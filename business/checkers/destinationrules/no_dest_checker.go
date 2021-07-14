@@ -18,6 +18,7 @@ type NoDestinationChecker struct {
 	DestinationRule kubernetes.IstioObject
 	ServiceEntries  map[string][]string
 	Services        []core_v1.Service
+	RegistryStatus  []*kubernetes.RegistryStatus
 }
 
 // Check parses the DestinationRule definitions and verifies that they point to an existing service, including any subset definitions
@@ -28,16 +29,11 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	if host, ok := n.DestinationRule.GetSpec()["host"]; ok {
 		if dHost, ok := host.(string); ok {
 			fqdn := kubernetes.GetHost(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName, n.Namespaces.GetNames())
+			// Testing Kubernetes Services + Istio ServiceEntries + Istio Runtime Registry (cross namespace)
 			if !n.hasMatchingService(fqdn, n.DestinationRule.GetObjectMeta().Namespace) {
-				if fqdn.Namespace != n.DestinationRule.GetObjectMeta().Namespace && fqdn.Namespace != "" {
-					validation := models.Build("validation.unable.cross-namespace", "spec/host")
-					valid = true
-					validations = append(validations, &validation)
-				} else {
-					validation := models.Build("destinationrules.nodest.matchingregistry", "spec/host")
-					valid = false
-					validations = append(validations, &validation)
-				}
+				validation := models.Build("destinationrules.nodest.matchingregistry", "spec/host")
+				valid = false
+				validations = append(validations, &validation)
 			} else if subsets, ok := n.DestinationRule.GetSpec()["subsets"]; ok {
 				if dSubsets, ok := subsets.([]interface{}); ok {
 					// Check that each subset has a matching workload somewhere..
@@ -139,6 +135,15 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 		}
 	}
 
-	// Otherwise Check ServiceEntries
-	return kubernetes.HasMatchingServiceEntries(host.Service, n.ServiceEntries)
+	// Check ServiceEntries
+	if kubernetes.HasMatchingServiceEntries(host.Service, n.ServiceEntries) {
+		return true
+	}
+
+	// Use RegistryStatus to check destinations that may not be covered with previous check
+	// i.e. Multi-cluster or Federation validations
+	if kubernetes.HasMatchingRegistryStatus(host.String(), n.RegistryStatus) {
+		return true
+	}
+	return false
 }

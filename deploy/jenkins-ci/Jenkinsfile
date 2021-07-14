@@ -32,15 +32,9 @@
  *   - QUAY_OPERATOR_NAME
  *      defaultValue: quay.io/kiali/kiali-operator
  *      description: The name of the Quay repository to push the operator release
- *   - NPM_DRY_RUN
+ *   - SKIP_KIALI_SERVER_RELEASE
  *      defaultValue: n
- *      description: Set to "y" if you want to make a "dry run" of the front-end release process
- *   - SKIP_BACKEND_RELEASE
- *      defaultValue: n
- *      description: Set to 'y' if you don't want to release the backend
-  *   - SKIP_UI_RELEASE
-  *      defaultValue: n
-  *      description: Set to 'y' if you don't want to release the UI
+ *      description: Set to 'y' if you don't want to release the server (back-end and front-end)
  *   - SKIP_OPERATOR_RELEASE
  *      defaultValue: n
  *      description: Set to 'y' if you don't want to release the operator
@@ -50,10 +44,6 @@
  *   - SKIP_SITE_RELEASE
  *      defaultValue: n
  *      description: Set to 'y' if you don't want to release the website
- *   - UI_VERSION
- *       defaultValue: ''
- *       description: If you are skipping UI release. Specify the UI version to package, or leave
- *                    unset to use the version present in the main Makefile (e.g. leave unset for patch releases)
  *   - NPM_CONFIG_REGISTRY
  *       defaultValue: ''
  *       description: NPM registry to use for fetching packages. This is not used for publishing releases.
@@ -63,6 +53,72 @@
  *       description: E-mail for sending build failure notifications.
  */
 
+def determineReleaseType() {
+  // This script determines the type of release that
+  // should be done, given the current date.
+  // It is possible to specify a different date
+  // by setting the NOW_DATE environment variable.
+  // The script will print a text:
+  // - "minor": if it's determined that a minor release
+  //     should be built.
+  // - "snapshot.0": if it's determined that a snapshot
+  //     release should be built (specifically, the first
+  //     snapshot of the sprint.
+  // - "snapshot.1": if it's determined that a snapshot
+  //     release should be built (specifically, the second
+  //     snapshot of the sprint.
+  // - "snapshot.2": for some sprints with longer duration.
+  //
+  // The reference date (base date) can be set in the
+  // environment variable BASE_DATE. By default, it is the
+  // last day of Kiali Sprint #14. Starting at end of Sprint #33,
+  // BASE_DATE is the last day of Sprint #33.
+  //
+  // Both NOW_DATE and BASE_DATE should be given in seconds
+  // since EPOCH. It is assumed that this script is run weekly
+  // starting in the base date. Running at different timespans
+  // won't guarantee a good result.
+  return sh ('''
+BASE_DATE=${BASE_DATE:-$(date -d '2018-11-30' '+%s')}
+NOW_DATE=${NOW_DATE:-$(date -d 'now' '+%s')}
+
+# At end of Sprint #33, we use it's last day as the base date
+cond=$(date -d '2020-01-10' '+%s')
+if [ $NOW_DATE -ge $cond ];
+then
+  BASE_DATE=$cond
+fi
+
+# Transitional calculations
+DATE_DIFF=$(( $NOW_DATE - $BASE_DATE ))
+DAYS_ELAPSED=$(( $DATE_DIFF / (24*60*60) ))
+WEEKS_ELAPSED=$(( $DAYS_ELAPSED / 7))
+
+# This value will be used to determine the type of the release
+WEEKS_MOD3=$(( $WEEKS_ELAPSED % 3 ))
+
+# Sprint #33 is 4 weeks long. Return 'snapshot.2' between Jan 3rd and Jan 9th
+if [ $NOW_DATE -ge $(date -d '2020-01-03' '+%s') ] && [ $NOW_DATE -lt $(date -d '2020-01-10' '+%s') ];
+then
+  echo 'snapshot.2'
+  exit 0
+fi
+
+case $WEEKS_MOD3 in
+  0)
+    RELEASE_TYPE='minor' ;;
+  1)
+    RELEASE_TYPE='snapshot.0' ;;
+  2)
+    RELEASE_TYPE='snapshot.1' ;;
+esac
+
+# Print the determined type
+echo $RELEASE_TYPE
+  ''',
+  returnStdout: true).trim()
+}
+
 node('kiali-build && fedora') {
   def backendDir = 'src/github.com/kiali/kiali'
   def backendMakefile = 'deploy/jenkins-ci/Makefile'
@@ -70,14 +126,13 @@ node('kiali-build && fedora') {
   def uiDir = 'src/github.com/kiali/kiali-ui'
   def uiMakefile = 'Makefile.jenkins'
 
-  def buildUi = params.SKIP_UI_RELEASE != "y"
-  def buildBackend = params.SKIP_BACKEND_RELEASE != "y"
+  def buildServer = params.SKIP_KIALI_SERVER_RELEASE != "y"
   def buildOperator = params.SKIP_OPERATOR_RELEASE != "y"
   def buildHelm = params.SKIP_HELM_RELEASE != "y" // Temptative value. It's re-assigned later.
   def buildSite = params.SKIP_SITE_RELEASE != "y" // Temptative value. It's re-assigned later.
   def quayTag = ""
 
-  if ( !buildBackend && !buildUi && !buildOperator && !buildHelm && !buildSite ) {
+  if ( !buildServer && !buildOperator && !buildHelm && !buildSite ) {
     currentBuild.result = 'ABORTED'
     echo "Nothing to release. Stopping."
     return
@@ -86,7 +141,7 @@ node('kiali-build && fedora') {
   try {
     cleanWs()
     stage('Checkout code') {
-      if ( buildBackend || buildOperator || buildHelm || buildSite ) {
+      if ( buildServer ) {
         checkout([
           $class: 'GitSCM',
           branches: [[name: params.RELEASING_BRANCHES]],
@@ -102,8 +157,7 @@ node('kiali-build && fedora') {
 
         sh "cd ${backendDir}; git config user.email 'kiali-dev@googlegroups.com'"
         sh "cd ${backendDir}; git config user.name 'kiali-bot'"
-      }
-      if ( buildUi ) {
+
         checkout([
           $class: 'GitSCM',
           branches: [[name: params.RELEASING_BRANCHES]],
@@ -125,90 +179,68 @@ node('kiali-build && fedora') {
     // Determine release type if "auto" was specified
     def releaseType = "${params.RELEASE_TYPE}"
     if ( releaseType == "auto" ) {
-      releaseType = sh(
-        returnStdout: true,
-        script: "${backendDir}/deploy/jenkins-ci/bin/determine-release-type.sh").trim()
+      releaseType = determineReleaseType()
     }
 
     buildSite = params.SKIP_SITE_RELEASE != "y" && releaseType == "minor"
     buildHelm = params.SKIP_HELM_RELEASE != "y" && (releaseType == "minor" || releaseType == "patch")
     echo "Resolved release type: ${releaseType}"
-    echo "Will build back-end? ${buildBackend}"
-    echo "Will build front-end? ${buildUi}"
+    echo "Will build back-end? ${buildServer}"
+    echo "Will build front-end? ${buildServer}"
     echo "Will build operator? ${buildOperator}"
     echo "Will build Helm charts? ${buildHelm}"
     echo "Will build site? ${buildSite}"
 
-    withEnv(["PATH+TOOLS=${env.WORKSPACE}/${backendDir}/deploy/jenkins-ci/bin",
-            "GOPATH=${env.WORKSPACE}",
-            "BACKEND_GITHUB_URI=git@github.com:${params.BACKEND_REPO}.git",
-            "BACKEND_FORK_URI=git@github.com:kiali-bot/kiali.git",
-            "BACKEND_PULL_URI=https://api.github.com/repos/${params.BACKEND_REPO}/pulls",
-            "UI_GITHUB_URI=git@github.com:${params.UI_REPO}.git",
-            "UI_FORK_URI=git@github.com:kiali-bot/kiali-ui.git",
-            "UI_PULL_URI=https://api.github.com/repos/${params.UI_REPO}/pulls",
-            "RELEASE_TYPE=${releaseType}"
-    ]) {
-      parallel backend: {
-        withEnv(["GOPATH=${env.WORKSPACE}"]) {
-          stage('Build backend') {
-            if ( buildBackend ) {
+    if ( buildServer ) {
+      withEnv(["PATH+TOOLS=${env.WORKSPACE}/${backendDir}/deploy/jenkins-ci/bin",
+              "GOPATH=${env.WORKSPACE}",
+              "BACKEND_GITHUB_URI=git@github.com:${params.BACKEND_REPO}.git",
+              "BACKEND_FORK_URI=git@github.com:kiali-bot/kiali.git",
+              "BACKEND_PULL_URI=https://api.github.com/repos/${params.BACKEND_REPO}/pulls",
+              "NPM_DRY_RUN=y",  // Just for safety, as we may be running Makefiles for pre-v1.35
+              "UI_GITHUB_URI=git@github.com:${params.UI_REPO}.git",
+              "UI_FORK_URI=git@github.com:kiali-bot/kiali-ui.git",
+              "UI_PULL_URI=https://api.github.com/repos/${params.UI_REPO}/pulls",
+              "RELEASE_TYPE=${releaseType}"
+      ]) {
+        parallel backend: {
+          withEnv(["GOPATH=${env.WORKSPACE}"]) {
+            stage('Build backend') {
               sh "make -f ${backendMakefile} -C ${backendDir} backend-build-release"
             }
-          }
-          stage('Test backend') {
-            if ( buildBackend ) {
+            stage('Test backend') {
               sh "make -f ${backendMakefile} -C ${backendDir} backend-test"
             }
           }
-        }
-      }, ui: {
-        stage('Build UI') {
-          if ( buildUi ) {
+        }, ui: {
+          stage('Build UI') {
             sh "make -f ${uiMakefile} -C ${uiDir} ui-fix-version ui-build"
           }
-        }
-        stage('Test UI') {
-          if ( buildUi ) {
+          stage('Test UI') {
             sh "make -f ${uiMakefile} -C ${uiDir} ui-test"
           }
-        }
-      },
+        },
+        failFast: true
 
-      failFast: true
-
-      stage('Release kiali-ui to NPM') {
-        if ( buildUi ) {
-          withCredentials([string(credentialsId: 'kiali-npm', variable: 'NPM_TOKEN')]) {
-            sh "make -f ${uiMakefile} -C ${uiDir} ui-npm-publish"
-          }
-        }
-      }
-
-      stage('Create release cut in front-end repo') {
-        if ( buildUi ) {
-          withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
-            sshagent(['kiali-bot-gh-ssh']) {
-              sh "make -f ${uiMakefile} -C ${uiDir} ui-push-version-tag ui-prepare-next-version"
-            }
-          }
-        }
-      }
-
-      stage('Release Kiali to Container Repositories') {
-        if ( buildBackend ) {
+        stage('Release Kiali to Container Repositories') {
           withCredentials([usernamePassword(credentialsId: 'kiali-quay', passwordVariable: 'QUAY_PASSWORD', usernameVariable: 'QUAY_USER')]) {
             sh "make -f ${backendMakefile} -C ${backendDir} backend-push-docker"
             quayTag = sh(returnStdout: true, script: "sed -rn 's/^VERSION \\?= v(.*)/v\\1/p' ${backendDir}/Makefile").trim()
           }
         }
-      }
 
-      stage('Create release cut in back-end repo') {
-        if ( buildBackend ) {
+        stage('Create release cut in back-end repo') {
           withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
             sshagent(['kiali-bot-gh-ssh']) {
               sh "make -f ${backendMakefile} -C ${backendDir} backend-push-version-tag backend-prepare-next-version"
+            }
+          }
+        }
+
+        stage('Create release cut in front-end repo') {
+          withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
+            sshagent(['kiali-bot-gh-ssh']) {
+              sh "make -f ${uiMakefile} -C ${uiDir} ui-push-version-tag ui-prepare-next-version"
             }
           }
         }

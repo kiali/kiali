@@ -92,7 +92,6 @@ var ObjectTypeSingular = map[string]string{
 	"rules":                  "rule",
 	"quotaspecs":             "quotaspec",
 	"quotaspecbindings":      "quotaspecbinding",
-	"servicemeshpolicies":    "servicemeshpolicy",
 	"policies":               "policy",
 	"serviceroles":           "servicerole",
 	"servicerolebindings":    "servicerolebinding",

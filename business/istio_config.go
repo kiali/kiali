@@ -12,7 +12,6 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util"
 )
 
@@ -31,6 +30,7 @@ type IstioConfigCriteria struct {
 	IncludeAuthorizationPolicies  bool
 	IncludePeerAuthentications    bool
 	IncludeWorkloadEntries        bool
+	IncludeWorkloadGroups         bool
 	IncludeRequestAuthentications bool
 	IncludeEnvoyFilters           bool
 	LabelSelector                 string
@@ -57,6 +57,8 @@ func (icc IstioConfigCriteria) Include(resource string) bool {
 		return icc.IncludePeerAuthentications
 	case kubernetes.WorkloadEntries:
 		return icc.IncludeWorkloadEntries && !isWorkloadSelector
+	case kubernetes.WorkloadGroups:
+		return icc.IncludeWorkloadGroups && !isWorkloadSelector
 	case kubernetes.RequestAuthentications:
 		return icc.IncludeRequestAuthentications
 	case kubernetes.EnvoyFilters:
@@ -66,22 +68,23 @@ func (icc IstioConfigCriteria) Include(resource string) bool {
 }
 
 // IstioConfig types used in the IstioConfig New Page Form
-var newIstioConfigTypes = []string{
-	kubernetes.AuthorizationPolicies,
+// networking.istio.io
+var newNetworkingConfigTypes = []string{
 	kubernetes.Sidecars,
 	kubernetes.Gateways,
+	kubernetes.ServiceEntries,
+}
+
+// security.istio.io
+var newSecurityConfigTypes = []string{
+	kubernetes.AuthorizationPolicies,
 	kubernetes.PeerAuthentications,
 	kubernetes.RequestAuthentications,
-	kubernetes.ServiceEntries,
 }
 
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
 // per a given Namespace.
 func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (models.IstioConfigList, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "GetIstioConfigList")
-	defer promtimer.ObserveNow(&err)
-
 	if criteria.Namespace == "" {
 		return models.IstioConfigList{}, errors.New("GetIstioConfigList needs a non empty Namespace")
 	}
@@ -95,6 +98,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		AuthorizationPolicies:  models.AuthorizationPolicies{},
 		PeerAuthentications:    models.PeerAuthentications{},
 		WorkloadEntries:        models.WorkloadEntries{},
+		WorkloadGroups:         models.WorkloadGroups{},
 		RequestAuthentications: models.RequestAuthentications{},
 		EnvoyFilters:           models.EnvoyFilters{},
 	}
@@ -111,10 +115,10 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		workloadSelector = criteria.WorkloadSelector
 	}
 
-	errChan := make(chan error, 10)
+	errChan := make(chan error, 11)
 
 	var wg sync.WaitGroup
-	wg.Add(10)
+	wg.Add(11)
 
 	go func(errChan chan error) {
 		defer wg.Done()
@@ -261,10 +265,35 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.Include(kubernetes.WorkloadEntries) {
-			if we, weErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.WorkloadEntries, criteria.LabelSelector); weErr == nil {
+			var we []kubernetes.IstioObject
+			var weErr error
+			if IsResourceCached(criteria.Namespace, kubernetes.WorkloadEntries) {
+				we, weErr = kialiCache.GetIstioObjects(criteria.Namespace, kubernetes.WorkloadEntries, criteria.LabelSelector)
+			} else {
+				we, weErr = in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.WorkloadEntries, criteria.LabelSelector)
+			}
+			if weErr == nil {
 				(&istioConfigList.WorkloadEntries).Parse(we)
 			} else {
 				errChan <- weErr
+			}
+		}
+	}(errChan)
+
+	go func(errChan chan error) {
+		defer wg.Done()
+		if criteria.Include(kubernetes.WorkloadGroups) {
+			var wg []kubernetes.IstioObject
+			var wgErr error
+			if IsResourceCached(criteria.Namespace, kubernetes.WorkloadGroups) {
+				wg, wgErr = kialiCache.GetIstioObjects(criteria.Namespace, kubernetes.WorkloadGroups, criteria.LabelSelector)
+			} else {
+				wg, wgErr = in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.WorkloadGroups, criteria.LabelSelector)
+			}
+			if wgErr == nil {
+				(&istioConfigList.WorkloadGroups).Parse(wg)
+			} else {
+				errChan <- wgErr
 			}
 		}
 	}(errChan)
@@ -293,7 +322,14 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.Include(kubernetes.EnvoyFilters) {
-			if ef, efErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.EnvoyFilters, criteria.LabelSelector); efErr == nil {
+			var ef []kubernetes.IstioObject
+			var efErr error
+			if IsResourceCached(criteria.Namespace, kubernetes.EnvoyFilters) {
+				ef, efErr = kialiCache.GetIstioObjects(criteria.Namespace, kubernetes.EnvoyFilters, criteria.LabelSelector)
+			} else {
+				ef, efErr = in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.EnvoyFilters, criteria.LabelSelector)
+			}
+			if efErr == nil {
 				if isWorkloadSelector {
 					ef = kubernetes.FilterIstioObjectsForWorkloadSelector(workloadSelector, ef)
 				}
@@ -309,7 +345,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	close(errChan)
 	for e := range errChan {
 		if e != nil { // Check that default value wasn't returned
-			err = e // To update the Kiali metric
+			err := e // To update the Kiali metric
 			return models.IstioConfigList{}, err
 		}
 	}
@@ -324,8 +360,6 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 // - "object":			name of the configuration
 func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, object string) (models.IstioConfigDetails, error) {
 	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "GetIstioConfigDetails")
-	defer promtimer.ObserveNow(&err)
 
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
@@ -404,6 +438,13 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 		if we, iErr := in.k8s.GetIstioObject(namespace, kubernetes.WorkloadEntries, object); iErr == nil {
 			istioConfigDetail.WorkloadEntry = &models.WorkloadEntry{}
 			istioConfigDetail.WorkloadEntry.Parse(we)
+		} else {
+			err = iErr
+		}
+	case kubernetes.WorkloadGroups:
+		if wg, iErr := in.k8s.GetIstioObject(namespace, kubernetes.WorkloadGroups, object); iErr == nil {
+			istioConfigDetail.WorkloadGroup = &models.WorkloadGroup{}
+			istioConfigDetail.WorkloadGroup.Parse(wg)
 		} else {
 			err = iErr
 		}
@@ -505,9 +546,6 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType string, body []byt
 
 // DeleteIstioConfigDetail deletes the given Istio resource
 func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceType, name string) (err error) {
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "DeleteIstioConfigDetail")
-	defer promtimer.ObserveNow(&err)
-
 	err = in.k8s.DeleteIstioObject(api, namespace, resourceType, name)
 
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh
@@ -518,10 +556,6 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceTy
 }
 
 func (in *IstioConfigService) UpdateIstioConfigDetail(api, namespace, resourceType, name, jsonPatch string) (models.IstioConfigDetails, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "UpdateIstioConfigDetail")
-	defer promtimer.ObserveNow(&err)
-
 	return in.modifyIstioConfigDetail(api, namespace, resourceType, name, jsonPatch, false)
 }
 
@@ -573,6 +607,9 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case kubernetes.WorkloadEntries:
 		istioConfigDetail.WorkloadEntry = &models.WorkloadEntry{}
 		istioConfigDetail.WorkloadEntry.Parse(result)
+	case kubernetes.WorkloadGroups:
+		istioConfigDetail.WorkloadGroup = &models.WorkloadGroup{}
+		istioConfigDetail.WorkloadGroup.Parse(result)
 	case kubernetes.EnvoyFilters:
 		istioConfigDetail.EnvoyFilter = &models.EnvoyFilter{}
 		istioConfigDetail.EnvoyFilter.Parse(result)
@@ -587,10 +624,6 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 }
 
 func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceType string, body []byte) (models.IstioConfigDetails, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "CreateIstioConfigDetail")
-	defer promtimer.ObserveNow(&err)
-
 	json, err := in.ParseJsonForCreate(resourceType, body)
 	if err != nil {
 		return models.IstioConfigDetails{}, errors2.NewBadRequest(err.Error())
@@ -599,40 +632,82 @@ func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceTy
 }
 
 func (in *IstioConfigService) GetIstioConfigPermissions(namespaces []string) models.IstioConfigPermissions {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "GetIstioConfigPermissions")
-	defer promtimer.ObserveNow(&err)
-
 	istioConfigPermissions := make(models.IstioConfigPermissions, len(namespaces))
 
 	if len(namespaces) > 0 {
+		networkingPermissions := make(models.IstioConfigPermissions, len(namespaces))
+		securityPermissions := make(models.IstioConfigPermissions, len(namespaces))
+
 		wg := sync.WaitGroup{}
-		wg.Add(len(namespaces) * len(newIstioConfigTypes))
+		// We will query 2 times per namespace (networking.istio.io and security.istio.io)
+		wg.Add(len(namespaces) * 2)
 		for _, ns := range namespaces {
-			resourcePermissions := make(models.ResourcesPermissions, len(newIstioConfigTypes))
-			for _, rs := range newIstioConfigTypes {
-				resourcePermissions[rs] = &models.ResourcePermissions{
-					Create: false,
-					Update: false,
-					Delete: false,
+			networkingRP := make(models.ResourcesPermissions, len(newNetworkingConfigTypes))
+			securityRP := make(models.ResourcesPermissions, len(newSecurityConfigTypes))
+			networkingPermissions[ns] = &networkingRP
+			securityPermissions[ns] = &securityRP
+			/*
+				We can optimize this logic.
+				Instead of query all editable objects of networking.istio.io and security.istio.io we can query
+				only one per API, that will save several queries to the backend.
+
+				Synced with:
+				https://github.com/kiali/kiali-operator/blob/master/roles/default/kiali-deploy/templates/kubernetes/role.yaml#L62
+			*/
+			go func(namespace string, wg *sync.WaitGroup, networkingPermissions *models.ResourcesPermissions) {
+				defer wg.Done()
+				canCreate, canUpdate, canDelete := getPermissionsApi(in.k8s, namespace, kubernetes.NetworkingGroupVersion.Group)
+				for _, rs := range newNetworkingConfigTypes {
+					networkingRP[rs] = &models.ResourcePermissions{
+						Create: canCreate,
+						Update: canUpdate,
+						Delete: canDelete,
+					}
 				}
-				go func(namespace, resource string, permissions *models.ResourcePermissions, wg *sync.WaitGroup) {
-					defer wg.Done()
-					permissions.Create, permissions.Update, permissions.Delete = getPermissions(in.k8s, namespace, resource)
-				}(ns, rs, resourcePermissions[rs], &wg)
-			}
-			istioConfigPermissions[ns] = &resourcePermissions
+			}(ns, &wg, &networkingRP)
+
+			go func(namespace string, wg *sync.WaitGroup, securityPermissions *models.ResourcesPermissions) {
+				defer wg.Done()
+				canCreate, canUpdate, canDelete := getPermissionsApi(in.k8s, namespace, kubernetes.SecurityGroupVersion.Group)
+				for _, rs := range newSecurityConfigTypes {
+					securityRP[rs] = &models.ResourcePermissions{
+						Create: canCreate,
+						Update: canUpdate,
+						Delete: canDelete,
+					}
+				}
+			}(ns, &wg, &securityRP)
 		}
 		wg.Wait()
+
+		// Join networking and security permissions into a single result
+		for _, ns := range namespaces {
+			allRP := make(models.ResourcesPermissions, len(newNetworkingConfigTypes)+len(newSecurityConfigTypes))
+			istioConfigPermissions[ns] = &allRP
+			for resource, permissions := range *networkingPermissions[ns] {
+				(*istioConfigPermissions[ns])[resource] = permissions
+			}
+			for resource, permissions := range *securityPermissions[ns] {
+				(*istioConfigPermissions[ns])[resource] = permissions
+			}
+		}
 	}
 	return istioConfigPermissions
 }
 
 func getPermissions(k8s kubernetes.ClientInterface, namespace, objectType string) (bool, bool, bool) {
-	var canCreate, canPatch, canUpdate, canDelete bool
+	var canCreate, canPatch, canDelete bool
 	if api, ok := kubernetes.ResourceTypesToAPI[objectType]; ok {
 		resourceType := objectType
-		ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, resourceType, []string{"create", "patch", "update", "delete"})
+		/*
+			Kiali only uses create,patch,delete as WRITE permissions
+
+			"update" creates an extra call to the API that we know that it will always fail, introducing extra latency
+
+			Synced with:
+			https://github.com/kiali/kiali-operator/blob/master/roles/default/kiali-deploy/templates/kubernetes/role.yaml#L62
+		*/
+		ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, resourceType, []string{"create", "patch", "delete"})
 		if permErr == nil {
 			for _, ssar := range ssars {
 				if ssar.Spec.ResourceAttributes != nil {
@@ -641,8 +716,6 @@ func getPermissions(k8s kubernetes.ClientInterface, namespace, objectType string
 						canCreate = ssar.Status.Allowed
 					case "patch":
 						canPatch = ssar.Status.Allowed
-					case "update":
-						canUpdate = ssar.Status.Allowed
 					case "delete":
 						canDelete = ssar.Status.Allowed
 					}
@@ -652,7 +725,38 @@ func getPermissions(k8s kubernetes.ClientInterface, namespace, objectType string
 			log.Errorf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, resourceType, permErr)
 		}
 	}
-	return canCreate, (canUpdate || canPatch), canDelete
+	return canCreate, canPatch, canDelete
+}
+
+func getPermissionsApi(k8s kubernetes.ClientInterface, namespace, api string) (bool, bool, bool) {
+	var canCreate, canPatch, canDelete bool
+	/*
+		Kiali only uses create,patch,delete as WRITE permissions
+
+		"update" creates an extra call to the API that we know that it will always fail, introducing extra latency
+
+		Synced with:
+		https://github.com/kiali/kiali-operator/blob/master/roles/default/kiali-deploy/templates/kubernetes/role.yaml#L62
+	*/
+	allResources := "*"
+	ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, allResources, []string{"create", "patch", "delete"})
+	if permErr == nil {
+		for _, ssar := range ssars {
+			if ssar.Spec.ResourceAttributes != nil {
+				switch ssar.Spec.ResourceAttributes.Verb {
+				case "create":
+					canCreate = ssar.Status.Allowed
+				case "patch":
+					canPatch = ssar.Status.Allowed
+				case "delete":
+					canDelete = ssar.Status.Allowed
+				}
+			}
+		}
+	} else {
+		log.Errorf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, "*", permErr)
+	}
+	return canCreate, canPatch, canDelete
 }
 
 func checkType(types []string, name string) bool {
@@ -676,6 +780,7 @@ func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelecto
 	criteria.IncludeAuthorizationPolicies = defaultInclude
 	criteria.IncludePeerAuthentications = defaultInclude
 	criteria.IncludeWorkloadEntries = defaultInclude
+	criteria.IncludeWorkloadGroups = defaultInclude
 	criteria.IncludeRequestAuthentications = defaultInclude
 	criteria.IncludeEnvoyFilters = defaultInclude
 	criteria.LabelSelector = labelSelector
@@ -709,6 +814,9 @@ func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelecto
 	}
 	if checkType(types, kubernetes.WorkloadEntries) {
 		criteria.IncludeWorkloadEntries = true
+	}
+	if checkType(types, kubernetes.WorkloadGroups) {
+		criteria.IncludeWorkloadGroups = true
 	}
 	if checkType(types, kubernetes.RequestAuthentications) {
 		criteria.IncludeRequestAuthentications = true

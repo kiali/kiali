@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/api"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -108,7 +109,7 @@ func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
 
 	p8s, err := api.NewClient(clientConfig)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewServiceUnavailable(err.Error())
 	}
 	client := Client{p8s: p8s, api: prom_v1.NewAPI(p8s), ctx: context.Background()}
 	return &client, nil
@@ -295,8 +296,9 @@ func (in *Client) GetMetricsForLabels(labels []string) ([]string, error) {
 		log.Warningf("GetMetricsForLabels. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {
-		return nil, err
+		return nil, errors.NewServiceUnavailable(err.Error())
 	}
+
 	var names []string
 	for _, labelSet := range results {
 		if name, ok := labelSet["__name__"]; ok {

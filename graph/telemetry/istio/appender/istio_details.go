@@ -105,6 +105,22 @@ NODES:
 		for _, virtualService := range istioCfg.VirtualServices.Items {
 			if virtualService.IsValidHost(namespace, n.Service) {
 				n.Metadata[graph.HasVS] = true
+
+				// Check if the VS also has one of the Kiali scenarios created by the wizard.
+				// TODO: Get this info from the VS spec in case the Istio object was not created by a wizard.
+				switch virtualService.Metadata.Labels[graph.WizardLabelKey] {
+				case graph.WizardRequestRoutingLabel:
+					n.Metadata[graph.HasRequestRouting] = true
+				case graph.WizardFaultInjectionLabel:
+					n.Metadata[graph.HasFaultInjection] = true
+				case graph.WizardTrafficShiftingLabel:
+					n.Metadata[graph.HasTrafficShifting] = true
+				case graph.WizardTCPTrafficShiftingLabel:
+					n.Metadata[graph.HasTCPTrafficShifting] = true
+				case graph.WizardRequestTimeoutsLabel:
+					n.Metadata[graph.HasRequestTimeout] = true
+				}
+
 				continue NODES
 			}
 		}

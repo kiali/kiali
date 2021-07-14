@@ -10,9 +10,10 @@ package istio
 //
 //   Second Pass: Apply any requested appenders to alter or append to the graph.
 //
-// Supports two vendor-specific query parameters:
+// Supports three vendor-specific query parameters:
 //   aggregate: Must be a valid metric attribute (default: request_operation)
-//   responseTimeQuantile: Must be a valid quantile (default: 0.95)
+//   responseTime: Must be one of: avg | 50 | 95 | 99
+//   throughputType: request | response (default: response)
 //
 import (
 	"context"
@@ -660,7 +661,7 @@ func promQuery(query string, queryTime time.Time, api prom_v1.API) model.Vector 
 	if warnings != nil && len(warnings) > 0 {
 		log.Warningf("promQuery. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
-	graph.CheckError(err)
+	graph.CheckUnavailable(err)
 	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
 
 	switch t := value.Type(); t {

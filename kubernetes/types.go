@@ -1,8 +1,8 @@
 package kubernetes
 
 import (
-	apps_v1 "k8s.io/api/apps/v1"
-	core_v1 "k8s.io/api/core/v1"
+	"time"
+
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -52,6 +52,10 @@ const (
 	WorkloadEntries       = "workloadentries"
 	WorkloadEntryType     = "WorkloadEntry"
 	WorkloadEntryTypeList = "WorkloadEntryList"
+
+	WorkloadGroups        = "workloadgroups"
+	WorkloadGroupType     = "WorkloadGroup"
+	WorkloadGroupTypeList = "WorkloadGroupList"
 
 	// Authorization PeerAuthentications
 	AuthorizationPolicies         = "authorizationpolicies"
@@ -125,6 +129,10 @@ var (
 			collectionKind: WorkloadEntryTypeList,
 		},
 		{
+			objectKind:     WorkloadGroupType,
+			collectionKind: WorkloadGroupTypeList,
+		},
+		{
 			objectKind:     EnvoyFilterType,
 			collectionKind: EnvoyFilterTypeList,
 		},
@@ -167,6 +175,7 @@ var (
 		ServiceEntries:   ServiceEntryType,
 		Sidecars:         SidecarType,
 		WorkloadEntries:  WorkloadEntryType,
+		WorkloadGroups:   WorkloadGroupType,
 		EnvoyFilters:     EnvoyFilterType,
 
 		// Security
@@ -185,6 +194,7 @@ var (
 		Gateways:               NetworkingGroupVersion.Group,
 		Sidecars:               NetworkingGroupVersion.Group,
 		WorkloadEntries:        NetworkingGroupVersion.Group,
+		WorkloadGroups:         NetworkingGroupVersion.Group,
 		EnvoyFilters:           NetworkingGroupVersion.Group,
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,
@@ -228,22 +238,6 @@ type IstioMeshConfig struct {
 	EnableAutoMtls          *bool `yaml:"enableAutoMtls,omitempty"`
 }
 
-// ServiceList holds list of services, pods and deployments
-type ServiceList struct {
-	Services    *core_v1.ServiceList
-	Pods        *core_v1.PodList
-	Deployments *apps_v1.DeploymentList
-}
-
-// ServiceDetails is a wrapper to group full Service description, Endpoints and Pods.
-// Used to fetch all details in a single operation instead to invoke individual APIs per each group.
-type ServiceDetails struct {
-	Service     *core_v1.Service        `json:"service"`
-	Endpoints   *core_v1.Endpoints      `json:"endpoints"`
-	Deployments *apps_v1.DeploymentList `json:"deployments"`
-	Pods        []core_v1.Pod           `json:"pods"`
-}
-
 // IstioDetails is a wrapper to group all Istio objects related to a Service.
 // Used to fetch all Istio information in a single operation instead to invoke individual APIs per each group.
 type IstioDetails struct {
@@ -281,6 +275,44 @@ type GenericIstioObjectList struct {
 	meta_v1.TypeMeta `json:",inline"`
 	meta_v1.ListMeta `json:"metadata"`
 	Items            []GenericIstioObject `json:"items"`
+}
+
+type ProxyStatus struct {
+	pilot string
+	SyncStatus
+}
+
+// SyncStatus is the synchronization status between Pilot and a given Envoy
+type SyncStatus struct {
+	ProxyID       string `json:"proxy,omitempty"`
+	ProxyVersion  string `json:"proxy_version,omitempty"`
+	IstioVersion  string `json:"istio_version,omitempty"`
+	ClusterSent   string `json:"cluster_sent,omitempty"`
+	ClusterAcked  string `json:"cluster_acked,omitempty"`
+	ListenerSent  string `json:"listener_sent,omitempty"`
+	ListenerAcked string `json:"listener_acked,omitempty"`
+	RouteSent     string `json:"route_sent,omitempty"`
+	RouteAcked    string `json:"route_acked,omitempty"`
+	EndpointSent  string `json:"endpoint_sent,omitempty"`
+	EndpointAcked string `json:"endpoint_acked,omitempty"`
+}
+
+type RegistryStatus struct {
+	pilot string
+	RegistryService
+}
+
+type RegistryService struct {
+	Attributes           map[string]interface{}   `json:"Attributes,omitempty"`
+	Ports                []map[string]interface{} `json:"ports"`
+	ServiceAccounts      []string                 `json:"serviceAccounts,omitempty"`
+	CreationTime         time.Time                `json:"creationTime,omitempty"`
+	Hostname             string                   `json:"hostname"`
+	Address              string                   `json:"address,omitempty"`
+	AutoAllocatedAddress string                   `json:"autoAllocatedAddress,omitempty"`
+	ClusterVIPs          map[string]string        `json:"cluster-vips,omitempty"`
+	Resolution           int                      `json:"Resolution,omitempty"`
+	MeshExternal         bool                     `json:"MeshExternal,omitempty"`
 }
 
 // GetSpec from a wrapper

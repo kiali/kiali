@@ -36,6 +36,11 @@ type IstioAnnotations struct {
 	IstioInjectionAnnotation string `json:"istioInjectionAnnotation,omitempty"`
 }
 
+type IstioCanaryRevision struct {
+	Current string `json:"current,omitempty"`
+	Upgrade string `json:"upgrade,omitempty"`
+}
+
 // PrometheusConfig holds actual Prometheus configuration that is useful to Kiali.
 // All durations are in seconds.
 type PrometheusConfig struct {
@@ -46,20 +51,20 @@ type PrometheusConfig struct {
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
-	ClusterInfo              ClusterInfo                     `json:"clusterInfo,omitempty"`
-	Clusters                 map[string]business.Cluster     `json:"clusters,omitempty"`
-	Extensions               Extensions                      `json:"extensions,omitempty"`
-	HealthConfig             config.HealthConfig             `json:"healthConfig,omitempty"`
-	InstallationTag          string                          `json:"installationTag,omitempty"`
-	IstioAnnotations         IstioAnnotations                `json:"istioAnnotations,omitempty"`
-	IstioStatusEnabled       bool                            `json:"istioStatusEnabled,omitempty"`
-	IstioIdentityDomain      string                          `json:"istioIdentityDomain,omitempty"`
-	IstioNamespace           string                          `json:"istioNamespace,omitempty"`
-	IstioComponentNamespaces config.IstioComponentNamespaces `json:"istioComponentNamespaces,omitempty"`
-	IstioLabels              config.IstioLabels              `json:"istioLabels,omitempty"`
-	IstioConfigMap           string                          `json:"istioConfigMap"`
-	KialiFeatureFlags        config.KialiFeatureFlags        `json:"kialiFeatureFlags,omitempty"`
-	Prometheus               PrometheusConfig                `json:"prometheus,omitempty"`
+	ClusterInfo         ClusterInfo                 `json:"clusterInfo,omitempty"`
+	Clusters            map[string]business.Cluster `json:"clusters,omitempty"`
+	Extensions          Extensions                  `json:"extensions,omitempty"`
+	HealthConfig        config.HealthConfig         `json:"healthConfig,omitempty"`
+	InstallationTag     string                      `json:"installationTag,omitempty"`
+	IstioAnnotations    IstioAnnotations            `json:"istioAnnotations,omitempty"`
+	IstioCanaryRevision IstioCanaryRevision         `json:"istioCanaryRevision,omitempty"`
+	IstioStatusEnabled  bool                        `json:"istioStatusEnabled,omitempty"`
+	IstioIdentityDomain string                      `json:"istioIdentityDomain,omitempty"`
+	IstioNamespace      string                      `json:"istioNamespace,omitempty"`
+	IstioLabels         config.IstioLabels          `json:"istioLabels,omitempty"`
+	IstioConfigMap      string                      `json:"istioConfigMap"`
+	KialiFeatureFlags   config.KialiFeatureFlags    `json:"kialiFeatureFlags,omitempty"`
+	Prometheus          PrometheusConfig            `json:"prometheus,omitempty"`
 }
 
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
@@ -82,14 +87,17 @@ func Config(w http.ResponseWriter, r *http.Request) {
 		IstioAnnotations: IstioAnnotations{
 			IstioInjectionAnnotation: config.ExternalServices.Istio.IstioInjectionAnnotation,
 		},
-		HealthConfig:             config.HealthConfig,
-		IstioStatusEnabled:       config.ExternalServices.Istio.ComponentStatuses.Enabled,
-		IstioIdentityDomain:      config.ExternalServices.Istio.IstioIdentityDomain,
-		IstioNamespace:           config.IstioNamespace,
-		IstioComponentNamespaces: config.IstioComponentNamespaces,
-		IstioLabels:              config.IstioLabels,
-		IstioConfigMap:           config.ExternalServices.Istio.ConfigMapName,
-		KialiFeatureFlags:        config.KialiFeatureFlags,
+		HealthConfig:        config.HealthConfig,
+		IstioStatusEnabled:  config.ExternalServices.Istio.ComponentStatuses.Enabled,
+		IstioIdentityDomain: config.ExternalServices.Istio.IstioIdentityDomain,
+		IstioNamespace:      config.IstioNamespace,
+		IstioLabels:         config.IstioLabels,
+		IstioConfigMap:      config.ExternalServices.Istio.ConfigMapName,
+		IstioCanaryRevision: IstioCanaryRevision{
+			Current: config.ExternalServices.Istio.IstioCanaryRevision.Current,
+			Upgrade: config.ExternalServices.Istio.IstioCanaryRevision.Upgrade,
+		},
+		KialiFeatureFlags: config.KialiFeatureFlags,
 		Prometheus: PrometheusConfig{
 			GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
 			StorageTsdbRetention: promConfig.StorageTsdbRetention,

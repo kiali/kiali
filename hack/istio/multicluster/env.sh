@@ -49,7 +49,7 @@ CLIENT_EXE_NAME="kubectl"
 ISTIO_DIR=""
 
 # If the scripts need image registry client, this is it (docker or podman)
-DORP="docker"
+DORP="${DORP:-docker}"
 
 # The namespace where Istio will be found - this namespace must be the same on both clusters
 ISTIO_NAMESPACE="istio-system"
@@ -108,6 +108,12 @@ MINIKUBE_DRIVER="virtualbox"
 MINIKUBE_CPU=""
 MINIKUBE_DISK=""
 MINIKUBE_MEMORY=""
+
+# Some settings that can be configured when helm installing the two Kiali instances.
+KIALI1_WEB_FQDN=""
+KIALI1_WEB_SCHEMA=""
+KIALI2_WEB_FQDN=""
+KIALI2_WEB_SCHEMA=""
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -185,6 +191,22 @@ while [[ $# -gt 0 ]]; do
       KIALI_ENABLED="$2"
       shift;shift
       ;;
+    -k1wf|--kiali1-web-fqdn)
+      KIALI1_WEB_FQDN="$2"
+      shift;shift
+      ;;
+    -k1ws|--kiali1-web-schema)
+      KIALI1_WEB_SCHEMA="$2"
+      shift;shift
+      ;;
+    -k2wf|--kiali2-web-fqdn)
+      KIALI2_WEB_FQDN="$2"
+      shift;shift
+      ;;
+    -k2ws|--kiali2-web-schema)
+      KIALI2_WEB_SCHEMA="$2"
+      shift;shift
+      ;;
     -mcpu|--minikube-cpu)
       MINIKUBE_CPU="$2"
       shift;shift
@@ -253,6 +275,10 @@ Valid command line arguments:
   -ke|--kiali-enabled <bool>: If "true" the latest release of Kiali will be installed in both clusters. If you want
                               a different version of Kiali installed, you must set this to "false" and install it yourself.
                               (Default: true)
+  -k1wf|--kiali1-web-fqdn <fqdn>: If specified, this will be the #1 Kaili setting for spec.server.web_fqdn.
+  -k1ws|--kiali1-web-schema <schema>: If specified, this will be the #1 Kaili setting for spec.server.web_schema.
+  -k2wf|--kiali2-web-fqdn <fqdn>: If specified, this will be the #2 Kaili setting for spec.server.web_fqdn.
+  -k2ws|--kiali2-web-schema <schema>: If specified, this will be the #2 Kaili setting for spec.server.web_schema.
   -mcpu|--minikube-cpu <cpu count>: Number of CPUs to give to each minikube cluster
   -md|--minikube-driver <name>: The driver used by minikube (e.g. virtualbox, kvm2) (Default: virtualbox)
   -mdisk|--minikube-disk <space>: Amount of disk space to give to each minikube cluster
@@ -439,6 +465,10 @@ ISTIO_DIR=$ISTIO_DIR
 ISTIO_NAMESPACE=$ISTIO_NAMESPACE
 ISTIO_TAG=$ISTIO_TAG
 KIALI_ENABLED=$KIALI_ENABLED
+KIALI1_WEB_FQDN=$KIALI1_WEB_FQDN
+KIALI1_WEB_SCHEMA=$KIALI1_WEB_SCHEMA
+KIALI2_WEB_FQDN=$KIALI2_WEB_FQDN
+KIALI2_WEB_SCHEMA=$KIALI2_WEB_SCHEMA
 MANAGE_KIND=$MANAGE_KIND
 MANAGE_MINIKUBE=$MANAGE_MINIKUBE
 MANUAL_MESH_NETWORK_CONFIG=$MANUAL_MESH_NETWORK_CONFIG

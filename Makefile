@@ -10,17 +10,13 @@ TARGET_ARCHS ?= amd64 arm64 s390x ppc64le
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= v1.33.0-SNAPSHOT
+VERSION ?= v1.38.0-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
-# Indicates which version of the UI console is to be embedded
-# in the container image. If "local" the CONSOLE_LOCAL_DIR is
-# where the UI project has been git cloned and has its
-# content built in its build/ subdirectory.
-# WARNING: If you have previously build a container image but
-# later want to change the CONSOLE_VERSION then you must run
-# the 'clean' target first before re-building the container image.
-CONSOLE_VERSION ?= latest
+# The path where the UI project has been git cloned. The UI should
+# have been built before trying to create a kiali server container
+# image. The UI project is configured to place its build
+# output in the $UI_SRC_ROOT/build/ subdirectory.
 CONSOLE_LOCAL_DIR ?= ${ROOTDIR}/../../../../../kiali-ui
 
 # Version label is used in the OpenShift/K8S resources to identify
@@ -34,7 +30,7 @@ GO ?= go
 GOFMT ?= $(shell ${GO} env GOROOT)/bin/gofmt
 GO_VERSION_KIALI = 1.16.2
 
-SWAGGER_VERSION ?= 0.22.0
+SWAGGER_VERSION ?= 0.27.0
 
 # Identifies the Kiali container image that will be built.
 IMAGE_ORG ?= kiali
@@ -93,6 +89,15 @@ MINIKUBE_PROFILE ?= minikube
 KIND ?= $(shell which kind 2>/dev/null || echo "MISSING-KIND-FROM-PATH")
 KIND_NAME ?= kind
 
+# Determine if the OC is operational or not. Useful for other commands that might timeout if the OC exists but is not responding.
+ifeq ($(CLUSTER_TYPE),minikube)
+OC_READY ?= $(shell if ${MINIKUBE} -p ${MINIKUBE_PROFILE} status &>/dev/null ; then echo "true" ; else echo "false" ; fi)
+else ifeq ($(CLUSTER_TYPE),kind)
+OC_READY ?= $(shell if ${OC} cluster-info --context=kind-${KIND_NAME} --request-timeout=1s &>/dev/null ; then echo "true" ; else echo "false" ; fi)
+else
+OC_READY ?= $(shell if ${OC} status --request-timeout=1s &>/dev/null ; then echo "true" ; else echo "false" ; fi)
+endif
+
 # Details about the Kiali operator image used when deploying to remote cluster
 ifeq ($(CLUSTER_TYPE),kind)
 OPERATOR_IMAGE_PULL_POLICY ?= IfNotPresent
@@ -129,7 +134,11 @@ SERVICE_TYPE ?= ClusterIP
 KIALI_CR_SPEC_VERSION ?= default
 
 # Determine if Maistra/ServiceMesh is deployed. If not, assume we are working with upstream Istio.
+ifeq ($(OC_READY),true)
 IS_MAISTRA ?= $(shell if ${OC} get namespace ${NAMESPACE} -o jsonpath='{.metadata.labels}' 2>/dev/null | grep -q maistra ; then echo "true" ; else echo "false" ; fi)
+else
+IS_MAISTRA ?= false
+endif
 
 # Path to Kiali CR file which is different based on what Istio implementation is deployed (upstream or Maistra)
 # This is used when deploying Kiali via make
@@ -142,6 +151,13 @@ endif
 # When ensuring the helm chart repo exists, by default the make infrastructure will pull the latest code from git.
 # If you do not want this to happen (i.e. if you want to retain the local copies of your helm charts), set this to false.
 HELM_CHARTS_REPO_PULL ?= true
+
+.PHONY: default_target
+default_target:
+	@echo
+	@echo "Apparently, you didn't specify a target."
+	@echo "This Makefile requires you to explicitly call a target."
+	@echo "Run '$(MAKE) help' to learn about the available targets."
 
 include make/Makefile.build.mk
 include make/Makefile.container.mk

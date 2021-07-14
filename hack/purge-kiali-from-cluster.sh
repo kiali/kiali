@@ -74,7 +74,13 @@ delete_namespace_resources() {
 delete_cluster_resources() {
   local selector_expression="$1"
   msg "Deleting cluster-scoped resources with selector [${selector_expression}]..."
-  for r in $(${CLIENT_EXE} get --ignore-not-found=true clusterroles,clusterrolebindings,customresourcedefinitions,oauthclients.oauth.openshift.io,consolelinks.console.openshift.io --selector="${selector_expression}" --all-namespaces -o custom-columns=K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g')
+
+  local openshift_resources=""
+  if [[ "$CLIENT_EXE" = *"oc" ]]; then
+    openshift_resources=",oauthclients.oauth.openshift.io,consolelinks.console.openshift.io"
+  fi
+
+  for r in $(${CLIENT_EXE} get --ignore-not-found=true clusterroles,clusterrolebindings,customresourcedefinitions${openshift_resources} --selector="${selector_expression}" --all-namespaces -o custom-columns=K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g')
   do
     local res_kind=$(echo $r | cut -d: -f1)
     local res_name=$(echo $r | cut -d: -f2)

@@ -11,7 +11,7 @@ Kiali provides answers to the questions: _What microservices are part of my Isti
 
 image::https://raw.githubusercontent.com/kiali/kiali.io/master/static/images/documentation/features/graph-overview.png[Kiali Graph, width=880]
 
-== Table of contents
+=== Table of contents
 
 toc::[]
 
@@ -21,197 +21,211 @@ A Microservice Architecture breaks up the monolith into many smaller pieces that
 
 A service mesh can now provide these services on a platform level and frees the application writers from those tasks. Routing decisions are done at the mesh level.
 
-Kiali works with Istio to visualise the service mesh topology, features like circuit breakers or request rates.
+Kiali works with Istio to visualise the service mesh topology, and features like circuit breakers or request rates.
 
-Kiali also includes an integration with Jaeger Tracing to provide distributed tracing out of the box.
+Kiali also includes an integration with Jaeger Tracing to augment the topology views with distributed transaction monitoring, and to also provide charts and stats about distributed traces.
+
+
+=== Contributing
+
+First, check the link:https://kiali.io/contribute[Contribute section in our web site], which provides a brief introduction on contributing, how to report issues and request features, and how to reach us.
+
+If you would like to make code contributions, please also check the link:./CONTRIBUTING.md[Contribution Guide].
 
 === Getting Started
 
-This README is targeted mainly toward Kiali developers. If you are not a developer but want to learn more about Kiali, you will find the link:https://www.kiali.io[Kiali documentation] more helpful. For some instructions on running Kiali without having to git clone this repository or build anything, please see the link:https://www.kiali.io/documentation/getting-started[Getting Started] page.
+The target audience of this README are developers. If you are not a developer but want to learn more about Kiali, the link:https://www.kiali.io[Kiali documentation] should be more helpful. For instructions on installing Kiali, please read the link:https://www.kiali.io/documentation/latest/quick-start[Quick Start] page.
 
-==== Testing on a OpenShift 4.x Cluster
+=== How and where Kiali is released?
 
-To install a OpenShift 4.x cluster in AWS, use this link:https://github.com/kiali/kiali/blob/master/hack/aws-openshift.sh[hack script].
+Read the link:./RELEASING.adoc[RELEASING.adoc] file.
 
-Run the hack script with `--help` for usage details. Here is a brief synopsis:
-
-* `aws-openshift.sh -kuca true create` : Create an AWS cluster that includes Service Mesh, Kiali, Jaeger, ElasticSearch
-* `aws-openshift.sh status` : Provides details about your AWS cluster
-* `aws-openshift.sh oc-env` : Provides details about how to set up the `oc` client in your shell so it can access your AWS cluster
-* `aws-openshift.sh destroy` : Destroy the AWS cluster
-* `aws-openshift.sh bi-install` : Install BookInfo demo in the AWS cluster
-* `aws-openshift.sh sm-uninstall` : Uninstall the Service Mesh and all its components that were previously installed via `create` or `sm-install`
-* `aws-openshift.sh sm-install` : Re-install the Service Mesh and all its components
-* `aws-openshift.sh k-uninstall` : Uninstall the Kiali component that was installed via `create` or `sm-install`
-
-Here's a way you can work with AWS to do Kiali development:
-
-* `aws-openshift.sh -kuca true create` to create your cluster with Service Mesh. `-kuca true` tells the script to create a cluster admin user "kiali" with password "kiali". This takes roughly 30 minutes to complete.
-* `aws-openshift.sh status` to show you details about your cluster, including "oc login" details as well as the console URL among other things
-* If you want to build and deploy your own Kiali:
-** First must uninstall the one that was installed when you created the cluster. To do this, run `aws-openshift.sh k-uninstall`
-** Next build Kiali and the Kiali operator normally (see below for details on that)
-** Push the dev builds of your Kiali and Kiali operator into the AWS cluster's image registry via `make cluster-push`.
-** Create the new Kiali Operator in your AWS cluster via `make operator-create`
-** Create the new Kiali in your AWS cluster via `make kiali-create`
-** At this point, your dev build of Kiali should be starting up. Wait for it to come up and then you can access the Kiali UI normally.
-
-=== Container Image
-
-The container images for Kiali and the Kiali Operator are published on https://quay.io/organization/kiali[Quay.io in the kiali organization].
-
-=== License and Copyright
-
-See the link:./LICENSE[LICENSE file].
-
-== Building
+== Developer setup
 
 [NOTE]
-These build instructions assume you have the following installed on your system: (1) link:http://golang.org/doc/install[Go Programming Language], (2) link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git], (3) link:https://docs.docker.com/installation/[Docker] or link:https://podman.io[Podman] , (4) link:https://nodejs.org[NPM], and (5) make. If you are using `podman` instead of `docker`, pass the environment variable `DORP=podman` when executing `make`. To run Kiali in a cluster after you build it, it is assumed you have a running OpenShift or Minikube or Kind environment available to you.
+Please, complement the content of this readme document with the link:https://github.com/kiali/kiali-ui/blob/master/README.adoc[README.adoc document of the front-end repository]. Although this document has some instructions about building the front-end, they are not complete.
+
+Make sure you have the following tools:
+
+* The link:http://golang.org/doc/install[Go Programming Language]
+** Currently, Kiali releases are built using Go 1.16. Although Kiali may build correctly using other versions of Go, it's suggested to use version 1.16.2 for development to ensure replicatable builds. Makefiles will require this minimum version of Go.
+* link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git]
+* link:https://docs.docker.com/installation/[Docker] or link:https://podman.io[Podman]
+** If you are using `podman` declare the environment variable `DORP=podman`.
+* link:https://nodejs.org[NodeJS] (with the NPM command)
+* The _GNU make_ utility or any of it's alternatives
+
+Once you have the required developer tools, you can get and build the code with the following script:
+
+[source,shell]
+----
+# Checkout the source code
+mkdir kiali_sources
+cd kiali_sources
+export KIALI_SOURCES=$(realpath .)
+
+git clone https://github.com/kiali/kiali.git
+git clone https://github.com/kiali/kiali-ui.git
+git clone https://github.com/kiali/kiali-operator.git
+git clone https://github.com/kiali/helm-charts.git
+
+ln -s $KIALI_SOURCES/kiali-operator kiali/operator
+
+# Build the back-end and run the tests
+cd $KIALI_SOURCES/kiali
+make build test
+
+# Build the front-end and run the tests
+cd $KIALI_SOURCES/kiali-ui
+yarn && yarn build && yarn test
+----
 
 [NOTE]
-Currently, Kiali releases are built using Go 1.16. Although Kiali may build correctly using other versions of Go, it's suggested to use version 1.16.2 for development to ensure replicatable builds. Makefiles will require this minimum version of Go.
+The rest of this README assumes the directory tree created by the previous commands:
 
-To build Kiali:
+ -- kiali_sources
+    |- kiali
+    |- kiali-ui
+    |- kiali-operator
+    \- helm-charts
 
-* Clone this repository inside a GOPATH. These instructions will use the example GOPATH of "/source/kiali/kiali" but you can use whatever you want. Just change the first line of the below instructions to use your GOPATH.
+=== Create a Kubernetes cluster and install a Service Mesh
 
-[source,shell]
-----
-export GOPATH=/source/kiali/kiali
-mkdir -p $GOPATH
-cd $GOPATH
-mkdir -p src/github.com/kiali
-cd src/github.com/kiali
-git clone git@github.com:kiali/kiali
-git clone git@github.com:kiali/kiali-operator kiali/operator
-git clone git@github.com:kiali/helm-charts kiali/helm-charts
-export PATH=${PATH}:${GOPATH}/bin
-----
+Since Kiali is a management console for an Istio-based service mesh, you will need an Istio-like Service Mesh to try Kiali. Then, Istio Meshes are installed on Kubernetes clusters.
 
-* Build Kiali
+We provide a few unsupported scripts that can help to get started:
 
-[source,shell]
-----
-cd ${GOPATH}/src/github.com/kiali/kiali
-make build
-----
+* If you have an OpenShift 4.x pull secret and also have an AWS account, you can use the link:hack/aws-openshift.sh[`aws-openshift.sh`] script to create an OpenShift cluster in AWS with the needed resources for the Service Mesh. The command you may want to try is `aws-openshift.sh -kuca true create`.
+** Once you have a cluster, you can use the link:hack/istio/install-sm2.sh[`install-sm2.sh`] to install the OpenShift Service Mesh, which is an Istio-based Service Mesh. Alternatively, you can also use link:https://maistra.io/[Maistra].
+* If you are familiar to minikube, you may try the link:hack/k8s-minikube.sh[`k8s-minikube.sh`] script. The command you may want to try is `k8s-minikube.sh start && k8s-minikube.sh istio` which will create a cluster and install Istio on it. This script accept flags to let you install the link:https://istio.io/latest/docs/examples/bookinfo/[Bookinfo sample application], install Kiali and also some other flags to set up an environment where you can try the OpenId authentication and also to ease the setup of a multi-cluster environment.
+* Finally, the link:hack/istio/install-istio-via-istioctl.sh[`install-istio-via-istioctl.sh`] and the link:hack/istio/install-bookinfo-demo.sh[`install-bookinfo-demo.sh`] scripts can assist into installing Istio and the Bookinfo sample application in your cluster, respectively. You can try running these scripts without any arguments.
 
-* At this point you can run the Kiali tests
+These scripts are written to rely on the minimum dependencies as possible and will try to download any required tools. You can try running them, and the scripts will abort and ask manually install any required tool.
 
-[source,shell]
-----
-cd ${GOPATH}/src/github.com/kiali/kiali
-make test
-----
+You can also use link:https://kind.sigs.k8s.io/[kind], however we don't have a script to create a kind cluster.
 
-== Running
+Depending on the type of cluster you are using, you should define the `CLUSTER_TYPE` environment variable on your shell to `openshift` (this is the default if not set), `minikube` or `kind` value so that the Makefiles can assist in other operations. If you are not using any of these clusters, you should set the environment variable to `CLUSTER_TYPE=local`.
 
 [NOTE]
-If you want to quickly get up and running to play with Kiali and do not wish to git clone the repository or build anything, see https://www.kiali.io/gettingstarted for instructions.
+If you are using `minikube` it's recommended that you enable the `registry` and `ingress` add-on. The `k8s-minikube.sh` script should do this for you.
 
 [NOTE]
-Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. There are a few places that you can reference in order to learn how to do this. We recommend using link:https://maistra.io/docs/installation/[Maistra] which is a variant of Istio. If you choose to use Istio, make sure to follow the link:https://istio.io/docs/setup/platform-setup/openshift/[OpenShift preparation steps]. Also, check the link:https://kiali.io/documentation/latest/installation-guide/#_kiali_version_requirements[version requirements] on our website to read notes about Istio and Maistra compatibility. There is a link:https://github.com/kiali/kiali/tree/master/hack/istio/install-istio-via-istioctl.sh[install-istio-via-istioctl.sh hack script] that can install Istio for you.
+If you are using `docker` and using minikube's registry add-on or any custom non-secure registry, make sure the link:https://docs.docker.com/registry/insecure/[Docker daemon is properly configured to use your registry].
 
-=== Running on OpenShift or Kubernetes (Minikube/Kind)
+=== Building the Container Image and deploying to a cluster
 
-By default, the make targets used to push and deploy Kiali images will assume you have an OpenShift 4.x cluster installed and running and that `oc` is found in your $PATH.
+Assuming that:
 
-If you wish to push and deploy Kiali to an installed and running Kubernetes (via Minikube) environment, pass the environment variable `CLUSTER_TYPE=minikube` to the `make` commands and make sure `kubectl` is found in your $PATH.
+* you have successfully built the back-end and the front-end,
+* you also have created a Kubernetes cluster with an Istio-based Service Mesh installed on it,
+* and you are not using the `CLUSTER_TYPE=local` environment variable
 
-If you wish to push and deploy Kiali to an installed and running Kubernetes (via Kind) environment, pass the environment variable `CLUSTER_TYPE=kind` to the `make` commands and make sure `kubectl` is found in your $PATH.
-
-If you have neither minikube, kind, nor a remote OpenShift cluster, you can pass the environment variable `CLUSTER_TYPE=local` to the `make` commands and make sure you have either `oc` or `kubectl` in your $PATH. This requires your Kubernetes cluster to be able to pull from your local image repository.
-
-In order to deploy on Minikube using the below instructions, and to be able to access the deployed services, you must ensure you have the Registry and Ingress addons. To do this, ensure you run `minikube addons enable registry` and `minikube addons enable ingress` and add `kiali` as a hostname in your `/etc/hosts` via something like this command: `echo "$(minikube ip) kiali" | sudo tee -a /etc/hosts`
-
-If you are using `docker`, make sure the endpoint for your OpenShift image registry or Kubernetes image registry is configured as an insecure registry in your docker daemon config.
-
-=== Building the Container Image
-
-Create the Kiali container images through the "container-build" make target:
+the following commands should deploy a development build of Kiali to the cluster:
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/kiali
-make container-build
-----
+cd $KIALI_SOURCES/kiali
 
-This will build the Kiali image.
-
-Generated container image will be consistant with the host machine (either x86_64 or aarch64).
-
-=== Pushing Kiali operator and Kiali images to your cluster
-
-[source,shell]
-----
-cd ${GOPATH}/src/github.com/kiali/kiali
+# Build the Kiali-server and Kiali-operator container images and push them to the cluster
 make cluster-push
-----
 
-This actually invokes the `container-build` target as well, so you technically do not have to run `make container-build` as a separate step.
+# If you want to only build and push the Kiali-server container images:
+# make cluster-push-kiali
 
-=== Deploying Kiali operator to your cluster
+# If you want to only build and push the Kiali-operator container images:
+# make cluster-push-operator
 
-[source,shell]
-----
-cd ${GOPATH}/src/github.com/kiali/kiali
+# Deploy the operator to the cluster
 make operator-create
-----
 
-Deploying the Kiali operator needs to be done only one time. After the operator is deployed, you can deploy and remove Kiali any number of times using the steps described below.
-
-=== Deploying Kiali to your cluster
-
-[source,shell]
-----
-cd ${GOPATH}/src/github.com/kiali/kiali
+# Create a KialCR to instruct the operator to deploy Kiali
 make kiali-create
 ----
 
-This creates a Kiali custom resource (CR) which instructs the Kiali operator to install Kiali. A secret will be created if needed (i.e. when the authentication strategy is set to `login`).
-
-=== Removing Kiali from your cluster
-
-If you want to remove Kiali, you can do so via the operator by executing the `kiali-delete` target. This target will also remove the secret.
+If you are using the `CLUSTER_TYPE=local` environment variable, you will need to declare some additional environment variables to set the container registry where container images should be pushed and use `make container-push*` targets instead of `cluster-push*` targets. For example, if your container registry is `localhost:5000`:
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/kiali
-make kiali-delete
-----
+export QUAY_NAME=localhost:5000/kiali/kiali
+export CONTAINER_NAME=localhost:5000/kiali/kiali
+export OPERATOR_QUAY_NAME=localhost:5000/kiali/kiali-operator
+export OPERATOR_CONTAINER_NAME=localhost:5000/kiali/kiali-operator
 
-If you want to purge your cluster of all Kiali resources without going through the operator to do it, you can run the `kiali-purge` target instead. This does not use the operator, instead it purges all Kiali resources using the oc/kubectl command.
+cd $KIALI_SOURCES/kiali
 
-[source,shell]
-----
-cd ${GOPATH}/src/github.com/kiali/kiali
-make kiali-purge
+# Build the Kiali-server and Kiali-operator container images and push them to the cluster
+make container-build container-push
+
+# If you want to only build and push the Kiali-server container images:
+# make container-build-kiali container-push-kiali-quay
+
+# If you want to only build and push the Kiali-operator container images:
+# make container-build-operator container-push-operator-quay
+
+# Deploy the operator to the cluster
+make operator-create
+
+# Create a KialCR to instruct the operator to deploy Kiali
+make kiali-create
 ----
 
 === Reloading Kiali image
 
-[NOTE]
-To easily facilitate development, this allows you to do `make clean build cluster-push-kiali kiali-reload-image` to quickly get your new Kiali build into your running cluster.
-
-If you already have Kiali installed but you want to recreate the pod with a new container image, you can run the following command:
+If you already have Kiali installed and you want to recreate the kiali server pod, you can run the following command:
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/kiali
+cd $KIALI_SOURCES/kiali
 make kiali-reload-image
 ----
 
-=== Removing Kiali operator from your cluster
+This is to facilitate development. To quickly build a new Kiali container image and load it to the cluster, you can run:
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/kiali
-make operator-delete
+cd $KIALI_SOURCES/kiali-ui
+yarn && yarn build
+
+cd $KIALI_SOURCES/kiali
+make clean build cluster-push-kiali kiali-reload-image
 ----
 
 [NOTE]
-After this completes, the `kiali-create` and `kiali-delete` targets will be ineffective until you run the `operator-create` target to re-deploy the Kiali operator again.
+There is no equivalent reload command for the operator. You would need to manually reload the operator via `kubectl` or `oc` commands.
+
+=== Cluster clean-up
+
+[source,shell]
+----
+cd $KIALI_SOURCES/kiali
+
+# Delete the Kiali CR to let the operator remove Kiali.
+make kiali-delete
+
+# If the previous command never ends, the following command forces removal by bypassing the operator
+# make kiali-purge
+
+# Remove the operator
+# NOTE: After this completes, the `kiali-create` and `kiali-delete` targets will be ineffective
+# until you run the `operator-create` target to re-deploy the Kiali operator again.
+make operator-delete
+----
+
+=== Code formatting and linting
+
+If you are changing the back-end code of Kiali, before submitting a pull request make sure your changes are properly formatted and no new linting issues are introduced by running:
+
+[source,shell]
+----
+# CD to the back-end source code
+cd $KIALI_SOURCES/kiali
+
+# Install linting tools
+make lint-install
+
+# Format the code and run linters
+make format lint
+----
 
 === Running Standalone
 
@@ -223,7 +237,7 @@ also located in the `hack` directory. Read the comments at the tops of both file
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/kiali/hack
+cd $KIALI_SOURCES/kiali/hack
 ./run-kiali.sh
 ----
 
@@ -246,24 +260,6 @@ If the page you want to embed uses other URL arguments, you can specify any of t
 
 == Configure External Services
 
-=== Jaeger
-
-If you have Jaeger installed in a custom way that is not easily auto-detectable by Kiali, you need to change in the Kiali CR the value of the jaeger > url
-
-[source,yaml]
-----
-apiVersion: kiali.io/v1alpha1
-kind: Kiali
-metadata:
-  name: kiali
-spec:
-...
-    external_services:
-      tracing:
-        url: http://jaeger-query-istio-system.127.0.0.1.nip.io
-...
-----
-
 === Grafana
 
 If you have Grafana installed in a custom way that is not easily auto-detectable by Kiali, you need to change in the Kiali CR the value of the grafana > url
@@ -282,113 +278,11 @@ spec:
 ...
 ----
 
-== Services API Documentation
-
-Kiali can display API Documentation of your services. See https://user-images.githubusercontent.com/1235410/61569413-0e870480-aa3c-11e9-9527-bbea18eff475.png[API documentation screen capture] and https://user-images.githubusercontent.com/1235410/61569419-1777d600-aa3c-11e9-82cc-f9510e5b9808.png[API type list screen capture].
-
-=== Configure your services
-
-Your services must be annotated with the type of API ('rest', 'grpc', 'graphql') and a URL to the spec of the API.
-If the API spec is served from the service itself, Kiali will infer the hostname and port :
-
-[source,yaml]
-----
-apiVersion: v1
-kind: Service
-metadata:
-  name: myservice
-  annotations:
-    kiali.io/api-type: rest
-    kiali.io/api-spec: /v1/api-spec
-spec:
-...
-----
-
-The API spec can also be served from any http/s URL, internal or external to the cluster :
-
-[source,yaml]
-----
-apiVersion: v1
-kind: Service
-metadata:
-  name: petstore
-  annotations:
-    kiali.io/api-type: rest
-    kiali.io/api-spec: https://petstore.swagger.io/v2/swagger.json
-spec:
-...
-----
-
-For now, only REST APIs have their spec displayed but we are working to support gRpc and GraphQL soon.
-A live console to test your APIs directly with Kiali is also being worked on.
-
-=== Customize API docs annotations
-
-You can configure Kiali to use your own annotation names with the Kiali CR
-
-[source,yaml]
-----
-...
-apidocs:
-  annotations:
-    api_spec_annotation_name: "my-annotation-for-api-spec"
-    api_type_annotation_name: "my-annotation-for-api-type"
-...
-----
-
 == Additional Notes
 
-=== Customize the UI web context root
+=== Running the UI outside the cluster
 
-By default Kiali UI is deployed to the top level of `https://kiali-istio-system.<your_cluster_domain_or_ip>/`.  In some situations such as when you want to serve Kiali UI along with other apps under the same host name, e.g., `example.com/kiali`, `example.com/app1`, you can edit Kiali Config Map and provide a different value for `web_root`.  Note: the path must begin with a `/` and not end with `/` (e.g. `/kiali`).
-
-An example of custom web root:
-
-[source,yaml]
-----
-...
-server:
-  web_root: /kiali
-...
-----
-
-=== Running the UI Outside the Core
-
-When developing the http://github.com/kiali/kiali-ui[Kiali UI] you will find it useful to run it outside of the core to make it easier to update the UI code and see the changes without having to recompile. The preferred approach for this is to use a proxy on the UI to mount the core. The process is described https://github.com/kiali/kiali-ui#developing[here].
-
-To connect with the backend and avoid the javascript prompt requesting authentication you need to send the requests with a specific header.
-[source]
-----
-X-Auth-Type-Kiali-UI: 1
-----
-The response will contain the header
-[source]
-----
-WWW-Authenticate: xBasic realm="Kiali"
-----
-Otherwise the header will be
-[source]
-----
-WWW-Authenticate: Basic realm="Kiali"
-----
-
-=== Running A Locally Built UI Inside the Core
-
-If you are developing the UI on your local machine but you want to see it deployed and running inside of the core server, you can do so by setting the environment variable CONSOLE_VERSION to the value "local" when building the container image via the `container-build` or `cluster-build` target. By default, your UI's build/ directory is assumed to be in a directory called `kiali-ui` that is a peer directory of the GOPATH root directory for the core server. If it is not, you can set the environment variable CONSOLE_LOCAL_DIR to the value of the path of the root directory for the UI such that `$CONSOLE_LOCAL_DIR/build` contains the generated build files for the UI.
-
-For example, if your GOPATH directory for the Kiali project is `/source/kiali/kiali` and you have git cloned the Kiali UI repository in `/source/kiali/kiali-ui` then you do not need to set CONSOLE_LOCAL_DIR. You can embed your locally built console into the core container image via:
-
-[source,shell]
-----
-CONSOLE_VERSION=local make container-build
-----
-
-If you git cloned the Kiali UI repository in directory `/my/git/repo` and have built the UI there (such that the build files are located at `/my/git/repo/build`) then you can embed that locally built console into the core container image via:
-
-[source,shell]
-----
-CONSOLE_VERSION=local CONSOLE_LOCAL_DIR=/my/git/repo make container-build
-----
+When developing the http://github.com/kiali/kiali-ui[Kiali UI] you will find it useful to run it outside of the cluster to make it easier to update the UI code and see the changes without having to re-deploy. The preferred approach for this is to use the _proxy_ feature of React. The process is described https://github.com/kiali/kiali-ui#developing[here].
 
 === Disabling SSL
 
@@ -398,13 +292,7 @@ In the provided OpenShift templates, SSL is turned on by default. If you want to
 
 * Remove the "identity" block, with certificate paths, from the Kiali Config Map.
 
-* Optionally you can also remove the annotation "service.alpha.openshift.io/serving-cert-secret-name", and the related volume that is declared and mounted in Kiali Deployment (but if you don't, they will just be ignored).
-
-In the provided Kubernetes templates, SSL is turned on by default. If you want to turn it off, you should:
-
-* Remove the "identity" block, with certificate paths, from the Kiali Config Map.
-
-* Optionally you can also remove the volume that is declared and mounted in Kiali Deployment (the name of the volume and mount are both "kiali-cert". If you don't remove these, they will just be ignored.
+* Optionally you can also remove the annotation "service.beta.openshift.io/serving-cert-secret-name" in the Kiali Service, and the related `kiali-cabundle` volume that is declared and mounted in Kiali Deployment (but if you don't, they will just be ignored).
 
 == Exposing Kiali to External Clients Using Istio Gateway
 
@@ -473,6 +361,12 @@ spec:
 
 === Observing a Remote Cluster
 
+[NOTE]
+The "Central IstioD" setup is currently named "Primary-remote" multi-cluster setup.
+
+[WARNING]
+When this support was incorporated into Kiali, the "Central IstioD" setup of Istio was in an early development phase. These instructions are probably now broken.
+
 There are certain use cases where Kiali needs to be deployed in one cluster (Control Plane) and observe a different cluster (Data Plane). link:https://user-images.githubusercontent.com/6889074/87819080-ad099980-c839-11ea-834b-56eec038ce4d.png[Diagram].
 
 Follow these steps:
@@ -513,10 +407,3 @@ spec:
   - istio_request_bytes
 
 6: Kiali in the Control Plane should now be fully functional with the Data Plane
-
-== Contributing
-
-First, check the link:https://kiali.io/contribute[Contribute section in our web site], which provides a brief introduction on contributing, how to report issues and request features, and how to reach us.
-
-If you would like to make code contributions, please also check the link:./CONTRIBUTING.md[Contribution Guide] as a starting point.
-

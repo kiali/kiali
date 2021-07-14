@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
@@ -41,6 +42,15 @@ func (c *kialiCacheImpl) createIstioInformers(namespace string, informer *typeCa
 	}
 	if c.CheckIstioResource(kubernetes.Sidecars) {
 		(*informer)[kubernetes.Sidecars] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.Sidecars, c.refreshDuration, namespace)
+	}
+	if c.CheckIstioResource(kubernetes.WorkloadEntries) {
+		(*informer)[kubernetes.WorkloadEntries] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.WorkloadEntries, c.refreshDuration, namespace)
+	}
+	if c.CheckIstioResource(kubernetes.WorkloadGroups) {
+		(*informer)[kubernetes.WorkloadGroups] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.WorkloadGroups, c.refreshDuration, namespace)
+	}
+	if c.CheckIstioResource(kubernetes.EnvoyFilters) {
+		(*informer)[kubernetes.EnvoyFilters] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.EnvoyFilters, c.refreshDuration, namespace)
 	}
 	if c.CheckIstioResource(kubernetes.PeerAuthentications) {
 		(*informer)[kubernetes.PeerAuthentications] = createIstioIndexInformer(c.istioSecurityGetter, kubernetes.PeerAuthentications, c.refreshDuration, namespace)
@@ -110,7 +120,11 @@ func (c *kialiCacheImpl) GetIstioObjects(namespace string, resourceType string, 
 			iResources := make([]kubernetes.IstioObject, lenResources)
 			for i, r := range resources {
 				iResources[i] = (r.(*kubernetes.GenericIstioObject)).DeepCopyIstioObject()
-				// TODO iResource[i].SetTypeMeta(typeMeta) is missing/needed ??
+				typeMeta := meta_v1.TypeMeta{
+					Kind:       kubernetes.PluralType[resourceType],
+					APIVersion: kubernetes.ApiToVersion[kubernetes.ResourceTypesToAPI[resourceType]],
+				}
+				iResources[i].SetTypeMeta(typeMeta)
 			}
 			if labelSelector != "" {
 				if selector, err := labels.Parse(labelSelector); err == nil {

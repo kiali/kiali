@@ -37,8 +37,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 				if fqdn.Namespace != dr.GetObjectMeta().Namespace && !strings.HasPrefix(fqdn.Service, "*") && fqdn.Namespace != "" {
 					// Unable to verify if the same host+subset combination is targeted from different namespace DRs
 					// "*" check removes the prefix errors
-					key, rrValidation := createError("validation.unable.cross-namespace", destinationRulesNamespace, destinationRulesName, true)
-					validations.MergeValidations(models.IstioValidations{key: rrValidation})
+					// NoDestinationChecker will check cross-namespace validations
 					continue
 				}
 

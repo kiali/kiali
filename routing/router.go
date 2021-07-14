@@ -1,12 +1,19 @@
 package routing
 
 import (
+	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
+	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
@@ -45,6 +52,16 @@ func NewRouter() *mux.Router {
 		webRootWithSlash = "/"
 	}
 
+	fileServerHandler := func(w http.ResponseWriter, r *http.Request) {
+		if r.RequestURI == webRootWithSlash || r.RequestURI == webRoot || r.RequestURI == webRootWithSlash+"index.html" {
+			serveIndexFile(w)
+		} else if r.RequestURI == webRootWithSlash+"env.js" {
+			serveEnvJsFile(w)
+		} else {
+			staticFileServer.ServeHTTP(w, r)
+		}
+	}
+
 	appRouter = appRouter.StrictSlash(true)
 
 	// Build our API server routes and install them.
@@ -67,7 +84,7 @@ func NewRouter() *mux.Router {
 	// All client-side routes are prefixed with /console.
 	// They are forwarded to index.html and will be handled by react-router.
 	appRouter.PathPrefix("/console").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, conf.Server.StaticContentRootDirectory+"/index.html")
+		serveIndexFile(w)
 	})
 
 	if conf.Auth.Strategy == config.AuthStrategyOpenId {
@@ -75,20 +92,97 @@ func NewRouter() *mux.Router {
 			if !handlers.OpenIdCodeFlowHandler(w, r) {
 				// If the OpenID handler does not handle the request, pass the
 				// request to the file server.
-				staticFileServer.ServeHTTP(w, r)
+				fileServerHandler(w, r)
 			}
 		})
 	}
 
-	rootRouter.PathPrefix(webRootWithSlash).Handler(staticFileServer)
+	rootRouter.PathPrefix(webRootWithSlash).HandlerFunc(fileServerHandler)
 
 	return rootRouter
 }
 
+// statusResponseWriter contains a ResponseWriter and a StatusCode to read in the metrics middleware
+type statusResponseWriter struct {
+	http.ResponseWriter
+	StatusCode int
+}
+
+// WriteHeader will be called by any function that needs to set an status code, in this function the StatusCode is also set
+func (srw *statusResponseWriter) WriteHeader(code int) {
+	srw.ResponseWriter.WriteHeader(code)
+	srw.StatusCode = code
+}
+
+// updateMetric evaluates the StatusCode, if there is an error, increase the API failure counter, otherwise save the duration
+func updateMetric(route string, srw *statusResponseWriter, timer *prometheus.Timer) {
+	// Always measure the duration even if the API call ended in an error
+	timer.ObserveDuration()
+	// Increase the error counter on 500 and 503 errors
+	if srw.StatusCode == http.StatusInternalServerError || srw.StatusCode == http.StatusServiceUnavailable {
+		internalmetrics.GetAPIFailureMetric(route).Inc()
+	}
+}
+
 func metricHandler(next http.Handler, route Route) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// By default, if there is no call to WriteHeader, an 200 will be
+		srw := &statusResponseWriter{
+			ResponseWriter: w,
+			StatusCode:     http.StatusOK,
+		}
 		promtimer := internalmetrics.GetAPIProcessingTimePrometheusTimer(route.Name)
-		defer promtimer.ObserveDuration()
-		next.ServeHTTP(w, r)
+		defer updateMetric(route.Name, srw, promtimer)
+		next.ServeHTTP(srw, r)
 	})
+}
+
+// serveEnvJsFile generates the env.js file needed by the UI from Kiali configs. The
+// generated file is sent to the HTTP response.
+func serveEnvJsFile(w http.ResponseWriter) {
+	conf := config.Get()
+	var body string
+	if len(conf.Server.WebHistoryMode) > 0 {
+		body += fmt.Sprintf("window.HISTORY_MODE='%s';", conf.Server.WebHistoryMode)
+	}
+
+	if webRoot := strings.TrimSuffix(config.Get().Server.WebRoot, "/"); len(webRoot) > 0 {
+		body += fmt.Sprintf("window.WEB_ROOT='%s';", webRoot)
+	}
+
+	w.Header().Set("content-type", "text/javascript")
+	_, err := io.WriteString(w, body)
+	if err != nil {
+		log.Errorf("HTTP I/O error [%v]", err.Error())
+	}
+}
+
+// serveIndexFile takes UI's index.html as a template to generate a modified index file that takes
+// into account the web_root path configured in the Kiali CR. The result is sent to the HTTP response.
+func serveIndexFile(w http.ResponseWriter) {
+	webRootPath := config.Get().Server.WebRoot
+	webRootPath = strings.TrimSuffix(webRootPath, "/")
+
+	path, _ := filepath.Abs("./console/index.html")
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Errorf("File I/O error [%v]", err.Error())
+		handlers.RespondWithDetailedError(w, http.StatusInternalServerError, "Unable to read index.html template file", err.Error())
+		return
+	}
+
+	html := string(b)
+	newHTML := html
+
+	if len(webRootPath) != 0 {
+		searchStr := `<base href="/"`
+		newStr := `<base href="` + webRootPath + `/"`
+		newHTML = strings.Replace(html, searchStr, newStr, -1)
+	}
+
+	w.Header().Set("content-type", "text/html")
+	_, err = io.WriteString(w, newHTML)
+	if err != nil {
+		log.Errorf("HTTP I/O error [%v]", err.Error())
+	}
 }

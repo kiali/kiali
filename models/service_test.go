@@ -20,6 +20,7 @@ func TestServiceDetailParsing(t *testing.T) {
 	service.SetService(fakeService())
 	service.SetEndpoints(fakeEndpoints())
 	service.SetPods(fakePods())
+	service.SetIstioSidecar(fakeWorkloads())
 	service.SetVirtualServices(fakeVirtualServices(), false, false, false)
 	service.SetDestinationRules(fakeDestinationRules(), false, false, false)
 
@@ -32,6 +33,7 @@ func TestServiceDetailParsing(t *testing.T) {
 	assert.Equal(service.Service.Type, "ClusterIP")
 	assert.Equal(service.Service.Ip, "127.0.0.9")
 	assert.Equal(service.Service.Labels, map[string]string{"label1": "labelName1", "label2": "labelName2"})
+	assert.Equal(service.IstioSidecar, true)
 	assert.Equal(service.Service.Ports, Ports{
 		Port{Name: "http", Protocol: "TCP", Port: 3001},
 		Port{Name: "http", Protocol: "TCP", Port: 3000}})
@@ -378,4 +380,13 @@ func fakeDestinationRules() []kubernetes.IstioObject {
 	}
 
 	return []kubernetes.IstioObject{&destinationRule1, &destinationRule2}
+}
+
+func fakeWorkloads() WorkloadOverviews {
+	wo := WorkloadOverviews{}
+	w1 := &WorkloadListItem{IstioSidecar: false}
+	w2 := &WorkloadListItem{IstioSidecar: true}
+	wo = append(wo, w1)
+	wo = append(wo, w2)
+	return wo
 }

@@ -103,6 +103,7 @@ swagger-validate:
 ## swagger-gen: Generate that swagger.json from Code. Runs `swagger generate` internally
 swagger-gen:
 	@swagger generate spec -o ./swagger.json
+	@swagger generate markdown --quiet --spec ./swagger.json --output ./kiali_api.md
 
 ## swagger-serve: Serve the swagger.json in a website in local. Runs `swagger serve` internally
 swagger-serve: swagger-validate

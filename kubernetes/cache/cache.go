@@ -35,6 +35,7 @@ type (
 		IstioCache
 		NamespacesCache
 		ProxyStatusCache
+		RegistryStatusCache
 	}
 
 	// This map will store Informers per specific types
@@ -63,13 +64,16 @@ type (
 		cacheIstioTypes        map[string]bool
 		stopChan               map[string]chan struct{}
 		nsCache                map[string]typeCache
-		cacheLock              sync.Mutex
+		cacheLock              sync.RWMutex
 		tokenLock              sync.RWMutex
 		tokenNamespaces        map[string]namespaceCache
 		tokenNamespaceDuration time.Duration
 		proxyStatusLock        sync.RWMutex
 		proxyStatusCreated     *time.Time
 		proxyStatusNamespaces  map[string]map[string]podProxyStatus
+		registryStatusLock     sync.RWMutex
+		registryStatusCreated  *time.Time
+		registryStatus         []*kubernetes.RegistryStatus
 	}
 )
 
@@ -197,7 +201,12 @@ func (c *kialiCacheImpl) CheckNamespace(namespace string) bool {
 	if !c.isCached(namespace) {
 		return false
 	}
-	if _, exist := c.nsCache[namespace]; !exist {
+
+	c.cacheLock.RLock()
+	_, isNsCached := c.nsCache[namespace]
+	c.cacheLock.RUnlock()
+
+	if !isNsCached {
 		defer c.cacheLock.Unlock()
 		c.cacheLock.Lock()
 		return c.createCache(namespace)

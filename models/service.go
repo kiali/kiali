@@ -27,6 +27,10 @@ type ServiceOverview struct {
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
 	// Labels for Service
 	Labels map[string]string `json:"labels"`
+	// Istio References
+	IstioReferences []*IstioValidationKey `json:"istioReferences"`
+	// Kiali Wizard scenario, if any
+	KialiWizard string `json:"kialiWizard"`
 }
 
 type ServiceList struct {
@@ -107,7 +111,10 @@ func (s *ServiceDetails) SetEndpoints(eps *core_v1.Endpoints) {
 func (s *ServiceDetails) SetPods(pods []core_v1.Pod) {
 	mPods := Pods{}
 	mPods.Parse(pods)
-	s.IstioSidecar = mPods.HasIstioSidecar()
+}
+
+func (s *ServiceDetails) SetIstioSidecar(workloads WorkloadOverviews) {
+	s.IstioSidecar = workloads.HasIstioSidecar()
 }
 
 func (s *ServiceDetails) SetVirtualServices(vs []kubernetes.IstioObject, canCreate, canUpdate, canDelete bool) {

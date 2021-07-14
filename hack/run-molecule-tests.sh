@@ -37,6 +37,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -kn|--kind-name)
       KIND_NAME="$2"
+    -me|--minikube-exe)
+      MINIKUBE_EXE="$2"
       shift;shift
       ;;
     -mp|--minikube-profile)
@@ -87,6 +89,7 @@ $0 [option...] command
 -hcr|--helm-charts-repo  Location of the helm charts git repo. (default: ../helm-charts)
 -ksh|--kiali_src-home    Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
 -kn|--kind-name          If cluster type is 'kind' you can specify the cluster name that is in use via this option.
+-me|--minikube-exe       If cluster type is 'minikube' you can specify the minikube executable that should be used.
 -mp|--minikube-profile   If cluster type is 'minikube' you can specify the profile that is in use via this option.
 -nd|--never-destroy      Do not have the molecule framework destroy the test scaffolding. Setting this to true
                          will help test failures by allowing you to examine the operator logs after a test finished.
@@ -189,6 +192,7 @@ echo MOLECULE_OPERATOR_PROFILER_ENABLED="$MOLECULE_OPERATOR_PROFILER_ENABLED"
 echo TEST_LOGS_DIR="$TEST_LOGS_DIR"
 echo TEST_CLIENT_EXE="$TEST_CLIENT_EXE"
 echo COLOR="$COLOR"
+echo MINIKUBE_EXE="$MINIKUBE_EXE"
 echo MINIKUBE_PROFILE="$MINIKUBE_PROFILE"
 echo KIND_NAME="$KIND_NAME"
 echo HELM_CHARTS_REPO="$HELM_CHARTS_REPO"
@@ -280,21 +284,25 @@ fi
 
 # we have to explicitly tell the makefile about the DORP value
 if [ -z "${DORP}" ]; then
-  if ! which docker > /dev/null 2>&1; then
-    if which podman > /dev/null 2>&1; then
-      DORP="podman"
+  if ! which podman > /dev/null 2>&1; then
+    if which docker > /dev/null 2>&1; then
+      DORP="docker"
     else
       echo "You do not have 'docker' or 'podman' in PATH - aborting."
       exit 1
     fi
   else
-    DORP="docker"
+    DORP="podman"
   fi
 fi
 export DORP
 
 # the user may have specified a specific minikube profile to use - export this so make knows about it
 export MINIKUBE_PROFILE
+
+if [ ! -z "${MINIKUBE_EXE}" ]; then
+  export MINIKUBE="${MINIKUBE_EXE}"
+fi
 
 # the user may have specified a specific KinD cluster name to use - export this so make knows about it
 export KIND_NAME

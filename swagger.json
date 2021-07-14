@@ -575,8 +575,16 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "none",
+            "x-go-name": "Name",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -593,14 +601,6 @@
             "x-go-name": "Name",
             "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
             "name": "graphType",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
-            "name": "boxBy",
             "in": "query"
           },
           {
@@ -633,6 +633,22 @@
             "x-go-name": "Name",
             "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
             "name": "queryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "95",
+            "x-go-name": "Name",
+            "description": "Used only with responseTime appender. One of: avg | 50 | 95 | 99.",
+            "name": "responseTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "request",
+            "x-go-name": "Name",
+            "description": "Used only with throughput appender. One of: request | response.",
+            "name": "throughput",
             "in": "query"
           }
         ],
@@ -1021,8 +1037,16 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "none",
+            "x-go-name": "Name",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -1039,14 +1063,6 @@
             "x-go-name": "Name",
             "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
             "name": "graphType",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
-            "name": "boxBy",
             "in": "query"
           },
           {
@@ -1071,6 +1087,22 @@
             "x-go-name": "Name",
             "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
             "name": "queryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "95",
+            "x-go-name": "Name",
+            "description": "Used only with responseTime appender. One of: avg | 50 | 95 | 99.",
+            "name": "responseTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "request",
+            "x-go-name": "Name",
+            "description": "Used only with throughput appender. One of: request | response.",
+            "name": "throughput",
             "in": "query"
           }
         ],
@@ -1137,8 +1169,16 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "none",
+            "x-go-name": "Name",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -1155,14 +1195,6 @@
             "x-go-name": "Name",
             "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
             "name": "graphType",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
-            "name": "boxBy",
             "in": "query"
           },
           {
@@ -1187,6 +1219,22 @@
             "x-go-name": "Name",
             "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
             "name": "queryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "95",
+            "x-go-name": "Name",
+            "description": "Used only with responseTime appender. One of: avg | 50 | 95 | 99.",
+            "name": "responseTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "request",
+            "x-go-name": "Name",
+            "description": "Used only with throughput appender. One of: request | response.",
+            "name": "throughput",
             "in": "query"
           }
         ],
@@ -2738,8 +2786,16 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "none",
+            "x-go-name": "Name",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -2760,18 +2816,26 @@
           },
           {
             "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
-            "name": "boxBy",
-            "in": "query"
-          },
-          {
-            "type": "string",
             "default": "now",
             "x-go-name": "Name",
             "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
             "name": "queryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "95",
+            "x-go-name": "Name",
+            "description": "Used only with responseTime appender. One of: avg | 50 | 95 | 99.",
+            "name": "responseTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "request",
+            "x-go-name": "Name",
+            "description": "Used only with throughput appender. One of: request | response.",
+            "name": "throughput",
             "in": "query"
           }
         ],
@@ -3463,8 +3527,16 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "none",
+            "x-go-name": "Name",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -3481,14 +3553,6 @@
             "x-go-name": "Name",
             "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
             "name": "graphType",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
-            "name": "boxBy",
             "in": "query"
           },
           {
@@ -3513,6 +3577,22 @@
             "x-go-name": "Name",
             "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
             "name": "queryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "95",
+            "x-go-name": "Name",
+            "description": "Used only with responseTime appender. One of: avg | 50 | 95 | 99.",
+            "name": "responseTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "request",
+            "x-go-name": "Name",
+            "description": "Used only with throughput appender. One of: request | response.",
+            "name": "throughput",
             "in": "query"
           }
         ],
@@ -3979,7 +4059,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Aggregation": {
-      "description": "Aggregation is the model representing label's allowed aggregation, transformed from aggregation in MonitoringDashboard k8s resource",
+      "description": "Aggregation is the model representing label's allowed aggregation, transformed from aggregation in MonitoringDashboard config resource",
       "type": "object",
       "properties": {
         "displayName": {
@@ -4088,6 +4168,14 @@
         "istioSidecar"
       ],
       "properties": {
+        "istioReferences": {
+          "description": "Istio References",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioValidationKey"
+          },
+          "x-go-name": "IstioReferences"
+        },
         "istioSidecar": {
           "description": "Define if all Pods related to the Workloads of this app has an IstioSidecar deployed",
           "type": "boolean",
@@ -4125,7 +4213,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Chart": {
-      "description": "Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard k8s resource",
+      "description": "Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard config resource",
       "type": "object",
       "properties": {
         "chartType": {
@@ -4298,6 +4386,14 @@
           "type": "string",
           "x-go-name": "Image"
         },
+        "isProxy": {
+          "type": "boolean",
+          "x-go-name": "IsProxy"
+        },
+        "isReady": {
+          "type": "boolean",
+          "x-go-name": "IsReady"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
@@ -4388,6 +4484,10 @@
         "target": {
           "type": "string",
           "x-go-name": "Target"
+        },
+        "throughput": {
+          "type": "string",
+          "x-go-name": "Throughput"
         },
         "traffic": {
           "$ref": "#/definitions/ProtocolTraffic"
@@ -4693,6 +4793,9 @@
         },
         "workloadEntry": {
           "$ref": "#/definitions/workloadEntry"
+        },
+        "workloadGroup": {
+          "$ref": "#/definitions/workloadGroup"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -4740,6 +4843,9 @@
         },
         "workloadEntries": {
           "$ref": "#/definitions/workloadEntries"
+        },
+        "workloadGroups": {
+          "$ref": "#/definitions/workloadGroups"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -5165,6 +5271,10 @@
         "enabled": {
           "type": "boolean",
           "x-go-name": "Enabled"
+        },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
         },
         "supportedVersion": {
           "type": "boolean",
@@ -5621,7 +5731,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "MonitoringDashboard": {
-      "description": "MonitoringDashboard is the model representing custom monitoring dashboard, transformed from MonitoringDashboard k8s resource",
+      "description": "MonitoringDashboard is the model representing custom monitoring dashboard, transformed from MonitoringDashboard config resource",
       "type": "object",
       "properties": {
         "aggregations": {
@@ -5645,6 +5755,10 @@
           },
           "x-go-name": "ExternalLinks"
         },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
         "title": {
           "type": "string",
           "x-go-name": "Title"
@@ -5655,28 +5769,23 @@
     "MonitoringDashboardExternalLinkVariables": {
       "type": "object",
       "properties": {
-        "app": {
-          "type": "string",
-          "x-go-name": "App"
+        "App": {
+          "type": "string"
         },
-        "namespace": {
-          "type": "string",
-          "x-go-name": "Namespace"
+        "Namespace": {
+          "type": "string"
         },
-        "service": {
-          "type": "string",
-          "x-go-name": "Service"
+        "Service": {
+          "type": "string"
         },
-        "version": {
-          "type": "string",
-          "x-go-name": "Version"
+        "Version": {
+          "type": "string"
         },
-        "workload": {
-          "type": "string",
-          "x-go-name": "Workload"
+        "Workload": {
+          "type": "string"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/kubernetes/monitoringdashboards/v1alpha1"
+      "x-go-package": "github.com/kiali/kiali/config/dashboards"
     },
     "NamespaceAppHealth": {
       "description": "NamespaceAppHealth is an alias of map of app name x health",
@@ -5712,12 +5821,32 @@
           "type": "boolean",
           "x-go-name": "HasCB"
         },
+        "hasFaultInjection": {
+          "type": "boolean",
+          "x-go-name": "HasFaultInjection"
+        },
         "hasHealthConfig": {
           "$ref": "#/definitions/HealthConfig"
         },
         "hasMissingSC": {
           "type": "boolean",
           "x-go-name": "HasMissingSC"
+        },
+        "hasRequestRouting": {
+          "type": "boolean",
+          "x-go-name": "HasRequestRouting"
+        },
+        "hasRequestTimeout": {
+          "type": "boolean",
+          "x-go-name": "HasRequestTimeout"
+        },
+        "hasTCPTrafficShifting": {
+          "type": "boolean",
+          "x-go-name": "HasTCPTrafficShifting"
+        },
+        "hasTrafficShifting": {
+          "type": "boolean",
+          "x-go-name": "HasTrafficShifting"
         },
         "hasVS": {
           "type": "boolean",
@@ -6293,6 +6422,10 @@
         "location": {
           "type": "string",
           "x-go-name": "Location"
+        },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
         }
       },
       "x-go-package": "github.com/kiali/kiali/graph"
@@ -6542,11 +6675,24 @@
           },
           "x-go-name": "HealthAnnotations"
         },
+        "istioReferences": {
+          "description": "Istio References",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioValidationKey"
+          },
+          "x-go-name": "IstioReferences"
+        },
         "istioSidecar": {
           "description": "Define if Pods related to this Service has an IstioSidecar deployed",
           "type": "boolean",
           "x-go-name": "IstioSidecar",
           "example": true
+        },
+        "kialiWizard": {
+          "description": "Kiali Wizard scenario, if any",
+          "type": "string",
+          "x-go-name": "KialiWizard"
         },
         "labels": {
           "description": "Labels for Service",
@@ -6934,6 +7080,14 @@
           "type": "boolean",
           "x-go-name": "IstioInjectionAnnotation"
         },
+        "istioReferences": {
+          "description": "Istio References",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioValidationKey"
+          },
+          "x-go-name": "IstioReferences"
+        },
         "istioSidecar": {
           "description": "Define if Pods related to this Workload has an IstioSidecar deployed",
           "type": "boolean",
@@ -7093,6 +7247,14 @@
           "description": "Define if Workload has an explicit Istio policy annotation\nIt's mapped as a pointer to show three values nil, true, false",
           "type": "boolean",
           "x-go-name": "IstioInjectionAnnotation"
+        },
+        "istioReferences": {
+          "description": "Istio References",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioValidationKey"
+          },
+          "x-go-name": "IstioReferences"
         },
         "istioSidecar": {
           "description": "Define if Pods related to this Workload has an IstioSidecar deployed",
@@ -7674,6 +7836,64 @@
         }
       },
       "x-go-name": "WorkloadEntry",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "workloadGroup": {
+      "description": "This is used for returning a WorkloadGroup",
+      "type": "object",
+      "title": "WorkloadGroup workloadGroup",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "metadata": {
+              "description": "This is not an error, the WorkloadGroup has a Metadata inside the Spec\nhttps://istio.io/latest/docs/reference/config/networking/workload-group/#WorkloadGroup",
+              "type": "object",
+              "x-go-name": "Metadata"
+            },
+            "probe": {
+              "type": "object",
+              "x-go-name": "Probe"
+            },
+            "template": {
+              "type": "object",
+              "x-go-name": "Template"
+            }
+          },
+          "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "WorkloadGroup",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "workloadGroups": {
+      "description": "This is used for returning an array of WorkloadGroup",
+      "type": "array",
+      "title": "WorkloadGroups workloadGroups",
+      "items": {
+        "$ref": "#/definitions/workloadGroup"
+      },
+      "x-go-name": "WorkloadGroups",
       "x-go-package": "github.com/kiali/kiali/models"
     }
   },

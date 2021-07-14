@@ -5,15 +5,14 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
-type ProxyStatus struct {
+type ProxyStatusService struct {
 	k8s           kubernetes.ClientInterface
 	businessLayer *Layer
 }
 
-func (in *ProxyStatus) GetPodProxyStatus(ns, pod string) (*kubernetes.ProxyStatus, error) {
+func (in *ProxyStatusService) GetPodProxyStatus(ns, pod string) (*kubernetes.ProxyStatus, error) {
 	if kialiCache == nil {
 		return nil, nil
 	}
@@ -35,7 +34,7 @@ func (in *ProxyStatus) GetPodProxyStatus(ns, pod string) (*kubernetes.ProxyStatu
 	return kialiCache.GetPodProxyStatus(ns, pod), nil
 }
 
-func (in *ProxyStatus) getProxyStatusUsingKialiSA() ([]*kubernetes.ProxyStatus, error) {
+func (in *ProxyStatusService) getProxyStatusUsingKialiSA() ([]*kubernetes.ProxyStatus, error) {
 	clientFactory, err := kubernetes.GetClientFactory()
 	if err != nil {
 		return nil, err
@@ -82,20 +81,12 @@ func xdsStatus(sent, acked string) string {
 	return "Stale"
 }
 
-func (in *ProxyStatus) GetConfigDump(namespace, pod string) (models.EnvoyProxyDump, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatus", "GetConfigDump")
-	defer promtimer.ObserveNow(&err)
-
+func (in *ProxyStatusService) GetConfigDump(namespace, pod string) (models.EnvoyProxyDump, error) {
 	dump, err := in.k8s.GetConfigDump(namespace, pod)
 	return models.EnvoyProxyDump{ConfigDump: dump}, err
 }
 
-func (in *ProxyStatus) GetConfigDumpResourceEntries(namespace, pod, resource string) (*models.EnvoyProxyDump, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatus", "GetConfigDump")
-	defer promtimer.ObserveNow(&err)
-
+func (in *ProxyStatusService) GetConfigDumpResourceEntries(namespace, pod, resource string) (*models.EnvoyProxyDump, error) {
 	dump, err := in.k8s.GetConfigDump(namespace, pod)
 	if err != nil {
 		return nil, err

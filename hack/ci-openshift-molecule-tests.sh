@@ -438,5 +438,5 @@ else
   sleep 5
   echo "PRIVMSG #${IRC_ROOM} : ${irc_msg}"
   echo QUIT
-  ) | nc irc.freenode.net 6667
+  ) | nc irc.libera.chat 6667
 fi

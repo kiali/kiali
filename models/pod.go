@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"strings"
 
 	core_v1 "k8s.io/api/core/v1"
 
@@ -37,8 +38,10 @@ type Reference struct {
 
 // ContainerInfo holds container name and image
 type ContainerInfo struct {
-	Name  string `json:"name"`
-	Image string `json:"image"`
+	Name    string `json:"name"`
+	Image   string `json:"image"`
+	IsProxy bool   `json:"isProxy"`
+	IsReady bool   `json:"isReady"`
 }
 
 // Parse extracts desired information from k8s []Pod info
@@ -81,15 +84,21 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 		if err == nil {
 			for _, name := range scs.InitContainers {
 				container := ContainerInfo{
-					Name:  name,
-					Image: lookupImage(name, p.Spec.InitContainers)}
+					Name:    name,
+					Image:   lookupImage(name, p.Spec.InitContainers),
+					IsProxy: true,
+					IsReady: lookupReady(name, p.Status.InitContainerStatuses),
+				}
 				pod.IstioInitContainers = append(pod.IstioInitContainers, &container)
 				istioContainerNames[name] = true
 			}
 			for _, name := range scs.Containers {
 				container := ContainerInfo{
-					Name:  name,
-					Image: lookupImage(name, p.Spec.Containers)}
+					Name:    name,
+					Image:   lookupImage(name, p.Spec.Containers),
+					IsProxy: true,
+					IsReady: lookupReady(name, p.Status.ContainerStatuses),
+				}
 				pod.IstioContainers = append(pod.IstioContainers, &container)
 				istioContainerNames[name] = true
 			}
@@ -100,8 +109,10 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 			continue
 		}
 		container := ContainerInfo{
-			Name:  c.Name,
-			Image: c.Image,
+			Name:    c.Name,
+			Image:   c.Image,
+			IsProxy: isIstioProxy(p, &c, conf),
+			IsReady: lookupReady(c.Name, p.Status.ContainerStatuses),
 		}
 		pod.Containers = append(pod.Containers, &container)
 	}
@@ -112,6 +123,21 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 	_, pod.VersionLabel = p.Labels[conf.IstioLabels.VersionLabelName]
 }
 
+func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.Config) bool {
+	if pod.Namespace != conf.IstioNamespace {
+		return false
+	}
+	if container.Name == "istio-proxy" {
+		return true
+	}
+	for _, c := range conf.ExternalServices.Istio.ComponentStatuses.Components {
+		if c.IsProxy && strings.HasPrefix(pod.Name, c.AppLabel) {
+			return true
+		}
+	}
+	return false
+}
+
 func lookupImage(containerName string, containers []core_v1.Container) string {
 	for _, c := range containers {
 		if c.Name == containerName {
@@ -119,6 +145,15 @@ func lookupImage(containerName string, containers []core_v1.Container) string {
 		}
 	}
 	return ""
+}
+
+func lookupReady(containerName string, statuses []core_v1.ContainerStatus) bool {
+	for _, s := range statuses {
+		if s.Name == containerName {
+			return s.Ready
+		}
+	}
+	return false
 }
 
 // HasIstioSidecar returns true if there are no pods or all pods have a sidecar
@@ -131,6 +166,18 @@ func (pods Pods) HasIstioSidecar() bool {
 		}
 	}
 	return true
+}
+
+// HasAnyIstioSidecar returns true if there are pods and any of pods have a sidecar
+func (pods Pods) HasAnyIstioSidecar() bool {
+	if len(pods) > 0 {
+		for _, p := range pods {
+			if p.HasIstioSidecar() {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // HasIstioSidecar returns true if the pod has an Istio proxy sidecar

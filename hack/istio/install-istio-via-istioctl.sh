@@ -170,7 +170,7 @@ Valid command line arguments:
        Default: "default"
   -m|--mtls (true|false):
        Indicate if you want global MTLS auto enabled.
-       Default: false
+       Default: true
   -mid|--mesh-id <mesh ID>:
        Installs istio as part of mesh with the given name.
        Default: mesh-default
@@ -244,9 +244,9 @@ if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   if ${ISTIOCTL} --remote=false version | grep -q "1\.6\|1\.7" ; then
     TELEMETRY_OPTIONS="--set components.telemetry.k8s.resources.requests.memory=100Mi --set components.telemetry.k8s.resources.requests.cpu=50m"
   fi
-
-  MTLS_OPTIONS="--set values.meshConfig.enableAutoMtls=${MTLS}"
 fi
+
+MTLS_OPTIONS="--set values.meshConfig.enableAutoMtls=${MTLS}"
 
 # When installing Istio (i.e. not deleting it) perform some preparation steps
 if [ "${DELETE_ISTIO}" != "true" ]; then
@@ -260,7 +260,7 @@ if [ "${DELETE_ISTIO}" != "true" ]; then
     fi
 
     echo Performing additional commands for OpenShift
-    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE}
   else
     if ! ${CLIENT_EXE} get namespace ${NAMESPACE}; then
       ${CLIENT_EXE} create namespace ${NAMESPACE}

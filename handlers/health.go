@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -146,11 +147,17 @@ type baseHealthParams struct {
 }
 
 func (p *baseHealthParams) baseExtract(r *http.Request, vars map[string]string) {
+	queryParams := r.URL.Query()
 	p.RateInterval = defaultHealthRateInterval
 	p.QueryTime = util.Clock.Now()
-	queryParams := r.URL.Query()
 	if rateInterval := queryParams.Get("rateInterval"); rateInterval != "" {
 		p.RateInterval = rateInterval
+	}
+	if queryTime := queryParams.Get("queryTime"); queryTime != "" {
+		unix, err := strconv.ParseInt(queryTime, 10, 64)
+		if err == nil {
+			p.QueryTime = time.Unix(unix, 0)
+		}
 	}
 	p.Namespace = vars["namespace"]
 }

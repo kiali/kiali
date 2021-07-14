@@ -165,3 +165,48 @@ func TestValidWildcardServiceEntryHost(t *testing.T) {
 	assert.True(valid)
 	assert.Empty(validations)
 }
+
+func TestValidServiceRegistry(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	virtualService := data.AddRoutesToVirtualService(
+		"http",
+		data.CreateRoute("ratings.mesh2-bookinfo.svc.mesh1-imports.local", "v1", -1),
+		data.CreateEmptyVirtualService("federation-vs", "bookinfo", []string{"*"}))
+
+	validations, valid := NoHostChecker{
+		Namespace:      "bookinfo",
+		ServiceNames:   []string{""},
+		VirtualService: virtualService,
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(validations)
+
+	registryService := kubernetes.RegistryStatus{}
+	registryService.Hostname = "ratings.mesh2-bookinfo.svc.mesh1-imports.local"
+	validations, valid = NoHostChecker{
+		Namespace:      "bookinfo",
+		ServiceNames:   []string{""},
+		VirtualService: virtualService,
+		RegistryStatus: []*kubernetes.RegistryStatus{&registryService},
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+
+	registryService = kubernetes.RegistryStatus{}
+	registryService.Hostname = "ratings2.mesh2-bookinfo.svc.mesh1-imports.local"
+	validations, valid = NoHostChecker{
+		Namespace:      "bookinfo",
+		ServiceNames:   []string{""},
+		VirtualService: virtualService,
+		RegistryStatus: []*kubernetes.RegistryStatus{&registryService},
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(validations)
+}

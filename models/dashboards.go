@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/kiali/kiali/kubernetes/monitoringdashboards/v1alpha1"
+	"github.com/kiali/kiali/config/dashboards"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -23,15 +23,16 @@ func (q *DashboardQuery) FillDefaults() {
 	q.RawDataAggregator = "sum"
 }
 
-// MonitoringDashboard is the model representing custom monitoring dashboard, transformed from MonitoringDashboard k8s resource
+// MonitoringDashboard is the model representing custom monitoring dashboard, transformed from MonitoringDashboard config resource
 type MonitoringDashboard struct {
+	Name          string         `json:"name"`
 	Title         string         `json:"title"`
 	Charts        []Chart        `json:"charts"`
 	Aggregations  []Aggregation  `json:"aggregations"`
 	ExternalLinks []ExternalLink `json:"externalLinks"`
 }
 
-// Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard k8s resource
+// Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard config resource
 type Chart struct {
 	Name           string   `json:"name"`
 	Unit           string   `json:"unit"`
@@ -45,8 +46,8 @@ type Chart struct {
 	Error          string   `json:"error"`
 }
 
-// ConvertChart converts a k8s chart (from MonitoringDashboard k8s resource) into this models chart
-func ConvertChart(from v1alpha1.MonitoringDashboardChart) Chart {
+// ConvertChart converts a config chart (from MonitoringDashboard config resource) into this models chart
+func ConvertChart(from dashboards.MonitoringDashboardChart) Chart {
 	return Chart{
 		Name:           from.Name,
 		Unit:           from.Unit,
@@ -60,16 +61,16 @@ func ConvertChart(from v1alpha1.MonitoringDashboardChart) Chart {
 	}
 }
 
-// Aggregation is the model representing label's allowed aggregation, transformed from aggregation in MonitoringDashboard k8s resource
+// Aggregation is the model representing label's allowed aggregation, transformed from aggregation in MonitoringDashboard config resource
 type Aggregation struct {
 	Label           string `json:"label"`
 	DisplayName     string `json:"displayName"`
 	SingleSelection bool   `json:"singleSelection"`
 }
 
-// ConvertAggregations converts a k8s aggregations (from MonitoringDashboard k8s resource) into this models aggregations
+// ConvertAggregations converts a config aggregations (from MonitoringDashboard config resource) into this models aggregations
 // Results are sorted by DisplayName
-func ConvertAggregations(from v1alpha1.MonitoringDashboardSpec) []Aggregation {
+func ConvertAggregations(from dashboards.MonitoringDashboard) []Aggregation {
 	uniqueAggs := make(map[string]Aggregation)
 	for _, item := range from.Items {
 		for _, agg := range item.Chart.Aggregations {
@@ -88,9 +89,9 @@ func ConvertAggregations(from v1alpha1.MonitoringDashboardSpec) []Aggregation {
 
 // ExternalLink provides links to external dashboards (e.g. to Grafana)
 type ExternalLink struct {
-	URL       string                                            `json:"url"`
-	Name      string                                            `json:"name"`
-	Variables v1alpha1.MonitoringDashboardExternalLinkVariables `json:"variables"`
+	URL       string                                              `json:"url"`
+	Name      string                                              `json:"name"`
+	Variables dashboards.MonitoringDashboardExternalLinkVariables `json:"variables"`
 }
 
 // Runtime holds the runtime title and associated dashboard template(s)

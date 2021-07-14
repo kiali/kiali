@@ -21,7 +21,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -87,9 +86,6 @@ func main() {
 	status.Put(status.CoreVersion, version)
 	status.Put(status.CoreCommitHash, commitHash)
 	status.Put(status.ContainerVersion, determineContainerVersion(version))
-
-	updateBaseURL(config.Get().Server.WebRoot)
-	configToJS()
 
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
@@ -202,66 +198,4 @@ func determineContainerVersion(defaultVersion string) string {
 		return defaultVersion
 	}
 	return v
-}
-
-// configToJS generates env.js file from Kiali config
-func configToJS() {
-	log.Info("Generating env.js from config")
-	path, _ := filepath.Abs("./console/env.js")
-
-	conf := config.Get()
-	var content string
-	if len(conf.Server.WebHistoryMode) > 0 {
-		content += fmt.Sprintf("window.HISTORY_MODE='%s';\n", conf.Server.WebHistoryMode)
-	}
-
-	if webRoot := strings.TrimSuffix(config.Get().Server.WebRoot, "/"); len(webRoot) > 0 {
-		content += fmt.Sprintf("window.WEB_ROOT='%s';\n", webRoot)
-	}
-
-	log.Debugf("The content of %v will be:\n%v", path, content)
-
-	err := ioutil.WriteFile(path, []byte(content), 0)
-	if isError(err) {
-		return
-	}
-}
-
-// updateBaseURL updates index.html base href with web root string
-func updateBaseURL(webRootPath string) {
-	webRootPath = strings.TrimSuffix(webRootPath, "/")
-	if len(webRootPath) == 0 {
-		return // nothing to do - our web root path is already /
-	}
-
-	log.Infof("Updating base URL in index.html with [%v]", webRootPath)
-	path, _ := filepath.Abs("./console/index.html")
-	b, err := ioutil.ReadFile(path)
-	if isError(err) {
-		return
-	}
-
-	html := string(b)
-
-	searchStr := `<base href="/"`
-	newStr := `<base href="` + webRootPath + `/"`
-	newHTML := strings.Replace(html, searchStr, newStr, -1)
-	if html != newHTML && strings.Contains(newHTML, newStr) {
-		log.Debugf("Base URL has been updated to [%v]", newStr)
-	} else {
-		log.Warningf("Base URL was not updated [%v]! The custom context root is not in force", searchStr)
-	}
-
-	err = ioutil.WriteFile(path, []byte(newHTML), 0)
-	if isError(err) {
-		return
-	}
-}
-
-func isError(err error) bool {
-	if err != nil {
-		log.Errorf("File I/O error [%v]", err.Error())
-	}
-
-	return err != nil
 }

@@ -75,6 +75,16 @@ func FilterServicesForSelector(selector labels.Selector, allServices []core_v1.S
 	return services
 }
 
+func FilterServicesByLabels(selector labels.Selector, allServices []core_v1.Service) []core_v1.Service {
+	var services []core_v1.Service
+	for _, svc := range allServices {
+		if selector.Matches(labels.Set(svc.ObjectMeta.Labels)) {
+			services = append(services, svc)
+		}
+	}
+	return services
+}
+
 func FilterVirtualServices(allVs []IstioObject, namespace string, serviceName string) []IstioObject {
 	typeMeta := meta_v1.TypeMeta{
 		Kind:       PluralType[VirtualServices],
@@ -265,4 +275,11 @@ func FilterIstioObjectsForWorkloadSelector(workloadSelector string, allObjects [
 		}
 	}
 	return istioObjects
+}
+
+func FilterByRegistryStatus(hostname string, registryStatus *RegistryStatus) bool {
+	// Basic filter using Hostname
+	// TODO use the ExportTo, Namespace, ServiceRegistry and other attributes to refine the match
+	// but for a first iteration if it's found in the registry it will be considered "valid" to reduce the number of false validation errors
+	return hostname == registryStatus.Hostname
 }

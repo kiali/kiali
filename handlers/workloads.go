@@ -20,7 +20,7 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 
 	// Fetch and build workloads
-	workloadList, err := business.Workload.GetWorkloadList(namespace)
+	workloadList, err := business.Workload.GetWorkloadList(namespace, true)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

@@ -233,3 +233,56 @@ func TestVS(t *testing.T) {
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 	assert.Equal(true, trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
 }
+
+func TestVSWithRoutingBadges(t *testing.T) {
+	assert := assert.New(t)
+	config.Set(config.NewConfig())
+
+	k8s := kubetest.NewK8SClientMock()
+	vService := kubernetes.GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "vService-1",
+			Labels: map[string]string{
+				graph.WizardLabelKey: graph.WizardTrafficShiftingLabel,
+			},
+		},
+		Spec: map[string]interface{}{
+			"hosts": []interface{}{
+				"ratings",
+			},
+			"http": []interface{}{
+				map[string]interface{}{
+					"route": []interface{}{
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"host": "foo",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{
+		vService.DeepCopyIstioObject(),
+	}, nil)
+
+	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	trafficMap, _, _, _, _, _, fooSvcNodeId := setupTrafficMap()
+
+	assert.Equal(nil, trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[fooSvcNodeId].Metadata[graph.HasTrafficShifting])
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
+	a := IstioAppender{}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	assert.Equal(true, trafficMap[fooSvcNodeId].Metadata[graph.HasTrafficShifting])
+}

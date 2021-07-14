@@ -46,7 +46,7 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
 	svc := setupAppService(k8s)
 
-	appList, _ := svc.GetAppList("Namespace")
+	appList, _ := svc.GetAppList("Namespace", false)
 
 	assert.Equal("Namespace", appList.Namespace.Name)
 
@@ -111,7 +111,7 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
 	svc := setupAppService(k8s)
 
-	appList, _ := svc.GetAppList("Namespace")
+	appList, _ := svc.GetAppList("Namespace", false)
 
 	assert.Equal("Namespace", appList.Namespace.Name)
 

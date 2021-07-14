@@ -14,7 +14,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // AppService deals with fetching Workloads group by "app" label, which will be identified as an "application"
@@ -49,17 +48,69 @@ func buildFinalLabels(m map[string][]string) map[string]string {
 }
 
 // GetAppList is the API handler to fetch the list of applications in a given namespace
-func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "AppService", "GetAppList")
-	defer promtimer.ObserveNow(&err)
-
+func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (models.AppList, error) {
 	appList := &models.AppList{
 		Namespace: models.Namespace{Name: namespace},
 		Apps:      []models.AppListItem{},
 	}
-	apps, err := fetchNamespaceApps(in.businessLayer, namespace, "")
-	if err != nil {
+
+	var err error
+	var apps namespaceApps
+
+	nFetches := 1
+	if linkIstioResources {
+		nFetches = 9
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(nFetches)
+	errChan := make(chan error, nFetches)
+
+	go func() {
+		defer wg.Done()
+		var err2 error
+		apps, err2 = fetchNamespaceApps(in.businessLayer, namespace, "")
+		if err2 != nil {
+			log.Errorf("Error fetching Applications per namespace %s: %s", namespace, err2)
+			errChan <- err2
+		}
+	}()
+
+	resources := []string{
+		kubernetes.VirtualServices,
+		kubernetes.DestinationRules,
+		kubernetes.Gateways,
+		kubernetes.AuthorizationPolicies,
+		kubernetes.PeerAuthentications,
+		kubernetes.Sidecars,
+		kubernetes.RequestAuthentications,
+		kubernetes.EnvoyFilters,
+	}
+	linkedResources := map[string]*[]kubernetes.IstioObject{}
+
+	if linkIstioResources {
+		for _, resource := range resources {
+			var resourceObjects []kubernetes.IstioObject
+			linkedResources[resource] = &resourceObjects
+			go func(namespace, resourceType string, dest *[]kubernetes.IstioObject, errChan chan error) {
+				defer wg.Done()
+				var err2 error
+				if IsNamespaceCached(namespace) {
+					*dest, err2 = kialiCache.GetIstioObjects(namespace, resourceType, "")
+				} else {
+					*dest, err2 = in.k8s.GetIstioObjects(namespace, resourceType, "")
+				}
+				if err2 != nil {
+					log.Errorf("Error fetching Istio %s per namespace %s: %s", resourceType, namespace, err2)
+					errChan <- err2
+				}
+			}(namespace, resource, &resourceObjects, errChan)
+		}
+	}
+
+	wg.Wait()
+	if len(errChan) != 0 {
+		err = <-errChan
 		return *appList, err
 	}
 
@@ -68,14 +119,53 @@ func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 			Name:         keyApp,
 			IstioSidecar: true,
 		}
-		labels := make(map[string][]string)
+		applabels := make(map[string][]string)
+		svcReferences := make([]*models.IstioValidationKey, 0)
 		for _, srv := range valueApp.Services {
-			joinMap(labels, srv.Labels)
+			joinMap(applabels, srv.Labels)
+			if linkIstioResources {
+				svcVirtualServices := kubernetes.FilterVirtualServices(*linkedResources[kubernetes.VirtualServices], srv.Namespace, srv.Name)
+				svcDestinationRules := kubernetes.FilterDestinationRules(*linkedResources[kubernetes.DestinationRules], srv.Namespace, srv.Name)
+				allFiltered := append(svcVirtualServices, svcDestinationRules...)
+				for _, a := range allFiltered {
+					ref := models.BuildKey(a.GetTypeMeta().Kind, a.GetObjectMeta().Namespace, a.GetObjectMeta().Name)
+					svcReferences = append(svcReferences, &ref)
+				}
+			}
+
 		}
+
+		wkdResources := []string{
+			kubernetes.Gateways,
+			kubernetes.AuthorizationPolicies,
+			kubernetes.PeerAuthentications,
+			kubernetes.Sidecars,
+			kubernetes.RequestAuthentications,
+			kubernetes.EnvoyFilters,
+		}
+		wkdReferences := make([]*models.IstioValidationKey, 0)
 		for _, wrk := range valueApp.Workloads {
-			joinMap(labels, wrk.Labels)
+			joinMap(applabels, wrk.Labels)
+			if linkIstioResources {
+				wSelector := labels.Set(wrk.Labels).AsSelector().String()
+				for _, wkdRsc := range wkdResources {
+					filtered := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, *linkedResources[wkdRsc])
+					for _, a := range filtered {
+						ref := models.BuildKey(a.GetTypeMeta().Kind, a.GetObjectMeta().Name, a.GetObjectMeta().Namespace)
+						exist := false
+						for _, r := range wkdReferences {
+							exist = exist || *r == ref
+						}
+						if !exist {
+							wkdReferences = append(wkdReferences, &ref)
+						}
+					}
+				}
+			}
 		}
-		appItem.Labels = buildFinalLabels(labels)
+		appItem.Labels = buildFinalLabels(applabels)
+		appItem.IstioReferences = append(svcReferences, wkdReferences...)
+
 		for _, w := range valueApp.Workloads {
 			if appItem.IstioSidecar = w.IstioSidecar; !appItem.IstioSidecar {
 				break
@@ -89,10 +179,6 @@ func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 
 // GetApp is the API handler to fetch the details for a given namespace and app name
 func (in *AppService) GetApp(namespace string, appName string) (models.App, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "AppService", "GetApp")
-	defer promtimer.ObserveNow(&err)
-
 	appInstance := &models.App{Namespace: models.Namespace{Name: namespace}, Name: appName}
 	namespaceApps, err := fetchNamespaceApps(in.businessLayer, namespace, appName)
 	if err != nil {

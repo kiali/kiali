@@ -13,25 +13,31 @@ func NewMetadata() Metadata {
 
 // Metadata keys to be used instead of literal strings
 const (
-	Aggregate       MetadataKey = "aggregate" // the prom attribute used for aggregation
-	AggregateValue  MetadataKey = "aggregateValue"
-	DestPrincipal   MetadataKey = "destPrincipal"
-	DestServices    MetadataKey = "destServices"
-	HasCB           MetadataKey = "hasCB"
-	HasHealthConfig MetadataKey = "hasHealthConfig"
-	HasMissingSC    MetadataKey = "hasMissingSC"
-	HasVS           MetadataKey = "hasVS"
-	IsDead          MetadataKey = "isDead"
-	IsEgressCluster MetadataKey = "isEgressCluster" // PassthroughCluster or BlackHoleCluster
-	IsIdle          MetadataKey = "isIdle"
-	IsInaccessible  MetadataKey = "isInaccessible"
-	IsMTLS          MetadataKey = "isMTLS"
-	IsOutside       MetadataKey = "isOutside"
-	IsRoot          MetadataKey = "isRoot"
-	IsServiceEntry  MetadataKey = "isServiceEntry"
-	ProtocolKey     MetadataKey = "protocol"
-	ResponseTime    MetadataKey = "responseTime"
-	SourcePrincipal MetadataKey = "sourcePrincipal"
+	Aggregate             MetadataKey = "aggregate" // the prom attribute used for aggregation
+	AggregateValue        MetadataKey = "aggregateValue"
+	DestPrincipal         MetadataKey = "destPrincipal"
+	DestServices          MetadataKey = "destServices"
+	HasCB                 MetadataKey = "hasCB"
+	HasFaultInjection     MetadataKey = "hasFaultInjection"
+	HasHealthConfig       MetadataKey = "hasHealthConfig"
+	HasMissingSC          MetadataKey = "hasMissingSC"
+	HasTCPTrafficShifting MetadataKey = "hasTCPTrafficShifting"
+	HasTrafficShifting    MetadataKey = "hasTrafficShifting"
+	HasRequestRouting     MetadataKey = "hasRequestRouting"
+	HasRequestTimeout     MetadataKey = "hasRequestTimeout"
+	HasVS                 MetadataKey = "hasVS"
+	IsDead                MetadataKey = "isDead"
+	IsEgressCluster       MetadataKey = "isEgressCluster" // PassthroughCluster or BlackHoleCluster
+	IsIdle                MetadataKey = "isIdle"
+	IsInaccessible        MetadataKey = "isInaccessible"
+	IsMTLS                MetadataKey = "isMTLS"
+	IsOutside             MetadataKey = "isOutside"
+	IsRoot                MetadataKey = "isRoot"
+	IsServiceEntry        MetadataKey = "isServiceEntry"
+	ProtocolKey           MetadataKey = "protocol"
+	ResponseTime          MetadataKey = "responseTime"
+	SourcePrincipal       MetadataKey = "sourcePrincipal"
+	Throughput            MetadataKey = "throughput"
 )
 
 // DestServicesMetadata key=Service.Key()

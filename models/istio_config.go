@@ -15,6 +15,7 @@ type IstioConfigList struct {
 	DestinationRules       DestinationRules       `json:"destinationRules"`
 	ServiceEntries         ServiceEntries         `json:"serviceEntries"`
 	WorkloadEntries        WorkloadEntries        `json:"workloadEntries"`
+	WorkloadGroups         WorkloadGroups         `json:"workloadGroups"`
 	EnvoyFilters           EnvoyFilters           `json:"envoyFilters"`
 	Sidecars               Sidecars               `json:"sidecars"`
 	AuthorizationPolicies  AuthorizationPolicies  `json:"authorizationPolicies"`
@@ -31,6 +32,7 @@ type IstioConfigDetails struct {
 	DestinationRule       *DestinationRule       `json:"destinationRule"`
 	ServiceEntry          *ServiceEntry          `json:"serviceEntry"`
 	WorkloadEntry         *WorkloadEntry         `json:"workloadEntry"`
+	WorkloadGroup         *WorkloadGroup         `json:"workloadGroup"`
 	EnvoyFilter           *EnvoyFilter           `json:"envoyFilter"`
 	Sidecar               *Sidecar               `json:"sidecar"`
 	AuthorizationPolicy   *AuthorizationPolicy   `json:"authorizationPolicy"`

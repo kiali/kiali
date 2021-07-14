@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 ##############################################################################
 # k8s-minikube.sh
@@ -21,20 +21,23 @@
 
 set -u
 
+DEFAULT_CLIENT_EXE="kubectl"
 DEFAULT_DEX_ENABLED="false"
 DEFAULT_DEX_REPO="https://github.com/dexidp/dex"
 DEFAULT_DEX_VERSION="v2.24.0"
 DEFAULT_DEX_USER_NAMESPACES="bookinfo"
-DEFAULT_INSECURE_REGISTRY_IP="192.168.99.100"
+DEFAULT_INSECURE_REGISTRY_IP=""
 DEFAULT_K8S_CPU="4"
 DEFAULT_K8S_DISK="40g"
 DEFAULT_K8S_DRIVER="virtualbox"
 DEFAULT_K8S_MEMORY="8g"
 DEFAULT_K8S_VERSION="stable"
 DEFAULT_LB_ADDRESSES="" # example: "'192.168.99.70-192.168.99.84'"
-DEFAULT_MINIKUBE_EXEC="minikube"
+DEFAULT_MINIKUBE_EXE="minikube"
 DEFAULT_MINIKUBE_PROFILE="minikube"
 DEFAULT_MINIKUBE_START_FLAGS=""
+DEFAULT_OLM_ENABLED="false"
+DEFAULT_OLM_VERSION="latest"
 DEFAULT_OUTPUT_PATH="/tmp/k8s-minikube-tmpdir"
 
 _VERBOSE="false"
@@ -75,6 +78,10 @@ print_all_gateway_urls() {
 }
 
 check_insecure_registry() {
+  if which podman > /dev/null 2>&1; then
+    # looks like this machine is using podman - ignore this check
+    return
+  fi
   local _registry="$(${MINIKUBE_EXEC_WITH_PROFILE} ip):5000"
   pgrep -a dockerd | grep "[-]-insecure-registry.*${_registry}" > /dev/null 2>&1
   if [ "$?" != "0" ]; then
@@ -133,6 +140,7 @@ install_dex() {
 ---
 > DNS.1 = ${KUBE_HOSTNAME}
 EOF
+    [ "$?" != "0" ] && echo "ERROR: Failed to patch gencert.sh" && exit 1
 
     $(cd ${DEX_VERSION_PATH}/examples/k8s/; bash ./kiali.gencert.sh)
     mv ${DEX_VERSION_PATH}/examples/k8s/ssl ${CERTS_PATH}
@@ -199,8 +207,9 @@ EOF
 ---
 >   namespace: dex      # The namespace dex is running in
 EOF
+    [ "$?" != "0" ] && echo "ERROR: Failed to patch dex file" && exit 1
 
-/bin/cat <<EOF > ${DEX_VERSION_PATH}/examples/k8s/oauth2.proxy
+    cat <<EOF > ${DEX_VERSION_PATH}/examples/k8s/oauth2.proxy
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -288,14 +297,16 @@ EOF
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create namespace dex
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create secret tls dex.example.com.tls --cert=${CERTS_PATH}/cert.pem --key=${CERTS_PATH}/key.pem -n dex
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- apply -n dex -f ${DEX_VERSION_PATH}/examples/k8s/dex.kiali.yaml
+  [ "$?" != "0" ] && echo "ERROR: Failed to install dex" && exit 1
   echo "Deploying oauth2 proxy..."
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create -f ${DEX_VERSION_PATH}/examples/k8s/oauth2.proxy
+  [ "$?" != "0" ] && echo "ERROR: Failed to deploy oauth2 proxy" && exit 1
   # Restart minikube
   echo "Restarting minikube with proper flags for API server and the autodetected registry IP..."
   ${MINIKUBE_EXEC_WITH_PROFILE} stop
   ${MINIKUBE_EXEC_WITH_PROFILE} start \
     ${MINIKUBE_START_FLAGS} \
-    --insecure-registry ${INSECURE_REGISTRY_IP}:5000 \
+    ${INSECURE_REGISTRY_START_ARG} \
     --insecure-registry ${MINIKUBE_IP}:5000 \
     --cpus=${K8S_CPU} \
     --memory=${K8S_MEMORY} \
@@ -307,6 +318,7 @@ EOF
     --extra-config=apiserver.oidc-ca-file=/var/lib/minikube/certs/ca.pem \
     --extra-config=apiserver.oidc-client-id=kiali-app \
     --extra-config=apiserver.oidc-groups-claim=groups
+  [ "$?" != "0" ] && echo "ERROR: Failed to restart minikube in preparation for dex" && exit 1
 
   echo "Minikube should now be configured with OpenID connect. Just wait for all pods to start."
   cat <<EOF
@@ -344,6 +356,33 @@ EOF
       done
     fi
   fi
+}
+
+install_olm() {
+  echo 'Installing OLM...'
+
+  if [ "${OLM_VERSION}" == "latest" ]; then
+    OLM_VERSION="$(curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases 2> /dev/null | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)"
+    if [ -z "${OLM_VERSION}" ]; then
+      echo "Failed to obtain the latest OLM version from Github. You will need to specify an explicit version via --olm-version."
+      exit 1
+    else
+      echo "Github reports the latest OLM version is: ${OLM_VERSION}"
+    fi
+  fi
+
+  # force the install.sh script to go through minikube kubectl when it executes kubectl commands
+  kubectl() {
+    ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- $@
+  }
+  export MINIKUBE_EXEC_WITH_PROFILE
+  export -f kubectl
+  # TODO when https://github.com/operator-framework/operator-lifecycle-manager/pull/2211 is fixed, we can remove the "sed" here
+  curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}/install.sh | sed 's/set -e//g' | bash -s ${OLM_VERSION}
+  [ "$?" != "0" ] && echo "ERROR: Failed to install OLM" && exit 1
+  unset -f kubectl
+
+  echo "OLM ${OLM_VERSION} is installed."
 }
 
 determine_full_lb_range() {
@@ -384,6 +423,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     resetclock) _CMD="resetclock"; shift ;;
+    -ce|--client-exe) CLIENT_EXE="$2"; shift;shift ;;
     -de|--dex-enabled) DEX_ENABLED="$2"; shift;shift ;;
     -dr|--dex-repo) DEX_REPO="$2"; shift;shift ;;
     -dun|--dex-user-namespaces) DEX_USER_NAMESPACES="$2"; shift;shift ;;
@@ -395,10 +435,12 @@ while [[ $# -gt 0 ]]; do
     -km|--kubernetes-memory) K8S_MEMORY="$2"; shift;shift ;;
     -kv|--kubernetes-version) K8S_VERSION="$2"; shift;shift ;;
     -lba|--load-balancer-addrs) LB_ADDRESSES="$2"; shift;shift ;;
-    -me|--minikube-exec) MINIKUBE_EXEC="$2"; shift;shift ;;
+    -me|--minikube-exe) MINIKUBE_EXE="$2"; shift;shift ;;
     -mf|--minikube-flags) MINIKUBE_START_FLAGS="$2"; shift;shift ;;
     -mp|--minikube-profile) MINIKUBE_PROFILE="$2"; shift;shift ;;
+    -oe|--olm-enabled) OLM_ENABLED="$2"; shift;shift ;;
     -op|--output-path) OUTPUT_PATH="$2"; shift;shift ;;
+    -ov|--olm-version) OLM_VERSION="$2"; shift;shift ;;
     -v|--verbose) _VERBOSE=true; shift ;;
     -h|--help)
       cat <<HELPMSG
@@ -406,6 +448,10 @@ while [[ $# -gt 0 ]]; do
 $0 [option...] command
 
 Valid options:
+  -ce|--client-exe
+      The kubectl client to use.
+      Only used for needing to install Istio or the Bookinfo demo. The "minikube kubectl" command will be used instead when possible.
+      Default: ${DEFAULT_CLIENT_EXE}
   -de|--dex-enabled
       If true, install and configure Dex. This provides an OpenID Connect implementation.
       Only used for the 'start' command.
@@ -465,9 +511,9 @@ Valid options:
       the "minikube ip" is 192.168.99.100, the load balancer addrs will be "192.168.99.70-192.168.99.84".
       Only used for the 'start' command.
       Default: ${DEFAULT_LB_ADDRESSES}
-  -me|--minikube-exec
+  -me|--minikube-exe
       The minikube executable.
-      Default: ${DEFAULT_MINIKUBE_EXEC}
+      Default: ${DEFAULT_MINIKUBE_EXE}
   -mf|--minikube-flags
       Additional flags to pass to the 'minikube start' command.
       Only used for the 'start' command.
@@ -475,11 +521,20 @@ Valid options:
   -mp|--minikube-profile
       The profile which minikube will be started with.
       Default: ${DEFAULT_MINIKUBE_PROFILE}
+  -oe|--olm-enabled
+      If true, OLM will be installed in the minikube cluster allowing you to install operators using the OLM API.
+      Only used for the 'start' command.
+      Default: ${DEFAULT_OLM_ENABLED}
   -op|--output-path
       A path this script can use to store files it needs or generates.
       This path will be created if it does not exist, but it will
       only be created if it is needed by the script.
       Default: ${DEFAULT_OUTPUT_PATH}
+  -ov|--olm-version
+      If OLM is enabled, this is the version of OLM to install.
+      If set to "latest", github will be queried to determine the latest release, and that version will be installed.
+      Only used for the 'start' command.
+      Default: ${DEFAULT_OLM_VERSION}
   -v|--verbose
       Enable logging of debug messages from this script.
 
@@ -510,6 +565,7 @@ HELPMSG
 done
 
 # Prepare some env vars
+: ${CLIENT_EXE:=${DEFAULT_CLIENT_EXE}}
 : ${DEX_ENABLED:=${DEFAULT_DEX_ENABLED}}
 : ${DEX_REPO:=${DEFAULT_DEX_REPO}}
 : ${DEX_USER_NAMESPACES:=${DEFAULT_DEX_USER_NAMESPACES}}
@@ -521,55 +577,72 @@ done
 : ${K8S_VERSION:=${DEFAULT_K8S_VERSION}}
 : ${K8S_MEMORY:=${DEFAULT_K8S_MEMORY}}
 : ${LB_ADDRESSES:=${DEFAULT_LB_ADDRESSES}}
-: ${MINIKUBE_EXEC:=${DEFAULT_MINIKUBE_EXEC}}
+: ${MINIKUBE_EXE:=${DEFAULT_MINIKUBE_EXE}}
 : ${MINIKUBE_START_FLAGS:=${DEFAULT_MINIKUBE_START_FLAGS}}
 : ${MINIKUBE_PROFILE:=${DEFAULT_MINIKUBE_PROFILE}}
+: ${OLM_ENABLED:=${DEFAULT_OLM_ENABLED}}
+: ${OLM_VERSION:=${DEFAULT_OLM_VERSION}}
 : ${OUTPUT_PATH:=${DEFAULT_OUTPUT_PATH}}
 
-MINIKUBE_EXEC_WITH_PROFILE="${MINIKUBE_EXEC} -p ${MINIKUBE_PROFILE}"
+MINIKUBE_EXEC_WITH_PROFILE="${MINIKUBE_EXE} -p ${MINIKUBE_PROFILE}"
 
+if [ ! -z "${INSECURE_REGISTRY_IP}" ]; then
+  INSECURE_REGISTRY_START_ARG="--insecure-registry ${INSECURE_REGISTRY_IP}:5000"
+else
+  INSECURE_REGISTRY_START_ARG=""
+fi
+
+debug "CLIENT_EXE=$CLIENT_EXE"
 debug "DEX_ENABLED=$DEX_ENABLED"
 debug "DEX_REPO=$DEX_REPO"
 debug "DEX_USER_NAMESPACES=$DEX_USER_NAMESPACES"
 debug "DEX_VERSION=$DEX_VERSION"
 debug "INSECURE_REGISTRY_IP=$INSECURE_REGISTRY_IP"
+debug "INSECURE_REGISTRY_START_ARG=$INSECURE_REGISTRY_START_ARG"
 debug "K8S_CPU=$K8S_CPU"
 debug "K8S_DISK=$K8S_DISK"
 debug "K8S_DRIVER=$K8S_DRIVER"
 debug "K8S_MEMORY=$K8S_MEMORY"
 debug "K8S_VERSION=$K8S_VERSION"
 debug "LB_ADDRESSES=$LB_ADDRESSES"
-debug "MINIKUBE_EXEC=$MINIKUBE_EXEC"
+debug "MINIKUBE_EXE=$MINIKUBE_EXE"
 debug "MINIKUBE_START_FLAGS=$MINIKUBE_START_FLAGS"
 debug "MINIKUBE_PROFILE=$MINIKUBE_PROFILE"
+debug "OLM_ENABLED=$OLM_ENABLED"
+debug "OLM_VERSION=$OLM_VERSION"
 debug "OUTPUT_PATH=$OUTPUT_PATH"
 
 # If minikube executable is not found, abort.
-if ! which ${MINIKUBE_EXEC} > /dev/null 2>&1 ; then
-  echo 'You do not have minikube installed [${MINIKUBE_EXEC}]. Aborting.'
+if ! which ${MINIKUBE_EXE} > /dev/null 2>&1 ; then
+  echo "You do not have minikube installed [${MINIKUBE_EXE}]. Aborting."
   exit 1
 fi
 
 debug "This script is located at $(pwd)"
-debug "minikube is located at $(which ${MINIKUBE_EXEC})"
+debug "minikube is located at $(which ${MINIKUBE_EXE})"
 
 if [ "$_CMD" = "start" ]; then
   echo 'Starting minikube...'
   ${MINIKUBE_EXEC_WITH_PROFILE} start \
     ${MINIKUBE_START_FLAGS} \
-    --insecure-registry ${INSECURE_REGISTRY_IP}:5000 \
+    ${INSECURE_REGISTRY_START_ARG} \
     --cpus=${K8S_CPU} \
     --memory=${K8S_MEMORY} \
     --disk-size=${K8S_DISK} \
     --driver=${K8S_DRIVER} \
     --kubernetes-version=${K8S_VERSION}
+  [ "$?" != "0" ] && echo "ERROR: Failed to start minikube" && exit 1
   echo 'Enabling the ingress addon'
   ${MINIKUBE_EXEC_WITH_PROFILE} addons enable ingress
+  [ "$?" != "0" ] && echo "ERROR: Failed to enable ingress addon" && exit 1
   echo 'Enabling the image registry'
   ${MINIKUBE_EXEC_WITH_PROFILE} addons enable registry
+  [ "$?" != "0" ] && echo "ERROR: Failed to enable registry addon" && exit 1
+
   if [ ! -z "${LB_ADDRESSES}" ]; then
     echo 'Enabling the metallb load balancer'
     ${MINIKUBE_EXEC_WITH_PROFILE} addons enable metallb
+    [ "$?" != "0" ] && echo "ERROR: Failed to enable metallb addon" && exit 1
     determine_full_lb_range
     cat <<LBCONFIGMAP | ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- apply -f -
 apiVersion: v1
@@ -584,11 +657,18 @@ data:
       protocol: layer2
       addresses: [${LB_ADDRESSES}]
 LBCONFIGMAP
+    [ "$?" != "0" ] && echo "ERROR: Failed to configure metallb addon" && exit 1
   fi
 
   if [ "${DEX_ENABLED}" == "true" ]; then
     install_dex
   fi
+
+  if [ "${OLM_ENABLED}" == "true" ]; then
+    install_olm
+  fi
+
+  echo 'Minikube has started.'
 
 elif [ "$_CMD" = "stop" ]; then
   ensure_minikube_is_running
@@ -624,12 +704,12 @@ elif [ "$_CMD" = "ingress" ]; then
 elif [ "$_CMD" = "istio" ]; then
   ensure_minikube_is_running
   echo 'Installing Istio'
-  ./istio/install-istio-via-istioctl.sh -c kubectl
+  ./istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE}
 
 elif [ "$_CMD" = "bookinfo" ]; then
   ensure_minikube_is_running
   echo 'Installing Bookinfo'
-  ./istio/install-bookinfo-demo.sh --mongo -tg -c kubectl
+  ./istio/install-bookinfo-demo.sh --mongo -tg -c ${CLIENT_EXE} -mp ${MINIKUBE_PROFILE}
   get_gateway_url http2
   echo 'To access the Bookinfo application, access this URL:'
   echo "http://${GATEWAY_URL}/productpage"

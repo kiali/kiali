@@ -25,6 +25,9 @@ type AppListItem struct {
 
 	// Labels for App
 	Labels map[string]string `json:"labels"`
+
+	// Istio References
+	IstioReferences []*IstioValidationKey `json:"istioReferences"`
 }
 
 type WorkloadItem struct {

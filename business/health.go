@@ -5,6 +5,7 @@ import (
 
 	"github.com/prometheus/common/model"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -12,7 +13,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // HealthService deals with fetching health from various sources and convert to kiali model
@@ -27,20 +27,12 @@ var HealthAnnotation = []models.AnnotationKey{models.RateHealthAnnotation}
 
 // GetServiceHealth returns a service health (service request error rate)
 func (in *HealthService) GetServiceHealth(namespace, service, rateInterval string, queryTime time.Time) (models.ServiceHealth, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetServiceHealth")
-	defer promtimer.ObserveNow(&err)
-
 	rqHealth, err := in.getServiceRequestsHealth(namespace, service, rateInterval, queryTime)
 	return models.ServiceHealth{Requests: rqHealth}, err
 }
 
 // GetAppHealth returns an app health from just Namespace and app name (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetAppHealth(namespace, app, rateInterval string, queryTime time.Time) (models.AppHealth, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetAppHealth")
-	defer promtimer.ObserveNow(&err)
-
 	appLabel := config.Get().IstioLabels.AppLabelName
 
 	selectorLabels := make(map[string]string)
@@ -84,10 +76,6 @@ func (in *HealthService) getAppHealth(namespace, app, rateInterval string, query
 
 // GetWorkloadHealth returns a workload health from just Namespace and workload (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetWorkloadHealth(namespace, workload, workloadType, rateInterval string, queryTime time.Time) (models.WorkloadHealth, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetWorkloadHealth")
-	defer promtimer.ObserveNow(&err)
-
 	w, err := fetchWorkload(in.businessLayer, namespace, workload, workloadType)
 	if err != nil {
 		return models.WorkloadHealth{}, err
@@ -113,10 +101,6 @@ func (in *HealthService) GetWorkloadHealth(namespace, workload, workloadType, ra
 
 // GetNamespaceAppHealth returns a health for all apps in given Namespace (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetNamespaceAppHealth(namespace, rateInterval string, queryTime time.Time) (models.NamespaceAppHealth, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetNamespaceAppHealth")
-	defer promtimer.ObserveNow(&err)
-
 	appEntities, err := fetchNamespaceApps(in.businessLayer, namespace, "")
 	if err != nil {
 		return nil, err
@@ -148,28 +132,26 @@ func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities nam
 		}
 	}
 
-	var errRate error
 	if sidecarPresent {
 		// Fetch services requests rates
 		rates, err := in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
-		errRate = err
+		if err != nil {
+			return allHealth, errors.NewServiceUnavailable(err.Error())
+		}
 		// Fill with collected request rates
 		fillAppRequestRates(allHealth, rates)
 	}
 
-	return allHealth, errRate
+	return allHealth, nil
 }
 
 // GetNamespaceServiceHealth returns a health for all services in given Namespace (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetNamespaceServiceHealth(namespace, rateInterval string, queryTime time.Time) (models.NamespaceServiceHealth, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetNamespaceServiceHealth")
-	defer promtimer.ObserveNow(&err)
 	var services []core_v1.Service
-
+	var err error
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
+	if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
 		return nil, err
 	}
 
@@ -213,10 +195,6 @@ func (in *HealthService) getNamespaceServiceHealth(namespace string, services []
 
 // GetNamespaceWorkloadHealth returns a health for all workloads in given Namespace (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetNamespaceWorkloadHealth(namespace, rateInterval string, queryTime time.Time) (models.NamespaceWorkloadHealth, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetNamespaceWorkloadHealth")
-	defer promtimer.ObserveNow(&err)
-
 	wl, err := fetchWorkloads(in.businessLayer, namespace, "")
 	if err != nil {
 		return nil, err
@@ -239,16 +217,17 @@ func (in *HealthService) getNamespaceWorkloadHealth(namespace string, ws models.
 		}
 	}
 
-	var err error
 	if hasSidecar {
 		// Fetch services requests rates
-		var rates model.Vector
-		rates, err = in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
+		rates, err := in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
+		if err != nil {
+			return allHealth, errors.NewServiceUnavailable(err.Error())
+		}
 		// Fill with collected request rates
 		fillWorkloadRequestRates(allHealth, rates)
 	}
 
-	return allHealth, err
+	return allHealth, nil
 }
 
 // fillAppRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
@@ -294,7 +273,7 @@ func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterv
 	rqHealth := models.NewEmptyRequestHealth()
 	inbound, err := in.prom.GetServiceRequestRates(namespace, service, rateInterval, queryTime)
 	if err != nil {
-		return rqHealth, err
+		return rqHealth, errors.NewServiceUnavailable(err.Error())
 	}
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
@@ -305,12 +284,16 @@ func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterv
 	}
 	rqHealth.HealthAnnotations = models.GetHealthAnnotation(svc.Annotations, HealthAnnotation)
 	rqHealth.CombineReporters()
-	return rqHealth, err
+	return rqHealth, nil
 }
 
 func (in *HealthService) getAppRequestsHealth(namespace, app, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
+
 	inbound, outbound, err := in.prom.GetAppRequestRates(namespace, app, rateInterval, queryTime)
+	if err != nil {
+		return rqHealth, errors.NewServiceUnavailable(err.Error())
+	}
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
 	}
@@ -318,7 +301,7 @@ func (in *HealthService) getAppRequestsHealth(namespace, app, rateInterval strin
 		rqHealth.AggregateOutbound(sample)
 	}
 	rqHealth.CombineReporters()
-	return rqHealth, err
+	return rqHealth, nil
 }
 
 func (in *HealthService) getWorkloadRequestsHealth(namespace, workload, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {

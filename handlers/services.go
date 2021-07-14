@@ -24,7 +24,7 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 
 	// Fetch and build services
-	serviceList, err := business.Svc.GetServiceList(namespace)
+	serviceList, err := business.Svc.GetServiceList(namespace, true)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

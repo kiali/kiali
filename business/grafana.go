@@ -12,7 +12,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes/monitoringdashboards/v1alpha1"
+	"github.com/kiali/kiali/config/dashboards"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
@@ -45,7 +45,7 @@ func GetGrafanaInfo(authInfo *api.AuthInfo, dashboardSupplier dashboardSupplier)
 			externalLink := models.ExternalLink{
 				URL:  dashboardPath,
 				Name: dashboardConfig.Name,
-				Variables: v1alpha1.MonitoringDashboardExternalLinkVariables{
+				Variables: dashboards.MonitoringDashboardExternalLinkVariables{
 					App:       dashboardConfig.Variables.App,
 					Namespace: dashboardConfig.Variables.Namespace,
 					Service:   dashboardConfig.Variables.Service,
@@ -65,7 +65,7 @@ func GetGrafanaInfo(authInfo *api.AuthInfo, dashboardSupplier dashboardSupplier)
 }
 
 // GetGrafanaLinks returns the links to Grafana dashboards and other info, the HTTP status code (int) and eventually an error
-func GetGrafanaLinks(authInfo *api.AuthInfo, linksSpec []v1alpha1.MonitoringDashboardExternalLink) ([]models.ExternalLink, int, error) {
+func GetGrafanaLinks(authInfo *api.AuthInfo, linksSpec []dashboards.MonitoringDashboardExternalLink) ([]models.ExternalLink, int, error) {
 	grafanaConfig := config.Get().ExternalServices.Grafana
 	if !grafanaConfig.Enabled {
 		return nil, 0, nil
@@ -82,7 +82,7 @@ func GetGrafanaLinks(authInfo *api.AuthInfo, linksSpec []v1alpha1.MonitoringDash
 	return getGrafanaLinks(connectionInfo, linksSpec, GrafanaDashboardSupplier)
 }
 
-func getGrafanaLinks(conn grafanaConnectionInfo, linksSpec []v1alpha1.MonitoringDashboardExternalLink, dashboardSupplier dashboardSupplier) ([]models.ExternalLink, int, error) {
+func getGrafanaLinks(conn grafanaConnectionInfo, linksSpec []dashboards.MonitoringDashboardExternalLink, dashboardSupplier dashboardSupplier) ([]models.ExternalLink, int, error) {
 	// Call Grafana REST API to get dashboard urls
 	linksOut := []models.ExternalLink{}
 	for _, linkSpec := range linksSpec {

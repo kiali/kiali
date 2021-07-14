@@ -1,8 +1,13 @@
+# Fault-injection into details service.
+# Most requests to details:v1 will abort with one of three error codes.
+# Those requests whose request-id does not match any regex definition below will be OK.
+#
+# last tested on Istio 1.10
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: details-abort-mc-vs
+  name: details-abort-vs
 spec:
   hosts:
   - details
@@ -12,12 +17,12 @@ spec:
         x-request-id:
           regex: "^[1234].*"
     route:
-      - destination:
-          host: details
-          subset: details-abort-dr-subset-v1
+    - destination:
+        host: details
+        subset: details-abort-dr-subset-v1
     fault:
       abort:
-        httpStatus: 333
+        httpStatus: 551
         percentage:
           value: 100
   - match:
@@ -25,12 +30,12 @@ spec:
         x-request-id:
           regex: "^[5678].*"
     route:
-      - destination:
-          host: details
-          subset: details-abort-dr-subset-v1
+    - destination:
+        host: details
+        subset: details-abort-dr-subset-v1
     fault:
       abort:
-        httpStatus: 444
+        httpStatus: 552
         percentage:
           value: 100
   - match:
@@ -38,12 +43,12 @@ spec:
         x-request-id:
           regex: "^[90ab].*"
     route:
-      - destination:
-          host: details
-          subset: details-abort-dr-subset-v1
+    - destination:
+        host: details
+        subset: details-abort-dr-subset-v1
     fault:
       abort:
-        httpStatus: 555
+        httpStatus: 553
         percentage:
           value: 100
   - route:
@@ -51,7 +56,7 @@ spec:
         host: details
         subset: details-abort-dr-subset-v1
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: details-abort-dr

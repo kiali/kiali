@@ -37,6 +37,7 @@ type IstioClientInterface interface {
 	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
 	GetProxyStatus() ([]*ProxyStatus, error)
 	GetConfigDump(namespace, podName string) (*ConfigDump, error)
+	GetRegistryStatus() ([]*RegistryStatus, error)
 }
 
 // Aux method to fetch proper (RESTClient, APIVersion) per API group
@@ -191,27 +192,7 @@ func (in *K8SClient) GetIstioObject(namespace, resourceType, name string) (Istio
 	return io, nil
 }
 
-type ProxyStatus struct {
-	pilot string
-	SyncStatus
-}
-
-// SyncStatus is the synchronization status between Pilot and a given Envoy
-type SyncStatus struct {
-	ProxyID       string `json:"proxy,omitempty"`
-	ProxyVersion  string `json:"proxy_version,omitempty"`
-	IstioVersion  string `json:"istio_version,omitempty"`
-	ClusterSent   string `json:"cluster_sent,omitempty"`
-	ClusterAcked  string `json:"cluster_acked,omitempty"`
-	ListenerSent  string `json:"listener_sent,omitempty"`
-	ListenerAcked string `json:"listener_acked,omitempty"`
-	RouteSent     string `json:"route_sent,omitempty"`
-	RouteAcked    string `json:"route_acked,omitempty"`
-	EndpointSent  string `json:"endpoint_sent,omitempty"`
-	EndpointAcked string `json:"endpoint_acked,omitempty"`
-}
-
-func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
+func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, error) {
 	c := config.Get()
 	istiods, err := in.GetPods(c.IstioNamespace, labels.Set(map[string]string{
 		"app": "istiod",
@@ -250,7 +231,7 @@ func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
 		go func(name, namespace string) {
 			defer wg.Done()
 
-			res, err := in.GetPodProxy(namespace, name, "/debug/syncz")
+			res, err := in.GetPodProxy(namespace, name, debugPath)
 			if err != nil {
 				errChan <- fmt.Errorf("%s: %s", name, err.Error())
 			} else {
@@ -278,15 +259,32 @@ func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
 		}
 	}
 
-	// If there is one sync, we consider it as valid
 	if len(result) > 0 {
-		return getStatus(result)
+		return result, nil
+	} else {
+		return nil, errors.New(errs)
 	}
-
-	return nil, errors.New(errs)
 }
 
-func getStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
+func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
+	synczPath := "/debug/syncz"
+	result, err := in.getIstiodDebugStatus(synczPath)
+	if err != nil {
+		return nil, err
+	}
+	return parseProxyStatus(result)
+}
+
+func (in *K8SClient) GetRegistryStatus() ([]*RegistryStatus, error) {
+	registryzPath := "/debug/registryz"
+	result, err := in.getIstiodDebugStatus(registryzPath)
+	if err != nil {
+		return nil, err
+	}
+	return parseRegistryServices(result)
+}
+
+func parseProxyStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
 	var fullStatus []*ProxyStatus
 	for pilot, status := range statuses {
 		var ss []*ProxyStatus
@@ -300,6 +298,22 @@ func getStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
 		fullStatus = append(fullStatus, ss...)
 	}
 	return fullStatus, nil
+}
+
+func parseRegistryServices(registries map[string][]byte) ([]*RegistryStatus, error) {
+	var fullRegistries []*RegistryStatus
+	for pilot, registry := range registries {
+		var rr []*RegistryStatus
+		err := json.Unmarshal(registry, &rr)
+		if err != nil {
+			return nil, err
+		}
+		for _, r := range rr {
+			r.pilot = pilot
+		}
+		fullRegistries = append(fullRegistries, rr...)
+	}
+	return fullRegistries, nil
 }
 
 func (in *K8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, error) {

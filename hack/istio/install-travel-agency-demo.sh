@@ -45,7 +45,7 @@ Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the travel agency demo will be deleted, not installed.
   -ei|--enable-injection: either 'true' or 'false' (default is true). If 'true' auto-inject proxies for the workloads.
-  -eo|--enable-operation-metrics: either 'true' or 'false' (default is false). Only works on Istio 1.9 installed in istio-system.
+  -eo|--enable-operation-metrics: either 'true' or 'false' (default is false). Only works on Istio 1.10 installed in istio-system.
   -s|--source: demo file source. For example: file:///home/me/demos Default: https://raw.githubusercontent.com/kiali/demos/master
   -sg|--show-gui: do not install anything, but bring up the travel agency GUI in a browser window
   -h|--help: this text
@@ -152,11 +152,11 @@ if [ "${ENABLE_OPERATION_METRICS}" != "true" ]; then
   exit 0
 fi
 
-# This only works if you have Istio 1.9 installed, and it is in istio-system namespace.
-${CLIENT_EXE} -n istio-system get envoyfilter stats-filter-1.9 -o yaml > stats-filter-1.9.yaml
-cat <<EOF | patch -o - | ${CLIENT_EXE} -n istio-system apply -f - && rm stats-filter-1.9.yaml
---- stats-filter-1.9.yaml	2021-01-13 11:54:58.238566005 -0500
-+++ stats-filter-1.9.yaml.new	2021-01-13 12:13:12.710918344 -0500
+# This only works if you have Istio 1.10 installed, and it is in istio-system namespace.
+${CLIENT_EXE} -n istio-system get envoyfilter stats-filter-1.10 -o yaml > stats-filter-1.10.yaml
+cat <<EOF | patch -o - | ${CLIENT_EXE} -n istio-system apply -f - && rm stats-filter-1.10.yaml
+--- stats-filter-1.10.yaml	2021-01-13 11:54:58.238566005 -0500
++++ stats-filter-1.10.yaml.new	2021-01-13 12:13:12.710918344 -0500
 @@ -117,6 +117,18 @@
                            "source_cluster": "downstream_peer.cluster_id",
                            "destination_cluster": "node.metadata['CLUSTER_ID']"
@@ -191,11 +191,11 @@ spec:
       listener:
         filterChain:
           filter:
-            name: envoy.http_connection_manager
+            name: "envoy.filters.network.http_connection_manager"
             subFilter:
               name: istio.stats
       proxy:
-        proxyVersion: 1\.9.*
+        proxyVersion: 1\.10.*
     patch:
       operation: INSERT_BEFORE
       value:
@@ -247,11 +247,11 @@ spec:
     match:
       context: SIDECAR_INBOUND
       proxy:
-        proxyVersion: '1\.9.*'
+        proxyVersion: '1\.10.*'
       listener:
         filterChain:
           filter:
-            name: "envoy.http_connection_manager"
+            name: "envoy.filters.network.http_connection_manager"
             subFilter:
               name: "istio.stats"
     patch:
@@ -301,11 +301,11 @@ spec:
     match:
       context: SIDECAR_INBOUND
       proxy:
-        proxyVersion: '1\.9.*'
+        proxyVersion: '1\.10.*'
       listener:
         filterChain:
           filter:
-            name: "envoy.http_connection_manager"
+            name: "envoy.filters.network.http_connection_manager"
             subFilter:
               name: "istio.stats"
     patch:

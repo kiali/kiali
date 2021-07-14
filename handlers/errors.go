@@ -23,6 +23,8 @@ func handleErrorResponse(w http.ResponseWriter, err error, extraMesg ...string) 
 		RespondWithError(w, http.StatusForbidden, errorMsg)
 	} else if errors.IsNotFound(err) {
 		RespondWithError(w, http.StatusNotFound, errorMsg)
+	} else if errors.IsServiceUnavailable(err) {
+		RespondWithError(w, http.StatusServiceUnavailable, errorMsg)
 	} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
 		errorMsg = statusError.ErrStatus.Message
 		RespondWithError(w, http.StatusInternalServerError, errorMsg)

@@ -24,7 +24,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // WorkloadService deals with fetching istio/kubernetes workloads related content and convert to kiali model
@@ -76,23 +75,92 @@ func isWorkloadIncluded(workload string) bool {
 }
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
-func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadList, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetWorkloadList")
-	defer promtimer.ObserveNow(&err)
-
+func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources bool) (models.WorkloadList, error) {
 	workloadList := &models.WorkloadList{
 		Namespace: models.Namespace{Name: namespace, CreationTimestamp: time.Time{}},
 		Workloads: []models.WorkloadListItem{},
 	}
-	ws, err := fetchWorkloads(in.businessLayer, namespace, "")
-	if err != nil {
+	var ws models.Workloads
+	var err error
+
+	nFetches := 1
+	if linkIstioResources {
+		nFetches = 7
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(nFetches)
+	errChan := make(chan error, nFetches)
+
+	go func() {
+		defer wg.Done()
+		var err2 error
+		ws, err2 = fetchWorkloads(in.businessLayer, namespace, "")
+		if err2 != nil {
+			log.Errorf("Error fetching Workloads per namespace %s: %s", namespace, err2)
+			errChan <- err2
+		}
+	}()
+
+	resources := []string{
+		kubernetes.Gateways,
+		kubernetes.AuthorizationPolicies,
+		kubernetes.PeerAuthentications,
+		kubernetes.Sidecars,
+		kubernetes.RequestAuthentications,
+		kubernetes.EnvoyFilters,
+	}
+	linkedResources := map[string]*[]kubernetes.IstioObject{}
+
+	if linkIstioResources {
+		for _, resource := range resources {
+			var resourceObjects []kubernetes.IstioObject
+			linkedResources[resource] = &resourceObjects
+			go func(namespace, resourceType string, dest *[]kubernetes.IstioObject, errChan chan error) {
+				defer wg.Done()
+				var err2 error
+				if IsNamespaceCached(namespace) {
+					*dest, err2 = kialiCache.GetIstioObjects(namespace, resourceType, "")
+				} else {
+					*dest, err2 = in.k8s.GetIstioObjects(namespace, resourceType, "")
+				}
+				if err2 != nil {
+					log.Errorf("Error fetching Istio %s per namespace %s: %s", resourceType, namespace, err2)
+					errChan <- err2
+				}
+			}(namespace, resource, &resourceObjects, errChan)
+		}
+	}
+
+	wg.Wait()
+	if len(errChan) != 0 {
+		err = <-errChan
 		return *workloadList, err
 	}
 
+	wkdResources := []string{
+		kubernetes.Gateways,
+		kubernetes.AuthorizationPolicies,
+		kubernetes.PeerAuthentications,
+		kubernetes.Sidecars,
+		kubernetes.RequestAuthentications,
+		kubernetes.EnvoyFilters,
+	}
 	for _, w := range ws {
+		wkdReferences := make([]*models.IstioValidationKey, 0)
 		wItem := &models.WorkloadListItem{}
 		wItem.ParseWorkload(w)
+		if linkIstioResources {
+			wSelector := labels.Set(wItem.Labels).AsSelector().String()
+			for _, wkdRsc := range wkdResources {
+				filtered := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, *linkedResources[wkdRsc])
+				for _, a := range filtered {
+					ref := models.BuildKey(a.GetTypeMeta().Kind, a.GetObjectMeta().Name, a.GetObjectMeta().Namespace)
+					wkdReferences = append(wkdReferences, &ref)
+				}
+			}
+			wItem.IstioReferences = wkdReferences
+		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
 
@@ -102,10 +170,6 @@ func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadLis
 // GetWorkload is the API handler to fetch details of a specific workload.
 // If includeServices is set true, the Workload will fetch all services related
 func (in *WorkloadService) GetWorkload(namespace string, workloadName string, workloadType string, includeServices bool) (*models.Workload, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetWorkload")
-	defer promtimer.ObserveNow(&err)
-
 	workload, err := fetchWorkload(in.businessLayer, namespace, workloadName, workloadType)
 	if err != nil {
 		return nil, err
@@ -147,12 +211,8 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, wo
 }
 
 func (in *WorkloadService) UpdateWorkload(namespace string, workloadName string, workloadType string, includeServices bool, jsonPatch string) (*models.Workload, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "UpdateWorkload")
-	defer promtimer.ObserveNow(&err)
-
 	// Identify controller and apply patch to workload
-	err = updateWorkload(in.businessLayer, namespace, workloadName, workloadType, jsonPatch)
+	err := updateWorkload(in.businessLayer, namespace, workloadName, workloadType, jsonPatch)
 	if err != nil {
 		return nil, err
 	}
@@ -168,9 +228,6 @@ func (in *WorkloadService) UpdateWorkload(namespace string, workloadName string,
 
 func (in *WorkloadService) GetPods(namespace string, labelSelector string) (models.Pods, error) {
 	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetPods")
-	defer promtimer.ObserveNow(&err)
-
 	var ps []core_v1.Pod
 	// Check if namespace is cached
 	if IsNamespaceCached(namespace) {
@@ -191,10 +248,6 @@ func (in *WorkloadService) GetPods(namespace string, labelSelector string) (mode
 }
 
 func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetPod")
-	defer promtimer.ObserveNow(&err)
-
 	p, err := in.k8s.GetPod(namespace, name)
 	if err != nil {
 		return nil, err
@@ -1298,11 +1351,17 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			AdditionalDetails: []models.AdditionalItem{},
 		}
 		ctype := controllers[workloadName]
+		// Cornercase -> a controller is found but API is forcing a different workload type
+		// https://github.com/kiali/kiali/issues/3830
+		controllerType := ctype
+		if workloadType != "" && ctype != workloadType {
+			controllerType = workloadType
+		}
 		// Flag to add a controller if it is found
 		cnFound := true
-		switch ctype {
+		switch controllerType {
 		case kubernetes.DeploymentType:
-			if dep.Name == workloadName {
+			if dep != nil && dep.Name == workloadName {
 				selector := labels.Set(dep.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
 				w.ParseDeployment(dep)
@@ -1347,7 +1406,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				cnFound = false
 			}
 		case kubernetes.DeploymentConfigType:
-			if depcon.Name == workloadName {
+			if depcon != nil && depcon.Name == workloadName {
 				selector := labels.Set(depcon.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
 				w.ParseDeploymentConfig(depcon)
@@ -1356,7 +1415,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				cnFound = false
 			}
 		case kubernetes.StatefulSetType:
-			if fulset.Name == workloadName {
+			if fulset != nil && fulset.Name == workloadName {
 				selector := labels.Set(fulset.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
 				w.ParseStatefulSet(fulset)
@@ -1418,7 +1477,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				cnFound = false
 			}
 		case kubernetes.DaemonSetType:
-			if ds.Name == workloadName {
+			if ds != nil && ds.Name == workloadName {
 				selector := labels.Set(ds.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
 				w.ParseDaemonSet(ds)
@@ -1428,6 +1487,8 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			}
 		default:
 			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
+			// Note, we will use the controller found in the Pod resolution, instead that the passed by parameter
+			// This will cover cornercase for https://github.com/kiali/kiali/issues/3830
 			childType := ctype
 			if _, unknownType := controllerOrder[ctype]; !unknownType {
 				childType = kubernetes.ReplicaSetType

@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sort"
+	"strings"
 	"sync"
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/kiali/kiali/config/dashboards"
 	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/log"
 )
@@ -166,14 +169,21 @@ type TracingConfig struct {
 
 // IstioConfig describes configuration used for istio links
 type IstioConfig struct {
-	ComponentStatuses        ComponentStatuses `yaml:"component_status,omitempty"`
-	ConfigMapName            string            `yaml:"config_map_name,omitempty"`
-	EnvoyAdminLocalPort      int               `yaml:"envoy_admin_local_port,omitempty"`
-	IstioIdentityDomain      string            `yaml:"istio_identity_domain,omitempty"`
-	IstioInjectionAnnotation string            `yaml:"istio_injection_annotation,omitempty"`
-	IstioSidecarAnnotation   string            `yaml:"istio_sidecar_annotation,omitempty"`
-	IstiodDeploymentName     string            `yaml:"istiod_deployment_name,omitempty"`
-	UrlServiceVersion        string            `yaml:"url_service_version"`
+	ComponentStatuses                 ComponentStatuses   `yaml:"component_status,omitempty"`
+	ConfigMapName                     string              `yaml:"config_map_name,omitempty"`
+	EnvoyAdminLocalPort               int                 `yaml:"envoy_admin_local_port,omitempty"`
+	IstioCanaryRevision               IstioCanaryRevision `yaml:"istio_canary_revision,omitempty"`
+	IstioIdentityDomain               string              `yaml:"istio_identity_domain,omitempty"`
+	IstioInjectionAnnotation          string              `yaml:"istio_injection_annotation,omitempty"`
+	IstioSidecarInjectorConfigMapName string              `yaml:"istio_sidecar_injector_config_map_name,omitempty"`
+	IstioSidecarAnnotation            string              `yaml:"istio_sidecar_annotation,omitempty"`
+	IstiodDeploymentName              string              `yaml:"istiod_deployment_name,omitempty"`
+	UrlServiceVersion                 string              `yaml:"url_service_version"`
+}
+
+type IstioCanaryRevision struct {
+	Current string `yaml:"current,omitempty"`
+	Upgrade string `yaml:"upgrade,omitempty"`
 }
 
 type ComponentStatuses struct {
@@ -184,6 +194,7 @@ type ComponentStatuses struct {
 type ComponentStatus struct {
 	AppLabel  string `yaml:"app_label,omitempty"`
 	IsCore    bool   `yaml:"is_core,omitempty"`
+	IsProxy   bool   `yaml:"is_proxy,omitempty"`
 	Namespace string `yaml:"namespace,omitempty"`
 }
 
@@ -222,6 +233,7 @@ func (lt *LoginToken) Obfuscate() {
 type IstioLabels struct {
 	AppLabelName       string `yaml:"app_label_name,omitempty" json:"appLabelName"`
 	InjectionLabelName string `yaml:"injection_label,omitempty" json:"injectionLabelName"`
+	InjectionLabelRev  string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
 	VersionLabelName   string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
@@ -305,20 +317,30 @@ type DeploymentConfig struct {
 	Namespace            string   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 }
 
-// IstioComponentNamespaces holds the component-specific Istio namespaces. Any missing component
-// defaults to the namespace configured for IstioNamespace (which itself defaults to 'istio-system').
-type IstioComponentNamespaces map[string]string
+// GraphFindOption defines a single Graph Find/Hide Option
+type GraphFindOption struct {
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+	Expression  string `yaml:"expression,omitempty" json:"expression,omitempty"`
+}
+
+// GraphUIDefaults defines UI Defaults specific to the UI Graph
+type GraphUIDefaults struct {
+	FindOptions []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
+	HideOptions []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
+}
 
 // UIDefaults defines default settings configured for the UI
 type UIDefaults struct {
-	MetricsPerRefresh string   `yaml:"metrics_per_refresh,omitempty" json:"metricsPerRefresh,omitempty"`
-	Namespaces        []string `yaml:"namespaces,omitempty" json:"namespaces,omitempty"`
-	RefreshInterval   string   `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`
+	Graph             GraphUIDefaults `yaml:"graph,omitempty" json:"graph,omitempty"`
+	MetricsPerRefresh string          `yaml:"metrics_per_refresh,omitempty" json:"metricsPerRefresh,omitempty"`
+	Namespaces        []string        `yaml:"namespaces,omitempty" json:"namespaces,omitempty"`
+	RefreshInterval   string          `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`
 }
 
 // KialiFeatureFlags available from the CR
 type KialiFeatureFlags struct {
 	IstioInjectionAction bool       `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
+	IstioUpgradeAction   bool       `yaml:"istio_upgrade_action,omitempty" json:"istioUpgradeAction"`
 	UIDefaults           UIDefaults `yaml:"ui_defaults,omitempty" json:"uiDefaults,omitempty"`
 }
 
@@ -346,23 +368,23 @@ type HealthConfig struct {
 
 // Config defines full YAML configuration.
 type Config struct {
-	AdditionalDisplayDetails []AdditionalDisplayItem  `yaml:"additional_display_details,omitempty"`
-	API                      ApiConfig                `yaml:"api,omitempty"`
-	Auth                     AuthConfig               `yaml:"auth,omitempty"`
-	Deployment               DeploymentConfig         `yaml:"deployment,omitempty"`
-	Extensions               Extensions               `yaml:"extensions,omitempty"`
-	ExternalServices         ExternalServices         `yaml:"external_services,omitempty"`
-	HealthConfig             HealthConfig             `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
-	Identity                 security.Identity        `yaml:",omitempty"`
-	InCluster                bool                     `yaml:"in_cluster,omitempty"`
-	InstallationTag          string                   `yaml:"installation_tag,omitempty"`
-	IstioComponentNamespaces IstioComponentNamespaces `yaml:"istio_component_namespaces,omitempty"`
-	IstioLabels              IstioLabels              `yaml:"istio_labels,omitempty"`
-	IstioNamespace           string                   `yaml:"istio_namespace,omitempty"` // default component namespace
-	KialiFeatureFlags        KialiFeatureFlags        `yaml:"kiali_feature_flags,omitempty"`
-	KubernetesConfig         KubernetesConfig         `yaml:"kubernetes_config,omitempty"`
-	LoginToken               LoginToken               `yaml:"login_token,omitempty"`
-	Server                   Server                   `yaml:",omitempty"`
+	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
+	API                      ApiConfig                           `yaml:"api,omitempty"`
+	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
+	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
+	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
+	Extensions               Extensions                          `yaml:"extensions,omitempty"`
+	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
+	HealthConfig             HealthConfig                        `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
+	Identity                 security.Identity                   `yaml:",omitempty"`
+	InCluster                bool                                `yaml:"in_cluster,omitempty"`
+	InstallationTag          string                              `yaml:"installation_tag,omitempty"`
+	IstioLabels              IstioLabels                         `yaml:"istio_labels,omitempty"`
+	IstioNamespace           string                              `yaml:"istio_namespace,omitempty"` // default component namespace
+	KialiFeatureFlags        KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
+	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
+	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
+	Server                   Server                              `yaml:",omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -402,6 +424,7 @@ func NewConfig() (c *Config) {
 				ClientIdPrefix: "kiali",
 			},
 		},
+		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
 			AccessibleNamespaces: []string{"**"},
 			Namespace:            "istio-system",
@@ -434,24 +457,28 @@ func NewConfig() (c *Config) {
 						{
 							AppLabel: "istio-egressgateway",
 							IsCore:   false,
+							IsProxy:  true,
 						},
 						{
 							AppLabel: "istio-ingressgateway",
 							IsCore:   true,
+							IsProxy:  true,
 						},
 						{
 							AppLabel: "istiod",
 							IsCore:   true,
+							IsProxy:  false,
 						},
 					},
 				},
-				ConfigMapName:            "istio",
-				EnvoyAdminLocalPort:      15000,
-				IstioIdentityDomain:      "svc.cluster.local",
-				IstioInjectionAnnotation: "sidecar.istio.io/inject",
-				IstioSidecarAnnotation:   "sidecar.istio.io/status",
-				IstiodDeploymentName:     "istiod",
-				UrlServiceVersion:        "http://istiod:15014/version",
+				ConfigMapName:                     "istio",
+				EnvoyAdminLocalPort:               15000,
+				IstioIdentityDomain:               "svc.cluster.local",
+				IstioInjectionAnnotation:          "sidecar.istio.io/inject",
+				IstioSidecarInjectorConfigMapName: "istio-sidecar-injector",
+				IstioSidecarAnnotation:            "sidecar.istio.io/status",
+				IstiodDeploymentName:              "istiod",
+				UrlServiceVersion:                 "http://istiod:15014/version",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
@@ -480,11 +507,39 @@ func NewConfig() (c *Config) {
 		IstioLabels: IstioLabels{
 			AppLabelName:       "app",
 			InjectionLabelName: "istio-injection",
+			InjectionLabelRev:  "istio.io/rev",
 			VersionLabelName:   "version",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
 			IstioInjectionAction: true,
+			IstioUpgradeAction:   false,
 			UIDefaults: UIDefaults{
+				Graph: GraphUIDefaults{
+					FindOptions: []GraphFindOption{
+						{
+							Description: "Find: slow edges (> 1s)",
+							Expression:  "rt > 1000",
+						},
+						{
+							Description: "Find: unhealthy nodes",
+							Expression:  "! healthy",
+						},
+						{
+							Description: "Find: unknown nodes",
+							Expression:  "name = unknown",
+						},
+					},
+					HideOptions: []GraphFindOption{
+						{
+							Description: "Hide: healthy nodes",
+							Expression:  "healthy",
+						},
+						{
+							Description: "Hide: unknown nodes",
+							Expression:  "name = unknown",
+						},
+					},
+				},
 				MetricsPerRefresh: "1m",
 				Namespaces:        make([]string, 0),
 				RefreshInterval:   "15s",
@@ -494,7 +549,7 @@ func NewConfig() (c *Config) {
 			Burst:                       200,
 			CacheDuration:               5 * 60,
 			CacheEnabled:                true,
-			CacheIstioTypes:             []string{"DestinationRule", "Gateway", "ServiceEntry", "VirtualService", "Sidecar", "PeerAuthentication", "RequestAuthentication", "AuthorizationPolicy"},
+			CacheIstioTypes:             []string{"AuthorizationPolicy", "DestinationRule", "EnvoyFilter", "Gateway", "PeerAuthentication", "RequestAuthentication", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup"},
 			CacheNamespaces:             []string{".*"},
 			CacheTokenNamespaceDuration: 10,
 			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController"},
@@ -597,6 +652,29 @@ func (conf Config) String() (str string) {
 	return
 }
 
+// prepareDashboards will ensure conf.CustomDashboards contains only the dashboards that are enabled
+func (conf *Config) prepareDashboards() {
+	if conf.ExternalServices.CustomDashboards.Enabled {
+		// If the user defined their own dashboards, we still want the built-in dashboards as a fallback.
+		// But the user-defined dashboards take precedence - if they gave us dashboards with the same name
+		// as one of the built-in dashboards, the user-defined dashboard "wins".
+		conf.CustomDashboards = dashboards.AddMonitoringDashboards(dashboards.GetBuiltInMonitoringDashboards(), conf.CustomDashboards)
+	} else {
+		// The user has disabled the custom dashboards, empty out the list completely
+		conf.CustomDashboards = dashboards.MonitoringDashboardsList(make([]dashboards.MonitoringDashboard, 0))
+	}
+
+	// to assist in debugging problems, log the number of dashboards and their names
+	if log.IsDebug() {
+		dashboardNames := make([]string, 0, len(conf.CustomDashboards))
+		for _, d := range conf.CustomDashboards {
+			dashboardNames = append(dashboardNames, d.Name)
+		}
+		sort.Strings(dashboardNames)
+		log.Debugf("Custom dashboards [count=%v, enabled=%v]: %v", len(dashboardNames), conf.ExternalServices.CustomDashboards.Enabled, strings.Join(dashboardNames, ","))
+	}
+}
+
 // Unmarshal parses the given YAML string and returns its Config object representation.
 func Unmarshal(yamlString string) (conf *Config, err error) {
 	conf = NewConfig()
@@ -604,6 +682,8 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse yaml data. error=%v", err)
 	}
+
+	conf.prepareDashboards()
 
 	// Some config settings (such as sensitive settings like passwords) are overrideable
 	// via environment variables. This allows a user to store sensitive values in secrets
@@ -705,15 +785,7 @@ func SaveToFile(filename string, conf *Config) (err error) {
 	return
 }
 
-// IsIstioNamespace returns true if the namespace is the default istio namespace or an Istio component namespace
+// IsIstioNamespace returns true if the namespace is the default istio namespace
 func IsIstioNamespace(namespace string) bool {
-	if namespace == configuration.IstioNamespace {
-		return true
-	}
-	for _, ns := range configuration.IstioComponentNamespaces {
-		if ns == namespace {
-			return true
-		}
-	}
-	return false
+	return namespace == configuration.IstioNamespace
 }

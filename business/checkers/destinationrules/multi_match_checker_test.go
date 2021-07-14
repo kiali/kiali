@@ -145,12 +145,8 @@ func TestMultiHostMatchValidShortFormatDiffNamespace(t *testing.T) {
 		DestinationRules: destinationRules,
 	}.Check()
 
-	assert.NotEmpty(validations)
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "rule2"}]
-	assert.True(ok)
-	assert.True(validation.Valid)
-	assert.NotEmpty(validation.Checks)
-	assert.Equal(models.Unknown, validation.Checks[0].Severity)
+	// MultiMatchChecker shouldn't fail if a host is in a different namespace
+	assert.Empty(validations)
 }
 
 func TestMultiHostMatchWildcardInvalid(t *testing.T) {
