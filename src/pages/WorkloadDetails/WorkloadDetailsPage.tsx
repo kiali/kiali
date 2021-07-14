@@ -213,6 +213,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
                     app={app}
                     version={version}
                     workload={this.state.workload!.name}
+                    workloadType={this.state.workload!.type}
                     template={dashboard.template}
                   />
                 </Tab>

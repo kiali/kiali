@@ -15,6 +15,8 @@ export interface DashboardQuery extends MetricsQuery {
   rawDataAggregator?: Aggregator;
   labelsFilters?: string;
   additionalLabels?: string;
+  workload?: string;
+  workloadType?: string;
 }
 
 export type Aggregator = 'sum' | 'avg' | 'min' | 'max' | 'stddev' | 'stdvar';
