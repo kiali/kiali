@@ -97,9 +97,14 @@ func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadLis
 // GetWorkload is the API handler to fetch details of a specific workload.
 // If includeServices is set true, the Workload will fetch all services related
 func (in *WorkloadService) GetWorkload(namespace string, workloadName string, workloadType string, includeServices bool) (*models.Workload, error) {
-	workload, err := fetchWorkload(in.businessLayer, namespace, workloadName, workloadType)
+	ns, err := in.businessLayer.Namespace.GetNamespace(namespace)
 	if err != nil {
 		return nil, err
+	}
+
+	workload, err2 := fetchWorkload(in.businessLayer, namespace, workloadName, workloadType)
+	if err2 != nil {
+		return nil, err2
 	}
 
 	var runtimes []models.Runtime
@@ -110,7 +115,7 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, wo
 		conf := config.Get()
 		app := workload.Labels[conf.IstioLabels.AppLabelName]
 		version := workload.Labels[conf.IstioLabels.VersionLabelName]
-		runtimes = NewDashboardsService().GetCustomDashboardRefs(namespace, app, version, workload.Pods)
+		runtimes = NewDashboardsService(ns, workload).GetCustomDashboardRefs(namespace, app, version, workload.Pods)
 	}()
 
 	if includeServices {
