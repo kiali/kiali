@@ -5751,6 +5751,11 @@
           "type": "string",
           "x-go-name": "Name"
         },
+        "rows": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Rows"
+        },
         "title": {
           "type": "string",
           "x-go-name": "Title"

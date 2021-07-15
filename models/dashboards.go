@@ -32,6 +32,7 @@ type MonitoringDashboard struct {
 	Charts        []Chart        `json:"charts"`
 	Aggregations  []Aggregation  `json:"aggregations"`
 	ExternalLinks []ExternalLink `json:"externalLinks"`
+	Rows          int            `json:"rows"`
 }
 
 // Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard config resource
@@ -152,10 +153,13 @@ func buildIstioAggregations(local, remote string) []Aggregation {
 
 // PrepareIstioDashboard prepares the Istio dashboard title and aggregations dynamically for input values
 func PrepareIstioDashboard(direction, local, remote string) MonitoringDashboard {
+	// Istio dashboards are predefined
+	// It uses two rows by default, columns are defined using the spans of the charts
 	return MonitoringDashboard{
 		Title:        fmt.Sprintf("%s Metrics", direction),
 		Aggregations: buildIstioAggregations(local, remote),
 		Charts:       []Chart{},
+		Rows:         2, // Rows layout used for Inbound Metrics and Outbound Metrics
 	}
 }
 
