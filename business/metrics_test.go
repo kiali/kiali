@@ -51,6 +51,8 @@ func TestGetServiceMetrics(t *testing.T) {
 	api.MockRangeRounded("sum(rate(istio_response_messages_total{"+labels+"}[5m]))", 20)
 	api.MockRangeRounded("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))", 11)
 	api.MockRangeRounded("sum(rate(istio_tcp_sent_bytes_total{"+labels+"}[5m]))", 13)
+	api.MockRangeRounded("sum(rate(istio_tcp_connections_closed_total{"+labels+"}[5m]))", 31)
+	api.MockRangeRounded("sum(rate(istio_tcp_connections_opened_total{"+labels+"}[5m]))", 32)
 	api.MockHistoRange("istio_request_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	api.MockHistoRange("istio_request_duration_seconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	api.MockHistoRange("istio_request_duration_milliseconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.8)
@@ -60,7 +62,7 @@ func TestGetServiceMetrics(t *testing.T) {
 	metrics, err := srv.GetMetrics(q, nil)
 
 	assert.Nil(err)
-	assert.Equal(11, len(metrics))
+	assert.Equal(13, len(metrics))
 	grpcRecIn := metrics["grpc_received"]
 	assert.NotNil(grpcRecIn)
 	grpcSentIn := metrics["grpc_sent"]
@@ -133,6 +135,8 @@ func TestGetAppMetrics(t *testing.T) {
 	api.MockRangeRounded("sum(rate(istio_response_messages_total{"+labels+"}[5m]))", 20)
 	api.MockRangeRounded("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))", 10)
 	api.MockRangeRounded("sum(rate(istio_tcp_sent_bytes_total{"+labels+"}[5m]))", 12)
+	api.MockRangeRounded("sum(rate(istio_tcp_connections_closed_total{"+labels+"}[5m]))", 31)
+	api.MockRangeRounded("sum(rate(istio_tcp_connections_opened_total{"+labels+"}[5m]))", 32)
 	api.MockHistoRange("istio_request_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	api.MockHistoRange("istio_request_duration_seconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	api.MockHistoRange("istio_request_duration_milliseconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
@@ -148,7 +152,7 @@ func TestGetAppMetrics(t *testing.T) {
 	metrics, err := srv.GetMetrics(q, nil)
 
 	assert.Nil(err)
-	assert.Equal(11, len(metrics))
+	assert.Equal(13, len(metrics))
 	grpcRecIn := metrics["grpc_received"]
 	assert.NotNil(grpcRecIn)
 	grpcSentIn := metrics["grpc_sent"]
@@ -288,6 +292,8 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	api.MockRangeRounded("sum(rate(istio_response_messages_total{"+labels+"}[5m]))", 20)
 	api.MockRangeRounded("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))", 10)
 	api.MockRangeRounded("sum(rate(istio_tcp_sent_bytes_total{"+labels+"}[5m]))", 12)
+	api.MockRangeRounded("sum(rate(istio_tcp_connections_closed_total{"+labels+"}[5m]))", 31)
+	api.MockRangeRounded("sum(rate(istio_tcp_connections_opened_total{"+labels+"}[5m]))", 32)
 	api.MockHistoRange("istio_request_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	api.MockHistoRange("istio_request_duration_seconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	api.MockHistoRange("istio_request_duration_milliseconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
@@ -302,7 +308,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	metrics, err := srv.GetMetrics(q, nil)
 
 	assert.Nil(err)
-	assert.Equal(11, len(metrics))
+	assert.Equal(13, len(metrics))
 	grpcRecOut := metrics["grpc_received"]
 	assert.NotNil(grpcRecOut)
 	grpcSentOut := metrics["grpc_sent"]
