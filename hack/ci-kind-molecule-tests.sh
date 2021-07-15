@@ -42,8 +42,8 @@ Options:
     Default: master
 
 -hf|--helm-fork <name>
-    The helm-chart fork/org to clone.
-    Default: kiali
+    The helm-chart fork to clone.
+    Default: kiali/helm-charts
 
 -ii|--install-istio <true|false>
     If true, an Istio control plane will be installed
@@ -69,16 +69,16 @@ Options:
     Default: master
 
 -kf|--kiali-fork <name>
-    The kiali fork/org to clone.
-    Default: kiali
+    The kiali fork to clone.
+    Default: kiali/kiali
 
 -kob|--kiali-operator-branch <branch name>
     The kiali-operator branch to clone.
     Default: master
 
 -kof|--kiali-operator-fork <name>
-    The kiali-operator fork/org to clone.
-    Default: kiali
+    The kiali-operator fork to clone.
+    Default: kiali/kiali-operator
 
 -lb|--logs-branch <branch name>
     The logs branch to clone.
@@ -174,11 +174,11 @@ GIT_CLONE_PROTOCOL="${GIT_CLONE_PROTOCOL:-git}"
 KIND_NAME="${KIND_NAME:-ci}"
 
 # if you want to test code from different forks and/or branches, set them here
-HELM_FORK="${HELM_FORK:-kiali}"
+HELM_FORK="${HELM_FORK:-kiali/helm-charts}"
 HELM_BRANCH="${HELM_BRANCH:-master}"
-KIALI_FORK="${KIALI_FORK:-kiali}"
+KIALI_FORK="${KIALI_FORK:-kiali/kiali}"
 KIALI_BRANCH="${KIALI_BRANCH:-master}"
-KIALI_OPERATOR_FORK="${KIALI_OPERATOR_FORK:-kiali}"
+KIALI_OPERATOR_FORK="${KIALI_OPERATOR_FORK:-kiali/kiali-operator}"
 KIALI_OPERATOR_BRANCH="${KIALI_OPERATOR_BRANCH:-master}"
 
 # details about the github repo where the logs are to be stored
@@ -198,12 +198,12 @@ LOGS_GITHUB_HTTPS_RESULTS="${LOGS_GITHUB_HTTPS_SUBDIR}/results.log"
 # The github git clone locations
 GITHUB_PROTOCOL_GIT="git@github.com:"
 GITHUB_PROTOCOL_HTTPS="https://github.com/"
-HELM_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${HELM_FORK}/helm-charts.git"
-HELM_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${HELM_FORK}/helm-charts.git"
-KIALI_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${KIALI_FORK}/kiali.git"
-KIALI_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${KIALI_FORK}/kiali.git"
-KIALI_OPERATOR_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${KIALI_OPERATOR_FORK}/kiali-operator.git"
-KIALI_OPERATOR_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${KIALI_OPERATOR_FORK}/kiali-operator.git"
+HELM_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${HELM_FORK}.git"
+HELM_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${HELM_FORK}.git"
+KIALI_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${KIALI_FORK}.git"
+KIALI_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${KIALI_FORK}.git"
+KIALI_OPERATOR_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${KIALI_OPERATOR_FORK}.git"
+KIALI_OPERATOR_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${KIALI_OPERATOR_FORK}.git"
 LOGS_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${LOGS_FORK}/${LOGS_PROJECT_NAME}.git"
 LOGS_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${LOGS_FORK}/${LOGS_PROJECT_NAME}.git"
 
@@ -298,16 +298,16 @@ infomsg "Clone github repos in [$SRC] to make sure we have the latest tests and 
 cd ${SRC}
 
 infomsg "Cloning logs repo [${LOGS_FORK}/${LOGS_PROJECT_NAME}:${LOGS_BRANCH}] from [${LOGS_GITHUB_GITCLONE}]..."
-git clone --single-branch --branch ${LOGS_BRANCH} ${LOGS_GITHUB_GITCLONE}
+git clone --single-branch --branch ${LOGS_BRANCH} ${LOGS_GITHUB_GITCLONE} logs
 
-infomsg "Cloning helm-charts [${HELM_FORK}/helm-charts:${HELM_BRANCH}] from [${HELM_GITHUB_GITCLONE}]..."
-git clone --single-branch --branch ${HELM_BRANCH} ${HELM_GITHUB_GITCLONE}
+infomsg "Cloning helm-charts [${HELM_FORK}:${HELM_BRANCH}] from [${HELM_GITHUB_GITCLONE}]..."
+git clone --single-branch --branch ${HELM_BRANCH} ${HELM_GITHUB_GITCLONE} helm-charts
 
-infomsg "Cloning kiali [${KIALI_FORK}/kiali:${KIALI_BRANCH}] from [${KIALI_GITHUB_GITCLONE}]..."
-git clone --single-branch --branch ${KIALI_BRANCH} ${KIALI_GITHUB_GITCLONE}
+infomsg "Cloning kiali [${KIALI_FORK}:${KIALI_BRANCH}] from [${KIALI_GITHUB_GITCLONE}]..."
+git clone --single-branch --branch ${KIALI_BRANCH} ${KIALI_GITHUB_GITCLONE} kiali
 
-infomsg "Cloning kiali-operator [${KIALI_OPERATOR_FORK}/kiali-operator:${KIALI_OPERATOR_BRANCH}] from [${KIALI_OPERATOR_GITHUB_GITCLONE}]..."
-git clone --single-branch --branch ${KIALI_OPERATOR_BRANCH} ${KIALI_OPERATOR_GITHUB_GITCLONE}
+infomsg "Cloning kiali-operator [${KIALI_OPERATOR_FORK}:${KIALI_OPERATOR_BRANCH}] from [${KIALI_OPERATOR_GITHUB_GITCLONE}]..."
+git clone --single-branch --branch ${KIALI_OPERATOR_BRANCH} ${KIALI_OPERATOR_GITHUB_GITCLONE} kiali-operator
 
 ln -s ${SRC}/kiali-operator kiali/operator
 cd kiali
