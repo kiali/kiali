@@ -252,13 +252,13 @@ func TestVSWithRoutingBadges(t *testing.T) {
 					"route": []interface{}{
 						map[string]interface{}{
 							"destination": map[string]interface{}{
-								"host": "foo",
+								"host":   "foo",
 								"weight": 20,
 							},
 						},
 						map[string]interface{}{
 							"destination": map[string]interface{}{
-								"host": "bar",
+								"host":   "bar",
 								"weight": 80,
 							},
 						},
