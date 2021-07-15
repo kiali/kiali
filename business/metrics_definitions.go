@@ -64,6 +64,16 @@ var istioMetrics = []istioMetric{
 		istioName: "istio_tcp_sent_bytes_total",
 		isHisto:   false,
 	},
+	{
+		kialiName: "tcp_opened",
+		istioName: "istio_tcp_connections_opened_total",
+		isHisto:   false,
+	},
+	{
+		kialiName: "tcp_closed",
+		istioName: "istio_tcp_connections_closed_total",
+		isHisto:   false,
+	},
 }
 
 func (in *istioMetric) labelsToUse(labels string, labelsError []string) []string {

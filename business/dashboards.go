@@ -388,22 +388,6 @@ func getIstioCharts() []istioChart {
 	istioCharts := []istioChart{
 		{
 			Chart: models.Chart{
-				Name:  "gRPC received",
-				Unit:  "msgrate",
-				Spans: 3,
-			},
-			refName: "grpc_received",
-		},
-		{
-			Chart: models.Chart{
-				Name:  "gRPC sent",
-				Unit:  "msgrate",
-				Spans: 3,
-			},
-			refName: "grpc_sent",
-		},
-		{
-			Chart: models.Chart{
 				Name:  "Request volume",
 				Unit:  "ops",
 				Spans: 3,
@@ -421,20 +405,28 @@ func getIstioCharts() []istioChart {
 		},
 		{
 			Chart: models.Chart{
+				Name:  "Request size",
+				Unit:  "bytes",
+				Spans: 3,
+			},
+			refName: "request_size",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Response size",
+				Unit:  "bytes",
+				Spans: 3,
+			},
+			refName: "response_size",
+		},
+		{
+			Chart: models.Chart{
 				Name:  "Request throughput",
 				Unit:  "bitrate",
 				Spans: 3,
 			},
 			refName: "request_throughput",
 			scale:   8, // Bps to bps
-		},
-		{
-			Chart: models.Chart{
-				Name:  "Request size",
-				Unit:  "bytes",
-				Spans: 3,
-			},
-			refName: "request_size",
 		},
 		{
 			Chart: models.Chart{
@@ -447,11 +439,35 @@ func getIstioCharts() []istioChart {
 		},
 		{
 			Chart: models.Chart{
-				Name:  "Response size",
-				Unit:  "bytes",
+				Name:  "gRPC received",
+				Unit:  "msgrate",
 				Spans: 3,
 			},
-			refName: "response_size",
+			refName: "grpc_received",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "gRPC sent",
+				Unit:  "msgrate",
+				Spans: 3,
+			},
+			refName: "grpc_sent",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "TCP opened",
+				Unit:  "conn",
+				Spans: 3,
+			},
+			refName: "tcp_opened",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "TCP closed",
+				Unit:  "conn",
+				Spans: 3,
+			},
+			refName: "tcp_closed",
 		},
 		{
 			Chart: models.Chart{
