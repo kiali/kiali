@@ -804,5 +804,6 @@ export const dashboardWithlegends: DashboardModel = {
       singleSelection: false
     }
   ],
-  externalLinks: []
+  externalLinks: [],
+  rows: 2
 };

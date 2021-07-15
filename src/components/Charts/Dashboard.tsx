@@ -64,10 +64,12 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     if (this.state.maximizedChart) {
       return this.props.dashboardHeight;
     }
-    // Dashboards are assumed to be presented in 2 rows
-    // This is controlled/synced from the definition of the dashboard in the backend
-    // TODO: Deprecate the configuration of dashboards in the backend
-    return this.props.dashboardHeight / 2;
+    // Dashboards define the rows that are used
+    // Columns are defined using the spans field in the charts definition using a flex strategy
+    // When columns span the grid (12 spans) charts move to the next row
+    // By default metrics use a 2 row layout
+    const rows = this.props.dashboard.rows > 0 ? this.props.dashboard.rows : 2;
+    return this.props.dashboardHeight / rows;
   };
 
   private renderChart(chart: ChartModel) {

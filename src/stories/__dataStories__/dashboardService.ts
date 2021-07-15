@@ -25777,5 +25777,6 @@ export const dashboardService: DashboardModel = {
       singleSelection: false
     }
   ],
-  externalLinks: []
+  externalLinks: [],
+  rows: 2
 };

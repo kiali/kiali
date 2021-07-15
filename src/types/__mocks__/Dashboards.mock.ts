@@ -85,7 +85,8 @@ export const generateRandomDashboard = (title: string, seed?: string): Dashboard
       }
     ],
     aggregations: [],
-    externalLinks: []
+    externalLinks: [],
+    rows: 2
   };
 };
 
@@ -93,5 +94,6 @@ export const emptyDashboard: DashboardModel = {
   title: 'Empty dashboard',
   charts: [],
   aggregations: [],
-  externalLinks: []
+  externalLinks: [],
+  rows: 2
 };

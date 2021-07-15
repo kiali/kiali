@@ -202,5 +202,6 @@ export const dashboardEnvoy: DashboardModel = {
       singleSelection: false
     }
   ],
-  externalLinks: []
+  externalLinks: [],
+  rows: 2
 };

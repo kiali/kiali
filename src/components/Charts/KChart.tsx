@@ -45,7 +45,7 @@ const kchartStyle = style({
   paddingTop: 15,
   paddingLeft: 25,
   paddingRight: 25,
-  paddingBottom: 15
+  paddingBottom: 12
 });
 
 // 24px (title + toolbar) + 20px (margin) + 15px (padding) + 15px (padding)
@@ -213,7 +213,9 @@ class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, State> 
           alignItems: 'center',
           overflow: 'hidden',
           height: this.getInnerChartHeight(),
-          textAlign: 'center'
+          textAlign: 'center',
+          borderLeft: '2px solid #ECEFF1',
+          borderBottom: '2px solid #ECEFF1'
         }}
       >
         <EmptyState variant={EmptyStateVariant.small} className={emptyStyle}>

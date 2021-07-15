@@ -106,7 +106,7 @@ describe('Metrics for a service', () => {
   });
 
   it('mounts and loads empty metrics', done => {
-    const dashboard: DashboardModel = { title: 'foo', aggregations: [], charts: [], externalLinks: [] };
+    const dashboard: DashboardModel = { title: 'foo', aggregations: [], charts: [], externalLinks: [], rows: 2 };
     new MounterMocker()
       .addMock('getServiceDashboard', dashboard)
       .mountWithStore(
@@ -127,7 +127,8 @@ describe('Metrics for a service', () => {
         createHistogramChart('m5'),
         createHistogramChart('m7')
       ],
-      externalLinks: []
+      externalLinks: [],
+      rows: 2
     };
     new MounterMocker()
       .addMock('getServiceDashboard', dashboard)
@@ -161,7 +162,7 @@ describe('Inbound Metrics for a workload', () => {
   });
 
   it('mounts and loads empty metrics', done => {
-    const dashboard: DashboardModel = { title: 'foo', aggregations: [], charts: [], externalLinks: [] };
+    const dashboard: DashboardModel = { title: 'foo', aggregations: [], charts: [], externalLinks: [], rows: 2 };
     new MounterMocker()
       .addMock('getWorkloadDashboard', dashboard)
       .mountWithStore(
@@ -182,7 +183,8 @@ describe('Inbound Metrics for a workload', () => {
         createHistogramChart('m5'),
         createHistogramChart('m7')
       ],
-      externalLinks: []
+      externalLinks: [],
+      rows: 2
     };
     new MounterMocker()
       .addMock('getWorkloadDashboard', dashboard)
