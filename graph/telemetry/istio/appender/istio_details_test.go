@@ -242,9 +242,6 @@ func TestVSWithRoutingBadges(t *testing.T) {
 	vService := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "vService-1",
-			Labels: map[string]string{
-				graph.WizardLabelKey: graph.WizardTrafficShiftingLabel,
-			},
 		},
 		Spec: map[string]interface{}{
 			"hosts": []interface{}{
@@ -256,6 +253,13 @@ func TestVSWithRoutingBadges(t *testing.T) {
 						map[string]interface{}{
 							"destination": map[string]interface{}{
 								"host": "foo",
+								"weight": 20,
+							},
+						},
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"host": "bar",
+								"weight": 80,
 							},
 						},
 					},
@@ -276,6 +280,7 @@ func TestVSWithRoutingBadges(t *testing.T) {
 
 	assert.Equal(nil, trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[fooSvcNodeId].Metadata[graph.HasTrafficShifting])
+	assert.Equal(nil, trafficMap[fooSvcNodeId].Metadata[graph.HasRequestRouting])
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer

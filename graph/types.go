@@ -20,12 +20,6 @@ const (
 	NodeTypeWorkload              string = "workload"
 	TF                            string = "2006-01-02 15:04:05" // TF is the TimeFormat for timestamps
 	Unknown                       string = "unknown"             // Istio unknown label value
-	WizardFaultInjectionLabel     string = "fault_injection"
-	WizardLabelKey                string = "kiali_wizard" // Label the front-end wizards add to objects created by them
-	WizardRequestRoutingLabel     string = "request_routing"
-	WizardRequestTimeoutsLabel    string = "request_timeouts"
-	WizardTCPTrafficShiftingLabel string = "tcp_traffic_shifting"
-	WizardTrafficShiftingLabel    string = "traffic_shifting"
 	// private
 	passthroughCluster string = "PassthroughCluster"
 	blackHoleCluster   string = "BlackHoleCluster"
