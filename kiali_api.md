@@ -7860,6 +7860,7 @@ There is currently only one possible value: "FieldsV1" |  |
 | Charts | [][Chart](#chart)| `[]*Chart` |  | |  |  |
 | ExternalLinks | [][ExternalLink](#external-link)| `[]*ExternalLink` |  | |  |  |
 | Name | string| `string` |  | |  |  |
+| Rows | int64 (formatted integer)| `int64` |  | |  |  |
 | Title | string| `string` |  | |  |  |
 
 
