@@ -60,7 +60,7 @@ const AxisStyle = {
 
 const MIN_HEIGHT = 30;
 const MIN_WIDTH = 275;
-const LEGEND_HEIGHT = 25;
+export const LEGEND_HEIGHT = 25;
 const FONT_SIZE_LEGEND = 14;
 
 const moreLegendIconStyle = style({
