@@ -456,7 +456,7 @@ func getIstioCharts() []istioChart {
 		{
 			Chart: models.Chart{
 				Name:  "TCP opened",
-				Unit:  "conn",
+				Unit:  "connrate",
 				Spans: 3,
 			},
 			refName: "tcp_opened",
@@ -464,7 +464,7 @@ func getIstioCharts() []istioChart {
 		{
 			Chart: models.Chart{
 				Name:  "TCP closed",
-				Unit:  "conn",
+				Unit:  "connrate",
 				Spans: 3,
 			},
 			refName: "tcp_closed",
