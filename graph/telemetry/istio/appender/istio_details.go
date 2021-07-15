@@ -105,7 +105,7 @@ NODES:
 		for _, virtualService := range istioCfg.VirtualServices.Items {
 			if virtualService.IsValidHost(namespace, n.Service) {
 				n.Metadata[graph.HasVS] = true
-				
+
 				if virtualService.HasRequestRouting() {
 					n.Metadata[graph.HasRequestRouting] = true
 				}
@@ -113,15 +113,15 @@ NODES:
 				if virtualService.HasRequestTimeout() {
 					n.Metadata[graph.HasRequestTimeout] = true
 				}
-				
+
 				if virtualService.HasFaultInjection() {
 					n.Metadata[graph.HasFaultInjection] = true
 				}
-				
+
 				if virtualService.HasTrafficShifting() {
 					n.Metadata[graph.HasTrafficShifting] = true
 				}
-				
+
 				if virtualService.HasTCPTrafficShifting() {
 					n.Metadata[graph.HasTCPTrafficShifting] = true
 				}

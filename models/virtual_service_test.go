@@ -77,7 +77,7 @@ spec:
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
-			
+
 			var vs models.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
@@ -92,7 +92,7 @@ spec:
 
 func TestVirtualServiceHasFaultInjection(t *testing.T) {
 	cases := map[string]struct {
-		vsYAML          []byte
+		vsYAML                 []byte
 		expectedFaultInjection bool
 	}{
 		"Has fault": {
@@ -186,11 +186,11 @@ spec:
 `),
 		},
 	}
-	
+
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
-			
+
 			var vs models.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
@@ -205,7 +205,7 @@ spec:
 
 func TestVirtualServiceHasTrafficShifting(t *testing.T) {
 	cases := map[string]struct {
-		vsYAML          []byte
+		vsYAML                  []byte
 		expectedTrafficShifting bool
 	}{
 		"Has traffic shifting": {
@@ -277,11 +277,11 @@ spec:
 `),
 		},
 	}
-	
+
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
-			
+
 			var vs models.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
@@ -296,7 +296,7 @@ spec:
 
 func TestVirtualServiceHasTCPTrafficShifting(t *testing.T) {
 	cases := map[string]struct {
-		vsYAML          []byte
+		vsYAML                     []byte
 		expectedTCPTrafficShifting bool
 	}{
 		"Has traffic shifting": {
@@ -383,11 +383,11 @@ spec:
 `),
 		},
 	}
-	
+
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
-			
+
 			var vs models.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
@@ -402,7 +402,7 @@ spec:
 
 func TestVirtualServiceHasRequestRouting(t *testing.T) {
 	cases := map[string]struct {
-		vsYAML          []byte
+		vsYAML                 []byte
 		expectedRequestRouting bool
 	}{
 		"Has http request routing": {
@@ -508,7 +508,7 @@ spec:
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
-			
+
 			var vs models.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 

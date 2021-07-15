@@ -8,18 +8,18 @@ import (
 )
 
 const (
-	GraphTypeApp                  string = "app"
-	GraphTypeService              string = "service" // Treated as graphType Workload, with service injection, and then condensed
-	GraphTypeVersionedApp         string = "versionedApp"
-	GraphTypeWorkload             string = "workload"
-	NodeTypeAggregate             string = "aggregate" // The special "aggregate" traffic node
-	NodeTypeApp                   string = "app"
-	NodeTypeBox                   string = "box" // The special "box" node. isBox will be set to "app" | "cluster" | "namespace"
-	NodeTypeService               string = "service"
-	NodeTypeUnknown               string = "unknown" // The special "unknown" traffic gen node
-	NodeTypeWorkload              string = "workload"
-	TF                            string = "2006-01-02 15:04:05" // TF is the TimeFormat for timestamps
-	Unknown                       string = "unknown"             // Istio unknown label value
+	GraphTypeApp          string = "app"
+	GraphTypeService      string = "service" // Treated as graphType Workload, with service injection, and then condensed
+	GraphTypeVersionedApp string = "versionedApp"
+	GraphTypeWorkload     string = "workload"
+	NodeTypeAggregate     string = "aggregate" // The special "aggregate" traffic node
+	NodeTypeApp           string = "app"
+	NodeTypeBox           string = "box" // The special "box" node. isBox will be set to "app" | "cluster" | "namespace"
+	NodeTypeService       string = "service"
+	NodeTypeUnknown       string = "unknown" // The special "unknown" traffic gen node
+	NodeTypeWorkload      string = "workload"
+	TF                    string = "2006-01-02 15:04:05" // TF is the TimeFormat for timestamps
+	Unknown               string = "unknown"             // Istio unknown label value
 	// private
 	passthroughCluster string = "PassthroughCluster"
 	blackHoleCluster   string = "BlackHoleCluster"

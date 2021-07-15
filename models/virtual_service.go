@@ -132,7 +132,6 @@ func (vService *VirtualService) HasTrafficShifting() bool {
 	return false
 }
 
-
 // HasTCPTrafficShifting determines if the spec has tcp traffic shifting set.
 // If there are routes with multiple destinations then it is assumed that
 // the spec has traffic shifting regardless of weights.
@@ -140,7 +139,7 @@ func (vService *VirtualService) HasTCPTrafficShifting() bool {
 	if vService == nil {
 		return false
 	}
-	
+
 	if routes, isSlice := vService.Spec.Tcp.([]interface{}); isSlice {
 		for _, route := range routes {
 			if routeMap, isMap := route.(map[string]interface{}); isMap {
@@ -175,7 +174,7 @@ func (vService *VirtualService) HasRequestRouting() bool {
 		}
 		return false
 	}
-	
+
 	if routes, isSlice := vService.Spec.Tcp.([]interface{}); isSlice {
 		if hasRoute(routes) {
 			return true
@@ -194,4 +193,3 @@ func (vService *VirtualService) HasRequestRouting() bool {
 
 	return false
 }
-
