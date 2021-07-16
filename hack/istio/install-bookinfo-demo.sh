@@ -144,8 +144,7 @@ IS_OPENSHIFT="false"
 IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
-  if [[ $([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true") ]]; then
-    IS_MAISTRA="true"
+  IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
   fi
 fi
 
@@ -283,4 +282,3 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
     curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml | $CLIENT_EXE create --validate=false -n ${NAMESPACE} -f -
   fi
 fi
-
