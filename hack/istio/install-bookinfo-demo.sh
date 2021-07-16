@@ -174,7 +174,7 @@ if [ "${DELETE_BOOKINFO}" == "true" ]; then
 fi
 
 # If OpenShift, we need to do some additional things
-if [[ "${IS_OPENSHIFT}" == "true" ]]; then
+if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE new-project ${NAMESPACE}
 else
   $CLIENT_EXE create namespace ${NAMESPACE}
