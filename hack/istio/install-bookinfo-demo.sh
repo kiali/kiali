@@ -241,6 +241,7 @@ apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
   name: bookinfo-scc
+runAsUser:
   type: RunAsAny
 seLinuxContext:
   type: RunAsAny
