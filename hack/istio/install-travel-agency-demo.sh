@@ -77,14 +77,29 @@ echo NAMESPACE_CONTROL=${NAMESPACE_CONTROL}
 echo NAMESPACE_PORTAL=${NAMESPACE_PORTAL}
 echo SOURCE=${SOURCE}
 
+IS_OPENSHIFT="false"
+IS_MAISTRA="false"
+if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+  IS_OPENSHIFT="true"
+  IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
+fi
+
+echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
+echo "IS_MAISTRA=${IS_MAISTRA}"
+
 
 # If we are to delete, remove everything and exit immediately after
 if [ "${DELETE_DEMO}" == "true" ]; then
   echo "Deleting Travel Agency Demo (the envoy filters, if previously created, will remain)"
-  if [ "${CLIENT_EXE}" == "oc" ]; then
-    ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_AGENCY}
-    ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_PORTAL}
-    ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_CONTROL}
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    if [ "${IS_MAISTRA}" != "true" ]; then
+      ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_AGENCY}
+      ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_PORTAL}
+      ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_CONTROL}
+    fi
+    $CLIENT_EXE delete security-context-constraints travel-scc -n ${NAMESPACE_AGENCY}
+    $CLIENT_EXE delete security-context-constraints travel-scc -n ${NAMESPACE_PORTAL}
+    $CLIENT_EXE delete security-context-constraints travel-scc -n ${NAMESPACE_CONTROL}
   fi
   ${CLIENT_EXE} delete namespace ${NAMESPACE_AGENCY}
   ${CLIENT_EXE} delete namespace ${NAMESPACE_PORTAL}
@@ -99,13 +114,15 @@ if ! ${CLIENT_EXE} get namespace ${NAMESPACE_AGENCY} 2>/dev/null; then
   if [ "${ENABLE_INJECTION}" == "true" ]; then
     ${CLIENT_EXE} label namespace ${NAMESPACE_AGENCY} istio-injection=enabled
   fi
-  if [ "${CLIENT_EXE}" == "oc" ]; then
-    cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_AGENCY} create -f -
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    if [ "${IS_MAISTRA}" != "true" ]; then
+      cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_AGENCY} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
-EOF
+NAD
+    fi
   fi
 fi
 
@@ -114,13 +131,15 @@ if ! ${CLIENT_EXE} get namespace ${NAMESPACE_PORTAL} 2>/dev/null; then
   if [ "${ENABLE_INJECTION}" == "true" ]; then
     ${CLIENT_EXE} label namespace ${NAMESPACE_PORTAL} istio-injection=enabled
   fi
-  if [ "${CLIENT_EXE}" == "oc" ]; then
-    cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_PORTAL} create -f -
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    if [ "${IS_MAISTRA}" != "true" ]; then
+      cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_PORTAL} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
-EOF
+NAD
+    fi
   fi
 fi
 
@@ -129,13 +148,15 @@ if ! ${CLIENT_EXE} get namespace ${NAMESPACE_CONTROL} 2>/dev/null; then
   if [ "${ENABLE_INJECTION}" == "true" ]; then
     ${CLIENT_EXE} label namespace ${NAMESPACE_CONTROL} istio-injection=enabled
   fi
-  if [ "${CLIENT_EXE}" == "oc" ]; then
-    cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_CONTROL} create -f -
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    if [ "${IS_MAISTRA}" != "true" ]; then
+      cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_CONTROL} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
-EOF
+NAD
+    fi
   fi
 fi
 
@@ -144,6 +165,49 @@ fi
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_agency.yaml") -n ${NAMESPACE_AGENCY}
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_portal.yaml") -n ${NAMESPACE_PORTAL}
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_control.yaml") -n ${NAMESPACE_CONTROL}
+
+# Add SCCs for OpenShift
+if [ "${IS_OPENSHIFT}" == "true" ]; then
+  cat <<SCC | $CLIENT_EXE -n ${NAMESPACE_AGENCY} create -f -
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: travel-scc
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+users:
+- "system:serviceaccount:${NAMESPACE_AGENCY}:default"
+SCC
+  cat <<SCC | $CLIENT_EXE -n ${NAMESPACE_PORTAL} create -f -
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: travel-scc
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+users:
+- "system:serviceaccount:${NAMESPACE_PORTAL}:default"
+SCC
+  cat <<SCC | $CLIENT_EXE -n ${NAMESPACE_CONTROL} create -f -
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: travel-scc
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+users:
+- "system:serviceaccount:${NAMESPACE_CONTROL}:default"
+SCC
+fi
 
 # Set up metric classification
 
