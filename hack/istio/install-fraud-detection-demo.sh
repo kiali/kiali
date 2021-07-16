@@ -63,8 +63,8 @@ echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 echo "IS_MAISTRA=${IS_MAISTRA}"
 
 if [ "${DELETE_DEMO}" == "true" ]; then
-  if [[ "${IS_OPENSHIFT}" = "true" ]]; then
-    if [[ "${IS_MAISTRA}" != "true" ]]; then
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    if [ "${IS_MAISTRA}" != "true" ]; then
       $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
     fi
     $CLIENT_EXE delete security-context-constraints fraud-detection-scc -n ${NAMESPACE}
@@ -119,5 +119,4 @@ users:
 - "system:serviceaccount:${NAMESPACE}:default"
 SCC
 fi
-
 
