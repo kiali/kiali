@@ -18,10 +18,19 @@ import (
 
 const testCluster = "testcluster"
 
-func setupServiceEntries(exportTo interface{}) *business.Layer {
+func setupBusinessLayer(istioObjects ...kubernetes.IstioObject) *business.Layer {
 	k8s := kubetest.NewK8SClientMock()
 
-	externalSE := kubernetes.GenericIstioObject{
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return(istioObjects, nil)
+	config.Set(config.NewConfig())
+
+	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	return businessLayer
+}
+
+func setupServiceEntries(exportTo interface{}) *business.Layer {
+	externalSE := &kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "externalSE",
 			Namespace: "testNamespace",
@@ -34,7 +43,7 @@ func setupServiceEntries(exportTo interface{}) *business.Layer {
 			"location": "MESH_EXTERNAL",
 		},
 	}
-	internalSE := kubernetes.GenericIstioObject{
+	internalSE := &kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "internalSE",
 			Namespace: "testNamespace",
@@ -47,15 +56,7 @@ func setupServiceEntries(exportTo interface{}) *business.Layer {
 		},
 	}
 
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
-		&externalSE,
-		&internalSE},
-		nil)
-	config.Set(config.NewConfig())
-
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
-	return businessLayer
+	return setupBusinessLayer(externalSE, internalSE)
 }
 
 func serviceEntriesTrafficMap() map[string]*graph.Node {
@@ -1018,4 +1019,109 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	assert.Equal(true, found3)
 	assert.Equal(0, len(notSEHost2ServiceNode.Edges))
 	assert.Equal(nil, notSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
+}
+
+// TestServiceEntryMultipleEdges ensures that a service entry node gets created
+// for nodes with multiple outgoing edges such as when an internal service entry
+// routes to multiple versions of a workload.
+func TestServiceEntryMultipleEdges(t *testing.T) {
+	assert := assert.New(t)
+
+	const (
+		namespace     = "testNamespace"
+		seServiceName = "reviews"
+		app           = "reviews"
+	)
+
+	internalSE := &kubernetes.GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      seServiceName,
+			Namespace: namespace,
+		},
+		Spec: map[string]interface{}{
+			"hosts": []interface{}{
+				"reviews",
+				"reviews.testNamespace.svc.cluster.local"},
+			"location": "MESH_INTERNAL",
+			"workloadSelector": map[string]interface{}{
+				"labels": map[string]string{
+					"app": "reviews",
+				},
+			},
+		},
+	}
+
+	businessLayer := setupBusinessLayer(internalSE)
+
+	// VersionedApp graph
+	trafficMap := make(map[string]*graph.Node)
+
+	// appNode for interal service v1
+	v1 := graph.NewNode(testCluster, namespace, seServiceName, namespace, "reviews-v1", app, "v1", graph.GraphTypeVersionedApp)
+	// appNode for interal service v2
+	v2 := graph.NewNode(testCluster, namespace, seServiceName, namespace, "reviews-v2", app, "v2", graph.GraphTypeVersionedApp)
+
+	// reviews serviceNode
+	svc := graph.NewNode(testCluster, namespace, seServiceName, namespace, "", "", "", graph.GraphTypeVersionedApp)
+
+	trafficMap[svc.ID] = &svc
+	trafficMap[v1.ID] = &v1
+	trafficMap[v2.ID] = &v2
+
+	svc.AddEdge(&v1).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	svc.AddEdge(&v2).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+
+	assert.Equal(3, len(trafficMap))
+
+	seSVCID, _ := graph.Id(testCluster, namespace, seServiceName, namespace, "", "", "", graph.GraphTypeVersionedApp)
+	svcNode, svcNodeFound := trafficMap[seSVCID]
+	assert.Equal(true, svcNodeFound)
+	assert.Equal(2, len(svcNode.Edges))
+	assert.Equal(nil, svcNode.Metadata[graph.IsServiceEntry])
+
+	v1ID, _ := graph.Id(testCluster, namespace, seServiceName, namespace, "reviews-v1", app, "v1", graph.GraphTypeVersionedApp)
+	v1Node, v1NodeFound := trafficMap[v1ID]
+	assert.Equal(true, v1NodeFound)
+	assert.Equal(0, len(v1Node.Edges))
+	assert.Equal(nil, v1Node.Metadata[graph.IsServiceEntry])
+
+	v2ID, _ := graph.Id(testCluster, namespace, seServiceName, namespace, "reviews-v2", app, "v2", graph.GraphTypeVersionedApp)
+	v2Node, v2NodeFound := trafficMap[v2ID]
+	assert.Equal(true, v2NodeFound)
+	assert.Equal(0, len(v2Node.Edges))
+	assert.Equal(nil, v2Node.Metadata[graph.IsServiceEntry])
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.HomeCluster = testCluster
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
+	// Run the appender...
+	a := ServiceEntryAppender{
+		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
+	}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	assert.Equal(3, len(trafficMap))
+
+	seSVCID, _ = graph.Id(testCluster, namespace, seServiceName, namespace, "", "", "", graph.GraphTypeVersionedApp)
+	svcNode, svcNodeFound = trafficMap[seSVCID]
+	assert.Equal(true, svcNodeFound)
+	assert.Equal("MESH_INTERNAL", svcNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
+	internalHosts := svcNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Hosts
+	assert.Equal("reviews", internalHosts[0])
+	assert.Equal("reviews.testNamespace.svc.cluster.local", internalHosts[1])
+	assert.Equal(2, len(svcNode.Edges))
+
+	v1ID, _ = graph.Id(testCluster, namespace, seServiceName, namespace, "reviews-v1", app, "v1", graph.GraphTypeVersionedApp)
+	v1Node, v1NodeFound = trafficMap[v1ID]
+	assert.Equal(true, v1NodeFound)
+	assert.Equal(0, len(v1Node.Edges))
+	assert.Equal(nil, v1Node.Metadata[graph.IsServiceEntry])
+
+	v2ID, _ = graph.Id(testCluster, namespace, seServiceName, namespace, "reviews-v2", app, "v2", graph.GraphTypeVersionedApp)
+	v2Node, v2NodeFound = trafficMap[v2ID]
+	assert.Equal(true, v2NodeFound)
+	assert.Equal(0, len(v2Node.Edges))
+	assert.Equal(nil, v2Node.Metadata[graph.IsServiceEntry])
 }
