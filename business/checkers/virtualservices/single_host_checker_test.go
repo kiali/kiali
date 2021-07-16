@@ -17,8 +17,9 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 		buildVirtualService("virtual-2", "ratings"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	emptyValidationTest(t, vals)
@@ -29,8 +30,9 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 		buildVirtualService("virtual-2", "ratings"),
 	}
 	vals = SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	emptyValidationTest(t, vals)
@@ -42,8 +44,9 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 		buildVirtualServiceWithGateway("virtual-2", "ratings", "bookinfo-gateway"),
 	}
 	vals = SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	emptyValidationTest(t, vals)
@@ -56,8 +59,9 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 	}
 
 	vals = SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	emptyValidationTest(t, vals)
@@ -70,8 +74,9 @@ func TestOneVirtualServicePerFQDNHost(t *testing.T) {
 		buildVirtualService("virtual-2", "ratings.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	emptyValidationTest(t, vals)
@@ -83,8 +88,9 @@ func TestOneVirtualServicePerFQDNWildcardHost(t *testing.T) {
 		buildVirtualService("virtual-2", "*.eshop.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	emptyValidationTest(t, vals)
@@ -98,8 +104,9 @@ func TestRepeatingSimpleHost(t *testing.T) {
 	}
 
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	presentValidationTest(t, vals, "virtual-1")
@@ -125,8 +132,9 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 	}
 
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	noObjectValidationTest(t, vals, "virtual-1")
@@ -138,8 +146,9 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 	}
 
 	vals = SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	noObjectValidationTest(t, vals, "virtual-1")
@@ -151,8 +160,9 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 	}
 
 	vals = SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	refKey := models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: "virtual-2"}
@@ -174,7 +184,8 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
-		VirtualServices: vss,
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	presentValidationTest(t, vals, "virtual-1")
@@ -189,7 +200,8 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
-		VirtualServices: vss,
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	presentValidationTest(t, vals, "virtual-1")
@@ -205,7 +217,8 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
-		VirtualServices: vss,
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	presentValidationTest(t, vals, "virtual-1")
@@ -220,7 +233,8 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
-		VirtualServices: vss,
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	presentValidationTest(t, vals, "virtual-1")
@@ -235,7 +249,8 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
-		VirtualServices: vss,
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	noObjectValidationTest(t, vals, "virtual-1")
@@ -251,7 +266,8 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
-		VirtualServices: vss,
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	noObjectValidationTest(t, vals, "virtual-1")
@@ -266,8 +282,9 @@ func TestRepeatingFQDNHost(t *testing.T) {
 		buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	presentValidationTest(t, vals, "virtual-1")
@@ -293,8 +310,9 @@ func TestRepeatingFQDNWildcardHost(t *testing.T) {
 		buildVirtualService("virtual-3", "*.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	presentValidationTest(t, vals, "virtual-1")
@@ -320,8 +338,9 @@ func TestIncludedIntoWildCard(t *testing.T) {
 		buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	presentValidationTest(t, vals, "virtual-1")
@@ -346,8 +365,9 @@ func TestIncludedIntoWildCard(t *testing.T) {
 		buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals = SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	presentValidationTest(t, vals, "virtual-1")
@@ -373,8 +393,9 @@ func TestShortHostNameIncludedIntoWildCard(t *testing.T) {
 		buildVirtualService("virtual-3", "reviews"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	presentValidationTest(t, vals, "virtual-1")
@@ -400,8 +421,9 @@ func TestWildcardisMarkedInvalid(t *testing.T) {
 		buildVirtualService("virtual-3", "reviews"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	presentValidationTest(t, vals, "virtual-1")
@@ -427,8 +449,9 @@ func TestMultipleHostsFailing(t *testing.T) {
 			"mongo.backup.svc.cluster.local", "mongo.staging.svc.cluster.local"}),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	presentValidationTest(t, vals, "virtual-1")
@@ -451,8 +474,9 @@ func TestMultipleHostsPassing(t *testing.T) {
 			"mongo.backup.svc.cluster.local", "mongo.staging.svc.cluster.local"}),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
-		VirtualServices: vss,
+		Namespace:               "bookinfo",
+		VirtualServices:         vss,
+		ExportedVirtualServices: []kubernetes.IstioObject{},
 	}.Check()
 
 	emptyValidationTest(t, vals)

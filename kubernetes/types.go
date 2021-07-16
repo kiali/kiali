@@ -262,6 +262,14 @@ type RBACDetails struct {
 	AuthorizationPolicies []IstioObject `json:"authorizationpolicies"`
 }
 
+// ExportedResources is a wrapper to group all exported Istio objects
+// Used to provide exported resources to validation
+type ExportedResources struct {
+	VirtualServices  []IstioObject `json:"virtualservices"`
+	DestinationRules []IstioObject `json:"destinationrules"`
+	ServiceEntries   []IstioObject `json:"serviceentries"`
+}
+
 // GenericIstioObject is a type to test Istio types defined by Istio as a Kubernetes extension.
 type GenericIstioObject struct {
 	meta_v1.TypeMeta   `json:",inline" yaml:",inline"`

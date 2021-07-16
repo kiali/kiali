@@ -10,10 +10,12 @@ import (
 const VirtualCheckerType = "virtualservice"
 
 type VirtualServiceChecker struct {
-	Namespace        string
-	Namespaces       models.Namespaces
-	DestinationRules []kubernetes.IstioObject
-	VirtualServices  []kubernetes.IstioObject
+	Namespace                string
+	Namespaces               models.Namespaces
+	DestinationRules         []kubernetes.IstioObject
+	VirtualServices          []kubernetes.IstioObject
+	ExportedVirtualServices  []kubernetes.IstioObject
+	ExportedDestinationRules []kubernetes.IstioObject
 }
 
 // An Object Checker runs all checkers for an specific object type (i.e.: pod, route rule,...)
@@ -45,7 +47,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	enabledCheckers := []GroupChecker{
-		virtualservices.SingleHostChecker{Namespace: in.Namespace, Namespaces: in.Namespaces, VirtualServices: in.VirtualServices},
+		virtualservices.SingleHostChecker{Namespace: in.Namespace, Namespaces: in.Namespaces, VirtualServices: in.VirtualServices, ExportedVirtualServices: in.ExportedVirtualServices},
 	}
 
 	for _, checker := range enabledCheckers {
