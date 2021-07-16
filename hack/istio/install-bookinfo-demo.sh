@@ -158,6 +158,7 @@ if [ "${GATEWAY_YAML}" == "" ]; then
   GATEWAY_YAML="${ISTIO_DIR}/samples/bookinfo/networking/bookinfo-gateway.yaml"
 fi
 
+# If we are to delete, remove everything and exit immediately after
 if [ "${DELETE_BOOKINFO}" == "true" ]; then
   echo "====== UNINSTALLING ANY EXISTING BOOKINFO DEMO ====="
   if [ "${IS_OPENSHIFT}" == "true" ]; then

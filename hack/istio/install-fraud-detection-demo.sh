@@ -62,6 +62,7 @@ fi
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 echo "IS_MAISTRA=${IS_MAISTRA}"
 
+# If we are to delete, remove everything and exit immediately after
 if [ "${DELETE_DEMO}" == "true" ]; then
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     if [ "${IS_MAISTRA}" != "true" ]; then
@@ -103,8 +104,7 @@ kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
-  fi  
-
+  fi
   cat <<SCC | $CLIENT_EXE -n ${NAMESPACE} create -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
