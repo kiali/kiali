@@ -228,7 +228,7 @@ $CLIENT_EXE get pods -n ${NAMESPACE}
 if [[ "${IS_OPENSHIFT}" = "true" ]]; then
   $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
   $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
-  if [[ "${IS_MAISTRA}" == "true" ]]; then
+  if [[ "${IS_MAISTRA}" != "true" ]]; then
     cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
