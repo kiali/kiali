@@ -97,9 +97,7 @@ if [ "${DELETE_DEMO}" == "true" ]; then
       ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_PORTAL}
       ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_CONTROL}
     fi
-    $CLIENT_EXE delete security-context-constraints travel-scc -n ${NAMESPACE_AGENCY}
-    $CLIENT_EXE delete security-context-constraints travel-scc -n ${NAMESPACE_PORTAL}
-    $CLIENT_EXE delete security-context-constraints travel-scc -n ${NAMESPACE_CONTROL}
+    $CLIENT_EXE delete scc travel-scc
   fi
   ${CLIENT_EXE} delete namespace ${NAMESPACE_AGENCY}
   ${CLIENT_EXE} delete namespace ${NAMESPACE_PORTAL}
@@ -166,9 +164,9 @@ ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_agency.yaml") -n ${NA
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_portal.yaml") -n ${NAMESPACE_PORTAL}
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_control.yaml") -n ${NAMESPACE_CONTROL}
 
-# Add SCCs for OpenShift
+# Add SCC for OpenShift
 if [ "${IS_OPENSHIFT}" == "true" ]; then
-  cat <<SCC | $CLIENT_EXE -n ${NAMESPACE_AGENCY} create -f -
+  cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
@@ -181,33 +179,7 @@ supplementalGroups:
   type: RunAsAny
 users:
 - "system:serviceaccount:${NAMESPACE_AGENCY}:default"
-SCC
-  cat <<SCC | $CLIENT_EXE -n ${NAMESPACE_PORTAL} create -f -
-apiVersion: security.openshift.io/v1
-kind: SecurityContextConstraints
-metadata:
-  name: travel-scc
-runAsUser:
-  type: RunAsAny
-seLinuxContext:
-  type: RunAsAny
-supplementalGroups:
-  type: RunAsAny
-users:
 - "system:serviceaccount:${NAMESPACE_PORTAL}:default"
-SCC
-  cat <<SCC | $CLIENT_EXE -n ${NAMESPACE_CONTROL} create -f -
-apiVersion: security.openshift.io/v1
-kind: SecurityContextConstraints
-metadata:
-  name: travel-scc
-runAsUser:
-  type: RunAsAny
-seLinuxContext:
-  type: RunAsAny
-supplementalGroups:
-  type: RunAsAny
-users:
 - "system:serviceaccount:${NAMESPACE_CONTROL}:default"
 SCC
 fi

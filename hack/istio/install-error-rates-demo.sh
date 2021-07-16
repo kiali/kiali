@@ -73,8 +73,7 @@ if [ "${DELETE_DEMO}" == "true" ]; then
       $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_ALPHA}
       $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE_BETA}
     fi
-    $CLIENT_EXE delete security-context-constraints error-rates-scc -n ${NAMESPACE_ALPHA}
-    $CLIENT_EXE delete security-context-constraints error-rates-scc -n ${NAMESPACE_BETA}
+    $CLIENT_EXE delete security-context-constraints error-rates-scc
   fi
   ${CLIENT_EXE} delete namespace ${NAMESPACE_ALPHA}
   ${CLIENT_EXE} delete namespace ${NAMESPACE_BETA}
@@ -111,7 +110,7 @@ metadata:
   name: istio-cni
 NAD
   fi
-  cat <<SCC | $CLIENT_EXE -n ${NAMESPACE_ALPHA} create -f -
+  cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
@@ -124,30 +123,6 @@ supplementalGroups:
   type: RunAsAny
 users:
 - "system:serviceaccount:${NAMESPACE_ALPHA}:default"
-SCC
-fi
-
-if [ "${IS_OPENSHIFT}" == "true" ]; then
-  if [ "${IS_MAISTRA}" != "true" ]; then
-    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_BETA} create -f -
-apiVersion: "k8s.cni.cncf.io/v1"
-kind: NetworkAttachmentDefinition
-metadata:
-  name: istio-cni
-NAD
-  fi
-  cat <<SCC | $CLIENT_EXE -n ${NAMESPACE_BETA} create -f -
-apiVersion: security.openshift.io/v1
-kind: SecurityContextConstraints
-metadata:
-  name: error-rates-scc
-runAsUser:
-  type: RunAsAny
-seLinuxContext:
-  type: RunAsAny
-supplementalGroups:
-  type: RunAsAny
-users:
 - "system:serviceaccount:${NAMESPACE_BETA}:default"
 SCC
 fi

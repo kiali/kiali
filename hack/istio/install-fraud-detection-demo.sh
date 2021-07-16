@@ -68,7 +68,7 @@ if [ "${DELETE_DEMO}" == "true" ]; then
     if [ "${IS_MAISTRA}" != "true" ]; then
       $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
     fi
-    $CLIENT_EXE delete security-context-constraints fraud-detection-scc -n ${NAMESPACE}
+    $CLIENT_EXE delete scc fraud-detection-scc
   fi
   ${CLIENT_EXE} delete namespace ${NAMESPACE}
   exit 0
@@ -105,7 +105,7 @@ metadata:
   name: istio-cni
 NAD
   fi
-  cat <<SCC | $CLIENT_EXE -n ${NAMESPACE} create -f -
+  cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:

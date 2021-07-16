@@ -165,7 +165,7 @@ if [ "${DELETE_BOOKINFO}" == "true" ]; then
     if [ "${IS_MAISTRA}" != "true" ]; then
       $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
     fi
-    $CLIENT_EXE delete security-context-constraints bookinfo-scc -n ${NAMESPACE}
+    $CLIENT_EXE delete scc bookinfo-scc
     $CLIENT_EXE delete project ${NAMESPACE}
   else
     $CLIENT_EXE delete namespace ${NAMESPACE}
@@ -236,7 +236,7 @@ metadata:
   name: istio-cni
 NAD
   fi  
-  cat <<SCC | $CLIENT_EXE -n ${NAMESPACE} create -f -
+  cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
