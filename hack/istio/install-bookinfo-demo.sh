@@ -161,7 +161,7 @@ fi
 if [ "${DELETE_BOOKINFO}" == "true" ]; then
   echo "====== UNINSTALLING ANY EXISTING BOOKINFO DEMO ====="
   if [[ "${IS_OPENSHIFT}" = "true" ]]; then
-    if [[ "${IS_MAISTRA}" == "true" ]]; then
+    if [[ "${IS_MAISTRA}" != "true" ]]; then
       $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
     fi
     $CLIENT_EXE delete security-context-constraints bookinfo-scc -n ${NAMESPACE}
@@ -251,6 +251,7 @@ users:
 - "system:serviceaccount:${NAMESPACE}:bookinfo-ratings"
 - "system:serviceaccount:${NAMESPACE}:bookinfo-ratings=v2"
 - "system:serviceaccount:${NAMESPACE}:bookinfo-reviews"
+- "system:serviceaccount:${NAMESPACE}:default"
 SCC
 fi
 
