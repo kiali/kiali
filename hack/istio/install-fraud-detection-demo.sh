@@ -75,7 +75,7 @@ fi
 
 # Create and prepare the demo namespaces
 
-if [[ "${IS_OPENSHIFT}" == "true" ]]; then
+if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE new-project ${NAMESPACE}
 else
   $CLIENT_EXE create namespace ${NAMESPACE}
@@ -119,4 +119,3 @@ users:
 - "system:serviceaccount:${NAMESPACE}:default"
 SCC
 fi
-
