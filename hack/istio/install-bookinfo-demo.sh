@@ -224,7 +224,7 @@ $CLIENT_EXE get services -n ${NAMESPACE}
 $CLIENT_EXE get pods -n ${NAMESPACE}
 
 # If OpenShift, we need to do some additional things
-if [[ "${IS_OPENSHIFT}" = "true" ]]; then
+if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
   $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
   if [[ "${IS_MAISTRA}" != "true" ]]; then
