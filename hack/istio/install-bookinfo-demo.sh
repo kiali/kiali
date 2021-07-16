@@ -140,6 +140,18 @@ else
   exit 1
 fi
 
+IS_OPENSHIFT="false"
+IS_MAISTRA="false"
+if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+  IS_OPENSHIFT="true"
+  if [[ $([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true") ]]; then
+    IS_MAISTRA="true"
+  fi
+fi
+
+echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
+echo "IS_MAISTRA=${IS_MAISTRA}"
+
 if [ "${BOOKINFO_YAML}" == "" ]; then
   BOOKINFO_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo.yaml"
 fi
@@ -150,8 +162,11 @@ fi
 
 if [ "${DELETE_BOOKINFO}" == "true" ]; then
   echo "====== UNINSTALLING ANY EXISTING BOOKINFO DEMO ====="
-  if [[ "$CLIENT_EXE" = *"oc" ]]; then
-    $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
+  if [[ "${IS_OPENSHIFT}" = "true" ]]; then
+    if [[ "${IS_MAISTRA}" == "true" ]]; then
+      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
+    fi
+    $CLIENT_EXE delete security-context-constraints bookinfo-scc -n ${NAMESPACE}
     $CLIENT_EXE delete project ${NAMESPACE}
   else
     $CLIENT_EXE delete namespace ${NAMESPACE}
@@ -161,7 +176,7 @@ if [ "${DELETE_BOOKINFO}" == "true" ]; then
 fi
 
 # If OpenShift, we need to do some additional things
-if [[ "$CLIENT_EXE" = *"oc" ]]; then
+if [[ "${IS_OPENSHIFT}" == "true" ]]; then
   $CLIENT_EXE new-project ${NAMESPACE}
 else
   $CLIENT_EXE create namespace ${NAMESPACE}
@@ -211,15 +226,34 @@ $CLIENT_EXE get services -n ${NAMESPACE}
 $CLIENT_EXE get pods -n ${NAMESPACE}
 
 # If OpenShift, we need to do some additional things
-if [[ "$CLIENT_EXE" = *"oc" ]]; then
+if [[ "${IS_OPENSHIFT}" = "true" ]]; then
   $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
   $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
-  cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
+  if [[ "${IS_MAISTRA}" == "true" ]]; then
+    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
+  fi  
+  cat <<SCC | $CLIENT_EXE -n ${NAMESPACE} create -f -
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: bookinfo-scc
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+users:
+- "system:serviceaccount:${NAMESPACE}:bookinfo-details"
+- "system:serviceaccount:${NAMESPACE}:bookinfo-productpage"
+- "system:serviceaccount:${NAMESPACE}:bookinfo-ratings"
+- "system:serviceaccount:${NAMESPACE}:bookinfo-ratings=v2"
+- "system:serviceaccount:${NAMESPACE}:bookinfo-reviews"
+SCC
 fi
 
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
@@ -249,3 +283,4 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
     curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml | $CLIENT_EXE create --validate=false -n ${NAMESPACE} -f -
   fi
 fi
+
