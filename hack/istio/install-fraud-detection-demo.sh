@@ -95,8 +95,8 @@ ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/claims.yaml") -n ${N
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/insurance.yaml") -n ${NAMESPACE}
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/fraud-detection/fraud.yaml") -n ${NAMESPACE}
 
-if [[ "${IS_OPENSHIFT}" = "true" ]]; then
-  if [[ "${IS_MAISTRA}" != "true" ]]; then
+if [ "${IS_OPENSHIFT}" == "true" ]; then
+  if [ "${IS_MAISTRA}" != "true" ]; then
     cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
