@@ -160,7 +160,7 @@ fi
 
 if [ "${DELETE_BOOKINFO}" == "true" ]; then
   echo "====== UNINSTALLING ANY EXISTING BOOKINFO DEMO ====="
-  if [[ "${IS_OPENSHIFT}" = "true" ]]; then
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
     if [[ "${IS_MAISTRA}" != "true" ]]; then
       $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
     fi
