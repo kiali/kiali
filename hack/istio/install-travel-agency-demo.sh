@@ -2,10 +2,39 @@
 
 # This deploys the travel agency demo
 
+# Given a namepace, prepare it for inclusion in Maistra's control plane
+# This means:
+# 1. Create a SMM
+# 2. Annotate all of the namespace's Deployments with the sidecar injection annotation if enabled
+prepare_maistra() {
+  local ns="${1}"
+
+  cat <<EOM | ${CLIENT_EXE} apply -f -
+apiVersion: maistra.io/v1
+kind: ServiceMeshMember
+metadata:
+  name: default
+  namespace: ${ns}
+spec:
+  controlPlaneRef:
+    namespace: ${ISTIO_NAMESPACE}
+    name: "$(${CLIENT_EXE} get smcp -n ${ISTIO_NAMESPACE} -o jsonpath='{.items[0].metadata.name}' )"
+EOM
+
+  if [ "${ENABLE_INJECTION}" == "true" ]; then
+    for d in $(${CLIENT_EXE} get deployments -n ${ns} -o name)
+    do
+      echo "Enabling sidecar injection for deployment: ${d}"
+      ${CLIENT_EXE} patch ${d} -n ${ns} -p '{"spec":{"template":{"metadata":{"annotations":{"sidecar.istio.io/inject": "true"}}}}}' --type=merge
+    done
+  fi
+}
+
 : ${CLIENT_EXE:=oc}
 : ${DELETE_DEMO:=false}
 : ${ENABLE_INJECTION:=true}
 : ${ENABLE_OPERATION_METRICS:=false}
+: ${ISTIO_NAMESPACE:=istio-system}
 : ${NAMESPACE_AGENCY:=travel-agency}
 : ${NAMESPACE_CONTROL:=travel-control}
 : ${NAMESPACE_PORTAL:=travel-portal}
@@ -31,6 +60,10 @@ while [ $# -gt 0 ]; do
       ENABLE_OPERATION_METRICS="$2"
       shift;shift
       ;;
+    -in|--istio-namespace)
+￼￼    ISTIO_NAMESPACE="$2"
+￼￼    shift;shift
+￼￼    ;;
     -s|--source)
       SOURCE="$2"
       shift;shift
@@ -46,6 +79,7 @@ Valid command line arguments:
   -d|--delete: either 'true' or 'false'. If 'true' the travel agency demo will be deleted, not installed.
   -ei|--enable-injection: either 'true' or 'false' (default is true). If 'true' auto-inject proxies for the workloads.
   -eo|--enable-operation-metrics: either 'true' or 'false' (default is false). Only works on Istio 1.10 installed in istio-system.
+  -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -s|--source: demo file source. For example: file:///home/me/demos Default: https://raw.githubusercontent.com/kiali/demos/master
   -sg|--show-gui: do not install anything, but bring up the travel agency GUI in a browser window
   -h|--help: this text
@@ -72,19 +106,37 @@ echo CLIENT_EXE=${CLIENT_EXE}
 echo DELETE_DEMO=${DELETE_DEMO}
 echo ENABLE_INJECTION=${ENABLE_INJECTION}
 echo ENABLE_OPERATION_METRICS=${ENABLE_OPERATION_METRICS}
+echo ISTIO_NAMESPACE=${ISTIO_NAMESPACE}
 echo NAMESPACE_AGENCY=${NAMESPACE_AGENCY}
 echo NAMESPACE_CONTROL=${NAMESPACE_CONTROL}
 echo NAMESPACE_PORTAL=${NAMESPACE_PORTAL}
 echo SOURCE=${SOURCE}
 
+IS_OPENSHIFT="false"
+IS_MAISTRA="false"
+if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+  IS_OPENSHIFT="true"
+  IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
+fi
+
+echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
+echo "IS_MAISTRA=${IS_MAISTRA}"
+
 
 # If we are to delete, remove everything and exit immediately after
 if [ "${DELETE_DEMO}" == "true" ]; then
   echo "Deleting Travel Agency Demo (the envoy filters, if previously created, will remain)"
-  if [ "${CLIENT_EXE}" == "oc" ]; then
-    ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_AGENCY}
-    ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_PORTAL}
-    ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_CONTROL}
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    if [ "${IS_MAISTRA}" != "true" ]; then
+      ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_AGENCY}
+      ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_PORTAL}
+      ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_CONTROL}
+    else
+      $CLIENT_EXE delete smm default -n ${NAMESPACE_AGENCY}
+      $CLIENT_EXE delete smm default -n ${NAMESPACE_PORTAL}
+      $CLIENT_EXE delete smm default -n ${NAMESPACE_CONTROL}
+    fi
+    $CLIENT_EXE delete scc travel-scc
   fi
   ${CLIENT_EXE} delete namespace ${NAMESPACE_AGENCY}
   ${CLIENT_EXE} delete namespace ${NAMESPACE_PORTAL}
@@ -99,13 +151,15 @@ if ! ${CLIENT_EXE} get namespace ${NAMESPACE_AGENCY} 2>/dev/null; then
   if [ "${ENABLE_INJECTION}" == "true" ]; then
     ${CLIENT_EXE} label namespace ${NAMESPACE_AGENCY} istio-injection=enabled
   fi
-  if [ "${CLIENT_EXE}" == "oc" ]; then
-    cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_AGENCY} create -f -
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    if [ "${IS_MAISTRA}" != "true" ]; then
+      cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_AGENCY} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
-EOF
+NAD
+    fi
   fi
 fi
 
@@ -114,13 +168,15 @@ if ! ${CLIENT_EXE} get namespace ${NAMESPACE_PORTAL} 2>/dev/null; then
   if [ "${ENABLE_INJECTION}" == "true" ]; then
     ${CLIENT_EXE} label namespace ${NAMESPACE_PORTAL} istio-injection=enabled
   fi
-  if [ "${CLIENT_EXE}" == "oc" ]; then
-    cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_PORTAL} create -f -
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    if [ "${IS_MAISTRA}" != "true" ]; then
+      cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_PORTAL} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
-EOF
+NAD
+    fi
   fi
 fi
 
@@ -129,13 +185,15 @@ if ! ${CLIENT_EXE} get namespace ${NAMESPACE_CONTROL} 2>/dev/null; then
   if [ "${ENABLE_INJECTION}" == "true" ]; then
     ${CLIENT_EXE} label namespace ${NAMESPACE_CONTROL} istio-injection=enabled
   fi
-  if [ "${CLIENT_EXE}" == "oc" ]; then
-    cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_CONTROL} create -f -
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    if [ "${IS_MAISTRA}" != "true" ]; then
+      cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_CONTROL} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
-EOF
+NAD
+    fi
   fi
 fi
 
@@ -144,6 +202,32 @@ fi
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_agency.yaml") -n ${NAMESPACE_AGENCY}
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_portal.yaml") -n ${NAMESPACE_PORTAL}
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_control.yaml") -n ${NAMESPACE_CONTROL}
+
+if [ "${IS_MAISTRA}" == "true" ]; then
+  prepare_maistra "${NAMESPACE_AGENCY}"
+  prepare_maistra "${NAMESPACE_PORTAL}"
+  prepare_maistra "${NAMESPACE_CONTROL}"
+fi
+
+# Add SCC for OpenShift
+if [ "${IS_OPENSHIFT}" == "true" ]; then
+  cat <<SCC | $CLIENT_EXE apply -f -
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: travel-scc
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+users:
+- "system:serviceaccount:${NAMESPACE_AGENCY}:default"
+- "system:serviceaccount:${NAMESPACE_PORTAL}:default"
+- "system:serviceaccount:${NAMESPACE_CONTROL}:default"
+SCC
+fi
 
 # Set up metric classification
 
