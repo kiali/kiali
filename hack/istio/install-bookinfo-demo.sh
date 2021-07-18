@@ -12,6 +12,34 @@
 #
 ##############################################################################
 
+# Given a namepace, prepare it for inclusion in Maistra's control plane
+# This means:
+# 1. Create a SMM
+# 2. Annotate all of the namespace's Deployments with the sidecar injection annotation if enabled
+prepare_maistra() {
+  local ns="${1}"
+
+  cat <<EOM | ${CLIENT_EXE} apply -f -
+apiVersion: maistra.io/v1
+kind: ServiceMeshMember
+metadata:
+  name: default
+  namespace: ${ns}
+spec:
+  controlPlaneRef:
+    namespace: ${ISTIO_NAMESPACE}
+    name: "$(${CLIENT_EXE} get smcp -n ${ISTIO_NAMESPACE} -o jsonpath='{.items[0].metadata.name}' )"
+EOM
+
+  if [ "${AUTO_INJECTION}" == "true" ]; then
+    for d in $(${CLIENT_EXE} get deployments -n ${ns} -o name)
+    do
+      echo "Enabling sidecar injection for deployment: ${d}"
+      ${CLIENT_EXE} patch ${d} -n ${ns} -p '{"spec":{"template":{"metadata":{"annotations":{"sidecar.istio.io/inject": "true"}}}}}' --type=merge
+    done
+  fi
+}
+
 # ISTIO_DIR is where the Istio download is installed and thus where the bookinfo demo files are found.
 # CLIENT_EXE_NAME is going to either be "oc" or "kubectl"
 ISTIO_DIR=
@@ -164,6 +192,8 @@ if [ "${DELETE_BOOKINFO}" == "true" ]; then
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     if [ "${IS_MAISTRA}" != "true" ]; then
       $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
+    else
+      $CLIENT_EXE delete smm default -n ${NAMESPACE}
     fi
     $CLIENT_EXE delete scc bookinfo-scc
     $CLIENT_EXE delete project ${NAMESPACE}
@@ -216,6 +246,10 @@ if [ "${MYSQL_ENABLED}" == "true" ]; then
     $ISTIOCTL kube-inject -f ${MYSQL_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
     $ISTIOCTL kube-inject -f ${MYSQL_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
   fi
+fi
+
+if [ "${IS_MAISTRA}" == "true" ]; then
+  prepare_maistra "${NAMESPACE}"
 fi
 
 sleep 4
