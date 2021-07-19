@@ -101,3 +101,35 @@ export const getAccumulatedTrafficRateHttp = (elements): TrafficRateHttp => {
     { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0, rateNoResponse: 0 }
   );
 };
+
+type TRAFFIC_TCP = {
+  RATE: string;
+};
+
+const NODE_TCP_IN: TRAFFIC_TCP = {
+  RATE: CyNode.tcpIn
+};
+const EDGE_TCP: TRAFFIC_TCP = {
+  RATE: CyEdge.tcp
+};
+
+export interface TrafficRateTcp {
+  rate: number;
+}
+
+export const getTrafficRateTcp = (element: any, trafficType: TRAFFIC_TCP = NODE_TCP_IN): TrafficRateTcp => {
+  return {
+    rate: safeRate(element.data(trafficType.RATE))
+  };
+};
+
+export const getAccumulatedTrafficRateTcp = (elements): TrafficRateTcp => {
+  return elements.reduce(
+    (r: TrafficRateTcp, element): TrafficRateTcp => {
+      const elementTrafficRate = getTrafficRateTcp(element, EDGE_TCP);
+      r.rate += elementTrafficRate.rate;
+      return r;
+    },
+    { rate: 0 }
+  );
+};

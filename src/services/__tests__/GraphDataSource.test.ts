@@ -1,7 +1,7 @@
 import axios from 'axios';
 import axiosMockAdapter from 'axios-mock-adapter';
 import GraphDataSource, { EMPTY_GRAPH_DATA } from '../GraphDataSource';
-import { GraphType } from '../../types/Graph';
+import { DefaultTrafficRates, GraphType } from '../../types/Graph';
 import MockAdapter from 'axios-mock-adapter';
 
 const GRAPH_EMPTY_RESPONSE = {
@@ -24,7 +24,8 @@ const FETCH_PARAMS = {
   showIdleEdges: false,
   showIdleNodes: false,
   showOperationNodes: false,
-  showSecurity: false
+  showSecurity: false,
+  trafficRates: DefaultTrafficRates
 };
 
 describe('GraphDataSource', () => {

@@ -21,7 +21,8 @@ import {
   NodeType,
   SummaryData,
   UNKNOWN,
-  BoxByType
+  BoxByType,
+  TrafficRate
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -42,7 +43,8 @@ import {
   meshWideMTLSEnabledSelector,
   refreshIntervalSelector,
   replayActiveSelector,
-  replayQueryTimeSelector
+  replayQueryTimeSelector,
+  trafficRatesSelector
 } from '../../store/Selectors';
 import { KialiAppState } from '../../store/Store';
 import { KialiAppAction } from '../../actions/KialiAppAction';
@@ -112,6 +114,7 @@ type ReduxProps = {
   startTour: ({ info: TourInfo, stop: number }) => void;
   summaryData: SummaryData | null;
   trace?: JaegerTrace;
+  trafficRates: TrafficRate[];
   toggleIdleNodes: () => void;
   toggleLegend: () => void;
   updateSummary: (event: CytoscapeClickEvent) => void;
@@ -346,6 +349,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       prev.showServiceNodes !== curr.showServiceNodes ||
       prev.showSecurity !== curr.showSecurity ||
       prev.showIdleNodes !== curr.showIdleNodes ||
+      prev.trafficRates !== curr.trafficRates ||
       GraphPage.isNodeChanged(prev.node, curr.node)
     ) {
       this.loadGraphDataFromBackend();
@@ -443,12 +447,13 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
             {this.props.summaryData && (
               <SummaryPanel
                 data={this.props.summaryData}
-                namespaces={this.props.activeNamespaces}
+                duration={this.state.graphData.fetchParams.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.showServiceNodes}
-                queryTime={this.state.graphData.timestamp / 1000}
-                duration={this.state.graphData.fetchParams.duration}
                 isPageVisible={this.props.isPageVisible}
+                namespaces={this.props.activeNamespaces}
+                queryTime={this.state.graphData.timestamp / 1000}
+                trafficRates={this.props.trafficRates}
                 {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
               />
             )}
@@ -591,7 +596,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
     const urlParams: GraphUrlParams = {
       activeNamespaces: this.state.graphData.fetchParams.namespaces,
       duration: this.state.graphData.fetchParams.duration,
-      edgeLabels: this.props.edgeLabels,
+      edgeLabels: this.state.graphData.fetchParams.edgeLabels,
       graphLayout: this.props.layout,
       graphType: this.state.graphData.fetchParams.graphType,
       node: targetNode,
@@ -599,7 +604,8 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       showIdleEdges: this.props.showIdleEdges,
       showIdleNodes: this.props.showIdleNodes,
       showOperationNodes: this.props.showOperationNodes,
-      showServiceNodes: this.props.showServiceNodes
+      showServiceNodes: this.props.showServiceNodes,
+      trafficRates: this.state.graphData.fetchParams.trafficRates
     };
 
     // To ensure updated components get the updated URL, update the URL first and then the state
@@ -661,7 +667,8 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       showIdleEdges: this.props.showIdleEdges,
       showIdleNodes: this.props.showIdleNodes,
       showOperationNodes: this.props.showOperationNodes,
-      showSecurity: this.props.showSecurity
+      showSecurity: this.props.showSecurity,
+      trafficRates: this.props.trafficRates
     });
   };
 
@@ -704,7 +711,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
   showVirtualServices: state.graph.toolbarState.showVirtualServices,
   summaryData: state.graph.summaryData,
-  trace: state.jaegerState?.selectedTrace
+  trace: state.jaegerState?.selectedTrace,
+  trafficRates: trafficRatesSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({

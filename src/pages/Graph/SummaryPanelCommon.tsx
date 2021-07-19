@@ -137,7 +137,7 @@ export const mergeMetricsResponses = (
   });
 };
 
-export const getFirstDatapoints = (metric: M.Metric[] | undefined): M.Datapoint[] => {
+export const getFirstDatapoints = (metric?: M.Metric[]): M.Datapoint[] => {
   return metric && metric.length > 0 ? metric[0].datapoints : [];
 };
 

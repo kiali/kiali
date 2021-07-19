@@ -1,7 +1,7 @@
 import graphDataState from '../GraphDataState';
 import { GraphActions } from '../../actions/GraphActions';
 import { GlobalActions } from '../../actions/GlobalActions';
-import { GraphType } from '../../types/Graph';
+import { DefaultTrafficRates, GraphType } from '../../types/Graph';
 import { DagreGraph } from '../../components/CytoscapeGraph/graphs/DagreGraph';
 
 describe('GraphDataState', () => {
@@ -28,7 +28,8 @@ describe('GraphDataState', () => {
         showSecurity: false,
         showServiceNodes: true,
         showTrafficAnimation: false,
-        showVirtualServices: true
+        showVirtualServices: true,
+        trafficRates: DefaultTrafficRates
       },
       updateTime: 0
     });

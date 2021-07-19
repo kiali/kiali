@@ -9,7 +9,15 @@ import {
   TimeRange,
   UserName
 } from '../types/Common';
-import { EdgeLabelMode, GraphDefinition, GraphType, Layout, NodeParamsType, SummaryData } from '../types/Graph';
+import {
+  EdgeLabelMode,
+  GraphDefinition,
+  GraphType,
+  Layout,
+  NodeParamsType,
+  SummaryData,
+  TrafficRate
+} from '../types/Graph';
 import { TLSStatus } from '../types/TLSStatus';
 import { StatusState } from '../types/StatusState';
 import { TourInfo } from 'components/Tour/TourStop';
@@ -38,6 +46,7 @@ export interface GraphToolbarState {
   // dropdown props
   edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
+  trafficRates: TrafficRate[];
   // find props
   findValue: string;
   hideValue: string;

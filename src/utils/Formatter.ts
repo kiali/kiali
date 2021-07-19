@@ -22,6 +22,12 @@ export const getUnit = (d3Format: D3FormatFunc, unit: string, val: number) => {
     case 'bitrate-iec':
       unitResult = formatDataIEC(d3Format, val, 'bit/s', true);
       break;
+    case 'connrate':
+      unitResult = formatDataSI(d3Format, val, 'conn/s', true);
+      break;
+    case 'msgrate':
+      unitResult = formatDataSI(d3Format, val, 'msg/s', true);
+      break;
     default:
       // Fallback to default SI scaler:
       unitResult = formatDataSI(d3Format, val, unit, true);
@@ -47,6 +53,10 @@ export const getFormatter = (d3Format: D3FormatFunc, unit: string, withUnit: boo
         return formatDataSI(d3Format, val, 'bit/s', withUnit);
       case 'bitrate-iec':
         return formatDataIEC(d3Format, val, 'bit/s', withUnit);
+      case 'connrate':
+        return formatDataSI(d3Format, val, 'conn/s', withUnit);
+      case 'msgrate':
+        return formatDataSI(d3Format, val, 'msg/s', withUnit);
       default:
         // Fallback to default SI scaler:
         return formatDataSI(d3Format, val, unit, withUnit);

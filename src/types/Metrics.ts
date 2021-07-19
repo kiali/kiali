@@ -9,6 +9,8 @@ export interface Metric {
 }
 
 export type IstioMetricsMap = {
+  grpc_received?: Metric[];
+  grpc_sent?: Metric[];
   request_count?: Metric[];
   request_error_count?: Metric[];
   request_duration_millis?: Metric[];

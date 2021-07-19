@@ -28,6 +28,8 @@ import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
 import { config } from 'config';
 import { store } from 'store/ConfigStore';
+import { toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
+import { GraphToolbarActions } from 'actions/GraphToolbarActions';
 
 interface AuthenticationControllerReduxProps {
   authenticated: boolean;
@@ -42,6 +44,7 @@ interface AuthenticationControllerReduxProps {
   setNamespaces: (namespaces: Namespace[], receivedAt: Date) => void;
   setRefreshInterval: (interval: IntervalInMilliseconds) => void;
   setServerStatus: (serverStatus: ServerStatus) => void;
+  setTrafficRates: (rates: TrafficRate[]) => void;
 }
 
 type AuthenticationControllerProps = AuthenticationControllerReduxProps & {
@@ -256,6 +259,22 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
           console.debug(`Setting UI Default: namespaces ${JSON.stringify(activeNamespaces.map(ns => ns.name))}`);
         }
       }
+
+      // Graph Traffic
+      const grpcRate = toGrpcRate(uiDefaults.graph.traffic.grpc);
+      const httpRate = toHttpRate(uiDefaults.graph.traffic.http);
+      const tcpRate = toTcpRate(uiDefaults.graph.traffic.tcp);
+      const rates: TrafficRate[] = [];
+      if (grpcRate) {
+        rates.push(TrafficRate.GRPC_GROUP, grpcRate);
+      }
+      if (httpRate) {
+        rates.push(TrafficRate.HTTP_GROUP, httpRate);
+      }
+      if (tcpRate) {
+        rates.push(TrafficRate.TCP_GROUP, tcpRate);
+      }
+      this.props.setTrafficRates(rates);
     }
   }
 
@@ -322,7 +341,8 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setMeshTlsStatus: bindActionCreators(MeshTlsActions.setinfo, dispatch),
   setNamespaces: bindActionCreators(NamespaceActions.receiveList, dispatch),
   setRefreshInterval: bindActionCreators(UserSettingsActions.setRefreshInterval, dispatch),
-  setServerStatus: (serverStatus: ServerStatus) => processServerStatus(dispatch, serverStatus)
+  setServerStatus: (serverStatus: ServerStatus) => processServerStatus(dispatch, serverStatus),
+  setTrafficRates: bindActionCreators(GraphToolbarActions.setTrafficRates, dispatch)
 });
 
 const AuthenticationControllerContainer = connect(mapStateToProps, mapDispatchToProps)(AuthenticationController);

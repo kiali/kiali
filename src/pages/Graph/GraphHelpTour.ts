@@ -27,6 +27,12 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     position: PopoverPosition.left,
     offset: '0, 250'
   },
+  GraphTraffic: {
+    name: 'Graph Traffic',
+    description:
+      'Choose the traffic rates used to generate the graph. Each supported protocol offers one or more options. Unused protocols can be omitted.',
+    position: PopoverPosition.bottom
+  },
   GraphType: {
     name: 'Graph Type',
     description:
@@ -65,6 +71,7 @@ const GraphTour: TourInfo = {
   name: 'GraphTour',
   stops: [
     GraphTourStops.Namespaces,
+    GraphTourStops.GraphTraffic,
     GraphTourStops.GraphType,
     GraphTourStops.Display,
     GraphTourStops.Find,

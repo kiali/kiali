@@ -2,7 +2,7 @@ import { getType } from 'typesafe-actions';
 import { GraphActions } from '../actions/GraphActions';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { GraphState } from '../store/Store';
-import { GraphType } from '../types/Graph';
+import { GraphType, TrafficRate } from '../types/Graph';
 import { GraphToolbarActions } from '../actions/GraphToolbarActions';
 import { DagreGraph } from '../components/CytoscapeGraph/graphs/DagreGraph';
 import { updateState } from '../utils/Reducer';
@@ -29,7 +29,15 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showSecurity: false,
     showServiceNodes: true,
     showTrafficAnimation: false,
-    showVirtualServices: true
+    showVirtualServices: true,
+    trafficRates: [
+      TrafficRate.GRPC_GROUP,
+      TrafficRate.GRPC_REQUEST,
+      TrafficRate.HTTP_GROUP,
+      TrafficRate.HTTP_REQUEST,
+      TrafficRate.TCP_GROUP,
+      TrafficRate.TCP_SENT
+    ]
   },
   updateTime: 0
 };
@@ -101,6 +109,13 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
           showIdleNodes: action.payload
         })
       });
+    case getType(GraphToolbarActions.setTrafficRates):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          trafficRates: action.payload
+        })
+      });
+
     case getType(GraphToolbarActions.toggleBoxByCluster):
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {

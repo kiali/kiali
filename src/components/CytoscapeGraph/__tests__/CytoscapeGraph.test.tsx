@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 
 import CytoscapeGraph from '../CytoscapeGraph';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
-import { EdgeLabelMode, GraphType, Layout } from '../../../types/Graph';
+import { DefaultTrafficRates, EdgeLabelMode, GraphType, Layout } from '../../../types/Graph';
 import EmptyGraphLayoutContainer from '../EmptyGraphLayout';
 import { decorateGraphData } from '../../../store/Selectors/GraphData';
 import GraphDataSource from '../../../services/GraphDataSource';
@@ -41,7 +41,8 @@ describe('CytoscapeGraph component test', () => {
       showIdleEdges: false,
       showIdleNodes: false,
       showOperationNodes: false,
-      showSecurity: true
+      showSecurity: true,
+      trafficRates: DefaultTrafficRates
     });
 
     dataSource.on('fetchSuccess', () => {
@@ -63,7 +64,8 @@ describe('CytoscapeGraph component test', () => {
               showIdleEdges: false,
               showIdleNodes: false,
               showOperationNodes: false,
-              showSecurity: true
+              showSecurity: true,
+              trafficRates: DefaultTrafficRates
             },
             timestamp: 0
           }}

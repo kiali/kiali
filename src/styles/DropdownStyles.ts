@@ -14,7 +14,7 @@ export const menuStyle = style({
 // this emulates Select component .pf-c-select__menu but w/o cursor manipulation
 export const menuEntryStyle = style({
   display: 'inline-block',
-  width: '15.5em'
+  width: '100%'
 });
 
 // this emulates Select component .pf-c-select__menu-group-title but with less bottom padding to conserve space

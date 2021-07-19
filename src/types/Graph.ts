@@ -22,18 +22,17 @@ export enum Protocol {
 
 export interface SummaryPanelPropType {
   data: SummaryData;
-  namespaces: Namespace[];
+  duration: DurationInSeconds;
   graphType: GraphType;
   injectServiceNodes: boolean;
+  namespaces: Namespace[];
   queryTime: TimeInSeconds;
-  duration: DurationInSeconds;
-  step: number;
   rateInterval: string;
+  step: number;
+  trafficRates: TrafficRate[];
 }
 
 export enum EdgeLabelMode {
-  REQUEST_DISTRIBUTION = 'requestDistribution',
-  REQUEST_RATE = 'requestRate',
   RESPONSE_TIME_GROUP = 'responseTime',
   RESPONSE_TIME_AVERAGE = 'avg',
   RESPONSE_TIME_P50 = 'rt50',
@@ -41,7 +40,9 @@ export enum EdgeLabelMode {
   RESPONSE_TIME_P99 = 'rt99',
   THROUGHPUT_GROUP = 'throughput',
   THROUGHPUT_REQUEST = 'throughputRequest',
-  THROUGHPUT_RESPONSE = 'throughputResponse'
+  THROUGHPUT_RESPONSE = 'throughputResponse',
+  TRAFFIC_DISTRIBUTION = 'trafficDistribution',
+  TRAFFIC_RATE = 'trafficRate'
 }
 
 export const isResponseTimeMode = (mode: EdgeLabelMode): boolean => {
@@ -64,6 +65,91 @@ export const isThroughputMode = (mode: EdgeLabelMode): boolean => {
 
 export const numLabels = (modes: EdgeLabelMode[]): number => {
   return modes.filter(m => m !== EdgeLabelMode.RESPONSE_TIME_GROUP && m !== EdgeLabelMode.THROUGHPUT_GROUP).length;
+};
+
+export enum TrafficRate {
+  GRPC_GROUP = 'grpc',
+  GRPC_RECEIVED = 'grpcReceived', // response_messages
+  GRPC_REQUEST = 'grpcRequest',
+  GRPC_SENT = 'grpcSent', // request_messages
+  GRPC_TOTAL = 'grpcTotal', // sent_bytes + received_bytes
+  HTTP_GROUP = 'http',
+  HTTP_REQUEST = 'httpRequest',
+  TCP_GROUP = 'tcp',
+  TCP_RECEIVED = 'tcpReceived', // received_bytes
+  TCP_SENT = 'tcpSent', // sent_bytes
+  TCP_TOTAL = 'tcpTotal' // sent_bytes + received_bytes
+}
+
+export const DefaultTrafficRates: TrafficRate[] = [
+  TrafficRate.GRPC_GROUP,
+  TrafficRate.GRPC_REQUEST,
+  TrafficRate.HTTP_GROUP,
+  TrafficRate.HTTP_REQUEST,
+  TrafficRate.TCP_GROUP,
+  TrafficRate.TCP_SENT
+];
+
+export const isGrpcRate = (rate: TrafficRate): boolean => {
+  return (
+    rate === TrafficRate.GRPC_GROUP ||
+    rate === TrafficRate.GRPC_RECEIVED ||
+    rate === TrafficRate.GRPC_REQUEST ||
+    rate === TrafficRate.GRPC_SENT ||
+    rate === TrafficRate.GRPC_TOTAL
+  );
+};
+
+export const toGrpcRate = (rate: string): TrafficRate | undefined => {
+  switch (rate) {
+    case 'received':
+      return TrafficRate.GRPC_RECEIVED;
+    case 'requests':
+    case 'request':
+      return TrafficRate.GRPC_REQUEST;
+    case 'sent':
+      return TrafficRate.GRPC_SENT;
+    case 'total':
+      return TrafficRate.GRPC_TOTAL;
+    default:
+      return undefined;
+  }
+};
+
+export const isHttpRate = (rate: TrafficRate): boolean => {
+  return rate === TrafficRate.HTTP_GROUP || rate === TrafficRate.HTTP_REQUEST;
+};
+
+export const toHttpRate = (rate: string): TrafficRate | undefined => {
+  switch (rate) {
+    case 'requests':
+    case 'request':
+      return TrafficRate.HTTP_REQUEST;
+    default:
+      return undefined;
+  }
+};
+
+export const isTcpRate = (rate: TrafficRate): boolean => {
+  return (
+    rate === TrafficRate.TCP_GROUP ||
+    rate === TrafficRate.TCP_RECEIVED ||
+    rate === TrafficRate.TCP_SENT ||
+    rate === TrafficRate.TCP_TOTAL
+  );
+};
+
+export const toTcpRate = (rate: string): TrafficRate | undefined => {
+  switch (rate) {
+    case 'received':
+      return TrafficRate.TCP_RECEIVED;
+    case 'sent':
+      return TrafficRate.TCP_SENT;
+    case 'total':
+      return TrafficRate.TCP_TOTAL;
+    default:
+      return undefined;
+  }
 };
 
 export enum GraphType {
@@ -114,6 +200,7 @@ export type CytoscapeGlobalScratchData = {
   showMissingSidecars: boolean;
   showSecurity: boolean;
   showVirtualServices: boolean;
+  trafficRates: TrafficRate[];
 };
 
 export interface CytoscapeBaseEvent {

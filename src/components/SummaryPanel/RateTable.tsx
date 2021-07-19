@@ -2,22 +2,27 @@ import * as React from 'react';
 import { renderRateChartHttp, renderRateChartGrpc } from './RateChart';
 
 type RateTableGrpcPropType = {
-  title: string;
+  isRequests: boolean;
   rate: number;
   rateGrpcErr: number;
   rateNR: number;
 };
 
+type RateTableTcpPropType = {
+  rate: number;
+};
+
 export class RateTableGrpc extends React.Component<RateTableGrpcPropType, {}> {
   render() {
     // for the table and graph
+    const title = `gRPC Traffic (${this.props.isRequests ? 'requests' : 'messages'} per second)`;
     const errRate: number = this.props.rateGrpcErr + this.props.rateNR;
     const percentErr: number = this.props.rate === 0 ? 0 : (errRate / this.props.rate) * 100;
     const percentOK: number = 100 - percentErr;
 
     return (
       <div>
-        <strong>{this.props.title}</strong>
+        <strong>{title}</strong>
         <table className="table">
           <thead>
             <tr>
@@ -29,12 +34,12 @@ export class RateTableGrpc extends React.Component<RateTableGrpcPropType, {}> {
           <tbody>
             <tr>
               <td>{this.props.rate.toFixed(2)}</td>
-              <td>{percentOK.toFixed(2)}</td>
-              <td>{percentErr.toFixed(2)}</td>
+              <td>{this.props.isRequests ? percentOK.toFixed(2) : '-'}</td>
+              <td>{this.props.isRequests ? percentErr.toFixed(2) : '-'}</td>
             </tr>
           </tbody>
         </table>
-        {renderRateChartGrpc(percentOK, percentErr)}
+        {this.props.isRequests && renderRateChartGrpc(percentOK, percentErr)}
       </div>
     );
   }
@@ -87,6 +92,34 @@ export class RateTableHttp extends React.Component<RateTableHttpPropType, {}> {
           </tbody>
         </table>
         {renderRateChartHttp(percent2xx, percent3xx, percent4xx, percent5xx, percentNR)}
+      </div>
+    );
+  }
+}
+
+export class RateTableTcp extends React.Component<RateTableTcpPropType, {}> {
+  render() {
+    const title = 'TCP Traffic (bytes per second)';
+
+    return (
+      <div>
+        <strong>{title}</strong>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Total</th>
+              <th>%Success</th>
+              <th>%Error</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{this.props.rate.toFixed(2)}</td>
+              <td>{'-'}</td>
+              <td>{'-'}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     );
   }

@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Button, ButtonVariant, Toolbar, ToolbarGroup, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import * as _ from 'lodash';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
@@ -11,10 +10,11 @@ import {
   edgeLabelsSelector,
   graphTypeSelector,
   showIdleNodesSelector,
-  replayActiveSelector
+  replayActiveSelector,
+  trafficRatesSelector
 } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
-import { GraphType, NodeParamsType, EdgeLabelMode, SummaryData } from '../../../types/Graph';
+import { GraphType, NodeParamsType, EdgeLabelMode, SummaryData, TrafficRate } from '../../../types/Graph';
 import GraphFindContainer from './GraphFind';
 import GraphSettingsContainer from './GraphSettings';
 import history, { HistoryManager, URLParam } from '../../../app/History';
@@ -38,12 +38,14 @@ type ReduxProps = {
   replayActive: boolean;
   showIdleNodes: boolean;
   summaryData: SummaryData | null;
+  trafficRates: TrafficRate[];
 
   setActiveNamespaces: (activeNamespaces: Namespace[]) => void;
   setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
   setGraphType: (graphType: GraphType) => void;
   setIdleNodes: (idleNodes: boolean) => void;
   setNode: (node?: NodeParamsType) => void;
+  setTrafficRates: (rates: TrafficRate[]) => void;
   toggleReplayActive: () => void;
 };
 
@@ -64,15 +66,6 @@ const rightToolbarStyle = style({
 });
 
 export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
-  /**
-   *  Key-value pair object representation of EdgeLabelMode
-   *
-   *  Example:  EdgeLabelMode =>{'TRAFFIC_RATE_PER_SECOND': 'TrafficRatePerSecond'}
-   */
-  static readonly EDGE_LABEL_MODES = _.mapValues(_.omitBy(EdgeLabelMode, _.isFunction), val =>
-    _.capitalize(_.startCase(val as EdgeLabelMode))
-  );
-
   static contextTypes = {
     router: () => null
   };
@@ -88,7 +81,17 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
       }
     } else {
       const edgeLabelsString = props.edgeLabels.join(',');
-      HistoryManager.setParam(URLParam.NAMESPACES, edgeLabelsString);
+      HistoryManager.setParam(URLParam.GRAPH_EDGES, edgeLabelsString);
+    }
+
+    const urlGraphTraffic = HistoryManager.getParam(URLParam.GRAPH_TRAFFIC, urlParams);
+    if (urlGraphTraffic) {
+      if (urlGraphTraffic !== props.trafficRates.join(',')) {
+        props.setTrafficRates(urlGraphTraffic.split(',') as TrafficRate[]);
+      }
+    } else {
+      const trafficRatesString = props.trafficRates.join(',');
+      HistoryManager.setParam(URLParam.GRAPH_TRAFFIC, trafficRatesString);
     }
 
     const urlGraphType = HistoryManager.getParam(URLParam.GRAPH_TYPE, urlParams) as GraphType;
@@ -129,8 +132,9 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
       HistoryManager.setParam(URLParam.NAMESPACES, activeNamespacesString);
     }
     HistoryManager.setParam(URLParam.GRAPH_EDGES, String(this.props.edgeLabels));
-    HistoryManager.setParam(URLParam.GRAPH_TYPE, String(this.props.graphType));
     HistoryManager.setParam(URLParam.GRAPH_IDLE_NODES, String(this.props.showIdleNodes));
+    HistoryManager.setParam(URLParam.GRAPH_TRAFFIC, String(this.props.trafficRates));
+    HistoryManager.setParam(URLParam.GRAPH_TYPE, String(this.props.graphType));
   }
 
   componentWillUnmount() {
@@ -212,7 +216,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   node: state.graph.node,
   replayActive: replayActiveSelector(state),
   showIdleNodes: showIdleNodesSelector(state),
-  summaryData: state.graph.summaryData
+  summaryData: state.graph.summaryData,
+  trafficRates: trafficRatesSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
@@ -222,6 +227,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     setGraphType: bindActionCreators(GraphToolbarActions.setGraphType, dispatch),
     setIdleNodes: bindActionCreators(GraphToolbarActions.setIdleNodes, dispatch),
     setNode: bindActionCreators(GraphActions.setNode, dispatch),
+    setTrafficRates: bindActionCreators(GraphToolbarActions.setTrafficRates, dispatch),
     toggleReplayActive: bindActionCreators(UserSettingsActions.toggleReplayActive, dispatch)
   };
 };

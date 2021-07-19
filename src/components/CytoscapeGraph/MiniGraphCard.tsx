@@ -234,7 +234,8 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
       showIdleEdges: this.props.dataSource.fetchParameters.showIdleEdges,
       showIdleNodes: this.props.dataSource.fetchParameters.showIdleNodes,
       showOperationNodes: this.props.dataSource.fetchParameters.showOperationNodes,
-      showServiceNodes: true
+      showServiceNodes: true,
+      trafficRates: this.props.dataSource.fetchParameters.trafficRates
     };
 
     // To ensure updated components get the updated URL, update the URL first and then the state

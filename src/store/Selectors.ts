@@ -71,6 +71,10 @@ const showIdleNodes = (state: KialiAppState) => state.graph.toolbarState.showIdl
 
 export const showIdleNodesSelector = createIdentitySelector(showIdleNodes);
 
+const trafficRates = (state: KialiAppState) => state.graph.toolbarState.trafficRates;
+
+export const trafficRatesSelector = createIdentitySelector(trafficRates);
+
 const meshwideMTLSStatus = (state: KialiAppState) => state.meshTLSStatus.status;
 
 export const meshWideMTLSStatusSelector = createIdentitySelector(meshwideMTLSStatus);

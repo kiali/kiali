@@ -26,9 +26,16 @@ interface GraphFindOption {
   expression: string;
 }
 
+interface GraphTraffic {
+  grpc: string;
+  http: string;
+  tcp: string;
+}
+
 interface GraphUIDefaults {
   findOptions: GraphFindOption[];
   hideOptions: GraphFindOption[];
+  traffic: GraphTraffic;
 }
 
 interface UIDefaults {

@@ -1,22 +1,29 @@
 import * as React from 'react';
 import { Tab } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
-import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
-import { SummaryPanelPropType, NodeType } from '../../types/Graph';
-import { getAccumulatedTrafficRateGrpc, getAccumulatedTrafficRateHttp } from '../../utils/TrafficRate';
+import { RateTableGrpc, RateTableHttp, RateTableTcp } from '../../components/SummaryPanel/RateTable';
+import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
+import { SummaryPanelPropType, NodeType, TrafficRate, Protocol, UNKNOWN } from '../../types/Graph';
+import {
+  getAccumulatedTrafficRateGrpc,
+  getAccumulatedTrafficRateHttp,
+  getAccumulatedTrafficRateTcp,
+  TrafficRateGrpc,
+  TrafficRateHttp,
+  TrafficRateTcp
+} from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
 import {
   shouldRefreshData,
   getFirstDatapoints,
-  mergeMetricsResponses,
   summaryFont,
   summaryHeader,
   summaryBodyTabs,
-  hr
+  hr,
+  getDatapoints
 } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
-import { IstioMetricsMap, Datapoint } from '../../types/Metrics';
+import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
@@ -29,30 +36,67 @@ import ValidationSummaryLink from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 type SummaryPanelNamespaceBoxMetricsState = {
-  errRates: Datapoint[];
-  metricsLoadError: string | null;
-  reqRates: Datapoint[];
-  tcpSent: Datapoint[];
-  tcpReceived: Datapoint[];
+  grpcRequestIn: Datapoint[];
+  grpcRequestOut: Datapoint[];
+  grpcRequestErrIn: Datapoint[];
+  grpcRequestErrOut: Datapoint[];
+  grpcSentIn: Datapoint[];
+  grpcSentOut: Datapoint[];
+  grpcReceivedIn: Datapoint[];
+  grpcReceivedOut: Datapoint[];
+  httpRequestIn: Datapoint[];
+  httpRequestOut: Datapoint[];
+  httpRequestErrIn: Datapoint[];
+  httpRequestErrOut: Datapoint[];
+  tcpSentIn: Datapoint[];
+  tcpSentOut: Datapoint[];
+  tcpReceivedIn: Datapoint[];
+  tcpReceivedOut: Datapoint[];
 };
 
 type SummaryPanelNamespaceBoxState = SummaryPanelNamespaceBoxMetricsState & {
-  namespaceBox: any;
   loading: boolean;
+  metricsLoadError: string | null;
+  namespaceBox: any;
   validation: ValidationStatus | undefined;
 };
 
+type SummaryPanelNamespaceBoxTraffic = {
+  grpcIn: TrafficRateGrpc;
+  grpcOut: TrafficRateGrpc;
+  grpcTotal: TrafficRateGrpc;
+  httpIn: TrafficRateHttp;
+  httpOut: TrafficRateHttp;
+  httpTotal: TrafficRateHttp;
+  isGrpcRequests: boolean;
+  tcpIn: TrafficRateTcp;
+  tcpOut: TrafficRateTcp;
+  tcpTotal: TrafficRateTcp;
+};
+
 const defaultMetricsState: SummaryPanelNamespaceBoxMetricsState = {
-  reqRates: [],
-  errRates: [],
-  tcpSent: [],
-  tcpReceived: [],
-  metricsLoadError: null
+  grpcRequestIn: [],
+  grpcRequestOut: [],
+  grpcRequestErrIn: [],
+  grpcRequestErrOut: [],
+  grpcSentIn: [],
+  grpcSentOut: [],
+  grpcReceivedIn: [],
+  grpcReceivedOut: [],
+  httpRequestIn: [],
+  httpRequestOut: [],
+  httpRequestErrIn: [],
+  httpRequestErrOut: [],
+  tcpSentIn: [],
+  tcpSentOut: [],
+  tcpReceivedIn: [],
+  tcpReceivedOut: []
 };
 
 const defaultState: SummaryPanelNamespaceBoxState = {
-  namespaceBox: null,
   loading: false,
+  metricsLoadError: null,
+  namespaceBox: null,
   validation: undefined,
   ...defaultMetricsState
 };
@@ -74,7 +118,8 @@ export default class SummaryPanelNamespaceBox extends React.Component<
     width: '25em'
   };
 
-  private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>>;
+  private boxTraffic?: SummaryPanelNamespaceBoxTraffic;
+  private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
   private validationPromise?: CancelablePromise<Response<ValidationStatus>>;
 
   constructor(props: SummaryPanelPropType) {
@@ -92,13 +137,15 @@ export default class SummaryPanelNamespaceBox extends React.Component<
   }
 
   componentDidMount() {
-    this.updateRpsChart();
+    this.boxTraffic = this.getBoxTraffic();
+    this.updateCharts();
     this.updateValidation();
   }
 
   componentDidUpdate(prevProps: SummaryPanelPropType) {
     if (shouldRefreshData(prevProps, this.props)) {
-      this.updateRpsChart();
+      this.boxTraffic = this.getBoxTraffic();
+      this.updateCharts();
       this.updateValidation();
     }
   }
@@ -116,27 +163,14 @@ export default class SummaryPanelNamespaceBox extends React.Component<
     const namespaceBox = this.props.data.summaryTarget;
     const boxed = namespaceBox.descendants();
     const namespace = namespaceBox.data(CyNode.namespace);
-    const cluster = namespaceBox.data(CyNode.cluster);
 
     const numSvc = boxed.filter(`node[nodeType = "${NodeType.SERVICE}"]`).size();
     const numWorkloads = boxed.filter(`node[nodeType = "${NodeType.WORKLOAD}"]`).size();
     const { numApps, numVersions } = this.countApps(boxed);
     const numEdges = boxed.connectedEdges().size();
-    // inbound edges are from a different namespace or a different cluster
-    const inboundEdges = namespaceBox
-      .cy()
-      .nodes(`[${CyNode.namespace} != "${namespace}"],[${CyNode.cluster} != "${cluster}"]`)
-      .edgesTo(boxed);
-    // outbound edges are to a different namespace or a different cluster
-    const outboundEdges = boxed.edgesTo(`[${CyNode.namespace} != "${namespace}"],[${CyNode.cluster} != "${cluster}"]`);
-    // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
-    const totalEdges = inboundEdges.add(boxed.filter(`[?${CyNode.workload}]`).edgesTo('*'));
-    const totalRateGrpc = getAccumulatedTrafficRateGrpc(totalEdges);
-    const totalRateHttp = getAccumulatedTrafficRateHttp(totalEdges);
-    const inboundRateGrpc = getAccumulatedTrafficRateGrpc(inboundEdges);
-    const inboundRateHttp = getAccumulatedTrafficRateHttp(inboundEdges);
-    const outboundRateGrpc = getAccumulatedTrafficRateGrpc(outboundEdges);
-    const outboundRateHttp = getAccumulatedTrafficRateHttp(outboundEdges);
+
+    const { grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
+      this.boxTraffic || this.getBoxTraffic();
 
     return (
       <div className="panel panel-default" style={SummaryPanelNamespaceBox.panelStyle}>
@@ -149,29 +183,30 @@ export default class SummaryPanelNamespaceBox extends React.Component<
           <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
             <Tab style={summaryFont} title="Inbound" eventKey={0}>
               <div style={summaryFont}>
-                {inboundRateGrpc.rate === 0 && inboundRateHttp.rate === 0 && (
+                {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No inbound traffic.
                   </>
                 )}
-                {inboundRateGrpc.rate > 0 && (
+                {grpcIn.rate > 0 && (
                   <RateTableGrpc
-                    title="GRPC Traffic (requests per second):"
-                    rate={inboundRateGrpc.rate}
-                    rateGrpcErr={inboundRateGrpc.rateGrpcErr}
-                    rateNR={inboundRateGrpc.rateNoResponse}
+                    isRequests={isGrpcRequests}
+                    rate={grpcIn.rate}
+                    rateGrpcErr={grpcIn.rateGrpcErr}
+                    rateNR={grpcIn.rateNoResponse}
                   />
                 )}
-                {inboundRateHttp.rate > 0 && (
+                {httpIn.rate > 0 && (
                   <RateTableHttp
                     title="HTTP (requests per second):"
-                    rate={inboundRateHttp.rate}
-                    rate3xx={inboundRateHttp.rate3xx}
-                    rate4xx={inboundRateHttp.rate4xx}
-                    rate5xx={inboundRateHttp.rate5xx}
-                    rateNR={inboundRateHttp.rateNoResponse}
+                    rate={httpIn.rate}
+                    rate3xx={httpIn.rate3xx}
+                    rate4xx={httpIn.rate4xx}
+                    rate5xx={httpIn.rate5xx}
+                    rateNR={httpIn.rateNoResponse}
                   />
                 )}
+                {tcpIn.rate > 0 && <RateTableTcp rate={tcpIn.rate} />}
                 {
                   // We don't show a sparkline here because we need to aggregate the traffic of an
                   // ad hoc set of [root] nodes. We don't have backend support for that aggregation.
@@ -180,29 +215,30 @@ export default class SummaryPanelNamespaceBox extends React.Component<
             </Tab>
             <Tab style={summaryFont} title="Outbound" eventKey={1}>
               <div style={summaryFont}>
-                {outboundRateGrpc.rate === 0 && outboundRateHttp.rate === 0 && (
+                {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No outbound traffic.
                   </>
                 )}
-                {outboundRateGrpc.rate > 0 && (
+                {grpcOut.rate > 0 && (
                   <RateTableGrpc
-                    title="GRPC Traffic (requests per second):"
-                    rate={outboundRateGrpc.rate}
-                    rateGrpcErr={outboundRateGrpc.rateGrpcErr}
-                    rateNR={outboundRateGrpc.rateNoResponse}
+                    isRequests={isGrpcRequests}
+                    rate={grpcOut.rate}
+                    rateGrpcErr={grpcOut.rateGrpcErr}
+                    rateNR={grpcOut.rateNoResponse}
                   />
                 )}
-                {outboundRateHttp.rate > 0 && (
+                {httpOut.rate > 0 && (
                   <RateTableHttp
                     title="HTTP (requests per second):"
-                    rate={outboundRateHttp.rate}
-                    rate3xx={outboundRateHttp.rate3xx}
-                    rate4xx={outboundRateHttp.rate4xx}
-                    rate5xx={outboundRateHttp.rate5xx}
-                    rateNR={outboundRateHttp.rateNoResponse}
+                    rate={httpOut.rate}
+                    rate3xx={httpOut.rate3xx}
+                    rate4xx={httpOut.rate4xx}
+                    rate5xx={httpOut.rate5xx}
+                    rateNR={httpOut.rateNoResponse}
                   />
                 )}
+                {tcpOut.rate > 0 && <RateTableTcp rate={tcpOut.rate} />}
                 {
                   // We don't show a sparkline here because we need to aggregate the traffic of an
                   // ad hoc set of [root] nodes. We don't have backend support for that aggregation.
@@ -211,32 +247,33 @@ export default class SummaryPanelNamespaceBox extends React.Component<
             </Tab>
             <Tab style={summaryFont} title="Total" eventKey={2}>
               <div style={summaryFont}>
-                {totalRateGrpc.rate === 0 && totalRateHttp.rate === 0 && (
+                {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
                   <>
                     <KialiIcon.Info /> No traffic.
                   </>
                 )}
-                {totalRateGrpc.rate > 0 && (
+                {grpcTotal.rate > 0 && (
                   <RateTableGrpc
-                    title="GRPC Traffic (requests per second):"
-                    rate={totalRateGrpc.rate}
-                    rateGrpcErr={totalRateGrpc.rateGrpcErr}
-                    rateNR={totalRateGrpc.rateNoResponse}
+                    isRequests={isGrpcRequests}
+                    rate={grpcTotal.rate}
+                    rateGrpcErr={grpcTotal.rateGrpcErr}
+                    rateNR={grpcTotal.rateNoResponse}
                   />
                 )}
-                {totalRateHttp.rate > 0 && (
+                {httpTotal.rate > 0 && (
                   <RateTableHttp
                     title="HTTP (requests per second):"
-                    rate={totalRateHttp.rate}
-                    rate3xx={totalRateHttp.rate3xx}
-                    rate4xx={totalRateHttp.rate4xx}
-                    rate5xx={totalRateHttp.rate5xx}
-                    rateNR={totalRateHttp.rateNoResponse}
+                    rate={httpTotal.rate}
+                    rate3xx={httpTotal.rate3xx}
+                    rate4xx={httpTotal.rate4xx}
+                    rate5xx={httpTotal.rate5xx}
+                    rateNR={httpTotal.rateNoResponse}
                   />
                 )}
+                {tcpTotal.rate > 0 && <RateTableTcp rate={tcpTotal.rate} />}
                 <div>
                   {hr()}
-                  {this.renderRpsChart()}
+                  {this.renderCharts()}
                 </div>
               </div>
             </Tab>
@@ -245,6 +282,36 @@ export default class SummaryPanelNamespaceBox extends React.Component<
       </div>
     );
   }
+
+  private getBoxTraffic = (): SummaryPanelNamespaceBoxTraffic => {
+    const namespaceBox = this.props.data.summaryTarget;
+    const boxed = namespaceBox.descendants();
+    const namespace = namespaceBox.data(CyNode.namespace);
+    const cluster = namespaceBox.data(CyNode.cluster);
+
+    // inbound edges are from a different namespace or a different cluster
+    const inboundEdges = namespaceBox
+      .cy()
+      .nodes(`[${CyNode.namespace} != "${namespace}"],[${CyNode.cluster} != "${cluster}"]`)
+      .edgesTo(boxed);
+    // outbound edges are to a different namespace or a different cluster
+    const outboundEdges = boxed.edgesTo(`[${CyNode.namespace} != "${namespace}"],[${CyNode.cluster} != "${cluster}"]`);
+    // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
+    const totalEdges = inboundEdges.add(boxed.filter(`[?${CyNode.workload}]`).edgesTo('*'));
+
+    return {
+      grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges),
+      grpcOut: getAccumulatedTrafficRateGrpc(outboundEdges),
+      grpcTotal: getAccumulatedTrafficRateGrpc(totalEdges),
+      httpIn: getAccumulatedTrafficRateHttp(inboundEdges),
+      httpOut: getAccumulatedTrafficRateHttp(outboundEdges),
+      httpTotal: getAccumulatedTrafficRateHttp(totalEdges),
+      isGrpcRequests: this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST),
+      tcpIn: getAccumulatedTrafficRateTcp(inboundEdges),
+      tcpOut: getAccumulatedTrafficRateTcp(outboundEdges),
+      tcpTotal: getAccumulatedTrafficRateTcp(totalEdges)
+    };
+  };
 
   private countApps = (boxed): { numApps: number; numVersions: number } => {
     const appVersions: { [key: string]: Set<string> } = {};
@@ -333,7 +400,10 @@ export default class SummaryPanelNamespaceBox extends React.Component<
     </>
   );
 
-  private renderRpsChart = () => {
+  private renderCharts = () => {
+    const props: SummaryPanelPropType = this.props;
+    const namespace = props.data.summaryTarget.data(CyNode.namespace);
+
     if (this.state.loading) {
       return <strong>Loading chart...</strong>;
     } else if (this.state.metricsLoadError) {
@@ -343,50 +413,169 @@ export default class SummaryPanelNamespaceBox extends React.Component<
           {this.state.metricsLoadError}
         </div>
       );
+    } else if (namespace === UNKNOWN) {
+      return <></>;
     }
+
+    // When there is any traffic for the protocol, show both inbound and outbound charts. It's a little
+    // confusing because for the tabs inbound is limited to just traffic entering the namespace, and outbound
+    // is limited to just traffic exitingt the namespace.  But in the charts inbound ad outbound also
+    // includes traffic within the namespace.
+    const { grpcTotal, httpTotal, isGrpcRequests, tcpTotal } = this.boxTraffic!;
 
     return (
       <>
-        <RpsChart label="HTTP - Total Request Traffic" dataRps={this.state.reqRates} dataErrors={this.state.errRates} />
-        <TcpChart label="TCP - Total Traffic" receivedRates={this.state.tcpReceived} sentRates={this.state.tcpSent} />
+        {grpcTotal.rate > 0 && isGrpcRequests && (
+          <>
+            <RequestChart
+              label="gRPC - Inbound Request Traffic"
+              dataRps={this.state.grpcRequestIn}
+              dataErrors={this.state.grpcRequestErrIn}
+            />
+            <RequestChart
+              label="gRPC - Outbound Request Traffic"
+              dataRps={this.state.grpcRequestOut}
+              dataErrors={this.state.grpcRequestErrOut}
+            />
+          </>
+        )}
+        {grpcTotal.rate > 0 && !isGrpcRequests && (
+          <>
+            <StreamChart
+              label="gRPC - Inbound Traffic"
+              receivedRates={this.state.grpcReceivedIn}
+              sentRates={this.state.grpcSentIn}
+              unit="messages"
+            />
+            <StreamChart
+              label="gRPC - Outbound Traffic"
+              receivedRates={this.state.grpcReceivedOut}
+              sentRates={this.state.grpcSentOut}
+              unit="messages"
+            />
+          </>
+        )}
+        {httpTotal.rate > 0 && (
+          <>
+            <RequestChart
+              label="HTTP - Inbound Request Traffic"
+              dataRps={this.state.httpRequestIn}
+              dataErrors={this.state.httpRequestErrIn}
+            />
+            <RequestChart
+              label="HTTP - Outbound Request Traffic"
+              dataRps={this.state.httpRequestOut}
+              dataErrors={this.state.httpRequestErrOut}
+            />
+          </>
+        )}
+        {tcpTotal.rate > 0 && (
+          <>
+            <StreamChart
+              label="TCP - Inbound Traffic"
+              receivedRates={this.state.tcpReceivedIn}
+              sentRates={this.state.tcpSentIn}
+              unit="bytes"
+            />
+            <StreamChart
+              label="TCP - Outbound Traffic"
+              receivedRates={this.state.tcpReceivedOut}
+              sentRates={this.state.tcpSentOut}
+              unit="bytes"
+            />
+          </>
+        )}
       </>
     );
   };
 
-  private updateRpsChart = () => {
+  private updateCharts = () => {
     const props: SummaryPanelPropType = this.props;
     const namespace = props.data.summaryTarget.data(CyNode.namespace);
-    const options: IstioMetricsOptions = {
-      filters: ['request_count', 'request_error_count'],
-      queryTime: props.queryTime,
-      duration: props.duration,
-      step: props.step,
-      rateInterval: props.rateInterval,
-      direction: 'inbound',
-      reporter: 'destination'
-    };
-    const promiseHTTP = API.getNamespaceMetrics(namespace, options);
-    // TCP metrics are only available for reporter="source"
-    const optionsTCP: IstioMetricsOptions = {
-      filters: ['tcp_sent', 'tcp_received'],
-      queryTime: props.queryTime,
-      duration: props.duration,
-      step: props.step,
-      rateInterval: props.rateInterval,
-      direction: 'inbound',
-      reporter: 'source'
-    };
-    const promiseTCP = API.getNamespaceMetrics(namespace, optionsTCP);
-    this.metricsPromise = makeCancelablePromise(mergeMetricsResponses([promiseHTTP, promiseTCP]));
+
+    if (namespace === UNKNOWN) {
+      this.setState({
+        loading: false
+      });
+      return;
+    }
+
+    // When there is any traffic for the protocol, show both inbound and outbound charts. It's a little
+    // confusing because for the tabs inbound is limited to just traffic entering the namespace, and outbound
+    // is limited to just traffic exitingt the namespace.  But in the charts inbound ad outbound also
+    // includes traffic within the namespace.
+    const { grpcTotal, httpTotal, isGrpcRequests, tcpTotal } = this.boxTraffic!;
+
+    if (this.metricsPromise) {
+      this.metricsPromise.cancel();
+      this.metricsPromise = undefined;
+    }
+
+    let promiseIn: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
+    let promiseOut: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
+
+    let filters: string[] = [];
+    if (grpcTotal.rate > 0 && !isGrpcRequests) {
+      filters.push('grpc_sent', 'grpc_received');
+    }
+    if (httpTotal.rate > 0 || (grpcTotal.rate > 0 && isGrpcRequests)) {
+      filters.push('request_count', 'request_error_count');
+    }
+    if (tcpTotal.rate > 0) {
+      filters.push('tcp_sent', 'tcp_received');
+    }
+
+    if (filters.length > 0) {
+      promiseIn = API.getNamespaceMetrics(namespace, {
+        byLabels: ['request_protocol'], // ignored by prom if it doesn't exist
+        direction: 'inbound',
+        duration: props.duration,
+        filters: filters,
+        queryTime: props.queryTime,
+        rateInterval: props.rateInterval,
+        reporter: 'destination',
+        step: props.step
+      } as IstioMetricsOptions);
+      promiseOut = API.getNamespaceMetrics(namespace, {
+        byLabels: ['request_protocol'], // ignored by prom if it doesn't exist
+        direction: 'outbound',
+        duration: props.duration,
+        filters: filters,
+        queryTime: props.queryTime,
+        rateInterval: props.rateInterval,
+        reporter: 'source',
+        step: props.step
+      } as IstioMetricsOptions);
+    }
+
+    this.metricsPromise = makeCancelablePromise(Promise.all([promiseIn, promiseOut]));
 
     this.metricsPromise.promise
-      .then(response => {
+      .then(responses => {
+        const comparator = (labels: Labels, protocol?: Protocol) => {
+          return protocol ? labels.request_protocol === protocol : true;
+        };
+        const metricsIn = responses[0].data;
+        const metricsOut = responses[1].data;
+
         this.setState({
           loading: false,
-          reqRates: getFirstDatapoints(response.data.request_count),
-          errRates: getFirstDatapoints(response.data.request_error_count),
-          tcpSent: getFirstDatapoints(response.data.tcp_sent),
-          tcpReceived: getFirstDatapoints(response.data.tcp_received)
+          grpcReceivedIn: getFirstDatapoints(metricsIn.grpc_received),
+          grpcReceivedOut: getFirstDatapoints(metricsOut.grpc_received),
+          grpcRequestIn: getDatapoints(metricsIn.request_count, comparator, Protocol.GRPC),
+          grpcRequestOut: getDatapoints(metricsOut.request_count, comparator, Protocol.GRPC),
+          grpcRequestErrIn: getDatapoints(metricsIn.request_error_count, comparator, Protocol.GRPC),
+          grpcRequestErrOut: getDatapoints(metricsOut.request_error_count, comparator, Protocol.GRPC),
+          grpcSentIn: getFirstDatapoints(metricsIn.grpc_sent),
+          grpcSentOut: getFirstDatapoints(metricsOut.grpc_sent),
+          httpRequestIn: getDatapoints(metricsIn.request_count, comparator, Protocol.HTTP),
+          httpRequestOut: getDatapoints(metricsOut.request_count, comparator, Protocol.HTTP),
+          httpRequestErrIn: getDatapoints(metricsIn.request_error_count, comparator, Protocol.HTTP),
+          httpRequestErrOut: getDatapoints(metricsOut.request_error_count, comparator, Protocol.HTTP),
+          tcpReceivedIn: getFirstDatapoints(metricsIn.tcp_received),
+          tcpReceivedOut: getFirstDatapoints(metricsOut.tcp_received),
+          tcpSentIn: getFirstDatapoints(metricsIn.tcp_sent),
+          tcpSentOut: getFirstDatapoints(metricsOut.tcp_sent)
         });
       })
       .catch(error => {

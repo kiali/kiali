@@ -42,9 +42,9 @@ type ReduxProps = {
 };
 
 type GraphSettingsProps = ReduxProps &
-  Omit<GraphToolbarState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp'>;
+  Omit<GraphToolbarState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp' | 'trafficRates'>;
 
-type GraphSettingsState = { edgeLabelThroughputChecked: boolean; isOpen: boolean };
+type GraphSettingsState = { isOpen: boolean };
 
 interface DisplayOptionType {
   id: string;
@@ -61,7 +61,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
   constructor(props: GraphSettingsProps) {
     super(props);
     this.state = {
-      edgeLabelThroughputChecked: false,
       isOpen: false
     };
 
@@ -154,18 +153,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
 
     const edgeLabelOptions: DisplayOptionType[] = [
       {
-        id: EdgeLabelMode.REQUEST_RATE,
-        labelText: _.startCase(EdgeLabelMode.REQUEST_RATE),
-        isChecked: edgeLabels.includes(EdgeLabelMode.REQUEST_RATE),
-        tooltip: (
-          <div style={{ textAlign: 'left' }}>
-            HTTP and gRPC rates are in requests-per-second (rps). When non-zero, the percentage of error responses is
-            shown below the rate. TCP rates are sent-bytes. The unit is bytes-per-second (bps) when less than 1024,
-            otherwise kilobytes-per-second (kps). Rates are rounded to 2 significant digits.
-          </div>
-        )
-      },
-      {
         id: EdgeLabelMode.RESPONSE_TIME_GROUP,
         labelText: _.startCase(EdgeLabelMode.RESPONSE_TIME_GROUP),
         isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP),
@@ -176,8 +163,9 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
               (s). Default: 95th Percentile.
             </div>
             <div>
-              The following edges do not offer a response time label but the information is available in the side panel
-              when selecting the edge:
+              Response times only apply to request-based traffic (not TCP or gRPC messaging). Additionally, the
+              following edges do not offer a response time label but the information is available in the side panel when
+              selecting the edge:
             </div>
             <div>- edges into service nodes</div>
             <div>- edges into or out of operation nodes.</div>
@@ -194,21 +182,37 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
               Displays the requested HTTP Throughput. The unit is bytes-per-second (bps) when less than 1024, otherwise
               kilobytes-per-second (kps). Default: Request Throughput
             </div>
-            <div>The following edges do not offer a throughput label:</div>
+            <div>
+              Throughput applies only to request-based, HTTP traffic. Additionally, the following edges do not offer a
+              throughput label:
+            </div>
             <div>- edges into service nodes</div>
             <div>- edges into or out of operation nodes.</div>
           </div>
         )
       },
       {
-        id: EdgeLabelMode.REQUEST_DISTRIBUTION,
-        labelText: _.startCase(EdgeLabelMode.REQUEST_DISTRIBUTION),
-        isChecked: edgeLabels.includes(EdgeLabelMode.REQUEST_DISTRIBUTION),
+        id: EdgeLabelMode.TRAFFIC_DISTRIBUTION,
+        labelText: _.startCase(EdgeLabelMode.TRAFFIC_DISTRIBUTION),
+        isChecked: edgeLabels.includes(EdgeLabelMode.TRAFFIC_DISTRIBUTION),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            HTTP and gRPC Edges display the percentage of outbound requests for that edge, when less than 100%. For a
-            source node, the sum for outbound edges (per protocol) should be equal to or near 100%, given rounding. TCP
-            edges are not included in the distribution because their rates reflect bytes sent, not requests sent.
+            HTTP and gRPC Edges display the percentage of traffic for that edge, when less than 100%. For a source node,
+            the sum for outbound edges (per protocol) should be equal to or near 100%, given rounding. TCP edges are not
+            included in the distribution because their rates reflect bytes.
+          </div>
+        )
+      },
+      {
+        id: EdgeLabelMode.TRAFFIC_RATE,
+        labelText: _.startCase(EdgeLabelMode.TRAFFIC_RATE),
+        isChecked: edgeLabels.includes(EdgeLabelMode.TRAFFIC_RATE),
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            HTTP rates are in requests-per-second (rps). gRPC rates may be in requests-per-second (rps) or
+            messages-per-second (mps). For request rates, the percentage of error responses is shown below the rate,
+            when non-zero. TCP rates are in bytes. The unit is bytes-per-second (bps) when less than 1024, otherwise
+            kilobytes-per-second (kps). Rates are rounded to 2 significant digits.
           </div>
         )
       }
@@ -391,7 +395,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
               Show closed or open lock icons on edges with traffic that differs from the global mTLS policy. The
               percentage of mTLS traffic can be seen in the side-panel when selecting the edge. Note that the global
               masthead will show a lock icon when global mTLS is enabled. The side-panel will also display source and
-              destination principals, if available.
+              destination principals, if available. mTLS status is not offered for gRPC-message traffic.
             </div>
           </div>
         )
@@ -417,7 +421,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         className={containerStyle}
         maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: marginBottom }}
       >
-        <div id="graph-display-menu" className={menuStyle}>
+        <div id="graph-display-menu" className={menuStyle} style={{ width: '15em' }}>
           <div style={{ marginTop: '10px' }}>
             <span className={titleStyle} style={{ position: 'relative', bottom: '3px', paddingRight: 0 }}>
               Show Edge Labels

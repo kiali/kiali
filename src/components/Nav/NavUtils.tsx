@@ -1,4 +1,4 @@
-import { Layout, EdgeLabelMode, NodeType, NodeParamsType, GraphType } from '../../types/Graph';
+import { Layout, EdgeLabelMode, NodeType, NodeParamsType, GraphType, TrafficRate } from '../../types/Graph';
 import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 import { URLParam } from '../../app/History';
@@ -16,6 +16,7 @@ export type GraphUrlParams = {
   showIdleNodes: boolean;
   showOperationNodes: boolean;
   showServiceNodes: boolean;
+  trafficRates: TrafficRate[];
 };
 
 const buildCommonQueryParams = (params: GraphUrlParams): string => {
@@ -24,6 +25,7 @@ const buildCommonQueryParams = (params: GraphUrlParams): string => {
   q += `&${URLParam.GRAPH_IDLE_EDGES}=${params.showIdleEdges}`;
   q += `&${URLParam.GRAPH_IDLE_NODES}=${params.showIdleNodes}`;
   q += `&${URLParam.GRAPH_SERVICE_NODES}=${params.showServiceNodes}`;
+  q += `&${URLParam.GRAPH_TRAFFIC}=${params.trafficRates}`;
   q += `&${URLParam.GRAPH_TYPE}=${params.graphType}`;
   q += `&${URLParam.DURATION}=${params.duration}`;
   q += `&${URLParam.OPERATION_NODES}=${params.showOperationNodes}`;

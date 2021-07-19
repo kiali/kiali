@@ -26,6 +26,7 @@ export enum URLParam {
   GRAPH_IDLE_NODES = 'idleNodes',
   GRAPH_LAYOUT = 'layout',
   GRAPH_SERVICE_NODES = 'injectServiceNodes',
+  GRAPH_TRAFFIC = 'traffic',
   GRAPH_TYPE = 'graphType',
   JAEGER_ERRORS_ONLY = 'errs',
   JAEGER_LIMIT_TRACES = 'limit',

@@ -109,62 +109,67 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
             {summaryType === 'box' && boxType === 'app' && (
               <SummaryPanelAppBox
                 data={this.props.data}
-                namespaces={this.props.data.summaryTarget.namespaces}
+                duration={this.props.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
+                namespaces={this.props.data.summaryTarget.namespaces}
                 queryTime={this.props.queryTime}
-                duration={this.props.duration}
-                step={this.props.step}
                 rateInterval={this.props.rateInterval}
+                step={this.props.step}
+                trafficRates={this.props.trafficRates}
               />
             )}
             {summaryType === 'box' && boxType === 'cluster' && (
               <SummaryPanelClusterBox
                 data={this.props.data}
-                namespaces={this.props.data.summaryTarget.namespaces}
+                duration={this.props.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
+                namespaces={this.props.data.summaryTarget.namespaces}
                 queryTime={this.props.queryTime}
-                duration={this.props.duration}
-                step={this.props.step}
                 rateInterval={this.props.rateInterval}
+                step={this.props.step}
+                trafficRates={this.props.trafficRates}
               />
             )}
             {summaryType === 'box' && boxType === 'namespace' && (
               <SummaryPanelNamespaceBox
                 data={this.props.data}
-                namespaces={this.props.data.summaryTarget.namespaces}
+                duration={this.props.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
+                namespaces={this.props.data.summaryTarget.namespaces}
                 queryTime={this.props.queryTime}
-                duration={this.props.duration}
-                step={this.props.step}
                 rateInterval={this.props.rateInterval}
+                step={this.props.step}
+                trafficRates={this.props.trafficRates}
               />
             )}
             {summaryType === 'edge' && <SummaryPanelEdge {...this.props} />}
             {summaryType === 'graph' && (
               <SummaryPanelGraph
                 data={this.props.data}
-                namespaces={this.props.namespaces}
+                duration={this.props.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
+                namespaces={this.props.namespaces}
                 queryTime={this.props.queryTime}
-                duration={this.props.duration}
-                step={this.props.step}
                 rateInterval={this.props.rateInterval}
+                step={this.props.step}
+                trafficRates={this.props.trafficRates}
               />
             )}
             {this.props.data.summaryType === 'node' && (
               <SummaryPanelNodeContainer
                 data={this.props.data}
-                queryTime={this.props.queryTime}
-                namespaces={this.props.namespaces}
+                duration={this.props.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
-                duration={this.props.duration}
-                step={this.props.step}
+                namespaces={this.props.namespaces}
                 rateInterval={this.props.rateInterval}
+                queryTime={this.props.queryTime}
+                step={this.props.step}
+                trafficRates={this.props.trafficRates}
               />
             )}
           </div>

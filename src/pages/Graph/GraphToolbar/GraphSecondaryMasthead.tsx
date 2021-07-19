@@ -8,6 +8,7 @@ import ToolbarDropdown from 'components/ToolbarDropdown/ToolbarDropdown';
 import { GraphType } from 'types/Graph';
 import * as _ from 'lodash';
 import TimeDurationContainer from '../../../components/Time/TimeDurationComponent';
+import GraphTrafficContainer from './GraphTraffic';
 
 type GraphSecondaryMastheadProps = {
   disabled: boolean;
@@ -55,10 +56,16 @@ export default class GraphSecondaryMasthead extends React.PureComponent<GraphSec
         <div className={mastheadStyle}>
           <NamespaceDropdownContainer disabled={this.props.isNodeGraph} />
           <span className={vrStyle} />
+          <TourStopContainer info={GraphTourStops.GraphTraffic}>
+            <span className={leftSpacerStyle}>
+              <GraphTrafficContainer disabled={this.props.disabled} />
+            </span>
+          </TourStopContainer>
+          <span className={vrStyle} />
           <TourStopContainer info={GraphTourStops.GraphType}>
             <span className={leftSpacerStyle}>
               <ToolbarDropdown
-                id={'graph_filter_view_type'}
+                id={'graph_type_dropdown'}
                 disabled={this.props.disabled}
                 handleSelect={this.setGraphType}
                 value={graphTypeKey}
