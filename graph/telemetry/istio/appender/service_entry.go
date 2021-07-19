@@ -79,12 +79,6 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 		if n.Metadata[graph.IsEgressCluster] == true {
 			continue
 		}
-		// a serviceEntry has at most one outgoing edge, to an egress gateway. (note: it may be that it
-		// can only lead to "istio-egressgateway" but at the time of writing we're not sure, and so don't
-		// want to hardcode that assumption.)
-		if len(n.Edges) > 1 {
-			continue
-		}
 
 		// To match, a service entry must be exported to the source namespace, and the requested
 		// service must match a defined host.  Note that teh source namespace is assumed to be the
