@@ -159,7 +159,7 @@ func PrepareIstioDashboard(direction, local, remote string) MonitoringDashboard 
 		Title:        fmt.Sprintf("%s Metrics", direction),
 		Aggregations: buildIstioAggregations(local, remote),
 		Charts:       []Chart{},
-		Rows:         2, // Rows layout used for Inbound Metrics and Outbound Metrics
+		Rows:         3, // Rows layout used for Inbound Metrics and Outbound Metrics
 	}
 }
 

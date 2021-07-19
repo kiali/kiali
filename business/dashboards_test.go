@@ -274,19 +274,20 @@ func TestBuildIstioDashboard(t *testing.T) {
 	assert.Equal("source_workload_namespace", dashboard.Aggregations[1].Label)
 	assert.Equal("Remote app", dashboard.Aggregations[2].DisplayName)
 	assert.Equal("source_canonical_service", dashboard.Aggregations[2].Label)
-	assert.Len(dashboard.Charts, 8)
+	assert.Len(dashboard.Charts, 12)
 	assert.Equal("Request volume", dashboard.Charts[0].Name)
-	assert.Len(dashboard.Charts[0].Metrics, 1)
 	assert.Equal("Request duration", dashboard.Charts[1].Name)
 	assert.Len(dashboard.Charts[1].Metrics, 2)
-	assert.Equal("TCP sent", dashboard.Charts[7].Name)
+	assert.Equal("Request size", dashboard.Charts[2].Name)
+	assert.Len(dashboard.Charts[2].Metrics, 2)
+	assert.Equal("TCP closed", dashboard.Charts[9].Name)
 	assert.Equal(float64(10), dashboard.Charts[0].Metrics[0].Datapoints[0].Value) // Request volume (request_count)
 	assert.Equal(float64(20), dashboard.Charts[1].Metrics[0].Datapoints[0].Value) // Request duration (request_duration_millis)
-	assert.Equal(float64(13), dashboard.Charts[7].Metrics[0].Datapoints[0].Value) // TCP sent (tcp_sent)
+	assert.Equal(float64(32), dashboard.Charts[9].Metrics[0].Datapoints[0].Value) // TCP closed (tcp_closed)
 	// Absent metrics are not nil
-	assert.Equal("Request throughput", dashboard.Charts[2].Name)
-	assert.NotNil(dashboard.Charts[2].Metrics)
-	assert.Len(dashboard.Charts[2].Metrics, 0)
+	assert.Equal("Response throughput", dashboard.Charts[5].Name)
+	assert.NotNil(dashboard.Charts[5].Metrics)
+	assert.Len(dashboard.Charts[5].Metrics, 0)
 }
 
 func fakeCounter(value float64) []models.Metric {
@@ -315,5 +316,7 @@ func fakeMetrics() models.MetricsMap {
 		"request_duration_millis": fakeHistogram(20, 20),
 		"request_size":            fakeHistogram(21, 21),
 		"response_size":           fakeHistogram(22, 22),
+		"tcp_opened":              fakeCounter(31),
+		"tcp_closed":              fakeCounter(32),
 	}
 }
