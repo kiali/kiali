@@ -60,7 +60,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	var deployments []apps_v1.Deployment
 	var registryStatus []*kubernetes.RegistryStatus
 
-	wg.Add(9) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
+	wg.Add(10) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 
 	if service != "" {
 		// These resources are not used if no service is targeted
@@ -148,7 +148,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	errChan := make(chan error, 1)
 
 	// Get all the Istio objects from a Namespace and all gateways from every namespace
-	wg.Add(9)
+	wg.Add(10)
 	go in.fetchNamespaces(&namespaces, errChan, &wg)
 	go in.fetchDetails(&istioDetails, namespace, errChan, &wg)
 	go in.fetchExportedResources(&exportedResources, namespace, errChan, &wg)
@@ -536,7 +536,7 @@ func (in *IstioValidationsService) fetchExportedResources(exportedResources *kub
 			return
 		}
 		if containsExportToNamespacesIstioObjects(ns, currentSEs) {
-		    exportedResources.ServiceEntries = append(exportedResources.ServiceEntries, seList...)
+			exportedResources.ServiceEntries = append(exportedResources.ServiceEntries, seList...)
 		}
 	}
 }
@@ -552,8 +552,6 @@ func containsExportToNamespacesIstioObjects(ns models.Namespace, currentIstioObj
 					}
 				}
 			}
-		} else {
-			return true
 		}
 	}
 	return false
