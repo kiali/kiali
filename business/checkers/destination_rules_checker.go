@@ -1,6 +1,7 @@
 package checkers
 
 import (
+	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/destinationrules"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -62,6 +63,7 @@ func (in DestinationRulesChecker) runChecks(destinationRule kubernetes.IstioObje
 	enabledCheckers := []Checker{
 		destinationrules.DisabledNamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},
 		destinationrules.DisabledMeshWideMTLSChecker{DestinationRule: destinationRule, MeshPeerAuthns: in.MTLSDetails.MeshPeerAuthentications},
+		common.ExportToNamespaceChecker{IstioObject: destinationRule, Namespaces: in.Namespaces},
 	}
 
 	// Appending validations that only applies to non-autoMTLS meshes
