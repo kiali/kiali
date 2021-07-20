@@ -324,7 +324,13 @@ if ${KIND_EXE} get kubeconfig --name ${KIND_NAME} > /dev/null 2>&1; then
   infomsg "Kind cluster named [${KIND_NAME}] already exists - it will be used as-is"
 else
   infomsg "Kind cluster to be created with name [${KIND_NAME}]"
-  ${KIND_EXE} create cluster --name ${KIND_NAME}
+  cat <<EOF | ${KIND_EXE} create cluster --name ${KIND_NAME} --config -
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+  - role: worker
+EOF
 
   infomsg "Create Kind LoadBalancer via MetalLB"
   lb_addr_range="255.70-255.84"
@@ -437,5 +443,5 @@ else
   sleep 5
   echo "PRIVMSG #${IRC_ROOM} : ${irc_msg}"
   echo QUIT
-  ) | nc irc.freenode.net 6667
+  ) | nc irc.libera.chat 6667
 fi
