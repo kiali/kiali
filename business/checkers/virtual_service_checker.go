@@ -10,10 +10,12 @@ import (
 const VirtualCheckerType = "virtualservice"
 
 type VirtualServiceChecker struct {
-	Namespace        string
-	Namespaces       models.Namespaces
-	DestinationRules []kubernetes.IstioObject
-	VirtualServices  []kubernetes.IstioObject
+	Namespace                string
+	Namespaces               models.Namespaces
+	DestinationRules         []kubernetes.IstioObject
+	VirtualServices          []kubernetes.IstioObject
+	ExportedVirtualServices  []kubernetes.IstioObject
+	ExportedDestinationRules []kubernetes.IstioObject
 }
 
 // An Object Checker runs all checkers for an specific object type (i.e.: pod, route rule,...)
@@ -33,7 +35,7 @@ func (in VirtualServiceChecker) Check() models.IstioValidations {
 func (in VirtualServiceChecker) runIndividualChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	for _, virtualService := range in.VirtualServices {
+	for _, virtualService := range append(in.VirtualServices, in.ExportedVirtualServices...) {
 		validations.MergeValidations(in.runChecks(virtualService))
 	}
 
@@ -45,7 +47,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	enabledCheckers := []GroupChecker{
-		virtual_services.SingleHostChecker{Namespace: in.Namespace, Namespaces: in.Namespaces, VirtualServices: in.VirtualServices},
+		virtual_services.SingleHostChecker{Namespace: in.Namespace, Namespaces: in.Namespaces, VirtualServices: append(in.VirtualServices, in.ExportedVirtualServices...)},
 	}
 
 	for _, checker := range enabledCheckers {
@@ -62,7 +64,7 @@ func (in VirtualServiceChecker) runChecks(virtualService kubernetes.IstioObject)
 
 	enabledCheckers := []Checker{
 		virtual_services.RouteChecker{Route: virtualService},
-		virtual_services.SubsetPresenceChecker{Namespace: in.Namespace, Namespaces: in.Namespaces.GetNames(), DestinationRules: in.DestinationRules, VirtualService: virtualService},
+		virtual_services.SubsetPresenceChecker{Namespace: in.Namespace, Namespaces: in.Namespaces.GetNames(), DestinationRules: append(in.DestinationRules, in.ExportedDestinationRules...), VirtualService: virtualService},
 		common.ExportToNamespaceChecker{IstioObject: virtualService, Namespaces: in.Namespaces},
 	}
 

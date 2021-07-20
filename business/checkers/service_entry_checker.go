@@ -9,14 +9,15 @@ import (
 const ServiceEntryCheckerType = "serviceentry"
 
 type ServiceEntryChecker struct {
-	ServiceEntries []kubernetes.IstioObject
-	Namespaces     models.Namespaces
+	ServiceEntries         []kubernetes.IstioObject
+	ExportedServiceEntries []kubernetes.IstioObject
+	Namespaces             models.Namespaces
 }
 
 func (s ServiceEntryChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	for _, se := range s.ServiceEntries {
+	for _, se := range append(s.ServiceEntries, s.ExportedServiceEntries...) {
 		validations.MergeValidations(s.runSingleChecks(se))
 	}
 

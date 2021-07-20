@@ -10,10 +10,12 @@ import (
 const DestinationRuleCheckerType = "destinationrule"
 
 type DestinationRulesChecker struct {
-	DestinationRules []kubernetes.IstioObject
-	MTLSDetails      kubernetes.MTLSDetails
-	ServiceEntries   []kubernetes.IstioObject
-	Namespaces       []models.Namespace
+	DestinationRules         []kubernetes.IstioObject
+	ExportedDestinationRules []kubernetes.IstioObject
+	MTLSDetails              kubernetes.MTLSDetails
+	ServiceEntries           []kubernetes.IstioObject
+	ExportedServiceEntries   []kubernetes.IstioObject
+	Namespaces               []models.Namespace
 }
 
 func (in DestinationRulesChecker) Check() models.IstioValidations {
@@ -28,15 +30,15 @@ func (in DestinationRulesChecker) Check() models.IstioValidations {
 func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	seHosts := kubernetes.ServiceEntryHostnames(in.ServiceEntries)
+	seHosts := kubernetes.ServiceEntryHostnames(append(in.ServiceEntries, in.ExportedServiceEntries...))
 
 	enabledDRCheckers := []GroupChecker{
-		destinationrules.MultiMatchChecker{Namespaces: in.Namespaces, DestinationRules: in.DestinationRules, ServiceEntries: seHosts},
+		destinationrules.MultiMatchChecker{Namespaces: in.Namespaces, DestinationRules: append(in.DestinationRules, in.ExportedDestinationRules...), ServiceEntries: seHosts},
 	}
 
 	// Appending validations that only applies to non-autoMTLS meshes
 	if !in.MTLSDetails.EnabledAutoMtls {
-		enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails})
+		enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{DestinationRules: append(in.DestinationRules, in.ExportedDestinationRules...), MTLSDetails: in.MTLSDetails})
 	}
 
 	for _, checker := range enabledDRCheckers {
@@ -49,7 +51,7 @@ func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 func (in DestinationRulesChecker) runIndividualChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	for _, destinationRule := range in.DestinationRules {
+	for _, destinationRule := range append(in.DestinationRules, in.ExportedDestinationRules...) {
 		validations.MergeValidations(in.runChecks(destinationRule))
 	}
 

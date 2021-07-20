@@ -48,6 +48,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	errChan := make(chan error, 1)
 
 	var istioDetails kubernetes.IstioDetails
+	var exportedResources kubernetes.ExportedResources
 	var services []core_v1.Service
 	var namespaces models.Namespaces
 	var pods []core_v1.Pod
@@ -59,7 +60,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	var deployments []apps_v1.Deployment
 	var registryStatus []*kubernetes.RegistryStatus
 
-	wg.Add(9) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
+	wg.Add(10) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 
 	if service != "" {
 		// These resources are not used if no service is targeted
@@ -70,6 +71,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 
 	// We fetch without target service as some validations will require full-namespace details
 	go in.fetchDetails(&istioDetails, namespace, errChan, &wg)
+	go in.fetchExportedResources(&exportedResources, namespace, errChan, &wg)
 	go in.fetchNamespaces(&namespaces, errChan, &wg)
 	go in.fetchWorkloads(&workloads, namespace, errChan, &wg)
 	go in.fetchAllWorkloads(&workloadsPerNamespace, errChan, &wg)
@@ -87,7 +89,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 		}
 	}
 
-	objectCheckers := in.getAllObjectCheckers(namespace, istioDetails, services, workloadsPerNamespace, workloads, gatewaysPerNamespace, mtlsDetails, rbacDetails, namespaces, registryStatus)
+	objectCheckers := in.getAllObjectCheckers(namespace, istioDetails, exportedResources, services, workloadsPerNamespace, workloads, gatewaysPerNamespace, mtlsDetails, rbacDetails, namespaces, registryStatus)
 
 	if service != "" {
 		objectCheckers = append(objectCheckers, in.getServiceCheckers(namespace, services, deployments, pods)...)
@@ -108,14 +110,14 @@ func (in *IstioValidationsService) getServiceCheckers(namespace string, services
 	}
 }
 
-func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioDetails kubernetes.IstioDetails, services []core_v1.Service, workloadsPerNamespace map[string]models.WorkloadList, workloads models.WorkloadList, gatewaysPerNamespace [][]kubernetes.IstioObject, mtlsDetails kubernetes.MTLSDetails, rbacDetails kubernetes.RBACDetails, namespaces []models.Namespace, registryStatus []*kubernetes.RegistryStatus) []ObjectChecker {
+func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioDetails kubernetes.IstioDetails, exportedResources kubernetes.ExportedResources, services []core_v1.Service, workloadsPerNamespace map[string]models.WorkloadList, workloads models.WorkloadList, gatewaysPerNamespace [][]kubernetes.IstioObject, mtlsDetails kubernetes.MTLSDetails, rbacDetails kubernetes.RBACDetails, namespaces []models.Namespace, registryStatus []*kubernetes.RegistryStatus) []ObjectChecker {
 	return []ObjectChecker{
 		checkers.NoServiceChecker{Namespace: namespace, Namespaces: namespaces, IstioDetails: &istioDetails, Services: services, WorkloadList: workloads, GatewaysPerNamespace: gatewaysPerNamespace, AuthorizationDetails: &rbacDetails, RegistryStatus: registryStatus},
-		checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, VirtualServices: istioDetails.VirtualServices},
-		checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioDetails.ServiceEntries},
+		checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, VirtualServices: istioDetails.VirtualServices, ExportedDestinationRules: exportedResources.DestinationRules, ExportedVirtualServices: exportedResources.VirtualServices},
+		checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioDetails.ServiceEntries, ExportedDestinationRules: exportedResources.DestinationRules, ExportedServiceEntries: exportedResources.ServiceEntries},
 		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace, WorkloadsPerNamespace: workloadsPerNamespace},
 		checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails, WorkloadList: workloads},
-		checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries, Namespaces: namespaces},
+		checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries, Namespaces: namespaces, ExportedServiceEntries: exportedResources.ServiceEntries},
 		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, Services: services, ServiceEntries: istioDetails.ServiceEntries, WorkloadList: workloads, MtlsDetails: mtlsDetails, VirtualServices: istioDetails.VirtualServices, RegistryStatus: registryStatus},
 		checkers.SidecarChecker{Sidecars: istioDetails.Sidecars, Namespaces: namespaces, WorkloadList: workloads, Services: services, ServiceEntries: istioDetails.ServiceEntries},
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioDetails.RequestAuthentications, WorkloadList: workloads},
@@ -124,6 +126,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 
 func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, objectType string, object string) (models.IstioValidations, error) {
 	var istioDetails kubernetes.IstioDetails
+	var exportedResources kubernetes.ExportedResources
 	var namespaces models.Namespaces
 	var services []core_v1.Service
 	var workloads models.WorkloadList
@@ -145,9 +148,10 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	errChan := make(chan error, 1)
 
 	// Get all the Istio objects from a Namespace and all gateways from every namespace
-	wg.Add(9)
+	wg.Add(10)
 	go in.fetchNamespaces(&namespaces, errChan, &wg)
 	go in.fetchDetails(&istioDetails, namespace, errChan, &wg)
+	go in.fetchExportedResources(&exportedResources, namespace, errChan, &wg)
 	go in.fetchServices(&services, namespace, errChan, &wg)
 	go in.fetchWorkloads(&workloads, namespace, errChan, &wg)
 	go in.fetchAllWorkloads(&workloadsPerNamespace, errChan, &wg)
@@ -165,13 +169,13 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 			checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace, WorkloadsPerNamespace: workloadsPerNamespace},
 		}
 	case kubernetes.VirtualServices:
-		virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
+		virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules, ExportedDestinationRules: exportedResources.DestinationRules, ExportedVirtualServices: exportedResources.VirtualServices}
 		objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
 	case kubernetes.DestinationRules:
-		destinationRulesChecker := checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioDetails.ServiceEntries}
+		destinationRulesChecker := checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioDetails.ServiceEntries, ExportedDestinationRules: exportedResources.DestinationRules, ExportedServiceEntries: exportedResources.ServiceEntries}
 		objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
 	case kubernetes.ServiceEntries:
-		serviceEntryChecker := checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries, Namespaces: namespaces}
+		serviceEntryChecker := checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries, Namespaces: namespaces, ExportedServiceEntries: exportedResources.ServiceEntries}
 		objectCheckers = []ObjectChecker{serviceEntryChecker}
 	case kubernetes.Sidecars:
 		sidecarsChecker := checkers.SidecarChecker{Sidecars: istioDetails.Sidecars, Namespaces: namespaces,
@@ -417,6 +421,7 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 			}
 			go fetchIstioObjects(&istioDetails.VirtualServices, namespace, getVirtualServices, &wg2, errChan2)
 		}
+
 		if IsResourceCached(namespace, kubernetes.DestinationRules) {
 			istioDetails.DestinationRules, err = kialiCache.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
 		} else {
@@ -477,6 +482,102 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 		} else {
 			*rValue = istioDetails
 		}
+	}
+}
+
+func (in *IstioValidationsService) fetchExportedResources(exportedResources *kubernetes.ExportedResources, namespace string, errChan chan error, wg *sync.WaitGroup) {
+	defer wg.Done()
+	if len(errChan) > 0 {
+		return
+	}
+	nss, err := in.businessLayer.Namespace.GetNamespaces()
+	if err != nil {
+		errChan <- err
+		return
+	}
+
+	currentVSs, err := in.fetchVirtualServices(namespace)
+	if err != nil {
+		errChan <- err
+		return
+	}
+	currentDRs, err := in.fetchDestinationRules(namespace)
+	if err != nil {
+		errChan <- err
+		return
+	}
+	currentSEs, err := in.fetchServiceEntries(namespace)
+	if err != nil {
+		errChan <- err
+		return
+	}
+	for _, ns := range nss {
+		vsList, err := in.fetchVirtualServices(ns.Name)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		if containsExportToNamespacesIstioObjects(ns, currentVSs) {
+			exportedResources.VirtualServices = append(exportedResources.VirtualServices, vsList...)
+		}
+
+		drList, err := in.fetchDestinationRules(ns.Name)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		if containsExportToNamespacesIstioObjects(ns, currentDRs) {
+			exportedResources.DestinationRules = append(exportedResources.DestinationRules, drList...)
+		}
+
+		seList, err := in.fetchServiceEntries(ns.Name)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		if containsExportToNamespacesIstioObjects(ns, currentSEs) {
+			exportedResources.ServiceEntries = append(exportedResources.ServiceEntries, seList...)
+		}
+	}
+}
+
+func containsExportToNamespacesIstioObjects(ns models.Namespace, currentIstioObjects []kubernetes.IstioObject) bool {
+	for _, vs := range currentIstioObjects {
+		if exportToSpec, found := vs.GetSpec()["exportTo"]; found {
+			if namespaces, ok := exportToSpec.([]interface{}); ok {
+				for _, exportToNs := range namespaces {
+					// take only namespaces where it is exported to, or if it is exported to current namespace
+					if (exportToNs == "." && ns.Name == vs.GetObjectMeta().Namespace) || exportToNs == ns.Name || exportToNs == "*" {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
+}
+
+func (in *IstioValidationsService) fetchVirtualServices(namespace string) ([]kubernetes.IstioObject, error) {
+	if IsResourceCached(namespace, kubernetes.VirtualServices) {
+		return kialiCache.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
+	} else {
+		return in.k8s.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
+	}
+}
+
+func (in *IstioValidationsService) fetchDestinationRules(namespace string) ([]kubernetes.IstioObject, error) {
+	if IsResourceCached(namespace, kubernetes.DestinationRules) {
+		return kialiCache.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
+	} else {
+		return in.k8s.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
+	}
+}
+
+func (in *IstioValidationsService) fetchServiceEntries(namespace string) ([]kubernetes.IstioObject, error) {
+	if IsResourceCached(namespace, kubernetes.ServiceEntries) {
+		return kialiCache.GetIstioObjects(namespace, kubernetes.ServiceEntries, "")
+	} else {
+		return in.k8s.GetIstioObjects(namespace, kubernetes.ServiceEntries, "")
 	}
 }
 
