@@ -345,6 +345,7 @@ else
 fi
 
 # Run the tests
+EXIT_CODE=0
 echo
 echo "====================="
 echo "=== TEST RESULTS: ==="
@@ -352,7 +353,11 @@ echo "====================="
 
 for t in ${ALL_TESTS}
 do
-  printf '\n%40s... ' "${t}"
+  if [ "$CI" != "true" ]; then
+    printf '\n%40s... ' "${t}"
+  else
+    echo "/*** BEGIN MOLECULE TEST: $t ***/"
+  fi
 
   if [[ "${SKIP_TESTS}" == *"$t"* ]]; then
     printf '%s' "$(dim 'skipped')"
@@ -365,18 +370,32 @@ do
   prepare_test ${t}
 
   export MOLECULE_SCENARIO="${t}"
-  make molecule-test >> ${TEST_LOGS_DIR}/${t}.log 2>&1
-  exitcode="$?"
+  if [ "$CI" != "true" ]; then
+    make molecule-test >> ${TEST_LOGS_DIR}/${t}.log 2>&1
+    exitcode="$?"
+  else
+    make molecule-test |& tee ${TEST_LOGS_DIR}/${t}.log
+    exitcode="${PIPESTATUS[0]}"
+  fi
 
   unprepare_test ${t}
 
   endtime=$SECONDS
   duration="$(($endtime / 60))m $(($endtime %60))s"
 
-  if [ "${exitcode}" == "0" ]; then
-    printf '%s [%s]' "$(green 'success')" "${duration}"
+  if [ "$CI" != "true" ]; then
+    if [ "${exitcode}" == "0" ]; then
+      printf '%s [%s]' "$(green 'success')" "${duration}"
+    else
+      printf '%s [%s]' "$(red 'FAILURE')" "${duration}"
+    fi
   else
-    printf '%s [%s]' "$(red 'FAILURE')" "${duration}"
+    if [ "${exitcode}" == "0" ]; then
+      echo "/*** FINISHED MOLECULE TEST: $t - success ${duration} ***/"
+    else
+      echo "/*** FINISHED MOLECULE TEST: $t - FAILURE ${duration} ***/"
+      EXIT_CODE=1
+    fi
   fi
 
 done
@@ -385,3 +404,6 @@ echo
 echo
 echo "Test logs can be found at: ${TEST_LOGS_DIR}"
 echo
+
+exit $EXIT_CODE
+

@@ -72,6 +72,14 @@ Options:
     The kiali fork to clone.
     Default: kiali/kiali
 
+-kuib|--kiali-ui-branch <branch name>
+    The kiali-ui branch to clone.
+    Default: master
+
+-kuif|--kiali-ui-fork <name>
+    The kiali-ui fork to clone.
+    Default: kiali/kiali-ui
+
 -kob|--kiali-operator-branch <branch name>
     The kiali-operator branch to clone.
     Default: master
@@ -151,6 +159,8 @@ while [[ $# -gt 0 ]]; do
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
     -kb|--kiali-branch)           KIALI_BRANCH="$2";          shift;shift; ;;
     -kf|--kiali-fork)             KIALI_FORK="$2";            shift;shift; ;;
+    -kuib|--kiali-ui-branch)      UI_BRANCH="$2";          shift;shift; ;;
+    -kuif|--kiali-ui-fork)        UI_FORK="$2";            shift;shift; ;;
     -kob|--kiali-operator-branch) KIALI_OPERATOR_BRANCH="$2"; shift;shift; ;;
     -kof|--kiali-operator-fork)   KIALI_OPERATOR_FORK="$2";   shift;shift; ;;
     -lb|--logs-branch)            LOGS_BRANCH="$2";           shift;shift; ;;
@@ -189,6 +199,8 @@ HELM_FORK="${HELM_FORK:-kiali/helm-charts}"
 HELM_BRANCH="${HELM_BRANCH:-master}"
 KIALI_FORK="${KIALI_FORK:-kiali/kiali}"
 KIALI_BRANCH="${KIALI_BRANCH:-master}"
+UI_FORK="${UI_FORK:-kiali/kiali-ui}"
+UI_BRANCH="${UI_BRANCH:-master}"
 KIALI_OPERATOR_FORK="${KIALI_OPERATOR_FORK:-kiali/kiali-operator}"
 KIALI_OPERATOR_BRANCH="${KIALI_OPERATOR_BRANCH:-master}"
 
@@ -213,6 +225,8 @@ HELM_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${HELM_FORK}.git"
 HELM_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${HELM_FORK}.git"
 KIALI_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${KIALI_FORK}.git"
 KIALI_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${KIALI_FORK}.git"
+UI_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${UI_FORK}.git"
+UI_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${UI_FORK}.git"
 KIALI_OPERATOR_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${KIALI_OPERATOR_FORK}.git"
 KIALI_OPERATOR_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${KIALI_OPERATOR_FORK}.git"
 LOGS_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${LOGS_FORK}/${LOGS_PROJECT_NAME}.git"
@@ -246,6 +260,8 @@ INSTALL_ISTIO=$INSTALL_ISTIO
 IRC_ROOM=$IRC_ROOM
 KIALI_BRANCH=$KIALI_BRANCH
 KIALI_FORK=$KIALI_FORK
+UI_BRANCH=$UI_BRANCH
+UI_FORK=$UI_FORK
 KIALI_OPERATOR_BRANCH=$KIALI_OPERATOR_BRANCH
 KIALI_OPERATOR_FORK=$KIALI_OPERATOR_FORK
 KIND_NAME=$KIND_NAME
@@ -269,11 +285,13 @@ EOM
 if [ "${GIT_CLONE_PROTOCOL}" == "git" ]; then
   HELM_GITHUB_GITCLONE="${HELM_GITHUB_GITCLONE_GIT}"
   KIALI_GITHUB_GITCLONE="${KIALI_GITHUB_GITCLONE_GIT}"
+  UI_GITHUB_GITCLONE="${UI_GITHUB_GITCLONE_GIT}"
   KIALI_OPERATOR_GITHUB_GITCLONE="${KIALI_OPERATOR_GITHUB_GITCLONE_GIT}"
   LOGS_GITHUB_GITCLONE="${LOGS_GITHUB_GITCLONE_GIT}"
 elif [ "${GIT_CLONE_PROTOCOL}" == "https" ]; then
   HELM_GITHUB_GITCLONE="${HELM_GITHUB_GITCLONE_HTTPS}"
   KIALI_GITHUB_GITCLONE="${KIALI_GITHUB_GITCLONE_HTTPS}"
+  UI_GITHUB_GITCLONE="${UI_GITHUB_GITCLONE_HTTPS}"
   KIALI_OPERATOR_GITHUB_GITCLONE="${KIALI_OPERATOR_GITHUB_GITCLONE_HTTPS}"
   LOGS_GITHUB_GITCLONE="${LOGS_GITHUB_GITCLONE_HTTPS}"
   if [ "${UPLOAD_LOGS}" == "true" ]; then
@@ -297,6 +315,7 @@ fi
 test -d ${SRC}/helm-charts && rm -rf ${SRC}/helm-charts
 test -d ${SRC}/kiali-operator && rm -rf ${SRC}/kiali-operator
 test -d ${SRC}/kiali && rm -rf ${SRC}/kiali
+test -d ${SRC}/kiali-ui && rm -rf ${SRC}/kiali-ui
 test -d ${SRC}/${LOGS_PROJECT_NAME:-invalid} && [ "${SRC}/${LOGS_PROJECT_NAME}" != "/" ] && rm -rf ${SRC}/${LOGS_PROJECT_NAME:-invalid}
 mkdir -p ${SRC}
 
@@ -309,8 +328,10 @@ infomsg "Clone github repos in [$SRC] to make sure we have the latest tests and 
 
 cd ${SRC}
 
-infomsg "Cloning logs repo [${LOGS_FORK}/${LOGS_PROJECT_NAME}:${LOGS_BRANCH}] from [${LOGS_GITHUB_GITCLONE}]..."
-git clone --single-branch --branch ${LOGS_BRANCH} ${LOGS_GITHUB_GITCLONE} logs
+if [ "$CI" != "true" ]; then
+  infomsg "Cloning logs repo [${LOGS_FORK}/${LOGS_PROJECT_NAME}:${LOGS_BRANCH}] from [${LOGS_GITHUB_GITCLONE}]..."
+  git clone --single-branch --branch ${LOGS_BRANCH} ${LOGS_GITHUB_GITCLONE} logs
+fi
 
 infomsg "Cloning helm-charts [${HELM_FORK}:${HELM_BRANCH}] from [${HELM_GITHUB_GITCLONE}]..."
 git clone --single-branch --branch ${HELM_BRANCH} ${HELM_GITHUB_GITCLONE} helm-charts
@@ -373,11 +394,27 @@ fi
 if [ "${USE_DEV_IMAGES}" == "true" ]; then
   infomsg "Dev images are to be tested. Will prepare them now."
 
+  infomsg "Cloning kiali-ui [${UI_FORK}:${UI_BRANCH}] from [${UI_GITHUB_GITCLONE}]..."
+  git clone --single-branch --branch ${UI_BRANCH} ${UI_GITHUB_GITCLONE} ../kiali-ui
+
+  # TODO: Remove this patch command. It's needed because of an ongoing reconciliation issue in KinD.
+  # TODO: See: https://github.com/operator-framework/operator-sdk/issues/5319
+  patch -i - operator/build/Dockerfile << EOF
+2c2
+< FROM quay.io/openshift/origin-ansible-operator:\${OPERATOR_BASE_IMAGE_VERSION}
+---
+> FROM quay.io/operator-framework/ansible-operator:v1.13.0
+EOF
+
   infomsg "Building dev image..."
-  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" clean build test
+  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" -e CONSOLE_LOCAL_DIR="../kiali-ui" clean build test
+
+  pushd ../kiali-ui
+  yarn && yarn build
+  popd
 
   infomsg "Pushing the images into the cluster..."
-  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="${KIND_NAME}" cluster-push
+  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="${KIND_NAME}" -e CONSOLE_LOCAL_DIR="../kiali-ui" cluster-push
 else
   infomsg "Will test the latest published images"
 fi
@@ -456,7 +493,11 @@ make -e FORCE_MOLECULE_BUILD="true" -e DORP="${DORP}" molecule-build
 
 mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
 infomsg "Running the tests - logs are going here: ${LOGS_LOCAL_SUBDIR_ABS}"
-eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" > "${LOGS_LOCAL_RESULTS}"
+if [ "${CI}" == "true" ]; then
+  eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}"
+else
+  eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" > "${LOGS_LOCAL_RESULTS}"
+fi
 
 cd ${LOGS_LOCAL_SUBDIR_ABS}
 
