@@ -67,3 +67,129 @@ func (vService *VirtualService) IsValidHost(namespace string, serviceName string
 
 	return kubernetes.FilterByRoute(protocols, protocolNames, serviceName, namespace, nil)
 }
+
+// HasRequestTimeout determines if the spec has an http timeout set.
+func (vService *VirtualService) HasRequestTimeout() bool {
+	if vService == nil {
+		return false
+	}
+
+	if routes, isSlice := vService.Spec.Http.([]interface{}); isSlice {
+		for _, route := range routes {
+			if routeMap, isMap := route.(map[string]interface{}); isMap {
+				if _, hasTimeout := routeMap["timeout"]; hasTimeout {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+// HasFaultInjection determines if the spec has http fault injection set.
+func (vService *VirtualService) HasFaultInjection() bool {
+	if vService == nil {
+		return false
+	}
+
+	if routes, isSlice := vService.Spec.Http.([]interface{}); isSlice {
+		for _, route := range routes {
+			if routeMap, isMap := route.(map[string]interface{}); isMap {
+				if _, hasFault := routeMap["fault"]; hasFault {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+// HasTrafficShifting determines if the spec has http traffic shifting set.
+// If there are routes with multiple destinations then it is assumed that
+// the spec has traffic shifting regardless of weights.
+func (vService *VirtualService) HasTrafficShifting() bool {
+	if vService == nil {
+		return false
+	}
+
+	if routes, isSlice := vService.Spec.Http.([]interface{}); isSlice {
+		for _, route := range routes {
+			if routeMap, isMap := route.(map[string]interface{}); isMap {
+				if destinationRoutes, hasDRRoutes := routeMap["route"]; hasDRRoutes {
+					if drRoutes, isSlice := destinationRoutes.([]interface{}); isSlice {
+						// If there's only a single destination then there's no weighted split.
+						// If there's multiple destinations, it's assumed that there's traffic
+						// splitting even if one destination has 100 weight and the rest have 0.
+						return len(drRoutes) > 1
+					}
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+// HasTCPTrafficShifting determines if the spec has tcp traffic shifting set.
+// If there are routes with multiple destinations then it is assumed that
+// the spec has traffic shifting regardless of weights.
+func (vService *VirtualService) HasTCPTrafficShifting() bool {
+	if vService == nil {
+		return false
+	}
+
+	if routes, isSlice := vService.Spec.Tcp.([]interface{}); isSlice {
+		for _, route := range routes {
+			if routeMap, isMap := route.(map[string]interface{}); isMap {
+				if destinationRoutes, hasDRRoutes := routeMap["route"]; hasDRRoutes {
+					if drRoutes, isSlice := destinationRoutes.([]interface{}); isSlice {
+						// If there's only a single destination then there's no weighted split.
+						// If there's multiple destinations, it's assumed that there's traffic
+						// splitting even if one destination has 100 weight and the rest have 0.
+						return len(drRoutes) > 1
+					}
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+// IsValidHost returns true if VirtualService hosts applies to the service
+func (vService *VirtualService) HasRequestRouting() bool {
+	if vService == nil {
+		return false
+	}
+
+	hasRoute := func(routes []interface{}) bool {
+		for _, route := range routes {
+			if routeMap, isMap := route.(map[string]interface{}); isMap {
+				if _, hasRoute := routeMap["route"]; hasRoute {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
+	if routes, isSlice := vService.Spec.Tcp.([]interface{}); isSlice {
+		if hasRoute(routes) {
+			return true
+		}
+	}
+	if routes, isSlice := vService.Spec.Http.([]interface{}); isSlice {
+		if hasRoute(routes) {
+			return true
+		}
+	}
+	if routes, isSlice := vService.Spec.Tls.([]interface{}); isSlice {
+		if hasRoute(routes) {
+			return true
+		}
+	}
+
+	return false
+}
