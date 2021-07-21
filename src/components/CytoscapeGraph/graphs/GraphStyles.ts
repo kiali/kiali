@@ -226,9 +226,6 @@ export class GraphStyles {
         if (!hasKialiScenario) {
           icons = `<span class="${NodeIconVS} ${iconMargin(icons)}"></span> ${icons}`;
         } else {
-          if (node.hasRequestRouting) {
-            icons = `<span class="${NodeIconRequestRouting} ${iconMargin(icons)}"></span> ${icons}`;
-          }
           if (node.hasFaultInjection) {
             icons = `<span class="${NodeIconFaultInjection} ${iconMargin(icons)}"></span> ${icons}`;
           }
@@ -237,6 +234,9 @@ export class GraphStyles {
           }
           if (node.hasRequestTimeout) {
             icons = `<span class="${NodeIconRequestTimeout} ${iconMargin(icons)}"></span> ${icons}`;
+          }
+          if (node.hasRequestRouting) {
+            icons = `<span class="${NodeIconRequestRouting} ${iconMargin(icons)}"></span> ${icons}`;
           }
         }
       }

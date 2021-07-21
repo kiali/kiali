@@ -110,4 +110,14 @@ describe('GraphStyles test', () => {
     const firstSpanEnd = label.search('</span>');
     expect(label.substring(firstSpanBegin, firstSpanEnd)).toContain(icons.istio.root.className);
   });
+
+  it('displays request routing icon before other kiali scenarios', () => {
+    const data = { ...nodeData, hasVS: true, hasTCPTrafficShifting: true, hasRequestRouting: true };
+    const node = setupNode(data);
+    const label = GraphStyles.getNodeLabel(node);
+
+    const firstSpanBegin = label.search('<span');
+    const firstSpanEnd = label.search('</span>');
+    expect(label.substring(firstSpanBegin, firstSpanEnd)).toContain(icons.istio.requestRouting.className);
+  });
 });
