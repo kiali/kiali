@@ -7,6 +7,8 @@
 # This will start a minikube cluster via the hack script k8s-minikube.sh.
 #
 
+set -u
+
 # Where this script is - all our hack files are assumed to be in here
 script_root="$( cd "$(dirname "$0")" ; pwd -P )"
 hack_dir="$script_root"
@@ -27,6 +29,25 @@ Options:
     Container environment to use.
     Default: ${DORP:-docker}
 
+-lb|--logs-branch <branch name>
+    The logs branch to clone.
+    Only used if --upload-logs is "true", otherwise, this setting is ignored.
+    Default: minikube
+
+-ld|--logs-directory <path>
+    The full path to the local git repository of the logs. This must exist and must be the git repo of the logs fork.
+    Only used if --upload-logs is "true", otherwise, this setting is ignored.
+
+-lf|--logs-fork <name>
+    The logs fork/org to clone.
+    Only used if --upload-logs is "true", otherwise, this setting is ignored.
+    Default: jmazzitelli
+
+-lpn|--logs-project-name <name>
+    The project name within the logs fork/org to clone.
+    Only used if --upload-logs is "true", otherwise, this setting is ignored.
+    Default: kiali-molecule-test-logs
+
 -me|--minikube-exe <path to minikube>
     The 'minikube' command, if not in PATH then must be a full path.
     Default: minikube
@@ -40,6 +61,14 @@ Options:
 -rc|--rebuild-cluster <true|false>
     If true, any existing cluster will be destroyed and a new one will be rebuilt.
     Default: false
+
+-ul|--upload-logs <true|false>
+    If you want to upload the logs to the git repo, set this to true.
+    If true, it is assumed there is a git repo cloned and located at
+    --logs-directory and that is there the test logs will go. Those logs
+    will then be pushed to the remote git repo.
+    If false, the logs will just be written to a local tmp directory.
+    Default: false
 HELP
 }
 
@@ -49,9 +78,14 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -ce|--client-exe)             CLIENT_EXE="$2";      shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";            shift;shift; ;;
+    -lb|--logs-branch)            LOGS_BRANCH="$2";     shift;shift; ;;
+    -ld|--logs-directory)         LOGS_DIR="$2";        shift;shift; ;;
+    -lf|--logs-fork)              LOGS_FORK="$2";       shift;shift; ;;
+    -lpn|--logs-project-name)     LOGS_PROJECT_NAME="$2"; shift;shift; ;;
     -me|--minikube-exe)           MINIKUBE_EXE="$2";    shift;shift; ;;
     -oe|--olm-enabled)            OLM_ENABLED="$2";     shift;shift; ;;
     -rc|--rebuild-cluster)        REBUILD_CLUSTER="$2"; shift;shift; ;;
+    -ul|--upload-logs)            UPLOAD_LOGS="$2";     shift;shift; ;;
     -h|--help)                    helpmsg; exit 1;      shift; ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
@@ -62,6 +96,31 @@ DORP="${DORP:-docker}"
 MINIKUBE_EXE="${MINIKUBE_EXE:-minikube}"
 OLM_ENABLED="${OLM_ENABLED:-false}"
 REBUILD_CLUSTER="${REBUILD_CLUSTER:-false}"
+
+# details about the github repo where the logs are to be stored
+LOGS_PROJECT_NAME="${LOGS_PROJECT_NAME:-kiali-molecule-test-logs}"
+LOGS_FORK="${LOGS_FORK:-jmazzitelli}"
+LOGS_BRANCH="${LOGS_BRANCH:-minikube}"
+
+LOGS_LOCAL_DIRNAME_ABS="${LOGS_DIR}"
+LOGS_LOCAL_SUBDIR="molecule-tests-$(date +'%Y-%m-%d_%H-%M-%S')"
+LOGS_LOCAL_SUBDIR_ABS="${LOGS_LOCAL_DIRNAME_ABS}/${LOGS_LOCAL_SUBDIR}"
+LOGS_LOCAL_RESULTS="${LOGS_LOCAL_SUBDIR_ABS}/results.log"
+LOGS_GITHUB_HTTPS_BASE="https://github.com/${LOGS_FORK}/${LOGS_PROJECT_NAME}/tree/${LOGS_BRANCH}"
+LOGS_GITHUB_HTTPS_SUBDIR="${LOGS_GITHUB_HTTPS_BASE}/${LOGS_LOCAL_SUBDIR}"
+
+# Only if this is set to "true" will the logs be committed and pushed to the git repo
+UPLOAD_LOGS="${UPLOAD_LOGS:-false}"
+if [ "${UPLOAD_LOGS}" == "true" ]; then
+  if [ -z "${LOGS_DIR}" -o ! -d "${LOGS_DIR}" ]; then
+    echo "Specify a valid directory via --logs-directory - this must be where the logs project is git cloned. [${LOGS_DIR}]"
+    exit 1
+  fi
+  if [ "${LOGS_PROJECT_NAME}" == "" -o "${LOGS_FORK}" == "" -o "${LOGS_BRANCH}" == "" ]; then
+    echo "Invalid logs settings."
+    exit 1
+  fi
+fi
 
 # the minikube hack script command
 minikube_profile="ci"
@@ -120,4 +179,40 @@ else
   ${minikube_sh} resetclock
 fi
 
-${hack_dir}/run-molecule-tests.sh --cluster-type minikube --minikube-profile ${minikube_profile} --color false --minikube-exe ${MINIKUBE_EXE} --client-exe ${CLIENT_EXE} -dorp ${DORP} ${operator_installer_arg}
+if [ "${UPLOAD_LOGS}" == "true" ]; then
+  cd "${LOGS_LOCAL_DIRNAME_ABS}"
+  if ! git checkout ${LOGS_BRANCH}; then echo "Cannot checkout logs branch [${LOGS_BRANCH}]"; exit 1; fi
+  if ! git pull; then echo "Cannot pull logs branch [${LOGS_BRANCH}]"; exit 1; fi
+  mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
+  echo "Test logs are going to this git repo and will be pushed to branch [${LOGS_BRANCH}]: ${LOGS_LOCAL_SUBDIR_ABS}"
+  test_logs_dir_arg="--test-logs-dir ${LOGS_LOCAL_SUBDIR_ABS}"
+  redirect_output_to="${LOGS_LOCAL_RESULTS}"
+else
+  test_logs_dir_arg=""
+  redirect_output_to="/dev/stdout"
+fi
+
+# Run the tests!
+${hack_dir}/run-molecule-tests.sh --cluster-type minikube --minikube-profile ${minikube_profile} --color false --minikube-exe ${MINIKUBE_EXE} --client-exe ${CLIENT_EXE} -dorp ${DORP} ${operator_installer_arg} ${test_logs_dir_arg} > ${redirect_output_to}
+
+# Upload the logs if requested
+if [ "${UPLOAD_LOGS}" == "true" ]; then
+  cd ${LOGS_LOCAL_SUBDIR_ABS}
+
+  # compress large log files
+  MAX_LOG_FILE_SIZE="50M"
+  for bigfile in $(find ${LOGS_LOCAL_SUBDIR_ABS} -maxdepth 1 -type f -size +${MAX_LOG_FILE_SIZE})
+  do
+    echo "This file is large and needs to be compressed: $(basename ${bigfile})"
+    tar -czf ${bigfile}.tgz -C ${LOGS_LOCAL_SUBDIR_ABS} --remove-files $(basename ${bigfile})
+  done
+
+  echo "Committing the logs to github: ${LOGS_GITHUB_HTTPS_SUBDIR}"
+  cd "${LOGS_LOCAL_SUBDIR_ABS}"
+  git add -A
+  git commit -m "Test results for ${LOGS_LOCAL_SUBDIR}"
+  git push
+
+  # dump the results to stdout
+  cat "${LOGS_LOCAL_RESULTS}"
+fi
