@@ -81,7 +81,7 @@ func assertMultimatchFailure(t *testing.T, code string, validations models.Istio
 	// Assert object's checks
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.ErrorSeverity, validation.Checks[0].Severity)
-	assert.Equal(models.CheckMessage(code), validation.Checks[0].Message)
+	assert.NoError(ConfirmIstioCheckMessage(code, validation.Checks[0]))
 
 	// Assert referenced objects
 	assert.Len(validation.References, len(references))

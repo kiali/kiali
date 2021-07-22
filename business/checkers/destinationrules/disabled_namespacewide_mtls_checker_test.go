@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -214,5 +215,5 @@ func testDisabledMtlsValidationsFound(t *testing.T, validationId string, destina
 	assert.NotNil(validation)
 	assert.Equal(models.ErrorSeverity, validation.Severity)
 	assert.Equal("spec/trafficPolicy/tls/mode", validation.Path)
-	assert.Equal(models.CheckMessage(validationId), validation.Message)
+	assert.NoError(common.ConfirmIstioCheckMessage(validationId, validation))
 }

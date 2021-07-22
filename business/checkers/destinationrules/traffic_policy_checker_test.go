@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -255,7 +256,7 @@ func testValidationAdded(t *testing.T, destinationRules []kubernetes.IstioObject
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 	assert.Equal("spec/trafficPolicy", validation.Checks[0].Path)
-	assert.Equal(models.CheckMessage("destinationrules.trafficpolicy.notlssettings"), validation.Checks[0].Message)
+	assert.NoError(common.ConfirmIstioCheckMessage("destinationrules.trafficpolicy.notlssettings", validation.Checks[0]))
 
 	assert.True(len(validation.References) > 0)
 	return validation

@@ -4839,10 +4839,17 @@
       "type": "object",
       "title": "IstioCheck represents an individual check.",
       "required": [
+        "code",
         "message",
         "severity"
       ],
       "properties": {
+        "code": {
+          "description": "The check code used to identify a check",
+          "type": "string",
+          "x-go-name": "Code",
+          "example": "KIA0001"
+        },
         "message": {
           "description": "Description of the check",
           "type": "string",

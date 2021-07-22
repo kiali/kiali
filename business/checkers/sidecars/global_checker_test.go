@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -69,5 +70,5 @@ func TestSidecarWithSelectorInControlPlane(t *testing.T) {
 
 	assert.Len(validations, 1)
 	assert.Equal(models.WarningSeverity, validations[0].Severity)
-	assert.Equal(models.CheckMessage("sidecar.global.selector"), validations[0].Message)
+	assert.NoError(common.ConfirmIstioCheckMessage("sidecar.global.selector", validations[0]))
 }

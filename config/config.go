@@ -348,11 +348,17 @@ type UIDefaults struct {
 	RefreshInterval   string          `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`
 }
 
+// Validations defines default settings configured for the Validations subsystem
+type Validations struct {
+	Ignore []string `yaml:"ignore,omitempty" json:"ignore,omitempty"`
+}
+
 // KialiFeatureFlags available from the CR
 type KialiFeatureFlags struct {
-	IstioInjectionAction bool       `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
-	IstioUpgradeAction   bool       `yaml:"istio_upgrade_action,omitempty" json:"istioUpgradeAction"`
-	UIDefaults           UIDefaults `yaml:"ui_defaults,omitempty" json:"uiDefaults,omitempty"`
+	IstioInjectionAction bool        `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
+	IstioUpgradeAction   bool        `yaml:"istio_upgrade_action,omitempty" json:"istioUpgradeAction"`
+	UIDefaults           UIDefaults  `yaml:"ui_defaults,omitempty" json:"uiDefaults,omitempty"`
+	Validations          Validations `yaml:"validations,omitempty" json:"validations,omitempty"`
 }
 
 // Tolerance config
@@ -559,6 +565,9 @@ func NewConfig() (c *Config) {
 				MetricsPerRefresh: "1m",
 				Namespaces:        make([]string, 0),
 				RefreshInterval:   "15s",
+			},
+			Validations: Validations{
+				Ignore: make([]string, 0),
 			},
 		},
 		KubernetesConfig: KubernetesConfig{

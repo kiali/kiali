@@ -66,7 +66,7 @@ func testFailure(assert *assert.Assertions, selector map[string]interface{}, wl 
 	assert.True(valid)
 	assert.NotEmpty(validations)
 	assert.Len(validations, 1)
-	assert.Equal(validations[0].Message, models.CheckMessage(code))
+	assert.NoError(ConfirmIstioCheckMessage(code, validations[0]))
 	assert.Equal(validations[0].Severity, models.WarningSeverity)
 	assert.Equal(validations[0].Path, "spec/workloadSelector/labels")
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -41,10 +42,10 @@ func TestNoValidHost(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.Equal(models.CheckMessage("virtualservices.nohost.hostnotfound"), validations[0].Message)
+	assert.NoError(common.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", validations[0]))
 	assert.Equal("spec/http[0]/route[0]/destination/host", validations[0].Path)
 	assert.Equal(models.ErrorSeverity, validations[1].Severity)
-	assert.Equal(models.CheckMessage("virtualservices.nohost.hostnotfound"), validations[1].Message)
+	assert.NoError(common.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", validations[1]))
 	assert.Equal("spec/tcp[0]/route[0]/destination/host", validations[1].Path)
 
 	delete(virtualService.GetSpec(), "http")
@@ -58,7 +59,7 @@ func TestNoValidHost(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.Equal(models.CheckMessage("virtualservices.nohost.hostnotfound"), validations[0].Message)
+	assert.NoError(common.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", validations[0]))
 	assert.Equal("spec/tcp[0]/route[0]/destination/host", validations[0].Path)
 
 	delete(virtualService.GetSpec(), "tcp")
@@ -72,7 +73,7 @@ func TestNoValidHost(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.Equal(models.CheckMessage("virtualservices.nohost.invalidprotocol"), validations[0].Message)
+	assert.NoError(common.ConfirmIstioCheckMessage("virtualservices.nohost.invalidprotocol", validations[0]))
 	assert.Equal("", validations[0].Path)
 }
 
@@ -99,7 +100,7 @@ func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
 	assert.True(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.Unknown, validations[0].Severity)
-	assert.Equal(models.CheckMessage("validation.unable.cross-namespace"), validations[0].Message)
+	assert.NoError(common.ConfirmIstioCheckMessage("validation.unable.cross-namespace", validations[0]))
 	assert.Equal("spec/tcp[0]/route[0]/destination/host", validations[0].Path)
 }
 

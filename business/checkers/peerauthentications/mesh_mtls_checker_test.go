@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -141,7 +142,7 @@ func testValidationAdded(t *testing.T, meshPolicy kubernetes.IstioObject, mTLSDe
 	assert.NotNil(validation)
 	assert.Equal(models.ErrorSeverity, validation.Severity)
 	assert.Equal("spec/mtls", validation.Path)
-	assert.Equal(models.CheckMessage("peerauthentication.mtls.destinationrulemissing"), validation.Message)
+	assert.NoError(common.ConfirmIstioCheckMessage("peerauthentication.mtls.destinationrulemissing", validation))
 }
 
 func testValidationsNotAdded(t *testing.T, meshPolicy kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {

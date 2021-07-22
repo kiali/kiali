@@ -7,6 +7,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -82,7 +83,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.False(customerDr.Valid)
 	assert.Equal(1, len(customerDr.Checks))
 	assert.Equal("spec/host", customerDr.Checks[0].Path)
-	assert.Equal(models.CheckMessage("destinationrules.nodest.matchingregistry"), customerDr.Checks[0].Message)
+	assert.NoError(common.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", customerDr.Checks[0]))
 
 	validations = NoServiceChecker{
 		Namespace: "test",
@@ -105,9 +106,9 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.False(productVs.Valid)
 	assert.Equal(2, len(productVs.Checks))
 	assert.Equal("spec/http[0]/route[0]/destination/host", productVs.Checks[0].Path)
-	assert.Equal(models.CheckMessage("virtualservices.nohost.hostnotfound"), productVs.Checks[0].Message)
+	assert.NoError(common.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", productVs.Checks[0]))
 	assert.Equal("spec/tcp[0]/route[0]/destination/host", productVs.Checks[1].Path)
-	assert.Equal(models.CheckMessage("virtualservices.nohost.hostnotfound"), productVs.Checks[1].Message)
+	assert.NoError(common.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", productVs.Checks[1]))
 
 	validations = NoServiceChecker{
 		Namespace: "test",
@@ -167,7 +168,7 @@ func TestObjectWithoutGateway(t *testing.T) {
 
 	productVs := validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
 	assert.False(productVs.Valid)
-	assert.Equal(models.CheckMessage("virtualservices.nogateway"), productVs.Checks[0].Message)
+	assert.NoError(common.ConfirmIstioCheckMessage("virtualservices.nogateway", productVs.Checks[0]))
 }
 
 func fakeIstioDetails() *kubernetes.IstioDetails {

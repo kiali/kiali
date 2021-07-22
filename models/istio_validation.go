@@ -2,6 +2,9 @@ package models
 
 import (
 	"encoding/json"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 // NamespaceValidations represents a set of IstioValidations grouped by namespace
@@ -61,6 +64,11 @@ type IstioValidation struct {
 // IstioCheck represents an individual check.
 // swagger:model
 type IstioCheck struct {
+	// The check code used to identify a check
+	// required: true
+	// example: KIA0001
+	Code string `json:"code"`
+
 	// Description of the check
 	// required: true
 	// example: Weight sum should be 100
@@ -104,163 +112,203 @@ var ObjectTypeSingular = map[string]string{
 
 var checkDescriptors = map[string]IstioCheck{
 	"authorizationpolicy.source.namespacenotfound": {
-		Message:  "KIA0101 Namespace not found for this rule",
+		Code:     "KIA0101",
+		Message:  "Namespace not found for this rule",
 		Severity: WarningSeverity,
 	},
 	"authorizationpolicy.to.wrongmethod": {
-		Message:  "KIA0102 Only HTTP methods and fully-qualified gRPC names are allowed",
+		Code:     "KIA0102",
+		Message:  "Only HTTP methods and fully-qualified gRPC names are allowed",
 		Severity: WarningSeverity,
 	},
 	"authorizationpolicy.nodest.matchingregistry": {
-		Message:  "KIA0104 This host has no matching entry in the service registry",
+		Code:     "KIA0104",
+		Message:  "This host has no matching entry in the service registry",
 		Severity: ErrorSeverity,
 	},
 	"authorizationpolicy.mtls.needstobeenabled": {
-		Message:  "KIA0105 This field requires mTLS to be enabled",
+		Code:     "KIA0105",
+		Message:  "This field requires mTLS to be enabled",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.multimatch": {
-		Message:  "KIA0201 More than one DestinationRules for the same host subset combination",
+		Code:     "KIA0201",
+		Message:  "More than one DestinationRules for the same host subset combination",
 		Severity: WarningSeverity,
 	},
 	"destinationrules.nodest.matchingregistry": {
-		Message:  "KIA0202 This host has no matching entry in the service registry (service, workload or service entries)",
+		Code:     "KIA0202",
+		Message:  "This host has no matching entry in the service registry (service, workload or service entries)",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.nodest.subsetlabels": {
-		Message:  "KIA0203 This subset's labels are not found in any matching host",
+		Code:     "KIA0203",
+		Message:  "This subset's labels are not found in any matching host",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.trafficpolicy.notlssettings": {
-		Message:  "KIA0204 mTLS settings of a non-local Destination Rule are overridden",
+		Code:     "KIA0204",
+		Message:  "mTLS settings of a non-local Destination Rule are overridden",
 		Severity: WarningSeverity,
 	},
 	"destinationrules.mtls.meshpolicymissing": {
-		Message:  "KIA0205 PeerAuthentication enabling mTLS at mesh level is missing",
+		Code:     "KIA0205",
+		Message:  "PeerAuthentication enabling mTLS at mesh level is missing",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.mtls.nspolicymissing": {
-		Message:  "KIA0206 PeerAuthentication enabling namespace-wide mTLS is missing",
+		Code:     "KIA0206",
+		Message:  "PeerAuthentication enabling namespace-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.mtls.policymtlsenabled": {
-		Message:  "KIA0207 PeerAuthentication with TLS strict mode found, it should be permissive",
+		Code:     "KIA0207",
+		Message:  "PeerAuthentication with TLS strict mode found, it should be permissive",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.mtls.meshpolicymtlsenabled": {
-		Message:  "KIA0208 PeerAuthentication enabling mTLS found, permissive mode needed",
+		Code:     "KIA0208",
+		Message:  "PeerAuthentication enabling mTLS found, permissive mode needed",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.nodest.subsetnolabels": {
-		Message:  "KIA0209 This subset has not labels",
+		Code:     "KIA0209",
+		Message:  "This subset has not labels",
 		Severity: WarningSeverity,
 	},
 	"gateways.multimatch": {
-		Message:  "KIA0301 More than one Gateway for the same host port combination",
+		Code:     "KIA0301",
+		Message:  "More than one Gateway for the same host port combination",
 		Severity: WarningSeverity,
 	},
 	"gateways.selector": {
-		Message:  "KIA0302 No matching workload found for gateway selector in this namespace",
+		Code:     "KIA0302",
+		Message:  "No matching workload found for gateway selector in this namespace",
 		Severity: WarningSeverity,
 	},
 	"generic.exportto.namespacenotfound": {
-		Message:  "KIA0005 No matching namespace found or namespace is not accessible",
+		Code:     "KIA0005",
+		Message:  "No matching namespace found or namespace is not accessible",
 		Severity: ErrorSeverity,
 	},
 	"generic.multimatch.selectorless": {
-		Message:  "KIA0002 More than one selector-less object in the same namespace",
+		Code:     "KIA0002",
+		Message:  "More than one selector-less object in the same namespace",
 		Severity: ErrorSeverity,
 	},
 	"generic.multimatch.selector": {
-		Message:  "KIA0003 More than one object applied to the same workload",
+		Code:     "KIA0003",
+		Message:  "More than one object applied to the same workload",
 		Severity: ErrorSeverity,
 	},
 	"generic.selector.workloadnotfound": {
-		Message:  "KIA0004 No matching workload found for the selector in this namespace",
+		Code:     "KIA0004",
+		Message:  "No matching workload found for the selector in this namespace",
 		Severity: WarningSeverity,
 	},
 	"peerauthentication.mtls.destinationrulemissing": {
-		Message:  "KIA0401 Mesh-wide Destination Rule enabling mTLS is missing",
+		Code:     "KIA0401",
+		Message:  "Mesh-wide Destination Rule enabling mTLS is missing",
 		Severity: ErrorSeverity,
 	},
 	"peerauthentications.mtls.destinationrulemissing": {
-		Message:  "KIA0501 Destination Rule enabling namespace-wide mTLS is missing",
+		Code:     "KIA0501",
+		Message:  "Destination Rule enabling namespace-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},
 	"peerauthentications.mtls.disabledestinationrulemissing": {
-		Message:  "KIA0505 Destination Rule disabling namespace-wide mTLS is missing",
+		Code:     "KIA0505",
+		Message:  "Destination Rule disabling namespace-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},
 	"peerauthentications.mtls.disablemeshdestinationrulemissing": {
-		Message:  "KIA0506 Destination Rule disabling mesh-wide mTLS is missing",
+		Code:     "KIA0506",
+		Message:  "Destination Rule disabling mesh-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},
 	"port.name.mismatch": {
-		Message:  "KIA0601 Port name must follow <protocol>[-suffix] form",
+		Code:     "KIA0601",
+		Message:  "Port name must follow <protocol>[-suffix] form",
 		Severity: ErrorSeverity,
 	},
 	"service.deployment.port.mismatch": {
-		Message:  "KIA0701 Deployment exposing same port as Service not found",
+		Code:     "KIA0701",
+		Message:  "Deployment exposing same port as Service not found",
 		Severity: WarningSeverity,
 	},
 	"servicerole.invalid.services": {
-		Message:  "KIA0901 Unable to find all the defined services",
+		Code:     "KIA0901",
+		Message:  "Unable to find all the defined services",
 		Severity: ErrorSeverity,
 	},
 	"servicerole.invalid.namespace": {
-		Message:  "KIA0902 ServiceRole can only point to current namespace",
+		Code:     "KIA0902",
+		Message:  "ServiceRole can only point to current namespace",
 		Severity: ErrorSeverity,
 	},
 	"servicerolebinding.invalid.role": {
-		Message:  "KIA0903 ServiceRole does not exists in this namespace",
+		Code:     "KIA0903",
+		Message:  "ServiceRole does not exists in this namespace",
 		Severity: ErrorSeverity,
 	},
 	"sidecar.egress.invalidhostformat": {
-		Message:  "KIA1003 Invalid host format. 'namespace/dnsName' format expected",
+		Code:     "KIA1003",
+		Message:  "Invalid host format. 'namespace/dnsName' format expected",
 		Severity: ErrorSeverity,
 	},
 	"sidecar.egress.servicenotfound": {
-		Message:  "KIA1004 This host has no matching entry in the service registry",
+		Code:     "KIA1004",
+		Message:  "This host has no matching entry in the service registry",
 		Severity: WarningSeverity,
 	},
 	"sidecar.global.selector": {
-		Message:  "KIA1006 Global default sidecar should not have workloadSelector",
+		Code:     "KIA1006",
+		Message:  "Global default sidecar should not have workloadSelector",
 		Severity: WarningSeverity,
 	},
 	"virtualservices.gateway.oldnomenclature": {
-		Message:  "KIA1108 Preferred nomenclature: <gateway namespace>/<gateway name>",
+		Code:     "KIA1108",
+		Message:  "Preferred nomenclature: <gateway namespace>/<gateway name>",
 		Severity: Unknown,
 	},
 	"virtualservices.nohost.hostnotfound": {
-		Message:  "KIA1101 DestinationWeight on route doesn't have a valid service (host not found)",
+		Code:     "KIA1101",
+		Message:  "DestinationWeight on route doesn't have a valid service (host not found)",
 		Severity: ErrorSeverity,
 	},
 	"virtualservices.nogateway": {
-		Message:  "KIA1102 VirtualService is pointing to a non-existent gateway",
+		Code:     "KIA1102",
+		Message:  "VirtualService is pointing to a non-existent gateway",
 		Severity: ErrorSeverity,
 	},
 	"virtualservices.nohost.invalidprotocol": {
-		Message:  "KIA1103 VirtualService doesn't define any valid route protocol",
+		Code:     "KIA1103",
+		Message:  "VirtualService doesn't define any valid route protocol",
 		Severity: ErrorSeverity,
 	},
 	"virtualservices.route.singleweight": {
-		Message:  "KIA1104 The weight is assumed to be 100 because there is only one route destination",
+		Code:     "KIA1104",
+		Message:  "The weight is assumed to be 100 because there is only one route destination",
 		Severity: WarningSeverity,
 	},
 	"virtualservices.route.repeatedsubset": {
-		Message:  "KIA1105 This subset is already referenced in another route destination",
+		Code:     "KIA1105",
+		Message:  "This subset is already referenced in another route destination",
 		Severity: WarningSeverity,
 	},
 	"virtualservices.singlehost": {
-		Message:  "KIA1106 More than one Virtual Service for same host",
+		Code:     "KIA1106",
+		Message:  "More than one Virtual Service for same host",
 		Severity: WarningSeverity,
 	},
 	"virtualservices.subsetpresent.subsetnotfound": {
-		Message:  "KIA1107 Subset not found",
+		Code:     "KIA1107",
+		Message:  "Subset not found",
 		Severity: WarningSeverity,
 	},
 	"validation.unable.cross-namespace": {
-		Message:  "KIA0001 Unable to verify the validity, cross-namespace validation is not supported for this field",
+		Code:     "KIA0001",
+		Message:  "Unable to verify the validity, cross-namespace validation is not supported for this field",
 		Severity: Unknown,
 	},
 }
@@ -276,7 +324,15 @@ func BuildKey(objectType, name, namespace string) IstioValidationKey {
 }
 
 func CheckMessage(checkId string) string {
-	return checkDescriptors[checkId].Message
+	if val, ok := checkDescriptors[checkId]; ok {
+		return val.GetFullMessage()
+	} else {
+		return "ISTIO CHECK ID DOES NOT EXIST:" + checkId
+	}
+}
+
+func (ic IstioCheck) GetFullMessage() string {
+	return ic.Code + " " + ic.Message
 }
 
 func (iv IstioValidations) FilterBySingleType(objectType, name string) IstioValidations {
@@ -400,4 +456,34 @@ func (iv IstioValidations) MarshalJSON() ([]byte, error) {
 		out[k.ObjectType][k.Name] = v
 	}
 	return json.Marshal(out)
+}
+
+func (iv *IstioValidations) StripIgnoredChecks() {
+	// strip away codes that are to be ignored
+	codesToIgnore := config.Get().KialiFeatureFlags.Validations.Ignore
+	if len(codesToIgnore) > 0 {
+		for curValidationKey, curValidation := range *iv {
+			idx := 0
+			// loop over each IstioCheck in the current Validation and only keep it if it is not ignored
+			for _, curCheck := range curValidation.Checks {
+				ignoreCheck := false
+				for _, cti := range codesToIgnore {
+					if cti == curCheck.Code {
+						ignoreCheck = true
+						log.Infof("Ignoring validation failure [%+v] for object [%s:%s] in namespace [%s]", curCheck, curValidationKey.ObjectType, curValidationKey.Name, curValidationKey.Namespace)
+						break
+					}
+				}
+				if !ignoreCheck {
+					curValidation.Checks[idx] = curCheck
+					idx++
+				}
+			}
+			// Prevent memory leak - nil out ignored checks
+			for extraIdx := idx; extraIdx < len(curValidation.Checks); extraIdx++ {
+				curValidation.Checks[extraIdx] = nil
+			}
+			curValidation.Checks = curValidation.Checks[:idx]
+		}
+	}
 }
