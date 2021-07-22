@@ -19,6 +19,10 @@ func TestDRNamespaceNotFound(t *testing.T) {
 	assertIstioObjectInvalidNamespace("dr_exportto_invalid.yaml", "DestinationRule", 2, t)
 }
 
+func TestDRAllNamespaces(t *testing.T) {
+	assertIstioObjectValid("dr_exportto_all_valid.yaml", "DestinationRule", t)
+}
+
 func TestVSNamespaceExist(t *testing.T) {
 	assertIstioObjectValid("vs_exportto_valid.yaml", "VirtualService", t)
 }
@@ -27,12 +31,20 @@ func TestVSNamespaceNotFound(t *testing.T) {
 	assertIstioObjectInvalidNamespace("vs_exportto_invalid.yaml", "VirtualService", 2, t)
 }
 
+func TestVSAllNamespaces(t *testing.T) {
+	assertIstioObjectValid("vs_exportto_all_valid.yaml", "VirtualService", t)
+}
+
 func TestSENamespaceExist(t *testing.T) {
 	assertIstioObjectValid("se_exportto_valid.yaml", "ServiceEntry", t)
 }
 
 func TestSENamespaceNotFound(t *testing.T) {
 	assertIstioObjectInvalidNamespace("se_exportto_invalid.yaml", "ServiceEntry", 2, t)
+}
+
+func TestSEAllNamespaces(t *testing.T) {
+	assertIstioObjectValid("se_exportto_all_valid.yaml", "ServiceEntry", t)
 }
 
 func assertIstioObjectValid(scenario string, objectType string, t *testing.T) {
