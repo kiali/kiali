@@ -368,8 +368,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     return istioObject ? jsYaml.safeDump(istioObject, safeDumpOptions) : '';
   };
 
-  getStatusMessages = (): ValidationMessage[] => {
-    const istioObject = getIstioObject(this.state.istioObjectDetails);
+  getStatusMessages = (istioConfigDetails?: IstioConfigDetails): ValidationMessage[] => {
+    const istioObject = getIstioObject(istioConfigDetails);
     return istioObject && istioObject.status && istioObject.status.validationMessages
       ? istioObject.status.validationMessages
       : ([] as ValidationMessage[]);
@@ -383,8 +383,9 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     );
   };
 
-  objectReferences = (): ObjectReference[] => {
-    const istioValidations: ObjectValidation = this.state.istioValidations || ({} as ObjectValidation);
+  objectReferences = (istioConfigDetails?: IstioConfigDetails): ObjectReference[] => {
+    const details: IstioConfigDetails = istioConfigDetails || ({} as IstioConfigDetails);
+    const istioValidations: ObjectValidation = details.validation || ({} as ObjectValidation);
     return istioValidations.references || ([] as ObjectReference[]);
   };
 
@@ -418,7 +419,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   isExpanded = (istioConfigDetails?: IstioConfigDetails) => {
     let isExpanded = false;
     if (istioConfigDetails) {
-      isExpanded = this.showCards(this.objectReferences().length > 0, this.getStatusMessages());
+      isExpanded = this.showCards(this.objectReferences(istioConfigDetails).length > 0, this.getStatusMessages(istioConfigDetails));
     }
     return isExpanded;
   };
@@ -429,8 +430,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   renderEditor = () => {
     const yamlSource = this.fetchYaml();
-    const istioStatusMsgs = this.getStatusMessages();
-    const objectReferences = this.objectReferences();
+    const istioStatusMsgs = this.getStatusMessages(this.state.istioObjectDetails);
+    const objectReferences = this.objectReferences(this.state.istioObjectDetails);
     const refPresent = objectReferences.length > 0;
     const showCards = this.showCards(refPresent, istioStatusMsgs);
     let editorValidations: AceValidations = {
