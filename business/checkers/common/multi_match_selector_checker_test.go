@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 func TestTwoSidecarsWithSelector(t *testing.T) {
@@ -81,7 +82,7 @@ func assertMultimatchFailure(t *testing.T, code string, validations models.Istio
 	// Assert object's checks
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.ErrorSeverity, validation.Checks[0].Severity)
-	assert.NoError(ConfirmIstioCheckMessage(code, validation.Checks[0]))
+	assert.NoError(testutils.ConfirmIstioCheckMessage(code, validation.Checks[0]))
 
 	// Assert referenced objects
 	assert.Len(validation.References, len(references))

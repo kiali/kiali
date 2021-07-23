@@ -8,10 +8,10 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 func TestEgressHostFormatCorrect(t *testing.T) {
@@ -63,7 +63,7 @@ func TestEgressHostCrossNamespace(t *testing.T) {
 	for i, c := range validations {
 		assert.Equal(models.Unknown, c.Severity)
 		assert.Equal(fmt.Sprintf("spec/egress[0]/hosts[%d]", i), c.Path)
-		assert.NoError(common.ConfirmIstioCheckMessage("validation.unable.cross-namespace", c))
+		assert.NoError(testutils.ConfirmIstioCheckMessage("validation.unable.cross-namespace", c))
 	}
 }
 
@@ -82,7 +82,7 @@ func TestEgressInvalidHostFormat(t *testing.T) {
 
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
 	assert.Equal("spec/egress[0]/hosts[0]", validations[0].Path)
-	assert.NoError(common.ConfirmIstioCheckMessage("sidecar.egress.invalidhostformat", validations[0]))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("sidecar.egress.invalidhostformat", validations[0]))
 }
 
 func TestEgressServiceNotFound(t *testing.T) {
@@ -102,7 +102,7 @@ func TestEgressServiceNotFound(t *testing.T) {
 	for i, c := range validations {
 		assert.Equal(models.WarningSeverity, c.Severity)
 		assert.Equal(fmt.Sprintf("spec/egress[0]/hosts[%d]", i), c.Path)
-		assert.NoError(common.ConfirmIstioCheckMessage("sidecar.egress.servicenotfound", c))
+		assert.NoError(testutils.ConfirmIstioCheckMessage("sidecar.egress.servicenotfound", c))
 	}
 }
 

@@ -9,8 +9,8 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 func TestPortMappingMatch(t *testing.T) {
@@ -82,7 +82,7 @@ func TestPortMappingMismatch(t *testing.T) {
 	validations, valid := pmc.Check()
 	assert.False(valid)
 	assert.NotEmpty(validations)
-	assert.NoError(common.ConfirmIstioCheckMessage("service.deployment.port.mismatch", validations[0]))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("service.deployment.port.mismatch", validations[0]))
 	assert.Equal("spec/ports[0]", validations[0].Path)
 }
 
@@ -101,7 +101,7 @@ func TestServicePortNaming(t *testing.T) {
 	validations, valid := pmc.Check()
 	assert.False(valid)
 	assert.NotEmpty(validations)
-	assert.NoError(common.ConfirmIstioCheckMessage("port.name.mismatch", validations[0]))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("port.name.mismatch", validations[0]))
 	assert.Equal("spec/ports[0]", validations[0].Path)
 }
 

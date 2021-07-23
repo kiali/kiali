@@ -5,10 +5,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 // Describe the validation of a MeshPolicy that enables mTLS. The validation is risen when there isn't any
@@ -142,7 +142,7 @@ func testValidationAdded(t *testing.T, meshPolicy kubernetes.IstioObject, mTLSDe
 	assert.NotNil(validation)
 	assert.Equal(models.ErrorSeverity, validation.Severity)
 	assert.Equal("spec/mtls", validation.Path)
-	assert.NoError(common.ConfirmIstioCheckMessage("peerauthentication.mtls.destinationrulemissing", validation))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("peerauthentication.mtls.destinationrulemissing", validation))
 }
 
 func testValidationsNotAdded(t *testing.T, meshPolicy kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {

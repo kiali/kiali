@@ -5,10 +5,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 // Context: DestinationRule enables mesh-wide mTLS
@@ -135,7 +135,7 @@ func testReturnsAValidation(t *testing.T, destinationRule kubernetes.IstioObject
 	assert.NotNil(validation)
 	assert.Equal(models.ErrorSeverity, validation.Severity)
 	assert.Equal("spec/trafficPolicy/tls/mode", validation.Path)
-	assert.NoError(common.ConfirmIstioCheckMessage("destinationrules.mtls.meshpolicymissing", validation))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.mtls.meshpolicymissing", validation))
 }
 
 func testNoValidationsFound(t *testing.T, destinationRule kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {

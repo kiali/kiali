@@ -5,10 +5,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 func TestValidPortDefinition(t *testing.T) {
@@ -44,6 +44,6 @@ func TestInvalidPortDefinition(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(common.ConfirmIstioCheckMessage("port.name.mismatch", validations[0]))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("port.name.mismatch", validations[0]))
 	assert.Equal("spec/ports[0]/name", validations[0].Path)
 }

@@ -7,10 +7,10 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 func TestPresentService(t *testing.T) {
@@ -45,7 +45,7 @@ func TestNonExistingService(t *testing.T) {
 	assert.NotEmpty(validations)
 	assert.Len(validations, 1)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(common.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", validations[0]))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", validations[0]))
 	assert.Equal("spec/rules[0]/to[0]/operation/hosts[1]", validations[0].Path)
 }
 
@@ -80,10 +80,10 @@ func TestWildcardHostOutsideNamespace(t *testing.T) {
 	assert.NotEmpty(validations)
 	assert.Len(validations, 2)
 	assert.Equal(models.Unknown, validations[0].Severity)
-	assert.NoError(common.ConfirmIstioCheckMessage("validation.unable.cross-namespace", validations[0]))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("validation.unable.cross-namespace", validations[0]))
 	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", validations[0].Path)
 	assert.Equal(models.Unknown, validations[1].Severity)
-	assert.NoError(common.ConfirmIstioCheckMessage("validation.unable.cross-namespace", validations[1]))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("validation.unable.cross-namespace", validations[1]))
 	assert.Equal("spec/rules[0]/to[0]/operation/hosts[1]", validations[1].Path)
 }
 
@@ -122,7 +122,7 @@ func TestServiceEntryNotPresent(t *testing.T) {
 	assert.NotEmpty(validations)
 	assert.Len(validations, 1)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(common.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", validations[0]))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", validations[0]))
 	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", validations[0].Path)
 }
 
@@ -161,7 +161,7 @@ func TestVirtualServiceNotPresent(t *testing.T) {
 	assert.NotEmpty(validations)
 	assert.Len(validations, 1)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(common.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", validations[0]))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", validations[0]))
 	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", validations[0].Path)
 }
 
@@ -196,7 +196,7 @@ func TestWildcardServiceEntryHost(t *testing.T) {
 	assert.NotEmpty(validations)
 	assert.Len(validations, 1)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(common.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", validations[0]))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", validations[0]))
 	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", validations[0].Path)
 }
 

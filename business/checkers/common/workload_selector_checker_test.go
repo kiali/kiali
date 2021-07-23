@@ -7,6 +7,7 @@ import (
 
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 func TestPresentWorkloads(t *testing.T) {
@@ -66,7 +67,7 @@ func testFailure(assert *assert.Assertions, selector map[string]interface{}, wl 
 	assert.True(valid)
 	assert.NotEmpty(validations)
 	assert.Len(validations, 1)
-	assert.NoError(ConfirmIstioCheckMessage(code, validations[0]))
+	assert.NoError(testutils.ConfirmIstioCheckMessage(code, validations[0]))
 	assert.Equal(validations[0].Severity, models.WarningSeverity)
 	assert.Equal(validations[0].Path, "spec/workloadSelector/labels")
 }

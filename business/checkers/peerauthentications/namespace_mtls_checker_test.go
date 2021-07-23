@@ -5,11 +5,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 // Describe the validation of a PeerAuthn that enables mTLS for one namespace. The validation is risen when there isn't any
@@ -43,7 +43,7 @@ func TestPeerAuthnmTLSEnabled(t *testing.T) {
 	assert.NotNil(validation)
 	assert.Equal(models.ErrorSeverity, validation.Severity)
 	assert.Equal("spec/mtls", validation.Path)
-	assert.NoError(common.ConfirmIstioCheckMessage("peerauthentications.mtls.destinationrulemissing", validation))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("peerauthentications.mtls.destinationrulemissing", validation))
 }
 
 // Context: PeerAuthn enables mTLS for a namespace

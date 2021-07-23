@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 type IstioCheckTestAsserter struct {
@@ -41,7 +41,7 @@ func (tb IstioCheckTestAsserter) AssertValidationAt(i int, severity models.Sever
 	assert.NotNil(validation)
 	assert.Equal(severity, validation.Severity)
 	assert.Equal(path, validation.Path)
-	assert.NoError(common.ConfirmIstioCheckMessage(message, validation))
+	assert.NoError(testutils.ConfirmIstioCheckMessage(message, validation))
 }
 
 type ValidationsTestAsserter struct {
@@ -77,5 +77,5 @@ func (vta ValidationsTestAsserter) AssertValidationAt(key models.IstioValidation
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(severity, validation.Checks[0].Severity)
 	assert.Equal(path, validation.Checks[0].Path)
-	assert.NoError(common.ConfirmIstioCheckMessage(message, validation.Checks[0]))
+	assert.NoError(testutils.ConfirmIstioCheckMessage(message, validation.Checks[0]))
 }
