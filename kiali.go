@@ -165,7 +165,7 @@ func validateConfig() error {
 
 	// log a warning if the user is ignoring some validations
 	if len(cfg.KialiFeatureFlags.Validations.Ignore) > 0 {
-		log.Warningf("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think these are false errors, please report them to the Kiali team for review.", cfg.KialiFeatureFlags.Validations.Ignore)
+		log.Warningf("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", cfg.KialiFeatureFlags.Validations.Ignore)
 	}
 
 	return nil
