@@ -240,7 +240,7 @@ func getIngressGatewaysWorkloads(globalInfo *graph.AppenderGlobalInfo) map[strin
 
 	ingressWorkloads := make(map[string][]models.WorkloadListItem)
 	for _, namespace := range nsList {
-		wList, err := globalInfo.Business.Workload.GetWorkloadList(namespace.Name)
+		wList, err := globalInfo.Business.Workload.GetWorkloadList(namespace.Name, false)
 		graph.CheckError(err)
 
 		// Find Ingress Gateway deployments
