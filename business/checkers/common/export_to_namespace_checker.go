@@ -17,7 +17,7 @@ func (p ExportToNamespaceChecker) Check() ([]*models.IstioCheck, bool) {
 	if exportToSpec, found := p.IstioObject.GetSpec()["exportTo"]; found {
 		if namespaces, ok := exportToSpec.([]interface{}); ok {
 			for nsIndex, namespace := range namespaces {
-				if namespace != "." && !p.Namespaces.Includes(namespace.(string)) {
+				if namespace != "." && namespace != "*" && !p.Namespaces.Includes(namespace.(string)) {
 					validation := models.Build("generic.exportto.namespacenotfound",
 						fmt.Sprintf("spec/exportTo[%d]", nsIndex))
 					validations = append(validations, &validation)
