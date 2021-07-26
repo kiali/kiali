@@ -168,7 +168,7 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
     row: 0,
     column: 0,
     type: severity,
-    text: check.message
+    text: (check.code ? check.code + ' ' : '') + check.message
   };
   let aceMarker = {
     startRow: 0,

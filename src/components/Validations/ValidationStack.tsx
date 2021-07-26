@@ -18,7 +18,11 @@ class ValidationStack extends React.Component<Props> {
     return (this.props.checks || []).map((check, index) => {
       return (
         <StackItem key={'validation-check-item-' + index} className={colorStyle}>
-          <Validation key={'validation-check-' + index} severity={check.severity} message={check.message} />
+          <Validation
+            key={'validation-check-' + index}
+            severity={check.severity}
+            message={(check.code ? check.code + ' ' : '') + check.message}
+          />
         </StackItem>
       );
     });

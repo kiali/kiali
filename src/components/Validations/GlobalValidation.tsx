@@ -63,7 +63,7 @@ class GlobalValidation extends React.Component<Props> {
 
   message(): string {
     const checks = this.globalChecks();
-    let message = checks.map(check => check.message).join(',');
+    let message = checks.map(check => (check.code ? check.code + ' ' : '') + check.message).join(',');
 
     if (!message.length && !this.isValid()) {
       message = 'Not all checks passed!';

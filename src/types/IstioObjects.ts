@@ -90,6 +90,7 @@ export interface ObjectValidation {
 }
 
 export interface ObjectCheck {
+  code?: string;
   message: string;
   severity: ValidationTypes;
   path: string;

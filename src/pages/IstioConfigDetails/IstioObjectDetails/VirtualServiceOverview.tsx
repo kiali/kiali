@@ -49,7 +49,7 @@ class VirtualServiceOverview extends React.Component<VirtualServiceProps> {
     const severity = highestSeverity(checks);
 
     return {
-      message: checks.map(check => check.message).join(','),
+      message: checks.map(check => (check.code ? check.code + ' ' : '') + check.message).join(','),
       severity
     };
   }
