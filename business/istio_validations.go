@@ -222,6 +222,8 @@ func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {
 		objectTypeValidations.MergeValidations(objectChecker.Check())
 	}
 
+	objectTypeValidations.StripIgnoredChecks()
+
 	return objectTypeValidations
 }
 

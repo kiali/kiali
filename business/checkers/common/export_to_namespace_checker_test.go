@@ -2,13 +2,14 @@ package common
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/config"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 func TestDRNamespaceExist(t *testing.T) {
@@ -66,7 +67,7 @@ func assertIstioObjectInvalidNamespace(scenario string, objectType string, error
 	assert.NotEmpty(validations)
 	assert.Len(validations, errorNumbers)
 	for i := 0; i < errorNumbers; i++ {
-		assert.Equal(validations[i].Message, models.CheckMessage("generic.exportto.namespacenotfound"))
+		assert.NoError(testutils.ConfirmIstioCheckMessage("generic.exportto.namespacenotfound", validations[i]))
 		assert.Equal(validations[i].Severity, models.ErrorSeverity)
 		assert.Equal(validations[i].Path, fmt.Sprintf("spec/exportTo[%d]", i))
 	}

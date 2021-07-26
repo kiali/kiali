@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 func TestValidInternalSelector(t *testing.T) {
@@ -114,6 +115,6 @@ func TestMissingSelectorTarget(t *testing.T) {
 
 	assert.False(valid)
 	assert.Equal(1, len(validations))
-	assert.Equal(models.CheckMessage("gateways.selector"), validations[0].Message)
+	assert.NoError(testutils.ConfirmIstioCheckMessage("gateways.selector", validations[0]))
 	assert.Equal(models.WarningSeverity, validations[0].Severity)
 }

@@ -7096,6 +7096,7 @@ It is false for service.namespace format and service entries. |  |
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| Code | string| `string` | ✓ | | The check code used to identify a check | `KIA0001` |
 | Message | string| `string` | ✓ | | Description of the check | `Weight sum should be 100` |
 | Path | string| `string` |  | | String that describes where in the yaml file is the check located | `spec/http[0]/route` |
 | severity | [SeverityLevel](#severity-level)| `SeverityLevel` | ✓ | |  |  |

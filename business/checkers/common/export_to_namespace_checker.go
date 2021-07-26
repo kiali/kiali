@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
