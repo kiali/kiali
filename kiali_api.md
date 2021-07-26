@@ -6948,6 +6948,42 @@ The exact format is defined in sigs.k8s.io/structured-merge-diff
 
 [interface{}](#interface)
 
+### <span id="g-w-info"></span> GWInfo
+
+
+> GWInfo contains the resolved gateway configuration if the node represents an Istio gateway
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| ingressInfo | [GWInfoIngress](#g-w-info-ingress)| `GWInfoIngress` |  | |  |  |
+
+
+
+### <span id="g-w-info-ingress"></span> GWInfoIngress
+
+
+> GWInfoIngress contains the resolved gateway configuration if the node represents an Istio ingress gateway
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Hostnames | []string| `[]string` |  | | Hostnames is the list of hosts being served by the associated Istio gateways. |  |
+
+
+
 ### <span id="gateway"></span> Gateway
 
 
@@ -6989,7 +7025,7 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| Selector | [interface{}](#interface)| `interface{}` |  | |  |  |
+| Selector | map of string| `map[string]string` |  | |  |  |
 | Servers | [interface{}](#interface)| `interface{}` |  | |  |  |
 
 
@@ -7955,7 +7991,6 @@ This type is used to describe a set of objects.
 | HasRequestTimeout | boolean| `bool` |  | |  |  |
 | HasTCPTrafficShifting | boolean| `bool` |  | |  |  |
 | HasTrafficShifting | boolean| `bool` |  | |  |  |
-| HasVS | boolean| `bool` |  | |  |  |
 | ID | string| `string` |  | | Cytoscape Fields |  |
 | IsBox | string| `string` |  | |  |  |
 | IsDead | boolean| `bool` |  | |  |  |
@@ -7971,6 +8006,8 @@ This type is used to describe a set of objects.
 | Version | string| `string` |  | |  |  |
 | Workload | string| `string` |  | |  |  |
 | hasHealthConfig | [HealthConfig](#health-config)| `HealthConfig` |  | |  |  |
+| hasVS | [VSInfo](#v-s-info)| `VSInfo` |  | |  |  |
+| isGateway | [GWInfo](#g-w-info)| `GWInfo` |  | |  |  |
 | isServiceEntry | [SEInfo](#s-e-info)| `SEInfo` |  | |  |  |
 
 
@@ -9056,6 +9093,21 @@ intent and helps make sure that UIDs and names do not get conflated. |  |
 
 
 
+### <span id="v-s-info"></span> VSInfo
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Hostnames | []string| `[]string` |  | | Hostnames is the list of hostnames configured in the associated VSs |  |
+
+
+
 ### <span id="value-type"></span> ValueType
 
 
@@ -9113,7 +9165,7 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 |------|------|---------|:--------:| ------- |-------------|---------|
 | ExportTo | [interface{}](#interface)| `interface{}` |  | |  |  |
 | Gateways | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Hosts | [interface{}](#interface)| `interface{}` |  | |  |  |
+| Hosts | []string| `[]string` |  | |  |  |
 | Http | [interface{}](#interface)| `interface{}` |  | |  |  |
 | Tcp | [interface{}](#interface)| `interface{}` |  | |  |  |
 | Tls | [interface{}](#interface)| `interface{}` |  | |  |  |
