@@ -5,6 +5,8 @@ import (
 
 	osproject_v1 "github.com/openshift/api/project/v1"
 	core_v1 "k8s.io/api/core/v1"
+
+	"github.com/kiali/kiali/config/dashboards"
 )
 
 // A Namespace provide a scope for names
@@ -27,6 +29,9 @@ type Namespace struct {
 
 	// Labels for Namespace
 	Labels map[string]string `json:"labels"`
+
+	// Specific annotations used in Kiali
+	Annotations map[string]string `json:"annotations"`
 }
 
 type Namespaces []Namespace
@@ -46,7 +51,11 @@ func CastNamespace(ns core_v1.Namespace) Namespace {
 	namespace.Name = ns.Name
 	namespace.CreationTimestamp = ns.CreationTimestamp.Time
 	namespace.Labels = ns.Labels
-
+	namespace.Annotations = make(map[string]string)
+	// Parse only annotations used by Kiali
+	if da, ok := ns.Annotations[dashboards.DashboardTemplateAnnotation]; ok {
+		namespace.Annotations[dashboards.DashboardTemplateAnnotation] = da
+	}
 	return namespace
 }
 
@@ -64,7 +73,11 @@ func CastProject(p osproject_v1.Project) Namespace {
 	namespace.Name = p.Name
 	namespace.CreationTimestamp = p.CreationTimestamp.Time
 	namespace.Labels = p.Labels
-
+	namespace.Annotations = make(map[string]string)
+	// Parse only annotations used by Kiali
+	if da, ok := p.Annotations[dashboards.DashboardTemplateAnnotation]; ok {
+		namespace.Annotations[dashboards.DashboardTemplateAnnotation] = da
+	}
 	return namespace
 }
 

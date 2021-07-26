@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 func TestOneVirtualServicePerHost(t *testing.T) {
@@ -501,7 +502,7 @@ func presentValidationTest(t *testing.T, validations models.IstioValidations, se
 	assert.True(validation.Valid)
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
-	assert.Equal(models.CheckMessage("virtualservices.singlehost"), validation.Checks[0].Message)
+	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.singlehost", validation.Checks[0]))
 	assert.Equal("spec/hosts", validation.Checks[0].Path)
 }
 

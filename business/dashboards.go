@@ -28,7 +28,7 @@ type DashboardsService struct {
 }
 
 // NewDashboardsService initializes this business service
-func NewDashboardsService() *DashboardsService {
+func NewDashboardsService(namespace *models.Namespace, workload *models.Workload) *DashboardsService {
 	cfg := config.Get()
 	customEnabled := cfg.ExternalServices.CustomDashboards.Enabled
 	prom := cfg.ExternalServices.Prometheus
@@ -39,12 +39,24 @@ func NewDashboardsService() *DashboardsService {
 	if nsLabel == "" {
 		nsLabel = "kubernetes_namespace"
 	}
+
+	// Overwrite Custom dashboards defined at Namespace level
+	builtInDashboards := cfg.CustomDashboards
+	if namespace != nil {
+		nsDashboards := dashboards.GetNamespaceMonitoringDashboards(namespace.Name, namespace.Annotations)
+		builtInDashboards = dashboards.AddMonitoringDashboards(builtInDashboards, nsDashboards)
+	}
+	if workload != nil {
+		wkDashboards := dashboards.GetWorkloadMonitoringDashboards(namespace.Name, workload.Name, workload.DashboardAnnotations)
+		builtInDashboards = dashboards.AddMonitoringDashboards(builtInDashboards, wkDashboards)
+	}
+
 	return &DashboardsService{
 		CustomEnabled:   customEnabled,
 		promConfig:      prom,
 		globalNamespace: cfg.Deployment.Namespace,
 		namespaceLabel:  nsLabel,
-		dashboards:      cfg.CustomDashboards.OrganizeByName(),
+		dashboards:      builtInDashboards.OrganizeByName(),
 	}
 }
 
@@ -122,6 +134,7 @@ func (in *DashboardsService) GetDashboard(authInfo *api.AuthInfo, params models.
 	if err != nil {
 		return nil, err
 	}
+
 	dashboard, err := in.loadAndResolveDashboardResource(template, map[string]bool{})
 	if err != nil {
 		return nil, err
@@ -209,12 +222,18 @@ func (in *DashboardsService) GetDashboard(authInfo *api.AuthInfo, params models.
 	}()
 
 	wg.Wait()
+	// A dashboard can define the rows used, if not defined, by default it will use 2 rows
+	rows := dashboard.Rows
+	if rows < 1 {
+		rows = 2
+	}
 	return &models.MonitoringDashboard{
 		Name:          dashboard.Name,
 		Title:         dashboard.Title,
 		Charts:        filledCharts,
 		Aggregations:  aggLabels,
 		ExternalLinks: externalLinks,
+		Rows:          rows,
 	}, nil
 }
 
@@ -386,20 +405,28 @@ func getIstioCharts() []istioChart {
 		},
 		{
 			Chart: models.Chart{
+				Name:  "Request size",
+				Unit:  "bytes",
+				Spans: 3,
+			},
+			refName: "request_size",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "Response size",
+				Unit:  "bytes",
+				Spans: 3,
+			},
+			refName: "response_size",
+		},
+		{
+			Chart: models.Chart{
 				Name:  "Request throughput",
 				Unit:  "bitrate",
 				Spans: 3,
 			},
 			refName: "request_throughput",
 			scale:   8, // Bps to bps
-		},
-		{
-			Chart: models.Chart{
-				Name:  "Request size",
-				Unit:  "bytes",
-				Spans: 3,
-			},
-			refName: "request_size",
 		},
 		{
 			Chart: models.Chart{
@@ -412,11 +439,35 @@ func getIstioCharts() []istioChart {
 		},
 		{
 			Chart: models.Chart{
-				Name:  "Response size",
-				Unit:  "bytes",
+				Name:  "gRPC received",
+				Unit:  "msgrate",
 				Spans: 3,
 			},
-			refName: "response_size",
+			refName: "grpc_received",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "gRPC sent",
+				Unit:  "msgrate",
+				Spans: 3,
+			},
+			refName: "grpc_sent",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "TCP opened",
+				Unit:  "connrate",
+				Spans: 3,
+			},
+			refName: "tcp_opened",
+		},
+		{
+			Chart: models.Chart{
+				Name:  "TCP closed",
+				Unit:  "connrate",
+				Spans: 3,
+			},
+			refName: "tcp_closed",
 		},
 		{
 			Chart: models.Chart{

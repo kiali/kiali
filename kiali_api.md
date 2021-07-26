@@ -1911,6 +1911,9 @@ The backing JSON for an app node detail graph. (supported graphTypes: app | vers
 | includeIdleEdges | `query` | string | `string` |  |  | `"false"` | Flag for including edges that have no request traffic for the time period. |
 | injectServiceNodes | `query` | string | `string` |  |  | `"false"` | Flag for injecting the requested service node between source and destination nodes. |
 | queryTime | `query` | string | `string` |  |  | `"now"` | Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now. |
+| rateGrpc | `query` | string | `string` |  |  | `"requests"` | How to calculate gRPC traffic rate. One of: none | received (i.e. response_messages) | requests | sent (i.e. request_messages) | total (i.e. sent+received). |
+| rateHttp | `query` | string | `string` |  |  | `"requests"` | How to calculate HTTP traffic rate. One of: none | requests. |
+| rateTcp | `query` | string | `string` |  |  | `"sent"` | How to calculate TCP traffic rate. One of: none | received (i.e. received_bytes) | sent (i.e. sent_bytes) | total (i.e. sent+received). |
 | responseTime | `query` | string | `string` |  |  | `"95"` | Used only with responseTime appender. One of: avg | 50 | 95 | 99. |
 | throughput | `query` | string | `string` |  |  | `"request"` | Used only with throughput appender. One of: request | response. |
 
@@ -2015,6 +2018,9 @@ The backing JSON for a versioned app node detail graph. (supported graphTypes: a
 | includeIdleEdges | `query` | string | `string` |  |  | `"false"` | Flag for including edges that have no request traffic for the time period. |
 | injectServiceNodes | `query` | string | `string` |  |  | `"false"` | Flag for injecting the requested service node between source and destination nodes. |
 | queryTime | `query` | string | `string` |  |  | `"now"` | Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now. |
+| rateGrpc | `query` | string | `string` |  |  | `"requests"` | How to calculate gRPC traffic rate. One of: none | received (i.e. response_messages) | requests | sent (i.e. request_messages) | total (i.e. sent+received). |
+| rateHttp | `query` | string | `string` |  |  | `"requests"` | How to calculate HTTP traffic rate. One of: none | requests. |
+| rateTcp | `query` | string | `string` |  |  | `"sent"` | How to calculate TCP traffic rate. One of: none | received (i.e. received_bytes) | sent (i.e. sent_bytes) | total (i.e. sent+received). |
 | responseTime | `query` | string | `string` |  |  | `"95"` | Used only with responseTime appender. One of: avg | 50 | 95 | 99. |
 | throughput | `query` | string | `string` |  |  | `"request"` | Used only with throughput appender. One of: request | response. |
 
@@ -2114,6 +2120,9 @@ GET /api/namespaces/graph
 | injectServiceNodes | `query` | string | `string` |  |  | `"false"` | Flag for injecting the requested service node between source and destination nodes. |
 | namespaces | `query` | string | `string` |  | ✓ |  | Comma-separated list of namespaces to include in the graph. The namespaces must be accessible to the client. |
 | queryTime | `query` | string | `string` |  |  | `"now"` | Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now. |
+| rateGrpc | `query` | string | `string` |  |  | `"requests"` | How to calculate gRPC traffic rate. One of: none | received (i.e. response_messages) | requests | sent (i.e. request_messages) | total (i.e. sent+received). |
+| rateHttp | `query` | string | `string` |  |  | `"requests"` | How to calculate HTTP traffic rate. One of: none | requests. |
+| rateTcp | `query` | string | `string` |  |  | `"sent"` | How to calculate TCP traffic rate. One of: none | received (i.e. received_bytes) | sent (i.e. sent_bytes) | total (i.e. sent+received). |
 | responseTime | `query` | string | `string` |  |  | `"95"` | Used only with responseTime appender. One of: avg | 50 | 95 | 99. |
 | throughput | `query` | string | `string` |  |  | `"request"` | Used only with throughput appender. One of: request | response. |
 
@@ -2213,6 +2222,9 @@ GET /api/namespaces/{namespace}/services/{service}/graph
 | duration | `query` | string | `string` |  |  | `"10m"` | Query time-range duration (Golang string duration). |
 | graphType | `query` | string | `string` |  |  | `"workload"` | Graph type. Available graph types: [app, service, versionedApp, workload]. |
 | queryTime | `query` | string | `string` |  |  | `"now"` | Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now. |
+| rateGrpc | `query` | string | `string` |  |  | `"requests"` | How to calculate gRPC traffic rate. One of: none | received (i.e. response_messages) | requests | sent (i.e. request_messages) | total (i.e. sent+received). |
+| rateHttp | `query` | string | `string` |  |  | `"requests"` | How to calculate HTTP traffic rate. One of: none | requests. |
+| rateTcp | `query` | string | `string` |  |  | `"sent"` | How to calculate TCP traffic rate. One of: none | received (i.e. received_bytes) | sent (i.e. sent_bytes) | total (i.e. sent+received). |
 | responseTime | `query` | string | `string` |  |  | `"95"` | Used only with responseTime appender. One of: avg | 50 | 95 | 99. |
 | throughput | `query` | string | `string` |  |  | `"request"` | Used only with throughput appender. One of: request | response. |
 
@@ -2314,6 +2326,9 @@ GET /api/namespaces/{namespace}/workloads/{workload}/graph
 | includeIdleEdges | `query` | string | `string` |  |  | `"false"` | Flag for including edges that have no request traffic for the time period. |
 | injectServiceNodes | `query` | string | `string` |  |  | `"false"` | Flag for injecting the requested service node between source and destination nodes. |
 | queryTime | `query` | string | `string` |  |  | `"now"` | Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now. |
+| rateGrpc | `query` | string | `string` |  |  | `"requests"` | How to calculate gRPC traffic rate. One of: none | received (i.e. response_messages) | requests | sent (i.e. request_messages) | total (i.e. sent+received). |
+| rateHttp | `query` | string | `string` |  |  | `"requests"` | How to calculate HTTP traffic rate. One of: none | requests. |
+| rateTcp | `query` | string | `string` |  |  | `"sent"` | How to calculate TCP traffic rate. One of: none | received (i.e. received_bytes) | sent (i.e. sent_bytes) | total (i.e. sent+received). |
 | responseTime | `query` | string | `string` |  |  | `"95"` | Used only with responseTime appender. One of: avg | 50 | 95 | 99. |
 | throughput | `query` | string | `string` |  |  | `"request"` | Used only with throughput appender. One of: request | response. |
 
@@ -6382,6 +6397,7 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| IstioReferences | [][IstioValidationKey](#istio-validation-key)| `[]*IstioValidationKey` |  | | Istio References |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if all Pods related to the Workloads of this app has an IstioSidecar deployed | `true` |
 | Labels | map of string| `map[string]string` |  | | Labels for App |  |
 | Name | string| `string` | ✓ | | Name of the application | `reviews` |
@@ -6590,6 +6606,7 @@ part of the mesh.
 |------|------|---------|:--------:| ------- |-------------|---------|
 | Image | string| `string` |  | |  |  |
 | IsProxy | boolean| `bool` |  | |  |  |
+| IsReady | boolean| `bool` |  | |  |  |
 | Name | string| `string` |  | |  |  |
 
 
@@ -7079,6 +7096,7 @@ It is false for service.namespace format and service entries. |  |
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| Code | string| `string` | ✓ | | The check code used to identify a check | `KIA0001` |
 | Message | string| `string` | ✓ | | Description of the check | `Weight sum should be 100` |
 | Path | string| `string` |  | | String that describes where in the yaml file is the check located | `spec/http[0]/route` |
 | severity | [SeverityLevel](#severity-level)| `SeverityLevel` | ✓ | |  |  |
@@ -7860,6 +7878,7 @@ There is currently only one possible value: "FieldsV1" |  |
 | Charts | [][Chart](#chart)| `[]*Chart` |  | |  |  |
 | ExternalLinks | [][ExternalLink](#external-link)| `[]*ExternalLink` |  | |  |  |
 | Name | string| `string` |  | |  |  |
+| Rows | int64 (formatted integer)| `int64` |  | |  |  |
 | Title | string| `string` |  | |  |  |
 
 
@@ -7898,6 +7917,7 @@ This type is used to describe a set of objects.
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| Annotations | map of string| `map[string]string` |  | | Specific annotations used in Kiali |  |
 | Labels | map of string| `map[string]string` |  | | Labels for Namespace |  |
 | Name | string| `string` | ✓ | | The id of the namespace. | `istio-system` |
 
@@ -8763,7 +8783,9 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 |------|------|---------|:--------:| ------- |-------------|---------|
 | AppLabel | boolean| `bool` | ✓ | | Has label app | `true` |
 | HealthAnnotations | map of string| `map[string]string` |  | | Annotations of the service |  |
+| IstioReferences | [][IstioValidationKey](#istio-validation-key)| `[]*IstioValidationKey` |  | | Istio References |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if Pods related to this Service has an IstioSidecar deployed | `true` |
+| KialiWizard | string| `string` |  | | Kiali Wizard scenario, if any |  |
 | Labels | map of string| `map[string]string` |  | | Labels for Service |  |
 | Name | string| `string` | ✓ | | Name of the Service | `reviews-v1` |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |
@@ -9136,10 +9158,12 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 | AvailableReplicas | int32 (formatted integer)| `int32` | ✓ | | Number of available replicas | `1` |
 | CreatedAt | string| `string` | ✓ | | Creation timestamp (in RFC3339 format) | `2018-07-31T12:24:17Z` |
 | CurrentReplicas | int32 (formatted integer)| `int32` | ✓ | | Number of current replicas pods that matches controller selector labels | `2` |
+| DashboardAnnotations | map of string| `map[string]string` |  | | Dashboard annotations |  |
 | DesiredReplicas | int32 (formatted integer)| `int32` | ✓ | | Number of desired replicas defined by the user in the controller Spec | `2` |
 | HealthAnnotations | map of string| `map[string]string` |  | | HealthAnnotations |  |
 | IstioInjectionAnnotation | boolean| `bool` |  | | Define if Workload has an explicit Istio policy annotation
 It's mapped as a pointer to show three values nil, true, false |  |
+| IstioReferences | [][IstioValidationKey](#istio-validation-key)| `[]*IstioValidationKey` |  | | Istio References |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if Pods related to this Workload has an IstioSidecar deployed | `true` |
 | Labels | map of string| `map[string]string` |  | | Workload labels |  |
 | Name | string| `string` | ✓ | | Name of the workload | `reviews-v1` |
@@ -9346,9 +9370,11 @@ https://istio.io/latest/docs/reference/config/networking/workload-group/#Workloa
 |------|------|---------|:--------:| ------- |-------------|---------|
 | AppLabel | boolean| `bool` | ✓ | | Define if Pods related to this Workload has the label App | `true` |
 | CreatedAt | string| `string` | ✓ | | Creation timestamp (in RFC3339 format) | `2018-07-31T12:24:17Z` |
+| DashboardAnnotations | map of string| `map[string]string` |  | | Dashboard annotations |  |
 | HealthAnnotations | map of string| `map[string]string` |  | | HealthAnnotations |  |
 | IstioInjectionAnnotation | boolean| `bool` |  | | Define if Workload has an explicit Istio policy annotation
 It's mapped as a pointer to show three values nil, true, false |  |
+| IstioReferences | [][IstioValidationKey](#istio-validation-key)| `[]*IstioValidationKey` |  | | Istio References |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if Pods related to this Workload has an IstioSidecar deployed | `true` |
 | Labels | map of string| `map[string]string` |  | | Workload labels |  |
 | Name | string| `string` | ✓ | | Name of the workload | `reviews-v1` |

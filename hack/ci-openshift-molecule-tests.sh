@@ -97,7 +97,7 @@ Options:
 
 -lb|--logs-branch <branch name>
     The logs branch to clone.
-    Default: master
+    Default: openshift
 
 -lf|--logs-fork <name>
     The logs fork/org to clone.
@@ -212,7 +212,7 @@ KIALI_OPERATOR_BRANCH="${KIALI_OPERATOR_BRANCH:-master}"
 # details about the github repo where the logs are to be stored
 LOGS_PROJECT_NAME="${LOGS_PROJECT_NAME:-kiali-molecule-test-logs}"
 LOGS_FORK="${LOGS_FORK:-jmazzitelli}"
-LOGS_BRANCH="${LOGS_BRANCH:-master}"
+LOGS_BRANCH="${LOGS_BRANCH:-openshift}"
 
 LOGS_LOCAL_DIRNAME="${LOGS_PROJECT_NAME}"
 LOGS_LOCAL_DIRNAME_ABS="${SRC}/${LOGS_LOCAL_DIRNAME}"

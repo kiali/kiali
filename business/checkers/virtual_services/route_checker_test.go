@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 // VirtualService has two routes that all the weights sum 100
@@ -32,7 +33,7 @@ func TestServiceMultipleChecks(t *testing.T) {
 	assert.True(valid)
 	assert.NotEmpty(validations)
 	assert.Len(validations, 1)
-	assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.route.singleweight"))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.route.singleweight", validations[0]))
 	assert.Equal(validations[0].Severity, models.WarningSeverity)
 	assert.Equal(validations[0].Path, "spec/http[0]/route[0]/weight")
 }
@@ -44,10 +45,10 @@ func TestVSWithRepeatingSubsets(t *testing.T) {
 	assert.True(valid)
 	assert.NotEmpty(validations)
 	assert.Len(validations, 4)
-	assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.route.repeatedsubset"))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.route.repeatedsubset", validations[0]))
 	assert.Equal(validations[0].Severity, models.WarningSeverity)
 	assert.Regexp(`spec\/http\[0\]\/route\[[0,2]\]\/subset`, validations[0].Path)
-	assert.Equal(validations[3].Message, models.CheckMessage("virtualservices.route.repeatedsubset"))
+	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.route.repeatedsubset", validations[3]))
 	assert.Equal(validations[3].Severity, models.WarningSeverity)
 	assert.Regexp(`spec\/http\[0\]\/route\[[1,3]\]\/subset`, validations[3].Path)
 }

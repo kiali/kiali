@@ -9,6 +9,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 // Context: DestinationRule ns-wide disabling mTLS connections
@@ -214,5 +215,5 @@ func testDisabledMtlsValidationsFound(t *testing.T, validationId string, destina
 	assert.NotNil(validation)
 	assert.Equal(models.ErrorSeverity, validation.Severity)
 	assert.Equal("spec/trafficPolicy/tls/mode", validation.Path)
-	assert.Equal(models.CheckMessage(validationId), validation.Message)
+	assert.NoError(testutils.ConfirmIstioCheckMessage(validationId, validation))
 }

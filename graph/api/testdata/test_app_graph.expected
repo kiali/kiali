@@ -6,6 +6,32 @@
     "nodes": [
       {
         "data": {
+          "id": "bc5b79fec012cfbc67b972036c8f867f",
+          "nodeType": "app",
+          "cluster": "unknown",
+          "namespace": "bankapp",
+          "app": "deposit",
+          "destServices": [
+            {
+              "cluster": "unknown",
+              "namespace": "bankapp",
+              "name": "deposit"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "grpc",
+              "rates": {
+                "grpcIn": "50.00"
+              }
+            }
+          ],
+          "isInaccessible": true,
+          "isOutside": true
+        }
+      },
+      {
+        "data": {
           "id": "4e958835e3486518a0acc09297780511",
           "nodeType": "app",
           "cluster": "unknown",
@@ -145,6 +171,12 @@
             }
           ],
           "traffic": [
+            {
+              "protocol": "grpc",
+              "rates": {
+                "grpcOut": "50.00"
+              }
+            },
             {
               "protocol": "http",
               "rates": {
@@ -520,6 +552,30 @@
                 },
                 "hosts": {
                   "ratings:9080": "33.3"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "2a2b210c724ed5addd0de63db0159831",
+          "source": "972d1587fe96aaaa64d0207c1401ae27",
+          "target": "bc5b79fec012cfbc67b972036c8f867f",
+          "traffic": {
+            "protocol": "grpc",
+            "rates": {
+              "grpc": "50.00",
+              "grpcPercentReq": "100.0"
+            },
+            "responses": {
+              "0": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "deposit:9080": "100.0"
                 }
               }
             }

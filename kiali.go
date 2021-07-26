@@ -120,19 +120,21 @@ func waitForTermination() {
 }
 
 func validateConfig() error {
-	if config.Get().Server.Port < 0 {
-		return fmt.Errorf("server port is negative: %v", config.Get().Server.Port)
+	cfg := config.Get()
+
+	if cfg.Server.Port < 0 {
+		return fmt.Errorf("server port is negative: %v", cfg.Server.Port)
 	}
 
-	if strings.Contains(config.Get().Server.StaticContentRootDirectory, "..") {
-		return fmt.Errorf("server static content root directory must not contain '..': %v", config.Get().Server.StaticContentRootDirectory)
+	if strings.Contains(cfg.Server.StaticContentRootDirectory, "..") {
+		return fmt.Errorf("server static content root directory must not contain '..': %v", cfg.Server.StaticContentRootDirectory)
 	}
-	if _, err := os.Stat(config.Get().Server.StaticContentRootDirectory); os.IsNotExist(err) {
-		return fmt.Errorf("server static content root directory does not exist: %v", config.Get().Server.StaticContentRootDirectory)
+	if _, err := os.Stat(cfg.Server.StaticContentRootDirectory); os.IsNotExist(err) {
+		return fmt.Errorf("server static content root directory does not exist: %v", cfg.Server.StaticContentRootDirectory)
 	}
 
 	validPathRegEx := regexp.MustCompile(`^\/[a-zA-Z0-9\-\._~!\$&\'()\*\+\,;=:@%/]*$`)
-	webRoot := config.Get().Server.WebRoot
+	webRoot := cfg.Server.WebRoot
 	if !validPathRegEx.MatchString(webRoot) {
 		return fmt.Errorf("web root must begin with a / and contain valid URL path characters: %v", webRoot)
 	}
@@ -144,7 +146,7 @@ func validateConfig() error {
 	}
 
 	// log some messages to let the administrator know when credentials are configured certain ways
-	auth := config.Get().Auth
+	auth := cfg.Auth
 	log.Infof("Using authentication strategy [%v]", auth.Strategy)
 	if auth.Strategy == config.AuthStrategyAnonymous {
 		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
@@ -156,9 +158,14 @@ func validateConfig() error {
 	}
 
 	// Check the signing key for the JWT token is valid
-	signingKey := config.Get().LoginToken.SigningKey
+	signingKey := cfg.LoginToken.SigningKey
 	if err := config.ValidateSigningKey(signingKey, auth.Strategy); err != nil {
 		return err
+	}
+
+	// log a warning if the user is ignoring some validations
+	if len(cfg.KialiFeatureFlags.Validations.Ignore) > 0 {
+		log.Warningf("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", cfg.KialiFeatureFlags.Validations.Ignore)
 	}
 
 	return nil

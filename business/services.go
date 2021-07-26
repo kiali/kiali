@@ -26,7 +26,7 @@ type SvcService struct {
 }
 
 // GetServiceList returns a list of all services for a given Namespace
-func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, error) {
+func (in *SvcService) GetServiceList(namespace string, linkIstioResources bool) (*models.ServiceList, error) {
 	var svcs []core_v1.Service
 	var pods []core_v1.Pod
 	var deployments []apps_v1.Deployment
@@ -37,9 +37,14 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 		return nil, err
 	}
 
+	nFetches := 3
+	if linkIstioResources {
+		nFetches = 5
+	}
+
 	wg := sync.WaitGroup{}
-	wg.Add(3)
-	errChan := make(chan error, 2)
+	wg.Add(nFetches)
+	errChan := make(chan error, nFetches)
 
 	go func() {
 		defer wg.Done()
@@ -75,19 +80,45 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 
 	go func() {
 		defer wg.Done()
-		var err error
+		var err2 error
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
 		if IsNamespaceCached(namespace) {
-			deployments, err = kialiCache.GetDeployments(namespace)
+			deployments, err2 = kialiCache.GetDeployments(namespace)
 		} else {
-			deployments, err = in.k8s.GetDeployments(namespace)
+			deployments, err2 = in.k8s.GetDeployments(namespace)
 		}
-		if err != nil {
-			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
-			errChan <- err
+		if err2 != nil {
+			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err2)
+			errChan <- err2
 		}
 	}()
+
+	resources := []string{
+		kubernetes.VirtualServices,
+		kubernetes.DestinationRules,
+	}
+	linkedResources := map[string]*[]kubernetes.IstioObject{}
+
+	if linkIstioResources {
+		for _, resource := range resources {
+			var resourceObjects []kubernetes.IstioObject
+			linkedResources[resource] = &resourceObjects
+			go func(namespace, resourceType string, dest *[]kubernetes.IstioObject, errChan chan error) {
+				defer wg.Done()
+				var err2 error
+				if IsNamespaceCached(namespace) {
+					*dest, err2 = kialiCache.GetIstioObjects(namespace, resourceType, "")
+				} else {
+					*dest, err2 = in.k8s.GetIstioObjects(namespace, resourceType, "")
+				}
+				if err2 != nil {
+					log.Errorf("Error fetching Istio %s per namespace %s: %s", resourceType, namespace, err2)
+					errChan <- err2
+				}
+			}(namespace, resource, &resourceObjects, errChan)
+		}
+	}
 
 	wg.Wait()
 	if len(errChan) != 0 {
@@ -96,20 +127,52 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 	}
 
 	// Convert to Kiali model
-	return in.buildServiceList(models.Namespace{Name: namespace}, svcs, pods, deployments), nil
+	return in.buildServiceList(models.Namespace{Name: namespace}, svcs, pods, deployments, linkedResources), nil
 }
 
-func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v1.Service, pods []core_v1.Pod, deployments []apps_v1.Deployment) *models.ServiceList {
+func getKialiScenario(resources []kubernetes.IstioObject) string {
+	scenario := ""
+	for _, r := range resources {
+		if scenario, ok := r.GetObjectMeta().Labels["kiali_wizard"]; ok {
+			return scenario
+		}
+	}
+	return scenario
+}
+
+func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v1.Service, pods []core_v1.Pod, deployments []apps_v1.Deployment, linkedResources map[string]*[]kubernetes.IstioObject) *models.ServiceList {
 	services := make([]models.ServiceOverview, len(svcs))
 	conf := config.Get()
 	validations := in.getServiceValidations(svcs, deployments, pods)
 	// Convert each k8s service into our model
+	virtualServices := []kubernetes.IstioObject{}
+	destinationRules := []kubernetes.IstioObject{}
+	if vs, ok := linkedResources[kubernetes.VirtualServices]; ok {
+		virtualServices = *vs
+	}
+	if dr, ok := linkedResources[kubernetes.DestinationRules]; ok {
+		destinationRules = *dr
+	}
 	for i, item := range svcs {
 		sPods := kubernetes.FilterPodsForService(&item, pods)
 		/** Check if Service has istioSidecar deployed */
 		mPods := models.Pods{}
 		mPods.Parse(sPods)
 		hasSidecar := mPods.HasAnyIstioSidecar()
+		svcVirtualServices := kubernetes.FilterVirtualServices(virtualServices, item.Namespace, item.Name)
+		svcDestinationRules := kubernetes.FilterDestinationRules(destinationRules, item.Namespace, item.Name)
+		allFiltered := append(svcVirtualServices, svcDestinationRules...)
+		svcReferences := make([]*models.IstioValidationKey, 0)
+		for _, a := range allFiltered {
+			ref := models.BuildKey(a.GetTypeMeta().Kind, a.GetObjectMeta().Name, a.GetObjectMeta().Namespace)
+			svcReferences = append(svcReferences, &ref)
+		}
+
+		kialiWizard := getKialiScenario(svcVirtualServices)
+		if kialiWizard == "" {
+			kialiWizard = getKialiScenario(svcDestinationRules)
+		}
+
 		/** Check if Service has the label app required by Istio */
 		_, appLabel := item.Spec.Selector[conf.IstioLabels.AppLabelName]
 		/** Check if Service has additional item icon */
@@ -120,6 +183,8 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(conf, item.ObjectMeta.Annotations),
 			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()),
 			Labels:                 item.Labels,
+			IstioReferences:        svcReferences,
+			KialiWizard:            kialiWizard,
 		}
 	}
 

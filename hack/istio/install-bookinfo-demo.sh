@@ -12,6 +12,34 @@
 #
 ##############################################################################
 
+# Given a namepace, prepare it for inclusion in Maistra's control plane
+# This means:
+# 1. Create a SMM
+# 2. Annotate all of the namespace's Deployments with the sidecar injection annotation if enabled
+prepare_maistra() {
+  local ns="${1}"
+
+  cat <<EOM | ${CLIENT_EXE} apply -f -
+apiVersion: maistra.io/v1
+kind: ServiceMeshMember
+metadata:
+  name: default
+  namespace: ${ns}
+spec:
+  controlPlaneRef:
+    namespace: ${ISTIO_NAMESPACE}
+    name: "$(${CLIENT_EXE} get smcp -n ${ISTIO_NAMESPACE} -o jsonpath='{.items[0].metadata.name}' )"
+EOM
+
+  if [ "${AUTO_INJECTION}" == "true" ]; then
+    for d in $(${CLIENT_EXE} get deployments -n ${ns} -o name)
+    do
+      echo "Enabling sidecar injection for deployment: ${d}"
+      ${CLIENT_EXE} patch ${d} -n ${ns} -p '{"spec":{"template":{"metadata":{"annotations":{"sidecar.istio.io/inject": "true"}}}}}' --type=merge
+    done
+  fi
+}
+
 # ISTIO_DIR is where the Istio download is installed and thus where the bookinfo demo files are found.
 # CLIENT_EXE_NAME is going to either be "oc" or "kubectl"
 ISTIO_DIR=
@@ -140,6 +168,16 @@ else
   exit 1
 fi
 
+IS_OPENSHIFT="false"
+IS_MAISTRA="false"
+if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+  IS_OPENSHIFT="true"
+  IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
+fi
+
+echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
+echo "IS_MAISTRA=${IS_MAISTRA}"
+
 if [ "${BOOKINFO_YAML}" == "" ]; then
   BOOKINFO_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo.yaml"
 fi
@@ -148,10 +186,16 @@ if [ "${GATEWAY_YAML}" == "" ]; then
   GATEWAY_YAML="${ISTIO_DIR}/samples/bookinfo/networking/bookinfo-gateway.yaml"
 fi
 
+# If we are to delete, remove everything and exit immediately after
 if [ "${DELETE_BOOKINFO}" == "true" ]; then
   echo "====== UNINSTALLING ANY EXISTING BOOKINFO DEMO ====="
-  if [[ "$CLIENT_EXE" = *"oc" ]]; then
-    $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    if [ "${IS_MAISTRA}" != "true" ]; then
+      $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
+    else
+      $CLIENT_EXE delete smm default -n ${NAMESPACE}
+    fi
+    $CLIENT_EXE delete scc bookinfo-scc
     $CLIENT_EXE delete project ${NAMESPACE}
   else
     $CLIENT_EXE delete namespace ${NAMESPACE}
@@ -161,7 +205,7 @@ if [ "${DELETE_BOOKINFO}" == "true" ]; then
 fi
 
 # If OpenShift, we need to do some additional things
-if [[ "$CLIENT_EXE" = *"oc" ]]; then
+if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE new-project ${NAMESPACE}
 else
   $CLIENT_EXE create namespace ${NAMESPACE}
@@ -204,6 +248,10 @@ if [ "${MYSQL_ENABLED}" == "true" ]; then
   fi
 fi
 
+if [ "${IS_MAISTRA}" == "true" ]; then
+  prepare_maistra "${NAMESPACE}"
+fi
+
 sleep 4
 
 echo "Bookinfo Demo should be installed and starting up - here are the pods and services"
@@ -211,20 +259,41 @@ $CLIENT_EXE get services -n ${NAMESPACE}
 $CLIENT_EXE get pods -n ${NAMESPACE}
 
 # If OpenShift, we need to do some additional things
-if [[ "$CLIENT_EXE" = *"oc" ]]; then
+if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
   $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
-  cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
+  if [ "${IS_MAISTRA}" != "true" ]; then
+    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
+  fi  
+  cat <<SCC | $CLIENT_EXE apply -f -
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: bookinfo-scc
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+users:
+- "system:serviceaccount:${NAMESPACE}:bookinfo-details"
+- "system:serviceaccount:${NAMESPACE}:bookinfo-productpage"
+- "system:serviceaccount:${NAMESPACE}:bookinfo-ratings"
+- "system:serviceaccount:${NAMESPACE}:bookinfo-ratings=v2"
+- "system:serviceaccount:${NAMESPACE}:bookinfo-reviews"
+- "system:serviceaccount:${NAMESPACE}:default"
+SCC
 fi
 
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
   echo "Installing Traffic Generator"
-  if [[ "$CLIENT_EXE" = *"oc" ]]; then
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
     INGRESS_ROUTE=$(${CLIENT_EXE} get route istio-ingressgateway -o jsonpath='{.spec.host}{"\n"}' -n ${ISTIO_NAMESPACE})
     echo "Traffic Generator will use the OpenShift ingress route of: ${INGRESS_ROUTE}"
   else

@@ -14,6 +14,7 @@ import (
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	errors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/config"
@@ -50,7 +51,7 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -93,7 +94,7 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -133,7 +134,7 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -175,7 +176,7 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -217,7 +218,7 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -259,7 +260,7 @@ func TestGetWorkloadListFromDaemonSets(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -300,7 +301,7 @@ func TestGetWorkloadListFromDepRCPod(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -333,7 +334,7 @@ func TestGetWorkloadListFromPod(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -366,7 +367,7 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -389,7 +390,7 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 	notfound := errors.NewNotFound(gr, "not found")
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}, nil)
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&FakeDepSyncedWithRS()[0], nil)
 	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&osapps_v1.DeploymentConfig{}, notfound)
 	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeRSSyncedWithPods(), nil)
@@ -705,7 +706,7 @@ func TestDuplicatedControllers(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	workload, _ := svc.GetWorkload("Namespace", "duplicated-v1", "", false)

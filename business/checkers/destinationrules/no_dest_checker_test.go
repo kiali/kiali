@@ -11,6 +11,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 func appVersionLabel(app, version string) map[string]string {
@@ -118,7 +119,7 @@ func TestValidServiceNamespaceInvalid(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.Equal(models.CheckMessage("destinationrules.nodest.matchingregistry"), validations[0].Message)
+	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", validations[0]))
 	assert.Equal("spec/host", validations[0].Path)
 }
 
@@ -171,7 +172,7 @@ func TestNoValidHost(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.Equal(models.CheckMessage("destinationrules.nodest.matchingregistry"), validations[0].Message)
+	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", validations[0]))
 	assert.Equal("spec/host", validations[0].Path)
 }
 
@@ -194,7 +195,7 @@ func TestNoMatchingSubset(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.Equal(models.CheckMessage("destinationrules.nodest.subsetlabels"), validations[0].Message)
+	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", validations[0]))
 	assert.Equal("spec/subsets[0]", validations[0].Path)
 }
 
@@ -229,7 +230,7 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.Equal(models.CheckMessage("destinationrules.nodest.subsetlabels"), validations[0].Message)
+	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", validations[0]))
 	assert.Equal("spec/subsets[0]", validations[0].Path)
 }
 
@@ -331,7 +332,7 @@ func TestNoLabelsInSubset(t *testing.T) {
 	assert.True(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.WarningSeverity, validations[0].Severity)
-	assert.Equal(models.CheckMessage("destinationrules.nodest.subsetnolabels"), validations[0].Message)
+	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.nodest.subsetnolabels", validations[0]))
 	assert.Equal("spec/subsets[0]", validations[0].Path)
 
 }

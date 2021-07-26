@@ -9,6 +9,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 func TestMultiHostMatchCorrect(t *testing.T) {
@@ -63,7 +64,7 @@ func validationAssertion(assert *assert.Assertions, validations models.IstioVali
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
-	assert.Equal(models.CheckMessage("destinationrules.multimatch"), validation.Checks[0].Message)
+	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.multimatch", validation.Checks[0]))
 
 	assert.NotEmpty(validation.References)
 	for _, refName := range refNames {
@@ -99,7 +100,7 @@ func TestMultiHostMatchInvalidShortFormat(t *testing.T) {
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
-	assert.Equal(models.CheckMessage("destinationrules.multimatch"), validation.Checks[0].Message)
+	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.multimatch", validation.Checks[0]))
 
 	assert.NotEmpty(validation.References)
 	assert.Equal("rule1", validation.References[0].Name)

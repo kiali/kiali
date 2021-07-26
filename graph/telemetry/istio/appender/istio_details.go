@@ -120,19 +120,24 @@ NODES:
 					vsMetadata[virtualService.Metadata.Name] = virtualService.Spec.Hosts
 				}
 
-				// Check if the VS also has one of the Kiali scenarios created by the wizard.
-				// TODO: Get this info from the VS spec in case the Istio object was not created by a wizard.
-				switch virtualService.Metadata.Labels[graph.WizardLabelKey] {
-				case graph.WizardRequestRoutingLabel:
+				if virtualService.HasRequestRouting() {
 					n.Metadata[graph.HasRequestRouting] = true
-				case graph.WizardFaultInjectionLabel:
-					n.Metadata[graph.HasFaultInjection] = true
-				case graph.WizardTrafficShiftingLabel:
-					n.Metadata[graph.HasTrafficShifting] = true
-				case graph.WizardTCPTrafficShiftingLabel:
-					n.Metadata[graph.HasTCPTrafficShifting] = true
-				case graph.WizardRequestTimeoutsLabel:
+				}
+
+				if virtualService.HasRequestTimeout() {
 					n.Metadata[graph.HasRequestTimeout] = true
+				}
+
+				if virtualService.HasFaultInjection() {
+					n.Metadata[graph.HasFaultInjection] = true
+				}
+
+				if virtualService.HasTrafficShifting() {
+					n.Metadata[graph.HasTrafficShifting] = true
+				}
+
+				if virtualService.HasTCPTrafficShifting() {
+					n.Metadata[graph.HasTCPTrafficShifting] = true
 				}
 
 				continue NODES

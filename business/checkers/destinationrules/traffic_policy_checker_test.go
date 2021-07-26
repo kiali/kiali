@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 // Context: MeshPolicy Enabling mTLS
@@ -255,7 +256,7 @@ func testValidationAdded(t *testing.T, destinationRules []kubernetes.IstioObject
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 	assert.Equal("spec/trafficPolicy", validation.Checks[0].Path)
-	assert.Equal(models.CheckMessage("destinationrules.trafficpolicy.notlssettings"), validation.Checks[0].Message)
+	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.trafficpolicy.notlssettings", validation.Checks[0]))
 
 	assert.True(len(validation.References) > 0)
 	return validation

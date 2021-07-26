@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 func TestSidecarWithoutSelectorOutOfControlPlane(t *testing.T) {
@@ -69,5 +70,5 @@ func TestSidecarWithSelectorInControlPlane(t *testing.T) {
 
 	assert.Len(validations, 1)
 	assert.Equal(models.WarningSeverity, validations[0].Severity)
-	assert.Equal(models.CheckMessage("sidecar.global.selector"), validations[0].Message)
+	assert.NoError(testutils.ConfirmIstioCheckMessage("sidecar.global.selector", validations[0]))
 }
