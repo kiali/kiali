@@ -49,6 +49,7 @@ type K8SClientInterface interface {
 	GetPodPortForwarder(namespace, podName, portMap string) (*httputil.PortForwarder, error)
 	GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error)
 	GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
+	GetSecret(namespace, name string) (*core_v1.Secret, error)
 	GetSecrets(namespace string, labelSelector string) ([]core_v1.Secret, error)
 	GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	GetService(namespace string, name string) (*core_v1.Service, error)

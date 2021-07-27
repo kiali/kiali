@@ -1069,6 +1069,27 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioStatus,
 			true,
 		},
+		// swagger:route GET /istio/status status istioStatus
+		// ---
+		// Get the status of each components needed in the control plane
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: istioStatusResponse
+		//      400: badRequestError
+		//      500: internalError
+		//
+		{
+			"IstioCerts",
+			"GET",
+			"/api/istio/certs",
+			handlers.IstioCerts,
+			true,
+		},
 		// swagger:route GET /namespaces/graph graphs graphNamespaces
 		// ---
 		// The backing JSON for a namespaces graph.
