@@ -184,10 +184,10 @@ func decorateGateways(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlo
 	istioAppLabelName := config.Get().IstioLabels.AppLabelName
 
 	ingressNodeMapping := make(map[*models.WorkloadListItem][]*graph.Node)
-	if ingressWorkloadsList, ok := ingressWorkloads[namespaceInfo.Namespace]; ok {
+	for ingressNs, ingressWorkloadsList := range ingressWorkloads {
 		for _, gw := range ingressWorkloadsList {
 			for _, node := range trafficMap {
-				if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App == gw.Labels[istioAppLabelName] && node.Namespace == namespaceInfo.Namespace {
+				if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App == gw.Labels[istioAppLabelName] && node.Namespace == ingressNs {
 					node.Metadata[graph.IsIngressGateway] = graph.GatewaysMetadata{}
 					ingressNodeMapping[&gw] = append(ingressNodeMapping[&gw], node)
 				}
