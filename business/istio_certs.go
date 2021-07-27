@@ -100,15 +100,15 @@ func (ics *IstioCertsService) getChironCertificates() ([]CertInfo, error) {
 			if err != nil {
 				certChan <- CertInfo{SecretName: secretName, Error: err}
 			} else {
-				block, _ := pem.Decode(certSecret.Data["root-cert.pem"])
+				block, _ := pem.Decode(certSecret.Data["cert-chain.pem"])
 				cert, err := x509.ParseCertificate(block.Bytes)
 				if err != nil {
 					certChan <- CertInfo{SecretName: secretName, Error: err}
 					return
 				}
 				certChan <- CertInfo{
-					Issuer:     cert.Issuer.CommonName,
-					Subject:    cert.Subject.CommonName,
+					Issuer:     cert.Issuer.String(),
+					Subject:    cert.Subject.String(),
 					NotBefore:  cert.NotBefore,
 					NotAfter:   cert.NotAfter,
 					SecretName: secretName,
@@ -121,7 +121,7 @@ func (ics *IstioCertsService) getChironCertificates() ([]CertInfo, error) {
 	wg.Wait()
 	close(certChan)
 
-	certs := make([]CertInfo, len(istioConfig.Certificates))
+	certs := make([]CertInfo, 0)
 	for cert := range certChan {
 		certs = append(certs, cert)
 	}
