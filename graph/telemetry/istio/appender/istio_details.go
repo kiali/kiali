@@ -14,8 +14,8 @@ const IstioAppenderName = "istio"
 
 // IstioAppender is responsible for badging nodes with special Istio significance:
 // - CircuitBreaker: n.Metadata[HasCB] = true
-// - VirtualService: n.Metadata[HasVS] = true
-// - Ingress Gateways: Graph nodes representing Istio ingress gateways are decorated with configured hostnames
+// - Ingress Gateways: n.Metadata[IsIngressGateway] = Map of GatewayName => hosts
+// - VirtualService: n.Metadata[HasVS] = Map of VirtualServiceName => hosts
 // Name: istio
 type IstioAppender struct{}
 
@@ -108,15 +108,14 @@ NODES:
 		}
 		for _, virtualService := range istioCfg.VirtualServices.Items {
 			if virtualService.IsValidHost(namespace, n.Service) {
-				n.Metadata[graph.HasVS] = true
-				if len(virtualService.Spec.Hosts) != 0 {
-					var vsMetadata graph.VirtualServicesMetadata
-					var vsOk bool
-					if vsMetadata, vsOk = n.Metadata[graph.VirtualServices].(graph.VirtualServicesMetadata); !vsOk {
-						vsMetadata = make(graph.VirtualServicesMetadata)
-						n.Metadata[graph.VirtualServices] = vsMetadata
-					}
+				var vsMetadata graph.VirtualServicesMetadata
+				var vsOk bool
+				if vsMetadata, vsOk = n.Metadata[graph.HasVS].(graph.VirtualServicesMetadata); !vsOk {
+					vsMetadata = make(graph.VirtualServicesMetadata)
+					n.Metadata[graph.HasVS] = vsMetadata
+				}
 
+				if len(virtualService.Spec.Hosts) != 0 {
 					vsMetadata[virtualService.Metadata.Name] = virtualService.Spec.Hosts
 				}
 
@@ -181,15 +180,15 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 
 func decorateGateways(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	// Get ingress-gateways deployments in the namespace. Then, find if the graph is showing any of them. If so, flag the GW nodes.
-	ingressWorkloads := getIngressGatewaysWorkloads(globalInfo)
+	ingressWorkloads := getIngressGatewayWorkloads(globalInfo)
 	istioAppLabelName := config.Get().IstioLabels.AppLabelName
 
 	ingressNodeMapping := make(map[*models.WorkloadListItem][]*graph.Node)
 	if ingressWorkloadsList, ok := ingressWorkloads[namespaceInfo.Namespace]; ok {
 		for _, gw := range ingressWorkloadsList {
 			for _, node := range trafficMap {
-				if node.App == gw.Labels[istioAppLabelName] && node.Namespace == namespaceInfo.Namespace {
-					node.Metadata[graph.IsIngressGw] = true
+				if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App == gw.Labels[istioAppLabelName] && node.Namespace == namespaceInfo.Namespace {
+					node.Metadata[graph.IsIngressGateway] = graph.GatewaysMetadata{}
 					ingressNodeMapping[&gw] = append(ingressNodeMapping[&gw], node)
 				}
 			}
@@ -224,9 +223,7 @@ func decorateGateways(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlo
 						}
 
 						// Metadata format: { gatewayName => array of hostnames }
-						node.Metadata[graph.Gateways] = graph.GatewaysMetadata{
-							gwCrd.Metadata.Name: hostnames,
-						}
+						node.Metadata[graph.IsIngressGateway].(graph.GatewaysMetadata)[gwCrd.Metadata.Name] = hostnames
 					}
 				}
 			}
@@ -234,7 +231,7 @@ func decorateGateways(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlo
 	}
 }
 
-func getIngressGatewaysWorkloads(globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
+func getIngressGatewayWorkloads(globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
 	nsList, nsErr := globalInfo.Business.Namespace.GetNamespaces()
 	graph.CheckError(nsErr)
 

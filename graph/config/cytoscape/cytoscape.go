@@ -58,9 +58,6 @@ type ProtocolTraffic struct {
 type GWInfo struct {
 	// IngressInfo contains the resolved gateway configuration if the node represents an Istio ingress gateway
 	IngressInfo GWInfoIngress `json:"ingressInfo,omitempty"`
-	//EgressInfo struct {
-	//
-	//}
 }
 
 // GWInfoIngress contains the resolved gateway configuration if the node represents an Istio ingress gateway
@@ -271,12 +268,10 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		}
 
 		// node may represent an Istio Ingress Gateway
-		if val, ok := n.Metadata[graph.IsIngressGw]; ok && val.(bool) {
+		if gateways, ok := n.Metadata[graph.IsIngressGateway]; ok {
 			var configuredHostnames []string
-			if gwData, gwOk := n.Metadata[graph.Gateways]; gwOk {
-				for _, hosts := range gwData.(graph.GatewaysMetadata) {
-					configuredHostnames = append(configuredHostnames, hosts...)
-				}
+			for _, hosts := range gateways.(graph.GatewaysMetadata) {
+				configuredHostnames = append(configuredHostnames, hosts...)
 			}
 
 			nd.IsGateway = &GWInfo{
@@ -290,17 +285,14 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		}
 
 		// node may have a virtual service
-		if val, ok := n.Metadata[graph.HasVS]; ok && val.(bool) {
-			nd.HasVS = &VSInfo{}
+		if virtualServices, ok := n.Metadata[graph.HasVS]; ok {
 
 			var configuredHostnames []string
-			if vsData, vsOk := n.Metadata[graph.VirtualServices]; vsOk {
-				for _, hosts := range vsData.(graph.VirtualServicesMetadata) {
-					configuredHostnames = append(configuredHostnames, hosts...)
-				}
+			for _, hosts := range virtualServices.(graph.VirtualServicesMetadata) {
+				configuredHostnames = append(configuredHostnames, hosts...)
 			}
 
-			nd.HasVS.Hostnames = configuredHostnames
+			nd.HasVS = &VSInfo{Hostnames: configuredHostnames}
 		}
 
 		// set sidecars checks, if available

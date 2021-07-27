@@ -234,7 +234,12 @@ func TestVS(t *testing.T) {
 	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
-	assert.Equal(true, trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
+
+	assert.NotNil(trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
+	assert.IsType(graph.VirtualServicesMetadata{}, trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
+	assert.Len(trafficMap[fooSvcNodeId].Metadata[graph.HasVS], 1)
+	assert.Len(trafficMap[fooSvcNodeId].Metadata[graph.HasVS].(graph.VirtualServicesMetadata)["vService-1"], 1)
+	assert.Equal("ratings", trafficMap[fooSvcNodeId].Metadata[graph.HasVS].(graph.VirtualServicesMetadata)["vService-1"][0])
 }
 
 func TestVSWithRoutingBadges(t *testing.T) {
