@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
+	"log"
 	"sync"
 	"time"
 
@@ -56,13 +57,14 @@ func (ics *IstioCertsService) getCertificateFromSecret(secretName string) (CertI
 	if err != nil {
 		return CertInfo{}, err
 	}
-
+	log.Println(string(secret.Data["ca-cert.pem"]))
 	block, _ := pem.Decode(secret.Data["ca-cert.pem"])
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
 		return CertInfo{SecretName: secretName, Error: err}, nil
 	}
-
+	log.Println(cert.NotBefore)
+	log.Println(cert.NotAfter)
 	return CertInfo{
 		Issuer:     cert.Issuer.String(),
 		Subject:    cert.Subject.String(),
