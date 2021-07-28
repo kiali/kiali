@@ -1069,9 +1069,9 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioStatus,
 			true,
 		},
-		// swagger:route GET /istio/status status istioStatus
+		// swagger:route GET /istio/certs certs istioCerts
 		// ---
-		// Get the status of each components needed in the control plane
+		// Get certificates (internal) information used by Istio
 		//
 		//     Produces:
 		//     - application/json
@@ -1079,8 +1079,7 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      200: istioStatusResponse
-		//      400: badRequestError
+		//      200: []certsInfo
 		//      500: internalError
 		//
 		{
