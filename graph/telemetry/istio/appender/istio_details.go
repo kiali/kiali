@@ -1,6 +1,8 @@
 package appender
 
 import (
+	"time"
+
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/business"
@@ -17,7 +19,9 @@ const IstioAppenderName = "istio"
 // - Ingress Gateways: n.Metadata[IsIngressGateway] = Map of GatewayName => hosts
 // - VirtualService: n.Metadata[HasVS] = Map of VirtualServiceName => hosts
 // Name: istio
-type IstioAppender struct{}
+type IstioAppender struct {
+	AccessibleNamespaces map[string]time.Time
+}
 
 // Name implements Appender
 func (a IstioAppender) Name() string {
@@ -34,7 +38,7 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *grap
 
 	addBadging(trafficMap, globalInfo, namespaceInfo)
 	addLabels(trafficMap, globalInfo, sdl)
-	decorateGateways(trafficMap, globalInfo, namespaceInfo)
+	a.decorateGateways(trafficMap, globalInfo, namespaceInfo)
 }
 
 func addBadging(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
@@ -178,18 +182,20 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 	}
 }
 
-func decorateGateways(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	// Get ingress-gateways deployments in the namespace. Then, find if the graph is showing any of them. If so, flag the GW nodes.
-	ingressWorkloads := getIngressGatewayWorkloads(globalInfo)
+	ingressWorkloads := a.getIngressGatewayWorkloads(globalInfo)
 	istioAppLabelName := config.Get().IstioLabels.AppLabelName
 
 	ingressNodeMapping := make(map[*models.WorkloadListItem][]*graph.Node)
 	for ingressNs, ingressWorkloadsList := range ingressWorkloads {
 		for _, gw := range ingressWorkloadsList {
 			for _, node := range trafficMap {
-				if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App == gw.Labels[istioAppLabelName] && node.Namespace == ingressNs {
-					node.Metadata[graph.IsIngressGateway] = graph.GatewaysMetadata{}
-					ingressNodeMapping[&gw] = append(ingressNodeMapping[&gw], node)
+				if _, ok := node.Metadata[graph.IsIngressGateway]; !ok {
+					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App == gw.Labels[istioAppLabelName] && node.Namespace == ingressNs {
+						node.Metadata[graph.IsIngressGateway] = graph.GatewaysMetadata{}
+						ingressNodeMapping[&gw] = append(ingressNodeMapping[&gw], node)
+					}
 				}
 			}
 		}
@@ -198,7 +204,7 @@ func decorateGateways(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlo
 	// If there is any ingress gateway node in the processing namespace, find Gateway CRDs and
 	// match them against gateways in the graph.
 	if len(ingressNodeMapping) != 0 {
-		gatewaysCrds := getIstioGatewayResources(globalInfo)
+		gatewaysCrds := a.getIstioGatewayResources(globalInfo)
 
 		for _, gwCrd := range gatewaysCrds {
 			gwSelector := labels.Set(gwCrd.Spec.Selector).AsSelector()
@@ -231,20 +237,17 @@ func decorateGateways(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlo
 	}
 }
 
-func getIngressGatewayWorkloads(globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
-	nsList, nsErr := globalInfo.Business.Namespace.GetNamespaces()
-	graph.CheckError(nsErr)
-
+func (a IstioAppender) getIngressGatewayWorkloads(globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
 	ingressWorkloads := make(map[string][]models.WorkloadListItem)
-	for _, namespace := range nsList {
-		wList, err := globalInfo.Business.Workload.GetWorkloadList(namespace.Name, false)
+	for namespace := range a.AccessibleNamespaces {
+		wList, err := globalInfo.Business.Workload.GetWorkloadList(namespace, false)
 		graph.CheckError(err)
 
 		// Find Ingress Gateway deployments
 		for _, workload := range wList.Workloads {
 			if workload.Type == "Deployment" {
 				if labelValue, ok := workload.Labels["operator.istio.io/component"]; ok && labelValue == "IngressGateways" {
-					ingressWorkloads[namespace.Name] = append(ingressWorkloads[namespace.Name], workload)
+					ingressWorkloads[namespace] = append(ingressWorkloads[namespace], workload)
 				}
 			}
 		}
@@ -253,15 +256,12 @@ func getIngressGatewayWorkloads(globalInfo *graph.AppenderGlobalInfo) map[string
 	return ingressWorkloads
 }
 
-func getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) models.Gateways {
-	nsList, nsErr := globalInfo.Business.Namespace.GetNamespaces()
-	graph.CheckError(nsErr)
-
+func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) models.Gateways {
 	retVal := models.Gateways{}
-	for _, namespace := range nsList {
+	for namespace := range a.AccessibleNamespaces {
 		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
 			IncludeGateways: true,
-			Namespace:       namespace.Name,
+			Namespace:       namespace,
 		})
 		graph.CheckError(err)
 
