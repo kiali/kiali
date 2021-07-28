@@ -58,6 +58,14 @@ _
   
 
 
+###  certs
+
+| Method  | URI     | Name   | Summary |
+|---------|---------|--------|---------|
+| GET | /api/istio/certs | [istio certs](#istio-certs) |  |
+  
+
+
 ###  config
 
 | Method  | URI     | Name   | Summary |
@@ -2438,6 +2446,66 @@ Status: Internal Server Error
 ###### Inlined models
 
 **<span id="healthz-internal-server-error-body"></span> HealthzInternalServerErrorBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
+| Message | string| `string` |  | |  |  |
+
+
+
+### <span id="istio-certs"></span> istio certs (*istioCerts*)
+
+```
+GET /api/istio/certs
+```
+
+Get certificates (internal) information used by Istio
+
+#### URI Schemes
+  * http
+  * https
+
+#### Produces
+  * application/json
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#istio-certs-200) | OK | Return a list of certificates information |  | [schema](#istio-certs-200-schema) |
+| [500](#istio-certs-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#istio-certs-500-schema) |
+
+#### Responses
+
+
+##### <span id="istio-certs-200"></span> 200 - Return a list of certificates information
+Status: OK
+
+###### <span id="istio-certs-200-schema"></span> Schema
+   
+  
+
+[][CertInfo](#cert-info)
+
+##### <span id="istio-certs-500"></span> 500 - A Internal is the error message that means something has gone wrong
+Status: Internal Server Error
+
+###### <span id="istio-certs-500-schema"></span> Schema
+   
+  
+
+[IstioCertsInternalServerErrorBody](#istio-certs-internal-server-error-body)
+
+###### Inlined models
+
+**<span id="istio-certs-internal-server-error-body"></span> IstioCertsInternalServerErrorBody**
 
 
   
@@ -6476,6 +6544,27 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | Bootstrap | map of any | `map[string]interface{}` |  | |  |  |
+
+
+
+### <span id="cert-info"></span> CertInfo
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| DNSNames | []string| `[]string` |  | |  |  |
+| Error | string| `string` |  | |  |  |
+| Issuer | string| `string` |  | |  |  |
+| NotAfter | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
+| NotBefore | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
+| SecretName | string| `string` |  | |  |  |
+| Subject | string| `string` |  | |  |  |
 
 
 

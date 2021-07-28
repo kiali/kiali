@@ -1079,7 +1079,7 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      200: []certsInfo
+		//      200: certsInfoResponse
 		//      500: internalError
 		//
 		{
