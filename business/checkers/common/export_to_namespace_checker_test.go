@@ -8,8 +8,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestDRNamespaceExist(t *testing.T) {
@@ -61,15 +60,15 @@ func assertIstioObjectValid(scenario string, objectType string, t *testing.T) {
 func assertIstioObjectInvalidNamespace(scenario string, objectType string, errorNumbers int, t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := validateIstioObject("dr_exportto_invalid.yaml", "DestinationRule", t)
+	vals, valid := validateIstioObject("dr_exportto_invalid.yaml", "DestinationRule", t)
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Len(validations, errorNumbers)
+	assert.NotEmpty(vals)
+	assert.Len(vals, errorNumbers)
 	for i := 0; i < errorNumbers; i++ {
-		assert.NoError(testutils.ConfirmIstioCheckMessage("generic.exportto.namespacenotfound", validations[i]))
-		assert.Equal(validations[i].Severity, models.ErrorSeverity)
-		assert.Equal(validations[i].Path, fmt.Sprintf("spec/exportTo[%d]", i))
+		assert.NoError(validations.ConfirmIstioCheckMessage("generic.exportto.namespacenotfound", vals[i]))
+		assert.Equal(vals[i].Severity, models.ErrorSeverity)
+		assert.Equal(vals[i].Path, fmt.Sprintf("spec/exportTo[%d]", i))
 	}
 }
 
@@ -94,7 +93,7 @@ func validateIstioObject(scenario string, objectType string, t *testing.T) ([]*m
 	return validations, valid
 }
 
-func yamlFixtureLoaderFor(file string) *data.YamlFixtureLoader {
+func yamlFixtureLoaderFor(file string) *validations.YamlFixtureLoader {
 	path := fmt.Sprintf("../../../tests/data/validations/exportto/%s", file)
-	return &data.YamlFixtureLoader{Filename: path}
+	return &validations.YamlFixtureLoader{Filename: path}
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestNoCrashOnNil(t *testing.T) {
@@ -32,7 +32,7 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 
 	assert := assert.New(t)
 
-	validations := NoServiceChecker{
+	vals := NoServiceChecker{
 		Namespace: "test",
 		WorkloadList: data.CreateWorkloadList("test",
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -49,11 +49,11 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.NotEmpty(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}])
-	assert.NotEmpty(validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}])
-	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
-	assert.True(validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
+	assert.NotEmpty(vals)
+	assert.NotEmpty(vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}])
+	assert.NotEmpty(vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}])
+	assert.True(vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
+	assert.True(vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
 }
 
 func TestDetectObjectWithoutService(t *testing.T) {
@@ -62,7 +62,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 
 	assert := assert.New(t)
 
-	validations := NoServiceChecker{
+	vals := NoServiceChecker{
 		Namespace:    "test",
 		IstioDetails: fakeIstioDetails(),
 		WorkloadList: data.CreateWorkloadList("test",
@@ -77,15 +77,15 @@ func TestDetectObjectWithoutService(t *testing.T) {
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
-	customerDr := validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}]
+	assert.NotEmpty(vals)
+	assert.True(vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
+	customerDr := vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}]
 	assert.False(customerDr.Valid)
 	assert.Equal(1, len(customerDr.Checks))
 	assert.Equal("spec/host", customerDr.Checks[0].Path)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", customerDr.Checks[0]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", customerDr.Checks[0]))
 
-	validations = NoServiceChecker{
+	vals = NoServiceChecker{
 		Namespace: "test",
 		WorkloadList: data.CreateWorkloadList("test",
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -100,17 +100,17 @@ func TestDetectObjectWithoutService(t *testing.T) {
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
-	productVs := validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
+	assert.NotEmpty(vals)
+	assert.True(vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
+	productVs := vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
 	assert.False(productVs.Valid)
 	assert.Equal(2, len(productVs.Checks))
 	assert.Equal("spec/http[0]/route[0]/destination/host", productVs.Checks[0].Path)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", productVs.Checks[0]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", productVs.Checks[0]))
 	assert.Equal("spec/tcp[0]/route[0]/destination/host", productVs.Checks[1].Path)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", productVs.Checks[1]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", productVs.Checks[1]))
 
-	validations = NoServiceChecker{
+	vals = NoServiceChecker{
 		Namespace: "test",
 		WorkloadList: data.CreateWorkloadList("test",
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -125,10 +125,10 @@ func TestDetectObjectWithoutService(t *testing.T) {
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
+	assert.NotEmpty(vals)
+	assert.True(vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
 
-	validations = NoServiceChecker{
+	vals = NoServiceChecker{
 		Namespace: "test",
 		WorkloadList: data.CreateWorkloadList("test",
 			data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
@@ -143,8 +143,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
+	assert.NotEmpty(vals)
+	assert.True(vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
 }
 
 func TestObjectWithoutGateway(t *testing.T) {
@@ -157,18 +157,18 @@ func TestObjectWithoutGateway(t *testing.T) {
 	gateways = append(gateways, "non-existant-gateway")
 
 	istioDetails.VirtualServices[0].GetSpec()["gateways"] = gateways
-	validations := NoServiceChecker{
+	vals := NoServiceChecker{
 		Namespace:            "test",
 		IstioDetails:         istioDetails,
 		Services:             fakeServiceDetails([]string{"reviews", "product", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
-	assert.NotEmpty(validations)
+	assert.NotEmpty(vals)
 
-	productVs := validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
+	productVs := vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
 	assert.False(productVs.Valid)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.nogateway", productVs.Checks[0]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", productVs.Checks[0]))
 }
 
 func fakeIstioDetails() *kubernetes.IstioDetails {

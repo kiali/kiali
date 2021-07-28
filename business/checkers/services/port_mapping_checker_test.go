@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestPortMappingMatch(t *testing.T) {
@@ -25,9 +25,9 @@ func TestPortMappingMatch(t *testing.T) {
 		Pods:        getPods(true),
 	}
 
-	validations, valid := pmc.Check()
+	vals, valid := pmc.Check()
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestTargetPortMappingMatch(t *testing.T) {
@@ -54,16 +54,16 @@ func TestTargetPortMappingMatch(t *testing.T) {
 		Pods:        getPods(true),
 	}
 
-	validations, valid := pmc.Check()
+	vals, valid := pmc.Check()
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 
 	// Now check with named port only
 	service.Spec.Ports[0].TargetPort = intstr.FromString("http-container")
 
-	validations, valid = pmc.Check()
+	vals, valid = pmc.Check()
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestPortMappingMismatch(t *testing.T) {
@@ -79,11 +79,11 @@ func TestPortMappingMismatch(t *testing.T) {
 		Pods:        getPods(true),
 	}
 
-	validations, valid := pmc.Check()
+	vals, valid := pmc.Check()
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("service.deployment.port.mismatch", validations[0]))
-	assert.Equal("spec/ports[0]", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.NoError(validations.ConfirmIstioCheckMessage("service.deployment.port.mismatch", vals[0]))
+	assert.Equal("spec/ports[0]", vals[0].Path)
 }
 
 func TestServicePortNaming(t *testing.T) {
@@ -98,11 +98,11 @@ func TestServicePortNaming(t *testing.T) {
 		Pods:        getPods(true),
 	}
 
-	validations, valid := pmc.Check()
+	vals, valid := pmc.Check()
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("port.name.mismatch", validations[0]))
-	assert.Equal("spec/ports[0]", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.NoError(validations.ConfirmIstioCheckMessage("port.name.mismatch", vals[0]))
+	assert.Equal("spec/ports[0]", vals[0].Path)
 }
 
 func TestServicePortNamingWithoutSidecar(t *testing.T) {
@@ -117,9 +117,9 @@ func TestServicePortNamingWithoutSidecar(t *testing.T) {
 		Pods:        getPods(false),
 	}
 
-	validations, valid := pmc.Check()
+	vals, valid := pmc.Check()
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func getService(servicePort int32, portName string) v1.Service {

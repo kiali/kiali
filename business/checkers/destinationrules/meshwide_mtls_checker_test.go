@@ -8,7 +8,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 // Context: DestinationRule enables mesh-wide mTLS
@@ -122,20 +122,20 @@ func TestMTLSDRDisabledWithMeshPolicyDisabled(t *testing.T) {
 func testReturnsAValidation(t *testing.T, destinationRule kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
-	validations, valid := MeshWideMTLSChecker{
+	vals, valid := MeshWideMTLSChecker{
 		DestinationRule: destinationRule,
 		MTLSDetails:     mTLSDetails,
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.Equal(1, len(validations))
+	assert.NotEmpty(vals)
+	assert.Equal(1, len(vals))
 	assert.False(valid)
 
-	validation := validations[0]
+	validation := vals[0]
 	assert.NotNil(validation)
 	assert.Equal(models.ErrorSeverity, validation.Severity)
 	assert.Equal("spec/trafficPolicy/tls/mode", validation.Path)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.mtls.meshpolicymissing", validation))
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.mtls.meshpolicymissing", validation))
 }
 
 func testNoValidationsFound(t *testing.T, destinationRule kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {

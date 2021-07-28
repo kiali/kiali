@@ -6,11 +6,10 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/data/validations"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
-// This validations works only with AutoMTls disabled
+// This vals works only with AutoMTls disabled
 
 // Context: PeerAuthn disabled
 // Context: DestinationRule tls mode disabled
@@ -62,7 +61,7 @@ func disabledNamespacetestPrep(scenario string, t *testing.T) ([]*models.IstioCh
 	loader := yamlFixtureLoaderFor(scenario)
 	err := loader.Load()
 
-	validations, valid := DisabledNamespaceWideChecker{
+	vals, valid := DisabledNamespaceWideChecker{
 		PeerAuthn:        loader.GetFirstResource("PeerAuthentication"),
 		DestinationRules: loader.GetResources("DestinationRule"),
 	}.Check()
@@ -71,7 +70,7 @@ func disabledNamespacetestPrep(scenario string, t *testing.T) ([]*models.IstioCh
 		t.Error("Error loading test data.")
 	}
 
-	return validations, valid
+	return vals, valid
 }
 
 func testNoDisabledNsValidations(scenario string, t *testing.T) {
@@ -89,7 +88,7 @@ func testWithDisabledNsValidations(scenario string, t *testing.T) {
 	tb.AssertValidationAt(0, models.ErrorSeverity, "spec/mtls", "peerauthentications.mtls.disabledestinationrulemissing")
 }
 
-func yamlFixtureLoaderFor(file string) *data.YamlFixtureLoader {
+func yamlFixtureLoaderFor(file string) *validations.YamlFixtureLoader {
 	path := fmt.Sprintf("../../../tests/data/validations/peerauthentications/%s", file)
-	return &data.YamlFixtureLoader{Filename: path}
+	return &validations.YamlFixtureLoader{Filename: path}
 }

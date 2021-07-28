@@ -7,8 +7,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/data/validations"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 // Context: AutoMtls enabled
@@ -273,7 +272,7 @@ func testMtlsCheckerPresent(scenario string, t *testing.T, autoMtls bool) {
 	}, models.ErrorSeverity, "spec/rules[0]/source/principals", "authorizationpolicy.mtls.needstobeenabled")
 }
 
-func yamlFixtureLoaderFor(file string) *data.YamlFixtureLoader {
+func yamlFixtureLoaderFor(file string) *validations.YamlFixtureLoader {
 	path := fmt.Sprintf("../../../tests/data/validations/authorization/%s", file)
-	return &data.YamlFixtureLoader{Filename: path}
+	return &validations.YamlFixtureLoader{Filename: path}
 }

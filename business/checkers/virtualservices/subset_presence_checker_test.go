@@ -1,4 +1,4 @@
-package virtual_services
+package virtualservices
 
 import (
 	"fmt"
@@ -7,8 +7,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/data/validations"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestCheckerWithSubsetMatching(t *testing.T) {
@@ -67,7 +66,7 @@ func subsetPresenceCheckerPrep(scenario string, t *testing.T) ([]*models.IstioCh
 	loader := yamlFixtureLoaderFor(scenario)
 	err := loader.Load()
 
-	validations, valid := SubsetPresenceChecker{
+	vals, valid := SubsetPresenceChecker{
 		Namespace:        "bookinfo",
 		Namespaces:       namespaceNames(loader.GetResources("Namespace")),
 		DestinationRules: loader.GetResources("DestinationRule"),
@@ -78,7 +77,7 @@ func subsetPresenceCheckerPrep(scenario string, t *testing.T) ([]*models.IstioCh
 		t.Error("Error loading test data.")
 	}
 
-	return validations, valid
+	return vals, valid
 }
 
 func namespaceNames(nss []kubernetes.IstioObject) []string {
@@ -89,9 +88,9 @@ func namespaceNames(nss []kubernetes.IstioObject) []string {
 	return namespaces
 }
 
-func yamlFixtureLoaderFor(file string) *data.YamlFixtureLoader {
+func yamlFixtureLoaderFor(file string) *validations.YamlFixtureLoader {
 	path := fmt.Sprintf("../../../tests/data/validations/virtualservices/%s", file)
-	return &data.YamlFixtureLoader{Filename: path}
+	return &validations.YamlFixtureLoader{Filename: path}
 }
 
 func testNoSubsetPresenceValidationsFound(scenario string, t *testing.T) {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestPresentWorkloads(t *testing.T) {
@@ -58,16 +58,16 @@ func testFailureWithEmptyWorkloadList(assert *assert.Assertions, selector map[st
 }
 
 func testFailure(assert *assert.Assertions, selector map[string]interface{}, wl models.WorkloadList, code string) {
-	validations, valid := WorkloadSelectorNoWorkloadFoundChecker(
+	vals, valid := WorkloadSelectorNoWorkloadFoundChecker(
 		"sidecar",
 		workloadSelectorSidecar("sidecar", selector),
 		wl,
 	).Check()
 
 	assert.True(valid)
-	assert.NotEmpty(validations)
-	assert.Len(validations, 1)
-	assert.NoError(testutils.ConfirmIstioCheckMessage(code, validations[0]))
-	assert.Equal(validations[0].Severity, models.WarningSeverity)
-	assert.Equal(validations[0].Path, "spec/workloadSelector/labels")
+	assert.NotEmpty(vals)
+	assert.Len(vals, 1)
+	assert.NoError(validations.ConfirmIstioCheckMessage(code, vals[0]))
+	assert.Equal(vals[0].Severity, models.WarningSeverity)
+	assert.Equal(vals[0].Path, "spec/workloadSelector/labels")
 }

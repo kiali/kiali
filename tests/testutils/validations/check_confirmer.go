@@ -1,4 +1,4 @@
-package testutils
+package validations
 
 import (
 	"fmt"

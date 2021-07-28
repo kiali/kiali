@@ -8,7 +8,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 // Describe the validation of a MeshPolicy that enables mTLS. The validation is risen when there isn't any
@@ -129,30 +129,30 @@ func TestMeshPolicymTLSDisabledDestinationRuleMissing(t *testing.T) {
 func testValidationAdded(t *testing.T, meshPolicy kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
-	validations, valid := MeshMtlsChecker{
+	vals, valid := MeshMtlsChecker{
 		MeshPolicy:  meshPolicy,
 		MTLSDetails: mTLSDetails,
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.Equal(1, len(validations))
+	assert.NotEmpty(vals)
+	assert.Equal(1, len(vals))
 	assert.False(valid)
 
-	validation := validations[0]
+	validation := vals[0]
 	assert.NotNil(validation)
 	assert.Equal(models.ErrorSeverity, validation.Severity)
 	assert.Equal("spec/mtls", validation.Path)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("peerauthentication.mtls.destinationrulemissing", validation))
+	assert.NoError(validations.ConfirmIstioCheckMessage("peerauthentication.mtls.destinationrulemissing", validation))
 }
 
 func testValidationsNotAdded(t *testing.T, meshPolicy kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
-	validations, valid := MeshMtlsChecker{
+	vals, valid := MeshMtlsChecker{
 		MeshPolicy:  meshPolicy,
 		MTLSDetails: mTLSDetails,
 	}.Check()
 
-	assert.Empty(validations)
+	assert.Empty(vals)
 	assert.True(valid)
 }

@@ -1,4 +1,4 @@
-package virtual_services
+package virtualservices
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestMissingGateway(t *testing.T) {
@@ -24,11 +24,11 @@ func TestMissingGateway(t *testing.T) {
 		GatewayNames:   make(map[string]struct{}),
 	}
 
-	validations, valid := checker.Check()
+	vals, valid := checker.Check()
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.nogateway", validations[0]))
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", vals[0]))
 }
 
 func TestMissingGatewayInHTTPMatch(t *testing.T) {
@@ -47,7 +47,7 @@ func TestMissingGatewayInHTTPMatch(t *testing.T) {
 			config.Set(conf)
 
 			path := fmt.Sprintf("../../../tests/data/validations/virtualservices/%s", "non-existent-gateway-in-match.yaml")
-			loader := &data.YamlFixtureLoader{Filename: path}
+			loader := &validations.YamlFixtureLoader{Filename: path}
 			err := loader.Load()
 			if err != nil {
 				t.Error("Error loading test data.")
@@ -59,12 +59,12 @@ func TestMissingGatewayInHTTPMatch(t *testing.T) {
 				GatewayNames:   map[string]struct{}{"valid-gateway": {}},
 			}
 
-			validations, valid := checker.Check()
+			vals, valid := checker.Check()
 
 			assert.False(valid)
-			assert.NotEmpty(validations)
-			assert.Equal(models.ErrorSeverity, validations[0].Severity)
-			assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.nogateway", validations[0]))
+			assert.NotEmpty(vals)
+			assert.Equal(models.ErrorSeverity, vals[0].Severity)
+			assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", vals[0]))
 		})
 	}
 }
@@ -82,11 +82,11 @@ func TestValidAndMissingGateway(t *testing.T) {
 		GatewayNames:   map[string]struct{}{"correctgw": empty},
 	}
 
-	validations, valid := checker.Check()
+	vals, valid := checker.Check()
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.nogateway", validations[0]))
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", vals[0]))
 }
 
 func TestFoundGateway(t *testing.T) {
@@ -106,9 +106,9 @@ func TestFoundGateway(t *testing.T) {
 		GatewayNames:   gatewayNames,
 	}
 
-	validations, valid := checker.Check()
+	vals, valid := checker.Check()
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestFoundGatewayTwoPartNaming(t *testing.T) {
@@ -128,11 +128,11 @@ func TestFoundGatewayTwoPartNaming(t *testing.T) {
 		GatewayNames:   gatewayNames,
 	}
 
-	validations, valid := checker.Check()
+	vals, valid := checker.Check()
 	assert.True(valid)
-	assert.Len(validations, 1)
-	assert.Equal(models.Unknown, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.gateway.oldnomenclature", validations[0]))
+	assert.Len(vals, 1)
+	assert.Equal(models.Unknown, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.gateway.oldnomenclature", vals[0]))
 }
 
 func TestFQDNFoundGateway(t *testing.T) {
@@ -153,11 +153,11 @@ func TestFQDNFoundGateway(t *testing.T) {
 		GatewayNames:   gatewayNames,
 	}
 
-	validations, valid := checker.Check()
+	vals, valid := checker.Check()
 	assert.True(valid)
-	assert.Len(validations, 1)
-	assert.Equal(models.Unknown, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.gateway.oldnomenclature", validations[0]))
+	assert.Len(vals, 1)
+	assert.Equal(models.Unknown, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.gateway.oldnomenclature", vals[0]))
 }
 
 func TestFQDNFoundOtherNamespaceGateway(t *testing.T) {
@@ -179,11 +179,11 @@ func TestFQDNFoundOtherNamespaceGateway(t *testing.T) {
 		GatewayNames:   gatewayNames,
 	}
 
-	validations, valid := checker.Check()
+	vals, valid := checker.Check()
 	assert.True(valid)
-	assert.Len(validations, 1)
-	assert.Equal(models.Unknown, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.gateway.oldnomenclature", validations[0]))
+	assert.Len(vals, 1)
+	assert.Equal(models.Unknown, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.gateway.oldnomenclature", vals[0]))
 }
 
 func TestNewIstioGatewayNameFormat(t *testing.T) {
@@ -205,7 +205,7 @@ func TestNewIstioGatewayNameFormat(t *testing.T) {
 		GatewayNames:   gatewayNames,
 	}
 
-	validations, valid := checker.Check()
+	vals, valid := checker.Check()
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }

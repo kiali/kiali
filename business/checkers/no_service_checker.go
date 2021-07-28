@@ -4,7 +4,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business/checkers/destinationrules"
-	"github.com/kiali/kiali/business/checkers/virtual_services"
+	"github.com/kiali/kiali/business/checkers/virtualservices"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -46,7 +46,7 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace string, serviceNames []string, serviceHosts map[string][]string, clusterNamespaces models.Namespaces, registryStatus []*kubernetes.RegistryStatus) models.IstioValidations {
 	key, validations := EmptyValidValidation(virtualService.GetObjectMeta().Name, virtualService.GetObjectMeta().Namespace, VirtualCheckerType)
 
-	result, valid := virtual_services.NoHostChecker{
+	result, valid := virtualservices.NoHostChecker{
 		Namespace:         namespace,
 		Namespaces:        clusterNamespaces,
 		ServiceNames:      serviceNames,
@@ -64,7 +64,7 @@ func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace str
 func runGatewayCheck(virtualService kubernetes.IstioObject, gatewayNames map[string]struct{}) models.IstioValidations {
 	key, validations := EmptyValidValidation(virtualService.GetObjectMeta().Name, virtualService.GetObjectMeta().Namespace, VirtualCheckerType)
 
-	result, valid := virtual_services.NoGatewayChecker{
+	result, valid := virtualservices.NoGatewayChecker{
 		VirtualService: virtualService,
 		GatewayNames:   gatewayNames,
 	}.Check()

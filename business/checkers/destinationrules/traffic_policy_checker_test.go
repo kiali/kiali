@@ -8,7 +8,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 // Context: MeshPolicy Enabling mTLS
@@ -241,22 +241,22 @@ func TestCrossNamespaceServiceEntryProtection(t *testing.T) {
 func testValidationAdded(t *testing.T, destinationRules []kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) *models.IstioValidation {
 	assert := assert.New(t)
 
-	validations := TrafficPolicyChecker{
+	vals := TrafficPolicyChecker{
 		DestinationRules: destinationRules,
 		MTLSDetails:      mTLSDetails,
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.Equal(1, len(validations))
+	assert.NotEmpty(vals)
+	assert.Equal(1, len(vals))
 
-	validation, ok := validations[models.BuildKey(DestinationRulesCheckerType, "reviews", "bookinfo")]
+	validation, ok := vals[models.BuildKey(DestinationRulesCheckerType, "reviews", "bookinfo")]
 	assert.True(ok)
 	assert.True(validation.Valid)
 
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 	assert.Equal("spec/trafficPolicy", validation.Checks[0].Path)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.trafficpolicy.notlssettings", validation.Checks[0]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.trafficpolicy.notlssettings", validation.Checks[0]))
 
 	assert.True(len(validation.References) > 0)
 	return validation
@@ -265,13 +265,13 @@ func testValidationAdded(t *testing.T, destinationRules []kubernetes.IstioObject
 func testValidationsNotAdded(t *testing.T, destinationRules []kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
-	validations := TrafficPolicyChecker{
+	vals := TrafficPolicyChecker{
 		DestinationRules: destinationRules,
 		MTLSDetails:      mTLSDetails,
 	}.Check()
 
-	assert.Empty(validations)
-	validation, ok := validations[models.BuildKey(DestinationRulesCheckerType, "reviews", "bookinfo")]
+	assert.Empty(vals)
+	validation, ok := vals[models.BuildKey(DestinationRulesCheckerType, "reviews", "bookinfo")]
 
 	assert.False(ok)
 	assert.Nil(validation)

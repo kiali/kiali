@@ -8,7 +8,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestTwoSidecarsWithSelector(t *testing.T) {
@@ -68,21 +68,21 @@ func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
 	assertMultimatchFailure(t, "generic.multimatch.selector", validations, "sidecar4", []string{"sidecar1", "sidecar3"})
 }
 
-func assertMultimatchFailure(t *testing.T, code string, validations models.IstioValidations, item string, references []string) {
+func assertMultimatchFailure(t *testing.T, code string, vals models.IstioValidations, item string, references []string) {
 	assert := assert.New(t)
 
 	// Global assertion
-	assert.NotEmpty(validations)
+	assert.NotEmpty(vals)
 
 	// Assert specific's object validation
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "sidecar", Namespace: "bookinfo", Name: item}]
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "sidecar", Namespace: "bookinfo", Name: item}]
 	assert.True(ok)
 	assert.False(validation.Valid)
 
 	// Assert object's checks
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.ErrorSeverity, validation.Checks[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage(code, validation.Checks[0]))
+	assert.NoError(validations.ConfirmIstioCheckMessage(code, validation.Checks[0]))
 
 	// Assert referenced objects
 	assert.Len(validation.References, len(references))

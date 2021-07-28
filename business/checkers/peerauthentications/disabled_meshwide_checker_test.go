@@ -5,10 +5,10 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/tests/data/validations"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
-// This validations works only with AutoMTls disabled
+// This vals works only with AutoMTls disabled
 
 // Context: MeshPeerAuthn disabled
 // Context: DestinationRule tls mode disabled
@@ -41,12 +41,12 @@ func disabledMeshTestPrep(scenario string, t *testing.T) ([]*models.IstioCheck, 
 		t.Error("Error loading test data.")
 	}
 
-	validations, valid := DisabledMeshWideChecker{
+	vals, valid := DisabledMeshWideChecker{
 		PeerAuthn:        loader.GetFirstResource("PeerAuthentication"),
 		DestinationRules: loader.GetResources("DestinationRule"),
 	}.Check()
 
-	return validations, valid
+	return vals, valid
 }
 
 func testNoDisabledMeshValidations(scenario string, t *testing.T) {

@@ -1,4 +1,4 @@
-package virtual_services
+package virtualservices
 
 import (
 	"reflect"

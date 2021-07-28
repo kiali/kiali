@@ -1,4 +1,4 @@
-package virtual_services
+package virtualservices
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 // VirtualService has two routes that all the weights sum 100
@@ -16,41 +16,41 @@ func TestServiceWellVirtualServiceValidation(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	validations, valid := RouteChecker{fakeValidVirtualService()}.Check()
+	vals, valid := RouteChecker{fakeValidVirtualService()}.Check()
 
 	// Well configured object
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 // VirtualService with one route and a weight between 0 and 100
 func TestServiceMultipleChecks(t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := RouteChecker{fakeOneRouteUnder100()}.Check()
+	vals, valid := RouteChecker{fakeOneRouteUnder100()}.Check()
 
 	// wrong weight'ed route rule
 	assert.True(valid)
-	assert.NotEmpty(validations)
-	assert.Len(validations, 1)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.route.singleweight", validations[0]))
-	assert.Equal(validations[0].Severity, models.WarningSeverity)
-	assert.Equal(validations[0].Path, "spec/http[0]/route[0]/weight")
+	assert.NotEmpty(vals)
+	assert.Len(vals, 1)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.route.singleweight", vals[0]))
+	assert.Equal(vals[0].Severity, models.WarningSeverity)
+	assert.Equal(vals[0].Path, "spec/http[0]/route[0]/weight")
 }
 
 func TestVSWithRepeatingSubsets(t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := RouteChecker{fakeRepeatedSubset()}.Check()
+	vals, valid := RouteChecker{fakeRepeatedSubset()}.Check()
 	assert.True(valid)
-	assert.NotEmpty(validations)
-	assert.Len(validations, 4)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.route.repeatedsubset", validations[0]))
-	assert.Equal(validations[0].Severity, models.WarningSeverity)
-	assert.Regexp(`spec\/http\[0\]\/route\[[0,2]\]\/subset`, validations[0].Path)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.route.repeatedsubset", validations[3]))
-	assert.Equal(validations[3].Severity, models.WarningSeverity)
-	assert.Regexp(`spec\/http\[0\]\/route\[[1,3]\]\/subset`, validations[3].Path)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 4)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.route.repeatedsubset", vals[0]))
+	assert.Equal(vals[0].Severity, models.WarningSeverity)
+	assert.Regexp(`spec\/http\[0\]\/route\[[0,2]\]\/subset`, vals[0].Path)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.route.repeatedsubset", vals[3]))
+	assert.Equal(vals[3].Severity, models.WarningSeverity)
+	assert.Regexp(`spec\/http\[0\]\/route\[[1,3]\]\/subset`, vals[3].Path)
 }
 
 func fakeValidVirtualService() kubernetes.IstioObject {

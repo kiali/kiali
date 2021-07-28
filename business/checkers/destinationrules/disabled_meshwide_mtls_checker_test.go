@@ -6,8 +6,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/data/validations"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 // Context: DestinationRule at mesh-level disabling mTLS
@@ -71,7 +70,7 @@ func testWithDestRuleDisabledValidations(scenario string, t *testing.T) {
 	tb.AssertValidationAt(0, models.ErrorSeverity, "spec/trafficPolicy/tls/mode", "destinationrules.mtls.meshpolicymtlsenabled")
 }
 
-func yamlFixtureLoaderFor(file string) *data.YamlFixtureLoader {
+func yamlFixtureLoaderFor(file string) *validations.YamlFixtureLoader {
 	path := fmt.Sprintf("../../../tests/data/validations/destinationrules/%s", file)
-	return &data.YamlFixtureLoader{Filename: path}
+	return &validations.YamlFixtureLoader{Filename: path}
 }
