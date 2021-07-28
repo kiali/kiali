@@ -1,4 +1,4 @@
-package virtual_services
+package virtualservices
 
 import (
 	"testing"
@@ -9,20 +9,20 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestValidHost(t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := NoHostChecker{
+	vals, valid := NoHostChecker{
 		Namespace:      "test-namespace",
 		ServiceNames:   []string{"reviews", "other"},
 		VirtualService: data.CreateVirtualService(),
 	}.Check()
 
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestNoValidHost(t *testing.T) {
@@ -33,48 +33,48 @@ func TestNoValidHost(t *testing.T) {
 
 	virtualService := data.CreateVirtualService()
 
-	validations, valid := NoHostChecker{
+	vals, valid := NoHostChecker{
 		Namespace:      "test-namespace",
 		ServiceNames:   []string{"details", "other"},
 		VirtualService: virtualService,
 	}.Check()
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", validations[0]))
-	assert.Equal("spec/http[0]/route[0]/destination/host", validations[0].Path)
-	assert.Equal(models.ErrorSeverity, validations[1].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", validations[1]))
-	assert.Equal("spec/tcp[0]/route[0]/destination/host", validations[1].Path)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", vals[0]))
+	assert.Equal("spec/http[0]/route[0]/destination/host", vals[0].Path)
+	assert.Equal(models.ErrorSeverity, vals[1].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", vals[1]))
+	assert.Equal("spec/tcp[0]/route[0]/destination/host", vals[1].Path)
 
 	delete(virtualService.GetSpec(), "http")
 
-	validations, valid = NoHostChecker{
+	vals, valid = NoHostChecker{
 		Namespace:      "test-namespace",
 		ServiceNames:   []string{"details", "other"},
 		VirtualService: virtualService,
 	}.Check()
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", validations[0]))
-	assert.Equal("spec/tcp[0]/route[0]/destination/host", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", vals[0]))
+	assert.Equal("spec/tcp[0]/route[0]/destination/host", vals[0].Path)
 
 	delete(virtualService.GetSpec(), "tcp")
 
-	validations, valid = NoHostChecker{
+	vals, valid = NoHostChecker{
 		Namespace:      "test-namespace",
 		ServiceNames:   []string{"details", "other"},
 		VirtualService: virtualService,
 	}.Check()
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.nohost.invalidprotocol", validations[0]))
-	assert.Equal("", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.invalidprotocol", vals[0]))
+	assert.Equal("", vals[0].Path)
 }
 
 func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
@@ -87,7 +87,7 @@ func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
 		data.CreateEmptyVirtualService("reviews", "test", []string{"reviews"}),
 	)
 
-	validations, valid := NoHostChecker{
+	vals, valid := NoHostChecker{
 		Namespace: "test-namespace",
 		Namespaces: models.Namespaces{
 			models.Namespace{Name: "test"},
@@ -98,10 +98,10 @@ func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
 	}.Check()
 
 	assert.True(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.Unknown, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("validation.unable.cross-namespace", validations[0]))
-	assert.Equal("spec/tcp[0]/route[0]/destination/host", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.Equal(models.Unknown, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("validation.unable.cross-namespace", vals[0]))
+	assert.Equal("spec/tcp[0]/route[0]/destination/host", vals[0].Path)
 }
 
 func TestValidServiceEntryHost(t *testing.T) {
@@ -112,19 +112,19 @@ func TestValidServiceEntryHost(t *testing.T) {
 
 	virtualService := data.CreateVirtualServiceWithServiceEntryTarget()
 
-	validations, valid := NoHostChecker{
+	vals, valid := NoHostChecker{
 		Namespace:      "wikipedia",
 		ServiceNames:   []string{"my-wiki-rule"},
 		VirtualService: virtualService,
 	}.Check()
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
+	assert.NotEmpty(vals)
 
 	// Add ServiceEntry for validity
 	serviceEntry := data.CreateExternalServiceEntry()
 
-	validations, valid = NoHostChecker{
+	vals, valid = NoHostChecker{
 		Namespace:         "wikipedia",
 		ServiceNames:      []string{"my-wiki-rule"},
 		VirtualService:    virtualService,
@@ -132,7 +132,7 @@ func TestValidServiceEntryHost(t *testing.T) {
 	}.Check()
 
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestValidWildcardServiceEntryHost(t *testing.T) {
@@ -144,19 +144,19 @@ func TestValidWildcardServiceEntryHost(t *testing.T) {
 	virtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("www.google.com", "v1", -1),
 		data.CreateEmptyVirtualService("googleIt", "google", []string{"www.google.com"}))
 
-	validations, valid := NoHostChecker{
+	vals, valid := NoHostChecker{
 		Namespace:      "google",
 		ServiceNames:   []string{"duckduckgo"},
 		VirtualService: virtualService,
 	}.Check()
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
+	assert.NotEmpty(vals)
 
 	// Add ServiceEntry for validity
 	serviceEntry := data.CreateEmptyMeshExternalServiceEntry("googlecard", "google", []string{"*.google.com"})
 
-	validations, valid = NoHostChecker{
+	vals, valid = NoHostChecker{
 		Namespace:         "google",
 		ServiceNames:      []string{"duckduckgo"},
 		VirtualService:    virtualService,
@@ -164,7 +164,7 @@ func TestValidWildcardServiceEntryHost(t *testing.T) {
 	}.Check()
 
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestValidServiceRegistry(t *testing.T) {
@@ -178,18 +178,18 @@ func TestValidServiceRegistry(t *testing.T) {
 		data.CreateRoute("ratings.mesh2-bookinfo.svc.mesh1-imports.local", "v1", -1),
 		data.CreateEmptyVirtualService("federation-vs", "bookinfo", []string{"*"}))
 
-	validations, valid := NoHostChecker{
+	vals, valid := NoHostChecker{
 		Namespace:      "bookinfo",
 		ServiceNames:   []string{""},
 		VirtualService: virtualService,
 	}.Check()
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
+	assert.NotEmpty(vals)
 
 	registryService := kubernetes.RegistryStatus{}
 	registryService.Hostname = "ratings.mesh2-bookinfo.svc.mesh1-imports.local"
-	validations, valid = NoHostChecker{
+	vals, valid = NoHostChecker{
 		Namespace:      "bookinfo",
 		ServiceNames:   []string{""},
 		VirtualService: virtualService,
@@ -197,11 +197,11 @@ func TestValidServiceRegistry(t *testing.T) {
 	}.Check()
 
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 
 	registryService = kubernetes.RegistryStatus{}
 	registryService.Hostname = "ratings2.mesh2-bookinfo.svc.mesh1-imports.local"
-	validations, valid = NoHostChecker{
+	vals, valid = NoHostChecker{
 		Namespace:      "bookinfo",
 		ServiceNames:   []string{""},
 		VirtualService: virtualService,
@@ -209,5 +209,5 @@ func TestValidServiceRegistry(t *testing.T) {
 	}.Check()
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
+	assert.NotEmpty(vals)
 }

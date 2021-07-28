@@ -8,7 +8,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestValidPortDefinition(t *testing.T) {
@@ -23,9 +23,9 @@ func TestValidPortDefinition(t *testing.T) {
 	)
 
 	pc := PortChecker{ServiceEntry: se}
-	validations, valid := pc.Check()
+	vals, valid := pc.Check()
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestInvalidPortDefinition(t *testing.T) {
@@ -40,10 +40,10 @@ func TestInvalidPortDefinition(t *testing.T) {
 	)
 
 	pc := PortChecker{ServiceEntry: se}
-	validations, valid := pc.Check()
+	vals, valid := pc.Check()
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("port.name.mismatch", validations[0]))
-	assert.Equal("spec/ports[0]/name", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("port.name.mismatch", vals[0]))
+	assert.Equal("spec/ports[0]/name", vals[0].Path)
 }

@@ -1,4 +1,4 @@
-package data
+package validations
 
 import (
 	"bytes"

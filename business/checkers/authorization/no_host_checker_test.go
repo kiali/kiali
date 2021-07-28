@@ -10,7 +10,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestPresentService(t *testing.T) {
@@ -32,7 +32,7 @@ func TestPresentService(t *testing.T) {
 func TestNonExistingService(t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := NoHostChecker{
+	vals, valid := NoHostChecker{
 		AuthorizationPolicy: authPolicyWithHost([]interface{}{"details", "wrong"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
@@ -42,17 +42,17 @@ func TestNonExistingService(t *testing.T) {
 
 	// Wrong host is not present
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Len(validations, 1)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", validations[0]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[1]", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 1)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/rules[0]/to[0]/operation/hosts[1]", vals[0].Path)
 }
 
 func TestWildcardHost(t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := NoHostChecker{
+	vals, valid := NoHostChecker{
 		AuthorizationPolicy: authPolicyWithHost([]interface{}{"*", "*.bookinfo", "*.bookinfo.svc.cluster.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
@@ -62,13 +62,13 @@ func TestWildcardHost(t *testing.T) {
 
 	// Well configured object
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestWildcardHostOutsideNamespace(t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := NoHostChecker{
+	vals, valid := NoHostChecker{
 		AuthorizationPolicy: authPolicyWithHost([]interface{}{"*.outside", "*.outside.svc.cluster.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
@@ -77,14 +77,14 @@ func TestWildcardHostOutsideNamespace(t *testing.T) {
 	}.Check()
 
 	assert.True(valid)
-	assert.NotEmpty(validations)
-	assert.Len(validations, 2)
-	assert.Equal(models.Unknown, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("validation.unable.cross-namespace", validations[0]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", validations[0].Path)
-	assert.Equal(models.Unknown, validations[1].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("validation.unable.cross-namespace", validations[1]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[1]", validations[1].Path)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 2)
+	assert.Equal(models.Unknown, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("validation.unable.cross-namespace", vals[0]))
+	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
+	assert.Equal(models.Unknown, vals[1].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("validation.unable.cross-namespace", vals[1]))
+	assert.Equal("spec/rules[0]/to[0]/operation/hosts[1]", vals[1].Path)
 }
 
 func TestServiceEntryPresent(t *testing.T) {
@@ -109,7 +109,7 @@ func TestServiceEntryNotPresent(t *testing.T) {
 	assert := assert.New(t)
 
 	serviceEntry := data.CreateExternalServiceEntry()
-	validations, valid := NoHostChecker{
+	vals, valid := NoHostChecker{
 		AuthorizationPolicy: authPolicyWithHost([]interface{}{"wrong.org"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
@@ -119,11 +119,11 @@ func TestServiceEntryNotPresent(t *testing.T) {
 
 	// Wrong.org host is not present
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Len(validations, 1)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", validations[0]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 1)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
 }
 
 func TestVirtualServicePresent(t *testing.T) {
@@ -147,7 +147,7 @@ func TestVirtualServiceNotPresent(t *testing.T) {
 	assert := assert.New(t)
 
 	virtualService := data.CreateEmptyVirtualService("foo-dev", "foo", []string{"foo-dev.example.com"})
-	validations, valid := NoHostChecker{
+	vals, valid := NoHostChecker{
 		AuthorizationPolicy: authPolicyWithHost([]interface{}{"foo-bogus.example.com"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
@@ -158,11 +158,11 @@ func TestVirtualServiceNotPresent(t *testing.T) {
 
 	// Wrong.org host is not present
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Len(validations, 1)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", validations[0]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 1)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
 }
 
 func TestWildcardServiceEntryHost(t *testing.T) {
@@ -170,7 +170,7 @@ func TestWildcardServiceEntryHost(t *testing.T) {
 
 	serviceEntry := data.CreateEmptyMeshExternalServiceEntry("googlecard", "google", []string{"*.google.com"})
 
-	validations, valid := NoHostChecker{
+	vals, valid := NoHostChecker{
 		AuthorizationPolicy: authPolicyWithHost([]interface{}{"maps.google.com"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
@@ -180,10 +180,10 @@ func TestWildcardServiceEntryHost(t *testing.T) {
 
 	// Well configured object
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 
 	// Not matching
-	validations, valid = NoHostChecker{
+	vals, valid = NoHostChecker{
 		AuthorizationPolicy: authPolicyWithHost([]interface{}{"maps.apple.com"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
@@ -193,11 +193,11 @@ func TestWildcardServiceEntryHost(t *testing.T) {
 
 	// apple.com host is not present
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Len(validations, 1)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", validations[0]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 1)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
 }
 
 func authPolicyWithHost(hostList []interface{}) kubernetes.IstioObject {

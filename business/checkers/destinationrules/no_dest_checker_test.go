@@ -11,7 +11,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func appVersionLabel(app, version string) map[string]string {
@@ -24,7 +24,7 @@ func appVersionLabel(app, version string) map[string]string {
 func TestValidHost(t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := NoDestinationChecker{
+	vals, valid := NoDestinationChecker{
 		Namespace: "test-namespace",
 		WorkloadList: data.CreateWorkloadList("test-namespace",
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -35,13 +35,13 @@ func TestValidHost(t *testing.T) {
 	}.Check()
 
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestValidWildcardHost(t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := NoDestinationChecker{
+	vals, valid := NoDestinationChecker{
 		Namespace: "test-namespace",
 		WorkloadList: data.CreateWorkloadList("test-namespace",
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -53,7 +53,7 @@ func TestValidWildcardHost(t *testing.T) {
 	}.Check()
 
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestValidMeshWideHost(t *testing.T) {
@@ -62,7 +62,7 @@ func TestValidMeshWideHost(t *testing.T) {
 
 	assert := assert.New(t)
 
-	validations, valid := NoDestinationChecker{
+	vals, valid := NoDestinationChecker{
 		Namespace: "test-namespace",
 		WorkloadList: data.CreateWorkloadList("test-namespace",
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -73,7 +73,7 @@ func TestValidMeshWideHost(t *testing.T) {
 	}.Check()
 
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestValidServiceNamespace(t *testing.T) {
@@ -82,7 +82,7 @@ func TestValidServiceNamespace(t *testing.T) {
 
 	assert := assert.New(t)
 
-	validations, valid := NoDestinationChecker{
+	vals, valid := NoDestinationChecker{
 		Namespace: "test-namespace",
 		WorkloadList: data.CreateWorkloadList("test-namespace",
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -93,7 +93,7 @@ func TestValidServiceNamespace(t *testing.T) {
 	}.Check()
 
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestValidServiceNamespaceInvalid(t *testing.T) {
@@ -102,7 +102,7 @@ func TestValidServiceNamespaceInvalid(t *testing.T) {
 
 	assert := assert.New(t)
 
-	validations, valid := NoDestinationChecker{
+	vals, valid := NoDestinationChecker{
 		Namespace: "test-namespace",
 		Namespaces: models.Namespaces{
 			models.Namespace{Name: "test-namespace"},
@@ -117,10 +117,10 @@ func TestValidServiceNamespaceInvalid(t *testing.T) {
 	}.Check()
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", validations[0]))
-	assert.Equal("spec/host", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/host", vals[0].Path)
 }
 
 func TestValidServiceNamespaceCrossNamespace(t *testing.T) {
@@ -133,7 +133,7 @@ func TestValidServiceNamespaceCrossNamespace(t *testing.T) {
 	registryService := kubernetes.RegistryStatus{}
 	registryService.Hostname = "reviews.outside-ns.svc.cluster.local"
 
-	validations, valid := NoDestinationChecker{
+	vals, valid := NoDestinationChecker{
 		Namespace: "test-namespace",
 		Namespaces: models.Namespaces{
 			models.Namespace{Name: "test-namespace"},
@@ -149,7 +149,7 @@ func TestValidServiceNamespaceCrossNamespace(t *testing.T) {
 	}.Check()
 
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestNoValidHost(t *testing.T) {
@@ -159,7 +159,7 @@ func TestNoValidHost(t *testing.T) {
 	assert := assert.New(t)
 
 	// reviews is not part of services
-	validations, valid := NoDestinationChecker{
+	vals, valid := NoDestinationChecker{
 		Namespace: "test-namespace",
 		WorkloadList: data.CreateWorkloadList("test-namespace",
 			data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
@@ -170,10 +170,10 @@ func TestNoValidHost(t *testing.T) {
 	}.Check()
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", validations[0]))
-	assert.Equal("spec/host", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/host", vals[0].Path)
 }
 
 func TestNoMatchingSubset(t *testing.T) {
@@ -183,7 +183,7 @@ func TestNoMatchingSubset(t *testing.T) {
 	assert := assert.New(t)
 
 	// reviews does not have v2 in known services
-	validations, valid := NoDestinationChecker{
+	vals, valid := NoDestinationChecker{
 		Namespace: "test-namespace",
 		WorkloadList: data.CreateWorkloadList("test-namespace",
 			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v1")),
@@ -193,10 +193,10 @@ func TestNoMatchingSubset(t *testing.T) {
 	}.Check()
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", validations[0]))
-	assert.Equal("spec/subsets[0]", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", vals[0]))
+	assert.Equal("spec/subsets[0]", vals[0].Path)
 }
 
 func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
@@ -217,7 +217,7 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 				"seek":    "notfound",
 			}}, data.CreateEmptyDestinationRule("test-namespace", "name", "reviews")))
 
-	validations, valid := NoDestinationChecker{
+	vals, valid := NoDestinationChecker{
 		Namespace: "test-namespace",
 		WorkloadList: data.CreateWorkloadList("test-namespace",
 			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v1")),
@@ -228,10 +228,10 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 	}.Check()
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", validations[0]))
-	assert.Equal("spec/subsets[0]", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", vals[0]))
+	assert.Equal("spec/subsets[0]", vals[0].Path)
 }
 
 func fakeServicesReview() []core_v1.Service {
@@ -259,7 +259,7 @@ func TestFailCrossNamespaceHost(t *testing.T) {
 	registryService := kubernetes.RegistryStatus{}
 	registryService.Hostname = "reviews.different-ns.svc.cluster.local"
 
-	validations, valid := NoDestinationChecker{
+	vals, valid := NoDestinationChecker{
 		Namespace: "test-namespace",
 		WorkloadList: data.CreateWorkloadList("test-namespace",
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -272,7 +272,7 @@ func TestFailCrossNamespaceHost(t *testing.T) {
 	}.Check()
 
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestSNIProxyExample(t *testing.T) {
@@ -286,14 +286,14 @@ func TestSNIProxyExample(t *testing.T) {
 	se := data.AddPortDefinitionToServiceEntry(data.CreateEmptyPortDefinition(8443, "tcp", "TCP"),
 		data.CreateEmptyMeshExternalServiceEntry("sni-proxy", "test", []string{"sni-proxy.local"}))
 
-	validations, valid := NoDestinationChecker{
+	vals, valid := NoDestinationChecker{
 		Namespace:       "test",
 		ServiceEntries:  kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{se}),
 		DestinationRule: dr,
 	}.Check()
 
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestWildcardServiceEntry(t *testing.T) {
@@ -306,20 +306,20 @@ func TestWildcardServiceEntry(t *testing.T) {
 	se := data.AddPortDefinitionToServiceEntry(data.CreateEmptyPortDefinition(8443, "tcp", "TCP"),
 		data.CreateEmptyMeshExternalServiceEntry("sni-proxy", "test", []string{"*.local"}))
 
-	validations, valid := NoDestinationChecker{
+	vals, valid := NoDestinationChecker{
 		Namespace:       "test",
 		ServiceEntries:  kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{se}),
 		DestinationRule: dr,
 	}.Check()
 
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestNoLabelsInSubset(t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := NoDestinationChecker{
+	vals, valid := NoDestinationChecker{
 		Namespace: "test-namespace",
 		WorkloadList: data.CreateWorkloadList("test-namespace",
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -330,10 +330,10 @@ func TestNoLabelsInSubset(t *testing.T) {
 	}.Check()
 
 	assert.True(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.WarningSeverity, validations[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.nodest.subsetnolabels", validations[0]))
-	assert.Equal("spec/subsets[0]", validations[0].Path)
+	assert.NotEmpty(vals)
+	assert.Equal(models.WarningSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetnolabels", vals[0]))
+	assert.Equal("spec/subsets[0]", vals[0].Path)
 
 }
 
@@ -345,61 +345,61 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	dr := data.CreateEmptyDestinationRule("test", "test-exported", "ratings.mesh2-bookinfo.svc.mesh1-imports.local")
 
-	validations, valid := NoDestinationChecker{
+	vals, valid := NoDestinationChecker{
 		Namespace:       "test",
 		DestinationRule: dr,
 	}.Check()
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
+	assert.NotEmpty(vals)
 
 	registryService := kubernetes.RegistryStatus{}
 	registryService.Hostname = "ratings.mesh2-bookinfo.svc.mesh1-imports.local"
 
-	validations, valid = NoDestinationChecker{
+	vals, valid = NoDestinationChecker{
 		Namespace:       "test",
 		DestinationRule: dr,
 		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
 	}.Check()
 
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 
 	registryService = kubernetes.RegistryStatus{}
 	registryService.Hostname = "ratings2.mesh2-bookinfo.svc.mesh1-imports.local"
 
-	validations, valid = NoDestinationChecker{
+	vals, valid = NoDestinationChecker{
 		Namespace:       "test",
 		DestinationRule: dr,
 		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
 	}.Check()
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
+	assert.NotEmpty(vals)
 
 	registryService = kubernetes.RegistryStatus{}
 	registryService.Hostname = "ratings.bookinfo.svc.cluster.local"
 
 	dr = data.CreateEmptyDestinationRule("test", "test-exported", "ratings.bookinfo.svc.cluster.local")
 
-	validations, valid = NoDestinationChecker{
+	vals, valid = NoDestinationChecker{
 		Namespace:       "test",
 		DestinationRule: dr,
 		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
 	}.Check()
 
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Empty(vals)
 
 	registryService = kubernetes.RegistryStatus{}
 	registryService.Hostname = "ratings2.bookinfo.svc.cluster.local"
 
-	validations, valid = NoDestinationChecker{
+	vals, valid = NoDestinationChecker{
 		Namespace:       "test",
 		DestinationRule: dr,
 		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
 	}.Check()
 
 	assert.False(valid)
-	assert.NotEmpty(validations)
+	assert.NotEmpty(vals)
 }

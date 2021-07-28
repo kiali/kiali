@@ -1,4 +1,4 @@
-package data
+package validations
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 func TestGetResources(t *testing.T) {
 	assert := assert.New(t)
 
-	loader := YamlFixtureLoader{Filename: "./loader/basic.yaml"}
+	loader := YamlFixtureLoader{Filename: "../../data/loader/basic.yaml"}
 	err := loader.Load()
 
 	assert.NoError(err)

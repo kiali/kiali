@@ -1,4 +1,4 @@
-package virtual_services
+package virtualservices
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestOneVirtualServicePerHost(t *testing.T) {
@@ -16,38 +16,38 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 		buildVirtualService("virtual-1", "reviews"),
 		buildVirtualService("virtual-2", "ratings"),
 	}
-	validations := SingleHostChecker{
+	vals := SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	emptyValidationTest(t, validations)
+	emptyValidationTest(t, vals)
 
 	// First virtual service has a gateway
 	vss = []kubernetes.IstioObject{
 		buildVirtualServiceWithGateway("virtual-1", "reviews", "bookinfo-gateway"),
 		buildVirtualService("virtual-2", "ratings"),
 	}
-	validations = SingleHostChecker{
+	vals = SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	emptyValidationTest(t, validations)
-	emptyValidationTest(t, validations)
+	emptyValidationTest(t, vals)
+	emptyValidationTest(t, vals)
 
 	// Second virtual service has a gateway
 	vss = []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "reviews"),
 		buildVirtualServiceWithGateway("virtual-2", "ratings", "bookinfo-gateway"),
 	}
-	validations = SingleHostChecker{
+	vals = SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	emptyValidationTest(t, validations)
-	emptyValidationTest(t, validations)
+	emptyValidationTest(t, vals)
+	emptyValidationTest(t, vals)
 
 	// Both virtual services have a gateway
 	vss = []kubernetes.IstioObject{
@@ -55,13 +55,13 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 		buildVirtualServiceWithGateway("virtual-2", "ratings", "bookinfo-gateway"),
 	}
 
-	validations = SingleHostChecker{
+	vals = SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	emptyValidationTest(t, validations)
-	emptyValidationTest(t, validations)
+	emptyValidationTest(t, vals)
+	emptyValidationTest(t, vals)
 }
 
 func TestOneVirtualServicePerFQDNHost(t *testing.T) {
@@ -69,12 +69,12 @@ func TestOneVirtualServicePerFQDNHost(t *testing.T) {
 		buildVirtualService("virtual-1", "reviews.bookinfo.svc.cluster.local"),
 		buildVirtualService("virtual-2", "ratings.bookinfo.svc.cluster.local"),
 	}
-	validations := SingleHostChecker{
+	vals := SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	emptyValidationTest(t, validations)
+	emptyValidationTest(t, vals)
 }
 
 func TestOneVirtualServicePerFQDNWildcardHost(t *testing.T) {
@@ -82,12 +82,12 @@ func TestOneVirtualServicePerFQDNWildcardHost(t *testing.T) {
 		buildVirtualService("virtual-1", "*.bookinfo.svc.cluster.local"),
 		buildVirtualService("virtual-2", "*.eshop.svc.cluster.local"),
 	}
-	validations := SingleHostChecker{
+	vals := SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	emptyValidationTest(t, validations)
+	emptyValidationTest(t, vals)
 }
 
 func TestRepeatingSimpleHost(t *testing.T) {
@@ -97,16 +97,16 @@ func TestRepeatingSimpleHost(t *testing.T) {
 		buildVirtualService("virtual-3", "reviews"),
 	}
 
-	validations := SingleHostChecker{
+	vals := SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	presentValidationTest(t, validations, "virtual-1")
-	presentValidationTest(t, validations, "virtual-2")
-	presentValidationTest(t, validations, "virtual-3")
+	presentValidationTest(t, vals, "virtual-1")
+	presentValidationTest(t, vals, "virtual-2")
+	presentValidationTest(t, vals, "virtual-3")
 
-	for _, validation := range validations {
+	for _, validation := range vals {
 		switch validation.Name {
 		case "virtual-1":
 			presentReferences(t, *validation, []string{"virtual-2", "virtual-3"})
@@ -124,44 +124,44 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 		buildVirtualService("virtual-2", "reviews"),
 	}
 
-	validations := SingleHostChecker{
+	vals := SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	noObjectValidationTest(t, validations, "virtual-1")
-	noObjectValidationTest(t, validations, "virtual-2")
+	noObjectValidationTest(t, vals, "virtual-1")
+	noObjectValidationTest(t, vals, "virtual-2")
 
 	vss = []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "reviews"),
 		buildVirtualServiceWithGateway("virtual-2", "reviews", "bookinfo"),
 	}
 
-	validations = SingleHostChecker{
+	vals = SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	noObjectValidationTest(t, validations, "virtual-1")
-	noObjectValidationTest(t, validations, "virtual-2")
+	noObjectValidationTest(t, vals, "virtual-1")
+	noObjectValidationTest(t, vals, "virtual-2")
 
 	vss = []kubernetes.IstioObject{
 		buildVirtualServiceWithGateway("virtual-1", "reviews", "bookinfo"),
 		buildVirtualServiceWithGateway("virtual-2", "reviews", "bookinfo"),
 	}
 
-	validations = SingleHostChecker{
+	vals = SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
 	refKey := models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: "virtual-2"}
-	presentValidationTest(t, validations, "virtual-1")
-	presentReference(t, *(validations[refKey]), "virtual-1")
+	presentValidationTest(t, vals, "virtual-1")
+	presentReference(t, *(vals[refKey]), "virtual-1")
 
 	refKey.Name = "virtual-2"
-	presentValidationTest(t, validations, "virtual-2")
-	presentReference(t, *(validations[refKey]), "virtual-1")
+	presentValidationTest(t, vals, "virtual-2")
+	presentReference(t, *(vals[refKey]), "virtual-1")
 }
 
 func TestRepeatingSVCNSHost(t *testing.T) {
@@ -169,7 +169,7 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		buildVirtualService("virtual-1", "reviews.bookinfo"),
 		buildVirtualService("virtual-2", "reviews.bookinfo"),
 	}
-	validations := SingleHostChecker{
+	vals := SingleHostChecker{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
@@ -177,14 +177,14 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
-	presentValidationTest(t, validations, "virtual-1")
-	presentValidationTest(t, validations, "virtual-2")
+	presentValidationTest(t, vals, "virtual-1")
+	presentValidationTest(t, vals, "virtual-2")
 
 	vss = []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "reviews"),
 		buildVirtualService("virtual-2", "reviews.bookinfo"),
 	}
-	validations = SingleHostChecker{
+	vals = SingleHostChecker{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
@@ -192,15 +192,15 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
-	presentValidationTest(t, validations, "virtual-1")
-	presentValidationTest(t, validations, "virtual-2")
+	presentValidationTest(t, vals, "virtual-1")
+	presentValidationTest(t, vals, "virtual-2")
 
 	vss = []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "reviews.bookinfo.svc.cluster.local"),
 		buildVirtualService("virtual-2", "reviews.bookinfo"),
 		buildVirtualServiceWithGateway("virtual-3", "reviews", "bookinfo-gateway-auto"),
 	}
-	validations = SingleHostChecker{
+	vals = SingleHostChecker{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
@@ -208,14 +208,14 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
-	presentValidationTest(t, validations, "virtual-1")
-	presentValidationTest(t, validations, "virtual-2")
+	presentValidationTest(t, vals, "virtual-1")
+	presentValidationTest(t, vals, "virtual-2")
 
 	vss = []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "*.bookinfo.svc.cluster.local"),
 		buildVirtualService("virtual-2", "reviews.bookinfo"),
 	}
-	validations = SingleHostChecker{
+	vals = SingleHostChecker{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
@@ -223,14 +223,14 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
-	presentValidationTest(t, validations, "virtual-1")
-	presentValidationTest(t, validations, "virtual-2")
+	presentValidationTest(t, vals, "virtual-1")
+	presentValidationTest(t, vals, "virtual-2")
 
 	vss = []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "reviews"),
 		buildVirtualService("virtual-2", "details.bookinfo"),
 	}
-	validations = SingleHostChecker{
+	vals = SingleHostChecker{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
@@ -238,15 +238,15 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
-	noObjectValidationTest(t, validations, "virtual-1")
-	noObjectValidationTest(t, validations, "virtual-2")
-	emptyValidationTest(t, validations)
+	noObjectValidationTest(t, vals, "virtual-1")
+	noObjectValidationTest(t, vals, "virtual-2")
+	emptyValidationTest(t, vals)
 
 	vss = []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "reviews.bookinfo.svc.cluster.local"),
 		buildVirtualService("virtual-2", "details.bookinfo"),
 	}
-	validations = SingleHostChecker{
+	vals = SingleHostChecker{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
@@ -254,9 +254,9 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
-	noObjectValidationTest(t, validations, "virtual-1")
-	noObjectValidationTest(t, validations, "virtual-2")
-	emptyValidationTest(t, validations)
+	noObjectValidationTest(t, vals, "virtual-1")
+	noObjectValidationTest(t, vals, "virtual-2")
+	emptyValidationTest(t, vals)
 }
 
 func TestRepeatingFQDNHost(t *testing.T) {
@@ -265,16 +265,16 @@ func TestRepeatingFQDNHost(t *testing.T) {
 		buildVirtualService("virtual-2", "reviews.bookinfo.svc.cluster.local"),
 		buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
-	validations := SingleHostChecker{
+	vals := SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	presentValidationTest(t, validations, "virtual-1")
-	presentValidationTest(t, validations, "virtual-2")
-	presentValidationTest(t, validations, "virtual-3")
+	presentValidationTest(t, vals, "virtual-1")
+	presentValidationTest(t, vals, "virtual-2")
+	presentValidationTest(t, vals, "virtual-3")
 
-	for _, validation := range validations {
+	for _, validation := range vals {
 		switch validation.Name {
 		case "virtual-1":
 			presentReferences(t, *validation, []string{"virtual-2", "virtual-3"})
@@ -292,16 +292,16 @@ func TestRepeatingFQDNWildcardHost(t *testing.T) {
 		buildVirtualService("virtual-2", "*.bookinfo.svc.cluster.local"),
 		buildVirtualService("virtual-3", "*.bookinfo.svc.cluster.local"),
 	}
-	validations := SingleHostChecker{
+	vals := SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	presentValidationTest(t, validations, "virtual-1")
-	presentValidationTest(t, validations, "virtual-2")
-	presentValidationTest(t, validations, "virtual-3")
+	presentValidationTest(t, vals, "virtual-1")
+	presentValidationTest(t, vals, "virtual-2")
+	presentValidationTest(t, vals, "virtual-3")
 
-	for _, validation := range validations {
+	for _, validation := range vals {
 		switch validation.Name {
 		case "virtual-1":
 			presentReferences(t, *validation, []string{"virtual-2", "virtual-3"})
@@ -319,16 +319,16 @@ func TestIncludedIntoWildCard(t *testing.T) {
 		buildVirtualService("virtual-2", "reviews.bookinfo.svc.cluster.local"),
 		buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
-	validations := SingleHostChecker{
+	vals := SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	presentValidationTest(t, validations, "virtual-1")
-	presentValidationTest(t, validations, "virtual-2")
-	presentValidationTest(t, validations, "virtual-3")
+	presentValidationTest(t, vals, "virtual-1")
+	presentValidationTest(t, vals, "virtual-2")
+	presentValidationTest(t, vals, "virtual-3")
 
-	for _, validation := range validations {
+	for _, validation := range vals {
 		switch validation.Name {
 		case "virtual-1":
 			presentReferences(t, *validation, []string{"virtual-2", "virtual-3"})
@@ -345,16 +345,16 @@ func TestIncludedIntoWildCard(t *testing.T) {
 		buildVirtualService("virtual-2", "*.bookinfo.svc.cluster.local"),
 		buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
-	validations = SingleHostChecker{
+	vals = SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	presentValidationTest(t, validations, "virtual-1")
-	presentValidationTest(t, validations, "virtual-2")
-	presentValidationTest(t, validations, "virtual-3")
+	presentValidationTest(t, vals, "virtual-1")
+	presentValidationTest(t, vals, "virtual-2")
+	presentValidationTest(t, vals, "virtual-3")
 
-	for _, validation := range validations {
+	for _, validation := range vals {
 		switch validation.Name {
 		case "virtual-1":
 			presentReferences(t, *validation, []string{"virtual-2", "virtual-3"})
@@ -372,16 +372,16 @@ func TestShortHostNameIncludedIntoWildCard(t *testing.T) {
 		buildVirtualService("virtual-2", "reviews"),
 		buildVirtualService("virtual-3", "reviews"),
 	}
-	validations := SingleHostChecker{
+	vals := SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	presentValidationTest(t, validations, "virtual-1")
-	presentValidationTest(t, validations, "virtual-2")
-	presentValidationTest(t, validations, "virtual-3")
+	presentValidationTest(t, vals, "virtual-1")
+	presentValidationTest(t, vals, "virtual-2")
+	presentValidationTest(t, vals, "virtual-3")
 
-	for _, validation := range validations {
+	for _, validation := range vals {
 		switch validation.Name {
 		case "virtual-1":
 			presentReferences(t, *validation, []string{"virtual-2", "virtual-3"})
@@ -399,16 +399,16 @@ func TestWildcardisMarkedInvalid(t *testing.T) {
 		buildVirtualService("virtual-2", "reviews"),
 		buildVirtualService("virtual-3", "reviews"),
 	}
-	validations := SingleHostChecker{
+	vals := SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	presentValidationTest(t, validations, "virtual-1")
-	presentValidationTest(t, validations, "virtual-2")
-	presentValidationTest(t, validations, "virtual-3")
+	presentValidationTest(t, vals, "virtual-1")
+	presentValidationTest(t, vals, "virtual-2")
+	presentValidationTest(t, vals, "virtual-3")
 
-	for _, validation := range validations {
+	for _, validation := range vals {
 		switch validation.Name {
 		case "virtual-1":
 			presentReferences(t, *validation, []string{"virtual-2", "virtual-3"})
@@ -426,15 +426,15 @@ func TestMultipleHostsFailing(t *testing.T) {
 		buildVirtualServiceMultipleHosts("virtual-2", []string{"reviews",
 			"mongo.backup.svc.cluster.local", "mongo.staging.svc.cluster.local"}),
 	}
-	validations := SingleHostChecker{
+	vals := SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	presentValidationTest(t, validations, "virtual-1")
-	presentValidationTest(t, validations, "virtual-2")
+	presentValidationTest(t, vals, "virtual-1")
+	presentValidationTest(t, vals, "virtual-2")
 
-	for _, validation := range validations {
+	for _, validation := range vals {
 		switch validation.Name {
 		case "virtual-1":
 			presentReference(t, *validation, "virtual-2")
@@ -450,12 +450,12 @@ func TestMultipleHostsPassing(t *testing.T) {
 		buildVirtualServiceMultipleHosts("virtual-2", []string{"ratings",
 			"mongo.backup.svc.cluster.local", "mongo.staging.svc.cluster.local"}),
 	}
-	validations := SingleHostChecker{
+	vals := SingleHostChecker{
 		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
-	emptyValidationTest(t, validations)
+	emptyValidationTest(t, vals)
 }
 
 func buildVirtualService(name, host string) kubernetes.IstioObject {
@@ -471,38 +471,38 @@ func buildVirtualServiceMultipleHosts(name string, hosts []string) kubernetes.Is
 	return data.CreateEmptyVirtualService(name, "bookinfo", hosts)
 }
 
-func emptyValidationTest(t *testing.T, validations models.IstioValidations) {
+func emptyValidationTest(t *testing.T, vals models.IstioValidations) {
 	assert := assert.New(t)
-	assert.Empty(validations)
+	assert.Empty(vals)
 
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: "virtual-1"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: "virtual-1"}]
 	assert.False(ok)
 	assert.Nil(validation)
 
-	validation, ok = validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: "virtual-2"}]
-	assert.False(ok)
-	assert.Nil(validation)
-}
-
-func noObjectValidationTest(t *testing.T, validations models.IstioValidations, name string) {
-	assert := assert.New(t)
-
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: name}]
+	validation, ok = vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: "virtual-2"}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
 
-func presentValidationTest(t *testing.T, validations models.IstioValidations, serviceName string) {
+func noObjectValidationTest(t *testing.T, vals models.IstioValidations, name string) {
 	assert := assert.New(t)
-	assert.NotEmpty(validations)
 
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: serviceName}]
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: name}]
+	assert.False(ok)
+	assert.Nil(validation)
+}
+
+func presentValidationTest(t *testing.T, vals models.IstioValidations, serviceName string) {
+	assert := assert.New(t)
+	assert.NotEmpty(vals)
+
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: serviceName}]
 	assert.True(ok)
 
 	assert.True(validation.Valid)
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("virtualservices.singlehost", validation.Checks[0]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.singlehost", validation.Checks[0]))
 	assert.Equal("spec/hosts", validation.Checks[0].Path)
 }
 

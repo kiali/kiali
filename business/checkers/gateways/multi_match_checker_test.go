@@ -24,12 +24,12 @@ func TestCorrectGateways(t *testing.T) {
 
 	gws := [][]kubernetes.IstioObject{{gwObject}}
 
-	validations := MultiMatchChecker{
+	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
 	}.Check()
 
-	assert.Empty(validations)
-	_, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "validgateway"}]
+	assert.Empty(vals)
+	_, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "validgateway"}]
 	assert.False(ok)
 }
 
@@ -51,13 +51,13 @@ func TestCaseMatching(t *testing.T) {
 
 	gws := [][]kubernetes.IstioObject{{gwObject}}
 
-	validations := MultiMatchChecker{
+	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.Equal(1, len(validations))
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "foxxed"}]
+	assert.NotEmpty(vals)
+	assert.Equal(1, len(vals))
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "foxxed"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 }
@@ -80,11 +80,11 @@ func TestDashSubdomainMatching(t *testing.T) {
 
 	gws := [][]kubernetes.IstioObject{{gwObject}}
 
-	validations := MultiMatchChecker{
+	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
 	}.Check()
 
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 // Two gateways can share port+host unless they use different ingress
@@ -107,11 +107,11 @@ func TestSameHostPortConfigInDifferentIngress(t *testing.T) {
 
 	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2}}
 
-	validations := MultiMatchChecker{
+	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
 	}.Check()
 
-	assert.Equal(0, len(validations))
+	assert.Equal(0, len(vals))
 }
 
 func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
@@ -133,17 +133,17 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 
 	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2}}
 
-	validations := MultiMatchChecker{
+	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.Equal(2, len(validations))
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Namespace: "bookinfo", Name: "stillvalid"}]
+	assert.NotEmpty(vals)
+	assert.Equal(2, len(vals))
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "bookinfo", Name: "stillvalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 
-	secValidation, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "validgateway"}]
+	secValidation, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "validgateway"}]
 	assert.True(ok)
 	assert.True(secValidation.Valid)
 
@@ -177,20 +177,20 @@ func TestWildCardMatchingHost(t *testing.T) {
 
 	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2, gwObject3}}
 
-	validations := MultiMatchChecker{
+	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.Equal(3, len(validations))
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "stillvalid"}]
+	assert.NotEmpty(vals)
+	assert.Equal(3, len(vals))
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "stillvalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 
 	// valid should have "*" as ref
 	// "*" should have valid and *.just as ref
 	// *.just should have "*" as ref
-	for _, v := range validations {
+	for _, v := range vals {
 		if v.Name == "stillvalid" {
 			assert.Equal(2, len(v.References))
 		} else {
@@ -217,13 +217,13 @@ func TestAnotherSubdomainWildcardCombination(t *testing.T) {
 
 	gws := [][]kubernetes.IstioObject{{gwObject}}
 
-	validations := MultiMatchChecker{
+	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.Equal(1, len(validations))
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "shouldnotbevalid"}]
+	assert.NotEmpty(vals)
+	assert.Equal(1, len(vals))
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "shouldnotbevalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 }
@@ -246,11 +246,11 @@ func TestNoMatchOnSubdomainHost(t *testing.T) {
 
 	gws := [][]kubernetes.IstioObject{{gwObject}}
 
-	validations := MultiMatchChecker{
+	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
 	}.Check()
 
-	assert.Empty(validations)
+	assert.Empty(vals)
 }
 
 func TestTwoWildCardsMatching(t *testing.T) {
@@ -272,13 +272,13 @@ func TestTwoWildCardsMatching(t *testing.T) {
 
 	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2}}
 
-	validations := MultiMatchChecker{
+	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.Equal(2, len(validations))
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "stillvalid"}]
+	assert.NotEmpty(vals)
+	assert.Equal(2, len(vals))
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "stillvalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 	assert.Equal("spec/servers[0]/hosts[0]", validation.Checks[0].Path)
@@ -302,15 +302,15 @@ func TestDuplicateGatewaysErrorCount(t *testing.T) {
 
 	gws := [][]kubernetes.IstioObject{{gwObject, gwObjectIdentical}}
 
-	validations := MultiMatchChecker{
+	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
 	}.Check()
 
-	assert.NotEmpty(validations)
-	validgateway, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "validgateway"}]
+	assert.NotEmpty(vals)
+	validgateway, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "validgateway"}]
 	assert.True(ok)
 
-	duplicatevalidgateway, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "duplicatevalidgateway"}]
+	duplicatevalidgateway, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "duplicatevalidgateway"}]
 	assert.True(ok)
 
 	assert.Equal(2, len(validgateway.Checks))

@@ -9,7 +9,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 // Context: DestinationRule enables namespace-wide mTLS
@@ -97,18 +97,18 @@ func TestMTLSNsWideDREnabledWithoutPolicy(t *testing.T) {
 
 	assert := assert.New(t)
 
-	validations, valid := NamespaceWideMTLSChecker{
+	vals, valid := NamespaceWideMTLSChecker{
 		DestinationRule: destinationRule,
 		MTLSDetails:     mTlsDetails,
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.Equal(1, len(validations))
+	assert.NotEmpty(vals)
+	assert.Equal(1, len(vals))
 	assert.False(valid)
 
-	validation := validations[0]
+	validation := vals[0]
 	assert.NotNil(validation)
 	assert.Equal(models.ErrorSeverity, validation.Severity)
 	assert.Equal("spec/trafficPolicy/tls/mode", validation.Path)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("destinationrules.mtls.nspolicymissing", validation))
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.mtls.nspolicymissing", validation))
 }

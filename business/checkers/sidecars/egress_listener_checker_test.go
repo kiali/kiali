@@ -11,13 +11,13 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestEgressHostFormatCorrect(t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := EgressHostChecker{
+	vals, valid := EgressHostChecker{
 		Services:       fakeServices([]string{"details", "reviews"}),
 		ServiceEntries: kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{data.CreateExternalServiceEntry()}),
 		Sidecar: sidecarWithHosts([]interface{}{
@@ -34,7 +34,7 @@ func TestEgressHostFormatCorrect(t *testing.T) {
 		}),
 	}.Check()
 
-	assert.Empty(validations)
+	assert.Empty(vals)
 	assert.True(valid)
 }
 
@@ -52,57 +52,57 @@ func TestEgressHostCrossNamespace(t *testing.T) {
 		"bookinfo/*.bogus.svc.cluster.local",
 	}
 
-	validations, valid := EgressHostChecker{
+	vals, valid := EgressHostChecker{
 		Sidecar: sidecarWithHosts(hosts),
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.Len(validations, len(hosts))
+	assert.NotEmpty(vals)
+	assert.Len(vals, len(hosts))
 	assert.True(valid)
 
-	for i, c := range validations {
+	for i, c := range vals {
 		assert.Equal(models.Unknown, c.Severity)
 		assert.Equal(fmt.Sprintf("spec/egress[0]/hosts[%d]", i), c.Path)
-		assert.NoError(testutils.ConfirmIstioCheckMessage("validation.unable.cross-namespace", c))
+		assert.NoError(validations.ConfirmIstioCheckMessage("validation.unable.cross-namespace", c))
 	}
 }
 
 func TestEgressInvalidHostFormat(t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := EgressHostChecker{
+	vals, valid := EgressHostChecker{
 		Sidecar: sidecarWithHosts([]interface{}{
 			"no-dash-used",
 		}),
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.Len(validations, 1)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 1)
 	assert.False(valid)
 
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.Equal("spec/egress[0]/hosts[0]", validations[0].Path)
-	assert.NoError(testutils.ConfirmIstioCheckMessage("sidecar.egress.invalidhostformat", validations[0]))
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.Equal("spec/egress[0]/hosts[0]", vals[0].Path)
+	assert.NoError(validations.ConfirmIstioCheckMessage("sidecar.egress.invalidhostformat", vals[0]))
 }
 
 func TestEgressServiceNotFound(t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := EgressHostChecker{
+	vals, valid := EgressHostChecker{
 		Sidecar: sidecarWithHosts([]interface{}{
 			"bookinfo/boggus.bookinfo.svc.cluster.local",
 			"bookinfo/boggus.org",
 		}),
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.Len(validations, 2)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 2)
 	assert.True(valid)
 
-	for i, c := range validations {
+	for i, c := range vals {
 		assert.Equal(models.WarningSeverity, c.Severity)
 		assert.Equal(fmt.Sprintf("spec/egress[0]/hosts[%d]", i), c.Path)
-		assert.NoError(testutils.ConfirmIstioCheckMessage("sidecar.egress.servicenotfound", c))
+		assert.NoError(validations.ConfirmIstioCheckMessage("sidecar.egress.servicenotfound", c))
 	}
 }
 

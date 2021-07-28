@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestParseListParams(t *testing.T) {
@@ -734,7 +735,7 @@ func TestFilterIstioObjectsForWorkloadSelector(t *testing.T) {
 	assert := assert.New(t)
 
 	path := fmt.Sprintf("../tests/data/filters/workload-selector-filter.yaml")
-	loader := &data.YamlFixtureLoader{Filename: path}
+	loader := &validations.YamlFixtureLoader{Filename: path}
 	err := loader.Load()
 
 	if err != nil {
