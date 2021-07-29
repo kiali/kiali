@@ -12,16 +12,19 @@
 #
 # This is not to be used in production environments and is not supported.
 #
-# In order to use this, you first must install Kiali the "normal" way
+# In order to use this, you usually install Kiali the "normal" way
 # (i.e. either via the operator or helm). Once installed, the Kiali
 # service account and roles will be created; this script will use that
 # service account to access the cluster, thus giving it the same
-# permissions that Kiali is normally granted.
+# permissions that Kiali is normally granted. If you do not want to install
+# Kiali first, then you must use the "--kube-context current" option.
 #
 # When running, you can reboot the Kiali server in one of two ways:
 #
 #   1. Control-C - you will be prompted to reboot the Kiali server or exit
-#   2. pkill run-kiali.sh - this will automatically reboot the Kiali server
+#   2. kill - Kill the server PID which will automatically reboot the Kiali server.
+#             To know what PID to kill, you can look for the log message that says:
+#             "The server is rebootable. You can reboot the server via [kill ##]."
 #
 # This is useful when you rebuild the Kiali binary executable - to pick up
 # the change, just reboot the Kiali Server using one of those two mechanisms.
