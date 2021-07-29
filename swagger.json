@@ -5766,20 +5766,25 @@
     "MonitoringDashboardExternalLinkVariables": {
       "type": "object",
       "properties": {
-        "App": {
-          "type": "string"
+        "app": {
+          "type": "string",
+          "x-go-name": "App"
         },
-        "Namespace": {
-          "type": "string"
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
         },
-        "Service": {
-          "type": "string"
+        "service": {
+          "type": "string",
+          "x-go-name": "Service"
         },
-        "Version": {
-          "type": "string"
+        "version": {
+          "type": "string",
+          "x-go-name": "Version"
         },
-        "Workload": {
-          "type": "string"
+        "workload": {
+          "type": "string",
+          "x-go-name": "Workload"
         }
       },
       "x-go-package": "github.com/kiali/kiali/config/dashboards"
