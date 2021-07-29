@@ -55,6 +55,7 @@ func (ics *IstioCertsService) getCertificateFromSecret(secretName string) (CertI
 	secret, err := ics.k8s.GetSecret(cfg.IstioNamespace, secretName)
 
 	if err != nil {
+		log.Println(err)
 		return CertInfo{}, err
 	}
 	log.Println(string(secret.Data["ca-cert.pem"]))
@@ -77,10 +78,13 @@ func (ics *IstioCertsService) getCertificateFromSecret(secretName string) (CertI
 func (ics *IstioCertsService) getChironCertificates() ([]CertInfo, error) {
 	cfg := config.Get()
 
-	istioConfigMap, _ := ics.k8s.GetConfigMap(cfg.IstioNamespace, "istio")
+	istioConfigMap, err := ics.k8s.GetConfigMap(cfg.IstioNamespace, "istio")
+	if err != nil {
+		return nil, err
+	}
 
 	istioConfig := IstioConfig{}
-	err := yaml.Unmarshal([]byte(istioConfigMap.Data["mesh"]), &istioConfig)
+	err = yaml.Unmarshal([]byte(istioConfigMap.Data["mesh"]), &istioConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -91,6 +95,7 @@ func (ics *IstioCertsService) getChironCertificates() ([]CertInfo, error) {
 
 	wg := sync.WaitGroup{}
 	certChan := make(chan CertInfo, len(istioConfig.Certificates))
+	errChan := make(chan error, len(istioConfig.Certificates))
 
 	for _, certConfig := range istioConfig.Certificates {
 		wg.Add(1)
@@ -98,7 +103,8 @@ func (ics *IstioCertsService) getChironCertificates() ([]CertInfo, error) {
 			defer wg.Done()
 			certSecret, err := ics.k8s.GetSecret(cfg.IstioNamespace, secretName)
 			if err != nil {
-				certChan <- CertInfo{SecretName: secretName, Error: err}
+				errChan <- err
+				return
 			} else {
 				block, _ := pem.Decode(certSecret.Data["cert-chain.pem"])
 				cert, err := x509.ParseCertificate(block.Bytes)
@@ -120,6 +126,13 @@ func (ics *IstioCertsService) getChironCertificates() ([]CertInfo, error) {
 
 	wg.Wait()
 	close(certChan)
+	close(errChan)
+
+	for err := range errChan {
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	certs := make([]CertInfo, 0)
 	for cert := range certChan {
