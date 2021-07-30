@@ -20,6 +20,8 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
+const DefaultClusterID = "Kubernetes"
+
 // MeshService is a support service for retrieving data about the mesh environment
 // when Istio is installed with multi-cluster enabled. Prefer initializing this
 // type via the NewMeshService function.
@@ -372,6 +374,11 @@ func (in *MeshService) resolveKialiNetwork() (string, error) {
 		// This setup is OK, it's just that it's not within our multi-cluster assumptions.
 		log.Warningf("Cannot resolve the network ID of the cluster where Kiali is hosted: cannot get the sidecar injector config map :%v", err)
 		return "", nil
+	} else if istioSidecarConfig == nil {
+		// Don't return an error, as this may mean that Kiali is not installed along the control plane.
+		// This setup is OK, it's just that it's not within our multi-cluster assumptions.
+		log.Warningf("Cannot resolve the network ID of the cluster where Kiali is hosted: sidecar injector config map [%s] does not exist", conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName)
+		return "", nil
 	}
 
 	parsedConfig := make(map[string]interface{})
@@ -447,7 +454,7 @@ func (in *MeshService) resolveRemoteClustersFromSecrets() ([]Cluster, error) {
 	for _, secret := range secrets {
 		clusterName, ok := secret.Annotations["networking.istio.io/cluster"]
 		if !ok {
-			clusterName = "unknown"
+			clusterName = DefaultClusterID
 		}
 
 		kubeconfigFile, ok := secret.Data[clusterName]
