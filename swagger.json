@@ -4708,6 +4708,31 @@
       "title": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.",
       "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
+    "GWInfo": {
+      "description": "GWInfo contains the resolved gateway configuration if the node represents an Istio gateway",
+      "type": "object",
+      "properties": {
+        "ingressInfo": {
+          "$ref": "#/definitions/GWInfoIngress"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
+    },
+    "GWInfoIngress": {
+      "description": "GWInfoIngress contains the resolved gateway configuration if the node represents an Istio ingress gateway",
+      "type": "object",
+      "properties": {
+        "hostnames": {
+          "description": "Hostnames is the list of hosts being served by the associated Istio gateways.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Hostnames"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
+    },
     "Gateway": {
       "type": "object",
       "properties": {
@@ -4729,6 +4754,9 @@
           "properties": {
             "selector": {
               "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
               "x-go-name": "Selector"
             },
             "servers": {
@@ -5986,8 +6014,7 @@
           "x-go-name": "HasTrafficShifting"
         },
         "hasVS": {
-          "type": "boolean",
-          "x-go-name": "HasVS"
+          "$ref": "#/definitions/VSInfo"
         },
         "id": {
           "description": "Cytoscape Fields",
@@ -6001,6 +6028,9 @@
         "isDead": {
           "type": "boolean",
           "x-go-name": "IsDead"
+        },
+        "isGateway": {
+          "$ref": "#/definitions/GWInfo"
         },
         "isIdle": {
           "type": "boolean",
@@ -7138,6 +7168,21 @@
       "type": "string",
       "x-go-package": "k8s.io/apimachinery/pkg/types"
     },
+    "VSInfo": {
+      "type": "object",
+      "title": "VSInfo contains the resolved VS configuration if the node has a VS attached.",
+      "properties": {
+        "hostnames": {
+          "description": "Hostnames is the list of hostnames configured in the associated VSs",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Hostnames"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
+    },
     "ValueType": {
       "type": "string",
       "title": "ValueType is the type of a value stored in KeyValue struct.",
@@ -7878,7 +7923,10 @@
               "x-go-name": "Gateways"
             },
             "hosts": {
-              "type": "object",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
               "x-go-name": "Hosts"
             },
             "http": {

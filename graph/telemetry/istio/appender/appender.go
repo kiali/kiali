@@ -158,7 +158,9 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 		appenders = append(appenders, a)
 	}
 	if _, ok := requestedAppenders[IstioAppenderName]; ok || o.Appenders.All {
-		a := IstioAppender{}
+		a := IstioAppender{
+			AccessibleNamespaces: o.AccessibleNamespaces,
+		}
 		appenders = append(appenders, a)
 	}
 	if _, ok := requestedAppenders[SidecarsCheckAppenderName]; ok || o.Appenders.All {

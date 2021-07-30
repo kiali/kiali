@@ -27,7 +27,8 @@ const (
 	HasRequestTimeout     MetadataKey = "hasRequestTimeout"
 	HasVS                 MetadataKey = "hasVS"
 	IsDead                MetadataKey = "isDead"
-	IsEgressCluster       MetadataKey = "isEgressCluster" // PassthroughCluster or BlackHoleCluster
+	IsEgressCluster       MetadataKey = "isEgressCluster"  // PassthroughCluster or BlackHoleCluster
+	IsIngressGateway      MetadataKey = "isIngressGateway" // Identifies a node that is an Istio ingress gateway
 	IsIdle                MetadataKey = "isIdle"
 	IsInaccessible        MetadataKey = "isInaccessible"
 	IsMTLS                MetadataKey = "isMTLS"
@@ -53,3 +54,6 @@ func (dsm DestServicesMetadata) Add(key string, service ServiceName) DestService
 	dsm[key] = service
 	return dsm
 }
+
+type GatewaysMetadata map[string][]string
+type VirtualServicesMetadata map[string][]string

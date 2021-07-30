@@ -59,6 +59,7 @@ func TestCBAll(t *testing.T) {
 		},
 	}
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+	k8s.On("GetProjects", mock.AnythingOfType("string")).Return([]osproject_v1.Project{}, nil)
 	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{
 		dRule.DeepCopyIstioObject(),
 	}, nil)
@@ -121,6 +122,7 @@ func TestCBSubset(t *testing.T) {
 		},
 	}
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+	k8s.On("GetProjects", mock.AnythingOfType("string")).Return([]osproject_v1.Project{}, nil)
 	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{
 		dRule.DeepCopyIstioObject(),
 	}, nil)
@@ -190,6 +192,7 @@ func TestVS(t *testing.T) {
 		},
 	}
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+	k8s.On("GetProjects", mock.AnythingOfType("string")).Return([]osproject_v1.Project{}, nil)
 	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
@@ -231,7 +234,12 @@ func TestVS(t *testing.T) {
 	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
-	assert.Equal(true, trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
+
+	assert.NotNil(trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
+	assert.IsType(graph.VirtualServicesMetadata{}, trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
+	assert.Len(trafficMap[fooSvcNodeId].Metadata[graph.HasVS], 1)
+	assert.Len(trafficMap[fooSvcNodeId].Metadata[graph.HasVS].(graph.VirtualServicesMetadata)["vService-1"], 1)
+	assert.Equal("ratings", trafficMap[fooSvcNodeId].Metadata[graph.HasVS].(graph.VirtualServicesMetadata)["vService-1"][0])
 }
 
 func TestVSWithRoutingBadges(t *testing.T) {
@@ -268,6 +276,7 @@ func TestVSWithRoutingBadges(t *testing.T) {
 		},
 	}
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+	k8s.On("GetProjects", mock.AnythingOfType("string")).Return([]osproject_v1.Project{}, nil)
 	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
