@@ -26,6 +26,7 @@ import trafficTcpImage from '../../assets/img/legend/traffic-tcp.svg';
 // Badges
 import badgeCircuitBreakerImage from '../../assets/img/legend/node-badge-circuit-breaker.svg';
 import badgeFaultInjectionImage from '../../assets/img/legend/node-badge-fault-injection.svg';
+import badgeGatewaysImage from '../../assets/img/legend/node-badge-gateways.svg';
 import badgeMissingSidecarImage from '../../assets/img/legend/node-badge-missing-sidecar.svg';
 import badgeRequestTimeoutImage from '../../assets/img/legend/node-badge-request-timeout.svg';
 import badgeTrafficShiftingSourceImage from '../../assets/img/legend/node-badge-traffic-shifting.svg';
@@ -93,6 +94,7 @@ const legendData: GraphLegendItem[] = [
     data: [
       { label: 'Circuit Breaker', icon: badgeCircuitBreakerImage },
       { label: 'Fault Injection', icon: badgeFaultInjectionImage },
+      { label: 'Gateway', icon: badgeGatewaysImage },
       { label: 'Missing Sidecar', icon: badgeMissingSidecarImage },
       { label: 'Request Timeout', icon: badgeRequestTimeoutImage },
       { label: 'Traffic Shifting/TCP Traffic Shifting', icon: badgeTrafficShiftingSourceImage },

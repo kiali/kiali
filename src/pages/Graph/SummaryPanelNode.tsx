@@ -7,12 +7,13 @@ import { summaryHeader, summaryPanel, summaryBodyTabs, summaryFont } from './Sum
 import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
-import { Dropdown, DropdownGroup, DropdownItem, DropdownPosition, KebabToggle, Tab } from '@patternfly/react-core';
+import { Dropdown, DropdownGroup, DropdownItem, DropdownPosition, Expandable, KebabToggle, Tab } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
 import SummaryPanelNodeTraces from './SummaryPanelNodeTraces';
 import SimpleTabs from 'components/Tab/SimpleTabs';
 import { JaegerState } from 'reducers/JaegerState';
+import { style } from 'typestyle';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -27,6 +28,23 @@ type ReduxProps = {
 };
 
 type SummaryPanelNodeProps = ReduxProps & SummaryPanelPropType;
+
+const expandableSectionStyle = style({
+  fontSize: 'var(--graph-side-panel--font-size)',
+  $nest: {
+    '& > div': {
+      marginLeft: '2em',
+      marginTop: '0 !important',
+      $nest: {
+        '& div': {
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
+        }
+      }
+    }
+  }
+});
 
 export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, SummaryPanelNodeState> {
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
@@ -107,6 +125,29 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     );
   }
 
+  private renderGatewayHostnames = (nodeData:  DecoratedGraphNodeData) => {
+    return this.renderHostnamesSection(nodeData.isGateway?.ingressInfo?.hostnames!);
+  };
+
+  private renderVsHostnames = (nodeData:  DecoratedGraphNodeData) => {
+    return this.renderHostnamesSection(nodeData.hasVS?.hostnames!);
+  };
+
+  private renderHostnamesSection = (hostnames: string[]) => {
+    const numberOfHostnames = hostnames.length;
+    let toggleText = `${numberOfHostnames} hosts`;
+
+    if (numberOfHostnames === 1) {
+      toggleText = '1 host';
+    }
+
+    return (
+      <Expandable toggleText={toggleText} className={expandableSectionStyle}>
+        {hostnames.map(hostname => (<div key={hostname} title={hostname}>{hostname === '*' ? '* (all hosts)' : hostname}</div>))}
+      </Expandable>
+    );
+  }
+
   private renderTrafficOnly() {
     return (
       <div className="panel-body">
@@ -147,10 +188,13 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       hasTCPTrafficShifting,
       hasTrafficShifting,
       hasVS,
-      isDead
+      isDead,
+      isGateway
     } = nodeData;
     const hasTrafficScenario =
       hasRequestRouting || hasFaultInjection || hasTrafficShifting || hasTCPTrafficShifting || hasRequestTimeout;
+    const shouldRenderGatewayHostnames = nodeData.isGateway?.ingressInfo?.hostnames !== undefined && nodeData.isGateway.ingressInfo.hostnames.length !== 0;
+    const shouldRenderVsHostnames = nodeData.hasVS?.hostnames !== undefined && nodeData.hasVS?.hostnames.length !== 0;
     return (
       <div style={{ marginTop: '10px', marginBottom: '10px' }}>
         {hasCB && (
@@ -160,10 +204,13 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
           </div>
         )}
         {hasVS && !hasTrafficScenario && (
-          <div>
-            <KialiIcon.VirtualService />
-            <span style={{ paddingLeft: '4px' }}>Has Virtual Service</span>
-          </div>
+          <>
+            <div>
+              <KialiIcon.VirtualService />
+              <span style={{ paddingLeft: '4px' }}>Has Virtual Service</span>
+            </div>
+            {shouldRenderVsHostnames && this.renderVsHostnames(nodeData)}
+          </>
         )}
         {hasMissingSC && (
           <div>
@@ -180,10 +227,13 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
           </div>
         )}
         {hasRequestRouting && (
-          <div>
-            <KialiIcon.RequestRouting />
-            <span style={{ paddingLeft: '4px' }}>Has Request Routing</span>
-          </div>
+          <>
+            <div>
+              <KialiIcon.RequestRouting />
+              <span style={{ paddingLeft: '4px' }}>Has Request Routing</span>
+            </div>
+            {shouldRenderVsHostnames && this.renderVsHostnames(nodeData)}
+          </>
         )}
         {hasFaultInjection && (
           <div>
@@ -208,6 +258,15 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
             <KialiIcon.RequestTimeout />
             <span style={{ paddingLeft: '4px' }}>Has Request Timeout</span>
           </div>
+        )}
+        {isGateway && (
+          <>
+            <div>
+              <KialiIcon.Gateway />
+              <span style={{ paddingLeft: '4px' }}>Is Gateway</span>
+            </div>
+            {shouldRenderGatewayHostnames && this.renderGatewayHostnames(nodeData)}
+          </>
         )}
       </div>
     );

@@ -22,6 +22,7 @@ const mutIcons = {
     },
     disabledMtls: { className: 'pf-icon pf-icon-unlocked', type: 'fa', name: 'unlock', ascii: '\uE065 ' },
     faultInjection: { className: 'fa fa-ban', type: 'fa', name: 'ban', ascii: '\uf05e ' },
+    gateway: { className: 'pf-icon pf-icon-globe-route', type: 'pf', name: 'globe-route' },
     missingSidecar: {
       icon: BlueprintIcon,
       className: 'pf-icon pf-icon-blueprint',

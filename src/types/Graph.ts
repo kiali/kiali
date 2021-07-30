@@ -308,11 +308,18 @@ export interface GraphNodeData {
   hasRequestTimeout?: boolean;
   hasTCPTrafficShifting?: boolean;
   hasTrafficShifting?: boolean;
-  hasVS?: boolean;
+  hasVS?: {
+    hostnames?: string[];
+  };
   isBox?: string;
   isDead?: boolean;
   isIdle?: boolean;
   isInaccessible?: boolean;
+  isGateway?: {
+    ingressInfo?: {
+      hostnames?: string[];
+    };
+  };
   isMisconfigured?: string;
   isOutside?: boolean;
   isRoot?: boolean;

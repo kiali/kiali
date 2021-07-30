@@ -127,10 +127,10 @@ const getLink = (nodeData: GraphNodeData, nodeType?: NodeType) => {
 
 export const renderBadgedHost = (host: string) => {
   return (
-    <span>
+    <div>
       <PFBadge badge={PFBadges.Host} />
-      {host}
-    </span>
+      {host === "*" ? "* (all hosts)" : host}
+    </div>
   );
 };
 

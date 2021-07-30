@@ -1,26 +1,28 @@
 import { style } from 'typestyle';
-import { PFColorVals, PFColorVal, PFColors } from '../../../components/Pf/PfColors';
-import { FAILURE, DEGRADED } from '../../../types/Health';
+import { PFColors, PFColorVal, PFColorVals } from '../../../components/Pf/PfColors';
+import { DEGRADED, FAILURE } from '../../../types/Health';
 import {
+  BoxByType,
+  CytoscapeGlobalScratchData,
+  CytoscapeGlobalScratchNamespace,
   EdgeLabelMode,
   GraphType,
   NodeType,
-  CytoscapeGlobalScratchNamespace,
-  CytoscapeGlobalScratchData,
-  UNKNOWN,
-  BoxByType,
-  Protocol,
   numLabels,
-  TrafficRate
+  Protocol,
+  TrafficRate,
+  UNKNOWN
 } from '../../../types/Graph';
 import { icons } from '../../../config';
 import NodeImageTopology from '../../../assets/img/node-background-topology.png';
 import NodeImageKey from '../../../assets/img/node-background-key.png';
-import { decoratedEdgeData, decoratedNodeData, CyNode } from '../CytoscapeGraphUtils';
+import { CyNode, decoratedEdgeData, decoratedNodeData } from '../CytoscapeGraphUtils';
 import _ from 'lodash';
 import * as Cy from 'cytoscape';
 import { getEdgeHealth } from '../../../types/ErrorRate';
 import { PFBadges } from 'components/Pf/PfBadges';
+import { config } from 'config/Config';
+
 export const DimClass = 'mousedim';
 export const HighlightClass = 'mousehighlight';
 export const HoveredClass = 'mousehover';
@@ -56,6 +58,7 @@ let NodeColorFillHoverFailure: PFColorVal;
 const NodeHeight = '25px';
 const NodeIconCB = icons.istio.circuitBreaker.className; // bolt
 const NodeIconFaultInjection = icons.istio.faultInjection.className; // ban
+const NodeIconGateway = icons.istio.gateway.className; // globe
 const NodeIconMS = icons.istio.missingSidecar.className; // exclamation
 const NodeIconRoot = icons.istio.root.className; // alt-arrow-circle-right
 const NodeIconVS = icons.istio.virtualService.className; // code-branch
@@ -125,10 +128,29 @@ const contentWithBadges = style({
   borderLeft: '0'
 });
 
+const hostsClass = style({
+  borderTop: `1px solid ${PFColors.Black600}`,
+  textAlign: 'initial',
+  fontSize: NodeTextFontSize,
+  marginTop: '0.5em',
+  paddingTop: '0.5em',
+  $nest: {
+    '& div:last-child': {
+      display: 'none'
+    },
+    '&:hover div:last-child': {
+      display: 'block'
+    },
+    '&:hover div:first-child': {
+      display: 'none'
+    }
+  }
+});
+
 const labelDefault = style({
   borderRadius: '3px',
   boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 2px 8px 0 rgba(0, 0, 0, 0.19)',
-  display: 'flex',
+  display: 'inline-flex',
   fontFamily: NodeTextFont,
   fontSize: '0',
   fontWeight: 'normal',
@@ -242,7 +264,10 @@ export class GraphStyles {
       }
     }
     if (node.isRoot) {
-      icons = `<span class="${NodeIconRoot} ${iconMargin(icons)}"></span> ${icons}`;
+      if (node.isGateway?.ingressInfo?.hostnames?.length !== undefined) {
+        icons = `<span class='${NodeIconGateway} ${iconMargin(icons)}'></span> ${icons}`;
+      }
+      icons = `<span class='${NodeIconRoot} ${iconMargin(icons)}'></span> ${icons}`;
     }
 
     const hasIcon = icons.length > 0;
@@ -361,7 +386,21 @@ export class GraphStyles {
       return `<div class="${labelDefault} ${labelBox}" style="${labelStyle}">${icons}${contentSpan}</div>`;
     }
 
-    const contentSpan = `<div class="${contentClasses}" style="${contentStyle}">${contentText}</div>`;
+    let hosts: string[] = [];
+    node.hasVS?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
+    node.isGateway?.ingressInfo?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
+
+    let htmlHosts = '';
+    if (hosts.length !== 0) {
+      let hostsToShow = hosts;
+      if (hostsToShow.length > config.graph.maxHosts) {
+        hostsToShow = hosts.slice(0, config.graph.maxHosts);
+        hostsToShow.push((hosts.length - config.graph.maxHosts) === 1 ? "1 more host..." : `${hosts.length - config.graph.maxHosts} more hosts...`);
+      }
+      htmlHosts = `<div class='${hostsClass}'><div>${hosts.length} ${hosts.length === 1 ? 'host' : 'hosts'}</div><div>${hostsToShow.join("<br/>")}</div></div>`;
+    }
+
+    const contentSpan = `<div class="${contentClasses}" style="display: block; ${contentStyle}"><div>${contentText}</div><div></div>${htmlHosts}</div></div>`;
     return `<div class="${labelDefault}" style="${labelStyle}">${icons}${contentSpan}</div>`;
   }
 

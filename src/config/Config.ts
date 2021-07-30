@@ -178,6 +178,12 @@ const conf = {
       workloadDashboard: (namespace: string, workload: string) =>
         `api/namespaces/${namespace}/workloads/${workload}/dashboard`
     }
+  },
+  /** Graph configurations */
+  graph: {
+    // maxHosts is the maximum number of hosts to show in the graph for
+    // nodes representing Gateways, VirtualServices and ServiceEntries.
+    maxHosts: 5
   }
 };
 

@@ -459,6 +459,22 @@ exports[`GraphLegend test should render correctly 1`] = `
           </div>
           <div
             className="f1n8a700"
+            key="node-badge-gateways.svg"
+          >
+            <span>
+              <img
+                alt="Gateway"
+                src="node-badge-gateways.svg"
+              />
+            </span>
+            <span
+              className="f1hob5wc"
+            >
+              Gateway
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
             key="node-badge-missing-sidecar.svg"
           >
             <span>
