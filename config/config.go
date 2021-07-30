@@ -514,7 +514,7 @@ func NewConfig() (c *Config) {
 				},
 				Enabled:              true,
 				NamespaceSelector:    true,
-				InClusterURL:         "http://tracing.istio-system/jaeger",
+				InClusterURL:         "http://tracing.istio-system:16685/jaeger",
 				IsCore:               false,
 				URL:                  "",
 				UseGRPC:              false,
