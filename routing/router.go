@@ -53,9 +53,14 @@ func NewRouter() *mux.Router {
 	}
 
 	fileServerHandler := func(w http.ResponseWriter, r *http.Request) {
-		if r.RequestURI == webRootWithSlash || r.RequestURI == webRoot || r.RequestURI == webRootWithSlash+"index.html" {
+		urlPath := r.RequestURI
+		if r.URL != nil {
+			urlPath = r.URL.Path
+		}
+
+		if urlPath == webRootWithSlash || urlPath == webRoot || urlPath == webRootWithSlash+"index.html" {
 			serveIndexFile(w)
-		} else if r.RequestURI == webRootWithSlash+"env.js" {
+		} else if urlPath == webRootWithSlash+"env.js" {
 			serveEnvJsFile(w)
 		} else {
 			staticFileServer.ServeHTTP(w, r)
