@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
 )
 
@@ -18,11 +19,13 @@ func TestSecurityPolicy(t *testing.T) {
 
 	q1 := `round((sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0) OR (sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0),0.001)`
 	q1m0 := model.Metric{
+		"source_cluster":                 business.DefaultClusterID,
 		"source_workload_namespace":      "istio-system",
 		"source_workload":                "ingressgateway-unknown",
 		"source_canonical_service":       "ingressgateway",
 		"source_canonical_revision":      model.LabelValue(graph.Unknown),
 		"source_principal":               "source-principal-test",
+		"destination_cluster":            business.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service_name":       "productpage",
 		"destination_workload_namespace": "bookinfo",
@@ -32,11 +35,13 @@ func TestSecurityPolicy(t *testing.T) {
 		"destination_principal":          "destination-principal-test",
 		"connection_security_policy":     "mutual_tls"}
 	q1m1 := model.Metric{
+		"source_cluster":                 business.DefaultClusterID,
 		"source_workload_namespace":      "istio-system",
 		"source_workload":                "ingressgateway-unknown",
 		"source_canonical_service":       "ingressgateway",
 		"source_canonical_revision":      model.LabelValue(graph.Unknown),
 		"source_principal":               "source-principal-test",
+		"destination_cluster":            business.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service_name":       "productpage",
 		"destination_workload_namespace": "bookinfo",
@@ -62,7 +67,7 @@ func TestSecurityPolicy(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := securityPolicyTestTraffic()
-	ingressID, _ := graph.Id(graph.Unknown, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingressID, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressID]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -104,11 +109,13 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 
 	q1 := `round((sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0) OR (sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0),0.001)`
 	q1m0 := model.Metric{
+		"source_cluster":                 business.DefaultClusterID,
 		"source_workload_namespace":      "istio-system",
 		"source_workload":                "ingressgateway-unknown",
 		"source_canonical_service":       "ingressgateway",
 		"source_canonical_revision":      model.LabelValue(graph.Unknown),
 		"source_principal":               "source-principal-test",
+		"destination_cluster":            business.DefaultClusterID,
 		"destination_service_namespace":  "bookinfo",
 		"destination_service_name":       "productpage",
 		"destination_workload_namespace": "bookinfo",
@@ -131,7 +138,7 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := securityPolicyTestTrafficWithServiceNodes()
-	ingressId, _ := graph.Id(graph.Unknown, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingressId, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressId]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -170,8 +177,8 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 }
 
 func securityPolicyTestTraffic() graph.TrafficMap {
-	ingress := graph.NewNode(graph.Unknown, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
-	productpage := graph.NewNode(graph.Unknown, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	ingress := graph.NewNode(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	productpage := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
 	trafficMap := graph.NewTrafficMap()
 	trafficMap[ingress.ID] = &ingress
 	trafficMap[productpage.ID] = &productpage
@@ -182,9 +189,9 @@ func securityPolicyTestTraffic() graph.TrafficMap {
 }
 
 func securityPolicyTestTrafficWithServiceNodes() graph.TrafficMap {
-	ingress := graph.NewNode(graph.Unknown, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
-	productpagesvc := graph.NewNode(graph.Unknown, "bookinfo", "productpage", "bookinfo", "", "", "", graph.GraphTypeVersionedApp)
-	productpage := graph.NewNode(graph.Unknown, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	ingress := graph.NewNode(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	productpagesvc := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "", "", "", graph.GraphTypeVersionedApp)
+	productpage := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
 	trafficMap := graph.NewTrafficMap()
 	trafficMap[ingress.ID] = &ingress
 	trafficMap[productpagesvc.ID] = &productpagesvc
