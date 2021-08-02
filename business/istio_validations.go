@@ -13,6 +13,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 type IstioValidationsService struct {
@@ -219,12 +220,19 @@ func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {
 
 	// Run checks for each IstioObject type
 	for _, objectChecker := range objectCheckers {
-		objectTypeValidations.MergeValidations(objectChecker.Check())
+		objectTypeValidations.MergeValidations(runObjectChecker(objectChecker))
 	}
 
 	objectTypeValidations.StripIgnoredChecks()
 
 	return objectTypeValidations
+}
+
+func runObjectChecker(objectChecker ObjectChecker) models.IstioValidations {
+	// tracking the time it takes to execute the Check
+	promtimer := internalmetrics.GetCheckerProcessingTimePrometheusTimer(fmt.Sprintf("%T", objectChecker))
+	defer promtimer.ObserveDuration()
+	return objectChecker.Check()
 }
 
 // The following idea is used underneath: if errChan has at least one record, we'll effectively cancel the request (if scheduled in such order). On the other hand, if we can't

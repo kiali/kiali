@@ -18,6 +18,7 @@ const (
 	labelAppender         = "appender"
 	labelRoute            = "route"
 	labelQueryGroup       = "query_group"
+	labelCheckerName      = "checker"
 )
 
 // MetricsType defines all of Kiali's own internal metrics.
@@ -30,6 +31,7 @@ type MetricsType struct {
 	PrometheusProcessingTime *prometheus.HistogramVec
 	KubernetesClients        *prometheus.GaugeVec
 	APIFailures              *prometheus.CounterVec
+	CheckerProcessingTime    *prometheus.HistogramVec
 }
 
 // Metrics contains all of Kiali's own internal metrics.
@@ -92,6 +94,13 @@ var Metrics = MetricsType{
 		},
 		[]string{labelRoute},
 	),
+	CheckerProcessingTime: prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "kiali_checker_processing_duration_seconds",
+			Help: "The time required to execute a validation checker.",
+		},
+		[]string{labelCheckerName},
+	),
 }
 
 // SuccessOrFailureMetricType let's you capture metrics for both successes and failures,
@@ -148,6 +157,7 @@ func RegisterInternalMetrics() {
 		Metrics.PrometheusProcessingTime,
 		Metrics.KubernetesClients,
 		Metrics.APIFailures,
+		Metrics.CheckerProcessingTime,
 	)
 }
 
@@ -240,6 +250,21 @@ func GetAPIProcessingTimePrometheusTimer(apiRouteName string) *prometheus.Timer 
 func GetPrometheusProcessingTimePrometheusTimer(queryGroup string) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.PrometheusProcessingTime.With(prometheus.Labels{
 		labelQueryGroup: queryGroup,
+	}))
+	return timer
+}
+
+// GetCheckerProcessingTimePrometheusTimer returns a timer that can be used to store
+// a value for the validation checker processing time metric. The timer is ticking immediately
+// when this function returns.
+//
+// Typical usage is as follows:
+//    promtimer := GetCheckerProcessingTimePrometheusTimer(...)
+//    ... execute the validation check ...
+//    promtimer.ObserveDuration()
+func GetCheckerProcessingTimePrometheusTimer(checkerName string) *prometheus.Timer {
+	timer := prometheus.NewTimer(Metrics.CheckerProcessingTime.With(prometheus.Labels{
+		labelCheckerName: checkerName,
 	}))
 	return timer
 }
