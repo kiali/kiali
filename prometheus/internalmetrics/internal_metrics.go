@@ -19,6 +19,8 @@ const (
 	labelRoute            = "route"
 	labelQueryGroup       = "query_group"
 	labelCheckerName      = "checker"
+	labelNamespace        = "namespace"
+	labelService          = "service"
 )
 
 // MetricsType defines all of Kiali's own internal metrics.
@@ -32,6 +34,7 @@ type MetricsType struct {
 	KubernetesClients        *prometheus.GaugeVec
 	APIFailures              *prometheus.CounterVec
 	CheckerProcessingTime    *prometheus.HistogramVec
+	ValidationProcessingTime *prometheus.HistogramVec
 }
 
 // Metrics contains all of Kiali's own internal metrics.
@@ -101,6 +104,13 @@ var Metrics = MetricsType{
 		},
 		[]string{labelCheckerName},
 	),
+	ValidationProcessingTime: prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "kiali_validation_processing_duration_seconds",
+			Help: "The time required to execute a full validation check on a namespace or service.",
+		},
+		[]string{labelNamespace, labelService},
+	),
 }
 
 // SuccessOrFailureMetricType let's you capture metrics for both successes and failures,
@@ -158,6 +168,7 @@ func RegisterInternalMetrics() {
 		Metrics.KubernetesClients,
 		Metrics.APIFailures,
 		Metrics.CheckerProcessingTime,
+		Metrics.ValidationProcessingTime,
 	)
 }
 
@@ -266,6 +277,34 @@ func GetCheckerProcessingTimePrometheusTimer(checkerName string) *prometheus.Tim
 	timer := prometheus.NewTimer(Metrics.CheckerProcessingTime.With(prometheus.Labels{
 		labelCheckerName: checkerName,
 	}))
+	return timer
+}
+
+// GetValidationProcessingTimePrometheusTimer returns a timer that can be used to store
+// a value for the validation processing time metric (time to validate a namespace
+// or service). The timer is ticking immediately when this function returns.
+//
+// When service is an empty string, it means this timer will track how long it took to validate
+// all services within the namespace.
+//
+// Typical usage is as follows:
+//    promtimer := GetValidationProcessingTimePrometheusTimer(...)
+//    ... execute the validation checks ...
+//    promtimer.ObserveDuration()
+func GetValidationProcessingTimePrometheusTimer(namespace string, service string) *prometheus.Timer {
+	var labels prometheus.Labels
+	if service != "" {
+		labels = prometheus.Labels{
+			labelNamespace: namespace,
+			labelService:   service,
+		}
+	} else {
+		labels = prometheus.Labels{
+			labelNamespace: namespace,
+			labelService:   "_all_",
+		}
+	}
+	timer := prometheus.NewTimer(Metrics.ValidationProcessingTime.With(labels))
 	return timer
 }
 

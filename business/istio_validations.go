@@ -45,6 +45,10 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 		}
 	}
 
+	// time this function execution so we can capture how long it takes to fully validate this namespace/service
+	timer := internalmetrics.GetValidationProcessingTimePrometheusTimer(namespace, service)
+	defer timer.ObserveDuration()
+
 	wg := sync.WaitGroup{}
 	errChan := make(chan error, 1)
 
