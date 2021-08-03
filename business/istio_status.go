@@ -237,7 +237,7 @@ func (iss *IstioStatusService) getAddonComponentStatus() IstioComponentStatus {
 
 	go getAddonStatus("prometheus", true, extServices.Prometheus.IsCore, &extServices.Prometheus.Auth, extServices.Prometheus.URL, extServices.Prometheus.HealthCheckUrl, staChan, &wg)
 	go getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.IsCore, &extServices.Grafana.Auth, extServices.Grafana.InClusterURL, extServices.Grafana.HealthCheckUrl, staChan, &wg)
-	go getAddonStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.IsCore, &extServices.Tracing.Auth, extServices.Tracing.InClusterURL, extServices.Tracing.HealthCheckUrl, staChan, &wg)
+	go iss.getTracingStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.IsCore, extServices.Tracing.InClusterURL, extServices.Tracing.HealthCheckUrl, staChan, &wg)
 
 	// Custom dashboards may use the main Prometheus config
 	customProm := extServices.CustomDashboards.Prometheus
@@ -327,6 +327,30 @@ func getAddonStatus(name string, enabled bool, isCore bool, auth *config.Auth, u
 	// Call the addOn service endpoint to find out whether is reachable or not
 	_, statusCode, err := httputil.HttpGet(url, auth, 10*time.Second)
 	if err != nil || statusCode > 399 {
+		staChan <- IstioComponentStatus{
+			ComponentStatus{
+				Name:   name,
+				Status: Unreachable,
+				IsCore: isCore,
+			},
+		}
+	}
+}
+
+func (iss *IstioStatusService) getTracingStatus(name string, enabled bool, isCore bool, url string, healthCheckUrl string, staChan chan<- IstioComponentStatus, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	if !enabled {
+		return
+	}
+
+	// Take the alternative health check url if present
+	if healthCheckUrl != "" {
+		url = healthCheckUrl
+	}
+
+	if accessible, err := iss.businessLayer.Jaeger.GetStatus(); !accessible {
+		log.Errorf("Error fetching availability of the tracing service: %v", err)
 		staChan <- IstioComponentStatus{
 			ComponentStatus{
 				Name:   name,
