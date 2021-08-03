@@ -18,18 +18,26 @@ const (
 	labelAppender         = "appender"
 	labelRoute            = "route"
 	labelQueryGroup       = "query_group"
+	labelCheckerName      = "checker"
+	labelNamespace        = "namespace"
+	labelService          = "service"
+	labelType             = "type"
+	labelName             = "name"
 )
 
 // MetricsType defines all of Kiali's own internal metrics.
 type MetricsType struct {
-	GraphNodes               *prometheus.GaugeVec
-	GraphGenerationTime      *prometheus.HistogramVec
-	GraphAppenderTime        *prometheus.HistogramVec
-	GraphMarshalTime         *prometheus.HistogramVec
-	APIProcessingTime        *prometheus.HistogramVec
-	PrometheusProcessingTime *prometheus.HistogramVec
-	KubernetesClients        *prometheus.GaugeVec
-	APIFailures              *prometheus.CounterVec
+	GraphNodes                     *prometheus.GaugeVec
+	GraphGenerationTime            *prometheus.HistogramVec
+	GraphAppenderTime              *prometheus.HistogramVec
+	GraphMarshalTime               *prometheus.HistogramVec
+	APIProcessingTime              *prometheus.HistogramVec
+	PrometheusProcessingTime       *prometheus.HistogramVec
+	KubernetesClients              *prometheus.GaugeVec
+	APIFailures                    *prometheus.CounterVec
+	CheckerProcessingTime          *prometheus.HistogramVec
+	ValidationProcessingTime       *prometheus.HistogramVec
+	SingleValidationProcessingTime *prometheus.HistogramVec
 }
 
 // Metrics contains all of Kiali's own internal metrics.
@@ -92,6 +100,27 @@ var Metrics = MetricsType{
 		},
 		[]string{labelRoute},
 	),
+	CheckerProcessingTime: prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "kiali_checker_processing_duration_seconds",
+			Help: "The time required to execute a validation checker.",
+		},
+		[]string{labelCheckerName},
+	),
+	ValidationProcessingTime: prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "kiali_validation_processing_duration_seconds",
+			Help: "The time required to execute a full validation check on a namespace or service.",
+		},
+		[]string{labelNamespace, labelService},
+	),
+	SingleValidationProcessingTime: prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "kiali_single_validation_processing_duration_seconds",
+			Help: "The time required to execute a validation check on a single Istio object.",
+		},
+		[]string{labelNamespace, labelType, labelName},
+	),
 }
 
 // SuccessOrFailureMetricType let's you capture metrics for both successes and failures,
@@ -148,6 +177,9 @@ func RegisterInternalMetrics() {
 		Metrics.PrometheusProcessingTime,
 		Metrics.KubernetesClients,
 		Metrics.APIFailures,
+		Metrics.CheckerProcessingTime,
+		Metrics.ValidationProcessingTime,
+		Metrics.SingleValidationProcessingTime,
 	)
 }
 
@@ -240,6 +272,66 @@ func GetAPIProcessingTimePrometheusTimer(apiRouteName string) *prometheus.Timer 
 func GetPrometheusProcessingTimePrometheusTimer(queryGroup string) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.PrometheusProcessingTime.With(prometheus.Labels{
 		labelQueryGroup: queryGroup,
+	}))
+	return timer
+}
+
+// GetCheckerProcessingTimePrometheusTimer returns a timer that can be used to store
+// a value for the validation checker processing time metric. The timer is ticking immediately
+// when this function returns.
+//
+// Typical usage is as follows:
+//    promtimer := GetCheckerProcessingTimePrometheusTimer(...)
+//    ... execute the validation check ...
+//    promtimer.ObserveDuration()
+func GetCheckerProcessingTimePrometheusTimer(checkerName string) *prometheus.Timer {
+	timer := prometheus.NewTimer(Metrics.CheckerProcessingTime.With(prometheus.Labels{
+		labelCheckerName: checkerName,
+	}))
+	return timer
+}
+
+// GetValidationProcessingTimePrometheusTimer returns a timer that can be used to store
+// a value for the validation processing time metric (time to validate a namespace
+// or service). The timer is ticking immediately when this function returns.
+//
+// When service is an empty string, it means this timer will track how long it took to validate
+// all services within the namespace.
+//
+// Typical usage is as follows:
+//    promtimer := GetValidationProcessingTimePrometheusTimer(...)
+//    ... execute the validation checks ...
+//    promtimer.ObserveDuration()
+func GetValidationProcessingTimePrometheusTimer(namespace string, service string) *prometheus.Timer {
+	var labels prometheus.Labels
+	if service != "" {
+		labels = prometheus.Labels{
+			labelNamespace: namespace,
+			labelService:   service,
+		}
+	} else {
+		labels = prometheus.Labels{
+			labelNamespace: namespace,
+			labelService:   "_all_",
+		}
+	}
+	timer := prometheus.NewTimer(Metrics.ValidationProcessingTime.With(labels))
+	return timer
+}
+
+// GetSingleValidationProcessingTimePrometheusTimer returns a timer that can be used to store
+// a value for the single validation processing time metric (time to validate a specific
+// Istio object in a specific namespace. The timer is ticking immediately when this function returns.
+//
+// Typical usage is as follows:
+//    promtimer := GetSingleValidationProcessingTimePrometheusTimer(...)
+//    ... execute the validation check ...
+//    promtimer.ObserveDuration()
+func GetSingleValidationProcessingTimePrometheusTimer(namespace string, objectType string, objectName string) *prometheus.Timer {
+	timer := prometheus.NewTimer(Metrics.SingleValidationProcessingTime.With(prometheus.Labels{
+		labelNamespace: namespace,
+		labelType:      objectType,
+		labelName:      objectName,
 	}))
 	return timer
 }
