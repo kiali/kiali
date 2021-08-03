@@ -237,7 +237,7 @@ func (iss *IstioStatusService) getAddonComponentStatus() IstioComponentStatus {
 
 	go getAddonStatus("prometheus", true, extServices.Prometheus.IsCore, &extServices.Prometheus.Auth, extServices.Prometheus.URL, extServices.Prometheus.HealthCheckUrl, staChan, &wg)
 	go getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.IsCore, &extServices.Grafana.Auth, extServices.Grafana.InClusterURL, extServices.Grafana.HealthCheckUrl, staChan, &wg)
-	go iss.getTracingStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.IsCore, extServices.Tracing.InClusterURL, extServices.Tracing.HealthCheckUrl, staChan, &wg)
+	go iss.getTracingStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)
 
 	// Custom dashboards may use the main Prometheus config
 	customProm := extServices.CustomDashboards.Prometheus
@@ -337,16 +337,11 @@ func getAddonStatus(name string, enabled bool, isCore bool, auth *config.Auth, u
 	}
 }
 
-func (iss *IstioStatusService) getTracingStatus(name string, enabled bool, isCore bool, url string, healthCheckUrl string, staChan chan<- IstioComponentStatus, wg *sync.WaitGroup) {
+func (iss *IstioStatusService) getTracingStatus(name string, enabled bool, isCore bool, staChan chan<- IstioComponentStatus, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	if !enabled {
 		return
-	}
-
-	// Take the alternative health check url if present
-	if healthCheckUrl != "" {
-		url = healthCheckUrl
 	}
 
 	if accessible, err := iss.businessLayer.Jaeger.GetStatus(); !accessible {
