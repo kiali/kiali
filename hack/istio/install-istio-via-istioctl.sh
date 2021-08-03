@@ -17,7 +17,7 @@
 ADDONS="prometheus grafana jaeger"
 CLIENT_EXE_NAME="oc"
 CLUSTER_NAME="cluster-default"
-CONFIG_PROFILE="demo" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
+CONFIG_PROFILE="" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
 DELETE_ISTIO="false"
 ISTIOCTL=
 ISTIO_DIR=
@@ -143,7 +143,7 @@ Valid command line arguments:
        Installs Istio with the given profile.
        Run "istioctl profile list" to see the valid list of configuration profiles available.
        See: https://istio.io/docs/setup/additional-setup/config-profiles/
-       Default: demo
+       Default: "demo" on non-OpenShift platforms, "openshift" on OpenShift
   -di|--delete-istio (true|false):
        Set to 'true' if you want to delete Istio, rather than install it.
        Default: false
@@ -205,6 +205,15 @@ if [ "${CLIENT_EXE}" = "" ]; then
   fi
 fi
 
+# default the config profile according to the cluster type
+if [ -z "${CONFIG_PROFILE}" ]; then
+  if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+    CONFIG_PROFILE="openshift"
+  else
+    CONFIG_PROFILE="demo"
+  fi
+fi
+
 if [ "${ISTIO_DIR}" == "" ]; then
   # Go to the main output directory and try to find an Istio there.
   HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
@@ -238,11 +247,9 @@ echo "istioctl is found here: ${ISTIOCTL}"
 
 # If OpenShift, install CNI
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
-  CNI_OPTIONS="--set components.cni.enabled=true --set components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/etc/cni/multus/net.d --set values.cni.chained=false --set values.cni.cniConfFileName=istio-cni.conf --set values.sidecarInjectorWebhook.injectedAnnotations.k8s\.v1\.cni\.cncf\.io/networks=istio-cni"
-
-  # Istio 1.8 removed mixer - so components.telemetry settings are only valid from 1.7 and earlier.
-  if ${ISTIOCTL} --remote=false version | grep -q "1\.6\|1\.7" ; then
-    TELEMETRY_OPTIONS="--set components.telemetry.k8s.resources.requests.memory=100Mi --set components.telemetry.k8s.resources.requests.cpu=50m"
+  # If on OpenShift but not using openshift profile, do some extra things. To support Istio 1.10 and earlier.
+  if [ "${CONFIG_PROFILE}" != "openshift" ]; then
+    CNI_OPTIONS="--set components.cni.enabled=true --set components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/etc/cni/multus/net.d --set values.cni.chained=false --set values.cni.cniConfFileName=istio-cni.conf --set values.sidecarInjectorWebhook.injectedAnnotations.k8s\.v1\.cni\.cncf\.io/networks=istio-cni"
   fi
 fi
 
@@ -284,7 +291,10 @@ if [ "${NAMESPACE}" != "istio-system" ]; then
   CUSTOM_NAMESPACE_OPTIONS="--set namespace=${NAMESPACE}"
   CUSTOM_NAMESPACE_OPTIONS="${CUSTOM_NAMESPACE_OPTIONS} --set values.global.istioNamespace=${NAMESPACE}"
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
-    CNI_OPTIONS="${CNI_OPTIONS} --set values.cni.excludeNamespaces[0]=${NAMESPACE}"
+    # If on OpenShift but not using openshift profile, do some extra things. To support Istio 1.10 and earlier.
+    if [ "${CONFIG_PROFILE}" != "openshift" ]; then
+      CNI_OPTIONS="${CNI_OPTIONS} --set values.cni.excludeNamespaces[0]=${NAMESPACE}"
+    fi
   fi
 fi
 
@@ -299,7 +309,6 @@ for s in \
    "--set values.global.multiCluster.clusterName=${CLUSTER_NAME}" \
    "--set values.global.network=${NETWORK}" \
    "${CNI_OPTIONS}" \
-   "${TELEMETRY_OPTIONS}" \
    "${CUSTOM_INSTALL_SETTINGS}"
 do
   MANIFEST_CONFIG_SETTINGS_TO_APPLY="${MANIFEST_CONFIG_SETTINGS_TO_APPLY} ${s}"
