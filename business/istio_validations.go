@@ -27,6 +27,7 @@ type ObjectChecker interface {
 
 // GetValidations returns an IstioValidations object with all the checks found when running
 // all the enabled checkers. If service is "" then the whole namespace is validated.
+// If service is not empty string, then all of its associated Istio objects are validated.
 func (in *IstioValidationsService) GetValidations(namespace, service string) (models.IstioValidations, error) {
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
@@ -127,6 +128,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 	}
 }
 
+// GetIstioObjectValidations validates a single Istio object of the given type with the given name found in the given namespace.
 func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, objectType string, object string) (models.IstioValidations, error) {
 	var istioDetails kubernetes.IstioDetails
 	var namespaces models.Namespaces
@@ -145,6 +147,10 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
 		return nil, err
 	}
+
+	// time this function execution so we can capture how long it takes to fully validate this istio object
+	timer := internalmetrics.GetSingleValidationProcessingTimePrometheusTimer(namespace, objectType, object)
+	defer timer.ObserveDuration()
 
 	wg := sync.WaitGroup{}
 	errChan := make(chan error, 1)
