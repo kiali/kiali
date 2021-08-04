@@ -1,6 +1,7 @@
 package destinationrules
 
 import (
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -16,6 +17,7 @@ type NoDestinationChecker struct {
 	Namespaces      models.Namespaces
 	WorkloadList    models.WorkloadList
 	DestinationRule kubernetes.IstioObject
+	VirtualServices []kubernetes.IstioObject
 	ServiceEntries  map[string][]string
 	Services        []core_v1.Service
 	RegistryStatus  []*kubernetes.RegistryStatus
@@ -50,8 +52,12 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 									if !n.hasMatchingWorkload(fqdn.Service, stringLabels) {
 										validation := models.Build("destinationrules.nodest.subsetlabels",
 											"spec/subsets["+strconv.Itoa(i)+"]")
+										if n.isSubsetReferenced(dHost, innerSubset["name"].(string)) {
+											valid = false
+										} else {
+											validation.Severity = models.Unknown
+										}
 										validations = append(validations, &validation)
-										valid = false
 									}
 								}
 							} else {
@@ -146,4 +152,75 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 		return true
 	}
 	return false
+}
+
+func (n NoDestinationChecker) isSubsetReferenced(host string, subset string) bool {
+	virtualServices, ok := n.getVirtualServices(host, subset)
+	if ok && len(virtualServices) > 0 {
+		return true
+	}
+
+	return false
+}
+
+func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virtualServiceSubset string) ([]kubernetes.IstioObject, bool) {
+	vss := make([]kubernetes.IstioObject, 0, len(n.VirtualServices))
+
+	for _, virtualService := range n.VirtualServices {
+		protocols := [3]string{"http", "tcp", "tls"}
+		for _, protocol := range protocols {
+			specProtocol := virtualService.GetSpec()[protocol]
+			if specProtocol == nil {
+				continue
+			}
+
+			// Getting a []HTTPRoute, []TLSRoute, []TCPRoute
+			slice := reflect.ValueOf(specProtocol)
+			if slice.Kind() != reflect.Slice {
+				continue
+			}
+
+			for routeIdx := 0; routeIdx < slice.Len(); routeIdx++ {
+				httpRoute, ok := slice.Index(routeIdx).Interface().(map[string]interface{})
+				if !ok || httpRoute["route"] == nil {
+					continue
+				}
+
+				// Getting a []DestinationWeight
+				destinationWeights := reflect.ValueOf(httpRoute["route"])
+
+				for destWeightIdx := 0; destWeightIdx < destinationWeights.Len(); destWeightIdx++ {
+					destinationWeight, ok := destinationWeights.Index(destWeightIdx).Interface().(map[string]interface{})
+					if !ok || destinationWeight["destination"] == nil {
+						continue
+					}
+
+					destination, ok := destinationWeight["destination"].(map[string]interface{})
+					if !ok {
+						continue
+					}
+
+					host, ok := destination["host"].(string)
+					if !ok {
+						continue
+					}
+
+					subset, ok := destination["subset"].(string)
+					if !ok {
+						continue
+					}
+
+					drHost := kubernetes.GetHost(host, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName, n.Namespaces.GetNames())
+					vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.GetObjectMeta().Namespace, virtualService.GetObjectMeta().ClusterName, n.Namespaces.GetNames())
+
+					// TODO Host could be in another namespace (FQDN)
+					if kubernetes.FilterByHost(vsHost.String(), drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
+						vss = append(vss, virtualService)
+					}
+				}
+			}
+		}
+	}
+
+	return vss, len(vss) > 0
 }

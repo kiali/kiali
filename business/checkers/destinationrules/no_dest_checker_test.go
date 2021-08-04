@@ -1,6 +1,7 @@
 package destinationrules
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -190,6 +191,11 @@ func TestNoMatchingSubset(t *testing.T) {
 		),
 		Services:        fakeServicesReview(),
 		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
+		VirtualServices: []kubernetes.IstioObject{data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 55),
+			data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v2", 45),
+				data.CreateEmptyVirtualService("reviews", "test-namespace", []string{"reviews"}),
+			),
+		)},
 	}.Check()
 
 	assert.False(valid)
@@ -225,11 +231,143 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 		),
 		Services:        fakeServicesReview(),
 		DestinationRule: dr,
+		VirtualServices: []kubernetes.IstioObject{data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "reviewsv1", 55),
+			data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "reviewsv2", 100),
+				data.CreateEmptyVirtualService("reviews", "test-namespace", []string{"reviews"}),
+			),
+		)},
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(vals)
 	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", vals[0]))
+	assert.Equal("spec/subsets[0]", vals[0].Path)
+}
+
+func TestSubsetNotReferenced(t *testing.T) {
+	assert := assert.New(t)
+
+	loader := yamlFixtureLoaderFor1("subset-presence-not-referenced.yaml")
+	err := loader.Load()
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
+
+	dr := loader.GetResource("DestinationRule", "testrule", "bookinfo")
+
+	vals, valid := NoDestinationChecker{
+		Namespace:  "bookinfo",
+		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo"}},
+		WorkloadList: data.CreateWorkloadList("bookinfo",
+			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v2")),
+		),
+		Services:        fakeServicesReview(),
+		DestinationRule: dr,
+		VirtualServices: []kubernetes.IstioObject{},
+	}.Check()
+
+	assert.True(valid)
+	assert.NotEmpty(vals)
+	assert.Equal(models.Unknown, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", vals[0]))
+	assert.Equal("spec/subsets[0]", vals[0].Path)
+}
+
+func TestSubsetReferenced(t *testing.T) {
+	assert := assert.New(t)
+
+	loader := yamlFixtureLoaderFor1("subset-presence-referenced.yaml")
+	err := loader.Load()
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
+
+	dr := loader.GetResource("DestinationRule", "testrule", "bookinfo")
+
+	vs := loader.GetResource("VirtualService", "testvs", "bookinfo")
+
+	vals, valid := NoDestinationChecker{
+		Namespace:  "bookinfo",
+		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo"}},
+		WorkloadList: data.CreateWorkloadList("bookinfo",
+			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v2")),
+		),
+		Services:        fakeServicesReview(),
+		DestinationRule: dr,
+		VirtualServices: []kubernetes.IstioObject{vs},
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Equal(2, len(vals))
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.Equal(models.ErrorSeverity, vals[1].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", vals[0]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", vals[1]))
+	assert.Equal("spec/subsets[0]", vals[0].Path)
+	assert.Equal("spec/subsets[1]", vals[1].Path)
+}
+
+func TestSubsetPresentMatchingNotReferenced(t *testing.T) {
+	assert := assert.New(t)
+
+	loader := yamlFixtureLoaderFor1("subset-presence-matching-not-referenced.yaml")
+	err := loader.Load()
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
+
+	dr := loader.GetResource("DestinationRule", "testrule", "bookinfo")
+
+	vs := loader.GetResource("VirtualService", "testvs", "bookinfo")
+
+	vals, valid := NoDestinationChecker{
+		Namespace:  "bookinfo",
+		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo"}},
+		WorkloadList: data.CreateWorkloadList("bookinfo",
+			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v2")),
+		),
+		Services:        fakeServicesReview(),
+		DestinationRule: dr,
+		VirtualServices: []kubernetes.IstioObject{vs},
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
+func TestWronglyReferenced(t *testing.T) {
+	assert := assert.New(t)
+
+	loader := yamlFixtureLoaderFor1("subset-presence-wrongly-referenced.yaml")
+	err := loader.Load()
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
+
+	dr := loader.GetResource("DestinationRule", "testrule", "bookinfo")
+
+	vs := loader.GetResource("VirtualService", "testvs", "bookinfo")
+
+	vals, valid := NoDestinationChecker{
+		Namespace:  "bookinfo",
+		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo"}},
+		WorkloadList: data.CreateWorkloadList("bookinfo",
+			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v2")),
+		),
+		Services:        fakeServicesReview(),
+		DestinationRule: dr,
+		VirtualServices: []kubernetes.IstioObject{vs},
+	}.Check()
+
+	assert.True(valid)
+	assert.NotEmpty(vals)
+	assert.Equal(models.Unknown, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", vals[0]))
 	assert.Equal("spec/subsets[0]", vals[0].Path)
 }
@@ -402,4 +540,9 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	assert.False(valid)
 	assert.NotEmpty(vals)
+}
+
+func yamlFixtureLoaderFor1(file string) *validations.YamlFixtureLoader {
+	path := fmt.Sprintf("../../../tests/data/validations/virtualservices/%s", file)
+	return &validations.YamlFixtureLoader{Filename: path}
 }
