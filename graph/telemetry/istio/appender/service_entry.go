@@ -55,7 +55,7 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 	}
 
 	if globalInfo.HomeCluster == "" {
-		globalInfo.HomeCluster = "unknown"
+		globalInfo.HomeCluster = business.DefaultClusterID
 		c, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster(nil)
 		graph.CheckError(err)
 		if c != nil {
