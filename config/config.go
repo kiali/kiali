@@ -158,7 +158,6 @@ type GrafanaVariablesConfig struct {
 type TracingConfig struct {
 	Auth                 Auth     `yaml:"auth"`
 	Enabled              bool     `yaml:"enabled"` // Enable Jaeger in Kiali
-	HealthCheckUrl       string   `yaml:"health_check_url,omitempty"`
 	InClusterURL         string   `yaml:"in_cluster_url"`
 	IsCore               bool     `yaml:"is_core,omitempty"`
 	NamespaceSelector    bool     `yaml:"namespace_selector"`
@@ -513,11 +512,11 @@ func NewConfig() (c *Config) {
 					Type: AuthTypeNone,
 				},
 				Enabled:              true,
-				NamespaceSelector:    true,
 				InClusterURL:         "http://tracing.istio-system:16685/jaeger",
 				IsCore:               false,
+				NamespaceSelector:    true,
 				URL:                  "",
-				UseGRPC:              false,
+				UseGRPC:              true,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
 			},
 		},
