@@ -158,7 +158,6 @@ type GrafanaVariablesConfig struct {
 type TracingConfig struct {
 	Auth                 Auth     `yaml:"auth"`
 	Enabled              bool     `yaml:"enabled"` // Enable Jaeger in Kiali
-	HealthCheckUrl       string   `yaml:"health_check_url,omitempty"`
 	InClusterURL         string   `yaml:"in_cluster_url"`
 	IsCore               bool     `yaml:"is_core,omitempty"`
 	NamespaceSelector    bool     `yaml:"namespace_selector"`

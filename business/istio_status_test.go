@@ -831,9 +831,6 @@ func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *co
 		conf.ExternalServices.Grafana.HealthCheckUrl = conf.ExternalServices.Grafana.InClusterURL
 		conf.ExternalServices.Grafana.InClusterURL = baseUrl + "/grafana/wrong"
 
-		conf.ExternalServices.Tracing.HealthCheckUrl = conf.ExternalServices.Tracing.InClusterURL
-		conf.ExternalServices.Tracing.InClusterURL = baseUrl + "/jaeger/wrong"
-
 		conf.ExternalServices.Prometheus.HealthCheckUrl = conf.ExternalServices.Prometheus.URL
 		conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/wrong"
 
