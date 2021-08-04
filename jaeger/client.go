@@ -31,6 +31,7 @@ type ClientInterface interface {
 	GetAppTraces(ns, app string, query models.TracingQuery) (traces *JaegerResponse, err error)
 	GetTraceDetail(traceId string) (*JaegerSingleTrace, error)
 	GetErrorTraces(ns, app string, duration time.Duration) (errorTraces int, err error)
+	GetServiceStatus() (available bool, err error)
 }
 
 // Client for Jaeger API.
@@ -198,6 +199,19 @@ func (in *Client) GetErrorTraces(ns, app string, duration time.Duration) (int, e
 		return 0, err
 	}
 	return len(traces.Data), nil
+}
+
+func (in *Client) GetServiceStatus() (bool, error) {
+	// Check Service Status using HTTP when gRPC is not enabled
+	if in.grpcClient == nil {
+		return getServiceStatusHTTP(in.httpClient, in.baseURL)
+	}
+
+	ctx, cancel := context.WithTimeout(in.ctx, 4*time.Second)
+	defer cancel()
+
+	_, err := in.grpcClient.GetServices(ctx, &api_v2.GetServicesRequest{})
+	return err == nil, err
 }
 
 type SpansStreamer interface {

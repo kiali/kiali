@@ -53,6 +53,13 @@ func getTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (
 	}, nil
 }
 
+func getServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error) {
+	url := *baseURL
+	url.Path = path.Join(url.Path, "/api/services")
+	_, _, reqError := makeRequest(client, url.String(), nil)
+	return reqError == nil, reqError
+}
+
 func queryTracesHTTP(client http.Client, u *url.URL) (*JaegerResponse, error) {
 	// HTTP and GRPC requests co-exist, but when minDuration is present, for HTTP it requires a unit (ms)
 	// https://github.com/kiali/kiali/issues/3939

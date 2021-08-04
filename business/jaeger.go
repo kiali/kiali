@@ -239,6 +239,14 @@ func (in *JaegerService) GetErrorTraces(ns, app string, duration time.Duration) 
 	return client.GetErrorTraces(ns, app, duration)
 }
 
+func (in *JaegerService) GetStatus() (accessible bool, err error) {
+	client, err := in.client()
+	if err != nil {
+		return false, err
+	}
+	return client.GetServiceStatus()
+}
+
 func matchesWorkload(trace *jaegerModels.Trace, namespace, workload string) bool {
 	for _, span := range trace.Spans {
 		if process, ok := trace.Processes[span.ProcessID]; ok {
