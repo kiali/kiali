@@ -1,6 +1,7 @@
 package business
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -20,6 +21,8 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/jaeger"
+	"github.com/kiali/kiali/jaeger/jaegertest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/log"
@@ -124,20 +127,20 @@ func TestComponentNamespaces(t *testing.T) {
 	a.Len(nss, 4)
 }
 
-func mockAddOnsCalls(ds []apps_v1.Deployment, daemonSets []apps_v1.DaemonSet, pods []v1.Pod, isIstioReachable bool, overrideAddonURLs bool) (*kubetest.K8SClientMock, *httptest.Server, *int, *int, *int) {
+func mockAddOnsCalls(ds []apps_v1.Deployment, daemonSets []apps_v1.DaemonSet, pods []v1.Pod, isIstioReachable bool, overrideAddonURLs bool) (*kubetest.K8SClientMock, *httptest.Server, *int, *int) {
 	// Prepare the Call counts for each Addon
-	jaegerCalls, grafanaCalls, prometheusCalls := 0, 0, 0
+	grafanaCalls, prometheusCalls := 0, 0
 
 	// Mock k8s api calls
 	k8s := mockDeploymentCall(ds, daemonSets, pods, isIstioReachable)
-	routes := mockAddOnCalls(defaultAddOnCalls(&jaegerCalls, &grafanaCalls, &prometheusCalls))
+	routes := mockAddOnCalls(defaultAddOnCalls(&grafanaCalls, &prometheusCalls))
 	httpServer := mockServer(routes)
 
 	// Adapt the AddOns URLs to the mock Server
 	conf := addonAddMockUrls(httpServer.URL, config.NewConfig(), overrideAddonURLs)
 	config.Set(conf)
 
-	return k8s, httpServer, &jaegerCalls, &grafanaCalls, &prometheusCalls
+	return k8s, httpServer, &grafanaCalls, &prometheusCalls
 }
 
 func sampleIstioComponent() ([]apps_v1.Deployment, []apps_v1.DaemonSet, []v1.Pod, bool, bool) {
@@ -185,16 +188,15 @@ func fakePod(name, namespace, appLabel, phase string) v1.Pod {
 func TestGrafanaWorking(t *testing.T) {
 	assert := assert.New(t)
 
-	k8s, httpServ, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(sampleIstioComponent())
+	k8s, httpServ, grafanaCalls, promCalls := mockAddOnsCalls(sampleIstioComponent())
 	defer httpServ.Close()
 
-	iss := NewWithBackends(k8s, nil, nil).IstioStatus
+	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
-	assert.Equal(1, *jaegerCalls)
 	assert.Equal(1, *promCalls)
 
 	assertNotPresent(assert, icsl, "grafana")
@@ -206,7 +208,7 @@ func TestGrafanaWorking(t *testing.T) {
 func TestGrafanaDisabled(t *testing.T) {
 	assert := assert.New(t)
 
-	k8s, httpServ, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(sampleIstioComponent())
+	k8s, httpServ, grafanaCalls, promCalls := mockAddOnsCalls(sampleIstioComponent())
 	defer httpServ.Close()
 
 	// Disable Grafana
@@ -214,7 +216,7 @@ func TestGrafanaDisabled(t *testing.T) {
 	conf.ExternalServices.Grafana.Enabled = false
 	config.Set(conf)
 
-	iss := NewWithBackends(k8s, nil, nil).IstioStatus
+	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
 
@@ -225,7 +227,6 @@ func TestGrafanaDisabled(t *testing.T) {
 	assert.Zero(*grafanaCalls)
 
 	// Requests to Jaeger and Prometheus performed once
-	assert.Equal(1, *jaegerCalls)
 	assert.Equal(1, *promCalls)
 
 	assertNotPresent(assert, icsl, "grafana")
@@ -236,10 +237,10 @@ func TestGrafanaDisabled(t *testing.T) {
 
 func TestGrafanaNotWorking(t *testing.T) {
 	assert := assert.New(t)
-	jaegerCalls, grafanaCalls, prometheusCalls := 0, 0, 0
+	grafanaCalls, prometheusCalls := 0, 0
 	dps, ds, pods, istiodReachable, _ := sampleIstioComponent()
 	k8s := mockDeploymentCall(dps, ds, pods, istiodReachable)
-	addOnsStetup := defaultAddOnCalls(&jaegerCalls, &grafanaCalls, &prometheusCalls)
+	addOnsStetup := defaultAddOnCalls(&grafanaCalls, &prometheusCalls)
 	addOnsStetup["grafana"] = addOnsSetup{
 		Url:        "/grafana/mock",
 		StatusCode: 501,
@@ -253,7 +254,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 	conf := addonAddMockUrls(httpServer.URL, config.NewConfig(), false)
 	config.Set(conf)
 
-	iss := NewWithBackends(k8s, nil, nil).IstioStatus
+	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
 
@@ -262,7 +263,6 @@ func TestGrafanaNotWorking(t *testing.T) {
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, grafanaCalls)
-	assert.Equal(1, jaegerCalls)
 	assert.Equal(1, prometheusCalls)
 
 	assertComponent(assert, icsl, "grafana", Unreachable, false)
@@ -271,20 +271,39 @@ func TestGrafanaNotWorking(t *testing.T) {
 	assertNotPresent(assert, icsl, "custom dashboards")
 }
 
-func TestOverriddenUrls(t *testing.T) {
+func TestFailingTracingService(t *testing.T) {
 	assert := assert.New(t)
 
-	dps, ds, pods, idReachable, _ := sampleIstioComponent()
-	k8s, httpServ, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(dps, ds, pods, idReachable, true)
+	k8s, httpServ, grafanaCalls, promCalls := mockAddOnsCalls(sampleIstioComponent())
 	defer httpServ.Close()
 
-	iss := NewWithBackends(k8s, nil, nil).IstioStatus
+	iss := NewWithBackends(k8s, nil, mockFailingJaeger).IstioStatus
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
-	assert.Equal(1, *jaegerCalls)
+	assert.Equal(1, *promCalls)
+
+	assertNotPresent(assert, icsl, "grafana")
+	assertNotPresent(assert, icsl, "prometheus")
+	assertNotPresent(assert, icsl, "custom dashboards")
+	assertComponent(assert, icsl, "jaeger", Unreachable, false)
+}
+
+func TestOverriddenUrls(t *testing.T) {
+	assert := assert.New(t)
+
+	dps, ds, pods, idReachable, _ := sampleIstioComponent()
+	k8s, httpServ, grafanaCalls, promCalls := mockAddOnsCalls(dps, ds, pods, idReachable, true)
+	defer httpServ.Close()
+
+	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
+	icsl, error := iss.GetStatus()
+	assert.NoError(error)
+
+	// Requests to AddOns have to be 1
+	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
 
 	assertNotPresent(assert, icsl, "grafana")
@@ -296,7 +315,7 @@ func TestOverriddenUrls(t *testing.T) {
 func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	assert := assert.New(t)
 
-	k8s, httpServ, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(sampleIstioComponent())
+	k8s, httpServ, grafanaCalls, promCalls := mockAddOnsCalls(sampleIstioComponent())
 	defer httpServ.Close()
 
 	// Custom Dashboard prom URL forced to be empty
@@ -304,13 +323,12 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	conf.ExternalServices.CustomDashboards.Prometheus.URL = ""
 	config.Set(conf)
 
-	iss := NewWithBackends(k8s, nil, nil).IstioStatus
+	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
-	assert.Equal(1, *jaegerCalls)
 	assert.Equal(2, *promCalls)
 
 	assertNotPresent(assert, icsl, "grafana")
@@ -322,10 +340,10 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 func TestNoIstioComponentFoundError(t *testing.T) {
 	assert := assert.New(t)
 
-	k8s, httpServ, _, _, _ := mockAddOnsCalls([]apps_v1.Deployment{}, []apps_v1.DaemonSet{}, []v1.Pod{}, true, false)
+	k8s, httpServ, _, _ := mockAddOnsCalls([]apps_v1.Deployment{}, []apps_v1.DaemonSet{}, []v1.Pod{}, true, false)
 	defer httpServ.Close()
 
-	iss := NewWithBackends(k8s, nil, nil).IstioStatus
+	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 	_, error := iss.GetStatus()
 	assert.Error(error)
 }
@@ -339,13 +357,13 @@ func TestDefaults(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(depl, dss, healthyIstiods(), true, false)
+	k8s, httpServer, grafanaCalls, promCalls := mockAddOnsCalls(depl, dss, healthyIstiods(), true, false)
 	defer httpServer.Close()
 
-	iss := NewWithBackends(k8s, nil, nil).IstioStatus
+	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 
-	icsl, error := iss.GetStatus()
-	assert.NoError(error)
+	icsl, err := iss.GetStatus()
+	assert.NoError(err)
 	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, true)
 	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
 
@@ -357,7 +375,6 @@ func TestDefaults(t *testing.T) {
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
-	assert.Equal(1, *jaegerCalls)
 	assert.Equal(1, *promCalls)
 }
 
@@ -370,7 +387,7 @@ func TestNonDefaults(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods, dss, healthyIstiods(), true, false)
+	k8s, httpServer, grafanaCalls, promCalls := mockAddOnsCalls(pods, dss, healthyIstiods(), true, false)
 	defer httpServer.Close()
 
 	c := config.Get()
@@ -384,7 +401,7 @@ func TestNonDefaults(t *testing.T) {
 	}
 	config.Set(c)
 
-	iss := NewWithBackends(k8s, nil, nil).IstioStatus
+	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
@@ -399,7 +416,6 @@ func TestNonDefaults(t *testing.T) {
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
-	assert.Equal(1, *jaegerCalls)
 	assert.Equal(1, *promCalls)
 }
 
@@ -414,7 +430,7 @@ func TestIstiodNotReady(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, notReadyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods, dss, healthyIstiods(), false, false)
+	k8s, httpServer, grafanaCalls, promCalls := mockAddOnsCalls(pods, dss, healthyIstiods(), false, false)
 	defer httpServer.Close()
 
 	c := config.Get()
@@ -429,7 +445,7 @@ func TestIstiodNotReady(t *testing.T) {
 	}
 	config.Set(c)
 
-	iss := NewWithBackends(k8s, nil, nil).IstioStatus
+	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
@@ -446,7 +462,6 @@ func TestIstiodNotReady(t *testing.T) {
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
-	assert.Equal(1, *jaegerCalls)
 	assert.Equal(1, *promCalls)
 
 }
@@ -462,7 +477,7 @@ func TestIstiodUnreachable(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods, dss, healthyIstiods(), false, false)
+	k8s, httpServer, grafanaCalls, promCalls := mockAddOnsCalls(pods, dss, healthyIstiods(), false, false)
 	defer httpServer.Close()
 
 	c := config.Get()
@@ -477,7 +492,7 @@ func TestIstiodUnreachable(t *testing.T) {
 	}
 	config.Set(c)
 
-	iss := NewWithBackends(k8s, nil, nil).IstioStatus
+	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
@@ -495,7 +510,6 @@ func TestIstiodUnreachable(t *testing.T) {
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
-	assert.Equal(1, *jaegerCalls)
 	assert.Equal(1, *promCalls)
 
 }
@@ -511,7 +525,7 @@ func TestCustomizedAppLabel(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(depls, dss, healthyIstiods(), true, false)
+	k8s, httpServer, grafanaCalls, promCalls := mockAddOnsCalls(depls, dss, healthyIstiods(), true, false)
 	defer httpServer.Close()
 
 	c := config.Get()
@@ -526,7 +540,7 @@ func TestCustomizedAppLabel(t *testing.T) {
 	}
 	config.Set(c)
 
-	iss := NewWithBackends(k8s, nil, nil).IstioStatus
+	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
@@ -541,7 +555,6 @@ func TestCustomizedAppLabel(t *testing.T) {
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
-	assert.Equal(1, *jaegerCalls)
 	assert.Equal(1, *promCalls)
 }
 
@@ -557,7 +570,7 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(depls, dss, healthyIstiods(), true, false)
+	k8s, httpServer, grafanaCalls, promCalls := mockAddOnsCalls(depls, dss, healthyIstiods(), true, false)
 	defer httpServer.Close()
 
 	c := config.Get()
@@ -572,7 +585,7 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	}
 	config.Set(c)
 
-	iss := NewWithBackends(k8s, nil, nil).IstioStatus
+	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
@@ -587,7 +600,6 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
-	assert.Equal(1, *jaegerCalls)
 	assert.Equal(1, *promCalls)
 }
 
@@ -604,7 +616,7 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(depls, dss, healthyIstiods(), true, false)
+	k8s, httpServer, grafanaCalls, promCalls := mockAddOnsCalls(depls, dss, healthyIstiods(), true, false)
 	defer httpServer.Close()
 
 	c := config.Get()
@@ -619,7 +631,7 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	}
 	config.Set(c)
 
-	iss := NewWithBackends(k8s, nil, nil).IstioStatus
+	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
@@ -634,7 +646,6 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
-	assert.Equal(1, *jaegerCalls)
 	assert.Equal(1, *promCalls)
 }
 
@@ -659,6 +670,18 @@ func assertNotPresent(assert *assert.Assertions, icsl IstioComponentStatus, name
 		}
 	}
 	assert.False(componentFound)
+}
+
+func mockJaeger() (jaeger.ClientInterface, error) {
+	j := new(jaegertest.JaegerClientMock)
+	j.On("GetServiceStatus").Return(true, nil)
+	return jaeger.ClientInterface(j), nil
+}
+
+func mockFailingJaeger() (jaeger.ClientInterface, error) {
+	j := new(jaegertest.JaegerClientMock)
+	j.On("GetServiceStatus").Return(false, errors.New("error connecting with jaeger service"))
+	return jaeger.ClientInterface(j), nil
 }
 
 // Setup K8S api call to fetch Pods
@@ -769,17 +792,12 @@ func mockAddOnCalls(addons map[string]addOnsSetup) *mux.Router {
 	return mr
 }
 
-func defaultAddOnCalls(jaeger, grafana, prom *int) map[string]addOnsSetup {
+func defaultAddOnCalls(grafana, prom *int) map[string]addOnsSetup {
 	return map[string]addOnsSetup{
 		"prometheus": {
 			Url:        "/prometheus/mock",
 			StatusCode: 200,
 			CallCount:  prom,
-		},
-		"jaeger": {
-			Url:        "/jaeger/mock",
-			StatusCode: 200,
-			CallCount:  jaeger,
 		},
 		"grafana": {
 			Url:        "/grafana/mock",
@@ -812,9 +830,6 @@ func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *co
 	if overrideUrl {
 		conf.ExternalServices.Grafana.HealthCheckUrl = conf.ExternalServices.Grafana.InClusterURL
 		conf.ExternalServices.Grafana.InClusterURL = baseUrl + "/grafana/wrong"
-
-		conf.ExternalServices.Tracing.HealthCheckUrl = conf.ExternalServices.Tracing.InClusterURL
-		conf.ExternalServices.Tracing.InClusterURL = baseUrl + "/jaeger/wrong"
 
 		conf.ExternalServices.Prometheus.HealthCheckUrl = conf.ExternalServices.Prometheus.URL
 		conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/wrong"
