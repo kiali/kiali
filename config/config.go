@@ -465,6 +465,7 @@ func NewConfig() (c *Config) {
 				},
 				Enabled: true,
 				IsCore:  false,
+				InClusterURL: "http://grafana.istio-system:3000",
 			},
 			Istio: IstioConfig{
 				ComponentStatuses: ComponentStatuses{
