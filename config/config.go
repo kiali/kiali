@@ -463,9 +463,9 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				Enabled: true,
-				IsCore:  false,
+				Enabled:      true,
 				InClusterURL: "http://grafana.istio-system:3000",
+				IsCore:       false,
 			},
 			Istio: IstioConfig{
 				ComponentStatuses: ComponentStatuses{

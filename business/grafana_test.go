@@ -42,6 +42,7 @@ func TestGetGrafanaInfoDisabled(t *testing.T) {
 
 func TestGetGrafanaInfoExternal(t *testing.T) {
 	conf := config.NewConfig()
+	conf.ExternalServices.Grafana.InClusterURL = ""
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
@@ -71,6 +72,7 @@ func TestGetGrafanaInfoInCluster(t *testing.T) {
 
 func TestGetGrafanaInfoGetError(t *testing.T) {
 	conf := config.NewConfig()
+	conf.ExternalServices.Grafana.InClusterURL = ""
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
@@ -83,6 +85,7 @@ func TestGetGrafanaInfoGetError(t *testing.T) {
 
 func TestGetGrafanaInfoInvalidDashboard(t *testing.T) {
 	conf := config.NewConfig()
+	conf.ExternalServices.Grafana.InClusterURL = ""
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
@@ -96,6 +99,7 @@ func TestGetGrafanaInfoInvalidDashboard(t *testing.T) {
 
 func TestGetGrafanaInfoWithoutLeadingSlashPath(t *testing.T) {
 	conf := config.NewConfig()
+	conf.ExternalServices.Grafana.InClusterURL = ""
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
@@ -110,6 +114,7 @@ func TestGetGrafanaInfoWithoutLeadingSlashPath(t *testing.T) {
 
 func TestGetGrafanaInfoWithTrailingSlashURL(t *testing.T) {
 	conf := config.NewConfig()
+	conf.ExternalServices.Grafana.InClusterURL = ""
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001/"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
@@ -124,6 +129,7 @@ func TestGetGrafanaInfoWithTrailingSlashURL(t *testing.T) {
 
 func TestGetGrafanaInfoWithQueryParams(t *testing.T) {
 	conf := config.NewConfig()
+	conf.ExternalServices.Grafana.InClusterURL = ""
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001/?orgId=1"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
@@ -138,6 +144,7 @@ func TestGetGrafanaInfoWithQueryParams(t *testing.T) {
 
 func TestGetGrafanaInfoWithAbsoluteDashboardURL(t *testing.T) {
 	conf := config.NewConfig()
+	conf.ExternalServices.Grafana.InClusterURL = ""
 	conf.ExternalServices.Grafana.URL = "/system/grafana/"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	conf.ExternalServices.Grafana.InClusterURL = "http://grafana.istio-system:3001"
