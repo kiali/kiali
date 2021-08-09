@@ -805,7 +805,7 @@ type IstioStatusResponse struct {
 // swagger:response certsInfoResponse
 type CertsInfoResponse struct {
 	// in: body
-	Body []business.CertInfo
+	Body []models.CertInfo
 }
 
 // Posted parameters for a metrics stats query

@@ -1,10 +1,10 @@
 package business
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/stretchr/testify/assert"
 	core_v1 "k8s.io/api/core/v1"
@@ -45,7 +45,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 
 	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&core_v1.ConfigMap{}, nil)
 	k8s.On("IsOpenShift").Return(false)
-	k8s.On("GetSecret", conf.IstioNamespace, "cacerts").Return(&core_v1.Secret{}, errors.New("error"))
+	k8s.On("GetSecret", conf.IstioNamespace, "cacerts").Return(&core_v1.Secret{}, kubernetes.NewNotFound("cacerts", "v1", "Secret"))
 	k8s.On("GetSecret", conf.IstioNamespace, "istio-ca-secret").Return(&secret, nil)
 
 	layer := NewWithBackends(k8s, nil, nil)
@@ -55,7 +55,6 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 
 	assert.Len(t, certs, 1)
 	assert.Equal(t, "O=cluster.local", certs[0].Issuer)
-	assert.Equal(t, "O=cluster.local", certs[0].Subject)
 	assert.Equal(t, "2021-07-27 14:37:00 +0000 UTC", certs[0].NotBefore.String())
 	assert.Equal(t, "2031-07-25 14:37:00 +0000 UTC", certs[0].NotAfter.String())
 	assert.Equal(t, "istio-ca-secret", certs[0].SecretName)
@@ -119,7 +118,6 @@ cdLzuNyDoeWOHU7mx52TuTwj3eObtQM+hlI=
 
 	assert.Len(t, certs, 1)
 	assert.Equal(t, "CN=Root CA,O=Istio", certs[0].Issuer)
-	assert.Equal(t, "CN=Intermediate CA,O=Istio,L=cluster1", certs[0].Subject)
 	assert.Equal(t, "2021-07-27 18:30:06 +0000 UTC", certs[0].NotBefore.String())
 	assert.Equal(t, "2023-07-27 18:30:06 +0000 UTC", certs[0].NotAfter.String())
 	assert.Equal(t, "cacerts", certs[0].SecretName)
