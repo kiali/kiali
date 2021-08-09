@@ -6550,7 +6550,10 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 ### <span id="cert-info"></span> CertInfo
 
 
+> CertInfo contains the information for a given certificate
   
+
+
 
 
 
@@ -6564,7 +6567,6 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 | NotAfter | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
 | NotBefore | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
 | SecretName | string| `string` |  | |  |  |
-| Subject | string| `string` |  | |  |  |
 
 
 

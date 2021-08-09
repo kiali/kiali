@@ -4357,6 +4357,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "CertInfo": {
+      "description": "CertInfo contains the information for a given certificate",
       "type": "object",
       "properties": {
         "dnsNames": {
@@ -4387,13 +4388,9 @@
         "secretName": {
           "type": "string",
           "x-go-name": "SecretName"
-        },
-        "subject": {
-          "type": "string",
-          "x-go-name": "Subject"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/business"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Chart": {
       "description": "Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard config resource",
