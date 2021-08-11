@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: WorkloadGroup
+metadata:
+  name: ratings-v1
+  namespace: bookinfo
+spec:
+  metadata:
+    labels:
+      app: ratings
+      version: v1
+  template:
+    serviceAccount: bookinfo-ratings
+    ports:
+      http: 9080
