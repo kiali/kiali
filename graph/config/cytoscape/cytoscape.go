@@ -108,6 +108,7 @@ type NodeData struct {
 	IsOutside             bool                `json:"isOutside,omitempty"`             // true | false
 	IsRoot                bool                `json:"isRoot,omitempty"`                // true | false
 	IsServiceEntry        *graph.SEInfo       `json:"isServiceEntry,omitempty"`        // set static service entry information
+	HasWorkloadEntry      bool                `json:"hasWorkloadEntry,omitempty"`      // true (this nodes has a corresponding WorkloadEntry) | false
 }
 
 type EdgeData struct {
@@ -336,6 +337,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// node may have service entry static info
 		if val, ok := n.Metadata[graph.IsServiceEntry]; ok {
 			nd.IsServiceEntry = val.(*graph.SEInfo)
+		}
+
+		// node may have a workload entry associated with it
+		if _, ok := n.Metadata[graph.HasWorkloadEntry]; ok {
+			nd.HasWorkloadEntry = true
 		}
 
 		// node may be an aggregate

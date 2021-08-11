@@ -3,6 +3,7 @@ package cytoscape
 import (
 	"testing"
 
+	"github.com/kiali/kiali/graph"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -80,4 +81,18 @@ func TestRateStrings(t *testing.T) {
 	assert.Equal("0.0009", rateToString(2, 0.0009))
 	assert.Equal("0.0009", rateToString(2, 0.00094))
 	assert.Equal("0.0010", rateToString(2, 0.00099))
+}
+
+func TestHasWorkloadEntryAddedToGraph(t *testing.T) {
+	assert := assert.New(t)
+
+	traffic := graph.NewTrafficMap()
+
+	n0 := graph.NewNode("testCluster", "appNamespace", "ratings", "appNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
+	n0.Metadata[graph.HasWorkloadEntry] = true
+	traffic[n0.ID] = &n0
+	cytoConfig := NewConfig(traffic, graph.ConfigOptions{})
+
+	cytoNode := cytoConfig.Elements.Nodes[0]
+	assert.True(cytoNode.Data.HasWorkloadEntry)
 }
