@@ -1,6 +1,7 @@
 package business
 
 import (
+	"fmt"
 	"testing"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
@@ -17,6 +18,7 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestGetNamespaceValidations(t *testing.T) {
@@ -52,6 +54,32 @@ func TestGatewayValidation(t *testing.T) {
 	v := mockMultiNamespaceGatewaysValidationService()
 	validations, _ := v.GetIstioObjectValidations("test", "gateways", "second")
 	assert.NotEmpty(validations)
+}
+
+func TestFilterExportToNamespacesVS(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	var currentIstioObjects []kubernetes.IstioObject
+	vs1to3 := loadIstioObject("vs_bookinfo1_to_2_3.yaml", "VirtualService", t)
+	currentIstioObjects = append(currentIstioObjects, vs1to3)
+	vs1tothis := loadIstioObject("vs_bookinfo1_to_this.yaml", "VirtualService", t)
+	currentIstioObjects = append(currentIstioObjects, vs1tothis)
+	vs2to1 := loadIstioObject("vs_bookinfo2_to_1.yaml", "VirtualService", t)
+	currentIstioObjects = append(currentIstioObjects, vs2to1)
+	vs2tothis := loadIstioObject("vs_bookinfo2_to_this.yaml", "VirtualService", t)
+	currentIstioObjects = append(currentIstioObjects, vs2tothis)
+	vs3to2 := loadIstioObject("vs_bookinfo3_to_2.yaml", "VirtualService", t)
+	currentIstioObjects = append(currentIstioObjects, vs3to2)
+	vs3toall := loadIstioObject("vs_bookinfo3_to_all.yaml", "VirtualService", t)
+	currentIstioObjects = append(currentIstioObjects, vs3toall)
+	v := mockEmptyValidationService()
+	filteredVSs := v.filterExportToNamespacesIstioObjects("bookinfo", &currentIstioObjects)
+	var expectedVS []kubernetes.IstioObject
+	expectedVS = append(expectedVS, vs2to1)
+	expectedVS = append(expectedVS, vs3toall)
+	assert.EqualValues(filteredVSs, &expectedVS)
 }
 
 func mockWorkLoadService(k8s *kubetest.K8SClientMock) WorkloadService {
@@ -124,6 +152,13 @@ func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, servic
 
 	mockWorkLoadService(k8s)
 
+	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
+}
+
+func mockEmptyValidationService() IstioValidationsService {
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsMaistraApi").Return(false)
 	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 }
 
@@ -218,4 +253,18 @@ func getGateway(name string) []kubernetes.IstioObject {
 		data.CreateEmptyGateway(name, "test", map[string]string{
 			"app": "real",
 		}))}
+}
+
+func loadIstioObject(file string, objectType string, t *testing.T) kubernetes.IstioObject {
+	loader := yamlFixtureLoaderFor(file)
+	err := loader.Load()
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
+	return loader.GetFirstResource(objectType)
+}
+
+func yamlFixtureLoaderFor(file string) *validations.YamlFixtureLoader {
+	path := fmt.Sprintf("../tests/data/validations/exportto/cns/%s", file)
+	return &validations.YamlFixtureLoader{Filename: path}
 }

@@ -1,8 +1,8 @@
 kind: VirtualService
 apiVersion: networking.istio.io/v1alpha3
 metadata:
-  name: vs_exportto_all_valid
-  namespace: bookinfo
+  name: vs_bookinfo3_to_all
+  namespace: bookinfo3
 spec:
   hosts:
     - '*'

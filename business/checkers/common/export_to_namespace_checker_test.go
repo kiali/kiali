@@ -27,6 +27,10 @@ func TestVSNamespaceExist(t *testing.T) {
 	assertIstioObjectValid("vs_exportto_valid.yaml", "VirtualService", t)
 }
 
+func TestVSAllExist(t *testing.T) {
+	assertIstioObjectValid("vs_exportto_all_valid.yaml", "VirtualService", t)
+}
+
 func TestVSNamespaceNotFound(t *testing.T) {
 	assertIstioObjectInvalidNamespace("vs_exportto_invalid.yaml", "VirtualService", 2, t)
 }
