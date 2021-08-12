@@ -8,12 +8,14 @@ import (
 
 // CertInfo contains the information for a given certificate
 type CertInfo struct {
-	SecretName string    `json:"secretName"`
-	DNSNames   []string  `json:"dnsNames"`
-	Issuer     string    `json:"issuer"`
-	NotBefore  time.Time `json:"notBefore"`
-	NotAfter   time.Time `json:"notAfter"`
-	Error      string    `json:"error"`
+	SecretName      string    `json:"secretName"`
+	SecretNamespace string    `json:"secretNamespace"`
+	DNSNames        []string  `json:"dnsNames"`
+	Issuer          string    `json:"issuer"`
+	NotBefore       time.Time `json:"notBefore"`
+	NotAfter        time.Time `json:"notAfter"`
+	Error           string    `json:"error"`
+	Accessible      bool      `json:"accessible"`
 }
 
 func (ci *CertInfo) Parse(certificate []byte) {
@@ -33,4 +35,5 @@ func (ci *CertInfo) Parse(certificate []byte) {
 	ci.Issuer = cert.Issuer.String()
 	ci.NotBefore = cert.NotBefore
 	ci.NotAfter = cert.NotAfter
+	ci.Accessible = true
 }

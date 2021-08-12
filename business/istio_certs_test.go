@@ -58,6 +58,8 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	assert.Equal(t, "2021-07-27 14:37:00 +0000 UTC", certs[0].NotBefore.String())
 	assert.Equal(t, "2031-07-25 14:37:00 +0000 UTC", certs[0].NotAfter.String())
 	assert.Equal(t, "istio-ca-secret", certs[0].SecretName)
+	assert.Equal(t, "istio-system", certs[0].SecretNamespace)
+	assert.True(t, certs[0].Accessible)
 	assert.Nil(t, certs[0].DNSNames)
 	assert.Empty(t, certs[0].Error)
 }
@@ -121,6 +123,8 @@ cdLzuNyDoeWOHU7mx52TuTwj3eObtQM+hlI=
 	assert.Equal(t, "2021-07-27 18:30:06 +0000 UTC", certs[0].NotBefore.String())
 	assert.Equal(t, "2023-07-27 18:30:06 +0000 UTC", certs[0].NotAfter.String())
 	assert.Equal(t, "cacerts", certs[0].SecretName)
+	assert.Equal(t, "istio-system", certs[0].SecretNamespace)
+	assert.True(t, certs[0].Accessible)
 	assert.Nil(t, certs[0].DNSNames)
 	assert.Empty(t, certs[0].Error)
 }

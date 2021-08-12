@@ -1,7 +1,6 @@
 package business
 
 import (
-	"fmt"
 	"sync"
 
 	"gopkg.in/yaml.v2"
@@ -69,12 +68,13 @@ func (ics *IstioCertsService) getCertificateFromSecret(secretName, certName stri
 
 	cert := models.CertInfo{}
 	cert.SecretName = secretName
+	cert.SecretNamespace = cfg.IstioNamespace
 
 	secret, err := ics.k8s.GetSecret(cfg.IstioNamespace, secretName)
 
 	if err != nil {
 		if errors.IsForbidden(err) {
-			cert.Error = fmt.Sprintf("unable to get secret due to permissions, to fix this error, grant Kiali service account permission to get %s secret in %s namespace", secretName, cfg.IstioNamespace)
+			cert.Accessible = false
 			return cert, nil
 		}
 		return models.CertInfo{}, err
