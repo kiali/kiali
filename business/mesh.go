@@ -441,6 +441,14 @@ func (in *MeshService) resolveRemoteClustersFromSecrets() ([]Cluster, error) {
 	// labels the secrets with istio/multiCluster=true. Let's use that label to fetch the secrets of interest.
 	secrets, err := in.k8s.GetSecrets(conf.IstioNamespace, "istio/multiCluster=true")
 	if err != nil {
+		if errors.IsForbidden(err) {
+			// A forbidden error means that we don't have privileges to list secrets in the Istio namespace.
+			// This may be because sysadmin may not want us to do that for security and probably
+			// because it is known that the environment is a single-cluster. So, return
+			// and empty list of clusters, avoid the warning error and use a trace log message.
+			log.Trace("Not enough privileges to list secrets with istio/multiCluster=true label.")
+			return []Cluster{}, nil
+		}
 		return []Cluster{}, err
 	}
 
