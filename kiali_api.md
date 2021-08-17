@@ -7991,6 +7991,7 @@ This type is used to describe a set of objects.
 | HasRequestTimeout | boolean| `bool` |  | |  |  |
 | HasTCPTrafficShifting | boolean| `bool` |  | |  |  |
 | HasTrafficShifting | boolean| `bool` |  | |  |  |
+| HasWorkloadEntry | boolean| `bool` |  | |  |  |
 | ID | string| `string` |  | | Cytoscape Fields |  |
 | IsBox | string| `string` |  | |  |  |
 | IsDead | boolean| `bool` |  | |  |  |

@@ -6016,6 +6016,10 @@
         "hasVS": {
           "$ref": "#/definitions/VSInfo"
         },
+        "hasWorkloadEntry": {
+          "type": "boolean",
+          "x-go-name": "HasWorkloadEntry"
+        },
         "id": {
           "description": "Cytoscape Fields",
           "type": "string",
