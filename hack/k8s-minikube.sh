@@ -377,8 +377,7 @@ install_olm() {
   }
   export MINIKUBE_EXEC_WITH_PROFILE
   export -f kubectl
-  # TODO when https://github.com/operator-framework/operator-lifecycle-manager/pull/2211 is fixed, we can remove the "sed" here
-  curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}/install.sh | sed 's/set -e//g' | bash -s ${OLM_VERSION}
+  curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}/install.sh | bash -s ${OLM_VERSION}
   [ "$?" != "0" ] && echo "ERROR: Failed to install OLM" && exit 1
   unset -f kubectl
 
