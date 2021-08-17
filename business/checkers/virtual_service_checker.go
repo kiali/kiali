@@ -64,7 +64,7 @@ func (in VirtualServiceChecker) runChecks(virtualService kubernetes.IstioObject)
 
 	enabledCheckers := []Checker{
 		virtualservices.RouteChecker{Route: virtualService},
-		virtualservices.SubsetPresenceChecker{Namespace: in.Namespace, Namespaces: in.Namespaces.GetNames(), DestinationRules: in.DestinationRules, VirtualService: virtualService},
+		virtualservices.SubsetPresenceChecker{Namespace: in.Namespace, Namespaces: in.Namespaces.GetNames(), DestinationRules: in.DestinationRules, VirtualService: virtualService, ExportedDestinationRules: in.ExportedDestinationRules},
 		common.ExportToNamespaceChecker{IstioObject: virtualService, Namespaces: in.Namespaces},
 	}
 

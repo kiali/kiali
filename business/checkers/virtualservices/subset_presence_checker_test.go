@@ -14,6 +14,19 @@ func TestCheckerWithSubsetMatching(t *testing.T) {
 	testNoSubsetPresenceValidationsFound("subset-presence-matching-subsets-1.yaml", t)
 }
 
+func TestCheckerWithExportSubsetMatching(t *testing.T) {
+	testNoSubsetPresenceValidationsFound("subset-presence-export-subset.yaml", t)
+}
+
+func TestCheckerWithExportSubsetNotMatching(t *testing.T) {
+	vals, valid := subsetPresenceCheckerPrep("subset-presence-no-matching-export-subset.yaml", t)
+
+	tb := validations.IstioCheckTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb.AssertValidationsPresent(2, true)
+	tb.AssertValidationAt(0, models.WarningSeverity, "spec/http[0]/route[0]/destination", "virtualservices.subsetpresent.subsetnotfound")
+	tb.AssertValidationAt(1, models.WarningSeverity, "spec/http[0]/route[1]/destination", "virtualservices.subsetpresent.subsetnotfound")
+}
+
 func TestCheckerWithSubsetsMatchingShortHostname(t *testing.T) {
 	testNoSubsetPresenceValidationsFound("subset-presence-matching-subsets-2.yaml", t)
 }
@@ -67,10 +80,11 @@ func subsetPresenceCheckerPrep(scenario string, t *testing.T) ([]*models.IstioCh
 	err := loader.Load()
 
 	vals, valid := SubsetPresenceChecker{
-		Namespace:        "bookinfo",
-		Namespaces:       namespaceNames(loader.GetResources("Namespace")),
-		DestinationRules: loader.GetResources("DestinationRule"),
-		VirtualService:   loader.GetFirstResource("VirtualService"),
+		Namespace:                "bookinfo",
+		Namespaces:               namespaceNames(loader.GetResources("Namespace")),
+		DestinationRules:         loader.GetResourcesIn("DestinationRule", "bookinfo"),
+		ExportedDestinationRules: loader.GetResourcesNotIn("DestinationRule", "bookinfo"),
+		VirtualService:           loader.GetFirstResource("VirtualService"),
 	}.Check()
 
 	if err != nil {

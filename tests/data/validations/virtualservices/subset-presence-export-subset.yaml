@@ -1,0 +1,89 @@
+# No validations found
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bookinfo
+  labels:
+    istio-injection: "enabled"
+spec: {}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bookinfo2
+  labels:
+    istio-injection: "enabled"
+spec: {}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bookinfo3
+  labels:
+    istio-injection: "enabled"
+spec: {}
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: testrule
+  namespace: bookinfo
+spec:
+  host: reviews.bookinfo.svc.cluster.local
+  subsets:
+    - labels:
+        version: v2
+      name: v2
+  exportTo:
+    - '.'
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: testrule
+  namespace: bookinfo2
+spec:
+  host: reviews
+  subsets:
+    - labels:
+        version: v1
+      name: v1
+  exportTo:
+    - bookinfo
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: testrule
+  namespace: bookinfo3
+spec:
+  host: reviews
+  subsets:
+    - labels:
+        version: v3
+      name: v3
+  exportTo:
+    - '*'
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: reviews-vs
+  namespace: bookinfo
+spec:
+  hosts:
+    - reviews.bookinfo.svc.cluster.local
+  http:
+    - route:
+        - destination:
+            host: reviews.bookinfo2.svc.cluster.local
+            subset: v1
+          weight: 33
+        - destination:
+            host: reviews.bookinfo.svc.cluster.local
+            subset: v2
+          weight: 33
+        - destination:
+            host: reviews.bookinfo3.svc.cluster.local
+            subset: v3
+          weight: 34
