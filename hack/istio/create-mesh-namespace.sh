@@ -55,9 +55,8 @@ Valid command line arguments:
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -n|--namespace <name>: The namespace to be created or deleted. REQUIRED.
   -sa|--service-accounts
-      The service accounts that will be able to authenticate with docker with the credentials you provide.
+      The service accounts to use for adding users to the SecurityContextConstraints.
       You can specify more than one service account separated with spaces.
-      If you are using this to be able to pull Istio addon images, this value should be "prometheus grafana default".
       Default: "default"
   -h|--help: this text
 HELPMSG
@@ -151,9 +150,6 @@ metadata:
   name: "${NAMESPACE}-scc"
 runAsUser:
   type: RunAsAny
-  UID: <none>
-  UID Range Min: <none>
-  UID Range Max: <none>
 seLinuxContext:
   type: RunAsAny
 supplementalGroups:
