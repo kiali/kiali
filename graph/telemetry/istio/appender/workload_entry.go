@@ -2,6 +2,7 @@ package appender
 
 import (
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 )
@@ -34,6 +35,9 @@ func (a WorkloadEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalIn
 }
 
 func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+	appLabel := config.Get().IstioLabels.AppLabelName
+	versionLabel := config.Get().IstioLabels.VersionLabelName
+
 	for _, n := range trafficMap {
 		// Only a workload or app node can be a workload entry
 		if n.NodeType != graph.NodeTypeWorkload && n.NodeType != graph.NodeTypeApp {
@@ -50,7 +54,7 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 
 		for _, entry := range istioCfg.WorkloadEntries {
 			if labels, ok := entry.Spec.Labels.(map[string]interface{}); ok {
-				if labels["app"] == n.App && labels["version"] == n.Version {
+				if labels[appLabel] == n.App && labels[versionLabel] == n.Version {
 					n.Metadata[graph.HasWorkloadEntry] = true
 					log.Trace("Found matching WorkloadEntry")
 					// Once a matching workload entry has been found for the workload node,

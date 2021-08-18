@@ -100,6 +100,7 @@ type NodeData struct {
 	HasTCPTrafficShifting bool                `json:"hasTCPTrafficShifting,omitempty"` // true (vs has tcp traffic shifting) | false
 	HasTrafficShifting    bool                `json:"hasTrafficShifting,omitempty"`    // true (vs has traffic shifting) | false
 	HasVS                 *VSInfo             `json:"hasVS,omitempty"`                 // it can be empty if there is a VS without hostnames
+	HasWorkloadEntry      bool                `json:"hasWorkloadEntry,omitempty"`      // true (this node has a corresponding WorkloadEntry) | false
 	IsBox                 string              `json:"isBox,omitempty"`                 // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
 	IsDead                bool                `json:"isDead,omitempty"`                // true (has no pods) | false
 	IsGateway             *GWInfo             `json:"isGateway,omitempty"`             // Istio ingress/egress gateway information
@@ -108,7 +109,6 @@ type NodeData struct {
 	IsOutside             bool                `json:"isOutside,omitempty"`             // true | false
 	IsRoot                bool                `json:"isRoot,omitempty"`                // true | false
 	IsServiceEntry        *graph.SEInfo       `json:"isServiceEntry,omitempty"`        // set static service entry information
-	HasWorkloadEntry      bool                `json:"hasWorkloadEntry,omitempty"`      // true (this node has a corresponding WorkloadEntry) | false
 }
 
 type EdgeData struct {
