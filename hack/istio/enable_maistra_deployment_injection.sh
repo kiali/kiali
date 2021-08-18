@@ -11,7 +11,7 @@ prepare_maistra() {
   for d in $(oc get deployments -n ${ns} -o name)
   do
     echo "Enabling sidecar injection for deployment: ${d}"
-    oc patch ${d} -n ${ns} -p '{"spec":{"template":{"metadata":{"annotations":{"sidecar.istio.io/inject": "true"}}}}}' --type=merge
+    oc patch ${d} -n ${ns} -p '{"spec":{"template":{"metadata":{"labels":{"sidecar.istio.io/inject": "true"}}}}}' --type=merge
   done
 }
 
