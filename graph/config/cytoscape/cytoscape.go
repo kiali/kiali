@@ -108,7 +108,7 @@ type NodeData struct {
 	IsOutside             bool                `json:"isOutside,omitempty"`             // true | false
 	IsRoot                bool                `json:"isRoot,omitempty"`                // true | false
 	IsServiceEntry        *graph.SEInfo       `json:"isServiceEntry,omitempty"`        // set static service entry information
-	HasWorkloadEntry      bool                `json:"hasWorkloadEntry,omitempty"`      // true (this nodes has a corresponding WorkloadEntry) | false
+	HasWorkloadEntry      bool                `json:"hasWorkloadEntry,omitempty"`      // true (this node has a corresponding WorkloadEntry) | false
 }
 
 type EdgeData struct {
