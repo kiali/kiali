@@ -25,6 +25,7 @@ EOM
 : ${DELETE_NAMESPACE:=false}
 : ${ENABLE_INJECTION:=true}
 : ${ISTIO_NAMESPACE:=istio-system}
+: ${SERVICE_ACCOUNTS:="default"}
 
 while [ $# -gt 0 ]; do
   key="$1"
@@ -53,12 +54,21 @@ Valid command line arguments:
   -ei|--enable-injection: either 'true' or 'false' (default is true). If 'true' auto-inject proxies for the workloads.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -n|--namespace <name>: The namespace to be created or deleted. REQUIRED.
+  -sa|--service-accounts
+      The service accounts that will be able to authenticate with docker with the credentials you provide.
+      You can specify more than one service account separated with spaces.
+      If you are using this to be able to pull Istio addon images, this value should be "prometheus grafana default".
+      Default: "default"
   -h|--help: this text
 HELPMSG
       exit 1
       ;;
     -n|--namespace)
       NAMESPACE="$2"
+      shift;shift
+      ;;
+    -sa|--service-accounts)
+      SERVICE_ACCOUNTS="$2"
       shift;shift
       ;;
     *)
@@ -74,6 +84,7 @@ echo DELETE_NAMESPACE=${DELETE_NAMESPACE}
 echo ENABLE_INJECTION=${ENABLE_INJECTION}
 echo ISTIO_NAMESPACE=${ISTIO_NAMESPACE}
 echo NAMESPACE=${NAMESPACE}
+echo SERVICE_ACCOUNTS=${SERVICE_ACCOUNTS}
 
 [ -z "$NAMESPACE" ] && echo "You must specify --namespace" && exit 1
 
@@ -127,6 +138,12 @@ metadata:
   name: istio-cni
 NAD
   fi
+
+  USERS=""
+  for sa in ${SERVICE_ACCOUNTS}; do
+    USERS=$(printf "%s\n- system:serviceaccount:%s:%s" "${USERS}" ${NAMESPACE} ${sa})
+  done
+
   cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
@@ -134,12 +151,14 @@ metadata:
   name: "${NAMESPACE}-scc"
 runAsUser:
   type: RunAsAny
+  UID: <none>
+  UID Range Min: <none>
+  UID Range Max: <none>
 seLinuxContext:
   type: RunAsAny
 supplementalGroups:
   type: RunAsAny
-users:
-- "system:serviceaccount:${NAMESPACE}:default"
+users:${USERS}
 SCC
 fi
 
