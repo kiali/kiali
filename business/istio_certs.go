@@ -33,6 +33,11 @@ const (
 )
 
 func (ics *IstioCertsService) GetCertsInfo() ([]models.CertInfo, error) {
+	// Return an empty list if the feature is not enabled
+	if !config.Get().KialiFeatureFlags.CertificatesInformationIndicators.Enabled {
+		return []models.CertInfo{}, nil
+	}
+
 	// Check if there are certificates configured in Istio ConfigMap
 	certsConfig, err := ics.getCertsConfigFromIstioConfigMap()
 	if err != nil {

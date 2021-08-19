@@ -13,6 +13,23 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+func TestCertificatesInformationIndicatorsDisabled(t *testing.T) {
+	k8s := new(kubetest.K8SClientMock)
+
+	conf := config.NewConfig()
+	conf.KialiFeatureFlags.CertificatesInformationIndicators.Enabled = false
+	config.Set(conf)
+
+	k8s.On("IsOpenShift").Return(false)
+
+	layer := NewWithBackends(k8s, nil, nil)
+	ics := layer.IstioCerts
+
+	certs, _ := ics.GetCertsInfo()
+
+	assert.Len(t, certs, 0)
+}
+
 func TestIstioCASecret(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 
