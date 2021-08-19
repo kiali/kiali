@@ -9,10 +9,11 @@ import (
 )
 
 type SubsetPresenceChecker struct {
-	Namespace        string
-	Namespaces       []string
-	DestinationRules []kubernetes.IstioObject
-	VirtualService   kubernetes.IstioObject
+	Namespace                string
+	Namespaces               []string
+	DestinationRules         []kubernetes.IstioObject
+	ExportedDestinationRules []kubernetes.IstioObject
+	VirtualService           kubernetes.IstioObject
 }
 
 func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
@@ -93,9 +94,9 @@ func (checker SubsetPresenceChecker) subsetPresent(host string, subset string) b
 }
 
 func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost string) ([]kubernetes.IstioObject, bool) {
-	drs := make([]kubernetes.IstioObject, 0, len(checker.DestinationRules))
+	drs := make([]kubernetes.IstioObject, 0, len(checker.DestinationRules)+len(checker.ExportedDestinationRules))
 
-	for _, destinationRule := range checker.DestinationRules {
+	for _, destinationRule := range append(checker.DestinationRules, checker.ExportedDestinationRules...) {
 		host, ok := destinationRule.GetSpec()["host"]
 		if !ok {
 			continue
