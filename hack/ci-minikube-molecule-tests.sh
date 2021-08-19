@@ -29,6 +29,11 @@ Options:
     Container environment to use.
     Default: ${DORP:-docker}
 
+-ir|--irc-room <irc room name>
+    The libera IRC room to send the results message.
+    Set to "" to not send any message.
+    Default: kiali-molecule-tests
+
 -lb|--logs-branch <branch name>
     The logs branch to clone.
     Only used if --upload-logs is "true", otherwise, this setting is ignored.
@@ -78,6 +83,7 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -ce|--client-exe)             CLIENT_EXE="$2";      shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";            shift;shift; ;;
+    -ir|--irc-room)               IRC_ROOM="$2";        shift;shift; ;;
     -lb|--logs-branch)            LOGS_BRANCH="$2";     shift;shift; ;;
     -ld|--logs-directory)         LOGS_DIR="$2";        shift;shift; ;;
     -lf|--logs-fork)              LOGS_FORK="$2";       shift;shift; ;;
@@ -108,6 +114,10 @@ LOGS_LOCAL_SUBDIR_ABS="${LOGS_LOCAL_DIRNAME_ABS}/${LOGS_LOCAL_SUBDIR}"
 LOGS_LOCAL_RESULTS="${LOGS_LOCAL_SUBDIR_ABS}/results.log"
 LOGS_GITHUB_HTTPS_BASE="https://github.com/${LOGS_FORK}/${LOGS_PROJECT_NAME}/tree/${LOGS_BRANCH}"
 LOGS_GITHUB_HTTPS_SUBDIR="${LOGS_GITHUB_HTTPS_BASE}/${LOGS_LOCAL_SUBDIR}"
+LOGS_GITHUB_HTTPS_RESULTS="${LOGS_GITHUB_HTTPS_SUBDIR}/results.log"
+
+# the libera IRC room where notifications are to be sent (allow the user to set this to "" via -ir option)
+IRC_ROOM="${IRC_ROOM-kiali-molecule-tests}"
 
 # Only if this is set to "true" will the logs be committed and pushed to the git repo
 UPLOAD_LOGS="${UPLOAD_LOGS:-false}"
@@ -215,4 +225,36 @@ if [ "${UPLOAD_LOGS}" == "true" ]; then
 
   # dump the results to stdout
   cat "${LOGS_LOCAL_RESULTS}"
+fi
+
+# determine what message to send to IRC based on test results (only know this if uploading logs)
+if [ -f "${LOGS_LOCAL_RESULTS}" ]; then
+  if grep FAILURE "${LOGS_LOCAL_RESULTS}"; then
+    irc_msg="a FAILURE occurred in [$(grep FAILURE "${LOGS_LOCAL_RESULTS}" | wc -l)] tests"
+  else
+    irc_msg="all tests passed"
+  fi
+else
+  irc_msg="check local output for test results"
+fi
+
+if [ "${UPLOAD_LOGS}" == "true" ]; then
+  irc_msg="kiali tests are done [${irc_msg}]: ${LOGS_GITHUB_HTTPS_RESULTS} (test logs directory: ${LOGS_GITHUB_HTTPS_SUBDIR})"
+else
+  irc_msg="kiali tests are done [${irc_msg}]: Logs were not uploaded. See the local machine for logs."
+fi
+
+if [ "${IRC_ROOM}" == "" ]; then
+  echo "Not sending IRC notification - results are: ${irc_msg}"
+else
+  echo "Sending IRC notification to room [#${IRC_ROOM}]. msg=${irc_msg}"
+  (
+  echo 'NICK kiali-test-bot'
+  echo 'USER kiali-test-bot 8 * : kiali-test-bot'
+  sleep 10
+  echo "JOIN #${IRC_ROOM}"
+  sleep 5
+  echo "PRIVMSG #${IRC_ROOM} : ${irc_msg}"
+  echo QUIT
+  ) | nc irc.libera.chat 6667
 fi
