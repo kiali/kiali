@@ -6561,12 +6561,14 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| Accessible | boolean| `bool` |  | |  |  |
 | DNSNames | []string| `[]string` |  | |  |  |
 | Error | string| `string` |  | |  |  |
 | Issuer | string| `string` |  | |  |  |
 | NotAfter | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
 | NotBefore | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
 | SecretName | string| `string` |  | |  |  |
+| SecretNamespace | string| `string` |  | |  |  |
 
 
 

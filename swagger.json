@@ -4360,6 +4360,10 @@
       "description": "CertInfo contains the information for a given certificate",
       "type": "object",
       "properties": {
+        "accessible": {
+          "type": "boolean",
+          "x-go-name": "Accessible"
+        },
         "dnsNames": {
           "type": "array",
           "items": {
@@ -4388,6 +4392,10 @@
         "secretName": {
           "type": "string",
           "x-go-name": "SecretName"
+        },
+        "secretNamespace": {
+          "type": "string",
+          "x-go-name": "SecretNamespace"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
