@@ -55,7 +55,7 @@ Options:
     Default: true
 
 -ir|--irc-room <irc room name>
-    The freenode IRC room to send the results message.
+    The libera IRC room to send the results message.
     Set to "" to not send any message.
     Default: kiali-molecule-tests
 
@@ -235,7 +235,7 @@ KIALI_OPERATOR_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${KIALI_OPERATOR_F
 LOGS_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${LOGS_FORK}/${LOGS_PROJECT_NAME}.git"
 LOGS_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${LOGS_FORK}/${LOGS_PROJECT_NAME}.git"
 
-# the freenode IRC room where notifications are to be sent (allow the user to set this to "" via -ir option)
+# the libera IRC room where notifications are to be sent (allow the user to set this to "" via -ir option)
 IRC_ROOM="${IRC_ROOM-kiali-molecule-tests}"
 
 # Only if this is set to "true" will the logs be committed and pushed to the git repo
@@ -415,7 +415,7 @@ fi
 
 # determine what message to send to IRC based on test results
 if grep FAILURE "${LOGS_LOCAL_RESULTS}"; then
-  irc_msg="a FAILURE occurred in one or more tests"
+  irc_msg="a FAILURE occurred in [$(grep FAILURE "${LOGS_LOCAL_RESULTS}" | wc -l)] tests"
 else
   irc_msg="all tests passed"
 fi
