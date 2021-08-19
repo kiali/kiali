@@ -8,7 +8,9 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/stretchr/testify/assert"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestIstioCASecret(t *testing.T) {
@@ -61,6 +63,55 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	assert.Equal(t, "istio-system", certs[0].SecretNamespace)
 	assert.True(t, certs[0].Accessible)
 	assert.Nil(t, certs[0].DNSNames)
+	assert.Empty(t, certs[0].Error)
+}
+
+func TestIstioCASecretForbiddenError(t *testing.T) {
+	k8s := new(kubetest.K8SClientMock)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	secret := core_v1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "istio-ca-secret",
+		},
+		Data: map[string][]byte{
+			"ca-cert.pem": []byte(`-----BEGIN CERTIFICATE-----
+MIIC/DCCAeSgAwIBAgIQVv6mINjF1kQJS2O98zkkNzANBgkqhkiG9w0BAQsFADAY
+MRYwFAYDVQQKEw1jbHVzdGVyLmxvY2FsMB4XDTIxMDcyNzE0MzcwMFoXDTMxMDcy
+NTE0MzcwMFowGDEWMBQGA1UEChMNY2x1c3Rlci5sb2NhbDCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAMwHN+LAkWbC9qyAlXQ4Zwn+Yhgc4eCPuw9LQVjW
+b9al44H5sV/1QIog8wOjDHx32k2lTXvdxRgOJd+ENXMQ9DmU6C9oeWhMZAmAvp4M
+NBaYnY4BRcWAPqIhEb/26zRA9pXjPVJX+aN45R1EJWsJxP6ZPkmZZKILnYY6VwqU
+wbbB3lp34HQruvkpePUo4Bux+N+DfQsu1g/C6UMbQlY/kl1d1KaTS4bYQAP1d4eT
+sPxw5Rf9WRSQcGaAWiPbUxVBtA0LYCbHzOacAAwvYhJgvbinr73RiqKUMR5BV/p3
+lyKyVDyrVXXbVNsQhsT/lM5e55DaQEJKyldgklSGseVYHy0CAwEAAaNCMEAwDgYD
+VR0PAQH/BAQDAgIEMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFK7ZOPXlxd78
+xUpOGYDaqgC/sdevMA0GCSqGSIb3DQEBCwUAA4IBAQACLa2gNuIxQWf4qiCxsbIj
+qddqbjHBGOWVAcyFRk/k7ydmellkI5BcMJEhlPT7TBUutcjvX8lCsup+xGy47NpH
+hRp4hxUYodGXLXQ2HfI+3CgAARBEIBXjh/73UDFcMtH/G6EtGfFEw8ZgbyaDQ9Ft
+c10h5QnbMUBFWdmvwSFvbJwZoTlFM+skogwv+d55sujZS83jbZHs7lZlDy0hDYIm
+tMAWt4FEJnLPrfFtCFJgddiXDYGtX/Apvqac2riSAFg8mQB5WRtxKH7TK9Qhvca7
+V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
+-----END CERTIFICATE-----`),
+		},
+	}
+
+	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&core_v1.ConfigMap{}, nil)
+	k8s.On("IsOpenShift").Return(false)
+	k8s.On("GetSecret", conf.IstioNamespace, "cacerts").Return(&core_v1.Secret{}, kubernetes.NewNotFound("cacerts", "v1", "Secret"))
+
+	forbiddenError := errors.NewForbidden(schema.GroupResource{Group: "", Resource: "Secret"}, "istio-ca-secret", nil)
+	k8s.On("GetSecret", conf.IstioNamespace, "istio-ca-secret").Return(&secret, forbiddenError)
+
+	layer := NewWithBackends(k8s, nil, nil)
+	ics := layer.IstioCerts
+
+	certs, _ := ics.GetCertsInfo()
+
+	assert.Len(t, certs, 1)
+	assert.False(t, certs[0].Accessible)
 	assert.Empty(t, certs[0].Error)
 }
 
@@ -256,4 +307,86 @@ iMXzPzS/OeYyKQ==
 	certs, _ := ics.GetCertsInfo()
 
 	assert.Len(t, certs, 2)
+}
+
+func TestChironSecretsError(t *testing.T) {
+	config.Set(config.NewConfig())
+	k8s := new(kubetest.K8SClientMock)
+	conf := config.NewConfig()
+
+	istioConfigMap := core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "istio",
+		},
+		Data: map[string]string{
+			"mesh": `certificates:
+- dnsNames:
+  - example1.istio-system.svc
+  - example1.istio-system
+  secretName: dns.example1-service-account
+- dnsNames:
+  - example2.istio-system.svc
+  - example2.istio-system
+  secretName: dns.example2-service-account`,
+		},
+	}
+
+	example1secret := core_v1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "dns.example1-service-account",
+		},
+		Data: map[string][]byte{
+			"cert-chain.pem": []byte(`-----BEGIN CERTIFICATE-----
+MIIDSjCCAjKgAwIBAgIRANM202oDuJ3+5rtcjkSsY34wDQYJKoZIhvcNAQELBQAw
+FTETMBEGA1UEAxMKbWluaWt1YmVDQTAeFw0yMTA3MjcxODM3NTJaFw0yMjA3Mjcx
+ODM3NTJaMAsxCTAHBgNVBAoTADCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
+ggEBALw6IMv9OHp8LkEHnBRVEqDhDoA+gDNEuFNt+gsA3nLH+64mqQG5ronIPxIN
+5hXefMd68bayo/Q2Wvy5oNx9DnwqvN4CSZF2xuWfvnAAcbEOaEm7YiQ3X5zLoq/9
+qpDKXOQ8LS1p70AYQ47bs4Plg0Dyhytpd4VmK175n4HC6KCPaPlfFTpYm5E9LVUb
+nWjwAXLI/Df7iWgmgs9Tub6N2dNg1CR/JF8JkI8G8k8IxLkupdwe8fKiN0SGchUJ
+PqMC1/ZxgZPDxHPqpJWhmmFJ7eDVRBhxTxXrzo7vlqRcFUA9XZm1QfPPLe61JkiM
+KLzeLoPEINElnSBtQDxwX+pM29ECAwEAAaOBnjCBmzAOBgNVHQ8BAf8EBAMCBaAw
+HQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMAwGA1UdEwEB/wQCMAAwHwYD
+VR0jBBgwFoAUQZxWbCpiU9oasp60hvk1RFOB1Z8wOwYDVR0RBDQwMoIZZXhhbXBs
+ZTEuaXN0aW8tc3lzdGVtLnN2Y4IVZXhhbXBsZTEuaXN0aW8tc3lzdGVtMA0GCSqG
+SIb3DQEBCwUAA4IBAQCNdYEZOT6zhupbKYly5uG5BJpTYCvzTJjK6Ulvgm5wp798
+TDGY3IIa8oNLQa+IkPR1sGnax+w7wNY39/f1orkLF/WbXFDsJJMeZguUQo3cIz7W
+4k20/UxYAo2vHMn3gKQ2wC+Og01N1fI12Gh0/TRbg3xDY0Orrz/eryMqIje3u3i4
+4ytJvZ8wRQl2+UrqI1ifvJTcxu3974lshdaThhhbt3sPPxvVRMJAvdyBRivgaNIn
+JwZAJq8YIy5IhlYYyoeVHPJpH3Fch9pRy3TLK4vdO00+ZeiTGj4feuaf353I4xMp
+0E9lzpH/nLW4M/TySDAYyJcikxxVcl24RpZw/hpk
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIDBjCCAe6gAwIBAgIBATANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDEwptaW5p
+a3ViZUNBMB4XDTIxMDcyMjE1MDU0NVoXDTMxMDcyMTE1MDU0NVowFTETMBEGA1UE
+AxMKbWluaWt1YmVDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKkf
+KllQ+/DouP7pflOfnrlpHwsfQvPXHYnmSrxY0rpCxjgdG6cU0DVR0rMKNl1v/ddk
+toC56EaPzrVrFrT08jVSyoeIoSbd2KYxv1ZQG65lKeSOy/Kqun0DL6N7rstF2mAo
+kHa1tXKE+uDC8AUMRyd85UpNF2cVd8UiaY6DqAChN1gpx0EIzcMI7SfHW6mRlLXl
+G5PpKmoB4fW0e2qH51hUILNBP3FPReJ/Q2BJSJWxc7YmueXkpL+s/SCXBf5OLpSi
+btGtwpk24Ar4tEPPE/sEg0CvoGvFbbVmnur17NnWapd7HJ+wnSzXACEKkyu6n55T
+K3XG+XrsaAYzKdYkq2UCAwEAAaNhMF8wDgYDVR0PAQH/BAQDAgKkMB0GA1UdJQQW
+MBQGCCsGAQUFBwMCBggrBgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQW
+BBRBnFZsKmJT2hqynrSG+TVEU4HVnzANBgkqhkiG9w0BAQsFAAOCAQEASh4nZgCA
+akFDfS/zEHJppg2M0U24lG5Uz6PGi2XFTiEKZZze5je2tOv5Zccedtearob+Emfi
+AbKD+qNGD+jJnONxwApx0zFIQPt1AhcNUduOb/GTX++9V4cpp2N3kfu0yupgVDQA
+m1NSsJuoyxHTiRjI9xPkwmbIYfFjXU0mQOZrt7CTrsX4whW2CzS9Sax4CipQEZ2X
+T4t/ASuhWl1i8tqWIYLVkpd93GVflfZE5L1U0kcfP3fq3vJP7rMBofUA/th01EHw
+Ws8kBubm6NXTG1sk8nqpmLPQvWaSPK/Wa6/mmF4Tjhix0vRiJrVf0bBSRVNpBWla
+iMXzPzS/OeYyKQ==
+-----END CERTIFICATE-----`),
+		},
+	}
+
+	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&istioConfigMap, nil)
+	k8s.On("IsOpenShift").Return(false)
+	k8s.On("GetSecret", conf.IstioNamespace, "dns.example1-service-account").Return(&example1secret, nil)
+	k8s.On("GetSecret", conf.IstioNamespace, "dns.example2-service-account").Return(&core_v1.Secret{}, kubernetes.NewNotFound("cacerts", "v1", "Secret"))
+
+	layer := NewWithBackends(k8s, nil, nil)
+	ics := layer.IstioCerts
+
+	_, err := ics.GetCertsInfo()
+
+	assert.Error(t, err)
 }
