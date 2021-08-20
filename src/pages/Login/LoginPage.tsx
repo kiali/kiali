@@ -146,9 +146,17 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     // Reference: https://openid.net/specs/openid-connect-core-1_0-final.html#AuthError
     if (urlParams.get('error')) {
       if (urlParams.get('error_description')) {
-        messages.push(this.renderMessage(`Authentication error: ${urlParams.get('error_description')}`, 'danger', 'idp-err'));
+        messages.push(
+          this.renderMessage(`Authentication error: ${urlParams.get('error_description')}`, 'danger', 'idp-err')
+        );
       } else {
-        messages.push(this.renderMessage(`The OpenID provider returned the following error code: ${urlParams.get('error')}`, 'danger', 'idp-err'));
+        messages.push(
+          this.renderMessage(
+            `The OpenID provider returned the following error code: ${urlParams.get('error')}`,
+            'danger',
+            'idp-err'
+          )
+        );
       }
     }
 
@@ -156,7 +164,9 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     // the Kiali backend still needs to do some extra negotiation with the IdP, which can fail.
     // The backend will set an "openid_error" url parameter when there is some failure.
     if (urlParams.get('openid_error')) {
-      messages.push(this.renderMessage(`Authentication failed: ${urlParams.get('openid_error')}`, 'danger', 'openid-err'));
+      messages.push(
+        this.renderMessage(`Authentication failed: ${urlParams.get('openid_error')}`, 'danger', 'openid-err')
+      );
     }
 
     return messages;
@@ -172,8 +182,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
 
     const messages = this.getHelperMessage();
     const isLoggingIn = this.props.isPostLoginPerforming || this.props.status === LoginStatus.logging;
-    const isLoginButtonDisabled =
-      isLoggingIn || (this.props.postLoginErrorMsg !== undefined && this.props.postLoginErrorMsg.length !== 0);
+    const isLoginButtonDisabled = isLoggingIn || this.props.status === LoginStatus.loggedIn;
 
     const listItem = (
       <>

@@ -64,10 +64,16 @@ interface AuthenticationControllerState {
   isPostLoginError: boolean;
 }
 
-class AuthenticationController extends React.Component<AuthenticationControllerProps, AuthenticationControllerState> {
-  static readonly PostLoginErrorMsg =
-    'You are logged in, but there was a problem when fetching some required server ' +
-    'configurations. Please, try refreshing the page.';
+export class AuthenticationController extends React.Component<
+  AuthenticationControllerProps,
+  AuthenticationControllerState
+> {
+  static readonly PostLoginErrorMsg = `Kiali failed to initialize. Please ensure that services 
+    Kiali depends on, such as Prometheus, are healthy and reachable by Kiali then refresh your browser.`;
+
+  // How long to wait for the post-login actions to complete
+  // before transitioning to the "Loading" page.
+  private readonly postLoginMSTillTransition = 3000;
 
   constructor(props: AuthenticationControllerProps) {
     super(props);
@@ -160,6 +166,10 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
   }
 
   private doPostLoginActions = async () => {
+    const postLoginTimer = setTimeout(() => {
+      this.setState({ stage: LoginStage.LOGGED_IN_AT_LOAD });
+    }, this.postLoginMSTillTransition);
+
     try {
       const getStatusPromise = API.getStatus()
         .then(response => this.props.setServerStatus(response.data))
@@ -184,6 +194,7 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
         getStatusPromise,
         getJaegerInfoPromise
       ]);
+
       this.props.setNamespaces(configs[0].data, new Date());
       setServerConfig(configs[1].data);
       this.applyUIDefaults();
@@ -196,7 +207,11 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
       this.setState({ stage: LoginStage.LOGGED_IN });
     } catch (err) {
       console.error('Error on post-login actions.', err);
-      this.setState({ isPostLoginError: true });
+      // Transitioning to LOGGED_IN_AT_LOAD so that the user will see the "Loading..."
+      // screen instead of being stuck at the "login" page after a post-login error.
+      this.setState({ isPostLoginError: true, stage: LoginStage.LOGGED_IN_AT_LOAD });
+    } finally {
+      clearTimeout(postLoginTimer);
     }
   };
 
