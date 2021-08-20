@@ -308,6 +308,7 @@ type OpenIdConfig struct {
 	IssuerUri               string            `yaml:"issuer_uri,omitempty"`
 	Scopes                  []string          `yaml:"scopes,omitempty"`
 	UsernameClaim           string            `yaml:"username_claim,omitempty"`
+	AllowedDomains          []string          `yaml:"allowed_domains,omitempty"`
 }
 
 // DeploymentConfig provides details on how Kiali was deployed.

@@ -249,6 +249,39 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 			RespondWithDetailedError(w, http.StatusForbidden, "the OpenID token was rejected", err.Error())
 			return true
 		}
+
+		if len(conf.Auth.OpenId.AllowedDomains) > 0 {
+			log.Debugf("Allowed Domains: %v", conf.Auth.OpenId.AllowedDomains)
+			tokenClaims := openIdParams.ParsedIdToken.Claims.(jwt.MapClaims)
+			var hostedDomain string
+			if v, ok := tokenClaims["hd"]; ok {
+				hostedDomain = v.(string)
+			} else {
+				splitedSubject := strings.Split(openIdParams.Subject, "@")
+				if len(splitedSubject) < 2 {
+					errMessage := "cannot detect hosted domain on OpenID token"
+					err := errors.New(errMessage)
+					RespondWithDetailedError(w, http.StatusUnauthorized, errMessage, err.Error())
+					return false
+				}
+				hostedDomain = splitedSubject[1]
+			}
+			var foundDomain bool
+			for _, d := range conf.Auth.OpenId.AllowedDomains {
+				if hostedDomain == d {
+					log.Debugf("found a allowed domain: %s", hostedDomain)
+					foundDomain = true
+					break
+				}
+			}
+			if !foundDomain {
+				errMessage := fmt.Sprintf("domain %s not allowed to login", hostedDomain)
+				log.Infof(errMessage)
+				err := errors.New(errMessage)
+				RespondWithDetailedError(w, http.StatusUnauthorized, errMessage, err.Error())
+				return false
+			}
+		}
 	} else {
 		// Check if user trying to login has enough privileges to login. This check is only done if
 		// config indicates that RBAC is on. For cases where RBAC is off, we simply assume that the
@@ -904,6 +937,39 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
 			return true
 		}
+		if len(conf.Auth.OpenId.AllowedDomains) > 0 {
+			log.Debugf("Allowed Domains: %v", conf.Auth.OpenId.AllowedDomains)
+			tokenClaims := openIdParams.ParsedIdToken.Claims.(jwt.MapClaims)
+			var hostedDomain string
+			if v, ok := tokenClaims["hd"]; ok {
+				hostedDomain = v.(string)
+			} else {
+				splitedSubject := strings.Split(openIdParams.Subject, "@")
+				if len(splitedSubject) < 2 {
+					errMessage := "cannot detect hosted domain on OpenID token"
+					err := errors.New(errMessage)
+					RespondWithDetailedError(w, http.StatusUnauthorized, errMessage, err.Error())
+					return false
+				}
+				hostedDomain = splitedSubject[1]
+			}
+			var foundDomain bool
+			for _, d := range conf.Auth.OpenId.AllowedDomains {
+				if hostedDomain == d {
+					log.Debugf("found a allowed domain: %s", hostedDomain)
+					foundDomain = true
+					break
+				}
+			}
+			if !foundDomain {
+				errMessage := fmt.Sprintf("domain %s not allowed to login", hostedDomain)
+				log.Infof(errMessage)
+				err := errors.New(errMessage)
+				RespondWithDetailedError(w, http.StatusUnauthorized, errMessage, err.Error())
+				return false
+			}
+		}
+
 	} else {
 		// Check if user trying to login has enough privileges to login. This check is only done if
 		// config indicates that RBAC is on. For cases where RBAC is off, we simply assume that the
