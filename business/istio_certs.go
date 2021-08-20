@@ -95,7 +95,7 @@ func (ics *IstioCertsService) getCertificateFromSecret(secretName, certName stri
 func (ics *IstioCertsService) getCertsConfigFromIstioConfigMap() ([]certConfig, error) {
 	cfg := config.Get()
 
-	istioConfigMap, err := ics.k8s.GetConfigMap(cfg.IstioNamespace, "istio")
+	istioConfigMap, err := ics.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
 	if err != nil {
 		return nil, err
 	}
