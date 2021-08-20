@@ -324,6 +324,8 @@ iMXzPzS/OeYyKQ==
 	certs, _ := ics.GetCertsInfo()
 
 	assert.Len(t, certs, 2)
+	assert.Equal(t, certs[0].SecretName, "dns.example1-service-account")
+	assert.Equal(t, certs[1].SecretName, "dns.example2-service-account")
 }
 
 func TestChironSecretsError(t *testing.T) {

@@ -1,6 +1,7 @@
 package business
 
 import (
+	"sort"
 	"sync"
 
 	"gopkg.in/yaml.v2"
@@ -145,6 +146,10 @@ func (ics *IstioCertsService) getChironCertificates(certsConfig []certConfig) ([
 	for cert := range certChan {
 		certs = append(certs, cert)
 	}
+
+	sort.Slice(certs, func(i, j int) bool {
+		return certs[i].SecretName < certs[j].SecretName
+	})
 
 	return certs, nil
 }
