@@ -257,14 +257,23 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 			if v, ok := tokenClaims["hd"]; ok {
 				hostedDomain = v.(string)
 			} else {
-				splitedSubject := strings.Split(openIdParams.Subject, "@")
-				if len(splitedSubject) < 2 {
+				//domains like gmail.com don't have the hosted domain (hd) on claims
+				//fields, so we try to get the domain on email claim
+				log.Debugf("Host Domain not found, trying to discover the host domain over e-mail")
+				var email string
+				if v, ok := tokenClaims["email"];ok {
+					email = v.(string)
+				}
+				log.Debugf("Token claim email: %s", email)
+				splitedEmail := strings.Split(email, "@")
+				if len(splitedEmail) < 2 {
 					errMessage := "cannot detect hosted domain on OpenID token"
 					err := errors.New(errMessage)
 					RespondWithDetailedError(w, http.StatusUnauthorized, errMessage, err.Error())
 					return false
 				}
-				hostedDomain = splitedSubject[1]
+				hostedDomain = splitedEmail[1]
+				log.Debugf("Discovered hosted domain: %s", hostedDomain)
 			}
 			var foundDomain bool
 			for _, d := range conf.Auth.OpenId.AllowedDomains {
@@ -938,20 +947,30 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 			return true
 		}
 		if len(conf.Auth.OpenId.AllowedDomains) > 0 {
+			//if the allowed domains is empty, we do nothing. All domains are allowed.
 			log.Debugf("Allowed Domains: %v", conf.Auth.OpenId.AllowedDomains)
 			tokenClaims := openIdParams.ParsedIdToken.Claims.(jwt.MapClaims)
 			var hostedDomain string
 			if v, ok := tokenClaims["hd"]; ok {
 				hostedDomain = v.(string)
 			} else {
-				splitedSubject := strings.Split(openIdParams.Subject, "@")
-				if len(splitedSubject) < 2 {
+				//domains like gmail.com don't have the hosted domain (hd) on claims
+				//fields, so we try to get the domain on email claim
+				log.Debugf("Host Domain not found, trying to discover the host domain over e-mail")
+				var email string
+				if v, ok := tokenClaims["email"];ok {
+					email = v.(string)
+				}
+				log.Debugf("Token claim email: %s", email)
+				splitedEmail := strings.Split(email, "@")
+				if len(splitedEmail) < 2 {
 					errMessage := "cannot detect hosted domain on OpenID token"
 					err := errors.New(errMessage)
 					RespondWithDetailedError(w, http.StatusUnauthorized, errMessage, err.Error())
 					return false
 				}
-				hostedDomain = splitedSubject[1]
+				hostedDomain = splitedEmail[1]
+				log.Debugf("Discovered hosted domain: %s", hostedDomain)
 			}
 			var foundDomain bool
 			for _, d := range conf.Auth.OpenId.AllowedDomains {
