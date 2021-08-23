@@ -261,7 +261,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 				//fields, so we try to get the domain on email claim
 				log.Debugf("Host Domain not found, trying to discover the host domain over e-mail")
 				var email string
-				if v, ok := tokenClaims["email"];ok {
+				if v, ok := tokenClaims["email"]; ok {
 					email = v.(string)
 				}
 				log.Debugf("Token claim email: %s", email)
@@ -958,7 +958,7 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 				//fields, so we try to get the domain on email claim
 				log.Debugf("Host Domain not found, trying to discover the host domain over e-mail")
 				var email string
-				if v, ok := tokenClaims["email"];ok {
+				if v, ok := tokenClaims["email"]; ok {
 					email = v.(string)
 				}
 				log.Debugf("Token claim email: %s", email)
