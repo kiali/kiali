@@ -14,6 +14,8 @@
 #        sshoc: logs into the CRC VM via oc debug so you can probe in the VM
 #       routes: outputs all known route URLs
 #     services: outputs all known service endpoints (excluding internal openshift services)
+#       expose: creates firewalld rules so remote clients can access the cluster
+#     unexpose: removes firewalld rules so remote clients cannot access the cluster
 #
 # This script accepts several options - see --help for details.
 #
@@ -204,6 +206,66 @@ exec_ssh() {
   ssh -y -i ${CRC_ROOT_DIR}/machines/crc/id_ecdsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null core@$(${CRC_COMMAND} ip) ${sshcmd}
 }
 
+expose_cluster() {
+  local virt_interface="crc"
+  local crc_ip="$(${CRC_COMMAND} ip 2>/dev/null)"
+  local sudo=$(test "$(whoami)" = "root" && echo "" || echo "sudo")
+
+  # make sure the platform has all the requirements needed to do this
+  local ip_fwd=$(cat /proc/sys/net/ipv4/ip_forward)
+  if [ "$ip_fwd" != "1" ]; then infomsg "ERROR: IP forwarding not enabled. /proc/sys/net/ipv4/ip_forward=$ip_fwd"; exit 1; fi
+  if ! which firewall-cmd >& /dev/null; then infomsg "ERROR: You do not have firewall-cmd in your PATH"; exit 1; fi
+  if ! systemctl -q is-active firewalld; then infomsg "ERROR: firewalld is not running"; exit 1; fi
+  if [ -z "${crc_ip}" ]; then infomsg "ERROR: The CRC cluster is not running"; exit 1; fi
+
+  # If we already have existing port forwards, abort
+  local existing_fwds=$($sudo firewall-cmd --list-forward-ports | grep "^port=80:proto=tcp:\|^port=443:proto=tcp:\|^port=6443:proto=tcp:")
+  if [ -n "$existing_fwds" ]; then
+    infomsg "ERROR: Existing port forwarding rules were found which are conflicting and must be deleted:"
+    for x in ${existing_fwds}; do
+      echo " $sudo firewall-cmd --remove-forward-port=\"$x\""
+    done
+    infomsg "You can use the 'unexpose' command to remove these rules."
+    exit 1
+  fi
+
+  for c in \
+    "firewall-cmd --add-forward-port=port=443:proto=tcp:toaddr=${crc_ip}:toport=443" \
+    "firewall-cmd --add-forward-port=port=6443:proto=tcp:toaddr=${crc_ip}:toport=6443" \
+    "firewall-cmd --add-forward-port=port=80:proto=tcp:toaddr=${crc_ip}:toport=80" \
+    "firewall-cmd --direct --passthrough ipv4 -I FORWARD -i ${virt_interface} -j ACCEPT" \
+    "firewall-cmd --direct --passthrough ipv4 -I FORWARD -o ${virt_interface} -j ACCEPT"
+  do
+    echo -n "EXECUTING: $sudo $c ... "
+    $sudo $c
+  done
+
+  infomsg "When accessing this cluster from outside make sure that cluster FQDNs resolve from outside."
+  infomsg "For basic api/console access, something like the following in an /etc/hosts entry should work:"
+  infomsg "<IP-of-this-host> api.crc.testing console-openshift-console.apps-crc.testing default-route-openshift-image-registry.apps-crc.testing oauth-openshift.apps-crc.testing"
+}
+
+unexpose_cluster() {
+  local sudo=$(test "$(whoami)" = "root" && echo "" || echo "sudo")
+
+  # make sure the platform has all the requirements needed to do this
+  local ip_fwd=$(cat /proc/sys/net/ipv4/ip_forward)
+  if [ "$ip_fwd" != "1" ]; then infomsg "ERROR: IP forwarding not enabled. /proc/sys/net/ipv4/ip_forward=$ip_fwd"; exit 1; fi
+  if ! which firewall-cmd >& /dev/null; then infomsg "ERROR: You do not have firewall-cmd in your PATH"; exit 1; fi
+  if ! systemctl -q is-active firewalld; then infomsg "ERROR: firewalld is not running"; exit 1; fi
+
+  local existing_fwds=$($sudo firewall-cmd --list-forward-ports | grep "^port=80:proto=tcp:\|^port=443:proto=tcp:\|^port=6443:proto=tcp:")
+  if [ -n "${existing_fwds}" ]; then
+    for x in ${existing_fwds}; do
+      echo -n "EXECUTING: $sudo firewall-cmd --remove-forward-port=\"$x\" ... "
+      $sudo firewall-cmd --remove-forward-port="$x"
+    done
+  else
+    echo "No relevant firewalld rules exist - nothing needs to be removed."
+  fi
+}
+
+
 # Change to the directory where this script is and set our environment
 SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
@@ -258,6 +320,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     services)
       _CMD="services"
+      shift
+      ;;
+    expose)
+      _CMD="expose"
+      shift
+      ;;
+    unexpose)
+      _CMD="unexpose"
       shift
       ;;
     -b|--bin-dir)
@@ -355,6 +425,8 @@ The command must be one of:
   * sshoc: Provides a command line prompt with root access inside the CRC VM. Logs in via oc debug.
   * routes: Outputs URLs for all known routes.
   * services: Outputs URLs for all known service endpoints (excluding internal openshift services).
+  * expose: Creates firewalld rules so remote clients can access the cluster.
+  * unexpose: Removes firewalld rules so remote clients cannot access the cluster.
 
 HELPMSG
       exit 1
@@ -633,7 +705,15 @@ elif [ "$_CMD" = "services" ]; then
 
   print_all_service_endpoints
 
+elif [ "$_CMD" = "expose" ]; then
+
+  expose_cluster
+
+elif [ "$_CMD" = "unexpose" ]; then
+
+  unexpose_cluster
+
 else
-  infomsg "ERROR: Required command must be either: start, stop, delete, status, ssh, sshoc, routes, services"
+  infomsg "ERROR: Required command must be either: start, stop, delete, status, ssh, sshoc, routes, services, expose, unexpose"
   exit 1
 fi
