@@ -7,10 +7,6 @@
 
 The following are brief summaries for each hack script. Most of these hack scripts accept a `--help` option to provide information on the different options available.
 
-* `link:aws-openshift-istio.sh[]`
-
-Utilizes the `aws-openshift.sh` script to start an OpenShift cluster on AWS, and then utilizes some of the link:./istio[hack scripts in ./istio] to install either Service Mesh or upstream Istio as well as the bookinfo demo. You must have an AWS account as well as an OpenShift pull secret to use this.
-
 * `link:aws-openshift.sh[]`
 
 Starts and stops an OpenShift cluster on AWS as well as provides information about the running OpenShift cluster. You must have an AWS account as well as an OpenShift pull secret to use this.
@@ -19,17 +15,25 @@ Starts and stops an OpenShift cluster on AWS as well as provides information abo
 
 Used by the Kiali server build targets in order to confirm the version of Go is compatible with Kiali.
 
+* `link:ci-kind-molecule-tests.sh[]`
+
+Runs the Kiali molecule tests on a Kind Kubernetes cluster. This utilizes `kind` to start and stop a k8s cluster and the `run-molecule-tests.sh` script to run the molecule tests. Use this in a cron job to periodically run the molecule tests on `kind`.
+
 * `link:ci-minikube-molecule-tests.sh[]`
 
-Runs the Kiali molecule tests with the latest version of the Kiali quay.io images on a minikube Kubernetes cluster. This utilizes the `k8s-minikube.sh` script to start and stop a minikube VM and the `run-molecule-tests.sh` script to run the molecule tests. Use this in a cron job to periodically run the molecule tests on minikube.
+Runs the Kiali molecule tests on a `minikube` Kubernetes cluster. This utilizes the `k8s-minikube.sh` script to start and stop a `minikube` VM and the `run-molecule-tests.sh` script to run the molecule tests. Use this in a cron job to periodically run the molecule tests on `minikube`.
 
 * `link:ci-openshift-molecule-tests.sh[]`
 
-Runs the Kiali molecule tests with the latest version of the Kiali quay.io images on an existing OpenShift cluster. Utilizes the `run-molecule-tests.sh` script to run the molecule tests. Use this in a cron job to periodically run the molecule tests.
+Runs the Kiali molecule tests on an existing OpenShift cluster. Utilizes the `run-molecule-tests.sh` script to run the molecule tests. Use this in a cron job to periodically run the molecule tests.
+
+* `link:configure-operator.sh[]`
+
+Configures an installed operator so you can enable and disable operator features (see https://kiali.io/documentation/latest/faq/#operator-configuration)
 
 * `link:crc-openshift.sh[]`
 
-Similar to `aws-openshift.sh` except it runs OpenShift on the local machine using link:https://github.com/code-ready/crc[CRC].
+Runs OpenShift on the local machine using link:https://github.com/code-ready/crc[CRC].
 
 * `link:jwt-decode.sh[]`
 
@@ -41,11 +45,23 @@ A testing utility that can be used to encode JWT tokens. Developers use this to 
 
 * `link:k8s-minikube.sh[]`
 
-Starts and stops a Kubernetes cluster via minikube as well as provides information about the running Kubernetes cluster. This can optionally install Dex OpenID Connect provider which is useful for testing Kiali's OpenID authentication integration.
+Starts and stops a Kubernetes cluster via `minikube` as well as provides information about the running Kubernetes cluster. This can optionally install Dex OpenID Connect provider which is useful for testing Kiali's OpenID authentication integration.
+
+* `link:kiali-port-forward.sh[]`
+
+Use this to access the Kiali UI that is installed locally in `minikube` or `kind`.
+
+* `link:purge-kiali-from-cluster.sh[]`
+
+Removes all remnants of Kiali and Kiali Operator from a cluster.
+
+* `link:run-kiali.sh[]`
+
+Runs Kiali on the local machine while having it connect to a remote k8s cluster. This is useful for development and debugging.
 
 * `link:run-molecule-tests.sh[]`
 
-Runs the suite of molecule tests on a running OpenShift or minikube cluster.
+Runs the suite of molecule tests on a running OpenShift or `minikube` cluster.
 
 * `link:run-prometheus.sh[]`
 
