@@ -103,6 +103,10 @@ func (h Host) String() string {
 	return hostname
 }
 
+func (h Host) IsWildcard() bool {
+	return strings.HasPrefix(h.Service, "*")
+}
+
 func ParseTwoPartHost(host Host) (string, string) {
 	localSvc, localNs := host.Service, host.Namespace
 	if !host.CompleteInput {
