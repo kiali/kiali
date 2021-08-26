@@ -1346,6 +1346,28 @@ func NewRoutes() (r *Routes) {
 			handlers.ConfigDumpResourceEntries,
 			true,
 		},
+		// swagger:route POST /namespaces/{namespace}/pods/{pod}/logging pods podProxyLogging
+		// ---
+		// Endpoint to set pod proxy log level
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      404: notFoundError
+		//      400: badRequestError
+		//      200: noContent
+		//
+		{
+			"PodProxyLogging",
+			"POST",
+			"/api/namespaces/{namespace}/pods/{pod}/logging",
+			handlers.LoggingUpdate,
+			true,
+		},
 		// swagger:route GET /iter8
 		// ---
 		// Endpoint to check if iter8 adapter is present in the cluster and if user can write adapter config

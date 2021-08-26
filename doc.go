@@ -70,7 +70,16 @@ type ContainerParam struct {
 	Name string `json:"container"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments podProxyDump podProxyResource
+// swagger:parameters podProxyLogging
+type LoggingParam struct {
+	// The log level for the pod's proxy.
+	//
+	// in: query
+	// required: true
+	Level string `json:"level"`
+}
+
+// swagger:parameters istioConfigList workloadList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments podProxyDump podProxyResource podProxyLogging
 type NamespaceParam struct {
 	// The namespace name.
 	//
@@ -107,7 +116,7 @@ type ObjectTypeParam struct {
 	Name string `json:"object_type"`
 }
 
-// swagger:parameters podDetails podLogs podProxyDump podProxyResource
+// swagger:parameters podDetails podLogs podProxyDump podProxyResource podProxyLogging
 type PodParam struct {
 	// The pod name.
 	//

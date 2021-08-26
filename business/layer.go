@@ -25,6 +25,7 @@ type Layer struct {
 	Mesh           MeshService
 	Namespace      NamespaceService
 	OpenshiftOAuth OpenshiftOAuthService
+	ProxyLogging   ProxyLoggingService
 	ProxyStatus    ProxyStatusService
 	RegistryStatus RegistryStatusService
 	Svc            SvcService
@@ -126,6 +127,7 @@ func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInter
 	temporaryLayer.Mesh = NewMeshService(k8s, temporaryLayer, nil)
 	temporaryLayer.Namespace = NewNamespaceService(k8s)
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s}
+	temporaryLayer.ProxyLogging = ProxyLoggingService{k8s: k8s}
 	temporaryLayer.ProxyStatus = ProxyStatusService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.RegistryStatus = RegistryStatusService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}

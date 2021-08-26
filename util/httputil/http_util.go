@@ -1,10 +1,12 @@
 package httputil
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -42,6 +44,36 @@ func HttpGet(url string, auth *config.Auth, timeout time.Duration) ([]byte, int,
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	return body, resp.StatusCode, err
+}
+
+func HttpPost(ctx context.Context, url string, auth *config.Auth, body io.Reader) ([]byte, int, error) {
+	req, err := http.NewRequest(http.MethodPost, url, body)
+	if err != nil {
+		return nil, 0, err
+	}
+	req = req.WithContext(ctx)
+
+	timeout := DefaultTimeout
+	// hasDeadline indicates a timeout has been set.
+	ctxDeadline, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		timeout = time.Until(ctxDeadline)
+	}
+
+	transport, err := CreateTransport(auth, &http.Transport{}, timeout)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	client := http.Client{Transport: transport, Timeout: timeout}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer resp.Body.Close()
+	respBody, err := ioutil.ReadAll(resp.Body)
+	return respBody, resp.StatusCode, err
 }
 
 type authRoundTripper struct {

@@ -143,6 +143,7 @@ _
 | GET | /api/namespaces/{namespace}/pods/{pod} | [pod details](#pod-details) |  |
 | GET | /api/namespaces/{namespace}/pods/{pod}/logs | [pod logs](#pod-logs) |  |
 | GET | /api/namespaces/{namespace}/pods/{pod}/config_dump | [pod proxy dump](#pod-proxy-dump) |  |
+| POST | /api/namespaces/{namespace}/pods/{pod}/logging | [pod proxy logging](#pod-proxy-logging) |  |
 | GET | /api/namespaces/{namespace}/pods/{pod}/config_dump/{resource} | [pod proxy resource](#pod-proxy-resource) |  |
   
 
@@ -4467,6 +4468,142 @@ Status: Internal Server Error
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | Code | int32 (formatted integer)| `int32` |  | `404`| HTTP status code | `404` |
+| Message | string| `string` |  | |  |  |
+
+
+
+### <span id="pod-proxy-logging"></span> pod proxy logging (*podProxyLogging*)
+
+```
+POST /api/namespaces/{namespace}/pods/{pod}/logging
+```
+
+Endpoint to set pod proxy log level
+
+#### URI Schemes
+  * http
+  * https
+
+#### Produces
+  * application/json
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
+| pod | `path` | string | `string` |  | ✓ |  | The pod name. |
+| level | `query` | string | `string` |  | ✓ |  | The log level for the pod's proxy. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#pod-proxy-logging-200) | OK | NoContent: the response is empty |  | [schema](#pod-proxy-logging-200-schema) |
+| [400](#pod-proxy-logging-400) | Bad Request | BadRequestError: the client request is incorrect |  | [schema](#pod-proxy-logging-400-schema) |
+| [404](#pod-proxy-logging-404) | Not Found | A NotFoundError is the error message that is generated when server could not find what was requested. |  | [schema](#pod-proxy-logging-404-schema) |
+| [500](#pod-proxy-logging-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#pod-proxy-logging-500-schema) |
+
+#### Responses
+
+
+##### <span id="pod-proxy-logging-200"></span> 200 - NoContent: the response is empty
+Status: OK
+
+###### <span id="pod-proxy-logging-200-schema"></span> Schema
+   
+  
+
+[PodProxyLoggingOKBody](#pod-proxy-logging-o-k-body)
+
+##### <span id="pod-proxy-logging-400"></span> 400 - BadRequestError: the client request is incorrect
+Status: Bad Request
+
+###### <span id="pod-proxy-logging-400-schema"></span> Schema
+   
+  
+
+[PodProxyLoggingBadRequestBody](#pod-proxy-logging-bad-request-body)
+
+##### <span id="pod-proxy-logging-404"></span> 404 - A NotFoundError is the error message that is generated when server could not find what was requested.
+Status: Not Found
+
+###### <span id="pod-proxy-logging-404-schema"></span> Schema
+   
+  
+
+[PodProxyLoggingNotFoundBody](#pod-proxy-logging-not-found-body)
+
+##### <span id="pod-proxy-logging-500"></span> 500 - A Internal is the error message that means something has gone wrong
+Status: Internal Server Error
+
+###### <span id="pod-proxy-logging-500-schema"></span> Schema
+   
+  
+
+[PodProxyLoggingInternalServerErrorBody](#pod-proxy-logging-internal-server-error-body)
+
+###### Inlined models
+
+**<span id="pod-proxy-logging-bad-request-body"></span> PodProxyLoggingBadRequestBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `400`| HTTP status code | `400` |
+| Message | string| `string` |  | |  |  |
+
+
+
+**<span id="pod-proxy-logging-internal-server-error-body"></span> PodProxyLoggingInternalServerErrorBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
+| Message | string| `string` |  | |  |  |
+
+
+
+**<span id="pod-proxy-logging-not-found-body"></span> PodProxyLoggingNotFoundBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `404`| HTTP status code | `404` |
+| Message | string| `string` |  | |  |  |
+
+
+
+**<span id="pod-proxy-logging-o-k-body"></span> PodProxyLoggingOKBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `204`| HTTP status code | `204` |
 | Message | string| `string` |  | |  |  |
 
 
