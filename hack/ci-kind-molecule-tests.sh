@@ -92,6 +92,11 @@ Options:
     The project name within the logs fork/org to clone.
     Default: kiali-molecule-test-logs
 
+-oe|--olm-enabled <true|false>
+    If true, install OLM into the cluster. If true, this will also force --operator-installer
+    to a value of "skip" and the latest Kiali Operator will be installed via OLM.
+    Default: false
+
 -oi|--operator-installer <helm|skip>
     How the operator is to be installed by the molecule tests. It is either installed
     via helm or the installation is skipped entirely. Use "skip" if you installed the
@@ -105,7 +110,7 @@ Options:
 
 -st|--skip-tests <tests>
     Space-separated list of all the molecule tests to be skipped.
-    Default: <tests that are unable to be run on OpenShift>
+    Default: <tests that are unable to be run>
 
 -sv|--spec-version <version>
     When the molecule tests create Kiali CR resources, this will be the value of
@@ -151,7 +156,7 @@ while [[ $# -gt 0 ]]; do
     -lb|--logs-branch)            LOGS_BRANCH="$2";           shift;shift; ;;
     -lf|--logs-fork)              LOGS_FORK="$2";             shift;shift; ;;
     -lpn|--logs-project-name)     LOGS_PROJECT_NAME="$2";     shift;shift; ;;
-    -oapi|--openshift-api)        OPENSHIFT_API="$2";         shift;shift; ;;
+    -oe|--olm-enabled)            OLM_ENABLED="$2";           shift;shift; ;;
     -oi|--operator-installer)     OPERATOR_INSTALLER="$2";    shift;shift; ;;
     -sd|--src-dir)                SRC="$2";                   shift;shift; ;;
     -st|--skip-tests)             SKIP_TESTS="$2";            shift;shift; ;;
@@ -166,12 +171,18 @@ done
 set -e
 
 # set up some of our defaults
-CLIENT_EXE=${OC:-/usr/bin/kubectl}
+CLIENT_EXE=${CLIENT_EXE:-/usr/bin/kubectl}
 SRC="${SRC:-/tmp/KIALI-GIT}"
 DORP="${DORP:-docker}"
 GIT_CLONE_PROTOCOL="${GIT_CLONE_PROTOCOL:-git}"
+OLM_ENABLED="${OLM_ENABLED:-false}"
 
 KIND_NAME="${KIND_NAME:-ci}"
+
+if [ "${OLM_ENABLED}" == "true" -a "${OPERATOR_INSTALLER}" != "skip" ]; then
+  infomsg "OLM is enabled; forcing --operator-installer to 'skip' so the operator installed via OLM is used."
+  OPERATOR_INSTALLER="skip"
+fi
 
 # if you want to test code from different forks and/or branches, set them here
 HELM_FORK="${HELM_FORK:-kiali/helm-charts}"
@@ -245,6 +256,7 @@ LOGS_GITHUB_HTTPS_SUBDIR=$LOGS_GITHUB_HTTPS_SUBDIR
 LOGS_LOCAL_RESULTS=$LOGS_LOCAL_RESULTS
 LOGS_LOCAL_SUBDIR=$LOGS_LOCAL_SUBDIR
 LOGS_LOCAL_SUBDIR_ABS=$LOGS_LOCAL_SUBDIR_ABS
+OLM_ENABLED=$OLM_ENABLED
 OPERATOR_INSTALLER=$OPERATOR_INSTALLER
 SKIP_TESTS=$SKIP_TESTS
 SPEC_VERSION=$SPEC_VERSION
@@ -368,6 +380,53 @@ if [ "${USE_DEV_IMAGES}" == "true" ]; then
   make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="${KIND_NAME}" cluster-push
 else
   infomsg "Will test the latest published images"
+fi
+
+# if requested, install OLM and the Kiali Operator via OLM
+if [ "${OLM_ENABLED}" == "true" ]; then
+  OLM_VERSION="latest" # TODO might be nice to allow the user to set this via a command line option --olm-version
+
+  if [ "${OLM_VERSION}" == "latest" ]; then
+    OLM_VERSION="$(curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases 2> /dev/null | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)"
+    if [ -z "${OLM_VERSION}" ]; then
+      infomsg "Failed to obtain the latest OLM version from Github."
+      exit 1
+    else
+      infomsg "Github reports the latest OLM version is: ${OLM_VERSION}"
+    fi
+  fi
+
+  # force the install.sh script to go through our client executable when it executes kubectl commands
+  kubectl() {
+    ${CLIENT_EXE} "$@"
+  }
+  export CLIENT_EXE
+  export -f kubectl
+  curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}/install.sh | bash -s ${OLM_VERSION}
+  [ "$?" != "0" ] && echo "ERROR: Failed to install OLM" && exit 1
+  unset -f kubectl
+
+  infomsg "OLM ${OLM_VERSION} is installed."
+
+  infomsg "Installing Kiali Operator via OLM"
+  ${CLIENT_EXE} create -f https://operatorhub.io/install/stable/kiali.yaml
+
+  echo -n "Waiting for Kiali CRD to be created."
+  timeout 1h bash -c "until ${CLIENT_EXE} get crd kialis.kiali.io >& /dev/null; do echo -n '.' ; sleep 3; done"
+  echo
+
+  infomsg "Waiting for Kiali CRD to be established."
+  ${CLIENT_EXE} wait --for condition=established --timeout=300s crd kialis.kiali.io
+
+  infomsg "Configuring the Kiali operator to allow ad hoc images and ad hoc namespaces."
+  operator_namespace="$(${CLIENT_EXE} get deployments --all-namespaces  | grep kiali-operator | cut -d ' ' -f 1)"
+  for env_name in ALLOW_AD_HOC_KIALI_NAMESPACE ALLOW_AD_HOC_KIALI_IMAGE; do
+    ${CLIENT_EXE} -n ${operator_namespace} patch $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) --type=json -p "[{'op':'replace','path':"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/$(${CLIENT_EXE} -n ${operator_namespace} get $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}' | tr ' ' '\n' | cat --number | grep ${env_name} | cut -f 1 | xargs echo -n | cat - <(echo "-1") | bc)/value",'value':"\"true\""}]"
+  done
+  sleep 5
+
+  infomsg "Waiting for the Kiali Operator to be ready."
+  ${CLIENT_EXE} wait -n ${operator_namespace} --for=condition=ready --timeout=300s $(${CLIENT_EXE} get pod -n ${operator_namespace} -l app.kubernetes.io/name=kiali-operator -o name)
 fi
 
 if [ "${OPERATOR_INSTALLER}" != "skip" ]; then
