@@ -9,11 +9,14 @@ import (
 
 	errors2 "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util"
 )
+
+const allResources string = "*"
 
 type IstioConfigService struct {
 	k8s           kubernetes.ClientInterface
@@ -656,7 +659,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(namespaces []string) mod
 			*/
 			go func(namespace string, wg *sync.WaitGroup, networkingPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(in.k8s, namespace, kubernetes.NetworkingGroupVersion.Group)
+				canCreate, canUpdate, canDelete := getPermissionsApi(in.k8s, namespace, kubernetes.NetworkingGroupVersion.Group, allResources)
 				for _, rs := range newNetworkingConfigTypes {
 					networkingRP[rs] = &models.ResourcePermissions{
 						Create: canCreate,
@@ -668,7 +671,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(namespaces []string) mod
 
 			go func(namespace string, wg *sync.WaitGroup, securityPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(in.k8s, namespace, kubernetes.SecurityGroupVersion.Group)
+				canCreate, canUpdate, canDelete := getPermissionsApi(in.k8s, namespace, kubernetes.SecurityGroupVersion.Group, allResources)
 				for _, rs := range newSecurityConfigTypes {
 					securityRP[rs] = &models.ResourcePermissions{
 						Create: canCreate,
@@ -697,39 +700,23 @@ func (in *IstioConfigService) GetIstioConfigPermissions(namespaces []string) mod
 
 func getPermissions(k8s kubernetes.ClientInterface, namespace, objectType string) (bool, bool, bool) {
 	var canCreate, canPatch, canDelete bool
+
 	if api, ok := kubernetes.ResourceTypesToAPI[objectType]; ok {
 		resourceType := objectType
-		/*
-			Kiali only uses create,patch,delete as WRITE permissions
-
-			"update" creates an extra call to the API that we know that it will always fail, introducing extra latency
-
-			Synced with:
-			https://github.com/kiali/kiali-operator/blob/master/roles/default/kiali-deploy/templates/kubernetes/role.yaml#L62
-		*/
-		ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, resourceType, []string{"create", "patch", "delete"})
-		if permErr == nil {
-			for _, ssar := range ssars {
-				if ssar.Spec.ResourceAttributes != nil {
-					switch ssar.Spec.ResourceAttributes.Verb {
-					case "create":
-						canCreate = ssar.Status.Allowed
-					case "patch":
-						canPatch = ssar.Status.Allowed
-					case "delete":
-						canDelete = ssar.Status.Allowed
-					}
-				}
-			}
-		} else {
-			log.Errorf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, resourceType, permErr)
-		}
+		return getPermissionsApi(k8s, namespace, api, resourceType)
 	}
 	return canCreate, canPatch, canDelete
 }
 
-func getPermissionsApi(k8s kubernetes.ClientInterface, namespace, api string) (bool, bool, bool) {
+func getPermissionsApi(k8s kubernetes.ClientInterface, namespace, api, resourceType string) (bool, bool, bool) {
 	var canCreate, canPatch, canDelete bool
+
+	// In view only mode, there is not need to check RBAC permissions, return false early
+	if config.Get().Deployment.ViewOnlyMode {
+		log.Debug("View only mode configured, skipping RBAC checks")
+		return canCreate, canPatch, canDelete
+	}
+
 	/*
 		Kiali only uses create,patch,delete as WRITE permissions
 
@@ -738,8 +725,7 @@ func getPermissionsApi(k8s kubernetes.ClientInterface, namespace, api string) (b
 		Synced with:
 		https://github.com/kiali/kiali-operator/blob/master/roles/default/kiali-deploy/templates/kubernetes/role.yaml#L62
 	*/
-	allResources := "*"
-	ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, allResources, []string{"create", "patch", "delete"})
+	ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, resourceType, []string{"create", "patch", "delete"})
 	if permErr == nil {
 		for _, ssar := range ssars {
 			if ssar.Spec.ResourceAttributes != nil {

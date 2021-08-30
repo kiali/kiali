@@ -48,12 +48,17 @@ type PrometheusConfig struct {
 	StorageTsdbRetention int64 `json:"storageTsdbRetention,omitempty"`
 }
 
+type DeploymentConfig struct {
+	ViewOnlyMode bool `json:"viewOnlyMode,omitempty"`
+}
+
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
 	ClusterInfo         ClusterInfo                 `json:"clusterInfo,omitempty"`
 	Clusters            map[string]business.Cluster `json:"clusters,omitempty"`
 	Extensions          Extensions                  `json:"extensions,omitempty"`
+	Deployment          DeploymentConfig            `json:"deployment,omitempty"`
 	HealthConfig        config.HealthConfig         `json:"healthConfig,omitempty"`
 	InstallationTag     string                      `json:"installationTag,omitempty"`
 	IstioAnnotations    IstioAnnotations            `json:"istioAnnotations,omitempty"`
@@ -82,6 +87,9 @@ func Config(w http.ResponseWriter, r *http.Request) {
 				Enabled:   config.Extensions.Iter8.Enabled,
 				Namespace: config.Extensions.Iter8.Namespace,
 			},
+		},
+		Deployment: DeploymentConfig{
+			ViewOnlyMode: config.Deployment.ViewOnlyMode,
 		},
 		InstallationTag: config.InstallationTag,
 		IstioAnnotations: IstioAnnotations{
