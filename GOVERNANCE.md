@@ -95,7 +95,7 @@ To become a Tester you need to:
 
 You can propose yourself to apply for the Tester role, or a Maintainer can do it for you.
 Proposals must be posted by opening a pull request
-modifying the testers list to add the new proposed tester, or via a in
+modifying the testers list to add the new proposed tester, or via
 a [GitHub discussion](https://github.com/kiali/kiali/discussions/new) under the
 Governance category. The following information must be provided:
 
@@ -143,7 +143,7 @@ It is important for contributors to be and stay active to set an example and sho
 
 ## Involuntary Removal or Demotion
 
-Involuntary removal/demotion of a contributor happens when requirements to be on certain role aren't being met. This may include repeated patterns of inactivity, extended period of inactivity, a period of failing to meet the requirements of your role, and/or a violation of the Code of Conduct. This process is important because it protects the community and its deliverables while also opens up opportunities for new contributors to step in.
+Involuntary removal/demotion of a contributor happens when requirements for a certain role aren't being met. This may include repeated patterns of inactivity, extended period of inactivity, a period of failing to meet the requirements of your role, and/or a violation of the Code of Conduct. This process is important because it protects the community and its deliverables while also opens up opportunities for new contributors to step in.
 
 Involuntary removal or demotion is handled through a vote by simple majority of the current Maintainers.
 
