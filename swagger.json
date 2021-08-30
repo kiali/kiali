@@ -7266,7 +7266,7 @@
           "x-go-name": "HealthAnnotations"
         },
         "istioInjectionAnnotation": {
-          "description": "Define if Workload has an explicit Istio policy annotation\nIt's mapped as a pointer to show three values nil, true, false",
+          "description": "Define if Workload has an explicit Istio policy annotation\nIstio supports this as a label as well - this will be defined if the label is set, too.\nIf both annotation and label are set, if any is false, injection is disabled.\nIt's mapped as a pointer to show three values nil, true, false",
           "type": "boolean",
           "x-go-name": "IstioInjectionAnnotation"
         },
@@ -7442,7 +7442,7 @@
           "x-go-name": "HealthAnnotations"
         },
         "istioInjectionAnnotation": {
-          "description": "Define if Workload has an explicit Istio policy annotation\nIt's mapped as a pointer to show three values nil, true, false",
+          "description": "Define if Workload has an explicit Istio policy annotation\nIstio supports this as a label as well - this will be defined if the label is set, too.\nIf both annotation and label are set, if any is false, injection is disabled.\nIt's mapped as a pointer to show three values nil, true, false",
           "type": "boolean",
           "x-go-name": "IstioInjectionAnnotation"
         },

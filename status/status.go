@@ -34,7 +34,11 @@ type StatusInfo struct {
 	WarningMessages []string `json:"warningMessages"`
 }
 
+// info is a global var that contains information about Kiali status and what external services are available
 var info StatusInfo
+
+// isMaistra will be true if we are running in a Maistra environment
+var isMaistra *bool
 
 // Status response model
 //
@@ -79,4 +83,20 @@ func Get() (status StatusInfo) {
 	info.WarningMessages = []string{}
 	getVersions()
 	return info
+}
+
+// IsMaistra returns true if we are running in a Maistra environment
+func IsMaistra() bool {
+	if isMaistra == nil {
+		Get()
+		isMaistra = new(bool)
+		*isMaistra = false
+		for _, esi := range info.ExternalServices {
+			if isMaistraExternalService(&esi) {
+				*isMaistra = true
+				break
+			}
+		}
+	}
+	return *isMaistra
 }

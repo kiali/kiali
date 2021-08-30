@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/status"
 )
 
 type WorkloadList struct {
@@ -48,6 +49,8 @@ type WorkloadListItem struct {
 	ResourceVersion string `json:"resourceVersion"`
 
 	// Define if Workload has an explicit Istio policy annotation
+	// Istio supports this as a label as well - this will be defined if the label is set, too.
+	// If both annotation and label are set, if any is false, injection is disabled.
 	// It's mapped as a pointer to show three values nil, true, false
 	IstioInjectionAnnotation *bool `json:"istioInjectionAnnotation,omitempty"`
 
@@ -160,12 +163,32 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 	if tplMeta.Annotations != nil {
 		annotations = tplMeta.Annotations
 	}
-	var annotation string
-	exist := false
-	annotation, exist = annotations[conf.ExternalServices.Istio.IstioInjectionAnnotation]
-	if value, err := strconv.ParseBool(annotation); exist && err == nil {
-		workload.IstioInjectionAnnotation = &value
+
+	// check for automatic sidecar injection - can be defined via label or annotation
+	// if both are defined, either one set to false will disable injection
+	// NOTE: the label (regardless of value) is meaningless in Maistra environments.
+	labelExplicitlyFalse := false // true means the label is defined and explicitly set to false
+	label, exist := workload.Labels[conf.ExternalServices.Istio.IstioInjectionAnnotation]
+	if exist && !status.IsMaistra() {
+		if value, err := strconv.ParseBool(label); err == nil {
+			workload.IstioInjectionAnnotation = &value
+			labelExplicitlyFalse = !value
+		}
 	}
+
+	// do not bother to check the annotation if the label is explicitly false since we know in that case injection is disabled
+	// NOTE: today, if the annotation value is set to "true", that is meaningless for non-Maistra environments.
+	if !labelExplicitlyFalse {
+		annotation, exist := annotations[conf.ExternalServices.Istio.IstioInjectionAnnotation]
+		if exist {
+			if value, err := strconv.ParseBool(annotation); err == nil {
+				if !value || status.IsMaistra() {
+					workload.IstioInjectionAnnotation = &value
+				}
+			}
+		}
+	}
+
 	workload.CreatedAt = formatTime(meta.CreationTimestamp.Time)
 	workload.ResourceVersion = meta.ResourceVersion
 	workload.AdditionalDetails = GetAdditionalDetails(conf, annotations)
