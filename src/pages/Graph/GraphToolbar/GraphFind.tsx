@@ -20,6 +20,7 @@ import { TimeInMilliseconds } from 'types/Common';
 import { AutoComplete } from 'utils/AutoComplete';
 import { DEGRADED, FAILURE, HEALTHY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
+import history, { HistoryManager, URLParam } from '../../../app/History';
 
 type ReduxProps = {
   compressOnHide: boolean;
@@ -126,11 +127,36 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
 
   constructor(props: GraphFindProps) {
     super(props);
-    const findValue = props.findValue ? props.findValue : '';
-    const hideValue = props.hideValue ? props.hideValue : '';
+
     this.findAutoComplete = new AutoComplete(operands);
     this.hideAutoComplete = new AutoComplete(operands);
+
+    let findValue = props.findValue ? props.findValue : '';
+    let hideValue = props.hideValue ? props.hideValue : '';
+
+    // Let URL override current redux state at construction time. Update URL as needed.
+    const urlParams = new URLSearchParams(history.location.search);
+    const urlFind = HistoryManager.getParam(URLParam.GRAPH_FIND, urlParams);
+    if (!!urlFind) {
+      if (urlFind !== findValue) {
+        findValue = urlFind;
+        props.setFindValue(urlFind);
+      }
+    } else if (!!findValue) {
+      HistoryManager.setParam(URLParam.GRAPH_FIND, findValue);
+    }
+    const urlHide = HistoryManager.getParam(URLParam.GRAPH_HIDE, urlParams);
+    if (!!urlHide) {
+      if (urlHide !== hideValue) {
+        hideValue = urlHide;
+        props.setHideValue(urlHide);
+      }
+    } else if (!!hideValue) {
+      HistoryManager.setParam(URLParam.GRAPH_HIDE, hideValue);
+    }
+
     this.state = { findInputValue: findValue, hideInputValue: hideValue };
+
     if (props.showFindHelp) {
       props.toggleFindHelp();
     }
@@ -172,6 +198,22 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     const findChanged = this.props.findValue !== prevProps.findValue;
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
     const graphChanged = this.props.updateTime !== prevProps.updateTime;
+
+    // ensure redux state and URL are aligned
+    if (findChanged) {
+      if (!this.props.findValue) {
+        HistoryManager.deleteParam(URLParam.GRAPH_FIND, true);
+      } else {
+        HistoryManager.setParam(URLParam.GRAPH_FIND, this.props.findValue);
+      }
+    }
+    if (hideChanged) {
+      if (!this.props.hideValue) {
+        HistoryManager.deleteParam(URLParam.GRAPH_HIDE, true);
+      } else {
+        HistoryManager.setParam(URLParam.GRAPH_HIDE, this.props.hideValue);
+      }
+    }
 
     // make sure the value is updated if there was a change
     if (findChanged || (graphChanged && !!this.props.findValue)) {

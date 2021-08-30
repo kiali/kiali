@@ -31,11 +31,6 @@ export type TimeInSeconds = number;
 export type IntervalInMilliseconds = number;
 export type DurationInSeconds = number;
 
-export type ReplayWindow = {
-  interval: IntervalInMilliseconds;
-  startTime: TimeInMilliseconds;
-};
-
 export type BoundsInMilliseconds = {
   from?: TimeInMilliseconds;
   to?: TimeInMilliseconds;

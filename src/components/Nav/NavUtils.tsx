@@ -20,7 +20,7 @@ export type GraphUrlParams = {
 };
 
 const buildCommonQueryParams = (params: GraphUrlParams): string => {
-  let q = `&${URLParam.GRAPH_EDGES}=${params.edgeLabels}`;
+  let q = `&${URLParam.GRAPH_EDGE_LABEL}=${params.edgeLabels}`;
   q += `&${URLParam.GRAPH_LAYOUT}=${params.graphLayout.name}`;
   q += `&${URLParam.GRAPH_IDLE_EDGES}=${params.showIdleEdges}`;
   q += `&${URLParam.GRAPH_IDLE_NODES}=${params.showIdleNodes}`;
@@ -28,7 +28,7 @@ const buildCommonQueryParams = (params: GraphUrlParams): string => {
   q += `&${URLParam.GRAPH_TRAFFIC}=${params.trafficRates}`;
   q += `&${URLParam.GRAPH_TYPE}=${params.graphType}`;
   q += `&${URLParam.DURATION}=${params.duration}`;
-  q += `&${URLParam.OPERATION_NODES}=${params.showOperationNodes}`;
+  q += `&${URLParam.GRAPH_OPERATION_NODES}=${params.showOperationNodes}`;
   q += `&${URLParam.REFRESH_INTERVAL}=${params.refreshInterval}`;
   return q;
 };

@@ -343,6 +343,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
           curr.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP))) ||
       prev.graphType !== curr.graphType ||
       (prev.lastRefreshAt !== curr.lastRefreshAt && curr.replayQueryTime === 0) ||
+      (prev.replayActive !== curr.replayActive && !curr.replayActive) ||
       prev.replayQueryTime !== curr.replayQueryTime ||
       prev.showIdleEdges !== curr.showIdleEdges ||
       prev.showOperationNodes !== curr.showOperationNodes ||

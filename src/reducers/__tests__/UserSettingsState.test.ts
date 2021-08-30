@@ -26,7 +26,6 @@ describe('UserSettingsState reducer', () => {
       refreshInterval: 15000,
       replayActive: false,
       replayQueryTime: 0,
-      replayWindow: { interval: 0, startTime: 0 },
       timeRange: { rangeDuration: 600 }
     });
   });
@@ -40,7 +39,6 @@ describe('UserSettingsState reducer', () => {
           refreshInterval: 60000,
           replayActive: false,
           replayQueryTime: 0,
-          replayWindow: { interval: 0, startTime: 0 },
           timeRange: { rangeDuration: 60 }
         },
         UserSettingsActions.navCollapse(true)
@@ -51,7 +49,6 @@ describe('UserSettingsState reducer', () => {
       refreshInterval: 60000,
       replayActive: false,
       replayQueryTime: 0,
-      replayWindow: { interval: 0, startTime: 0 },
       timeRange: { rangeDuration: 60 }
     });
   });
@@ -65,7 +62,6 @@ describe('UserSettingsState reducer', () => {
           refreshInterval: 60000,
           replayActive: false,
           replayQueryTime: 0,
-          replayWindow: { interval: 0, startTime: 0 },
           timeRange: { rangeDuration: 60 }
         },
         UserSettingsActions.setDuration(120)
@@ -76,7 +72,6 @@ describe('UserSettingsState reducer', () => {
       refreshInterval: 60000,
       replayActive: false,
       replayQueryTime: 0,
-      replayWindow: { interval: 0, startTime: 0 },
       timeRange: { rangeDuration: 60 }
     });
   });
@@ -90,7 +85,6 @@ describe('UserSettingsState reducer', () => {
           refreshInterval: 60000,
           replayActive: false,
           replayQueryTime: 0,
-          replayWindow: { interval: 0, startTime: 0 },
           timeRange: { rangeDuration: 60 }
         },
         UserSettingsActions.setRefreshInterval(120000)
@@ -101,7 +95,6 @@ describe('UserSettingsState reducer', () => {
       refreshInterval: 120000,
       replayActive: false,
       replayQueryTime: 0,
-      replayWindow: { interval: 0, startTime: 0 },
       timeRange: { rangeDuration: 60 }
     });
   });
@@ -115,7 +108,6 @@ describe('UserSettingsState reducer', () => {
           refreshInterval: 60000,
           replayActive: false,
           replayQueryTime: 0,
-          replayWindow: { interval: 0, startTime: 0 },
           timeRange: { rangeDuration: 60 }
         },
         UserSettingsActions.setTimeRange({ rangeDuration: 120 })
@@ -126,7 +118,6 @@ describe('UserSettingsState reducer', () => {
       refreshInterval: 60000,
       replayActive: false,
       replayQueryTime: 0,
-      replayWindow: { interval: 0, startTime: 0 },
       timeRange: { rangeDuration: 120 }
     });
   });
@@ -141,7 +132,6 @@ it('should set replay active', () => {
         refreshInterval: 60000,
         replayActive: false,
         replayQueryTime: 0,
-        replayWindow: { interval: 0, startTime: 0 },
         timeRange: { rangeDuration: 60 }
       },
       UserSettingsActions.toggleReplayActive()
@@ -152,32 +142,6 @@ it('should set replay active', () => {
     refreshInterval: 60000,
     replayActive: true,
     replayQueryTime: 0,
-    replayWindow: { interval: 0, startTime: 0 },
-    timeRange: { rangeDuration: 60 }
-  });
-});
-
-it('should set replay window', () => {
-  expect(
-    UserSettingsState(
-      {
-        duration: 60,
-        interface: { navCollapse: false },
-        refreshInterval: 60000,
-        replayActive: false,
-        replayQueryTime: 0,
-        replayWindow: { interval: 0, startTime: 0 },
-        timeRange: { rangeDuration: 60 }
-      },
-      UserSettingsActions.setReplayWindow({ interval: 600, startTime: 1234567890 })
-    )
-  ).toEqual({
-    duration: 60,
-    interface: { navCollapse: false },
-    refreshInterval: 60000,
-    replayActive: false,
-    replayQueryTime: 0,
-    replayWindow: { interval: 600, startTime: 1234567890 },
     timeRange: { rangeDuration: 60 }
   });
 });

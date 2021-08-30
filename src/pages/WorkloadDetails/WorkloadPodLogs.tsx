@@ -44,13 +44,16 @@ const appContainerColors = [PFColors.White, PFColors.LightGreen400, PFColors.Pur
 const proxyContainerColor = PFColors.Gold400;
 const spanColor = PFColors.Cyan300;
 
-export interface WorkloadPodLogsProps {
+type ReduxProps = {
   lastRefreshAt: TimeInMilliseconds;
+  timeRange: TimeRange;
+};
+
+export type WorkloadPodLogsProps = ReduxProps & {
   namespace: string;
   pods: Pod[];
-  timeRange: TimeRange;
   workload: string;
-}
+};
 
 type ContainerOption = {
   color: PFColorVal;

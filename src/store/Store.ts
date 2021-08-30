@@ -4,7 +4,6 @@ import {
   DurationInSeconds,
   IntervalInMilliseconds,
   RawDate,
-  ReplayWindow,
   TimeInMilliseconds,
   TimeRange,
   UserName
@@ -113,7 +112,6 @@ export interface UserSettings {
   refreshInterval: IntervalInMilliseconds;
   replayActive: boolean;
   replayQueryTime: TimeInMilliseconds;
-  replayWindow: ReplayWindow;
   timeRange: TimeRange;
 }
 

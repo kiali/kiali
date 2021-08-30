@@ -55,10 +55,6 @@ const replayActive = (state: KialiAppState) => state.userSettings.replayActive;
 
 export const replayActiveSelector = createIdentitySelector(replayActive);
 
-const replayWindow = (state: KialiAppState) => state.userSettings.replayWindow;
-
-export const replayWindowSelector = createIdentitySelector(replayWindow);
-
 const replayQueryTime = (state: KialiAppState) => state.userSettings.replayQueryTime;
 
 export const replayQueryTimeSelector = createIdentitySelector(replayQueryTime);
