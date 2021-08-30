@@ -4,21 +4,21 @@ This document defines governance policies for the Kiali project.
 
 ## Maintainers
 
-Kiali Maintainers have write access to the [https://github.com/kiali](Kiali GitHub repositories).
+Kiali Maintainers have write access to the [Kiali GitHub repositories](https://github.com/kiali).
 They can merge their own patches or patches from others. Maintainers collectively manage the project's
-resources and contributors.
+resources and contributors. Maintainers are elegible to become admins of specific repositories, or owners
+of the Kiali organization.
 
-This privilege is granted with an expectation of responsibility: maintainers care about the Kiali project and want to help it grow and improve. Above the ability to contribute changes, a maintainer has demonstrated the ability to collaborate well with the team, assign appropriate code reviewers, contribute high-quality code, and be thorough and timely with fixes, tests and documentation.
+These privileges are granted with an expectation of responsibility: maintainers care about the Kiali project and want to help it grow and improve. Above the ability to contribute changes, a maintainer has demonstrated the ability to collaborate well with the team, assign appropriate code reviewers, contribute high-quality code, and be thorough and timely with fixes, tests and documentation.
 
 A maintainer is a contributor to the Kiali project's success and a citizen helping the project succeed.
 
 Current list of maintainers (alphabetically ordered):
 
-* [abonas](https://github.com/abonas)
-* [aljesusg](https://github.com/aljesusg)
+* [aljesusg](https://github.com/aljesusg) - _Owner_
 * [hhovsepy](https://github.com/hhovsepy)
-* [israel-hdez](https://github.com/israel-hdez)
-* [jmazzitelli](https://github.com/jmazzitelli)
+* [israel-hdez](https://github.com/israel-hdez) - _Owner_
+* [jmazzitelli](https://github.com/jmazzitelli) - _Owner_
 * [leandroberetta](https://github.com/leandroberetta)
 * [nrfox](https://github.com/nrfox)
 * [xeviknal](https://github.com/xeviknal)
@@ -36,15 +36,27 @@ To become a Maintainer you need to demonstrate the following:
 * understanding of team policies and processes,
 * understanding of the project's code base, and coding and documentation style.
 
-A new maintainer must be proposed by an existing maintainer by opening a [GitHub
+A new maintainer must be proposed by an existing maintainer by opening a pull request
+modifying the maintainers list to add the new proposed maintainer, or via a [GitHub
 discussion](https://github.com/kiali/kiali/discussions/new) under the Governance category.
 The following information must be provided:
 
-* nominee's GitHub user name,
+* nominee's GitHub username,
 * an explanation of why the nominee should be a maintainer,
 * a list of links to non-trivial pull requests (top 10) authored by the nominee.
 
 Two other maintainers need to second the nomination. If no one objects in 5 working days (U.S.), the nomination is accepted.  If anyone objects or wants more information, the maintainers discuss and usually come to a consensus (within the 5 working days). If issues can't be resolved, there's a simple majority vote among current maintainers.
+
+To upgrade to _Admin_ of a Kiali repository or _Owner_ of the Kiali organization,
+you must first be a Maintainer (i.e. you cannot directly become an _Admin_ or _Owner_
+without being first a Maintainer). You can propose yourself to apply for admin privileges
+or ownership, or another Maintainer can do it for you. Proposals must be posted by opening a pull request
+modifying the admin or owners list to add the new _Admin_ or _Owner_, or via a
+[GitHub discussion](https://github.com/kiali/kiali/discussions/new) under the
+Governance category. The proposal must mention the GitHub username of the maintainer requiring
+the upgrade and the reason of the need of the upgrade (usually, it is because
+of the need of extra privileges). The new privileges are granted if a simple majority vote
+among current maintainers succeeds.
 
 ## Testers
 
@@ -53,7 +65,11 @@ delivered with good quality, by actively trying pull requests to find bugs,
 performance issues and any other kind of issues. Testers may also write manual or
 automated tests. The focus is on "System testing" and "Integration testing",
 although it is possible to do simple sanity, smoke and regression testing, or
-simply running existent automated tests if that is enough for a certain pull request.
+simply running existent automated tests if that is enough for a certain code change.
+
+Testers are granted the same privileges as Maintainers, and are also invited to become
+a member of the Kiali organization. This is in good faith of not performing tasks of a
+Maintainer.
 
 Testers do not need to be Maintainers. Also, Maintainers do not need to be Testers. Yet,
 both roles aren't mutually exclusive.
@@ -77,6 +93,19 @@ To become a Tester you need to:
 * ability to document testing procedures of Kiali features and to update existing documentation if features change,
 * understanding of team policies and processes.
 
+You can propose yourself to apply for the Tester role, or a Maintainer can do it for you.
+Proposals must be posted by opening a pull request
+modifying the testers list to add the new proposed tester, or via a in
+a [GitHub discussion](https://github.com/kiali/kiali/discussions/new) under the
+Governance category. The following information must be provided:
+
+* nominee's GitHub username
+* a list of pull requests (top 5) tested by the nominee.
+* a list of documented test cases (if any)
+
+Formalization of the Tester role is granted if a simple majority vote
+among current maintainers succeeds.
+
 ## Leaders
 
 Kiali leaders are Maintainers who have a broad knowledge about the Kiali project, its goals and vision.
@@ -85,19 +114,21 @@ Thus, they are able to guide and mentor other Maintainers, give direction, and s
 
 Current list of leaders (alphabetically ordered):
 
-* [jshaughn](https://github.com/jshaughn)
-* [lucasponce](https://github.com/lucasponce)
+* [abonas](https://github.com/abonas) - _Owner_
+* [jshaughn](https://github.com/jshaughn) - _Owner_
+* [lucasponce](https://github.com/lucasponce) - _Owner_
 
 ### Becoming a Leader
 
 To become a Leader, you must first be a Maintainer. Then, a new Leader must be proposed
-by an existing Maintainer by opening a [GitHub discussion](https://github.com/kiali/kiali/discussions/new)
+by an existing Maintainer by opening a pull request modifying the leaders list to add the new
+proposed leader, or via a by opening a [GitHub discussion](https://github.com/kiali/kiali/discussions/new)
 under the Governance category. The following information must be provided:
 
-* nominee's GitHub user name,
+* nominee's GitHub username,
 * an explanation of why the nominee should be a leader.
 
-Two other maintainers need to second the nomination. If no one objects in 5 working days (U.S.), the nomination is accepted.  If anyone objects or wants more information, the maintainers discuss and usually come to a consensus (within the 5 working days). If issues can't be resolved, there's a simple majority vote among current maintainers.
+Leadership is granted if a simple majority vote among current maintainers succeeds.
 
 ## Inactivity
 
@@ -114,13 +145,11 @@ It is important for contributors to be and stay active to set an example and sho
 
 Involuntary removal/demotion of a contributor happens when requirements to be on certain role aren't being met. This may include repeated patterns of inactivity, extended period of inactivity, a period of failing to meet the requirements of your role, and/or a violation of the Code of Conduct. This process is important because it protects the community and its deliverables while also opens up opportunities for new contributors to step in.
 
-<!-- TODO: replace with your method of removing/demoting contributors.  If you have a formal governance structure, this would be a good place to assign this to your governance, such as a Steering Committee.
-Again, the example below is for a project without formal governance except the maintainers.-->
 Involuntary removal or demotion is handled through a vote by simple majority of the current Maintainers.
 
 ## Stepping Down/Emeritus Process
 
-If and when contributors' commitment levels change, contributors can consider stepping down (moving down the contributor ladder) vs moving to emeritus status (completely stepping away from the project).
+If and when contributors commitment levels change, contributors can consider stepping down (moving down the contributor ladder) vs moving to emeritus status (completely stepping away from the project).
 
 Contact the Maintainers about changing to Emeritus status, or reducing your contributor level.
 
@@ -128,16 +157,17 @@ Contact the Maintainers about changing to Emeritus status, or reducing your cont
 
 While most business in Kiali project is conducted by "lazy consensus", periodically
 the Maintainers may need to vote on specific actions or changes.
-A vote can be taken on [the developer mailing list](TODO) or
-[the private Maintainer mailing list](TODO) for security or conduct matters.  
-Votes may also be taken at [the developer meeting](TODO).  Any Maintainer may
-demand a vote be taken.
+A vote can be taken on pull requests proposing project changes, or via a
+[a GitHub discussion](https://github.com/kiali/kiali/discussions/new).
+If there are security or conduct matters, voting can take place in private meetings.
+Any Maintainer or Tester may demand a vote be taken.
 
-Most votes require a simple majority of all Maintainers to succeed. Maintainers
-can be removed by a 2/3 majority vote of all Maintainers, or by resignation. Changes
+Most votes require a simple majority of all Maintainers to succeed. Changes
 to the Governance require a 2/3 vote of all Maintainers.
+
+Kiali Testers also have a voice in voting although their vote is not mandatory.
 
 ## Other Changes
 
-Unless specified above, all other changes to the project require a 2/3 majority vote by maintainers.
-Additionally, any maintainer may request that any change require a 2/3 majority vote by maintainers.
+Unless specified above, all other changes to the project require a 2/3 majority vote.
+Additionally, any maintainer or tester may request that any change require a 2/3 majority vote.
