@@ -170,5 +170,5 @@ func TestHTTPPostRespectsContextTimeout(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
 	t.Cleanup(cancel)
-	httputil.HttpPost(ctx, server.URL, nil, nil)
+	_, _, _ = httputil.HttpPost(ctx, server.URL, nil, nil)
 }
