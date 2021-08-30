@@ -1,5 +1,12 @@
 import * as React from 'react';
-import { Dropdown, DropdownItem, DropdownPosition, DropdownToggle } from '@patternfly/react-core';
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownPosition,
+  DropdownToggle,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { CaretDownIcon } from '@patternfly/react-icons';
 import { serverConfig } from '../../config';
 import { Workload } from '../../types/Workload';
@@ -93,6 +100,14 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
     }
   };
 
+  renderTooltip = (key, position, msg, child): JSX.Element => {
+    return (
+      <Tooltip key={'tooltip_' + key} position={position} content={<>{msg}</>}>
+        <div style={{ display: 'inline-block', cursor: 'not-allowed', textAlign: 'left' }}>{child}</div>
+      </Tooltip>
+    );
+  };
+
   renderDropdownItems = (): JSX.Element[] => {
     const items: JSX.Element[] = [];
     if (serverConfig.kialiFeatureFlags.istioInjectionAction) {
@@ -101,41 +116,55 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
           key={WIZARD_ENABLE_AUTO_INJECTION}
           component="button"
           onClick={() => this.onAction(WIZARD_ENABLE_AUTO_INJECTION)}
+          isDisabled={serverConfig.deployment.viewOnlyMode}
         >
           Enable Auto Injection
         </DropdownItem>
       );
+      const enableActionWrapper = serverConfig.deployment.viewOnlyMode
+        ? this.renderTooltip('enable_auto_injection', TooltipPosition.left, 'User has not permissions', enableAction)
+        : enableAction;
+
       const disableAction = (
         <DropdownItem
           key={WIZARD_DISABLE_AUTO_INJECTION}
           component="button"
           onClick={() => this.onAction(WIZARD_DISABLE_AUTO_INJECTION)}
+          isDisabled={serverConfig.deployment.viewOnlyMode}
         >
           Disable Auto Injection
         </DropdownItem>
       );
+      const disableActionWrapper = serverConfig.deployment.viewOnlyMode
+        ? this.renderTooltip('disable_auto_injection', TooltipPosition.left, 'User has not permissions', disableAction)
+        : disableAction;
+
       const removeAction = (
         <DropdownItem
           key={WIZARD_REMOVE_AUTO_INJECTION}
           component="button"
           onClick={() => this.onAction(WIZARD_REMOVE_AUTO_INJECTION)}
+          isDisabled={serverConfig.deployment.viewOnlyMode}
         >
           Remove Auto Injection
         </DropdownItem>
       );
+      const removeActionWrapper = serverConfig.deployment.viewOnlyMode
+        ? this.renderTooltip('remove_auto_injection', TooltipPosition.left, 'User has not permissions', removeAction)
+        : removeAction;
 
       if (this.props.workload.istioInjectionAnnotation !== undefined && this.props.workload.istioInjectionAnnotation) {
-        items.push(disableAction);
-        items.push(removeAction);
+        items.push(disableActionWrapper);
+        items.push(removeActionWrapper);
       } else if (
         this.props.workload.istioInjectionAnnotation !== undefined &&
         !this.props.workload.istioInjectionAnnotation
       ) {
-        items.push(enableAction);
-        items.push(removeAction);
+        items.push(enableActionWrapper);
+        items.push(removeActionWrapper);
       } else {
         // If sidecar is present, we offer first the disable action
-        items.push(this.props.workload.istioSidecar ? disableAction : enableAction);
+        items.push(this.props.workload.istioSidecar ? disableActionWrapper : enableActionWrapper);
       }
     }
     return items;
@@ -160,7 +189,18 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
       />
     );
     // TODO WorkloadWizard component contains only 3scale actions but in the future we may need to bring it back
-    return <>{dropdown}</>;
+    return (
+      <>
+        {!validActions
+          ? this.renderTooltip(
+              'tooltip_wizard_actions',
+              TooltipPosition.top,
+              'User has not permissions on this Workload',
+              dropdown
+            )
+          : dropdown}
+      </>
+    );
   }
 }
 

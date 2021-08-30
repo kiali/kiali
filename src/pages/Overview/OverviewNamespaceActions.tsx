@@ -43,7 +43,7 @@ export class OverviewNamespaceActions extends React.Component<Props, State> {
     });
   };
 
-  renderTooltip = (key, position, msg, child): any => {
+  renderTooltip = (key, position, msg, child): JSX.Element => {
     return (
       <Tooltip key={'tooltip_' + key} position={position} content={<>{msg}</>}>
         <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{child}</div>

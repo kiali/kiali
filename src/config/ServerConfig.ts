@@ -54,6 +54,9 @@ const defaultServerConfig: ComputedServerConfig = {
   healthConfig: {
     rate: []
   },
+  deployment: {
+    viewOnlyMode: false
+  },
   installationTag: 'Kiali Console',
   istioAnnotations: {
     istioInjectionAnnotation: 'sidecar.istio.io/inject'

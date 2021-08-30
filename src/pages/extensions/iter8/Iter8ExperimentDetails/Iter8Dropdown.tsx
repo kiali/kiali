@@ -192,7 +192,7 @@ class Iter8Dropdown extends React.Component<Props, State> {
     return this.props.startTime !== '' && this.props.phase === phase;
   };
 
-  renderTooltip = (key, position, msg, child): any => {
+  renderTooltip = (key, position, msg, child): JSX.Element => {
     return (
       <Tooltip key={key} position={position} content={<>{msg}</>}>
         <div style={{ cursor: 'not-allowed' }}>{child}</div>

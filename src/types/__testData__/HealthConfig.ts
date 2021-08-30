@@ -52,7 +52,10 @@ export const healthConfig = {
     storageTsdbRetention: 21600
   },
   durations: {},
-  istioTelemetryV2: true
+  istioTelemetryV2: true,
+  deployment: {
+    viewOnlyMode: false
+  }
 };
 
 export const tolerancesDefault = [
