@@ -31,8 +31,8 @@ func NewEmptyRequestHealth() RequestHealth {
 		Inbound:            make(map[string]map[string]float64),
 		Outbound:           make(map[string]map[string]float64),
 		HealthAnnotations:  make(map[string]string),
-		inboundSource:      make(map[string]map[string]float64),
-		inboundDestination: make(map[string]map[string]float64),
+		InboundSource:      make(map[string]map[string]float64),
+		InboundDestination: make(map[string]map[string]float64),
 	}
 }
 
@@ -98,8 +98,8 @@ type RequestHealth struct {
 	Inbound            map[string]map[string]float64 `json:"inbound"`
 	Outbound           map[string]map[string]float64 `json:"outbound"`
 	HealthAnnotations  map[string]string             `json:"healthAnnotations"`
-	inboundSource      map[string]map[string]float64
-	inboundDestination map[string]map[string]float64
+	InboundSource      map[string]map[string]float64
+	InboundDestination map[string]map[string]float64
 }
 
 // AggregateInbound adds the provided metric sample to internal inbound counters and updates error ratios
@@ -108,9 +108,9 @@ func (in *RequestHealth) AggregateInbound(sample *model.Sample) {
 	reporter := string(sample.Metric[model.LabelName("reporter")])
 	switch reporter {
 	case "source":
-		aggregate(sample, in.inboundSource)
+		aggregate(sample, in.InboundSource)
 	case "destination":
-		aggregate(sample, in.inboundDestination)
+		aggregate(sample, in.InboundDestination)
 	default:
 		log.Tracef("Inbound metric without reporter %v ", sample)
 		aggregate(sample, in.Inbound)
@@ -133,7 +133,7 @@ func (in *RequestHealth) AggregateOutbound(sample *model.Sample) {
 func (in *RequestHealth) CombineReporters() {
 	// Inbound
 	// Init Inbound with data from source reporter
-	for isProtocol, isCodes := range in.inboundSource {
+	for isProtocol, isCodes := range in.InboundSource {
 		if _, ok := in.Inbound[isProtocol]; !ok {
 			in.Inbound[isProtocol] = make(map[string]float64)
 		}
@@ -142,7 +142,7 @@ func (in *RequestHealth) CombineReporters() {
 		}
 	}
 	// Combine data from destination and source reporters for Inbound rate
-	for idProtocol, idCodes := range in.inboundDestination {
+	for idProtocol, idCodes := range in.InboundDestination {
 		if _, ok := in.Inbound[idProtocol]; !ok {
 			in.Inbound[idProtocol] = make(map[string]float64)
 		}
