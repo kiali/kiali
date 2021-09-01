@@ -10,10 +10,11 @@ import (
 const DestinationRuleCheckerType = "destinationrule"
 
 type DestinationRulesChecker struct {
-	DestinationRules []kubernetes.IstioObject
-	MTLSDetails      kubernetes.MTLSDetails
-	ServiceEntries   []kubernetes.IstioObject
-	Namespaces       []models.Namespace
+	DestinationRules         []kubernetes.IstioObject
+	ExportedDestinationRules []kubernetes.IstioObject
+	MTLSDetails              kubernetes.MTLSDetails
+	ServiceEntries           []kubernetes.IstioObject
+	Namespaces               []models.Namespace
 }
 
 func (in DestinationRulesChecker) Check() models.IstioValidations {
@@ -31,7 +32,7 @@ func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 	seHosts := kubernetes.ServiceEntryHostnames(in.ServiceEntries)
 
 	enabledDRCheckers := []GroupChecker{
-		destinationrules.MultiMatchChecker{Namespaces: in.Namespaces, DestinationRules: in.DestinationRules, ServiceEntries: seHosts},
+		destinationrules.MultiMatchChecker{Namespaces: in.Namespaces, DestinationRules: in.DestinationRules, ServiceEntries: seHosts, ExportedDestinationRules: in.ExportedDestinationRules},
 	}
 
 	// Appending validations that only applies to non-autoMTLS meshes

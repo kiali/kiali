@@ -24,7 +24,8 @@ func TestMultiHostMatchCorrect(t *testing.T) {
 	}
 
 	vals := MultiMatchChecker{
-		DestinationRules: destinationRules,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
 	}.Check()
 
 	assert.Empty(vals)
@@ -46,7 +47,8 @@ func TestMultiHostMatchInvalid(t *testing.T) {
 	}
 
 	vals := MultiMatchChecker{
-		DestinationRules: destinationRules,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -90,7 +92,8 @@ func TestMultiHostMatchInvalidShortFormat(t *testing.T) {
 	}
 
 	vals := MultiMatchChecker{
-		DestinationRules: destinationRules,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -118,7 +121,8 @@ func TestMultiHostMatchValidShortFormat(t *testing.T) {
 	}
 
 	vals := MultiMatchChecker{
-		DestinationRules: destinationRules,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
 	}.Check()
 
 	assert.Empty(vals)
@@ -143,7 +147,8 @@ func TestMultiHostMatchValidShortFormatDiffNamespace(t *testing.T) {
 			models.Namespace{Name: "bookinfo"},
 			models.Namespace{Name: "test"},
 		},
-		DestinationRules: destinationRules,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
 	}.Check()
 
 	// MultiMatchChecker shouldn't fail if a host is in a different namespace
@@ -162,7 +167,8 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	}
 
 	vals := MultiMatchChecker{
-		DestinationRules: destinationRules,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -181,7 +187,55 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	}
 
 	vals = MultiMatchChecker{
-		DestinationRules: destinationRules,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
+	}.Check()
+
+	assert.NotEmpty(vals)
+	validation, ok = vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "rule1"}]
+	assert.True(ok)
+	assert.True(validation.Valid) // As long as it is warning, this is true
+	assert.NotEmpty(validation.Checks)
+	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
+
+	assert.NotEmpty(validation.References)
+	assert.Equal("rule2", validation.References[0].Name)
+}
+
+func TestMultiHostMatchBothWildcardInvalid(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	destinationRules := []kubernetes.IstioObject{
+		data.CreateTestDestinationRule("test", "rule1", "*"),
+		data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
+	}
+
+	vals := MultiMatchChecker{
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
+	}.Check()
+
+	assert.NotEmpty(vals)
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "rule2"}]
+	assert.True(ok)
+	assert.True(validation.Valid) // As long as it is warning, this is true
+	assert.NotEmpty(validation.Checks)
+	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
+
+	assert.NotEmpty(validation.References)
+	assert.Equal("rule1", validation.References[0].Name)
+
+	destinationRules = []kubernetes.IstioObject{
+		data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
+		data.CreateTestDestinationRule("test", "rule1", "*"),
+	}
+
+	vals = MultiMatchChecker{
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -208,7 +262,8 @@ func TestMultiHostMatchingMeshWideMTLSDestinationRule(t *testing.T) {
 	}
 
 	vals := MultiMatchChecker{
-		DestinationRules: destinationRules,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
 	}.Check()
 
 	assert.Empty(vals)
@@ -230,7 +285,8 @@ func TestMultiHostMatchingNamespaceWideMTLSDestinationRule(t *testing.T) {
 	}
 
 	vals := MultiMatchChecker{
-		DestinationRules: destinationRules,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
 	}.Check()
 
 	assert.Empty(vals)
@@ -253,7 +309,8 @@ func TestMultiHostMatchDifferentSubsets(t *testing.T) {
 	}
 
 	vals := MultiMatchChecker{
-		DestinationRules: destinationRules,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
 	}.Check()
 
 	assert.Empty(vals)
@@ -264,7 +321,8 @@ func TestMultiHostMatchDifferentSubsets(t *testing.T) {
 	)
 
 	vals = MultiMatchChecker{
-		DestinationRules: destinationRules,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -283,7 +341,8 @@ func TestReviewsExample(t *testing.T) {
 	}
 
 	vals := MultiMatchChecker{
-		DestinationRules: destinationRules,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
 	}.Check()
 
 	assert.Empty(vals)
@@ -293,7 +352,8 @@ func TestReviewsExample(t *testing.T) {
 	destinationRules = append(destinationRules, allMatch)
 
 	vals = MultiMatchChecker{
-		DestinationRules: destinationRules,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -321,8 +381,9 @@ func TestMultiServiceEntry(t *testing.T) {
 	drB := data.CreateEmptyDestinationRule("test", "service-b", "api.service_b.com")
 
 	vals := MultiMatchChecker{
-		DestinationRules: []kubernetes.IstioObject{drA, drB},
-		ServiceEntries:   kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{seA, seB}),
+		DestinationRules:         []kubernetes.IstioObject{drA, drB},
+		ExportedDestinationRules: []kubernetes.IstioObject{},
+		ServiceEntries:           kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{seA, seB}),
 	}.Check()
 
 	assert.Empty(vals)
@@ -340,8 +401,9 @@ func TestMultiServiceEntryInvalid(t *testing.T) {
 	drB := data.CreateEmptyDestinationRule("test", "service-a2", "api.service_a.com")
 
 	vals := MultiMatchChecker{
-		DestinationRules: []kubernetes.IstioObject{drA, drB},
-		ServiceEntries:   kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{seA}),
+		DestinationRules:         []kubernetes.IstioObject{drA, drB},
+		ExportedDestinationRules: []kubernetes.IstioObject{},
+		ServiceEntries:           kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{seA}),
 	}.Check()
 
 	assert.NotEmpty(vals)

@@ -1,6 +1,7 @@
 package destinationrules
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -10,45 +11,45 @@ import (
 const DestinationRulesCheckerType = "destinationrule"
 
 type MultiMatchChecker struct {
-	DestinationRules []kubernetes.IstioObject
-	ServiceEntries   map[string][]string
-	Namespaces       models.Namespaces
+	DestinationRules         []kubernetes.IstioObject
+	ExportedDestinationRules []kubernetes.IstioObject
+	ServiceEntries           map[string][]string
+	Namespaces               models.Namespaces
 }
 
 type subset struct {
-	Name     string
-	RuleName string
+	Name      string
+	Namespace string
+	RuleName  string
+}
+
+type rule struct {
+	Name      string
+	Namespace string
 }
 
 // Check validates that no two destinationRules target the same host+subset combination
 func (m MultiMatchChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	// Equality search is: [fqdn.Service][subset] except for ServiceEntry targets which use [host][subset]
-	seenHostSubsets := make(map[string]map[string][]string)
+	// Equality search is: [fqdn.String()][subset] except for ServiceEntry targets which use [host][subset]
+	seenHostSubsets := make(map[string]map[string][]rule)
 
-	for _, dr := range m.DestinationRules {
+	for _, dr := range append(m.DestinationRules, m.ExportedDestinationRules...) {
 		if host, ok := dr.GetSpec()["host"]; ok {
 			destinationRulesName := dr.GetObjectMeta().Name
 			destinationRulesNamespace := dr.GetObjectMeta().Namespace
 			if dHost, ok := host.(string); ok {
 				fqdn := kubernetes.GetHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName, m.Namespaces.GetNames())
 
-				if fqdn.Namespace != dr.GetObjectMeta().Namespace && !strings.HasPrefix(fqdn.Service, "*") && fqdn.Namespace != "" {
-					// Unable to verify if the same host+subset combination is targeted from different namespace DRs
-					// "*" check removes the prefix errors
-					// NoDestinationChecker will check cross-namespace validations
-					continue
-				}
-
 				// Skip DR validation if it enables mTLS either namespace or mesh-wide
-				if isNonLocalmTLSForServiceEnabled(dr, fqdn.Service) {
+				if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
 					continue
 				}
 
-				foundSubsets := extractSubsets(dr, destinationRulesName)
+				foundSubsets := extractSubsets(dr, destinationRulesName, destinationRulesNamespace)
 
-				if fqdn.Service == "*" {
+				if fqdn.IsWildcard() {
 					// We need to check the matching subsets from all hosts now
 					for _, h := range seenHostSubsets {
 						checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, h)
@@ -56,21 +57,21 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 					// We add * later
 				}
 				// Search "*" first and then exact name
-				if previous, found := seenHostSubsets["*"]; found {
+				if previous, found := seenHostSubsets[fmt.Sprintf("*.%s.%s", fqdn.Namespace, fqdn.Cluster)]; found {
 					// Need to check subsets of "*"
 					checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, previous)
 				}
 
-				if previous, found := seenHostSubsets[fqdn.Service]; found {
+				if previous, found := seenHostSubsets[fqdn.String()]; found {
 					// Host found, need to check underlying subsets
 					checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, previous)
 				}
 				// Nothing threw an error, so add these
-				if _, found := seenHostSubsets[fqdn.Service]; !found {
-					seenHostSubsets[fqdn.Service] = make(map[string][]string)
+				if _, found := seenHostSubsets[fqdn.String()]; !found {
+					seenHostSubsets[fqdn.String()] = make(map[string][]rule)
 				}
 				for _, s := range foundSubsets {
-					seenHostSubsets[fqdn.Service][s.Name] = append(seenHostSubsets[fqdn.Service][s.Name], destinationRulesName)
+					seenHostSubsets[fqdn.String()][s.Name] = append(seenHostSubsets[fqdn.String()][s.Name], rule{destinationRulesName, destinationRulesNamespace})
 				}
 			}
 		}
@@ -100,7 +101,7 @@ func ismTLSEnabled(dr kubernetes.IstioObject) bool {
 	return false
 }
 
-func extractSubsets(dr kubernetes.IstioObject, destinationRulesName string) []subset {
+func extractSubsets(dr kubernetes.IstioObject, destinationRulesName string, destinationRulesNamespace string) []subset {
 	if subsets, found := dr.GetSpec()["subsets"]; found {
 		if subsetSlice, ok := subsets.([]interface{}); ok {
 			foundSubsets := make([]subset, 0, len(subsetSlice))
@@ -108,7 +109,7 @@ func extractSubsets(dr kubernetes.IstioObject, destinationRulesName string) []su
 				if element, ok := se.(map[string]interface{}); ok {
 					if name, found := element["name"]; found {
 						if n, ok := name.(string); ok {
-							foundSubsets = append(foundSubsets, subset{n, destinationRulesName})
+							foundSubsets = append(foundSubsets, subset{n, destinationRulesNamespace, destinationRulesName})
 						}
 					}
 				}
@@ -117,40 +118,40 @@ func extractSubsets(dr kubernetes.IstioObject, destinationRulesName string) []su
 		}
 	}
 	// Matches all the subsets:~
-	return []subset{{"~", destinationRulesName}}
+	return []subset{{"~", destinationRulesNamespace, destinationRulesName}}
 }
 
-func checkCollisions(validations models.IstioValidations, namespace, destinationRulesName string, foundSubsets []subset, existing map[string][]string) {
+func checkCollisions(validations models.IstioValidations, namespace, destinationRulesName string, foundSubsets []subset, existing map[string][]rule) {
 	// If current subset is ~
 	if len(foundSubsets) == 1 && foundSubsets[0].Name == "~" {
 		// This should match any subset in the same hostname
 		for _, v := range existing {
 			for _, e := range v {
-				addError(validations, namespace, []string{destinationRulesName, e})
+				addError(validations, []string{namespace, e.Namespace}, []string{destinationRulesName, e.Name})
 			}
 		}
 	}
 
 	// If we have existing subset with ~
-	if ruleNames, found := existing["~"]; found {
-		for _, ruleName := range ruleNames {
-			addError(validations, namespace, []string{destinationRulesName, ruleName})
+	if rules, found := existing["~"]; found {
+		for _, rule := range rules {
+			addError(validations, []string{namespace, rule.Namespace}, []string{destinationRulesName, rule.Name})
 		}
 	}
 
 	for _, s := range foundSubsets {
-		if ruleNames, found := existing[s.Name]; found {
-			for _, ruleName := range ruleNames {
-				addError(validations, namespace, []string{destinationRulesName, ruleName})
+		if rules, found := existing[s.Name]; found {
+			for _, rule := range rules {
+				addError(validations, []string{namespace, rule.Namespace}, []string{destinationRulesName, rule.Name})
 			}
 		}
 	}
 }
 
-// addError links new validation errors to the validations. destinationRuleNames must always be a pair
-func addError(validations models.IstioValidations, namespace string, destinationRuleNames []string) models.IstioValidations {
-	key0, rrValidation0 := createError("destinationrules.multimatch", namespace, destinationRuleNames[0], true)
-	key1, rrValidation1 := createError("destinationrules.multimatch", namespace, destinationRuleNames[1], true)
+// addError links new validation errors to the validations. namespaces nad destinationRuleNames must always be a pair
+func addError(validations models.IstioValidations, namespaces []string, destinationRuleNames []string) models.IstioValidations {
+	key0, rrValidation0 := createError("destinationrules.multimatch", namespaces[0], destinationRuleNames[0], true)
+	key1, rrValidation1 := createError("destinationrules.multimatch", namespaces[1], destinationRuleNames[1], true)
 
 	rrValidation0.References = append(rrValidation0.References, key1)
 	rrValidation1.References = append(rrValidation1.References, key0)
