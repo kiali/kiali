@@ -62,7 +62,7 @@ among current maintainers succeeds.
 
 Kiali testers dedicate time and resources to ensure that the Kiali project is
 delivered with good quality, by actively trying pull requests to find bugs,
-performance issues and any other kind of issues. Testers may also write manual or
+performance issues and any other kind of defect. Testers may also write manual or
 automated tests. The focus is on "System testing" and "Integration testing",
 although it is possible to do simple sanity, smoke and regression testing, or
 simply running existent automated tests if that is enough for a certain code change.
@@ -87,7 +87,7 @@ To become a Tester you need to:
 
 * actively participate in testing code changes of the Kiali project
   * testing pull requests for 3 months or more,
-  * find 5 non trivial issues in Kiali,
+  * find 5 non trivial defects in Kiali,
   * occassionally, do testing over `master` branches to find broken features
 * ability to collaborate with the team,
 * ability to document testing procedures of Kiali features and to update existing documentation if features change,
