@@ -242,8 +242,9 @@ func testValidationAdded(t *testing.T, destinationRules []kubernetes.IstioObject
 	assert := assert.New(t)
 
 	vals := TrafficPolicyChecker{
-		DestinationRules: destinationRules,
-		MTLSDetails:      mTLSDetails,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
+		MTLSDetails:              mTLSDetails,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -266,8 +267,9 @@ func testValidationsNotAdded(t *testing.T, destinationRules []kubernetes.IstioOb
 	assert := assert.New(t)
 
 	vals := TrafficPolicyChecker{
-		DestinationRules: destinationRules,
-		MTLSDetails:      mTLSDetails,
+		DestinationRules:         destinationRules,
+		ExportedDestinationRules: []kubernetes.IstioObject{},
+		MTLSDetails:              mTLSDetails,
 	}.Check()
 
 	assert.Empty(vals)

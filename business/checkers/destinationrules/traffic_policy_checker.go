@@ -1,27 +1,26 @@
 package destinationrules
 
 import (
+	"fmt"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type TrafficPolicyChecker struct {
-	DestinationRules []kubernetes.IstioObject
-	MTLSDetails      kubernetes.MTLSDetails
+	DestinationRules         []kubernetes.IstioObject
+	ExportedDestinationRules []kubernetes.IstioObject
+	MTLSDetails              kubernetes.MTLSDetails
 }
 
 func (t TrafficPolicyChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	refdMtls := t.drsWithNonLocalmTLSEnabled()
-	// When mTLS is not enabled, there is no validation to be added.
-	if len(refdMtls) == 0 {
-		return validations
-	}
 
 	// Check whether DRs override mTLS.
 	for _, dr := range t.DestinationRules {
-		drSameHosts := sameHostDestinationRules(dr, refdMtls)
+		drSameHosts := sameHostDestinationRules(dr, refdMtls, t.ExportedDestinationRules)
 
 		// Continue if there aren't DestinationRules enabling mTLS non-locally
 		// and pointing to same host as dr.
@@ -35,7 +34,7 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 			key := models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name, dr.GetObjectMeta().Namespace)
 
 			refKeys := make([]models.IstioValidationKey, 0, len(refdMtls))
-			for _, dr := range refdMtls {
+			for _, dr := range drSameHosts {
 				refKeys = append(refKeys, models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name, dr.GetObjectMeta().Namespace))
 			}
 
@@ -56,7 +55,7 @@ func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []kubernetes.IstioObj
 		if host, ok := dr.GetSpec()["host"]; ok {
 			if dHost, ok := host.(string); ok {
 				fqdn := kubernetes.ParseHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
-				if isNonLocalmTLSForServiceEnabled(dr, fqdn.Service) {
+				if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
 					mtlsDrs = append(mtlsDrs, dr)
 				}
 			}
@@ -65,9 +64,9 @@ func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []kubernetes.IstioObj
 	return mtlsDrs
 }
 
-func sameHostDestinationRules(dr kubernetes.IstioObject, mdrs []kubernetes.IstioObject) []kubernetes.IstioObject {
+func sameHostDestinationRules(dr kubernetes.IstioObject, mdrs []kubernetes.IstioObject, edrs []kubernetes.IstioObject) []kubernetes.IstioObject {
 	var drHost kubernetes.Host
-	shdrs := make([]kubernetes.IstioObject, 0, len(mdrs))
+	shdrs := make([]kubernetes.IstioObject, 0, len(mdrs)+len(edrs))
 
 	if host, ok := dr.GetSpec()["host"]; ok {
 		if dHost, ok := host.(string); ok {
@@ -82,6 +81,17 @@ func sameHostDestinationRules(dr kubernetes.IstioObject, mdrs []kubernetes.Istio
 				if mdrHost.Service == "*.local" ||
 					(mdrHost.Cluster == drHost.Cluster && mdrHost.Namespace == drHost.Namespace) {
 					shdrs = append(shdrs, mdr)
+				}
+			}
+		}
+	}
+
+	for _, edr := range edrs {
+		if host, ok := edr.GetSpec()["host"]; ok {
+			if dHost, ok := host.(string); ok {
+				if ismTLSEnabled(edr) &&
+					(dHost == fmt.Sprintf("*.%s.%s", drHost.Namespace, drHost.Cluster) || dHost == drHost.String()) {
+					shdrs = append(shdrs, edr)
 				}
 			}
 		}
