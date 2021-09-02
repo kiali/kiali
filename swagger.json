@@ -5013,6 +5013,21 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "IstioEnvironment": {
+      "description": "IstioEnvironment describes the Istio implementation environment",
+      "type": "object",
+      "required": [
+        "isMaistra"
+      ],
+      "properties": {
+        "isMaistra": {
+          "description": "If true, the Istio implementation is a variant of Maistra.",
+          "type": "boolean",
+          "x-go-name": "IsMaistra"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/status"
+    },
     "IstioValidation": {
       "type": "object",
       "title": "IstioValidation represents a list of checks associated to an Istio object.",
@@ -7044,7 +7059,8 @@
       "title": "StatusInfo statusInfo",
       "required": [
         "status",
-        "externalServices"
+        "externalServices",
+        "istioEnvironment"
       ],
       "properties": {
         "externalServices": {
@@ -7054,6 +7070,9 @@
             "$ref": "#/definitions/externalServiceInfo"
           },
           "x-go-name": "ExternalServices"
+        },
+        "istioEnvironment": {
+          "$ref": "#/definitions/IstioEnvironment"
         },
         "status": {
           "description": "The state of Kiali\nA hash of key,values with versions of Kiali and state",

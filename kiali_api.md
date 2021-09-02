@@ -7215,6 +7215,24 @@ It is false for service.namespace format and service entries. |  |
 
 [IstioConfigPermissions](#istio-config-permissions)
 
+### <span id="istio-environment"></span> IstioEnvironment
+
+
+> IstioEnvironment describes the Istio implementation environment
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| IsMaistra | boolean| `bool` | ✓ | | If true, the Istio implementation is a variant of Maistra. |  |
+
+
+
 ### <span id="istio-validation"></span> IstioValidation
 
 
@@ -8988,6 +9006,7 @@ included, ES with dynamic settings off will automatically ignore unneeded fields
 | Status | map of string| `map[string]string` | ✓ | | The state of Kiali
 A hash of key,values with versions of Kiali and state |  |
 | WarningMessages | []string| `[]string` |  | | An array of warningMessages |  |
+| istioEnvironment | [IstioEnvironment](#istio-environment)| `IstioEnvironment` | ✓ | |  |  |
 
 
 

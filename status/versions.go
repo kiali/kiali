@@ -43,7 +43,7 @@ var (
 	istioVersionExpr          = regexp.MustCompile(`([0-9]+\.[0-9]+\.[0-9]+)`)
 )
 
-var (
+const (
 	istioProductNameMaistra          = "Maistra"
 	istioProductNameMaistraProject   = "Maistra Project"
 	istioProductNameOSSM             = "OpenShift Service Mesh"
