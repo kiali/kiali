@@ -41,6 +41,8 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 				requestedAppenders[SidecarsCheckAppenderName] = true
 			case ThroughputAppenderName:
 				requestedAppenders[ThroughputAppenderName] = true
+			case WorkloadEntryAppenderName:
+				requestedAppenders[WorkloadEntryAppenderName] = true
 			case "":
 				// skip
 			default:
@@ -67,6 +69,12 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	}
 	if _, ok := requestedAppenders[DeadNodeAppenderName]; ok || o.Appenders.All {
 		a := DeadNodeAppender{}
+		appenders = append(appenders, a)
+	}
+	if _, ok := requestedAppenders[WorkloadEntryAppenderName]; ok || o.Appenders.All {
+		a := WorkloadEntryAppender{
+			GraphType: o.GraphType,
+		}
 		appenders = append(appenders, a)
 	}
 	if _, ok := requestedAppenders[ResponseTimeAppenderName]; ok || o.Appenders.All {

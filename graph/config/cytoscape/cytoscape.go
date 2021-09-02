@@ -100,6 +100,7 @@ type NodeData struct {
 	HasTCPTrafficShifting bool                `json:"hasTCPTrafficShifting,omitempty"` // true (vs has tcp traffic shifting) | false
 	HasTrafficShifting    bool                `json:"hasTrafficShifting,omitempty"`    // true (vs has traffic shifting) | false
 	HasVS                 *VSInfo             `json:"hasVS,omitempty"`                 // it can be empty if there is a VS without hostnames
+	HasWorkloadEntry      bool                `json:"hasWorkloadEntry,omitempty"`      // true (this node has a corresponding WorkloadEntry) | false
 	IsBox                 string              `json:"isBox,omitempty"`                 // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
 	IsDead                bool                `json:"isDead,omitempty"`                // true (has no pods) | false
 	IsGateway             *GWInfo             `json:"isGateway,omitempty"`             // Istio ingress/egress gateway information
@@ -336,6 +337,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// node may have service entry static info
 		if val, ok := n.Metadata[graph.IsServiceEntry]; ok {
 			nd.IsServiceEntry = val.(*graph.SEInfo)
+		}
+
+		// node may have a workload entry associated with it
+		if _, ok := n.Metadata[graph.HasWorkloadEntry]; ok {
+			nd.HasWorkloadEntry = true
 		}
 
 		// node may be an aggregate
