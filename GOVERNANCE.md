@@ -76,6 +76,7 @@ both roles aren't mutually exclusive.
 
 Current list of testers (alphabetically ordered):
 
+* [FilipB](https://github.com/FilipB)
 * [mattmahoneyrh](https://github.com/mattmahoneyrh)
 * [pbajjuri20](https://github.com/pbajjuri20)
 * [prachiyadav](https://github.com/prachiyadav)
@@ -166,6 +167,9 @@ Most votes require a simple majority of all Maintainers to succeed. Changes
 to the Governance require a 2/3 vote of all Maintainers.
 
 Kiali Testers also have a voice in voting although their vote is not mandatory.
+
+Unless some process specifies something different, once a vote starts Maintainers (and Testers)
+must give their vote within 5 working days (U.S.)
 
 ## Other Changes
 
