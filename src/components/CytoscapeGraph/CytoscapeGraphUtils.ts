@@ -50,6 +50,7 @@ export const CyNode = {
   hasTCPTrafficShifting: 'hasTCPTrafficShifting',
   hasTrafficShifting: 'hasTrafficShifting',
   hasVS: 'hasVS',
+  hasWorkloadEntry: 'hasWorkloadEntry',
   health: 'health',
   healthStatus: 'healthStatus',
   httpIn: 'httpIn',

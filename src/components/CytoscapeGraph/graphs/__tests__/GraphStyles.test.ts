@@ -120,4 +120,32 @@ describe('GraphStyles test', () => {
     const firstSpanEnd = label.search('</span>');
     expect(label.substring(firstSpanBegin, firstSpanEnd)).toContain(icons.istio.requestRouting.className);
   });
+
+  it('displays vm icon when workload entry present', () => {
+    const data = { ...nodeData, hasWorkloadEntry: true };
+    const node = setupNode(data);
+    const label = GraphStyles.getNodeLabel(node);
+
+    expect(label).toContain(icons.istio.workloadEntry.className);
+  });
+
+  it('displays root as leftmost when workload entry present', () => {
+    const data = { ...nodeData, hasWorkloadEntry: true, isRoot: true };
+    const node = setupNode(data);
+    const label = GraphStyles.getNodeLabel(node);
+
+    const firstSpanBegin = label.search('<span');
+    const firstSpanEnd = label.search('</span>');
+    expect(label.substring(firstSpanBegin, firstSpanEnd)).toContain(icons.istio.root.className);
+  });
+
+  it('displays workload entry as leftmost when not root', () => {
+    const data = { ...nodeData, hasWorkloadEntry: true, hasMissingSC: true };
+    const node = setupNode(data);
+    const label = GraphStyles.getNodeLabel(node);
+
+    const firstSpanBegin = label.search('<span');
+    const firstSpanEnd = label.search('</span>');
+    expect(label.substring(firstSpanBegin, firstSpanEnd)).toContain(icons.istio.workloadEntry.className);
+  });
 });

@@ -65,6 +65,7 @@ const NodeIconVS = icons.istio.virtualService.className; // code-branch
 const NodeIconRequestRouting = icons.istio.requestRouting.className; // code-branch
 const NodeIconRequestTimeout = icons.istio.requestTimeout.className; // clock
 const NodeIconTrafficShifting = icons.istio.trafficShifting.className; // share-alt
+const NodeIconWorkloadEntry = icons.istio.workloadEntry.className; // pf-icon-virtual-machine
 const NodeTextColor = PFColors.Black1000;
 const NodeTextColorBox = PFColors.White;
 const NodeTextBackgroundColor = PFColors.White;
@@ -263,6 +264,11 @@ export class GraphStyles {
         }
       }
     }
+
+    if (node.hasWorkloadEntry) {
+      icons = `<span class="${NodeIconWorkloadEntry} ${iconMargin(icons)}"></span> ${icons}`;
+    }
+
     if (node.isRoot) {
       if (node.isGateway?.ingressInfo?.hostnames?.length !== undefined) {
         icons = `<span class='${NodeIconGateway} ${iconMargin(icons)}'></span> ${icons}`;
@@ -395,9 +401,15 @@ export class GraphStyles {
       let hostsToShow = hosts;
       if (hostsToShow.length > config.graph.maxHosts) {
         hostsToShow = hosts.slice(0, config.graph.maxHosts);
-        hostsToShow.push((hosts.length - config.graph.maxHosts) === 1 ? "1 more host..." : `${hosts.length - config.graph.maxHosts} more hosts...`);
+        hostsToShow.push(
+          hosts.length - config.graph.maxHosts === 1
+            ? '1 more host...'
+            : `${hosts.length - config.graph.maxHosts} more hosts...`
+        );
       }
-      htmlHosts = `<div class='${hostsClass}'><div>${hosts.length} ${hosts.length === 1 ? 'host' : 'hosts'}</div><div>${hostsToShow.join("<br/>")}</div></div>`;
+      htmlHosts = `<div class='${hostsClass}'><div>${hosts.length} ${
+        hosts.length === 1 ? 'host' : 'hosts'
+      }</div><div>${hostsToShow.join('<br/>')}</div></div>`;
     }
 
     const contentSpan = `<div class="${contentClasses}" style="display: block; ${contentStyle}"><div>${contentText}</div><div></div>${htmlHosts}</div></div>`;

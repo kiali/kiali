@@ -212,7 +212,8 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['tcptrafficshifting'],
       ['trafficshifting'],
       ['trafficsource', `has only outbound edges`],
-      ['virtualservice']
+      ['virtualservice'],
+      ['workloadentry']
     ];
   };
 
@@ -227,7 +228,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['Use "<operand> = NaN" to test for no activity. Use "!= NaN" for any activity. (e.g. httpout = NaN)'],
       [`Unary operands may optionally be prefixed with "is" or "has". (i.e. "has mtls")`],
       ['The "name" operand expands internally to an "OR" expression (an "AND" when negated).'],
-      ['Abbreviate: ns|namespace, svc|service, se|serviceentry, wl|workload, op|operation'],
+      ['Abbreviate: ns|namespace, svc|service, se|serviceentry, wl|workload, we|workloadentry, op|operation'],
       ['Abbreviate: rt|responsetime, sc|sidecar, vs|virtualservice'],
       ['Abbreviate: cb|circuitbreaker, fi|faultinjection, rr|requestrouting, rto|requesttimeout, ts|trafficshifting'],
       ['Hiding nodes will automatically hide connected edges.'],

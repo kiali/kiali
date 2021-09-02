@@ -110,7 +110,8 @@ const operands: string[] = [
   'virtualservice',
   'tcpin',
   'tcpout',
-  'workload'
+  'workload',
+  'workloadentry'
 ];
 
 export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
@@ -882,6 +883,12 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       case 'vs':
       case 'virtualservice':
         return { target: 'node', selector: isNegation ? `[^${CyNode.hasVS}]` : `[?${CyNode.hasVS}]` };
+      case 'we':
+      case 'workloadentry':
+        return {
+          target: 'node',
+          selector: isNegation ? `[^${CyNode.hasWorkloadEntry}]` : `[?${CyNode.hasWorkloadEntry}]`
+        };
       //
       // edges...
       //

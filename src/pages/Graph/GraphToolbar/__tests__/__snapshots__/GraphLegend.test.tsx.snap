@@ -553,6 +553,22 @@ exports[`GraphLegend test should render correctly 1`] = `
               Virtual Service/Request Routing
             </span>
           </div>
+          <div
+            className="f1n8a700"
+            key="node-badge-workload-entry.svg"
+          >
+            <span>
+              <img
+                alt="Workload Entry"
+                src="node-badge-workload-entry.svg"
+              />
+            </span>
+            <span
+              className="f1hob5wc"
+            >
+              Workload Entry
+            </span>
+          </div>
         </div>
       </div>
     </div>

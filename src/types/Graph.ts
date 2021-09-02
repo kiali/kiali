@@ -311,6 +311,7 @@ export interface GraphNodeData {
   hasVS?: {
     hostnames?: string[];
   };
+  hasWorkloadEntry?: boolean;
   isBox?: string;
   isDead?: boolean;
   isIdle?: boolean;

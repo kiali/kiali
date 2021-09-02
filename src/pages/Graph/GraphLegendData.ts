@@ -32,6 +32,7 @@ import badgeRequestTimeoutImage from '../../assets/img/legend/node-badge-request
 import badgeTrafficShiftingSourceImage from '../../assets/img/legend/node-badge-traffic-shifting.svg';
 import badgeTrafficSourceImage from '../../assets/img/legend/node-badge-traffic-source.svg';
 import badgeVirtualServicesImage from '../../assets/img/legend/node-badge-virtual-services.svg';
+import badgeWorkloadEntryImage from '../../assets/img/legend/node-badge-workload-entry.svg';
 
 export interface GraphLegendItem {
   title: string;
@@ -99,7 +100,8 @@ const legendData: GraphLegendItem[] = [
       { label: 'Request Timeout', icon: badgeRequestTimeoutImage },
       { label: 'Traffic Shifting/TCP Traffic Shifting', icon: badgeTrafficShiftingSourceImage },
       { label: 'Traffic Source', icon: badgeTrafficSourceImage },
-      { label: 'Virtual Service/Request Routing', icon: badgeVirtualServicesImage }
+      { label: 'Virtual Service/Request Routing', icon: badgeVirtualServicesImage },
+      { label: 'Workload Entry', icon: badgeWorkloadEntryImage }
     ]
   }
 ];

@@ -36,7 +36,13 @@ const mutIcons = {
     requestTimeout: { className: 'fa fa-clock', type: 'fa', name: 'clock', ascii: '\uf017 ' },
     root: { className: 'fa fa-arrow-alt-circle-right', type: 'fa', name: 'arrow-alt-circle-right', ascii: '\uf35a ' },
     trafficShifting: { className: 'fa fa-share-alt', type: 'fa', name: 'share-alt', ascii: '\uf1e0 ' },
-    virtualService: { className: 'fa fa-code-branch', type: 'fa', name: 'code-fork', ascii: '\uf126 ' }
+    virtualService: { className: 'fa fa-code-branch', type: 'fa', name: 'code-fork', ascii: '\uf126 ' },
+    workloadEntry: {
+      className: 'pf-icon pf-icon-virtual-machine',
+      type: 'pf',
+      name: 'virtual-machine',
+      ascii: '\uf126 '
+    }
   }
 };
 

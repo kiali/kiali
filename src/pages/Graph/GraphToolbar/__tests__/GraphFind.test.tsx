@@ -117,6 +117,10 @@ describe('Parse find value test', () => {
     expect(instance.parseValue('virtualService')).toEqual('node[?hasVS]');
     // @ts-ignore
     expect(instance.parseValue('vs')).toEqual('node[?hasVS]');
+    // @ts-ignore
+    expect(instance.parseValue('we')).toEqual('node[?hasWorkloadEntry]');
+    // @ts-ignore
+    expect(instance.parseValue('workloadentry')).toEqual('node[?hasWorkloadEntry]');
 
     // check coverage of edge operands
     // @ts-ignore
