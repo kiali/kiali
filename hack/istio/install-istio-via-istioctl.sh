@@ -308,6 +308,7 @@ for s in \
    "--set values.global.meshID=${MESH_ID}" \
    "--set values.global.multiCluster.clusterName=${CLUSTER_NAME}" \
    "--set values.global.network=${NETWORK}" \
+   "--set values.meshConfig.accessLogFile=/dev/stdout" \
    "${CNI_OPTIONS}" \
    "${CUSTOM_INSTALL_SETTINGS}"
 do
