@@ -476,3 +476,23 @@ func (imc IstioMeshConfig) GetEnableAutoMtls() bool {
 	}
 	return *imc.EnableAutoMtls
 }
+
+// IsIstioObjectTypeValid is check istio object type valid, return true or false.
+func IsIstioObjectTypeValid(resourceType string) bool {
+	switch resourceType {
+	case Gateways:
+	case VirtualServices:
+	case DestinationRules:
+	case ServiceEntries:
+	case AuthorizationPolicies:
+	case PeerAuthentications:
+	case Sidecars:
+	case WorkloadEntries:
+	case WorkloadGroups:
+	case RequestAuthentications:
+	case EnvoyFilters:
+	default:
+		return false
+	}
+	return true
+}
