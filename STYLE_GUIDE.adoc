@@ -65,13 +65,15 @@ createItem = () => {
 }
 ----
 
-= Redux and Type-safe Use
+= Redux
+
+== Type-safe usage
 
 For additional type safety in our Redux Actions/Reducers, we use the library:
 https://github.com/piotrwitek/typesafe-actions
 Please refer to this site for instructions on how to use typescript with Redux.
 
-= Redux and URL Consistency
+== URL Consistency
 
 Every application page should strive to have it's state in Redux so that
 we have a reproducible application state contained in Redux.
@@ -83,3 +85,32 @@ of the rules needed:
 * On component construction let URL param values override any existing redux state values.
 * On component construction set (via replace) any unset URL params to reflect the redux state value. This gives us a full bookmark at all times.
 * After construction update URL (via replace) as necessary to reflect redux state changes. This is typically done in _componentDidUpdate_. This maintains the full bookmark.
+
+== Redux props usage
+
+The declaration of the properties of a component connected to Redux should clearly indicate whether each property comes from Redux or are strictly from the component.
+This convention should help developers easily see which properties comes from the Redux state management without the need to be either versed with the whole Redux catalog or the component itself.
+
+The convention is consist in:
+
+* Declaring a type `ReduxProps` which only contains the Redux properties, sorted alphabetically.
+* Declaring a type `<ClassName>Props` which only contains the properties from the component, sorted alphabetically.
+* Intersecting type `ReduxProps` into type `<ClassName>Props`.
+* Using `<ClassName>Props` type for the component declaration.
+
+See an example:
+
+[source, typescript]
+----
+type ReduxProps = {
+ // just the Redux props, alphabetical
+};
+
+type <ClassName>Props = ReduxProps & {
+ // non-Redux props, alphabetical
+};
+
+class <ClassName>Component extends React.Component<Props> {
+...
+}
+----
