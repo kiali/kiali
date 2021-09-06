@@ -308,6 +308,7 @@ type OpenIdConfig struct {
 type DeploymentConfig struct {
 	AccessibleNamespaces []string `yaml:"accessible_namespaces"`
 	Namespace            string   `yaml:"namespace,omitempty"` // Kiali deployment namespace
+	ViewOnlyMode         bool     `yaml:"view_only_mode,omitempty"`
 }
 
 // GraphFindOption defines a single Graph Find/Hide Option
@@ -420,6 +421,7 @@ func NewConfig() (c *Config) {
 		Deployment: DeploymentConfig{
 			AccessibleNamespaces: []string{"**"},
 			Namespace:            "istio-system",
+			ViewOnlyMode:         false,
 		},
 		Extensions: Extensions{
 			Iter8: Iter8Config{
