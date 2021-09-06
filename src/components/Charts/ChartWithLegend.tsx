@@ -58,8 +58,9 @@ const AxisStyle = {
   }
 };
 
-const MIN_HEIGHT = 30;
-const MIN_WIDTH = 275;
+export const MIN_HEIGHT = 20;
+export const MIN_HEIGHT_YAXIS = 70;
+export const MIN_WIDTH = 275;
 export const LEGEND_HEIGHT = 25;
 const FONT_SIZE_LEGEND = 14;
 
@@ -128,7 +129,12 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
     const overlayIdx = this.props.data.length;
     const showOverlay = (this.props.overlay && this.props.showSpans) || false;
     const overlayRightPadding = showOverlay ? 15 : 0;
-    const padding: Padding = { top: 0, bottom: LEGEND_HEIGHT, left: 0, right: 10 + overlayRightPadding };
+    const padding: Padding = {
+      top: 0,
+      bottom: chartHeight > MIN_HEIGHT_YAXIS ? LEGEND_HEIGHT : 0,
+      left: 0,
+      right: 10 + overlayRightPadding
+    };
 
     const events: VCEvent[] = [];
     if (this.props.onClick) {
@@ -235,6 +241,7 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
               </VictoryPortal>
             }
             dependentAxis={true}
+            tickCount={chartHeight <= MIN_HEIGHT_YAXIS ? 1 : undefined}
             tickFormat={getFormatter(d3Format, this.props.unit)}
             label={getUnit(d3Format, this.props.unit, mainMax)}
             axisLabelComponent={<VictoryLabel y={-10} x={-15} angle={0} renderInPortal={true} />}
@@ -246,6 +253,7 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
               dependentAxis={true}
               offsetX={this.state.width - overlayRightPadding}
               style={AxisStyle}
+              tickCount={chartHeight <= MIN_HEIGHT_YAXIS ? 1 : undefined}
               tickFormat={t => getFormatter(d3Format, this.props.overlay?.info.lineInfo.unit || '')(t / overlayFactor)}
               tickLabelComponent={<VictoryLabel dx={15} textAnchor={'start'} />}
               theme={VictoryTheme.material}
@@ -257,7 +265,9 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
               axisLabelComponent={<VictoryLabel y={-10} x={this.state.width} angle={0} renderInPortal={true} />}
             />
           )}
-          {this.props.xAxis === 'series' ? this.renderCategories() : this.renderTimeSeries(chartHeight - LEGEND_HEIGHT)}
+          {this.props.xAxis === 'series'
+            ? this.renderCategories()
+            : this.renderTimeSeries(chartHeight > MIN_HEIGHT_YAXIS ? chartHeight - LEGEND_HEIGHT : chartHeight)}
           {showOverlay &&
             (this.props.overlay!.info.buckets ? (
               <VictoryBoxPlot
@@ -281,31 +291,33 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
                 style={{ data: this.props.overlay!.info.dataStyle }}
               />
             ))}
-          <VictoryLegend
-            name={'serie-legend'}
-            data={filteredLegendData}
-            x={0}
-            y={chartHeight}
-            height={LEGEND_HEIGHT}
-            width={this.state.width}
-            style={{
-              data: { cursor: 'pointer', padding: 0 },
-              labels: { cursor: 'pointer', fontSize: FONT_SIZE_LEGEND }
-            }}
-            borderPadding={{
-              top: 5,
-              left: 0,
-              right: 0,
-              bottom: 0
-            }}
-            symbolSpacer={5}
-            gutter={{
-              left: 0,
-              right: 15
-            }}
-          />
+          {chartHeight > MIN_HEIGHT_YAXIS ? (
+            <VictoryLegend
+              name={'serie-legend'}
+              data={filteredLegendData}
+              x={0}
+              y={chartHeight}
+              height={LEGEND_HEIGHT}
+              width={this.state.width}
+              style={{
+                data: { cursor: 'pointer', padding: 0 },
+                labels: { cursor: 'pointer', fontSize: FONT_SIZE_LEGEND }
+              }}
+              borderPadding={{
+                top: 5,
+                left: 0,
+                right: 0,
+                bottom: 0
+              }}
+              symbolSpacer={5}
+              gutter={{
+                left: 0,
+                right: 15
+              }}
+            />
+          ) : undefined}
         </Chart>
-        {showMoreLegend && (
+        {showMoreLegend && chartHeight > MIN_HEIGHT_YAXIS && (
           <div
             style={{
               position: 'relative',
