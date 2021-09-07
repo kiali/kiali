@@ -33,6 +33,9 @@ func (s NoGatewayChecker) ValidateVirtualServiceGateways(spec map[string]interfa
 		if gateways, ok := gatewaysSpec.([]interface{}); ok {
 			valid = s.checkGateways(gateways, namespace, clusterName, validations, "spec")
 		}
+	} else {
+		validation := models.Build("virtualservices.emptygateway", "spec/gateways")
+		*validations = append(*validations, &validation)
 	}
 	if httpSpec, found := spec["http"]; found {
 		if https, ok := httpSpec.([]interface{}); ok {

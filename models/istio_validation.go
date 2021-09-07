@@ -266,6 +266,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Global default sidecar should not have workloadSelector",
 		Severity: WarningSeverity,
 	},
+	"virtualservices.emptygateway": {
+		Code:     "KIA1109",
+		Message:  "When gateway is not set, the default gateway (mesh) is used, which applies the rule to all sidecars in the mesh",
+		Severity: Unknown,
+	},
 	"virtualservices.gateway.oldnomenclature": {
 		Code:     "KIA1108",
 		Message:  "Preferred nomenclature: <gateway namespace>/<gateway name>",
