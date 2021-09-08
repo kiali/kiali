@@ -6,13 +6,13 @@ import { Dropdown, DropdownToggle, DropdownItem } from '@patternfly/react-core';
 import { QuestionCircleIcon } from '@patternfly/react-icons/';
 import { connect } from 'react-redux';
 import { isUpstream } from '../../UpstreamDetector/UpstreamDetector';
-import { Status, Component, StatusKey } from '../../../types/StatusState';
+import { Status, ExternalServiceInfo, StatusKey } from '../../../types/StatusState';
 import { config, serverConfig } from '../../../config';
 import IstioCertsInfoConnected from 'components/IstioCertsInfo/IstioCertsInfo';
 
 type HelpDropdownProps = {
   status: Status;
-  components: Component[];
+  externalServices: ExternalServiceInfo[];
   warningMessages: string[];
 };
 
@@ -110,7 +110,7 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
 
     return (
       <>
-        <AboutUIModal ref={this.about} status={this.props.status} components={this.props.components} />
+        <AboutUIModal ref={this.about} status={this.props.status} externalServices={this.props.externalServices} />
         <DebugInformationContainer ref={this.debugInformation} />
         {serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled && (
           <IstioCertsInfoConnected ref={this.certsInformation} />
@@ -130,7 +130,7 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
 
 const mapStateToProps = (state: KialiAppState) => ({
   status: state.statusState.status,
-  components: state.statusState.components,
+  externalServices: state.statusState.externalServices,
   warningMessages: state.statusState.warningMessages
 });
 

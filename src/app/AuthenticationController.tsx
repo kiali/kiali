@@ -10,7 +10,6 @@ import LoginThunkActions from '../actions/LoginThunkActions';
 import { MessageCenterActions } from '../actions/MessageCenterActions';
 import { MessageType } from '../types/MessageCenter';
 import { KialiDispatch } from '../types/Redux';
-import { ServerStatus } from '../types/ServerStatus';
 import InitializingScreen from './InitializingScreen';
 import { isKioskMode } from '../utils/SearchParamUtils';
 import * as AlertUtils from '../utils/AlertUtils';
@@ -30,8 +29,10 @@ import { config } from 'config';
 import { store } from 'store/ConfigStore';
 import { toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
 import { GraphToolbarActions } from 'actions/GraphToolbarActions';
+import { StatusState } from 'types/StatusState';
 
 interface AuthenticationControllerReduxProps {
+  addMessage: (content: string, detail: string, groupId?: string, msgType?: MessageType, showNotif?: boolean) => void;
   authenticated: boolean;
   checkCredentials: () => void;
   isLoginError: boolean;
@@ -43,8 +44,8 @@ interface AuthenticationControllerReduxProps {
   setMeshTlsStatus: (meshStatus: TLSStatus) => void;
   setNamespaces: (namespaces: Namespace[], receivedAt: Date) => void;
   setRefreshInterval: (interval: IntervalInMilliseconds) => void;
-  setServerStatus: (serverStatus: ServerStatus) => void;
   setTrafficRates: (rates: TrafficRate[]) => void;
+  statusRefresh: (statusState: StatusState) => void;
 }
 
 type AuthenticationControllerProps = AuthenticationControllerReduxProps & {
@@ -172,7 +173,7 @@ export class AuthenticationController extends React.Component<
 
     try {
       const getStatusPromise = API.getStatus()
-        .then(response => this.props.setServerStatus(response.data))
+        .then(response => this.processServerStatus(response.data))
         .catch(error => {
           AlertUtils.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
         });
@@ -329,17 +330,15 @@ export class AuthenticationController extends React.Component<
       document.documentElement.className = isKioskMode() ? 'kiosk' : '';
     }
   };
+
+  private processServerStatus = (status: StatusState) => {
+    this.props.statusRefresh(status);
+
+    status.warningMessages.forEach(wMsg => {
+      this.props.addMessage(wMsg, '', 'systemErrors', MessageType.WARNING);
+    });
+  };
 }
-
-const processServerStatus = (dispatch: KialiDispatch, serverStatus: ServerStatus) => {
-  dispatch(
-    HelpDropdownActions.statusRefresh(serverStatus.status, serverStatus.externalServices, serverStatus.warningMessages)
-  );
-
-  serverStatus.warningMessages.forEach(wMsg => {
-    dispatch(MessageCenterActions.addMessage(wMsg, '', 'systemErrors', MessageType.WARNING));
-  });
-};
 
 const mapStateToProps = (state: KialiAppState) => ({
   authenticated: state.authentication.status === LoginStatus.loggedIn,
@@ -348,6 +347,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+  addMessage: bindActionCreators(MessageCenterActions.addMessage, dispatch),
   checkCredentials: () => dispatch(LoginThunkActions.checkCredentials()),
   setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
   setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch),
@@ -356,8 +356,8 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setMeshTlsStatus: bindActionCreators(MeshTlsActions.setinfo, dispatch),
   setNamespaces: bindActionCreators(NamespaceActions.receiveList, dispatch),
   setRefreshInterval: bindActionCreators(UserSettingsActions.setRefreshInterval, dispatch),
-  setServerStatus: (serverStatus: ServerStatus) => processServerStatus(dispatch, serverStatus),
-  setTrafficRates: bindActionCreators(GraphToolbarActions.setTrafficRates, dispatch)
+  setTrafficRates: bindActionCreators(GraphToolbarActions.setTrafficRates, dispatch),
+  statusRefresh: bindActionCreators(HelpDropdownActions.statusRefresh, dispatch)
 });
 
 const AuthenticationControllerContainer = connect(mapStateToProps, mapDispatchToProps)(AuthenticationController);

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { AboutModal, TextContent, TextList, TextListItem, Title, Button } from '@patternfly/react-core';
-import { Component, Status, StatusKey } from '../../types/StatusState';
+import { ExternalServiceInfo, Status, StatusKey } from '../../types/StatusState';
 import { config, kialiLogo } from '../../config';
 import { style } from 'typestyle';
 import { KialiIcon } from 'config/KialiIcon';
@@ -11,7 +11,7 @@ type AboutUIModalState = {
 
 type AboutUIModalProps = {
   status: Status;
-  components: Component[];
+  externalServices: ExternalServiceInfo[];
 };
 
 const iconStyle = style({
@@ -76,7 +76,9 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
           <Title size="xl" style={{ padding: '20px 0px 20px' }}>
             Components
           </Title>
-          <TextList component="dl">{this.props.components && this.props.components.map(this.renderComponent)}</TextList>
+          <TextList component="dl">
+            {this.props.externalServices && this.props.externalServices.map(this.renderComponent)}
+          </TextList>
           {this.renderWebsiteLink()}
           {this.renderProjectLink()}
         </TextContent>
@@ -84,9 +86,9 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
     );
   }
 
-  private renderComponent = (component: Component) => {
-    const name = component.version ? component.name : `${component.name} URL`;
-    const additionalInfo = this.additionalComponentInfoContent(component);
+  private renderComponent = (externalService: ExternalServiceInfo) => {
+    const name = externalService.version ? externalService.name : `${externalService.name} URL`;
+    const additionalInfo = this.additionalComponentInfoContent(externalService);
     return (
       <React.Fragment key={name + additionalInfo}>
         <TextListItem component="dt">{name}</TextListItem>
@@ -95,14 +97,14 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
     );
   };
 
-  private additionalComponentInfoContent = (component: Component) => {
-    if (!component.version && !component.url) {
+  private additionalComponentInfoContent = (externalService: ExternalServiceInfo) => {
+    if (!externalService.version && !externalService.url) {
       return 'N/A';
     }
-    const version = component.version ? component.version : '';
-    const url = component.url ? (
-      <a href={component.url} target="_blank" rel="noopener noreferrer">
-        {component.url}
+    const version = externalService.version ? externalService.version : '';
+    const url = externalService.url ? (
+      <a href={externalService.url} target="_blank" rel="noopener noreferrer">
+        {externalService.url}
       </a>
     ) : (
       ''

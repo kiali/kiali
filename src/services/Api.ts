@@ -29,7 +29,7 @@ import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types
 import { IstioMetricsMap, MetricsStatsResult } from '../types/Metrics';
 import Namespace from '../types/Namespace';
 import { ServerConfig } from '../types/ServerConfig';
-import { ServerStatus } from '../types/ServerStatus';
+import { StatusState } from '../types/StatusState';
 import { ServiceDetailsInfo } from '../types/ServiceInfo';
 import { ServiceList } from '../types/ServiceList';
 import { Span, TracingQuery } from 'types/Tracing';
@@ -118,7 +118,7 @@ export const checkOpenshiftAuth = async (data: any): Promise<Response<LoginSessi
 };
 
 export const getStatus = () => {
-  return newRequest<ServerStatus>(HTTP_VERBS.GET, urls.status, {}, {});
+  return newRequest<StatusState>(HTTP_VERBS.GET, urls.status, {}, {});
 };
 
 export const getNamespaces = () => {

@@ -19,10 +19,12 @@ import {
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
+import { StatusState } from '../../types/StatusState';
 
 interface Props {
   namespace: string;
   workload: Workload;
+  statusState: StatusState;
   onChange: () => void;
 }
 
@@ -67,7 +69,12 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
       case WIZARD_REMOVE_AUTO_INJECTION:
         const remove = key === WIZARD_REMOVE_AUTO_INJECTION;
         const enable = key === WIZARD_ENABLE_AUTO_INJECTION;
-        const jsonInjectionPatch = buildWorkloadInjectionPatch(this.props.workload.type, enable, remove);
+        const jsonInjectionPatch = buildWorkloadInjectionPatch(
+          this.props.workload.type,
+          enable,
+          remove,
+          this.props.statusState
+        );
         API.updateWorkload(this.props.namespace, this.props.workload.name, this.props.workload.type, jsonInjectionPatch)
           .then(_ => {
             AlertUtils.add('Workload ' + this.props.workload.name + ' updated', 'default', MessageType.SUCCESS);

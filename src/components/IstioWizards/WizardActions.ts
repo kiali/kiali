@@ -1,3 +1,4 @@
+import { StatusState } from '../../types/StatusState';
 import { TLSStatus } from '../../types/TLSStatus';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { WorkloadWeight } from './TrafficShifting';
@@ -1404,20 +1405,44 @@ export const buildNamespaceInjectionPatch = (enable: boolean, remove: boolean, r
   return JSON.stringify(patch);
 };
 
-export const buildWorkloadInjectionPatch = (workloadType: string, enable: boolean, remove: boolean): string => {
+export const buildWorkloadInjectionPatch = (
+  workloadType: string,
+  enable: boolean,
+  remove: boolean,
+  statusState: StatusState
+): string => {
   const patch = {};
-  const annotations = {};
-  annotations[serverConfig.istioAnnotations.istioInjectionAnnotation] = remove ? null : enable ? 'true' : 'false';
-  if (workloadType === 'Pod') {
-    patch['annotations'] = annotations;
-  } else {
-    patch['spec'] = {
-      template: {
-        metadata: {
-          annotations: annotations
+
+  if (statusState.istioEnvironment.isMaistra) {
+    // Maistra only supports pod annotations
+    const annotations = {};
+    annotations[serverConfig.istioAnnotations.istioInjectionAnnotation] = remove ? null : enable ? 'true' : 'false';
+    if (workloadType === 'Pod') {
+      patch['annotations'] = annotations;
+    } else {
+      patch['spec'] = {
+        template: {
+          metadata: {
+            annotations: annotations
+          }
         }
-      }
-    };
+      };
+    }
+  } else {
+    // supported non-Maistra environments prefer to use the pod label over the annotation
+    const labels = {};
+    labels[serverConfig.istioAnnotations.istioInjectionAnnotation] = remove ? null : enable ? 'true' : 'false';
+    if (workloadType === 'Pod') {
+      patch['labels'] = labels;
+    } else {
+      patch['spec'] = {
+        template: {
+          metadata: {
+            labels: labels
+          }
+        }
+      };
+    }
   }
   return JSON.stringify(patch);
 };

@@ -21,16 +21,20 @@ import TrafficDetails from 'components/TrafficList/TrafficDetails';
 import WorkloadWizardDropdown from '../../components/IstioWizards/WorkloadWizardDropdown';
 import TimeControl from '../../components/Time/TimeControl';
 import EnvoyDetailsContainer from 'components/Envoy/EnvoyDetails';
+import { StatusState } from '../../types/StatusState';
 
 type WorkloadDetailsState = {
   workload?: Workload;
   currentTab: string;
 };
 
-type WorkloadDetailsPageProps = RouteComponentProps<WorkloadId> & {
+type ReduxProps = {
   jaegerInfo?: JaegerInfo;
   lastRefreshAt: TimeInMilliseconds;
+  statusState: StatusState;
 };
+
+type WorkloadDetailsPageProps = ReduxProps & RouteComponentProps<WorkloadId>;
 
 const tabName = 'tab';
 const defaultTab = 'info';
@@ -259,6 +263,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           namespace={this.props.match.params.namespace}
           workload={this.state.workload}
           onChange={this.fetchWorkload}
+          statusState={this.props.statusState}
         />
       ) : undefined;
     return (
@@ -291,7 +296,8 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
 const mapStateToProps = (state: KialiAppState) => ({
   jaegerInfo: state.jaegerState.info,
-  lastRefreshAt: state.globalState.lastRefreshAt
+  lastRefreshAt: state.globalState.lastRefreshAt,
+  statusState: state.statusState
 });
 
 const WorkloadDetailsContainer = connect(mapStateToProps)(WorkloadDetails);

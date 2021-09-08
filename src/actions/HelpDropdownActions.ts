@@ -1,16 +1,14 @@
 import { ActionType, createAction } from 'typesafe-actions';
-import { Component } from '../types/StatusState';
+import { StatusState } from '../types/StatusState';
 import { ActionKeys } from './ActionKeys';
 
 export const HelpDropdownActions = {
-  statusRefresh: createAction(
-    ActionKeys.HELP_STATUS_REFRESH,
-    resolve => (status: { [key: string]: string }, components: Component[], warningMessages: string[]) =>
-      resolve({
-        status: status,
-        components: components,
-        warningMessages: warningMessages
-      })
+  statusRefresh: createAction(ActionKeys.HELP_STATUS_REFRESH, resolve => (status: StatusState) =>
+    resolve({
+      status: status.status,
+      externalServices: status.externalServices,
+      warningMessages: status.warningMessages
+    })
   )
 };
 

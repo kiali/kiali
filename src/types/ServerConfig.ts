@@ -22,6 +22,7 @@ interface DeploymentConfig {
 }
 
 interface IstioAnnotations {
+  // for non-Maistra environments, this can also be the name of the pod label, too
   istioInjectionAnnotation: string;
 }
 

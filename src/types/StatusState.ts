@@ -8,14 +8,19 @@ export enum StatusKey {
 
 export type Status = { [K in StatusKey]?: string };
 
-export interface Component {
+export interface ExternalServiceInfo {
   name: string;
   version?: string;
   url?: string;
 }
 
+export interface IstioEnvironment {
+  isMaistra: boolean;
+}
+
 export interface StatusState {
   status: Status;
-  components: Component[];
+  externalServices: ExternalServiceInfo[];
   warningMessages: string[];
+  istioEnvironment: IstioEnvironment;
 }

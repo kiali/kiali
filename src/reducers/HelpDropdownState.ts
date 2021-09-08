@@ -5,18 +5,20 @@ import { HelpDropdownActions } from '../actions/HelpDropdownActions';
 
 export const INITIAL_STATUS_STATE: StatusState = {
   status: {},
-  components: [],
-  warningMessages: []
+  externalServices: [],
+  warningMessages: [],
+  istioEnvironment: {
+    isMaistra: false
+  }
 };
 
-// This Reducer allows changes to the 'graphDataState' portion of Redux Store
 const HelpDropdownState = (state: StatusState = INITIAL_STATUS_STATE, action: KialiAppAction): StatusState => {
   switch (action.type) {
     case getType(HelpDropdownActions.statusRefresh):
       return {
         ...INITIAL_STATUS_STATE,
         status: action.payload.status,
-        components: action.payload.components,
+        externalServices: action.payload.externalServices,
         warningMessages: action.payload.warningMessages
       };
     default:
