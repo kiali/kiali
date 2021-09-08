@@ -44,7 +44,7 @@ func LoggingUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := business.ProxyLogging.SetLogLevel(r.Context(), namespace, pod, level); err != nil {
+	if err := business.ProxyLogging.SetLogLevel(namespace, pod, level); err != nil {
 		handleErrorResponse(w, err)
 		return
 	}

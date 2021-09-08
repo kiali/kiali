@@ -1,8 +1,8 @@
 package business
 
 import (
-	"context"
 	"fmt"
+	"time"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -17,7 +17,7 @@ type ProxyLoggingService struct {
 	k8s kubernetes.ClientInterface
 }
 
-func (in *ProxyLoggingService) SetLogLevel(ctx context.Context, namespace, pod, level string) error {
+func (in *ProxyLoggingService) SetLogLevel(namespace, pod, level string) error {
 	path := fmt.Sprintf("/logging?level=%s", level)
 
 	localPort := httputil.Pool.GetFreePort()
@@ -36,7 +36,7 @@ func (in *ProxyLoggingService) SetLogLevel(ctx context.Context, namespace, pod, 
 
 	// Ready to create a request
 	url := fmt.Sprintf("http://localhost:%d%s", localPort, path)
-	body, code, err := httputil.HttpPost(ctx, url, nil, nil)
+	body, code, err := httputil.HttpPost(url, nil, nil, time.Second*10)
 	if code >= 400 {
 		log.Errorf("Error whilst posting. Error: %s. Body: %s", err, string(body))
 		return fmt.Errorf("error sending post request %s from %s/%s. Response code: %d", path, namespace, pod, code)

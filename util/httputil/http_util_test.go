@@ -1,7 +1,6 @@
 package httputil_test
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -149,26 +148,6 @@ func TestHTTPPostSendsPostRequest(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	_, _, err := httputil.HttpPost(context.TODO(), server.URL, nil, nil)
+	_, _, err := httputil.HttpPost(server.URL, nil, nil, time.Second)
 	assert.NoError(err)
-}
-
-func TestHTTPPostRespectsContextTimeout(t *testing.T) {
-	assert := assert.New(t)
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		timer := time.NewTimer(time.Second)
-		select {
-		case <-timer.C:
-			assert.Fail("Timeout exceeded. HTTPPost did not respect context timeout")
-		case <-r.Context().Done():
-			w.WriteHeader(200)
-		}
-		timer.Stop()
-		w.WriteHeader(200)
-	}))
-	t.Cleanup(server.Close)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
-	t.Cleanup(cancel)
-	_, _, _ = httputil.HttpPost(ctx, server.URL, nil, nil)
 }
