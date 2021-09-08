@@ -152,6 +152,7 @@ const conf = {
       namespaceValidations: (namespace: string) => `api/namespaces/${namespace}/validations`,
       meshTls: () => 'api/mesh/tls',
       istioStatus: () => 'api/istio/status',
+      istioCertsInfo: () => 'api/istio/certs',
       pod: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}`,
       podLogs: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}/logs`,
       podEnvoyProxy: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}/config_dump`,

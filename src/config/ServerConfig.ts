@@ -74,6 +74,9 @@ const defaultServerConfig: ComputedServerConfig = {
     versionLabelName: 'version'
   },
   kialiFeatureFlags: {
+    certificatesInformationIndicators: {
+      enabled: true
+    },
     istioInjectionAction: true,
     istioUpgradeAction: false
   },

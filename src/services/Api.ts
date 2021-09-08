@@ -35,6 +35,7 @@ import { ServiceList } from '../types/ServiceList';
 import { Span, TracingQuery } from 'types/Tracing';
 import { TLSStatus } from '../types/TLSStatus';
 import { Workload, WorkloadNamespaceResponse } from '../types/Workload';
+import { CertsInfo } from 'types/CertsInfo';
 export const ANONYMOUS_USER = 'anonymous';
 
 export interface Response<T> {
@@ -134,6 +135,10 @@ export const getMeshTls = () => {
 
 export const getIstioStatus = () => {
   return newRequest<ComponentStatus[]>(HTTP_VERBS.GET, urls.istioStatus(), {}, {});
+};
+
+export const getIstioCertsInfo = () => {
+  return newRequest<CertsInfo[]>(HTTP_VERBS.GET, urls.istioCertsInfo(), {}, {});
 };
 
 export const getNamespaceTls = (namespace: string) => {

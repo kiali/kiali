@@ -82,3 +82,7 @@ export const meshWideMTLSEnabledSelector = createIdentitySelector(meshwideMTLSEn
 const istioStatus = (state: KialiAppState) => state.istioStatus;
 
 export const istioStatusSelector = createIdentitySelector(istioStatus);
+
+const istioCertsInfo = (state: KialiAppState) => state.istioCertsInfo;
+
+export const istioCertsInfoSelector = createIdentitySelector(istioCertsInfo);

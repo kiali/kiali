@@ -49,7 +49,12 @@ interface UIDefaults {
   refreshInterval?: string;
 }
 
+interface CertificatesInformationIndicators {
+  enabled: boolean;
+}
+
 interface KialiFeatureFlags {
+  certificatesInformationIndicators: CertificatesInformationIndicators;
   istioInjectionAction: boolean;
   istioUpgradeAction: boolean;
   uiDefaults?: UIDefaults;

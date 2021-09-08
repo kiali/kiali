@@ -23,6 +23,7 @@ import { TourInfo } from 'components/Tour/TourStop';
 import { ComponentStatus } from '../types/IstioStatus';
 import { JaegerState } from 'reducers/JaegerState';
 import { MetricsStatsState } from 'reducers/MetricsStatsState';
+import { CertsInfo } from 'types/CertsInfo';
 
 // Store is the Redux Data store
 
@@ -128,6 +129,7 @@ export interface KialiAppState {
   statusState: StatusState;
   meshTLSStatus: TLSStatus;
   istioStatus: ComponentStatus[];
+  istioCertsInfo: CertsInfo[];
   /** Page Settings */
   authentication: LoginState;
   messageCenter: MessageCenterState;

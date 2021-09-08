@@ -14,6 +14,7 @@ import MeshTlsState from './MeshTlsState';
 import IstioStatusState from './IstioStatusState';
 import JaegerStateReducer from './JaegerState';
 import MetricsStatsReducer from './MetricsStatsState';
+import IstioCertsInfoState from './IstioCertsInfoState';
 
 const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   authentication: loginState,
@@ -26,6 +27,7 @@ const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   jaegerState: JaegerStateReducer,
   meshTLSStatus: MeshTlsState,
   istioStatus: IstioStatusState,
+  istioCertsInfo: IstioCertsInfoState,
   tourState: TourState,
   metricsStats: MetricsStatsReducer
 });

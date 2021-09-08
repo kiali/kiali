@@ -21,6 +21,7 @@ import { INITIAL_MESH_TLS_STATE } from '../reducers/MeshTlsState';
 import { INITIAL_TOUR_STATE } from '../reducers/TourState';
 import { INITIAL_ISTIO_STATUS_STATE } from '../reducers/IstioStatusState';
 import { INITIAL_METRICS_STATS_STATE } from '../reducers/MetricsStatsState';
+import { INITIAL_ISTIO_CERTS_INFO_STATE } from 'reducers/IstioCertsInfoState';
 
 declare const window;
 
@@ -91,6 +92,7 @@ const initialStore: KialiAppState = {
   meshTLSStatus: INITIAL_MESH_TLS_STATE,
   metricsStats: INITIAL_METRICS_STATS_STATE,
   istioStatus: INITIAL_ISTIO_STATUS_STATE,
+  istioCertsInfo: INITIAL_ISTIO_CERTS_INFO_STATE,
   tourState: INITIAL_TOUR_STATE
 };
 

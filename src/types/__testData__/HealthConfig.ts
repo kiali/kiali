@@ -3,6 +3,9 @@ import { getExpr } from '../../config/HealthConfig';
 export const healthConfig = {
   clusters: {},
   kialiFeatureFlags: {
+    certificatesInformationIndicators: {
+      enabled: true
+    },
     istioInjectionAction: true,
     istioUpgradeAction: false
   },
