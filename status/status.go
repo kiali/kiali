@@ -12,6 +12,14 @@ const (
 	StateRunning     = "running"
 )
 
+// IstioEnvironment describes the Istio implementation environment
+type IstioEnvironment struct {
+	// If true, the Istio implementation is a variant of Maistra.
+	//
+	// required: true
+	IsMaistra bool `json:"isMaistra"`
+}
+
 // StatusInfo statusInfo
 //
 // This is used for returning a response of Kiali Status
@@ -32,8 +40,13 @@ type StatusInfo struct {
 	// items.example: Istio version 0.7.1 is not supported, the version should be 0.8.0
 	// swagger:allOf
 	WarningMessages []string `json:"warningMessages"`
+	// Information about the Istio implementation environment
+	//
+	// required: true
+	IstioEnvironment *IstioEnvironment `json:"istioEnvironment"`
 }
 
+// info is a global var that contains information about Kiali status and what external services are available
 var info StatusInfo
 
 // Status response model
@@ -78,5 +91,25 @@ func Get() (status StatusInfo) {
 	info.ExternalServices = []ExternalServiceInfo{}
 	info.WarningMessages = []string{}
 	getVersions()
+
+	// we only need to get the IstioEnvironment one time - its content is static and will never change
+	if info.IstioEnvironment == nil {
+		isMaistra := false
+		for _, esi := range info.ExternalServices {
+			if isMaistraExternalService(&esi) {
+				isMaistra = true
+				break
+			}
+		}
+		info.IstioEnvironment = &IstioEnvironment{
+			IsMaistra: isMaistra,
+		}
+	}
+
 	return info
+}
+
+// IsMaistra returns true if we are running in a Maistra environment
+func IsMaistra() bool {
+	return info.IstioEnvironment.IsMaistra
 }

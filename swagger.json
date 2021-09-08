@@ -5081,6 +5081,21 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "IstioEnvironment": {
+      "description": "IstioEnvironment describes the Istio implementation environment",
+      "type": "object",
+      "required": [
+        "isMaistra"
+      ],
+      "properties": {
+        "isMaistra": {
+          "description": "If true, the Istio implementation is a variant of Maistra.",
+          "type": "boolean",
+          "x-go-name": "IsMaistra"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/status"
+    },
     "IstioValidation": {
       "type": "object",
       "title": "IstioValidation represents a list of checks associated to an Istio object.",
@@ -7116,7 +7131,8 @@
       "title": "StatusInfo statusInfo",
       "required": [
         "status",
-        "externalServices"
+        "externalServices",
+        "istioEnvironment"
       ],
       "properties": {
         "externalServices": {
@@ -7126,6 +7142,9 @@
             "$ref": "#/definitions/externalServiceInfo"
           },
           "x-go-name": "ExternalServices"
+        },
+        "istioEnvironment": {
+          "$ref": "#/definitions/IstioEnvironment"
         },
         "status": {
           "description": "The state of Kiali\nA hash of key,values with versions of Kiali and state",
@@ -7338,7 +7357,7 @@
           "x-go-name": "HealthAnnotations"
         },
         "istioInjectionAnnotation": {
-          "description": "Define if Workload has an explicit Istio policy annotation\nIt's mapped as a pointer to show three values nil, true, false",
+          "description": "Define if Workload has an explicit Istio policy annotation\nIstio supports this as a label as well - this will be defined if the label is set, too.\nIf both annotation and label are set, if any is false, injection is disabled.\nIt's mapped as a pointer to show three values nil, true, false",
           "type": "boolean",
           "x-go-name": "IstioInjectionAnnotation"
         },
@@ -7514,7 +7533,7 @@
           "x-go-name": "HealthAnnotations"
         },
         "istioInjectionAnnotation": {
-          "description": "Define if Workload has an explicit Istio policy annotation\nIt's mapped as a pointer to show three values nil, true, false",
+          "description": "Define if Workload has an explicit Istio policy annotation\nIstio supports this as a label as well - this will be defined if the label is set, too.\nIf both annotation and label are set, if any is false, injection is disabled.\nIt's mapped as a pointer to show three values nil, true, false",
           "type": "boolean",
           "x-go-name": "IstioInjectionAnnotation"
         },

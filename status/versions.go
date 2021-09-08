@@ -43,6 +43,17 @@ var (
 	istioVersionExpr          = regexp.MustCompile(`([0-9]+\.[0-9]+\.[0-9]+)`)
 )
 
+const (
+	istioProductNameMaistra          = "Maistra"
+	istioProductNameMaistraProject   = "Maistra Project"
+	istioProductNameOSSM             = "OpenShift Service Mesh"
+	istioProductNameUpstream         = "Istio"
+	istioProductNameUpstreamSnapshot = "Istio Snapshot"
+	istioProductNameUpstreamRC       = "Istio RC"
+	istioProductNameUpstreamDev      = "Istio Dev"
+	istioProductNameUnknown          = "Unknown Istio Implementation"
+)
+
 func getVersions() {
 	components := []externalService{
 		istioVersion,
@@ -122,7 +133,7 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 	if maistraVersionStringArr != nil {
 		log.Debugf("Detected Maistra product version [%v]", rawVersion)
 		if len(maistraVersionStringArr) > 1 {
-			product.Name = "Maistra"
+			product.Name = istioProductNameMaistra
 			product.Version = maistraVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
 			if !validateVersion(config.MaistraVersionSupported, product.Version) {
 				info.WarningMessages = append(info.WarningMessages, "Maistra version "+product.Version+" is not supported, the version should be "+config.MaistraVersionSupported)
@@ -137,7 +148,7 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 	if maistraVersionStringArr != nil {
 		log.Debugf("Detected Maistra project version [%v]", rawVersion)
 		if len(maistraVersionStringArr) > 1 {
-			product.Name = "Maistra Project"
+			product.Name = istioProductNameMaistraProject
 			product.Version = maistraVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
 			if !validateVersion(config.MaistraVersionSupported, product.Version) {
 				info.WarningMessages = append(info.WarningMessages, "Maistra project version "+product.Version+" is not supported, the version should be "+config.MaistraVersionSupported)
@@ -153,7 +164,7 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 	if ossmStringArr != nil {
 		log.Debugf("Detected OpenShift Service Mesh version [%v]", rawVersion)
 		if len(ossmStringArr) > 1 {
-			product.Name = "OpenShift Service Mesh"
+			product.Name = istioProductNameOSSM
 			product.Version = ossmStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
 			if !validateVersion(config.OSSMVersionSupported, product.Version) {
 				info.WarningMessages = append(info.WarningMessages, "OpenShift Service Mesh version "+product.Version+" is not supported, the version should be "+config.OSSMVersionSupported)
@@ -169,7 +180,7 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 	if istioVersionStringArr != nil {
 		log.Debugf("Detected Istio snapshot version [%v]", rawVersion)
 		if len(istioVersionStringArr) > 2 {
-			product.Name = "Istio Snapshot"
+			product.Name = istioProductNameUpstreamSnapshot
 			majorMinor := istioVersionStringArr[1]  // regex group #1 is the "#.#" version numbers
 			snapshotStr := istioVersionStringArr[2] // regex group #2 is the date/time stamp
 			product.Version = majorMinor + snapshotStr
@@ -186,7 +197,7 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 	if istioVersionStringArr != nil {
 		log.Debugf("Detected Istio RC version [%v]", rawVersion)
 		if len(istioVersionStringArr) > 2 {
-			product.Name = "Istio RC"
+			product.Name = istioProductNameUpstreamRC
 			majorMinor := istioVersionStringArr[1] // regex group #1 is the "#.#.#" version numbers
 			rc := istioVersionStringArr[2]         // regex group #2 is the alpha or beta version
 			product.Version = fmt.Sprintf("%s (%s)", majorMinor, rc)
@@ -203,7 +214,7 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 	if istioVersionStringArr != nil {
 		log.Debugf("Detected Istio dev version [%v]", rawVersion)
 		if len(istioVersionStringArr) > 2 {
-			product.Name = "Istio Dev"
+			product.Name = istioProductNameUpstreamDev
 			majorMinor := istioVersionStringArr[1] // regex group #1 is the "#.#" version numbers
 			buildHash := istioVersionStringArr[2]  // regex group #2 is the build hash
 			product.Version = fmt.Sprintf("%s (dev %s)", majorMinor, buildHash)
@@ -220,7 +231,7 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 	if istioVersionStringArr != nil {
 		log.Debugf("Detected Istio version [%v]", rawVersion)
 		if len(istioVersionStringArr) > 1 {
-			product.Name = "Istio"
+			product.Name = istioProductNameUpstream
 			product.Version = istioVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
 			if !validateVersion(config.IstioVersionSupported, product.Version) {
 				info.WarningMessages = append(info.WarningMessages, "Istio version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
@@ -231,7 +242,7 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 	}
 
 	log.Debugf("Detected unknown Istio implementation version [%v]", rawVersion)
-	product.Name = "Unknown Istio Implementation"
+	product.Name = istioProductNameUnknown
 	product.Version = rawVersion
 	info.WarningMessages = append(info.WarningMessages, "Unknown Istio implementation version "+product.Version+" is not recognized, thus not supported.")
 	return &product, nil
@@ -320,4 +331,8 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 // Check Iter8 Supported Version
 func IsIter8Supported(analyticsImgVersion string) bool {
 	return validateVersion(config.Iter8VersionSupported, analyticsImgVersion)
+}
+
+func isMaistraExternalService(esi *ExternalServiceInfo) bool {
+	return esi.Name == istioProductNameOSSM || esi.Name == istioProductNameMaistra || esi.Name == istioProductNameMaistraProject
 }

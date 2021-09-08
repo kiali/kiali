@@ -7308,6 +7308,24 @@ It is false for service.namespace format and service entries. |  |
 
 [IstioConfigPermissions](#istio-config-permissions)
 
+### <span id="istio-environment"></span> IstioEnvironment
+
+
+> IstioEnvironment describes the Istio implementation environment
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| IsMaistra | boolean| `bool` | ✓ | | If true, the Istio implementation is a variant of Maistra. |  |
+
+
+
 ### <span id="istio-validation"></span> IstioValidation
 
 
@@ -9082,6 +9100,7 @@ included, ES with dynamic settings off will automatically ignore unneeded fields
 | Status | map of string| `map[string]string` | ✓ | | The state of Kiali
 A hash of key,values with versions of Kiali and state |  |
 | WarningMessages | []string| `[]string` |  | | An array of warningMessages |  |
+| istioEnvironment | [IstioEnvironment](#istio-environment)| `IstioEnvironment` | ✓ | |  |  |
 
 
 
@@ -9308,6 +9327,8 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 | DesiredReplicas | int32 (formatted integer)| `int32` | ✓ | | Number of desired replicas defined by the user in the controller Spec | `2` |
 | HealthAnnotations | map of string| `map[string]string` |  | | HealthAnnotations |  |
 | IstioInjectionAnnotation | boolean| `bool` |  | | Define if Workload has an explicit Istio policy annotation
+Istio supports this as a label as well - this will be defined if the label is set, too.
+If both annotation and label are set, if any is false, injection is disabled.
 It's mapped as a pointer to show three values nil, true, false |  |
 | IstioReferences | [][IstioValidationKey](#istio-validation-key)| `[]*IstioValidationKey` |  | | Istio References |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if Pods related to this Workload has an IstioSidecar deployed | `true` |
@@ -9519,6 +9540,8 @@ https://istio.io/latest/docs/reference/config/networking/workload-group/#Workloa
 | DashboardAnnotations | map of string| `map[string]string` |  | | Dashboard annotations |  |
 | HealthAnnotations | map of string| `map[string]string` |  | | HealthAnnotations |  |
 | IstioInjectionAnnotation | boolean| `bool` |  | | Define if Workload has an explicit Istio policy annotation
+Istio supports this as a label as well - this will be defined if the label is set, too.
+If both annotation and label are set, if any is false, injection is disabled.
 It's mapped as a pointer to show three values nil, true, false |  |
 | IstioReferences | [][IstioValidationKey](#istio-validation-key)| `[]*IstioValidationKey` |  | | Istio References |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if Pods related to this Workload has an IstioSidecar deployed | `true` |
