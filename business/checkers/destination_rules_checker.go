@@ -37,7 +37,7 @@ func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 
 	// Appending validations that only applies to non-autoMTLS meshes
 	if !in.MTLSDetails.EnabledAutoMtls {
-		enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails})
+		enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, ExportedDestinationRules: in.ExportedDestinationRules, MTLSDetails: in.MTLSDetails})
 	}
 
 	for _, checker := range enabledDRCheckers {
