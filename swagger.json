@@ -224,6 +224,30 @@
         }
       }
     },
+    "/istio/certs": {
+      "get": {
+        "description": "Get certificates (internal) information used by Istio",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "certs"
+        ],
+        "operationId": "istioCerts",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/certsInfoResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/istio/permissions": {
       "get": {
         "description": "Endpoint to get the caller permissions on new Istio Config objects",
@@ -4332,6 +4356,50 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "CertInfo": {
+      "description": "CertInfo contains the information for a given certificate",
+      "type": "object",
+      "properties": {
+        "accessible": {
+          "type": "boolean",
+          "x-go-name": "Accessible"
+        },
+        "dnsNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "DNSNames"
+        },
+        "error": {
+          "type": "string",
+          "x-go-name": "Error"
+        },
+        "issuer": {
+          "type": "string",
+          "x-go-name": "Issuer"
+        },
+        "notAfter": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "NotAfter"
+        },
+        "notBefore": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "NotBefore"
+        },
+        "secretName": {
+          "type": "string",
+          "x-go-name": "SecretName"
+        },
+        "secretNamespace": {
+          "type": "string",
+          "x-go-name": "SecretNamespace"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "Chart": {
       "description": "Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard config resource",
       "type": "object",
@@ -8157,6 +8225,15 @@
             "type": "string",
             "x-go-name": "Message"
           }
+        }
+      }
+    },
+    "certsInfoResponse": {
+      "description": "Return a list of certificates information",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/CertInfo"
         }
       }
     },

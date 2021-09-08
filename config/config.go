@@ -353,12 +353,19 @@ type Validations struct {
 	Ignore []string `yaml:"ignore,omitempty" json:"ignore,omitempty"`
 }
 
+// CertificatesInformationIndicators defines configuration to enable the feature and to grant read permissions to a list of secrets
+type CertificatesInformationIndicators struct {
+	Enabled bool     `yaml:"enabled,omitempty" json:"enabled"`
+	Secrets []string `yaml:"secrets,omitempty" json:"secrets,omitempty"`
+}
+
 // KialiFeatureFlags available from the CR
 type KialiFeatureFlags struct {
-	IstioInjectionAction bool        `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
-	IstioUpgradeAction   bool        `yaml:"istio_upgrade_action,omitempty" json:"istioUpgradeAction"`
-	UIDefaults           UIDefaults  `yaml:"ui_defaults,omitempty" json:"uiDefaults,omitempty"`
-	Validations          Validations `yaml:"validations,omitempty" json:"validations,omitempty"`
+	CertificatesInformationIndicators CertificatesInformationIndicators `yaml:"certificates_information_indicators,omitempty" json:"certificatesInformationIndicators"`
+	IstioInjectionAction              bool                              `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
+	IstioUpgradeAction                bool                              `yaml:"istio_upgrade_action,omitempty" json:"istioUpgradeAction"`
+	UIDefaults                        UIDefaults                        `yaml:"ui_defaults,omitempty" json:"uiDefaults,omitempty"`
+	Validations                       Validations                       `yaml:"validations,omitempty" json:"validations,omitempty"`
 }
 
 // Tolerance config
@@ -570,6 +577,10 @@ func NewConfig() (c *Config) {
 			},
 			Validations: Validations{
 				Ignore: make([]string, 0),
+			},
+			CertificatesInformationIndicators: CertificatesInformationIndicators{
+				Enabled: true,
+				Secrets: []string{"cacerts", "istio-ca-secret"},
 			},
 		},
 		KubernetesConfig: KubernetesConfig{
