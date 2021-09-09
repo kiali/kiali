@@ -6,7 +6,7 @@ This document defines governance policies for the Kiali project.
 
 Kiali Maintainers have write access to the [Kiali GitHub repositories](https://github.com/kiali).
 They can merge their own patches or patches from others. Maintainers collectively manage the project's
-resources and contributors. Maintainers are elegible to become admins of specific repositories, or owners
+resources and contributors. If needed, maintainers are elegible to become admins of specific repositories, or owners
 of the Kiali organization.
 
 These privileges are granted with an expectation of responsibility: maintainers care about the Kiali project and want to help it grow and improve. Above the ability to contribute changes, a maintainer has demonstrated the ability to collaborate well with the team, assign appropriate code reviewers, contribute high-quality code, and be thorough and timely with fixes, tests and documentation.
@@ -15,10 +15,10 @@ A maintainer is a contributor to the Kiali project's success and a citizen helpi
 
 Current list of maintainers (alphabetically ordered):
 
-* [aljesusg](https://github.com/aljesusg) - _Owner_
+* [aljesusg](https://github.com/aljesusg)
 * [hhovsepy](https://github.com/hhovsepy)
-* [israel-hdez](https://github.com/israel-hdez) - _Owner_
-* [jmazzitelli](https://github.com/jmazzitelli) - _Owner_
+* [israel-hdez](https://github.com/israel-hdez)
+* [jmazzitelli](https://github.com/jmazzitelli)
 * [leandroberetta](https://github.com/leandroberetta)
 * [nrfox](https://github.com/nrfox)
 * [xeviknal](https://github.com/xeviknal)
@@ -46,17 +46,6 @@ The following information must be provided:
 * a list of links to non-trivial pull requests (top 10) authored by the nominee.
 
 Two other maintainers need to second the nomination. If no one objects in 5 working days (U.S.), the nomination is accepted.  If anyone objects or wants more information, the maintainers discuss and usually come to a consensus (within the 5 working days). If issues can't be resolved, there's a simple majority vote among current maintainers.
-
-To upgrade to _Admin_ of a Kiali repository or _Owner_ of the Kiali organization,
-you must first be a Maintainer (i.e. you cannot directly become an _Admin_ or _Owner_
-without being first a Maintainer). You can propose yourself to apply for admin privileges
-or ownership, or another Maintainer can do it for you. Proposals must be posted by opening a pull request
-modifying the admin or owners list to add the new _Admin_ or _Owner_, or via a
-[GitHub discussion](https://github.com/kiali/kiali/discussions/new) under the
-Governance category. The proposal must mention the GitHub username of the maintainer requiring
-the upgrade and the reason of the need of the upgrade (usually, it is because
-of the need of extra privileges). The new privileges are granted if a simple majority vote
-among current maintainers succeeds.
 
 ## Testers
 
@@ -115,9 +104,9 @@ Thus, they are able to guide and mentor other Maintainers, give direction, and s
 
 Current list of leaders (alphabetically ordered):
 
-* [abonas](https://github.com/abonas) - _Owner_
-* [jshaughn](https://github.com/jshaughn) - _Owner_
-* [lucasponce](https://github.com/lucasponce) - _Owner_
+* [abonas](https://github.com/abonas)
+* [jshaughn](https://github.com/jshaughn)
+* [lucasponce](https://github.com/lucasponce)
 
 ### Becoming a Leader
 
@@ -169,7 +158,7 @@ to the Governance require a 2/3 vote of all Maintainers.
 Kiali Testers also have a voice in voting although their vote is not mandatory.
 
 Unless some process specifies something different, once a vote starts Maintainers (and Testers)
-must give their vote within 5 working days (U.S.)
+must give their vote within 7 working days (U.S.)
 
 ## Other Changes
 
