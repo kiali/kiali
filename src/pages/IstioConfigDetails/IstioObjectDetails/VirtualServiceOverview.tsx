@@ -115,6 +115,32 @@ class VirtualServiceOverview extends React.Component<VirtualServiceProps> {
     );
   }
 
+  generateEmptyGateways() {
+    return (
+      <>
+        <Text component={TextVariants.h3}>Gateways</Text>
+        <ul className={'details'}>
+          <li key={'gateway_mesh'}>
+            <div>
+              mesh
+              <Tooltip
+                position={TooltipPosition.right}
+                content={
+                  <div style={{ textAlign: 'left' }}>
+                    When the gateways field is omitted, the default gateway (mesh) will be used, which would apply the
+                    rule to all sidecars in the mesh
+                  </div>
+                }
+              >
+                <KialiIcon.Info className={infoStyle} />
+              </Tooltip>
+            </div>
+          </li>
+        </ul>
+      </>
+    );
+  }
+
   generateServiceList(routes: HTTPRoute[] | TLSRoute[] | TCPRoute[], isValid: boolean) {
     const hosts: string[] = [];
     routes.forEach(route => {
@@ -155,6 +181,9 @@ class VirtualServiceOverview extends React.Component<VirtualServiceProps> {
         <Stack>
           {virtualService.spec.gateways && virtualService.spec.gateways.length > 0 && (
             <StackItem id={'gateways'}>{this.generateGatewaysList(virtualService.spec.gateways, isValid)}</StackItem>
+          )}
+          {(!virtualService.spec.gateways || virtualService.spec.gateways.length === 0) && (
+            <StackItem id={'gateways'}>{this.generateEmptyGateways()}</StackItem>
           )}
           {protocols.map((protocol, i) => {
             const { name, object } = protocol;
