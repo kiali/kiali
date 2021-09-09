@@ -3,11 +3,19 @@ import * as React from 'react';
 import { URLParam, HistoryManager } from '../../app/History';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import { Reporter, Direction } from '../../types/MetricsOptions';
+import { Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { KialiIcon } from '../../config/KialiIcon';
+import { style } from 'typestyle';
 
 interface Props {
   onChanged: (reproter: Reporter) => void;
   direction: Direction;
 }
+
+const infoStyle = style({
+  margin: '0px 5px 2px 5px',
+  verticalAlign: '-5px !important'
+});
 
 export default class MetricsReporter extends React.Component<Props> {
   static ReporterOptions: { [key: string]: string } = {
@@ -36,17 +44,49 @@ export default class MetricsReporter extends React.Component<Props> {
     this.props.onChanged(this.reporter);
   };
 
+  reportTooltip = (
+    <div>
+      <ul style={{ listStyleType: 'none' }}>
+        <li>
+          <div style={{ display: 'inline-block' }}>
+            Select the reporter for the metrics displayed. Each Istio metric can be reported by the Source (workload
+            which emitted the request) and by the Destination (workload which received the request). In general, the
+            timeseries will look exactly the same because Source and Destination report the same data.
+          </div>
+        </li>
+        <li>
+          <div style={{ display: 'inline-block' }}>There are some exceptions:</div>
+        </li>
+        <li>
+          <ul style={{ listStyleType: 'circle', marginLeft: '20px' }}>
+            <li>An opened circuit breaker would cause networking failures only reported by the Source</li>
+            <li>Fault-injected failures only reported by the Source</li>
+            <li>
+              Traffic coming from unknown sources (anything that is not under the Istio mesh) would only be reported by
+              the Destination
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  );
+
   render() {
     return (
-      <ToolbarDropdown
-        id={'metrics_filter_reporter'}
-        disabled={false}
-        handleSelect={this.onReporterChanged}
-        nameDropdown={'Reported from'}
-        value={this.reporter}
-        initialLabel={MetricsReporter.ReporterOptions[this.reporter]}
-        options={MetricsReporter.ReporterOptions}
-      />
+      <span>
+        <ToolbarDropdown
+          id={'metrics_filter_reporter'}
+          disabled={false}
+          handleSelect={this.onReporterChanged}
+          nameDropdown={'Reported from'}
+          value={this.reporter}
+          initialLabel={MetricsReporter.ReporterOptions[this.reporter]}
+          options={MetricsReporter.ReporterOptions}
+        />
+        <Tooltip content={<div style={{ textAlign: 'left' }}>{this.reportTooltip}</div>} position={TooltipPosition.top}>
+          <KialiIcon.Info className={infoStyle} />
+        </Tooltip>
+      </span>
     );
   }
 }
