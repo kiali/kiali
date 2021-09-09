@@ -127,8 +127,8 @@ class VirtualServiceOverview extends React.Component<VirtualServiceProps> {
                 position={TooltipPosition.right}
                 content={
                   <div style={{ textAlign: 'left' }}>
-                    When this field is omitted, the default gateway (mesh) will be used, which would apply the rule to
-                    all sidecars in the mesh
+                    When the gateways field is omitted, the default gateway (mesh) will be used, which would apply the
+                    rule to all sidecars in the mesh
                   </div>
                 }
               >
