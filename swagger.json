@@ -2505,6 +2505,15 @@
         "operationId": "podProxyLogging",
         "parameters": [
           {
+            "enum": [
+              "off",
+              "trace",
+              "debug",
+              "info",
+              "warning",
+              "error",
+              "critical"
+            ],
             "type": "string",
             "x-go-name": "Level",
             "description": "The log level for the pod's proxy.",

@@ -6,26 +6,15 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-)
 
-var (
-	validLogLevels = []string{"off", "trace", "debug", "info", "warning", "error", "critical"}
+	"github.com/kiali/kiali/business"
 )
-
-func isValidLogLevel(level string) bool {
-	for _, l := range validLogLevels {
-		if level == l {
-			return true
-		}
-	}
-	return false
-}
 
 func LoggingUpdate(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	// Get business layer
-	business, err := getBusiness(r)
+	businessLayer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -38,13 +27,13 @@ func LoggingUpdate(w http.ResponseWriter, r *http.Request) {
 	case level == "":
 		RespondWithError(w, 400, "level query param is not set")
 		return
-	case !isValidLogLevel(level):
-		msg := fmt.Sprintf("%s is an invalid log level. Valid log levels are: %s", level, strings.Join(validLogLevels, ", "))
+	case !business.IsValidProxyLogLevel(level):
+		msg := fmt.Sprintf("%s is an invalid log level. Valid log levels are: %s", level, strings.Join(business.ValidProxyLogLevels, ", "))
 		RespondWithError(w, 400, msg)
 		return
 	}
 
-	if err := business.ProxyLogging.SetLogLevel(namespace, pod, level); err != nil {
+	if err := businessLayer.ProxyLogging.SetLogLevel(namespace, pod, level); err != nil {
 		handleErrorResponse(w, err)
 		return
 	}

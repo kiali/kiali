@@ -76,7 +76,7 @@ type LoggingParam struct {
 	//
 	// in: query
 	// required: true
-	Level string `json:"level"`
+	Level ProxyLogLevel `json:"level"`
 }
 
 // swagger:parameters istioConfigList workloadList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments podProxyDump podProxyResource podProxyLogging
@@ -830,3 +830,16 @@ type ClustersResponse struct {
 	// in: body
 	Body []business.Cluster
 }
+
+// swagger:enum ProxyLogLevel
+type ProxyLogLevel string
+
+const (
+	ProxyLogLevelOff ProxyLogLevel = "off"
+	ProxyLogLevelTrace ProxyLogLevel = "trace"
+	ProxyLogLevelDebug ProxyLogLevel = "debug"
+	ProxyLogLevelInfo ProxyLogLevel = "info"
+	ProxyLogLevelWarning ProxyLogLevel = "warning"
+	ProxyLogLevelError ProxyLogLevel = "error"
+	ProxyLogLevelCritical ProxyLogLevel = "critical"
+)
