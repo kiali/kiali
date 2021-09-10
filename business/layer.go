@@ -127,8 +127,9 @@ func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInter
 	temporaryLayer.Mesh = NewMeshService(k8s, temporaryLayer, nil)
 	temporaryLayer.Namespace = NewNamespaceService(k8s)
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s}
-	temporaryLayer.ProxyLogging = ProxyLoggingService{k8s: k8s}
 	temporaryLayer.ProxyStatus = ProxyStatusService{k8s: k8s, businessLayer: temporaryLayer}
+	// Out of order because it relies on ProxyStatus
+	temporaryLayer.ProxyLogging = ProxyLoggingService{k8s: k8s, proxyStatus: &temporaryLayer.ProxyStatus}
 	temporaryLayer.RegistryStatus = RegistryStatusService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}
