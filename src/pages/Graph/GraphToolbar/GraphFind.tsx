@@ -218,10 +218,20 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
 
     // make sure the value is updated if there was a change
     if (findChanged || (graphChanged && !!this.props.findValue)) {
+      // ensure findInputValue is aligned if findValue is set externally (e.g. resetSettings)
+      if (this.state.findInputValue !== this.props.findValue) {
+        this.setFind(this.props.findValue);
+      }
+
       this.handleFind(this.props.cy);
     }
 
     if (hideChanged || (graphChanged && !!this.props.hideValue)) {
+      // ensure hideInputValue is aligned if hideValue is set externally (e.g. resetSettings)
+      if (this.state.hideInputValue !== this.props.hideValue) {
+        this.setHide(this.props.hideValue);
+      }
+
       const compressOnHideChanged = this.props.compressOnHide !== prevProps.compressOnHide;
       this.handleHide(this.props.cy, hideChanged, graphChanged, compressOnHideChanged);
     }

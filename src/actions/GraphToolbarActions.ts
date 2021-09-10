@@ -4,6 +4,7 @@ import { GraphType, EdgeLabelMode, TrafficRate } from '../types/Graph';
 import { ActionKeys } from './ActionKeys';
 
 export const GraphToolbarActions = {
+  resetSettings: createAction(ActionKeys.GRAPH_TOOLBAR_RESET_SETTINGS),
   setEdgeLabels: createStandardAction(ActionKeys.GRAPH_TOOLBAR_SET_EDGE_LABELS)<EdgeLabelMode[]>(),
   setFindValue: createStandardAction(ActionKeys.GRAPH_TOOLBAR_SET_FIND_VALUE)<string>(),
   setGraphType: createStandardAction(ActionKeys.GRAPH_TOOLBAR_SET_GRAPH_TYPE)<GraphType>(),

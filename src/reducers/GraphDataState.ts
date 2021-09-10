@@ -115,7 +115,10 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
           trafficRates: action.payload
         })
       });
-
+    case getType(GraphToolbarActions.resetSettings):
+      return updateState(state, {
+        toolbarState: INITIAL_GRAPH_STATE.toolbarState
+      });
     case getType(GraphToolbarActions.toggleBoxByCluster):
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {

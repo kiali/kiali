@@ -47,7 +47,8 @@ import {
   TopologyIcon,
   UnknownIcon,
   UserClockIcon,
-  WarningTriangleIcon
+  WarningTriangleIcon,
+  ProcessAutomationIcon
 } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 
@@ -89,12 +90,14 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   History: (props: IconProps) => <HistoryIcon className={props.className} />,
   Info: (props: IconProps) => <InfoAltIcon className={props.className} color={props.color || PFColors.Info} />,
   IstioConfig: (props: IconProps) => <PficonTemplateIcon className={props.className} />,
+  InProgressIcon: (props: IconProps) => <InProgressIcon className={props.className} />,
   LocalTime: (props: IconProps) => <GlobeAmericasIcon className={props.className} />,
   MissingSidecar: (props: IconProps) => <BlueprintIcon className={props.className} />,
   MoreLegend: (props: IconProps) => <EllipsisHIcon className={props.className} />,
   MtlsLock: (props: IconProps) => <LockIcon className={props.className} />,
   MtlsUnlock: (props: IconProps) => <LockOpenIcon className={props.className} />,
   Ok: (props: IconProps) => <OkIcon className={props.className} color={props.color || PFColors.Success} />,
+  OnRunningIcon: (props: IconProps) => <OnRunningIcon className={props.className} />,
   Pause: (props: IconProps) => <PauseIcon className={props.className} />,
   PauseCircle: (props: IconProps) => <PauseCircleIcon className={props.className} />,
   Play: (props: IconProps) => <PlayIcon className={props.className} />,
@@ -102,6 +105,7 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   Regex: (props: IconProps) => <AsteriskIcon className={props.className} />,
   Repository: (props: IconProps) => <RepositoryIcon className={props.className} />,
   RequestRouting: (props: IconProps) => <CodeBranchIcon className={props.className} />,
+  ResetSettings: (props: IconProps) => <ProcessAutomationIcon className={props.className} />,
   RequestTimeout: (props: IconProps) => <OutlinedClockIcon className={props.className} />,
   Services: (props: IconProps) => <ServiceIcon className={props.className} />,
   Stop: (props: IconProps) => <StopIcon className={props.className} />,
@@ -114,9 +118,7 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
     <WarningTriangleIcon className={props.className} color={props.color || PFColors.Warning} />
   ),
   Website: (props: IconProps) => <HomeIcon className={props.className} />,
-  Workloads: (props: IconProps) => <BundleIcon className={props.className} />,
-  OnRunningIcon: (props: IconProps) => <OnRunningIcon className={props.className} />,
-  InProgressIcon: (props: IconProps) => <InProgressIcon className={props.className} />
+  Workloads: (props: IconProps) => <BundleIcon className={props.className} />
 };
 
 Object.keys(KialiIcon).forEach(key => {
