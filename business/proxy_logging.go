@@ -24,7 +24,7 @@ func IsValidProxyLogLevel(level string) bool {
 
 // ProxyLoggingService is a thin layer over the kube interface for proxy logging functions.
 type ProxyLoggingService struct {
-	k8s kubernetes.ClientInterface
+	k8s         kubernetes.ClientInterface
 	proxyStatus *ProxyStatusService
 }
 

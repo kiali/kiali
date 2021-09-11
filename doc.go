@@ -835,11 +835,11 @@ type ClustersResponse struct {
 type ProxyLogLevel string
 
 const (
-	ProxyLogLevelOff ProxyLogLevel = "off"
-	ProxyLogLevelTrace ProxyLogLevel = "trace"
-	ProxyLogLevelDebug ProxyLogLevel = "debug"
-	ProxyLogLevelInfo ProxyLogLevel = "info"
-	ProxyLogLevelWarning ProxyLogLevel = "warning"
-	ProxyLogLevelError ProxyLogLevel = "error"
+	ProxyLogLevelOff      ProxyLogLevel = "off"
+	ProxyLogLevelTrace    ProxyLogLevel = "trace"
+	ProxyLogLevelDebug    ProxyLogLevel = "debug"
+	ProxyLogLevelInfo     ProxyLogLevel = "info"
+	ProxyLogLevelWarning  ProxyLogLevel = "warning"
+	ProxyLogLevelError    ProxyLogLevel = "error"
 	ProxyLogLevelCritical ProxyLogLevel = "critical"
 )
