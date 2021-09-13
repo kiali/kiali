@@ -295,7 +295,7 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of OpenShift to be downloaded
-DEFAULT_OPENSHIFT_DOWNLOAD_VERSION="4.4.3"
+DEFAULT_OPENSHIFT_DOWNLOAD_VERSION="4.8.11"
 
 # The default path under mirror.openshift.com/pub/openshift-v4 where the version downloads are found
 DEFAULT_OCP_URL_PATH="ocp"
