@@ -167,7 +167,6 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         </Tab>
       );
     }
-
     if (this.state.workload && this.hasIstioSidecars(this.state.workload)) {
       const envoyTab = (
         <Tab title="Envoy" eventKey={10} key={'Envoy'}>
@@ -193,10 +192,12 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       workload.pods.forEach(pod => {
         if (pod.istioContainers && pod.istioContainers.length > 0) {
           hasIstioSidecars = true;
+        } else {
+          hasIstioSidecars =
+            hasIstioSidecars || (!!pod.containers && pod.containers.some(cont => cont.name === 'istio-proxy'));
         }
       });
     }
-
     return hasIstioSidecars;
   }
 
