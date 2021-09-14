@@ -37,6 +37,6 @@ func LoggingUpdate(w http.ResponseWriter, r *http.Request) {
 		handleErrorResponse(w, err)
 		return
 	}
-
+	audit(r, "UPDATE Envoy log. Namespace: "+namespace+" Pod: "+pod+" Log level:"+level)
 	RespondWithCode(w, 200)
 }
