@@ -114,10 +114,11 @@ type PrometheusConfig struct {
 	// Enable cache for Prometheus queries
 	CacheEnabled bool `yaml:"cache_enabled,omitempty"`
 	// Global cache expiration expressed in seconds
-	CacheExpiration int    `yaml:"cache_expiration,omitempty"`
-	HealthCheckUrl  string `yaml:"health_check_url,omitempty"`
-	IsCore          bool   `yaml:"is_core,omitempty"`
-	URL             string `yaml:"url,omitempty"`
+	CacheExpiration int               `yaml:"cache_expiration,omitempty"`
+	CustomHeaders   map[string]string `yaml:"custom_headers,omitempty"`
+	HealthCheckUrl  string            `yaml:"health_check_url,omitempty"`
+	IsCore          bool              `yaml:"is_core,omitempty"`
+	URL             string            `yaml:"url,omitempty"`
 }
 
 // CustomDashboardsConfig describes configuration specific to Custom Dashboards
@@ -515,6 +516,7 @@ func NewConfig() (c *Config) {
 				CacheDuration: 7,
 				// Prom Cache expires and it forces to repopulate cache
 				CacheExpiration: 300,
+				CustomHeaders:   map[string]string{},
 				URL:             "http://prometheus.istio-system:9090",
 			},
 			Tracing: TracingConfig{

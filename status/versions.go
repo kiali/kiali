@@ -111,7 +111,7 @@ func validateVersion(requiredVersion string, installedVersion string) bool {
 // istioVersion returns the current istio version information
 func istioVersion() (*ExternalServiceInfo, error) {
 	istioConfig := config.Get().ExternalServices.Istio
-	body, code, err := httputil.HttpGet(istioConfig.UrlServiceVersion, nil, 10*time.Second)
+	body, code, err := httputil.HttpGet(istioConfig.UrlServiceVersion, nil, 10*time.Second, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +290,7 @@ func prometheusVersion() (*ExternalServiceInfo, error) {
 		auth.Token = token
 	}
 
-	body, _, err := httputil.HttpGet(cfg.URL+"/version", &auth, 10*time.Second)
+	body, _, err := httputil.HttpGet(cfg.URL+"/version", &auth, 10*time.Second, nil)
 	if err == nil {
 		err = json.Unmarshal(body, &prometheusV)
 		if err == nil {

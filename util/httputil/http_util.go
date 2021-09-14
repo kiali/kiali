@@ -22,13 +22,13 @@ func HttpMethods() []string {
 		http.MethodDelete, http.MethodConnect, http.MethodOptions, http.MethodTrace}
 }
 
-func HttpGet(url string, auth *config.Auth, timeout time.Duration) ([]byte, int, error) {
+func HttpGet(url string, auth *config.Auth, timeout time.Duration, customHeaders map[string]string) ([]byte, int, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	transport, err := CreateTransport(auth, &http.Transport{}, timeout)
+	transport, err := CreateTransport(auth, &http.Transport{}, timeout, customHeaders)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -49,8 +49,21 @@ type authRoundTripper struct {
 	originalRT http.RoundTripper
 }
 
+type customHeadersRoundTripper struct {
+	headers    map[string]string
+	originalRT http.RoundTripper
+}
+
 func (rt *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set("Authorization", rt.auth)
+	return rt.originalRT.RoundTrip(req)
+}
+
+func (rt *customHeadersRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	// note: no need to check for nil or empty map - newCustomHeadersRoundTripper will assure us there will always be at least 1
+	for k, v := range rt.headers {
+		req.Header.Set(k, v)
+	}
 	return rt.originalRT.RoundTrip(req)
 }
 
@@ -67,13 +80,24 @@ func newAuthRoundTripper(auth *config.Auth, rt http.RoundTripper) http.RoundTrip
 	}
 }
 
-// Creates a new HTTP Transport with TLS and Timeouts.
+func newCustomHeadersRoundTripper(headers map[string]string, rt http.RoundTripper) http.RoundTripper {
+	if len(headers) == 0 {
+		// if there are no custom headers then there is no need for a special RoundTripper; therefore just return the original RoundTripper
+		return rt
+	}
+	return &customHeadersRoundTripper{
+		headers:    headers,
+		originalRT: rt,
+	}
+}
+
+// Creates a new HTTP Transport with TLS, Timeouts, and optional custom headers.
 //
 // Please remember that setting long timeouts is not recommended as it can make
 // idle connections stay open for as long as 2 * timeout. This should only be
 // done in cases where you know the request is very likely going to be reused at
 // some point in the near future.
-func CreateTransport(auth *config.Auth, transportConfig *http.Transport, timeout time.Duration) (http.RoundTripper, error) {
+func CreateTransport(auth *config.Auth, transportConfig *http.Transport, timeout time.Duration, customHeaders map[string]string) (http.RoundTripper, error) {
 	// Limits the time spent establishing a TCP connection if a new one is
 	// needed. If DialContext is not set, Dial is used, we only create a new one
 	// if neither is defined.
@@ -85,19 +109,22 @@ func CreateTransport(auth *config.Auth, transportConfig *http.Transport, timeout
 
 	transportConfig.IdleConnTimeout = timeout
 
-	if auth == nil {
-		return transportConfig, nil
+	// We might need some custom RoundTrippers to manipulate the requests (for auth and other custom request headers).
+	// Chain together the RoundTrippers that we need, retaining the outer-most round tripper so we can return it.
+	outerRoundTripper := newCustomHeadersRoundTripper(customHeaders, transportConfig)
+
+	if auth != nil {
+		tlscfg, err := GetTLSConfig(auth)
+		if err != nil {
+			return nil, err
+		}
+		if tlscfg != nil {
+			transportConfig.TLSClientConfig = tlscfg
+		}
+		outerRoundTripper = newAuthRoundTripper(auth, outerRoundTripper)
 	}
 
-	tlscfg, err := GetTLSConfig(auth)
-	if err != nil {
-		return nil, err
-	}
-	if tlscfg != nil {
-		transportConfig.TLSClientConfig = tlscfg
-	}
-
-	return newAuthRoundTripper(auth, transportConfig), nil
+	return outerRoundTripper, nil
 }
 
 func GetTLSConfig(auth *config.Auth) (*tls.Config, error) {
