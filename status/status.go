@@ -111,5 +111,8 @@ func Get() (status StatusInfo) {
 
 // IsMaistra returns true if we are running in a Maistra environment
 func IsMaistra() bool {
+	if info.IstioEnvironment == nil {
+		Get()
+	}
 	return info.IstioEnvironment.IsMaistra
 }
