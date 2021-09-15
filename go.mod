@@ -15,12 +15,10 @@ require (
 	github.com/mitchellh/mapstructure v1.4.0
 	github.com/nitishm/engarde v0.1.1
 	github.com/openshift/api v0.0.0-20200221181648-8ce0047d664f
-	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/prometheus/client_golang v1.9.0
 	github.com/prometheus/common v0.15.0
 	github.com/rs/zerolog v1.20.0
 	github.com/stretchr/testify v1.6.1
-	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
 	golang.org/x/oauth2 v0.0.0-20201109201403-9fd604954f58 // indirect
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	google.golang.org/grpc v1.33.1
