@@ -304,6 +304,7 @@ func (c *kialiCacheImpl) GetPods(namespace, labelSelector string) ([]core_v1.Pod
 }
 
 func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
+	log.Infof("In cache GetReplicaSets(%s)", namespace)
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		reps := nsCache[kubernetes.ReplicaSetType].GetStore().List()
 		lenReps := len(reps)
@@ -312,13 +313,37 @@ func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet,
 			if !ok {
 				return nil, errors.New("bad ReplicaSet type found in cache")
 			}
+
+			activeRSMap := map[string]*apps_v1.ReplicaSet{}
+			for _, ref := range reps {
+				rs := ref.(*apps_v1.ReplicaSet)
+				if len(rs.OwnerReferences) > 0 {
+					for _, ownerRef := range rs.OwnerReferences {
+						if ownerRef.Controller != nil && *ownerRef.Controller {
+							if currRS, ok := activeRSMap[ownerRef.Name]; ok {
+								if currRS.CreationTimestamp.Time.Before(rs.CreationTimestamp.Time) {
+									activeRSMap[ownerRef.Name] = rs
+									log.Infof("replacing %s with %s for %s", currRS.CreationTimestamp.String(), rs.CreationTimestamp.String(), ownerRef.Name)
+								}
+							} else {
+								activeRSMap[ownerRef.Name] = rs
+							}
+						}
+					}
+				}
+			}
+
 			nsReps := make([]apps_v1.ReplicaSet, lenReps)
-			for i, rep := range reps {
-				nsReps[i] = *(rep.(*apps_v1.ReplicaSet))
+			i := 0
+			for _, activeRS := range activeRSMap {
+				nsReps[i] = *(activeRS)
+				i = i + 1
 			}
 			log.Tracef("[Kiali Cache] Get [resource: ReplicaSet] for [namespace: %s] = %d", namespace, lenReps)
+			log.Infof("Out cache GetReplicaSets(%s)=%v", namespace, len(nsReps))
 			return nsReps, nil
 		}
 	}
+	log.Infof("Out cache GetReplicaSets (%v)", "none")
 	return []apps_v1.ReplicaSet{}, nil
 }

@@ -501,7 +501,8 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 		// Check if namespace is cached
 		// Namespace access is checked in the upper caller
 		if IsNamespaceCached(namespace) {
-			repset, err = kialiCache.GetReplicaSets(namespace)
+			// repset, err = kialiCache.GetReplicaSets(namespace)
+			repset, err = layer.k8s.GetReplicaSets(namespace)
 		} else {
 			repset, err = layer.k8s.GetReplicaSets(namespace)
 		}
@@ -1081,7 +1082,8 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
 		if IsNamespaceCached(namespace) {
-			repset, err = kialiCache.GetReplicaSets(namespace)
+			// repset, err = kialiCache.GetReplicaSets(namespace)
+			repset, err = layer.k8s.GetReplicaSets(namespace)
 		} else {
 			repset, err = layer.k8s.GetReplicaSets(namespace)
 		}
