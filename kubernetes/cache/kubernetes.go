@@ -303,12 +303,15 @@ func (c *kialiCacheImpl) GetPods(namespace, labelSelector string) ([]core_v1.Pod
 	return []core_v1.Pod{}, nil
 }
 
+// GetReplicaSets returns the cached ReplicaSets for the namespace.  For any given Owner (i.e. Deployment),
+// only the most recent ReplicaSet will be included in the returned list. When an owning Deployment
+// is configured with revisionHistoryLimit > 0, then k8s may return multiple ReplicaSets for the
+// same Deployment (current and older revisions).
+// see also: ../kubernetes.go
 func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
-	log.Infof("In cache GetReplicaSets(%s)", namespace)
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		reps := nsCache[kubernetes.ReplicaSetType].GetStore().List()
-		lenReps := len(reps)
-		if lenReps > 0 {
+		if len(reps) > 0 {
 			_, ok := reps[0].(*apps_v1.ReplicaSet)
 			if !ok {
 				return nil, errors.New("bad ReplicaSet type found in cache")
@@ -323,7 +326,6 @@ func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet,
 							if currRS, ok := activeRSMap[ownerRef.Name]; ok {
 								if currRS.CreationTimestamp.Time.Before(rs.CreationTimestamp.Time) {
 									activeRSMap[ownerRef.Name] = rs
-									log.Infof("replacing %s with %s for %s", currRS.CreationTimestamp.String(), rs.CreationTimestamp.String(), ownerRef.Name)
 								}
 							} else {
 								activeRSMap[ownerRef.Name] = rs
@@ -333,17 +335,16 @@ func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet,
 				}
 			}
 
-			nsReps := make([]apps_v1.ReplicaSet, lenReps)
+			lenRS := len(activeRSMap)
+			result := make([]apps_v1.ReplicaSet, lenRS)
 			i := 0
 			for _, activeRS := range activeRSMap {
-				nsReps[i] = *(activeRS)
+				result[i] = *(activeRS)
 				i = i + 1
 			}
-			log.Tracef("[Kiali Cache] Get [resource: ReplicaSet] for [namespace: %s] = %d", namespace, lenReps)
-			log.Infof("Out cache GetReplicaSets(%s)=%v", namespace, len(nsReps))
-			return nsReps, nil
+			log.Tracef("[Kiali Cache] Get [resource: ReplicaSet] for [namespace: %s] = %d", namespace, lenRS)
+			return result, nil
 		}
 	}
-	log.Infof("Out cache GetReplicaSets (%v)", "none")
 	return []apps_v1.ReplicaSet{}, nil
 }

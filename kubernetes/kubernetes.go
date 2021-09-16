@@ -303,8 +303,8 @@ func (in *K8SClient) GetDeploymentConfigs(namespace string) ([]osapps_v1.Deploym
 // only the most recent ReplicaSet will be included in the returned list. When an owning Deployment
 // is configured with revisionHistoryLimit > 0, then k8s may return multiple ReplicaSets for the
 // same Deployment (current and older revisions).
+// see also: ./cache/kubernetes.go
 func (in *K8SClient) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
-	log.Infof("In GetReplicaSets(%s)", namespace)
 	if rsList, err := in.k8s.AppsV1().ReplicaSets(namespace).List(in.ctx, emptyListOptions); err == nil {
 		activeRSMap := map[string]apps_v1.ReplicaSet{}
 		for _, rs := range rsList.Items {
@@ -314,9 +314,6 @@ func (in *K8SClient) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, err
 						if currRS, ok := activeRSMap[ownerRef.Name]; ok {
 							if currRS.CreationTimestamp.Time.Before(rs.CreationTimestamp.Time) {
 								activeRSMap[ownerRef.Name] = rs
-								log.Infof("replacing %s with %s for %s", currRS.CreationTimestamp.String(), rs.CreationTimestamp.String(), ownerRef.Name)
-							} else {
-								log.Infof("NOT replacing %s with %s for %s", currRS.CreationTimestamp.String(), rs.CreationTimestamp.String(), ownerRef.Name)
 							}
 						} else {
 							activeRSMap[ownerRef.Name] = rs
@@ -325,19 +322,17 @@ func (in *K8SClient) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, err
 				}
 			}
 		}
-		result := []apps_v1.ReplicaSet{}
-		for _, activeRS := range activeRSMap {
-			result = append(result, activeRS)
-			log.Infof("  Adding RS %s", activeRS.Name)
-		}
-		log.Infof("Out GetReplicaSets(%s)=%v", namespace, len(result))
-		return result, nil
 
+		result := make([]apps_v1.ReplicaSet, len(activeRSMap))
+		i := 0
+		for _, activeRS := range activeRSMap {
+			result[i] = activeRS
+			i = i + 1
+		}
+		return result, nil
 	} else {
-		log.Infof("Out GetReplicaSets(%s)=none", namespace)
 		return []apps_v1.ReplicaSet{}, err
 	}
-
 }
 
 func (in *K8SClient) GetStatefulSet(namespace string, name string) (*apps_v1.StatefulSet, error) {
