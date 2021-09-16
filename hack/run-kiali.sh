@@ -68,12 +68,6 @@ questionchar() {
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 cd ${SCRIPT_DIR}
 
-# This is a directory where we write temp files needed to run Kiali locally
-
-TMP_DIR="/tmp/run-kiali"
-rm -rf /tmp/run-kiali
-mkdir -p ${TMP_DIR}
-
 # Some defaults
 
 DEFAULT_API_PROXY_HOST="127.0.0.1"
@@ -89,6 +83,7 @@ DEFAULT_LOCAL_REMOTE_PORTS_PROMETHEUS="9091:9090"
 DEFAULT_LOCAL_REMOTE_PORTS_TRACING="16686:16686"
 DEFAULT_LOG_LEVEL="info"
 DEFAULT_REBOOTABLE="true"
+DEFAULT_TMP_ROOT_DIR="/tmp"
 
 # Process command line options
 
@@ -112,6 +107,7 @@ while [[ $# -gt 0 ]]; do
     -pt|--ports-tracing)         LOCAL_REMOTE_PORTS_TRACING="$2";    shift;shift ;;
     -pu|--prometheus-url)        PROMETHEUS_URL="$2";                shift;shift ;;
     -r|--rebootable)             REBOOTABLE="$2";                    shift;shift ;;
+    -trd|--tmp-root-dir)         TMP_ROOT_DIR="$2";                  shift;shift ;;
     -tu|--tracing-url)           TRACING_URL="$2";                   shift;shift ;;
     -ucd|--ui-console-dir)       UI_CONSOLE_DIR="$2";                shift;shift ;;
     -h|--help )
@@ -207,6 +203,9 @@ Valid options:
       be run in foreground and Control-C will kill it immediately without the ability to reboot it.
       If --enabled-server is 'false', this setting is ignored and assumed 'false'.
       Default: ${DEFAULT_REBOOTABLE}
+  -trd|--tmp-root-dir)
+      Where temporary files and directories will be created.
+      Default: ${DEFAULT_TMP_ROOT_DIR}
   -tu|--tracing-url
       The URL that can be used to query the exposed Tracing service. You must have exposed Tracing
       to external clients outside of the cluster - that external URL is what this value should be.
@@ -245,10 +244,17 @@ LOCAL_REMOTE_PORTS_PROMETHEUS="${LOCAL_REMOTE_PORTS_PROMETHEUS:-${DEFAULT_LOCAL_
 LOCAL_REMOTE_PORTS_TRACING="${LOCAL_REMOTE_PORTS_TRACING:-${DEFAULT_LOCAL_REMOTE_PORTS_TRACING}}"
 LOG_LEVEL="${LOG_LEVEL:-${DEFAULT_LOG_LEVEL}}"
 REBOOTABLE="${REBOOTABLE:-${DEFAULT_REBOOTABLE}}"
+TMP_ROOT_DIR="${TMP_ROOT_DIR:-${DEFAULT_TMP_ROOT_DIR}}"
 
 # these are the env vars required by the Kiali server itself
 KUBERNETES_SERVICE_HOST="${API_PROXY_HOST}"
 KUBERNETES_SERVICE_PORT="${API_PROXY_PORT}"
+
+# This is a directory where we write temp files needed to run Kiali locally
+
+TMP_DIR="${TMP_ROOT_DIR}/run-kiali"
+rm -rf ${TMP_ROOT_DIR}/run-kiali
+mkdir -p ${TMP_DIR}
 
 # Get the client with which we can talk to the cluster
 
@@ -486,6 +492,7 @@ echo "LOCAL_REMOTE_PORTS_TRACING=$LOCAL_REMOTE_PORTS_TRACING"
 echo "LOG_LEVEL=$LOG_LEVEL"
 echo "PROMETHEUS_URL=$PROMETHEUS_URL"
 echo "REBOOTABLE=$REBOOTABLE"
+echo "TMP_ROOT_DIR=$TMP_ROOT_DIR"
 echo "TRACING_URL=$TRACING_URL"
 echo "UI_CONSOLE_DIR=$UI_CONSOLE_DIR"
 
