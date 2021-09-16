@@ -108,7 +108,7 @@ LOGS_PROJECT_NAME="${LOGS_PROJECT_NAME:-kiali-molecule-test-logs}"
 LOGS_FORK="${LOGS_FORK:-jmazzitelli}"
 LOGS_BRANCH="${LOGS_BRANCH:-minikube}"
 
-LOGS_LOCAL_DIRNAME_ABS="${LOGS_DIR}"
+LOGS_LOCAL_DIRNAME_ABS="${LOGS_DIR:-}"
 LOGS_LOCAL_SUBDIR="molecule-tests-$(date +'%Y-%m-%d_%H-%M-%S')"
 LOGS_LOCAL_SUBDIR_ABS="${LOGS_LOCAL_DIRNAME_ABS}/${LOGS_LOCAL_SUBDIR}"
 LOGS_LOCAL_RESULTS="${LOGS_LOCAL_SUBDIR_ABS}/results.log"
@@ -122,8 +122,8 @@ IRC_ROOM="${IRC_ROOM-kiali-molecule-tests}"
 # Only if this is set to "true" will the logs be committed and pushed to the git repo
 UPLOAD_LOGS="${UPLOAD_LOGS:-false}"
 if [ "${UPLOAD_LOGS}" == "true" ]; then
-  if [ -z "${LOGS_DIR}" -o ! -d "${LOGS_DIR}" ]; then
-    echo "Specify a valid directory via --logs-directory - this must be where the logs project is git cloned. [${LOGS_DIR}]"
+  if [ -z "${LOGS_DIR:-}" -o ! -d "${LOGS_DIR:-}" ]; then
+    echo "Specify a valid directory via --logs-directory - this must be where the logs project is git cloned. [${LOGS_DIR:-}]"
     exit 1
   fi
   if [ "${LOGS_PROJECT_NAME}" == "" -o "${LOGS_FORK}" == "" -o "${LOGS_BRANCH}" == "" ]; then
