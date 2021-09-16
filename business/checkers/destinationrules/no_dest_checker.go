@@ -49,7 +49,7 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 											stringLabels[k] = s
 										}
 									}
-									if !n.hasMatchingWorkload(fqdn.Service, stringLabels) {
+									if !n.hasMatchingWorkload(fqdn.String(), stringLabels) {
 										validation := models.Build("destinationrules.nodest.subsetlabels",
 											"spec/subsets["+strconv.Itoa(i)+"]")
 										if n.isSubsetReferenced(dHost, innerSubset["name"].(string)) {
@@ -122,7 +122,7 @@ func (n NoDestinationChecker) hasMatchingWorkload(service string, subsetLabels m
 
 func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNamespace string) bool {
 	// Check wildcard hosts - needs to match "*" and "*.suffix" also..
-	if strings.HasPrefix(host.Service, "*") {
+	if host.IsWildcard() {
 		return true
 	}
 
@@ -142,7 +142,7 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 	}
 
 	// Check ServiceEntries
-	if kubernetes.HasMatchingServiceEntries(host.Service, n.ServiceEntries) {
+	if kubernetes.HasMatchingServiceEntries(host.String(), n.ServiceEntries) {
 		return true
 	}
 

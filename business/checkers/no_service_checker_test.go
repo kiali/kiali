@@ -18,9 +18,10 @@ func TestNoCrashOnNil(t *testing.T) {
 	assert := assert.New(t)
 
 	typeValidations := NoServiceChecker{
-		Namespace:    "test",
-		IstioDetails: nil,
-		Services:     nil,
+		Namespace:         "test",
+		IstioDetails:      nil,
+		ExportedResources: nil,
+		Services:          nil,
 	}.Check()
 
 	assert.Empty(typeValidations)
@@ -45,6 +46,7 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
 		),
 		IstioDetails:         fakeIstioDetails(),
+		ExportedResources:    emptyExportedResources(),
 		Services:             fakeServiceDetails([]string{"reviews", "details", "product", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -63,8 +65,9 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert := assert.New(t)
 
 	vals := NoServiceChecker{
-		Namespace:    "test",
-		IstioDetails: fakeIstioDetails(),
+		Namespace:         "test",
+		IstioDetails:      fakeIstioDetails(),
+		ExportedResources: emptyExportedResources(),
 		WorkloadList: data.CreateWorkloadList("test",
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
@@ -96,6 +99,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
 		),
 		IstioDetails:         fakeIstioDetails(),
+		ExportedResources:    emptyExportedResources(),
 		Services:             fakeServiceDetails([]string{"reviews", "details", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -121,6 +125,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
 		),
 		IstioDetails:         fakeIstioDetails(),
+		ExportedResources:    emptyExportedResources(),
 		Services:             fakeServiceDetails([]string{"reviews", "product", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -139,6 +144,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
 		),
 		IstioDetails:         fakeIstioDetails(),
+		ExportedResources:    emptyExportedResources(),
 		Services:             fakeServiceDetails([]string{"details", "product", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -160,6 +166,7 @@ func TestObjectWithoutGateway(t *testing.T) {
 	vals := NoServiceChecker{
 		Namespace:            "test",
 		IstioDetails:         istioDetails,
+		ExportedResources:    emptyExportedResources(),
 		Services:             fakeServiceDetails([]string{"reviews", "product", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -186,6 +193,10 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 	}
 
 	return &istioDetails
+}
+
+func emptyExportedResources() *kubernetes.ExportedResources {
+	return &kubernetes.ExportedResources{}
 }
 
 func fakeServiceDetails(services []string) []core_v1.Service {

@@ -454,6 +454,165 @@ func TestWildcardServiceEntry(t *testing.T) {
 	assert.Empty(vals)
 }
 
+func TestExportedInternalServiceEntry(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	dr := data.CreateEmptyDestinationRule("bookinfo", "details", "details.bookinfo2.svc.cluster.local")
+	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details.bookinfo2.svc.cluster.local"})
+
+	vals, valid := NoDestinationChecker{
+		Namespace:       "bookinfo",
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{se}),
+		DestinationRule: dr,
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
+func TestWildcardExportedInternalServiceEntry(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	dr := data.CreateEmptyDestinationRule("bookinfo", "details", "details.bookinfo2.svc.cluster.local")
+	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"*.bookinfo2.svc.cluster.local"})
+
+	vals, valid := NoDestinationChecker{
+		Namespace:       "bookinfo",
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{se}),
+		DestinationRule: dr,
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
+func TestExportedInternalServiceEntryFail(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	dr := data.CreateEmptyDestinationRule("bookinfo", "details", "details.bookinfo2.svc.cluster.local")
+	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details.bookinfo3.svc.cluster.local"})
+
+	vals, valid := NoDestinationChecker{
+		Namespace:       "bookinfo",
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{se}),
+		DestinationRule: dr,
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/host", vals[0].Path)
+}
+
+func TestWildcardExportedInternalServiceEntryFail(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	dr := data.CreateEmptyDestinationRule("bookinfo", "details", "details.bookinfo2.svc.cluster.local")
+	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"*.bookinfo3.svc.cluster.local"})
+
+	vals, valid := NoDestinationChecker{
+		Namespace:       "bookinfo",
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{se}),
+		DestinationRule: dr,
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/host", vals[0].Path)
+}
+
+func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	dr := data.CreateEmptyDestinationRule("bookinfo", "details", "details.bookinfo2.svc.cluster.local")
+	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details"})
+
+	vals, valid := NoDestinationChecker{
+		Namespace:       "bookinfo",
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{se}),
+		DestinationRule: dr,
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/host", vals[0].Path)
+
+	dr = data.CreateEmptyDestinationRule("bookinfo", "details", "details")
+
+	vals, valid = NoDestinationChecker{
+		Namespace:       "bookinfo",
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{se}),
+		DestinationRule: dr,
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/host", vals[0].Path)
+}
+
+func TestExportedExternalServiceEntry(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	dr := data.CreateEmptyDestinationRule("bookinfo", "details", "www.myhost.com")
+	se := data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"www.myhost.com"})
+
+	vals, valid := NoDestinationChecker{
+		Namespace:       "bookinfo",
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{se}),
+		DestinationRule: dr,
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
+func TestExportedExternalServiceEntryFail(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	dr := data.CreateEmptyDestinationRule("bookinfo", "details", "www.mynotexistinghost.com")
+	se := data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"www.myhost.com"})
+
+	vals, valid := NoDestinationChecker{
+		Namespace:       "bookinfo",
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{se}),
+		DestinationRule: dr,
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/host", vals[0].Path)
+}
+
 func TestNoLabelsInSubset(t *testing.T) {
 	assert := assert.New(t)
 

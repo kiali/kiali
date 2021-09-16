@@ -15,6 +15,7 @@ type NoServiceChecker struct {
 	Namespace            string
 	Namespaces           models.Namespaces
 	IstioDetails         *kubernetes.IstioDetails
+	ExportedResources    *kubernetes.ExportedResources
 	Services             []core_v1.Service
 	WorkloadList         models.WorkloadList
 	GatewaysPerNamespace [][]kubernetes.IstioObject
@@ -30,7 +31,7 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	}
 
 	serviceNames := getServiceNames(in.Services)
-	serviceHosts := kubernetes.ServiceEntryHostnames(in.IstioDetails.ServiceEntries)
+	serviceHosts := kubernetes.ServiceEntryHostnames(append(in.IstioDetails.ServiceEntries, in.ExportedResources.ServiceEntries...))
 	gatewayNames := kubernetes.GatewayNames(in.GatewaysPerNamespace)
 
 	for _, virtualService := range in.IstioDetails.VirtualServices {
