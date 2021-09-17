@@ -139,12 +139,12 @@ func TestWorkloadEntry(t *testing.T) {
 	workloadV1ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	workloadV1Node, found := trafficMap[workloadV1ID]
 	assert.True(found)
-	assert.Equal(workloadV1Node.Metadata[graph.HasWorkloadEntry], true)
+	assert.Equal(workloadV1Node.Metadata[graph.HasWorkloadEntry], []graph.WEInfo{{Name: "workloadA", Namespace: appNamespace}})
 
 	workloadV2ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
 	workloadV2Node, found := trafficMap[workloadV2ID]
 	assert.True(found)
-	assert.Equal(workloadV2Node.Metadata[graph.HasWorkloadEntry], true)
+	assert.Equal(workloadV2Node.Metadata[graph.HasWorkloadEntry], []graph.WEInfo{{Name: "workloadB", Namespace: appNamespace}})
 
 	workloadV3ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
 	workloadV3Node, found := trafficMap[workloadV3ID]
@@ -311,12 +311,15 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 	workloadV1ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	workloadV1Node, found := trafficMap[workloadV1ID]
 	assert.True(found)
-	assert.Equal(workloadV1Node.Metadata[graph.HasWorkloadEntry], true)
+	assert.Equal(
+		workloadV1Node.Metadata[graph.HasWorkloadEntry],
+		[]graph.WEInfo{{Name: "workloadV1A", Namespace: appNamespace}, {Name: "workloadV1B", Namespace: appNamespace}},
+	)
 
 	workloadV2ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
 	workloadV2Node, found := trafficMap[workloadV2ID]
 	assert.True(found)
-	assert.Equal(workloadV2Node.Metadata[graph.HasWorkloadEntry], true)
+	assert.Equal(workloadV2Node.Metadata[graph.HasWorkloadEntry], []graph.WEInfo{{Name: "workloadV2", Namespace: appNamespace}})
 
 	workloadV3ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
 	workloadV3Node, found := trafficMap[workloadV3ID]

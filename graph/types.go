@@ -62,6 +62,13 @@ type ServiceName struct {
 	Name      string `json:"name"`
 }
 
+// WEInfo provides static information about the workload entrie
+// associated with a workload node.
+type WEInfo struct {
+	Name      string `json:"name"`      // name of the workload entry object
+	Namespace string `json:"namespace"` // the definition namespace
+}
+
 // SEInfo provides static information about the service entry
 type SEInfo struct {
 	Hosts     []string `json:"hosts"`     // configured list of hosts
