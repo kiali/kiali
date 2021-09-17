@@ -38,7 +38,7 @@ type ClientInterface interface {
 	GetNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
-	GetMetricsForLabels(labels []string) ([]string, error)
+	GetMetricsForLabels(metricNames []string, labels string) ([]string, error)
 }
 
 // Client for Prometheus API.
@@ -285,13 +285,19 @@ func (in *Client) GetFlags() (prom_v1.FlagsResult, error) {
 	return flags, nil
 }
 
-// GetMetricsForLabels returns a list of metrics existing for the provided labels set
-func (in *Client) GetMetricsForLabels(labels []string) ([]string, error) {
-	// Arbitrarily set time range. Meaning that discovery works with metrics produced within last hour
-	end := time.Now()
-	start := end.Add(-time.Hour)
-	log.Tracef("[Prom] GetMetricsForLabels: %v", labels)
-	results, warnings, err := in.api.Series(in.ctx, labels, start, end)
+// GetMetricsForLabels returns a list of metrics existing for the provided labels set. Only metrics that match a name in the given
+// list of metricNames will be returned - others will be ignored.
+func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString string) ([]string, error) {
+	if len(metricNames) == 0 {
+		return []string{}, nil
+	}
+
+	log.Tracef("[Prom] GetMetricsForLabels: labels=[%v] metricNames=[%v]", labelQueryString, metricNames)
+	queryString := fmt.Sprintf("%v%v", metricNames[0], labelQueryString)
+	for i := 1; i < len(metricNames); i++ {
+		queryString = fmt.Sprintf("%v OR %v%v", queryString, metricNames[i], labelQueryString)
+	}
+	results, warnings, err := in.api.Query(in.ctx, queryString, time.Now())
 	if warnings != nil && len(warnings) > 0 {
 		log.Warningf("GetMetricsForLabels. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
@@ -299,20 +305,11 @@ func (in *Client) GetMetricsForLabels(labels []string) ([]string, error) {
 		return nil, errors.NewServiceUnavailable(err.Error())
 	}
 
-	// there will be duplicate __name__ values for histograms and summaries - strip the dups out by storing in a map
-	names := make(map[string]bool, 400)
-	for _, labelSet := range results {
-		if name, ok := labelSet["__name__"]; ok {
-			names[strings.TrimSpace(string(name))] = true
-		}
+	names := make([]string, 0, 5)
+	for _, item := range results.(model.Vector) {
+		names = append(names, string(item.Metric["__name__"]))
 	}
-	namesArray := make([]string, len(names))
-	i := 0
-	for k := range names {
-		namesArray[i] = k
-		i++
-	}
-	return namesArray, nil
+	return names, nil
 }
 
 // SanitizeLabelName replaces anything that doesn't match invalidLabelCharRE with an underscore.

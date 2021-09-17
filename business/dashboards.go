@@ -140,7 +140,7 @@ func (in *DashboardsService) GetDashboard(authInfo *api.AuthInfo, params models.
 		return nil, err
 	}
 
-	filters := in.buildLabels(params.Namespace, params.LabelsFilters)
+	filters := in.buildLabelsQueryString(params.Namespace, params.LabelsFilters)
 	aggLabels := append(params.AdditionalLabels, models.ConvertAggregations(*dashboard)...)
 	if len(aggLabels) == 0 {
 		// Prevent null in json
@@ -276,14 +276,23 @@ func (in *DashboardsService) buildRuntimesList(templatesNames []string) []models
 	return runtimes
 }
 
-func (in *DashboardsService) fetchMetricNames(namespace string, labelsFilters map[string]string) []string {
+func (in *DashboardsService) fetchDashboardMetricNames(namespace string, labelsFilters map[string]string) []string {
 	promClient, err := in.prom()
 	if err != nil {
 		return []string{}
 	}
 
-	labels := in.buildLabels(namespace, labelsFilters)
-	metrics, err := promClient.GetMetricsForLabels([]string{labels})
+	// Get the list of metrics that we look for to determine which dashboards can be used.
+	// Some dashboards cannot be discovered using metric lookups - ignore those.
+	discoverOnMetrics := make([]string, 0, len(in.dashboards))
+	for _, md := range in.dashboards {
+		if md.DiscoverOn != "" {
+			discoverOnMetrics = append(discoverOnMetrics, md.DiscoverOn)
+		}
+	}
+
+	labels := in.buildLabelsQueryString(namespace, labelsFilters)
+	metrics, err := promClient.GetMetricsForLabels(discoverOnMetrics, labels)
 	if err != nil {
 		log.Errorf("custom dashboard discovery failed, cannot load metrics for labels [%s]: %v", labels, err)
 	}
@@ -299,7 +308,7 @@ func (in *DashboardsService) discoverDashboards(namespace string, labelsFilters 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		metrics = in.fetchMetricNames(namespace, labelsFilters)
+		metrics = in.fetchDashboardMetricNames(namespace, labelsFilters)
 	}()
 
 	wg.Wait()
@@ -365,7 +374,7 @@ func addDashboardToRuntimes(dashboard *dashboards.MonitoringDashboard, runtimes 
 	return runtimes
 }
 
-func (in *DashboardsService) buildLabels(namespace string, labelsFilters map[string]string) string {
+func (in *DashboardsService) buildLabelsQueryString(namespace string, labelsFilters map[string]string) string {
 	namespaceLabel := in.namespaceLabel
 	if namespaceLabel == "" {
 		namespaceLabel = defaultNamespaceLabel
