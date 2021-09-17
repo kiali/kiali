@@ -315,7 +315,7 @@ func runDiscoveryMatcher(metrics []string, allDashboards map[string]dashboards.M
 		matchReference := strings.TrimSpace(dashboard.DiscoverOn)
 		if matchReference != "" {
 			for _, metric := range metrics {
-				if matchReference == strings.TrimSpace(metric) {
+				if matchReference == metric {
 					if _, exists := runtimesMap[dashboard.Name]; !exists {
 						runtimesMap[dashboard.Name] = &dashboard
 					}

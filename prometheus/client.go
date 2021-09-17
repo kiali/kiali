@@ -299,13 +299,20 @@ func (in *Client) GetMetricsForLabels(labels []string) ([]string, error) {
 		return nil, errors.NewServiceUnavailable(err.Error())
 	}
 
-	var names []string
+	// there will be duplicate __name__ values for histograms and summaries - strip the dups out by storing in a map
+	names := make(map[string]bool, 400)
 	for _, labelSet := range results {
 		if name, ok := labelSet["__name__"]; ok {
-			names = append(names, string(name))
+			names[strings.TrimSpace(string(name))] = true
 		}
 	}
-	return names, nil
+	namesArray := make([]string, len(names))
+	i := 0
+	for k := range names {
+		namesArray[i] = k
+		i++
+	}
+	return namesArray, nil
 }
 
 // SanitizeLabelName replaces anything that doesn't match invalidLabelCharRE with an underscore.
