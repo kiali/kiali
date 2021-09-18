@@ -305,10 +305,18 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 		return nil, errors.NewServiceUnavailable(err.Error())
 	}
 
-	names := make([]string, 0, 5)
+	// We will get one timeseries per pod for each metric family name. We don't need duplicates, so
+	// store the metric name in a map and convert to an array to remove those duplicates.
+
+	namesMap := make(map[string]bool)
 	for _, item := range results.(model.Vector) {
-		names = append(names, string(item.Metric["__name__"]))
+		namesMap[string(item.Metric["__name__"])] = true
 	}
+	names := make([]string, 0, 5)
+	for n := range namesMap {
+		names = append(names, n)
+	}
+
 	return names, nil
 }
 
