@@ -52,7 +52,7 @@ func HttpPost(url string, auth *config.Auth, body io.Reader, timeout time.Durati
 		return nil, 0, err
 	}
 
-	transport, err := CreateTransport(auth, &http.Transport{}, timeout)
+	transport, err := CreateTransport(auth, &http.Transport{}, timeout, map[string]string{})
 	if err != nil {
 		return nil, 0, err
 	}
