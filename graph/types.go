@@ -62,10 +62,12 @@ type ServiceName struct {
 	Name      string `json:"name"`
 }
 
-// WEInfo provides static information about the workload entry
+// WEInfo provides static information about a workload entry
 // associated with a workload node.
 type WEInfo struct {
-	Name      string `json:"name"`      // name of the workload entry object
+	// Name of the workload entry object
+	// required:true
+	Name string `json:"name"`
 }
 
 // SEInfo provides static information about the service entry

@@ -313,7 +313,7 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 	assert.True(found)
 	assert.Equal(
 		workloadV1Node.Metadata[graph.HasWorkloadEntry],
-		[]graph.WEInfo{{Name: "workloadV1A"}, {Name: "workloadV1B",}},
+		[]graph.WEInfo{{Name: "workloadV1A"}, {Name: "workloadV1B"}},
 	)
 
 	workloadV2ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)

@@ -8102,7 +8102,7 @@ This type is used to describe a set of objects.
 | HasRequestTimeout | boolean| `bool` |  | |  |  |
 | HasTCPTrafficShifting | boolean| `bool` |  | |  |  |
 | HasTrafficShifting | boolean| `bool` |  | |  |  |
-| HasWorkloadEntry | boolean| `bool` |  | |  |  |
+| HasWorkloadEntry | [][WEInfo](#w-e-info)| `[]*WEInfo` |  | |  |  |
 | ID | string| `string` |  | | Cytoscape Fields |  |
 | IsBox | string| `string` |  | |  |  |
 | IsDead | boolean| `bool` |  | |  |  |
@@ -9301,6 +9301,25 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 |------|------|---------|:--------:| ------- |-------------|---------|
 | Items | [][VirtualService](#virtual-service)| `[]*VirtualService` |  | |  |  |
 | permissions | [ResourcePermissions](#resource-permissions)| `ResourcePermissions` |  | |  |  |
+
+
+
+### <span id="w-e-info"></span> WEInfo
+
+
+> WEInfo provides static information about the workload entry
+associated with a workload node.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Name | string| `string` | ✓ | | Name of the workload entry object |  |
 
 
 
