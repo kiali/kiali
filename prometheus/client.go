@@ -293,10 +293,7 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 	}
 
 	log.Tracef("[Prom] GetMetricsForLabels: labels=[%v] metricNames=[%v]", labelQueryString, metricNames)
-	queryString := fmt.Sprintf("sum(%v%v) by (__name__)", metricNames[0], labelQueryString)
-	for i := 1; i < len(metricNames); i++ {
-		queryString = fmt.Sprintf("%v OR sum(%v%v) by (__name__)", queryString, metricNames[i], labelQueryString)
-	}
+	queryString := fmt.Sprintf("count(%v) by (__name__)", labelQueryString)
 	results, warnings, err := in.api.Query(in.ctx, queryString, time.Now())
 	if warnings != nil && len(warnings) > 0 {
 		log.Warningf("GetMetricsForLabels. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
@@ -305,19 +302,22 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 		return nil, errors.NewServiceUnavailable(err.Error())
 	}
 
-	// We should only get one timeseries per pod for each metric family name. However, just in case
-	// we get duplicates, store the metric name in a map and convert to an array to remove duplicates.
-
-	namesMap := make(map[string]bool)
+	// Put the metric family names in a map so we can do quick lookups
+	// haystack - the list of all metric families associated with the given labels
+	// needles - the metrics we are looking for that we found in the haystack
+	haystack := make(map[string]bool)
 	for _, item := range results.(model.Vector) {
-		namesMap[string(item.Metric["__name__"])] = true
+		haystack[string(item.Metric["__name__"])] = true
 	}
-	names := make([]string, 0, 5)
-	for n := range namesMap {
-		names = append(names, n)
+	needles := make([]string, 0, 5)
+	for i := 0; i < len(metricNames); i++ {
+		needle := metricNames[i]
+		if haystack[needle] {
+			needles = append(needles, needle)
+		}
 	}
 
-	return names, nil
+	return needles, nil
 }
 
 // SanitizeLabelName replaces anything that doesn't match invalidLabelCharRE with an underscore.
