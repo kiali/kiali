@@ -2513,6 +2513,71 @@
         }
       }
     },
+    "/namespaces/{namespace}/pods/{pod}/logging": {
+      "post": {
+        "description": "Endpoint to set pod proxy log level",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "pods"
+        ],
+        "operationId": "podProxyLogging",
+        "parameters": [
+          {
+            "enum": [
+              "off",
+              "trace",
+              "debug",
+              "info",
+              "warning",
+              "error",
+              "critical"
+            ],
+            "type": "string",
+            "x-go-name": "Level",
+            "description": "The log level for the pod's proxy.",
+            "name": "level",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The pod name.",
+            "name": "pod",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/noContent"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/pods/{pod}/logs": {
       "get": {
         "description": "Endpoint to get pod logs",
