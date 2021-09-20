@@ -9307,7 +9307,7 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 ### <span id="w-e-info"></span> WEInfo
 
 
-> WEInfo provides static information about the workload entry
+> WEInfo provides static information about a workload entry
 associated with a workload node.
   
 

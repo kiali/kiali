@@ -7283,7 +7283,7 @@
       "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
     "WEInfo": {
-      "description": "WEInfo provides static information about the workload entry\nassociated with a workload node.",
+      "description": "WEInfo provides static information about a workload entry\nassociated with a workload node.",
       "type": "object",
       "required": [
         "name"
