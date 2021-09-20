@@ -293,9 +293,9 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 	}
 
 	log.Tracef("[Prom] GetMetricsForLabels: labels=[%v] metricNames=[%v]", labelQueryString, metricNames)
-	queryString := fmt.Sprintf("%v%v", metricNames[0], labelQueryString)
+	queryString := fmt.Sprintf("sum(%v%v) by (__name__)", metricNames[0], labelQueryString)
 	for i := 1; i < len(metricNames); i++ {
-		queryString = fmt.Sprintf("%v OR %v%v", queryString, metricNames[i], labelQueryString)
+		queryString = fmt.Sprintf("%v OR sum(%v%v) by (__name__)", queryString, metricNames[i], labelQueryString)
 	}
 	results, warnings, err := in.api.Query(in.ctx, queryString, time.Now())
 	if warnings != nil && len(warnings) > 0 {
@@ -305,8 +305,8 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 		return nil, errors.NewServiceUnavailable(err.Error())
 	}
 
-	// We will get one timeseries per pod for each metric family name. We don't need duplicates, so
-	// store the metric name in a map and convert to an array to remove those duplicates.
+	// We should only get one timeseries per pod for each metric family name. However, just in case
+	// we get duplicates, store the metric name in a map and convert to an array to remove duplicates.
 
 	namesMap := make(map[string]bool)
 	for _, item := range results.(model.Vector) {
