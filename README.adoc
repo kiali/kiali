@@ -95,12 +95,11 @@ Since Kiali is a management console for an Istio-based service mesh, you will ne
 
 We provide a few unsupported scripts that can help to get started:
 
-* If you have an OpenShift 4.x pull secret and also have an AWS account, you can use the link:hack/aws-openshift.sh[`aws-openshift.sh`] script to create an OpenShift cluster in AWS with the needed resources for the Service Mesh. The command you may want to try is `aws-openshift.sh -kuca true create`.
-** Once you have a cluster, you can use the link:hack/istio/install-sm2.sh[`install-sm2.sh`] to install the OpenShift Service Mesh, which is an Istio-based Service Mesh. Alternatively, you can also use link:https://maistra.io/[Maistra].
-* If you are familiar to minikube, you may try the link:hack/k8s-minikube.sh[`k8s-minikube.sh`] script. The command you may want to try is `k8s-minikube.sh start && k8s-minikube.sh istio` which will create a cluster and install Istio on it. This script accept flags to let you install the link:https://istio.io/latest/docs/examples/bookinfo/[Bookinfo sample application], install Kiali and also some other flags to set up an environment where you can try the OpenId authentication and also to ease the setup of a multi-cluster environment.
+* You can use the link:hack/crc-openshift.sh[`crc-openshift.sh`] script to create an OpenShift cluster on your local machine.
+* If you are familiar to minikube, you may try the link:hack/k8s-minikube.sh[`k8s-minikube.sh`] script. It has the option to install Dex which is useful if you want to test with OpenID.
 * Finally, the link:hack/istio/install-istio-via-istioctl.sh[`install-istio-via-istioctl.sh`] and the link:hack/istio/install-bookinfo-demo.sh[`install-bookinfo-demo.sh`] scripts can assist into installing Istio and the Bookinfo sample application in your cluster, respectively. You can try running these scripts without any arguments.
 
-These scripts are written to rely on the minimum dependencies as possible and will try to download any required tools. You can try running them, and the scripts will abort and ask manually install any required tool.
+These scripts are written to rely on the minimum dependencies as possible and will try to download any required tools.
 
 You can also use link:https://kind.sigs.k8s.io/[kind], however we don't have a script to create a kind cluster.
 
@@ -229,7 +228,7 @@ make format lint
 
 === Running Standalone
 
-Rarely, you may want to run Kiali outside of any cluster environment, perhaps for debugging purposes. To do this, you
+You may want to run Kiali outside of any cluster environment for debugging purposes. To do this, you
 will want to use the link:./hack/run-kiali.sh[run-kiali.sh hack script] located in the
 link:./hack[hack directory]. See the `--help` output for the options you can set.
 The default configuration it uses is found in the link:./hack/run-kiali-config-template.yaml[config template file]
@@ -239,6 +238,35 @@ also located in the `hack` directory. Read the comments at the tops of both file
 ----
 cd $KIALI_SOURCES/kiali/hack
 ./run-kiali.sh
+----
+
+==== Debugging With VisualStudio Code
+
+If you are using VisualStudio Code, you can install the following `launcher.json` that is then used to launch the Kiali Server in the debugger. Run the `hack/run-kiali.sh` script first to ensure the proper services are up (such as the Prometheus port-forward proxy).
+
+[source,json]
+----
+{
+    // To use this, first run "hack/run-kiali.sh --tmp-root-dir $HOME/tmp --enable-server false"
+    // Pass in --help to that hack script for details on more options.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Kiali to use hack script services",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceRoot}/kiali.go",
+            "cwd": "${env:HOME}/tmp/run-kiali",
+            "args": ["-config", "${env:HOME}/tmp/run-kiali/run-kiali-config.yaml"],
+            "env": {
+                "KUBERNETES_SERVICE_HOST": "127.0.0.1",
+                "KUBERNETES_SERVICE_PORT": "8001",
+                "LOG_LEVEL": "trace"
+            }
+        }
+    ]
+}
 ----
 
 == Configuration
