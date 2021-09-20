@@ -59,7 +59,7 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 						n.Metadata[graph.HasWorkloadEntry] = []graph.WEInfo{}
 					}
 
-					we := graph.WEInfo{Name: entry.Metadata.Name, Namespace: entry.Metadata.Namespace}
+					we := graph.WEInfo{Name: entry.Metadata.Name}
 					weMetadata := n.Metadata[graph.HasWorkloadEntry].([]graph.WEInfo)
 					weMetadata = append(weMetadata, we)
 					n.Metadata[graph.HasWorkloadEntry] = weMetadata
