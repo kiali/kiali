@@ -156,6 +156,7 @@ const conf = {
       pod: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}`,
       podLogs: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}/logs`,
       podEnvoyProxy: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}/config_dump`,
+      podEnvoyProxyLogging: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}/logging`,
       podEnvoyProxyResourceEntries: (namespace: string, pod: string, resource: string) =>
         `api/namespaces/${namespace}/pods/${pod}/config_dump/${resource}`,
       serverConfig: `api/config`,

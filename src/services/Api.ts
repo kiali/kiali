@@ -533,6 +533,13 @@ export const getPodLogs = (
   return newRequest<PodLogs>(HTTP_VERBS.GET, urls.podLogs(namespace, name), params, {});
 };
 
+export const setPodEnvoyProxyLogLevel = (namespace: string, name: string, level: string) => {
+  const params: any = {};
+  params.level = level;
+
+  return newRequest<undefined>(HTTP_VERBS.POST, urls.podEnvoyProxyLogging(namespace, name), params, {});
+};
+
 export const getPodEnvoyProxy = (namespace: string, pod: string) => {
   return newRequest<EnvoyProxyDump>(HTTP_VERBS.GET, urls.podEnvoyProxy(namespace, pod), {}, {});
 };
