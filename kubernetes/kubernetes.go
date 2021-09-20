@@ -320,6 +320,9 @@ func (in *K8SClient) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, err
 						}
 					}
 				}
+			} else {
+				// it is it's own controller
+				activeRSMap[rs.Name] = rs
 			}
 		}
 

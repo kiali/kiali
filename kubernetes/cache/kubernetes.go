@@ -332,6 +332,9 @@ func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet,
 							}
 						}
 					}
+				} else {
+					// it is it's own controller
+					activeRSMap[rs.Name] = rs
 				}
 			}
 
