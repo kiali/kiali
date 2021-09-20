@@ -302,22 +302,20 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 		return nil, errors.NewServiceUnavailable(err.Error())
 	}
 
-	// Put the metric family names in a map so we can do quick lookups
-	// haystack - the list of all metric families associated with the given labels
-	// needles - the metrics we are looking for that we found in the haystack
-	haystack := make(map[string]bool)
-	for _, item := range results.(model.Vector) {
-		haystack[string(item.Metric["__name__"])] = true
-	}
-	needles := make([]string, 0, 5)
+	metricsWeAreLookingFor := make(map[string]bool, len(metricNames))
 	for i := 0; i < len(metricNames); i++ {
-		needle := metricNames[i]
-		if haystack[needle] {
-			needles = append(needles, needle)
+		metricsWeAreLookingFor[metricNames[i]] = true
+	}
+
+	metricsWeFound := make([]string, 0, 5)
+	for _, item := range results.(model.Vector) {
+		n := string(item.Metric["__name__"])
+		if metricsWeAreLookingFor[n] {
+			metricsWeFound = append(metricsWeFound, n)
 		}
 	}
 
-	return needles, nil
+	return metricsWeFound, nil
 }
 
 // SanitizeLabelName replaces anything that doesn't match invalidLabelCharRE with an underscore.
