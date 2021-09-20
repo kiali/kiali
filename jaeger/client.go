@@ -103,7 +103,7 @@ func NewClient(token string) (*Client, error) {
 			// Legacy HTTP client
 			log.Tracef("Using legacy HTTP client for Jaeger: url=%v, auth.type=%s", u, auth.Type)
 			timeout := time.Duration(5000 * time.Millisecond)
-			transport, err := httputil.CreateTransport(&auth, &http.Transport{}, timeout)
+			transport, err := httputil.CreateTransport(&auth, &http.Transport{}, timeout, nil)
 			if err != nil {
 				return nil, err
 			}

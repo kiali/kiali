@@ -325,7 +325,7 @@ func getAddonStatus(name string, enabled bool, isCore bool, auth *config.Auth, u
 	}
 
 	// Call the addOn service endpoint to find out whether is reachable or not
-	_, statusCode, err := httputil.HttpGet(url, auth, 10*time.Second)
+	_, statusCode, err := httputil.HttpGet(url, auth, 10*time.Second, nil)
 	if err != nil || statusCode > 399 {
 		staChan <- IstioComponentStatus{
 			ComponentStatus{

@@ -85,7 +85,7 @@ func (in *K8SClient) ForwardGetRequest(namespace, podName string, localPort, des
 	defer (*f).Stop()
 
 	// Ready to create a request
-	resp, code, err := httputil.HttpGet(fmt.Sprintf("http://localhost:%d%s", localPort, path), nil, 10*time.Second)
+	resp, code, err := httputil.HttpGet(fmt.Sprintf("http://localhost:%d%s", localPort, path), nil, 10*time.Second, nil)
 	if code >= 400 {
 		return resp, fmt.Errorf("error fetching %s from %s/%s. Response code: %d", path, namespace, podName, code)
 	}
