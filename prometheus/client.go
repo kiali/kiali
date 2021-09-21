@@ -293,6 +293,7 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 	}
 
 	log.Tracef("[Prom] GetMetricsForLabels: labels=[%v] metricNames=[%v]", labelQueryString, metricNames)
+	startT := time.Now()
 	queryString := fmt.Sprintf("count(%v) by (__name__)", labelQueryString)
 	results, warnings, err := in.api.Query(in.ctx, queryString, time.Now())
 	if warnings != nil && len(warnings) > 0 {
@@ -315,6 +316,7 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 		}
 	}
 
+	log.Tracef("[Prom] GetMetricsForLabels: exec time=[%v], results count=[%v], looking for count=[%v], found count=[%v]", time.Since(startT), len(results.(model.Vector)), len(metricsWeAreLookingFor), len(metricsWeFound))
 	return metricsWeFound, nil
 }
 
