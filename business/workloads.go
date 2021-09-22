@@ -957,11 +957,9 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 				cnFound = false
 			}
 		default:
-			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
+			// Assuming that if the controller is not a known type then the controller is controlling pods itself
+			// i.e. the pod's have an owner ref directly to the controller type.
 			childType := ctype
-			if _, unknownType := controllerOrder[ctype]; !unknownType {
-				childType = kubernetes.ReplicaSetType
-			}
 			cPods := kubernetes.FilterPodsForController(cname, childType, pods)
 			w.SetPods(cPods)
 			rsParsed := false
@@ -1491,13 +1489,12 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				cnFound = false
 			}
 		default:
-			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
+			// Assuming that if the controller is not a known type then the controller is controlling pods itself
+			// i.e. the pod's have an owner ref directly to the controller type.
+
 			// Note, we will use the controller found in the Pod resolution, instead that the passed by parameter
 			// This will cover cornercase for https://github.com/kiali/kiali/issues/3830
 			childType := ctype
-			if _, unknownType := controllerOrder[ctype]; !unknownType {
-				childType = kubernetes.ReplicaSetType
-			}
 			cPods := kubernetes.FilterPodsForController(workloadName, childType, pods)
 			w.SetPods(cPods)
 			rsParsed := false
