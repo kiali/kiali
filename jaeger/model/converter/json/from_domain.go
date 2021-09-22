@@ -42,7 +42,6 @@ func FromDomainEmbedProcess(span *model.Span) *json.Span {
 
 type fromDomain struct {
 	convertKeyValuesFunc func(keyValues model.KeyValues) []json.KeyValue
-	convertKeyValuesPointerFunc func(tags []*model.KeyValue) []json.KeyValue
 }
 
 func (fd fromDomain) fromDomain(trace *model.Trace) *json.Trace {
@@ -174,7 +173,7 @@ func (fd fromDomain) convertLogs(logs []*model.Log) []json.Log {
 	for i, log := range logs {
 		out[i] = json.Log{
 			Timestamp: model.TimeAsEpochMicroseconds(log.Timestamp.AsTime()),
-			Fields:    fd.convertKeyValuesPointerFunc(log.Fields),
+			Fields:    fd.convertKeyValuesFunc(log.Fields),
 		}
 	}
 	return out
@@ -191,7 +190,7 @@ func (fd fromDomain) convertProcesses(processes map[string]*model.Process) map[j
 func (fd fromDomain) convertProcess(process *model.Process) json.Process {
 	return json.Process{
 		ServiceName: process.ServiceName,
-		Tags:        fd.convertKeyValuesPointerFunc(process.Tags),
+		Tags:        fd.convertKeyValuesFunc(process.Tags),
 	}
 }
 
