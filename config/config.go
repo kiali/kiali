@@ -106,6 +106,13 @@ func (a *Auth) Obfuscate() {
 	a.CAFile = "xxx"
 }
 
+// Thanos describes configuration of the Thanos proxy component
+type Thanos struct {
+	Enabled         bool   `yaml:"enabled,omitempty"`
+	RetentionPeriod string `yaml:"retention_period,omitempty"`
+	ScrapeInterval  string `yaml:"scrape_interval,omitempty"`
+}
+
 // PrometheusConfig describes configuration of the Prometheus component
 type PrometheusConfig struct {
 	Auth Auth `yaml:"auth,omitempty"`
@@ -118,6 +125,7 @@ type PrometheusConfig struct {
 	CustomHeaders   map[string]string `yaml:"custom_headers,omitempty"`
 	HealthCheckUrl  string            `yaml:"health_check_url,omitempty"`
 	IsCore          bool              `yaml:"is_core,omitempty"`
+	ThanosProxy     Thanos            `yaml:"thanos_proxy,omitempty"`
 	URL             string            `yaml:"url,omitempty"`
 }
 
@@ -510,6 +518,9 @@ func NewConfig() (c *Config) {
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
 					Type: AuthTypeNone,
+				},
+				ThanosProxy: Thanos{
+					Enabled: false,
 				},
 				CacheEnabled: true,
 				// 1/2 Prom Scrape Interval
