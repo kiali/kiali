@@ -303,21 +303,50 @@ func (c *kialiCacheImpl) GetPods(namespace, labelSelector string) ([]core_v1.Pod
 	return []core_v1.Pod{}, nil
 }
 
+// GetReplicaSets returns the cached ReplicaSets for the namespace.  For any given Owner (i.e. Deployment),
+// only the most recent ReplicaSet will be included in the returned list. When an owning Deployment
+// is configured with revisionHistoryLimit > 0, then k8s may return multiple ReplicaSets for the
+// same Deployment (current and older revisions).
+// see also: ../kubernetes.go
 func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		reps := nsCache[kubernetes.ReplicaSetType].GetStore().List()
-		lenReps := len(reps)
-		if lenReps > 0 {
+		if len(reps) > 0 {
 			_, ok := reps[0].(*apps_v1.ReplicaSet)
 			if !ok {
 				return nil, errors.New("bad ReplicaSet type found in cache")
 			}
-			nsReps := make([]apps_v1.ReplicaSet, lenReps)
-			for i, rep := range reps {
-				nsReps[i] = *(rep.(*apps_v1.ReplicaSet))
+
+			activeRSMap := map[string]*apps_v1.ReplicaSet{}
+			for _, ref := range reps {
+				rs := ref.(*apps_v1.ReplicaSet)
+				if len(rs.OwnerReferences) > 0 {
+					for _, ownerRef := range rs.OwnerReferences {
+						if ownerRef.Controller != nil && *ownerRef.Controller {
+							if currRS, ok := activeRSMap[ownerRef.Name]; ok {
+								if currRS.CreationTimestamp.Time.Before(rs.CreationTimestamp.Time) {
+									activeRSMap[ownerRef.Name] = rs
+								}
+							} else {
+								activeRSMap[ownerRef.Name] = rs
+							}
+						}
+					}
+				} else {
+					// it is it's own controller
+					activeRSMap[rs.Name] = rs
+				}
 			}
-			log.Tracef("[Kiali Cache] Get [resource: ReplicaSet] for [namespace: %s] = %d", namespace, lenReps)
-			return nsReps, nil
+
+			lenRS := len(activeRSMap)
+			result := make([]apps_v1.ReplicaSet, lenRS)
+			i := 0
+			for _, activeRS := range activeRSMap {
+				result[i] = *(activeRS)
+				i = i + 1
+			}
+			log.Tracef("[Kiali Cache] Get [resource: ReplicaSet] for [namespace: %s] = %d", namespace, lenRS)
+			return result, nil
 		}
 	}
 	return []apps_v1.ReplicaSet{}, nil
