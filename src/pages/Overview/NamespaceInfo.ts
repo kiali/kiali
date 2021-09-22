@@ -10,6 +10,7 @@ export type NamespaceInfo = {
   istioConfig?: IstioConfigList;
   validations?: ValidationStatus;
   metrics?: Metric[];
+  errorMetrics?: Metric[];
   labels?: { [key: string]: string };
 };
 

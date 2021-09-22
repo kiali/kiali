@@ -146,6 +146,7 @@ export const status: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
           status={ns.status}
           type={OverviewToolbar.currentOverviewType()}
           metrics={ns.metrics}
+          errorMetrics={ns.errorMetrics}
         />
       </td>
     );

@@ -1,5 +1,13 @@
 import * as React from 'react';
-import { Chart, ChartProps, ChartVoronoiContainer, ChartAxis, ChartScatter, ChartArea } from '@patternfly/react-charts';
+import {
+  Chart,
+  ChartProps,
+  ChartVoronoiContainer,
+  ChartAxis,
+  ChartScatter,
+  ChartArea,
+  ChartLabel
+} from '@patternfly/react-charts';
 import { VictoryLegend } from 'victory';
 
 import { VCLines, VCDataPoint, RichDataPoint } from 'types/VictoryChartInfo';
@@ -10,6 +18,7 @@ type Props = ChartProps & {
   name: string;
   series: VCLines<RichDataPoint>;
   showLegend?: boolean;
+  showYAxis?: boolean;
   tooltipFormat?: (dp: VCDataPoint) => string;
 };
 
@@ -114,7 +123,16 @@ export class SparklineChart extends React.Component<Props, State> {
         domainPadding={{ y: 1 }}
       >
         <ChartAxis tickCount={15} style={hiddenAxisStyle} />
-        <ChartAxis dependentAxis={true} style={hiddenAxisStyle} />
+        {this.props.showYAxis ? (
+          <ChartAxis
+            label="ops"
+            axisLabelComponent={<ChartLabel y={0} x={15} angle={0} renderInPortal={true} />}
+            tickCount={2}
+            dependentAxis={true}
+          />
+        ) : (
+          <ChartAxis dependentAxis={true} style={hiddenAxisStyle} />
+        )}
         {this.props.series.map((serie, idx) => {
           if (this.state.hiddenSeries.has(idx)) {
             return undefined;

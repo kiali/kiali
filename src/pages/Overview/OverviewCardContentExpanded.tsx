@@ -15,6 +15,7 @@ type Props = {
   duration: DurationInSeconds;
   status: NamespaceStatus;
   metrics?: Metric[];
+  errorMetrics?: Metric[];
 };
 
 class OverviewCardContentExpanded extends React.Component<Props> {
@@ -29,7 +30,11 @@ class OverviewCardContentExpanded extends React.Component<Props> {
             verticalAlign: 'top'
           }}
         >
-          <OverviewCardSparkline metrics={this.props.metrics} duration={this.props.duration} />
+          <OverviewCardSparkline
+            metrics={this.props.metrics}
+            errorMetrics={this.props.errorMetrics}
+            duration={this.props.duration}
+          />
         </div>
       </>
     );
