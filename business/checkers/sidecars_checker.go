@@ -14,11 +14,12 @@ import (
 const SidecarCheckerType = "sidecar"
 
 type SidecarChecker struct {
-	Sidecars       []networking_v1alpha3.Sidecar
-	ServiceEntries []networking_v1alpha3.ServiceEntry
-	Services       []core_v1.Service
-	Namespaces     models.Namespaces
-	WorkloadList   models.WorkloadList
+	Sidecars               []networking_v1alpha3.Sidecar
+	ServiceEntries         []networking_v1alpha3.ServiceEntry
+	ExportedServiceEntries []networking_v1alpha3.ServiceEntry
+	Services               []core_v1.Service
+	Namespaces             models.Namespaces
+	WorkloadList           models.WorkloadList
 }
 
 func (s SidecarChecker) Check() models.IstioValidations {
@@ -57,11 +58,12 @@ func (s SidecarChecker) runIndividualChecks() models.IstioValidations {
 func (s SidecarChecker) runChecks(sidecar networking_v1alpha3.Sidecar) models.IstioValidations {
 	policyName := sidecar.Name
 	key, rrValidation := EmptyValidValidation(policyName, sidecar.Namespace, SidecarCheckerType)
-	serviceHosts := kubernetes.ServiceEntryHostnames(s.ServiceEntries)
+	serviceHosts := kubernetes.ServiceEntryHostnames(append(s.ServiceEntries, s.ExportedServiceEntries...))
 	selectorLabels := make(map[string]string)
 	if sidecar.Spec.WorkloadSelector != nil {
 		selectorLabels = sidecar.Spec.WorkloadSelector.Labels
 	}
+
 	enabledCheckers := []Checker{
 		common.WorkloadSelectorNoWorkloadFoundChecker(SidecarCheckerType, selectorLabels, s.WorkloadList),
 		sidecars.EgressHostChecker{Sidecar: sidecar, Services: s.Services, ServiceEntries: serviceHosts},
