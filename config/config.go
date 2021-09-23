@@ -525,7 +525,9 @@ func NewConfig() (c *Config) {
 					Type: AuthTypeNone,
 				},
 				ThanosProxy: ThanosProxy{
-					Enabled: false,
+					Enabled:         false,
+					RetentionPeriod: "7d",
+					ScrapeInterval:  "30s",
 				},
 				CacheEnabled: true,
 				// 1/2 Prom Scrape Interval
