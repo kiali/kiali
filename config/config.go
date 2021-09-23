@@ -125,7 +125,7 @@ type PrometheusConfig struct {
 	CustomHeaders   map[string]string `yaml:"custom_headers,omitempty"`
 	HealthCheckUrl  string            `yaml:"health_check_url,omitempty"`
 	IsCore          bool              `yaml:"is_core,omitempty"`
-	ThanosProxy     Thanos            `yaml:"thanos_proxy,omitempty"`
+	ThanosProxy     ThanosProxy       `yaml:"thanos_proxy,omitempty"`
 	URL             string            `yaml:"url,omitempty"`
 }
 
@@ -476,6 +476,11 @@ func NewConfig() (c *Config) {
 				Enabled:                true,
 				IsCore:                 false,
 				NamespaceLabel:         "kubernetes_namespace",
+				Prometheus: PrometheusConfig{
+					ThanosProxy: ThanosProxy{
+						Enabled: false
+					}
+				}
 			},
 			Grafana: GrafanaConfig{
 				Auth: Auth{
@@ -519,7 +524,7 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				ThanosProxy: Thanos{
+				ThanosProxy: ThanosProxy{
 					Enabled: false,
 				},
 				CacheEnabled: true,
