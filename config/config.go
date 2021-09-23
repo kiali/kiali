@@ -106,8 +106,8 @@ func (a *Auth) Obfuscate() {
 	a.CAFile = "xxx"
 }
 
-// Thanos describes configuration of the Thanos proxy component
-type Thanos struct {
+// ThanosProxy describes configuration of the Thanos proxy component
+type ThanosProxy struct {
 	Enabled         bool   `yaml:"enabled,omitempty"`
 	RetentionPeriod string `yaml:"retention_period,omitempty"`
 	ScrapeInterval  string `yaml:"scrape_interval,omitempty"`
