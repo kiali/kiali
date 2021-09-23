@@ -108,7 +108,7 @@ func (fd fromDomain) convertReferences(span *model.Span) []json.Reference {
 	for _, ref := range span.References {
 		traceId := model.TraceID{}
 		traceId.Unmarshal(ref.TraceId)
-		spanId, err := model.SpanIDFromBytes(span.SpanId)
+		spanId, err := model.SpanIDFromBytes(ref.SpanId)
 		if err != nil {
 			// On purpose to not propagate this error to the upper caller
 			log.Warningf("jaeger SpanId unmarshall error: %v", err)

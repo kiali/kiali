@@ -16,15 +16,15 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/kiali/kiali/config"
+	jaegerModel "github.com/kiali/kiali/jaeger/model"
 	jsonConv "github.com/kiali/kiali/jaeger/model/converter/json"
 	jsonModel "github.com/kiali/kiali/jaeger/model/json"
-	jaegerModel "github.com/kiali/kiali/jaeger/model"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // ClientInterface for mocks (only mocked function are necessary here)

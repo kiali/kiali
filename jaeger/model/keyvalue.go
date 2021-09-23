@@ -16,13 +16,13 @@
 package model
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"sort"
 	"strconv"
-	"bytes"
 )
 
 // These constants are kept mostly for backwards compatibility.
