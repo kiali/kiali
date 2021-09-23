@@ -478,9 +478,9 @@ func NewConfig() (c *Config) {
 				NamespaceLabel:         "kubernetes_namespace",
 				Prometheus: PrometheusConfig{
 					ThanosProxy: ThanosProxy{
-						Enabled: false
-					}
-				}
+						Enabled: false,
+					},
+				},
 			},
 			Grafana: GrafanaConfig{
 				Auth: Auth{
