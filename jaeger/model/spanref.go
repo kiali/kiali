@@ -13,6 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Cloned from github.com/jaegertracing/jaeger/
+
+//nolint
 package model
 
 import "github.com/kiali/kiali/log"
@@ -38,7 +41,11 @@ func MaybeAddParentSpanID(traceID TraceID, parentSpanID SpanID, refs []SpanRef) 
 	for i := range refs {
 		r := &refs[i]
 		rTraceId := TraceID{}
-		rTraceId.Unmarshal(r.TraceId)
+		err := rTraceId.Unmarshal(r.TraceId)
+		if err != nil {
+			// On purpose to not propagate this error to the upper caller
+			log.Warningf("jaeger TraceId unmarshall error: %v", err)
+		}
 		rSpanId, err := SpanIDFromBytes(r.SpanId)
 		if err != nil {
 			// On purpose to not propagate this error to the upper caller

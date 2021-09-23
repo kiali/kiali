@@ -238,7 +238,11 @@ func readSpansStream(stream SpansStreamer) (map[jaegerModel.TraceID]*jaegerModel
 		}
 		for i, span := range received.Spans {
 			traceId := jaegerModel.TraceID{}
-			traceId.Unmarshal(span.TraceId)
+			err := traceId.Unmarshal(span.TraceId)
+			if err != nil {
+				log.Errorf("Jaeger TraceId unmarshall error: %v", err)
+				continue
+			}
 			if trace, ok := tracesMap[traceId]; ok {
 				trace.Spans = append(trace.Spans, received.Spans[i])
 			} else {
