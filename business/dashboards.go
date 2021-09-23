@@ -501,14 +501,14 @@ func GetIstioScaler() func(name string) float64 {
 	}
 }
 
-// GetIstioDashboard returns Istio dashboard (currently hard-coded) filled-in with metrics
+// BuildIstioDashboard returns Istio dashboard filled-in with metrics
 func (in *DashboardsService) BuildIstioDashboard(metrics models.MetricsMap, direction string) *models.MonitoringDashboard {
 	var dashboard models.MonitoringDashboard
 	// Copy dashboard
 	if direction == "inbound" {
-		dashboard = models.PrepareIstioDashboard("Inbound", "destination", "source")
+		dashboard = models.PrepareIstioDashboard("Inbound")
 	} else {
-		dashboard = models.PrepareIstioDashboard("Outbound", "source", "destination")
+		dashboard = models.PrepareIstioDashboard("Outbound")
 	}
 
 	istioCharts := getIstioCharts()
