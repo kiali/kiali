@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -168,7 +169,16 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 			if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
 				seInfo := n.Metadata[graph.IsServiceEntry].(*graph.SEInfo)
 				for _, host := range seInfo.Hosts {
-					if svc, found := svcMap[host]; found {
+					var hostToTest string
+
+					hostSplitted := strings.Split(host, ".")
+					if len(hostSplitted) == 3 && hostSplitted[2] == config.IstioMultiClusterHostSuffix {
+						hostToTest = host
+					} else {
+						hostToTest = hostSplitted[0]
+					}
+
+					if svc, found := svcMap[hostToTest]; found {
 						if app, ok := svc.Labels[appLabelName]; ok {
 							n.App = app
 						}
