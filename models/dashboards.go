@@ -106,14 +106,66 @@ type DashboardRef struct {
 	Title    string `json:"title"`
 }
 
+// metricsDefaults builds the default label aggregations for either inbound or outbound metric pages.
+func metricsDefaults(local, remote string) []Aggregation {
+	aggs := []Aggregation{
+		{
+			Label:       fmt.Sprintf("%s_canonical_revision", local),
+			DisplayName: "Local version",
+		},
+		{
+			Label:       fmt.Sprintf("%s_workload_namespace", remote),
+			DisplayName: "Remote namespace",
+		},
+	}
+	if remote == "destination" {
+		aggs = append(aggs, Aggregation{
+			Label:       "destination_service_name",
+			DisplayName: "Remote service",
+		})
+	}
+	aggs = append(aggs, []Aggregation{
+		{
+			Label:       fmt.Sprintf("%s_canonical_service", remote),
+			DisplayName: "Remote app",
+		},
+		{
+			Label:       fmt.Sprintf("%s_canonical_revision", remote),
+			DisplayName: "Remote version",
+		},
+		{
+			Label:       "response_code",
+			DisplayName: "Response code",
+		},
+		{
+			Label:       "grpc_response_status",
+			DisplayName: "GRPC status",
+		},
+		{
+			Label:       "response_flags",
+			DisplayName: "Response flags",
+		},
+	}...)
+	return aggs
+}
+
 func buildIstioAggregations(direction string) []Aggregation {
+	var aggregations []Aggregation
 	cfg := config.Get()
 
 	if direction == "Inbound" {
-		return cfg.KialiFeatureFlags.UIDefaults.MetricsInbound.Aggregations
+		aggregations = metricsDefaults("destination", "source")
+		if len(cfg.KialiFeatureFlags.UIDefaults.MetricsInbound.Aggregations) != 0 {
+			aggregations = append(aggregations, cfg.KialiFeatureFlags.UIDefaults.MetricsInbound.Aggregations...)
+		}
 	} else {
-		return cfg.KialiFeatureFlags.UIDefaults.MetricsOutbound.Aggregations
+		aggregations = metricsDefaults("source", "destination")
+		if len(cfg.KialiFeatureFlags.UIDefaults.MetricsOutbound.Aggregations) != 0 {
+			aggregations = append(aggregations, cfg.KialiFeatureFlags.UIDefaults.MetricsOutbound.Aggregations...)
+		}
 	}
+
+	return aggregations
 }
 
 // PrepareIstioDashboard prepares the Istio dashboard title and aggregations dynamically for input values

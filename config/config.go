@@ -586,8 +586,8 @@ func NewConfig() (c *Config) {
 						Tcp:  "sent",
 					},
 				},
-				MetricsInbound:    metricsInboundDefaults(),
-				MetricsOutbound:   metricsOutboundDefaults(),
+				MetricsInbound:    MetricsDefaults{},
+				MetricsOutbound:   MetricsDefaults{},
 				MetricsPerRefresh: "1m",
 				Namespaces:        make([]string, 0),
 				RefreshInterval:   "15s",
@@ -705,63 +705,6 @@ func (conf Config) String() (str string) {
 	}
 
 	return
-}
-
-// metricsDefaults builds the default label aggregations for either inbound or outbound metric pages.
-func metricsDefaults(local, remote string) []Aggregation {
-	aggs := []Aggregation{
-		{
-			Label:       fmt.Sprintf("%s_canonical_revision", local),
-			DisplayName: "Local version",
-		},
-		{
-			Label:       fmt.Sprintf("%s_workload_namespace", remote),
-			DisplayName: "Remote namespace",
-		},
-	}
-	if remote == "destination" {
-		aggs = append(aggs, Aggregation{
-			Label:       "destination_service_name",
-			DisplayName: "Remote service",
-		})
-	}
-	aggs = append(aggs, []Aggregation{
-		{
-			Label:       fmt.Sprintf("%s_canonical_service", remote),
-			DisplayName: "Remote app",
-		},
-		{
-			Label:       fmt.Sprintf("%s_canonical_revision", remote),
-			DisplayName: "Remote version",
-		},
-		{
-			Label:       "response_code",
-			DisplayName: "Response code",
-		},
-		{
-			Label:       "grpc_response_status",
-			DisplayName: "GRPC status",
-		},
-		{
-			Label:       "response_flags",
-			DisplayName: "Response flags",
-		},
-	}...)
-	return aggs
-}
-
-// metricsInboundDefaults builds the default label aggregations for inbound metric pages.
-func metricsInboundDefaults() MetricsDefaults {
-	return MetricsDefaults{
-		Aggregations: metricsDefaults("destination", "source"),
-	}
-}
-
-// metricsOutboundDefaults builds the default label aggregations for outbound metric pages.
-func metricsOutboundDefaults() MetricsDefaults {
-	return MetricsDefaults{
-		Aggregations: metricsDefaults("source", "destination"),
-	}
 }
 
 // prepareDashboards will ensure conf.CustomDashboards contains only the dashboards that are enabled
