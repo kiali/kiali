@@ -6517,7 +6517,7 @@ Status: Internal Server Error
 ### <span id="aggregation"></span> Aggregation
 
 
-> Aggregation is the model representing label's allowed aggregation, transformed from aggregation in MonitoringDashboard config resource
+> Aggregation represents label's allowed aggregations, transformed from aggregation in MonitoringDashboard config resource
   
 
 
