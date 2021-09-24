@@ -133,12 +133,20 @@ const details: ResourceType<AppListItem | WorkloadListItem | ServiceListItem> = 
   renderer: Renderers.details
 };
 
-const configuration: ResourceType<ServiceListItem | IstioConfigItem> = {
+const serviceConfiguration: ResourceType<ServiceListItem> = {
   name: 'Configuration',
   param: 'cv',
   column: 'Configuration',
   transforms: [sortable, cellWidth(10)],
-  renderer: Renderers.configuration
+  renderer: Renderers.serviceConfiguration
+};
+
+const istioObjectConfiguration: ResourceType<IstioConfigItem> = {
+  name: 'Configuration',
+  param: 'cv',
+  column: 'Configuration',
+  transforms: [sortable, cellWidth(10)],
+  renderer: Renderers.istioConfiguration
 };
 
 const workloadType: ResourceType<WorkloadListItem> = {
@@ -244,13 +252,13 @@ const applications: Resource = {
 
 const services: Resource = {
   name: 'services',
-  columns: [health, serviceItem, namespace, labels, configuration, details],
+  columns: [health, serviceItem, namespace, labels, serviceConfiguration, details],
   badge: PFBadges.Service
 };
 
 const istio: Resource = {
   name: 'istio',
-  columns: [istioItem, namespace, istioType, configuration]
+  columns: [istioItem, namespace, istioType, istioObjectConfiguration]
 };
 
 const conf = {
