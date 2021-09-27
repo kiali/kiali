@@ -1,6 +1,7 @@
 package appender_test
 
 import (
+	"errors"
 	"testing"
 
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -30,7 +31,13 @@ func setupBusinessLayer(istioObjects ...kubernetes.IstioObject) *business.Layer 
 
 func setupBusinessLayerWithKube(k8s *kubetest.K8SClientMock, istioObjects ...kubernetes.IstioObject) *business.Layer {
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "workloadentries", "").Return(istioObjects, nil)
+	k8s.On("GetIstioObjects", mock.MatchedBy(func(ns string) bool {
+		return ns == appNamespace
+	}), "workloadentries", "").Return(istioObjects, nil)
+	k8s.On("GetIstioObjects", mock.MatchedBy(func(ns string) bool {
+		return ns != appNamespace
+	}), "workloadentries", "").Return([]kubernetes.IstioObject{}, errors.New("outsider should be ignored"))
+
 	config.Set(config.NewConfig())
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
@@ -84,14 +91,19 @@ func workloadEntriesTrafficMap() map[string]*graph.Node {
 	// v3 Workload
 	n3 := graph.NewNode(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
 
+	// v4 Workload (just to test ignoring of outsider nodes)
+	n4 := graph.NewNode(testCluster, "outsider", "outsider", "outsider", "outsider-v1", "outsider", "v1", graph.GraphTypeVersionedApp)
+
 	trafficMap[n0.ID] = &n0
 	trafficMap[n1.ID] = &n1
 	trafficMap[n2.ID] = &n2
 	trafficMap[n3.ID] = &n3
+	trafficMap[n4.ID] = &n4
 
 	n0.AddEdge(&n1).Metadata[graph.ProtocolKey] = graph.HTTP.Name
 	n0.AddEdge(&n2).Metadata[graph.ProtocolKey] = graph.HTTP.Name
 	n0.AddEdge(&n3).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n0.AddEdge(&n4).Metadata[graph.ProtocolKey] = graph.HTTP.Name
 	// Need to put some metadata in here to ensure it gets counted as a workload
 
 	return trafficMap
@@ -103,12 +115,12 @@ func TestWorkloadEntry(t *testing.T) {
 	businessLayer := setupWorkloadEntries()
 	trafficMap := workloadEntriesTrafficMap()
 
-	assert.Equal(4, len(trafficMap))
+	assert.Equal(5, len(trafficMap))
 
 	seSVCID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "", "", "", graph.GraphTypeVersionedApp)
 	seSVCNode, found := trafficMap[seSVCID]
 	assert.True(found)
-	assert.Equal(3, len(seSVCNode.Edges))
+	assert.Equal(4, len(seSVCNode.Edges))
 
 	v1WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	v1Node, found := trafficMap[v1WorkloadID]
@@ -125,6 +137,11 @@ func TestWorkloadEntry(t *testing.T) {
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
+	v4WorkloadID, _ := graph.Id(testCluster, "outsider", "outsider", "outsider", "outsider-v1", "outsider", "v1", graph.GraphTypeVersionedApp)
+	v4Node, found := trafficMap[v4WorkloadID]
+	assert.True(found)
+	assert.NotContains(v4Node.Metadata, graph.HasWorkloadEntry)
+
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.HomeCluster = testCluster
 	globalInfo.Business = businessLayer
@@ -134,7 +151,7 @@ func TestWorkloadEntry(t *testing.T) {
 	a := appender.WorkloadEntryAppender{}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
-	assert.Equal(4, len(trafficMap))
+	assert.Equal(5, len(trafficMap))
 
 	workloadV1ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	workloadV1Node, found := trafficMap[workloadV1ID]
@@ -183,12 +200,12 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 	businessLayer := setupBusinessLayer(workloadV1, workloadV2)
 	trafficMap := workloadEntriesTrafficMap()
 
-	assert.Equal(4, len(trafficMap))
+	assert.Equal(5, len(trafficMap))
 
 	seSVCID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "", "", "", graph.GraphTypeVersionedApp)
 	seSVCNode, found := trafficMap[seSVCID]
 	assert.True(found)
-	assert.Equal(3, len(seSVCNode.Edges))
+	assert.Equal(4, len(seSVCNode.Edges))
 
 	v1WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	v1Node, found := trafficMap[v1WorkloadID]
@@ -214,7 +231,7 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 	a := appender.WorkloadEntryAppender{}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
-	assert.Equal(4, len(trafficMap))
+	assert.Equal(5, len(trafficMap))
 
 	workloadV1ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	workloadV1Node, found := trafficMap[workloadV1ID]
@@ -275,12 +292,12 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 	businessLayer := setupBusinessLayer(workloadV1A, workloadV1B, workloadV2)
 	trafficMap := workloadEntriesTrafficMap()
 
-	assert.Equal(4, len(trafficMap))
+	assert.Equal(5, len(trafficMap))
 
 	seSVCID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "", "", "", graph.GraphTypeVersionedApp)
 	seSVCNode, found := trafficMap[seSVCID]
 	assert.True(found)
-	assert.Equal(3, len(seSVCNode.Edges))
+	assert.Equal(4, len(seSVCNode.Edges))
 
 	v1WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	v1Node, found := trafficMap[v1WorkloadID]
@@ -306,7 +323,7 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 	a := appender.WorkloadEntryAppender{}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
-	assert.Equal(4, len(trafficMap))
+	assert.Equal(5, len(trafficMap))
 
 	workloadV1ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	workloadV1Node, found := trafficMap[workloadV1ID]
@@ -330,12 +347,12 @@ func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 	businessLayer := setupBusinessLayer()
 	trafficMap := workloadEntriesTrafficMap()
 
-	assert.Equal(4, len(trafficMap))
+	assert.Equal(5, len(trafficMap))
 
 	seSVCID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "", "", "", graph.GraphTypeVersionedApp)
 	seSVCNode, found := trafficMap[seSVCID]
 	assert.True(found)
-	assert.Equal(3, len(seSVCNode.Edges))
+	assert.Equal(4, len(seSVCNode.Edges))
 
 	v1WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	v1Node, found := trafficMap[v1WorkloadID]
@@ -361,7 +378,7 @@ func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 	a := appender.WorkloadEntryAppender{}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
-	assert.Equal(4, len(trafficMap))
+	assert.Equal(5, len(trafficMap))
 
 	workloadV1ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	workloadV1Node, found := trafficMap[workloadV1ID]
