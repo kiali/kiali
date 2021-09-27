@@ -39,6 +39,11 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 	versionLabel := config.Get().IstioLabels.VersionLabelName
 
 	for _, n := range trafficMap {
+		// Skip the check if this node is outside the requested namespace, we limit badging to the requested namespaces
+		if n.Namespace != namespaceInfo.Namespace {
+			continue
+		}
+
 		// Only a workload or app node can be a workload entry
 		if n.NodeType != graph.NodeTypeWorkload && n.NodeType != graph.NodeTypeApp {
 			continue
