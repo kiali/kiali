@@ -263,7 +263,7 @@ func (o *PromClientMock) MockWorkloadRequestRates(namespace, wkld string, in, ou
 
 // MockMetricsForLabels mocks GetMetricsForLabels
 func (o *PromClientMock) MockMetricsForLabels(metrics []string) {
-	o.On("GetMetricsForLabels", mock.AnythingOfType("[]string")).Return(metrics, nil)
+	o.On("GetMetricsForLabels", mock.AnythingOfType("[]string"), mock.AnythingOfType("string")).Return(metrics, nil)
 }
 
 func (o *PromClientMock) GetAllRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error) {
@@ -321,8 +321,8 @@ func (o *PromClientMock) FetchHistogramValues(metricName, labels, grouping, rate
 	return args.Get(0).(map[string]model.Vector), args.Error((1))
 }
 
-func (o *PromClientMock) GetMetricsForLabels(labels []string) ([]string, error) {
-	args := o.Called(labels)
+func (o *PromClientMock) GetMetricsForLabels(metricNames []string, labels string) ([]string, error) {
+	args := o.Called(metricNames, labels)
 	return args.Get(0).([]string), args.Error(1)
 }
 
