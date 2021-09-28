@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -163,8 +164,27 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 	for _, n := range trafficMap {
 		// make sure service nodes have the defined app label so it can be used for app grouping in the UI.
 		if n.NodeType == graph.NodeTypeService && n.Namespace == sdl.Namespace.Name && n.App == "" {
-			// A service node that is a service entry will not have a service definition
+			// For service nodes that are a service entries, use the `hosts` property of the SE to find
+			// a matching Kubernetes Svc for adding missing labels
 			if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
+				seInfo := n.Metadata[graph.IsServiceEntry].(*graph.SEInfo)
+				for _, host := range seInfo.Hosts {
+					var hostToTest string
+
+					hostSplitted := strings.Split(host, ".")
+					if len(hostSplitted) == 3 && hostSplitted[2] == config.IstioMultiClusterHostSuffix {
+						hostToTest = host
+					} else {
+						hostToTest = hostSplitted[0]
+					}
+
+					if svc, found := svcMap[hostToTest]; found {
+						if app, ok := svc.Labels[appLabelName]; ok {
+							n.App = app
+						}
+						continue
+					}
+				}
 				continue
 			}
 			// A service node that is an Istio egress cluster will not have a service definition

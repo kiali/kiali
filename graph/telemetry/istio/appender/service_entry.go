@@ -81,7 +81,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 		}
 
 		// To match, a service entry must be exported to the source namespace, and the requested
-		// service must match a defined host.  Note that teh source namespace is assumed to be the
+		// service must match a defined host.  Note that the source namespace is assumed to be the
 		// the same as the appender namespace as all requests for the service entry should be coming
 		// from workloads in the current namespace being processed for the graph.
 		if se, ok := a.getServiceEntry(namespaceInfo.Namespace, n.Service, globalInfo); ok {

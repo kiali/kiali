@@ -300,3 +300,41 @@ func TestVSWithRoutingBadges(t *testing.T) {
 
 	assert.Equal(true, trafficMap[fooSvcNodeId].Metadata[graph.HasTrafficShifting])
 }
+
+func TestSEInAppBox(t *testing.T) {
+	check := assert.New(t)
+	config.Set(config.NewConfig())
+
+	k8s := kubetest.NewK8SClientMock()
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "foobar",
+			Labels: map[string]string{
+				"app": "fooApp",
+			},
+		},
+	}}, nil)
+
+	businessLayer := business.NewWithBackends(k8s, nil, nil)
+
+	trafficMap := graph.NewTrafficMap()
+	serviceEntryNode := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)
+	serviceEntryNode.Metadata[graph.IsServiceEntry] = &graph.SEInfo{
+		Hosts:     []string{"foobar.com"},
+		Location:  "MESH_INTERNAL",
+		Namespace: "testNamespace",
+	}
+	trafficMap[serviceEntryNode.ID] = &serviceEntryNode
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
+	a := IstioAppender{}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	check.Equal("fooApp", trafficMap[serviceEntryNode.ID].App)
+}
