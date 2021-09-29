@@ -719,12 +719,12 @@ func TestGetWorkloadListFromGenericPodController(t *testing.T) {
 	assert := assert.New(t)
 
 	pods := FakePodsSyncedWithDeployments()
-	
+
 	// Doesn't matter what the type is as long as kiali doesn't recognize it.
 	owner := &core_v1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{
 			Name: "testing",
-			UID: types.UID("f9952f02-5552-4b2c-afdb-441d859dbb36"),
+			UID:  types.UID("f9952f02-5552-4b2c-afdb-441d859dbb36"),
 		},
 	}
 	ref := v1.NewControllerRef(owner, core_v1.SchemeGroupVersion.WithKind("ConfigMap"))
