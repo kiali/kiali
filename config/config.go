@@ -341,10 +341,23 @@ type GraphUIDefaults struct {
 	Traffic     GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
 }
 
+// Aggregation represents label's allowed aggregations, transformed from aggregation in MonitoringDashboard config resource
+type Aggregation struct {
+	Label           string `yaml:"label,omitempty" json:"label"`
+	DisplayName     string `yaml:"display_name,omitempty" json:"displayName"`
+	SingleSelection bool   `yaml:"single_selection,omitempty" json:"singleSelection"`
+}
+
+type MetricsDefaults struct {
+	Aggregations []Aggregation `yaml:"aggregations,omitempty" json:"aggregations,omitempty"`
+}
+
 // UIDefaults defines default settings configured for the UI
 type UIDefaults struct {
 	Graph             GraphUIDefaults `yaml:"graph,omitempty" json:"graph,omitempty"`
 	MetricsPerRefresh string          `yaml:"metrics_per_refresh,omitempty" json:"metricsPerRefresh,omitempty"`
+	MetricsInbound    MetricsDefaults `yaml:"metrics_inbound,omitempty" json:"metricsInbound,omitempty"`
+	MetricsOutbound   MetricsDefaults `yaml:"metrics_outbound,omitempty" json:"metricsOutbound,omitempty"`
 	Namespaces        []string        `yaml:"namespaces,omitempty" json:"namespaces,omitempty"`
 	RefreshInterval   string          `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`
 }
@@ -573,6 +586,8 @@ func NewConfig() (c *Config) {
 						Tcp:  "sent",
 					},
 				},
+				MetricsInbound:    MetricsDefaults{},
+				MetricsOutbound:   MetricsDefaults{},
 				MetricsPerRefresh: "1m",
 				Namespaces:        make([]string, 0),
 				RefreshInterval:   "15s",

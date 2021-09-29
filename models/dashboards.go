@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/dashboards"
 	"github.com/kiali/kiali/prometheus"
 )
@@ -65,11 +66,7 @@ func ConvertChart(from dashboards.MonitoringDashboardChart) Chart {
 }
 
 // Aggregation is the model representing label's allowed aggregation, transformed from aggregation in MonitoringDashboard config resource
-type Aggregation struct {
-	Label           string `json:"label"`
-	DisplayName     string `json:"displayName"`
-	SingleSelection bool   `json:"singleSelection"`
-}
+type Aggregation = config.Aggregation
 
 // ConvertAggregations converts a config aggregations (from MonitoringDashboard config resource) into this models aggregations
 // Results are sorted by DisplayName
@@ -109,7 +106,8 @@ type DashboardRef struct {
 	Title    string `json:"title"`
 }
 
-func buildIstioAggregations(local, remote string) []Aggregation {
+// metricsDefaults builds the default label aggregations for either inbound or outbound metric pages.
+func metricsDefaults(local, remote string) []Aggregation {
 	aggs := []Aggregation{
 		{
 			Label:       fmt.Sprintf("%s_canonical_revision", local),
@@ -151,13 +149,32 @@ func buildIstioAggregations(local, remote string) []Aggregation {
 	return aggs
 }
 
+func buildIstioAggregations(direction string) []Aggregation {
+	var aggregations []Aggregation
+	cfg := config.Get()
+
+	if direction == "Inbound" {
+		aggregations = metricsDefaults("destination", "source")
+		if len(cfg.KialiFeatureFlags.UIDefaults.MetricsInbound.Aggregations) != 0 {
+			aggregations = append(aggregations, cfg.KialiFeatureFlags.UIDefaults.MetricsInbound.Aggregations...)
+		}
+	} else {
+		aggregations = metricsDefaults("source", "destination")
+		if len(cfg.KialiFeatureFlags.UIDefaults.MetricsOutbound.Aggregations) != 0 {
+			aggregations = append(aggregations, cfg.KialiFeatureFlags.UIDefaults.MetricsOutbound.Aggregations...)
+		}
+	}
+
+	return aggregations
+}
+
 // PrepareIstioDashboard prepares the Istio dashboard title and aggregations dynamically for input values
-func PrepareIstioDashboard(direction, local, remote string) MonitoringDashboard {
+func PrepareIstioDashboard(direction string) MonitoringDashboard {
 	// Istio dashboards are predefined
 	// It uses two rows by default, columns are defined using the spans of the charts
 	return MonitoringDashboard{
 		Title:        fmt.Sprintf("%s Metrics", direction),
-		Aggregations: buildIstioAggregations(local, remote),
+		Aggregations: buildIstioAggregations(direction),
 		Charts:       []Chart{},
 		Rows:         3, // Rows layout used for Inbound Metrics and Outbound Metrics
 	}

@@ -3,8 +3,9 @@ package cytoscape
 import (
 	"testing"
 
-	"github.com/kiali/kiali/graph"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kiali/kiali/graph"
 )
 
 func TestRateStrings(t *testing.T) {

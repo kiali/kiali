@@ -4268,7 +4268,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Aggregation": {
-      "description": "Aggregation is the model representing label's allowed aggregation, transformed from aggregation in MonitoringDashboard config resource",
+      "description": "Aggregation represents label's allowed aggregations, transformed from aggregation in MonitoringDashboard config resource",
       "type": "object",
       "properties": {
         "displayName": {
@@ -4284,7 +4284,7 @@
           "x-go-name": "SingleSelection"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/models"
+      "x-go-package": "github.com/kiali/kiali/config"
     },
     "App": {
       "type": "object",
