@@ -12,15 +12,17 @@ import (
 const AuthorizationPolicyCheckerType = "authorizationpolicy"
 
 type AuthorizationPolicyChecker struct {
-	AuthorizationPolicies []kubernetes.IstioObject
-	Namespace             string
-	Namespaces            models.Namespaces
-	ServiceEntries        []kubernetes.IstioObject
-	Services              []core_v1.Service
-	WorkloadList          models.WorkloadList
-	MtlsDetails           kubernetes.MTLSDetails
-	VirtualServices       []kubernetes.IstioObject
-	RegistryStatus        []*kubernetes.RegistryStatus
+	AuthorizationPolicies   []kubernetes.IstioObject
+	Namespace               string
+	Namespaces              models.Namespaces
+	ServiceEntries          []kubernetes.IstioObject
+	ExportedServiceEntries  []kubernetes.IstioObject
+	Services                []core_v1.Service
+	WorkloadList            models.WorkloadList
+	MtlsDetails             kubernetes.MTLSDetails
+	VirtualServices         []kubernetes.IstioObject
+	ExportedVirtualServices []kubernetes.IstioObject
+	RegistryStatus          []*kubernetes.RegistryStatus
 }
 
 func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
@@ -45,7 +47,7 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 func (a AuthorizationPolicyChecker) runChecks(authPolicy kubernetes.IstioObject) models.IstioValidations {
 	policyName := authPolicy.GetObjectMeta().Name
 	key, rrValidation := EmptyValidValidation(policyName, authPolicy.GetObjectMeta().Namespace, AuthorizationPolicyCheckerType)
-	serviceHosts := kubernetes.ServiceEntryHostnames(a.ServiceEntries)
+	serviceHosts := kubernetes.ServiceEntryHostnames(append(a.ServiceEntries, a.ExportedServiceEntries...))
 
 	enabledCheckers := []Checker{
 		common.SelectorNoWorkloadFoundChecker(AuthorizationPolicyCheckerType, authPolicy, a.WorkloadList),

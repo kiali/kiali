@@ -3,7 +3,6 @@ package authorization
 import (
 	"fmt"
 	"reflect"
-	"strings"
 
 	core_v1 "k8s.io/api/core/v1"
 
@@ -80,15 +79,9 @@ func (n NoHostChecker) validateHost(ruleIdx int, to interface{}) ([]*models.Isti
 				fqdn := kubernetes.GetHost(dHost, n.AuthorizationPolicy.GetObjectMeta().Namespace, n.AuthorizationPolicy.GetObjectMeta().ClusterName, n.Namespaces.GetNames())
 				if !n.hasMatchingService(fqdn, n.AuthorizationPolicy.GetObjectMeta().Namespace) {
 					path := fmt.Sprintf("spec/rules[%d]/to[%d]/operation/hosts[%d]", ruleIdx, toIdx, hostIdx)
-					if fqdn.Namespace != n.AuthorizationPolicy.GetObjectMeta().Namespace && fqdn.Namespace != "" {
-						validation := models.Build("validation.unable.cross-namespace", path)
-						valid = valid && true
-						checks = append(checks, &validation)
-					} else {
-						validation := models.Build("authorizationpolicy.nodest.matchingregistry", path)
-						valid = false
-						checks = append(checks, &validation)
-					}
+					validation := models.Build("authorizationpolicy.nodest.matchingregistry", path)
+					valid = false
+					checks = append(checks, &validation)
 				}
 			}
 		}
@@ -102,7 +95,7 @@ func (n NoHostChecker) hasMatchingService(host kubernetes.Host, itemNamespace st
 	localSvc, localNs := kubernetes.ParseTwoPartHost(host)
 
 	// Check wildcard hosts - needs to match "*" and "*.suffix" also..
-	if strings.HasPrefix(host.Service, "*") && localNs == itemNamespace {
+	if host.IsWildcard() && localNs == itemNamespace {
 		return true
 	}
 
@@ -115,7 +108,7 @@ func (n NoHostChecker) hasMatchingService(host kubernetes.Host, itemNamespace st
 	}
 
 	// Check ServiceEntries
-	if kubernetes.HasMatchingServiceEntries(host.Service, n.ServiceEntries) {
+	if kubernetes.HasMatchingServiceEntries(host.String(), n.ServiceEntries) {
 		return true
 	}
 
