@@ -5811,7 +5811,7 @@
           "x-go-name": "Value"
         }
       },
-      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
     "KialiInstance": {
       "description": "KialiInstance represents a Kiali installation. It holds some data about\nwhere and how Kiali was deployed.",
@@ -5892,7 +5892,7 @@
           "x-go-name": "Timestamp"
         }
       },
-      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
     "MTLSStatus": {
       "description": "MTLSStatus describes the current mTLS status of a mesh entity",
@@ -6510,12 +6510,12 @@
           "x-go-name": "Tags"
         }
       },
-      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
     "ProcessID": {
       "type": "string",
       "title": "ProcessID is a hashed value of the Process struct that is unique within the trace.",
-      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
     "ProtocolTraffic": {
       "description": "ProtocolTraffic supplies all of the traffic information for a single protocol",
@@ -6572,12 +6572,12 @@
           "$ref": "#/definitions/TraceID"
         }
       },
-      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
     "ReferenceType": {
       "description": "ReferenceType is the reference type of one span to another",
       "type": "string",
-      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
     "RequestHealth": {
       "description": "RequestHealth holds several stats about recent request errors\nInbound//Outbound are the rates of requests by protocol and status_code.\nExample:   Inbound: { \"http\": {\"200\": 1.5, \"400\": 2.3}, \"grpc\": {\"1\": 1.2} }",
@@ -7167,12 +7167,12 @@
           "x-go-name": "Warnings"
         }
       },
-      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
     "SpanID": {
       "description": "SpanID is the id of a span",
       "type": "string",
-      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
     "Stat": {
       "description": "Stat holds arbitrary stat name \u0026 value",
@@ -7312,12 +7312,12 @@
           "x-go-name": "Warnings"
         }
       },
-      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
     "TraceID": {
       "type": "string",
       "title": "TraceID is the shared trace ID of all spans in the trace.",
-      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
     "UID": {
       "description": "UID is a type that holds unique ID values, including UUIDs.  Because we\ndon't ONLY use UUIDs, this is an alias to string.  Being a type captures\nintent and helps make sure that UIDs and names do not get conflated.",
@@ -7342,7 +7342,7 @@
     "ValueType": {
       "type": "string",
       "title": "ValueType is the type of a value stored in KeyValue struct.",
-      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
     "Workload": {
       "description": "Workload has the details of a workload",

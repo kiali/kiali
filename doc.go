@@ -1,7 +1,7 @@
 package main
 
 import (
-	jaegerModels "github.com/jaegertracing/jaeger/model/json"
+	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph/config/cytoscape"

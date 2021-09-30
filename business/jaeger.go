@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	jaegerModels "github.com/jaegertracing/jaeger/model/json"
+	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
 
 	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/log"
