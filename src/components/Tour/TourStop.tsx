@@ -13,7 +13,8 @@ import { PFColors } from 'components/Pf/PfColors';
 
 export interface TourStopInfo {
   name: string; // displayed in the tour stop header.
-  description: string; // displayed as the tour stop body
+  description?: string; // displayed as the tour stop body
+  htmlDescription?: JSX.Element;
   position?: PopoverPosition;
   offset?: string; // tippy prop: 'xOffset, yOffset'
   isValid?: boolean; // internal use, leave unset
@@ -185,7 +186,7 @@ class TourStop extends React.PureComponent<TourStopProps> {
                   <span>{info.name}</span>
                 </div>
               }
-              bodyContent={info.description}
+              bodyContent={info.description ? info.description : info.htmlDescription}
               footerContent={
                 <div>
                   {this.backButton()}

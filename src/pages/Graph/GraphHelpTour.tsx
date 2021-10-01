@@ -1,5 +1,7 @@
+import * as React from 'react';
 import { PopoverPosition } from '@patternfly/react-core';
 import { TourStopInfo, TourInfo } from 'components/Tour/TourStop';
+import GraphShortcuts from './GraphToolbar/GraphShortcuts';
 
 export const GraphTourStops: { [name: string]: TourStopInfo } = {
   ContextualMenu: {
@@ -54,6 +56,11 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     description: 'Select the namespaces you want to see in the graph.',
     position: PopoverPosition.bottom
   },
+  Shortcuts: {
+    name: 'Shortcuts',
+    htmlDescription: <GraphShortcuts />,
+    position: PopoverPosition.left
+  },
   SidePanel: {
     name: 'Side Panel',
     description: 'The Side Panel shows details about the currently selected node or edge, otherwise the whole graph.',
@@ -70,6 +77,7 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
 const GraphTour: TourInfo = {
   name: 'GraphTour',
   stops: [
+    GraphTourStops.Shortcuts,
     GraphTourStops.Namespaces,
     GraphTourStops.GraphTraffic,
     GraphTourStops.GraphType,
