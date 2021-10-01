@@ -8,6 +8,7 @@ import MissingSidecar from '../MissingSidecar/MissingSidecar';
 import { hasMissingSidecar, IstioTypes, Renderer, Resource, SortResource, TResource } from './Config';
 import { HealthIndicator } from '../Health/HealthIndicator';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
+import { ValidationServiceSummary } from '../Validations/ValidationServiceSummary';
 import { WorkloadListItem } from '../../types/Workload';
 import { IstioConfigItem } from '../../types/IstioConfigList';
 import { AppListItem } from '../../types/AppList';
@@ -315,10 +316,7 @@ export const istioType: Renderer<IstioConfigItem> = (item: IstioConfigItem) => {
   );
 };
 
-export const configuration: Renderer<ServiceListItem | IstioConfigItem> = (
-  item: ServiceListItem | IstioConfigItem,
-  config: Resource
-) => {
+export const istioConfiguration: Renderer<IstioConfigItem> = (item: IstioConfigItem, config: Resource) => {
   const validation = item.validation;
   const linkQuery: string = item['type'] ? 'list=yaml' : '';
   return (
@@ -326,6 +324,22 @@ export const configuration: Renderer<ServiceListItem | IstioConfigItem> = (
       {validation ? (
         <Link to={`${getLink(item, config, linkQuery)}`}>
           <ValidationObjectSummary id={item.name + '-config-validation'} validations={[validation]} />
+        </Link>
+      ) : (
+        <>N/A</>
+      )}
+    </td>
+  );
+};
+
+export const serviceConfiguration: Renderer<ServiceListItem> = (item: ServiceListItem, config: Resource) => {
+  const validation = item.validation;
+  const linkQuery: string = item['type'] ? 'list=yaml' : '';
+  return (
+    <td role="gridcell" key={'VirtuaItem_Conf_' + item.namespace + '_' + item.name} style={{ verticalAlign: 'middle' }}>
+      {validation ? (
+        <Link to={`${getLink(item, config, linkQuery)}`}>
+          <ValidationServiceSummary id={item.name + '-service-validation'} validations={[validation]} />
         </Link>
       ) : (
         <>N/A</>
