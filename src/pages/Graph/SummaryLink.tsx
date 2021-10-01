@@ -9,6 +9,12 @@ import { getPFBadge, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import KialiPageLink from 'components/Link/KialiPageLink';
 import { serverConfig } from 'config';
 
+interface LinkInfo {
+  link: string;
+  displayName: string;
+  key: string;
+}
+
 const getTooltip = (tooltip: React.ReactFragment, nodeData: GraphNodeData): React.ReactFragment => {
   const addNamespace = nodeData.isBox !== BoxByType.NAMESPACE;
   const addCluster =
@@ -24,7 +30,7 @@ const getTooltip = (tooltip: React.ReactFragment, nodeData: GraphNodeData): Reac
   );
 };
 
-const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType) => {
+export const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType) => {
   switch (nodeType || nodeData.nodeType) {
     case NodeType.AGGREGATE:
       return getPFBadge(PFBadges.Operation.badge, getTooltip(`Operation: ${nodeData.aggregate!}`, nodeData));
@@ -54,13 +60,15 @@ const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType) => {
           )
         : getPFBadge(PFBadges.Service.badge, getTooltip(PFBadges.Service.tt!, nodeData));
     case NodeType.WORKLOAD:
-      return getPFBadge(PFBadges.Workload.badge, getTooltip(PFBadges.Workload.tt!, nodeData));
+      return nodeData.hasWorkloadEntry
+        ? getPFBadge(PFBadges.WorkloadEntry.badge, getTooltip(PFBadges.WorkloadEntry.tt!, nodeData))
+        : getPFBadge(PFBadges.Workload.badge, getTooltip(PFBadges.Workload.tt!, nodeData));
     default:
       return <PFBadge badge={PFBadges.Unknown} />;
   }
 };
 
-const getLink = (nodeData: GraphNodeData, nodeType?: NodeType) => {
+export const getLink = (nodeData: GraphNodeData, nodeType?: NodeType, linkGenerator?: () => LinkInfo) => {
   const { app, cluster, namespace, service, workload } = nodeData;
   if (!nodeType || nodeData.nodeType === NodeType.UNKNOWN) {
     nodeType = nodeData.nodeType;
@@ -69,49 +77,53 @@ const getLink = (nodeData: GraphNodeData, nodeType?: NodeType) => {
   let link: string | undefined;
   let key: string | undefined;
 
-  switch (nodeType) {
-    case NodeType.AGGREGATE:
-      displayName = nodeData.aggregateValue!;
-      break;
-    case NodeType.APP:
-      link = `/namespaces/${encodeURIComponent(namespace)}/applications/${encodeURIComponent(app!)}`;
-      key = `${namespace}.app.${app}`;
-      displayName = app!;
-      break;
-    case NodeType.BOX:
-      switch (nodeData.isBox) {
-        case BoxByType.APP:
-          link = `/namespaces/${encodeURIComponent(namespace)}/applications/${encodeURIComponent(app!)}`;
-          key = `${namespace}.app.${app}`;
-          displayName = app!;
-          break;
-        case BoxByType.CLUSTER:
-          displayName = cluster;
-          break;
-        case BoxByType.NAMESPACE:
-          displayName = namespace;
-          break;
-      }
-      break;
-    case NodeType.SERVICE:
-      if (nodeData.isServiceEntry) {
-        link = `/namespaces/${encodeURIComponent(
-          nodeData.isServiceEntry.namespace
-        )}/istio/serviceentries/${encodeURIComponent(service!)}`;
-      } else {
-        link = `/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(service!)}`;
-      }
-      key = `${namespace}.svc.${service}`;
-      displayName = service!;
-      break;
-    case NodeType.WORKLOAD:
-      link = `/namespaces/${encodeURIComponent(namespace)}/workloads/${encodeURIComponent(workload!)}`;
-      key = `${namespace}.wl.${workload}`;
-      displayName = workload!;
-      break;
-    default:
-      // NOOP
-      break;
+  if (linkGenerator) {
+    ({ displayName, link, key } = linkGenerator());
+  } else {
+    switch (nodeType) {
+      case NodeType.AGGREGATE:
+        displayName = nodeData.aggregateValue!;
+        break;
+      case NodeType.APP:
+        link = `/namespaces/${encodeURIComponent(namespace)}/applications/${encodeURIComponent(app!)}`;
+        key = `${namespace}.app.${app}`;
+        displayName = app!;
+        break;
+      case NodeType.BOX:
+        switch (nodeData.isBox) {
+          case BoxByType.APP:
+            link = `/namespaces/${encodeURIComponent(namespace)}/applications/${encodeURIComponent(app!)}`;
+            key = `${namespace}.app.${app}`;
+            displayName = app!;
+            break;
+          case BoxByType.CLUSTER:
+            displayName = cluster;
+            break;
+          case BoxByType.NAMESPACE:
+            displayName = namespace;
+            break;
+        }
+        break;
+      case NodeType.SERVICE:
+        if (nodeData.isServiceEntry) {
+          link = `/namespaces/${encodeURIComponent(
+            nodeData.isServiceEntry.namespace
+          )}/istio/serviceentries/${encodeURIComponent(service!)}`;
+        } else {
+          link = `/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(service!)}`;
+        }
+        key = `${namespace}.svc.${service}`;
+        displayName = service!;
+        break;
+      case NodeType.WORKLOAD:
+        link = `/namespaces/${encodeURIComponent(namespace)}/workloads/${encodeURIComponent(workload!)}`;
+        key = `${namespace}.wl.${workload}`;
+        displayName = workload!;
+        break;
+      default:
+        // NOOP
+        break;
+    }
   }
 
   if (link && !nodeData.isInaccessible) {
@@ -129,13 +141,18 @@ export const renderBadgedHost = (host: string) => {
   return (
     <div>
       <PFBadge badge={PFBadges.Host} />
-      {host === "*" ? "* (all hosts)" : host}
+      {host === '*' ? '* (all hosts)' : host}
     </div>
   );
 };
 
-export const renderBadgedLink = (nodeData: GraphNodeData, nodeType?: NodeType, label?: string) => {
-  const link = getLink(nodeData, nodeType);
+export const renderBadgedLink = (
+  nodeData: GraphNodeData,
+  nodeType?: NodeType,
+  label?: string,
+  linkGenerator?: () => LinkInfo
+) => {
+  const link = getLink(nodeData, nodeType, linkGenerator);
 
   return (
     <>

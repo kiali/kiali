@@ -285,6 +285,10 @@ export interface SEInfo {
   namespace: string; // namespace represents where the ServiceEntry object is defined and not necessarily the namespace of the node.
 }
 
+export interface WEInfo {
+  name: string;
+}
+
 // Node data expected from server
 export interface GraphNodeData {
   id: string;
@@ -311,7 +315,7 @@ export interface GraphNodeData {
   hasVS?: {
     hostnames?: string[];
   };
-  hasWorkloadEntry?: boolean;
+  hasWorkloadEntry?: WEInfo[];
   isBox?: string;
   isDead?: boolean;
   isIdle?: boolean;
