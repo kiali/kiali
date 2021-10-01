@@ -6165,7 +6165,10 @@
           "$ref": "#/definitions/VSInfo"
         },
         "hasWorkloadEntry": {
-          "type": "boolean",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WEInfo"
+          },
           "x-go-name": "HasWorkloadEntry"
         },
         "id": {
@@ -7343,6 +7346,21 @@
       "type": "string",
       "title": "ValueType is the type of a value stored in KeyValue struct.",
       "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
+    },
+    "WEInfo": {
+      "description": "WEInfo provides static information about a workload entry\nassociated with a workload node.",
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "description": "Name of the workload entry object",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/graph"
     },
     "Workload": {
       "description": "Workload has the details of a workload",

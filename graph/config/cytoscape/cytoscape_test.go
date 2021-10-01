@@ -90,10 +90,23 @@ func TestHasWorkloadEntryAddedToGraph(t *testing.T) {
 	traffic := graph.NewTrafficMap()
 
 	n0 := graph.NewNode("testCluster", "appNamespace", "ratings", "appNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
-	n0.Metadata[graph.HasWorkloadEntry] = true
+	n0.Metadata[graph.HasWorkloadEntry] = []graph.WEInfo{{Name: "ratings-v1"}}
 	traffic[n0.ID] = &n0
 	cytoConfig := NewConfig(traffic, graph.ConfigOptions{})
 
 	cytoNode := cytoConfig.Elements.Nodes[0]
-	assert.True(cytoNode.Data.HasWorkloadEntry)
+	assert.Equal(cytoNode.Data.HasWorkloadEntry, n0.Metadata[graph.HasWorkloadEntry])
+}
+
+func TestHasWorkloadEntryEmpty(t *testing.T) {
+	assert := assert.New(t)
+
+	traffic := graph.NewTrafficMap()
+
+	n0 := graph.NewNode("testCluster", "appNamespace", "ratings", "appNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
+	traffic[n0.ID] = &n0
+	cytoConfig := NewConfig(traffic, graph.ConfigOptions{})
+
+	cytoNode := cytoConfig.Elements.Nodes[0]
+	assert.Empty(cytoNode.Data.HasWorkloadEntry)
 }
