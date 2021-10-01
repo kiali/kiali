@@ -1,19 +1,18 @@
 package appender_test
 
 import (
-	"errors"
 	"testing"
 
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -23,21 +22,16 @@ const (
 	appNamespace = "testNamespace"
 )
 
-func setupBusinessLayer(istioObjects ...kubernetes.IstioObject) *business.Layer {
+func setupBusinessLayer(istioObjects ...runtime.Object) *business.Layer {
 	k8s := kubetest.NewK8SClientMock()
 
 	return setupBusinessLayerWithKube(k8s, istioObjects...)
 }
 
-func setupBusinessLayerWithKube(k8s *kubetest.K8SClientMock, istioObjects ...kubernetes.IstioObject) *business.Layer {
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.MatchedBy(func(ns string) bool {
-		return ns == appNamespace
-	}), "workloadentries", "").Return(istioObjects, nil)
-	k8s.On("GetIstioObjects", mock.MatchedBy(func(ns string) bool {
-		return ns != appNamespace
-	}), "workloadentries", "").Return([]kubernetes.IstioObject{}, errors.New("outsider should be ignored"))
+func setupBusinessLayerWithKube(k8s *kubetest.K8SClientMock, istioObjects ...runtime.Object) *business.Layer {
 
+	k8s.MockIstio(istioObjects...)
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	config.Set(config.NewConfig())
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
@@ -45,31 +39,20 @@ func setupBusinessLayerWithKube(k8s *kubetest.K8SClientMock, istioObjects ...kub
 }
 
 func setupWorkloadEntries() *business.Layer {
-	workloadV1 := &kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "workloadA",
-			Namespace: appNamespace,
-		},
-		Spec: map[string]interface{}{
-			"labels": map[string]interface{}{
-				"app":     appName,
-				"version": "v1",
-			},
-		},
+	workloadV1 := &networking_v1alpha3.WorkloadEntry{}
+	workloadV1.Name = "workloadA"
+	workloadV1.Namespace = appNamespace
+	workloadV1.Spec.Labels = map[string]string{
+		"app":     appName,
+		"version": "v1",
 	}
-	workloadV2 := &kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "workloadB",
-			Namespace: appNamespace,
-		},
-		Spec: map[string]interface{}{
-			"labels": map[string]interface{}{
-				"app":     appName,
-				"version": "v2",
-			},
-		},
+	workloadV2 := &networking_v1alpha3.WorkloadEntry{}
+	workloadV2.Name = "workloadB"
+	workloadV2.Namespace = appNamespace
+	workloadV2.Spec.Labels = map[string]string{
+		"app":     appName,
+		"version": "v2",
 	}
-
 	return setupBusinessLayer(workloadV1, workloadV2)
 }
 
@@ -172,29 +155,20 @@ func TestWorkloadEntry(t *testing.T) {
 func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 	assert := require.New(t)
 
-	workloadV1 := &kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "workloadA",
-			Namespace: appNamespace,
-		},
-		Spec: map[string]interface{}{
-			"labels": map[string]interface{}{
-				"app":     "pastamaker",
-				"version": "v1",
-			},
-		},
+	workloadV1 := &networking_v1alpha3.WorkloadEntry{}
+	workloadV1.Name = "workloadA"
+	workloadV1.Namespace = appNamespace
+	workloadV1.Spec.Labels = map[string]string{
+		"app":     "pastamaker",
+		"version": "v1",
 	}
-	workloadV2 := &kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "workloadB",
-			Namespace: appNamespace,
-		},
-		Spec: map[string]interface{}{
-			"labels": map[string]interface{}{
-				"app":     "pastamaker",
-				"version": "v2",
-			},
-		},
+
+	workloadV2 := &networking_v1alpha3.WorkloadEntry{}
+	workloadV2.Name = "workloadB"
+	workloadV2.Namespace = appNamespace
+	workloadV2.Spec.Labels = map[string]string{
+		"app":     "pastamaker",
+		"version": "v2",
 	}
 
 	businessLayer := setupBusinessLayer(workloadV1, workloadV2)
@@ -252,41 +226,28 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 	assert := require.New(t)
 
-	workloadV1A := &kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "workloadV1A",
-			Namespace: appNamespace,
-		},
-		Spec: map[string]interface{}{
-			"labels": map[string]interface{}{
-				"app":     appName,
-				"version": "v1",
-			},
-		},
+	workloadV1A := &networking_v1alpha3.WorkloadEntry{}
+	workloadV1A.Name = "workloadV1A"
+	workloadV1A.Namespace = appNamespace
+	workloadV1A.Spec.Labels = map[string]string{
+		"app":     appName,
+		"version": "v1",
 	}
-	workloadV1B := &kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "workloadV1B",
-			Namespace: appNamespace,
-		},
-		Spec: map[string]interface{}{
-			"labels": map[string]interface{}{
-				"app":     appName,
-				"version": "v1",
-			},
-		},
+
+	workloadV1B := &networking_v1alpha3.WorkloadEntry{}
+	workloadV1B.Name = "workloadV1B"
+	workloadV1B.Namespace = appNamespace
+	workloadV1B.Spec.Labels = map[string]string{
+		"app":     appName,
+		"version": "v1",
 	}
-	workloadV2 := &kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "workloadV2",
-			Namespace: appNamespace,
-		},
-		Spec: map[string]interface{}{
-			"labels": map[string]interface{}{
-				"app":     appName,
-				"version": "v2",
-			},
-		},
+
+	workloadV2 := &networking_v1alpha3.WorkloadEntry{}
+	workloadV2.Name = "workloadV2"
+	workloadV2.Namespace = appNamespace
+	workloadV2.Spec.Labels = map[string]string{
+		"app":     appName,
+		"version": "v2",
 	}
 
 	businessLayer := setupBusinessLayer(workloadV1A, workloadV1B, workloadV2)

@@ -15,21 +15,20 @@ func TestGetResources(t *testing.T) {
 	assert.NoError(err)
 	assert.NotEmpty(loader)
 
-	rscs := loader.GetResources("PeerAuthentication")
-	assert.Len(rscs, 2)
+	rscs := loader.GetResources()
+	assert.Equal(len(rscs.PeerAuthentications), 2)
 
-	rsc := rscs[0]
-	assert.Equal(rsc.GetObjectKind().GroupVersionKind().Kind, "PeerAuthentication")
-	assert.Equal(rsc.GetObjectMeta().Name, "default")
-	assert.Equal(rsc.GetObjectMeta().Namespace, "bookinfo")
-	assert.NotEmpty(rsc.GetSpec())
+	rsc := rscs.PeerAuthentications[0]
+	assert.Equal(rsc.Kind, "PeerAuthentication")
+	assert.Equal(rsc.Name, "default")
+	assert.Equal(rsc.Namespace, "bookinfo")
+	assert.NotEmpty(rsc.Spec)
 
-	rsc = rscs[1]
-	assert.Equal(rsc.GetObjectKind().GroupVersionKind().Kind, "PeerAuthentication")
-	assert.Equal(rsc.GetObjectMeta().Name, "default")
-	assert.Equal(rsc.GetObjectMeta().Namespace, "istio-system")
-	assert.NotEmpty(rsc.GetSpec())
+	rsc = rscs.PeerAuthentications[1]
+	assert.Equal(rsc.Kind, "PeerAuthentication")
+	assert.Equal(rsc.Name, "default")
+	assert.Equal(rsc.Namespace, "istio-system")
+	assert.NotEmpty(rsc.Spec)
 
-	rscs = loader.GetResources("VirtualService")
-	assert.Len(rscs, 0)
+	assert.Equal(len(rscs.VirtualServices), 0)
 }

@@ -208,7 +208,7 @@ func TestNeedsIdentities(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		ap := loader.GetResource("AuthorizationPolicy", test.name, "bookinfo")
+		ap := loader.FindAuthorizationPolicy(test.name, "bookinfo")
 		needs, paths := needsMtls(ap)
 		if needs != test.result {
 			t.Errorf("%s needs identities: %t. Expected to be %t", test.name, needs, test.result)
@@ -237,17 +237,17 @@ func mtlsCheckerTestPrep(scenario string, autoMtls bool, t *testing.T) models.Is
 	loader := yamlFixtureLoaderFor(scenario)
 	err := loader.Load()
 	if err != nil {
-		t.Error("Error loading test data.")
+		t.Errorf("Error loading scenario [%s] test data. Error: [%s]", scenario, err)
 	}
 
 	validations := MtlsEnabledChecker{
 		Namespace:             "bookinfo",
-		AuthorizationPolicies: loader.GetResources("AuthorizationPolicy"),
+		AuthorizationPolicies: loader.GetResources().AuthorizationPolicies,
 		Services:              fakeServices([]string{"ratings"}),
 		MtlsDetails: kubernetes.MTLSDetails{
-			DestinationRules:        loader.GetResources("DestinationRule"),
-			MeshPeerAuthentications: loader.GetResourcesIn("PeerAuthentication", "istio-system"),
-			PeerAuthentications:     loader.GetResourcesNotIn("PeerAuthentication", "istio-system"),
+			DestinationRules:        loader.GetResources().DestinationRules,
+			MeshPeerAuthentications: loader.FindPeerAuthenticationIn("istio-system"),
+			PeerAuthentications:     loader.FindPeerAuthenticationNotIn("istio-system"),
 			EnabledAutoMtls:         autoMtls,
 		},
 	}.Check()

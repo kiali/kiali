@@ -1,12 +1,14 @@
 package destinationrules
 
 import (
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type NamespaceWideMTLSChecker struct {
-	DestinationRule kubernetes.IstioObject
+	DestinationRule networking_v1alpha3.DestinationRule
 	MTLSDetails     kubernetes.MTLSDetails
 }
 
@@ -14,7 +16,7 @@ func (m NamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
 	// if DestinationRule doesn't enable mTLS, stop validation with any check
-	if enabled, _ := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(m.DestinationRule.GetObjectMeta().Namespace, m.DestinationRule); !enabled {
+	if enabled, _ := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(m.DestinationRule.Namespace, m.DestinationRule); !enabled {
 		return validations, true
 	}
 

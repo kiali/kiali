@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -19,8 +20,8 @@ func TestEgressHostFormatCorrect(t *testing.T) {
 
 	vals, valid := EgressHostChecker{
 		Services:       fakeServices([]string{"details", "reviews"}),
-		ServiceEntries: kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{data.CreateExternalServiceEntry()}),
-		Sidecar: sidecarWithHosts([]interface{}{
+		ServiceEntries: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{data.CreateExternalServiceEntry()}),
+		Sidecar: *sidecarWithHosts([]string{
 			"*/*",
 			"~/*",
 			"./*",
@@ -41,7 +42,7 @@ func TestEgressHostFormatCorrect(t *testing.T) {
 func TestEgressHostCrossNamespace(t *testing.T) {
 	assert := assert.New(t)
 
-	hosts := []interface{}{
+	hosts := []string{
 		"*/*.example.com",
 		"*/www.example.com",
 		"*/example.prod.svc.cluster.local",
@@ -53,7 +54,7 @@ func TestEgressHostCrossNamespace(t *testing.T) {
 	}
 
 	vals, valid := EgressHostChecker{
-		Sidecar: sidecarWithHosts(hosts),
+		Sidecar: *sidecarWithHosts(hosts),
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -71,7 +72,7 @@ func TestEgressInvalidHostFormat(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := EgressHostChecker{
-		Sidecar: sidecarWithHosts([]interface{}{
+		Sidecar: *sidecarWithHosts([]string{
 			"no-dash-used",
 		}),
 	}.Check()
@@ -89,7 +90,7 @@ func TestEgressServiceNotFound(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := EgressHostChecker{
-		Sidecar: sidecarWithHosts([]interface{}{
+		Sidecar: *sidecarWithHosts([]string{
 			"bookinfo/boggus.bookinfo.svc.cluster.local",
 			"bookinfo/boggus.org",
 		}),
@@ -106,7 +107,7 @@ func TestEgressServiceNotFound(t *testing.T) {
 	}
 }
 
-func sidecarWithHosts(hl []interface{}) kubernetes.IstioObject {
+func sidecarWithHosts(hl []string) *networking_v1alpha3.Sidecar {
 	return data.AddHostsToSidecar(hl, data.CreateSidecar("sidecar", "bookinfo"))
 }
 

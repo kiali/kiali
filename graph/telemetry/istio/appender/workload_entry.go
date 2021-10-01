@@ -58,18 +58,16 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 		log.Tracef("WorkloadEntries found: %d", len(istioCfg.WorkloadEntries))
 
 		for _, entry := range istioCfg.WorkloadEntries {
-			if labels, ok := entry.Spec.Labels.(map[string]interface{}); ok {
-				if labels[appLabel] == n.App && labels[versionLabel] == n.Version {
-					if n.Metadata[graph.HasWorkloadEntry] == nil {
-						n.Metadata[graph.HasWorkloadEntry] = []graph.WEInfo{}
-					}
-
-					we := graph.WEInfo{Name: entry.Metadata.Name}
-					weMetadata := n.Metadata[graph.HasWorkloadEntry].([]graph.WEInfo)
-					weMetadata = append(weMetadata, we)
-					n.Metadata[graph.HasWorkloadEntry] = weMetadata
-					log.Trace("Found matching WorkloadEntry")
+			if entry.Spec.Labels[appLabel] == n.App && entry.Spec.Labels[versionLabel] == n.Version {
+				if n.Metadata[graph.HasWorkloadEntry] == nil {
+					n.Metadata[graph.HasWorkloadEntry] = []graph.WEInfo{}
 				}
+
+				we := graph.WEInfo{Name: entry.Name}
+				weMetadata := n.Metadata[graph.HasWorkloadEntry].([]graph.WEInfo)
+				weMetadata = append(weMetadata, we)
+				n.Metadata[graph.HasWorkloadEntry] = weMetadata
+				log.Trace("Found matching WorkloadEntry")
 			}
 		}
 	}

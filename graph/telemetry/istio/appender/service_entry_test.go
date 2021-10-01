@@ -7,54 +7,50 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
 const testCluster = "testcluster"
 
-func setupBusinessLayer(istioObjects ...kubernetes.IstioObject) *business.Layer {
+func setupBusinessLayer(istioObjects ...runtime.Object) *business.Layer {
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	k8s := kubetest.NewK8SClientMock()
+	k8s.MockIstio(istioObjects...)
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return(istioObjects, nil)
-	config.Set(config.NewConfig())
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	return businessLayer
 }
 
-func setupServiceEntries(exportTo interface{}) *business.Layer {
-	externalSE := &kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "externalSE",
-			Namespace: "testNamespace",
-		},
-		Spec: map[string]interface{}{
-			"exportTo": exportTo,
-			"hosts": []interface{}{
-				"host1.external.com",
-				"host2.external.com"},
-			"location": "MESH_EXTERNAL",
-		},
+func setupServiceEntries(exportTo []string) *business.Layer {
+	externalSE := &networking_v1alpha3.ServiceEntry{}
+	externalSE.Name = "externalSE"
+	externalSE.Namespace = "testNamespace"
+	externalSE.Spec.ExportTo = exportTo
+	externalSE.Spec.Hosts = []string{
+		"host1.external.com",
+		"host2.external.com",
 	}
-	internalSE := &kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "internalSE",
-			Namespace: "testNamespace",
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				"internalHost1",
-				"internalHost2.namespace.svc.cluster.local"},
-			"location": "MESH_INTERNAL",
-		},
+	externalSE.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_EXTERNAL
+
+	internalSE := &networking_v1alpha3.ServiceEntry{}
+	internalSE.Name = "internalSE"
+	internalSE.Namespace = "testNamespace"
+	internalSE.Spec.Hosts = []string{
+		"internalHost1",
+		"internalHost2.namespace.svc.cluster.local",
 	}
+	internalSE.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_INTERNAL
 
 	return setupBusinessLayer(externalSE, internalSE)
 }
@@ -244,7 +240,7 @@ func TestServiceEntry(t *testing.T) {
 func TestServiceEntryExportAll(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries([]interface{}{"*"})
+	businessLayer := setupServiceEntries([]string{"*"})
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -352,7 +348,7 @@ func TestServiceEntryExportAll(t *testing.T) {
 func TestServiceEntryExportNamespaceFound(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries([]interface{}{"fooNamespace", "testNamespace"})
+	businessLayer := setupServiceEntries([]string{"fooNamespace", "testNamespace"})
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -460,7 +456,7 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries([]interface{}{"."})
+	businessLayer := setupServiceEntries([]string{"."})
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -568,7 +564,7 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries([]interface{}{"fooNamespace", "barNamespace"})
+	businessLayer := setupServiceEntries([]string{"fooNamespace", "barNamespace"})
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -679,23 +675,18 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	// Mock the k8s client with a "global" ServiceEntry
 	k8s := kubetest.NewK8SClientMock()
 
-	remoteSE := kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "externalSE",
-			Namespace: "testNamespace",
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				"svc1.namespace.global"},
-			"location": "MESH_INTERNAL",
-		},
+	remoteSE := &networking_v1alpha3.ServiceEntry{}
+	remoteSE.Name = "externalSE"
+	remoteSE.Namespace = "namespace"
+	remoteSE.Spec.Hosts = []string{
+		"svc1.namespace.global",
 	}
+	remoteSE.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_INTERNAL
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
-		&remoteSE},
-		nil)
 	config.Set(config.NewConfig())
+
+	k8s.MockIstio(remoteSE)
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
 
@@ -744,7 +735,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 		if n.Service == "externalSE" {
 			numMatches++
 			assert.Equal("MESH_INTERNAL", n.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
-			assert.Equal("testNamespace", n.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Namespace)
+			assert.Equal("namespace", n.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Namespace)
 		}
 	}
 	assert.Equal(1, numMatches)
@@ -753,39 +744,28 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	k8s := kubetest.NewK8SClientMock()
 
-	SE1 := kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "SE1",
-			Namespace: "fooNamespace", // definition namespace is irrelevant in this case
-		},
-		Spec: map[string]interface{}{
-			"exportTo": []interface{}{"*"}, // can match a service in any namespace
-			"hosts": []interface{}{
-				"host1.external.com",
-			},
-			"location": "MESH_EXTERNAL",
-		},
+	SE1 := &networking_v1alpha3.ServiceEntry{}
+	SE1.Name = "SE1"
+	SE1.Namespace = "fooNamespace"
+	SE1.Spec.ExportTo = []string{"*"}
+	SE1.Spec.Hosts = []string{
+		"host1.external.com",
 	}
-	SE2 := kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "SE2",
-			Namespace: "testNamespace",
-		},
-		Spec: map[string]interface{}{
-			"exportTo": []interface{}{"."}, // can match a service in only testNamespace
-			"hosts": []interface{}{
-				"host1.external.com",
-				"host2.external.com",
-			},
-			"location": "MESH_EXTERNAL",
-		},
+	SE1.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_EXTERNAL
+
+	SE2 := &networking_v1alpha3.ServiceEntry{}
+	SE2.Name = "SE2"
+	SE2.Namespace = "testNamespace"
+	SE2.Spec.ExportTo = []string{"."}
+	SE2.Spec.Hosts = []string{
+		"host1.external.com",
+		"host2.external.com",
 	}
+	SE2.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_EXTERNAL
+
+	k8s.MockIstio(SE1, SE2)
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
-		&SE1,
-		&SE2},
-		nil)
 	config.Set(config.NewConfig())
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
@@ -888,39 +868,28 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	k8s := kubetest.NewK8SClientMock()
 
-	SE1 := kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "SE1",
-			Namespace: "fooNamespace", // definition namespace is irrelevant in this case
-		},
-		Spec: map[string]interface{}{
-			"exportTo": []interface{}{"*"}, // can match a service in any namespace
-			"hosts": []interface{}{
-				"host1.external.com",
-			},
-			"location": "MESH_EXTERNAL",
-		},
+	SE1 := &networking_v1alpha3.ServiceEntry{}
+	SE1.Name = "SE1"
+	SE1.Namespace = "otherNamespace"
+	SE1.Spec.ExportTo = []string{"*"}
+	SE1.Spec.Hosts = []string{
+		"host1.external.com",
 	}
-	SE2 := kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "SE2",
-			Namespace: "testNamespace",
-		},
-		Spec: map[string]interface{}{
-			"exportTo": []interface{}{"."}, // can match a service in only testNamespace
-			"hosts": []interface{}{
-				"host1.external.com",
-				"host2.external.com",
-			},
-			"location": "MESH_EXTERNAL",
-		},
+	SE1.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_EXTERNAL
+
+	SE2 := &networking_v1alpha3.ServiceEntry{}
+	SE2.Name = "SE2"
+	SE2.Namespace = "testNamespace"
+	SE2.Spec.ExportTo = []string{"."}
+	SE2.Spec.Hosts = []string{
+		"host1.external.com",
+		"host2.external.com",
 	}
+	SE2.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_EXTERNAL
+
+	k8s.MockIstio(SE1, SE2)
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
-		&SE1,
-		&SE2},
-		nil)
 	config.Set(config.NewConfig())
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
@@ -1011,7 +980,7 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	assert.Equal(true, found2)
 	assert.Equal(0, len(SE1Node.Edges))
 	assert.Equal("MESH_EXTERNAL", SE1Node.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
-	assert.Equal("fooNamespace", SE1Node.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Namespace)
+	assert.Equal("otherNamespace", SE1Node.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Namespace)
 	assert.Equal(1, len(SE1Node.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 
 	notSEHost2ServiceID, _ = graph.Id(testCluster, "testNamespace", "host2.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
@@ -1033,23 +1002,19 @@ func TestServiceEntryMultipleEdges(t *testing.T) {
 		app           = "reviews"
 	)
 
-	internalSE := &kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      seServiceName,
-			Namespace: namespace,
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				"reviews",
-				"reviews.testNamespace.svc.cluster.local"},
-			"location": "MESH_INTERNAL",
-			"workloadSelector": map[string]interface{}{
-				"labels": map[string]string{
-					"app": "reviews",
-				},
-			},
+	internalSE := &networking_v1alpha3.ServiceEntry{}
+	internalSE.Name = seServiceName
+	internalSE.Namespace = namespace
+	internalSE.Spec.Hosts = []string{
+		"reviews",
+		"reviews.testNamespace.svc.cluster.local",
+	}
+	internalSE.Spec.WorkloadSelector = &api_networking_v1alpha3.WorkloadSelector{
+		Labels: map[string]string{
+			"app": "reviews",
 		},
 	}
+	internalSE.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_INTERNAL
 
 	businessLayer := setupBusinessLayer(internalSE)
 

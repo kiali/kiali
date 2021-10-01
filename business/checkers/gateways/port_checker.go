@@ -3,32 +3,27 @@ package gateways
 import (
 	"fmt"
 
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type PortChecker struct {
-	Gateway kubernetes.IstioObject
+	Gateway networking_v1alpha3.Gateway
 }
 
 func (p PortChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
-
-	if serversSpec, found := p.Gateway.GetSpec()["servers"]; found {
-		if servers, ok := serversSpec.([]interface{}); ok {
-			for serverIndex, server := range servers {
-				if serverDef, ok := server.(map[string]interface{}); ok {
-					if portDef, found := serverDef["port"]; found {
-						if !kubernetes.ValidatePort(portDef) {
-							validation := models.Build("port.name.mismatch",
-								fmt.Sprintf("spec/servers[%d]/port/name", serverIndex))
-							validations = append(validations, &validation)
-						}
-					}
-				}
-			}
+	for serverIndex, server := range p.Gateway.Spec.Servers {
+		if server == nil {
+			continue
+		}
+		if !kubernetes.ValidatePort(server.Port) {
+			validation := models.Build("port.name.mismatch",
+				fmt.Sprintf("spec/servers[%d]/port/name", serverIndex))
+			validations = append(validations, &validation)
 		}
 	}
-
 	return validations, len(validations) == 0
 }

@@ -1,34 +1,24 @@
 package gateways
 
 import (
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type SelectorChecker struct {
 	WorkloadsPerNamespace map[string]models.WorkloadList
-	Gateway               kubernetes.IstioObject
+	Gateway               networking_v1alpha3.Gateway
 }
 
 // Check verifies that the Gateway's selector's labels do match a known service inside the same namespace as recommended/required by the docs
 func (s SelectorChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
-
-	if selectorSpec, found := s.Gateway.GetSpec()["selector"]; found {
-		if selectors, ok := selectorSpec.(map[string]interface{}); ok {
-			labelSelectors := make(map[string]string, len(selectors))
-			for k, v := range selectors {
-				labelSelectors[k] = v.(string)
-			}
-			if !s.hasMatchingWorkload(labelSelectors) {
-				validation := models.Build("gateways.selector", "spec/selector")
-				validations = append(validations, &validation)
-			}
-		}
+	if !s.hasMatchingWorkload(s.Gateway.Spec.Selector) {
+		validation := models.Build("gateways.selector", "spec/selector")
+		validations = append(validations, &validation)
 	}
-
 	return validations, len(validations) == 0
 }
 
