@@ -250,3 +250,39 @@ export const drToIstioItems = (drs: DestinationRule[], validations: Validations)
   });
   return istioItems;
 };
+
+export const gwToIstioItems = (gws: Gateway[], vss: VirtualService[], validations: Validations): IstioConfigItem[] => {
+  const istioItems: IstioConfigItem[] = [];
+  const hasValidations = (name: string) => validations.gateway && validations.gateway[name];
+  const vsGateways = new Set();
+
+  const typeNameProto = dicIstioType['gateways']; // ex. serviceEntries -> ServiceEntry
+  const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
+  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+
+  vss.forEach(vs => {
+    vs.spec.gateways?.forEach(vsGatewayName => {
+      if (vsGatewayName.indexOf('/') < 0) {
+        vsGateways.add(vs.metadata.namespace + '/' + vsGatewayName);
+      } else {
+        vsGateways.add(vsGatewayName);
+      }
+    });
+  });
+
+  gws.forEach(gw => {
+    if (vsGateways.has(gw.metadata.namespace + '/' + gw.metadata.name)) {
+      const item = {
+        namespace: gw.metadata.namespace || '',
+        type: typeName,
+        name: gw.metadata.name,
+        creationTimestamp: gw.metadata.creationTimestamp,
+        resourceVersion: gw.metadata.resourceVersion,
+        validation: hasValidations(gw.metadata.name) ? validations.gateway[gw.metadata.name] : undefined
+      };
+      item[entryName] = gw;
+      istioItems.push(item);
+    }
+  });
+  return istioItems;
+};
