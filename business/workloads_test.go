@@ -834,3 +834,31 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 
 	assert.Equal(len(pods), len(workload.Pods))
 }
+
+func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	const logs = `2021-10-05T00:32:40.309334Z     debug   envoy http      [C57][S7648448766062793478] request end stream
+2021-10-05T00:32:40.309425Z     debug   envoy router    [C57][S7648448766062793478] cluster 'inbound|9080||' match for URL '/details/0'
+2021-10-05T00:32:40.309438Z     debug   envoy upstream  Using existing host 172.17.0.12:9080.
+2021-10-05T00:32:40.309457Z     debug   envoy router    [C57][S7648448766062793478] router decoding headers:
+2021-10-05T00:32:40.309457Z     ':authority', 'details:9080'
+2021-10-05T00:32:40.309457Z     ':path', '/details/0'
+2021-10-05T00:32:40.309457Z     ':method', 'GET'
+2021-10-05T00:32:40.309457Z     ':scheme', 'http'`
+	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(&kubernetes.PodLogs{Logs: logs}, nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	svc := setupWorkloadService(k8s)
+
+	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{IsProxy: true, PodLogOptions: core_v1.PodLogOptions{Container: "istio-proxy"}})
+
+	assert.Equal(8, len(podLogs.Entries))
+	for _, entry := range podLogs.Entries {
+		assert.Nil(entry.AccessLog)
+	}
+}

@@ -391,7 +391,21 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 		if opts.IsProxy {
 			engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
 			al, err := engardeParser.Parse(entry.Message)
-			if err == nil {
+			// engardeParser.Parse will not throw errors even if no fields
+			// were parsed out. Checking here that some fields were actually
+			// set before setting the AccessLog to an empty object. See issue #4346.
+			if err != nil || isAccessLogEmpty(al) {
+				if err != nil {
+					log.Debugf("AccessLog parse failure: %s", err.Error())
+				}
+				// try to parse out the time manually
+				tokens := strings.SplitN(entry.Message, " ", 2)
+				timestampToken := strings.Trim(tokens[0], "[]")
+				t, err := time.Parse(time.RFC3339, timestampToken)
+				if err == nil {
+					parsedTimestamp = t
+				}
+			} else {
 				entry.AccessLog = al
 				t, err := time.Parse(time.RFC3339, al.Timestamp)
 				if err == nil {
@@ -402,15 +416,6 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 				entry.AccessLog.MixerStatus = ""
 				entry.AccessLog.OriginalMessage = ""
 				entry.AccessLog.ParseError = ""
-			} else {
-				log.Debugf("AccessLog parse failure: %s", err.Error())
-				// try to parse out the time manually
-				tokens := strings.SplitN(entry.Message, " ", 2)
-				timestampToken := strings.Trim(tokens[0], "[]")
-				t, err := time.Parse(time.RFC3339, timestampToken)
-				if err == nil {
-					parsedTimestamp = t
-				}
 			}
 		}
 
@@ -438,6 +443,38 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 // GetPodLogs returns pod logs given the provided options
 func (in *WorkloadService) GetPodLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
 	return in.getParsedLogs(namespace, name, opts)
+}
+
+func isAccessLogEmpty(al *parser.AccessLog) bool {
+	if al == nil {
+		return true
+	}
+
+	return (al.Authority == "" &&
+		al.BytesReceived == "" &&
+		al.BytesSent == "" &&
+		al.DownstreamLocal == "" &&
+		al.DownstreamRemote == "" &&
+		al.Duration == "" &&
+		al.ForwardedFor == "" &&
+		al.Method == "" &&
+		al.MixerStatus == "" &&
+		al.Protocol == "" &&
+		al.RequestId == "" &&
+		al.RequestedServer == "" &&
+		al.ResponseFlags == "" &&
+		al.RouteName == "" &&
+		al.StatusCode == "" &&
+		al.TcpServiceTime == "" &&
+		al.Timestamp == "" &&
+		al.UpstreamCluster == "" &&
+		al.UpstreamFailureReason == "" &&
+		al.UpstreamLocal == "" &&
+		al.UpstreamService == "" &&
+		al.UpstreamServiceTime == "" &&
+		al.UriParam == "" &&
+		al.UriPath == "" &&
+		al.UserAgent == "")
 }
 
 func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (models.Workloads, error) {
