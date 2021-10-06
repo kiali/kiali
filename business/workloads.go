@@ -330,7 +330,7 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 	if k8sOpts.SinceTime != nil {
 		startTime = &k8sOpts.SinceTime.Time
 	}
-	
+
 	engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
 
 	for _, line := range lines {
