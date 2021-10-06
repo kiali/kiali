@@ -330,6 +330,8 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 	if k8sOpts.SinceTime != nil {
 		startTime = &k8sOpts.SinceTime.Time
 	}
+	
+	engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
 
 	for _, line := range lines {
 		entry := LogEntry{
@@ -389,7 +391,6 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 		// If this is an istio access log, then parse it out. Prefer the access log time over the k8s time
 		// as it is the actual time as opposed to the k8s store time.
 		if opts.IsProxy {
-			engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
 			al, err := engardeParser.Parse(entry.Message)
 			// engardeParser.Parse will not throw errors even if no fields
 			// were parsed out. Checking here that some fields were actually
@@ -450,7 +451,8 @@ func isAccessLogEmpty(al *parser.AccessLog) bool {
 		return true
 	}
 
-	return (al.Authority == "" &&
+	return (al.Timestamp == "" &&
+		al.Authority == "" &&
 		al.BytesReceived == "" &&
 		al.BytesSent == "" &&
 		al.DownstreamLocal == "" &&
@@ -466,7 +468,6 @@ func isAccessLogEmpty(al *parser.AccessLog) bool {
 		al.RouteName == "" &&
 		al.StatusCode == "" &&
 		al.TcpServiceTime == "" &&
-		al.Timestamp == "" &&
 		al.UpstreamCluster == "" &&
 		al.UpstreamFailureReason == "" &&
 		al.UpstreamLocal == "" &&
