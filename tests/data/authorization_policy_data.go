@@ -40,3 +40,32 @@ func CreateAuthorizationPolicy(sourceNamespaces, operationMethods, operationHost
 		},
 	}).DeepCopyIstioObject()
 }
+
+func CreateEmptyAuthorizationPolicy(name, namespace string) kubernetes.IstioObject {
+	return (&kubernetes.GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: map[string]interface{}{},
+	}).DeepCopyIstioObject()
+}
+
+func CreateEmptyMeshAuthorizationPolicy(name string) kubernetes.IstioObject {
+	return CreateEmptyAuthorizationPolicy(name, "istio-system")
+}
+
+func CreateAuthorizationPolicyWithMetaAndSelector(name, namespace string, selector map[string]interface{}) kubernetes.IstioObject {
+	return (&kubernetes.GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: map[string]interface{}{
+			"selector": map[string]interface{}{
+				"matchLabels": selector,
+			},
+		},
+	}).DeepCopyIstioObject()
+
+}

@@ -31,12 +31,7 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 		validations.MergeValidations(a.runChecks(authPolicy))
 	}
 
-	// Group Validations
-	validations.MergeValidations(authorization.MtlsEnabledChecker{
-		Namespace:             a.Namespace,
-		AuthorizationPolicies: a.AuthorizationPolicies,
-		MtlsDetails:           a.MtlsDetails,
-	}.Check())
+	validations = validations.MergeValidations(a.runGroupChecks())
 
 	return validations
 }
@@ -61,4 +56,19 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy kubernetes.IstioObject)
 	}
 
 	return models.IstioValidations{key: rrValidation}
+}
+
+func (a AuthorizationPolicyChecker) runGroupChecks() models.IstioValidations {
+	validations := models.IstioValidations{}
+
+	enabledDRCheckers := []GroupChecker{
+		authorization.MtlsEnabledChecker{Namespace: a.Namespace, AuthorizationPolicies: a.AuthorizationPolicies, MtlsDetails: a.MtlsDetails},
+		authorization.UncoveredWorkloadChecker{AuthorizationPolicies: a.AuthorizationPolicies, WorkloadList: a.WorkloadList},
+	}
+
+	for _, checker := range enabledDRCheckers {
+		validations = validations.MergeValidations(checker.Check())
+	}
+
+	return validations
 }

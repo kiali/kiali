@@ -131,6 +131,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "This field requires mTLS to be enabled",
 		Severity: ErrorSeverity,
 	},
+	"authorizationpolicy.workload.needstobecovered": {
+		Code:     "KIA0106",
+		Message:  "This workload is not covered by any authorization policy",
+		Severity: WarningSeverity,
+	},
 	"destinationrules.multimatch": {
 		Code:     "KIA0201",
 		Message:  "More than one DestinationRules for the same host subset combination",
