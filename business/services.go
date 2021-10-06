@@ -39,7 +39,7 @@ func (in *SvcService) GetServiceList(namespace string, linkIstioResources bool) 
 
 	nFetches := 3
 	if linkIstioResources {
-		nFetches = 5
+		nFetches = 6
 	}
 
 	wg := sync.WaitGroup{}
@@ -97,6 +97,7 @@ func (in *SvcService) GetServiceList(namespace string, linkIstioResources bool) 
 	resources := []string{
 		kubernetes.VirtualServices,
 		kubernetes.DestinationRules,
+		kubernetes.Gateways,
 	}
 	linkedResources := map[string]*[]kubernetes.IstioObject{}
 
@@ -147,11 +148,15 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 	// Convert each k8s service into our model
 	virtualServices := []kubernetes.IstioObject{}
 	destinationRules := []kubernetes.IstioObject{}
+	gateways := []kubernetes.IstioObject{}
 	if vs, ok := linkedResources[kubernetes.VirtualServices]; ok {
 		virtualServices = *vs
 	}
 	if dr, ok := linkedResources[kubernetes.DestinationRules]; ok {
 		destinationRules = *dr
+	}
+	if gw, ok := linkedResources[kubernetes.Gateways]; ok {
+		gateways = *gw
 	}
 	for i, item := range svcs {
 		sPods := kubernetes.FilterPodsForService(&item, pods)
@@ -161,7 +166,8 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 		hasSidecar := mPods.HasAnyIstioSidecar()
 		svcVirtualServices := kubernetes.FilterVirtualServices(virtualServices, item.Namespace, item.Name)
 		svcDestinationRules := kubernetes.FilterDestinationRules(destinationRules, item.Namespace, item.Name)
-		allFiltered := append(svcVirtualServices, svcDestinationRules...)
+		svcGateways := kubernetes.FilterGateways(gateways, svcVirtualServices)
+		allFiltered := append(append(svcVirtualServices, svcDestinationRules...), svcGateways...)
 		svcReferences := make([]*models.IstioValidationKey, 0)
 		for _, a := range allFiltered {
 			ref := models.BuildKey(a.GetTypeMeta().Kind, a.GetObjectMeta().Name, a.GetObjectMeta().Namespace)

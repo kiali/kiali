@@ -126,9 +126,10 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 			if linkIstioResources {
 				svcVirtualServices := kubernetes.FilterVirtualServices(*linkedResources[kubernetes.VirtualServices], srv.Namespace, srv.Name)
 				svcDestinationRules := kubernetes.FilterDestinationRules(*linkedResources[kubernetes.DestinationRules], srv.Namespace, srv.Name)
-				allFiltered := append(svcVirtualServices, svcDestinationRules...)
+				svcGateways := kubernetes.FilterGateways(*linkedResources[kubernetes.Gateways], svcVirtualServices)
+				allFiltered := append(append(svcVirtualServices, svcDestinationRules...), svcGateways...)
 				for _, a := range allFiltered {
-					ref := models.BuildKey(a.GetTypeMeta().Kind, a.GetObjectMeta().Namespace, a.GetObjectMeta().Name)
+					ref := models.BuildKey(a.GetTypeMeta().Kind, a.GetObjectMeta().Name, a.GetObjectMeta().Namespace)
 					svcReferences = append(svcReferences, &ref)
 				}
 			}

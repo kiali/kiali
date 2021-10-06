@@ -106,6 +106,37 @@ func FilterVirtualServices(allVs []IstioObject, namespace string, serviceName st
 	return virtualServices
 }
 
+func FilterGateways(allGws []IstioObject, allVs []IstioObject) []IstioObject {
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[Gateways],
+		APIVersion: ApiNetworkingVersion,
+	}
+	var empty struct{}
+	gateways := make([]IstioObject, 0)
+	gatewayNames := make(map[string]struct{})
+	for _, vs := range allVs {
+		if gatewaysSpec, found := vs.GetSpec()["gateways"]; found {
+			if gwns, ok := gatewaysSpec.([]interface{}); ok {
+				for _, gwn := range gwns {
+					if !strings.Contains(gwn.(string), "/") {
+						gatewayNames[vs.GetObjectMeta().Namespace+"/"+gwn.(string)] = empty
+					} else {
+						gatewayNames[gwn.(string)] = empty
+					}
+				}
+			}
+		}
+	}
+	for _, gw := range allGws {
+		if _, ok := gatewayNames[gw.GetObjectMeta().Namespace+"/"+gw.GetObjectMeta().Name]; ok {
+			gwc := gw.DeepCopyIstioObject()
+			gwc.SetTypeMeta(typeMeta)
+			gateways = append(gateways, gwc)
+		}
+	}
+	return gateways
+}
+
 func FilterDestinationRules(allDr []IstioObject, namespace string, serviceName string) []IstioObject {
 	typeMeta := meta_v1.TypeMeta{
 		Kind:       PluralType[DestinationRules],

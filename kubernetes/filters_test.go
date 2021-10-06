@@ -63,3 +63,83 @@ func TestFilterPodsForEndpoints(t *testing.T) {
 	assert.Equal("pod-2", filtered[1].Name)
 	assert.Equal("pod-3", filtered[2].Name)
 }
+
+func TestFilterGateways(t *testing.T) {
+	assert := assert.New(t)
+
+	virtualServices := []IstioObject{
+		&GenericIstioObject{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:        "reviews",
+				Namespace:   "bookinfo",
+				ClusterName: "svc.cluster.local",
+			},
+			Spec: map[string]interface{}{
+				"hosts":    []interface{}{"reviews"},
+				"gateways": []interface{}{"bookinfo/gateway1", "bookinfo2/gateway2", "wronggateway", "bookinfo2/wronggateway2"},
+			},
+		},
+		&GenericIstioObject{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:        "ratings",
+				Namespace:   "bookinfo",
+				ClusterName: "svc.cluster.local",
+			},
+			Spec: map[string]interface{}{
+				"hosts":    []interface{}{"ratings"},
+				"gateways": []interface{}{"gateway4", "gateway2"},
+			},
+		},
+		&GenericIstioObject{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:        "details",
+				Namespace:   "bookinfo",
+				ClusterName: "svc.cluster.local",
+			},
+			Spec: map[string]interface{}{
+				"hosts":    []interface{}{"details"},
+				"gateways": []interface{}{"gateway1", "bookinfo3/gateway3", "wronggateway2"},
+			},
+		},
+	}
+
+	gateways := []IstioObject{
+		&GenericIstioObject{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "gateway1",
+				Namespace: "bookinfo",
+			},
+		},
+		&GenericIstioObject{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "gateway2",
+				Namespace: "bookinfo2",
+			},
+		},
+		&GenericIstioObject{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "gateway3",
+				Namespace: "bookinfo3",
+			},
+		},
+		&GenericIstioObject{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "gateway4",
+				Namespace: "bookinfo",
+			},
+		},
+		&GenericIstioObject{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "gateway5",
+				Namespace: "bookinfo2",
+			},
+		},
+	}
+
+	filtered := FilterGateways(gateways, virtualServices)
+	assert.Len(filtered, 4)
+	assert.Equal("gateway1", filtered[0].GetObjectMeta().Name)
+	assert.Equal("gateway2", filtered[1].GetObjectMeta().Name)
+	assert.Equal("gateway3", filtered[2].GetObjectMeta().Name)
+	assert.Equal("gateway4", filtered[3].GetObjectMeta().Name)
+}
