@@ -8234,6 +8234,7 @@ This type is used to describe a set of objects.
 | DestServices | [][ServiceName](#service-name)| `[]*ServiceName` |  | |  |  |
 | HasCB | boolean| `bool` |  | |  |  |
 | HasFaultInjection | boolean| `bool` |  | |  |  |
+| HasMirroring | boolean| `bool` |  | |  |  |
 | HasMissingSC | boolean| `bool` |  | |  |  |
 | HasRequestRouting | boolean| `bool` |  | |  |  |
 | HasRequestTimeout | boolean| `bool` |  | |  |  |
