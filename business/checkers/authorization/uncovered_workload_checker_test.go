@@ -5,12 +5,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
 
 func TestCoveredworkloads(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	assert := assert.New(t)
 
 	//firstCase - authorization policy namespace is wide mesh and has no selector (covers all workloads)
@@ -33,6 +37,9 @@ func TestCoveredworkloads(t *testing.T) {
 }
 
 func TestUnCoveredWorkloads(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	assert := assert.New(t)
 	//case 1 - authpolicy in root ns with unmatching selector
 	testFailure(assert,
@@ -57,7 +64,7 @@ func testFailure(assert *assert.Assertions, authpolicies []kubernetes.IstioObjec
 	for _, v := range validations {
 		assert.Equal(v.Checks[0].Code+" "+v.Checks[0].Message, models.CheckMessage("authorizationpolicy.workload.needstobecovered"))
 		assert.Equal(v.Checks[0].Severity, models.WarningSeverity)
-		assert.Equal(v.Valid, false)
+		assert.Equal(v.Valid, true)
 	}
 }
 

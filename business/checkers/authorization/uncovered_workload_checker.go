@@ -4,6 +4,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/business/checkers/common"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -29,7 +30,7 @@ func (ucw UncoveredWorkloadChecker) Check() models.IstioValidations {
 			validations.MergeValidations(models.IstioValidations{key: &models.IstioValidation{
 				Name:       wl.Name,
 				ObjectType: wl.Type,
-				Valid:      false,
+				Valid:      true,
 				Checks:     checks,
 			}})
 		}
@@ -54,7 +55,7 @@ func (ucw UncoveredWorkloadChecker) hasCoveringAuthPolicy(wl models.WorkloadList
 			apSelector = labels.SelectorFromSet(apLabels)
 		}
 
-		if apNamespace == "istio-system" || apNamespace == wlNamespace { //wide mesh namespace is "istio-system" or config.Get().IstioNamespace
+		if config.IsIstioNamespace(apNamespace) || apNamespace == wlNamespace {
 			if apSelector == nil || apSelector.Matches(wlSelector) {
 				return true
 			}
