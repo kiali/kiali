@@ -70,7 +70,7 @@ exports[`Overview page renders initial layout 1`] = `
     showClose={true}
     title="Confirm  Traffic Policies ?"
   >
-    Namespace  has existing AuthorizationPolicy objects. Do you want to  them ?
+    Namespace  has existing traffic policies objects. Do you want to  them ?
   </Modal>
 </Fragment>
 `;
