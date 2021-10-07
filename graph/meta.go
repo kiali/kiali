@@ -20,6 +20,7 @@ const (
 	HasCB                 MetadataKey = "hasCB"
 	HasFaultInjection     MetadataKey = "hasFaultInjection"
 	HasHealthConfig       MetadataKey = "hasHealthConfig"
+	HasMirroring          MetadataKey = "hasMirroring"
 	HasMissingSC          MetadataKey = "hasMissingSC"
 	HasTCPTrafficShifting MetadataKey = "hasTCPTrafficShifting"
 	HasTrafficShifting    MetadataKey = "hasTrafficShifting"
