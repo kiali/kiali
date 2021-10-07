@@ -46,13 +46,13 @@ func HttpGet(url string, auth *config.Auth, timeout time.Duration, customHeaders
 }
 
 // HttpPost sends an HTTP Post request to the given URL and returns the response body.
-func HttpPost(url string, auth *config.Auth, body io.Reader, timeout time.Duration) ([]byte, int, error) {
+func HttpPost(url string, auth *config.Auth, body io.Reader, timeout time.Duration, customHeaders map[string]string) ([]byte, int, error) {
 	req, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	transport, err := CreateTransport(auth, &http.Transport{}, timeout, nil)
+	transport, err := CreateTransport(auth, &http.Transport{}, timeout, customHeaders)
 	if err != nil {
 		return nil, 0, err
 	}
