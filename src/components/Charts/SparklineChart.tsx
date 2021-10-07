@@ -126,7 +126,7 @@ export class SparklineChart extends React.Component<Props, State> {
         {this.props.showYAxis ? (
           <ChartAxis
             label="ops"
-            axisLabelComponent={<ChartLabel y={0} x={15} angle={0} renderInPortal={true} />}
+            axisLabelComponent={<ChartLabel y={-5} x={7} angle={0} renderInPortal={true} />}
             tickCount={2}
             dependentAxis={true}
           />
