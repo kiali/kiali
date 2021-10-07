@@ -640,11 +640,11 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                   }
                   const le = e.logEntry!;
                   return !le.accessLog ? (
-                    <>
+                    <div key={`le-d-${i}`} style={{ height: '22px', lineHeight: '22px' }}>
                       <p key={`le-${i}`} style={{ color: le.color!, fontSize: '12px' }}>
                         {this.entryToString(e)}
                       </p>
-                    </>
+                    </div>
                   ) : (
                     <div key={`al-${i}`} style={{ height: '22px', lineHeight: '22px' }}>
                       {this.state.showTimestamps && (
