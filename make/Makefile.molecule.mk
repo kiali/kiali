@@ -12,14 +12,25 @@ MOLECULE_KIALI_CR_SPEC_VERSION ?= default
 
 # Set MOLECULE_USE_DEV_IMAGES to true to use your local Kiali dev builds (not released images from quay.io).
 # To use this, you must have first pushed your local Kiali dev builds via the cluster-push target.
-# Note that you can use your own image names/versions if you set MOLECULE_IMAGE_ENV_ARGS appropriately.
-# This is useful if you want to test a specific released version or images found in a different repo.
-# If the x_IMAGE_NAME env vars are set to 'dev' then the molecule tests will use the internal OpenShift registry location.
 #
-# If MOLECULE_USE_DEV_IMAGES is not set, but MOLECULE_KIALI_CR_SPEC_VERSION is set to something other than 'default'
-# we will ensure we override the image version to be that spec version. We need to do this because the molecule ansible
-# scripts will always set the spec.deployment.image_version override field, so we have to make sure we set it correctly,
-# otherwise it will default to "latest" and that is not what we want when setting the spec.version to a non-default value.
+# If MOLECULE_USE_DEV_IMAGES is not set or set to 'false', that usually means you want to pick up the latest images
+# published on quay.io. However, if you want to test the default Kiali server image that the operator will install, you
+# can set MOLECULE_USE_DEFAULT_SERVER_IMAGE=true. When that is set (in conjunction with MOLECULE_USE_DEV_IMAGES=false),
+# the molecule tests will set the spec.deployment.image_version and spec.deployment.image_name override fields to an
+# empty string thus causing the Kiali server image to be the default image installed by the operator. This is useful
+# when you are installing Kiali via OLM and you want to test with a specific Kiali CR spec.version (MOLECULE_KIALI_CR_SPEC_VERSION)
+# and the default server that is installed by the operator for that spec.version.
+#
+# Note that you can override everything mentioned above in order to use your own image names/versions. You can do this by
+# setting MOLECULE_IMAGE_ENV_ARGS. This is useful if you want to test a specific released version or images found in a different repo.
+# If the x_IMAGE_NAME env vars are set to 'dev' then the molecule tests will use the internal OpenShift registry location.
+# An example MOLECULE_IMAGE_ENV_ARGS can be:
+#
+#   MOLECULE_IMAGE_ENV_ARGS = --env MOLECULE_KIALI_OPERATOR_IMAGE_NAME=quay.io/myuser/kiali-operator \
+#                             --env MOLECULE_KIALI_OPERATOR_IMAGE_VERSION=test \
+#                             --env MOLECULE_KIALI_IMAGE_NAME=quay.io/myuser/kiali \
+#                             --env MOLECULE_KIALI_IMAGE_VERSION=test
+
 ifndef MOLECULE_IMAGE_ENV_ARGS
 ifeq ($(MOLECULE_USE_DEV_IMAGES),true)
 ifeq ($(CLUSTER_TYPE),openshift)
@@ -30,8 +41,10 @@ else ifeq ($(CLUSTER_TYPE),kind)
 MOLECULE_IMAGE_ENV_ARGS = --env MOLECULE_KIALI_OPERATOR_IMAGE_NAME=kiali/kiali-operator --env MOLECULE_KIALI_OPERATOR_IMAGE_VERSION=dev --env MOLECULE_KIALI_IMAGE_NAME=kiali/kiali --env MOLECULE_KIALI_IMAGE_VERSION=dev
 MOLECULE_IMAGE_PULL_POLICY="IfNotPresent"
 endif
-else ifneq ($(MOLECULE_KIALI_CR_SPEC_VERSION),default)
-MOLECULE_IMAGE_ENV_ARGS = --env MOLECULE_KIALI_IMAGE_VERSION=${MOLECULE_KIALI_CR_SPEC_VERSION}
+else ifeq ($(MOLECULE_USE_DEFAULT_SERVER_IMAGE),true)
+export MOLECULE_KIALI_IMAGE_NAME =
+export MOLECULE_KIALI_IMAGE_VERSION =
+MOLECULE_IMAGE_ENV_ARGS = --env 'MOLECULE_KIALI_IMAGE_NAME=' --env 'MOLECULE_KIALI_IMAGE_VERSION='
 endif
 endif
 
