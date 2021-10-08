@@ -144,6 +144,14 @@ Options:
     If false, the cluster will simply pull the 'latest' images published on quay.io.
     Default: false
 
+-udsi|--use-default-server-image <true|false>
+    If true (and --use-dev-images is 'false') no specific image name or version will be specified in
+    the Kiali CRs that are created by the molecule tests. In other words, spec.deployment.image_name and
+    spec.deployment.image_version will be empty strings. This means the Kial server image that will be deployed
+    in the tests will be determined by the operator defaults. This is useful when testing with a specific
+    spec.version (--spec-version) and you want the operator to install the default server image for that version.
+    Default: false
+
 -ul|--upload-logs <true|false>
     If you want to upload the logs to the git repo, set this to true.
     Otherwise, set this to false. The logs will remain on the local machine,
@@ -184,6 +192,7 @@ while [[ $# -gt 0 ]]; do
     -st|--skip-tests)             SKIP_TESTS="$2";            shift;shift; ;;
     -sv|--spec-version)           SPEC_VERSION="$2";          shift;shift; ;;
     -udi|--use-dev-images)        USE_DEV_IMAGES="$2";        shift;shift; ;;
+    -udsi|--use-default-server-image) USE_DEFAULT_SERVER_IMAGE="$2"; shift;shift; ;;
     -ul|--upload-logs)            UPLOAD_LOGS="$2";           shift;shift; ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
@@ -392,7 +401,7 @@ make -e FORCE_MOLECULE_BUILD="true" -e DORP="${DORP}" molecule-build
 
 mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
 infomsg "Running the tests - logs are going here: ${LOGS_LOCAL_SUBDIR_ABS}"
-eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$OC" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --operator-installer "${OPERATOR_INSTALLER:-helm}" > "${LOGS_LOCAL_RESULTS}"
+eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --use-default_server_image "${USE_DEFAULT_SERVER_IMAGE}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$OC" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --operator-installer "${OPERATOR_INSTALLER:-helm}" > "${LOGS_LOCAL_RESULTS}"
 
 cd ${LOGS_LOCAL_SUBDIR_ABS}
 
