@@ -148,6 +148,7 @@ export const retrieveMetricsSettings = (): MetricsSettings => {
   const urlParams = new URLSearchParams(history.location.search);
   const settings: MetricsSettings = {
     showSpans: false,
+    showTrendlines: false,
     showAverage: true,
     showQuantiles: [],
     labelsSettings: new Map()
@@ -159,6 +160,10 @@ export const retrieveMetricsSettings = (): MetricsSettings => {
   const spans = urlParams.get(URLParam.SHOW_SPANS);
   if (spans !== null) {
     settings.showSpans = spans === 'true';
+  }
+  const trendlines = urlParams.get(URLParam.SHOW_TRENDLINES);
+  if (trendlines !== null) {
+    settings.showTrendlines = trendlines === 'true';
   }
   const quantiles = urlParams.get(URLParam.QUANTILES);
   if (quantiles !== null) {

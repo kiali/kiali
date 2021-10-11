@@ -37,6 +37,7 @@ type MetricsState = {
   spanOverlay?: Overlay<JaegerLineInfo>;
   tabHeight: number;
   showSpans: boolean;
+  showTrendlines: boolean;
 };
 
 type ObjectId = {
@@ -82,7 +83,8 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
       labelsSettings: settings.labelsSettings,
       grafanaLinks: [],
       tabHeight: 300,
-      showSpans: settings.showSpans
+      showSpans: settings.showSpans,
+      showTrendlines: settings.showTrendlines
     };
     this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
   }
@@ -262,6 +264,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                 labelPrettifier={MetricsHelper.prettyLabelValues}
                 overlay={this.state.spanOverlay}
                 showSpans={this.state.showSpans}
+                showTrendlines={this.state.showTrendlines}
                 dashboardHeight={dashboardHeight}
                 timeWindow={evalTimeRange(this.props.timeRange)}
                 brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
@@ -278,6 +281,13 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
     history.replace(history.location.pathname + '?' + urlParams.toString());
     this.setState({ showSpans: !this.state.showSpans });
+  };
+
+  private onTrendlines = (checked: boolean) => {
+    const urlParams = new URLSearchParams(history.location.search);
+    urlParams.set(URLParam.SHOW_TRENDLINES, String(checked));
+    history.replace(history.location.pathname + '?' + urlParams.toString());
+    this.setState({ showTrendlines: !this.state.showTrendlines });
   };
 
   private renderOptionsBar() {
@@ -303,15 +313,6 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
           <ToolbarGroup>
             <ToolbarItem className={displayFlex}>
               <div style={maximizeButtonStyle} className="pf-c-check">
-                <input
-                  key={`spans-show-chart`}
-                  id={`spans-show-`}
-                  className="pf-c-check__input"
-                  style={{ marginBottom: '3px' }}
-                  type="checkbox"
-                  checked={this.state.showSpans}
-                  onChange={event => this.onSpans(event.target.checked)}
-                />
                 <label
                   className="pf-c-check__label"
                   style={{
@@ -319,7 +320,38 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                     paddingRight: '5px'
                   }}
                 >
+                  <input
+                    key={`spans-show-chart`}
+                    id={`spans-show-`}
+                    className="pf-c-check__input"
+                    type="checkbox"
+                    checked={this.state.showSpans}
+                    onChange={event => this.onSpans(event.target.checked)}
+                  />
+                  &nbsp;
                   Spans
+                </label>
+              </div>
+            </ToolbarItem>
+            <ToolbarItem className={displayFlex}>
+              <div style={maximizeButtonStyle} className="pf-c-check">
+                <label
+                  className="pf-c-check__label"
+                  style={{
+                    paddingLeft: '5px',
+                    paddingRight: '5px'
+                  }}
+                >
+                  <input
+                    key={`trendlines-show-chart`}
+                    id={`trendlines-show-`}
+                    className="pf-c-check__input"
+                    type="checkbox"
+                    checked={this.state.showTrendlines}
+                    onChange={event => this.onTrendlines(event.target.checked)}
+                  />
+                  &nbsp;
+                  Trendlines
                 </label>
               </div>
             </ToolbarItem>

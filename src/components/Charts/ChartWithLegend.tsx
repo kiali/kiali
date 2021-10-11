@@ -10,9 +10,10 @@ import { toBuckets } from 'utils/VictoryChartsUtils';
 import { VCEvent, addLegendEvent } from 'utils/VictoryEvents';
 import { XAxisType } from 'types/Dashboards';
 import { CustomTooltip } from './CustomTooltip';
-import { INTERPOTALION_STRATEGY } from './SparklineChart';
+import { INTERPOLATION_STRATEGY } from './SparklineChart';
 import { KialiIcon } from '../../config/KialiIcon';
 import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import regression from 'regression';
 import { style } from 'typestyle';
 
 type Props<T extends RichDataPoint, O extends LineInfo> = {
@@ -23,6 +24,7 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
   stroke?: boolean;
   fill?: boolean;
   showSpans?: boolean;
+  showTrendline?: boolean;
   isMaximized?: boolean;
   groupOffset?: number;
   sizeRatio?: number;
@@ -150,13 +152,13 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
         }
       });
     }
-    this.props.data.forEach((s, idx) => this.registerEvents(events, idx, 'serie-' + idx, s.legendItem.name));
+    this.props.data.forEach((s, idx) => this.registerEvents(events, idx, ['serie-' + idx, 'serie-reg-' + idx], s.legendItem.name));
     let useSecondAxis = showOverlay;
     let normalizedOverlay: RawOrBucket<O>[] = [];
     let overlayFactor = 1.0;
     const mainMax = Math.max(...this.props.data.map(line => Math.max(...line.datapoints.map(d => d.y))));
     if (this.props.overlay) {
-      this.registerEvents(events, overlayIdx, overlayName, overlayName);
+      this.registerEvents(events, overlayIdx, [overlayName], overlayName);
       // Normalization for y-axis display to match y-axis domain of the main data
       // (see https://formidable.com/open-source/victory/gallery/multiple-dependent-axes/)
       const overlayMax = Math.max(...this.props.overlay.vcLine.datapoints.map(d => d.y));
@@ -399,19 +401,49 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
           if (this.state.hiddenSeries.has(serie.legendItem.name)) {
             return undefined;
           }
-          return React.cloneElement(
+          const plot = React.cloneElement(
             this.props.seriesComponent,
             this.withStyle(
               {
                 key: 'serie-' + idx,
                 name: 'serie-' + idx,
                 data: serie.datapoints,
-                interpolation: INTERPOTALION_STRATEGY
+                interpolation: INTERPOLATION_STRATEGY
               },
               serie.color
             )
           );
-        })}
+
+          if (this.props.showTrendline === true) {
+            const first_dpx = (serie.datapoints[0].x as Date).getTime() / 1000;
+            const datapoints = serie.datapoints.map(d => [((d.x as Date).getTime()/1000 - first_dpx) / 10000, parseFloat(d.y.toString())]);
+            const linearRegression = regression.linear(datapoints, { precision: 10 });
+
+            let regressionDatapoints = serie.datapoints.map(d => ({
+              ...d,
+              name: d.name + ' (trendline)',
+              y: linearRegression.predict(((d.x as Date).getTime()/1000 - first_dpx) / 10000)[1]
+            }));
+
+            const regressionPlot = React.cloneElement(
+              this.props.seriesComponent,
+              this.withStyle(
+                {
+                  key: 'serie-reg-' + idx,
+                  name: 'serie-reg-' + idx,
+                  data: regressionDatapoints,
+                  interpolation: INTERPOLATION_STRATEGY
+                },
+                serie.color,
+                true
+              )
+            );
+
+            return [plot, regressionPlot];
+          }
+
+          return [plot];
+        }).flat()}
       </ChartGroup>
     );
   };
@@ -440,12 +472,12 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private withStyle = (props: any, color?: string) => {
+  private withStyle = (props: any, color?: string, strokeDasharray?: boolean) => {
     return this.props.overrideSeriesComponentStyle === false
       ? props
       : {
           ...props,
-          style: { data: { fill: this.props.fill ? color : undefined, stroke: this.props.stroke ? color : undefined } }
+          style: { data: { fill: this.props.fill ? color : undefined, stroke: this.props.stroke ? color : undefined, strokeDasharray: strokeDasharray === true ? "3 5" : undefined } }
         };
   };
 
@@ -485,7 +517,7 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
     return filtered;
   }
 
-  private registerEvents(events: VCEvent[], idx: number, serieID: string, serieName: string) {
+  private registerEvents(events: VCEvent[], idx: number, serieID: string[], serieName: string) {
     addLegendEvent(events, {
       legendName: 'serie-legend',
       idx: idx,

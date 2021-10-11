@@ -22,6 +22,7 @@ export type Props<T extends LineInfo> = {
   template?: string;
   dashboardHeight: number;
   showSpans: boolean;
+  showTrendlines?: boolean;
   customMetric?: boolean;
   overlay?: Overlay<T>;
   timeWindow?: [Date, Date];
@@ -89,6 +90,7 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
         chartHeight={this.getChartHeight()}
         chart={chart}
         showSpans={this.props.showSpans}
+        showTrendline={this.props.showTrendlines}
         data={dataSupplier()}
         onToggleMaximized={() => this.onToggleMaximized(chart.name)}
         isMaximized={this.state.maximizedChart !== undefined}

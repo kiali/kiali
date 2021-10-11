@@ -26,6 +26,7 @@ type KChartProps<T extends LineInfo> = {
   onToggleMaximized: () => void;
   onClick?: (datum: RawOrBucket<T>) => void;
   showSpans: boolean;
+  showTrendline?: boolean;
   brushHandlers?: BrushHandlers;
   overlay?: Overlay<T>;
   timeWindow?: [Date, Date];
@@ -186,6 +187,7 @@ class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, State> 
         fill={typeData.fill}
         stroke={typeData.stroke}
         showSpans={this.props.showSpans}
+        showTrendline={this.props.showTrendline}
         groupOffset={typeData.groupOffset}
         sizeRatio={typeData.sizeRatio}
         overlay={this.props.overlay}

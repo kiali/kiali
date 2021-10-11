@@ -92,6 +92,7 @@
     "redux-persist": "5.10.0",
     "redux-persist-transform-filter": "0.0.18",
     "redux-thunk": "2.3.0",
+    "regression": "^2.0.1",
     "reselect": "4.0.0",
     "screenfull": "5.0.2",
     "seedrandom": "3.0.1",

@@ -16,5 +16,6 @@ export interface MetricsSettings {
   labelsSettings: LabelsSettings;
   showAverage: boolean;
   showSpans: boolean;
+  showTrendlines: boolean;
   showQuantiles: Quantiles[];
 }

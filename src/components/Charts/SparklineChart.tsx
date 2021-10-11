@@ -27,7 +27,7 @@ type State = {
   hiddenSeries: Set<number>;
 };
 
-export const INTERPOTALION_STRATEGY = 'monotoneX';
+export const INTERPOLATION_STRATEGY = 'monotoneX';
 
 export class SparklineChart extends React.Component<Props, State> {
   containerRef?: React.RefObject<HTMLDivElement>;
@@ -80,7 +80,7 @@ export class SparklineChart extends React.Component<Props, State> {
         addLegendEvent(events, {
           legendName: this.props.name + '-legend',
           idx: idx,
-          serieID: this.props.name + '-area-' + idx,
+          serieID: [this.props.name + '-area-' + idx],
           onClick: () => {
             if (!this.state.hiddenSeries.delete(idx)) {
               // Was not already hidden => add to set
@@ -164,7 +164,7 @@ export class SparklineChart extends React.Component<Props, State> {
                   strokeWidth: 2
                 }
               }}
-              interpolation={INTERPOTALION_STRATEGY}
+              interpolation={INTERPOLATION_STRATEGY}
             />
           );
         })}

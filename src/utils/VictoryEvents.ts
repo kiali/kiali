@@ -3,7 +3,7 @@ import { RawOrBucket, LineInfo } from '../types/VictoryChartInfo';
 interface EventItem {
   legendName: string;
   idx: number;
-  serieID: string;
+  serieID: string[];
   onClick?: (props: RawOrBucket<LineInfo>) => Partial<RawOrBucket<LineInfo>> | null;
   onMouseOver?: (props: RawOrBucket<LineInfo>) => Partial<RawOrBucket<LineInfo>> | null;
   onMouseOut?: (props: RawOrBucket<LineInfo>) => Partial<RawOrBucket<LineInfo>> | null;
@@ -35,12 +35,12 @@ export const addLegendEvent = (events: VCEvent[], item: EventItem): void => {
       e.stopPropagation();
       return [
         {
-          childName: [item.serieID],
+          childName: [item.serieID[0]],
           target: 'data',
           mutation: props => item.onClick!(props)
         },
         {
-          childName: [item.serieID],
+          childName: [item.serieID[0]],
           target: 'data',
           eventKey: 'all',
           mutation: () => null
@@ -52,7 +52,7 @@ export const addLegendEvent = (events: VCEvent[], item: EventItem): void => {
     eventHandlers.onMouseOver = () => {
       return [
         {
-          childName: [item.serieID],
+          childName: item.serieID,
           target: 'data',
           eventKey: 'all',
           mutation: props => item.onMouseOver!(props)
@@ -62,7 +62,7 @@ export const addLegendEvent = (events: VCEvent[], item: EventItem): void => {
     eventHandlers.onMouseOut = () => {
       return [
         {
-          childName: [item.serieID],
+          childName: item.serieID,
           target: 'data',
           eventKey: 'all',
           mutation: props => (item.onMouseOut ? item.onMouseOut(props) : null)

@@ -55,6 +55,7 @@ export enum URLParam {
   REPORTER = 'reporter',
   SHOW_AVERAGE = 'avg',
   SHOW_SPANS = 'spans',
+  SHOW_TRENDLINES = 'trendlines',
   SORT = 'sort',
   TO = 'to',
   EXPERIMENTAL_FLAGS = 'xflags'

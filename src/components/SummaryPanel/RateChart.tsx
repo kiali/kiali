@@ -41,7 +41,7 @@ export class RateChart extends React.Component<Props, State> {
       addLegendEvent(events, {
         legendName: this.props.baseName + '-legend',
         idx: idx,
-        serieID: this.props.baseName + '-bars-' + idx,
+        serieID: [this.props.baseName + '-bars-' + idx],
         onClick: __ => {
           // Same event can be fired for several targets, so make sure we only apply it once
           if (!this.state.hiddenSeries.delete(idx)) {
