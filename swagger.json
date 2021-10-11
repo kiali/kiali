@@ -6964,6 +6964,9 @@
       "description": "Pod holds a subset of v1.Pod data that is meaningful in Kiali",
       "type": "object",
       "properties": {
+        "ServiceAccountName": {
+          "type": "string"
+        },
         "annotations": {
           "type": "object",
           "additionalProperties": {
@@ -8430,6 +8433,14 @@
           },
           "x-go-name": "Runtimes"
         },
+        "serviceAccountNames": {
+          "description": "Names of the workload service accounts",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ServiceAccountNames"
+        },
         "services": {
           "$ref": "#/definitions/Services"
         },
@@ -8704,6 +8715,15 @@
           "x-go-name": "IstioSidecar",
           "example": true
         },
+        "serviceAccountNames": {
+          "description": "List of service accounts involved in this application",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ServiceAccountNames",
+          "example": "productpage, reviews, details"
+        },
         "workloadName": {
           "description": "Name of a workload member of an application",
           "type": "string",
@@ -8824,6 +8844,14 @@
           "type": "string",
           "x-go-name": "ResourceVersion",
           "example": "192892127"
+        },
+        "serviceAccountNames": {
+          "description": "Names of the workload service accounts",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ServiceAccountNames"
         },
         "type": {
           "description": "Type of the workload",

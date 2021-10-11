@@ -92,6 +92,9 @@ type WorkloadListItem struct {
 	// Dashboard annotations
 	// required: false
 	DashboardAnnotations map[string]string `json:"dashboardAnnotations"`
+
+	// Names of the workload service accounts
+	ServiceAccountNames []string `json:"serviceAccountNames"`
 }
 
 type WorkloadOverviews []*WorkloadListItem
@@ -139,6 +142,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.IstioSidecar = w.HasIstioSidecar()
 	workload.Labels = w.Labels
 	workload.PodCount = len(w.Pods)
+	workload.ServiceAccountNames = w.Pods.ServiceAccounts()
 	workload.AdditionalDetailSample = w.AdditionalDetailSample
 	workload.HealthAnnotations = w.HealthAnnotations
 	workload.IstioReferences = []*IstioValidationKey{}
