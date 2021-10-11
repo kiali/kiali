@@ -401,7 +401,7 @@ make -e FORCE_MOLECULE_BUILD="true" -e DORP="${DORP}" molecule-build
 
 mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
 infomsg "Running the tests - logs are going here: ${LOGS_LOCAL_SUBDIR_ABS}"
-eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --use-default_server_image "${USE_DEFAULT_SERVER_IMAGE}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$OC" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --operator-installer "${OPERATOR_INSTALLER:-helm}" > "${LOGS_LOCAL_RESULTS}"
+eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --use-default-server-image "${USE_DEFAULT_SERVER_IMAGE}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$OC" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --operator-installer "${OPERATOR_INSTALLER:-helm}" > "${LOGS_LOCAL_RESULTS}"
 
 cd ${LOGS_LOCAL_SUBDIR_ABS}
 
