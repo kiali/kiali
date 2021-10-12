@@ -259,6 +259,9 @@ USE_DEV_IMAGES="${USE_DEV_IMAGES:-false}"
 # Determines what Kiali CR spec.version the tests should use
 SPEC_VERSION="${SPEC_VERSION:-default}"
 
+# Determines if image_name/image_version should be omitted from test Kiali CRs
+USE_DEFAULT_SERVER_IMAGE="${USE_DEFAULT_SERVER_IMAGE:-false}"
+
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
@@ -289,6 +292,7 @@ SPEC_VERSION=$SPEC_VERSION
 SRC=$SRC
 UPLOAD_LOGS=$UPLOAD_LOGS
 USE_DEV_IMAGES=$USE_DEV_IMAGES
+USE_DEFAULT_SERVER_IMAGE=$USE_DEFAULT_SERVER_IMAGE
 === SETTINGS ===
 EOM
 
