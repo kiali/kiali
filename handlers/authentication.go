@@ -220,7 +220,7 @@ func checkDomain(tokenClaims map[string]interface{}, allowedDomains []string) er
 		}
 		splitedEmail := strings.Split(email, "@")
 		if len(splitedEmail) < 2 {
-			return errors.New("cannot detect hosted domain on OpenID token")
+			return fmt.Errorf("cannot detect hosted domain on OpenID for the email %s ", email)
 		}
 		hostedDomain = splitedEmail[1]
 	}
