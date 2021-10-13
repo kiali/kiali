@@ -214,8 +214,6 @@ func checkDomain(tokenClaims map[string]interface{}, allowedDomains []string) er
 	} else {
 		//domains like gmail.com don't have the hosted domain (hd) on claims
 		//fields, so we try to get the domain on email claim
-
-		// Try discover tthe host domain over
 		var email string
 		if v, ok := tokenClaims["email"]; ok {
 			email = v.(string)
