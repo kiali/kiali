@@ -935,8 +935,9 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	if len(conf.Auth.OpenId.AllowedDomains) > 0 {
 		err := checkDomain(openIdParams.ParsedIdToken.Claims.(jwt.MapClaims), conf.Auth.OpenId.AllowedDomains)
 		if err != nil {
-			RespondWithError(w, http.StatusUnauthorized, err.Error())
-			return false
+			log.Error(err.Error())
+			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(err.Error())), http.StatusFound)
+			return true
 		}
 	}
 
