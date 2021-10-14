@@ -86,6 +86,8 @@ describe('Parse find value test', () => {
     // @ts-ignore
     expect(instance.parseValue('fi')).toEqual('node[?hasFaultInjection]');
     // @ts-ignore
+    expect(instance.parseValue('mirroring')).toEqual('node[?hasMirroring]');
+    // @ts-ignore
     expect(instance.parseValue('outside')).toEqual('node[?isOutside]');
     // @ts-ignore
     expect(instance.parseValue('outsider')).toEqual('node[?isOutside]');

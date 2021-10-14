@@ -66,6 +66,13 @@ describe('GraphStyles test', () => {
     expect(label).toContain(icons.istio.faultInjection.className);
   });
 
+  it('has icon for mirroring', () => {
+    const data = { ...nodeData, hasVS: {}, hasMirroring: true };
+    const node = setupNode(data);
+    const label = GraphStyles.getNodeLabel(node);
+    expect(label).toContain(icons.istio.mirroring.className);
+  });
+
   it('has icon for request routing', () => {
     const data = { ...nodeData, hasVS: {}, hasRequestRouting: true };
     const node = setupNode(data);

@@ -204,6 +204,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['faultinjection'],
       ['healthy', 'is not degraded or failing.'],
       ['idle', `will auto-enable 'idle nodes' display option`],
+      ['mirroring'],
       ['outside', 'is outside of requested namespaces'],
       ['requestrouting'],
       ['requesttimeout'],

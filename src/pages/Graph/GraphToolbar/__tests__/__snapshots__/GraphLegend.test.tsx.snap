@@ -475,6 +475,22 @@ exports[`GraphLegend test should render correctly 1`] = `
           </div>
           <div
             className="f1n8a700"
+            key="node-badge-mirroring.svg"
+          >
+            <span>
+              <img
+                alt="Mirroring"
+                src="node-badge-mirroring.svg"
+              />
+            </span>
+            <span
+              className="f1hob5wc"
+            >
+              Mirroring
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
             key="node-badge-missing-sidecar.svg"
           >
             <span>

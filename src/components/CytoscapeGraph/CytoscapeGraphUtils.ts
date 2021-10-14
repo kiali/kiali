@@ -44,6 +44,7 @@ export const CyNode = {
   grpcOut: 'grpcOut',
   hasCB: 'hasCB',
   hasFaultInjection: 'hasFaultInjection',
+  hasMirroring: 'hasMirroring',
   hasMissingSC: 'hasMissingSC',
   hasRequestRouting: 'hasRequestRouting',
   hasRequestTimeout: 'hasRequestTimeout',

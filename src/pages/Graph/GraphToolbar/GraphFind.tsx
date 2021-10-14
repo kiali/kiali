@@ -86,6 +86,7 @@ const operands: string[] = [
   'httpin',
   'httpout',
   'idle',
+  'mirroring',
   'mtls',
   'name',
   'namespace',
@@ -854,6 +855,11 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
           this.props.toggleIdleNodes();
         }
         return { target: 'node', selector: isNegation ? `[^${CyNode.isIdle}]` : `[?${CyNode.isIdle}]` };
+      case 'mirroring':
+        return {
+          target: 'node',
+          selector: isNegation ? `[^${CyNode.hasMirroring}]` : `[?${CyNode.hasMirroring}]`
+        };
       case 'outside':
       case 'outsider':
         return { target: 'node', selector: isNegation ? `[^${CyNode.isOutside}]` : `[?${CyNode.isOutside}]` };

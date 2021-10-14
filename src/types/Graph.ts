@@ -307,6 +307,7 @@ export interface GraphNodeData {
   hasCB?: boolean;
   hasFaultInjection?: boolean;
   hasHealthConfig?: HealthAnnotationType;
+  hasMirroring?: boolean;
   hasMissingSC?: boolean;
   hasRequestRouting?: boolean;
   hasRequestTimeout?: boolean;

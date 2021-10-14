@@ -59,7 +59,8 @@ const NodeHeight = '25px';
 const NodeIconCB = icons.istio.circuitBreaker.className; // bolt
 const NodeIconFaultInjection = icons.istio.faultInjection.className; // ban
 const NodeIconGateway = icons.istio.gateway.className; // globe
-const NodeIconMS = icons.istio.missingSidecar.className; // exclamation
+const NodeIconMirroring = icons.istio.mirroring.className; // migration
+const NodeIconMS = icons.istio.missingSidecar.className; // blueprint
 const NodeIconRoot = icons.istio.root.className; // alt-arrow-circle-right
 const NodeIconVS = icons.istio.virtualService.className; // code-branch
 const NodeIconRequestRouting = icons.istio.requestRouting.className; // code-branch
@@ -242,6 +243,7 @@ export class GraphStyles {
       if (node.hasVS) {
         const hasKialiScenario =
           node.hasFaultInjection ||
+          node.hasMirroring ||
           node.hasRequestRouting ||
           node.hasRequestTimeout ||
           node.hasTCPTrafficShifting ||
@@ -251,6 +253,11 @@ export class GraphStyles {
         } else {
           if (node.hasFaultInjection) {
             icons = `<span class="${NodeIconFaultInjection} ${iconMargin(icons)}"></span> ${icons}`;
+          }
+          if (node.hasMirroring) {
+            icons = `<span class="${NodeIconMirroring}  ${iconMargin(icons)} ${style({
+              marginTop: '1px'
+            })}"></span> ${icons}`;
           }
           if (node.hasTrafficShifting || node.hasTCPTrafficShifting) {
             icons = `<span class="${NodeIconTrafficShifting} ${iconMargin(icons)}"></span> ${icons}`;

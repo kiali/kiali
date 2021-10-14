@@ -237,6 +237,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     const {
       hasCB,
       hasFaultInjection,
+      hasMirroring,
       hasMissingSC,
       hasRequestRouting,
       hasRequestTimeout,
@@ -247,7 +248,12 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       isGateway
     } = nodeData;
     const hasTrafficScenario =
-      hasRequestRouting || hasFaultInjection || hasTrafficShifting || hasTCPTrafficShifting || hasRequestTimeout;
+      hasRequestRouting ||
+      hasFaultInjection ||
+      hasMirroring ||
+      hasTrafficShifting ||
+      hasTCPTrafficShifting ||
+      hasRequestTimeout;
     const shouldRenderGatewayHostnames =
       nodeData.isGateway?.ingressInfo?.hostnames !== undefined && nodeData.isGateway.ingressInfo.hostnames.length !== 0;
     const shouldRenderVsHostnames = nodeData.hasVS?.hostnames !== undefined && nodeData.hasVS?.hostnames.length !== 0;
@@ -267,6 +273,12 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
             </div>
             {shouldRenderVsHostnames && this.renderVsHostnames(nodeData)}
           </>
+        )}
+        {hasMirroring && (
+          <div>
+            <KialiIcon.Mirroring />
+            <span style={{ paddingLeft: '4px' }}>Has Mirroring</span>
+          </div>
         )}
         {hasMissingSC && (
           <div>

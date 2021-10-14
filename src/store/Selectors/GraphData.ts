@@ -51,6 +51,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       grpcOut: NaN,
       hasCB: undefined,
       hasFaultInjection: undefined,
+      hasMirroring: undefined,
       hasMissingSC: undefined,
       hasRequestRouting: undefined,
       hasRequestTimeout: undefined,

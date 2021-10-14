@@ -3,7 +3,7 @@ import BootstrapSlider from './BootstrapSlider';
 import { Button, ButtonVariant, InputGroupText, TextInput, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import Boundaries from './Boundaries';
 import { style } from 'typestyle';
-import { MinusIcon, PlusIcon, ThumbTackIcon, VirtualMachineIcon } from '@patternfly/react-icons';
+import { MinusIcon, PlusIcon, ThumbTackIcon, MigrationIcon } from '@patternfly/react-icons';
 import './styles/default.css';
 
 export const noop = Function.prototype;
@@ -186,7 +186,7 @@ class Slider extends React.Component<Props, State> {
           variant={this.props.mirrored ? ButtonVariant.primary : ButtonVariant.secondary}
           onClick={() => this.props.onMirror(!this.props.mirrored)}
         >
-          <VirtualMachineIcon />
+          <MigrationIcon />
         </Button>
       </Tooltip>
     );
