@@ -94,6 +94,7 @@ type NodeData struct {
 	HasCB                 bool                `json:"hasCB,omitempty"`                 // true (has circuit breaker) | false
 	HasFaultInjection     bool                `json:"hasFaultInjection,omitempty"`     // true (vs has fault injection) | false
 	HasHealthConfig       HealthConfig        `json:"hasHealthConfig,omitempty"`       // set to the health config override
+	HasMirroring          bool                `json:"hasMirroring,omitempty"`          // true (has mirroring) | false
 	HasMissingSC          bool                `json:"hasMissingSC,omitempty"`          // true (has missing sidecar) | false
 	HasRequestRouting     bool                `json:"hasRequestRouting,omitempty"`     // true (vs has request routing) | false
 	HasRequestTimeout     bool                `json:"hasRequestTimeout,omitempty"`     // true (vs has request timeout) | false
@@ -304,6 +305,10 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// check if node is on another namespace
 		if val, ok := n.Metadata[graph.IsOutside]; ok {
 			nd.IsOutside = val.(bool)
+		}
+
+		if val, ok := n.Metadata[graph.HasMirroring]; ok {
+			nd.HasMirroring = val.(bool)
 		}
 
 		if val, ok := n.Metadata[graph.HasRequestRouting]; ok {

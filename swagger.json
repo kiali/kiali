@@ -6141,6 +6141,10 @@
         "hasHealthConfig": {
           "$ref": "#/definitions/HealthConfig"
         },
+        "hasMirroring": {
+          "type": "boolean",
+          "x-go-name": "HasMirroring"
+        },
         "hasMissingSC": {
           "type": "boolean",
           "x-go-name": "HasMissingSC"

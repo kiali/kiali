@@ -520,3 +520,70 @@ spec:
 	var vs *models.VirtualService
 	assert.False(t, vs.HasRequestRouting())
 }
+
+func TestVirtualServiceHasMirroring(t *testing.T) {
+	cases := map[string]struct {
+		vsYAML            []byte
+		expectedMirroring bool
+	}{
+		"Has mirroring": {
+			expectedMirroring: true,
+			vsYAML: []byte(`
+kind: VirtualService
+apiVersion: networking.istio.io/v1alpha3
+metadata:
+  name: reviews  
+spec:
+  hosts:
+    - reviews
+  http:
+    - mirror:
+        host: reviews
+        subset: v3
+      mirrorPercentage:
+        value: 34
+      route:
+        - destination:
+            host: reviews
+            subset: v1
+          weight: 33
+        - destination:
+            host: reviews
+            subset: v2
+          weight: 67
+`),
+		},
+		"No mirroring": {
+			expectedMirroring: false,
+			vsYAML: []byte(`
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: reviews
+spec:
+  hosts:
+  - reviews
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: v2
+`),
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			var vs models.VirtualService
+			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
+
+			assert.Equal(vs.HasMirroring(), tc.expectedMirroring)
+		})
+	}
+
+	// Testing nil case
+	var vs *models.VirtualService
+	assert.False(t, vs.HasMirroring())
+}

@@ -201,3 +201,22 @@ func (vService *VirtualService) HasRequestRouting() bool {
 
 	return false
 }
+
+// HasMirroring determines if the spec has a mirror set.
+func (vService *VirtualService) HasMirroring() bool {
+	if vService == nil {
+		return false
+	}
+
+	if routes, isSlice := vService.Spec.Http.([]interface{}); isSlice {
+		for _, route := range routes {
+			if routeMap, isMap := route.(map[string]interface{}); isMap {
+				if _, hasMirroring := routeMap["mirror"]; hasMirroring {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}

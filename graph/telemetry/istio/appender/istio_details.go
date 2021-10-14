@@ -144,6 +144,10 @@ NODES:
 					n.Metadata[graph.HasTCPTrafficShifting] = true
 				}
 
+				if virtualService.HasMirroring() {
+					n.Metadata[graph.HasMirroring] = true
+				}
+
 				continue NODES
 			}
 		}
