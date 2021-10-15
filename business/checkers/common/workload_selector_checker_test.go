@@ -15,10 +15,10 @@ func TestPresentWorkloads(t *testing.T) {
 
 	validations, valid := WorkloadSelectorNoWorkloadFoundChecker(
 		"sidecar",
-		workloadSelectorSidecar("sidecar", map[string]interface{}{
+		map[string]string{
 			"app":     "details",
 			"version": "v1",
-		}),
+		},
 		workloadList(),
 	).Check()
 
@@ -28,9 +28,9 @@ func TestPresentWorkloads(t *testing.T) {
 
 	validations, valid = WorkloadSelectorNoWorkloadFoundChecker(
 		"sidecar",
-		workloadSelectorSidecar("sidecar", map[string]interface{}{
+		map[string]string{
 			"app": "details",
-		}),
+		},
 		workloadList(),
 	).Check()
 
@@ -41,26 +41,26 @@ func TestPresentWorkloads(t *testing.T) {
 
 func TestWorkloadNotFound(t *testing.T) {
 	assert := assert.New(t)
-	testFailureWithWorkloadList(assert, map[string]interface{}{"app": "wrong", "version": "v1"})
-	testFailureWithWorkloadList(assert, map[string]interface{}{"app": "details", "version": "wrong"})
-	testFailureWithWorkloadList(assert, map[string]interface{}{"app": "wrong"})
-	testFailureWithEmptyWorkloadList(assert, map[string]interface{}{"app": "wrong", "version": "v1"})
-	testFailureWithEmptyWorkloadList(assert, map[string]interface{}{"app": "details", "version": "wrong"})
-	testFailureWithEmptyWorkloadList(assert, map[string]interface{}{"app": "wrong"})
+	testFailureWithWorkloadList(assert, map[string]string{"app": "wrong", "version": "v1"})
+	testFailureWithWorkloadList(assert, map[string]string{"app": "details", "version": "wrong"})
+	testFailureWithWorkloadList(assert, map[string]string{"app": "wrong"})
+	testFailureWithEmptyWorkloadList(assert, map[string]string{"app": "wrong", "version": "v1"})
+	testFailureWithEmptyWorkloadList(assert, map[string]string{"app": "details", "version": "wrong"})
+	testFailureWithEmptyWorkloadList(assert, map[string]string{"app": "wrong"})
 }
 
-func testFailureWithWorkloadList(assert *assert.Assertions, selector map[string]interface{}) {
+func testFailureWithWorkloadList(assert *assert.Assertions, selector map[string]string) {
 	testFailure(assert, selector, workloadList(), "generic.selector.workloadnotfound")
 }
 
-func testFailureWithEmptyWorkloadList(assert *assert.Assertions, selector map[string]interface{}) {
+func testFailureWithEmptyWorkloadList(assert *assert.Assertions, selector map[string]string) {
 	testFailure(assert, selector, data.CreateWorkloadList("test", models.WorkloadListItem{}), "generic.selector.workloadnotfound")
 }
 
-func testFailure(assert *assert.Assertions, selector map[string]interface{}, wl models.WorkloadList, code string) {
+func testFailure(assert *assert.Assertions, selector map[string]string, wl models.WorkloadList, code string) {
 	vals, valid := WorkloadSelectorNoWorkloadFoundChecker(
 		"sidecar",
-		workloadSelectorSidecar("sidecar", selector),
+		selector,
 		wl,
 	).Check()
 

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
@@ -12,14 +14,14 @@ import (
 )
 
 type EgressHostChecker struct {
-	Sidecar        kubernetes.IstioObject
+	Sidecar        networking_v1alpha3.Sidecar
 	ServiceEntries map[string][]string
 	Services       []core_v1.Service
 }
 
 type HostWithIndex struct {
 	Index int
-	Hosts []interface{}
+	Hosts []string
 }
 
 func (elc EgressHostChecker) Check() ([]*models.IstioCheck, bool) {
@@ -31,12 +33,7 @@ func (elc EgressHostChecker) Check() ([]*models.IstioCheck, bool) {
 
 	for i, hwi := range hosts {
 		for j, h := range hwi.Hosts {
-			host, ok := h.(string)
-			if !ok {
-				continue
-			}
-
-			check, hv := elc.validateHost(host, i, j)
+			check, hv := elc.validateHost(h, i, j)
 			checks = append(checks, check...)
 			valid = valid && hv
 		}
@@ -46,48 +43,27 @@ func (elc EgressHostChecker) Check() ([]*models.IstioCheck, bool) {
 }
 
 func (elc EgressHostChecker) getHosts() ([]HostWithIndex, bool) {
-	er, found := elc.Sidecar.GetSpec()["egress"]
-	if !found {
-		return nil, found
+	if len(elc.Sidecar.Spec.Egress) == 0 {
+		return nil, false
 	}
-
-	el, ok := er.([]interface{})
-	if !ok {
-		return nil, found
-	}
-
-	hl := make([]HostWithIndex, 0, len(el))
-	for i, ei := range el {
-		ec, ok := ei.(map[string]interface{})
-		if !ok {
-			return nil, ok
+	hl := make([]HostWithIndex, 0, len(elc.Sidecar.Spec.Egress))
+	for i, ei := range elc.Sidecar.Spec.Egress {
+		if ei == nil {
+			continue
 		}
-
-		hr, found := ec["hosts"]
-		if !found {
-			return nil, ok
-		}
-
-		hc, ok := hr.([]interface{})
-		if !ok {
-			return nil, ok
-		}
-
 		hwi := HostWithIndex{
 			Index: i,
-			Hosts: hc,
+			Hosts: ei.Hosts,
 		}
-
 		hl = append(hl, hwi)
 	}
-
 	return hl, true
 }
 
 func (elc EgressHostChecker) validateHost(host string, egrIdx, hostIdx int) ([]*models.IstioCheck, bool) {
 	checks := make([]*models.IstioCheck, 0)
 	ins := config.Get().IstioNamespace
-	sns := elc.Sidecar.GetObjectMeta().Namespace
+	sns := elc.Sidecar.Namespace
 
 	hostNs, dnsName, valid := getHostComponents(host)
 	if !valid {
@@ -113,7 +89,7 @@ func (elc EgressHostChecker) validateHost(host string, egrIdx, hostIdx int) ([]*
 		}
 
 		// Parse the dnsName to a kubernetes Host
-		fqdn := kubernetes.ParseHost(dnsName, sns, elc.Sidecar.GetObjectMeta().ClusterName)
+		fqdn := kubernetes.ParseHost(dnsName, sns, elc.Sidecar.ClusterName)
 		if fqdn.Namespace != sns && fqdn.Namespace != "" {
 			return append(checks, buildCheck("validation.unable.cross-namespace", egrIdx, hostIdx)), true
 		}

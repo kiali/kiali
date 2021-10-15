@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"strings"
 
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type NoGatewayChecker struct {
-	VirtualService kubernetes.IstioObject
+	VirtualService networking_v1alpha3.VirtualService
 	GatewayNames   map[string]struct{}
 }
 
@@ -18,32 +20,28 @@ type NoGatewayChecker struct {
 func (s NoGatewayChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
-	valid := s.ValidateVirtualServiceGateways(s.VirtualService.GetSpec(), s.VirtualService.GetObjectMeta().Namespace, s.VirtualService.GetObjectMeta().ClusterName, &validations)
+	valid := s.ValidateVirtualServiceGateways(&validations)
 
 	return validations, valid
 }
 
 // ValidateVirtualServiceGateways checks all VirtualService gateways (except mesh, which is reserved word) and checks that they're found from the given list of gatewayNames. Also return index of missing gatways to show clearer error path in editor
-func (s NoGatewayChecker) ValidateVirtualServiceGateways(spec map[string]interface{}, namespace, clusterName string, validations *[]*models.IstioCheck) bool {
+func (s NoGatewayChecker) ValidateVirtualServiceGateways(validations *[]*models.IstioCheck) bool {
+	namespace := s.VirtualService.Namespace
+	clusterName := s.VirtualService.ClusterName
 	valid := true
 	if clusterName == "" {
 		clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
 	}
-	if gatewaysSpec, found := spec["gateways"]; found {
-		if gateways, ok := gatewaysSpec.([]interface{}); ok {
-			valid = s.checkGateways(gateways, namespace, clusterName, validations, "spec")
-		}
+	if len(s.VirtualService.Spec.Gateways) > 0 {
+		valid = s.checkGateways(s.VirtualService.Spec.Gateways, namespace, clusterName, validations, "spec")
 	}
-	if httpSpec, found := spec["http"]; found {
-		if https, ok := httpSpec.([]interface{}); ok {
-			for index, http := range https {
-				if https, ok := http.(map[string]interface{}); ok {
-					if match, ok := https["match"]; ok {
-						for _, m := range match.([]interface{}) {
-							if gateways, found := m.(map[string]interface{})["gateways"]; found {
-								valid = s.checkGateways(gateways.([]interface{}), namespace, clusterName, validations, fmt.Sprintf("spec/http[%d]/match", index))
-							}
-						}
+	if len(s.VirtualService.Spec.Http) > 0 {
+		for index, httpRoute := range s.VirtualService.Spec.Http {
+			if httpRoute != nil {
+				for _, match := range httpRoute.Match {
+					if match != nil {
+						valid = valid && s.checkGateways(match.Gateways, namespace, clusterName, validations, fmt.Sprintf("spec/http[%d]/match", index))
 					}
 				}
 			}
@@ -52,28 +50,26 @@ func (s NoGatewayChecker) ValidateVirtualServiceGateways(spec map[string]interfa
 	return valid
 }
 
-func (s NoGatewayChecker) checkGateways(gateways []interface{}, namespace, clusterName string, validations *[]*models.IstioCheck, location string) bool {
+func (s NoGatewayChecker) checkGateways(gateways []string, namespace, clusterName string, validations *[]*models.IstioCheck, location string) bool {
 GatewaySearch:
-	for index, g := range gateways {
-		if gate, ok := g.(string); ok {
-			if gate == "mesh" {
+	for index, gate := range gateways {
+		if gate == "mesh" {
+			continue GatewaySearch
+		}
+
+		// Gateways should be using <namespace>/<gateway>
+		checkNomenclature(gate, index, validations)
+
+		hostname := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName).String()
+		for gw := range s.GatewayNames {
+			if found := kubernetes.FilterByHost(hostname, gw, namespace); found {
 				continue GatewaySearch
 			}
-
-			// Gateways should be using <namespace>/<gateway>
-			checkNomenclature(gate, index, validations)
-
-			hostname := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName).String()
-			for gw := range s.GatewayNames {
-				if found := kubernetes.FilterByHost(hostname, gw, namespace); found {
-					continue GatewaySearch
-				}
-			}
-			path := fmt.Sprintf("%s/gateways[%d]", location, index)
-			validation := models.Build("virtualservices.nogateway", path)
-			*validations = append(*validations, &validation)
-			return false
 		}
+		path := fmt.Sprintf("%s/gateways[%d]", location, index)
+		validation := models.Build("virtualservices.nogateway", path)
+		*validations = append(*validations, &validation)
+		return false
 	}
 	return true
 }

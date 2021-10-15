@@ -1,10 +1,11 @@
 package mtls
 
 import (
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -17,8 +18,8 @@ const (
 
 type MtlsStatus struct {
 	Namespace           string
-	PeerAuthentications []kubernetes.IstioObject
-	DestinationRules    []kubernetes.IstioObject
+	PeerAuthentications []security_v1beta.PeerAuthentication
+	DestinationRules    []networking_v1alpha3.DestinationRule
 	MatchingLabels      labels.Labels
 	Services            []v1.Service
 	AutoMtlsEnabled     bool
@@ -54,11 +55,12 @@ func (m MtlsStatus) hasDesinationRuleEnablingNamespacemTLS() string {
 // Returns the mTLS status at workload level (matching the m.MatchingLabels)
 func (m MtlsStatus) WorkloadMtlsStatus() string {
 	for _, pa := range m.PeerAuthentications {
-		selectorLabels := common.GetSelectorLabels(pa)
-		if selectorLabels == nil {
+		var selectorLabels map[string]string
+		if pa.Spec.Selector != nil {
+			selectorLabels = pa.Spec.Selector.MatchLabels
+		} else {
 			continue
 		}
-
 		selector := labels.Set(selectorLabels).AsSelector()
 		match := selector.Matches(m.MatchingLabels)
 		if !match {

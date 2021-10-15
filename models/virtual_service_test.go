@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
 	"github.com/kiali/kiali/models"
 )
 
@@ -78,16 +80,16 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			var vs models.VirtualService
+			var vs networking_v1alpha3.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
-			assert.Equal(vs.HasRequestTimeout(), tc.expectedTimeout)
+			assert.Equal(models.HasVSRequestTimeout(&vs), tc.expectedTimeout)
 		})
 	}
 
 	// Testing nil case
-	var vs *models.VirtualService
-	assert.False(t, vs.HasRequestTimeout())
+	var vs *networking_v1alpha3.VirtualService
+	assert.False(t, models.HasVSRequestTimeout(vs))
 }
 
 func TestVirtualServiceHasFaultInjection(t *testing.T) {
@@ -191,16 +193,16 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			var vs models.VirtualService
+			var vs networking_v1alpha3.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
-			assert.Equal(vs.HasFaultInjection(), tc.expectedFaultInjection)
+			assert.Equal(models.HasVSFaultInjection(&vs), tc.expectedFaultInjection)
 		})
 	}
 
 	// Testing nil case
-	var vs *models.VirtualService
-	assert.False(t, vs.HasFaultInjection())
+	var vs *networking_v1alpha3.VirtualService
+	assert.False(t, models.HasVSFaultInjection(vs))
 }
 
 func TestVirtualServiceHasTrafficShifting(t *testing.T) {
@@ -282,16 +284,16 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			var vs models.VirtualService
+			var vs networking_v1alpha3.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
-			assert.Equal(vs.HasTrafficShifting(), tc.expectedTrafficShifting)
+			assert.Equal(models.HasVSTrafficShifting(&vs), tc.expectedTrafficShifting)
 		})
 	}
 
 	// Testing nil case
-	var vs *models.VirtualService
-	assert.False(t, vs.HasTrafficShifting())
+	var vs *networking_v1alpha3.VirtualService
+	assert.False(t, models.HasVSTrafficShifting(vs))
 }
 
 func TestVirtualServiceHasTCPTrafficShifting(t *testing.T) {
@@ -388,16 +390,16 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			var vs models.VirtualService
+			var vs networking_v1alpha3.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
-			assert.Equal(vs.HasTCPTrafficShifting(), tc.expectedTCPTrafficShifting)
+			assert.Equal(models.HasVSTCPTrafficShifting(&vs), tc.expectedTCPTrafficShifting)
 		})
 	}
 
 	// Testing nil case
-	var vs *models.VirtualService
-	assert.False(t, vs.HasTCPTrafficShifting())
+	var vs *networking_v1alpha3.VirtualService
+	assert.False(t, models.HasVSTCPTrafficShifting(vs))
 }
 
 func TestVirtualServiceHasRequestRouting(t *testing.T) {
@@ -509,16 +511,16 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			var vs models.VirtualService
+			var vs networking_v1alpha3.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
-			assert.Equal(vs.HasRequestRouting(), tc.expectedRequestRouting)
+			assert.Equal(models.HasVSRequestRouting(&vs), tc.expectedRequestRouting)
 		})
 	}
 
 	// Testing nil case
-	var vs *models.VirtualService
-	assert.False(t, vs.HasRequestRouting())
+	var vs *networking_v1alpha3.VirtualService
+	assert.False(t, models.HasVSRequestRouting(vs))
 }
 
 func TestVirtualServiceHasMirroring(t *testing.T) {
@@ -576,14 +578,13 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			var vs models.VirtualService
+			var vs networking_v1alpha3.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
-			assert.Equal(vs.HasMirroring(), tc.expectedMirroring)
+			assert.Equal(models.HasVSMirroring(&vs), tc.expectedMirroring)
 		})
 	}
 
 	// Testing nil case
-	var vs *models.VirtualService
-	assert.False(t, vs.HasMirroring())
+	assert.False(t, models.HasVSMirroring(nil))
 }

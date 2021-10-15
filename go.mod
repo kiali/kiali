@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.4.3
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/gorilla/mux v1.7.4
@@ -20,13 +20,15 @@ require (
 	github.com/rs/zerolog v1.20.0
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/oauth2 v0.0.0-20201109201403-9fd604954f58 // indirect
-	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987
-	google.golang.org/grpc v1.33.1
+	google.golang.org/grpc v1.35.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/square/go-jose.v2 v2.5.1
-	gopkg.in/yaml.v2 v2.3.0
-	k8s.io/api v0.20.1
-	k8s.io/apimachinery v0.20.1
-	k8s.io/client-go v0.20.1
+	gopkg.in/yaml.v2 v2.4.0
+	istio.io/api v0.0.0-20210809175348-eff556fb5d8a
+	istio.io/client-go v1.11.2
+	k8s.io/api v0.21.0
+	k8s.io/apimachinery v0.21.0
+	k8s.io/client-go v0.21.0
 )

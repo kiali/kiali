@@ -5,15 +5,17 @@ import (
 	"strconv"
 	"strings"
 
+	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/intutil"
 )
 
 type MultiMatchChecker struct {
-	GatewaysPerNamespace [][]kubernetes.IstioObject
+	GatewaysPerNamespace [][]networking_v1alpha3.Gateway
 	existingList         map[string][]Host
 }
 
@@ -38,49 +40,39 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 
 	for _, nsG := range m.GatewaysPerNamespace {
 		for _, g := range nsG {
-			gatewayRuleName := g.GetObjectMeta().Name
-			gatewayNamespace := g.GetObjectMeta().Namespace
+			gatewayRuleName := g.Name
+			gatewayNamespace := g.Namespace
 
 			selectorString := ""
-			if selectorRaw, found := g.GetSpec()["selector"]; found {
-				if selector, ok := selectorRaw.(map[string]interface{}); ok {
-					selectorMap := map[string]string{}
-					for k, v := range selector {
-						selectorMap[k] = v.(string)
-					}
-					selectorString = labels.Set(selectorMap).String()
-				}
+			if len(g.Spec.Selector) > 0 {
+				selectorString = labels.Set(g.Spec.Selector).String()
 			}
+			for i, server := range g.Spec.Servers {
+				if server == nil {
+					continue
+				}
+				hosts := parsePortAndHostnames(server)
+				for hi, host := range hosts {
+					host.ServerIndex = i
+					host.HostIndex = hi
+					host.GatewayRuleName = gatewayRuleName
+					host.Namespace = gatewayNamespace
+					duplicate, dhosts := m.findMatch(host, selectorString)
+					if duplicate {
+						// The above is referenced by each one below..
+						currentHostValidation := createError(host.GatewayRuleName, host.Namespace, host.ServerIndex, host.HostIndex)
 
-			if specServers, found := g.GetSpec()["servers"]; found {
-				if servers, ok := specServers.([]interface{}); ok {
-					for i, def := range servers {
-						if serverDef, ok := def.(map[string]interface{}); ok {
-							hosts := parsePortAndHostnames(serverDef)
-							for hi, host := range hosts {
-								host.ServerIndex = i
-								host.HostIndex = hi
-								host.GatewayRuleName = gatewayRuleName
-								host.Namespace = gatewayNamespace
-								duplicate, dhosts := m.findMatch(host, selectorString)
-								if duplicate {
-									// The above is referenced by each one below..
-									currentHostValidation := createError(host.GatewayRuleName, host.Namespace, host.ServerIndex, host.HostIndex)
-
-									// CurrentHostValidation is always the first one, so we skip it
-									for i := 1; i < len(dhosts); i++ {
-										dh := dhosts[i]
-										refValidation := createError(dh.GatewayRuleName, dh.Namespace, dh.ServerIndex, dh.HostIndex)
-										refValidation = refValidation.MergeReferences(currentHostValidation)
-										currentHostValidation = currentHostValidation.MergeReferences(refValidation)
-										validations = validations.MergeValidations(refValidation)
-									}
-									validations = validations.MergeValidations(currentHostValidation)
-								}
-								m.existingList[selectorString] = append(m.existingList[selectorString], host)
-							}
+						// CurrentHostValidation is always the first one, so we skip it
+						for i := 1; i < len(dhosts); i++ {
+							dh := dhosts[i]
+							refValidation := createError(dh.GatewayRuleName, dh.Namespace, dh.ServerIndex, dh.HostIndex)
+							refValidation = refValidation.MergeReferences(currentHostValidation)
+							currentHostValidation = currentHostValidation.MergeReferences(refValidation)
+							validations = validations.MergeValidations(refValidation)
 						}
+						validations = validations.MergeValidations(currentHostValidation)
 					}
+					m.existingList[selectorString] = append(m.existingList[selectorString], host)
 				}
 			}
 		}
@@ -105,31 +97,22 @@ func createError(gatewayRuleName, namespace string, serverIndex, hostIndex int) 
 	return models.IstioValidations{key: rrValidation}
 }
 
-func parsePortAndHostnames(serverDef map[string]interface{}) []Host {
+func parsePortAndHostnames(serverDef *api_networking_v1alpha3.Server) []Host {
 	var port int
-	if portDef, found := serverDef["port"]; found {
-		if ports, ok := portDef.(map[string]interface{}); ok {
-			if numberDef, found := ports["number"]; found {
-				if portNumber, err := intutil.Convert(numberDef); err == nil {
-					port = portNumber
-				}
-			}
+	if serverDef.Port != nil {
+		if n, e := intutil.Convert(serverDef.Port.Number); e != nil {
+			port = n
 		}
 	}
-
-	if hostDef, found := serverDef["hosts"]; found {
-		if hostnames, ok := hostDef.([]interface{}); ok {
-			hosts := make([]Host, 0, len(hostnames))
-			for _, hostinterface := range hostnames {
-				if hostname, ok := hostinterface.(string); ok {
-					hosts = append(hosts, Host{
-						Port:     port,
-						Hostname: hostname,
-					})
-				}
-			}
-			return hosts
+	if len(serverDef.Hosts) > 0 {
+		hosts := make([]Host, 0, len(serverDef.Hosts))
+		for _, hostname := range serverDef.Hosts {
+			hosts = append(hosts, Host{
+				Port:     port,
+				Hostname: hostname,
+			})
 		}
+		return hosts
 	}
 	return nil
 }

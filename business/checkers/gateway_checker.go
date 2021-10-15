@@ -1,15 +1,16 @@
 package checkers
 
 import (
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
 	"github.com/kiali/kiali/business/checkers/gateways"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 const GatewayCheckerType = "gateway"
 
 type GatewayChecker struct {
-	GatewaysPerNamespace  [][]kubernetes.IstioObject
+	GatewaysPerNamespace  [][]networking_v1alpha3.Gateway
 	Namespace             string
 	WorkloadsPerNamespace map[string]models.WorkloadList
 }
@@ -24,7 +25,7 @@ func (g GatewayChecker) Check() models.IstioValidations {
 	// Single namespace
 	for _, nssGw := range g.GatewaysPerNamespace {
 		for _, gw := range nssGw {
-			if gw.GetObjectMeta().Namespace == g.Namespace {
+			if gw.Namespace == g.Namespace {
 				validations.MergeValidations(g.runSingleChecks(gw))
 			}
 		}
@@ -33,8 +34,8 @@ func (g GatewayChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func (g GatewayChecker) runSingleChecks(gw kubernetes.IstioObject) models.IstioValidations {
-	key, validations := EmptyValidValidation(gw.GetObjectMeta().Name, gw.GetObjectMeta().Namespace, GatewayCheckerType)
+func (g GatewayChecker) runSingleChecks(gw networking_v1alpha3.Gateway) models.IstioValidations {
+	key, validations := EmptyValidValidation(gw.Name, gw.Namespace, GatewayCheckerType)
 
 	enabledCheckers := []Checker{
 		gateways.SelectorChecker{

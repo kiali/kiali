@@ -150,8 +150,7 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 	objectType := params["object_type"]
 	object := params["object"]
 
-	api := business.GetIstioAPI(objectType)
-	if api == "" {
+	if !business.GetIstioAPI(objectType) {
 		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
 		return
 	}
@@ -162,7 +161,7 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
-	err = business.IstioConfig.DeleteIstioConfigDetail(api, namespace, objectType, object)
+	err = business.IstioConfig.DeleteIstioConfigDetail(namespace, objectType, object)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -178,8 +177,7 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 	objectType := params["object_type"]
 	object := params["object"]
 
-	api := business.GetIstioAPI(objectType)
-	if api == "" {
+	if !business.GetIstioAPI(objectType) {
 		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
 		return
 	}
@@ -196,7 +194,7 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
 	}
 	jsonPatch := string(body)
-	updatedConfigDetails, err := business.IstioConfig.UpdateIstioConfigDetail(api, namespace, objectType, object, jsonPatch)
+	updatedConfigDetails, err := business.IstioConfig.UpdateIstioConfigDetail(namespace, objectType, object, jsonPatch)
 
 	if err != nil {
 		handleErrorResponse(w, err)
@@ -213,8 +211,7 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 	objectType := params["object_type"]
 
-	api := business.GetIstioAPI(objectType)
-	if api == "" {
+	if !business.GetIstioAPI(objectType) {
 		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
 		return
 	}
@@ -231,7 +228,7 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Create request could not be read: "+err.Error())
 	}
 
-	createdConfigDetails, err := business.IstioConfig.CreateIstioConfigDetail(api, namespace, objectType, body)
+	createdConfigDetails, err := business.IstioConfig.CreateIstioConfigDetail(namespace, objectType, body)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -242,7 +239,7 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkObjectType(objectType string) bool {
-	return business.GetIstioAPI(objectType) != ""
+	return business.GetIstioAPI(objectType)
 }
 
 func audit(r *http.Request, message string) {

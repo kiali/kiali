@@ -2,7 +2,8 @@ package virtualservices
 
 import (
 	"fmt"
-	"reflect"
+
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -11,70 +12,87 @@ import (
 type SubsetPresenceChecker struct {
 	Namespace                string
 	Namespaces               []string
-	DestinationRules         []kubernetes.IstioObject
-	ExportedDestinationRules []kubernetes.IstioObject
-	VirtualService           kubernetes.IstioObject
+	DestinationRules         []networking_v1alpha3.DestinationRule
+	ExportedDestinationRules []networking_v1alpha3.DestinationRule
+	VirtualService           networking_v1alpha3.VirtualService
 }
 
 func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 	valid := true
 	validations := make([]*models.IstioCheck, 0)
 
-	protocols := [3]string{"http", "tcp", "tls"}
-	for _, protocol := range protocols {
-		specProtocol := checker.VirtualService.GetSpec()[protocol]
-		if specProtocol == nil {
+	for routeIdx, httpRoute := range checker.VirtualService.Spec.Http {
+		if httpRoute == nil {
 			continue
 		}
-
-		// Getting a []HTTPRoute, []TLSRoute, []TCPRoute
-		slice := reflect.ValueOf(specProtocol)
-		if slice.Kind() != reflect.Slice {
-			continue
-		}
-
-		for routeIdx := 0; routeIdx < slice.Len(); routeIdx++ {
-			httpRoute, ok := slice.Index(routeIdx).Interface().(map[string]interface{})
-			if !ok || httpRoute["route"] == nil {
+		for destWeightIdx, destinationWeight := range httpRoute.Route {
+			if destinationWeight == nil && destinationWeight.Destination == nil {
 				continue
 			}
-
-			// Getting a []DestinationWeight
-			destinationWeights := reflect.ValueOf(httpRoute["route"])
-			if destinationWeights.Kind() != reflect.Slice {
-				return validations, valid
+			host := destinationWeight.Destination.Host
+			if host == "" {
+				continue
 			}
-
-			for destWeightIdx := 0; destWeightIdx < destinationWeights.Len(); destWeightIdx++ {
-				destinationWeight, ok := destinationWeights.Index(destWeightIdx).Interface().(map[string]interface{})
-				if !ok || destinationWeight["destination"] == nil {
-					continue
-				}
-
-				destination, ok := destinationWeight["destination"].(map[string]interface{})
-				if !ok {
-					continue
-				}
-
-				host, ok := destination["host"].(string)
-				if !ok {
-					continue
-				}
-
-				subset, ok := destination["subset"].(string)
-				if !ok {
-					continue
-				}
-
-				if !checker.subsetPresent(host, subset) {
-					path := fmt.Sprintf("spec/%s[%d]/route[%d]/destination", protocol, routeIdx, destWeightIdx)
-					validation := models.Build("virtualservices.subsetpresent.subsetnotfound", path)
-					validations = append(validations, &validation)
-				}
+			subset := destinationWeight.Destination.Subset
+			if subset == "" {
+				continue
+			}
+			if !checker.subsetPresent(host, subset) {
+				path := fmt.Sprintf("spec/http[%d]/route[%d]/destination", routeIdx, destWeightIdx)
+				validation := models.Build("virtualservices.subsetpresent.subsetnotfound", path)
+				validations = append(validations, &validation)
 			}
 		}
 	}
 
+	for routeIdx, tcpRoute := range checker.VirtualService.Spec.Tcp {
+		if tcpRoute == nil {
+			continue
+		}
+		for destWeightIdx, destinationWeight := range tcpRoute.Route {
+			if destinationWeight == nil && destinationWeight.Destination == nil {
+				continue
+			}
+			host := destinationWeight.Destination.Host
+			if host == "" {
+				continue
+			}
+			subset := destinationWeight.Destination.Subset
+			if subset == "" {
+				continue
+			}
+			if !checker.subsetPresent(host, subset) {
+				path := fmt.Sprintf("spec/tcp[%d]/route[%d]/destination", routeIdx, destWeightIdx)
+				validation := models.Build("virtualservices.subsetpresent.subsetnotfound", path)
+				validations = append(validations, &validation)
+			}
+		}
+
+	}
+
+	for routeIdx, tlsRoute := range checker.VirtualService.Spec.Tls {
+		if tlsRoute == nil {
+			continue
+		}
+		for destWeightIdx, destinationWeight := range tlsRoute.Route {
+			if destinationWeight == nil && destinationWeight.Destination == nil {
+				continue
+			}
+			host := destinationWeight.Destination.Host
+			if host == "" {
+				continue
+			}
+			subset := destinationWeight.Destination.Subset
+			if subset == "" {
+				continue
+			}
+			if !checker.subsetPresent(host, subset) {
+				path := fmt.Sprintf("spec/tls[%d]/route[%d]/destination", routeIdx, destWeightIdx)
+				validation := models.Build("virtualservices.subsetpresent.subsetnotfound", path)
+				validations = append(validations, &validation)
+			}
+		}
+	}
 	return validations, valid
 }
 
@@ -89,26 +107,17 @@ func (checker SubsetPresenceChecker) subsetPresent(host string, subset string) b
 			return true
 		}
 	}
-
 	return false
 }
 
-func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost string) ([]kubernetes.IstioObject, bool) {
-	drs := make([]kubernetes.IstioObject, 0, len(checker.DestinationRules)+len(checker.ExportedDestinationRules))
+func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost string) ([]networking_v1alpha3.DestinationRule, bool) {
+	drs := make([]networking_v1alpha3.DestinationRule, 0, len(checker.DestinationRules)+len(checker.ExportedDestinationRules))
 
 	for _, destinationRule := range append(checker.DestinationRules, checker.ExportedDestinationRules...) {
-		host, ok := destinationRule.GetSpec()["host"]
-		if !ok {
-			continue
-		}
+		host := destinationRule.Spec.Host
 
-		sHost, ok := host.(string)
-		if !ok {
-			continue
-		}
-
-		drHost := kubernetes.GetHost(sHost, destinationRule.GetObjectMeta().Namespace, destinationRule.GetObjectMeta().ClusterName, checker.Namespaces)
-		vsHost := kubernetes.GetHost(virtualServiceHost, checker.Namespace, checker.VirtualService.GetObjectMeta().ClusterName, checker.Namespaces)
+		drHost := kubernetes.GetHost(host, destinationRule.Namespace, destinationRule.ClusterName, checker.Namespaces)
+		vsHost := kubernetes.GetHost(virtualServiceHost, checker.Namespace, checker.VirtualService.ClusterName, checker.Namespaces)
 
 		// TODO Host could be in another namespace (FQDN)
 		if kubernetes.FilterByHost(vsHost.String(), drHost.Service, drHost.Namespace) {
@@ -119,19 +128,13 @@ func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost stri
 	return drs, len(drs) > 0
 }
 
-func hasSubsetDefined(destinationRule kubernetes.IstioObject, subsetTarget string) bool {
-	if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
-		if dSubsets, ok := subsets.([]interface{}); ok {
-			for _, subset := range dSubsets {
-				if innerSubset, ok := subset.(map[string]interface{}); ok {
-					if sSubsetName := innerSubset["name"]; ok {
-						subsetName := sSubsetName.(string)
-						if subsetName == subsetTarget {
-							return true
-						}
-					}
-				}
-			}
+func hasSubsetDefined(destinationRule networking_v1alpha3.DestinationRule, subsetTarget string) bool {
+	for _, subset := range destinationRule.Spec.Subsets {
+		if subset == nil {
+			continue
+		}
+		if subset.Name == subsetTarget {
+			return true
 		}
 	}
 	return false

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -11,8 +13,8 @@ import (
 const DestinationRulesCheckerType = "destinationrule"
 
 type MultiMatchChecker struct {
-	DestinationRules         []kubernetes.IstioObject
-	ExportedDestinationRules []kubernetes.IstioObject
+	DestinationRules         []networking_v1alpha3.DestinationRule
+	ExportedDestinationRules []networking_v1alpha3.DestinationRule
 	ServiceEntries           map[string][]string
 	Namespaces               models.Namespaces
 }
@@ -36,86 +38,70 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	seenHostSubsets := make(map[string]map[string][]rule)
 
 	for _, dr := range append(m.DestinationRules, m.ExportedDestinationRules...) {
-		if host, ok := dr.GetSpec()["host"]; ok {
-			destinationRulesName := dr.GetObjectMeta().Name
-			destinationRulesNamespace := dr.GetObjectMeta().Namespace
-			if dHost, ok := host.(string); ok {
-				fqdn := kubernetes.GetHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName, m.Namespaces.GetNames())
+		destinationRulesName := dr.Name
+		destinationRulesNamespace := dr.Namespace
+		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, dr.ClusterName, m.Namespaces.GetNames())
 
-				// Skip DR validation if it enables mTLS either namespace or mesh-wide
-				if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
-					continue
-				}
-
-				foundSubsets := extractSubsets(dr, destinationRulesName, destinationRulesNamespace)
-
-				if fqdn.IsWildcard() {
-					// We need to check the matching subsets from all hosts now
-					for _, h := range seenHostSubsets {
-						checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, h)
-					}
-					// We add * later
-				}
-				// Search "*" first and then exact name
-				if previous, found := seenHostSubsets[fmt.Sprintf("*.%s.%s", fqdn.Namespace, fqdn.Cluster)]; found {
-					// Need to check subsets of "*"
-					checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, previous)
-				}
-
-				if previous, found := seenHostSubsets[fqdn.String()]; found {
-					// Host found, need to check underlying subsets
-					checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, previous)
-				}
-				// Nothing threw an error, so add these
-				if _, found := seenHostSubsets[fqdn.String()]; !found {
-					seenHostSubsets[fqdn.String()] = make(map[string][]rule)
-				}
-				for _, s := range foundSubsets {
-					seenHostSubsets[fqdn.String()][s.Name] = append(seenHostSubsets[fqdn.String()][s.Name], rule{destinationRulesName, destinationRulesNamespace})
-				}
-			}
+		// Skip DR validation if it enables mTLS either namespace or mesh-wide
+		if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
+			continue
 		}
+
+		foundSubsets := extractSubsets(dr, destinationRulesName, destinationRulesNamespace)
+
+		if fqdn.IsWildcard() {
+			// We need to check the matching subsets from all hosts now
+			for _, h := range seenHostSubsets {
+				checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, h)
+			}
+			// We add * later
+		}
+		// Search "*" first and then exact name
+		if previous, found := seenHostSubsets[fmt.Sprintf("*.%s.%s", fqdn.Namespace, fqdn.Cluster)]; found {
+			// Need to check subsets of "*"
+			checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, previous)
+		}
+
+		if previous, found := seenHostSubsets[fqdn.String()]; found {
+			// Host found, need to check underlying subsets
+			checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, previous)
+		}
+		// Nothing threw an error, so add these
+		if _, found := seenHostSubsets[fqdn.String()]; !found {
+			seenHostSubsets[fqdn.String()] = make(map[string][]rule)
+		}
+		for _, s := range foundSubsets {
+			seenHostSubsets[fqdn.String()][s.Name] = append(seenHostSubsets[fqdn.String()][s.Name], rule{destinationRulesName, destinationRulesNamespace})
+		}
+
 	}
 
 	return validations
 }
 
-func isNonLocalmTLSForServiceEnabled(dr kubernetes.IstioObject, service string) bool {
+func isNonLocalmTLSForServiceEnabled(dr networking_v1alpha3.DestinationRule, service string) bool {
 	return strings.HasPrefix(service, "*") && ismTLSEnabled(dr)
 }
 
-func ismTLSEnabled(dr kubernetes.IstioObject) bool {
-	if trafficPolicy, trafficPresent := dr.GetSpec()["trafficPolicy"]; trafficPresent {
-		if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
-			if tls, found := trafficCasted["tls"]; found {
-				if tlsCasted, ok := tls.(map[string]interface{}); ok {
-					if mode, found := tlsCasted["mode"]; found {
-						if modeCasted, ok := mode.(string); ok {
-							return modeCasted == "ISTIO_MUTUAL"
-						}
-					}
-				}
-			}
-		}
+func ismTLSEnabled(dr networking_v1alpha3.DestinationRule) bool {
+	if dr.Spec.TrafficPolicy != nil && dr.Spec.TrafficPolicy.Tls != nil {
+		mode := dr.Spec.TrafficPolicy.Tls.Mode.String()
+		return mode == "ISTIO_MUTUAL"
 	}
 	return false
 }
 
-func extractSubsets(dr kubernetes.IstioObject, destinationRulesName string, destinationRulesNamespace string) []subset {
-	if subsets, found := dr.GetSpec()["subsets"]; found {
-		if subsetSlice, ok := subsets.([]interface{}); ok {
-			foundSubsets := make([]subset, 0, len(subsetSlice))
-			for _, se := range subsetSlice {
-				if element, ok := se.(map[string]interface{}); ok {
-					if name, found := element["name"]; found {
-						if n, ok := name.(string); ok {
-							foundSubsets = append(foundSubsets, subset{n, destinationRulesNamespace, destinationRulesName})
-						}
-					}
-				}
-			}
-			return foundSubsets
+func extractSubsets(dr networking_v1alpha3.DestinationRule, destinationRulesName string, destinationRulesNamespace string) []subset {
+	if len(dr.Spec.Subsets) > 0 {
+		foundSubsets := []subset{}
+		for _, ss := range dr.Spec.Subsets {
+			foundSubsets = append(foundSubsets, subset{
+				Name:      ss.Name,
+				Namespace: destinationRulesNamespace,
+				RuleName:  destinationRulesName,
+			})
 		}
+		return foundSubsets
 	}
 	// Matches all the subsets:~
 	return []subset{{"~", destinationRulesNamespace, destinationRulesName}}

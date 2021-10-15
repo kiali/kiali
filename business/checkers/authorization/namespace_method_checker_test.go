@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
@@ -16,7 +16,7 @@ func TestSourceNamespaceExisting(t *testing.T) {
 	assert := assert.New(t)
 
 	validations, valid := NamespaceMethodChecker{
-		AuthorizationPolicy: sourceNamespaceAuthPolicy([]interface{}{"bookinfo", "bookinfo2"}),
+		AuthorizationPolicy: *sourceNamespaceAuthPolicy([]string{"bookinfo", "bookinfo2"}),
 		Namespaces:          []string{"bookinfo", "bookinfo2"},
 	}.Check()
 
@@ -29,7 +29,7 @@ func TestSourceNamespaceNotFound(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NamespaceMethodChecker{
-		AuthorizationPolicy: sourceNamespaceAuthPolicy([]interface{}{"wrong1", "wrong2"}),
+		AuthorizationPolicy: *sourceNamespaceAuthPolicy([]string{"wrong1", "wrong2"}),
 		Namespaces:          []string{"bookinfo"},
 	}.Check()
 
@@ -48,7 +48,7 @@ func TestToMethodWrongHTTP(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NamespaceMethodChecker{
-		AuthorizationPolicy: toMethodsAuthPolicy([]interface{}{
+		AuthorizationPolicy: *toMethodsAuthPolicy([]string{
 			"GET", "/grpc.package/method", "/grpc.package/subpackage/subpackage/method",
 			"GOT", "WRONG", "/grpc.pkg/hello.method", "grpc.pkg/noinitialslash",
 		}),
@@ -65,16 +65,16 @@ func TestToMethodWrongHTTP(t *testing.T) {
 	}
 }
 
-func sourceNamespaceAuthPolicy(nss []interface{}) kubernetes.IstioObject {
-	methods := []interface{}{"GET", "PUT", "PATCH"}
-	selector := map[string]interface{}{"app": "details"}
-	hosts := []interface{}{"details"}
+func sourceNamespaceAuthPolicy(nss []string) *security_v1beta.AuthorizationPolicy {
+	methods := []string{"GET", "PUT", "PATCH"}
+	selector := map[string]string{"app": "details"}
+	hosts := []string{"details"}
 	return data.CreateAuthorizationPolicy(nss, methods, hosts, selector)
 }
 
-func toMethodsAuthPolicy(methods []interface{}) kubernetes.IstioObject {
-	nss := []interface{}{"bookinfo"}
-	selector := map[string]interface{}{"app": "details"}
-	hosts := []interface{}{"details"}
+func toMethodsAuthPolicy(methods []string) *security_v1beta.AuthorizationPolicy {
+	nss := []string{"bookinfo"}
+	selector := map[string]string{"app": "details"}
+	hosts := []string{"details"}
 	return data.CreateAuthorizationPolicy(nss, methods, hosts, selector)
 }

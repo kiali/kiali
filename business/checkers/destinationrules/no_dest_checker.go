@@ -1,9 +1,10 @@
 package destinationrules
 
 import (
-	"reflect"
 	"strconv"
 	"strings"
+
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -16,8 +17,8 @@ type NoDestinationChecker struct {
 	Namespace       string
 	Namespaces      models.Namespaces
 	WorkloadList    models.WorkloadList
-	DestinationRule kubernetes.IstioObject
-	VirtualServices []kubernetes.IstioObject
+	DestinationRule networking_v1alpha3.DestinationRule
+	VirtualServices []networking_v1alpha3.VirtualService
 	ServiceEntries  map[string][]string
 	Services        []core_v1.Service
 	RegistryStatus  []*kubernetes.RegistryStatus
@@ -28,52 +29,34 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	valid := true
 	validations := make([]*models.IstioCheck, 0)
 
-	if host, ok := n.DestinationRule.GetSpec()["host"]; ok {
-		if dHost, ok := host.(string); ok {
-			fqdn := kubernetes.GetHost(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName, n.Namespaces.GetNames())
-			// Testing Kubernetes Services + Istio ServiceEntries + Istio Runtime Registry (cross namespace)
-			if !n.hasMatchingService(fqdn, n.DestinationRule.GetObjectMeta().Namespace) {
-				validation := models.Build("destinationrules.nodest.matchingregistry", "spec/host")
-				valid = false
-				validations = append(validations, &validation)
-			} else if subsets, ok := n.DestinationRule.GetSpec()["subsets"]; ok {
-				if dSubsets, ok := subsets.([]interface{}); ok {
-					// Check that each subset has a matching workload somewhere..
-					for i, subset := range dSubsets {
-						if innerSubset, ok := subset.(map[string]interface{}); ok {
-							if labels, ok := innerSubset["labels"]; ok {
-								if dLabels, ok := labels.(map[string]interface{}); ok {
-									stringLabels := make(map[string]string, len(dLabels))
-									for k, v := range dLabels {
-										if s, ok := v.(string); ok {
-											stringLabels[k] = s
-										}
-									}
-									if !n.hasMatchingWorkload(fqdn.String(), stringLabels) {
-										validation := models.Build("destinationrules.nodest.subsetlabels",
-											"spec/subsets["+strconv.Itoa(i)+"]")
-										if n.isSubsetReferenced(dHost, innerSubset["name"].(string)) {
-											valid = false
-										} else {
-											validation.Severity = models.Unknown
-										}
-										validations = append(validations, &validation)
-									}
-								}
-							} else {
-								validation := models.Build("destinationrules.nodest.subsetnolabels",
-									"spec/subsets["+strconv.Itoa(i)+"]")
-								validations = append(validations, &validation)
-								// Not changing valid value, if other subset is on error, a valid = false has priority
-							}
-						}
+	fqdn := kubernetes.GetHost(n.DestinationRule.Spec.Host, n.DestinationRule.Namespace, n.DestinationRule.ClusterName, n.Namespaces.GetNames())
+	// Testing Kubernetes Services + Istio ServiceEntries + Istio Runtime Registry (cross namespace)
+	if !n.hasMatchingService(fqdn, n.DestinationRule.Namespace) {
+		validation := models.Build("destinationrules.nodest.matchingregistry", "spec/host")
+		valid = false
+		validations = append(validations, &validation)
+	} else if len(n.DestinationRule.Spec.Subsets) > 0 {
+		// Check that each subset has a matching workload somewhere..
+		for i, subset := range n.DestinationRule.Spec.Subsets {
+			if len(subset.Labels) > 0 {
+				if !n.hasMatchingWorkload(fqdn.Service, subset.Labels) {
+					validation := models.Build("destinationrules.nodest.subsetlabels",
+						"spec/subsets["+strconv.Itoa(i)+"]")
+					if n.isSubsetReferenced(n.DestinationRule.Spec.Host, subset.Name) {
+						valid = false
+					} else {
+						validation.Severity = models.Unknown
 					}
-
+					validations = append(validations, &validation)
 				}
+			} else {
+				validation := models.Build("destinationrules.nodest.subsetnolabels",
+					"spec/subsets["+strconv.Itoa(i)+"]")
+				validations = append(validations, &validation)
+				// Not changing valid value, if other subset is on error, a valid = false has priority
 			}
 		}
 	}
-
 	return validations, valid
 }
 
@@ -163,59 +146,75 @@ func (n NoDestinationChecker) isSubsetReferenced(host string, subset string) boo
 	return false
 }
 
-func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virtualServiceSubset string) ([]kubernetes.IstioObject, bool) {
-	vss := make([]kubernetes.IstioObject, 0, len(n.VirtualServices))
+func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virtualServiceSubset string) ([]networking_v1alpha3.VirtualService, bool) {
+	vss := make([]networking_v1alpha3.VirtualService, 0, len(n.VirtualServices))
 
 	for _, virtualService := range n.VirtualServices {
-		protocols := [3]string{"http", "tcp", "tls"}
-		for _, protocol := range protocols {
-			specProtocol := virtualService.GetSpec()[protocol]
-			if specProtocol == nil {
-				continue
-			}
 
-			// Getting a []HTTPRoute, []TLSRoute, []TCPRoute
-			slice := reflect.ValueOf(specProtocol)
-			if slice.Kind() != reflect.Slice {
-				continue
-			}
-
-			for routeIdx := 0; routeIdx < slice.Len(); routeIdx++ {
-				httpRoute, ok := slice.Index(routeIdx).Interface().(map[string]interface{})
-				if !ok || httpRoute["route"] == nil {
+		if len(virtualService.Spec.Http) > 0 {
+			for _, httpRoute := range virtualService.Spec.Http {
+				if httpRoute == nil {
 					continue
 				}
-
-				// Getting a []DestinationWeight
-				destinationWeights := reflect.ValueOf(httpRoute["route"])
-
-				for destWeightIdx := 0; destWeightIdx < destinationWeights.Len(); destWeightIdx++ {
-					destinationWeight, ok := destinationWeights.Index(destWeightIdx).Interface().(map[string]interface{})
-					if !ok || destinationWeight["destination"] == nil {
-						continue
+				if len(httpRoute.Route) > 0 {
+					for _, dest := range httpRoute.Route {
+						if dest == nil || dest.Destination == nil {
+							continue
+						}
+						host := dest.Destination.Host
+						subset := dest.Destination.Subset
+						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ClusterName, n.Namespaces.GetNames())
+						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+						// TODO Host could be in another namespace (FQDN)
+						if kubernetes.FilterByHost(vsHost.String(), drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
+							vss = append(vss, virtualService)
+						}
 					}
+				}
+			}
+		}
 
-					destination, ok := destinationWeight["destination"].(map[string]interface{})
-					if !ok {
-						continue
+		if len(virtualService.Spec.Tcp) > 0 {
+			for _, tcpRoute := range virtualService.Spec.Tcp {
+				if tcpRoute == nil {
+					continue
+				}
+				if len(tcpRoute.Route) > 0 {
+					for _, dest := range tcpRoute.Route {
+						if dest == nil || dest.Destination == nil {
+							continue
+						}
+						host := dest.Destination.Host
+						subset := dest.Destination.Subset
+						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ClusterName, n.Namespaces.GetNames())
+						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+						// TODO Host could be in another namespace (FQDN)
+						if kubernetes.FilterByHost(vsHost.String(), drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
+							vss = append(vss, virtualService)
+						}
 					}
+				}
+			}
+		}
 
-					host, ok := destination["host"].(string)
-					if !ok {
-						continue
-					}
-
-					subset, ok := destination["subset"].(string)
-					if !ok {
-						continue
-					}
-
-					drHost := kubernetes.GetHost(host, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName, n.Namespaces.GetNames())
-					vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.GetObjectMeta().Namespace, virtualService.GetObjectMeta().ClusterName, n.Namespaces.GetNames())
-
-					// TODO Host could be in another namespace (FQDN)
-					if kubernetes.FilterByHost(vsHost.String(), drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
-						vss = append(vss, virtualService)
+		if len(virtualService.Spec.Tls) > 0 {
+			for _, tlsRoute := range virtualService.Spec.Tls {
+				if tlsRoute == nil {
+					continue
+				}
+				if len(tlsRoute.Route) > 0 {
+					for _, dest := range tlsRoute.Route {
+						if dest == nil || dest.Destination == nil {
+							continue
+						}
+						host := dest.Destination.Host
+						subset := dest.Destination.Subset
+						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ClusterName, n.Namespaces.GetNames())
+						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+						// TODO Host could be in another namespace (FQDN)
+						if kubernetes.FilterByHost(vsHost.String(), drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
+							vss = append(vss, virtualService)
+						}
 					}
 				}
 			}

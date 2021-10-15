@@ -4,25 +4,25 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForVirtualService(istioObject kubernetes.IstioObject) models.IstioValidations {
-	istioObjects := []kubernetes.IstioObject{istioObject}
+func prepareTestForVirtualService(vs *networking_v1alpha3.VirtualService) models.IstioValidations {
+	vss := []networking_v1alpha3.VirtualService{*vs}
 
 	// Setup mocks
-	destinationList := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("bookinfo", "reviewsrule", "reviews"),
+	destinationList := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("bookinfo", "reviewsrule", "reviews"),
 	}
 
 	virtualServiceChecker := VirtualServiceChecker{
 		Namespace:        "bookinfo",
 		DestinationRules: destinationList,
-		VirtualServices:  istioObjects,
+		VirtualServices:  vss,
 	}
 
 	return virtualServiceChecker.Check()
@@ -82,8 +82,8 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	destinationList := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("bookinfo", "reviewsrule1", "reviews"),
+	destinationList := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("bookinfo", "reviewsrule1", "reviews"),
 	}
 
 	virtualServiceChecker := VirtualServiceChecker{
@@ -110,35 +110,35 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	assert.Len(validation.Checks, 2)
 }
 
-func fakeVirtualServices() kubernetes.IstioObject {
-	validVirtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 55),
-		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v2", 45),
+func fakeVirtualServices() *networking_v1alpha3.VirtualService {
+	validVirtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 55),
+		data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v2", 45),
 			data.CreateEmptyVirtualService("reviews-well", "bookinfo", []string{"reviews.prod.svc.cluster.local"}),
 		),
-	).DeepCopyIstioObject()
+	)
 
 	return validVirtualService
 }
 
-func fakeVirtualServicesMultipleChecks() kubernetes.IstioObject {
+func fakeVirtualServicesMultipleChecks() *networking_v1alpha3.VirtualService {
 	virtualService := data.CreateEmptyVirtualService("reviews-multiple", "bookinfo", []string{})
-	validVirtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 55), virtualService)
-	validVirtualService = data.AddRoutesToVirtualService("tcp", data.CreateRoute("reviews", "v2", 55),
-		validVirtualService).DeepCopyIstioObject()
-	delete(validVirtualService.GetSpec(), "hosts") // this isn't valid, but we mock the original testdata
+	validVirtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 55), virtualService)
+	validVirtualService = data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("reviews", "v2", 55),
+		validVirtualService)
+	validVirtualService.Spec.Hosts = nil
 
 	return validVirtualService
 }
 
-func fakeVirtualServiceMixedChecker() kubernetes.IstioObject {
-	validVirtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v4", 05),
+func fakeVirtualServiceMixedChecker() *networking_v1alpha3.VirtualService {
+	validVirtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v4", 05),
 		data.CreateEmptyVirtualService("reviews-mixed", "bookinfo", []string{}),
-	).DeepCopyIstioObject()
-	delete(validVirtualService.GetSpec(), "hosts") // this isn't valid, but we mock the original testdata
+	)
+	validVirtualService.Spec.Hosts = nil
 
 	return validVirtualService
 }
 
-func fakeVirtualServiceMultipleIstioObjects() []kubernetes.IstioObject {
-	return []kubernetes.IstioObject{fakeVirtualServiceMixedChecker(), fakeVirtualServicesMultipleChecks()}
+func fakeVirtualServiceMultipleIstioObjects() []networking_v1alpha3.VirtualService {
+	return []networking_v1alpha3.VirtualService{*fakeVirtualServiceMixedChecker(), *fakeVirtualServicesMultipleChecks()}
 }
