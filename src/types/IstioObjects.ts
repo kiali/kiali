@@ -1,5 +1,4 @@
 import Namespace from './Namespace';
-import { ResourcePermissions } from './Permissions';
 import { ServicePort } from './ServiceInfo';
 import { ProxyStatus } from './Health';
 import { TimeInSeconds } from './Common';
@@ -55,8 +54,8 @@ export interface IstioStatus {
 
 export interface ValidationMessage {
   description?: string;
-  documentation_url: string;
-  level?: number;
+  documentationUrl: string;
+  level?: string;
   type: ValidationMessageType;
 }
 
@@ -75,10 +74,10 @@ export enum ValidationTypes {
 }
 
 export const IstioLevelToSeverity = {
-  0: ValidationTypes.Info,
-  3: ValidationTypes.Error,
-  8: ValidationTypes.Warning,
-  12: ValidationTypes.Info
+  UNKNOWN: ValidationTypes.Info,
+  ERROR: ValidationTypes.Error,
+  WARNING: ValidationTypes.Warning,
+  INFO: ValidationTypes.Info
 };
 
 export interface ObjectValidation {
@@ -526,11 +525,6 @@ export interface DestinationRule extends IstioObject {
   spec: DestinationRuleSpec;
 }
 
-export interface DestinationRules {
-  items: DestinationRule[];
-  permissions: ResourcePermissions;
-}
-
 // Virtual Service
 
 // 1.6
@@ -605,11 +599,6 @@ export interface VirtualServiceSpec {
 // 1.6
 export interface VirtualService extends IstioObject {
   spec: VirtualServiceSpec;
-}
-
-export interface VirtualServices {
-  items: VirtualService[];
-  permissions: ResourcePermissions;
 }
 
 export interface K8sOwnerReference {

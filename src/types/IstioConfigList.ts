@@ -2,7 +2,6 @@ import Namespace from './Namespace';
 import {
   AuthorizationPolicy,
   DestinationRule,
-  DestinationRules,
   EnvoyFilter,
   Gateway,
   ObjectValidation,
@@ -12,7 +11,6 @@ import {
   Sidecar,
   Validations,
   VirtualService,
-  VirtualServices,
   WorkloadEntry,
   WorkloadGroup
 } from './IstioObjects';
@@ -41,8 +39,8 @@ export interface IstioConfigItem {
 export interface IstioConfigList {
   namespace: Namespace;
   gateways: Gateway[];
-  virtualServices: VirtualServices;
-  destinationRules: DestinationRules;
+  virtualServices: VirtualService[];
+  destinationRules: DestinationRule[];
   serviceEntries: ServiceEntry[];
   workloadEntries: WorkloadEntry[];
   workloadGroups: WorkloadGroup[];
@@ -109,14 +107,8 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
   return {
     namespace: unfiltered.namespace,
     gateways: unfiltered.gateways.filter(gw => includeName(gw.metadata.name, names)),
-    virtualServices: {
-      permissions: unfiltered.virtualServices.permissions,
-      items: unfiltered.virtualServices.items.filter(vs => includeName(vs.metadata.name, names))
-    },
-    destinationRules: {
-      permissions: unfiltered.destinationRules.permissions,
-      items: unfiltered.destinationRules.items.filter(dr => includeName(dr.metadata.name, names))
-    },
+    virtualServices: unfiltered.virtualServices.filter(vs => includeName(vs.metadata.name, names)),
+    destinationRules: unfiltered.destinationRules.filter(dr => includeName(dr.metadata.name, names)),
     serviceEntries: unfiltered.serviceEntries.filter(se => includeName(se.metadata.name, names)),
     authorizationPolicies: unfiltered.authorizationPolicies.filter(rc => includeName(rc.metadata.name, names)),
     sidecars: unfiltered.sidecars.filter(sc => includeName(sc.metadata.name, names)),

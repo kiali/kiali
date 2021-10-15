@@ -16,7 +16,7 @@ class IstioStatusMessageList extends React.Component<Props> {
         </Title>
         <Stack gutter="lg">
           {this.props.messages.map((msg: ValidationMessage, i: number) => {
-            const severity: ValidationTypes = IstioLevelToSeverity[msg.level || 0];
+            const severity: ValidationTypes = IstioLevelToSeverity[msg.level || 'UNKNOWN'];
             return (
               <StackItem id={'msg-' + i} className={'validation-message'}>
                 <Split>
@@ -24,7 +24,7 @@ class IstioStatusMessageList extends React.Component<Props> {
                     <Validation severity={severity} />
                   </SplitItem>
                   <SplitItem>
-                    <a href={msg.documentation_url} target="_blank" rel="noopener noreferrer">
+                    <a href={msg.documentationUrl} target="_blank" rel="noopener noreferrer">
                       {msg.type.code}
                     </a>
                     {msg.description ? ': ' + msg.description : undefined}

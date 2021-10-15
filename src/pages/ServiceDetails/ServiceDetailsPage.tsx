@@ -200,6 +200,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         workloads={this.state.serviceDetails.workloads || []}
         virtualServices={this.state.serviceDetails.virtualServices}
         destinationRules={this.state.serviceDetails.destinationRules}
+        istioPermissions={this.state.serviceDetails.istioPermissions}
         gateways={this.getGatewaysAsList()}
         peerAuthentications={this.state.peerAuthentications}
         tlsStatus={this.state.serviceDetails.namespaceMTLS}

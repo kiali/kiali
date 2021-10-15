@@ -151,7 +151,7 @@ class ServiceNetwork extends React.Component<Props> {
                   })}
                 </div>
               </li>
-              {this.props.serviceDetails.virtualServices.items.length > 0 && (
+              {this.props.serviceDetails.virtualServices.length > 0 && (
                 <li>
                   <span>Hostnames</span>
                   <div
@@ -160,7 +160,7 @@ class ServiceNetwork extends React.Component<Props> {
                       width: '75%'
                     }}
                   >
-                    {this.getHostnames(this.props.serviceDetails.virtualServices.items).map((hostname, i) => {
+                    {this.getHostnames(this.props.serviceDetails.virtualServices).map((hostname, i) => {
                       return (
                         <div key={'hostname_' + i}>
                           <Tooltip

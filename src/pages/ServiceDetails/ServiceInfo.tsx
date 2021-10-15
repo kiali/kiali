@@ -87,16 +87,16 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
 
   render() {
     const vsIstioConfigItems = this.props.serviceDetails?.virtualServices
-      ? vsToIstioItems(this.props.serviceDetails.virtualServices.items, this.props.serviceDetails.validations)
+      ? vsToIstioItems(this.props.serviceDetails.virtualServices, this.props.serviceDetails.validations)
       : [];
     const drIstioConfigItems = this.props.serviceDetails?.destinationRules
-      ? drToIstioItems(this.props.serviceDetails.destinationRules.items, this.props.serviceDetails.validations)
+      ? drToIstioItems(this.props.serviceDetails.destinationRules, this.props.serviceDetails.validations)
       : [];
     const gwIstioConfigItems =
       this.props?.gateways && this.props.serviceDetails?.virtualServices
         ? gwToIstioItems(
             this.props?.gateways,
-            this.props.serviceDetails.virtualServices.items,
+            this.props.serviceDetails.virtualServices,
             this.props.serviceDetails.validations
           )
         : [];

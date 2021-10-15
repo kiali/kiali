@@ -1,14 +1,15 @@
 import { DEGRADED, FAILURE, HEALTHY, NA, ServiceHealth, Status } from './Health';
 import {
-  DestinationRules,
+  DestinationRule,
   ObjectCheck,
   ObjectValidation,
   Validations,
   ValidationTypes,
-  VirtualServices
+  VirtualService
 } from './IstioObjects';
 import { TLSStatus } from './TLSStatus';
 import { AdditionalItem } from './Workload';
+import { ResourcePermissions } from './Permissions';
 
 export interface ServicePort {
   name: string;
@@ -52,8 +53,9 @@ export interface ServiceDetailsInfo {
   service: Service;
   endpoints?: Endpoints[];
   istioSidecar: boolean;
-  virtualServices: VirtualServices;
-  destinationRules: DestinationRules;
+  virtualServices: VirtualService[];
+  destinationRules: DestinationRule[];
+  istioPermissions: ResourcePermissions;
   health?: ServiceHealth;
   workloads?: WorkloadOverview[];
   namespaceMTLS?: TLSStatus;

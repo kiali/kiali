@@ -8,8 +8,8 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
       name: 'test'
     },
     gateways: [],
-    virtualServices: { items: [], permissions: { create: false, update: false, delete: false } },
-    destinationRules: { items: [], permissions: { create: false, update: false, delete: false } },
+    virtualServices: [],
+    destinationRules: [],
     serviceEntries: [],
     authorizationPolicies: [],
     sidecars: [],
@@ -23,10 +23,10 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
   };
   names.forEach(name => {
     testData.authorizationPolicies.push({ metadata: { name: name + '0' }, spec: {} });
-    testData.destinationRules.items.push({ metadata: { name: name + '1' }, spec: {} });
+    testData.destinationRules.push({ metadata: { name: name + '1' }, spec: {} });
     testData.gateways.push({ metadata: { name: name + '2' }, spec: {} });
     testData.serviceEntries.push({ metadata: { name: name + '3' }, spec: {} });
-    testData.virtualServices.items.push({ metadata: { name: name + '4' }, spec: {} });
+    testData.virtualServices.push({ metadata: { name: name + '4' }, spec: {} });
   });
   return testData;
 };
@@ -38,20 +38,20 @@ describe('IstioConfigListContainer#filterByName', () => {
     let filtered = filterByName(unfiltered, ['white', 'red']);
     expect(filtered).toBeDefined();
     expect(filtered.gateways.length).toBe(2);
-    expect(filtered.virtualServices.items.length).toBe(2);
-    expect(filtered.destinationRules.items.length).toBe(2);
+    expect(filtered.virtualServices.length).toBe(2);
+    expect(filtered.destinationRules.length).toBe(2);
     expect(filtered.serviceEntries.length).toBe(2);
 
     expect(filtered.authorizationPolicies[0].metadata.name).toBe('white0');
-    expect(filtered.destinationRules.items[0].metadata.name).toBe('white1');
+    expect(filtered.destinationRules[0].metadata.name).toBe('white1');
     expect(filtered.serviceEntries[0].metadata.name).toBe('white3');
-    expect(filtered.virtualServices.items[0].metadata.name).toBe('white4');
+    expect(filtered.virtualServices[0].metadata.name).toBe('white4');
 
     filtered = filterByName(unfiltered, ['bad']);
     expect(filtered).toBeDefined();
     expect(filtered.gateways.length).toBe(0);
-    expect(filtered.virtualServices.items.length).toBe(0);
-    expect(filtered.destinationRules.items.length).toBe(0);
+    expect(filtered.virtualServices.length).toBe(0);
+    expect(filtered.destinationRules.length).toBe(0);
     expect(filtered.serviceEntries.length).toBe(0);
   });
 });

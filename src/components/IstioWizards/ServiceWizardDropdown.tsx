@@ -13,7 +13,7 @@ import {
 } from '@patternfly/react-core';
 import { CaretDownIcon } from '@patternfly/react-icons';
 import { WorkloadOverview } from '../../types/ServiceInfo';
-import { DestinationRule, DestinationRules, PeerAuthentication, VirtualServices } from '../../types/IstioObjects';
+import { DestinationRule, PeerAuthentication, VirtualService } from '../../types/IstioObjects';
 import * as AlertUtils from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
 import { serverConfig } from '../../config/ServerConfig';
@@ -30,14 +30,16 @@ import {
   WIZARD_TCP_TRAFFIC_SHIFTING
 } from './WizardActions';
 import ServiceWizard from './ServiceWizard';
+import { ResourcePermissions } from '../../types/Permissions';
 
 type Props = {
   namespace: string;
   serviceName: string;
   show: boolean;
   workloads: WorkloadOverview[];
-  virtualServices: VirtualServices;
-  destinationRules: DestinationRules;
+  virtualServices: VirtualService[];
+  destinationRules: DestinationRule[];
+  istioPermissions: ResourcePermissions;
   gateways: string[];
   peerAuthentications: PeerAuthentication[];
   tlsStatus?: TLSStatus;
@@ -76,30 +78,24 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
   // Wizard can be opened when there are not existing VS & DR and there are update permissions
   canCreate = () => {
     return (
-      this.props.virtualServices.permissions.create &&
-      this.props.destinationRules.permissions.create &&
-      !serverConfig.deployment.viewOnlyMode
+      this.props.istioPermissions.create && this.props.istioPermissions.create && !serverConfig.deployment.viewOnlyMode
     );
   };
 
   canUpdate = () => {
     return (
-      this.props.virtualServices.permissions.update &&
-      this.props.destinationRules.permissions.update &&
-      !serverConfig.deployment.viewOnlyMode
+      this.props.istioPermissions.update && this.props.istioPermissions.update && !serverConfig.deployment.viewOnlyMode
     );
   };
 
   canDelete = () => {
     return (
-      this.props.virtualServices.permissions.delete &&
-      this.props.destinationRules.permissions.delete &&
-      !serverConfig.deployment.viewOnlyMode
+      this.props.istioPermissions.delete && this.props.istioPermissions.delete && !serverConfig.deployment.viewOnlyMode
     );
   };
 
   hasTrafficRouting = () => {
-    return this.props.virtualServices.items.length > 0 || this.props.destinationRules.items.length > 0;
+    return this.props.virtualServices.length > 0 || this.props.destinationRules.length > 0;
   };
 
   hasSidecarWorkloads = (): boolean => {
@@ -124,26 +120,26 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
     switch (this.state.deleteAction) {
       case DELETE_TRAFFIC_ROUTING:
         let vsMessage =
-          this.props.virtualServices.items.length > 0
-            ? `VirtualService${
-                this.props.virtualServices.items.length > 1 ? 's' : ''
-              }: '${this.props.virtualServices.items.map(vs => vs.metadata.name)}'`
+          this.props.virtualServices.length > 0
+            ? `VirtualService${this.props.virtualServices.length > 1 ? 's' : ''}: '${this.props.virtualServices.map(
+                vs => vs.metadata.name
+              )}'`
             : '';
         deleteItems.push(<div>{vsMessage}</div>);
 
         let drMessage =
-          this.props.destinationRules.items.length > 0
-            ? `DestinationRule${
-                this.props.destinationRules.items.length > 1 ? 's' : ''
-              }: '${this.props.destinationRules.items.map(dr => dr.metadata.name)}'`
+          this.props.destinationRules.length > 0
+            ? `DestinationRule${this.props.destinationRules.length > 1 ? 's' : ''}: '${this.props.destinationRules.map(
+                dr => dr.metadata.name
+              )}'`
             : '';
         deleteItems.push(<div>{drMessage}</div>);
 
         let paMessage =
-          this.props.destinationRules.items.length > 0 && this.hasAnyPeerAuthn(this.props.destinationRules)
+          this.props.destinationRules.length > 0 && this.hasAnyPeerAuthn(this.props.destinationRules)
             ? `PeerAuthentication${
-                this.props.destinationRules.items.length > 1 ? 's' : ''
-              }: '${this.props.destinationRules.items.map(dr => dr.metadata.name)}'`
+                this.props.destinationRules.length > 1 ? 's' : ''
+              }: '${this.props.destinationRules.map(dr => dr.metadata.name)}'`
             : '';
         deleteItems.push(<div>{paMessage}</div>);
 
@@ -158,8 +154,8 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
     );
   };
 
-  hasAnyPeerAuthn = (drs: DestinationRules): boolean => {
-    return drs.items.filter(dr => !!this.hasPeerAuthentication(dr)).length > 0;
+  hasAnyPeerAuthn = (drs: DestinationRule[]): boolean => {
+    return drs.filter(dr => !!this.hasPeerAuthentication(dr)).length > 0;
   };
 
   hasPeerAuthentication = (dr: DestinationRule): string => {
@@ -185,10 +181,10 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
   };
 
   getVSWizardLabel = () => {
-    return this.props.virtualServices.items.length === 1 &&
-      this.props.virtualServices.items[0].metadata.labels &&
-      this.props.virtualServices.items[0].metadata.labels[KIALI_WIZARD_LABEL]
-      ? this.props.virtualServices.items[0].metadata.labels[KIALI_WIZARD_LABEL]
+    return this.props.virtualServices.length === 1 &&
+      this.props.virtualServices[0].metadata.labels &&
+      this.props.virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]
+      ? this.props.virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]
       : '';
   };
 
@@ -238,12 +234,12 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
     const deletePromises: Promise<any>[] = [];
     switch (this.state.deleteAction) {
       case DELETE_TRAFFIC_ROUTING:
-        this.props.virtualServices.items.forEach(vs => {
+        this.props.virtualServices.forEach(vs => {
           deletePromises.push(
             API.deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name)
           );
         });
-        this.props.destinationRules.items.forEach(dr => {
+        this.props.destinationRules.forEach(dr => {
           deletePromises.push(
             API.deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name)
           );

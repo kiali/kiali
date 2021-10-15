@@ -10,7 +10,6 @@ import {
   Condition,
   ConnectionPoolSettings,
   DestinationRule,
-  DestinationRules,
   Gateway,
   HTTPMatchRequest,
   HTTPRoute,
@@ -30,7 +29,6 @@ import {
   TCPRoute,
   TLSRoute,
   VirtualService,
-  VirtualServices,
   WorkloadMatchSelector
 } from '../../types/IstioObjects';
 import { serverConfig } from '../../config';
@@ -81,8 +79,8 @@ export type ServiceWizardProps = {
   serviceName: string;
   tlsStatus?: TLSStatus;
   workloads: WorkloadOverview[];
-  virtualServices: VirtualServices;
-  destinationRules: DestinationRules;
+  virtualServices: VirtualService[];
+  destinationRules: DestinationRule[];
   gateways: string[];
   peerAuthentications: PeerAuthentication[];
   onClose: (changed: boolean) => void;
@@ -243,8 +241,8 @@ export const buildIstioConfig = (
   // DestinationRule from the labels
   let drName = wProps.serviceName;
   // In some limited scenarios DR may be created externally to Kiali (i.e. extensions)
-  if (wProps.destinationRules.items.length === 1 && wProps.destinationRules.items[0].metadata.name !== drName) {
-    drName = wProps.destinationRules.items[0].metadata.name;
+  if (wProps.destinationRules.length === 1 && wProps.destinationRules[0].metadata.name !== drName) {
+    drName = wProps.destinationRules[0].metadata.name;
   }
   const wizardDR: DestinationRule = {
     metadata: {
@@ -285,8 +283,8 @@ export const buildIstioConfig = (
 
   // In some limited scenarios VS may be created externally to Kiali (i.e. extensions)
   let vsName = wProps.serviceName;
-  if (wProps.virtualServices.items.length === 1 && wProps.virtualServices.items[0].metadata.name !== vsName) {
-    vsName = wProps.virtualServices.items[0].metadata.name;
+  if (wProps.virtualServices.length === 1 && wProps.virtualServices[0].metadata.name !== vsName) {
+    vsName = wProps.virtualServices[0].metadata.name;
   }
   const wizardVS: VirtualService = {
     metadata: {
@@ -652,13 +650,13 @@ export const buildIstioConfig = (
 
 const getWorkloadsByVersion = (
   workloads: WorkloadOverview[],
-  destinationRules: DestinationRules
+  destinationRules: DestinationRule[]
 ): { [key: string]: string } => {
   const versionLabelName = serverConfig.istioLabels.versionLabelName;
   const wkdVersionName: { [key: string]: string } = {};
   workloads.forEach(workload => (wkdVersionName[workload.labels![versionLabelName]] = workload.name));
-  if (destinationRules.items.length > 0) {
-    destinationRules.items.forEach(dr => {
+  if (destinationRules.length > 0) {
+    destinationRules.forEach(dr => {
       dr.spec.subsets?.forEach(ss => {
         const version = ss.labels![versionLabelName];
         wkdVersionName[ss.name] = wkdVersionName[version];
@@ -686,18 +684,18 @@ export const getDefaultWeights = (workloads: WorkloadOverview[]): WorkloadWeight
 
 export const getInitWeights = (
   workloads: WorkloadOverview[],
-  virtualServices: VirtualServices,
-  destinationRules: DestinationRules
+  virtualServices: VirtualService[],
+  destinationRules: DestinationRule[]
 ): WorkloadWeight[] => {
   const wkdVersionName = getWorkloadsByVersion(workloads, destinationRules);
   const wkdWeights: WorkloadWeight[] = [];
-  if (virtualServices.items.length === 1) {
+  if (virtualServices.length === 1) {
     let route: HTTPRoute | TCPRoute | TLSRoute | undefined;
-    if (virtualServices.items[0].spec.http && virtualServices.items[0].spec.http!.length === 1) {
-      route = virtualServices.items[0].spec.http![0];
+    if (virtualServices[0].spec.http && virtualServices[0].spec.http!.length === 1) {
+      route = virtualServices[0].spec.http![0];
     }
-    if (virtualServices.items[0].spec.tcp && virtualServices.items[0].spec.tcp!.length === 1) {
-      route = virtualServices.items[0].spec.tcp![0];
+    if (virtualServices[0].spec.tcp && virtualServices[0].spec.tcp!.length === 1) {
+      route = virtualServices[0].spec.tcp![0];
     }
     if (route) {
       // Populate WorkloadWeights from a VirtualService
@@ -758,13 +756,13 @@ export const getInitWeights = (
 
 export const getInitRules = (
   workloads: WorkloadOverview[],
-  virtualServices: VirtualServices,
-  destinationRules: DestinationRules
+  virtualServices: VirtualService[],
+  destinationRules: DestinationRule[]
 ): Rule[] => {
   const wkdVersionName = getWorkloadsByVersion(workloads, destinationRules);
   const rules: Rule[] = [];
-  if (virtualServices.items.length === 1) {
-    virtualServices.items[0].spec.http!.forEach(httpRoute => {
+  if (virtualServices.length === 1) {
+    virtualServices[0].spec.http!.forEach(httpRoute => {
       const rule: Rule = {
         matches: [],
         workloadWeights: []
@@ -827,8 +825,8 @@ export const getInitRules = (
 
 export const getInitFaultInjectionRoute = (
   workloads: WorkloadOverview[],
-  virtualServices: VirtualServices,
-  destinationRules: DestinationRules
+  virtualServices: VirtualService[],
+  destinationRules: DestinationRule[]
 ): FaultInjectionRoute => {
   // Read potential predefined weights
   let initWeights = getInitWeights(workloads, virtualServices, destinationRules);
@@ -856,12 +854,12 @@ export const getInitFaultInjectionRoute = (
   };
   // This use case is intended for VS with single HTTP Route, others scenarios should use the Request Routing Wizard
   if (
-    virtualServices.items.length === 1 &&
-    virtualServices.items[0].spec.http &&
-    virtualServices.items[0].spec.http.length === 1 &&
-    virtualServices.items[0].spec.http[0].fault
+    virtualServices.length === 1 &&
+    virtualServices[0].spec.http &&
+    virtualServices[0].spec.http.length === 1 &&
+    virtualServices[0].spec.http[0].fault
   ) {
-    const fault = virtualServices.items[0].spec.http[0].fault;
+    const fault = virtualServices[0].spec.http[0].fault;
     if (fault.delay) {
       fiRoute.delayed = true;
       fiRoute.delay.percentage.value = fault.delay.percentage ? fault.delay.percentage.value : 100;
@@ -878,8 +876,8 @@ export const getInitFaultInjectionRoute = (
 
 export const getInitTimeoutRetryRoute = (
   workloads: WorkloadOverview[],
-  virtualServices: VirtualServices,
-  destinationRules: DestinationRules
+  virtualServices: VirtualService[],
+  destinationRules: DestinationRule[]
 ): TimeoutRetryRoute => {
   // Read potential predefined weights
   let initWeights = getInitWeights(workloads, virtualServices, destinationRules);
@@ -900,66 +898,62 @@ export const getInitTimeoutRetryRoute = (
     isValidRetry: true
   };
   // This use case is intended for VS with single HTTP Route, others scenarios should use the Request Routing Wizard
-  if (
-    virtualServices.items.length === 1 &&
-    virtualServices.items[0].spec.http &&
-    virtualServices.items[0].spec.http.length === 1
-  ) {
-    if (virtualServices.items[0].spec.http[0].timeout) {
+  if (virtualServices.length === 1 && virtualServices[0].spec.http && virtualServices[0].spec.http.length === 1) {
+    if (virtualServices[0].spec.http[0].timeout) {
       trRoute.isTimeout = true;
-      trRoute.timeout = virtualServices.items[0].spec.http[0].timeout;
+      trRoute.timeout = virtualServices[0].spec.http[0].timeout;
     }
-    if (virtualServices.items[0].spec.http[0].retries) {
+    if (virtualServices[0].spec.http[0].retries) {
       trRoute.isRetry = true;
-      trRoute.retries.attempts = virtualServices.items[0].spec.http[0].retries.attempts;
-      if (virtualServices.items[0].spec.http[0].retries.perTryTimeout) {
-        trRoute.retries.perTryTimeout = virtualServices.items[0].spec.http[0].retries.perTryTimeout;
+      trRoute.retries.attempts = virtualServices[0].spec.http[0].retries.attempts;
+      if (virtualServices[0].spec.http[0].retries.perTryTimeout) {
+        trRoute.retries.perTryTimeout = virtualServices[0].spec.http[0].retries.perTryTimeout;
       }
-      if (virtualServices.items[0].spec.http[0].retries.retryOn) {
+      if (virtualServices[0].spec.http[0].retries.retryOn) {
       }
     }
   }
   return trRoute;
 };
 
-export const getInitTlsMode = (destinationRules: DestinationRules): [string, string, string, string] => {
+export const getInitTlsMode = (destinationRules: DestinationRule[]): [string, string, string, string] => {
   if (
-    destinationRules.items.length === 1 &&
-    destinationRules.items[0].spec.trafficPolicy &&
-    destinationRules.items[0].spec.trafficPolicy.tls
+    destinationRules.length === 1 &&
+    destinationRules[0].spec.trafficPolicy &&
+    destinationRules[0].spec.trafficPolicy.tls
   ) {
     return [
-      destinationRules.items[0].spec.trafficPolicy.tls.mode || '',
-      destinationRules.items[0].spec.trafficPolicy.tls.clientCertificate || '',
-      destinationRules.items[0].spec.trafficPolicy.tls.privateKey || '',
-      destinationRules.items[0].spec.trafficPolicy.tls.caCertificates || ''
+      destinationRules[0].spec.trafficPolicy.tls.mode || '',
+      destinationRules[0].spec.trafficPolicy.tls.clientCertificate || '',
+      destinationRules[0].spec.trafficPolicy.tls.privateKey || '',
+      destinationRules[0].spec.trafficPolicy.tls.caCertificates || ''
     ];
   }
   return ['', '', '', ''];
 };
 
-export const getInitLoadBalancer = (destinationRules: DestinationRules): LoadBalancerSettings | undefined => {
+export const getInitLoadBalancer = (destinationRules: DestinationRule[]): LoadBalancerSettings | undefined => {
   if (
-    destinationRules.items.length === 1 &&
-    destinationRules.items[0].spec.trafficPolicy &&
-    destinationRules.items[0].spec.trafficPolicy.loadBalancer
+    destinationRules.length === 1 &&
+    destinationRules[0].spec.trafficPolicy &&
+    destinationRules[0].spec.trafficPolicy.loadBalancer
   ) {
-    return destinationRules.items[0].spec.trafficPolicy.loadBalancer;
+    return destinationRules[0].spec.trafficPolicy.loadBalancer;
   }
   return undefined;
 };
 
 export const getInitPeerAuthentication = (
-  destinationRules: DestinationRules,
+  destinationRules: DestinationRule[],
   peerAuthentications: PeerAuthentication[]
 ): PeerAuthenticationMutualTLSMode | undefined => {
   let paMode: PeerAuthenticationMutualTLSMode | undefined;
   if (
-    destinationRules.items.length === 1 &&
-    destinationRules.items[0].metadata.annotations &&
-    destinationRules.items[0].metadata.annotations[KIALI_RELATED_LABEL]
+    destinationRules.length === 1 &&
+    destinationRules[0].metadata.annotations &&
+    destinationRules[0].metadata.annotations[KIALI_RELATED_LABEL]
   ) {
-    let related = destinationRules.items[0].metadata.annotations[KIALI_RELATED_LABEL].split('/');
+    let related = destinationRules[0].metadata.annotations[KIALI_RELATED_LABEL].split('/');
     if (related.length > 1) {
       const peerAuthn = peerAuthentications.find(
         (value: PeerAuthentication): boolean => value.metadata.name === related[1]
@@ -972,44 +966,44 @@ export const getInitPeerAuthentication = (
   return paMode;
 };
 
-export const getInitConnectionPool = (destinationRules: DestinationRules): ConnectionPoolSettings | undefined => {
+export const getInitConnectionPool = (destinationRules: DestinationRule[]): ConnectionPoolSettings | undefined => {
   if (
-    destinationRules.items.length === 1 &&
-    destinationRules.items[0].spec.trafficPolicy &&
-    destinationRules.items[0].spec.trafficPolicy?.connectionPool
+    destinationRules.length === 1 &&
+    destinationRules[0].spec.trafficPolicy &&
+    destinationRules[0].spec.trafficPolicy?.connectionPool
   ) {
-    return destinationRules.items[0].spec.trafficPolicy?.connectionPool;
+    return destinationRules[0].spec.trafficPolicy?.connectionPool;
   }
   return undefined;
 };
 
-export const getInitOutlierDetection = (destinationRules: DestinationRules): OutlierDetection | undefined => {
+export const getInitOutlierDetection = (destinationRules: DestinationRule[]): OutlierDetection | undefined => {
   if (
-    destinationRules.items.length === 1 &&
-    destinationRules.items[0].spec.trafficPolicy &&
-    destinationRules.items[0].spec.trafficPolicy?.outlierDetection
+    destinationRules.length === 1 &&
+    destinationRules[0].spec.trafficPolicy &&
+    destinationRules[0].spec.trafficPolicy?.outlierDetection
   ) {
-    return destinationRules.items[0].spec.trafficPolicy?.outlierDetection;
+    return destinationRules[0].spec.trafficPolicy?.outlierDetection;
   }
   return undefined;
 };
 
-export const hasGateway = (virtualServices: VirtualServices): boolean => {
+export const hasGateway = (virtualServices: VirtualService[]): boolean => {
   // We need to if sentence, otherwise a potential undefined is not well handled
   if (
-    virtualServices.items.length === 1 &&
-    virtualServices.items[0] &&
-    virtualServices.items[0].spec.gateways &&
-    virtualServices.items[0].spec.gateways.length > 0
+    virtualServices.length === 1 &&
+    virtualServices[0] &&
+    virtualServices[0].spec.gateways &&
+    virtualServices[0].spec.gateways.length > 0
   ) {
     return true;
   }
   return false;
 };
 
-export const getInitHosts = (virtualServices: VirtualServices): string[] => {
-  if (virtualServices.items.length === 1 && virtualServices.items[0] && virtualServices.items[0].spec.hosts) {
-    return virtualServices.items[0].spec.hosts;
+export const getInitHosts = (virtualServices: VirtualService[]): string[] => {
+  if (virtualServices.length === 1 && virtualServices[0] && virtualServices[0].spec.hosts) {
+    return virtualServices[0].spec.hosts;
   }
   return [];
 };
@@ -1017,20 +1011,20 @@ export const getInitHosts = (virtualServices: VirtualServices): string[] => {
 // VirtualServices added from the Kiali Wizard only support to add a single gateway
 // and optionally a mesh gateway.
 // This method returns a gateway selected by the user and if mesh is present
-export const getInitGateway = (virtualServices: VirtualServices): [string, boolean] => {
+export const getInitGateway = (virtualServices: VirtualService[]): [string, boolean] => {
   if (
-    virtualServices.items.length === 1 &&
-    virtualServices.items[0] &&
-    virtualServices.items[0].spec.gateways &&
-    virtualServices.items[0].spec.gateways.length > 0
+    virtualServices.length === 1 &&
+    virtualServices[0] &&
+    virtualServices[0].spec.gateways &&
+    virtualServices[0].spec.gateways.length > 0
   ) {
-    let selectedGateway = virtualServices.items[0].spec.gateways[0];
+    let selectedGateway = virtualServices[0].spec.gateways[0];
     if (selectedGateway === 'mesh') {
       // In Kiali Wizard, the first gateway is reserved for user gateway
       selectedGateway = '';
     }
     let meshPresent = false;
-    if (virtualServices.items[0].spec.gateways.includes('mesh')) {
+    if (virtualServices[0].spec.gateways.includes('mesh')) {
       meshPresent = true;
     }
     return [selectedGateway, meshPresent];
