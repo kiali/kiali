@@ -32,10 +32,14 @@ func TestTlsPerfNsDr(t *testing.T) {
 		}
 	}
 	// Iterate on namespaces
-	preparePerfScenario(t, numNs, numDr)
+	nss, pss, drs := preparePerfScenario(numNs, numDr)
+
+	testPerfScenario(MTLSPartiallyEnabled, nss, drs, pss, false, t)
+	testPerfScenario(MTLSEnabled, nss, drs, pss, true, t)
+	testPerfScenario(MTLSEnabled, nss, []networking_v1alpha3.DestinationRule{}, pss, true, t)
 }
 
-func preparePerfScenario(t *testing.T, numNs, numDr int) {
+func preparePerfScenario(numNs, numDr int) ([]core_v1.Namespace, []security_v1beta1.PeerAuthentication, []networking_v1alpha3.DestinationRule) {
 	nss := []core_v1.Namespace{}
 	pss := []security_v1beta1.PeerAuthentication{}
 	drs := []networking_v1alpha3.DestinationRule{}
@@ -56,9 +60,7 @@ func preparePerfScenario(t *testing.T, numNs, numDr int) {
 		}
 		i++
 	}
-	testPerfScenario(MTLSPartiallyEnabled, nss, drs, pss, false, t)
-	testPerfScenario(MTLSEnabled, nss, drs, pss, true, t)
-	testPerfScenario(MTLSEnabled, nss, []networking_v1alpha3.DestinationRule{}, pss, true, t)
+	return nss, pss, drs
 }
 
 func testPerfScenario(exStatus string, nss []core_v1.Namespace, drs []networking_v1alpha3.DestinationRule, ps []security_v1beta1.PeerAuthentication, autoMtls bool, t *testing.T) {
