@@ -449,7 +449,10 @@ func (in *IstioValidationsService) fetchExportedResources(exportedResources *kub
 			continue // skip the current namespace as it is considered already in validations
 		}
 		criteria := IstioConfigCriteria{
-			Namespace: ns.Name,
+			Namespace:               ns.Name,
+			IncludeDestinationRules: true,
+			IncludeServiceEntries:   true,
+			IncludeVirtualServices:  true,
 		}
 		istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
 		if err != nil {
