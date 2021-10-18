@@ -1,6 +1,9 @@
 package business
 
 import (
+	"fmt"
+	"os"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,13 +12,10 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/kiali/kiali/config"
-	"fmt"
 	"github.com/stretchr/testify/mock"
-	"os"
-	"strconv"
 )
 
 func TestTlsPerfNsDr(t *testing.T) {
@@ -50,7 +50,7 @@ func preparePerfScenario(t *testing.T, numNs, numDr int) {
 		pss = append(pss, ps)
 		j := 0
 		for j < numDr {
-			dr := *data.CreateEmptyDestinationRule(ns.Name, fmt.Sprintf("dr-%d-%d", i, j), fmt.Sprintf("*.%s.svc.cluster.local", ns.Name));
+			dr := *data.CreateEmptyDestinationRule(ns.Name, fmt.Sprintf("dr-%d-%d", i, j), fmt.Sprintf("*.%s.svc.cluster.local", ns.Name))
 			drs = append(drs, dr)
 			j++
 		}
