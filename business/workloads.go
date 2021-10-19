@@ -136,7 +136,7 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 		wItem.ParseWorkload(w)
 		if linkIstioResources {
 			wSelector := labels.Set(wItem.Labels).AsSelector().String()
-			wItem.IstioReferences = FilterWorkloadReferences(wSelector, istioConfigList)
+			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(wSelector, istioConfigList))
 		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
@@ -212,6 +212,24 @@ func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConf
 		}
 	}
 	return wkdReferences
+}
+
+func FilterUniqueIstioReferences(refs []*models.IstioValidationKey) []*models.IstioValidationKey {
+	refMap := make(map[models.IstioValidationKey]struct{})
+	for _, ref := range refs {
+		if _, exist := refMap[*ref]; !exist {
+			refMap[*ref] = struct{}{}
+		}
+	}
+	filtered := make([]*models.IstioValidationKey, 0)
+	for k := range refMap {
+		filtered = append(filtered, &models.IstioValidationKey{
+			ObjectType: k.ObjectType,
+			Name:       k.Name,
+			Namespace:  k.Namespace,
+		})
+	}
+	return filtered
 }
 
 // GetWorkload is the API handler to fetch details of a specific workload.
