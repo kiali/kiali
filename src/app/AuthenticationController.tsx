@@ -30,6 +30,7 @@ import { store } from 'store/ConfigStore';
 import { toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
 import { GraphToolbarActions } from 'actions/GraphToolbarActions';
 import { StatusState } from 'types/StatusState';
+import { PromisesRegistry } from '../utils/CancelablePromises';
 
 interface AuthenticationControllerReduxProps {
   addMessage: (content: string, detail: string, groupId?: string, msgType?: MessageType, showNotif?: boolean) => void;
@@ -69,12 +70,13 @@ export class AuthenticationController extends React.Component<
   AuthenticationControllerProps,
   AuthenticationControllerState
 > {
-  static readonly PostLoginErrorMsg = `Kiali failed to initialize. Please ensure that services 
+  static readonly PostLoginErrorMsg = `Kiali failed to initialize. Please ensure that services
     Kiali depends on, such as Prometheus, are healthy and reachable by Kiali then refresh your browser.`;
 
   // How long to wait for the post-login actions to complete
   // before transitioning to the "Loading" page.
   private readonly postLoginMSTillTransition = 3000;
+  private promises = new PromisesRegistry();
 
   constructor(props: AuthenticationControllerProps) {
     super(props);
@@ -142,6 +144,10 @@ export class AuthenticationController extends React.Component<
     this.setDocLayout();
   }
 
+  componentWillUnmount() {
+    this.promises.cancelAll();
+  }
+
   render() {
     if (this.state.stage === LoginStage.LOGGED_IN) {
       return this.props.protectedAreaComponent;
@@ -172,12 +178,14 @@ export class AuthenticationController extends React.Component<
     }, this.postLoginMSTillTransition);
 
     try {
-      const getStatusPromise = API.getStatus()
+      const getStatusPromise = this.promises
+        .register('getStatus', API.getStatus())
         .then(response => this.processServerStatus(response.data))
         .catch(error => {
           AlertUtils.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
         });
-      const getJaegerInfoPromise = API.getJaegerInfo()
+      const getJaegerInfoPromise = this.promises
+        .register('getJaegerInfo', API.getJaegerInfo())
         .then(response => this.props.setJaegerInfo(response.data))
         .catch(error => {
           this.props.setJaegerInfo(null);
@@ -188,13 +196,10 @@ export class AuthenticationController extends React.Component<
             MessageType.INFO
           );
         });
+      const getNamespaces = this.promises.register('getNamespaces', API.getNamespaces());
+      const getServerConfig = this.promises.register('getServerConfig', API.getServerConfig());
 
-      const configs = await Promise.all([
-        API.getNamespaces(),
-        API.getServerConfig(),
-        getStatusPromise,
-        getJaegerInfoPromise
-      ]);
+      const configs = await Promise.all([getNamespaces, getServerConfig, getStatusPromise, getJaegerInfoPromise]);
 
       this.props.setNamespaces(configs[0].data, new Date());
       setServerConfig(configs[1].data);
