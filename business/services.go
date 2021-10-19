@@ -41,6 +41,7 @@ func (in *SvcService) GetServiceList(criteria ServiceCriteria) (*models.ServiceL
 	var deployments []apps_v1.Deployment
 	var istioConfigList models.IstioConfigList
 	var err error
+
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if _, err = in.businessLayer.Namespace.GetNamespace(criteria.Namespace); err != nil {

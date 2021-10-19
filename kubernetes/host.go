@@ -207,11 +207,11 @@ func HasMatchingVirtualServices(host Host, virtualServices []networking_v1alpha3
 
 // HasMatchingRegistryService returns true when the FDQN of the host param matches
 // with one registry status of the registryStatus param.
-func HasMatchingRegistryService(host string, registryServices []*RegistryService) bool {
+func HasMatchingRegistryService(namespace string, host string, registryServices []*RegistryService) bool {
 	for _, rStatus := range registryServices {
 		// We assume that on these cases the host.Service is provided in FQDN
 		// i.e. ratings.mesh2-bookinfo.svc.mesh1-imports.local
-		if FilterByRegistryService(host, rStatus) {
+		if FilterByRegistryService(namespace, host, rStatus) {
 			return true
 		}
 	}

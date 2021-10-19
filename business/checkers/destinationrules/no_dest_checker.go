@@ -130,7 +130,7 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 
 	// Use RegistryService to check destinations that may not be covered with previous check
 	// i.e. Multi-cluster or Federation validations
-	if kubernetes.HasMatchingRegistryService(host.String(), n.RegistryServices) {
+	if kubernetes.HasMatchingRegistryService(itemNamespace, host.String(), n.RegistryServices) {
 		return true
 	}
 	return false

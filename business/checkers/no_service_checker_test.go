@@ -48,6 +48,7 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 		ExportedResources:    emptyExportedResources(),
 		ServiceList:          fakeServiceList([]string{"reviews", "details", "product", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
+		RegistryServices:     data.CreateFakeRegistryServices("product.test.svc.cluster.local", "test", "test"),
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -77,6 +78,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 		),
 		ServiceList:          fakeServiceList([]string{"reviews", "details", "product"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
+		RegistryServices:     data.CreateFakeRegistryServices("product.test.svc.cluster.local", "test", "."),
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -174,7 +176,7 @@ func TestObjectWithoutGateway(t *testing.T) {
 
 	productVs := vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
 	assert.False(productVs.Valid)
-	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", productVs.Checks[0]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", productVs.Checks[2]))
 }
 
 func fakeIstioConfigList() *models.IstioConfigList {
