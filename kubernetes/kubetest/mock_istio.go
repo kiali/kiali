@@ -1,15 +1,16 @@
 package kubetest
 
 import (
+	"context"
+
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	istio "istio.io/client-go/pkg/clientset/versioned"
 	istio_fake "istio.io/client-go/pkg/clientset/versioned/fake"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"context"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
-	istio "istio.io/client-go/pkg/clientset/versioned"
 )
 
 func (o *K8SClientMock) MockIstio(objects ...runtime.Object) {

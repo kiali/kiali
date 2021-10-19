@@ -3,10 +3,10 @@ package business
 import (
 	"testing"
 
-	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/jaeger"
+	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
 )
 
 var trace1 = jaegerModels.Trace{

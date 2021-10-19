@@ -5,9 +5,8 @@ import (
 	"sync"
 	"time"
 
-	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
-
 	"github.com/kiali/kiali/jaeger"
+	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )

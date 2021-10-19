@@ -6,11 +6,10 @@ import (
 	"sync"
 	"time"
 
+	istio "istio.io/client-go/pkg/clientset/versioned"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-
-	istio "istio.io/client-go/pkg/clientset/versioned"
 
 	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"

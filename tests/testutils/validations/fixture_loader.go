@@ -2,6 +2,9 @@ package validations
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
 	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
@@ -9,11 +12,8 @@ import (
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 
-	"encoding/json"
-	"fmt"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"io"
 )
 
 type FixtureLoader interface {

@@ -7,10 +7,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/kiali/kiali/kubernetes"
-	"k8s.io/apimachinery/pkg/fields"
 )
 
 type fakeInformer struct {
