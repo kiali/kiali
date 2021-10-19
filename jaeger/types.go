@@ -1,7 +1,7 @@
 package jaeger
 
 import (
-	jaegerModels "github.com/jaegertracing/jaeger/model/json"
+	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
 )
 
 type structuredError struct {

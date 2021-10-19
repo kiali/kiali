@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -85,44 +86,80 @@ func FilterServicesByLabels(selector labels.Selector, allServices []core_v1.Serv
 	return services
 }
 
-func FilterVirtualServices(allVs []IstioObject, namespace string, serviceName string) []IstioObject {
-	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[VirtualServices],
-		APIVersion: ApiNetworkingVersion,
-	}
-	virtualServices := make([]IstioObject, 0)
-	for _, virtualService := range allVs {
+func FilterVirtualServices(allVs []networking_v1alpha3.VirtualService, namespace string, serviceName string) []networking_v1alpha3.VirtualService {
+	filtered := []networking_v1alpha3.VirtualService{}
+	for _, vs := range allVs {
 		appendVirtualService := serviceName == ""
-		routeProtocols := []string{"http", "tcp"}
-		if !appendVirtualService && FilterByRoute(virtualService.GetSpec(), routeProtocols, serviceName, namespace, nil) {
-			appendVirtualService = true
-		}
-		if appendVirtualService {
-			vs := virtualService.DeepCopyIstioObject()
-			vs.SetTypeMeta(typeMeta)
-			virtualServices = append(virtualServices, vs)
-		}
-	}
-	return virtualServices
-}
-
-func FilterDestinationRules(allDr []IstioObject, namespace string, serviceName string) []IstioObject {
-	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[DestinationRules],
-		APIVersion: ApiNetworkingVersion,
-	}
-	destinationRules := make([]IstioObject, 0)
-	for _, destinationRule := range allDr {
-		appendDestinationRule := serviceName == ""
-		if host, ok := destinationRule.GetSpec()["host"]; ok {
-			if dHost, ok := host.(string); ok && FilterByHost(dHost, serviceName, namespace) {
-				appendDestinationRule = true
+		if !appendVirtualService {
+			for _, httpRoute := range vs.Spec.Http {
+				if httpRoute != nil {
+					for _, dest := range httpRoute.Route {
+						if dest.Destination != nil && FilterByHost(dest.Destination.Host, serviceName, namespace) {
+							appendVirtualService = true
+						}
+					}
+				}
+			}
+			if !appendVirtualService {
+				for _, tcpRoute := range vs.Spec.Tcp {
+					if tcpRoute != nil {
+						for _, dest := range tcpRoute.Route {
+							if dest.Destination != nil && FilterByHost(dest.Destination.Host, serviceName, namespace) {
+								appendVirtualService = true
+							}
+						}
+					}
+				}
+			}
+			if !appendVirtualService {
+				for _, tlsRoute := range vs.Spec.Tls {
+					if tlsRoute != nil {
+						for _, dest := range tlsRoute.Route {
+							if dest.Destination != nil && FilterByHost(dest.Destination.Host, serviceName, namespace) {
+								appendVirtualService = true
+							}
+						}
+					}
+				}
 			}
 		}
+		if appendVirtualService {
+			filtered = append(filtered, vs)
+		}
+	}
+	return filtered
+}
+
+func FilterGatewaysByVS(allGws []networking_v1alpha3.Gateway, allVs []networking_v1alpha3.VirtualService) []networking_v1alpha3.Gateway {
+	var empty struct{}
+	gateways := []networking_v1alpha3.Gateway{}
+	gatewayNames := make(map[string]struct{})
+	for _, vs := range allVs {
+		for _, gwn := range vs.Spec.Gateways {
+			if !strings.Contains(gwn, "/") {
+				gatewayNames[vs.Namespace+"/"+gwn] = empty
+			} else {
+				gatewayNames[gwn] = empty
+			}
+		}
+	}
+	for _, gw := range allGws {
+		if _, ok := gatewayNames[gw.Namespace+"/"+gw.Name]; ok {
+			gateways = append(gateways, gw)
+		}
+	}
+	return gateways
+}
+
+func FilterDestinationRules(allDr []networking_v1alpha3.DestinationRule, namespace string, serviceName string) []networking_v1alpha3.DestinationRule {
+	destinationRules := []networking_v1alpha3.DestinationRule{}
+	for _, destinationRule := range allDr {
+		appendDestinationRule := serviceName == ""
+		if FilterByHost(destinationRule.Spec.Host, serviceName, namespace) {
+			appendDestinationRule = true
+		}
 		if appendDestinationRule {
-			dr := destinationRule.DeepCopyIstioObject()
-			dr.SetTypeMeta(typeMeta)
-			destinationRules = append(destinationRules, dr)
+			destinationRules = append(destinationRules, destinationRule)
 		}
 	}
 	return destinationRules
@@ -153,70 +190,159 @@ func FilterByHost(host, serviceName, namespace string) bool {
 	return false
 }
 
-func FilterByRoute(spec map[string]interface{}, protocols []string, service string, namespace string, serviceEntries map[string]struct{}) bool {
-	if len(protocols) == 0 {
+func FilterVSByRoute(vs *networking_v1alpha3.VirtualService, service string, namespace string) bool {
+	if vs == nil {
 		return false
 	}
-	for _, protocol := range protocols {
-		if prot, ok := spec[protocol]; ok {
-			if aHttp, ok := prot.([]interface{}); ok {
-				for _, httpRoute := range aHttp {
-					if mHttpRoute, ok := httpRoute.(map[string]interface{}); ok {
-						if route, ok := mHttpRoute["route"]; ok {
-							if aRouteDestination, ok := route.([]interface{}); ok {
-								for _, destination := range aRouteDestination {
-									if mDestination, ok := destination.(map[string]interface{}); ok {
-										if destinationW, ok := mDestination["destination"]; ok {
-											if mDestinationW, ok := destinationW.(map[string]interface{}); ok {
-												if host, ok := mDestinationW["host"]; ok {
-													if sHost, ok := host.(string); ok {
-														if FilterByHost(sHost, service, namespace) {
-															return true
-														}
-														if serviceEntries != nil {
-															// We have ServiceEntry to check
-															if _, found := serviceEntries[strings.ToLower(protocol)+sHost]; found {
-																return true
-															}
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
+	hosts := []string{}
+	for _, httpRoute := range vs.Spec.Http {
+		for _, httpDes := range httpRoute.Route {
+			if httpDes.Destination != nil {
+				hosts = append(hosts, httpDes.Destination.Host)
 			}
+		}
+	}
+	for _, tcpRoute := range vs.Spec.Tcp {
+		for _, tcpDes := range tcpRoute.Route {
+			if tcpDes.Destination != nil {
+				hosts = append(hosts, tcpDes.Destination.Host)
+			}
+		}
+	}
+	for _, tlsRoute := range vs.Spec.Tls {
+		for _, tlsDes := range tlsRoute.Route {
+			if tlsDes.Destination != nil {
+				hosts = append(hosts, tlsDes.Destination.Host)
+			}
+		}
+	}
+	for _, h := range hosts {
+		if FilterByHost(h, service, namespace) {
+			return true
 		}
 	}
 	return false
 }
 
-func FilterIstioObjectsForSelector(selector labels.Selector, allObjects []IstioObject) []IstioObject {
-	istioObjects := []IstioObject{}
-	for _, object := range allObjects {
-		if selector.Matches(labels.Set(object.GetObjectMeta().Labels)) {
-			istioObjects = append(istioObjects, object)
+func FilterEnvoyFilters(workloadSelector string, envoyfilters []networking_v1alpha3.EnvoyFilter) []networking_v1alpha3.EnvoyFilter {
+	filtered := []networking_v1alpha3.EnvoyFilter{}
+	workloadLabels := mapWorkloadSelector(workloadSelector)
+	for _, ef := range envoyfilters {
+		wkLabelsS := []string{}
+		if ef.Spec.WorkloadSelector != nil {
+			efSelector := ef.Spec.WorkloadSelector.Labels
+			for k, v := range efSelector {
+				wkLabelsS = append(wkLabelsS, k+"="+v)
+			}
+		}
+		if resourceSelector, err := labels.Parse(strings.Join(wkLabelsS, ",")); err == nil {
+			if resourceSelector.Matches(labels.Set(workloadLabels)) {
+				filtered = append(filtered, ef)
+			}
 		}
 	}
-	return istioObjects
+	return filtered
 }
 
-func FilterIstioObjectsForWorkloadSelector(workloadSelector string, allObjects []IstioObject) []IstioObject {
-	// IstioObjects with workloadSelectors:
-	// Networking:
-	// - Gateways 			-> spec/selector map<string, string> selector
-	// - EnvoyFilters 		-> spec/workloadSelector -> map<string, string> labels
-	// - Sidecars			-> spec/workloadSelector -> map<string, string> labels
-	// Security:
-	// - RequestAuthentications -> spec/selector (istio.type.v1beta1.WorkloadSelector) -> map<string, string> match_labels
-	// - PeerAuthentications	-> spec/selector (istio.type.v1beta1.WorkloadSelector) -> map<string, string> match_labels
-	// - AuthorizationPolicies	-> spec/selector (istio.type.v1beta1.WorkloadSelector) -> map<string, string> match_labels
-	istioObjects := []IstioObject{}
+func FilterGateways(workloadSelector string, gateways []networking_v1alpha3.Gateway) []networking_v1alpha3.Gateway {
+	filtered := []networking_v1alpha3.Gateway{}
+	workloadLabels := mapWorkloadSelector(workloadSelector)
+	for _, gw := range gateways {
+		wkLabelsS := []string{}
+		gwSelector := gw.Spec.Selector
+		for k, v := range gwSelector {
+			wkLabelsS = append(wkLabelsS, k+"="+v)
+		}
+		if resourceSelector, err := labels.Parse(strings.Join(wkLabelsS, ",")); err == nil {
+			if resourceSelector.Matches(labels.Set(workloadLabels)) {
+				filtered = append(filtered, gw)
+			}
+		}
+	}
+	return filtered
+}
 
+func FilterSidecars(workloadSelector string, sidecars []networking_v1alpha3.Sidecar) []networking_v1alpha3.Sidecar {
+	filtered := []networking_v1alpha3.Sidecar{}
+	workloadLabels := mapWorkloadSelector(workloadSelector)
+	for _, sc := range sidecars {
+		wkLabelsS := []string{}
+		if sc.Spec.WorkloadSelector != nil {
+			efSelector := sc.Spec.WorkloadSelector.Labels
+			for k, v := range efSelector {
+				wkLabelsS = append(wkLabelsS, k+"="+v)
+			}
+		}
+		if resourceSelector, err := labels.Parse(strings.Join(wkLabelsS, ",")); err == nil {
+			if resourceSelector.Matches(labels.Set(workloadLabels)) {
+				filtered = append(filtered, sc)
+			}
+		}
+	}
+	return filtered
+}
+
+func FilterAuthorizationPolicies(workloadSelector string, authorizationpolicies []security_v1beta1.AuthorizationPolicy) []security_v1beta1.AuthorizationPolicy {
+	filtered := []security_v1beta1.AuthorizationPolicy{}
+	workloadLabels := mapWorkloadSelector(workloadSelector)
+	for _, ap := range authorizationpolicies {
+		wkLabelsS := []string{}
+		if ap.Spec.Selector != nil {
+			apSelector := ap.Spec.Selector.MatchLabels
+			for k, v := range apSelector {
+				wkLabelsS = append(wkLabelsS, k+"="+v)
+			}
+		}
+		if resourceSelector, err := labels.Parse(strings.Join(wkLabelsS, ",")); err == nil {
+			if resourceSelector.Matches(labels.Set(workloadLabels)) {
+				filtered = append(filtered, ap)
+			}
+		}
+	}
+	return filtered
+}
+
+func FilterPeerAuthentications(workloadSelector string, peerauthentications []security_v1beta1.PeerAuthentication) []security_v1beta1.PeerAuthentication {
+	filtered := []security_v1beta1.PeerAuthentication{}
+	workloadLabels := mapWorkloadSelector(workloadSelector)
+	for _, pa := range peerauthentications {
+		wkLabelsS := []string{}
+		if pa.Spec.Selector != nil {
+			apSelector := pa.Spec.Selector.MatchLabels
+			for k, v := range apSelector {
+				wkLabelsS = append(wkLabelsS, k+"="+v)
+			}
+		}
+		if resourceSelector, err := labels.Parse(strings.Join(wkLabelsS, ",")); err == nil {
+			if resourceSelector.Matches(labels.Set(workloadLabels)) {
+				filtered = append(filtered, pa)
+			}
+		}
+	}
+	return filtered
+}
+
+func FilterRequestAuthentications(workloadSelector string, requestauthentications []security_v1beta1.RequestAuthentication) []security_v1beta1.RequestAuthentication {
+	filtered := []security_v1beta1.RequestAuthentication{}
+	workloadLabels := mapWorkloadSelector(workloadSelector)
+	for _, ra := range requestauthentications {
+		wkLabelsS := []string{}
+		if ra.Spec.Selector != nil {
+			apSelector := ra.Spec.Selector.MatchLabels
+			for k, v := range apSelector {
+				wkLabelsS = append(wkLabelsS, k+"="+v)
+			}
+		}
+		if resourceSelector, err := labels.Parse(strings.Join(wkLabelsS, ",")); err == nil {
+			if resourceSelector.Matches(labels.Set(workloadLabels)) {
+				filtered = append(filtered, ra)
+			}
+		}
+	}
+	return filtered
+}
+
+func mapWorkloadSelector(workloadSelector string) map[string]string {
 	// workloadSelector is a representation of the template labels of a workload
 	workloadLabels := map[string]string{}
 	aLabels := strings.Split(workloadSelector, ",")
@@ -228,53 +354,7 @@ func FilterIstioObjectsForWorkloadSelector(workloadSelector string, allObjects [
 			workloadLabels[label[0]] = ""
 		}
 	}
-
-	for _, object := range allObjects {
-		var wkLabels map[string]interface{}
-		wkLabels = nil
-		switch object.GetTypeMeta().Kind {
-		case GatewayType:
-			if selector, ok := object.GetSpec()["selector"]; ok {
-				if selectorMap, ok := selector.(map[string]interface{}); ok {
-					wkLabels = selectorMap
-				}
-			}
-		case EnvoyFilterType, SidecarType:
-			if workloadSelectorField, ok := object.GetSpec()["workloadSelector"]; ok {
-				if workloadSelectorFieldM, ok := workloadSelectorField.(map[string]interface{}); ok {
-					if labelsField, ok := workloadSelectorFieldM["labels"]; ok {
-						if labelsFieldM, ok := labelsField.(map[string]interface{}); ok {
-							wkLabels = labelsFieldM
-						}
-					}
-				}
-			}
-		case RequestAuthenticationsType, PeerAuthenticationsType, AuthorizationPoliciesType:
-			if workloadSelectorField, ok := object.GetSpec()["selector"]; ok {
-				if workloadSelectorFieldM, ok := workloadSelectorField.(map[string]interface{}); ok {
-					if labelsField, ok := workloadSelectorFieldM["matchLabels"]; ok {
-						if labelsFieldM, ok := labelsField.(map[string]interface{}); ok {
-							wkLabels = labelsFieldM
-						}
-					}
-				}
-			}
-		}
-		if wkLabels != nil {
-			wkLabelsS := []string{}
-			for k, v := range wkLabels {
-				if vs, ok := v.(string); ok {
-					wkLabelsS = append(wkLabelsS, k+"="+vs)
-				}
-			}
-			if resourceSelector, err := labels.Parse(strings.Join(wkLabelsS, ",")); err == nil {
-				if resourceSelector.Matches(labels.Set(workloadLabels)) {
-					istioObjects = append(istioObjects, object)
-				}
-			}
-		}
-	}
-	return istioObjects
+	return workloadLabels
 }
 
 func FilterByRegistryStatus(hostname string, registryStatus *RegistryStatus) bool {

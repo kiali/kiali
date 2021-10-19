@@ -2,15 +2,15 @@ package virtualservices
 
 import (
 	"fmt"
-	"reflect"
 
-	"github.com/kiali/kiali/kubernetes"
+	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/util/intutil"
 )
 
 type RouteChecker struct {
-	Route kubernetes.IstioObject
+	VirtualService networking_v1alpha3.VirtualService
 }
 
 // Check returns both an array of IstioCheck and a boolean indicating if the current route rule is valid.
@@ -21,90 +21,155 @@ type RouteChecker struct {
 // 4. All the route has to have weight label.
 func (route RouteChecker) Check() ([]*models.IstioCheck, bool) {
 	checks, valid := make([]*models.IstioCheck, 0), true
-	protocols := []string{"http", "tcp", "tls"}
 
-	for _, protocol := range protocols {
-		cs, v := route.checkRoutesFor(protocol)
-		checks = append(checks, cs...)
-		valid = valid && v
-	}
+	cs, v := route.checkHttpRoutes()
+	checks = append(checks, cs...)
+	valid = valid && v
+
+	cs, v = route.checkTcpRoutes()
+	checks = append(checks, cs...)
+	valid = valid && v
+
+	cs, v = route.checkTlsRoutes()
+	checks = append(checks, cs...)
+	valid = valid && v
 
 	return checks, valid
 }
 
-func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, bool) {
+func (route RouteChecker) checkHttpRoutes() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 	valid := true
 
-	http := route.Route.GetSpec()[kind]
-	if http == nil {
-		return validations, valid
-	}
-
-	// Getting a []HTTPRoute
-	slice := reflect.ValueOf(http)
-	if slice.Kind() != reflect.Slice {
-		return validations, valid
-	}
-
-	for routeIdx := 0; routeIdx < slice.Len(); routeIdx++ {
-		route, ok := slice.Index(routeIdx).Interface().(map[string]interface{})
-		if !ok || route["route"] == nil {
+	for routeIdx, httpRoute := range route.VirtualService.Spec.Http {
+		if httpRoute == nil {
 			continue
 		}
 
 		// Getting a []DestinationWeight
-		destinationWeights := reflect.ValueOf(route["route"])
-		if destinationWeights.Kind() != reflect.Slice {
-			return validations, valid
-		}
+		destinationWeights := httpRoute.Route
 
-		if destinationWeights.Len() == 1 {
-			destinationWeight, ok := destinationWeights.Index(0).Interface().(map[string]interface{})
-			if !ok || destinationWeight["weight"] == nil {
+		if len(destinationWeights) == 1 {
+			if destinationWeights[0] == nil {
 				continue
 			}
-
-			if weight, err := intutil.Convert(destinationWeight["weight"]); err == nil && weight < 100 {
+			weight := destinationWeights[0].Weight
+			// We can't rely on nil value as Weight is an integer that will be always present
+			if weight > 0 && weight < 100 {
 				valid = true
-				path := fmt.Sprintf("spec/%s[%d]/route[%d]/weight", kind, routeIdx, 0)
+				path := fmt.Sprintf("spec/http[%d]/route[%d]/weight", routeIdx, 0)
 				validation := models.Build("virtualservices.route.singleweight", path)
 				validations = append(validations, &validation)
 			}
 		}
 
-		trackSubset(routeIdx, kind, destinationWeights, &validations)
+		trackHttpSubset(routeIdx, "http", destinationWeights, &validations)
 	}
 
 	return validations, valid
 }
 
-func trackSubset(routeIdx int, kind string, destinationWeights reflect.Value, checks *[]*models.IstioCheck) {
-	subsetCollitions := map[string][]int{}
+func (route RouteChecker) checkTcpRoutes() ([]*models.IstioCheck, bool) {
+	validations := make([]*models.IstioCheck, 0)
+	valid := true
 
-	for destWeightIdx := 0; destWeightIdx < destinationWeights.Len(); destWeightIdx++ {
-		destinationWeight, ok := destinationWeights.Index(destWeightIdx).Interface().(map[string]interface{})
-		if !ok || destinationWeight["weight"] == nil {
+	for routeIdx, tcpRoute := range route.VirtualService.Spec.Tcp {
+		if tcpRoute == nil {
 			continue
 		}
 
-		destination, ok := destinationWeight["destination"].(map[string]interface{})
-		if !ok {
-			return
+		// Getting a []DestinationWeight
+		destinationWeights := tcpRoute.Route
+
+		if len(destinationWeights) == 1 {
+			if destinationWeights[0] == nil {
+				continue
+			}
+			weight := destinationWeights[0].Weight
+			if weight < 100 {
+				valid = true
+				path := fmt.Sprintf("spec/tcp[%d]/route[%d]/weight", routeIdx, 0)
+				validation := models.Build("virtualservices.route.singleweight", path)
+				validations = append(validations, &validation)
+			}
 		}
 
-		subset, ok := destination["subset"].(string)
-		if !ok {
-			return
-		}
-
-		collisions := subsetCollitions[subset]
-		if collisions == nil {
-			collisions = make([]int, 0, destinationWeights.Len())
-		}
-		subsetCollitions[subset] = append(collisions, destWeightIdx)
+		trackTcpTlsSubset(routeIdx, "http", destinationWeights, &validations)
 	}
 
+	return validations, valid
+}
+
+func (route RouteChecker) checkTlsRoutes() ([]*models.IstioCheck, bool) {
+	validations := make([]*models.IstioCheck, 0)
+	valid := true
+
+	for routeIdx, tlsRoute := range route.VirtualService.Spec.Tls {
+		if tlsRoute == nil {
+			continue
+		}
+
+		// Getting a []DestinationWeight
+		destinationWeights := tlsRoute.Route
+
+		if len(destinationWeights) == 1 {
+			if destinationWeights[0] == nil {
+				continue
+			}
+			weight := destinationWeights[0].Weight
+			if weight < 100 {
+				valid = true
+				path := fmt.Sprintf("spec/tls[%d]/route[%d]/weight", routeIdx, 0)
+				validation := models.Build("virtualservices.route.singleweight", path)
+				validations = append(validations, &validation)
+			}
+		}
+
+		trackTcpTlsSubset(routeIdx, "http", destinationWeights, &validations)
+	}
+
+	return validations, valid
+}
+
+func trackHttpSubset(routeIdx int, kind string, destinationWeights []*api_networking_v1alpha3.HTTPRouteDestination, checks *[]*models.IstioCheck) {
+	subsetCollitions := map[string][]int{}
+
+	for destWeightIdx, destinationWeight := range destinationWeights {
+		if destinationWeight == nil {
+			continue
+		}
+		if destinationWeight.Destination == nil {
+			return
+		}
+		subset := destinationWeight.Destination.Subset
+		collisions := subsetCollitions[subset]
+		if collisions == nil {
+			collisions = make([]int, 0, len(destinationWeights))
+		}
+		subsetCollitions[subset] = append(collisions, destWeightIdx)
+
+	}
+	appendSubsetDuplicity(routeIdx, kind, subsetCollitions, checks)
+}
+
+func trackTcpTlsSubset(routeIdx int, kind string, destinationWeights []*api_networking_v1alpha3.RouteDestination, checks *[]*models.IstioCheck) {
+	subsetCollitions := map[string][]int{}
+
+	for destWeightIdx, destinationWeight := range destinationWeights {
+		if destinationWeight == nil {
+			continue
+		}
+		if destinationWeight.Destination == nil {
+			return
+		}
+		subset := destinationWeight.Destination.Subset
+		collisions := subsetCollitions[subset]
+		if collisions == nil {
+			collisions = make([]int, 0, len(destinationWeights))
+		}
+		subsetCollitions[subset] = append(collisions, destWeightIdx)
+
+	}
 	appendSubsetDuplicity(routeIdx, kind, subsetCollitions, checks)
 }
 

@@ -151,6 +151,7 @@ _
 | GET | /api/namespaces/{namespace}/pods/{pod} | [pod details](#pod-details) |  |
 | GET | /api/namespaces/{namespace}/pods/{pod}/logs | [pod logs](#pod-logs) |  |
 | GET | /api/namespaces/{namespace}/pods/{pod}/config_dump | [pod proxy dump](#pod-proxy-dump) |  |
+| POST | /api/namespaces/{namespace}/pods/{pod}/logging | [pod proxy logging](#pod-proxy-logging) |  |
 | GET | /api/namespaces/{namespace}/pods/{pod}/config_dump/{resource} | [pod proxy resource](#pod-proxy-resource) |  |
   
 
@@ -4539,6 +4540,142 @@ Status: Internal Server Error
 
 
 
+### <span id="pod-proxy-logging"></span> pod proxy logging (*podProxyLogging*)
+
+```
+POST /api/namespaces/{namespace}/pods/{pod}/logging
+```
+
+Endpoint to set pod proxy log level
+
+#### URI Schemes
+  * http
+  * https
+
+#### Produces
+  * application/json
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
+| pod | `path` | string | `string` |  | ✓ |  | The pod name. |
+| level | `query` | string | `string` |  | ✓ |  | The log level for the pod's proxy. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#pod-proxy-logging-200) | OK | NoContent: the response is empty |  | [schema](#pod-proxy-logging-200-schema) |
+| [400](#pod-proxy-logging-400) | Bad Request | BadRequestError: the client request is incorrect |  | [schema](#pod-proxy-logging-400-schema) |
+| [404](#pod-proxy-logging-404) | Not Found | A NotFoundError is the error message that is generated when server could not find what was requested. |  | [schema](#pod-proxy-logging-404-schema) |
+| [500](#pod-proxy-logging-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#pod-proxy-logging-500-schema) |
+
+#### Responses
+
+
+##### <span id="pod-proxy-logging-200"></span> 200 - NoContent: the response is empty
+Status: OK
+
+###### <span id="pod-proxy-logging-200-schema"></span> Schema
+   
+  
+
+[PodProxyLoggingOKBody](#pod-proxy-logging-o-k-body)
+
+##### <span id="pod-proxy-logging-400"></span> 400 - BadRequestError: the client request is incorrect
+Status: Bad Request
+
+###### <span id="pod-proxy-logging-400-schema"></span> Schema
+   
+  
+
+[PodProxyLoggingBadRequestBody](#pod-proxy-logging-bad-request-body)
+
+##### <span id="pod-proxy-logging-404"></span> 404 - A NotFoundError is the error message that is generated when server could not find what was requested.
+Status: Not Found
+
+###### <span id="pod-proxy-logging-404-schema"></span> Schema
+   
+  
+
+[PodProxyLoggingNotFoundBody](#pod-proxy-logging-not-found-body)
+
+##### <span id="pod-proxy-logging-500"></span> 500 - A Internal is the error message that means something has gone wrong
+Status: Internal Server Error
+
+###### <span id="pod-proxy-logging-500-schema"></span> Schema
+   
+  
+
+[PodProxyLoggingInternalServerErrorBody](#pod-proxy-logging-internal-server-error-body)
+
+###### Inlined models
+
+**<span id="pod-proxy-logging-bad-request-body"></span> PodProxyLoggingBadRequestBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `400`| HTTP status code | `400` |
+| Message | string| `string` |  | |  |  |
+
+
+
+**<span id="pod-proxy-logging-internal-server-error-body"></span> PodProxyLoggingInternalServerErrorBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
+| Message | string| `string` |  | |  |  |
+
+
+
+**<span id="pod-proxy-logging-not-found-body"></span> PodProxyLoggingNotFoundBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `404`| HTTP status code | `404` |
+| Message | string| `string` |  | |  |  |
+
+
+
+**<span id="pod-proxy-logging-o-k-body"></span> PodProxyLoggingOKBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `204`| HTTP status code | `204` |
+| Message | string| `string` |  | |  |  |
+
+
+
 ### <span id="pod-proxy-resource"></span> pod proxy resource (*podProxyResource*)
 
 ```
@@ -6380,7 +6517,7 @@ Status: Internal Server Error
 ### <span id="aggregation"></span> Aggregation
 
 
-> Aggregation is the model representing label's allowed aggregation, transformed from aggregation in MonitoringDashboard config resource
+> Aggregation represents label's allowed aggregations, transformed from aggregation in MonitoringDashboard config resource
   
 
 
@@ -6394,6 +6531,70 @@ Status: Internal Server Error
 | DisplayName | string| `string` |  | |  |  |
 | Label | string| `string` |  | |  |  |
 | SingleSelection | boolean| `bool` |  | |  |  |
+
+
+
+### <span id="analysis-message-base"></span> AnalysisMessageBase
+
+
+> AnalysisMessageBase describes some common information that is needed for all
+messages. All information should be static with respect to the error code.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| DocumentationUrl | string| `string` |  | | A url pointing to the Istio documentation for this specific error type.
+Should be of the form
+`^http(s)?://(preliminary\.)?istio.io/docs/reference/config/analysis/`
+Required. |  |
+| level | [AnalysisMessageBaseLevel](#analysis-message-base-level)| `AnalysisMessageBaseLevel` |  | |  |  |
+| type | [AnalysisMessageBaseType](#analysis-message-base-type)| `AnalysisMessageBaseType` |  | |  |  |
+
+
+
+### <span id="analysis-message-base-level"></span> AnalysisMessageBase_Level
+
+
+> as well as leaving space in between to add more later
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| AnalysisMessageBase_Level | int32 (formatted integer)| int32 | | as well as leaving space in between to add more later |  |
+
+
+
+### <span id="analysis-message-base-type"></span> AnalysisMessageBase_Type
+
+
+> A unique identifier for the type of message. Name is intended to be
+human-readable, code is intended to be machine readable. There should be a
+one-to-one mapping between name and code. (i.e. do not re-use names or
+codes between message types.)
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | string| `string` |  | | A 7 character code matching `^IST[0-9]{4}$` intended to uniquely identify
+the message type. (e.g. "IST0001" is mapped to the "InternalError" message
+type.) 0000-0100 are reserved. Required. |  |
+| Name | string| `string` |  | | A human-readable name for the message type. e.g. "InternalError",
+"PodMissingProxy". This should be the same for all messages of the same type.
+Required. |  |
 
 
 
@@ -6472,20 +6673,53 @@ Status: Internal Server Error
 
 
 
-### <span id="authorization-policies"></span> AuthorizationPolicies
-
-
-> This is used for returning an array of AuthorizationPolicies
-  
-
-
-
-[][AuthorizationPolicy](#authorization-policy)
-
 ### <span id="authorization-policy"></span> AuthorizationPolicy
 
 
-> This is used for returning an AuthorizationPolicy
+> For example, the following authorization policy allows nothing and effectively denies all requests to workloads
+in namespace foo.
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+name: allow-nothing
+namespace: foo
+spec:
+{}
+```
+
+The following authorization policy allows all requests to workloads in namespace foo.
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+name: allow-all
+namespace: foo
+spec:
+rules:
+{}
+```
+
+<!-- crd generation tags
++cue-gen:AuthorizationPolicy:groupName:security.istio.io
++cue-gen:AuthorizationPolicy:version:v1beta1
++cue-gen:AuthorizationPolicy:storageVersion
++cue-gen:AuthorizationPolicy:annotations:helm.sh/resource-policy=keep
++cue-gen:AuthorizationPolicy:labels:app=istio-pilot,chart=istio,istio=security,heritage=Tiller,release=istio
++cue-gen:AuthorizationPolicy:subresource:status
++cue-gen:AuthorizationPolicy:scope:Namespaced
++cue-gen:AuthorizationPolicy:resource:categories=istio-io,security-istio-io,plural=authorizationpolicies
++cue-gen:AuthorizationPolicy:preserveUnknownFields:false
+>
+
+<!-- go code generation tags
++kubetype-gen
++kubetype-gen:groupVersion=security.istio.io/v1beta1
++genclient
++k8s:deepcopy-gen=true
+>
   
 
 
@@ -6501,34 +6735,121 @@ Servers should convert recognized schemas to the latest internal value, and
 may reject unrecognized values.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 +optional |  |
+| Annotations | map of string| `map[string]string` |  | | Annotations is an unstructured key value map stored with a resource that may be
+set by external tools to store and retrieve arbitrary metadata. They are not
+queryable and should be preserved when modifying objects.
+More info: http://kubernetes.io/docs/user-guide/annotations
++optional |  |
+| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
+This is used to distinguish resources with same name and namespace in different clusters.
+This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
++optional |  |
+| DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
+it will be removed from the system. Only set when deletionTimestamp is also set.
+May only be shortened.
+Read-only.
++optional |  |
+| Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
+is an identifier for the responsible component that will remove the entry
+from the list. If the deletionTimestamp of the object is non-nil, entries
+in this list can only be removed.
+Finalizers may be processed and removed in any order.  Order is NOT enforced
+because it introduces significant risk of stuck finalizers.
+finalizers is a shared field, any actor with permission can reorder it.
+If the finalizer list is processed in order, then this can lead to a situation
+in which the component responsible for the first finalizer in the list is
+waiting for a signal (field value, external system, or other) produced by a
+component responsible for a finalizer later in the list, resulting in a deadlock.
+Without enforced ordering finalizers are free to order amongst themselves and
+are not vulnerable to ordering changes in the list.
++optional
++patchStrategy=merge |  |
+| GenerateName | string| `string` |  | | GenerateName is an optional prefix, used by the server, to generate a unique
+name ONLY IF the Name field has not been provided.
+If this field is used, the name returned to the client will be different
+than the name passed. This value will also be combined with a unique suffix.
+The provided value has the same validation rules as the Name field,
+and may be truncated by the length of the suffix required to make the value
+unique on the server.
+
+If this field is specified and the generated name exists, the server will
+NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
+ServerTimeout indicating a unique name could not be found in the time allotted, and the client
+should retry (optionally after the time indicated in the Retry-After header).
+
+Applied only if Name is not specified.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
++optional |  |
+| Generation | int64 (formatted integer)| `int64` |  | | A sequence number representing a specific generation of the desired state.
+Populated by the system. Read-only.
++optional |  |
 | Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
 Servers may infer this from the endpoint the client submits requests to.
 Cannot be updated.
 In CamelCase.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 +optional |  |
-| Status | map of any | `map[string]interface{}` |  | |  |  |
-| metadata | [ObjectMeta](#object-meta)| `ObjectMeta` |  | |  |  |
-| spec | [Spec](#spec)| `Spec` |  | |  |  |
+| Labels | map of string| `map[string]string` |  | | Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: http://kubernetes.io/docs/user-guide/labels
++optional |  |
+| ManagedFields | [][ManagedFieldsEntry](#managed-fields-entry)| `[]*ManagedFieldsEntry` |  | | ManagedFields maps workflow-id and version to the set of fields
+that are managed by that workflow. This is mostly for internal
+housekeeping, and users typically shouldn't need to set or
+understand this field. A workflow can be the user's name, a
+controller's name, or the name of a specific apply path like
+"ci-cd". The set of fields is always in the version that the
+workflow used when modifying the object.
 
++optional |  |
+| Name | string| `string` |  | | Name must be unique within a namespace. Is required when creating resources, although
+some resources may allow a client to request the generation of an appropriate name
+automatically. Name is primarily intended for creation idempotence and configuration
+definition.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/identifiers#names
++optional |  |
+| Namespace | string| `string` |  | | Namespace defines the space within which each name must be unique. An empty namespace is
+equivalent to the "default" namespace, but "default" is the canonical representation.
+Not all objects are required to be scoped to a namespace - the value of this field for
+those objects will be empty.
 
+Must be a DNS_LABEL.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/namespaces
++optional |  |
+| OwnerReferences | [][OwnerReference](#owner-reference)| `[]*OwnerReference` |  | | List of objects depended by this object. If ALL objects in the list have
+been deleted, this object will be garbage collected. If this object is managed by a controller,
+then an entry in this list will point to this controller, with the controller field set to true.
+There cannot be more than one managing controller.
++optional
++patchMergeKey=uid
++patchStrategy=merge |  |
+| ResourceVersion | string| `string` |  | | An opaque value that represents the internal version of this object that can
+be used by clients to determine when objects have changed. May be used for optimistic
+concurrency, change detection, and the watch operation on a resource or set of resources.
+Clients must treat these values as opaque and passed unmodified back to the server.
+They may only be valid for a particular resource or set of resources.
 
-#### Inlined models
+Populated by the system.
+Read-only.
+Value must be treated as opaque by clients and .
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
++optional |  |
+| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
+Populated by the system.
+Read-only.
 
-**<span id="spec"></span> Spec**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Action | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Rules | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Selector | [interface{}](#interface)| `interface{}` |  | |  |  |
+DEPRECATED
+Kubernetes will stop propagating this field in 1.20 release and the field is planned
+to be removed in 1.21 release.
++optional |  |
+| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
+| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| spec | [AuthorizationPolicy](#authorization-policy)| `AuthorizationPolicy` |  | |  |  |
+| status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
+| uid | [UID](#uid)| `UID` |  | |  |  |
 
 
 
@@ -6760,7 +7081,32 @@ part of the mesh.
 ### <span id="destination-rule"></span> DestinationRule
 
 
-> This is used for returning a DestinationRule
+> <!-- crd generation tags
++cue-gen:DestinationRule:groupName:networking.istio.io
++cue-gen:DestinationRule:version:v1alpha3
++cue-gen:DestinationRule:storageVersion
++cue-gen:DestinationRule:annotations:helm.sh/resource-policy=keep
++cue-gen:DestinationRule:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
++cue-gen:DestinationRule:subresource:status
++cue-gen:DestinationRule:scope:Namespaced
++cue-gen:DestinationRule:resource:categories=istio-io,networking-istio-io,shortNames=dr
++cue-gen:DestinationRule:printerColumn:name=Host,type=string,JSONPath=.spec.host,description="The name of a service from the service registry"
++cue-gen:DestinationRule:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description="CreationTimestamp is a timestamp
+representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+Populated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata"
++cue-gen:DestinationRule:preserveUnknownFields:false
+>
+
+<!-- go code generation tags
++kubetype-gen
++kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++genclient
++k8s:deepcopy-gen=true
+>
+<!-- istio code generation tags
++istio.io/sync-start
+>
   
 
 
@@ -6776,54 +7122,121 @@ Servers should convert recognized schemas to the latest internal value, and
 may reject unrecognized values.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 +optional |  |
+| Annotations | map of string| `map[string]string` |  | | Annotations is an unstructured key value map stored with a resource that may be
+set by external tools to store and retrieve arbitrary metadata. They are not
+queryable and should be preserved when modifying objects.
+More info: http://kubernetes.io/docs/user-guide/annotations
++optional |  |
+| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
+This is used to distinguish resources with same name and namespace in different clusters.
+This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
++optional |  |
+| DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
+it will be removed from the system. Only set when deletionTimestamp is also set.
+May only be shortened.
+Read-only.
++optional |  |
+| Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
+is an identifier for the responsible component that will remove the entry
+from the list. If the deletionTimestamp of the object is non-nil, entries
+in this list can only be removed.
+Finalizers may be processed and removed in any order.  Order is NOT enforced
+because it introduces significant risk of stuck finalizers.
+finalizers is a shared field, any actor with permission can reorder it.
+If the finalizer list is processed in order, then this can lead to a situation
+in which the component responsible for the first finalizer in the list is
+waiting for a signal (field value, external system, or other) produced by a
+component responsible for a finalizer later in the list, resulting in a deadlock.
+Without enforced ordering finalizers are free to order amongst themselves and
+are not vulnerable to ordering changes in the list.
++optional
++patchStrategy=merge |  |
+| GenerateName | string| `string` |  | | GenerateName is an optional prefix, used by the server, to generate a unique
+name ONLY IF the Name field has not been provided.
+If this field is used, the name returned to the client will be different
+than the name passed. This value will also be combined with a unique suffix.
+The provided value has the same validation rules as the Name field,
+and may be truncated by the length of the suffix required to make the value
+unique on the server.
+
+If this field is specified and the generated name exists, the server will
+NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
+ServerTimeout indicating a unique name could not be found in the time allotted, and the client
+should retry (optionally after the time indicated in the Retry-After header).
+
+Applied only if Name is not specified.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
++optional |  |
+| Generation | int64 (formatted integer)| `int64` |  | | A sequence number representing a specific generation of the desired state.
+Populated by the system. Read-only.
++optional |  |
 | Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
 Servers may infer this from the endpoint the client submits requests to.
 Cannot be updated.
 In CamelCase.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 +optional |  |
-| Status | map of any | `map[string]interface{}` |  | |  |  |
-| metadata | [ObjectMeta](#object-meta)| `ObjectMeta` |  | |  |  |
-| spec | [Spec](#spec)| `Spec` |  | |  |  |
+| Labels | map of string| `map[string]string` |  | | Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: http://kubernetes.io/docs/user-guide/labels
++optional |  |
+| ManagedFields | [][ManagedFieldsEntry](#managed-fields-entry)| `[]*ManagedFieldsEntry` |  | | ManagedFields maps workflow-id and version to the set of fields
+that are managed by that workflow. This is mostly for internal
+housekeeping, and users typically shouldn't need to set or
+understand this field. A workflow can be the user's name, a
+controller's name, or the name of a specific apply path like
+"ci-cd". The set of fields is always in the version that the
+workflow used when modifying the object.
 
++optional |  |
+| Name | string| `string` |  | | Name must be unique within a namespace. Is required when creating resources, although
+some resources may allow a client to request the generation of an appropriate name
+automatically. Name is primarily intended for creation idempotence and configuration
+definition.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/identifiers#names
++optional |  |
+| Namespace | string| `string` |  | | Namespace defines the space within which each name must be unique. An empty namespace is
+equivalent to the "default" namespace, but "default" is the canonical representation.
+Not all objects are required to be scoped to a namespace - the value of this field for
+those objects will be empty.
 
+Must be a DNS_LABEL.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/namespaces
++optional |  |
+| OwnerReferences | [][OwnerReference](#owner-reference)| `[]*OwnerReference` |  | | List of objects depended by this object. If ALL objects in the list have
+been deleted, this object will be garbage collected. If this object is managed by a controller,
+then an entry in this list will point to this controller, with the controller field set to true.
+There cannot be more than one managing controller.
++optional
++patchMergeKey=uid
++patchStrategy=merge |  |
+| ResourceVersion | string| `string` |  | | An opaque value that represents the internal version of this object that can
+be used by clients to determine when objects have changed. May be used for optimistic
+concurrency, change detection, and the watch operation on a resource or set of resources.
+Clients must treat these values as opaque and passed unmodified back to the server.
+They may only be valid for a particular resource or set of resources.
 
-#### Inlined models
+Populated by the system.
+Read-only.
+Value must be treated as opaque by clients and .
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
++optional |  |
+| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
+Populated by the system.
+Read-only.
 
-**<span id="spec"></span> Spec**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| ExportTo | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Host | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Subsets | [interface{}](#interface)| `interface{}` |  | |  |  |
-| TrafficPolicy | [interface{}](#interface)| `interface{}` |  | |  |  |
-
-
-
-### <span id="destination-rules"></span> DestinationRules
-
-
-> This is used for returning an array of DestinationRules
-  
-
-
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Items | [][DestinationRule](#destination-rule)| `[]*DestinationRule` |  | |  |  |
-| permissions | [ResourcePermissions](#resource-permissions)| `ResourcePermissions` |  | |  |  |
+DEPRECATED
+Kubernetes will stop propagating this field in 1.20 release and the field is planned
+to be removed in 1.21 release.
++optional |  |
+| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
+| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| spec | [DestinationRule](#destination-rule)| `DestinationRule` |  | |  |  |
+| status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
+| uid | [UID](#uid)| `UID` |  | |  |  |
 
 
 
@@ -6907,7 +7320,24 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 ### <span id="envoy-filter"></span> EnvoyFilter
 
 
-> This is used for returning an EnvoyFilter
+> <!-- crd generation tags
++cue-gen:EnvoyFilter:groupName:networking.istio.io
++cue-gen:EnvoyFilter:version:v1alpha3
++cue-gen:EnvoyFilter:storageVersion
++cue-gen:EnvoyFilter:annotations:helm.sh/resource-policy=keep
++cue-gen:EnvoyFilter:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
++cue-gen:EnvoyFilter:subresource:status
++cue-gen:EnvoyFilter:scope:Namespaced
++cue-gen:EnvoyFilter:resource:categories=istio-io,networking-istio-io
++cue-gen:EnvoyFilter:preserveUnknownFields:configPatches.[].patch.value
+>
+
+<!-- go code generation tags
++kubetype-gen
++kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++genclient
++k8s:deepcopy-gen=true
+>
   
 
 
@@ -6923,45 +7353,123 @@ Servers should convert recognized schemas to the latest internal value, and
 may reject unrecognized values.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 +optional |  |
+| Annotations | map of string| `map[string]string` |  | | Annotations is an unstructured key value map stored with a resource that may be
+set by external tools to store and retrieve arbitrary metadata. They are not
+queryable and should be preserved when modifying objects.
+More info: http://kubernetes.io/docs/user-guide/annotations
++optional |  |
+| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
+This is used to distinguish resources with same name and namespace in different clusters.
+This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
++optional |  |
+| DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
+it will be removed from the system. Only set when deletionTimestamp is also set.
+May only be shortened.
+Read-only.
++optional |  |
+| Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
+is an identifier for the responsible component that will remove the entry
+from the list. If the deletionTimestamp of the object is non-nil, entries
+in this list can only be removed.
+Finalizers may be processed and removed in any order.  Order is NOT enforced
+because it introduces significant risk of stuck finalizers.
+finalizers is a shared field, any actor with permission can reorder it.
+If the finalizer list is processed in order, then this can lead to a situation
+in which the component responsible for the first finalizer in the list is
+waiting for a signal (field value, external system, or other) produced by a
+component responsible for a finalizer later in the list, resulting in a deadlock.
+Without enforced ordering finalizers are free to order amongst themselves and
+are not vulnerable to ordering changes in the list.
++optional
++patchStrategy=merge |  |
+| GenerateName | string| `string` |  | | GenerateName is an optional prefix, used by the server, to generate a unique
+name ONLY IF the Name field has not been provided.
+If this field is used, the name returned to the client will be different
+than the name passed. This value will also be combined with a unique suffix.
+The provided value has the same validation rules as the Name field,
+and may be truncated by the length of the suffix required to make the value
+unique on the server.
+
+If this field is specified and the generated name exists, the server will
+NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
+ServerTimeout indicating a unique name could not be found in the time allotted, and the client
+should retry (optionally after the time indicated in the Retry-After header).
+
+Applied only if Name is not specified.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
++optional |  |
+| Generation | int64 (formatted integer)| `int64` |  | | A sequence number representing a specific generation of the desired state.
+Populated by the system. Read-only.
++optional |  |
 | Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
 Servers may infer this from the endpoint the client submits requests to.
 Cannot be updated.
 In CamelCase.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 +optional |  |
-| Status | map of any | `map[string]interface{}` |  | |  |  |
-| metadata | [ObjectMeta](#object-meta)| `ObjectMeta` |  | |  |  |
-| spec | [Spec](#spec)| `Spec` |  | |  |  |
+| Labels | map of string| `map[string]string` |  | | Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: http://kubernetes.io/docs/user-guide/labels
++optional |  |
+| ManagedFields | [][ManagedFieldsEntry](#managed-fields-entry)| `[]*ManagedFieldsEntry` |  | | ManagedFields maps workflow-id and version to the set of fields
+that are managed by that workflow. This is mostly for internal
+housekeeping, and users typically shouldn't need to set or
+understand this field. A workflow can be the user's name, a
+controller's name, or the name of a specific apply path like
+"ci-cd". The set of fields is always in the version that the
+workflow used when modifying the object.
+
++optional |  |
+| Name | string| `string` |  | | Name must be unique within a namespace. Is required when creating resources, although
+some resources may allow a client to request the generation of an appropriate name
+automatically. Name is primarily intended for creation idempotence and configuration
+definition.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/identifiers#names
++optional |  |
+| Namespace | string| `string` |  | | Namespace defines the space within which each name must be unique. An empty namespace is
+equivalent to the "default" namespace, but "default" is the canonical representation.
+Not all objects are required to be scoped to a namespace - the value of this field for
+those objects will be empty.
+
+Must be a DNS_LABEL.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/namespaces
++optional |  |
+| OwnerReferences | [][OwnerReference](#owner-reference)| `[]*OwnerReference` |  | | List of objects depended by this object. If ALL objects in the list have
+been deleted, this object will be garbage collected. If this object is managed by a controller,
+then an entry in this list will point to this controller, with the controller field set to true.
+There cannot be more than one managing controller.
++optional
++patchMergeKey=uid
++patchStrategy=merge |  |
+| ResourceVersion | string| `string` |  | | An opaque value that represents the internal version of this object that can
+be used by clients to determine when objects have changed. May be used for optimistic
+concurrency, change detection, and the watch operation on a resource or set of resources.
+Clients must treat these values as opaque and passed unmodified back to the server.
+They may only be valid for a particular resource or set of resources.
+
+Populated by the system.
+Read-only.
+Value must be treated as opaque by clients and .
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
++optional |  |
+| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
+Populated by the system.
+Read-only.
+
+DEPRECATED
+Kubernetes will stop propagating this field in 1.20 release and the field is planned
+to be removed in 1.21 release.
++optional |  |
+| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
+| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| spec | [EnvoyFilter](#envoy-filter)| `EnvoyFilter` |  | |  |  |
+| status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
+| uid | [UID](#uid)| `UID` |  | |  |  |
 
 
-
-#### Inlined models
-
-**<span id="spec"></span> Spec**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| ConfigPatches | [interface{}](#interface)| `interface{}` |  | |  |  |
-| WorkloadSelector | [interface{}](#interface)| `interface{}` |  | |  |  |
-
-
-
-### <span id="envoy-filters"></span> EnvoyFilters
-
-
-> This is used for returning an array of EnvoyFilter
-  
-
-
-
-[][EnvoyFilter](#envoy-filter)
 
 ### <span id="envoy-proxy-dump"></span> EnvoyProxyDump
 
@@ -7080,7 +7588,30 @@ The exact format is defined in sigs.k8s.io/structured-merge-diff
 ### <span id="gateway"></span> Gateway
 
 
+> <!-- crd generation tags
++cue-gen:Gateway:groupName:networking.istio.io
++cue-gen:Gateway:version:v1alpha3
++cue-gen:Gateway:storageVersion
++cue-gen:Gateway:annotations:helm.sh/resource-policy=keep
++cue-gen:Gateway:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
++cue-gen:Gateway:subresource:status
++cue-gen:Gateway:scope:Namespaced
++cue-gen:Gateway:resource:categories=istio-io,networking-istio-io,shortNames=gw
++cue-gen:Gateway:preserveUnknownFields:false
+>
+
+<!-- go code generation tags
++kubetype-gen
++kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++genclient
++k8s:deepcopy-gen=true
+>
+<!-- istio code generation tags
++istio.io/sync-start
+>
   
+
+
 
 
 
@@ -7093,42 +7624,123 @@ Servers should convert recognized schemas to the latest internal value, and
 may reject unrecognized values.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 +optional |  |
+| Annotations | map of string| `map[string]string` |  | | Annotations is an unstructured key value map stored with a resource that may be
+set by external tools to store and retrieve arbitrary metadata. They are not
+queryable and should be preserved when modifying objects.
+More info: http://kubernetes.io/docs/user-guide/annotations
++optional |  |
+| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
+This is used to distinguish resources with same name and namespace in different clusters.
+This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
++optional |  |
+| DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
+it will be removed from the system. Only set when deletionTimestamp is also set.
+May only be shortened.
+Read-only.
++optional |  |
+| Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
+is an identifier for the responsible component that will remove the entry
+from the list. If the deletionTimestamp of the object is non-nil, entries
+in this list can only be removed.
+Finalizers may be processed and removed in any order.  Order is NOT enforced
+because it introduces significant risk of stuck finalizers.
+finalizers is a shared field, any actor with permission can reorder it.
+If the finalizer list is processed in order, then this can lead to a situation
+in which the component responsible for the first finalizer in the list is
+waiting for a signal (field value, external system, or other) produced by a
+component responsible for a finalizer later in the list, resulting in a deadlock.
+Without enforced ordering finalizers are free to order amongst themselves and
+are not vulnerable to ordering changes in the list.
++optional
++patchStrategy=merge |  |
+| GenerateName | string| `string` |  | | GenerateName is an optional prefix, used by the server, to generate a unique
+name ONLY IF the Name field has not been provided.
+If this field is used, the name returned to the client will be different
+than the name passed. This value will also be combined with a unique suffix.
+The provided value has the same validation rules as the Name field,
+and may be truncated by the length of the suffix required to make the value
+unique on the server.
+
+If this field is specified and the generated name exists, the server will
+NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
+ServerTimeout indicating a unique name could not be found in the time allotted, and the client
+should retry (optionally after the time indicated in the Retry-After header).
+
+Applied only if Name is not specified.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
++optional |  |
+| Generation | int64 (formatted integer)| `int64` |  | | A sequence number representing a specific generation of the desired state.
+Populated by the system. Read-only.
++optional |  |
 | Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
 Servers may infer this from the endpoint the client submits requests to.
 Cannot be updated.
 In CamelCase.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 +optional |  |
-| Status | map of any | `map[string]interface{}` |  | |  |  |
-| metadata | [ObjectMeta](#object-meta)| `ObjectMeta` |  | |  |  |
-| spec | [Spec](#spec)| `Spec` |  | |  |  |
+| Labels | map of string| `map[string]string` |  | | Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: http://kubernetes.io/docs/user-guide/labels
++optional |  |
+| ManagedFields | [][ManagedFieldsEntry](#managed-fields-entry)| `[]*ManagedFieldsEntry` |  | | ManagedFields maps workflow-id and version to the set of fields
+that are managed by that workflow. This is mostly for internal
+housekeeping, and users typically shouldn't need to set or
+understand this field. A workflow can be the user's name, a
+controller's name, or the name of a specific apply path like
+"ci-cd". The set of fields is always in the version that the
+workflow used when modifying the object.
+
++optional |  |
+| Name | string| `string` |  | | Name must be unique within a namespace. Is required when creating resources, although
+some resources may allow a client to request the generation of an appropriate name
+automatically. Name is primarily intended for creation idempotence and configuration
+definition.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/identifiers#names
++optional |  |
+| Namespace | string| `string` |  | | Namespace defines the space within which each name must be unique. An empty namespace is
+equivalent to the "default" namespace, but "default" is the canonical representation.
+Not all objects are required to be scoped to a namespace - the value of this field for
+those objects will be empty.
+
+Must be a DNS_LABEL.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/namespaces
++optional |  |
+| OwnerReferences | [][OwnerReference](#owner-reference)| `[]*OwnerReference` |  | | List of objects depended by this object. If ALL objects in the list have
+been deleted, this object will be garbage collected. If this object is managed by a controller,
+then an entry in this list will point to this controller, with the controller field set to true.
+There cannot be more than one managing controller.
++optional
++patchMergeKey=uid
++patchStrategy=merge |  |
+| ResourceVersion | string| `string` |  | | An opaque value that represents the internal version of this object that can
+be used by clients to determine when objects have changed. May be used for optimistic
+concurrency, change detection, and the watch operation on a resource or set of resources.
+Clients must treat these values as opaque and passed unmodified back to the server.
+They may only be valid for a particular resource or set of resources.
+
+Populated by the system.
+Read-only.
+Value must be treated as opaque by clients and .
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
++optional |  |
+| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
+Populated by the system.
+Read-only.
+
+DEPRECATED
+Kubernetes will stop propagating this field in 1.20 release and the field is planned
+to be removed in 1.21 release.
++optional |  |
+| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
+| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| spec | [Gateway](#gateway)| `Gateway` |  | |  |  |
+| status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
+| uid | [UID](#uid)| `UID` |  | |  |  |
 
 
-
-#### Inlined models
-
-**<span id="spec"></span> Spec**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Selector | map of string| `map[string]string` |  | |  |  |
-| Servers | [interface{}](#interface)| `interface{}` |  | |  |  |
-
-
-
-### <span id="gateways"></span> Gateways
-
-
-  
-
-[][Gateway](#gateway)
 
 ### <span id="grafana-info"></span> GrafanaInfo
 
@@ -7239,6 +7851,29 @@ It is false for service.namespace format and service entries. |  |
 
 [][ComponentStatus](#component-status)
 
+### <span id="istio-condition"></span> IstioCondition
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Message | string| `string` |  | | Human-readable message indicating details about last transition.
++optional |  |
+| Reason | string| `string` |  | | Unique, one-word, CamelCase reason for the condition's last transition.
++optional |  |
+| Status | string| `string` |  | | Status is the status of the condition.
+Can be True, False, Unknown. |  |
+| Type | string| `string` |  | | Type is the type of the condition. |  |
+| last_probe_time | [Timestamp](#timestamp)| `Timestamp` |  | |  |  |
+| last_transition_time | [Timestamp](#timestamp)| `Timestamp` |  | |  |  |
+
+
+
 ### <span id="istio-config-details"></span> IstioConfigDetails
 
 
@@ -7282,19 +7917,19 @@ It is false for service.namespace format and service entries. |  |
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| authorizationPolicies | [AuthorizationPolicies](#authorization-policies)| `AuthorizationPolicies` |  | |  |  |
-| destinationRules | [DestinationRules](#destination-rules)| `DestinationRules` |  | |  |  |
-| envoyFilters | [EnvoyFilters](#envoy-filters)| `EnvoyFilters` |  | |  |  |
-| gateways | [Gateways](#gateways)| `Gateways` |  | |  |  |
+| AuthorizationPolicies | [][AuthorizationPolicy](#authorization-policy)| `[]*AuthorizationPolicy` |  | |  |  |
+| DestinationRules | [][DestinationRule](#destination-rule)| `[]*DestinationRule` |  | |  |  |
+| EnvoyFilters | [][EnvoyFilter](#envoy-filter)| `[]*EnvoyFilter` |  | |  |  |
+| Gateways | [][Gateway](#gateway)| `[]*Gateway` |  | |  |  |
+| PeerAuthentications | [][PeerAuthentication](#peer-authentication)| `[]*PeerAuthentication` |  | |  |  |
+| RequestAuthentications | [][RequestAuthentication](#request-authentication)| `[]*RequestAuthentication` |  | |  |  |
+| ServiceEntries | [][ServiceEntry](#service-entry)| `[]*ServiceEntry` |  | |  |  |
+| Sidecars | [][Sidecar](#sidecar)| `[]*Sidecar` |  | |  |  |
+| VirtualServices | [][VirtualService](#virtual-service)| `[]*VirtualService` |  | |  |  |
+| WorkloadEntries | [][WorkloadEntry](#workload-entry)| `[]*WorkloadEntry` |  | |  |  |
+| WorkloadGroups | [][WorkloadGroup](#workload-group)| `[]*WorkloadGroup` |  | |  |  |
 | namespace | [Namespace](#namespace)| `Namespace` | ✓ | |  |  |
-| peerAuthentications | [PeerAuthentications](#peer-authentications)| `PeerAuthentications` |  | |  |  |
-| requestAuthentications | [RequestAuthentications](#request-authentications)| `RequestAuthentications` |  | |  |  |
-| serviceEntries | [ServiceEntries](#service-entries)| `ServiceEntries` |  | |  |  |
-| sidecars | [Sidecars](#sidecars)| `Sidecars` |  | |  |  |
 | validations | [IstioValidations](#istio-validations)| `IstioValidations` |  | |  |  |
-| virtualServices | [VirtualServices](#virtual-services)| `VirtualServices` |  | |  |  |
-| workloadEntries | [WorkloadEntries](#workload-entries)| `WorkloadEntries` |  | |  |  |
-| workloadGroups | [WorkloadGroups](#workload-groups)| `WorkloadGroups` |  | |  |  |
 
 
 
@@ -7323,6 +7958,33 @@ It is false for service.namespace format and service entries. |  |
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | IsMaistra | boolean| `bool` | ✓ | | If true, the Istio implementation is a variant of Maistra. |  |
+
+
+
+### <span id="istio-status"></span> IstioStatus
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Conditions | [][IstioCondition](#istio-condition)| `[]*IstioCondition` |  | | Current service state of pod.
+More info: https://istio.io/docs/reference/config/config-status/
++optional
++patchMergeKey=type
++patchStrategy=merge |  |
+| ObservedGeneration | int64 (formatted integer)| `int64` |  | | Resource Generation to which the Reconciled Condition refers.
+When this value is not equal to the object's metadata generation, reconciled condition  calculation for the current
+generation is still in progress.  See https://istio.io/latest/docs/reference/config/config-status/ for more info.
++optional |  |
+| ValidationMessages | [][AnalysisMessageBase](#analysis-message-base)| `[]*AnalysisMessageBase` |  | | Includes any errors or warnings detected by Istio's analyzers.
++optional
++patchMergeKey=type
++patchStrategy=merge |  |
 
 
 
@@ -8097,12 +8759,13 @@ This type is used to describe a set of objects.
 | DestServices | [][ServiceName](#service-name)| `[]*ServiceName` |  | |  |  |
 | HasCB | boolean| `bool` |  | |  |  |
 | HasFaultInjection | boolean| `bool` |  | |  |  |
+| HasMirroring | boolean| `bool` |  | |  |  |
 | HasMissingSC | boolean| `bool` |  | |  |  |
 | HasRequestRouting | boolean| `bool` |  | |  |  |
 | HasRequestTimeout | boolean| `bool` |  | |  |  |
 | HasTCPTrafficShifting | boolean| `bool` |  | |  |  |
 | HasTrafficShifting | boolean| `bool` |  | |  |  |
-| HasWorkloadEntry | boolean| `bool` |  | |  |  |
+| HasWorkloadEntry | [][WEInfo](#w-e-info)| `[]*WEInfo` |  | |  |  |
 | ID | string| `string` |  | | Cytoscape Fields |  |
 | IsBox | string| `string` |  | |  |  |
 | IsDead | boolean| `bool` |  | |  |  |
@@ -8139,11 +8802,12 @@ This type is used to describe a set of objects.
 
 
 
-### <span id="object-meta"></span> ObjectMeta
+### <span id="owner-reference"></span> OwnerReference
 
 
-> ObjectMeta is metadata that all persisted resources must have, which includes all objects
-users must create.
+> OwnerReference contains enough information to let you identify an owning
+object. An owning object must be in the same namespace as the dependent, or
+be cluster-scoped, so there is no namespace field.
   
 
 
@@ -8154,6 +8818,141 @@ users must create.
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| APIVersion | string| `string` |  | | API version of the referent. |  |
+| BlockOwnerDeletion | boolean| `bool` |  | | If true, AND if the owner has the "foregroundDeletion" finalizer, then
+the owner cannot be deleted from the key-value store until this
+reference is removed.
+Defaults to false.
+To set this field, a user needs "delete" permission of the owner,
+otherwise 422 (Unprocessable Entity) will be returned.
++optional |  |
+| Controller | boolean| `bool` |  | | If true, this reference points to the managing controller.
++optional |  |
+| Kind | string| `string` |  | | Kind of the referent.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |  |
+| Name | string| `string` |  | | Name of the referent.
+More info: http://kubernetes.io/docs/user-guide/identifiers#names |  |
+| uid | [UID](#uid)| `UID` |  | |  |  |
+
+
+
+### <span id="peer-authentication"></span> PeerAuthentication
+
+
+> Examples:
+
+Policy to allow mTLS traffic for all workloads under namespace `foo`:
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+name: default
+namespace: foo
+spec:
+mtls:
+mode: STRICT
+```
+For mesh level, put the policy in root-namespace according to your Istio installation.
+
+Policies to allow both mTLS & plaintext traffic for all workloads under namespace `foo`, but
+require mTLS for workload `finance`.
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+name: default
+namespace: foo
+spec:
+mtls:
+mode: PERMISSIVE
+
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+name: default
+namespace: foo
+spec:
+selector:
+matchLabels:
+app: finance
+mtls:
+mode: STRICT
+```
+Policy to allow mTLS strict for all workloads, but leave port 8080 to
+plaintext:
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+name: default
+namespace: foo
+spec:
+selector:
+matchLabels:
+app: finance
+mtls:
+mode: STRICT
+portLevelMtls:
+8080:
+mode: DISABLE
+```
+Policy to inherit mTLS mode from namespace (or mesh) settings, and overwrite
+settings for port 8080
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+name: default
+namespace: foo
+spec:
+selector:
+matchLabels:
+app: finance
+mtls:
+mode: UNSET
+portLevelMtls:
+8080:
+mode: DISABLE
+```
+
+<!-- crd generation tags
++cue-gen:PeerAuthentication:groupName:security.istio.io
++cue-gen:PeerAuthentication:version:v1beta1
++cue-gen:PeerAuthentication:storageVersion
++cue-gen:PeerAuthentication:annotations:helm.sh/resource-policy=keep
++cue-gen:PeerAuthentication:labels:app=istio-pilot,chart=istio,istio=security,heritage=Tiller,release=istio
++cue-gen:PeerAuthentication:subresource:status
++cue-gen:PeerAuthentication:scope:Namespaced
++cue-gen:PeerAuthentication:resource:categories=istio-io,security-istio-io,shortNames=pa
++cue-gen:PeerAuthentication:preserveUnknownFields:false
++cue-gen:PeerAuthentication:printerColumn:name=Mode,type=string,JSONPath=.spec.mtls.mode,description="Defines the mTLS mode used for peer authentication."
++cue-gen:PeerAuthentication:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description="CreationTimestamp is a timestamp
+representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+Populated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata"
+>
+
+<!-- go code generation tags
++kubetype-gen
++kubetype-gen:groupVersion=security.istio.io/v1beta1
++genclient
++k8s:deepcopy-gen=true
+>
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| APIVersion | string| `string` |  | | APIVersion defines the versioned schema of this representation of an object.
+Servers should convert recognized schemas to the latest internal value, and
+may reject unrecognized values.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
++optional |  |
 | Annotations | map of string| `map[string]string` |  | | Annotations is an unstructured key value map stored with a resource that may be
 set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
@@ -8201,6 +9000,12 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 +optional |  |
 | Generation | int64 (formatted integer)| `int64` |  | | A sequence number representing a specific generation of the desired state.
 Populated by the system. Read-only.
++optional |  |
+| Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
+Servers may infer this from the endpoint the client submits requests to.
+Cannot be updated.
+In CamelCase.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 +optional |  |
 | Labels | map of string| `map[string]string` |  | | Map of string keys and values that can be used to organize and categorize
 (scope and select) objects. May match selectors of replication controllers
@@ -8260,103 +9065,11 @@ to be removed in 1.21 release.
 +optional |  |
 | creationTimestamp | [Time](#time)| `Time` |  | |  |  |
 | deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| spec | [PeerAuthentication](#peer-authentication)| `PeerAuthentication` |  | |  |  |
+| status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
 | uid | [UID](#uid)| `UID` |  | |  |  |
 
 
-
-### <span id="owner-reference"></span> OwnerReference
-
-
-> OwnerReference contains enough information to let you identify an owning
-object. An owning object must be in the same namespace as the dependent, or
-be cluster-scoped, so there is no namespace field.
-  
-
-
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| APIVersion | string| `string` |  | | API version of the referent. |  |
-| BlockOwnerDeletion | boolean| `bool` |  | | If true, AND if the owner has the "foregroundDeletion" finalizer, then
-the owner cannot be deleted from the key-value store until this
-reference is removed.
-Defaults to false.
-To set this field, a user needs "delete" permission of the owner,
-otherwise 422 (Unprocessable Entity) will be returned.
-+optional |  |
-| Controller | boolean| `bool` |  | | If true, this reference points to the managing controller.
-+optional |  |
-| Kind | string| `string` |  | | Kind of the referent.
-More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |  |
-| Name | string| `string` |  | | Name of the referent.
-More info: http://kubernetes.io/docs/user-guide/identifiers#names |  |
-| uid | [UID](#uid)| `UID` |  | |  |  |
-
-
-
-### <span id="peer-authentication"></span> PeerAuthentication
-
-
-> This is used for returning an PeerAuthentication
-  
-
-
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| APIVersion | string| `string` |  | | APIVersion defines the versioned schema of this representation of an object.
-Servers should convert recognized schemas to the latest internal value, and
-may reject unrecognized values.
-More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-+optional |  |
-| Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
-Servers may infer this from the endpoint the client submits requests to.
-Cannot be updated.
-In CamelCase.
-More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-+optional |  |
-| Status | map of any | `map[string]interface{}` |  | |  |  |
-| metadata | [ObjectMeta](#object-meta)| `ObjectMeta` |  | |  |  |
-| spec | [Spec](#spec)| `Spec` |  | |  |  |
-
-
-
-#### Inlined models
-
-**<span id="spec"></span> Spec**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Mtls | [interface{}](#interface)| `interface{}` |  | |  |  |
-| PortLevelMtls | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Selector | [interface{}](#interface)| `interface{}` |  | |  |  |
-
-
-
-### <span id="peer-authentications"></span> PeerAuthentications
-
-
-> This is used for returning an array of PeerAuthentication
-  
-
-
-
-[][PeerAuthentication](#peer-authentication)
 
 ### <span id="pod"></span> Pod
 
@@ -8532,7 +9245,120 @@ If at least one variable is false, then the proxy isn't fully sync'ed with pilot
 ### <span id="request-authentication"></span> RequestAuthentication
 
 
-> This is used for returning an RequestAuthentication
+> Require JWT for all request for workloads that have label `app:httpbin`
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+name: httpbin
+namespace: foo
+spec:
+selector:
+matchLabels:
+app: httpbin
+jwtRules:
+issuer: "issuer-foo"
+jwksUri: https://example.com/.well-known/jwks.json
+
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+name: httpbin
+namespace: foo
+spec:
+selector:
+matchLabels:
+app: httpbin
+rules:
+from:
+source:
+requestPrincipals: ["*"]
+```
+
+The next example shows how to set a different JWT requirement for a different `host`. The `RequestAuthentication`
+declares it can accept JWTs issued by either `issuer-foo` or `issuer-bar` (the public key set is implicitly
+set from the OpenID Connect spec).
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+name: httpbin
+namespace: foo
+spec:
+selector:
+matchLabels:
+app: httpbin
+jwtRules:
+issuer: "issuer-foo"
+issuer: "issuer-bar"
+
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+name: httpbin
+namespace: foo
+spec:
+selector:
+matchLabels:
+app: httpbin
+rules:
+from:
+source:
+requestPrincipals: ["issuer-foo/*"]
+to:
+operation:
+hosts: ["example.com"]
+from:
+source:
+requestPrincipals: ["issuer-bar/*"]
+to:
+operation:
+hosts: ["another-host.com"]
+```
+
+You can fine tune the authorization policy to set different requirement per path. For example,
+to require JWT on all paths, except /healthz, the same `RequestAuthentication` can be used, but the
+authorization policy could be:
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+name: httpbin
+namespace: foo
+spec:
+selector:
+matchLabels:
+app: httpbin
+rules:
+from:
+source:
+requestPrincipals: ["*"]
+to:
+operation:
+paths: ["/healthz"]
+```
+
+<!-- crd generation tags
++cue-gen:RequestAuthentication:groupName:security.istio.io
++cue-gen:RequestAuthentication:version:v1beta1
++cue-gen:RequestAuthentication:storageVersion
++cue-gen:RequestAuthentication:annotations:helm.sh/resource-policy=keep
++cue-gen:RequestAuthentication:labels:app=istio-pilot,chart=istio,istio=security,heritage=Tiller,release=istio
++cue-gen:RequestAuthentication:subresource:status
++cue-gen:RequestAuthentication:scope:Namespaced
++cue-gen:RequestAuthentication:resource:categories=istio-io,security-istio-io,shortNames=ra
++cue-gen:RequestAuthentication:preserveUnknownFields:false
+>
+
+<!-- go code generation tags
++kubetype-gen
++kubetype-gen:groupVersion=security.istio.io/v1beta1
++genclient
++k8s:deepcopy-gen=true
+>
   
 
 
@@ -8548,45 +9374,123 @@ Servers should convert recognized schemas to the latest internal value, and
 may reject unrecognized values.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 +optional |  |
+| Annotations | map of string| `map[string]string` |  | | Annotations is an unstructured key value map stored with a resource that may be
+set by external tools to store and retrieve arbitrary metadata. They are not
+queryable and should be preserved when modifying objects.
+More info: http://kubernetes.io/docs/user-guide/annotations
++optional |  |
+| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
+This is used to distinguish resources with same name and namespace in different clusters.
+This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
++optional |  |
+| DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
+it will be removed from the system. Only set when deletionTimestamp is also set.
+May only be shortened.
+Read-only.
++optional |  |
+| Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
+is an identifier for the responsible component that will remove the entry
+from the list. If the deletionTimestamp of the object is non-nil, entries
+in this list can only be removed.
+Finalizers may be processed and removed in any order.  Order is NOT enforced
+because it introduces significant risk of stuck finalizers.
+finalizers is a shared field, any actor with permission can reorder it.
+If the finalizer list is processed in order, then this can lead to a situation
+in which the component responsible for the first finalizer in the list is
+waiting for a signal (field value, external system, or other) produced by a
+component responsible for a finalizer later in the list, resulting in a deadlock.
+Without enforced ordering finalizers are free to order amongst themselves and
+are not vulnerable to ordering changes in the list.
++optional
++patchStrategy=merge |  |
+| GenerateName | string| `string` |  | | GenerateName is an optional prefix, used by the server, to generate a unique
+name ONLY IF the Name field has not been provided.
+If this field is used, the name returned to the client will be different
+than the name passed. This value will also be combined with a unique suffix.
+The provided value has the same validation rules as the Name field,
+and may be truncated by the length of the suffix required to make the value
+unique on the server.
+
+If this field is specified and the generated name exists, the server will
+NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
+ServerTimeout indicating a unique name could not be found in the time allotted, and the client
+should retry (optionally after the time indicated in the Retry-After header).
+
+Applied only if Name is not specified.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
++optional |  |
+| Generation | int64 (formatted integer)| `int64` |  | | A sequence number representing a specific generation of the desired state.
+Populated by the system. Read-only.
++optional |  |
 | Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
 Servers may infer this from the endpoint the client submits requests to.
 Cannot be updated.
 In CamelCase.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 +optional |  |
-| Status | map of any | `map[string]interface{}` |  | |  |  |
-| metadata | [ObjectMeta](#object-meta)| `ObjectMeta` |  | |  |  |
-| spec | [Spec](#spec)| `Spec` |  | |  |  |
+| Labels | map of string| `map[string]string` |  | | Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: http://kubernetes.io/docs/user-guide/labels
++optional |  |
+| ManagedFields | [][ManagedFieldsEntry](#managed-fields-entry)| `[]*ManagedFieldsEntry` |  | | ManagedFields maps workflow-id and version to the set of fields
+that are managed by that workflow. This is mostly for internal
+housekeeping, and users typically shouldn't need to set or
+understand this field. A workflow can be the user's name, a
+controller's name, or the name of a specific apply path like
+"ci-cd". The set of fields is always in the version that the
+workflow used when modifying the object.
+
++optional |  |
+| Name | string| `string` |  | | Name must be unique within a namespace. Is required when creating resources, although
+some resources may allow a client to request the generation of an appropriate name
+automatically. Name is primarily intended for creation idempotence and configuration
+definition.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/identifiers#names
++optional |  |
+| Namespace | string| `string` |  | | Namespace defines the space within which each name must be unique. An empty namespace is
+equivalent to the "default" namespace, but "default" is the canonical representation.
+Not all objects are required to be scoped to a namespace - the value of this field for
+those objects will be empty.
+
+Must be a DNS_LABEL.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/namespaces
++optional |  |
+| OwnerReferences | [][OwnerReference](#owner-reference)| `[]*OwnerReference` |  | | List of objects depended by this object. If ALL objects in the list have
+been deleted, this object will be garbage collected. If this object is managed by a controller,
+then an entry in this list will point to this controller, with the controller field set to true.
+There cannot be more than one managing controller.
++optional
++patchMergeKey=uid
++patchStrategy=merge |  |
+| ResourceVersion | string| `string` |  | | An opaque value that represents the internal version of this object that can
+be used by clients to determine when objects have changed. May be used for optimistic
+concurrency, change detection, and the watch operation on a resource or set of resources.
+Clients must treat these values as opaque and passed unmodified back to the server.
+They may only be valid for a particular resource or set of resources.
+
+Populated by the system.
+Read-only.
+Value must be treated as opaque by clients and .
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
++optional |  |
+| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
+Populated by the system.
+Read-only.
+
+DEPRECATED
+Kubernetes will stop propagating this field in 1.20 release and the field is planned
+to be removed in 1.21 release.
++optional |  |
+| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
+| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| spec | [RequestAuthentication](#request-authentication)| `RequestAuthentication` |  | |  |  |
+| status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
+| uid | [UID](#uid)| `UID` |  | |  |  |
 
 
-
-#### Inlined models
-
-**<span id="spec"></span> Spec**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| JwtRules | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Selector | [interface{}](#interface)| `interface{}` |  | |  |  |
-
-
-
-### <span id="request-authentications"></span> RequestAuthentications
-
-
-> This is used for returning an array of RequestAuthentication
-  
-
-
-
-[][RequestAuthentication](#request-authentication)
 
 ### <span id="request-health"></span> RequestHealth
 
@@ -8795,29 +9699,55 @@ True means allowed.
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | AdditionalDetails | [][AdditionalItem](#additional-item)| `[]*AdditionalItem` |  | |  |  |
+| DestinationRules | [][DestinationRule](#destination-rule)| `[]*DestinationRule` |  | |  |  |
 | IstioSidecar | boolean| `bool` |  | |  |  |
-| destinationRules | [DestinationRules](#destination-rules)| `DestinationRules` |  | |  |  |
+| VirtualServices | [][VirtualService](#virtual-service)| `[]*VirtualService` |  | |  |  |
 | endpoints | [Endpoints](#endpoints)| `Endpoints` |  | |  |  |
 | health | [ServiceHealth](#service-health)| `ServiceHealth` |  | |  |  |
+| istioPermissions | [ResourcePermissions](#resource-permissions)| `ResourcePermissions` |  | |  |  |
 | namespaceMTLS | [MTLSStatus](#m-tls-status)| `MTLSStatus` |  | |  |  |
 | service | [Service](#service)| `Service` |  | |  |  |
 | validations | [IstioValidations](#istio-validations)| `IstioValidations` |  | |  |  |
-| virtualServices | [VirtualServices](#virtual-services)| `VirtualServices` |  | |  |  |
 | workloads | [WorkloadOverviews](#workload-overviews)| `WorkloadOverviews` |  | |  |  |
 
 
 
-### <span id="service-entries"></span> ServiceEntries
-
-
-  
-
-[][ServiceEntry](#service-entry)
-
 ### <span id="service-entry"></span> ServiceEntry
 
 
+> <!-- crd generation tags
++cue-gen:ServiceEntry:groupName:networking.istio.io
++cue-gen:ServiceEntry:version:v1alpha3
++cue-gen:ServiceEntry:storageVersion
++cue-gen:ServiceEntry:annotations:helm.sh/resource-policy=keep
++cue-gen:ServiceEntry:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
++cue-gen:ServiceEntry:subresource:status
++cue-gen:ServiceEntry:scope:Namespaced
++cue-gen:ServiceEntry:resource:categories=istio-io,networking-istio-io,shortNames=se,plural=serviceentries
++cue-gen:ServiceEntry:printerColumn:name=Hosts,type=string,JSONPath=.spec.hosts,description="The hosts associated with the ServiceEntry"
++cue-gen:ServiceEntry:printerColumn:name=Location,type=string,JSONPath=.spec.location,description="Whether the service is external to the
+mesh or part of the mesh (MESH_EXTERNAL or MESH_INTERNAL)"
++cue-gen:ServiceEntry:printerColumn:name=Resolution,type=string,JSONPath=.spec.resolution,description="Service discovery mode for the hosts
+(NONE, STATIC, or DNS)"
++cue-gen:ServiceEntry:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description="CreationTimestamp is a timestamp
+representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+Populated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata"
++cue-gen:ServiceEntry:preserveUnknownFields:false
+>
+
+<!-- go code generation tags
++kubetype-gen
++kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++genclient
++k8s:deepcopy-gen=true
+>
+<!-- istio code generation tags
++istio.io/sync-start
+>
   
+
+
 
 
 
@@ -8830,40 +9760,121 @@ Servers should convert recognized schemas to the latest internal value, and
 may reject unrecognized values.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 +optional |  |
+| Annotations | map of string| `map[string]string` |  | | Annotations is an unstructured key value map stored with a resource that may be
+set by external tools to store and retrieve arbitrary metadata. They are not
+queryable and should be preserved when modifying objects.
+More info: http://kubernetes.io/docs/user-guide/annotations
++optional |  |
+| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
+This is used to distinguish resources with same name and namespace in different clusters.
+This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
++optional |  |
+| DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
+it will be removed from the system. Only set when deletionTimestamp is also set.
+May only be shortened.
+Read-only.
++optional |  |
+| Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
+is an identifier for the responsible component that will remove the entry
+from the list. If the deletionTimestamp of the object is non-nil, entries
+in this list can only be removed.
+Finalizers may be processed and removed in any order.  Order is NOT enforced
+because it introduces significant risk of stuck finalizers.
+finalizers is a shared field, any actor with permission can reorder it.
+If the finalizer list is processed in order, then this can lead to a situation
+in which the component responsible for the first finalizer in the list is
+waiting for a signal (field value, external system, or other) produced by a
+component responsible for a finalizer later in the list, resulting in a deadlock.
+Without enforced ordering finalizers are free to order amongst themselves and
+are not vulnerable to ordering changes in the list.
++optional
++patchStrategy=merge |  |
+| GenerateName | string| `string` |  | | GenerateName is an optional prefix, used by the server, to generate a unique
+name ONLY IF the Name field has not been provided.
+If this field is used, the name returned to the client will be different
+than the name passed. This value will also be combined with a unique suffix.
+The provided value has the same validation rules as the Name field,
+and may be truncated by the length of the suffix required to make the value
+unique on the server.
+
+If this field is specified and the generated name exists, the server will
+NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
+ServerTimeout indicating a unique name could not be found in the time allotted, and the client
+should retry (optionally after the time indicated in the Retry-After header).
+
+Applied only if Name is not specified.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
++optional |  |
+| Generation | int64 (formatted integer)| `int64` |  | | A sequence number representing a specific generation of the desired state.
+Populated by the system. Read-only.
++optional |  |
 | Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
 Servers may infer this from the endpoint the client submits requests to.
 Cannot be updated.
 In CamelCase.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 +optional |  |
-| Status | map of any | `map[string]interface{}` |  | |  |  |
-| metadata | [ObjectMeta](#object-meta)| `ObjectMeta` |  | |  |  |
-| spec | [Spec](#spec)| `Spec` |  | |  |  |
+| Labels | map of string| `map[string]string` |  | | Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: http://kubernetes.io/docs/user-guide/labels
++optional |  |
+| ManagedFields | [][ManagedFieldsEntry](#managed-fields-entry)| `[]*ManagedFieldsEntry` |  | | ManagedFields maps workflow-id and version to the set of fields
+that are managed by that workflow. This is mostly for internal
+housekeeping, and users typically shouldn't need to set or
+understand this field. A workflow can be the user's name, a
+controller's name, or the name of a specific apply path like
+"ci-cd". The set of fields is always in the version that the
+workflow used when modifying the object.
 
++optional |  |
+| Name | string| `string` |  | | Name must be unique within a namespace. Is required when creating resources, although
+some resources may allow a client to request the generation of an appropriate name
+automatically. Name is primarily intended for creation idempotence and configuration
+definition.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/identifiers#names
++optional |  |
+| Namespace | string| `string` |  | | Namespace defines the space within which each name must be unique. An empty namespace is
+equivalent to the "default" namespace, but "default" is the canonical representation.
+Not all objects are required to be scoped to a namespace - the value of this field for
+those objects will be empty.
 
+Must be a DNS_LABEL.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/namespaces
++optional |  |
+| OwnerReferences | [][OwnerReference](#owner-reference)| `[]*OwnerReference` |  | | List of objects depended by this object. If ALL objects in the list have
+been deleted, this object will be garbage collected. If this object is managed by a controller,
+then an entry in this list will point to this controller, with the controller field set to true.
+There cannot be more than one managing controller.
++optional
++patchMergeKey=uid
++patchStrategy=merge |  |
+| ResourceVersion | string| `string` |  | | An opaque value that represents the internal version of this object that can
+be used by clients to determine when objects have changed. May be used for optimistic
+concurrency, change detection, and the watch operation on a resource or set of resources.
+Clients must treat these values as opaque and passed unmodified back to the server.
+They may only be valid for a particular resource or set of resources.
 
-#### Inlined models
+Populated by the system.
+Read-only.
+Value must be treated as opaque by clients and .
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
++optional |  |
+| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
+Populated by the system.
+Read-only.
 
-**<span id="spec"></span> Spec**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Addresses | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Endpoints | [interface{}](#interface)| `interface{}` |  | |  |  |
-| ExportTo | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Hosts | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Location | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Ports | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Resolution | [interface{}](#interface)| `interface{}` |  | |  |  |
-| SubjectAltNames | [interface{}](#interface)| `interface{}` |  | |  |  |
-| WorkloadSelector | [interface{}](#interface)| `interface{}` |  | |  |  |
+DEPRECATED
+Kubernetes will stop propagating this field in 1.20 release and the field is planned
+to be removed in 1.21 release.
++optional |  |
+| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
+| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| spec | [ServiceEntry](#service-entry)| `ServiceEntry` |  | |  |  |
+| status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
+| uid | [UID](#uid)| `UID` |  | |  |  |
 
 
 
@@ -8962,7 +9973,30 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 ### <span id="sidecar"></span> Sidecar
 
 
+> <!-- crd generation tags
++cue-gen:Sidecar:groupName:networking.istio.io
++cue-gen:Sidecar:version:v1alpha3
++cue-gen:Sidecar:storageVersion
++cue-gen:Sidecar:annotations:helm.sh/resource-policy=keep
++cue-gen:Sidecar:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
++cue-gen:Sidecar:subresource:status
++cue-gen:Sidecar:scope:Namespaced
++cue-gen:Sidecar:resource:categories=istio-io,networking-istio-io
++cue-gen:Sidecar:preserveUnknownFields:false
+>
+
+<!-- go code generation tags
++kubetype-gen
++kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++genclient
++k8s:deepcopy-gen=true
+>
+<!-- istio code generation tags
++istio.io/sync-start
+>
   
+
+
 
 
 
@@ -8975,45 +10009,123 @@ Servers should convert recognized schemas to the latest internal value, and
 may reject unrecognized values.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 +optional |  |
+| Annotations | map of string| `map[string]string` |  | | Annotations is an unstructured key value map stored with a resource that may be
+set by external tools to store and retrieve arbitrary metadata. They are not
+queryable and should be preserved when modifying objects.
+More info: http://kubernetes.io/docs/user-guide/annotations
++optional |  |
+| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
+This is used to distinguish resources with same name and namespace in different clusters.
+This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
++optional |  |
+| DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
+it will be removed from the system. Only set when deletionTimestamp is also set.
+May only be shortened.
+Read-only.
++optional |  |
+| Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
+is an identifier for the responsible component that will remove the entry
+from the list. If the deletionTimestamp of the object is non-nil, entries
+in this list can only be removed.
+Finalizers may be processed and removed in any order.  Order is NOT enforced
+because it introduces significant risk of stuck finalizers.
+finalizers is a shared field, any actor with permission can reorder it.
+If the finalizer list is processed in order, then this can lead to a situation
+in which the component responsible for the first finalizer in the list is
+waiting for a signal (field value, external system, or other) produced by a
+component responsible for a finalizer later in the list, resulting in a deadlock.
+Without enforced ordering finalizers are free to order amongst themselves and
+are not vulnerable to ordering changes in the list.
++optional
++patchStrategy=merge |  |
+| GenerateName | string| `string` |  | | GenerateName is an optional prefix, used by the server, to generate a unique
+name ONLY IF the Name field has not been provided.
+If this field is used, the name returned to the client will be different
+than the name passed. This value will also be combined with a unique suffix.
+The provided value has the same validation rules as the Name field,
+and may be truncated by the length of the suffix required to make the value
+unique on the server.
+
+If this field is specified and the generated name exists, the server will
+NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
+ServerTimeout indicating a unique name could not be found in the time allotted, and the client
+should retry (optionally after the time indicated in the Retry-After header).
+
+Applied only if Name is not specified.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
++optional |  |
+| Generation | int64 (formatted integer)| `int64` |  | | A sequence number representing a specific generation of the desired state.
+Populated by the system. Read-only.
++optional |  |
 | Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
 Servers may infer this from the endpoint the client submits requests to.
 Cannot be updated.
 In CamelCase.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 +optional |  |
-| Status | map of any | `map[string]interface{}` |  | |  |  |
-| metadata | [ObjectMeta](#object-meta)| `ObjectMeta` |  | |  |  |
-| spec | [Spec](#spec)| `Spec` |  | |  |  |
+| Labels | map of string| `map[string]string` |  | | Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: http://kubernetes.io/docs/user-guide/labels
++optional |  |
+| ManagedFields | [][ManagedFieldsEntry](#managed-fields-entry)| `[]*ManagedFieldsEntry` |  | | ManagedFields maps workflow-id and version to the set of fields
+that are managed by that workflow. This is mostly for internal
+housekeeping, and users typically shouldn't need to set or
+understand this field. A workflow can be the user's name, a
+controller's name, or the name of a specific apply path like
+"ci-cd". The set of fields is always in the version that the
+workflow used when modifying the object.
+
++optional |  |
+| Name | string| `string` |  | | Name must be unique within a namespace. Is required when creating resources, although
+some resources may allow a client to request the generation of an appropriate name
+automatically. Name is primarily intended for creation idempotence and configuration
+definition.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/identifiers#names
++optional |  |
+| Namespace | string| `string` |  | | Namespace defines the space within which each name must be unique. An empty namespace is
+equivalent to the "default" namespace, but "default" is the canonical representation.
+Not all objects are required to be scoped to a namespace - the value of this field for
+those objects will be empty.
+
+Must be a DNS_LABEL.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/namespaces
++optional |  |
+| OwnerReferences | [][OwnerReference](#owner-reference)| `[]*OwnerReference` |  | | List of objects depended by this object. If ALL objects in the list have
+been deleted, this object will be garbage collected. If this object is managed by a controller,
+then an entry in this list will point to this controller, with the controller field set to true.
+There cannot be more than one managing controller.
++optional
++patchMergeKey=uid
++patchStrategy=merge |  |
+| ResourceVersion | string| `string` |  | | An opaque value that represents the internal version of this object that can
+be used by clients to determine when objects have changed. May be used for optimistic
+concurrency, change detection, and the watch operation on a resource or set of resources.
+Clients must treat these values as opaque and passed unmodified back to the server.
+They may only be valid for a particular resource or set of resources.
+
+Populated by the system.
+Read-only.
+Value must be treated as opaque by clients and .
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
++optional |  |
+| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
+Populated by the system.
+Read-only.
+
+DEPRECATED
+Kubernetes will stop propagating this field in 1.20 release and the field is planned
+to be removed in 1.21 release.
++optional |  |
+| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
+| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| spec | [Sidecar](#sidecar)| `Sidecar` |  | |  |  |
+| status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
+| uid | [UID](#uid)| `UID` |  | |  |  |
 
 
-
-#### Inlined models
-
-**<span id="spec"></span> Spec**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Egress | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Ingress | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Localhost | [interface{}](#interface)| `interface{}` |  | |  |  |
-| OutboundTrafficPolicy | [interface{}](#interface)| `interface{}` |  | |  |  |
-| WorkloadSelector | [interface{}](#interface)| `interface{}` |  | |  |  |
-
-
-
-### <span id="sidecars"></span> Sidecars
-
-
-  
-
-[][Sidecar](#sidecar)
 
 ### <span id="span"></span> Span
 
@@ -9133,6 +10245,105 @@ A hash of key,values with versions of Kiali and state |  |
 
 [interface{}](#interface)
 
+### <span id="timestamp"></span> Timestamp
+
+
+> All minutes are 60 seconds long. Leap seconds are "smeared" so that no leap
+second table is needed for interpretation, using a [24-hour linear
+smear](https://developers.google.com/time/smear).
+
+The range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By
+restricting to that range, we ensure that we can convert to and from [RFC
+3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
+
+# Examples
+
+Example 1: Compute Timestamp from POSIX `time()`.
+
+Timestamp timestamp;
+timestamp.set_seconds(time(NULL));
+timestamp.set_nanos(0);
+
+Example 2: Compute Timestamp from POSIX `gettimeofday()`.
+
+struct timeval tv;
+gettimeofday(&tv, NULL);
+
+Timestamp timestamp;
+timestamp.set_seconds(tv.tv_sec);
+timestamp.set_nanos(tv.tv_usec * 1000);
+
+Example 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.
+
+FILETIME ft;
+GetSystemTimeAsFileTime(&ft);
+UINT64 ticks = (((UINT64)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+
+A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z
+is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z.
+Timestamp timestamp;
+timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));
+timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));
+
+Example 4: Compute Timestamp from Java `System.currentTimeMillis()`.
+
+long millis = System.currentTimeMillis();
+
+Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
+.setNanos((int) ((millis % 1000) * 1000000)).build();
+
+
+Example 5: Compute Timestamp from current time in Python.
+
+timestamp = Timestamp()
+timestamp.GetCurrentTime()
+
+# JSON Mapping
+
+In JSON format, the Timestamp type is encoded as a string in the
+[RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
+format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z"
+where {year} is always expressed using four digits while {month}, {day},
+{hour}, {min}, and {sec} are zero-padded to two digits each. The fractional
+seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution),
+are optional. The "Z" suffix indicates the timezone ("UTC"); the timezone
+is required. A proto3 JSON serializer should always use UTC (as indicated by
+"Z") when printing the Timestamp type and a proto3 JSON parser should be
+able to accept both UTC and other timezones (as indicated by an offset).
+
+For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
+01:30 UTC on January 15, 2017.
+
+In JavaScript, one can convert a Date object to this format using the
+standard
+[toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
+method. In Python, a standard `datetime.datetime` object can be converted
+to this format using
+[`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
+the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
+the Joda Time's [`ISODateTimeFormat.dateTime()`](
+http://www.joda.org/joda-time/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime%2D%2D
+) to obtain a formatter capable of generating timestamps in this format.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Nanos | int32 (formatted integer)| `int32` |  | | Non-negative fractions of a second at nanosecond resolution. Negative
+second values with fractions must still have non-negative nanos values
+that count forward in time. Must be from 0 to 999,999,999
+inclusive. |  |
+| Seconds | int64 (formatted integer)| `int64` |  | | Represents seconds of UTC time since Unix epoch
+1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
+9999-12-31T23:59:59Z inclusive. |  |
+
+
+
 ### <span id="token-response"></span> TokenResponse
 
 
@@ -9235,7 +10446,34 @@ intent and helps make sure that UIDs and names do not get conflated. |  |
 ### <span id="virtual-service"></span> VirtualService
 
 
-> This type is used for returning a VirtualService
+> <!-- crd generation tags
++cue-gen:VirtualService:groupName:networking.istio.io
++cue-gen:VirtualService:version:v1alpha3
++cue-gen:VirtualService:storageVersion
++cue-gen:VirtualService:annotations:helm.sh/resource-policy=keep
++cue-gen:VirtualService:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
++cue-gen:VirtualService:subresource:status
++cue-gen:VirtualService:scope:Namespaced
++cue-gen:VirtualService:resource:categories=istio-io,networking-istio-io,shortNames=vs
++cue-gen:VirtualService:printerColumn:name=Gateways,type=string,JSONPath=.spec.gateways,description="The names of gateways and sidecars
+that should apply these routes"
++cue-gen:VirtualService:printerColumn:name=Hosts,type=string,JSONPath=.spec.hosts,description="The destination hosts to which traffic is being sent"
++cue-gen:VirtualService:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description="CreationTimestamp is a timestamp
+representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+Populated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata"
++cue-gen:VirtualService:preserveUnknownFields:false
+>
+
+<!-- go code generation tags
++kubetype-gen
++kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++genclient
++k8s:deepcopy-gen=true
+>
+<!-- istio code generation tags
++istio.io/sync-start
+>
   
 
 
@@ -9251,24 +10489,132 @@ Servers should convert recognized schemas to the latest internal value, and
 may reject unrecognized values.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 +optional |  |
+| Annotations | map of string| `map[string]string` |  | | Annotations is an unstructured key value map stored with a resource that may be
+set by external tools to store and retrieve arbitrary metadata. They are not
+queryable and should be preserved when modifying objects.
+More info: http://kubernetes.io/docs/user-guide/annotations
++optional |  |
+| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
+This is used to distinguish resources with same name and namespace in different clusters.
+This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
++optional |  |
+| DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
+it will be removed from the system. Only set when deletionTimestamp is also set.
+May only be shortened.
+Read-only.
++optional |  |
+| Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
+is an identifier for the responsible component that will remove the entry
+from the list. If the deletionTimestamp of the object is non-nil, entries
+in this list can only be removed.
+Finalizers may be processed and removed in any order.  Order is NOT enforced
+because it introduces significant risk of stuck finalizers.
+finalizers is a shared field, any actor with permission can reorder it.
+If the finalizer list is processed in order, then this can lead to a situation
+in which the component responsible for the first finalizer in the list is
+waiting for a signal (field value, external system, or other) produced by a
+component responsible for a finalizer later in the list, resulting in a deadlock.
+Without enforced ordering finalizers are free to order amongst themselves and
+are not vulnerable to ordering changes in the list.
++optional
++patchStrategy=merge |  |
+| GenerateName | string| `string` |  | | GenerateName is an optional prefix, used by the server, to generate a unique
+name ONLY IF the Name field has not been provided.
+If this field is used, the name returned to the client will be different
+than the name passed. This value will also be combined with a unique suffix.
+The provided value has the same validation rules as the Name field,
+and may be truncated by the length of the suffix required to make the value
+unique on the server.
+
+If this field is specified and the generated name exists, the server will
+NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
+ServerTimeout indicating a unique name could not be found in the time allotted, and the client
+should retry (optionally after the time indicated in the Retry-After header).
+
+Applied only if Name is not specified.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
++optional |  |
+| Generation | int64 (formatted integer)| `int64` |  | | A sequence number representing a specific generation of the desired state.
+Populated by the system. Read-only.
++optional |  |
 | Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
 Servers may infer this from the endpoint the client submits requests to.
 Cannot be updated.
 In CamelCase.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 +optional |  |
-| Status | map of any | `map[string]interface{}` |  | |  |  |
-| metadata | [ObjectMeta](#object-meta)| `ObjectMeta` |  | |  |  |
-| spec | [Spec](#spec)| `Spec` |  | |  |  |
+| Labels | map of string| `map[string]string` |  | | Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: http://kubernetes.io/docs/user-guide/labels
++optional |  |
+| ManagedFields | [][ManagedFieldsEntry](#managed-fields-entry)| `[]*ManagedFieldsEntry` |  | | ManagedFields maps workflow-id and version to the set of fields
+that are managed by that workflow. This is mostly for internal
+housekeeping, and users typically shouldn't need to set or
+understand this field. A workflow can be the user's name, a
+controller's name, or the name of a specific apply path like
+"ci-cd". The set of fields is always in the version that the
+workflow used when modifying the object.
+
++optional |  |
+| Name | string| `string` |  | | Name must be unique within a namespace. Is required when creating resources, although
+some resources may allow a client to request the generation of an appropriate name
+automatically. Name is primarily intended for creation idempotence and configuration
+definition.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/identifiers#names
++optional |  |
+| Namespace | string| `string` |  | | Namespace defines the space within which each name must be unique. An empty namespace is
+equivalent to the "default" namespace, but "default" is the canonical representation.
+Not all objects are required to be scoped to a namespace - the value of this field for
+those objects will be empty.
+
+Must be a DNS_LABEL.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/namespaces
++optional |  |
+| OwnerReferences | [][OwnerReference](#owner-reference)| `[]*OwnerReference` |  | | List of objects depended by this object. If ALL objects in the list have
+been deleted, this object will be garbage collected. If this object is managed by a controller,
+then an entry in this list will point to this controller, with the controller field set to true.
+There cannot be more than one managing controller.
++optional
++patchMergeKey=uid
++patchStrategy=merge |  |
+| ResourceVersion | string| `string` |  | | An opaque value that represents the internal version of this object that can
+be used by clients to determine when objects have changed. May be used for optimistic
+concurrency, change detection, and the watch operation on a resource or set of resources.
+Clients must treat these values as opaque and passed unmodified back to the server.
+They may only be valid for a particular resource or set of resources.
+
+Populated by the system.
+Read-only.
+Value must be treated as opaque by clients and .
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
++optional |  |
+| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
+Populated by the system.
+Read-only.
+
+DEPRECATED
+Kubernetes will stop propagating this field in 1.20 release and the field is planned
+to be removed in 1.21 release.
++optional |  |
+| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
+| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| spec | [VirtualService](#virtual-service)| `VirtualService` |  | |  |  |
+| status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
+| uid | [UID](#uid)| `UID` |  | |  |  |
 
 
 
-#### Inlined models
-
-**<span id="spec"></span> Spec**
+### <span id="w-e-info"></span> WEInfo
 
 
+> WEInfo provides static information about a workload entry
+associated with a workload node.
   
+
+
 
 
 
@@ -9276,31 +10622,7 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| ExportTo | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Gateways | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Hosts | []string| `[]string` |  | |  |  |
-| Http | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Tcp | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Tls | [interface{}](#interface)| `interface{}` |  | |  |  |
-
-
-
-### <span id="virtual-services"></span> VirtualServices
-
-
-> This type is used for returning an array of VirtualServices with some permission flags
-  
-
-
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Items | [][VirtualService](#virtual-service)| `[]*VirtualService` |  | |  |  |
-| permissions | [ResourcePermissions](#resource-permissions)| `ResourcePermissions` |  | |  |  |
+| Name | string| `string` | ✓ | | Name of the workload entry object |  |
 
 
 
@@ -9345,20 +10667,35 @@ It's mapped as a pointer to show three values nil, true, false |  |
 
 
 
-### <span id="workload-entries"></span> WorkloadEntries
-
-
-> This is used for returning an array of WorkloadEntry
-  
-
-
-
-[][WorkloadEntry](#workload-entry)
-
 ### <span id="workload-entry"></span> WorkloadEntry
 
 
-> This is used for returning an WorkloadEntry
+> <!-- crd generation tags
++cue-gen:WorkloadEntry:groupName:networking.istio.io
++cue-gen:WorkloadEntry:version:v1alpha3
++cue-gen:WorkloadEntry:storageVersion
++cue-gen:WorkloadEntry:annotations:helm.sh/resource-policy=keep
++cue-gen:WorkloadEntry:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
++cue-gen:WorkloadEntry:subresource:status
++cue-gen:WorkloadEntry:scope:Namespaced
++cue-gen:WorkloadEntry:resource:categories=istio-io,networking-istio-io,shortNames=we,plural=workloadentries
++cue-gen:WorkloadEntry:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description="CreationTimestamp is a timestamp
+representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+Populated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata"
++cue-gen:WorkloadEntry:printerColumn:name=Address,type=string,JSONPath=.spec.address,description="Address associated with the network endpoint."
++cue-gen:WorkloadEntry:preserveUnknownFields:false
+>
+
+<!-- go code generation tags
++kubetype-gen
++kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++genclient
++k8s:deepcopy-gen=true
+>
+<!-- istio code generation tags
++istio.io/sync-start
+>
   
 
 
@@ -9374,45 +10711,148 @@ Servers should convert recognized schemas to the latest internal value, and
 may reject unrecognized values.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 +optional |  |
+| Annotations | map of string| `map[string]string` |  | | Annotations is an unstructured key value map stored with a resource that may be
+set by external tools to store and retrieve arbitrary metadata. They are not
+queryable and should be preserved when modifying objects.
+More info: http://kubernetes.io/docs/user-guide/annotations
++optional |  |
+| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
+This is used to distinguish resources with same name and namespace in different clusters.
+This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
++optional |  |
+| DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
+it will be removed from the system. Only set when deletionTimestamp is also set.
+May only be shortened.
+Read-only.
++optional |  |
+| Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
+is an identifier for the responsible component that will remove the entry
+from the list. If the deletionTimestamp of the object is non-nil, entries
+in this list can only be removed.
+Finalizers may be processed and removed in any order.  Order is NOT enforced
+because it introduces significant risk of stuck finalizers.
+finalizers is a shared field, any actor with permission can reorder it.
+If the finalizer list is processed in order, then this can lead to a situation
+in which the component responsible for the first finalizer in the list is
+waiting for a signal (field value, external system, or other) produced by a
+component responsible for a finalizer later in the list, resulting in a deadlock.
+Without enforced ordering finalizers are free to order amongst themselves and
+are not vulnerable to ordering changes in the list.
++optional
++patchStrategy=merge |  |
+| GenerateName | string| `string` |  | | GenerateName is an optional prefix, used by the server, to generate a unique
+name ONLY IF the Name field has not been provided.
+If this field is used, the name returned to the client will be different
+than the name passed. This value will also be combined with a unique suffix.
+The provided value has the same validation rules as the Name field,
+and may be truncated by the length of the suffix required to make the value
+unique on the server.
+
+If this field is specified and the generated name exists, the server will
+NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
+ServerTimeout indicating a unique name could not be found in the time allotted, and the client
+should retry (optionally after the time indicated in the Retry-After header).
+
+Applied only if Name is not specified.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
++optional |  |
+| Generation | int64 (formatted integer)| `int64` |  | | A sequence number representing a specific generation of the desired state.
+Populated by the system. Read-only.
++optional |  |
 | Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
 Servers may infer this from the endpoint the client submits requests to.
 Cannot be updated.
 In CamelCase.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 +optional |  |
-| Status | map of any | `map[string]interface{}` |  | |  |  |
-| metadata | [ObjectMeta](#object-meta)| `ObjectMeta` |  | |  |  |
-| spec | [Spec](#spec)| `Spec` |  | |  |  |
+| Labels | map of string| `map[string]string` |  | | Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: http://kubernetes.io/docs/user-guide/labels
++optional |  |
+| ManagedFields | [][ManagedFieldsEntry](#managed-fields-entry)| `[]*ManagedFieldsEntry` |  | | ManagedFields maps workflow-id and version to the set of fields
+that are managed by that workflow. This is mostly for internal
+housekeeping, and users typically shouldn't need to set or
+understand this field. A workflow can be the user's name, a
+controller's name, or the name of a specific apply path like
+"ci-cd". The set of fields is always in the version that the
+workflow used when modifying the object.
 
++optional |  |
+| Name | string| `string` |  | | Name must be unique within a namespace. Is required when creating resources, although
+some resources may allow a client to request the generation of an appropriate name
+automatically. Name is primarily intended for creation idempotence and configuration
+definition.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/identifiers#names
++optional |  |
+| Namespace | string| `string` |  | | Namespace defines the space within which each name must be unique. An empty namespace is
+equivalent to the "default" namespace, but "default" is the canonical representation.
+Not all objects are required to be scoped to a namespace - the value of this field for
+those objects will be empty.
 
+Must be a DNS_LABEL.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/namespaces
++optional |  |
+| OwnerReferences | [][OwnerReference](#owner-reference)| `[]*OwnerReference` |  | | List of objects depended by this object. If ALL objects in the list have
+been deleted, this object will be garbage collected. If this object is managed by a controller,
+then an entry in this list will point to this controller, with the controller field set to true.
+There cannot be more than one managing controller.
++optional
++patchMergeKey=uid
++patchStrategy=merge |  |
+| ResourceVersion | string| `string` |  | | An opaque value that represents the internal version of this object that can
+be used by clients to determine when objects have changed. May be used for optimistic
+concurrency, change detection, and the watch operation on a resource or set of resources.
+Clients must treat these values as opaque and passed unmodified back to the server.
+They may only be valid for a particular resource or set of resources.
 
-#### Inlined models
+Populated by the system.
+Read-only.
+Value must be treated as opaque by clients and .
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
++optional |  |
+| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
+Populated by the system.
+Read-only.
 
-**<span id="spec"></span> Spec**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Address | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Labels | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Locality | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Network | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Ports | [interface{}](#interface)| `interface{}` |  | |  |  |
-| ServiceAccount | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Weight | [interface{}](#interface)| `interface{}` |  | |  |  |
+DEPRECATED
+Kubernetes will stop propagating this field in 1.20 release and the field is planned
+to be removed in 1.21 release.
++optional |  |
+| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
+| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| spec | [WorkloadEntry](#workload-entry)| `WorkloadEntry` |  | |  |  |
+| status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
+| uid | [UID](#uid)| `UID` |  | |  |  |
 
 
 
 ### <span id="workload-group"></span> WorkloadGroup
 
 
-> This is used for returning a WorkloadGroup
+> <!-- crd generation tags
++cue-gen:WorkloadGroup:groupName:networking.istio.io
++cue-gen:WorkloadGroup:version:v1alpha3
++cue-gen:WorkloadGroup:storageVersion
++cue-gen:WorkloadGroup:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
++cue-gen:WorkloadGroup:subresource:status
++cue-gen:WorkloadGroup:scope:Namespaced
++cue-gen:WorkloadGroup:resource:categories=istio-io,networking-istio-io,shortNames=wg,plural=workloadgroups
++cue-gen:WorkloadGroup:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description="CreationTimestamp is a timestamp
+representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+Populated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata"
++cue-gen:WorkloadGroup:preserveUnknownFields:false
+>
+
+<!-- go code generation tags
++kubetype-gen
++kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++genclient
++k8s:deepcopy-gen=true
+>
   
 
 
@@ -9428,47 +10868,123 @@ Servers should convert recognized schemas to the latest internal value, and
 may reject unrecognized values.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 +optional |  |
+| Annotations | map of string| `map[string]string` |  | | Annotations is an unstructured key value map stored with a resource that may be
+set by external tools to store and retrieve arbitrary metadata. They are not
+queryable and should be preserved when modifying objects.
+More info: http://kubernetes.io/docs/user-guide/annotations
++optional |  |
+| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
+This is used to distinguish resources with same name and namespace in different clusters.
+This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
++optional |  |
+| DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
+it will be removed from the system. Only set when deletionTimestamp is also set.
+May only be shortened.
+Read-only.
++optional |  |
+| Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
+is an identifier for the responsible component that will remove the entry
+from the list. If the deletionTimestamp of the object is non-nil, entries
+in this list can only be removed.
+Finalizers may be processed and removed in any order.  Order is NOT enforced
+because it introduces significant risk of stuck finalizers.
+finalizers is a shared field, any actor with permission can reorder it.
+If the finalizer list is processed in order, then this can lead to a situation
+in which the component responsible for the first finalizer in the list is
+waiting for a signal (field value, external system, or other) produced by a
+component responsible for a finalizer later in the list, resulting in a deadlock.
+Without enforced ordering finalizers are free to order amongst themselves and
+are not vulnerable to ordering changes in the list.
++optional
++patchStrategy=merge |  |
+| GenerateName | string| `string` |  | | GenerateName is an optional prefix, used by the server, to generate a unique
+name ONLY IF the Name field has not been provided.
+If this field is used, the name returned to the client will be different
+than the name passed. This value will also be combined with a unique suffix.
+The provided value has the same validation rules as the Name field,
+and may be truncated by the length of the suffix required to make the value
+unique on the server.
+
+If this field is specified and the generated name exists, the server will
+NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
+ServerTimeout indicating a unique name could not be found in the time allotted, and the client
+should retry (optionally after the time indicated in the Retry-After header).
+
+Applied only if Name is not specified.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
++optional |  |
+| Generation | int64 (formatted integer)| `int64` |  | | A sequence number representing a specific generation of the desired state.
+Populated by the system. Read-only.
++optional |  |
 | Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
 Servers may infer this from the endpoint the client submits requests to.
 Cannot be updated.
 In CamelCase.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 +optional |  |
-| Status | map of any | `map[string]interface{}` |  | |  |  |
-| metadata | [ObjectMeta](#object-meta)| `ObjectMeta` |  | |  |  |
-| spec | [Spec](#spec)| `Spec` |  | |  |  |
+| Labels | map of string| `map[string]string` |  | | Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: http://kubernetes.io/docs/user-guide/labels
++optional |  |
+| ManagedFields | [][ManagedFieldsEntry](#managed-fields-entry)| `[]*ManagedFieldsEntry` |  | | ManagedFields maps workflow-id and version to the set of fields
+that are managed by that workflow. This is mostly for internal
+housekeeping, and users typically shouldn't need to set or
+understand this field. A workflow can be the user's name, a
+controller's name, or the name of a specific apply path like
+"ci-cd". The set of fields is always in the version that the
+workflow used when modifying the object.
+
++optional |  |
+| Name | string| `string` |  | | Name must be unique within a namespace. Is required when creating resources, although
+some resources may allow a client to request the generation of an appropriate name
+automatically. Name is primarily intended for creation idempotence and configuration
+definition.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/identifiers#names
++optional |  |
+| Namespace | string| `string` |  | | Namespace defines the space within which each name must be unique. An empty namespace is
+equivalent to the "default" namespace, but "default" is the canonical representation.
+Not all objects are required to be scoped to a namespace - the value of this field for
+those objects will be empty.
+
+Must be a DNS_LABEL.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/namespaces
++optional |  |
+| OwnerReferences | [][OwnerReference](#owner-reference)| `[]*OwnerReference` |  | | List of objects depended by this object. If ALL objects in the list have
+been deleted, this object will be garbage collected. If this object is managed by a controller,
+then an entry in this list will point to this controller, with the controller field set to true.
+There cannot be more than one managing controller.
++optional
++patchMergeKey=uid
++patchStrategy=merge |  |
+| ResourceVersion | string| `string` |  | | An opaque value that represents the internal version of this object that can
+be used by clients to determine when objects have changed. May be used for optimistic
+concurrency, change detection, and the watch operation on a resource or set of resources.
+Clients must treat these values as opaque and passed unmodified back to the server.
+They may only be valid for a particular resource or set of resources.
+
+Populated by the system.
+Read-only.
+Value must be treated as opaque by clients and .
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
++optional |  |
+| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
+Populated by the system.
+Read-only.
+
+DEPRECATED
+Kubernetes will stop propagating this field in 1.20 release and the field is planned
+to be removed in 1.21 release.
++optional |  |
+| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
+| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| spec | [WorkloadGroup](#workload-group)| `WorkloadGroup` |  | |  |  |
+| status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
+| uid | [UID](#uid)| `UID` |  | |  |  |
 
 
-
-#### Inlined models
-
-**<span id="spec"></span> Spec**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Metadata | [interface{}](#interface)| `interface{}` |  | | This is not an error, the WorkloadGroup has a Metadata inside the Spec
-https://istio.io/latest/docs/reference/config/networking/workload-group/#WorkloadGroup |  |
-| Probe | [interface{}](#interface)| `interface{}` |  | |  |  |
-| Template | [interface{}](#interface)| `interface{}` |  | |  |  |
-
-
-
-### <span id="workload-groups"></span> WorkloadGroups
-
-
-> This is used for returning an array of WorkloadGroup
-  
-
-
-
-[][WorkloadGroup](#workload-group)
 
 ### <span id="workload-health"></span> WorkloadHealth
 

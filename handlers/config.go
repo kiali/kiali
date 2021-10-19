@@ -166,31 +166,42 @@ func getPrometheusConfig() PrometheusConfig {
 	promConfig := PrometheusConfig{
 		GlobalScrapeInterval: defaultPrometheusGlobalScrapeInterval,
 	}
-
-	client, err := prometheus.NewClient()
-	if !checkErr(err, "") {
-		log.Error(err)
-		return promConfig
-	}
-
-	configResult, err := client.GetConfiguration()
-	if checkErr(err, "Failed to fetch Prometheus configuration") {
-		var config PrometheusPartialConfig
-		if checkErr(yaml.Unmarshal([]byte(configResult.YAML), &config), "Failed to unmarshal Prometheus configuration") {
-			scrapeIntervalString := config.Global.Scrape_interval
-			scrapeInterval, err := model.ParseDuration(scrapeIntervalString)
-			if checkErr(err, fmt.Sprintf("Invalid global scrape interval [%s]", scrapeIntervalString)) {
-				promConfig.GlobalScrapeInterval = int64(time.Duration(scrapeInterval).Seconds())
+	// Check if thanosProxy
+	thanosConf := config.Get().ExternalServices.Prometheus.ThanosProxy
+	if thanosConf.Enabled {
+		scrapeInterval, err := model.ParseDuration(thanosConf.ScrapeInterval)
+		if checkErr(err, fmt.Sprintf("Invalid scrape interval in ThanosProxy configuration [%s]", scrapeInterval)) {
+			promConfig.GlobalScrapeInterval = int64(time.Duration(scrapeInterval).Seconds())
+		}
+		retention, err := model.ParseDuration(thanosConf.RetentionPeriod)
+		if checkErr(err, fmt.Sprintf("Invalid retention period in ThanosProxy configuration [%s]", retention)) {
+			promConfig.StorageTsdbRetention = int64(time.Duration(retention).Seconds())
+		}
+	} else {
+		client, err := prometheus.NewClient()
+		if !checkErr(err, "") {
+			log.Error(err)
+			return promConfig
+		}
+		configResult, err := client.GetConfiguration()
+		if checkErr(err, "Failed to fetch Prometheus configuration") {
+			var config PrometheusPartialConfig
+			if checkErr(yaml.Unmarshal([]byte(configResult.YAML), &config), "Failed to unmarshal Prometheus configuration") {
+				scrapeIntervalString := config.Global.Scrape_interval
+				scrapeInterval, err := model.ParseDuration(scrapeIntervalString)
+				if checkErr(err, fmt.Sprintf("Invalid global scrape interval [%s]", scrapeIntervalString)) {
+					promConfig.GlobalScrapeInterval = int64(time.Duration(scrapeInterval).Seconds())
+				}
 			}
 		}
-	}
 
-	flags, err := client.GetFlags()
-	if checkErr(err, "Failed to fetch Prometheus flags") {
-		if retentionString, ok := flags["storage.tsdb.retention"]; ok {
-			retention, err := model.ParseDuration(retentionString)
-			if checkErr(err, fmt.Sprintf("Invalid storage.tsdb.retention [%s]", retentionString)) {
-				promConfig.StorageTsdbRetention = int64(time.Duration(retention).Seconds())
+		flags, err := client.GetFlags()
+		if checkErr(err, "Failed to fetch Prometheus flags") {
+			if retentionString, ok := flags["storage.tsdb.retention"]; ok {
+				retention, err := model.ParseDuration(retentionString)
+				if checkErr(err, fmt.Sprintf("Invalid storage.tsdb.retention [%s]", retentionString)) {
+					promConfig.StorageTsdbRetention = int64(time.Duration(retention).Seconds())
+				}
 			}
 		}
 	}

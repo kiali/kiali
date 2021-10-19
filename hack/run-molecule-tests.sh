@@ -74,6 +74,10 @@ while [[ $# -gt 0 ]]; do
       MOLECULE_USE_DEV_IMAGES="$2"
       shift;shift
       ;;
+    -udsi|--use-default-server-image)
+      MOLECULE_USE_DEFAULT_SERVER_IMAGE="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 
@@ -107,6 +111,13 @@ $0 [option...] command
 -udi|--use-dev-images    If true, the tests will use locally built dev images of Kiali and the operator. When using dev
                          images, you must have already pushed locally built dev images into your cluster.
                          If false, the cluster will put the latest images found on quay.io.
+                         Default: false
+-udsi|--use-default-server-image
+                         If true (and --use-dev-images is 'false') no specific image name or version will be specified in
+                         the Kiali CRs that are created by the molecule tests. In other words, spec.deployment.image_name and
+                         spec.deployment.image_version will be empty strings. This means the Kial server image that will be deployed
+                         in the tests will be determined by the operator defaults. This is useful when testing with a specific
+                         spec.version (--spec-version) and you want the operator to install the default server image for that version.
                          Default: false
 HELPMSG
       exit 1
@@ -156,6 +167,10 @@ fi
 # If this is set to true, the current dev images that have been pushed to the cluster will be tested.
 export MOLECULE_USE_DEV_IMAGES="${MOLECULE_USE_DEV_IMAGES:-false}"
 
+# Use this if you want the operator to install the default server image rather than the test explicitly
+# indicate what server image to use in the Kiali CR.
+export MOLECULE_USE_DEFAULT_SERVER_IMAGE="${MOLECULE_USE_DEFAULT_SERVER_IMAGE:-false}"
+
 # Set this to true if you want molecule to output more noisy logs from Ansible.
 export MOLECULE_DEBUG="${MOLECULE_DEBUG:-true}"
 
@@ -178,12 +193,20 @@ TEST_LOGS_DIR="${TEST_LOGS_DIR:-/tmp/kiali-molecule-test-logs.$(date +'%Y-%m-%d_
 # If you want color in the output, set this to 'true'.
 COLOR=${COLOR:-true}
 
+if [ "${MOLECULE_USE_DEV_IMAGES}" == "true" -a "${MOLECULE_USE_DEFAULT_SERVER_IMAGE}" == "true" ]; then
+  echo "You set --use-dev-images to true, but you also set --use-default-server-image to true. These are mutually exclusive."
+  echo "If you want to test the default server image then you cannot tell the tests to use dev images at the same time."
+  echo "Set one or the other to false and try again."
+  exit 1
+fi
+
 echo "========== SETTINGS =========="
 echo DORP="$DORP"
 echo KIALI_SRC_HOME="$KIALI_SRC_HOME"
 echo ALL_TESTS="$ALL_TESTS"
 echo SKIP_TESTS="$SKIP_TESTS"
 echo CLUSTER_TYPE="$CLUSTER_TYPE"
+echo MOLECULE_USE_DEFAULT_SERVER_IMAGE="$MOLECULE_USE_DEFAULT_SERVER_IMAGE"
 echo MOLECULE_USE_DEV_IMAGES="$MOLECULE_USE_DEV_IMAGES"
 echo MOLECULE_DEBUG="$MOLECULE_DEBUG"
 echo MOLECULE_DESTROY_NEVER="$MOLECULE_DESTROY_NEVER"

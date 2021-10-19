@@ -85,7 +85,7 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 
 	nFetches := 1
 	if linkIstioResources {
-		nFetches = 7
+		nFetches = 2
 	}
 
 	wg := sync.WaitGroup{}
@@ -102,34 +102,27 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 		}
 	}()
 
-	resources := []string{
-		kubernetes.Gateways,
-		kubernetes.AuthorizationPolicies,
-		kubernetes.PeerAuthentications,
-		kubernetes.Sidecars,
-		kubernetes.RequestAuthentications,
-		kubernetes.EnvoyFilters,
+	criteria := IstioConfigCriteria{
+		Namespace:                     namespace,
+		IncludeAuthorizationPolicies:  true,
+		IncludeEnvoyFilters:           true,
+		IncludeGateways:               true,
+		IncludePeerAuthentications:    true,
+		IncludeRequestAuthentications: true,
+		IncludeSidecars:               true,
 	}
-	linkedResources := map[string]*[]kubernetes.IstioObject{}
+	var istioConfigList models.IstioConfigList
 
 	if linkIstioResources {
-		for _, resource := range resources {
-			var resourceObjects []kubernetes.IstioObject
-			linkedResources[resource] = &resourceObjects
-			go func(namespace, resourceType string, dest *[]kubernetes.IstioObject, errChan chan error) {
-				defer wg.Done()
-				var err2 error
-				if IsNamespaceCached(namespace) {
-					*dest, err2 = kialiCache.GetIstioObjects(namespace, resourceType, "")
-				} else {
-					*dest, err2 = in.k8s.GetIstioObjects(namespace, resourceType, "")
-				}
-				if err2 != nil {
-					log.Errorf("Error fetching Istio %s per namespace %s: %s", resourceType, namespace, err2)
-					errChan <- err2
-				}
-			}(namespace, resource, &resourceObjects, errChan)
-		}
+		go func() {
+			defer wg.Done()
+			var err2 error
+			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+			if err2 != nil {
+				log.Errorf("Error fetching Istio Config per namespace %s: %s", namespace, err2)
+				errChan <- err2
+			}
+		}()
 	}
 
 	wg.Wait()
@@ -138,33 +131,87 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 		return *workloadList, err
 	}
 
-	wkdResources := []string{
-		kubernetes.Gateways,
-		kubernetes.AuthorizationPolicies,
-		kubernetes.PeerAuthentications,
-		kubernetes.Sidecars,
-		kubernetes.RequestAuthentications,
-		kubernetes.EnvoyFilters,
-	}
 	for _, w := range ws {
-		wkdReferences := make([]*models.IstioValidationKey, 0)
 		wItem := &models.WorkloadListItem{}
 		wItem.ParseWorkload(w)
 		if linkIstioResources {
 			wSelector := labels.Set(wItem.Labels).AsSelector().String()
-			for _, wkdRsc := range wkdResources {
-				filtered := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, *linkedResources[wkdRsc])
-				for _, a := range filtered {
-					ref := models.BuildKey(a.GetTypeMeta().Kind, a.GetObjectMeta().Name, a.GetObjectMeta().Namespace)
-					wkdReferences = append(wkdReferences, &ref)
-				}
-			}
-			wItem.IstioReferences = wkdReferences
+			wItem.IstioReferences = FilterWorkloadReferences(wSelector, istioConfigList)
 		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
-
 	return *workloadList, nil
+}
+
+func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConfigList) []*models.IstioValidationKey {
+	wkdReferences := make([]*models.IstioValidationKey, 0)
+	gwFiltered := kubernetes.FilterGateways(wSelector, istioConfigList.Gateways)
+	for _, g := range gwFiltered {
+		ref := models.BuildKey(g.Kind, g.Name, g.Namespace)
+		exist := false
+		for _, r := range wkdReferences {
+			exist = exist || *r == ref
+		}
+		if !exist {
+			wkdReferences = append(wkdReferences, &ref)
+		}
+	}
+	apFiltered := kubernetes.FilterAuthorizationPolicies(wSelector, istioConfigList.AuthorizationPolicies)
+	for _, a := range apFiltered {
+		ref := models.BuildKey(a.Kind, a.Name, a.Namespace)
+		exist := false
+		for _, r := range wkdReferences {
+			exist = exist || *r == ref
+		}
+		if !exist {
+			wkdReferences = append(wkdReferences, &ref)
+		}
+	}
+	paFiltered := kubernetes.FilterPeerAuthentications(wSelector, istioConfigList.PeerAuthentications)
+	for _, p := range paFiltered {
+		ref := models.BuildKey(p.Kind, p.Name, p.Namespace)
+		exist := false
+		for _, r := range wkdReferences {
+			exist = exist || *r == ref
+		}
+		if !exist {
+			wkdReferences = append(wkdReferences, &ref)
+		}
+	}
+	scFiltered := kubernetes.FilterSidecars(wSelector, istioConfigList.Sidecars)
+	for _, s := range scFiltered {
+		ref := models.BuildKey(s.Kind, s.Name, s.Namespace)
+		exist := false
+		for _, r := range wkdReferences {
+			exist = exist || *r == ref
+		}
+		if !exist {
+			wkdReferences = append(wkdReferences, &ref)
+		}
+	}
+	raFiltered := kubernetes.FilterRequestAuthentications(wSelector, istioConfigList.RequestAuthentications)
+	for _, ra := range raFiltered {
+		ref := models.BuildKey(ra.Kind, ra.Name, ra.Namespace)
+		exist := false
+		for _, r := range wkdReferences {
+			exist = exist || *r == ref
+		}
+		if !exist {
+			wkdReferences = append(wkdReferences, &ref)
+		}
+	}
+	efFiltered := kubernetes.FilterEnvoyFilters(wSelector, istioConfigList.EnvoyFilters)
+	for _, ef := range efFiltered {
+		ref := models.BuildKey(ef.Kind, ef.Name, ef.Namespace)
+		exist := false
+		for _, r := range wkdReferences {
+			exist = exist || *r == ref
+		}
+		if !exist {
+			wkdReferences = append(wkdReferences, &ref)
+		}
+	}
+	return wkdReferences
 }
 
 // GetWorkload is the API handler to fetch details of a specific workload.
@@ -958,12 +1005,14 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 			}
 		default:
 			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
-			childType := ctype
-			if _, unknownType := controllerOrder[ctype]; !unknownType {
-				childType = kubernetes.ReplicaSetType
+			cPods := kubernetes.FilterPodsForController(cname, kubernetes.ReplicaSetType, pods)
+			if len(cPods) == 0 {
+				// If no pods we're found for a ReplicaSet type, it's possible the controller
+				// is managing the pods itself i.e. the pod's have an owner ref directly to the controller type.
+				cPods = kubernetes.FilterPodsForController(cname, ctype, pods)
 			}
-			cPods := kubernetes.FilterPodsForController(cname, childType, pods)
 			w.SetPods(cPods)
+
 			rsParsed := false
 			for _, rs := range repset {
 				if strings.HasPrefix(rs.Name, cname) {
@@ -973,7 +1022,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 				}
 			}
 			if !rsParsed {
-				log.Warningf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", cname, ctype)
+				log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", cname, ctype)
 				w.ParsePods(cname, ctype, cPods)
 			}
 		}
@@ -1494,12 +1543,14 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
 			// Note, we will use the controller found in the Pod resolution, instead that the passed by parameter
 			// This will cover cornercase for https://github.com/kiali/kiali/issues/3830
-			childType := ctype
-			if _, unknownType := controllerOrder[ctype]; !unknownType {
-				childType = kubernetes.ReplicaSetType
+			cPods := kubernetes.FilterPodsForController(workloadName, kubernetes.ReplicaSetType, pods)
+			if len(cPods) == 0 {
+				// If no pods we're found for a ReplicaSet type, it's possible the controller
+				// is managing the pods itself i.e. the pod's have an owner ref directly to the controller type.
+				cPods = kubernetes.FilterPodsForController(workloadName, ctype, pods)
 			}
-			cPods := kubernetes.FilterPodsForController(workloadName, childType, pods)
 			w.SetPods(cPods)
+
 			rsParsed := false
 			for _, rs := range repset {
 				if strings.HasPrefix(rs.Name, workloadName) {
@@ -1509,7 +1560,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				}
 			}
 			if !rsParsed {
-				log.Warningf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", workloadName, ctype)
+				log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", workloadName, ctype)
 				w.ParsePods(workloadName, ctype, cPods)
 			}
 		}

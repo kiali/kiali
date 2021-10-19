@@ -38,7 +38,7 @@ type ClientInterface interface {
 	GetNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
-	GetMetricsForLabels(labels []string) ([]string, error)
+	GetMetricsForLabels(metricNames []string, labels string) ([]string, error)
 }
 
 // Client for Prometheus API.
@@ -101,7 +101,7 @@ func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
-	transportConfig, err := httputil.CreateTransport(&auth, roundTripper, httputil.DefaultTimeout)
+	transportConfig, err := httputil.CreateTransport(&auth, roundTripper, httputil.DefaultTimeout, cfg.CustomHeaders)
 	if err != nil {
 		return nil, err
 	}
@@ -285,13 +285,17 @@ func (in *Client) GetFlags() (prom_v1.FlagsResult, error) {
 	return flags, nil
 }
 
-// GetMetricsForLabels returns a list of metrics existing for the provided labels set
-func (in *Client) GetMetricsForLabels(labels []string) ([]string, error) {
-	// Arbitrarily set time range. Meaning that discovery works with metrics produced within last hour
-	end := time.Now()
-	start := end.Add(-time.Hour)
-	log.Tracef("[Prom] GetMetricsForLabels: %v", labels)
-	results, warnings, err := in.api.Series(in.ctx, labels, start, end)
+// GetMetricsForLabels returns a list of metrics existing for the provided labels set. Only metrics that match a name in the given
+// list of metricNames will be returned - others will be ignored.
+func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString string) ([]string, error) {
+	if len(metricNames) == 0 {
+		return []string{}, nil
+	}
+
+	log.Tracef("[Prom] GetMetricsForLabels: labels=[%v] metricNames=[%v]", labelQueryString, metricNames)
+	startT := time.Now()
+	queryString := fmt.Sprintf("count(%v) by (__name__)", labelQueryString)
+	results, warnings, err := in.api.Query(in.ctx, queryString, time.Now())
 	if warnings != nil && len(warnings) > 0 {
 		log.Warningf("GetMetricsForLabels. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
@@ -299,13 +303,21 @@ func (in *Client) GetMetricsForLabels(labels []string) ([]string, error) {
 		return nil, errors.NewServiceUnavailable(err.Error())
 	}
 
-	var names []string
-	for _, labelSet := range results {
-		if name, ok := labelSet["__name__"]; ok {
-			names = append(names, string(name))
+	metricsWeAreLookingFor := make(map[string]bool, len(metricNames))
+	for i := 0; i < len(metricNames); i++ {
+		metricsWeAreLookingFor[metricNames[i]] = true
+	}
+
+	metricsWeFound := make([]string, 0, 5)
+	for _, item := range results.(model.Vector) {
+		n := string(item.Metric["__name__"])
+		if metricsWeAreLookingFor[n] {
+			metricsWeFound = append(metricsWeFound, n)
 		}
 	}
-	return names, nil
+
+	log.Tracef("[Prom] GetMetricsForLabels: exec time=[%v], results count=[%v], looking for count=[%v], found count=[%v]", time.Since(startT), len(results.(model.Vector)), len(metricsWeAreLookingFor), len(metricsWeFound))
+	return metricsWeFound, nil
 }
 
 // SanitizeLabelName replaces anything that doesn't match invalidLabelCharRE with an underscore.

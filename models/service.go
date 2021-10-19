@@ -3,7 +3,7 @@ package models
 import (
 	core_v1 "k8s.io/api/core/v1"
 
-	"github.com/kiali/kiali/kubernetes"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 )
 
 type ServiceOverview struct {
@@ -45,16 +45,17 @@ type ServiceDefinitionList struct {
 }
 
 type ServiceDetails struct {
-	Service           Service           `json:"service"`
-	IstioSidecar      bool              `json:"istioSidecar"`
-	Endpoints         Endpoints         `json:"endpoints"`
-	VirtualServices   VirtualServices   `json:"virtualServices"`
-	DestinationRules  DestinationRules  `json:"destinationRules"`
-	Workloads         WorkloadOverviews `json:"workloads"`
-	Health            ServiceHealth     `json:"health"`
-	Validations       IstioValidations  `json:"validations"`
-	NamespaceMTLS     MTLSStatus        `json:"namespaceMTLS"`
-	AdditionalDetails []AdditionalItem  `json:"additionalDetails"`
+	Service           Service                               `json:"service"`
+	IstioSidecar      bool                                  `json:"istioSidecar"`
+	Endpoints         Endpoints                             `json:"endpoints"`
+	VirtualServices   []networking_v1alpha3.VirtualService  `json:"virtualServices"`
+	DestinationRules  []networking_v1alpha3.DestinationRule `json:"destinationRules"`
+	IstioPermissions  ResourcePermissions                   `json:"istioPermissions"`
+	Workloads         WorkloadOverviews                     `json:"workloads"`
+	Health            ServiceHealth                         `json:"health"`
+	Validations       IstioValidations                      `json:"validations"`
+	NamespaceMTLS     MTLSStatus                            `json:"namespaceMTLS"`
+	AdditionalDetails []AdditionalItem                      `json:"additionalDetails"`
 }
 
 type Services []*Service
@@ -115,14 +116,4 @@ func (s *ServiceDetails) SetPods(pods []core_v1.Pod) {
 
 func (s *ServiceDetails) SetIstioSidecar(workloads WorkloadOverviews) {
 	s.IstioSidecar = workloads.HasIstioSidecar()
-}
-
-func (s *ServiceDetails) SetVirtualServices(vs []kubernetes.IstioObject, canCreate, canUpdate, canDelete bool) {
-	s.VirtualServices.Permissions = ResourcePermissions{Create: canCreate, Update: canUpdate, Delete: canDelete}
-	(&s.VirtualServices).Parse(vs)
-}
-
-func (s *ServiceDetails) SetDestinationRules(dr []kubernetes.IstioObject, canCreate, canUpdate, canDelete bool) {
-	s.DestinationRules.Permissions = ResourcePermissions{Create: canCreate, Update: canUpdate, Delete: canDelete}
-	(&s.DestinationRules).Parse(dr)
 }

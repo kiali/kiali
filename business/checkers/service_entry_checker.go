@@ -1,16 +1,18 @@
 package checkers
 
 import (
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
 	"github.com/kiali/kiali/business/checkers/common"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 const ServiceEntryCheckerType = "serviceentry"
 
 type ServiceEntryChecker struct {
-	ServiceEntries []kubernetes.IstioObject
-	Namespaces     models.Namespaces
+	ServiceEntries         []networking_v1alpha3.ServiceEntry
+	ExportedServiceEntries []networking_v1alpha3.ServiceEntry
+	Namespaces             models.Namespaces
 }
 
 func (s ServiceEntryChecker) Check() models.IstioValidations {
@@ -23,11 +25,11 @@ func (s ServiceEntryChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func (s ServiceEntryChecker) runSingleChecks(se kubernetes.IstioObject) models.IstioValidations {
-	key, validations := EmptyValidValidation(se.GetObjectMeta().Name, se.GetObjectMeta().Namespace, ServiceEntryCheckerType)
+func (s ServiceEntryChecker) runSingleChecks(se networking_v1alpha3.ServiceEntry) models.IstioValidations {
+	key, validations := EmptyValidValidation(se.Name, se.Namespace, ServiceEntryCheckerType)
 
 	enabledCheckers := []Checker{
-		common.ExportToNamespaceChecker{IstioObject: se, Namespaces: s.Namespaces},
+		common.ExportToNamespaceChecker{ExportTo: se.Spec.ExportTo, Namespaces: s.Namespaces},
 	}
 
 	for _, checker := range enabledCheckers {

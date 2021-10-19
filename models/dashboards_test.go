@@ -4,12 +4,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kiali/kiali/config"
 )
 
 func TestPrepareIstioDashboard(t *testing.T) {
 	assert := assert.New(t)
+	config.Set(config.NewConfig())
 
-	dashboard := PrepareIstioDashboard("Outbound", "source", "destination")
+	dashboard := PrepareIstioDashboard("Outbound")
 
 	assert.Equal(dashboard.Title, "Outbound Metrics")
 	assert.Len(dashboard.Aggregations, 8)

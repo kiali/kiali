@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -17,7 +19,7 @@ func TestPresentService(t *testing.T) {
 	assert := assert.New(t)
 
 	validations, valid := NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"details", "reviews"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"details", "reviews"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		ServiceEntries:      map[string][]string{},
@@ -33,7 +35,7 @@ func TestNonExistingService(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"details", "wrong"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"details", "wrong"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		ServiceEntries:      map[string][]string{},
@@ -53,7 +55,7 @@ func TestWildcardHost(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"*", "*.bookinfo", "*.bookinfo.svc.cluster.local"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"*", "*.bookinfo", "*.bookinfo.svc.cluster.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		ServiceEntries:      map[string][]string{},
@@ -69,21 +71,21 @@ func TestWildcardHostOutsideNamespace(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"*.outside", "*.outside.svc.cluster.local"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"*.outside", "*.outside.svc.cluster.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		ServiceEntries:      map[string][]string{},
 		Services:            fakeServices([]string{"details", "reviews"}),
 	}.Check()
 
-	assert.True(valid)
+	assert.False(valid)
 	assert.NotEmpty(vals)
 	assert.Len(vals, 2)
-	assert.Equal(models.Unknown, vals[0].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("validation.unable.cross-namespace", vals[0]))
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
 	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
-	assert.Equal(models.Unknown, vals[1].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("validation.unable.cross-namespace", vals[1]))
+	assert.Equal(models.ErrorSeverity, vals[1].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[1]))
 	assert.Equal("spec/rules[0]/to[0]/operation/hosts[1]", vals[1].Path)
 }
 
@@ -93,10 +95,10 @@ func TestServiceEntryPresent(t *testing.T) {
 	serviceEntry := data.CreateExternalServiceEntry()
 
 	validations, valid := NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"wikipedia.org"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"wikipedia.org"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{serviceEntry}),
 		Services:            []core_v1.Service{},
 	}.Check()
 
@@ -105,15 +107,156 @@ func TestServiceEntryPresent(t *testing.T) {
 	assert.Empty(validations)
 }
 
+func TestExportedInternalServiceEntryPresent(t *testing.T) {
+	assert := assert.New(t)
+
+	serviceEntry := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details.bookinfo2.svc.cluster.local"})
+
+	validations, valid := NoHostChecker{
+		AuthorizationPolicy: *authPolicyWithHost([]string{"details.bookinfo2.svc.cluster.local"}),
+		Namespace:           "bookinfo",
+		Namespaces:          models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		Services:            []core_v1.Service{},
+	}.Check()
+
+	// Well configured object
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
+func TestExportedExternalServiceEntryPresent(t *testing.T) {
+	assert := assert.New(t)
+
+	serviceEntry := data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"www.myhost.com"})
+
+	validations, valid := NoHostChecker{
+		AuthorizationPolicy: *authPolicyWithHost([]string{"www.myhost.com"}),
+		Namespace:           "bookinfo",
+		Namespaces:          models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		Services:            []core_v1.Service{},
+	}.Check()
+
+	// Well configured object
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
+func TestExportedExternalServiceEntryFail(t *testing.T) {
+	assert := assert.New(t)
+
+	serviceEntry := data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"www.myhost.com"})
+
+	vals, valid := NoHostChecker{
+		AuthorizationPolicy: *authPolicyWithHost([]string{"www.wrong.com"}),
+		Namespace:           "bookinfo",
+		Namespaces:          models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		Services:            []core_v1.Service{},
+	}.Check()
+
+	// www.wrong.com host is not present
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 1)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
+}
+
+func TestWildcardExportedInternalServiceEntryPresent(t *testing.T) {
+	assert := assert.New(t)
+
+	serviceEntry := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"*.bookinfo2.svc.cluster.local"})
+
+	validations, valid := NoHostChecker{
+		AuthorizationPolicy: *authPolicyWithHost([]string{"details.bookinfo2.svc.cluster.local"}),
+		Namespace:           "bookinfo",
+		Namespaces:          models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		Services:            []core_v1.Service{},
+	}.Check()
+
+	// Well configured object
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
+func TestWildcardExportedInternalServiceEntryFail(t *testing.T) {
+	assert := assert.New(t)
+
+	serviceEntry := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details.bookinfo2.svc.cluster.local"})
+
+	vals, valid := NoHostChecker{
+		AuthorizationPolicy: *authPolicyWithHost([]string{"details.bookinfo3.svc.cluster.local"}),
+		Namespace:           "bookinfo",
+		Namespaces:          models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		Services:            []core_v1.Service{},
+	}.Check()
+
+	// details.bookinfo3.svc.cluster.local host is not present
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 1)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
+}
+
+func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
+	assert := assert.New(t)
+
+	serviceEntry := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details"})
+
+	vals, valid := NoHostChecker{
+		AuthorizationPolicy: *authPolicyWithHost([]string{"details.bookinfo2.svc.cluster.local"}),
+		Namespace:           "bookinfo",
+		Namespaces:          models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		Services:            []core_v1.Service{},
+	}.Check()
+
+	// details.bookinfo2.svc.cluster.local host is not present
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 1)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
+}
+
 func TestServiceEntryNotPresent(t *testing.T) {
 	assert := assert.New(t)
 
 	serviceEntry := data.CreateExternalServiceEntry()
 	vals, valid := NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"wrong.org"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"wrong.org"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{serviceEntry}),
+		Services:            []core_v1.Service{},
+	}.Check()
+
+	// Wrong.org host is not present
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 1)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
+}
+
+func TestExportedInternalServiceEntryNotPresent(t *testing.T) {
+	assert := assert.New(t)
+
+	serviceEntry := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details.bookinfo2.svc.cluster.local"})
+	vals, valid := NoHostChecker{
+		AuthorizationPolicy: *authPolicyWithHost([]string{"wrong.bookinfo2.svc.cluster.local"}),
+		Namespace:           "bookinfo",
+		Namespaces:          models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
 		Services:            []core_v1.Service{},
 	}.Check()
 
@@ -129,14 +272,14 @@ func TestServiceEntryNotPresent(t *testing.T) {
 func TestVirtualServicePresent(t *testing.T) {
 	assert := assert.New(t)
 
-	virtualService := data.CreateEmptyVirtualService("foo-dev", "foo", []string{"foo-dev.example.com"})
+	virtualService := *data.CreateEmptyVirtualService("foo-dev", "foo", []string{"foo-dev.example.com"})
 	validations, valid := NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"foo-dev.example.com"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"foo-dev.example.com"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		ServiceEntries:      map[string][]string{},
 		Services:            []core_v1.Service{},
-		VirtualServices:     []kubernetes.IstioObject{virtualService},
+		VirtualServices:     []networking_v1alpha3.VirtualService{virtualService},
 	}.Check()
 
 	assert.True(valid)
@@ -146,14 +289,14 @@ func TestVirtualServicePresent(t *testing.T) {
 func TestVirtualServiceNotPresent(t *testing.T) {
 	assert := assert.New(t)
 
-	virtualService := data.CreateEmptyVirtualService("foo-dev", "foo", []string{"foo-dev.example.com"})
+	virtualService := *data.CreateEmptyVirtualService("foo-dev", "foo", []string{"foo-dev.example.com"})
 	vals, valid := NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"foo-bogus.example.com"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"foo-bogus.example.com"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		ServiceEntries:      map[string][]string{},
 		Services:            []core_v1.Service{},
-		VirtualServices:     []kubernetes.IstioObject{virtualService},
+		VirtualServices:     []networking_v1alpha3.VirtualService{virtualService},
 	}.Check()
 
 	// Wrong.org host is not present
@@ -168,13 +311,13 @@ func TestVirtualServiceNotPresent(t *testing.T) {
 func TestWildcardServiceEntryHost(t *testing.T) {
 	assert := assert.New(t)
 
-	serviceEntry := data.CreateEmptyMeshExternalServiceEntry("googlecard", "google", []string{"*.google.com"})
+	serviceEntry := *data.CreateEmptyMeshExternalServiceEntry("googlecard", "google", []string{"*.google.com"})
 
 	vals, valid := NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"maps.google.com"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"maps.google.com"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{serviceEntry}),
 		Services:            []core_v1.Service{},
 	}.Check()
 
@@ -184,10 +327,10 @@ func TestWildcardServiceEntryHost(t *testing.T) {
 
 	// Not matching
 	vals, valid = NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"maps.apple.com"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"maps.apple.com"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{serviceEntry}),
 		Services:            []core_v1.Service{},
 	}.Check()
 
@@ -200,10 +343,10 @@ func TestWildcardServiceEntryHost(t *testing.T) {
 	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
 }
 
-func authPolicyWithHost(hostList []interface{}) kubernetes.IstioObject {
-	methods := []interface{}{"GET", "PUT", "PATCH"}
-	nss := []interface{}{"bookinfo"}
-	selector := map[string]interface{}{"app": "details", "version": "v1"}
+func authPolicyWithHost(hostList []string) *security_v1beta.AuthorizationPolicy {
+	methods := []string{"GET", "PUT", "PATCH"}
+	nss := []string{"bookinfo"}
+	selector := map[string]string{"app": "details", "version": "v1"}
 	return data.CreateAuthorizationPolicy(nss, methods, hostList, selector)
 }
 
@@ -235,7 +378,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	assert := assert.New(t)
 
 	validations, valid := NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 	}.Check()
@@ -247,7 +390,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	registryService.Hostname = "ratings.mesh2-bookinfo.svc.mesh1-imports.local"
 
 	validations, valid = NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		RegistryStatus:      []*kubernetes.RegistryStatus{&registryService},
@@ -260,7 +403,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	registryService.Hostname = "ratings2.mesh2-bookinfo.svc.mesh1-imports.local"
 
 	validations, valid = NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		RegistryStatus:      []*kubernetes.RegistryStatus{&registryService},
@@ -273,7 +416,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	registryService.Hostname = "ratings.bookinfo.svc.cluster.local"
 
 	validations, valid = NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"ratings.bookinfo.svc.cluster.local"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"ratings.bookinfo.svc.cluster.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		RegistryStatus:      []*kubernetes.RegistryStatus{&registryService},
@@ -286,7 +429,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	registryService.Hostname = "ratings.bookinfo.svc.cluster.local"
 
 	validations, valid = NoHostChecker{
-		AuthorizationPolicy: authPolicyWithHost([]interface{}{"ratings2.bookinfo.svc.cluster.local"}),
+		AuthorizationPolicy: *authPolicyWithHost([]string{"ratings2.bookinfo.svc.cluster.local"}),
 		Namespace:           "test",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		RegistryStatus:      []*kubernetes.RegistryStatus{&registryService},

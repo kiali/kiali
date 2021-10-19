@@ -4,6 +4,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/mock"
+	istio_fake "istio.io/client-go/pkg/clientset/versioned/fake"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_apps_v1 "k8s.io/api/batch/v1beta1"
@@ -40,6 +41,7 @@ func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo) (kubernetes.Cli
 
 type K8SClientMock struct {
 	mock.Mock
+	istioClientset *istio_fake.Clientset
 }
 
 // Constructor

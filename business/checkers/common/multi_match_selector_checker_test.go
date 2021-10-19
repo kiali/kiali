@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
@@ -14,18 +14,14 @@ import (
 func TestTwoSidecarsWithSelector(t *testing.T) {
 	assert := assert.New(t)
 
-	validations := WorkloadSelectorMultiMatchChecker(
+	validations := SidecarSelectorMultiMatchChecker(
 		"sidecar",
-		[]kubernetes.IstioObject{
-			data.AddSelectorToSidecar(map[string]interface{}{
-				"labels": map[string]interface{}{
-					"app": "reviews",
-				},
+		[]networking_v1alpha3.Sidecar{
+			*data.AddSelectorToSidecar(map[string]string{
+				"app": "reviews",
 			}, data.CreateSidecar("sidecar1", "bookinfo")),
-			data.AddSelectorToSidecar(map[string]interface{}{
-				"labels": map[string]interface{}{
-					"app": "details",
-				},
+			*data.AddSelectorToSidecar(map[string]string{
+				"app": "details",
 			}, data.CreateSidecar("sidecar2", "bookinfo")),
 		},
 		workloadList(),
@@ -35,11 +31,11 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 }
 
 func TestTwoSidecarsWithoutSelector(t *testing.T) {
-	validations := WorkloadSelectorMultiMatchChecker(
+	validations := SidecarSelectorMultiMatchChecker(
 		"sidecar",
-		[]kubernetes.IstioObject{
-			data.CreateSidecar("sidecar1", "bookinfo"),
-			data.CreateSidecar("sidecar2", "bookinfo"),
+		[]networking_v1alpha3.Sidecar{
+			*data.CreateSidecar("sidecar1", "bookinfo"),
+			*data.CreateSidecar("sidecar2", "bookinfo"),
 		},
 		workloadList(),
 	).Check()
@@ -49,19 +45,27 @@ func TestTwoSidecarsWithoutSelector(t *testing.T) {
 }
 
 func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
-	validations := GenericMultiMatchChecker{
-		SubjectType: "sidecar",
-		Subjects: []kubernetes.IstioObject{
-			workloadSelectorSidecar("sidecar1", map[string]interface{}{"app": "details", "version": "v1"}),
-			workloadSelectorSidecar("sidecar2", map[string]interface{}{"app": "reviews", "version": "v1"}),
-			workloadSelectorSidecar("sidecar3", map[string]interface{}{"app": "details"}),
-			workloadSelectorSidecar("sidecar4", map[string]interface{}{"version": "v1"}),
-		},
-		WorkloadList:      workloadList(),
-		HasSelector:       HasWorkloadSelector,
-		GetSelectorLabels: GetWorkloadSelectorLabels,
-		Path:              "spec/workloadSelector",
-	}.Check()
+	sidecars := []networking_v1alpha3.Sidecar{
+		*data.AddSelectorToSidecar(map[string]string{
+			"app":     "details",
+			"version": "v1",
+		}, data.CreateSidecar("sidecar1", "bookinfo")),
+		*data.AddSelectorToSidecar(map[string]string{
+			"app":     "reviews",
+			"version": "v1",
+		}, data.CreateSidecar("sidecar2", "bookinfo")),
+		*data.AddSelectorToSidecar(map[string]string{
+			"app": "details",
+		}, data.CreateSidecar("sidecar3", "bookinfo")),
+		*data.AddSelectorToSidecar(map[string]string{
+			"version": "v1",
+		}, data.CreateSidecar("sidecar4", "bookinfo")),
+	}
+	validations := SidecarSelectorMultiMatchChecker(
+		"sidecar",
+		sidecars,
+		workloadList(),
+	).Check()
 
 	assertMultimatchFailure(t, "generic.multimatch.selector", validations, "sidecar1", []string{"sidecar3", "sidecar4"})
 	assertMultimatchFailure(t, "generic.multimatch.selector", validations, "sidecar3", []string{"sidecar1", "sidecar4"})
@@ -100,9 +104,4 @@ func workloadList() models.WorkloadList {
 	}
 
 	return data.CreateWorkloadList("test", wli...)
-}
-
-func workloadSelectorSidecar(name string, selector map[string]interface{}) kubernetes.IstioObject {
-	workloadSelector := map[string]interface{}{"labels": selector}
-	return data.AddSelectorToSidecar(workloadSelector, data.CreateSidecar(name, "bookinfo"))
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -18,9 +19,10 @@ func TestNoCrashOnNil(t *testing.T) {
 	assert := assert.New(t)
 
 	typeValidations := NoServiceChecker{
-		Namespace:    "test",
-		IstioDetails: nil,
-		Services:     nil,
+		Namespace:         "test",
+		IstioConfigList:   models.IstioConfigList{},
+		ExportedResources: nil,
+		Services:          nil,
 	}.Check()
 
 	assert.Empty(typeValidations)
@@ -44,7 +46,8 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 			data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
 			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
 		),
-		IstioDetails:         fakeIstioDetails(),
+		IstioConfigList:      *fakeIstioConfigList(),
+		ExportedResources:    emptyExportedResources(),
 		Services:             fakeServiceDetails([]string{"reviews", "details", "product", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -63,8 +66,9 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert := assert.New(t)
 
 	vals := NoServiceChecker{
-		Namespace:    "test",
-		IstioDetails: fakeIstioDetails(),
+		Namespace:         "test",
+		IstioConfigList:   *fakeIstioConfigList(),
+		ExportedResources: emptyExportedResources(),
 		WorkloadList: data.CreateWorkloadList("test",
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
@@ -95,7 +99,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 			data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
 			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
 		),
-		IstioDetails:         fakeIstioDetails(),
+		IstioConfigList:      *fakeIstioConfigList(),
+		ExportedResources:    emptyExportedResources(),
 		Services:             fakeServiceDetails([]string{"reviews", "details", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -120,7 +125,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 			data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
 			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
 		),
-		IstioDetails:         fakeIstioDetails(),
+		IstioConfigList:      *fakeIstioConfigList(),
+		ExportedResources:    emptyExportedResources(),
 		Services:             fakeServiceDetails([]string{"reviews", "product", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -138,7 +144,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 			data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
 			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
 		),
-		IstioDetails:         fakeIstioDetails(),
+		IstioConfigList:      *fakeIstioConfigList(),
+		ExportedResources:    emptyExportedResources(),
 		Services:             fakeServiceDetails([]string{"details", "product", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -152,14 +159,15 @@ func TestObjectWithoutGateway(t *testing.T) {
 	config.Set(conf)
 	assert := assert.New(t)
 
-	istioDetails := fakeIstioDetails()
-	gateways := make([]interface{}, 1)
+	istioDetails := fakeIstioConfigList()
+	gateways := make([]string, 1)
 	gateways = append(gateways, "non-existant-gateway")
 
-	istioDetails.VirtualServices[0].GetSpec()["gateways"] = gateways
+	istioDetails.VirtualServices[0].Spec.Gateways = gateways
 	vals := NoServiceChecker{
 		Namespace:            "test",
-		IstioDetails:         istioDetails,
+		IstioConfigList:      *istioDetails,
+		ExportedResources:    emptyExportedResources(),
 		Services:             fakeServiceDetails([]string{"reviews", "product", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -171,21 +179,25 @@ func TestObjectWithoutGateway(t *testing.T) {
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", productVs.Checks[0]))
 }
 
-func fakeIstioDetails() *kubernetes.IstioDetails {
-	istioDetails := kubernetes.IstioDetails{}
+func fakeIstioConfigList() *models.IstioConfigList {
+	istioConfigList := models.IstioConfigList{}
 
-	istioDetails.VirtualServices = []kubernetes.IstioObject{
-		data.AddRoutesToVirtualService("http", data.CreateRoute("product", "v1", -1),
-			data.AddRoutesToVirtualService("tcp", data.CreateRoute("product", "v1", -1),
+	istioConfigList.VirtualServices = []networking_v1alpha3.VirtualService{
+		*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("product", "v1", -1),
+			data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("product", "v1", -1),
 				data.CreateEmptyVirtualService("product-vs", "test", []string{"product"}),
 			),
 		)}
 
-	istioDetails.DestinationRules = []kubernetes.IstioObject{
-		data.CreateEmptyDestinationRule("test", "customer-dr", "customer"),
+	istioConfigList.DestinationRules = []networking_v1alpha3.DestinationRule{
+		*data.CreateEmptyDestinationRule("test", "customer-dr", "customer"),
 	}
 
-	return &istioDetails
+	return &istioConfigList
+}
+
+func emptyExportedResources() *kubernetes.ExportedResources {
+	return &kubernetes.ExportedResources{}
 }
 
 func fakeServiceDetails(services []string) []core_v1.Service {

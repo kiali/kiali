@@ -94,13 +94,14 @@ type NodeData struct {
 	HasCB                 bool                `json:"hasCB,omitempty"`                 // true (has circuit breaker) | false
 	HasFaultInjection     bool                `json:"hasFaultInjection,omitempty"`     // true (vs has fault injection) | false
 	HasHealthConfig       HealthConfig        `json:"hasHealthConfig,omitempty"`       // set to the health config override
+	HasMirroring          bool                `json:"hasMirroring,omitempty"`          // true (has mirroring) | false
 	HasMissingSC          bool                `json:"hasMissingSC,omitempty"`          // true (has missing sidecar) | false
 	HasRequestRouting     bool                `json:"hasRequestRouting,omitempty"`     // true (vs has request routing) | false
 	HasRequestTimeout     bool                `json:"hasRequestTimeout,omitempty"`     // true (vs has request timeout) | false
 	HasTCPTrafficShifting bool                `json:"hasTCPTrafficShifting,omitempty"` // true (vs has tcp traffic shifting) | false
 	HasTrafficShifting    bool                `json:"hasTrafficShifting,omitempty"`    // true (vs has traffic shifting) | false
 	HasVS                 *VSInfo             `json:"hasVS,omitempty"`                 // it can be empty if there is a VS without hostnames
-	HasWorkloadEntry      bool                `json:"hasWorkloadEntry,omitempty"`      // true (this node has a corresponding WorkloadEntry) | false
+	HasWorkloadEntry      []graph.WEInfo      `json:"hasWorkloadEntry,omitempty"`      // static workload entry information | empty if there are no workload entries
 	IsBox                 string              `json:"isBox,omitempty"`                 // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
 	IsDead                bool                `json:"isDead,omitempty"`                // true (has no pods) | false
 	IsGateway             *GWInfo             `json:"isGateway,omitempty"`             // Istio ingress/egress gateway information
@@ -306,6 +307,10 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			nd.IsOutside = val.(bool)
 		}
 
+		if val, ok := n.Metadata[graph.HasMirroring]; ok {
+			nd.HasMirroring = val.(bool)
+		}
+
 		if val, ok := n.Metadata[graph.HasRequestRouting]; ok {
 			nd.HasRequestRouting = val.(bool)
 		}
@@ -340,8 +345,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		}
 
 		// node may have a workload entry associated with it
-		if _, ok := n.Metadata[graph.HasWorkloadEntry]; ok {
-			nd.HasWorkloadEntry = true
+		if val, ok := n.Metadata[graph.HasWorkloadEntry]; ok {
+			nd.HasWorkloadEntry = []graph.WEInfo{}
+			if weInfo, ok := val.([]graph.WEInfo); ok {
+				nd.HasWorkloadEntry = append(nd.HasWorkloadEntry, weInfo...)
+			}
 		}
 
 		// node may be an aggregate

@@ -2,9 +2,9 @@ package kubernetes
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -159,23 +159,10 @@ func HasMatchingServiceEntries(service string, serviceEntries map[string][]strin
 	return false
 }
 
-func HasMatchingVirtualServices(host Host, virtualServices []IstioObject) bool {
+func HasMatchingVirtualServices(host Host, virtualServices []networking_v1alpha3.VirtualService) bool {
 	for _, vs := range virtualServices {
-		rawHosts, found := vs.GetSpec()["hosts"]
-		if !found {
-			continue
-		}
-
-		slice := reflect.ValueOf(rawHosts)
-		if slice.Kind() != reflect.Slice {
-			continue
-		}
-
-		for hostIdx := 0; hostIdx < slice.Len(); hostIdx++ {
-			vHost, ok := slice.Index(hostIdx).Interface().(string)
-			if !ok {
-				continue
-			}
+		for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
+			vHost := vs.Spec.Hosts[hostIdx]
 
 			// vHost is wildcard, then any host fit in
 			if vHost == "*" {
@@ -183,7 +170,7 @@ func HasMatchingVirtualServices(host Host, virtualServices []IstioObject) bool {
 			}
 
 			// vHost is simple name (namespaces should match)
-			if vHost == host.Service && vs.GetObjectMeta().Namespace == host.Namespace {
+			if vHost == host.Service && vs.Namespace == host.Namespace {
 				return true
 			}
 
@@ -203,7 +190,7 @@ func HasMatchingVirtualServices(host Host, virtualServices []IstioObject) bool {
 			}
 
 			// Non-internal service name
-			hostS := ParseHost(vHost, vs.GetObjectMeta().Namespace, vs.GetObjectMeta().ClusterName)
+			hostS := ParseHost(vHost, vs.Namespace, vs.ClusterName)
 			if hostS.Service == host.Service && hostS.CompleteInput == host.CompleteInput && !hostS.CompleteInput {
 				return true
 			}

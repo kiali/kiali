@@ -39,6 +39,11 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 	versionLabel := config.Get().IstioLabels.VersionLabelName
 
 	for _, n := range trafficMap {
+		// Skip the check if this node is outside the requested namespace, we limit badging to the requested namespaces
+		if n.Namespace != namespaceInfo.Namespace {
+			continue
+		}
+
 		// Only a workload or app node can be a workload entry
 		if n.NodeType != graph.NodeTypeWorkload && n.NodeType != graph.NodeTypeApp {
 			continue
@@ -53,15 +58,16 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 		log.Tracef("WorkloadEntries found: %d", len(istioCfg.WorkloadEntries))
 
 		for _, entry := range istioCfg.WorkloadEntries {
-			if labels, ok := entry.Spec.Labels.(map[string]interface{}); ok {
-				if labels[appLabel] == n.App && labels[versionLabel] == n.Version {
-					n.Metadata[graph.HasWorkloadEntry] = true
-					log.Trace("Found matching WorkloadEntry")
-					// Once a matching workload entry has been found for the workload node,
-					// the rest of the entries can be ignored because having a single matching
-					// workload entry is enough.
-					break
+			if entry.Spec.Labels[appLabel] == n.App && entry.Spec.Labels[versionLabel] == n.Version {
+				if n.Metadata[graph.HasWorkloadEntry] == nil {
+					n.Metadata[graph.HasWorkloadEntry] = []graph.WEInfo{}
 				}
+
+				we := graph.WEInfo{Name: entry.Name}
+				weMetadata := n.Metadata[graph.HasWorkloadEntry].([]graph.WEInfo)
+				weMetadata = append(weMetadata, we)
+				n.Metadata[graph.HasWorkloadEntry] = weMetadata
+				log.Trace("Found matching WorkloadEntry")
 			}
 		}
 	}

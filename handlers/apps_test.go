@@ -25,7 +25,6 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -207,6 +206,7 @@ func setupAppListEndpoint() (*httptest.Server, *kubetest.K8SClientMock, *prometh
 
 func TestAppsEndpoint(t *testing.T) {
 	ts, k8s, _ := setupAppListEndpoint()
+	k8s.MockIstio()
 	defer ts.Close()
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
@@ -220,7 +220,6 @@ func TestAppsEndpoint(t *testing.T) {
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
 
 	url := ts.URL + "/api/namespaces/ns/apps"
 

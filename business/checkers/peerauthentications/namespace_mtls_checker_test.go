@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -25,13 +27,13 @@ func TestPeerAuthnmTLSEnabled(t *testing.T) {
 
 	policy := data.CreateEmptyPeerAuthentication("default", "bar", data.CreateMTLS("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []kubernetes.IstioObject{
-			data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),
+		DestinationRules: []networking_v1alpha3.DestinationRule{
+			*data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),
 		},
 	}
 
 	vals, valid := NamespaceMtlsChecker{
-		PeerAuthn:   policy,
+		PeerAuthn:   *policy,
 		MTLSDetails: mTLSDetails,
 	}.Check()
 
@@ -52,13 +54,13 @@ func TestPeerAuthnmTLSEnabled(t *testing.T) {
 func TestPolicyEnabledDRmTLSEnabled(t *testing.T) {
 	peerAuthn := data.CreateEmptyPeerAuthentication("default", "bar", data.CreateMTLS("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []kubernetes.IstioObject{
-			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		DestinationRules: []networking_v1alpha3.DestinationRule{
+			*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local")),
 		},
 	}
 
-	assertNoValidations(t, peerAuthn, mTLSDetails)
+	assertNoValidations(t, *peerAuthn, mTLSDetails)
 }
 
 // Context: PeerAuthn enables mTLS for a namespace
@@ -69,13 +71,13 @@ func TestPolicyEnabledDRmTLSMeshWideEnabled(t *testing.T) {
 	peerAuthn := data.CreateEmptyPeerAuthentication("default", "bar", data.CreateMTLS("STRICT"))
 
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []kubernetes.IstioObject{
-			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		DestinationRules: []networking_v1alpha3.DestinationRule{
+			*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bar", "default", "*.local")),
 		},
 	}
 
-	assertNoValidations(t, peerAuthn, mTLSDetails)
+	assertNoValidations(t, *peerAuthn, mTLSDetails)
 
 }
 
@@ -85,14 +87,14 @@ func TestPolicyEnabledDRmTLSMeshWideEnabled(t *testing.T) {
 func TestPolicyPermissive(t *testing.T) {
 	peerAuthn := data.CreateEmptyPeerAuthentication("default", "bar", data.CreateMTLS("PERMISSIVE"))
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []kubernetes.IstioObject{
-			data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),
+		DestinationRules: []networking_v1alpha3.DestinationRule{
+			*data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),
 		},
 	}
-	assertNoValidations(t, peerAuthn, mTLSDetails)
+	assertNoValidations(t, *peerAuthn, mTLSDetails)
 }
 
-func assertNoValidations(t *testing.T, peerAuth kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
+func assertNoValidations(t *testing.T, peerAuth security_v1beta.PeerAuthentication, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)

@@ -6,13 +6,14 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -49,23 +50,22 @@ func TestCBAll(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	k8s := kubetest.NewK8SClientMock()
-	dRule := kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "dRule-1",
-		},
-		Spec: map[string]interface{}{
-			"host":          "ratings",
-			"trafficPolicy": map[string]interface{}{"connectionPool": true},
+	dRule := &networking_v1alpha3.DestinationRule{}
+	dRule.Name = "dRule-1"
+	dRule.Namespace = "testNamespace"
+	dRule.Spec.Host = "ratings"
+	dRule.Spec.TrafficPolicy = &api_networking_v1alpha3.TrafficPolicy{
+		ConnectionPool: &api_networking_v1alpha3.ConnectionPoolSettings{
+			Http: &api_networking_v1alpha3.ConnectionPoolSettings_HTTPSettings{
+				MaxRequestsPerConnection: 30,
+			},
 		},
 	}
+	k8s.MockIstio(dRule)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetProjects", mock.AnythingOfType("string")).Return([]osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{
-		dRule.DeepCopyIstioObject(),
-	}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{}, nil)
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
@@ -107,28 +107,30 @@ func TestCBSubset(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	k8s := kubetest.NewK8SClientMock()
-	dRule := kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "dRule-1",
-		},
-		Spec: map[string]interface{}{
-			"host": "ratings",
-			"subsets": []interface{}{
-				map[string]interface{}{
-					"trafficPolicy": map[string]interface{}{"connectionPool": true},
-					"labels":        map[string]interface{}{"version": "v1"},
+	dRule := &networking_v1alpha3.DestinationRule{}
+	dRule.Name = "dRule-1"
+	dRule.Namespace = "testNamespace"
+	dRule.Spec.Host = "ratings"
+	dRule.Spec.Subsets = []*api_networking_v1alpha3.Subset{
+		{
+			TrafficPolicy: &api_networking_v1alpha3.TrafficPolicy{
+				ConnectionPool: &api_networking_v1alpha3.ConnectionPoolSettings{
+					Http: &api_networking_v1alpha3.ConnectionPoolSettings_HTTPSettings{
+						MaxRequestsPerConnection: 30,
+					},
 				},
+			},
+			Labels: map[string]string{
+				"version": "v1",
 			},
 		},
 	}
+	k8s.MockIstio(dRule)
+
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetProjects", mock.AnythingOfType("string")).Return([]osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{
-		dRule.DeepCopyIstioObject(),
-	}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{}, nil)
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
@@ -170,35 +172,27 @@ func TestVS(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	k8s := kubetest.NewK8SClientMock()
-	vService := kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "vService-1",
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				"ratings",
-			},
-			"http": []interface{}{
-				map[string]interface{}{
-					"route": []interface{}{
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"host": "foo",
-							},
-						},
+	vService := &networking_v1alpha3.VirtualService{}
+	vService.Name = "vService-1"
+	vService.Namespace = "testNamespace"
+	vService.Spec.Hosts = []string{"ratings"}
+	vService.Spec.Http = []*api_networking_v1alpha3.HTTPRoute{
+		{
+			Route: []*api_networking_v1alpha3.HTTPRouteDestination{
+				{
+					Destination: &api_networking_v1alpha3.Destination{
+						Host: "foo",
 					},
 				},
 			},
 		},
 	}
+	k8s.MockIstio(vService)
+
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetProjects", mock.AnythingOfType("string")).Return([]osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{
-		vService.DeepCopyIstioObject(),
-	}, nil)
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, fooSvcNodeId := setupTrafficMap()
@@ -247,42 +241,33 @@ func TestVSWithRoutingBadges(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	k8s := kubetest.NewK8SClientMock()
-	vService := kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "vService-1",
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				"ratings",
-			},
-			"http": []interface{}{
-				map[string]interface{}{
-					"route": []interface{}{
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"host":   "foo",
-								"weight": 20,
-							},
-						},
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"host":   "bar",
-								"weight": 80,
-							},
-						},
+	vService := &networking_v1alpha3.VirtualService{}
+	vService.Name = "vService-1"
+	vService.Namespace = "testNamespace"
+	vService.Spec.Hosts = []string{"ratings"}
+	vService.Spec.Http = []*api_networking_v1alpha3.HTTPRoute{
+		{
+			Route: []*api_networking_v1alpha3.HTTPRouteDestination{
+				{
+					Destination: &api_networking_v1alpha3.Destination{
+						Host: "foo",
 					},
+					Weight: 20,
+				},
+				{
+					Destination: &api_networking_v1alpha3.Destination{
+						Host: "bar",
+					},
+					Weight: 80,
 				},
 			},
 		},
 	}
+	k8s.MockIstio(vService)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetProjects", mock.AnythingOfType("string")).Return([]osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{
-		vService.DeepCopyIstioObject(),
-	}, nil)
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	trafficMap, _, _, _, _, _, fooSvcNodeId := setupTrafficMap()
@@ -299,4 +284,41 @@ func TestVSWithRoutingBadges(t *testing.T) {
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(true, trafficMap[fooSvcNodeId].Metadata[graph.HasTrafficShifting])
+}
+
+func TestSEInAppBox(t *testing.T) {
+	check := assert.New(t)
+	config.Set(config.NewConfig())
+
+	k8s := kubetest.NewK8SClientMock()
+	k8s.MockIstio()
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "foobar",
+			Labels: map[string]string{
+				"app": "fooApp",
+			},
+		},
+	}}, nil)
+
+	businessLayer := business.NewWithBackends(k8s, nil, nil)
+
+	trafficMap := graph.NewTrafficMap()
+	serviceEntryNode := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)
+	serviceEntryNode.Metadata[graph.IsServiceEntry] = &graph.SEInfo{
+		Hosts:     []string{"foobar.com"},
+		Location:  "MESH_INTERNAL",
+		Namespace: "testNamespace",
+	}
+	trafficMap[serviceEntryNode.ID] = &serviceEntryNode
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
+	a := IstioAppender{}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	check.Equal("fooApp", trafficMap[serviceEntryNode.ID].App)
 }

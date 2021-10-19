@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 )
 
 func TestServiceDetailParsing(t *testing.T) {
@@ -21,8 +21,6 @@ func TestServiceDetailParsing(t *testing.T) {
 	service.SetEndpoints(fakeEndpoints())
 	service.SetPods(fakePods())
 	service.SetIstioSidecar(fakeWorkloads())
-	service.SetVirtualServices(fakeVirtualServices(), false, false, false)
-	service.SetDestinationRules(fakeDestinationRules(), false, false, false)
 
 	// Kubernetes Details
 
@@ -47,103 +45,6 @@ func TestServiceDetailParsing(t *testing.T) {
 				Port{Name: "http", Protocol: "TCP", Port: 3001},
 				Port{Name: "http", Protocol: "TCP", Port: 3000},
 			}}})
-
-	assert.Equal(2, len(service.VirtualServices.Items))
-	assert.Equal("reviews", service.VirtualServices.Items[0].Metadata.Name)
-	assert.Equal([]interface{}{
-		map[string]interface{}{
-			"route": []interface{}{
-				map[string]interface{}{
-					"destination": map[string]interface{}{
-						"name":   "reviews",
-						"subset": "v2",
-					},
-					"weight": 50,
-				},
-				map[string]interface{}{
-					"destination": map[string]interface{}{
-						"name":   "reviews",
-						"subset": "v3",
-					},
-					"weight": 50,
-				},
-			},
-		}}, service.VirtualServices.Items[0].Spec.Http)
-
-	assert.Equal("ratings", service.VirtualServices.Items[1].Metadata.Name)
-	assert.Equal([]interface{}{
-		map[string]interface{}{
-			"match": []interface{}{
-				map[string]interface{}{
-					"headers": map[string]interface{}{
-						"cookie": map[string]interface{}{
-							"regex": "^(.*?;)?(user=jason)(;.*)?$",
-						},
-					},
-				},
-			},
-			"fault": map[string]interface{}{
-				"delay": map[string]interface{}{
-					"percent":    100,
-					"fixedDelay": "7s",
-				},
-			},
-			"route": []interface{}{
-				map[string]interface{}{
-					"destination": map[string]interface{}{
-						"name":   "ratings",
-						"subset": "v1",
-					},
-				},
-			},
-		},
-		map[string]interface{}{
-			"route": []interface{}{
-				map[string]interface{}{
-					"destination": map[string]interface{}{
-						"name":   "ratings",
-						"subset": "v1",
-					},
-				},
-			},
-		},
-	}, service.VirtualServices.Items[1].Spec.Http)
-
-	assert.Equal(2, len(service.DestinationRules.Items))
-	assert.Equal("reviews-destination", service.DestinationRules.Items[0].Metadata.Name)
-	assert.Equal([]interface{}{
-		map[string]interface{}{
-			"name": "v1",
-			"labels": map[string]interface{}{
-				"version": "v1",
-			},
-		},
-		map[string]interface{}{
-			"name": "v2",
-			"labels": map[string]interface{}{
-				"version": "v2",
-			},
-		},
-	}, service.DestinationRules.Items[0].Spec.Subsets)
-	assert.Equal("bookinfo-ratings", service.DestinationRules.Items[1].Metadata.Name)
-	assert.Equal(map[string]interface{}{
-		"loadBalancer": map[string]interface{}{
-			"simple": "LEAST_CONN",
-		},
-	}, service.DestinationRules.Items[1].Spec.TrafficPolicy)
-	assert.Equal([]interface{}{
-		map[string]interface{}{
-			"name": "testversion",
-			"labels": map[string]interface{}{
-				"version": "v3",
-			},
-			"trafficPolicy": map[string]interface{}{
-				"loadBalancer": map[string]interface{}{
-					"simple": "ROUND_ROBIN",
-				},
-			},
-		},
-	}, service.DestinationRules.Items[1].Spec.Subsets)
 }
 
 func TestServiceParse(t *testing.T) {
@@ -234,152 +135,6 @@ func fakePods() []core_v1.Pod {
 				CreationTimestamp: meta_v1.NewTime(t2),
 				Labels:            map[string]string{"apps": "reviews", "version": "v2"}}},
 	}
-}
-
-func fakeVirtualServices() []kubernetes.IstioObject {
-	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:47 +0300")
-
-	virtualService1 := kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:              "reviews",
-			CreationTimestamp: meta_v1.NewTime(t2),
-			ResourceVersion:   "1234",
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				"reviews",
-			},
-			"http": []interface{}{
-				map[string]interface{}{
-					"route": []interface{}{
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"name":   "reviews",
-								"subset": "v2",
-							},
-							"weight": 50,
-						},
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"name":   "reviews",
-								"subset": "v3",
-							},
-							"weight": 50,
-						},
-					},
-				},
-			},
-		},
-	}
-	virtualService2 := kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:              "ratings",
-			CreationTimestamp: meta_v1.NewTime(t2),
-			ResourceVersion:   "1234",
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				"reviews",
-			},
-			"http": []interface{}{
-				map[string]interface{}{
-					"match": []interface{}{
-						map[string]interface{}{
-							"headers": map[string]interface{}{
-								"cookie": map[string]interface{}{
-									"regex": "^(.*?;)?(user=jason)(;.*)?$",
-								},
-							},
-						},
-					},
-					"fault": map[string]interface{}{
-						"delay": map[string]interface{}{
-							"percent":    100,
-							"fixedDelay": "7s",
-						},
-					},
-					"route": []interface{}{
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"name":   "ratings",
-								"subset": "v1",
-							},
-						},
-					},
-				},
-				map[string]interface{}{
-					"route": []interface{}{
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"name":   "ratings",
-								"subset": "v1",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	return []kubernetes.IstioObject{&virtualService1, &virtualService2}
-}
-
-func fakeDestinationRules() []kubernetes.IstioObject {
-	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:47 +0300")
-
-	destinationRule1 := kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:              "reviews-destination",
-			CreationTimestamp: meta_v1.NewTime(t2),
-			ResourceVersion:   "1234",
-		},
-		Spec: map[string]interface{}{
-			"host": "reviews",
-			"subsets": []interface{}{
-				map[string]interface{}{
-					"name": "v1",
-					"labels": map[string]interface{}{
-						"version": "v1",
-					},
-				},
-				map[string]interface{}{
-					"name": "v2",
-					"labels": map[string]interface{}{
-						"version": "v2",
-					},
-				},
-			},
-		},
-	}
-	destinationRule2 := kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:              "bookinfo-ratings",
-			CreationTimestamp: meta_v1.NewTime(t2),
-			ResourceVersion:   "1234",
-		},
-		Spec: map[string]interface{}{
-			"host": "ratings",
-			"trafficPolicy": map[string]interface{}{
-				"loadBalancer": map[string]interface{}{
-					"simple": "LEAST_CONN",
-				},
-			},
-			"subsets": []interface{}{
-				map[string]interface{}{
-					"name": "testversion",
-					"labels": map[string]interface{}{
-						"version": "v3",
-					},
-					"trafficPolicy": map[string]interface{}{
-						"loadBalancer": map[string]interface{}{
-							"simple": "ROUND_ROBIN",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	return []kubernetes.IstioObject{&destinationRule1, &destinationRule2}
 }
 
 func fakeWorkloads() WorkloadOverviews {

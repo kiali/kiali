@@ -81,7 +81,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 		}
 
 		// To match, a service entry must be exported to the source namespace, and the requested
-		// service must match a defined host.  Note that teh source namespace is assumed to be the
+		// service must match a defined host.  Note that the source namespace is assumed to be the
 		// the same as the appender namespace as all requests for the service entry should be coming
 		// from workloads in the current namespace being processed for the graph.
 		if se, ok := a.getServiceEntry(namespaceInfo.Namespace, n.Service, globalInfo); ok {
@@ -164,17 +164,17 @@ func (a ServiceEntryAppender) getServiceEntry(namespace, serviceName string, glo
 			for _, entry := range istioCfg.ServiceEntries {
 				if entry.Spec.Hosts != nil {
 					location := "MESH_EXTERNAL"
-					if entry.Spec.Location == "MESH_INTERNAL" {
+					if entry.Spec.Location.String() == "MESH_INTERNAL" {
 						location = "MESH_INTERNAL"
 					}
 					se := serviceEntry{
 						exportTo:  entry.Spec.ExportTo,
 						location:  location,
-						name:      entry.Metadata.Name,
-						namespace: entry.Metadata.Namespace,
+						name:      entry.Name,
+						namespace: entry.Namespace,
 					}
-					for _, host := range entry.Spec.Hosts.([]interface{}) {
-						serviceEntryHosts.addHost(host.(string), &se)
+					for _, host := range entry.Spec.Hosts {
+						serviceEntryHosts.addHost(host, &se)
 					}
 				}
 			}
@@ -221,7 +221,7 @@ func isExportedToNamespace(se *serviceEntry, namespace string) bool {
 	if se.exportTo == nil {
 		return true
 	}
-	for _, export := range se.exportTo.([]interface{}) {
+	for _, export := range se.exportTo {
 		if export == "*" {
 			return true
 		}

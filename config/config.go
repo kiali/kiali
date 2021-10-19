@@ -106,6 +106,13 @@ func (a *Auth) Obfuscate() {
 	a.CAFile = "xxx"
 }
 
+// ThanosProxy describes configuration of the Thanos proxy component
+type ThanosProxy struct {
+	Enabled         bool   `yaml:"enabled,omitempty"`
+	RetentionPeriod string `yaml:"retention_period,omitempty"`
+	ScrapeInterval  string `yaml:"scrape_interval,omitempty"`
+}
+
 // PrometheusConfig describes configuration of the Prometheus component
 type PrometheusConfig struct {
 	Auth Auth `yaml:"auth,omitempty"`
@@ -114,10 +121,12 @@ type PrometheusConfig struct {
 	// Enable cache for Prometheus queries
 	CacheEnabled bool `yaml:"cache_enabled,omitempty"`
 	// Global cache expiration expressed in seconds
-	CacheExpiration int    `yaml:"cache_expiration,omitempty"`
-	HealthCheckUrl  string `yaml:"health_check_url,omitempty"`
-	IsCore          bool   `yaml:"is_core,omitempty"`
-	URL             string `yaml:"url,omitempty"`
+	CacheExpiration int               `yaml:"cache_expiration,omitempty"`
+	CustomHeaders   map[string]string `yaml:"custom_headers,omitempty"`
+	HealthCheckUrl  string            `yaml:"health_check_url,omitempty"`
+	IsCore          bool              `yaml:"is_core,omitempty"`
+	ThanosProxy     ThanosProxy       `yaml:"thanos_proxy,omitempty"`
+	URL             string            `yaml:"url,omitempty"`
 }
 
 // CustomDashboardsConfig describes configuration specific to Custom Dashboards
@@ -340,10 +349,23 @@ type GraphUIDefaults struct {
 	Traffic     GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
 }
 
+// Aggregation represents label's allowed aggregations, transformed from aggregation in MonitoringDashboard config resource
+type Aggregation struct {
+	Label           string `yaml:"label,omitempty" json:"label"`
+	DisplayName     string `yaml:"display_name,omitempty" json:"displayName"`
+	SingleSelection bool   `yaml:"single_selection,omitempty" json:"singleSelection"`
+}
+
+type MetricsDefaults struct {
+	Aggregations []Aggregation `yaml:"aggregations,omitempty" json:"aggregations,omitempty"`
+}
+
 // UIDefaults defines default settings configured for the UI
 type UIDefaults struct {
 	Graph             GraphUIDefaults `yaml:"graph,omitempty" json:"graph,omitempty"`
 	MetricsPerRefresh string          `yaml:"metrics_per_refresh,omitempty" json:"metricsPerRefresh,omitempty"`
+	MetricsInbound    MetricsDefaults `yaml:"metrics_inbound,omitempty" json:"metricsInbound,omitempty"`
+	MetricsOutbound   MetricsDefaults `yaml:"metrics_outbound,omitempty" json:"metricsOutbound,omitempty"`
 	Namespaces        []string        `yaml:"namespaces,omitempty" json:"namespaces,omitempty"`
 	RefreshInterval   string          `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`
 }
@@ -467,6 +489,11 @@ func NewConfig() (c *Config) {
 				Enabled:                true,
 				IsCore:                 false,
 				NamespaceLabel:         "kubernetes_namespace",
+				Prometheus: PrometheusConfig{
+					ThanosProxy: ThanosProxy{
+						Enabled: false,
+					},
+				},
 			},
 			Grafana: GrafanaConfig{
 				Auth: Auth{
@@ -510,11 +537,17 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
+				ThanosProxy: ThanosProxy{
+					Enabled:         false,
+					RetentionPeriod: "7d",
+					ScrapeInterval:  "30s",
+				},
 				CacheEnabled: true,
 				// 1/2 Prom Scrape Interval
 				CacheDuration: 7,
 				// Prom Cache expires and it forces to repopulate cache
 				CacheExpiration: 300,
+				CustomHeaders:   map[string]string{},
 				URL:             "http://prometheus.istio-system:9090",
 			},
 			Tracing: TracingConfig{
@@ -571,6 +604,8 @@ func NewConfig() (c *Config) {
 						Tcp:  "sent",
 					},
 				},
+				MetricsInbound:    MetricsDefaults{},
+				MetricsOutbound:   MetricsDefaults{},
 				MetricsPerRefresh: "1m",
 				Namespaces:        make([]string, 0),
 				RefreshInterval:   "15s",
