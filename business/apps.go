@@ -146,7 +146,7 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 			}
 		}
 		appItem.Labels = buildFinalLabels(applabels)
-		appItem.IstioReferences = append(svcReferences, wkdReferences...)
+		appItem.IstioReferences = FilterUniqueIstioReferences(append(svcReferences, wkdReferences...))
 
 		for _, w := range valueApp.Workloads {
 			if appItem.IstioSidecar = w.IstioSidecar; !appItem.IstioSidecar {

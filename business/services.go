@@ -173,6 +173,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 			ref := models.BuildKey(gw.Kind, gw.Name, gw.Namespace)
 			svcReferences = append(svcReferences, &ref)
 		}
+		svcReferences = FilterUniqueIstioReferences(svcReferences)
 
 		kialiWizard := getVSKialiScenario(svcVirtualServices)
 		if kialiWizard == "" {
