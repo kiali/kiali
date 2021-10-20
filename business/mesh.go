@@ -86,6 +86,13 @@ type meshIdConfig struct {
 	} `yaml:"defaultConfig,omitempty"`
 }
 
+type MeshConfig struct {
+	DefaultConfig struct {
+		MeshId string `yaml:"meshId,omitempty"`
+	} `yaml:"defaultConfig,omitempty"`
+	RootNamespace string `yaml:"rootNamespace,omitempty"`
+}
+
 // NewMeshService initializes a new MeshService structure with the given k8s client and
 // newRemoteClientFunc arguments (see the MeshService struct for details). The newRemoteClientFunc
 // can be passed a nil value and a default function will be used.
@@ -544,4 +551,37 @@ func (in *MeshService) resolveNetwork(clusterName string, kubeconfig *kubernetes
 	}
 
 	return networkName
+}
+
+// GetMeshConfig obtains the mesh configuration from Istio configmap
+func (in *MeshService) GetMeshConfig() (*MeshConfig, error) {
+	cfg := config.Get()
+
+	istioConfigMap, err := in.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+	if err != nil {
+		return nil, err
+	}
+
+	meshConfig := MeshConfig{}
+	err = yaml.Unmarshal([]byte(istioConfigMap.Data["mesh"]), &meshConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return &meshConfig, nil
+}
+
+// GetRootNamespace returns the root namespace if configured or the control plane namespace
+func (in *MeshService) GetRootNamespace() string {
+	meshConfig, err := in.GetMeshConfig()
+
+	if err == nil && meshConfig.RootNamespace != "" {
+		return meshConfig.RootNamespace
+	}
+	return config.Get().IstioNamespace
+}
+
+// IsRootNamespace returns true if the namespace is equal to the root namespace
+func (in *MeshService) IsRootNamespace(namespace string) bool {
+	return namespace == in.GetRootNamespace()
 }
