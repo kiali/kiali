@@ -6964,9 +6964,6 @@
       "description": "Pod holds a subset of v1.Pod data that is meaningful in Kiali",
       "type": "object",
       "properties": {
-        "ServiceAccountName": {
-          "type": "string"
-        },
         "annotations": {
           "type": "object",
           "additionalProperties": {
@@ -7023,6 +7020,10 @@
         },
         "proxyStatus": {
           "$ref": "#/definitions/ProxyStatus"
+        },
+        "serviceAccountName": {
+          "type": "string",
+          "x-go-name": "ServiceAccountName"
         },
         "status": {
           "type": "string",
@@ -8706,7 +8707,8 @@
       "type": "object",
       "required": [
         "workloadName",
-        "istioSidecar"
+        "istioSidecar",
+        "serviceAccountNames"
       ],
       "properties": {
         "istioSidecar": {
