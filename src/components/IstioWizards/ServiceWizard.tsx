@@ -350,9 +350,20 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
   onVsHosts = (valid: boolean, vsHosts: string[]) => {
     this.setState(prevState => {
       prevState.valid.vsHosts = valid;
-      // When adding a new Gateway, VirtualService host should be synced with Gateway host
       if (prevState.gateway && prevState.gateway.addGateway && prevState.gateway.newGateway) {
         prevState.gateway.gwHosts = vsHosts.join(',');
+      }
+      // Check if Gateway is valid after a VsHosts check
+      if (valid && !prevState.valid.gateway) {
+        const hasVsWildcard = vsHosts.some(h => h === '*');
+        if (hasVsWildcard) {
+          if (prevState.gateway && !prevState.gateway.addMesh) {
+            prevState.valid.gateway = true;
+          }
+        } else {
+          // If no wildcard Gateway should be ok
+          prevState.valid.gateway = true;
+        }
       }
       return {
         valid: prevState.valid,
@@ -392,7 +403,6 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
   onGateway = (valid: boolean, gateway: GatewaySelectorState) => {
     this.setState(prevState => {
       prevState.valid.gateway = valid;
-      // When adding a new Gateway, VirtualService host should be synced with Gateway host
       return {
         valid: prevState.valid,
         gateway: gateway,
@@ -545,7 +555,11 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
               <Tab eventKey={0} title={'Destination Hosts'}>
                 <div style={{ marginTop: '20px' }}>
-                  <VirtualServiceHosts vsHosts={this.state.vsHosts} onVsHostsChange={this.onVsHosts} />
+                  <VirtualServiceHosts
+                    vsHosts={this.state.vsHosts}
+                    gateway={this.state.gateway}
+                    onVsHostsChange={this.onVsHosts}
+                  />
                 </div>
               </Tab>
               <Tab eventKey={1} title={'Gateways'}>
@@ -556,6 +570,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
                     gateway={gatewaySelected}
                     isMesh={isMesh}
                     gateways={this.props.gateways}
+                    vsHosts={this.state.vsHosts}
                     onGatewayChange={this.onGateway}
                   />
                 </div>
