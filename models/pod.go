@@ -217,7 +217,7 @@ func (pods Pods) ServiceAccounts() []string {
 	}
 
 	sans := make([]string, 0, len(pods))
-	for sa, _ := range san {
+	for sa := range san {
 		sans = append(sans, sa)
 	}
 	return sans
