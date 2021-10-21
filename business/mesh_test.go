@@ -346,3 +346,124 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	check.NotNil(result)
 	check.Equal("KialiCluster", result.Name)
 }
+
+func TestGetMeshConfigOK(t *testing.T) {
+	k8s := new(kubetest.K8SClientMock)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	istioConfigMap := core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "istio",
+		},
+		Data: map[string]string{
+			"mesh": `rootNamespace: istio-config`,
+		},
+	}
+
+	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&istioConfigMap, nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	layer := NewWithBackends(k8s, nil, nil)
+	ms := layer.Mesh
+
+	m, _ := ms.GetMeshConfig()
+
+	assert.Equal(t, m.RootNamespace, "istio-config")
+}
+
+func TestGetConfiguredRootNamespace(t *testing.T) {
+	k8s := new(kubetest.K8SClientMock)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	istioConfigMap := core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "istio",
+		},
+		Data: map[string]string{
+			"mesh": `rootNamespace: istio-config`,
+		},
+	}
+
+	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&istioConfigMap, nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	layer := NewWithBackends(k8s, nil, nil)
+	ms := layer.Mesh
+
+	m, _ := ms.GetMeshConfig()
+
+	assert.Equal(t, m.RootNamespace, "istio-config")
+}
+
+func TestGetDefaultRootNamespace(t *testing.T) {
+	k8s := new(kubetest.K8SClientMock)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	istioConfigMap := core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "istio",
+		},
+		Data: map[string]string{
+			"mesh": ``,
+		},
+	}
+
+	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&istioConfigMap, nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	layer := NewWithBackends(k8s, nil, nil)
+	ms := layer.Mesh
+
+	rn := ms.GetRootNamespace()
+
+	assert.Equal(t, rn, "istio-system")
+}
+
+func TestIsRootNamespace(t *testing.T) {
+	k8s := new(kubetest.K8SClientMock)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	istioConfigMap := core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "istio",
+		},
+		Data: map[string]string{
+			"mesh": `rootNamespace: istio-config`,
+		},
+	}
+
+	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&istioConfigMap, nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	layer := NewWithBackends(k8s, nil, nil)
+	ms := layer.Mesh
+
+	assert.True(t, ms.IsRootNamespace("istio-config"))
+}
+
+func TestIsNotRootNamespace(t *testing.T) {
+	k8s := new(kubetest.K8SClientMock)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	istioConfigMap := core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "istio",
+		},
+		Data: map[string]string{
+			"mesh": `rootNamespace: istio-system`,
+		},
+	}
+
+	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&istioConfigMap, nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	layer := NewWithBackends(k8s, nil, nil)
+	ms := layer.Mesh
+
+	assert.False(t, ms.IsRootNamespace("istio-config"))
+}
