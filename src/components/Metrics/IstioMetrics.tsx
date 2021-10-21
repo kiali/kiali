@@ -119,7 +119,11 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
       if (this.props.direction !== prevProps.direction) {
         const settings = MetricsHelper.retrieveMetricsSettings();
         this.options = this.initOptions(settings);
-        this.setState({ labelsSettings: settings.labelsSettings });
+        this.setState({
+          labelsSettings: settings.labelsSettings,
+          showSpans: settings.showSpans,
+          showTrendlines: settings.showTrendlines
+        });
       }
       this.spanOverlay.reset();
       this.refresh();
@@ -307,7 +311,11 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
           </ToolbarGroup>
           <ToolbarGroup>
             <ToolbarItem className={displayFlex}>
-              <MetricsReporter onChanged={this.onReporterChanged} direction={this.props.direction} />
+              <MetricsReporter
+                onChanged={this.onReporterChanged}
+                direction={this.props.direction}
+                reporter={this.options.reporter}
+              />
             </ToolbarItem>
           </ToolbarGroup>
           <ToolbarGroup>
@@ -328,8 +336,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                     checked={this.state.showSpans}
                     onChange={event => this.onSpans(event.target.checked)}
                   />
-                  &nbsp;
-                  Spans
+                  &nbsp; Spans
                 </label>
               </div>
             </ToolbarItem>
@@ -350,8 +357,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                     checked={this.state.showTrendlines}
                     onChange={event => this.onTrendlines(event.target.checked)}
                   />
-                  &nbsp;
-                  Trendlines
+                  &nbsp; Trendlines
                 </label>
               </div>
             </ToolbarItem>
