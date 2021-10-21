@@ -211,9 +211,14 @@ func (pods Pods) SyncedPodProxiesCount() int32 {
 
 // ServiceAccounts returns the names of each service account of the pod list
 func (pods Pods) ServiceAccounts() []string {
-	san := make([]string, 0, len(pods))
+	san := map[string]int{}
 	for _, pod := range pods {
-		san = append(san, pod.ServiceAccountName)
+		san[pod.ServiceAccountName]++
 	}
-	return san
+
+	sans := make([]string, 0, len(pods))
+	for sa, _ := range san {
+		sans = append(sans, sa)
+	}
+	return sans
 }
