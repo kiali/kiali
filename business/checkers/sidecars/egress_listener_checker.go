@@ -8,7 +8,6 @@ import (
 
 	core_v1 "k8s.io/api/core/v1"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -62,7 +61,6 @@ func (elc EgressHostChecker) getHosts() ([]HostWithIndex, bool) {
 
 func (elc EgressHostChecker) validateHost(host string, egrIdx, hostIdx int) ([]*models.IstioCheck, bool) {
 	checks := make([]*models.IstioCheck, 0)
-	ins := config.Get().IstioNamespace
 	sns := elc.Sidecar.Namespace
 
 	hostNs, dnsName, valid := getHostComponents(host)
@@ -75,44 +73,31 @@ func (elc EgressHostChecker) validateHost(host string, egrIdx, hostIdx int) ([]*
 		return checks, true
 	}
 
-	// Show cross-namespace validation
-	// when namespace is different to both istio control plane or sidecar namespace
-	if hostNs != ins && hostNs != sns && hostNs != "." {
-		return append(checks, buildCheck("validation.unable.cross-namespace", egrIdx, hostIdx)), true
+	// namespace/* is a valid scenario
+	if dnsName == "*" {
+		return checks, true
 	}
 
-	// Lookup services when ns is . or sidecar namespace
-	if hostNs == sns || hostNs == "." {
-		// namespace/* is a valid scenario
-		if dnsName == "*" {
-			return checks, true
-		}
+	fqdn := kubernetes.ParseHost(dnsName, sns, elc.Sidecar.ClusterName)
 
-		// Parse the dnsName to a kubernetes Host
-		fqdn := kubernetes.ParseHost(dnsName, sns, elc.Sidecar.ClusterName)
-		if fqdn.Namespace != sns && fqdn.Namespace != "" {
-			return append(checks, buildCheck("validation.unable.cross-namespace", egrIdx, hostIdx)), true
-		}
-
-		// Lookup for matching services
-		if !elc.HasMatchingService(fqdn, sns) {
-			checks = append(checks, buildCheck("sidecar.egress.servicenotfound", egrIdx, hostIdx))
-		}
+	// Lookup for matching services
+	if !elc.HasMatchingService(fqdn, sns) {
+		checks = append(checks, buildCheck("sidecar.egress.servicenotfound", egrIdx, hostIdx))
 	}
 
 	return checks, true
 }
 
 func (elc EgressHostChecker) HasMatchingService(host kubernetes.Host, itemNamespace string) bool {
-	if strings.HasPrefix(host.Service, "*") {
+	// Check wildcard hosts - needs to match "*" and "*.suffix" also.
+	if host.IsWildcard() && host.Namespace == itemNamespace {
 		return true
 	}
-
 	if kubernetes.HasMatchingServices(host.Service, elc.Services) {
 		return true
 	}
 
-	return kubernetes.HasMatchingServiceEntries(host.Service, elc.ServiceEntries)
+	return kubernetes.HasMatchingServiceEntries(host.String(), elc.ServiceEntries)
 }
 
 func getHostComponents(host string) (string, string, bool) {
