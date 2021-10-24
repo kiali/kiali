@@ -5,8 +5,10 @@ import (
 	"sync"
 
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business/checkers"
@@ -29,7 +31,7 @@ type ObjectChecker interface {
 // GetValidations returns an IstioValidations object with all the checks found when running
 // all the enabled checkers. If service is "" then the whole namespace is validated.
 // If service is not empty string, then all of its associated Istio objects are validated.
-func (in *IstioValidationsService) GetValidations(namespace, service string) (models.IstioValidations, error) {
+func (in *IstioValidationsService) GetValidations(namespace, service, workload string) (models.IstioValidations, error) {
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
@@ -98,6 +100,8 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 
 	if service != "" {
 		objectCheckers = append(objectCheckers, in.getServiceCheckers(namespace, services, deployments, pods)...)
+	} else if workload != "" {
+		objectCheckers = append(objectCheckers, in.getWorkloadCheckers(namespace, rbacDetails.AuthorizationPolicies, workloadsPerNamespace[namespace])...)
 	}
 
 	// Get group validations for same kind istio objects
@@ -107,6 +111,12 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	}
 
 	return validations, nil
+}
+
+func (in *IstioValidationsService) getWorkloadCheckers(namespace string, authorizationPolicies []security_v1beta.AuthorizationPolicy, workloadList models.WorkloadList) []ObjectChecker {
+	return []ObjectChecker{
+		checkers.WorkloadChecker{Namespace: namespace, AuthorizationPolicies: authorizationPolicies, WorkloadList: workloadList},
+	}
 }
 
 func (in *IstioValidationsService) getServiceCheckers(namespace string, services []core_v1.Service, deployments []apps_v1.Deployment, pods []core_v1.Pod) []ObjectChecker {

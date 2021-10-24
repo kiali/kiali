@@ -71,7 +71,6 @@ func (a AuthorizationPolicyChecker) runGroupChecks() models.IstioValidations {
 
 	enabledDRCheckers := []GroupChecker{
 		authorization.MtlsEnabledChecker{Namespace: a.Namespace, AuthorizationPolicies: a.AuthorizationPolicies, MtlsDetails: a.MtlsDetails},
-		authorization.UncoveredWorkloadChecker{AuthorizationPolicies: a.AuthorizationPolicies, WorkloadList: a.WorkloadList},
 	}
 
 	for _, checker := range enabledDRCheckers {

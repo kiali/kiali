@@ -31,7 +31,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 	vs := mockCombinedValidationService(fakeCombinedIstioConfigList(),
 		[]string{"details", "product", "customer"}, fakePods())
 
-	validations, _ := vs.GetValidations("test", "")
+	validations, _ := vs.GetValidations("test", "", "")
 	assert.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
 }

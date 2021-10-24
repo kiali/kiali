@@ -59,7 +59,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		go func(namespace string, istioConfigValidations *models.IstioValidations, err *error) {
 			defer wg.Done()
 			// We don't filter by objects when calling validations, because certain validations require fetching all types to get the correct errors
-			istioConfigValidationResults, errValidations := business.Validations.GetValidations(namespace, "")
+			istioConfigValidationResults, errValidations := business.Validations.GetValidations(namespace, "", "")
 			if errValidations != nil && *err == nil {
 				*err = errValidations
 			} else {

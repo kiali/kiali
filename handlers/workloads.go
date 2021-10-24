@@ -3,8 +3,10 @@ package handlers
 import (
 	"io/ioutil"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/mux"
+	"github.com/kiali/kiali/models"
 )
 
 // WorkloadList is the API handler to fetch all the workloads to be displayed, related to a single namespace
@@ -44,8 +46,30 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	workload := params["workload"]
 	workloadType := query.Get("type")
 
+	includeValidations := false
+	if _, found := query["validate"]; found {
+		includeValidations = true
+	}
+
+	var istioConfigValidations = models.IstioValidations{}
+	var errValidations error
+
+	wg := sync.WaitGroup{}
+	if includeValidations {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			istioConfigValidations, errValidations = business.Validations.GetValidations(namespace, "", workload)
+		}()
+	}
+
 	// Fetch and build workload
 	workloadDetails, err := business.Workload.GetWorkload(namespace, workload, workloadType, true)
+	if includeValidations && err == nil {
+		wg.Wait()
+		workloadDetails.Validations = istioConfigValidations
+		err = errValidations
+	}
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -70,13 +94,35 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 	workload := params["workload"]
 	workloadType := query.Get("type")
 
+	includeValidations := false
+	if _, found := query["validate"]; found {
+		includeValidations = true
+	}
+
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
 	}
 	jsonPatch := string(body)
-	workloadDetails, err := business.Workload.UpdateWorkload(namespace, workload, workloadType, true, jsonPatch)
 
+	var istioConfigValidations = models.IstioValidations{}
+	var errValidations error
+
+	wg := sync.WaitGroup{}
+	if includeValidations {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			istioConfigValidations, errValidations = business.Validations.GetValidations(namespace, "", workload)
+		}()
+	}
+
+	workloadDetails, err := business.Workload.UpdateWorkload(namespace, workload, workloadType, true, jsonPatch)
+	if includeValidations && err == nil {
+		wg.Wait()
+		workloadDetails.Validations = istioConfigValidations
+		err = errValidations
+	}
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

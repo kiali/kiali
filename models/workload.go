@@ -24,6 +24,8 @@ type WorkloadList struct {
 	// Workloads for a given namespace
 	// required: true
 	Workloads []WorkloadListItem `json:"workloads"`
+
+	Validations IstioValidations `json:"validations"`
 }
 
 // WorkloadListItem has the necessary information to display the console workload list
@@ -126,6 +128,8 @@ type Workload struct {
 
 	// Additional details to display, such as configured annotations
 	AdditionalDetails []AdditionalItem `json:"additionalDetails"`
+
+	Validations IstioValidations `json:"validations"`
 }
 
 type Workloads []*Workload
