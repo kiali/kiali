@@ -30,7 +30,8 @@ const defaultProps = () => ({
       appLabel: false,
       versionLabel: false,
       containers: [{ name: 'busybox', image: 'busybox:v1', isProxy: false, isReady: true }],
-      istioContainers: [{ name: 'istio-proxy', image: 'istio:latest', isProxy: true, isReady: true }]
+      istioContainers: [{ name: 'istio-proxy', image: 'istio:latest', isProxy: true, isReady: true }],
+      serviceAccountName: 'namespace-testingpod'
     }
   ]
 });

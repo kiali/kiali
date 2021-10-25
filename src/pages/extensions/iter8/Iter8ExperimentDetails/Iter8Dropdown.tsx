@@ -135,7 +135,8 @@ class Iter8Dropdown extends React.Component<Props, State> {
         istioSidecar: false,
         labels: {},
         resourceVersion: 'v',
-        createdAt: ''
+        createdAt: '',
+        serviceAccountNames: []
       });
     });
 

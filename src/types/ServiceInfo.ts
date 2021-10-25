@@ -35,6 +35,7 @@ export interface WorkloadOverview {
   labels?: { [key: string]: string };
   resourceVersion: string;
   createdAt: string;
+  serviceAccountNames: string[];
 }
 
 export interface Service {

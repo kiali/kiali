@@ -9,6 +9,7 @@ import { HealthSubItem } from '../../types/Health';
 import { renderTrafficStatus } from '../Health/HealthDetails';
 import { createIcon } from '../Health/Helper';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
+import { KialiIcon } from '../../config/KialiIcon';
 
 type Props = {
   namespace: string;
@@ -25,11 +26,23 @@ const iconStyle = style({
 });
 
 const resourceListStyle = style({
-  margin: '0px 0 11px 0'
+  margin: '0px 0 11px 0',
+  $nest: {
+    '& > span': {
+      float: 'left',
+      width: '125px',
+      fontWeight: 700
+    }
+  }
 });
 
 const titleStyle = style({
   margin: '15px 0 8px 0'
+});
+
+const infoStyle = style({
+  margin: '0px 4px 2px 10px',
+  verticalAlign: '-4px !important'
 });
 
 class DetailDescription extends React.PureComponent<Props> {
@@ -90,6 +103,9 @@ class DetailDescription extends React.PureComponent<Props> {
         <Link to={'/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName}>
           {workload.workloadName}
         </Link>
+        <Tooltip position={TooltipPosition.right} content={this.renderServiceAccounts(workload)}>
+          <KialiIcon.Info className={infoStyle} />
+        </Tooltip>
         {!workload.istioSidecar && (
           <MissingSidecar namespace={this.props.namespace} tooltip={true} style={{ marginLeft: '10px' }} text={''} />
         )}
@@ -117,6 +133,9 @@ class DetailDescription extends React.PureComponent<Props> {
           <Link to={'/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName}>
             {workload.workloadName}
           </Link>
+          <Tooltip position={TooltipPosition.right} content={this.renderServiceAccounts(workload)}>
+            <KialiIcon.Info className={infoStyle} />
+          </Tooltip>
           <Tooltip
             aria-label={'Health indicator'}
             content={<>{sub.text}</>}
@@ -138,6 +157,25 @@ class DetailDescription extends React.PureComponent<Props> {
         </span>
       );
     }
+  }
+
+  private renderServiceAccounts(workload: AppWorkload) {
+    return (
+      <div style={{ textAlign: 'left' }}>
+        {workload.serviceAccountNames && workload.serviceAccountNames.length > 0 ? (
+          <div key="properties-list" className={resourceListStyle}>
+            <span>Service accounts</span>
+            <ul>
+              {workload.serviceAccountNames.map(serviceAccount => (
+                <li>{serviceAccount}</li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          'Not found'
+        )}
+      </div>
+    );
   }
 
   private renderWorkloadStatus() {

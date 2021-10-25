@@ -105,6 +105,10 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
                 </div>
               </li>
               <li>
+                <span>Service Account</span>
+                <div style={{ display: 'inline-block' }}>{pod.serviceAccountName || 'Not found'}</div>
+              </li>
+              <li>
                 <span>Istio Init Container</span>
                 <div style={{ display: 'inline-block' }}>
                   {pod.istioInitContainers ? pod.istioInitContainers.map(c => `${c.image}`).join(', ') : 'Not found'}

@@ -80,7 +80,8 @@ class ServiceDescription extends React.Component<ServiceInfoDescriptionProps, St
             }
             workloads.push({
               workloadName: wk.name,
-              istioSidecar: wk.istioSidecar
+              istioSidecar: wk.istioSidecar,
+              serviceAccountNames: wk.serviceAccountNames
             });
           });
       }

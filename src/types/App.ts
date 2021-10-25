@@ -9,6 +9,7 @@ export interface AppId {
 export interface AppWorkload {
   workloadName: string;
   istioSidecar: boolean;
+  serviceAccountNames: string[];
 }
 
 export interface App {

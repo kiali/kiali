@@ -135,6 +135,7 @@ export interface Pod {
   containers?: ContainerInfo[];
   istioContainers?: ContainerInfo[];
   istioInitContainers?: ContainerInfo[];
+  serviceAccountName: string;
   status: string;
   statusMessage?: string;
   statusReason?: string;
