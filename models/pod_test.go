@@ -182,3 +182,31 @@ func TestSyncedPodProxiesCount(t *testing.T) {
 	pods = append(pods, pod)
 	assert.Equal(int32(-1), pods.SyncedPodProxiesCount())
 }
+
+func TestServiceNames(t *testing.T) {
+	pods := Pods{
+		{
+			Name:               "details-1282912-shgf",
+			ServiceAccountName: "bookinfo-details",
+		},
+		{
+			Name:               "details-1282912-hsua8",
+			ServiceAccountName: "bookinfo-details",
+		},
+		{
+			Name:               "rating-1282912-2abj",
+			ServiceAccountName: "bookinfo-rating",
+		},
+		{
+			Name:               "rating-1282912-acnd",
+			ServiceAccountName: "bookinfo-rating",
+		},
+		{
+			Name:               "productpage-1282912-acnd",
+			ServiceAccountName: "bookinfo-productpage",
+		},
+	}
+
+	a := assert.New(t)
+	a.ElementsMatch([]string{"bookinfo-details", "bookinfo-productpage", "bookinfo-rating"}, pods.ServiceAccounts())
+}

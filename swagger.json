@@ -7021,6 +7021,10 @@
         "proxyStatus": {
           "$ref": "#/definitions/ProxyStatus"
         },
+        "serviceAccountName": {
+          "type": "string",
+          "x-go-name": "ServiceAccountName"
+        },
         "status": {
           "type": "string",
           "x-go-name": "Status"
@@ -8430,6 +8434,14 @@
           },
           "x-go-name": "Runtimes"
         },
+        "serviceAccountNames": {
+          "description": "Names of the workload service accounts",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ServiceAccountNames"
+        },
         "services": {
           "$ref": "#/definitions/Services"
         },
@@ -8695,7 +8707,8 @@
       "type": "object",
       "required": [
         "workloadName",
-        "istioSidecar"
+        "istioSidecar",
+        "serviceAccountNames"
       ],
       "properties": {
         "istioSidecar": {
@@ -8703,6 +8716,15 @@
           "type": "boolean",
           "x-go-name": "IstioSidecar",
           "example": true
+        },
+        "serviceAccountNames": {
+          "description": "List of service accounts involved in this application",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ServiceAccountNames",
+          "example": "productpage, reviews, details"
         },
         "workloadName": {
           "description": "Name of a workload member of an application",
@@ -8824,6 +8846,14 @@
           "type": "string",
           "x-go-name": "ResourceVersion",
           "example": "192892127"
+        },
+        "serviceAccountNames": {
+          "description": "Names of the workload service accounts",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ServiceAccountNames"
         },
         "type": {
           "description": "Type of the workload",

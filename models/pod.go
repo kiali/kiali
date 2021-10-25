@@ -28,6 +28,7 @@ type Pod struct {
 	VersionLabel        bool              `json:"versionLabel"`
 	Annotations         map[string]string `json:"annotations"`
 	ProxyStatus         *ProxyStatus      `json:"proxyStatus"`
+	ServiceAccountName  string            `json:"serviceAccountName"`
 }
 
 // Reference holds some information on the pod creator
@@ -121,6 +122,7 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 	pod.StatusReason = string(p.Status.Reason)
 	_, pod.AppLabel = p.Labels[conf.IstioLabels.AppLabelName]
 	_, pod.VersionLabel = p.Labels[conf.IstioLabels.VersionLabelName]
+	pod.ServiceAccountName = p.Spec.ServiceAccountName
 }
 
 func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.Config) bool {
@@ -205,4 +207,18 @@ func (pods Pods) SyncedPodProxiesCount() int32 {
 	}
 
 	return syncedProxies
+}
+
+// ServiceAccounts returns the names of each service account of the pod list
+func (pods Pods) ServiceAccounts() []string {
+	san := map[string]int{}
+	for _, pod := range pods {
+		san[pod.ServiceAccountName]++
+	}
+
+	sans := make([]string, 0, len(pods))
+	for sa := range san {
+		sans = append(sans, sa)
+	}
+	return sans
 }
