@@ -70,7 +70,8 @@ func Iter8ExperimentGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if experiment.ExperimentItem.Kind == "Deployment" {
-		workloadList, err := business.Workload.GetWorkloadList(namespace, false)
+		criteria := business2.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false}
+		workloadList, err := business.Workload.GetWorkloadList(criteria)
 		if err != nil {
 			handleErrorResponse(w, err)
 			return

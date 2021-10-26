@@ -209,7 +209,7 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetServices", "ns", mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
 	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
-	k8s.On("GetPods", "ns", "app").Return(fakePodsHealthReviewWithoutIstio(), nil)
+	k8s.On("GetPods", "ns", "").Return(fakePodsHealthReviewWithoutIstio(), nil)
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 

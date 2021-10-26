@@ -1,7 +1,6 @@
 package business
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -246,9 +245,9 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 	var ws models.Workloads
 	cfg := config.Get()
 
-	labelSelector := cfg.IstioLabels.AppLabelName
+	var selector labels.Set
 	if appName != "" {
-		labelSelector = fmt.Sprintf("%s=%s", cfg.IstioLabels.AppLabelName, appName)
+		selector = labels.Set(map[string]string{cfg.IstioLabels.AppLabelName: appName})
 	}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
@@ -271,8 +270,7 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 			services, err = layer.k8s.GetServices(namespace, nil)
 		}
 		if appName != "" {
-			selector := labels.Set(map[string]string{cfg.IstioLabels.AppLabelName: appName}).AsSelector()
-			services = kubernetes.FilterServicesForSelector(selector, services)
+			services = kubernetes.FilterServicesForSelector(selector.AsSelector(), services)
 		}
 		if err != nil {
 			log.Errorf("Error fetching Services per namespace %s: %s", namespace, err)
@@ -283,6 +281,10 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 	go func() {
 		defer wg.Done()
 		var err error
+		labelSelector := ""
+		if selector != nil {
+			labelSelector = selector.String()
+		}
 		ws, err = fetchWorkloads(layer, namespace, labelSelector)
 		if err != nil {
 			log.Errorf("Error fetching Workload per namespace %s: %s", namespace, err)

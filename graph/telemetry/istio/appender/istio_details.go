@@ -262,7 +262,8 @@ func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo 
 func (a IstioAppender) getIngressGatewayWorkloads(globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
 	ingressWorkloads := make(map[string][]models.WorkloadListItem)
 	for namespace := range a.AccessibleNamespaces {
-		wList, err := globalInfo.Business.Workload.GetWorkloadList(namespace, false)
+		criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false}
+		wList, err := globalInfo.Business.Workload.GetWorkloadList(criteria)
 		graph.CheckError(err)
 
 		// Find Ingress Gateway deployments

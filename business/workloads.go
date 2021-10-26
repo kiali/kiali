@@ -33,6 +33,11 @@ type WorkloadService struct {
 	businessLayer *Layer
 }
 
+type WorkloadCriteria struct {
+	Namespace             string
+	IncludeIstioResources bool
+}
+
 // PodLog reports log entries
 type PodLog struct {
 	Entries []LogEntry `json:"entries,omitempty"`
@@ -75,16 +80,16 @@ func isWorkloadIncluded(workload string) bool {
 }
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
-func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources bool) (models.WorkloadList, error) {
+func (in *WorkloadService) GetWorkloadList(criteria WorkloadCriteria) (models.WorkloadList, error) {
 	workloadList := &models.WorkloadList{
-		Namespace: models.Namespace{Name: namespace, CreationTimestamp: time.Time{}},
+		Namespace: models.Namespace{Name: criteria.Namespace, CreationTimestamp: time.Time{}},
 		Workloads: []models.WorkloadListItem{},
 	}
 	var ws models.Workloads
 	var err error
 
 	nFetches := 1
-	if linkIstioResources {
+	if criteria.IncludeIstioResources {
 		nFetches = 2
 	}
 
@@ -95,15 +100,15 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 	go func() {
 		defer wg.Done()
 		var err2 error
-		ws, err2 = fetchWorkloads(in.businessLayer, namespace, "")
+		ws, err2 = fetchWorkloads(in.businessLayer, criteria.Namespace, "")
 		if err2 != nil {
-			log.Errorf("Error fetching Workloads per namespace %s: %s", namespace, err2)
+			log.Errorf("Error fetching Workloads per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2
 		}
 	}()
 
-	criteria := IstioConfigCriteria{
-		Namespace:                     namespace,
+	istioConfigCriteria := IstioConfigCriteria{
+		Namespace:                     criteria.Namespace,
 		IncludeAuthorizationPolicies:  true,
 		IncludeEnvoyFilters:           true,
 		IncludeGateways:               true,
@@ -113,13 +118,13 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 	}
 	var istioConfigList models.IstioConfigList
 
-	if linkIstioResources {
+	if criteria.IncludeIstioResources {
 		go func() {
 			defer wg.Done()
 			var err2 error
-			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(istioConfigCriteria)
 			if err2 != nil {
-				log.Errorf("Error fetching Istio Config per namespace %s: %s", namespace, err2)
+				log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err2)
 				errChan <- err2
 			}
 		}()
@@ -134,7 +139,7 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{}
 		wItem.ParseWorkload(w)
-		if linkIstioResources {
+		if criteria.IncludeIstioResources {
 			wSelector := labels.Set(wItem.Labels).AsSelector().String()
 			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(wSelector, istioConfigList))
 		}

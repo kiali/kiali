@@ -3,6 +3,7 @@ package appender
 import (
 	"fmt"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/models"
@@ -269,7 +270,8 @@ func getWorkloadList(namespace string, gi *graph.AppenderGlobalInfo) *models.Wor
 		return workloadList
 	}
 
-	workloadList, err := gi.Business.Workload.GetWorkloadList(namespace, false)
+	criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false}
+	workloadList, err := gi.Business.Workload.GetWorkloadList(criteria)
 	graph.CheckError(err)
 	workloadListMap[namespace] = &workloadList
 

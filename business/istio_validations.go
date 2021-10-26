@@ -372,7 +372,8 @@ func (in *IstioValidationsService) fetchPods(rValue *[]core_v1.Pod, namespace st
 func (in *IstioValidationsService) fetchWorkloads(rValue *models.WorkloadList, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		workloadList, err := in.businessLayer.Workload.GetWorkloadList(namespace, false)
+		criteria := WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false}
+		workloadList, err := in.businessLayer.Workload.GetWorkloadList(criteria)
 		if err != nil {
 			select {
 			case errChan <- err:
@@ -395,7 +396,8 @@ func (in *IstioValidationsService) fetchAllWorkloads(rValue *map[string]models.W
 		}
 		allWorkloads := map[string]models.WorkloadList{}
 		for _, ns := range nss {
-			workloadList, err := in.businessLayer.Workload.GetWorkloadList(ns.Name, false)
+			criteria := WorkloadCriteria{Namespace: ns.Name, IncludeIstioResources: false}
+			workloadList, err := in.businessLayer.Workload.GetWorkloadList(criteria)
 			if err != nil {
 				select {
 				case errChan <- err:

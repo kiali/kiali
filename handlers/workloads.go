@@ -5,11 +5,16 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+
+	"github.com/kiali/kiali/business"
 )
 
 // WorkloadList is the API handler to fetch all the workloads to be displayed, related to a single namespace
 func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
+	namespace := params["namespace"]
+
+	criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: true}
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -17,10 +22,9 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Workloads initialization error: "+err.Error())
 		return
 	}
-	namespace := params["namespace"]
 
 	// Fetch and build workloads
-	workloadList, err := business.Workload.GetWorkloadList(namespace, true)
+	workloadList, err := business.Workload.GetWorkloadList(criteria)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
