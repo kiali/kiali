@@ -28,8 +28,13 @@ type SvcService struct {
 	businessLayer *Layer
 }
 
-// GetServiceList returns a list of all services for a given Namespace
-func (in *SvcService) GetServiceList(namespace string, linkIstioResources bool) (*models.ServiceList, error) {
+type ServiceCriteria struct {
+	Namespace             string
+	IncludeIstioResources bool
+}
+
+// GetServiceList returns a list of all services for a given criteria
+func (in *SvcService) GetServiceList(criteria ServiceCriteria) (*models.ServiceList, error) {
 	var svcs []core_v1.Service
 	var pods []core_v1.Pod
 	var deployments []apps_v1.Deployment
@@ -37,12 +42,12 @@ func (in *SvcService) GetServiceList(namespace string, linkIstioResources bool) 
 	var err error
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
+	if _, err = in.businessLayer.Namespace.GetNamespace(criteria.Namespace); err != nil {
 		return nil, err
 	}
 
 	nFetches := 3
-	if linkIstioResources {
+	if criteria.IncludeIstioResources {
 		nFetches = 4
 	}
 
@@ -55,13 +60,13 @@ func (in *SvcService) GetServiceList(namespace string, linkIstioResources bool) 
 		var err2 error
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
-		if IsNamespaceCached(namespace) {
-			svcs, err2 = kialiCache.GetServices(namespace, nil)
+		if IsNamespaceCached(criteria.Namespace) {
+			svcs, err2 = kialiCache.GetServices(criteria.Namespace, nil)
 		} else {
-			svcs, err2 = in.k8s.GetServices(namespace, nil)
+			svcs, err2 = in.k8s.GetServices(criteria.Namespace, nil)
 		}
 		if err2 != nil {
-			log.Errorf("Error fetching Services per namespace %s: %s", namespace, err2)
+			log.Errorf("Error fetching Services per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2
 		}
 	}()
@@ -71,13 +76,13 @@ func (in *SvcService) GetServiceList(namespace string, linkIstioResources bool) 
 		var err2 error
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
-		if IsNamespaceCached(namespace) {
-			pods, err2 = kialiCache.GetPods(namespace, "")
+		if IsNamespaceCached(criteria.Namespace) {
+			pods, err2 = kialiCache.GetPods(criteria.Namespace, "")
 		} else {
-			pods, err2 = in.k8s.GetPods(namespace, "")
+			pods, err2 = in.k8s.GetPods(criteria.Namespace, "")
 		}
 		if err2 != nil {
-			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err2)
+			log.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2
 		}
 	}()
@@ -87,20 +92,20 @@ func (in *SvcService) GetServiceList(namespace string, linkIstioResources bool) 
 		var err2 error
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
-		if IsNamespaceCached(namespace) {
-			deployments, err2 = kialiCache.GetDeployments(namespace)
+		if IsNamespaceCached(criteria.Namespace) {
+			deployments, err2 = kialiCache.GetDeployments(criteria.Namespace)
 		} else {
-			deployments, err2 = in.k8s.GetDeployments(namespace)
+			deployments, err2 = in.k8s.GetDeployments(criteria.Namespace)
 		}
 		if err2 != nil {
-			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err2)
+			log.Errorf("Error fetching Deployments per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2
 		}
 	}()
 
-	if linkIstioResources {
+	if criteria.IncludeIstioResources {
 		criteria := IstioConfigCriteria{
-			Namespace:               namespace,
+			Namespace:               criteria.Namespace,
 			IncludeDestinationRules: true,
 			IncludeGateways:         true,
 			IncludeVirtualServices:  true,
@@ -110,7 +115,7 @@ func (in *SvcService) GetServiceList(namespace string, linkIstioResources bool) 
 			var err2 error
 			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
 			if err2 != nil {
-				log.Errorf("Error fetching IstioConfigList per namespace %s: %s", namespace, err2)
+				log.Errorf("Error fetching IstioConfigList per namespace %s: %s", criteria.Namespace, err2)
 				errChan <- err2
 			}
 		}()
@@ -123,7 +128,7 @@ func (in *SvcService) GetServiceList(namespace string, linkIstioResources bool) 
 	}
 
 	// Convert to Kiali model
-	return in.buildServiceList(models.Namespace{Name: namespace}, svcs, pods, deployments, istioConfigList), nil
+	return in.buildServiceList(models.Namespace{Name: criteria.Namespace}, svcs, pods, deployments, istioConfigList), nil
 }
 
 func getVSKialiScenario(vs []networking_v1alpha3.VirtualService) string {
