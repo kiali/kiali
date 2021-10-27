@@ -262,17 +262,14 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, wo
 	}()
 
 	if includeServices {
-		var services []core_v1.Service
+		var services *models.ServiceList
 		var err error
-		// Check if namespace is cached
-		if IsNamespaceCached(namespace) {
-			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
-				services, err = kialiCache.GetServices(namespace, workload.Labels)
-			}
-		} else {
-			services, err = in.k8s.GetServices(namespace, workload.Labels)
+
+		criteria := ServiceCriteria{
+			Namespace:              namespace,
+			IncludeOnlyDefinitions: true,
 		}
+		services, err = in.businessLayer.Svc.GetServiceList(criteria)
 		if err != nil {
 			return nil, err
 		}
@@ -859,7 +856,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 	for _, cname := range cnames {
 		w := &models.Workload{
 			Pods:     models.Pods{},
-			Services: models.Services{},
+			Services: []models.ServiceOverview{},
 		}
 		ctype := controllers[cname]
 		// Flag to add a controller if it is found
@@ -1081,7 +1078,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 
 	wl := &models.Workload{
 		Pods:              models.Pods{},
-		Services:          models.Services{},
+		Services:          []models.ServiceOverview{},
 		Runtimes:          []models.Runtime{},
 		AdditionalDetails: []models.AdditionalItem{},
 	}
@@ -1423,7 +1420,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 	if _, exist := controllers[workloadName]; exist {
 		w := models.Workload{
 			Pods:              models.Pods{},
-			Services:          models.Services{},
+			Services:          []models.ServiceOverview{},
 			Runtimes:          []models.Runtime{},
 			AdditionalDetails: []models.AdditionalItem{},
 		}
