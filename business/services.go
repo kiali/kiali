@@ -29,7 +29,7 @@ type SvcService struct {
 }
 
 type ServiceCriteria struct {
-	Namespace             string
+	Namespace              string
 	IncludeIstioResources  bool
 	IncludeOnlyDefinitions bool
 	ServiceSelector        string
@@ -60,19 +60,20 @@ func (in *SvcService) GetServiceList(criteria ServiceCriteria) (*models.ServiceL
 	go func() {
 		defer wg.Done()
 		var err2 error
-		// Check if namespace is cached
-		// Namespace access is checked in the upper call
-		if IsNamespaceCached(criteria.Namespace) {
-			svcs, err2 = kialiCache.GetServices(criteria.Namespace, nil)
-		} else {
-			svcs, err2 = in.k8s.GetServices(criteria.Namespace, nil)
-		}
+		var selectorLabels map[string]string
 		if criteria.ServiceSelector != "" {
 			if selector, err3 := labels.ConvertSelectorToLabelsMap(criteria.ServiceSelector); err3 == nil {
-				svcs = kubernetes.FilterServicesForSelector(selector.AsSelector(), svcs)
+				selectorLabels = selector
 			} else {
 				log.Warningf("Services not filtered. Selector %s not valid", criteria.ServiceSelector)
 			}
+		}
+		// Check if namespace is cached
+		// Namespace access is checked in the upper call
+		if IsNamespaceCached(criteria.Namespace) {
+			svcs, err2 = kialiCache.GetServices(criteria.Namespace, selectorLabels)
+		} else {
+			svcs, err2 = in.k8s.GetServices(criteria.Namespace, selectorLabels)
 		}
 		if err2 != nil {
 			log.Errorf("Error fetching Services per namespace %s: %s", criteria.Namespace, err2)
@@ -203,13 +204,13 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 		/** Check if Service has additional item icon */
 		services[i] = models.ServiceOverview{
 			Name:                   item.Name,
-			Namespace:				item.Namespace,
+			Namespace:              item.Namespace,
 			IstioSidecar:           hasSidecar,
 			AppLabel:               appLabel,
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(conf, item.ObjectMeta.Annotations),
 			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()),
 			Labels:                 item.Labels,
-			Selector:			    item.Spec.Selector,
+			Selector:               item.Spec.Selector,
 			IstioReferences:        svcReferences,
 			KialiWizard:            kialiWizard,
 		}

@@ -267,10 +267,10 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 		var err error
 		// Check if namespace is cached
 		criteria := ServiceCriteria{
-			Namespace: namespace,
-			IncludeIstioResources: false,
+			Namespace:              namespace,
+			IncludeIstioResources:  false,
 			IncludeOnlyDefinitions: true,
-			ServiceSelector: appNameSelector,
+			ServiceSelector:        appNameSelector,
 		}
 		ss, err = layer.Svc.GetServiceList(criteria)
 		if err != nil {
