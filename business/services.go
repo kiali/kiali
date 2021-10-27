@@ -30,7 +30,9 @@ type SvcService struct {
 
 type ServiceCriteria struct {
 	Namespace             string
-	IncludeIstioResources bool
+	IncludeIstioResources  bool
+	IncludeOnlyDefinitions bool
+	ServiceSelector        string
 }
 
 // GetServiceList returns a list of all services for a given criteria
@@ -65,6 +67,13 @@ func (in *SvcService) GetServiceList(criteria ServiceCriteria) (*models.ServiceL
 		} else {
 			svcs, err2 = in.k8s.GetServices(criteria.Namespace, nil)
 		}
+		if criteria.ServiceSelector != "" {
+			if selector, err3 := labels.ConvertSelectorToLabelsMap(criteria.ServiceSelector); err3 == nil {
+				svcs = kubernetes.FilterServicesForSelector(selector.AsSelector(), svcs)
+			} else {
+				log.Warningf("Services not filtered. Selector %s not valid", criteria.ServiceSelector)
+			}
+		}
 		if err2 != nil {
 			log.Errorf("Error fetching Services per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2
@@ -74,32 +83,36 @@ func (in *SvcService) GetServiceList(criteria ServiceCriteria) (*models.ServiceL
 	go func() {
 		defer wg.Done()
 		var err2 error
-		// Check if namespace is cached
-		// Namespace access is checked in the upper call
-		if IsNamespaceCached(criteria.Namespace) {
-			pods, err2 = kialiCache.GetPods(criteria.Namespace, "")
-		} else {
-			pods, err2 = in.k8s.GetPods(criteria.Namespace, "")
-		}
-		if err2 != nil {
-			log.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err2)
-			errChan <- err2
+		if !criteria.IncludeOnlyDefinitions {
+			// Check if namespace is cached
+			// Namespace access is checked in the upper call
+			if IsNamespaceCached(criteria.Namespace) {
+				pods, err2 = kialiCache.GetPods(criteria.Namespace, "")
+			} else {
+				pods, err2 = in.k8s.GetPods(criteria.Namespace, "")
+			}
+			if err2 != nil {
+				log.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err2)
+				errChan <- err2
+			}
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		var err2 error
-		// Check if namespace is cached
-		// Namespace access is checked in the upper call
-		if IsNamespaceCached(criteria.Namespace) {
-			deployments, err2 = kialiCache.GetDeployments(criteria.Namespace)
-		} else {
-			deployments, err2 = in.k8s.GetDeployments(criteria.Namespace)
-		}
-		if err2 != nil {
-			log.Errorf("Error fetching Deployments per namespace %s: %s", criteria.Namespace, err2)
-			errChan <- err2
+		if !criteria.IncludeOnlyDefinitions {
+			// Check if namespace is cached
+			// Namespace access is checked in the upper call
+			if IsNamespaceCached(criteria.Namespace) {
+				deployments, err2 = kialiCache.GetDeployments(criteria.Namespace)
+			} else {
+				deployments, err2 = in.k8s.GetDeployments(criteria.Namespace)
+			}
+			if err2 != nil {
+				log.Errorf("Error fetching Deployments per namespace %s: %s", criteria.Namespace, err2)
+				errChan <- err2
+			}
 		}
 	}()
 
@@ -190,11 +203,13 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 		/** Check if Service has additional item icon */
 		services[i] = models.ServiceOverview{
 			Name:                   item.Name,
+			Namespace:				item.Namespace,
 			IstioSidecar:           hasSidecar,
 			AppLabel:               appLabel,
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(conf, item.ObjectMeta.Annotations),
 			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()),
 			Labels:                 item.Labels,
+			Selector:			    item.Spec.Selector,
 			IstioReferences:        svcReferences,
 			KialiWizard:            kialiWizard,
 		}

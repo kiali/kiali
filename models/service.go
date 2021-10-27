@@ -11,6 +11,8 @@ type ServiceOverview struct {
 	// required: true
 	// example: reviews-v1
 	Name string `json:"name"`
+	// Namespace of the Service
+	Namespace string `json:"namespace"`
 	// Define if Pods related to this Service has an IstioSidecar deployed
 	// required: true
 	// example: true
@@ -27,6 +29,8 @@ type ServiceOverview struct {
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
 	// Labels for Service
 	Labels map[string]string `json:"labels"`
+	// Selector for Service
+	Selector map[string]string `json:"selector"`
 	// Istio References
 	IstioReferences []*IstioValidationKey `json:"istioReferences"`
 	// Kiali Wizard scenario, if any

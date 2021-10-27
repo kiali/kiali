@@ -5,7 +5,6 @@ import (
 	"strings"
 	"sync"
 
-	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -200,24 +199,26 @@ func (in *AppService) GetApp(namespace string, appName string) (models.App, erro
 // AppDetails holds Services and Workloads having the same "app" label
 type appDetails struct {
 	app       string
-	Services  []core_v1.Service
+	Services  []models.ServiceOverview
 	Workloads models.Workloads
 }
 
 // NamespaceApps is a map of app_name x AppDetails
 type namespaceApps = map[string]*appDetails
 
-func castAppDetails(services []core_v1.Service, ws models.Workloads) namespaceApps {
+func castAppDetails(ss *models.ServiceList, ws models.Workloads) namespaceApps {
 	allEntities := make(namespaceApps)
 	appLabel := config.Get().IstioLabels.AppLabelName
-	for _, service := range services {
-		if app, ok := service.Spec.Selector[appLabel]; ok {
-			if appEntities, ok := allEntities[app]; ok {
-				appEntities.Services = append(appEntities.Services, service)
-			} else {
-				allEntities[app] = &appDetails{
-					app:      app,
-					Services: []core_v1.Service{service},
+	if ss != nil {
+		for _, service := range ss.Services {
+			if app, ok := service.Selector[appLabel]; ok {
+				if appEntities, ok := allEntities[app]; ok {
+					appEntities.Services = append(appEntities.Services, service)
+				} else {
+					allEntities[app] = &appDetails{
+						app:      app,
+						Services: []models.ServiceOverview{service},
+					}
 				}
 			}
 		}
@@ -241,13 +242,14 @@ func castAppDetails(services []core_v1.Service, ws models.Workloads) namespaceAp
 // Optionally if appName parameter is provided, it filters apps for that name.
 // Return an error on any problem.
 func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespaceApps, error) {
-	var services []core_v1.Service
+	var ss *models.ServiceList
 	var ws models.Workloads
 	cfg := config.Get()
 
-	var selector labels.Set
+	appNameSelector := ""
 	if appName != "" {
-		selector = labels.Set(map[string]string{cfg.IstioLabels.AppLabelName: appName})
+		selector := labels.Set(map[string]string{cfg.IstioLabels.AppLabelName: appName})
+		appNameSelector = selector.String()
 	}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
@@ -264,14 +266,13 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 		defer wg.Done()
 		var err error
 		// Check if namespace is cached
-		if IsNamespaceCached(namespace) {
-			services, err = kialiCache.GetServices(namespace, nil)
-		} else {
-			services, err = layer.k8s.GetServices(namespace, nil)
+		criteria := ServiceCriteria{
+			Namespace: namespace,
+			IncludeIstioResources: false,
+			IncludeOnlyDefinitions: true,
+			ServiceSelector: appNameSelector,
 		}
-		if appName != "" {
-			services = kubernetes.FilterServicesForSelector(selector.AsSelector(), services)
-		}
+		ss, err = layer.Svc.GetServiceList(criteria)
 		if err != nil {
 			log.Errorf("Error fetching Services per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -281,11 +282,7 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 	go func() {
 		defer wg.Done()
 		var err error
-		labelSelector := ""
-		if selector != nil {
-			labelSelector = selector.String()
-		}
-		ws, err = fetchWorkloads(layer, namespace, labelSelector)
+		ws, err = fetchWorkloads(layer, namespace, appNameSelector)
 		if err != nil {
 			log.Errorf("Error fetching Workload per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -298,5 +295,5 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 		return nil, err
 	}
 
-	return castAppDetails(services, ws), nil
+	return castAppDetails(ss, ws), nil
 }
