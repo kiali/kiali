@@ -7776,14 +7776,20 @@
           "type": "string",
           "x-go-name": "Name",
           "example": "reviews-v1"
+        },
+        "namespace": {
+          "description": "Namespace of the Service",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "selector": {
+          "description": "Selector for Service",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Selector"
         }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "Services": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Service"
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
@@ -8443,7 +8449,12 @@
           "x-go-name": "ServiceAccountNames"
         },
         "services": {
-          "$ref": "#/definitions/Services"
+          "description": "Services that match workload selector",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ServiceOverview"
+          },
+          "x-go-name": "Services"
         },
         "type": {
           "description": "Type of the workload",

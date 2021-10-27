@@ -390,19 +390,6 @@ func (in *SvcService) UpdateService(namespace, service string, interval string, 
 	return in.GetService(namespace, service, interval, queryTime)
 }
 
-// GetServiceDefinition returns a single service definition (the service object and endpoints), no istio or runtime information
-func (in *SvcService) GetServiceDefinition(namespace, service string) (*models.ServiceDetails, error) {
-	svc, eps, err := in.getServiceDefinition(namespace, service)
-	if err != nil {
-		return nil, err
-	}
-
-	s := models.ServiceDetails{}
-	s.SetService(svc)
-	s.SetEndpoints(eps)
-	return &s, nil
-}
-
 func (in *SvcService) getService(namespace, service string) (svc *core_v1.Service, err error) {
 	if IsNamespaceCached(namespace) {
 		// Cache uses Kiali ServiceAccount, check if user can access to the namespace
@@ -457,39 +444,6 @@ func (in *SvcService) getServiceDefinition(namespace, service string) (svc *core
 	}
 
 	return svc, eps, nil
-}
-
-// GetServiceDefinitionList returns service definitions for the namespace (the service object only), no istio or runtime information
-func (in *SvcService) GetServiceDefinitionList(namespace string) (*models.ServiceDefinitionList, error) {
-	var err error
-	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
-	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
-		return nil, err
-	}
-
-	var svcs []core_v1.Service
-	// Check if namespace is cached
-	if IsNamespaceCached(namespace) {
-		svcs, err = kialiCache.GetServices(namespace, nil)
-	} else {
-		svcs, err = in.k8s.GetServices(namespace, nil)
-	}
-	if err != nil {
-		log.Errorf("Error fetching Service definitions for namespace %s: %s", namespace, err)
-	}
-
-	// Convert to Kiali model
-	sdl := models.ServiceDefinitionList{
-		Namespace:          models.Namespace{Name: namespace},
-		ServiceDefinitions: []models.ServiceDetails{},
-	}
-	for _, svc := range svcs {
-		s := models.ServiceDetails{}
-		s.SetService(&svc)
-		sdl.ServiceDefinitions = append(sdl.ServiceDefinitions, s)
-	}
-	return &sdl, nil
 }
 
 func (in *SvcService) getServiceValidations(services []core_v1.Service, deployments []apps_v1.Deployment, pods []core_v1.Pod) models.IstioValidations {

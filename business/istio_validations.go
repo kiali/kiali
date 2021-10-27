@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 
@@ -300,53 +299,6 @@ func (in *IstioValidationsService) fetchServices(rValue *models.ServiceList, nam
 			}
 		} else {
 			*rValue = *services
-		}
-	}
-}
-
-func (in *IstioValidationsService) fetchDeployments(rValue *[]apps_v1.Deployment, namespace string, errChan chan error, wg *sync.WaitGroup) {
-	defer wg.Done()
-	if len(errChan) == 0 {
-		var deployments []apps_v1.Deployment
-		var err error
-
-		// Check if namespace is cached
-		// Namespace access is checked in the upper GetValidations
-		if IsNamespaceCached(namespace) {
-			deployments, err = kialiCache.GetDeployments(namespace)
-		} else {
-			deployments, err = in.k8s.GetDeployments(namespace)
-		}
-		if err != nil {
-			select {
-			case errChan <- err:
-			default:
-			}
-		} else {
-			*rValue = deployments
-		}
-	}
-}
-
-func (in *IstioValidationsService) fetchPods(rValue *[]core_v1.Pod, namespace string, errChan chan error, wg *sync.WaitGroup) {
-	defer wg.Done()
-	if len(errChan) == 0 {
-		var err error
-		var pods []core_v1.Pod
-		// Check if namespace is cached
-		// Namespace access is checked in the upper call
-		if IsNamespaceCached(namespace) {
-			pods, err = kialiCache.GetPods(namespace, "")
-		} else {
-			pods, err = in.k8s.GetPods(namespace, "")
-		}
-		if err != nil {
-			select {
-			case errChan <- err:
-			default:
-			}
-		} else {
-			*rValue = pods
 		}
 	}
 }
