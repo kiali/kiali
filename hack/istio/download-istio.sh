@@ -66,8 +66,8 @@ if [ -z "${ISTIO_VERSION}" ]; then
   if [ -z "${DEV_ISTIO_VERSION}" ]; then
     # get the latest released version
     VERSION_WE_WANT=$(curl -L -s https://api.github.com/repos/istio/istio/releases | \
-          grep tag_name | sed "s/ *\"tag_name\": *\"\\(.*\\)\",*/\\1/" | \
-          grep -v -E "(alpha|beta|rc)\.[0-9]$" | sort -t"." -k 1,1 -k 2,2 -k 3,3 -k 4,4 | tail -n 1)
+          grep tag_name | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | \
+          grep -v -E "(snapshot|alpha|beta|rc)\.[0-9]$" | sort -t"." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)
     echo "Will use the latest Istio version: $VERSION_WE_WANT"
     ISTIO_VERSION="${VERSION_WE_WANT}"
   else
