@@ -1,0 +1,14 @@
+name: Kiali Molecule Tests
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # This is UTC time
+
+jobs:
+  molecules:
+    name: Molecule tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run molecule tests
+        run: wget -qO - "https://raw.githubusercontent.com/kiali/kiali/master/hack/ci-kind-molecule-tests.sh" | bash -s -- -gcp https -ir "" -ce $(which kubectl)
+
