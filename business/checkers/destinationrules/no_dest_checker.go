@@ -6,7 +6,6 @@ import (
 
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
-	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -20,7 +19,7 @@ type NoDestinationChecker struct {
 	DestinationRule networking_v1alpha3.DestinationRule
 	VirtualServices []networking_v1alpha3.VirtualService
 	ServiceEntries  map[string][]string
-	Services        []core_v1.Service
+	ServiceList     models.ServiceList
 	RegistryStatus  []*kubernetes.RegistryStatus
 }
 
@@ -76,9 +75,9 @@ func (n NoDestinationChecker) hasMatchingWorkload(service string, subsetLabels m
 	var selectors map[string]string
 
 	// Find the correct service
-	for _, s := range n.Services {
+	for _, s := range n.ServiceList.Services {
 		if s.Name == svc {
-			selectors = s.Spec.Selector
+			selectors = s.Selector
 		}
 	}
 
@@ -119,7 +118,7 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 		}
 
 		// Check ServiceNames
-		if matches := kubernetes.HasMatchingServices(localSvc, n.Services); matches {
+		if matches := n.ServiceList.HasMatchingServices(localSvc); matches {
 			return matches
 		}
 	}

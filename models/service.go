@@ -4,6 +4,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 type ServiceOverview struct {
@@ -120,4 +121,23 @@ func (s *ServiceDetails) SetPods(pods []core_v1.Pod) {
 
 func (s *ServiceDetails) SetIstioSidecar(workloads WorkloadOverviews) {
 	s.IstioSidecar = workloads.HasIstioSidecar()
+}
+
+func (s *ServiceList) HasMatchingServices(service string) bool {
+	for _, s := range s.Services {
+		if service == s.Name {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *ServiceList) FilterServicesForSelector(selector labels.Selector) []ServiceOverview {
+	services := []ServiceOverview{}
+	for _, svc := range s.Services {
+		if selector.Matches(labels.Set(svc.Selector)) {
+			services = append(services, svc)
+		}
+	}
+	return services
 }

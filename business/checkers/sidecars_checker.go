@@ -3,8 +3,6 @@ package checkers
 import (
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
-	core_v1 "k8s.io/api/core/v1"
-
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/sidecars"
 	"github.com/kiali/kiali/kubernetes"
@@ -17,7 +15,7 @@ type SidecarChecker struct {
 	Sidecars               []networking_v1alpha3.Sidecar
 	ServiceEntries         []networking_v1alpha3.ServiceEntry
 	ExportedServiceEntries []networking_v1alpha3.ServiceEntry
-	Services               []core_v1.Service
+	ServiceList            models.ServiceList
 	Namespaces             models.Namespaces
 	WorkloadList           models.WorkloadList
 }
@@ -66,7 +64,7 @@ func (s SidecarChecker) runChecks(sidecar networking_v1alpha3.Sidecar) models.Is
 
 	enabledCheckers := []Checker{
 		common.WorkloadSelectorNoWorkloadFoundChecker(SidecarCheckerType, selectorLabels, s.WorkloadList),
-		sidecars.EgressHostChecker{Sidecar: sidecar, Services: s.Services, ServiceEntries: serviceHosts},
+		sidecars.EgressHostChecker{Sidecar: sidecar, ServiceList: s.ServiceList, ServiceEntries: serviceHosts},
 		sidecars.GlobalChecker{Sidecar: sidecar},
 	}
 
