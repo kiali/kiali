@@ -28,6 +28,10 @@ Options:
     If 'kubectl' is in your PATH, you can pass the option as '-ce \$(which kubectl)'
     Default: /usr/bin/kubectl
 
+-ci <true|false>
+    Run in continuous-integration mode. Verbose logs will be printed to stdout. (default: false).
+    Default: false
+
 -dorp|--docker-or-podman <docker|podman>
     What to use when building images.
     Default: docker
@@ -149,6 +153,7 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -at|--all-tests)              ALL_TESTS="$2";             shift;shift; ;;
     -ce|--client-exe)             CLIENT_EXE="$2";            shift;shift; ;;
+    -ci)                          CI="$2";                    shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
     -gcp|--git-clone-protocol)    GIT_CLONE_PROTOCOL="$2";    shift;shift; ;;
     -hb|--helm-branch)            HELM_BRANCH="$2";           shift;shift; ;;
@@ -159,8 +164,8 @@ while [[ $# -gt 0 ]]; do
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
     -kb|--kiali-branch)           KIALI_BRANCH="$2";          shift;shift; ;;
     -kf|--kiali-fork)             KIALI_FORK="$2";            shift;shift; ;;
-    -kuib|--kiali-ui-branch)      UI_BRANCH="$2";          shift;shift; ;;
-    -kuif|--kiali-ui-fork)        UI_FORK="$2";            shift;shift; ;;
+    -kuib|--kiali-ui-branch)      UI_BRANCH="$2";             shift;shift; ;;
+    -kuif|--kiali-ui-fork)        UI_FORK="$2";               shift;shift; ;;
     -kob|--kiali-operator-branch) KIALI_OPERATOR_BRANCH="$2"; shift;shift; ;;
     -kof|--kiali-operator-fork)   KIALI_OPERATOR_FORK="$2";   shift;shift; ;;
     -lb|--logs-branch)            LOGS_BRANCH="$2";           shift;shift; ;;
@@ -188,6 +193,7 @@ GIT_CLONE_PROTOCOL="${GIT_CLONE_PROTOCOL:-git}"
 OLM_ENABLED="${OLM_ENABLED:-false}"
 
 KIND_NAME="${KIND_NAME:-ci}"
+CI="${CI:-false}"
 
 if [ "${OLM_ENABLED}" == "true" -a "${OPERATOR_INSTALLER}" != "skip" ]; then
   infomsg "OLM is enabled; forcing --operator-installer to 'skip' so the operator installed via OLM is used."
@@ -279,6 +285,7 @@ SPEC_VERSION=$SPEC_VERSION
 SRC=$SRC
 UPLOAD_LOGS=$UPLOAD_LOGS
 USE_DEV_IMAGES=$USE_DEV_IMAGES
+CI=$CI
 === SETTINGS ===
 EOM
 
@@ -494,9 +501,9 @@ make -e FORCE_MOLECULE_BUILD="true" -e DORP="${DORP}" molecule-build
 mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
 infomsg "Running the tests - logs are going here: ${LOGS_LOCAL_SUBDIR_ABS}"
 if [ "${CI}" == "true" ]; then
-  eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}"
+  eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" -ci true
 else
-  eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" > "${LOGS_LOCAL_RESULTS}"
+  eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" -ci false > "${LOGS_LOCAL_RESULTS}"
 fi
 
 cd ${LOGS_LOCAL_SUBDIR_ABS}
