@@ -106,6 +106,13 @@ func (a *Auth) Obfuscate() {
 	a.CAFile = "xxx"
 }
 
+// ThanosProxy describes configuration of the Thanos proxy component
+type ThanosProxy struct {
+	Enabled         bool   `yaml:"enabled,omitempty"`
+	RetentionPeriod string `yaml:"retention_period,omitempty"`
+	ScrapeInterval  string `yaml:"scrape_interval,omitempty"`
+}
+
 // PrometheusConfig describes configuration of the Prometheus component
 type PrometheusConfig struct {
 	Auth Auth `yaml:"auth,omitempty"`
@@ -118,6 +125,7 @@ type PrometheusConfig struct {
 	CustomHeaders   map[string]string `yaml:"custom_headers,omitempty"`
 	HealthCheckUrl  string            `yaml:"health_check_url,omitempty"`
 	IsCore          bool              `yaml:"is_core,omitempty"`
+	ThanosProxy     ThanosProxy       `yaml:"thanos_proxy,omitempty"`
 	URL             string            `yaml:"url,omitempty"`
 }
 
@@ -295,10 +303,11 @@ type OpenShiftConfig struct {
 // OpenIdConfig contains specific configuration for authentication using an OpenID provider
 type OpenIdConfig struct {
 	AdditionalRequestParams map[string]string `yaml:"additional_request_params,omitempty"`
+	AllowedDomains          []string          `yaml:"allowed_domains,omitempty"`
 	ApiProxy                string            `yaml:"api_proxy,omitempty"`
 	ApiProxyCAData          string            `yaml:"api_proxy_ca_data,omitempty"`
-	AuthenticationTimeout   int               `yaml:"authentication_timeout,omitempty"`
 	ApiToken                string            `yaml:"api_token,omitempty"`
+	AuthenticationTimeout   int               `yaml:"authentication_timeout,omitempty"`
 	AuthorizationEndpoint   string            `yaml:"authorization_endpoint,omitempty"`
 	ClientId                string            `yaml:"client_id,omitempty"`
 	ClientSecret            string            `yaml:"client_secret,omitempty"`
@@ -445,10 +454,11 @@ func NewConfig() (c *Config) {
 			Strategy: "token",
 			OpenId: OpenIdConfig{
 				AdditionalRequestParams: map[string]string{},
+				AllowedDomains:          []string{},
 				ApiProxy:                "",
 				ApiProxyCAData:          "",
-				AuthenticationTimeout:   300,
 				ApiToken:                "id_token",
+				AuthenticationTimeout:   300,
 				AuthorizationEndpoint:   "",
 				ClientId:                "",
 				ClientSecret:            "",
@@ -481,6 +491,11 @@ func NewConfig() (c *Config) {
 				Enabled:                true,
 				IsCore:                 false,
 				NamespaceLabel:         "kubernetes_namespace",
+				Prometheus: PrometheusConfig{
+					ThanosProxy: ThanosProxy{
+						Enabled: false,
+					},
+				},
 			},
 			Grafana: GrafanaConfig{
 				Auth: Auth{
@@ -523,6 +538,11 @@ func NewConfig() (c *Config) {
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
 					Type: AuthTypeNone,
+				},
+				ThanosProxy: ThanosProxy{
+					Enabled:         false,
+					RetentionPeriod: "7d",
+					ScrapeInterval:  "30s",
 				},
 				CacheEnabled: true,
 				// 1/2 Prom Scrape Interval

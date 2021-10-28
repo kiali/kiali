@@ -85,8 +85,28 @@ func validateIstioObject(scenario string, objectType string, t *testing.T) ([]*m
 	if err != nil {
 		t.Error("Error loading test data.")
 	}
+
+	exportTo := []string{}
+	switch objectType {
+	case "DestinationRule":
+		dr := loader.GetResources().DestinationRules
+		if len(dr) > 0 {
+			exportTo = dr[0].Spec.ExportTo
+		}
+	case "VirtualService":
+		vs := loader.GetResources().VirtualServices
+		if len(vs) > 0 {
+			exportTo = vs[0].Spec.ExportTo
+		}
+	case "ServiceEntry":
+		se := loader.GetResources().ServiceEntries
+		if len(se) > 0 {
+			exportTo = se[0].Spec.ExportTo
+		}
+	}
+
 	validations, valid := ExportToNamespaceChecker{
-		IstioObject: loader.GetFirstResource(objectType),
+		ExportTo: exportTo,
 		Namespaces: models.Namespaces{
 			models.Namespace{Name: "bookinfo"},
 			models.Namespace{Name: "bookinfo2"},

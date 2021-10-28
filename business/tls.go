@@ -3,6 +3,8 @@ package business
 import (
 	"sync"
 
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
@@ -47,20 +49,17 @@ func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus
 	}, nil
 }
 
-func (in *TLSService) getMeshPeerAuthentications() ([]kubernetes.IstioObject, error) {
-	var mps []kubernetes.IstioObject
-	var err error
-	controlPlaneNs := config.Get().IstioNamespace
-	if IsResourceCached(controlPlaneNs, kubernetes.PeerAuthentications) {
-		mps, err = kialiCache.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
-	} else {
-		mps, err = in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
+func (in *TLSService) getMeshPeerAuthentications() ([]security_v1beta1.PeerAuthentication, error) {
+	criteria := IstioConfigCriteria{
+		Namespace:                  config.Get().IstioNamespace,
+		IncludePeerAuthentications: true,
 	}
-	return mps, err
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+	return istioConfigList.PeerAuthentications, err
 }
 
-func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.IstioObject, error) {
-	drChan := make(chan []kubernetes.IstioObject, len(namespaces))
+func (in *TLSService) getAllDestinationRules(namespaces []string) ([]networking_v1alpha3.DestinationRule, error) {
+	drChan := make(chan []networking_v1alpha3.DestinationRule, len(namespaces))
 	errChan := make(chan error, 1)
 	wg := sync.WaitGroup{}
 
@@ -69,21 +68,17 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.
 	for _, namespace := range namespaces {
 		go func(ns string) {
 			defer wg.Done()
-			var drs []kubernetes.IstioObject
-			var err error
-			// Check if namespace is cached
-			// Namespace access is checked in the upper call
-			if IsResourceCached(ns, kubernetes.DestinationRules) {
-				drs, err = kialiCache.GetIstioObjects(ns, kubernetes.DestinationRules, "")
-			} else {
-				drs, err = in.k8s.GetIstioObjects(ns, kubernetes.DestinationRules, "")
+			criteria := IstioConfigCriteria{
+				Namespace:               ns,
+				IncludeDestinationRules: true,
 			}
+			istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
 			if err != nil {
 				errChan <- err
 				return
 			}
 
-			drChan <- drs
+			drChan <- istioConfigList.DestinationRules
 		}(namespace)
 	}
 
@@ -97,7 +92,7 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.
 		}
 	}
 
-	allDestinationRules := make([]kubernetes.IstioObject, 0)
+	allDestinationRules := make([]networking_v1alpha3.DestinationRule, 0)
 	for drs := range drChan {
 		allDestinationRules = append(allDestinationRules, drs...)
 	}
@@ -134,15 +129,16 @@ func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatu
 	}, nil
 }
 
-func (in TLSService) getPeerAuthentications(namespace string) ([]kubernetes.IstioObject, error) {
+func (in TLSService) getPeerAuthentications(namespace string) ([]security_v1beta1.PeerAuthentication, error) {
 	if namespace == config.Get().IstioNamespace {
-		return []kubernetes.IstioObject{}, nil
+		return []security_v1beta1.PeerAuthentication{}, nil
 	}
-	if IsResourceCached(namespace, kubernetes.PeerAuthentications) {
-		return kialiCache.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
-	} else {
-		return in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+	criteria := IstioConfigCriteria{
+		Namespace:                  namespace,
+		IncludePeerAuthentications: true,
 	}
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+	return istioConfigList.PeerAuthentications, err
 }
 
 func (in TLSService) getNamespaces() ([]string, error) {
@@ -155,7 +151,6 @@ func (in TLSService) getNamespaces() ([]string, error) {
 	for _, ns := range nss {
 		nsNames = append(nsNames, ns.Name)
 	}
-
 	return nsNames, nil
 }
 

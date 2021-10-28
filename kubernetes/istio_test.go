@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	api_security_v1beta1 "istio.io/api/security/v1beta1"
+	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/config"
 )
@@ -87,53 +88,47 @@ func TestInvalidPortNameMatcher(t *testing.T) {
 }
 
 func TestPolicyHasMtlsEnabledStructMode(t *testing.T) {
-	policy := createPeerAuthn("default", "bookinfo", map[string]interface{}{
-		"mode": map[string]interface{}{},
-	})
+	policy := createPeerAuthn("default", "bookinfo", nil)
 
-	enabled, mode := PeerAuthnHasMTLSEnabled(policy)
+	enabled, mode := PeerAuthnHasMTLSEnabled(*policy)
 	assert.False(t, enabled)
 	assert.Equal(t, "", mode)
 }
 
 func TestPolicyHasMTLSEnabledStrictMode(t *testing.T) {
-	policy := createPeerAuthn("default", "bookinfo", map[string]interface{}{
-		"mode": "STRICT",
-	})
+	policy := createPeerAuthn("default", "bookinfo", createMtls("STRICT"))
 
-	enabled, mode := PeerAuthnHasMTLSEnabled(policy)
+	enabled, mode := PeerAuthnHasMTLSEnabled(*policy)
 	assert.True(t, enabled)
 	assert.Equal(t, "STRICT", mode)
 }
 
 func TestPolicyHasMTLSEnabledStructMtls(t *testing.T) {
-	policy := createPeerAuthn("default", "bookinfo", map[string]interface{}{
-		"mode": "STRICT",
-	})
+	policy := createPeerAuthn("default", "bookinfo", createMtls("STRICT"))
 
-	enabled, mode := PeerAuthnHasMTLSEnabled(policy)
+	enabled, mode := PeerAuthnHasMTLSEnabled(*policy)
 	assert.True(t, enabled)
 	assert.Equal(t, "STRICT", mode)
 }
 
 func TestPolicyHasMTLSEnabledPermissiveMode(t *testing.T) {
-	policy := createPeerAuthn("default", "bookinfo", map[string]interface{}{
-		"mode": "PERMISSIVE",
-	})
+	policy := createPeerAuthn("default", "bookinfo", createMtls("PERMISSIVE"))
 
-	enabled, mode := PeerAuthnHasMTLSEnabled(policy)
+	enabled, mode := PeerAuthnHasMTLSEnabled(*policy)
 	assert.True(t, enabled)
 	assert.Equal(t, "PERMISSIVE", mode)
 }
 
-func createPeerAuthn(name, namespace string, mtls interface{}) IstioObject {
-	return (&GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: map[string]interface{}{
-			"mtls": mtls,
-		},
-	}).DeepCopyIstioObject()
+func createMtls(mode string) *api_security_v1beta1.PeerAuthentication_MutualTLS {
+	mtls := &api_security_v1beta1.PeerAuthentication_MutualTLS{}
+	mtls.Mode = api_security_v1beta1.PeerAuthentication_MutualTLS_Mode(api_security_v1beta1.PeerAuthentication_MutualTLS_Mode_value[mode])
+	return mtls
+}
+
+func createPeerAuthn(name, namespace string, mtls *api_security_v1beta1.PeerAuthentication_MutualTLS) *security_v1beta1.PeerAuthentication {
+	pa := &security_v1beta1.PeerAuthentication{}
+	pa.Name = name
+	pa.Namespace = namespace
+	pa.Spec.Mtls = mtls
+	return pa
 }

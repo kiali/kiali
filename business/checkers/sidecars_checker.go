@@ -1,6 +1,8 @@
 package checkers
 
 import (
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business/checkers/common"
@@ -12,11 +14,12 @@ import (
 const SidecarCheckerType = "sidecar"
 
 type SidecarChecker struct {
-	Sidecars       []kubernetes.IstioObject
-	ServiceEntries []kubernetes.IstioObject
-	Services       []core_v1.Service
-	Namespaces     models.Namespaces
-	WorkloadList   models.WorkloadList
+	Sidecars               []networking_v1alpha3.Sidecar
+	ServiceEntries         []networking_v1alpha3.ServiceEntry
+	ExportedServiceEntries []networking_v1alpha3.ServiceEntry
+	Services               []core_v1.Service
+	Namespaces             models.Namespaces
+	WorkloadList           models.WorkloadList
 }
 
 func (s SidecarChecker) Check() models.IstioValidations {
@@ -32,7 +35,7 @@ func (s SidecarChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	enabledDRCheckers := []GroupChecker{
-		common.WorkloadSelectorMultiMatchChecker(SidecarCheckerType, s.Sidecars, s.WorkloadList),
+		common.SidecarSelectorMultiMatchChecker(SidecarCheckerType, s.Sidecars, s.WorkloadList),
 	}
 
 	for _, checker := range enabledDRCheckers {
@@ -52,13 +55,17 @@ func (s SidecarChecker) runIndividualChecks() models.IstioValidations {
 	return validations
 }
 
-func (s SidecarChecker) runChecks(sidecar kubernetes.IstioObject) models.IstioValidations {
-	policyName := sidecar.GetObjectMeta().Name
-	key, rrValidation := EmptyValidValidation(policyName, sidecar.GetObjectMeta().Namespace, SidecarCheckerType)
-	serviceHosts := kubernetes.ServiceEntryHostnames(s.ServiceEntries)
+func (s SidecarChecker) runChecks(sidecar networking_v1alpha3.Sidecar) models.IstioValidations {
+	policyName := sidecar.Name
+	key, rrValidation := EmptyValidValidation(policyName, sidecar.Namespace, SidecarCheckerType)
+	serviceHosts := kubernetes.ServiceEntryHostnames(append(s.ServiceEntries, s.ExportedServiceEntries...))
+	selectorLabels := make(map[string]string)
+	if sidecar.Spec.WorkloadSelector != nil {
+		selectorLabels = sidecar.Spec.WorkloadSelector.Labels
+	}
 
 	enabledCheckers := []Checker{
-		common.WorkloadSelectorNoWorkloadFoundChecker(SidecarCheckerType, sidecar, s.WorkloadList),
+		common.WorkloadSelectorNoWorkloadFoundChecker(SidecarCheckerType, selectorLabels, s.WorkloadList),
 		sidecars.EgressHostChecker{Sidecar: sidecar, Services: s.Services, ServiceEntries: serviceHosts},
 		sidecars.GlobalChecker{Sidecar: sidecar},
 	}

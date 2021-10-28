@@ -4286,6 +4286,48 @@
       },
       "x-go-package": "github.com/kiali/kiali/config"
     },
+    "AnalysisMessageBase": {
+      "description": "AnalysisMessageBase describes some common information that is needed for all\nmessages. All information should be static with respect to the error code.",
+      "type": "object",
+      "properties": {
+        "documentation_url": {
+          "description": "A url pointing to the Istio documentation for this specific error type.\nShould be of the form\n`^http(s)?://(preliminary\\.)?istio.io/docs/reference/config/analysis/`\nRequired.",
+          "type": "string",
+          "x-go-name": "DocumentationUrl"
+        },
+        "level": {
+          "$ref": "#/definitions/AnalysisMessageBase_Level"
+        },
+        "type": {
+          "$ref": "#/definitions/AnalysisMessageBase_Type"
+        }
+      },
+      "x-go-package": "istio.io/api/analysis/v1alpha1"
+    },
+    "AnalysisMessageBase_Level": {
+      "description": "as well as leaving space in between to add more later",
+      "type": "integer",
+      "format": "int32",
+      "title": "The values here are chosen so that more severe messages get sorted higher,",
+      "x-go-package": "istio.io/api/analysis/v1alpha1"
+    },
+    "AnalysisMessageBase_Type": {
+      "description": "A unique identifier for the type of message. Name is intended to be\nhuman-readable, code is intended to be machine readable. There should be a\none-to-one mapping between name and code. (i.e. do not re-use names or\ncodes between message types.)",
+      "type": "object",
+      "properties": {
+        "code": {
+          "description": "A 7 character code matching `^IST[0-9]{4}$` intended to uniquely identify\nthe message type. (e.g. \"IST0001\" is mapped to the \"InternalError\" message\ntype.) 0000-0100 are reserved. Required.",
+          "type": "string",
+          "x-go-name": "Code"
+        },
+        "name": {
+          "description": "A human-readable name for the message type. e.g. \"InternalError\",\n\"PodMissingProxy\". This should be the same for all messages of the same type.\nRequired.",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "istio.io/api/analysis/v1alpha1"
+    },
     "App": {
       "type": "object",
       "required": [
@@ -4407,6 +4449,121 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "AuthorizationPolicy": {
+      "description": "For example, the following authorization policy allows nothing and effectively denies all requests to workloads\nin namespace foo.\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: allow-nothing\nnamespace: foo\nspec:\n{}\n```\n\nThe following authorization policy allows all requests to workloads in namespace foo.\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: allow-all\nnamespace: foo\nspec:\nrules:\n{}\n```\n\n\u003c!-- crd generation tags\n+cue-gen:AuthorizationPolicy:groupName:security.istio.io\n+cue-gen:AuthorizationPolicy:version:v1beta1\n+cue-gen:AuthorizationPolicy:storageVersion\n+cue-gen:AuthorizationPolicy:annotations:helm.sh/resource-policy=keep\n+cue-gen:AuthorizationPolicy:labels:app=istio-pilot,chart=istio,istio=security,heritage=Tiller,release=istio\n+cue-gen:AuthorizationPolicy:subresource:status\n+cue-gen:AuthorizationPolicy:scope:Namespaced\n+cue-gen:AuthorizationPolicy:resource:categories=istio-io,security-istio-io,plural=authorizationpolicies\n+cue-gen:AuthorizationPolicy:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=security.istio.io/v1beta1\n+genclient\n+k8s:deepcopy-gen=true\n\u003e",
+      "type": "object",
+      "title": "AuthorizationPolicy enables access control on workloads.",
+      "properties": {
+        "annotations": {
+          "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "clusterName": {
+          "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+          "type": "string",
+          "x-go-name": "ClusterName"
+        },
+        "creationTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "deletionGracePeriodSeconds": {
+          "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DeletionGracePeriodSeconds"
+        },
+        "deletionTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "finalizers": {
+          "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Finalizers"
+        },
+        "generateName": {
+          "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+          "type": "string",
+          "x-go-name": "GenerateName"
+        },
+        "generation": {
+          "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Generation"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "labels": {
+          "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "managedFields": {
+          "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ManagedFieldsEntry"
+          },
+          "x-go-name": "ManagedFields"
+        },
+        "name": {
+          "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "ownerReferences": {
+          "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OwnerReference"
+          },
+          "x-go-name": "OwnerReferences"
+        },
+        "resourceVersion": {
+          "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selfLink": {
+          "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+          "type": "string",
+          "x-go-name": "SelfLink"
+        },
+        "spec": {
+          "$ref": "#/definitions/AuthorizationPolicy"
+        },
+        "status": {
+          "$ref": "#/definitions/IstioStatus"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
+        }
+      },
+      "x-go-package": "istio.io/client-go/pkg/apis/security/v1beta1"
     },
     "Bootstrap": {
       "type": "object",
@@ -4705,6 +4862,121 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "DestinationRule": {
+      "description": "\u003c!-- crd generation tags\n+cue-gen:DestinationRule:groupName:networking.istio.io\n+cue-gen:DestinationRule:version:v1alpha3\n+cue-gen:DestinationRule:storageVersion\n+cue-gen:DestinationRule:annotations:helm.sh/resource-policy=keep\n+cue-gen:DestinationRule:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:DestinationRule:subresource:status\n+cue-gen:DestinationRule:scope:Namespaced\n+cue-gen:DestinationRule:resource:categories=istio-io,networking-istio-io,shortNames=dr\n+cue-gen:DestinationRule:printerColumn:name=Host,type=string,JSONPath=.spec.host,description=\"The name of a service from the service registry\"\n+cue-gen:DestinationRule:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:DestinationRule:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-start\n\u003e",
+      "type": "object",
+      "title": "DestinationRule defines policies that apply to traffic intended for a service\nafter routing has occurred.",
+      "properties": {
+        "annotations": {
+          "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "clusterName": {
+          "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+          "type": "string",
+          "x-go-name": "ClusterName"
+        },
+        "creationTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "deletionGracePeriodSeconds": {
+          "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DeletionGracePeriodSeconds"
+        },
+        "deletionTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "finalizers": {
+          "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Finalizers"
+        },
+        "generateName": {
+          "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+          "type": "string",
+          "x-go-name": "GenerateName"
+        },
+        "generation": {
+          "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Generation"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "labels": {
+          "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "managedFields": {
+          "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ManagedFieldsEntry"
+          },
+          "x-go-name": "ManagedFields"
+        },
+        "name": {
+          "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "ownerReferences": {
+          "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OwnerReference"
+          },
+          "x-go-name": "OwnerReferences"
+        },
+        "resourceVersion": {
+          "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selfLink": {
+          "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+          "type": "string",
+          "x-go-name": "SelfLink"
+        },
+        "spec": {
+          "$ref": "#/definitions/DestinationRule"
+        },
+        "status": {
+          "$ref": "#/definitions/IstioStatus"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
+        }
+      },
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
+    },
     "EdgeData": {
       "type": "object",
       "properties": {
@@ -4796,6 +5068,121 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "EnvoyFilter": {
+      "description": "\u003c!-- crd generation tags\n+cue-gen:EnvoyFilter:groupName:networking.istio.io\n+cue-gen:EnvoyFilter:version:v1alpha3\n+cue-gen:EnvoyFilter:storageVersion\n+cue-gen:EnvoyFilter:annotations:helm.sh/resource-policy=keep\n+cue-gen:EnvoyFilter:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:EnvoyFilter:subresource:status\n+cue-gen:EnvoyFilter:scope:Namespaced\n+cue-gen:EnvoyFilter:resource:categories=istio-io,networking-istio-io\n+cue-gen:EnvoyFilter:preserveUnknownFields:configPatches.[].patch.value\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e",
+      "type": "object",
+      "title": "EnvoyFilter provides a mechanism to customize the Envoy configuration\ngenerated by Istio Pilot.",
+      "properties": {
+        "annotations": {
+          "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "clusterName": {
+          "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+          "type": "string",
+          "x-go-name": "ClusterName"
+        },
+        "creationTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "deletionGracePeriodSeconds": {
+          "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DeletionGracePeriodSeconds"
+        },
+        "deletionTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "finalizers": {
+          "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Finalizers"
+        },
+        "generateName": {
+          "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+          "type": "string",
+          "x-go-name": "GenerateName"
+        },
+        "generation": {
+          "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Generation"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "labels": {
+          "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "managedFields": {
+          "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ManagedFieldsEntry"
+          },
+          "x-go-name": "ManagedFields"
+        },
+        "name": {
+          "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "ownerReferences": {
+          "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OwnerReference"
+          },
+          "x-go-name": "OwnerReferences"
+        },
+        "resourceVersion": {
+          "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selfLink": {
+          "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+          "type": "string",
+          "x-go-name": "SelfLink"
+        },
+        "spec": {
+          "$ref": "#/definitions/EnvoyFilter"
+        },
+        "status": {
+          "$ref": "#/definitions/IstioStatus"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
+        }
+      },
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
+    },
     "EnvoyProxyDump": {
       "type": "object",
       "properties": {
@@ -4867,54 +5254,119 @@
       "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
     "Gateway": {
+      "description": "\u003c!-- crd generation tags\n+cue-gen:Gateway:groupName:networking.istio.io\n+cue-gen:Gateway:version:v1alpha3\n+cue-gen:Gateway:storageVersion\n+cue-gen:Gateway:annotations:helm.sh/resource-policy=keep\n+cue-gen:Gateway:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:Gateway:subresource:status\n+cue-gen:Gateway:scope:Namespaced\n+cue-gen:Gateway:resource:categories=istio-io,networking-istio-io,shortNames=gw\n+cue-gen:Gateway:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-start\n\u003e",
       "type": "object",
+      "title": "Gateway describes a load balancer operating at the edge of the mesh\nreceiving incoming or outgoing HTTP/TCP connections.",
       "properties": {
+        "annotations": {
+          "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
         "apiVersion": {
           "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
           "type": "string",
           "x-go-name": "APIVersion"
+        },
+        "clusterName": {
+          "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+          "type": "string",
+          "x-go-name": "ClusterName"
+        },
+        "creationTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "deletionGracePeriodSeconds": {
+          "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DeletionGracePeriodSeconds"
+        },
+        "deletionTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "finalizers": {
+          "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Finalizers"
+        },
+        "generateName": {
+          "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+          "type": "string",
+          "x-go-name": "GenerateName"
+        },
+        "generation": {
+          "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Generation"
         },
         "kind": {
           "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string",
           "x-go-name": "Kind"
         },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "selector": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              },
-              "x-go-name": "Selector"
-            },
-            "servers": {
-              "type": "object",
-              "x-go-name": "Servers"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
+        "labels": {
+          "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
           "type": "object",
           "additionalProperties": {
-            "type": "object"
+            "type": "string"
           },
-          "x-go-name": "Status"
+          "x-go-name": "Labels"
+        },
+        "managedFields": {
+          "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ManagedFieldsEntry"
+          },
+          "x-go-name": "ManagedFields"
+        },
+        "name": {
+          "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "ownerReferences": {
+          "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OwnerReference"
+          },
+          "x-go-name": "OwnerReferences"
+        },
+        "resourceVersion": {
+          "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selfLink": {
+          "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+          "type": "string",
+          "x-go-name": "SelfLink"
+        },
+        "spec": {
+          "$ref": "#/definitions/Gateway"
+        },
+        "status": {
+          "$ref": "#/definitions/IstioStatus"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "Gateways": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Gateway"
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
     },
     "GrafanaInfo": {
       "description": "GrafanaInfo provides information to access Grafana dashboards",
@@ -5036,17 +5488,49 @@
       },
       "x-go-package": "github.com/kiali/kiali/business"
     },
+    "IstioCondition": {
+      "type": "object",
+      "properties": {
+        "last_probe_time": {
+          "$ref": "#/definitions/Timestamp"
+        },
+        "last_transition_time": {
+          "$ref": "#/definitions/Timestamp"
+        },
+        "message": {
+          "description": "Human-readable message indicating details about last transition.\n+optional",
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "reason": {
+          "description": "Unique, one-word, CamelCase reason for the condition's last transition.\n+optional",
+          "type": "string",
+          "x-go-name": "Reason"
+        },
+        "status": {
+          "description": "Status is the status of the condition.\nCan be True, False, Unknown.",
+          "type": "string",
+          "x-go-name": "Status"
+        },
+        "type": {
+          "description": "Type is the type of the condition.",
+          "type": "string",
+          "x-go-name": "Type"
+        }
+      },
+      "x-go-package": "istio.io/api/meta/v1alpha1"
+    },
     "IstioConfigDetails": {
       "type": "object",
       "properties": {
         "authorizationPolicy": {
-          "$ref": "#/definitions/authorizationPolicy"
+          "$ref": "#/definitions/AuthorizationPolicy"
         },
         "destinationRule": {
-          "$ref": "#/definitions/destinationRule"
+          "$ref": "#/definitions/DestinationRule"
         },
         "envoyFilter": {
-          "$ref": "#/definitions/envoyFilter"
+          "$ref": "#/definitions/EnvoyFilter"
         },
         "gateway": {
           "$ref": "#/definitions/Gateway"
@@ -5059,13 +5543,13 @@
           "x-go-name": "ObjectType"
         },
         "peerAuthentication": {
-          "$ref": "#/definitions/peerAuthentication"
+          "$ref": "#/definitions/PeerAuthentication"
         },
         "permissions": {
           "$ref": "#/definitions/ResourcePermissions"
         },
         "requestAuthentication": {
-          "$ref": "#/definitions/requestAuthentication"
+          "$ref": "#/definitions/RequestAuthentication"
         },
         "serviceEntry": {
           "$ref": "#/definitions/ServiceEntry"
@@ -5077,13 +5561,13 @@
           "$ref": "#/definitions/IstioValidation"
         },
         "virtualService": {
-          "$ref": "#/definitions/virtualService"
+          "$ref": "#/definitions/VirtualService"
         },
         "workloadEntry": {
-          "$ref": "#/definitions/workloadEntry"
+          "$ref": "#/definitions/WorkloadEntry"
         },
         "workloadGroup": {
-          "$ref": "#/definitions/workloadGroup"
+          "$ref": "#/definitions/WorkloadGroup"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -5097,43 +5581,87 @@
       ],
       "properties": {
         "authorizationPolicies": {
-          "$ref": "#/definitions/authorizationPolicies"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AuthorizationPolicy"
+          },
+          "x-go-name": "AuthorizationPolicies"
         },
         "destinationRules": {
-          "$ref": "#/definitions/destinationRules"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DestinationRule"
+          },
+          "x-go-name": "DestinationRules"
         },
         "envoyFilters": {
-          "$ref": "#/definitions/envoyFilters"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EnvoyFilter"
+          },
+          "x-go-name": "EnvoyFilters"
         },
         "gateways": {
-          "$ref": "#/definitions/Gateways"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Gateway"
+          },
+          "x-go-name": "Gateways"
         },
         "namespace": {
           "$ref": "#/definitions/namespace"
         },
         "peerAuthentications": {
-          "$ref": "#/definitions/peerAuthentications"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PeerAuthentication"
+          },
+          "x-go-name": "PeerAuthentications"
         },
         "requestAuthentications": {
-          "$ref": "#/definitions/requestAuthentications"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RequestAuthentication"
+          },
+          "x-go-name": "RequestAuthentications"
         },
         "serviceEntries": {
-          "$ref": "#/definitions/ServiceEntries"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ServiceEntry"
+          },
+          "x-go-name": "ServiceEntries"
         },
         "sidecars": {
-          "$ref": "#/definitions/Sidecars"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Sidecar"
+          },
+          "x-go-name": "Sidecars"
         },
         "validations": {
           "$ref": "#/definitions/IstioValidations"
         },
         "virtualServices": {
-          "$ref": "#/definitions/virtualServices"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VirtualService"
+          },
+          "x-go-name": "VirtualServices"
         },
         "workloadEntries": {
-          "$ref": "#/definitions/workloadEntries"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WorkloadEntry"
+          },
+          "x-go-name": "WorkloadEntries"
         },
         "workloadGroups": {
-          "$ref": "#/definitions/workloadGroups"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WorkloadGroup"
+          },
+          "x-go-name": "WorkloadGroups"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -5160,6 +5688,34 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/status"
+    },
+    "IstioStatus": {
+      "type": "object",
+      "properties": {
+        "conditions": {
+          "description": "Current service state of pod.\nMore info: https://istio.io/docs/reference/config/config-status/\n+optional\n+patchMergeKey=type\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioCondition"
+          },
+          "x-go-name": "Conditions"
+        },
+        "observed_generation": {
+          "description": "Resource Generation to which the Reconciled Condition refers.\nWhen this value is not equal to the object's metadata generation, reconciled condition  calculation for the current\ngeneration is still in progress.  See https://istio.io/latest/docs/reference/config/config-status/ for more info.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ObservedGeneration"
+        },
+        "validation_messages": {
+          "description": "Includes any errors or warnings detected by Istio's analyzers.\n+optional\n+patchMergeKey=type\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AnalysisMessageBase"
+          },
+          "x-go-name": "ValidationMessages"
+        }
+      },
+      "x-go-package": "istio.io/api/meta/v1alpha1"
     },
     "IstioValidation": {
       "type": "object",
@@ -6141,6 +6697,10 @@
         "hasHealthConfig": {
           "$ref": "#/definitions/HealthConfig"
         },
+        "hasMirroring": {
+          "type": "boolean",
+          "x-go-name": "HasMirroring"
+        },
         "hasMissingSC": {
           "type": "boolean",
           "x-go-name": "HasMissingSC"
@@ -6250,9 +6810,45 @@
       },
       "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
-    "ObjectMeta": {
-      "description": "ObjectMeta is metadata that all persisted resources must have, which includes all objects\nusers must create.",
+    "OwnerReference": {
+      "description": "OwnerReference contains enough information to let you identify an owning\nobject. An owning object must be in the same namespace as the dependent, or\nbe cluster-scoped, so there is no namespace field.",
       "type": "object",
+      "properties": {
+        "apiVersion": {
+          "description": "API version of the referent.",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "blockOwnerDeletion": {
+          "description": "If true, AND if the owner has the \"foregroundDeletion\" finalizer, then\nthe owner cannot be deleted from the key-value store until this\nreference is removed.\nDefaults to false.\nTo set this field, a user needs \"delete\" permission of the owner,\notherwise 422 (Unprocessable Entity) will be returned.\n+optional",
+          "type": "boolean",
+          "x-go-name": "BlockOwnerDeletion"
+        },
+        "controller": {
+          "description": "If true, this reference points to the managing controller.\n+optional",
+          "type": "boolean",
+          "x-go-name": "Controller"
+        },
+        "kind": {
+          "description": "Kind of the referent.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "name": {
+          "description": "Name of the referent.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
+        }
+      },
+      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
+    "PeerAuthentication": {
+      "description": "Examples:\n\nPolicy to allow mTLS traffic for all workloads under namespace `foo`:\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: PeerAuthentication\nmetadata:\nname: default\nnamespace: foo\nspec:\nmtls:\nmode: STRICT\n```\nFor mesh level, put the policy in root-namespace according to your Istio installation.\n\nPolicies to allow both mTLS \u0026 plaintext traffic for all workloads under namespace `foo`, but\nrequire mTLS for workload `finance`.\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: PeerAuthentication\nmetadata:\nname: default\nnamespace: foo\nspec:\nmtls:\nmode: PERMISSIVE\n\napiVersion: security.istio.io/v1beta1\nkind: PeerAuthentication\nmetadata:\nname: default\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: finance\nmtls:\nmode: STRICT\n```\nPolicy to allow mTLS strict for all workloads, but leave port 8080 to\nplaintext:\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: PeerAuthentication\nmetadata:\nname: default\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: finance\nmtls:\nmode: STRICT\nportLevelMtls:\n8080:\nmode: DISABLE\n```\nPolicy to inherit mTLS mode from namespace (or mesh) settings, and overwrite\nsettings for port 8080\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: PeerAuthentication\nmetadata:\nname: default\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: finance\nmtls:\nmode: UNSET\nportLevelMtls:\n8080:\nmode: DISABLE\n```\n\n\u003c!-- crd generation tags\n+cue-gen:PeerAuthentication:groupName:security.istio.io\n+cue-gen:PeerAuthentication:version:v1beta1\n+cue-gen:PeerAuthentication:storageVersion\n+cue-gen:PeerAuthentication:annotations:helm.sh/resource-policy=keep\n+cue-gen:PeerAuthentication:labels:app=istio-pilot,chart=istio,istio=security,heritage=Tiller,release=istio\n+cue-gen:PeerAuthentication:subresource:status\n+cue-gen:PeerAuthentication:scope:Namespaced\n+cue-gen:PeerAuthentication:resource:categories=istio-io,security-istio-io,shortNames=pa\n+cue-gen:PeerAuthentication:preserveUnknownFields:false\n+cue-gen:PeerAuthentication:printerColumn:name=Mode,type=string,JSONPath=.spec.mtls.mode,description=\"Defines the mTLS mode used for peer authentication.\"\n+cue-gen:PeerAuthentication:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=security.istio.io/v1beta1\n+genclient\n+k8s:deepcopy-gen=true\n\u003e",
+      "type": "object",
+      "title": "PeerAuthentication defines how traffic will be tunneled (or not) to the sidecar.",
       "properties": {
         "annotations": {
           "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
@@ -6261,6 +6857,11 @@
             "type": "string"
           },
           "x-go-name": "Annotations"
+        },
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
         },
         "clusterName": {
           "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
@@ -6297,6 +6898,11 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "Generation"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
         },
         "labels": {
           "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
@@ -6342,46 +6948,17 @@
           "type": "string",
           "x-go-name": "SelfLink"
         },
-        "uid": {
-          "$ref": "#/definitions/UID"
-        }
-      },
-      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
-    },
-    "OwnerReference": {
-      "description": "OwnerReference contains enough information to let you identify an owning\nobject. An owning object must be in the same namespace as the dependent, or\nbe cluster-scoped, so there is no namespace field.",
-      "type": "object",
-      "properties": {
-        "apiVersion": {
-          "description": "API version of the referent.",
-          "type": "string",
-          "x-go-name": "APIVersion"
+        "spec": {
+          "$ref": "#/definitions/PeerAuthentication"
         },
-        "blockOwnerDeletion": {
-          "description": "If true, AND if the owner has the \"foregroundDeletion\" finalizer, then\nthe owner cannot be deleted from the key-value store until this\nreference is removed.\nDefaults to false.\nTo set this field, a user needs \"delete\" permission of the owner,\notherwise 422 (Unprocessable Entity) will be returned.\n+optional",
-          "type": "boolean",
-          "x-go-name": "BlockOwnerDeletion"
-        },
-        "controller": {
-          "description": "If true, this reference points to the managing controller.\n+optional",
-          "type": "boolean",
-          "x-go-name": "Controller"
-        },
-        "kind": {
-          "description": "Kind of the referent.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "name": {
-          "description": "Name of the referent.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names",
-          "type": "string",
-          "x-go-name": "Name"
+        "status": {
+          "$ref": "#/definitions/IstioStatus"
         },
         "uid": {
           "$ref": "#/definitions/UID"
         }
       },
-      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "istio.io/client-go/pkg/apis/security/v1beta1"
     },
     "Pod": {
       "description": "Pod holds a subset of v1.Pod data that is meaningful in Kiali",
@@ -6443,6 +7020,10 @@
         },
         "proxyStatus": {
           "$ref": "#/definitions/ProxyStatus"
+        },
+        "serviceAccountName": {
+          "type": "string",
+          "x-go-name": "ServiceAccountName"
         },
         "status": {
           "type": "string",
@@ -6581,6 +7162,121 @@
       "description": "ReferenceType is the reference type of one span to another",
       "type": "string",
       "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
+    },
+    "RequestAuthentication": {
+      "description": "Require JWT for all request for workloads that have label `app:httpbin`\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: RequestAuthentication\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\njwtRules:\nissuer: \"issuer-foo\"\njwksUri: https://example.com/.well-known/jwks.json\n\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\nrules:\nfrom:\nsource:\nrequestPrincipals: [\"*\"]\n```\n\nThe next example shows how to set a different JWT requirement for a different `host`. The `RequestAuthentication`\ndeclares it can accept JWTs issued by either `issuer-foo` or `issuer-bar` (the public key set is implicitly\nset from the OpenID Connect spec).\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: RequestAuthentication\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\njwtRules:\nissuer: \"issuer-foo\"\nissuer: \"issuer-bar\"\n\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\nrules:\nfrom:\nsource:\nrequestPrincipals: [\"issuer-foo/*\"]\nto:\noperation:\nhosts: [\"example.com\"]\nfrom:\nsource:\nrequestPrincipals: [\"issuer-bar/*\"]\nto:\noperation:\nhosts: [\"another-host.com\"]\n```\n\nYou can fine tune the authorization policy to set different requirement per path. For example,\nto require JWT on all paths, except /healthz, the same `RequestAuthentication` can be used, but the\nauthorization policy could be:\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\nrules:\nfrom:\nsource:\nrequestPrincipals: [\"*\"]\nto:\noperation:\npaths: [\"/healthz\"]\n```\n\n\u003c!-- crd generation tags\n+cue-gen:RequestAuthentication:groupName:security.istio.io\n+cue-gen:RequestAuthentication:version:v1beta1\n+cue-gen:RequestAuthentication:storageVersion\n+cue-gen:RequestAuthentication:annotations:helm.sh/resource-policy=keep\n+cue-gen:RequestAuthentication:labels:app=istio-pilot,chart=istio,istio=security,heritage=Tiller,release=istio\n+cue-gen:RequestAuthentication:subresource:status\n+cue-gen:RequestAuthentication:scope:Namespaced\n+cue-gen:RequestAuthentication:resource:categories=istio-io,security-istio-io,shortNames=ra\n+cue-gen:RequestAuthentication:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=security.istio.io/v1beta1\n+genclient\n+k8s:deepcopy-gen=true\n\u003e",
+      "type": "object",
+      "title": "RequestAuthentication defines what request authentication methods are supported by a workload.\nIt will reject a request if the request contains invalid authentication information, based on the\nconfigured authentication rules. A request that does not contain any authentication credentials\nwill be accepted but will not have any authenticated identity. To restrict access to authenticated\nrequests only, this should be accompanied by an authorization rule.\nExamples:",
+      "properties": {
+        "annotations": {
+          "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "clusterName": {
+          "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+          "type": "string",
+          "x-go-name": "ClusterName"
+        },
+        "creationTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "deletionGracePeriodSeconds": {
+          "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DeletionGracePeriodSeconds"
+        },
+        "deletionTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "finalizers": {
+          "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Finalizers"
+        },
+        "generateName": {
+          "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+          "type": "string",
+          "x-go-name": "GenerateName"
+        },
+        "generation": {
+          "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Generation"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "labels": {
+          "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "managedFields": {
+          "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ManagedFieldsEntry"
+          },
+          "x-go-name": "ManagedFields"
+        },
+        "name": {
+          "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "ownerReferences": {
+          "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OwnerReference"
+          },
+          "x-go-name": "OwnerReferences"
+        },
+        "resourceVersion": {
+          "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selfLink": {
+          "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+          "type": "string",
+          "x-go-name": "SelfLink"
+        },
+        "spec": {
+          "$ref": "#/definitions/RequestAuthentication"
+        },
+        "status": {
+          "$ref": "#/definitions/IstioStatus"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
+        }
+      },
+      "x-go-package": "istio.io/client-go/pkg/apis/security/v1beta1"
     },
     "RequestHealth": {
       "description": "RequestHealth holds several stats about recent request errors\nInbound//Outbound are the rates of requests by protocol and status_code.\nExample:   Inbound: { \"http\": {\"200\": 1.5, \"400\": 2.3}, \"grpc\": {\"1\": 1.2} }",
@@ -6820,13 +7516,20 @@
           "x-go-name": "AdditionalDetails"
         },
         "destinationRules": {
-          "$ref": "#/definitions/destinationRules"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DestinationRule"
+          },
+          "x-go-name": "DestinationRules"
         },
         "endpoints": {
           "$ref": "#/definitions/Endpoints"
         },
         "health": {
           "$ref": "#/definitions/ServiceHealth"
+        },
+        "istioPermissions": {
+          "$ref": "#/definitions/ResourcePermissions"
         },
         "istioSidecar": {
           "type": "boolean",
@@ -6842,7 +7545,11 @@
           "$ref": "#/definitions/IstioValidations"
         },
         "virtualServices": {
-          "$ref": "#/definitions/virtualServices"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VirtualService"
+          },
+          "x-go-name": "VirtualServices"
         },
         "workloads": {
           "$ref": "#/definitions/WorkloadOverviews"
@@ -6850,80 +7557,120 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
-    "ServiceEntries": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/ServiceEntry"
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
     "ServiceEntry": {
+      "description": "\u003c!-- crd generation tags\n+cue-gen:ServiceEntry:groupName:networking.istio.io\n+cue-gen:ServiceEntry:version:v1alpha3\n+cue-gen:ServiceEntry:storageVersion\n+cue-gen:ServiceEntry:annotations:helm.sh/resource-policy=keep\n+cue-gen:ServiceEntry:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:ServiceEntry:subresource:status\n+cue-gen:ServiceEntry:scope:Namespaced\n+cue-gen:ServiceEntry:resource:categories=istio-io,networking-istio-io,shortNames=se,plural=serviceentries\n+cue-gen:ServiceEntry:printerColumn:name=Hosts,type=string,JSONPath=.spec.hosts,description=\"The hosts associated with the ServiceEntry\"\n+cue-gen:ServiceEntry:printerColumn:name=Location,type=string,JSONPath=.spec.location,description=\"Whether the service is external to the\nmesh or part of the mesh (MESH_EXTERNAL or MESH_INTERNAL)\"\n+cue-gen:ServiceEntry:printerColumn:name=Resolution,type=string,JSONPath=.spec.resolution,description=\"Service discovery mode for the hosts\n(NONE, STATIC, or DNS)\"\n+cue-gen:ServiceEntry:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:ServiceEntry:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-start\n\u003e",
       "type": "object",
+      "title": "ServiceEntry enables adding additional entries into Istio's internal\nservice registry.",
       "properties": {
+        "annotations": {
+          "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
         "apiVersion": {
           "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
           "type": "string",
           "x-go-name": "APIVersion"
+        },
+        "clusterName": {
+          "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+          "type": "string",
+          "x-go-name": "ClusterName"
+        },
+        "creationTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "deletionGracePeriodSeconds": {
+          "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DeletionGracePeriodSeconds"
+        },
+        "deletionTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "finalizers": {
+          "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Finalizers"
+        },
+        "generateName": {
+          "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+          "type": "string",
+          "x-go-name": "GenerateName"
+        },
+        "generation": {
+          "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Generation"
         },
         "kind": {
           "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string",
           "x-go-name": "Kind"
         },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "addresses": {
-              "type": "object",
-              "x-go-name": "Addresses"
-            },
-            "endpoints": {
-              "type": "object",
-              "x-go-name": "Endpoints"
-            },
-            "exportTo": {
-              "type": "object",
-              "x-go-name": "ExportTo"
-            },
-            "hosts": {
-              "type": "object",
-              "x-go-name": "Hosts"
-            },
-            "location": {
-              "type": "object",
-              "x-go-name": "Location"
-            },
-            "ports": {
-              "type": "object",
-              "x-go-name": "Ports"
-            },
-            "resolution": {
-              "type": "object",
-              "x-go-name": "Resolution"
-            },
-            "subjectAltNames": {
-              "type": "object",
-              "x-go-name": "SubjectAltNames"
-            },
-            "workloadSelector": {
-              "type": "object",
-              "x-go-name": "WorkloadSelector"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
+        "labels": {
+          "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
           "type": "object",
           "additionalProperties": {
-            "type": "object"
+            "type": "string"
           },
-          "x-go-name": "Status"
+          "x-go-name": "Labels"
+        },
+        "managedFields": {
+          "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ManagedFieldsEntry"
+          },
+          "x-go-name": "ManagedFields"
+        },
+        "name": {
+          "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "ownerReferences": {
+          "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OwnerReference"
+          },
+          "x-go-name": "OwnerReferences"
+        },
+        "resourceVersion": {
+          "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selfLink": {
+          "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+          "type": "string",
+          "x-go-name": "SelfLink"
+        },
+        "spec": {
+          "$ref": "#/definitions/ServiceEntry"
+        },
+        "status": {
+          "$ref": "#/definitions/IstioStatus"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/models"
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
     },
     "ServiceHealth": {
       "description": "ServiceHealth contains aggregated health from various sources, for a given service",
@@ -7045,63 +7792,119 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Sidecar": {
+      "description": "\u003c!-- crd generation tags\n+cue-gen:Sidecar:groupName:networking.istio.io\n+cue-gen:Sidecar:version:v1alpha3\n+cue-gen:Sidecar:storageVersion\n+cue-gen:Sidecar:annotations:helm.sh/resource-policy=keep\n+cue-gen:Sidecar:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:Sidecar:subresource:status\n+cue-gen:Sidecar:scope:Namespaced\n+cue-gen:Sidecar:resource:categories=istio-io,networking-istio-io\n+cue-gen:Sidecar:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-start\n\u003e",
       "type": "object",
+      "title": "`Sidecar` describes the configuration of the sidecar proxy that mediates\ninbound and outbound communication of the workload instance to which it is\nattached.",
       "properties": {
+        "annotations": {
+          "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
         "apiVersion": {
           "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
           "type": "string",
           "x-go-name": "APIVersion"
+        },
+        "clusterName": {
+          "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+          "type": "string",
+          "x-go-name": "ClusterName"
+        },
+        "creationTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "deletionGracePeriodSeconds": {
+          "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DeletionGracePeriodSeconds"
+        },
+        "deletionTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "finalizers": {
+          "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Finalizers"
+        },
+        "generateName": {
+          "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+          "type": "string",
+          "x-go-name": "GenerateName"
+        },
+        "generation": {
+          "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Generation"
         },
         "kind": {
           "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string",
           "x-go-name": "Kind"
         },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "egress": {
-              "type": "object",
-              "x-go-name": "Egress"
-            },
-            "ingress": {
-              "type": "object",
-              "x-go-name": "Ingress"
-            },
-            "localhost": {
-              "type": "object",
-              "x-go-name": "Localhost"
-            },
-            "outboundTrafficPolicy": {
-              "type": "object",
-              "x-go-name": "OutboundTrafficPolicy"
-            },
-            "workloadSelector": {
-              "type": "object",
-              "x-go-name": "WorkloadSelector"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
+        "labels": {
+          "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
           "type": "object",
           "additionalProperties": {
-            "type": "object"
+            "type": "string"
           },
-          "x-go-name": "Status"
+          "x-go-name": "Labels"
+        },
+        "managedFields": {
+          "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ManagedFieldsEntry"
+          },
+          "x-go-name": "ManagedFields"
+        },
+        "name": {
+          "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "ownerReferences": {
+          "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OwnerReference"
+          },
+          "x-go-name": "OwnerReferences"
+        },
+        "resourceVersion": {
+          "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selfLink": {
+          "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+          "type": "string",
+          "x-go-name": "SelfLink"
+        },
+        "spec": {
+          "$ref": "#/definitions/Sidecar"
+        },
+        "status": {
+          "$ref": "#/definitions/IstioStatus"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "Sidecars": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Sidecar"
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
     },
     "Span": {
       "description": "Span is a span denoting a piece of work in some infrastructure\nWhen converting to UI model, ParentSpanID and Process should be dereferenced into\nReferences and ProcessID, respectively.\nWhen converting to ES model, ProcessID and Warnings should be omitted. Even if\nincluded, ES with dynamic settings off will automatically ignore unneeded fields.",
@@ -7255,6 +8058,26 @@
       "title": "Time is a wrapper around time.Time which supports correct\nmarshaling to YAML and JSON.  Wrappers are provided for many\nof the factory methods that the time package offers.",
       "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
+    "Timestamp": {
+      "description": "All minutes are 60 seconds long. Leap seconds are \"smeared\" so that no leap\nsecond table is needed for interpretation, using a [24-hour linear\nsmear](https://developers.google.com/time/smear).\n\nThe range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By\nrestricting to that range, we ensure that we can convert to and from [RFC\n3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.\n\n# Examples\n\nExample 1: Compute Timestamp from POSIX `time()`.\n\nTimestamp timestamp;\ntimestamp.set_seconds(time(NULL));\ntimestamp.set_nanos(0);\n\nExample 2: Compute Timestamp from POSIX `gettimeofday()`.\n\nstruct timeval tv;\ngettimeofday(\u0026tv, NULL);\n\nTimestamp timestamp;\ntimestamp.set_seconds(tv.tv_sec);\ntimestamp.set_nanos(tv.tv_usec * 1000);\n\nExample 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.\n\nFILETIME ft;\nGetSystemTimeAsFileTime(\u0026ft);\nUINT64 ticks = (((UINT64)ft.dwHighDateTime) \u003c\u003c 32) | ft.dwLowDateTime;\n\nA Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z\nis 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z.\nTimestamp timestamp;\ntimestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));\ntimestamp.set_nanos((INT32) ((ticks % 10000000) * 100));\n\nExample 4: Compute Timestamp from Java `System.currentTimeMillis()`.\n\nlong millis = System.currentTimeMillis();\n\nTimestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)\n.setNanos((int) ((millis % 1000) * 1000000)).build();\n\n\nExample 5: Compute Timestamp from current time in Python.\n\ntimestamp = Timestamp()\ntimestamp.GetCurrentTime()\n\n# JSON Mapping\n\nIn JSON format, the Timestamp type is encoded as a string in the\n[RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the\nformat is \"{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z\"\nwhere {year} is always expressed using four digits while {month}, {day},\n{hour}, {min}, and {sec} are zero-padded to two digits each. The fractional\nseconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution),\nare optional. The \"Z\" suffix indicates the timezone (\"UTC\"); the timezone\nis required. A proto3 JSON serializer should always use UTC (as indicated by\n\"Z\") when printing the Timestamp type and a proto3 JSON parser should be\nable to accept both UTC and other timezones (as indicated by an offset).\n\nFor example, \"2017-01-15T01:30:15.01Z\" encodes 15.01 seconds past\n01:30 UTC on January 15, 2017.\n\nIn JavaScript, one can convert a Date object to this format using the\nstandard\n[toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)\nmethod. In Python, a standard `datetime.datetime` object can be converted\nto this format using\n[`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with\nthe time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use\nthe Joda Time's [`ISODateTimeFormat.dateTime()`](\nhttp://www.joda.org/joda-time/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime%2D%2D\n) to obtain a formatter capable of generating timestamps in this format.",
+      "type": "object",
+      "title": "A Timestamp represents a point in time independent of any time zone or local\ncalendar, encoded as a count of seconds and fractions of seconds at\nnanosecond resolution. The count is relative to an epoch at UTC midnight on\nJanuary 1, 1970, in the proleptic Gregorian calendar which extends the\nGregorian calendar backwards to year one.",
+      "properties": {
+        "nanos": {
+          "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "Nanos"
+        },
+        "seconds": {
+          "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Seconds"
+        }
+      },
+      "x-go-package": "github.com/gogo/protobuf/types"
+    },
     "TokenResponse": {
       "description": "This is used for returning the token",
       "type": "object",
@@ -7346,6 +8169,121 @@
       "type": "string",
       "title": "ValueType is the type of a value stored in KeyValue struct.",
       "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
+    },
+    "VirtualService": {
+      "description": "\u003c!-- crd generation tags\n+cue-gen:VirtualService:groupName:networking.istio.io\n+cue-gen:VirtualService:version:v1alpha3\n+cue-gen:VirtualService:storageVersion\n+cue-gen:VirtualService:annotations:helm.sh/resource-policy=keep\n+cue-gen:VirtualService:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:VirtualService:subresource:status\n+cue-gen:VirtualService:scope:Namespaced\n+cue-gen:VirtualService:resource:categories=istio-io,networking-istio-io,shortNames=vs\n+cue-gen:VirtualService:printerColumn:name=Gateways,type=string,JSONPath=.spec.gateways,description=\"The names of gateways and sidecars\nthat should apply these routes\"\n+cue-gen:VirtualService:printerColumn:name=Hosts,type=string,JSONPath=.spec.hosts,description=\"The destination hosts to which traffic is being sent\"\n+cue-gen:VirtualService:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:VirtualService:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-start\n\u003e",
+      "type": "object",
+      "title": "Configuration affecting traffic routing.",
+      "properties": {
+        "annotations": {
+          "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "clusterName": {
+          "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+          "type": "string",
+          "x-go-name": "ClusterName"
+        },
+        "creationTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "deletionGracePeriodSeconds": {
+          "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DeletionGracePeriodSeconds"
+        },
+        "deletionTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "finalizers": {
+          "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Finalizers"
+        },
+        "generateName": {
+          "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+          "type": "string",
+          "x-go-name": "GenerateName"
+        },
+        "generation": {
+          "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Generation"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "labels": {
+          "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "managedFields": {
+          "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ManagedFieldsEntry"
+          },
+          "x-go-name": "ManagedFields"
+        },
+        "name": {
+          "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "ownerReferences": {
+          "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OwnerReference"
+          },
+          "x-go-name": "OwnerReferences"
+        },
+        "resourceVersion": {
+          "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selfLink": {
+          "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+          "type": "string",
+          "x-go-name": "SelfLink"
+        },
+        "spec": {
+          "$ref": "#/definitions/VirtualService"
+        },
+        "status": {
+          "$ref": "#/definitions/IstioStatus"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
+        }
+      },
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
     },
     "WEInfo": {
       "description": "WEInfo provides static information about a workload entry\nassociated with a workload node.",
@@ -7496,6 +8434,14 @@
           },
           "x-go-name": "Runtimes"
         },
+        "serviceAccountNames": {
+          "description": "Names of the workload service accounts",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ServiceAccountNames"
+        },
         "services": {
           "$ref": "#/definitions/Services"
         },
@@ -7514,6 +8460,236 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "WorkloadEntry": {
+      "description": "\u003c!-- crd generation tags\n+cue-gen:WorkloadEntry:groupName:networking.istio.io\n+cue-gen:WorkloadEntry:version:v1alpha3\n+cue-gen:WorkloadEntry:storageVersion\n+cue-gen:WorkloadEntry:annotations:helm.sh/resource-policy=keep\n+cue-gen:WorkloadEntry:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:WorkloadEntry:subresource:status\n+cue-gen:WorkloadEntry:scope:Namespaced\n+cue-gen:WorkloadEntry:resource:categories=istio-io,networking-istio-io,shortNames=we,plural=workloadentries\n+cue-gen:WorkloadEntry:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:WorkloadEntry:printerColumn:name=Address,type=string,JSONPath=.spec.address,description=\"Address associated with the network endpoint.\"\n+cue-gen:WorkloadEntry:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-start\n\u003e",
+      "type": "object",
+      "title": "WorkloadEntry enables specifying the properties of a single non-Kubernetes workload such a VM or a bare metal services that can be referred to by service entries.",
+      "properties": {
+        "annotations": {
+          "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "clusterName": {
+          "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+          "type": "string",
+          "x-go-name": "ClusterName"
+        },
+        "creationTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "deletionGracePeriodSeconds": {
+          "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DeletionGracePeriodSeconds"
+        },
+        "deletionTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "finalizers": {
+          "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Finalizers"
+        },
+        "generateName": {
+          "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+          "type": "string",
+          "x-go-name": "GenerateName"
+        },
+        "generation": {
+          "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Generation"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "labels": {
+          "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "managedFields": {
+          "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ManagedFieldsEntry"
+          },
+          "x-go-name": "ManagedFields"
+        },
+        "name": {
+          "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "ownerReferences": {
+          "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OwnerReference"
+          },
+          "x-go-name": "OwnerReferences"
+        },
+        "resourceVersion": {
+          "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selfLink": {
+          "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+          "type": "string",
+          "x-go-name": "SelfLink"
+        },
+        "spec": {
+          "$ref": "#/definitions/WorkloadEntry"
+        },
+        "status": {
+          "$ref": "#/definitions/IstioStatus"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
+        }
+      },
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
+    },
+    "WorkloadGroup": {
+      "description": "\u003c!-- crd generation tags\n+cue-gen:WorkloadGroup:groupName:networking.istio.io\n+cue-gen:WorkloadGroup:version:v1alpha3\n+cue-gen:WorkloadGroup:storageVersion\n+cue-gen:WorkloadGroup:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:WorkloadGroup:subresource:status\n+cue-gen:WorkloadGroup:scope:Namespaced\n+cue-gen:WorkloadGroup:resource:categories=istio-io,networking-istio-io,shortNames=wg,plural=workloadgroups\n+cue-gen:WorkloadGroup:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:WorkloadGroup:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e",
+      "type": "object",
+      "title": "`WorkloadGroup` enables specifying the properties of a single workload for bootstrap and\nprovides a template for `WorkloadEntry`, similar to how `Deployment` specifies properties\nof workloads via `Pod` templates. A `WorkloadGroup` can have more than one `WorkloadEntry`.\n`WorkloadGroup` has no relationship to resources which control service registry like `ServiceEntry`\nand as such doesn't configure host name for these workloads.",
+      "properties": {
+        "annotations": {
+          "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "clusterName": {
+          "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+          "type": "string",
+          "x-go-name": "ClusterName"
+        },
+        "creationTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "deletionGracePeriodSeconds": {
+          "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DeletionGracePeriodSeconds"
+        },
+        "deletionTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "finalizers": {
+          "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Finalizers"
+        },
+        "generateName": {
+          "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
+          "type": "string",
+          "x-go-name": "GenerateName"
+        },
+        "generation": {
+          "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Generation"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "labels": {
+          "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "managedFields": {
+          "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ManagedFieldsEntry"
+          },
+          "x-go-name": "ManagedFields"
+        },
+        "name": {
+          "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "ownerReferences": {
+          "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OwnerReference"
+          },
+          "x-go-name": "OwnerReferences"
+        },
+        "resourceVersion": {
+          "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selfLink": {
+          "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
+          "type": "string",
+          "x-go-name": "SelfLink"
+        },
+        "spec": {
+          "$ref": "#/definitions/WorkloadGroup"
+        },
+        "status": {
+          "$ref": "#/definitions/IstioStatus"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
+        }
+      },
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
+    },
     "WorkloadHealth": {
       "description": "WorkloadHealth contains aggregated health from various sources, for a given workload",
       "type": "object",
@@ -7531,7 +8707,8 @@
       "type": "object",
       "required": [
         "workloadName",
-        "istioSidecar"
+        "istioSidecar",
+        "serviceAccountNames"
       ],
       "properties": {
         "istioSidecar": {
@@ -7539,6 +8716,15 @@
           "type": "boolean",
           "x-go-name": "IstioSidecar",
           "example": true
+        },
+        "serviceAccountNames": {
+          "description": "List of service accounts involved in this application",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ServiceAccountNames",
+          "example": "productpage, reviews, details"
         },
         "workloadName": {
           "description": "Name of a workload member of an application",
@@ -7661,6 +8847,14 @@
           "x-go-name": "ResourceVersion",
           "example": "192892127"
         },
+        "serviceAccountNames": {
+          "description": "Names of the workload service accounts",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ServiceAccountNames"
+        },
         "type": {
           "description": "Type of the workload",
           "type": "string",
@@ -7712,186 +8906,6 @@
           "x-go-name": "SyncedProxies"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "authorizationPolicies": {
-      "description": "This is used for returning an array of AuthorizationPolicies",
-      "type": "array",
-      "title": "AuthorizationPolicies authorizationPolicies",
-      "items": {
-        "$ref": "#/definitions/authorizationPolicy"
-      },
-      "x-go-name": "AuthorizationPolicies",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "authorizationPolicy": {
-      "description": "This is used for returning an AuthorizationPolicy",
-      "type": "object",
-      "title": "AuthorizationPolicy authorizationPolicy",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "action": {
-              "type": "object",
-              "x-go-name": "Action"
-            },
-            "rules": {
-              "type": "object",
-              "x-go-name": "Rules"
-            },
-            "selector": {
-              "type": "object",
-              "x-go-name": "Selector"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "AuthorizationPolicy",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "destinationRule": {
-      "description": "This is used for returning a DestinationRule",
-      "type": "object",
-      "title": "DestinationRule destinationRule",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "exportTo": {
-              "type": "object",
-              "x-go-name": "ExportTo"
-            },
-            "host": {
-              "type": "object",
-              "x-go-name": "Host"
-            },
-            "subsets": {
-              "type": "object",
-              "x-go-name": "Subsets"
-            },
-            "trafficPolicy": {
-              "type": "object",
-              "x-go-name": "TrafficPolicy"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "DestinationRule",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "destinationRules": {
-      "description": "This is used for returning an array of DestinationRules",
-      "type": "object",
-      "title": "DestinationRules destinationRules",
-      "properties": {
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/destinationRule"
-          },
-          "x-go-name": "Items"
-        },
-        "permissions": {
-          "$ref": "#/definitions/ResourcePermissions"
-        }
-      },
-      "x-go-name": "DestinationRules",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "envoyFilter": {
-      "description": "This is used for returning an EnvoyFilter",
-      "type": "object",
-      "title": "EnvoyFilter envoyFilter",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "configPatches": {
-              "type": "object",
-              "x-go-name": "ConfigPatches"
-            },
-            "workloadSelector": {
-              "type": "object",
-              "x-go-name": "WorkloadSelector"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "EnvoyFilter",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "envoyFilters": {
-      "description": "This is used for returning an array of EnvoyFilter",
-      "type": "array",
-      "title": "EnvoyFilters envoyFilters",
-      "items": {
-        "$ref": "#/definitions/envoyFilter"
-      },
-      "x-go-name": "EnvoyFilters",
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "externalServiceInfo": {
@@ -7955,328 +8969,6 @@
         }
       },
       "x-go-name": "Namespace",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "peerAuthentication": {
-      "description": "This is used for returning an PeerAuthentication",
-      "type": "object",
-      "title": "PeerAuthentication peerAuthentication",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "mtls": {
-              "type": "object",
-              "x-go-name": "Mtls"
-            },
-            "portLevelMtls": {
-              "type": "object",
-              "x-go-name": "PortLevelMtls"
-            },
-            "selector": {
-              "type": "object",
-              "x-go-name": "Selector"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "PeerAuthentication",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "peerAuthentications": {
-      "description": "This is used for returning an array of PeerAuthentication",
-      "type": "array",
-      "title": "PeerAuthentications peerAuthentications",
-      "items": {
-        "$ref": "#/definitions/peerAuthentication"
-      },
-      "x-go-name": "PeerAuthentications",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "requestAuthentication": {
-      "description": "This is used for returning an RequestAuthentication",
-      "type": "object",
-      "title": "RequestAuthentication requestAuthentication",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "jwtRules": {
-              "type": "object",
-              "x-go-name": "JwtRules"
-            },
-            "selector": {
-              "type": "object",
-              "x-go-name": "Selector"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "RequestAuthentication",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "requestAuthentications": {
-      "description": "This is used for returning an array of RequestAuthentication",
-      "type": "array",
-      "title": "RequestAuthentications requestAuthentications",
-      "items": {
-        "$ref": "#/definitions/requestAuthentication"
-      },
-      "x-go-name": "RequestAuthentications",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "virtualService": {
-      "description": "This type is used for returning a VirtualService",
-      "type": "object",
-      "title": "VirtualService virtualService",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "exportTo": {
-              "type": "object",
-              "x-go-name": "ExportTo"
-            },
-            "gateways": {
-              "type": "object",
-              "x-go-name": "Gateways"
-            },
-            "hosts": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "x-go-name": "Hosts"
-            },
-            "http": {
-              "type": "object",
-              "x-go-name": "Http"
-            },
-            "tcp": {
-              "type": "object",
-              "x-go-name": "Tcp"
-            },
-            "tls": {
-              "type": "object",
-              "x-go-name": "Tls"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "VirtualService",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "virtualServices": {
-      "description": "This type is used for returning an array of VirtualServices with some permission flags",
-      "type": "object",
-      "title": "VirtualServices virtualServices",
-      "properties": {
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/virtualService"
-          },
-          "x-go-name": "Items"
-        },
-        "permissions": {
-          "$ref": "#/definitions/ResourcePermissions"
-        }
-      },
-      "x-go-name": "VirtualServices",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "workloadEntries": {
-      "description": "This is used for returning an array of WorkloadEntry",
-      "type": "array",
-      "title": "WorkloadEntries workloadEntries",
-      "items": {
-        "$ref": "#/definitions/workloadEntry"
-      },
-      "x-go-name": "WorkloadEntries",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "workloadEntry": {
-      "description": "This is used for returning an WorkloadEntry",
-      "type": "object",
-      "title": "WorkloadEntry workloadEntry",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "address": {
-              "type": "object",
-              "x-go-name": "Address"
-            },
-            "labels": {
-              "type": "object",
-              "x-go-name": "Labels"
-            },
-            "locality": {
-              "type": "object",
-              "x-go-name": "Locality"
-            },
-            "network": {
-              "type": "object",
-              "x-go-name": "Network"
-            },
-            "ports": {
-              "type": "object",
-              "x-go-name": "Ports"
-            },
-            "serviceAccount": {
-              "type": "object",
-              "x-go-name": "ServiceAccount"
-            },
-            "weight": {
-              "type": "object",
-              "x-go-name": "Weight"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "WorkloadEntry",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "workloadGroup": {
-      "description": "This is used for returning a WorkloadGroup",
-      "type": "object",
-      "title": "WorkloadGroup workloadGroup",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "metadata": {
-              "description": "This is not an error, the WorkloadGroup has a Metadata inside the Spec\nhttps://istio.io/latest/docs/reference/config/networking/workload-group/#WorkloadGroup",
-              "type": "object",
-              "x-go-name": "Metadata"
-            },
-            "probe": {
-              "type": "object",
-              "x-go-name": "Probe"
-            },
-            "template": {
-              "type": "object",
-              "x-go-name": "Template"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "WorkloadGroup",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "workloadGroups": {
-      "description": "This is used for returning an array of WorkloadGroup",
-      "type": "array",
-      "title": "WorkloadGroups workloadGroups",
-      "items": {
-        "$ref": "#/definitions/workloadGroup"
-      },
-      "x-go-name": "WorkloadGroups",
       "x-go-package": "github.com/kiali/kiali/models"
     }
   },

@@ -206,6 +206,36 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 	return true
 }
 
+func checkDomain(tokenClaims map[string]interface{}, allowedDomains []string) error {
+	var hostedDomain string
+	foundDomain := false
+	if v, ok := tokenClaims["hd"]; ok {
+		hostedDomain = v.(string)
+	} else {
+		//domains like gmail.com don't have the hosted domain (hd) on claims
+		//fields, so we try to get the domain on email claim
+		var email string
+		if v, ok := tokenClaims["email"]; ok {
+			email = v.(string)
+		}
+		splitedEmail := strings.Split(email, "@")
+		if len(splitedEmail) < 2 {
+			return fmt.Errorf("cannot detect hosted domain on OpenID for the email %s ", email)
+		}
+		hostedDomain = splitedEmail[1]
+	}
+	for _, d := range allowedDomains {
+		if hostedDomain == d {
+			foundDomain = true
+			break
+		}
+	}
+	if !foundDomain {
+		return fmt.Errorf("domain %s not allowed to login", hostedDomain)
+	}
+	return nil
+}
+
 func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	conf := config.Get()
 
@@ -238,6 +268,15 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	if nonceError := business.ValidateOpenIdNonceCode(openIdParams); len(nonceError) > 0 {
 		RespondWithError(w, http.StatusForbidden, fmt.Sprintf("OpenId token rejected: %s", nonceError))
 		return false
+	}
+
+	// Check if the domain is allowed
+	if len(conf.Auth.OpenId.AllowedDomains) > 0 {
+		err := checkDomain(openIdParams.ParsedIdToken.Claims.(jwt.MapClaims), conf.Auth.OpenId.AllowedDomains)
+		if err != nil {
+			RespondWithError(w, http.StatusUnauthorized, err.Error())
+			return false
+		}
 	}
 
 	if conf.Auth.OpenId.DisableRBAC {
@@ -890,6 +929,16 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		log.Error(msg)
 		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
 		return true
+	}
+
+	// Check if the domain is allowed
+	if len(conf.Auth.OpenId.AllowedDomains) > 0 {
+		err := checkDomain(openIdParams.ParsedIdToken.Claims.(jwt.MapClaims), conf.Auth.OpenId.AllowedDomains)
+		if err != nil {
+			log.Error(err.Error())
+			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(err.Error())), http.StatusFound)
+			return true
+		}
 	}
 
 	useAccessToken := false

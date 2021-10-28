@@ -48,8 +48,8 @@ func disabledMeshDestRuleTestPrep(scenario string, t *testing.T) ([]*models.Isti
 	}
 
 	validations, valid := DisabledMeshWideMTLSChecker{
-		DestinationRule: loader.GetFirstResource("DestinationRule"),
-		MeshPeerAuthns:  loader.GetResources("PeerAuthentication"),
+		DestinationRule: loader.GetResources().DestinationRules[0],
+		MeshPeerAuthns:  loader.GetResources().PeerAuthentications,
 	}.Check()
 
 	return validations, valid

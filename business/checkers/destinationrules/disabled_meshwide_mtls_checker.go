@@ -1,13 +1,16 @@
 package destinationrules
 
 import (
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type DisabledMeshWideMTLSChecker struct {
-	DestinationRule kubernetes.IstioObject
-	MeshPeerAuthns  []kubernetes.IstioObject
+	DestinationRule networking_v1alpha3.DestinationRule
+	MeshPeerAuthns  []security_v1beta.PeerAuthentication
 }
 
 func (c DisabledMeshWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {

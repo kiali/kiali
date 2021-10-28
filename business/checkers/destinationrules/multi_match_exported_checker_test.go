@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -18,12 +19,12 @@ func TestExportMultiHostMatchCorrect(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "host1"),
+	destinationRules := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "host1"),
 	}
 
-	edr := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test2", "rule2", "host2.test2.svc.cluster.local"),
+	edr := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test2", "rule2", "host2.test2.svc.cluster.local"),
 	}
 
 	vals := MultiMatchChecker{
@@ -43,13 +44,13 @@ func TestExportMultiHostMatchInvalid(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "host1.test.svc.cluster.local"),
+	destinationRules := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "host1.test.svc.cluster.local"),
 	}
 
-	edr := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test2", "rule2", "host1.test.svc.cluster.local"),
-		data.CreateTestDestinationRule("test3", "rule3", "host1.test.svc.cluster.local"),
+	edr := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test2", "rule2", "host1.test.svc.cluster.local"),
+		*data.CreateTestDestinationRule("test3", "rule3", "host1.test.svc.cluster.local"),
 	}
 
 	vals := MultiMatchChecker{
@@ -81,13 +82,13 @@ func TestExportMultiHostMatchInvalid2(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "host1.test.svc.cluster.local"),
+	destinationRules := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "host1.test.svc.cluster.local"),
 	}
 
-	edr := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test2", "rule2", "host1.test.svc.cluster.local"),
-		data.CreateTestDestinationRule("test3", "rule3", "host1.test2.svc.cluster.local"),
+	edr := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test2", "rule2", "host1.test.svc.cluster.local"),
+		*data.CreateTestDestinationRule("test3", "rule3", "host1.test2.svc.cluster.local"),
 	}
 
 	vals := MultiMatchChecker{
@@ -135,12 +136,12 @@ func TestExportMultiHostMatchValidShortFormat(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "host1"),
+	destinationRules := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "host1"),
 	}
 
-	edr := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test2", "rule2", "host1.test"),
+	edr := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test2", "rule2", "host1.test"),
 	}
 
 	vals := MultiMatchChecker{
@@ -160,12 +161,12 @@ func TestExportMultiHostMatchValidShortFormat2(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "host1"),
+	destinationRules := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "host1"),
 	}
 
-	edr := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test2", "rule2", "host2.test"),
+	edr := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test2", "rule2", "host2.test"),
 	}
 
 	vals := MultiMatchChecker{
@@ -185,12 +186,12 @@ func TestExportMultiHostMatchValidShortFormatDiffNamespace(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "host1"),
+	destinationRules := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "host1"),
 	}
 
-	edr := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test2", "rule2", "host2.bookinfo"),
+	edr := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test2", "rule2", "host2.bookinfo"),
 	}
 
 	vals := MultiMatchChecker{
@@ -213,12 +214,12 @@ func TestExportMultiHostMatchWildcardInvalid(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "host1.test.svc.cluster.local"),
+	destinationRules := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "host1.test.svc.cluster.local"),
 	}
 
-	edr := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test2", "rule2", "*.test.svc.cluster.local"),
+	edr := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test2", "rule2", "*.test.svc.cluster.local"),
 	}
 
 	vals := MultiMatchChecker{
@@ -236,12 +237,12 @@ func TestExportMultiHostMatchWildcardInvalid(t *testing.T) {
 	assert.NotEmpty(validation.References)
 	assert.Equal("rule1", validation.References[0].Name)
 
-	destinationRules = []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test2", "rule2", "*.test2.svc.cluster.local"),
+	destinationRules = []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test2", "rule2", "*.test2.svc.cluster.local"),
 	}
 
-	edr = []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "host1.test2.svc.cluster.local"),
+	edr = []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "host1.test2.svc.cluster.local"),
 	}
 
 	vals = MultiMatchChecker{
@@ -266,12 +267,12 @@ func TestExportMultiHostMatchBothWildcardInvalid(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "*"),
+	destinationRules := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "*"),
 	}
 
-	edr := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test2", "rule2", "*.test.svc.cluster.local"),
+	edr := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test2", "rule2", "*.test.svc.cluster.local"),
 	}
 
 	vals := MultiMatchChecker{
@@ -289,12 +290,12 @@ func TestExportMultiHostMatchBothWildcardInvalid(t *testing.T) {
 	assert.NotEmpty(validation.References)
 	assert.Equal("rule1", validation.References[0].Name)
 
-	destinationRules = []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test2", "rule2", "*.test.svc.cluster.local"),
+	destinationRules = []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test2", "rule2", "*.test.svc.cluster.local"),
 	}
 
-	edr = []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "*"),
+	edr = []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "*"),
 	}
 
 	vals = MultiMatchChecker{
@@ -319,12 +320,12 @@ func TestExportMultiHostMatchBothWildcardInvalid2(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "*.test.svc.cluster.local"),
+	destinationRules := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "*.test.svc.cluster.local"),
 	}
 
-	edr := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test2", "rule2", "*.test.svc.cluster.local"),
+	edr := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test2", "rule2", "*.test.svc.cluster.local"),
 	}
 
 	vals := MultiMatchChecker{
@@ -342,12 +343,12 @@ func TestExportMultiHostMatchBothWildcardInvalid2(t *testing.T) {
 	assert.NotEmpty(validation.References)
 	assert.Equal("rule1", validation.References[0].Name)
 
-	destinationRules = []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test2", "rule2", "*.test2.svc.cluster.local"),
+	destinationRules = []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test2", "rule2", "*.test2.svc.cluster.local"),
 	}
 
-	edr = []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "*.test2.svc.cluster.local"),
+	edr = []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "*.test2.svc.cluster.local"),
 	}
 
 	vals = MultiMatchChecker{
@@ -372,12 +373,12 @@ func TestExportMultiHostMatchBothWildcardInvalid3(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "*.wikipedia.org"),
+	destinationRules := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "*.wikipedia.org"),
 	}
 
-	edr := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test2", "rule2", "*.wikipedia.org"),
+	edr := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test2", "rule2", "*.wikipedia.org"),
 	}
 
 	vals := MultiMatchChecker{
@@ -395,12 +396,12 @@ func TestExportMultiHostMatchBothWildcardInvalid3(t *testing.T) {
 	assert.NotEmpty(validation.References)
 	assert.Equal("rule1", validation.References[0].Name)
 
-	destinationRules = []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test2", "rule2", "*.wikipedia.org"),
+	destinationRules = []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test2", "rule2", "*.wikipedia.org"),
 	}
 
-	edr = []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "*.wikipedia.org"),
+	edr = []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "*.wikipedia.org"),
 	}
 
 	vals = MultiMatchChecker{
@@ -425,12 +426,12 @@ func TestExportMultiHostMatchingMeshWideMTLSDestinationRule(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "host1"),
+	destinationRules := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "host1"),
 	}
 
-	edr := []kubernetes.IstioObject{
-		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+	edr := []networking_v1alpha3.DestinationRule{
+		*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateTestDestinationRule("test2", "rule2", "*.local")),
 	}
 
@@ -451,12 +452,12 @@ func TestExportMultiHostMatchingNamespaceWideMTLSDestinationRule(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "rule1", "host1"),
+	destinationRules := []networking_v1alpha3.DestinationRule{
+		*data.CreateTestDestinationRule("test", "rule1", "host1"),
 	}
 
-	edr := []kubernetes.IstioObject{
-		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+	edr := []networking_v1alpha3.DestinationRule{
+		*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateTestDestinationRule("test2", "rule2", "*.test.svc.cluster.local")),
 	}
 
@@ -477,13 +478,13 @@ func TestExportMultiHostMatchDifferentSubsets(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []kubernetes.IstioObject{
-		data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"),
+	destinationRules := []networking_v1alpha3.DestinationRule{
+		*data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"),
 			data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"), data.CreateEmptyDestinationRule("test", "rule1", "host1"))),
 	}
 
-	edr := []kubernetes.IstioObject{
-		data.AddSubsetToDestinationRule(data.CreateSubset("v3", "v3"),
+	edr := []networking_v1alpha3.DestinationRule{
+		*data.AddSubsetToDestinationRule(data.CreateSubset("v3", "v3"),
 			data.AddSubsetToDestinationRule(data.CreateSubset("v4", "v4"), data.CreateEmptyDestinationRule("test2", "rule2", "host1"))),
 	}
 
@@ -495,7 +496,7 @@ func TestExportMultiHostMatchDifferentSubsets(t *testing.T) {
 	assert.Empty(vals)
 
 	edr = append(edr,
-		data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"),
+		*data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"),
 			data.AddSubsetToDestinationRule(data.CreateSubset("v5", "v5"), data.CreateEmptyDestinationRule("test3", "rule5", "*.test.svc.cluster.local"))),
 	)
 
@@ -513,13 +514,13 @@ func TestExportReviewsExample(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []kubernetes.IstioObject{
-		data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"),
+	destinationRules := []networking_v1alpha3.DestinationRule{
+		*data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"),
 			data.AddSubsetToDestinationRule(data.CreateSubset("v3", "v3"), data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews.bookinfo.svc.cluster.local"))),
 	}
 
-	edr := []kubernetes.IstioObject{
-		data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule("bookinfo2", "reviews2", "reviews.bookinfo.svc.cluster.local")),
+	edr := []networking_v1alpha3.DestinationRule{
+		*data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule("bookinfo2", "reviews2", "reviews.bookinfo.svc.cluster.local")),
 	}
 
 	vals := MultiMatchChecker{
@@ -530,8 +531,7 @@ func TestExportReviewsExample(t *testing.T) {
 	assert.Empty(vals)
 
 	allMatch := data.CreateEmptyDestinationRule("bookinfo3", "reviews3", "reviews.bookinfo.svc.cluster.local")
-	allMatch.GetSpec()["subsets"] = "~"
-	edr = append(edr, allMatch)
+	edr = append(edr, *allMatch)
 
 	vals = MultiMatchChecker{
 		DestinationRules:         destinationRules,
@@ -563,9 +563,9 @@ func TestExportMultiServiceEntry(t *testing.T) {
 	drB := data.CreateEmptyDestinationRule("test2", "service-b", "api.service_b.com")
 
 	vals := MultiMatchChecker{
-		DestinationRules:         []kubernetes.IstioObject{drA},
-		ExportedDestinationRules: []kubernetes.IstioObject{drB},
-		ServiceEntries:           kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{seA, seB}),
+		DestinationRules:         []networking_v1alpha3.DestinationRule{*drA},
+		ExportedDestinationRules: []networking_v1alpha3.DestinationRule{*drB},
+		ServiceEntries:           kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*seA, *seB}),
 	}.Check()
 
 	assert.Empty(vals)
@@ -583,9 +583,9 @@ func TestExportMultiServiceEntryInvalid(t *testing.T) {
 	drB := data.CreateEmptyDestinationRule("test2", "service-a2", "api.service_a.com")
 
 	vals := MultiMatchChecker{
-		DestinationRules:         []kubernetes.IstioObject{drA},
-		ExportedDestinationRules: []kubernetes.IstioObject{drB},
-		ServiceEntries:           kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{seA}),
+		DestinationRules:         []networking_v1alpha3.DestinationRule{*drA},
+		ExportedDestinationRules: []networking_v1alpha3.DestinationRule{*drB},
+		ServiceEntries:           kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*seA}),
 	}.Check()
 
 	assert.NotEmpty(vals)

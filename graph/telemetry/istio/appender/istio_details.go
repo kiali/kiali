@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/business"
@@ -68,8 +69,8 @@ NODES:
 		versionOk := graph.IsOK(n.Version)
 		switch {
 		case n.NodeType == graph.NodeTypeService:
-			for _, destinationRule := range istioCfg.DestinationRules.Items {
-				if destinationRule.HasCircuitBreaker(namespace, n.Service, "") {
+			for _, destinationRule := range istioCfg.DestinationRules {
+				if models.HasDRCircuitBreaker(&destinationRule, namespace, n.Service, "") {
 					n.Metadata[graph.HasCB] = true
 					continue NODES
 				}
@@ -77,8 +78,8 @@ NODES:
 		case !versionOk && (n.NodeType == graph.NodeTypeApp):
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(graph.DestServicesMetadata) {
-					for _, destinationRule := range istioCfg.DestinationRules.Items {
-						if destinationRule.HasCircuitBreaker(ds.Namespace, ds.Name, "") {
+					for _, destinationRule := range istioCfg.DestinationRules {
+						if models.HasDRCircuitBreaker(&destinationRule, ds.Namespace, ds.Name, "") {
 							n.Metadata[graph.HasCB] = true
 							continue NODES
 						}
@@ -88,8 +89,8 @@ NODES:
 		case versionOk:
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(graph.DestServicesMetadata) {
-					for _, destinationRule := range istioCfg.DestinationRules.Items {
-						if destinationRule.HasCircuitBreaker(ds.Namespace, ds.Name, n.Version) {
+					for _, destinationRule := range istioCfg.DestinationRules {
+						if models.HasDRCircuitBreaker(&destinationRule, ds.Namespace, ds.Name, n.Version) {
 							n.Metadata[graph.HasCB] = true
 							continue NODES
 						}
@@ -111,8 +112,8 @@ NODES:
 		if n.Namespace != namespace {
 			continue
 		}
-		for _, virtualService := range istioCfg.VirtualServices.Items {
-			if virtualService.IsValidHost(namespace, n.Service) {
+		for _, virtualService := range istioCfg.VirtualServices {
+			if models.IsVSValidHost(&virtualService, namespace, n.Service) {
 				var vsMetadata graph.VirtualServicesMetadata
 				var vsOk bool
 				if vsMetadata, vsOk = n.Metadata[graph.HasVS].(graph.VirtualServicesMetadata); !vsOk {
@@ -121,27 +122,31 @@ NODES:
 				}
 
 				if len(virtualService.Spec.Hosts) != 0 {
-					vsMetadata[virtualService.Metadata.Name] = virtualService.Spec.Hosts
+					vsMetadata[virtualService.Name] = virtualService.Spec.Hosts
 				}
 
-				if virtualService.HasRequestRouting() {
+				if models.HasVSRequestRouting(&virtualService) {
 					n.Metadata[graph.HasRequestRouting] = true
 				}
 
-				if virtualService.HasRequestTimeout() {
+				if models.HasVSRequestTimeout(&virtualService) {
 					n.Metadata[graph.HasRequestTimeout] = true
 				}
 
-				if virtualService.HasFaultInjection() {
+				if models.HasVSFaultInjection(&virtualService) {
 					n.Metadata[graph.HasFaultInjection] = true
 				}
 
-				if virtualService.HasTrafficShifting() {
+				if models.HasVSTrafficShifting(&virtualService) {
 					n.Metadata[graph.HasTrafficShifting] = true
 				}
 
-				if virtualService.HasTCPTrafficShifting() {
+				if models.HasVSTCPTrafficShifting(&virtualService) {
 					n.Metadata[graph.HasTCPTrafficShifting] = true
+				}
+
+				if models.HasVSMirroring(&virtualService) {
+					n.Metadata[graph.HasMirroring] = true
 				}
 
 				continue NODES
@@ -237,19 +242,16 @@ func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo 
 
 					// Let's extract the hostnames and add them to the node metadata.
 					for _, node := range nodes {
-						gwServers := gwCrd.Spec.Servers.([]interface{})
+						gwServers := gwCrd.Spec.Servers
 						var hostnames []string
 
 						for _, gwServer := range gwServers {
-							gwServerMap := gwServer.(map[string]interface{})
-							gwHosts := gwServerMap["hosts"].([]interface{})
-							for _, gwHost := range gwHosts {
-								hostnames = append(hostnames, gwHost.(string))
-							}
+							gwHosts := gwServer.Hosts
+							hostnames = append(hostnames, gwHosts...)
 						}
 
 						// Metadata format: { gatewayName => array of hostnames }
-						node.Metadata[graph.IsIngressGateway].(graph.GatewaysMetadata)[gwCrd.Metadata.Name] = hostnames
+						node.Metadata[graph.IsIngressGateway].(graph.GatewaysMetadata)[gwCrd.Name] = hostnames
 					}
 				}
 			}
@@ -276,8 +278,8 @@ func (a IstioAppender) getIngressGatewayWorkloads(globalInfo *graph.AppenderGlob
 	return ingressWorkloads
 }
 
-func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) models.Gateways {
-	retVal := models.Gateways{}
+func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) []networking_v1alpha3.Gateway {
+	retVal := []networking_v1alpha3.Gateway{}
 	for namespace := range a.AccessibleNamespaces {
 		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
 			IncludeGateways: true,

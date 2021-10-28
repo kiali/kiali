@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -24,13 +25,13 @@ func TestMTLSNshWideDREnabledWithNsPolicyPermissive(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		PeerAuthentications: []kubernetes.IstioObject{
-			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
+		PeerAuthentications: []security_v1beta.PeerAuthentication{
+			*data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
 
 	validations, valid := NamespaceWideMTLSChecker{
-		DestinationRule: destinationRule,
+		DestinationRule: *destinationRule,
 		MTLSDetails:     mTlsDetails,
 	}.Check()
 
@@ -46,15 +47,15 @@ func TestMTLSNsWideDREnabledWithPolicy(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		PeerAuthentications: []kubernetes.IstioObject{
-			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("STRICT")),
+		PeerAuthentications: []security_v1beta.PeerAuthentication{
+			*data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("STRICT")),
 		},
 	}
 
 	assert := assert.New(t)
 
 	validations, valid := NamespaceWideMTLSChecker{
-		DestinationRule: destinationRule,
+		DestinationRule: *destinationRule,
 		MTLSDetails:     mTlsDetails,
 	}.Check()
 
@@ -70,15 +71,15 @@ func TestMTLSNsWideDREnabledWithMeshPolicy(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []kubernetes.IstioObject{
-			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
+		MeshPeerAuthentications: []security_v1beta.PeerAuthentication{
+			*data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
 
 	assert := assert.New(t)
 
 	validations, valid := NamespaceWideMTLSChecker{
-		DestinationRule: destinationRule,
+		DestinationRule: *destinationRule,
 		MTLSDetails:     mTlsDetails,
 	}.Check()
 
@@ -98,7 +99,7 @@ func TestMTLSNsWideDREnabledWithoutPolicy(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NamespaceWideMTLSChecker{
-		DestinationRule: destinationRule,
+		DestinationRule: *destinationRule,
 		MTLSDetails:     mTlsDetails,
 	}.Check()
 

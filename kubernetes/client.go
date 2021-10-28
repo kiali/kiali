@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	istio "istio.io/client-go/pkg/clientset/versioned"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -25,8 +26,8 @@ import (
 const RemoteSecretData = "/kiali-remote-secret/kiali"
 
 var (
-	emptyListOptions = meta_v1.ListOptions{}
 	emptyGetOptions  = meta_v1.GetOptions{}
+	emptyListOptions = meta_v1.ListOptions{}
 )
 
 type PodLogs struct {
@@ -49,11 +50,10 @@ type ClientInterface interface {
 // It hides the way it queries each API
 type K8SClient struct {
 	ClientInterface
-	token              string
-	k8s                *kube.Clientset
-	istioNetworkingApi *rest.RESTClient
-	istioSecurityApi   *rest.RESTClient
-	iter8Api           *rest.RESTClient
+	token          string
+	k8s            *kube.Clientset
+	iter8Api       *rest.RESTClient
+	istioClientset *istio.Clientset
 	// Used in REST queries after bump to client-go v0.20.x
 	ctx context.Context
 	// isOpenShift private variable will check if kiali is deployed under an OpenShift cluster or not
@@ -65,31 +65,11 @@ type K8SClient struct {
 	// It is represented as a pointer to include the initialization phase.
 	// See iter8.go#IsIter8Api() for more details
 	isIter8Api *bool
-
-	// networkingResources private variable will check which resources kiali has access to from networking.istio.io group
-	// It is represented as a pointer to include the initialization phase.
-	// See istio_details_service.go#hasNetworkingResource() for more details.
-	networkingResources *map[string]bool
-
-	// securityResources private variable will check which resources kiali has access to from security.istio.io group
-	// It is represented as a pointer to include the initialization phase.
-	// See istio_details_service.go#hasSecurityResource() for more details.
-	securityResources *map[string]bool
 }
 
 // GetK8sApi returns the clientset referencing all K8s rest clients
 func (client *K8SClient) GetK8sApi() *kube.Clientset {
 	return client.k8s
-}
-
-// GetIstioNetworkingApi returns the istio config rest client
-func (client *K8SClient) GetIstioNetworkingApi() *rest.RESTClient {
-	return client.istioNetworkingApi
-}
-
-// GetIstioSecurityApi returns the istio security rest client
-func (client *K8SClient) GetIstioSecurityApi() *rest.RESTClient {
-	return client.istioSecurityApi
 }
 
 // GetToken returns the BearerToken used from the config
@@ -187,15 +167,6 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 	types := runtime.NewScheme()
 	schemeBuilder := runtime.NewSchemeBuilder(
 		func(scheme *runtime.Scheme) error {
-			// Register networking types
-			for _, nt := range networkingTypes {
-				scheme.AddKnownTypeWithName(NetworkingGroupVersion.WithKind(nt.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(NetworkingGroupVersion.WithKind(nt.collectionKind), &GenericIstioObjectList{})
-			}
-			for _, rt := range securityTypes {
-				scheme.AddKnownTypeWithName(SecurityGroupVersion.WithKind(rt.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(SecurityGroupVersion.WithKind(rt.collectionKind), &GenericIstioObjectList{})
-			}
 			// Register Extension (iter8) types
 			for _, rt := range iter8Types {
 				// We will use a Iter8ExperimentObject which only contains metadata and spec with interfaces
@@ -204,8 +175,6 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 				scheme.AddKnownTypeWithName(Iter8GroupVersion.WithKind(rt.collectionKind), &Iter8ExperimentObjectList{})
 			}
 
-			meta_v1.AddToGroupVersion(scheme, NetworkingGroupVersion)
-			meta_v1.AddToGroupVersion(scheme, SecurityGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, Iter8GroupVersion)
 			return nil
 		})
@@ -215,23 +184,16 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 		return nil, err
 	}
 
-	istioNetworkingAPI, err := newClientForAPI(config, NetworkingGroupVersion, types)
-	if err != nil {
-		return nil, err
-	}
-
-	istioSecurityApi, err := newClientForAPI(config, SecurityGroupVersion, types)
-	if err != nil {
-		return nil, err
-	}
-
 	iter8Api, err := newClientForAPI(config, Iter8GroupVersion, types)
 	if err != nil {
 		return nil, err
 	}
 
-	client.istioNetworkingApi = istioNetworkingAPI
-	client.istioSecurityApi = istioSecurityApi
+	client.istioClientset, err = istio.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
 	client.iter8Api = iter8Api
 	client.ctx = context.Background()
 	return &client, nil

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -18,7 +19,7 @@ func TestValidHost(t *testing.T) {
 	vals, valid := NoHostChecker{
 		Namespace:      "test-namespace",
 		ServiceNames:   []string{"reviews", "other"},
-		VirtualService: data.CreateVirtualService(),
+		VirtualService: *data.CreateVirtualService(),
 	}.Check()
 
 	assert.True(valid)
@@ -36,7 +37,7 @@ func TestNoValidHost(t *testing.T) {
 	vals, valid := NoHostChecker{
 		Namespace:      "test-namespace",
 		ServiceNames:   []string{"details", "other"},
-		VirtualService: virtualService,
+		VirtualService: *virtualService,
 	}.Check()
 
 	assert.False(valid)
@@ -48,12 +49,12 @@ func TestNoValidHost(t *testing.T) {
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", vals[1]))
 	assert.Equal("spec/tcp[0]/route[0]/destination/host", vals[1].Path)
 
-	delete(virtualService.GetSpec(), "http")
+	virtualService.Spec.Http = nil
 
 	vals, valid = NoHostChecker{
 		Namespace:      "test-namespace",
 		ServiceNames:   []string{"details", "other"},
-		VirtualService: virtualService,
+		VirtualService: *virtualService,
 	}.Check()
 
 	assert.False(valid)
@@ -62,12 +63,12 @@ func TestNoValidHost(t *testing.T) {
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", vals[0]))
 	assert.Equal("spec/tcp[0]/route[0]/destination/host", vals[0].Path)
 
-	delete(virtualService.GetSpec(), "tcp")
+	virtualService.Spec.Tcp = nil
 
 	vals, valid = NoHostChecker{
 		Namespace:      "test-namespace",
 		ServiceNames:   []string{"details", "other"},
-		VirtualService: virtualService,
+		VirtualService: *virtualService,
 	}.Check()
 
 	assert.False(valid)
@@ -83,7 +84,7 @@ func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
 
 	assert := assert.New(t)
 
-	virtualService := data.AddRoutesToVirtualService("tcp", data.CreateRoute("reviews.outside-namespace", "v1", -1),
+	virtualService := data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("reviews.outside-namespace", "v1", -1),
 		data.CreateEmptyVirtualService("reviews", "test", []string{"reviews"}),
 	)
 
@@ -94,7 +95,7 @@ func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
 			models.Namespace{Name: "outside-namespace"},
 		},
 		ServiceNames:   []string{"details", "other"},
-		VirtualService: virtualService,
+		VirtualService: *virtualService,
 	}.Check()
 
 	assert.True(valid)
@@ -115,7 +116,7 @@ func TestValidServiceEntryHost(t *testing.T) {
 	vals, valid := NoHostChecker{
 		Namespace:      "wikipedia",
 		ServiceNames:   []string{"my-wiki-rule"},
-		VirtualService: virtualService,
+		VirtualService: *virtualService,
 	}.Check()
 
 	assert.False(valid)
@@ -127,8 +128,8 @@ func TestValidServiceEntryHost(t *testing.T) {
 	vals, valid = NoHostChecker{
 		Namespace:         "wikipedia",
 		ServiceNames:      []string{"my-wiki-rule"},
-		VirtualService:    virtualService,
-		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{serviceEntry}),
+		VirtualService:    *virtualService,
+		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{serviceEntry}),
 	}.Check()
 
 	assert.True(valid)
@@ -141,13 +142,13 @@ func TestValidWildcardServiceEntryHost(t *testing.T) {
 
 	assert := assert.New(t)
 
-	virtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("www.google.com", "v1", -1),
+	virtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("www.google.com", "v1", -1),
 		data.CreateEmptyVirtualService("googleIt", "google", []string{"www.google.com"}))
 
 	vals, valid := NoHostChecker{
 		Namespace:      "google",
 		ServiceNames:   []string{"duckduckgo"},
-		VirtualService: virtualService,
+		VirtualService: *virtualService,
 	}.Check()
 
 	assert.False(valid)
@@ -159,8 +160,8 @@ func TestValidWildcardServiceEntryHost(t *testing.T) {
 	vals, valid = NoHostChecker{
 		Namespace:         "google",
 		ServiceNames:      []string{"duckduckgo"},
-		VirtualService:    virtualService,
-		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{serviceEntry}),
+		VirtualService:    *virtualService,
+		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
 	}.Check()
 
 	assert.True(valid)
@@ -173,15 +174,14 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	assert := assert.New(t)
 
-	virtualService := data.AddRoutesToVirtualService(
-		"http",
-		data.CreateRoute("ratings.mesh2-bookinfo.svc.mesh1-imports.local", "v1", -1),
+	virtualService := data.AddHttpRoutesToVirtualService(
+		data.CreateHttpRouteDestination("ratings.mesh2-bookinfo.svc.mesh1-imports.local", "v1", -1),
 		data.CreateEmptyVirtualService("federation-vs", "bookinfo", []string{"*"}))
 
 	vals, valid := NoHostChecker{
 		Namespace:      "bookinfo",
 		ServiceNames:   []string{""},
-		VirtualService: virtualService,
+		VirtualService: *virtualService,
 	}.Check()
 
 	assert.False(valid)
@@ -192,7 +192,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	vals, valid = NoHostChecker{
 		Namespace:      "bookinfo",
 		ServiceNames:   []string{""},
-		VirtualService: virtualService,
+		VirtualService: *virtualService,
 		RegistryStatus: []*kubernetes.RegistryStatus{&registryService},
 	}.Check()
 
@@ -204,7 +204,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	vals, valid = NoHostChecker{
 		Namespace:      "bookinfo",
 		ServiceNames:   []string{""},
-		VirtualService: virtualService,
+		VirtualService: *virtualService,
 		RegistryStatus: []*kubernetes.RegistryStatus{&registryService},
 	}.Check()
 

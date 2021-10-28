@@ -1,82 +1,87 @@
 package data
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
-	"github.com/kiali/kiali/kubernetes"
+	"github.com/gogo/protobuf/types"
+	"time"
 )
 
-func CreateEmptyVirtualService(name string, namespace string, hosts []string) kubernetes.IstioObject {
-	hostsAsInterface := make([]interface{}, len(hosts))
-	for i, h := range hosts {
-		hostsAsInterface[i] = h
-	}
-
-	return (&kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:        name,
-			Namespace:   namespace,
-			ClusterName: "svc.cluster.local",
-		},
-		Spec: map[string]interface{}{
-			"hosts": hostsAsInterface,
-		},
-	}).DeepCopyIstioObject()
+func CreateEmptyVirtualService(name string, namespace string, hosts []string) *networking_v1alpha3.VirtualService {
+	vs := networking_v1alpha3.VirtualService{}
+	vs.Name = name
+	vs.Namespace = namespace
+	vs.Spec.Hosts = hosts
+	return &vs
 }
 
 // TODO Naming etc
-func CreateVirtualService() kubernetes.IstioObject {
-	return AddRoutesToVirtualService("http", CreateRoute("reviews", "v1", -1),
-		AddRoutesToVirtualService("tcp", CreateRoute("reviews", "v1", -1),
+func CreateVirtualService() *networking_v1alpha3.VirtualService {
+	return AddHttpRoutesToVirtualService(CreateHttpRouteDestination("reviews", "v1", -1),
+		AddTcpRoutesToVirtualService(CreateTcpRoute("reviews", "v1", -1),
 			CreateEmptyVirtualService("reviews", "test", []string{"reviews"}),
 		),
 	)
 }
 
-func AddRoutesToVirtualService(routeType string, route map[string]interface{}, vs kubernetes.IstioObject) kubernetes.IstioObject {
-	if routeTypeExists, found := vs.GetSpec()[routeType]; found {
-		if routeTypeCasted, ok := routeTypeExists.([]interface{}); ok {
-			if routeElement, ok := routeTypeCasted[0].(map[string]interface{}); ok {
-				if routeValue, found := routeElement["route"]; found {
-					if routeOneMoreCast, ok := routeValue.([]interface{}); ok {
-						routeOneMoreCast = append(routeOneMoreCast, route)
-						routeElement["route"] = routeOneMoreCast
-					}
-				}
-			}
-		}
-	} else {
-		vs.GetSpec()[routeType] = []interface{}{
-			map[string]interface{}{
-				"route": []interface{}{route},
+func AddHttpRoutesToVirtualService(route *api_networking_v1alpha3.HTTPRouteDestination, vs *networking_v1alpha3.VirtualService) *networking_v1alpha3.VirtualService {
+	if len(vs.Spec.Http) == 0 {
+		vs.Spec.Http = []*api_networking_v1alpha3.HTTPRoute{
+			{
+				Route: []*api_networking_v1alpha3.HTTPRouteDestination{
+					route,
+				},
 			},
 		}
+	} else {
+		vs.Spec.Http[0].Route = append(vs.Spec.Http[0].Route, route)
 	}
 	return vs
 }
 
-func CreateRoute(host string, subset string, weight int64) map[string]interface{} {
-	route := make(map[string]interface{})
-	route["destination"] = map[string]interface{}{
-		"host":   host,
-		"subset": subset,
+func AddTcpRoutesToVirtualService(route *api_networking_v1alpha3.TCPRoute, vs *networking_v1alpha3.VirtualService) *networking_v1alpha3.VirtualService {
+	vs.Spec.Tcp = append(vs.Spec.Tcp, route)
+	return vs
+}
+
+func CreateHttpRouteDestination(host string, subset string, weight int32) *api_networking_v1alpha3.HTTPRouteDestination {
+	httpRouteDestination := &api_networking_v1alpha3.HTTPRouteDestination{
+		Destination: &api_networking_v1alpha3.Destination{
+			Host:   host,
+			Subset: subset,
+		},
+		Weight: weight,
 	}
-	if weight >= 0 {
-		route["weight"] = uint64(weight) // Weight is supposed to be between [0,100] so this is safe
+	return httpRouteDestination
+}
+
+func CreateTcpRoute(host string, subset string, weight int32) *api_networking_v1alpha3.TCPRoute {
+	route := api_networking_v1alpha3.TCPRoute{
+		Route: []*api_networking_v1alpha3.RouteDestination{
+			{
+				Destination: &api_networking_v1alpha3.Destination{
+					Host:   host,
+					Subset: subset,
+				},
+				Weight: weight,
+			},
+		},
 	}
-	return route
+	return &route
 }
 
 // Example from https://istio.io/docs/reference/config/istio.networking.v1alpha3/#Destination
-func CreateVirtualServiceWithServiceEntryTarget() kubernetes.IstioObject {
+func CreateVirtualServiceWithServiceEntryTarget() *networking_v1alpha3.VirtualService {
 	vs := CreateEmptyVirtualService("my-wiki-rule", "wikipedia", []string{"wikipedia.org"})
-	vs.GetSpec()["http"] = []interface{}{
-		map[string]interface{}{
-			"timeout": "5s",
-			"route": []interface{}{
-				map[string]interface{}{
-					"destination": map[string]interface{}{
-						"host": "wikipedia.org",
+	timeout, _ := time.ParseDuration("5s")
+	vs.Spec.Http = []*api_networking_v1alpha3.HTTPRoute{
+		{
+			Timeout: types.DurationProto(timeout),
+			Route: []*api_networking_v1alpha3.HTTPRouteDestination{
+				{
+					Destination: &api_networking_v1alpha3.Destination{
+						Host: "wikipedia.org",
 					},
 				},
 			},

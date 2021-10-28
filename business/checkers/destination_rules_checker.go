@@ -1,6 +1,8 @@
 package checkers
 
 import (
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/destinationrules"
 	"github.com/kiali/kiali/kubernetes"
@@ -10,10 +12,11 @@ import (
 const DestinationRuleCheckerType = "destinationrule"
 
 type DestinationRulesChecker struct {
-	DestinationRules         []kubernetes.IstioObject
-	ExportedDestinationRules []kubernetes.IstioObject
+	DestinationRules         []networking_v1alpha3.DestinationRule
+	ExportedDestinationRules []networking_v1alpha3.DestinationRule
 	MTLSDetails              kubernetes.MTLSDetails
-	ServiceEntries           []kubernetes.IstioObject
+	ServiceEntries           []networking_v1alpha3.ServiceEntry
+	ExportedServiceEntries   []networking_v1alpha3.ServiceEntry
 	Namespaces               []models.Namespace
 }
 
@@ -29,7 +32,7 @@ func (in DestinationRulesChecker) Check() models.IstioValidations {
 func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	seHosts := kubernetes.ServiceEntryHostnames(in.ServiceEntries)
+	seHosts := kubernetes.ServiceEntryHostnames(append(in.ServiceEntries, in.ExportedServiceEntries...))
 
 	enabledDRCheckers := []GroupChecker{
 		destinationrules.MultiMatchChecker{Namespaces: in.Namespaces, DestinationRules: in.DestinationRules, ServiceEntries: seHosts, ExportedDestinationRules: in.ExportedDestinationRules},
@@ -57,14 +60,14 @@ func (in DestinationRulesChecker) runIndividualChecks() models.IstioValidations 
 	return validations
 }
 
-func (in DestinationRulesChecker) runChecks(destinationRule kubernetes.IstioObject) models.IstioValidations {
-	destinationRuleName := destinationRule.GetObjectMeta().Name
-	key, rrValidation := EmptyValidValidation(destinationRuleName, destinationRule.GetObjectMeta().Namespace, DestinationRuleCheckerType)
+func (in DestinationRulesChecker) runChecks(destinationRule networking_v1alpha3.DestinationRule) models.IstioValidations {
+	destinationRuleName := destinationRule.Name
+	key, rrValidation := EmptyValidValidation(destinationRuleName, destinationRule.Namespace, DestinationRuleCheckerType)
 
 	enabledCheckers := []Checker{
 		destinationrules.DisabledNamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},
 		destinationrules.DisabledMeshWideMTLSChecker{DestinationRule: destinationRule, MeshPeerAuthns: in.MTLSDetails.MeshPeerAuthentications},
-		common.ExportToNamespaceChecker{IstioObject: destinationRule, Namespaces: in.Namespaces},
+		common.ExportToNamespaceChecker{ExportTo: destinationRule.Spec.ExportTo, Namespaces: in.Namespaces},
 	}
 
 	// Appending validations that only applies to non-autoMTLS meshes

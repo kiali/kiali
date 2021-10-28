@@ -10,12 +10,12 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v2"
+	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	istio "istio.io/client-go/pkg/clientset/versioned"
 	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -32,167 +32,16 @@ var (
 )
 
 type IstioClientInterface interface {
-	CreateIstioObject(api, namespace, resourceType, json string) (IstioObject, error)
-	DeleteIstioObject(api, namespace, resourceType, name string) error
-	GetIstioObject(namespace, resourceType, name string) (IstioObject, error)
-	GetIstioObjects(namespace, resourceType, labelSelector string) ([]IstioObject, error)
-	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
+	Istio() istio.Interface
+
 	GetProxyStatus() ([]*ProxyStatus, error)
 	GetConfigDump(namespace, podName string) (*ConfigDump, error)
 	SetProxyLogLevel(namespace, podName, level string) error
 	GetRegistryStatus() ([]*RegistryStatus, error)
 }
 
-// Aux method to fetch proper (RESTClient, APIVersion) per API group
-func (in *K8SClient) getApiClientVersion(apiGroup string) (*rest.RESTClient, string) {
-	if apiGroup == NetworkingGroupVersion.Group {
-		return in.istioNetworkingApi, ApiNetworkingVersion
-	} else if apiGroup == SecurityGroupVersion.Group {
-		return in.istioSecurityApi, ApiSecurityVersion
-	}
-	return nil, ""
-}
-
-// CreateIstioObject creates an Istio object
-func (in *K8SClient) CreateIstioObject(api, namespace, resourceType, json string) (IstioObject, error) {
-	var result runtime.Object
-	var err error
-
-	typeMeta := meta_v1.TypeMeta{
-		Kind:       "",
-		APIVersion: "",
-	}
-	typeMeta.Kind = PluralType[resourceType]
-	byteJson := []byte(json)
-
-	var apiClient *rest.RESTClient
-	apiClient, typeMeta.APIVersion = in.getApiClientVersion(api)
-	if apiClient == nil {
-		return nil, fmt.Errorf("%s is not supported in CreateIstioObject operation", api)
-	}
-
-	result, err = apiClient.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do(in.ctx).Get()
-	if err != nil {
-		return nil, err
-	}
-
-	istioObject, ok := result.(*GenericIstioObject)
-	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return an IstioObject object", namespace, resourceType)
-	}
-	istioObject.SetTypeMeta(typeMeta)
-	return istioObject, err
-}
-
-// DeleteIstioObject deletes an Istio object from either config api or networking api
-func (in *K8SClient) DeleteIstioObject(api, namespace, resourceType, name string) error {
-	log.Debugf("DeleteIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
-	var err error
-	apiClient, _ := in.getApiClientVersion(api)
-	if apiClient == nil {
-		return fmt.Errorf("%s is not supported in DeleteIstioObject operation", api)
-	}
-	_, err = apiClient.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do(in.ctx).Get()
-	return err
-}
-
-// UpdateIstioObject updates an Istio object from either config api or networking api
-func (in *K8SClient) UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error) {
-	log.Debugf("UpdateIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
-	var result runtime.Object
-	var err error
-
-	typeMeta := meta_v1.TypeMeta{
-		Kind:       "",
-		APIVersion: "",
-	}
-	typeMeta.Kind = PluralType[resourceType]
-	bytePatch := []byte(jsonPatch)
-	var apiClient *rest.RESTClient
-	apiClient, typeMeta.APIVersion = in.getApiClientVersion(api)
-	if apiClient == nil {
-		return nil, fmt.Errorf("%s is not supported in UpdateIstioObject operation", api)
-	}
-	result, err = apiClient.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do(in.ctx).Get()
-	if err != nil {
-		return nil, err
-	}
-	istioObject, ok := result.(*GenericIstioObject)
-	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return an IstioObject object", namespace, name)
-	}
-	istioObject.SetTypeMeta(typeMeta)
-	return istioObject, err
-}
-
-func (in *K8SClient) GetIstioObjects(namespace, resourceType, labelSelector string) ([]IstioObject, error) {
-	var apiClient *rest.RESTClient
-	var apiGroup, apiVersion string
-	var ok bool
-	if apiGroup, ok = ResourceTypesToAPI[resourceType]; ok {
-		apiClient, apiVersion = in.getApiClientVersion(apiGroup)
-	} else {
-		return []IstioObject{}, fmt.Errorf("%s not found in ResourcesTypeToAPI", resourceType)
-	}
-
-	if apiGroup == NetworkingGroupVersion.Group && !in.hasNetworkingResource(resourceType) {
-		return []IstioObject{}, nil
-	}
-
-	if apiGroup == SecurityGroupVersion.Group && !in.hasSecurityResource(resourceType) {
-		return []IstioObject{}, nil
-	}
-
-	var result runtime.Object
-	var err error
-	result, err = apiClient.Get().Namespace(namespace).Resource(resourceType).Param("labelSelector", labelSelector).Do(in.ctx).Get()
-	if err != nil {
-		return nil, err
-	}
-	istioList, ok := result.(*GenericIstioObjectList)
-	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return a list", namespace, resourceType)
-	}
-	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[resourceType],
-		APIVersion: apiVersion,
-	}
-	list := make([]IstioObject, 0)
-	for _, item := range istioList.GetItems() {
-		i := item.DeepCopyIstioObject()
-		i.SetTypeMeta(typeMeta)
-		list = append(list, i)
-	}
-	return list, nil
-}
-
-func (in *K8SClient) GetIstioObject(namespace, resourceType, name string) (IstioObject, error) {
-	var apiClient *rest.RESTClient
-	var apiGroup, apiVersion string
-	var ok bool
-	if apiGroup, ok = ResourceTypesToAPI[resourceType]; ok {
-		apiClient, apiVersion = in.getApiClientVersion(apiGroup)
-	} else {
-		return nil, fmt.Errorf("%s not found in ResourcesTypeToAPI", resourceType)
-	}
-
-	var result runtime.Object
-	var err error
-	result, err = apiClient.Get().Namespace(namespace).Resource(resourceType).SubResource(name).Do(in.ctx).Get()
-	if err != nil {
-		return nil, err
-	}
-	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[resourceType],
-		APIVersion: apiVersion,
-	}
-	istioObject, ok := result.(*GenericIstioObject)
-	if !ok {
-		return nil, fmt.Errorf("%s/%s/%s doesn't return an Istio object", namespace, resourceType, name)
-	}
-	io := istioObject.DeepCopyIstioObject()
-	io.SetTypeMeta(typeMeta)
-	return io, nil
+func (in *K8SClient) Istio() istio.Interface {
+	return in.istioClientset
 }
 
 func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, error) {
@@ -366,63 +215,13 @@ func (in *K8SClient) SetProxyLogLevel(namespace, pod, level string) error {
 
 	// Ready to create a request
 	url := fmt.Sprintf("http://localhost:%d%s", localPort, path)
-	body, code, err := httputil.HttpPost(url, nil, nil, time.Second*10)
+	body, code, err := httputil.HttpPost(url, nil, nil, time.Second*10, nil)
 	if code >= 400 {
 		log.Errorf("Error whilst posting. Error: %s. Body: %s", err, string(body))
 		return fmt.Errorf("error sending post request %s from %s/%s. Response code: %d", path, namespace, pod, code)
 	}
 
 	return err
-}
-
-func (in *K8SClient) hasNetworkingResource(resource string) bool {
-	return in.getNetworkingResources()[resource]
-}
-
-func (in *K8SClient) getNetworkingResources() map[string]bool {
-	if in.networkingResources != nil {
-		return *in.networkingResources
-	}
-
-	networkingResources := map[string]bool{}
-	path := fmt.Sprintf("/apis/%s", ApiNetworkingVersion)
-	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do(in.ctx).Raw()
-	if err == nil {
-		resourceList := meta_v1.APIResourceList{}
-		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {
-			for _, resource := range resourceList.APIResources {
-				networkingResources[resource.Name] = true
-			}
-		}
-	}
-	in.networkingResources = &networkingResources
-
-	return *in.networkingResources
-}
-
-func (in *K8SClient) hasSecurityResource(resource string) bool {
-	return in.getSecurityResources()[resource]
-}
-
-func (in *K8SClient) getSecurityResources() map[string]bool {
-	if in.securityResources != nil {
-		return *in.securityResources
-	}
-
-	securityResources := map[string]bool{}
-	path := fmt.Sprintf("/apis/%s", ApiSecurityVersion)
-	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do(in.ctx).Raw()
-	if err == nil {
-		resourceList := meta_v1.APIResourceList{}
-		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {
-			for _, resource := range resourceList.APIResources {
-				securityResources[resource.Name] = true
-			}
-		}
-	}
-	in.securityResources = &securityResources
-
-	return *in.securityResources
 }
 
 func GetIstioConfigMap(istioConfig *core_v1.ConfigMap) (*IstioMeshConfig, error) {
@@ -447,44 +246,25 @@ func GetIstioConfigMap(istioConfig *core_v1.ConfigMap) (*IstioMeshConfig, error)
 		log.Warningf("GetIstioConfigMap: Cannot read Istio mesh configuration.")
 		return nil, err
 	}
-
 	return meshConfig, nil
 }
 
 // ServiceEntryHostnames returns a list of hostnames defined in the ServiceEntries Specs. Key in the resulting map is the protocol (in lowercase) + hostname
 // exported for test
-func ServiceEntryHostnames(serviceEntries []IstioObject) map[string][]string {
+func ServiceEntryHostnames(serviceEntries []networking_v1alpha3.ServiceEntry) map[string][]string {
 	hostnames := make(map[string][]string)
 
 	for _, v := range serviceEntries {
-		if hostsSpec, found := v.GetSpec()["hosts"]; found {
-			if hosts, ok := hostsSpec.([]interface{}); ok {
-				// Seek the protocol
-				for _, h := range hosts {
-					if hostname, ok := h.(string); ok {
-						hostnames[hostname] = make([]string, 0, 1)
-					}
-				}
-			}
+		for _, host := range v.Spec.Hosts {
+			hostnames[host] = make([]string, 0, 1)
 		}
-		if portsSpec, found := v.GetSpec()["ports"]; found {
-			if portsArray, ok := portsSpec.([]interface{}); ok {
-				for _, portDef := range portsArray {
-					if ports, ok := portDef.(map[string]interface{}); ok {
-						if proto, found := ports["protocol"]; found {
-							if protocol, ok := proto.(string); ok {
-								protocol = mapPortToVirtualServiceProtocol(protocol)
-								for host := range hostnames {
-									hostnames[host] = append(hostnames[host], protocol)
-								}
-							}
-						}
-					}
-				}
+		for _, port := range v.Spec.Ports {
+			protocol := mapPortToVirtualServiceProtocol(port.Protocol)
+			for host := range hostnames {
+				hostnames[host] = append(hostnames[host], protocol)
 			}
 		}
 	}
-
 	return hostnames
 }
 
@@ -511,32 +291,16 @@ func mapPortToVirtualServiceProtocol(proto string) string {
 }
 
 // ValidaPort parses the Istio Port definition and validates the naming scheme
-func ValidatePort(portDef interface{}) bool {
-	return MatchPortNameRule(parsePort(portDef))
-}
-
-func parsePort(portDef interface{}) (string, string) {
-	var name, proto string
-	if port, ok := portDef.(map[string]interface{}); ok {
-		if portNameDef, found := port["name"]; found {
-			if portName, ok := portNameDef.(string); ok {
-				name = portName
-			}
-		}
-		if protocolDef, found := port["protocol"]; found {
-			if protocol, ok := protocolDef.(string); ok {
-				proto = protocol
-			}
-		}
+func ValidatePort(portDef *api_networking_v1alpha3.Port) bool {
+	if portDef == nil {
+		return false
 	}
-
-	return name, proto
+	return MatchPortNameRule(portDef.Name, portDef.Protocol)
 }
 
 func MatchPortNameRule(portName, protocol string) bool {
 	protocol = strings.ToLower(protocol)
 	// Check that portName begins with the protocol
-
 	if protocol == "tcp" || protocol == "udp" {
 		// TCP and UDP protocols do not care about the name
 		return true
@@ -568,89 +332,68 @@ func MatchPortNameWithValidProtocols(portName string) bool {
 }
 
 // GatewayNames extracts the gateway names for easier matching
-func GatewayNames(gateways [][]IstioObject) map[string]struct{} {
+func GatewayNames(gateways [][]networking_v1alpha3.Gateway) map[string]struct{} {
 	var empty struct{}
 	names := make(map[string]struct{})
 	for _, ns := range gateways {
 		for _, gw := range ns {
 			gw := gw
-			clusterName := gw.GetObjectMeta().ClusterName
+			clusterName := gw.ClusterName
 			if clusterName == "" {
 				clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
 			}
-			names[ParseHost(gw.GetObjectMeta().Name, gw.GetObjectMeta().Namespace, clusterName).String()] = empty
+			names[ParseHost(gw.Name, gw.Namespace, clusterName).String()] = empty
 		}
 	}
 	return names
 }
 
-func PeerAuthnHasStrictMTLS(peerAuthn IstioObject) bool {
+func PeerAuthnHasStrictMTLS(peerAuthn security_v1beta1.PeerAuthentication) bool {
 	_, mode := PeerAuthnHasMTLSEnabled(peerAuthn)
 	return mode == "STRICT"
 }
 
-func PeerAuthnHasMTLSEnabled(peerAuthn IstioObject) (bool, string) {
+func PeerAuthnHasMTLSEnabled(peerAuthn security_v1beta1.PeerAuthentication) (bool, string) {
 	// It is no globally enabled when has targets
-	if peerAuthn.HasMatchLabelsSelector() {
+	if peerAuthn.Spec.Selector != nil && len(peerAuthn.Spec.Selector.MatchLabels) >= 0 {
 		return false, ""
 	}
 	return PeerAuthnMTLSMode(peerAuthn)
 }
 
-func PeerAuthnMTLSMode(peerAuthn IstioObject) (bool, string) {
+func PeerAuthnMTLSMode(peerAuthn security_v1beta1.PeerAuthentication) (bool, string) {
 	// It is globally enabled when mtls is in STRICT mode
-	if mtls, mtlsPresent := peerAuthn.GetSpec()["mtls"]; mtlsPresent {
-		if mtlsMap, ok := mtls.(map[string]interface{}); ok {
-			if modeItf, found := mtlsMap["mode"]; found {
-				if mode, ok := modeItf.(string); ok {
-					return mode == "STRICT" || mode == "PERMISSIVE", mode
-				} else {
-					return false, ""
-				}
-			} else {
-				return true, "PERMISSIVE"
-			}
-		}
+	if peerAuthn.Spec.Mtls != nil {
+		mode := peerAuthn.Spec.Mtls.Mode.String()
+		return mode == "STRICT" || mode == "PERMISSIVE", mode
 	}
-
 	return false, ""
 }
 
-func DestinationRuleHasMeshWideMTLSEnabled(destinationRule IstioObject) (bool, string) {
+func DestinationRuleHasMeshWideMTLSEnabled(destinationRule networking_v1alpha3.DestinationRule) (bool, string) {
 	// Following the suggested procedure to enable mesh-wide mTLS, host might be '*.local':
 	// https://istio.io/docs/tasks/security/authn-policy/#globally-enabling-istio-mutual-tls
 	return DestinationRuleHasMTLSEnabledForHost("*.local", destinationRule)
 }
 
-func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule IstioObject) (bool, string) {
+func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule networking_v1alpha3.DestinationRule) (bool, string) {
 	// Following the suggested procedure to enable namespace-wide mTLS, host might be '*.namespace.svc.cluster.local'
 	// https://istio.io/docs/tasks/security/authn-policy/#namespace-wide-policy
 	nsHost := fmt.Sprintf("*.%s.%s", namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain)
 	return DestinationRuleHasMTLSEnabledForHost(nsHost, destinationRule)
 }
 
-func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule IstioObject) (bool, string) {
-	host, hostPresent := destinationRule.GetSpec()["host"]
-	if !hostPresent || host != expectedHost {
+func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule networking_v1alpha3.DestinationRule) (bool, string) {
+	if destinationRule.Spec.Host == "" || destinationRule.Spec.Host != expectedHost {
 		return false, ""
 	}
 	return DestinationRuleHasMTLSEnabled(destinationRule)
 }
 
-func DestinationRuleHasMTLSEnabled(destinationRule IstioObject) (bool, string) {
-	if trafficPolicy, trafficPresent := destinationRule.GetSpec()["trafficPolicy"]; trafficPresent {
-		if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
-			if tls, found := trafficCasted["tls"]; found {
-				if tlsCasted, ok := tls.(map[string]interface{}); ok {
-					if mode, found := tlsCasted["mode"]; found {
-						if modeCasted, ok := mode.(string); ok {
-							return modeCasted == "ISTIO_MUTUAL", modeCasted
-						}
-					}
-				}
-			}
-		}
+func DestinationRuleHasMTLSEnabled(destinationRule networking_v1alpha3.DestinationRule) (bool, string) {
+	if destinationRule.Spec.TrafficPolicy != nil && destinationRule.Spec.TrafficPolicy.Tls != nil {
+		mode := destinationRule.Spec.TrafficPolicy.Tls.Mode.String()
+		return mode == "ISTIO_MUTUAL", mode
 	}
-
 	return false, ""
 }

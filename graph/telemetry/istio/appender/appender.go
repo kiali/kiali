@@ -188,7 +188,7 @@ const (
 )
 
 type serviceEntry struct {
-	exportTo  interface{}
+	exportTo  []string
 	hosts     []string
 	location  string
 	name      string // serviceEntry name
@@ -206,7 +206,7 @@ func (seh serviceEntryHosts) addHost(host string, se *serviceEntry) {
 	if serviceEntriesForHost, ok := seh[host]; ok {
 		// if the same host is defined in multiple service entries, prefer the most
 		// specific namespace match when checking for a match...
-		if se.exportTo == nil || se.exportTo.([]interface{})[0] == '*' {
+		if se.exportTo == nil || se.exportTo[0] == "*" {
 			seh[host] = append(serviceEntriesForHost, seArr...)
 		} else {
 			seh[host] = append(seArr, serviceEntriesForHost...)

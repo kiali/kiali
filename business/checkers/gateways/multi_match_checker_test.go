@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -22,7 +22,7 @@ func TestCorrectGateways(t *testing.T) {
 			"app": "real",
 		}))
 
-	gws := [][]kubernetes.IstioObject{{gwObject}}
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
 
 	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -49,7 +49,7 @@ func TestCaseMatching(t *testing.T) {
 			"app": "canidae",
 		}))
 
-	gws := [][]kubernetes.IstioObject{{gwObject}}
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
 
 	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -78,7 +78,7 @@ func TestDashSubdomainMatching(t *testing.T) {
 			"app": "canidae",
 		}))
 
-	gws := [][]kubernetes.IstioObject{{gwObject}}
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
 
 	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -105,7 +105,7 @@ func TestSameHostPortConfigInDifferentIngress(t *testing.T) {
 			"app": "istio-ingress-prv",
 		}))
 
-	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2}}
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject}, {*gwObject2}}
 
 	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -131,7 +131,7 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 			"app": "real",
 		}))
 
-	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2}}
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject}, {*gwObject2}}
 
 	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -175,7 +175,7 @@ func TestWildCardMatchingHost(t *testing.T) {
 			"istio": "istio-ingress",
 		}))
 
-	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2, gwObject3}}
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject}, {*gwObject2, *gwObject3}}
 
 	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -215,7 +215,7 @@ func TestAnotherSubdomainWildcardCombination(t *testing.T) {
 			"app": "monotreme",
 		}))
 
-	gws := [][]kubernetes.IstioObject{{gwObject}}
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
 
 	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -244,7 +244,7 @@ func TestNoMatchOnSubdomainHost(t *testing.T) {
 			"app": "someother",
 		}))
 
-	gws := [][]kubernetes.IstioObject{{gwObject}}
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
 
 	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -270,7 +270,7 @@ func TestTwoWildCardsMatching(t *testing.T) {
 			"istio": "istio-ingress",
 		}))
 
-	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2}}
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject}, {*gwObject2}}
 
 	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -300,7 +300,7 @@ func TestDuplicateGatewaysErrorCount(t *testing.T) {
 			"app": "real",
 		}))
 
-	gws := [][]kubernetes.IstioObject{{gwObject, gwObjectIdentical}}
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject, *gwObjectIdentical}}
 
 	vals := MultiMatchChecker{
 		GatewaysPerNamespace: gws,

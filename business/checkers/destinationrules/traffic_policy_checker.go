@@ -3,13 +3,15 @@ package destinationrules
 import (
 	"fmt"
 
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type TrafficPolicyChecker struct {
-	DestinationRules         []kubernetes.IstioObject
-	ExportedDestinationRules []kubernetes.IstioObject
+	DestinationRules         []networking_v1alpha3.DestinationRule
+	ExportedDestinationRules []networking_v1alpha3.DestinationRule
 	MTLSDetails              kubernetes.MTLSDetails
 }
 
@@ -31,11 +33,11 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 		// Invalid if there isn't trafficPolicy specified or trafficPolicy doesn't specify TLSSettings
 		if !hasTrafficPolicy(dr) || !hasTLSSettings(dr) {
 			check := models.Build("destinationrules.trafficpolicy.notlssettings", "spec/trafficPolicy")
-			key := models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name, dr.GetObjectMeta().Namespace)
+			key := models.BuildKey(DestinationRulesCheckerType, dr.Name, dr.Namespace)
 
 			refKeys := make([]models.IstioValidationKey, 0, len(refdMtls))
 			for _, dr := range drSameHosts {
-				refKeys = append(refKeys, models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name, dr.GetObjectMeta().Namespace))
+				refKeys = append(refKeys, models.BuildKey(DestinationRulesCheckerType, dr.Name, dr.Namespace))
 			}
 
 			validation := buildDestinationRuleValidation(dr, check, true, refKeys)
@@ -49,91 +51,53 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []kubernetes.IstioObject {
-	mtlsDrs := make([]kubernetes.IstioObject, 0)
+func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []networking_v1alpha3.DestinationRule {
+	mtlsDrs := make([]networking_v1alpha3.DestinationRule, 0)
 	for _, dr := range t.MTLSDetails.DestinationRules {
-		if host, ok := dr.GetSpec()["host"]; ok {
-			if dHost, ok := host.(string); ok {
-				fqdn := kubernetes.ParseHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
-				if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
-					mtlsDrs = append(mtlsDrs, dr)
-				}
-			}
+		fqdn := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace, dr.ClusterName)
+		if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
+			mtlsDrs = append(mtlsDrs, dr)
 		}
 	}
 	return mtlsDrs
 }
 
-func sameHostDestinationRules(dr kubernetes.IstioObject, mdrs []kubernetes.IstioObject, edrs []kubernetes.IstioObject) []kubernetes.IstioObject {
-	var drHost kubernetes.Host
-	shdrs := make([]kubernetes.IstioObject, 0, len(mdrs)+len(edrs))
-
-	if host, ok := dr.GetSpec()["host"]; ok {
-		if dHost, ok := host.(string); ok {
-			drHost = kubernetes.ParseHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
-		}
-	}
+func sameHostDestinationRules(dr networking_v1alpha3.DestinationRule, mdrs []networking_v1alpha3.DestinationRule, edrs []networking_v1alpha3.DestinationRule) []networking_v1alpha3.DestinationRule {
+	shdrs := make([]networking_v1alpha3.DestinationRule, 0, len(mdrs)+len(edrs))
+	drHost := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace, dr.ClusterName)
 
 	for _, mdr := range mdrs {
-		if host, ok := mdr.GetSpec()["host"]; ok {
-			if dHost, ok := host.(string); ok {
-				mdrHost := kubernetes.ParseHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
-				if mdrHost.Service == "*.local" ||
-					(mdrHost.Cluster == drHost.Cluster && mdrHost.Namespace == drHost.Namespace) {
-					shdrs = append(shdrs, mdr)
-				}
-			}
+		mdrHost := kubernetes.ParseHost(mdr.Spec.Host, dr.Namespace, dr.ClusterName)
+		if mdrHost.Service == "*.local" ||
+			(mdrHost.Cluster == drHost.Cluster && mdrHost.Namespace == drHost.Namespace) {
+			shdrs = append(shdrs, mdr)
 		}
 	}
 
 	for _, edr := range edrs {
-		if host, ok := edr.GetSpec()["host"]; ok {
-			if dHost, ok := host.(string); ok {
-				if ismTLSEnabled(edr) &&
-					(dHost == fmt.Sprintf("*.%s.%s", drHost.Namespace, drHost.Cluster) || dHost == drHost.String()) {
-					shdrs = append(shdrs, edr)
-				}
-			}
+		dHost := edr.Spec.Host
+		if ismTLSEnabled(edr) &&
+			(dHost == fmt.Sprintf("*.%s.%s", drHost.Namespace, drHost.Cluster) || dHost == drHost.String()) {
+			shdrs = append(shdrs, edr)
 		}
 	}
 
 	return shdrs
 }
 
-func hasTrafficPolicy(dr kubernetes.IstioObject) bool {
-	_, trafficPresent := dr.GetSpec()["trafficPolicy"]
-	return trafficPresent
+func hasTrafficPolicy(dr networking_v1alpha3.DestinationRule) bool {
+	return dr.Spec.TrafficPolicy != nil
 }
 
-func hasTLSSettings(dr kubernetes.IstioObject) bool {
+func hasTLSSettings(dr networking_v1alpha3.DestinationRule) bool {
 	return hasTrafficPolicyTLS(dr) || hasPortTLS(dr)
 }
 
 // hasPortTLS returns true when there is one port that specifies any TLS settings
-func hasPortTLS(dr kubernetes.IstioObject) bool {
-	if trafficPolicy, trafficPresent := dr.GetSpec()["trafficPolicy"]; trafficPresent {
-		if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
-			if portsSettings, found := trafficCasted["portLevelSettings"]; found {
-				if portsSettingsCasted, ok := portsSettings.([]interface{}); ok {
-					for _, portSettings := range portsSettingsCasted {
-						if portSettingsCasted, ok := portSettings.(map[string]interface{}); ok {
-							if _, found := portSettingsCasted["tls"]; found {
-								return true
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return false
-}
-
-// hasTrafficPolicyTLS returns true when there is a trafficPolicy specifying any tls mode
-func hasTrafficPolicyTLS(dr kubernetes.IstioObject) bool {
-	if trafficPolicy, trafficPresent := dr.GetSpec()["trafficPolicy"]; trafficPresent {
-		if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
-			if _, found := trafficCasted["tls"]; found {
+func hasPortTLS(dr networking_v1alpha3.DestinationRule) bool {
+	if dr.Spec.TrafficPolicy != nil {
+		for _, portLevel := range dr.Spec.TrafficPolicy.PortLevelSettings {
+			if portLevel.Tls != nil {
 				return true
 			}
 		}
@@ -141,9 +105,17 @@ func hasTrafficPolicyTLS(dr kubernetes.IstioObject) bool {
 	return false
 }
 
-func buildDestinationRuleValidation(dr kubernetes.IstioObject, checks models.IstioCheck, valid bool, refKeys []models.IstioValidationKey) *models.IstioValidation {
+// hasTrafficPolicyTLS returns true when there is a trafficPolicy specifying any tls mode
+func hasTrafficPolicyTLS(dr networking_v1alpha3.DestinationRule) bool {
+	if dr.Spec.TrafficPolicy != nil && dr.Spec.TrafficPolicy.Tls != nil {
+		return true
+	}
+	return false
+}
+
+func buildDestinationRuleValidation(dr networking_v1alpha3.DestinationRule, checks models.IstioCheck, valid bool, refKeys []models.IstioValidationKey) *models.IstioValidation {
 	validation := &models.IstioValidation{
-		Name:       dr.GetObjectMeta().Name,
+		Name:       dr.Name,
 		ObjectType: DestinationRulesCheckerType,
 		Valid:      valid,
 		Checks: []*models.IstioCheck{

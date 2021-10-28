@@ -21,6 +21,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
@@ -861,4 +862,15 @@ func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
 	for _, entry := range podLogs.Entries {
 		assert.Nil(entry.AccessLog)
 	}
+}
+
+func TestFilterUniqueIstioReferences(t *testing.T) {
+	assert := assert.New(t)
+	references := []*models.IstioValidationKey{
+		{ObjectType: "t1", Namespace: "ns1", Name: "n1"},
+		{ObjectType: "t1", Namespace: "ns1", Name: "n1"},
+		{ObjectType: "t2", Namespace: "ns2", Name: "n2"},
+	}
+	filtered := FilterUniqueIstioReferences(references)
+	assert.Equal(2, len(filtered))
 }

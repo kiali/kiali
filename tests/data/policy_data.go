@@ -1,54 +1,50 @@
 package data
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/kiali/kiali/kubernetes"
+	api_security_v1beta1 "istio.io/api/security/v1beta1"
+	api_v1beta1 "istio.io/api/type/v1beta1"
+	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
-func CreateEmptyPeerAuthentication(name, namespace string, mtls interface{}) kubernetes.IstioObject {
-	return (&kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: map[string]interface{}{
-			"mtls": mtls,
-		},
-	}).DeepCopyIstioObject()
+func CreateEmptyPeerAuthentication(name, namespace string, mtls *api_security_v1beta1.PeerAuthentication_MutualTLS) *security_v1beta1.PeerAuthentication {
+	pa := security_v1beta1.PeerAuthentication{}
+	pa.Name = name
+	pa.Namespace = namespace
+	pa.Spec.Mtls = mtls
+	return &pa
 }
 
-func CreateEmptyMeshPeerAuthentication(name string, mtls interface{}) kubernetes.IstioObject {
+func CreateEmptyMeshPeerAuthentication(name string, mtls *api_security_v1beta1.PeerAuthentication_MutualTLS) *security_v1beta1.PeerAuthentication {
 	return CreateEmptyPeerAuthentication(name, "istio-system", mtls)
 }
 
-func CreateEmptyPeerAuthenticationWithSelector(name, namespace string, selector interface{}) kubernetes.IstioObject {
-	return (&kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: map[string]interface{}{
-			"selector": selector,
-		},
-	}).DeepCopyIstioObject()
+func CreateEmptyPeerAuthenticationWithSelector(name, namespace string, selector map[string]string) *security_v1beta1.PeerAuthentication {
+	pa := security_v1beta1.PeerAuthentication{}
+	pa.Name = name
+	pa.Namespace = namespace
+	pa.Spec.Selector = &api_v1beta1.WorkloadSelector{
+		MatchLabels: selector,
+	}
+	return &pa
 }
 
-func AddSelectorToPeerAuthn(selector map[string]interface{}, mp kubernetes.IstioObject) kubernetes.IstioObject {
-	mp.GetSpec()["selector"] = selector
+func AddSelectorToPeerAuthn(selector map[string]string, mp *security_v1beta1.PeerAuthentication) *security_v1beta1.PeerAuthentication {
+	mp.Spec.Selector = &api_v1beta1.WorkloadSelector{
+		MatchLabels: selector,
+	}
 	return mp
 }
 
-func CreateMTLS(mode string) interface{} {
-	return map[string]interface{}{
-		"mode": mode,
+func CreateMTLS(mode string) *api_security_v1beta1.PeerAuthentication_MutualTLS {
+	mtls := api_security_v1beta1.PeerAuthentication_MutualTLS{}
+	if m, ok := api_security_v1beta1.PeerAuthentication_MutualTLS_Mode_value[mode]; ok {
+		mtls.Mode = api_security_v1beta1.PeerAuthentication_MutualTLS_Mode(m)
 	}
+	return &mtls
 }
 
-func CreateOneLabelSelector(value string) map[string]interface{} {
-	return map[string]interface{}{
-		"matchLabels": map[string]interface{}{
-			"app": value,
-		},
+func CreateOneLabelSelector(value string) map[string]string {
+	return map[string]string{
+		"app": value,
 	}
 }

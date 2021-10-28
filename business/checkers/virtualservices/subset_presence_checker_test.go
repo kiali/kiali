@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	core_v1 "k8s.io/api/core/v1"
+
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/testutils/validations"
 )
@@ -81,10 +82,10 @@ func subsetPresenceCheckerPrep(scenario string, t *testing.T) ([]*models.IstioCh
 
 	vals, valid := SubsetPresenceChecker{
 		Namespace:                "bookinfo",
-		Namespaces:               namespaceNames(loader.GetResources("Namespace")),
-		DestinationRules:         loader.GetResourcesIn("DestinationRule", "bookinfo"),
-		ExportedDestinationRules: loader.GetResourcesNotIn("DestinationRule", "bookinfo"),
-		VirtualService:           loader.GetFirstResource("VirtualService"),
+		Namespaces:               namespaceNames(loader.GetNamespaces()),
+		DestinationRules:         loader.FindDestinationRuleIn("bookinfo"),
+		ExportedDestinationRules: loader.FindDestinationRuleNotIn("bookinfo"),
+		VirtualService:           loader.GetResources().VirtualServices[0],
 	}.Check()
 
 	if err != nil {
@@ -94,10 +95,10 @@ func subsetPresenceCheckerPrep(scenario string, t *testing.T) ([]*models.IstioCh
 	return vals, valid
 }
 
-func namespaceNames(nss []kubernetes.IstioObject) []string {
+func namespaceNames(nss []core_v1.Namespace) []string {
 	namespaces := make([]string, 0)
 	for _, ns := range nss {
-		namespaces = append(namespaces, ns.GetObjectMeta().Name)
+		namespaces = append(namespaces, ns.Name)
 	}
 	return namespaces
 }

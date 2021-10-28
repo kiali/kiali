@@ -15,6 +15,10 @@ while [[ $# -gt 0 ]]; do
       TEST_CLIENT_EXE="$2"
       shift;shift
       ;;
+    -ci)
+      CI="$2"
+      shift;shift
+      ;;
     -ct|--cluster-type)
       CLUSTER_TYPE="$2"
       shift;shift
@@ -74,6 +78,10 @@ while [[ $# -gt 0 ]]; do
       MOLECULE_USE_DEV_IMAGES="$2"
       shift;shift
       ;;
+    -udsi|--use-default-server-image)
+      MOLECULE_USE_DEFAULT_SERVER_IMAGE="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 
@@ -84,6 +92,7 @@ $0 [option...] command
                          The default is all the tests found in the operator/molecule directory in the Kiali source home directory.
 -c|--color               True if you want color in the output. (default: true)
 -ce|--client-exe         Location of the client executable (either referring to 'oc' or 'kubectl') (default: relies on path).
+-ci                      Run in continuous-integration mode. Verbose logs will be printed to stdout. (default: false).
 -ct|--cluster-type       The type of cluster being tested. Must be one of: minikube, openshift. (default: openshift)
 -d|--debug               True if you want the molecule tests to output large amounts of debug messages. (default: true)
 -dorp|--docker-or-podman What should be used - "docker" or "podman"
@@ -107,6 +116,13 @@ $0 [option...] command
 -udi|--use-dev-images    If true, the tests will use locally built dev images of Kiali and the operator. When using dev
                          images, you must have already pushed locally built dev images into your cluster.
                          If false, the cluster will put the latest images found on quay.io.
+                         Default: false
+-udsi|--use-default-server-image
+                         If true (and --use-dev-images is 'false') no specific image name or version will be specified in
+                         the Kiali CRs that are created by the molecule tests. In other words, spec.deployment.image_name and
+                         spec.deployment.image_version will be empty strings. This means the Kial server image that will be deployed
+                         in the tests will be determined by the operator defaults. This is useful when testing with a specific
+                         spec.version (--spec-version) and you want the operator to install the default server image for that version.
                          Default: false
 HELPMSG
       exit 1
@@ -156,6 +172,10 @@ fi
 # If this is set to true, the current dev images that have been pushed to the cluster will be tested.
 export MOLECULE_USE_DEV_IMAGES="${MOLECULE_USE_DEV_IMAGES:-false}"
 
+# Use this if you want the operator to install the default server image rather than the test explicitly
+# indicate what server image to use in the Kiali CR.
+export MOLECULE_USE_DEFAULT_SERVER_IMAGE="${MOLECULE_USE_DEFAULT_SERVER_IMAGE:-false}"
+
 # Set this to true if you want molecule to output more noisy logs from Ansible.
 export MOLECULE_DEBUG="${MOLECULE_DEBUG:-true}"
 
@@ -172,11 +192,21 @@ export MOLECULE_OPERATOR_INSTALLER="${MOLECULE_OPERATOR_INSTALLER:-helm}"
 # When the tests create Kiali CR resources, this is its spec.version value.
 export MOLECULE_KIALI_CR_SPEC_VERSION="${MOLECULE_KIALI_CR_SPEC_VERSION:-default}"
 
+# Set to true if you want molecule's logs to be printed to the terminal, rather than a simple success/failure/skipped summary.
+export CI="${CI:-false}"
+
 # The parent directory where all the test logs are going to be stored.
 TEST_LOGS_DIR="${TEST_LOGS_DIR:-/tmp/kiali-molecule-test-logs.$(date +'%Y-%m-%d_%H-%M-%S')}"
 
 # If you want color in the output, set this to 'true'.
 COLOR=${COLOR:-true}
+
+if [ "${MOLECULE_USE_DEV_IMAGES}" == "true" -a "${MOLECULE_USE_DEFAULT_SERVER_IMAGE}" == "true" ]; then
+  echo "You set --use-dev-images to true, but you also set --use-default-server-image to true. These are mutually exclusive."
+  echo "If you want to test the default server image then you cannot tell the tests to use dev images at the same time."
+  echo "Set one or the other to false and try again."
+  exit 1
+fi
 
 echo "========== SETTINGS =========="
 echo DORP="$DORP"
@@ -184,6 +214,7 @@ echo KIALI_SRC_HOME="$KIALI_SRC_HOME"
 echo ALL_TESTS="$ALL_TESTS"
 echo SKIP_TESTS="$SKIP_TESTS"
 echo CLUSTER_TYPE="$CLUSTER_TYPE"
+echo MOLECULE_USE_DEFAULT_SERVER_IMAGE="$MOLECULE_USE_DEFAULT_SERVER_IMAGE"
 echo MOLECULE_USE_DEV_IMAGES="$MOLECULE_USE_DEV_IMAGES"
 echo MOLECULE_DEBUG="$MOLECULE_DEBUG"
 echo MOLECULE_DESTROY_NEVER="$MOLECULE_DESTROY_NEVER"
@@ -197,6 +228,7 @@ echo MINIKUBE_EXE="$MINIKUBE_EXE"
 echo MINIKUBE_PROFILE="$MINIKUBE_PROFILE"
 echo KIND_NAME="$KIND_NAME"
 echo HELM_CHARTS_REPO="$HELM_CHARTS_REPO"
+echo CI="$CI"
 echo "=============================="
 
 # Make sure the cluster is accessible
@@ -322,6 +354,7 @@ else
 fi
 
 # Run the tests
+EXIT_CODE=0
 echo
 echo "====================="
 echo "=== TEST RESULTS: ==="
@@ -329,7 +362,11 @@ echo "====================="
 
 for t in ${ALL_TESTS}
 do
-  printf '\n%40s... ' "${t}"
+  if [ "$CI" != "true" ]; then
+    printf '\n%40s... ' "${t}"
+  else
+    echo "/*** BEGIN MOLECULE TEST: $t ***/"
+  fi
 
   if [[ "${SKIP_TESTS}" == *"$t"* ]]; then
     printf '%s' "$(dim 'skipped')"
@@ -342,18 +379,32 @@ do
   prepare_test ${t}
 
   export MOLECULE_SCENARIO="${t}"
-  make molecule-test >> ${TEST_LOGS_DIR}/${t}.log 2>&1
-  exitcode="$?"
+  if [ "$CI" != "true" ]; then
+    make molecule-test >> ${TEST_LOGS_DIR}/${t}.log 2>&1
+    exitcode="$?"
+  else
+    make molecule-test |& tee ${TEST_LOGS_DIR}/${t}.log
+    exitcode="${PIPESTATUS[0]}"
+  fi
 
   unprepare_test ${t}
 
   endtime=$SECONDS
   duration="$(($endtime / 60))m $(($endtime %60))s"
 
-  if [ "${exitcode}" == "0" ]; then
-    printf '%s [%s]' "$(green 'success')" "${duration}"
+  if [ "$CI" != "true" ]; then
+    if [ "${exitcode}" == "0" ]; then
+      printf '%s [%s]' "$(green 'success')" "${duration}"
+    else
+      printf '%s [%s]' "$(red 'FAILURE')" "${duration}"
+    fi
   else
-    printf '%s [%s]' "$(red 'FAILURE')" "${duration}"
+    if [ "${exitcode}" == "0" ]; then
+      echo "/*** FINISHED MOLECULE TEST: $t - success ${duration} ***/"
+    else
+      echo "/*** FINISHED MOLECULE TEST: $t - FAILURE ${duration} ***/"
+      ((EXIT_CODE++))
+    fi
   fi
 
 done
@@ -362,3 +413,6 @@ echo
 echo
 echo "Test logs can be found at: ${TEST_LOGS_DIR}"
 echo
+
+exit $EXIT_CODE
+

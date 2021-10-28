@@ -1,5 +1,10 @@
 package models
 
+import (
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+)
+
 // IstioConfigList istioConfigList
 //
 // This type is used for returning a response of IstioConfigList
@@ -9,37 +14,43 @@ type IstioConfigList struct {
 	// The namespace of istioConfiglist
 	//
 	// required: true
-	Namespace              Namespace              `json:"namespace"`
-	Gateways               Gateways               `json:"gateways"`
-	VirtualServices        VirtualServices        `json:"virtualServices"`
-	DestinationRules       DestinationRules       `json:"destinationRules"`
-	ServiceEntries         ServiceEntries         `json:"serviceEntries"`
-	WorkloadEntries        WorkloadEntries        `json:"workloadEntries"`
-	WorkloadGroups         WorkloadGroups         `json:"workloadGroups"`
-	EnvoyFilters           EnvoyFilters           `json:"envoyFilters"`
-	Sidecars               Sidecars               `json:"sidecars"`
-	AuthorizationPolicies  AuthorizationPolicies  `json:"authorizationPolicies"`
-	PeerAuthentications    PeerAuthentications    `json:"peerAuthentications"`
-	RequestAuthentications RequestAuthentications `json:"requestAuthentications"`
-	IstioValidations       IstioValidations       `json:"validations"`
+	Namespace Namespace `json:"namespace"`
+
+	DestinationRules []networking_v1alpha3.DestinationRule `json:"destinationRules"`
+	EnvoyFilters     []networking_v1alpha3.EnvoyFilter     `json:"envoyFilters"`
+	Gateways         []networking_v1alpha3.Gateway         `json:"gateways"`
+	ServiceEntries   []networking_v1alpha3.ServiceEntry    `json:"serviceEntries"`
+	Sidecars         []networking_v1alpha3.Sidecar         `json:"sidecars"`
+	VirtualServices  []networking_v1alpha3.VirtualService  `json:"virtualServices"`
+	WorkloadEntries  []networking_v1alpha3.WorkloadEntry   `json:"workloadEntries"`
+	WorkloadGroups   []networking_v1alpha3.WorkloadGroup   `json:"workloadGroups"`
+
+	AuthorizationPolicies  []security_v1beta.AuthorizationPolicy   `json:"authorizationPolicies"`
+	PeerAuthentications    []security_v1beta.PeerAuthentication    `json:"peerAuthentications"`
+	RequestAuthentications []security_v1beta.RequestAuthentication `json:"requestAuthentications"`
+
+	IstioValidations IstioValidations `json:"validations"`
 }
 
 type IstioConfigDetails struct {
-	Namespace             Namespace              `json:"namespace"`
-	ObjectType            string                 `json:"objectType"`
-	Gateway               *Gateway               `json:"gateway"`
-	VirtualService        *VirtualService        `json:"virtualService"`
-	DestinationRule       *DestinationRule       `json:"destinationRule"`
-	ServiceEntry          *ServiceEntry          `json:"serviceEntry"`
-	WorkloadEntry         *WorkloadEntry         `json:"workloadEntry"`
-	WorkloadGroup         *WorkloadGroup         `json:"workloadGroup"`
-	EnvoyFilter           *EnvoyFilter           `json:"envoyFilter"`
-	Sidecar               *Sidecar               `json:"sidecar"`
-	AuthorizationPolicy   *AuthorizationPolicy   `json:"authorizationPolicy"`
-	PeerAuthentication    *PeerAuthentication    `json:"peerAuthentication"`
-	RequestAuthentication *RequestAuthentication `json:"requestAuthentication"`
-	Permissions           ResourcePermissions    `json:"permissions"`
-	IstioValidation       *IstioValidation       `json:"validation"`
+	Namespace  Namespace `json:"namespace"`
+	ObjectType string    `json:"objectType"`
+
+	DestinationRule *networking_v1alpha3.DestinationRule `json:"destinationRule"`
+	EnvoyFilter     *networking_v1alpha3.EnvoyFilter     `json:"envoyFilter"`
+	Gateway         *networking_v1alpha3.Gateway         `json:"gateway"`
+	ServiceEntry    *networking_v1alpha3.ServiceEntry    `json:"serviceEntry"`
+	Sidecar         *networking_v1alpha3.Sidecar         `json:"sidecar"`
+	VirtualService  *networking_v1alpha3.VirtualService  `json:"virtualService"`
+	WorkloadEntry   *networking_v1alpha3.WorkloadEntry   `json:"workloadEntry"`
+	WorkloadGroup   *networking_v1alpha3.WorkloadGroup   `json:"workloadGroup"`
+
+	AuthorizationPolicy   *security_v1beta.AuthorizationPolicy   `json:"authorizationPolicy"`
+	PeerAuthentication    *security_v1beta.PeerAuthentication    `json:"peerAuthentication"`
+	RequestAuthentication *security_v1beta.RequestAuthentication `json:"requestAuthentication"`
+
+	Permissions     ResourcePermissions `json:"permissions"`
+	IstioValidation *IstioValidation    `json:"validation"`
 }
 
 // ResourcePermissions holds permission flags for an object type

@@ -1,13 +1,15 @@
 package peerauthentications
 
 import (
+	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 // Note that MeshMtlsChecker will work with MeshPolicy resources
 type MeshMtlsChecker struct {
-	MeshPolicy    kubernetes.IstioObject
+	MeshPolicy    security_v1beta.PeerAuthentication
 	MTLSDetails   kubernetes.MTLSDetails
 	IsServiceMesh bool
 }

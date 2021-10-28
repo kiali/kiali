@@ -1,40 +1,90 @@
 package common
 
 import (
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type GenericMultiMatchChecker struct {
-	SubjectType       string
-	Subjects          []kubernetes.IstioObject
-	WorkloadList      models.WorkloadList
-	HasSelector       func(s kubernetes.IstioObject) bool
-	GetSelectorLabels func(s kubernetes.IstioObject) map[string]string
-	Path              string
+	SubjectType  string
+	Keys         []models.IstioValidationKey
+	Selectors    map[int]map[string]string
+	WorkloadList models.WorkloadList
+	Path         string
 }
 
-func SelectorMultiMatchChecker(subjectType string, subjects []kubernetes.IstioObject, workloadList models.WorkloadList) GenericMultiMatchChecker {
+func PeerAuthenticationMultiMatchChecker(subjectType string, pa []security_v1beta.PeerAuthentication, workloadList models.WorkloadList) GenericMultiMatchChecker {
+	keys := []models.IstioValidationKey{}
+	selectors := make(map[int]map[string]string, len(pa))
+	for i, p := range pa {
+		key := models.IstioValidationKey{
+			ObjectType: subjectType,
+			Name:       p.Name,
+			Namespace:  p.Namespace,
+		}
+		keys = append(keys, key)
+		selectors[i] = make(map[string]string)
+		if p.Spec.Selector != nil {
+			selectors[i] = p.Spec.Selector.MatchLabels
+		}
+	}
 	return GenericMultiMatchChecker{
-		SubjectType:       subjectType,
-		Subjects:          subjects,
-		WorkloadList:      workloadList,
-		HasSelector:       HasSelector,
-		GetSelectorLabels: GetSelectorLabels,
-		Path:              "spec/selector",
+		SubjectType:  subjectType,
+		Keys:         keys,
+		Selectors:    selectors,
+		WorkloadList: workloadList,
+		Path:         "spec/selector",
 	}
 }
 
-func WorkloadSelectorMultiMatchChecker(subjectType string, subjects []kubernetes.IstioObject, workloadList models.WorkloadList) GenericMultiMatchChecker {
+func RequestAuthenticationMultiMatchChecker(subjectType string, ra []security_v1beta.RequestAuthentication, workloadList models.WorkloadList) GenericMultiMatchChecker {
+	keys := []models.IstioValidationKey{}
+	selectors := make(map[int]map[string]string, len(ra))
+	for i, r := range ra {
+		key := models.IstioValidationKey{
+			ObjectType: subjectType,
+			Name:       r.Name,
+			Namespace:  r.Namespace,
+		}
+		keys = append(keys, key)
+		selectors[i] = make(map[string]string)
+		if r.Spec.Selector != nil {
+			selectors[i] = r.Spec.Selector.MatchLabels
+		}
+	}
 	return GenericMultiMatchChecker{
-		SubjectType:       subjectType,
-		Subjects:          subjects,
-		WorkloadList:      workloadList,
-		HasSelector:       HasWorkloadSelector,
-		GetSelectorLabels: GetWorkloadSelectorLabels,
-		Path:              "spec/workloadSelector",
+		SubjectType:  subjectType,
+		Keys:         keys,
+		Selectors:    selectors,
+		WorkloadList: workloadList,
+		Path:         "spec/selector",
+	}
+}
+
+func SidecarSelectorMultiMatchChecker(subjectType string, sc []networking_v1alpha3.Sidecar, workloadList models.WorkloadList) GenericMultiMatchChecker {
+	keys := []models.IstioValidationKey{}
+	selectors := make(map[int]map[string]string, len(sc))
+	for i, s := range sc {
+		key := models.IstioValidationKey{
+			ObjectType: subjectType,
+			Name:       s.Name,
+			Namespace:  s.Namespace,
+		}
+		keys = append(keys, key)
+		selectors[i] = make(map[string]string)
+		if s.Spec.WorkloadSelector != nil {
+			selectors[i] = s.Spec.WorkloadSelector.Labels
+		}
+	}
+	return GenericMultiMatchChecker{
+		SubjectType:  subjectType,
+		Keys:         keys,
+		Selectors:    selectors,
+		WorkloadList: workloadList,
+		Path:         "spec/workloadSelector",
 	}
 }
 
@@ -71,19 +121,17 @@ func (m GenericMultiMatchChecker) analyzeSelectorLessSubjects() models.IstioVali
 }
 
 func (m GenericMultiMatchChecker) selectorLessSubjects() []KeyWithIndex {
-	swi := make([]KeyWithIndex, 0, len(m.Subjects))
-
-	for i, s := range m.Subjects {
-		if !m.HasSelector(s) {
+	swi := make([]KeyWithIndex, 0, len(m.Keys))
+	for i, k := range m.Keys {
+		if len(m.Selectors[i]) == 0 {
 			swi = append(swi, KeyWithIndex{
 				Index: i,
 				Key: &models.IstioValidationKey{
-					Name:       s.GetObjectMeta().Name,
-					Namespace:  s.GetObjectMeta().Namespace,
-					ObjectType: m.SubjectType,
+					ObjectType: k.ObjectType,
+					Name:       k.Name,
+					Namespace:  k.Namespace,
 				},
-			},
-			)
+			})
 		}
 	}
 	return swi
@@ -136,10 +184,10 @@ func (m GenericMultiMatchChecker) analyzeSelectorSubjects() models.IstioValidati
 func (m GenericMultiMatchChecker) multiMatchSubjects() ReferenceMap {
 	workloadSubjects := ReferenceMap{}
 
-	for _, s := range m.Subjects {
-		subjectKey := models.BuildKey(m.SubjectType, s.GetObjectMeta().Name, s.GetObjectMeta().Namespace)
+	for i, s := range m.Keys {
+		subjectKey := models.BuildKey(m.SubjectType, s.Name, s.Namespace)
 
-		selector := labels.SelectorFromSet(m.GetSelectorLabels(s))
+		selector := labels.SelectorFromSet(m.Selectors[i])
 		if selector.Empty() {
 			continue
 		}
@@ -199,60 +247,4 @@ func (m GenericMultiMatchChecker) buildMultipleSubjectValidation(scs []models.Is
 	}
 
 	return validations
-}
-
-func GetWorkloadSelectorLabels(s kubernetes.IstioObject) map[string]string {
-	return getLabels("workloadSelector", "labels", s)
-}
-
-func GetSelectorLabels(s kubernetes.IstioObject) map[string]string {
-	return getLabels("selector", "matchLabels", s)
-}
-
-func HasSelector(s kubernetes.IstioObject) bool {
-	return s.HasMatchLabelsSelector()
-}
-
-func HasWorkloadSelector(s kubernetes.IstioObject) bool {
-	return s.HasWorkloadSelectorLabels()
-}
-
-// getLabels return the labels of the workloads that the rule be applied to.
-// There are two possible ways to define those labels:
-// 1. selector: matchLabels: app: productpage
-// 2. workloadSelector: labels: app: productpage
-// selectorName param: name of the first key (selector, workloadSelector)
-// labelsName param: name of the second key (matchLabels, labels)
-func getLabels(selectorName, labelsName string, s kubernetes.IstioObject) map[string]string {
-	ws, found := s.GetSpec()[selectorName]
-	if !found {
-		return nil
-	}
-
-	wsCasted, ok := ws.(map[string]interface{})
-	if !ok {
-		return nil
-	}
-
-	labels, found := wsCasted[labelsName]
-	if !found {
-		return nil
-	}
-
-	labCast, ok := labels.(map[string]interface{})
-	if !ok {
-		return nil
-	}
-
-	labs := map[string]string{}
-	for i, k := range labCast {
-		val, ok := k.(string)
-		if !ok {
-			continue
-		}
-
-		labs[i] = val
-	}
-
-	return labs
 }
