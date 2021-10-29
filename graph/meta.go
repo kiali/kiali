@@ -30,6 +30,7 @@ const (
 	HasWorkloadEntry      MetadataKey = "hasWorkloadEntry"
 	IsDead                MetadataKey = "isDead"
 	IsEgressCluster       MetadataKey = "isEgressCluster"  // PassthroughCluster or BlackHoleCluster
+	IsEgressGateway       MetadataKey = "isEgressGateway"  // Identifies a node that is an Istio egress gateway
 	IsIngressGateway      MetadataKey = "isIngressGateway" // Identifies a node that is an Istio ingress gateway
 	IsIdle                MetadataKey = "isIdle"
 	IsInaccessible        MetadataKey = "isInaccessible"
