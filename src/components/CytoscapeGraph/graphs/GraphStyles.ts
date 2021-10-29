@@ -281,6 +281,10 @@ export class GraphStyles {
         icons = `<span class='${NodeIconGateway} ${iconMargin(icons)}'></span> ${icons}`;
       }
       icons = `<span class='${NodeIconRoot} ${iconMargin(icons)}'></span> ${icons}`;
+    } else {
+      if (node.isGateway?.egressInfo?.hostnames?.length !== undefined) {
+        icons = `<span class='${NodeIconGateway} ${iconMargin(icons)}'></span> ${icons}`;
+      }
     }
 
     const hasIcon = icons.length > 0;
@@ -402,6 +406,7 @@ export class GraphStyles {
     let hosts: string[] = [];
     node.hasVS?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
     node.isGateway?.ingressInfo?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
+    node.isGateway?.egressInfo?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
 
     let htmlHosts = '';
     if (hosts.length !== 0) {

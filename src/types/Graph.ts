@@ -325,6 +325,9 @@ export interface GraphNodeData {
     ingressInfo?: {
       hostnames?: string[];
     };
+    egressInfo?: {
+      hostnames?: string[];
+    };
   };
   isMisconfigured?: string;
   isOutside?: boolean;
