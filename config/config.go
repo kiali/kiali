@@ -186,6 +186,7 @@ type IstioConfig struct {
 	IstioSidecarInjectorConfigMapName string              `yaml:"istio_sidecar_injector_config_map_name,omitempty"`
 	IstioSidecarAnnotation            string              `yaml:"istio_sidecar_annotation,omitempty"`
 	IstiodDeploymentName              string              `yaml:"istiod_deployment_name,omitempty"`
+	RootNamespace                     string              `yaml:"root_namespace,omitempty"`
 	UrlServiceVersion                 string              `yaml:"url_service_version"`
 }
 
@@ -533,6 +534,7 @@ func NewConfig() (c *Config) {
 				IstioSidecarInjectorConfigMapName: "istio-sidecar-injector",
 				IstioSidecarAnnotation:            "sidecar.istio.io/status",
 				IstiodDeploymentName:              "istiod",
+				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "http://istiod:15014/version",
 			},
 			Prometheus: PrometheusConfig{
@@ -863,4 +865,9 @@ func SaveToFile(filename string, conf *Config) (err error) {
 // IsIstioNamespace returns true if the namespace is the default istio namespace
 func IsIstioNamespace(namespace string) bool {
 	return namespace == configuration.IstioNamespace
+}
+
+// IsRootNamespace returns true if the namespace is the root namespace
+func IsRootNamespace(namespace string) bool {
+	return namespace == configuration.ExternalServices.Istio.RootNamespace
 }
