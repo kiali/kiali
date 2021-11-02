@@ -1,9 +1,8 @@
 package models
 
 import (
-	core_v1 "k8s.io/api/core/v1"
-
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -140,4 +139,12 @@ func (s *ServiceList) FilterServicesForSelector(selector labels.Selector) []Serv
 		}
 	}
 	return services
+}
+
+func (s *ServiceList) GetServiceNames() []string {
+	serviceNames := make([]string, 0)
+	for _, item := range s.Services {
+		serviceNames = append(serviceNames, item.Name)
+	}
+	return serviceNames
 }

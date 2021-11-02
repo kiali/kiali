@@ -30,7 +30,7 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 		return validations
 	}
 
-	serviceNames := getServiceNames(in.ServiceList)
+	serviceNames := in.ServiceList.GetServiceNames()
 	serviceHosts := kubernetes.ServiceEntryHostnames(append(in.IstioConfigList.ServiceEntries, in.ExportedResources.ServiceEntries...))
 	gatewayNames := kubernetes.GatewayNames(in.GatewaysPerNamespace)
 
@@ -95,12 +95,4 @@ func runDestinationRuleCheck(destinationRule networking_v1alpha3.DestinationRule
 	validations.Checks = result
 
 	return models.IstioValidations{key: validations}
-}
-
-func getServiceNames(services models.ServiceList) []string {
-	serviceNames := make([]string, 0)
-	for _, item := range services.Services {
-		serviceNames = append(serviceNames, item.Name)
-	}
-	return serviceNames
 }
