@@ -17,7 +17,7 @@ link:https://quay.io/repository/kiali/kiali?tab=tags[Kiali Operator Quay.io repo
 * Helm charts for deploying the Kiali operator or the Kiali server via the Helm CLI.
 Charts are published to https://kiali.org/helm-charts/.
 * The versioned documentation in the website that is published
-on https://kiali.io/documentation/.
+on https://kiali.io/docs/.
 
 Tags and branches are also created in the Kiali's GitHub repositories, as a reference
 for rebuilds (if needed) or as a base for z-stream releases.
@@ -69,13 +69,13 @@ make -f deploy/jenkins-ci/Makefile release
 
 These special Makefiles are helpers that were created in the past to assist in manually
 creating a release. That was useful when the only artifact that was being released was
-the Kiali server container image. But nowadays we also generate the the kiali operator,
-the helm charts and the website, and there is no equivalent helper Makefiles to assist in
+the Kiali server container image. But nowadays we also generate the kiali operator,
+the helm charts and the website, and there are no equivalent helper Makefiles to assist in
 creating a release of these artifacts. You will need to manually replay these Jenkins scripts:
 
 * link:https://github.com/kiali/kiali-operator/blob/master/Jenkinsfile[The Jenkins script to release the kiali-operator.]
-* link:https://github.com/kiali/kiali.io/blob/master/Jenkinsfile[The Jenkins script to release the Kiali helm charts.]
-* link:https://github.com/kiali/helm-charts/blob/master/Jenkinsfile[The Jenkins script to release the Kiali website.]
+* link:https://github.com/kiali/helm-charts/blob/master/Jenkinsfile[The Jenkins script to release the Kiali helm charts.]
+* link:https://github.com/kiali/kiali.io/blob/staging/Jenkinsfile[The Jenkins script to release the website.]
 
 Since this manual process is unknown to work, and it also involves manually replaying commands,
 it's probably better to set up a development environment for the Jenkins pipeline and run the
