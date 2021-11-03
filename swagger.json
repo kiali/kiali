@@ -5232,6 +5232,9 @@
       "description": "GWInfo contains the resolved gateway configuration if the node represents an Istio gateway",
       "type": "object",
       "properties": {
+        "egressInfo": {
+          "$ref": "#/definitions/GWInfoIngress"
+        },
         "ingressInfo": {
           "$ref": "#/definitions/GWInfoIngress"
         }
