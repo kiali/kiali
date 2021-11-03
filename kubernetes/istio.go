@@ -212,6 +212,7 @@ func (in *K8SClient) SetProxyLogLevel(namespace, pod, level string) error {
 	path := fmt.Sprintf("/logging?level=%s", level)
 
 	localPort := httputil.Pool.GetFreePort()
+	defer httputil.Pool.FreePort(localPort)
 	f, err := in.GetPodPortForwarder(namespace, pod, fmt.Sprintf("%d:%d", localPort, envoyAdminPort))
 	if err != nil {
 		return err
