@@ -9674,6 +9674,7 @@ True means allowed.
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| AdditionalDetails | [][AdditionalItem](#additional-item)| `[]*AdditionalItem` |  | |  |  |
 | CreatedAt | string| `string` |  | |  |  |
 | ExternalName | string| `string` |  | |  |  |
 | HealthAnnotations | map of string| `map[string]string` |  | |  |  |
@@ -9699,7 +9700,6 @@ True means allowed.
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| AdditionalDetails | [][AdditionalItem](#additional-item)| `[]*AdditionalItem` |  | |  |  |
 | DestinationRules | [][DestinationRule](#destination-rule)| `[]*DestinationRule` |  | |  |  |
 | IstioSidecar | boolean| `bool` |  | |  |  |
 | VirtualServices | [][VirtualService](#virtual-service)| `[]*VirtualService` |  | |  |  |

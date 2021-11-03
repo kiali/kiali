@@ -77,7 +77,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	serviceDetails, err := business.Svc.GetService(namespace, service, rateInterval, queryTime)
+	serviceDetails, err := business.Svc.GetServiceDetails(namespace, service, rateInterval, queryTime)
 	if includeValidations && err == nil {
 		wg.Wait()
 		serviceDetails.Validations = istioConfigValidations

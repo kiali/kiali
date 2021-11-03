@@ -7451,6 +7451,13 @@
     "Service": {
       "type": "object",
       "properties": {
+        "additionalDetails": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AdditionalItem"
+          },
+          "x-go-name": "AdditionalDetails"
+        },
         "createdAt": {
           "type": "string",
           "x-go-name": "CreatedAt"
@@ -7508,13 +7515,6 @@
     "ServiceDetails": {
       "type": "object",
       "properties": {
-        "additionalDetails": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/AdditionalItem"
-          },
-          "x-go-name": "AdditionalDetails"
-        },
         "destinationRules": {
           "type": "array",
           "items": {

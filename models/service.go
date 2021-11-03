@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/kiali/kiali/config"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -49,17 +50,16 @@ type ServiceDefinitionList struct {
 }
 
 type ServiceDetails struct {
-	Service           Service                               `json:"service"`
-	IstioSidecar      bool                                  `json:"istioSidecar"`
-	Endpoints         Endpoints                             `json:"endpoints"`
-	VirtualServices   []networking_v1alpha3.VirtualService  `json:"virtualServices"`
-	DestinationRules  []networking_v1alpha3.DestinationRule `json:"destinationRules"`
-	IstioPermissions  ResourcePermissions                   `json:"istioPermissions"`
-	Workloads         WorkloadOverviews                     `json:"workloads"`
-	Health            ServiceHealth                         `json:"health"`
-	Validations       IstioValidations                      `json:"validations"`
-	NamespaceMTLS     MTLSStatus                            `json:"namespaceMTLS"`
-	AdditionalDetails []AdditionalItem                      `json:"additionalDetails"`
+	Service          Service                               `json:"service"`
+	IstioSidecar     bool                                  `json:"istioSidecar"`
+	Endpoints        Endpoints                             `json:"endpoints"`
+	VirtualServices  []networking_v1alpha3.VirtualService  `json:"virtualServices"`
+	DestinationRules []networking_v1alpha3.DestinationRule `json:"destinationRules"`
+	IstioPermissions ResourcePermissions                   `json:"istioPermissions"`
+	Workloads        WorkloadOverviews                     `json:"workloads"`
+	Health           ServiceHealth                         `json:"health"`
+	Validations      IstioValidations                      `json:"validations"`
+	NamespaceMTLS    MTLSStatus                            `json:"namespaceMTLS"`
 }
 
 type Services []*Service
@@ -75,6 +75,7 @@ type Service struct {
 	Ports             Ports             `json:"ports"`
 	ExternalName      string            `json:"externalName"`
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
+	AdditionalDetails []AdditionalItem  `json:"additionalDetails"`
 }
 
 func (ss *Services) Parse(services []core_v1.Service) {
@@ -101,6 +102,7 @@ func (s *Service) Parse(service *core_v1.Service) {
 		s.CreatedAt = formatTime(service.CreationTimestamp.Time)
 		s.ResourceVersion = service.ResourceVersion
 		s.HealthAnnotations = GetHealthAnnotation(service.Annotations, GetHealthConfigAnnotation())
+		s.AdditionalDetails = GetAdditionalDetails(config.Get(), service.ObjectMeta.Annotations)
 		(&s.Ports).Parse(service.Spec.Ports)
 	}
 }

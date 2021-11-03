@@ -279,11 +279,11 @@ func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterv
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
 	}
-	svc, err := in.businessLayer.Svc.getService(namespace, service)
+	svc, err := in.businessLayer.Svc.GetService(namespace, service)
 	if err != nil {
 		return rqHealth, err
 	}
-	rqHealth.HealthAnnotations = models.GetHealthAnnotation(svc.Annotations, HealthAnnotation)
+	rqHealth.HealthAnnotations = svc.HealthAnnotations
 	rqHealth.CombineReporters()
 	return rqHealth, nil
 }
