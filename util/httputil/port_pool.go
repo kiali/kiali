@@ -1,8 +1,9 @@
 package httputil
 
 import (
-	"fmt"
 	"sync"
+
+	"github.com/kiali/kiali/log"
 )
 
 type PortPool struct {
@@ -10,7 +11,7 @@ type PortPool struct {
 	LastBusyPort int
 
 	// mutex is the mutex used to solve concurrency problems while managing the port
-	Mutex sync.Mutex
+	Mutex sync.Locker
 
 	// portsMap tracks whether an specific port is busy
 	// portsMap[14100] = true => means that port 14100 is busy
@@ -28,7 +29,7 @@ type PortPool struct {
 
 var Pool = &PortPool{
 	LastBusyPort:  13999,
-	Mutex:         sync.Mutex{},
+	Mutex:         &sync.Mutex{},
 	PortsMap:      map[int]bool{},
 	PortRangeInit: 14000,
 	PortRangeSize: 1000,
@@ -65,12 +66,12 @@ func (pool *PortPool) GetFreePort() int {
 }
 
 // FreePort frees the port and makes it available for being pick to use.
-func (pool *PortPool) FreePort(port int) (err error) {
+func (pool *PortPool) FreePort(port int) {
 	if port < pool.PortRangeInit || port > pool.PortRangeInit+pool.PortRangeSize {
-		return fmt.Errorf("port %d is out of range", port)
+		log.Errorf("port %d is out of range", port)
+		return
 	}
 	pool.Mutex.Lock()
 	pool.PortsMap[port] = false
 	pool.Mutex.Unlock()
-	return err
 }
