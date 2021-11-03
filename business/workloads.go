@@ -267,6 +267,7 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, wo
 
 		criteria := ServiceCriteria{
 			Namespace:              namespace,
+			ServiceSelector:        labels.Set(workload.Labels).String(),
 			IncludeOnlyDefinitions: true,
 		}
 		services, err = in.businessLayer.Svc.GetServiceList(criteria)
