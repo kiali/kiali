@@ -29,7 +29,7 @@ Runs the Kiali molecule tests on an existing OpenShift cluster. Utilizes the `ru
 
 * `link:configure-operator.sh[]`
 
-Configures an installed operator so you can enable and disable operator features (see https://kiali.io/documentation/latest/faq/#operator-configuration)
+Configures an installed operator so you can enable and disable operator features (see https://kiali.io/docs/faq/installation/#operator-configuration)
 
 * `link:crc-openshift.sh[]`
 

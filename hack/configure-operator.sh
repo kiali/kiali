@@ -4,7 +4,7 @@
 # configure-operator.sh
 #
 # Configures the operator environment variables to enable/disable features.
-# See: https://kiali.io/documentation/latest/faq/#operator-configuration
+# See: https://kiali.io/docs/faq/installation/#operator-configuration
 ##############################################################################
 
 set -eu

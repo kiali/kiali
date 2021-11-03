@@ -9,7 +9,7 @@ image:https://img.shields.io/badge/license-Apache2-blue.svg["Apache 2.0 license"
 
 Kiali provides answers to the questions: _What microservices are part of my Istio service mesh and how are they connected?_
 
-image::https://raw.githubusercontent.com/kiali/kiali.io/master/static/images/documentation/features/graph-overview.png[Kiali Graph, width=880]
+image::https://kiali.io/images/documentation/features/topology-graph.png[Kiali Graph, width=880]
 
 === Table of contents
 
@@ -28,13 +28,13 @@ Kiali also includes an integration with Jaeger Tracing to augment the topology v
 
 === Contributing
 
-First, check the link:https://kiali.io/contribute[Contribute section in our web site], which provides a brief introduction on contributing, how to report issues and request features, and how to reach us.
+First, check the link:https://kiali.io/community/[Community section on kiali.io], which provides a brief introduction on contributing, how to report issues and request features, and how to reach us.
 
 If you would like to make code contributions, please also check the link:./CONTRIBUTING.md[Contribution Guide].
 
 === Getting Started
 
-The target audience of this README are developers. If you are not a developer but want to learn more about Kiali, the link:https://www.kiali.io[Kiali documentation] should be more helpful. For instructions on installing Kiali, please read the link:https://www.kiali.io/documentation/latest/quick-start[Quick Start] page.
+The target audience of this README are developers. If you are not a developer but want to learn more about Kiali, the link:https://kiali.io/docs[Kiali documentation] should be more helpful. For instructions on installing Kiali, please read the link:https://kiali.io/docs/installation/[Installation] page.
 
 === How and where Kiali is released?
 

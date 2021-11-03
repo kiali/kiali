@@ -76,7 +76,7 @@ are their names:
   [Jenkinsfile](https://github.com/kiali/helm-charts/blob/master/Jenkinsfile)
   is located in the kiali/helm-charts repository.
 * `kiali-website-release` is the Pipeline that releases Kiali's website. It's
-  [Jenkinsfile](https://github.com/kiali/kiali.io/blob/master/Jenkinsfile) is
+  [Jenkinsfile](https://github.com/kiali/kiali.io/blob/staging/Jenkinsfile) is
   located in the kiali/kiali.io repository.
 
 All Pipelines are written using [Jenkins's scripted syntax](https://jenkins.io/doc/book/pipeline/syntax/#scripted-pipeline)
