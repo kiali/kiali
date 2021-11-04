@@ -4256,6 +4256,11 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
+        },
+        "port": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "Port"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -4676,44 +4681,34 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Cluster": {
-      "description": "Cluster holds some metadata about a cluster that is\npart of the mesh.",
       "type": "object",
       "properties": {
-        "apiEndpoint": {
-          "description": "ApiEndpoint is the URL where the Kubernetes/Cluster API Server can be contacted",
+        "destination_rule": {
           "type": "string",
-          "x-go-name": "ApiEndpoint"
+          "x-go-name": "DestinationRule"
         },
-        "isKialiHome": {
-          "description": "IsKialiHome specifies if this cluster is hosting this Kiali instance (and the observed Mesh Control Plane)",
-          "type": "boolean",
-          "x-go-name": "IsKialiHome"
-        },
-        "kialiInstances": {
-          "description": "KialiInstances is the list of Kialis discovered in the cluster.",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/KialiInstance"
-          },
-          "x-go-name": "KialiInstances"
-        },
-        "name": {
-          "description": "Name specifies the CLUSTER_ID as known by the Control Plane",
+        "direction": {
           "type": "string",
-          "x-go-name": "Name"
+          "x-go-name": "Direction"
         },
-        "network": {
-          "description": "Network specifies the logical NETWORK_ID as known by the Control Plane",
-          "type": "string",
-          "x-go-name": "Network"
+        "port": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Port"
         },
-        "secretName": {
-          "description": "SecretName is the name of the kubernetes \"remote secret\" where data of this cluster was resolved",
+        "service_fqdn": {
+          "$ref": "#/definitions/Host"
+        },
+        "subset": {
           "type": "string",
-          "x-go-name": "SecretName"
+          "x-go-name": "Subset"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/business"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Clusters": {
       "type": "array",
@@ -6372,38 +6367,6 @@
       },
       "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
-    "KialiInstance": {
-      "description": "KialiInstance represents a Kiali installation. It holds some data about\nwhere and how Kiali was deployed.",
-      "type": "object",
-      "properties": {
-        "namespace": {
-          "description": "Namespace is the name of the namespace where is Kiali installed on.",
-          "type": "string",
-          "x-go-name": "Namespace"
-        },
-        "operatorResource": {
-          "description": "OperatorResource contains the namespace and the name of the Kiali CR that the user\ncreated to install Kiali via the operator. This can be blank if the operator wasn't used\nto install Kiali. This resource is populated from annotations in the Service. It has\nthe format \"namespace/resource_name\".",
-          "type": "string",
-          "x-go-name": "OperatorResource"
-        },
-        "serviceName": {
-          "description": "ServiceName is the name of the Kubernetes service associated to the Kiali installation. The Kiali Service is the\nentity that is looked for in order to determine if a Kiali instance is available.",
-          "type": "string",
-          "x-go-name": "ServiceName"
-        },
-        "url": {
-          "description": "Url is the URI that can be used to access Kiali.",
-          "type": "string",
-          "x-go-name": "Url"
-        },
-        "version": {
-          "description": "Version is the Kiali version as reported by annotations in the Service.",
-          "type": "string",
-          "x-go-name": "Version"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/business"
-    },
     "Listener": {
       "type": "object",
       "properties": {
@@ -7067,6 +7030,10 @@
           "type": "string",
           "x-go-name": "AppProtocol"
         },
+        "istioProtocol": {
+          "type": "string",
+          "x-go-name": "IstioProtocol"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
@@ -7079,6 +7046,11 @@
         "protocol": {
           "type": "string",
           "x-go-name": "Protocol"
+        },
+        "tlsMode": {
+          "description": "TLSMode endpoint is injected with istio sidecar and ready to configure Istio mTLS\nDisabledTLSModeLabel implies that this endpoint should receive traffic as is (mostly plaintext)\nDisabledTLSModeLabel = \"disabled\"\nIstioMutualTLSModeLabel implies that the endpoint is ready to receive Istio mTLS connections.\nIstioMutualTLSModeLabel = \"istio\"",
+          "type": "string",
+          "x-go-name": "TLSMode"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -7553,6 +7525,13 @@
         "service": {
           "$ref": "#/definitions/Service"
         },
+        "serviceEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ServiceEntry"
+          },
+          "x-go-name": "ServiceEntries"
+        },
         "validations": {
           "$ref": "#/definitions/IstioValidations"
         },
@@ -7801,6 +7780,11 @@
             "type": "string"
           },
           "x-go-name": "Selector"
+        },
+        "serviceRegistry": {
+          "description": "ServiceRegistry values:\nKubernetes: \tis a service registry backed by k8s API server\nExternal: \tis a service registry for externally provided ServiceEntries\nFederation:  special case when registry is provided from a federated environment",
+          "type": "string",
+          "x-go-name": "ServiceRegistry"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -8746,8 +8730,7 @@
           "items": {
             "type": "string"
           },
-          "x-go-name": "ServiceAccountNames",
-          "example": "productpage, reviews, details"
+          "x-go-name": "ServiceAccountNames"
         },
         "workloadName": {
           "description": "Name of a workload member of an application",
@@ -9051,15 +9034,6 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/CertInfo"
-        }
-      }
-    },
-    "clustersResponse": {
-      "description": "Return a list of Cluster items",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/Cluster"
         }
       }
     },

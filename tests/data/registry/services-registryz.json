@@ -1,0 +1,111 @@
+[
+  {
+    "Attributes": {
+      "ServiceRegistry": "External",
+      "Name": "*.msn.com",
+      "Namespace": "electronic-shop",
+      "Labels": null,
+      "ExportTo": null,
+      "LabelSelectors": null,
+      "ClusterExternalAddresses": {
+        "Addresses": null
+      },
+      "ClusterExternalPorts": null
+    },
+    "ports": [
+      {
+        "name": "http-port",
+        "port": 80,
+        "protocol": "HTTP"
+      },
+      {
+        "name": "https",
+        "port": 443,
+        "protocol": "HTTPS"
+      }
+    ],
+    "creationTime": "2021-11-23T08:16:17Z",
+    "hostname": "*.msn.com",
+    "clusterVIPs": {
+      "Addresses": null
+    },
+    "defaultAddress": "0.0.0.0",
+    "Resolution": 2,
+    "MeshExternal": true,
+    "ResourceVersion": ""
+  },
+  {
+    "Attributes": {
+      "ServiceRegistry": "External",
+      "Name": "www.bookdepository.com",
+      "Namespace": "electronic-shop",
+      "Labels": null,
+      "ExportTo": null,
+      "LabelSelectors": null,
+      "ClusterExternalAddresses": {
+        "Addresses": null
+      },
+      "ClusterExternalPorts": null
+    },
+    "ports": [
+      {
+        "name": "http-port",
+        "port": 80,
+        "protocol": "HTTP"
+      },
+      {
+        "name": "https",
+        "port": 443,
+        "protocol": "HTTPS"
+      }
+    ],
+    "creationTime": "2021-11-23T08:18:41Z",
+    "hostname": "www.bookdepository.com",
+    "clusterVIPs": {
+      "Addresses": null
+    },
+    "defaultAddress": "0.0.0.0",
+    "autoAllocatedAddress": "240.240.0.1",
+    "Resolution": 1,
+    "MeshExternal": true,
+    "ResourceVersion": ""
+  },
+  {
+    "Attributes": {
+      "ServiceRegistry": "Kubernetes",
+      "Name": "bookstore",
+      "Namespace": "electronic-shop",
+      "Labels": {
+        "app": "bookstore"
+      },
+      "ExportTo": null,
+      "LabelSelectors": {
+        "app": "bookstore"
+      },
+      "ClusterExternalAddresses": {
+        "Addresses": null
+      },
+      "ClusterExternalPorts": null
+    },
+    "ports": [
+      {
+        "name": "http",
+        "port": 8888,
+        "protocol": "HTTP"
+      }
+    ],
+    "creationTime": "2021-11-23T08:16:16Z",
+    "hostname": "bookstore.electronic-shop.svc.cluster.local",
+    "clusterVIPs": {
+      "Addresses": {
+        "Kubernetes": [
+          "10.217.4.189"
+        ]
+      }
+    },
+    "defaultAddress": "10.217.4.189",
+    "Resolution": 0,
+    "MeshExternal": false,
+    "ResourceVersion": "39719"
+  }
+]

@@ -7,6 +7,7 @@ type Address struct {
 	Kind string `json:"kind"`
 	Name string `json:"name"`
 	IP   string `json:"ip"`
+	Port uint32 `json:"port"`
 }
 
 func (addresses *Addresses) Parse(as []core_v1.EndpointAddress) {

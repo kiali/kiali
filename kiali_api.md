@@ -6504,6 +6504,7 @@ Status: Internal Server Error
 | IP | string| `string` |  | |  |  |
 | Kind | string| `string` |  | |  |  |
 | Name | string| `string` |  | |  |  |
+| Port | uint32 (formatted integer)| `uint32` |  | |  |  |
 
 
 
@@ -6923,11 +6924,7 @@ to be removed in 1.21 release.
 ### <span id="cluster"></span> Cluster
 
 
-> Cluster holds some metadata about a cluster that is
-part of the mesh.
   
-
-
 
 
 
@@ -6935,12 +6932,12 @@ part of the mesh.
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| ApiEndpoint | string| `string` |  | | ApiEndpoint is the URL where the Kubernetes/Cluster API Server can be contacted |  |
-| IsKialiHome | boolean| `bool` |  | | IsKialiHome specifies if this cluster is hosting this Kiali instance (and the observed Mesh Control Plane) |  |
-| KialiInstances | [][KialiInstance](#kiali-instance)| `[]*KialiInstance` |  | | KialiInstances is the list of Kialis discovered in the cluster. |  |
-| Name | string| `string` |  | | Name specifies the CLUSTER_ID as known by the Control Plane |  |
-| Network | string| `string` |  | | Network specifies the logical NETWORK_ID as known by the Control Plane |  |
-| SecretName | string| `string` |  | | SecretName is the name of the kubernetes "remote secret" where data of this cluster was resolved |  |
+| DestinationRule | string| `string` |  | |  |  |
+| Direction | string| `string` |  | |  |  |
+| Port | int64 (formatted integer)| `int64` |  | |  |  |
+| Subset | string| `string` |  | |  |  |
+| Type | string| `string` |  | |  |  |
+| service_fqdn | [Host](#host)| `Host` |  | |  |  |
 
 
 
@@ -8470,33 +8467,6 @@ generation is still in progress.  See https://istio.io/latest/docs/reference/con
 
 
 
-### <span id="kiali-instance"></span> KialiInstance
-
-
-> KialiInstance represents a Kiali installation. It holds some data about
-where and how Kiali was deployed.
-  
-
-
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Namespace | string| `string` |  | | Namespace is the name of the namespace where is Kiali installed on. |  |
-| OperatorResource | string| `string` |  | | OperatorResource contains the namespace and the name of the Kiali CR that the user
-created to install Kiali via the operator. This can be blank if the operator wasn't used
-to install Kiali. This resource is populated from annotations in the Service. It has
-the format "namespace/resource_name". |  |
-| ServiceName | string| `string` |  | | ServiceName is the name of the Kubernetes service associated to the Kiali installation. The Kiali Service is the
-entity that is looked for in order to determine if a Kiali instance is available. |  |
-| Url | string| `string` |  | | Url is the URI that can be used to access Kiali. |  |
-| Version | string| `string` |  | | Version is the Kiali version as reported by annotations in the Service. |  |
-
-
-
 ### <span id="listener"></span> Listener
 
 
@@ -9133,9 +9103,16 @@ to be removed in 1.21 release.
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| AppProtocol | string| `string` |  | |  |  |
+| IstioProtocol | string| `string` |  | |  |  |
 | Name | string| `string` |  | |  |  |
 | Port | int32 (formatted integer)| `int32` |  | |  |  |
 | Protocol | string| `string` |  | |  |  |
+| TLSMode | string| `string` |  | | TLSMode endpoint is injected with istio sidecar and ready to configure Istio mTLS
+DisabledTLSModeLabel implies that this endpoint should receive traffic as is (mostly plaintext)
+DisabledTLSModeLabel = "disabled"
+IstioMutualTLSModeLabel implies that the endpoint is ready to receive Istio mTLS connections.
+IstioMutualTLSModeLabel = "istio" |  |
 
 
 
@@ -9711,6 +9688,7 @@ True means allowed.
 |------|------|---------|:--------:| ------- |-------------|---------|
 | DestinationRules | [][DestinationRule](#destination-rule)| `[]*DestinationRule` |  | |  |  |
 | IstioSidecar | boolean| `bool` |  | |  |  |
+| ServiceEntries | [][ServiceEntry](#service-entry)| `[]*ServiceEntry` |  | |  |  |
 | VirtualServices | [][VirtualService](#virtual-service)| `[]*VirtualService` |  | |  |  |
 | endpoints | [Endpoints](#endpoints)| `Endpoints` |  | |  |  |
 | health | [ServiceHealth](#service-health)| `ServiceHealth` |  | |  |  |
@@ -9960,6 +9938,10 @@ to be removed in 1.21 release.
 | Name | string| `string` | ✓ | | Name of the Service | `reviews-v1` |
 | Namespace | string| `string` |  | | Namespace of the Service |  |
 | Selector | map of string| `map[string]string` |  | | Selector for Service |  |
+| ServiceRegistry | string| `string` |  | | ServiceRegistry values:
+Kubernetes: 	is a service registry backed by k8s API server
+External: 	is a service registry for externally provided ServiceEntries
+Federation:  special case when registry is provided from a federated environment |  |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |
 
 
@@ -11023,7 +11005,7 @@ to be removed in 1.21 release.
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | IstioSidecar | boolean| `bool` | ✓ | | Define if all Pods related to the Workload has an IstioSidecar deployed | `true` |
-| ServiceAccountNames | []string| `[]string` | ✓ | | List of service accounts involved in this application | `productpage, reviews, details` |
+| ServiceAccountNames | []string| `[]string` | ✓ | | List of service accounts involved in this application |  |
 | WorkloadName | string| `string` | ✓ | | Name of a workload member of an application | `reviews-v1` |
 
 

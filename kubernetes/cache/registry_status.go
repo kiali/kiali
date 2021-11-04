@@ -9,8 +9,8 @@ import (
 type (
 	RegistryStatusCache interface {
 		CheckRegistryStatus() bool
-		GetRegistryStatus() []*kubernetes.RegistryStatus
-		SetRegistryStatus(registryStatus []*kubernetes.RegistryStatus)
+		GetRegistryStatus() *kubernetes.RegistryStatus
+		SetRegistryStatus(registryStatus *kubernetes.RegistryStatus)
 		RefreshRegistryStatus()
 	}
 )
@@ -21,19 +21,19 @@ func (c *kialiCacheImpl) CheckRegistryStatus() bool {
 	if c.registryStatusCreated == nil {
 		return false
 	}
-	if time.Since(*c.registryStatusCreated) > c.tokenNamespaceDuration {
+	if time.Since(*c.registryStatusCreated) > c.refreshDuration {
 		return false
 	}
 	return true
 }
 
-func (c *kialiCacheImpl) GetRegistryStatus() []*kubernetes.RegistryStatus {
+func (c *kialiCacheImpl) GetRegistryStatus() *kubernetes.RegistryStatus {
 	defer c.registryStatusLock.RUnlock()
 	c.registryStatusLock.RLock()
 	return c.registryStatus
 }
 
-func (c *kialiCacheImpl) SetRegistryStatus(registryStatus []*kubernetes.RegistryStatus) {
+func (c *kialiCacheImpl) SetRegistryStatus(registryStatus *kubernetes.RegistryStatus) {
 	defer c.registryStatusLock.Unlock()
 	c.registryStatusLock.Lock()
 	timeNow := time.Now()
@@ -44,5 +44,6 @@ func (c *kialiCacheImpl) SetRegistryStatus(registryStatus []*kubernetes.Registry
 func (c *kialiCacheImpl) RefreshRegistryStatus() {
 	defer c.registryStatusLock.Unlock()
 	c.registryStatusLock.Lock()
+	c.registryStatusCreated = nil
 	c.registryStatus = nil
 }

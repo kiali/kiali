@@ -187,25 +187,25 @@ func TestValidServiceRegistry(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(vals)
 
-	registryService := kubernetes.RegistryStatus{}
+	registryService := kubernetes.RegistryService{}
 	registryService.Hostname = "ratings.mesh2-bookinfo.svc.mesh1-imports.local"
 	vals, valid = NoHostChecker{
-		Namespace:      "bookinfo",
-		ServiceNames:   []string{""},
-		VirtualService: *virtualService,
-		RegistryStatus: []*kubernetes.RegistryStatus{&registryService},
+		Namespace:        "bookinfo",
+		ServiceNames:     []string{""},
+		VirtualService:   *virtualService,
+		RegistryServices: []*kubernetes.RegistryService{&registryService},
 	}.Check()
 
 	assert.True(valid)
 	assert.Empty(vals)
 
-	registryService = kubernetes.RegistryStatus{}
+	registryService = kubernetes.RegistryService{}
 	registryService.Hostname = "ratings2.mesh2-bookinfo.svc.mesh1-imports.local"
 	vals, valid = NoHostChecker{
-		Namespace:      "bookinfo",
-		ServiceNames:   []string{""},
-		VirtualService: *virtualService,
-		RegistryStatus: []*kubernetes.RegistryStatus{&registryService},
+		Namespace:        "bookinfo",
+		ServiceNames:     []string{""},
+		VirtualService:   *virtualService,
+		RegistryServices: []*kubernetes.RegistryService{&registryService},
 	}.Check()
 
 	assert.False(valid)

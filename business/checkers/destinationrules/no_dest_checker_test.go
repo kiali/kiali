@@ -131,7 +131,7 @@ func TestValidServiceNamespaceCrossNamespace(t *testing.T) {
 	assert := assert.New(t)
 
 	// Note that a cross-namespace service should be visible in the registry, otherwise won't be visible
-	registryService := kubernetes.RegistryStatus{}
+	registryService := kubernetes.RegistryService{}
 	registryService.Hostname = "reviews.outside-ns.svc.cluster.local"
 
 	vals, valid := NoDestinationChecker{
@@ -144,9 +144,9 @@ func TestValidServiceNamespaceCrossNamespace(t *testing.T) {
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
 		),
-		ServiceList:     fakeServicesReview(),
-		DestinationRule: *data.CreateTestDestinationRule("test-namespace", "name", "reviews.outside-ns.svc.cluster.local"),
-		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
+		ServiceList:      fakeServicesReview(),
+		DestinationRule:  *data.CreateTestDestinationRule("test-namespace", "name", "reviews.outside-ns.svc.cluster.local"),
+		RegistryServices: []*kubernetes.RegistryService{&registryService},
 	}.Check()
 
 	assert.True(valid)
@@ -396,7 +396,7 @@ func TestFailCrossNamespaceHost(t *testing.T) {
 	assert := assert.New(t)
 
 	// Note that a cross-namespace service should be visible in the registry, otherwise won't be visible
-	registryService := kubernetes.RegistryStatus{}
+	registryService := kubernetes.RegistryService{}
 	registryService.Hostname = "reviews.different-ns.svc.cluster.local"
 
 	vals, valid := NoDestinationChecker{
@@ -407,8 +407,8 @@ func TestFailCrossNamespaceHost(t *testing.T) {
 		),
 		ServiceList: fakeServicesReview(),
 		// Intentionally using the same serviceName, but different NS. This shouldn't fail to match the above workloads
-		DestinationRule: *data.CreateTestDestinationRule("test-namespace", "name", "reviews.different-ns.svc.cluster.local"),
-		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
+		DestinationRule:  *data.CreateTestDestinationRule("test-namespace", "name", "reviews.different-ns.svc.cluster.local"),
+		RegistryServices: []*kubernetes.RegistryService{&registryService},
 	}.Check()
 
 	assert.True(valid)
@@ -652,51 +652,51 @@ func TestValidServiceRegistry(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(vals)
 
-	registryService := kubernetes.RegistryStatus{}
+	registryService := kubernetes.RegistryService{}
 	registryService.Hostname = "ratings.mesh2-bookinfo.svc.mesh1-imports.local"
 
 	vals, valid = NoDestinationChecker{
-		Namespace:       "test",
-		DestinationRule: *dr,
-		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
+		Namespace:        "test",
+		DestinationRule:  *dr,
+		RegistryServices: []*kubernetes.RegistryService{&registryService},
 	}.Check()
 
 	assert.True(valid)
 	assert.Empty(vals)
 
-	registryService = kubernetes.RegistryStatus{}
+	registryService = kubernetes.RegistryService{}
 	registryService.Hostname = "ratings2.mesh2-bookinfo.svc.mesh1-imports.local"
 
 	vals, valid = NoDestinationChecker{
-		Namespace:       "test",
-		DestinationRule: *dr,
-		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
+		Namespace:        "test",
+		DestinationRule:  *dr,
+		RegistryServices: []*kubernetes.RegistryService{&registryService},
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(vals)
 
-	registryService = kubernetes.RegistryStatus{}
+	registryService = kubernetes.RegistryService{}
 	registryService.Hostname = "ratings.bookinfo.svc.cluster.local"
 
 	dr = data.CreateEmptyDestinationRule("test", "test-exported", "ratings.bookinfo.svc.cluster.local")
 
 	vals, valid = NoDestinationChecker{
-		Namespace:       "test",
-		DestinationRule: *dr,
-		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
+		Namespace:        "test",
+		DestinationRule:  *dr,
+		RegistryServices: []*kubernetes.RegistryService{&registryService},
 	}.Check()
 
 	assert.True(valid)
 	assert.Empty(vals)
 
-	registryService = kubernetes.RegistryStatus{}
+	registryService = kubernetes.RegistryService{}
 	registryService.Hostname = "ratings2.bookinfo.svc.cluster.local"
 
 	vals, valid = NoDestinationChecker{
-		Namespace:       "test",
-		DestinationRule: *dr,
-		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
+		Namespace:        "test",
+		DestinationRule:  *dr,
+		RegistryServices: []*kubernetes.RegistryService{&registryService},
 	}.Check()
 
 	assert.False(valid)

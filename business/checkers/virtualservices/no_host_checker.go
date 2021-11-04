@@ -16,7 +16,7 @@ type NoHostChecker struct {
 	ServiceNames      []string
 	VirtualService    networking_v1alpha3.VirtualService
 	ServiceEntryHosts map[string][]string
-	RegistryStatus    []*kubernetes.RegistryStatus
+	RegistryServices  []*kubernetes.RegistryService
 }
 
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
@@ -127,7 +127,7 @@ func (n NoHostChecker) checkDestination(sHost string) bool {
 		}
 	}
 
-	// Use RegistryStatus to check destinations that may not be covered with previous check
+	// Use RegistryService to check destinations that may not be covered with previous check
 	// i.e. Multi-cluster or Federation validations
-	return kubernetes.HasMatchingRegistryStatus(sHost, n.RegistryStatus)
+	return kubernetes.HasMatchingRegistryService(sHost, n.RegistryServices)
 }

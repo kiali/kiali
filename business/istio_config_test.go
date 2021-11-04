@@ -512,29 +512,29 @@ func TestFilterIstioObjectsForWorkloadSelector(t *testing.T) {
 	istioConfigList := loader.GetResources()
 
 	s := "app=my-gateway"
-	gw := kubernetes.FilterGateways(s, istioConfigList.Gateways)
+	gw := kubernetes.FilterGatewaysBySelector(s, istioConfigList.Gateways)
 	assert.Equal(1, len(gw))
 	assert.Equal("my-gateway", gw[0].Name)
 
 	s = "app=my-envoyfilter"
-	ef := kubernetes.FilterEnvoyFilters(s, istioConfigList.EnvoyFilters)
+	ef := kubernetes.FilterEnvoyFiltersBySelector(s, istioConfigList.EnvoyFilters)
 	assert.Equal(1, len(ef))
 	assert.Equal("my-envoyfilter", ef[0].Name)
 
 	s = "app=my-sidecar"
-	sc := kubernetes.FilterSidecars(s, istioConfigList.Sidecars)
+	sc := kubernetes.FilterSidecarsBySelector(s, istioConfigList.Sidecars)
 	assert.Equal(1, len(sc))
 	assert.Equal("my-sidecar", sc[0].Name)
 
 	s = "app=my-security"
-	ap := kubernetes.FilterAuthorizationPolicies(s, istioConfigList.AuthorizationPolicies)
+	ap := kubernetes.FilterAuthorizationPoliciesBySelector(s, istioConfigList.AuthorizationPolicies)
 	assert.Equal(1, len(ap))
 
 	s = "app=my-security"
-	ra := kubernetes.FilterRequestAuthentications(s, istioConfigList.RequestAuthentications)
+	ra := kubernetes.FilterRequestAuthenticationsBySelector(s, istioConfigList.RequestAuthentications)
 	assert.Equal(1, len(ra))
 
 	s = "app=my-security"
-	pa := kubernetes.FilterPeerAuthentications(s, istioConfigList.PeerAuthentications)
+	pa := kubernetes.FilterPeerAuthenticationsBySelector(s, istioConfigList.PeerAuthentications)
 	assert.Equal(1, len(pa))
 }

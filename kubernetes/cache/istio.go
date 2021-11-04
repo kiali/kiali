@@ -53,37 +53,48 @@ func (c *kialiCacheImpl) createIstioInformers(namespace string, informer *typeCa
 	sharedInformers := istio.NewSharedInformerFactoryWithOptions(c.istioApi, c.refreshDuration, istio.WithNamespace(namespace))
 	if c.CheckIstioResource(kubernetes.DestinationRules) {
 		(*informer)[kubernetes.DestinationRuleType] = sharedInformers.Networking().V1alpha3().DestinationRules().Informer()
+		(*informer)[kubernetes.DestinationRuleType].AddEventHandler(c.registryRefreshHandler)
 	}
 	if c.CheckIstioResource(kubernetes.EnvoyFilters) {
 		(*informer)[kubernetes.EnvoyFilterType] = sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer()
+		(*informer)[kubernetes.EnvoyFilterType].AddEventHandler(c.registryRefreshHandler)
 	}
 	if c.CheckIstioResource(kubernetes.Gateways) {
 		(*informer)[kubernetes.GatewayType] = sharedInformers.Networking().V1alpha3().Gateways().Informer()
+		(*informer)[kubernetes.GatewayType].AddEventHandler(c.registryRefreshHandler)
 	}
 	if c.CheckIstioResource(kubernetes.ServiceEntries) {
 		(*informer)[kubernetes.ServiceEntryType] = sharedInformers.Networking().V1alpha3().ServiceEntries().Informer()
+		(*informer)[kubernetes.ServiceEntryType].AddEventHandler(c.registryRefreshHandler)
 	}
 	if c.CheckIstioResource(kubernetes.Sidecars) {
 		(*informer)[kubernetes.SidecarType] = sharedInformers.Networking().V1alpha3().Sidecars().Informer()
+		(*informer)[kubernetes.SidecarType].AddEventHandler(c.registryRefreshHandler)
 	}
 	if c.CheckIstioResource(kubernetes.VirtualServices) {
 		(*informer)[kubernetes.VirtualServiceType] = sharedInformers.Networking().V1alpha3().VirtualServices().Informer()
+		(*informer)[kubernetes.VirtualServiceType].AddEventHandler(c.registryRefreshHandler)
 	}
 	if c.CheckIstioResource(kubernetes.WorkloadEntries) {
 		(*informer)[kubernetes.WorkloadEntryType] = sharedInformers.Networking().V1alpha3().WorkloadEntries().Informer()
+		(*informer)[kubernetes.WorkloadEntryType].AddEventHandler(c.registryRefreshHandler)
 	}
 	if c.CheckIstioResource(kubernetes.WorkloadGroups) {
 		(*informer)[kubernetes.WorkloadGroupType] = sharedInformers.Networking().V1alpha3().WorkloadGroups().Informer()
+		(*informer)[kubernetes.WorkloadGroupType].AddEventHandler(c.registryRefreshHandler)
 	}
 
 	if c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
 		(*informer)[kubernetes.AuthorizationPoliciesType] = sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer()
+		(*informer)[kubernetes.AuthorizationPoliciesType].AddEventHandler(c.registryRefreshHandler)
 	}
 	if c.CheckIstioResource(kubernetes.PeerAuthentications) {
 		(*informer)[kubernetes.PeerAuthenticationsType] = sharedInformers.Security().V1beta1().PeerAuthentications().Informer()
+		(*informer)[kubernetes.PeerAuthenticationsType].AddEventHandler(c.registryRefreshHandler)
 	}
 	if c.CheckIstioResource(kubernetes.RequestAuthentications) {
 		(*informer)[kubernetes.RequestAuthenticationsType] = sharedInformers.Security().V1beta1().RequestAuthentications().Informer()
+		(*informer)[kubernetes.RequestAuthenticationsType].AddEventHandler(c.registryRefreshHandler)
 	}
 }
 

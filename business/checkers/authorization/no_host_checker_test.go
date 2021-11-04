@@ -379,53 +379,53 @@ func TestValidServiceRegistry(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 
-	registryService := kubernetes.RegistryStatus{}
+	registryService := kubernetes.RegistryService{}
 	registryService.Hostname = "ratings.mesh2-bookinfo.svc.mesh1-imports.local"
 
 	validations, valid = NoHostChecker{
 		AuthorizationPolicy: *authPolicyWithHost([]string{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
-		RegistryStatus:      []*kubernetes.RegistryStatus{&registryService},
+		RegistryServices:    []*kubernetes.RegistryService{&registryService},
 	}.Check()
 
 	assert.True(valid)
 	assert.Empty(validations)
 
-	registryService = kubernetes.RegistryStatus{}
+	registryService = kubernetes.RegistryService{}
 	registryService.Hostname = "ratings2.mesh2-bookinfo.svc.mesh1-imports.local"
 
 	validations, valid = NoHostChecker{
 		AuthorizationPolicy: *authPolicyWithHost([]string{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
-		RegistryStatus:      []*kubernetes.RegistryStatus{&registryService},
+		RegistryServices:    []*kubernetes.RegistryService{&registryService},
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(validations)
 
-	registryService = kubernetes.RegistryStatus{}
+	registryService = kubernetes.RegistryService{}
 	registryService.Hostname = "ratings.bookinfo.svc.cluster.local"
 
 	validations, valid = NoHostChecker{
 		AuthorizationPolicy: *authPolicyWithHost([]string{"ratings.bookinfo.svc.cluster.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
-		RegistryStatus:      []*kubernetes.RegistryStatus{&registryService},
+		RegistryServices:    []*kubernetes.RegistryService{&registryService},
 	}.Check()
 
 	assert.True(valid)
 	assert.Empty(validations)
 
-	registryService = kubernetes.RegistryStatus{}
+	registryService = kubernetes.RegistryService{}
 	registryService.Hostname = "ratings.bookinfo.svc.cluster.local"
 
 	validations, valid = NoHostChecker{
 		AuthorizationPolicy: *authPolicyWithHost([]string{"ratings2.bookinfo.svc.cluster.local"}),
 		Namespace:           "test",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
-		RegistryStatus:      []*kubernetes.RegistryStatus{&registryService},
+		RegistryServices:    []*kubernetes.RegistryService{&registryService},
 	}.Check()
 
 	assert.False(valid)
