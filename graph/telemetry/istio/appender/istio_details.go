@@ -36,7 +36,7 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *grap
 		return
 	}
 
-	sdl := getServiceDefinitionList(namespaceInfo.Namespace, globalInfo)
+	sdl := getServiceList(namespaceInfo.Namespace, globalInfo)
 
 	addBadging(trafficMap, globalInfo, namespaceInfo)
 	addLabels(trafficMap, globalInfo, sdl)
@@ -157,12 +157,11 @@ NODES:
 
 // addLabels is a chance to add any missing label info to nodes when the telemetry does not provide enough information.
 // For example, service injection has this problem.
-func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, sdl *models.ServiceDefinitionList) {
+func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, sdl *models.ServiceList) {
 	// build map for quick lookup
-	svcMap := map[string]*models.Service{}
-	for _, sd := range sdl.ServiceDefinitions {
-		s := sd.Service
-		svcMap[sd.Service.Name] = &s
+	svcMap := map[string]models.ServiceOverview{}
+	for _, sd := range sdl.Services {
+		svcMap[sd.Name] = sd
 	}
 
 	appLabelName := config.Get().IstioLabels.AppLabelName
@@ -262,7 +261,8 @@ func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo 
 func (a IstioAppender) getIngressGatewayWorkloads(globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
 	ingressWorkloads := make(map[string][]models.WorkloadListItem)
 	for namespace := range a.AccessibleNamespaces {
-		wList, err := globalInfo.Business.Workload.GetWorkloadList(namespace, false)
+		criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false}
+		wList, err := globalInfo.Business.Workload.GetWorkloadList(criteria)
 		graph.CheckError(err)
 
 		// Find Ingress Gateway deployments

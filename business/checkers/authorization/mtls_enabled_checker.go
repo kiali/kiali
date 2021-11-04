@@ -7,7 +7,6 @@ import (
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -21,7 +20,7 @@ type MtlsEnabledChecker struct {
 	Namespace             string
 	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
 	MtlsDetails           kubernetes.MTLSDetails
-	Services              []v1.Service
+	ServiceList           models.ServiceList
 	ServiceEntries        []networking_v1alpha3.ServiceEntry
 }
 
@@ -135,7 +134,7 @@ func (c MtlsEnabledChecker) IsMtlsEnabledFor(labels labels.Set) bool {
 		MatchingLabels:      labels,
 		Namespace:           c.Namespace,
 		PeerAuthentications: c.MtlsDetails.PeerAuthentications,
-		Services:            c.Services,
+		ServiceList:         c.ServiceList,
 	}.WorkloadMtlsStatus()
 
 	if workloadmTlsStatus == mtls.MTLSEnabled {

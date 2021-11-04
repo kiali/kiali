@@ -122,7 +122,7 @@ type Workload struct {
 	Pods Pods `json:"pods"`
 
 	// Services that match workload selector
-	Services Services `json:"services"`
+	Services []ServiceOverview `json:"services"`
 
 	// Runtimes and associated dashboards
 	Runtimes []Runtime `json:"runtimes"`
@@ -377,8 +377,8 @@ func (workload *Workload) SetPods(pods []core_v1.Pod) {
 	workload.IstioSidecar = workload.HasIstioSidecar()
 }
 
-func (workload *Workload) SetServices(svcs []core_v1.Service) {
-	workload.Services.Parse(svcs)
+func (workload *Workload) SetServices(svcs *ServiceList) {
+	workload.Services = svcs.Services
 }
 
 // HasIstioSidecar return true if there is at least one pod and all pods have sidecars

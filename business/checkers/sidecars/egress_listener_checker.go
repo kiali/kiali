@@ -6,8 +6,6 @@ import (
 
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
-	core_v1 "k8s.io/api/core/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -15,7 +13,7 @@ import (
 type EgressHostChecker struct {
 	Sidecar        networking_v1alpha3.Sidecar
 	ServiceEntries map[string][]string
-	Services       []core_v1.Service
+	ServiceList    models.ServiceList
 }
 
 type HostWithIndex struct {
@@ -93,10 +91,9 @@ func (elc EgressHostChecker) HasMatchingService(host kubernetes.Host, itemNamesp
 	if host.IsWildcard() && host.Namespace == itemNamespace {
 		return true
 	}
-	if kubernetes.HasMatchingServices(host.Service, elc.Services) {
+	if elc.ServiceList.HasMatchingServices(host.Service) {
 		return true
 	}
-
 	return kubernetes.HasMatchingServiceEntries(host.String(), elc.ServiceEntries)
 }
 

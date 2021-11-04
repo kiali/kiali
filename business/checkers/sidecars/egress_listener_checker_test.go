@@ -6,8 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -19,7 +17,7 @@ func TestEgressHostFormatCorrect(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := EgressHostChecker{
-		Services:       fakeServices([]string{"details", "reviews"}),
+		ServiceList:    fakeServiceList([]string{"details", "reviews"}),
 		ServiceEntries: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{data.CreateExternalServiceEntry()}),
 		Sidecar: *sidecarWithHosts([]string{
 			"*/*",
@@ -43,7 +41,7 @@ func TestEgressExportedInternalServiceEntryPresent(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := EgressHostChecker{
-		Services:       []core_v1.Service{},
+		ServiceList:    models.ServiceList{},
 		ServiceEntries: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details.bookinfo2.svc.cluster.local"})}),
 		Sidecar: *sidecarWithHosts([]string{
 			"bookinfo/details.bookinfo2.svc.cluster.local",
@@ -58,7 +56,7 @@ func TestEgressExportedExternalServiceEntryPresent(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := EgressHostChecker{
-		Services:       []core_v1.Service{},
+		ServiceList:    models.ServiceList{},
 		ServiceEntries: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"www.myhost.com"})}),
 		Sidecar: *sidecarWithHosts([]string{
 			"bookinfo/www.myhost.com",
@@ -73,7 +71,7 @@ func TestWildcardHostEgressExportedExternalServiceEntryNotPresent(t *testing.T) 
 	assert := assert.New(t)
 
 	vals, valid := EgressHostChecker{
-		Services:       []core_v1.Service{},
+		ServiceList:    models.ServiceList{},
 		ServiceEntries: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"www.myhost.com"})}),
 		Sidecar: *sidecarWithHosts([]string{
 			"bookinfo/*.myhost.com",
@@ -91,7 +89,7 @@ func TestEgressExportedExternalWildcardServiceEntryPresent(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := EgressHostChecker{
-		Services:       []core_v1.Service{},
+		ServiceList:    models.ServiceList{},
 		ServiceEntries: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"*.myhost.com"})}),
 		Sidecar: *sidecarWithHosts([]string{
 			"bookinfo/www.myhost.com",
@@ -106,7 +104,7 @@ func TestEgressExportedInternalServiceEntryNotPresent(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := EgressHostChecker{
-		Services:       []core_v1.Service{},
+		ServiceList:    models.ServiceList{},
 		ServiceEntries: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details.bookinfo2.svc.cluster.local"})}),
 		Sidecar: *sidecarWithHosts([]string{
 			"bookinfo/details.bookinfo.svc.cluster.local",
@@ -124,7 +122,7 @@ func TestEgressExportedExternalServiceEntryNotPresent(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := EgressHostChecker{
-		Services:       []core_v1.Service{},
+		ServiceList:    models.ServiceList{},
 		ServiceEntries: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"www.myhost.com"})}),
 		Sidecar: *sidecarWithHosts([]string{
 			"bookinfo/www.wrong.com",
@@ -142,7 +140,7 @@ func TestEgressExportedWildcardInternalServiceEntryPresent(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := EgressHostChecker{
-		Services:       []core_v1.Service{},
+		ServiceList:    models.ServiceList{},
 		ServiceEntries: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"*.bookinfo2.svc.cluster.local"})}),
 		Sidecar: *sidecarWithHosts([]string{
 			"bookinfo/details.bookinfo2.svc.cluster.local",
@@ -157,7 +155,7 @@ func TestEgressExportedWildcardInternalServiceEntryNotPresent(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := EgressHostChecker{
-		Services:       []core_v1.Service{},
+		ServiceList:    models.ServiceList{},
 		ServiceEntries: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"*.bookinfo3.svc.cluster.local"})}),
 		Sidecar: *sidecarWithHosts([]string{
 			"bookinfo/*.bookinfo2.svc.cluster.local",
@@ -175,7 +173,7 @@ func TestEgressExportedNonFQDNInternalServiceEntryNotPresent(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := EgressHostChecker{
-		Services:       []core_v1.Service{},
+		ServiceList:    models.ServiceList{},
 		ServiceEntries: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details"})}),
 		Sidecar: *sidecarWithHosts([]string{
 			"bookinfo/details.bookinfo2.svc.cluster.local",
@@ -261,26 +259,21 @@ func sidecarWithHosts(hl []string) *networking_v1alpha3.Sidecar {
 	return data.AddHostsToSidecar(hl, data.CreateSidecar("sidecar", "bookinfo"))
 }
 
-func fakeServices(serviceNames []string) []core_v1.Service {
-	services := make([]core_v1.Service, 0, len(serviceNames))
-
-	for _, sName := range serviceNames {
-		service := core_v1.Service{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:      sName,
-				Namespace: "bookinfo",
-				Labels: map[string]string{
-					"app":     sName,
-					"version": "v1"}},
-			Spec: core_v1.ServiceSpec{
-				ClusterIP: "fromservice",
-				Type:      "ClusterIP",
-				Selector:  map[string]string{"app": sName},
-			},
-		}
-
-		services = append(services, service)
+func fakeServiceList(serviceNames []string) models.ServiceList {
+	serviceList := models.ServiceList{
+		Services: []models.ServiceOverview{},
 	}
-
-	return services
+	for _, sName := range serviceNames {
+		service := models.ServiceOverview{
+			Name:      sName,
+			Namespace: "bookinfo",
+			Labels: map[string]string{
+				"app":     sName,
+				"version": "v1",
+			},
+			Selector: map[string]string{"app": sName},
+		}
+		serviceList.Services = append(serviceList.Services, service)
+	}
+	return serviceList
 }

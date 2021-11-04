@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util"
 )
@@ -14,17 +15,17 @@ import (
 // ServiceList is the API handler to fetch the list of services in a given namespace
 func ServiceList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-
+	namespace := params["namespace"]
+	criteria := business.ServiceCriteria{Namespace: namespace, IncludeIstioResources: true}
 	// Get business layer
 	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
-	namespace := params["namespace"]
 
 	// Fetch and build services
-	serviceList, err := business.Svc.GetServiceList(namespace, true)
+	serviceList, err := business.Svc.GetServiceList(criteria)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -76,7 +77,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	serviceDetails, err := business.Svc.GetService(namespace, service, rateInterval, queryTime)
+	serviceDetails, err := business.Svc.GetServiceDetails(namespace, service, rateInterval, queryTime)
 	if includeValidations && err == nil {
 		wg.Wait()
 		serviceDetails.Validations = istioConfigValidations

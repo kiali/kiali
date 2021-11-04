@@ -3,10 +3,10 @@ package mtls
 import (
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 )
 
 const (
@@ -21,7 +21,7 @@ type MtlsStatus struct {
 	PeerAuthentications []security_v1beta.PeerAuthentication
 	DestinationRules    []networking_v1alpha3.DestinationRule
 	MatchingLabels      labels.Labels
-	Services            []v1.Service
+	ServiceList         models.ServiceList
 	AutoMtlsEnabled     bool
 	AllowPermissive     bool
 }
@@ -79,7 +79,7 @@ func (m MtlsStatus) WorkloadMtlsStatus() string {
 				// Filter DR that applies to the Services matching with the selector
 				// Fetch hosts from DRs and its mtls mode [details, ISTIO_STATUS]
 				// Filter Svc and extract its workloads selectors
-				filteredSvcs := kubernetes.FilterServicesForSelector(selector, m.Services)
+				filteredSvcs := m.ServiceList.FilterServicesForSelector(selector)
 				for _, svc := range filteredSvcs {
 					filteredDrs := kubernetes.FilterDestinationRules(m.DestinationRules, svc.Namespace, svc.Name)
 					for _, dr := range filteredDrs {
