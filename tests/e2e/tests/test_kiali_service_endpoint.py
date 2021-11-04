@@ -52,7 +52,7 @@ def test_service_detail_with_virtual_service(kiali_client):
       pre_vs_count = len(kiali_client.request(
           method_name='serviceDetails',
           path={'namespace': bookinfo_namespace,
-                'service': SERVICE_TO_VALIDATE}).json().get('virtualServices').get('items'))
+                'service': SERVICE_TO_VALIDATE}).json().get('virtualServices'))
 
       # Add a virtual service that will be tested
       assert command_exec.oc_apply(VIRTUAL_SERVICE_FILE, bookinfo_namespace) == True
@@ -60,7 +60,7 @@ def test_service_detail_with_virtual_service(kiali_client):
       with timeout(seconds=60, error_message='Timed out waiting for virtual service creation'):
         while True:
           service_details = kiali_client.request(method_name='serviceDetails', path={'namespace': bookinfo_namespace, 'service': SERVICE_TO_VALIDATE}).json()
-          if service_details != None and service_details.get('virtualServices') != None and len(service_details.get('virtualServices').get('items')) > pre_vs_count:
+          if service_details != None and service_details.get('virtualServices') != None and len(service_details.get('virtualServices')) > pre_vs_count:
             break
 
           time.sleep(1)
@@ -70,15 +70,9 @@ def test_service_detail_with_virtual_service(kiali_client):
       virtual_service_descriptor = service_details.get('virtualServices')
       assert virtual_service_descriptor != None
 
-      permissions = virtual_service_descriptor.get('permissions')
-      assert permissions != None
-      assert permissions.get('update') == True
-      assert permissions.get('delete') == True
-      assert permissions.get('create') == True
-
       # find our virtual service
       virtual_service = None
-      for vs in virtual_service_descriptor.get('items'):
+      for vs in virtual_service_descriptor:
           if(vs['metadata']['name'] == 'reviews'):
               virtual_service = vs
               break
@@ -113,7 +107,7 @@ def test_service_detail_with_virtual_service(kiali_client):
       with timeout(seconds=60, error_message='Timed out waiting for virtual service deletion'):
         while True:
           service_details = kiali_client.request(method_name='serviceDetails', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}).json()
-          if service_details != None and len(service_details.get('virtualServices').get('items')) == pre_vs_count:
+          if service_details != None and len(service_details.get('virtualServices')) == pre_vs_count:
             break
 
           time.sleep(1)
@@ -126,7 +120,7 @@ def test_service_detail_with_destination_rule(kiali_client):
       pre_dr_count = len(kiali_client.request(
           method_name='serviceDetails',
           path={'namespace': bookinfo_namespace,
-                'service':SERVICE_TO_VALIDATE}).json().get('destinationRules').get('items'))
+                'service':SERVICE_TO_VALIDATE}).json().get('destinationRules'))
 
       # Add a destination rule that will be tested
       assert command_exec.oc_apply(DESTINATION_RULE_FILE, bookinfo_namespace) == True
@@ -134,7 +128,7 @@ def test_service_detail_with_destination_rule(kiali_client):
       with timeout(seconds=60, error_message='Timed out waiting for destination rule creation'):
         while True:
           service_details = kiali_client.request(method_name='serviceDetails', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}).json()
-          if service_details != None and service_details.get('destinationRules') != None and len(service_details.get('destinationRules').get('items')) > pre_dr_count:
+          if service_details != None and service_details.get('destinationRules') != None and len(service_details.get('destinationRules')) > pre_dr_count:
             break
 
           time.sleep(1)
@@ -144,15 +138,9 @@ def test_service_detail_with_destination_rule(kiali_client):
       destination_rule_descriptor = service_details.get('destinationRules')
       assert destination_rule_descriptor != None
 
-      permissions = destination_rule_descriptor.get('permissions')
-      assert permissions != None
-      assert permissions.get('update') == True
-      assert permissions.get('delete') == True
-      assert permissions.get('create') == True
-
       # find our destination rule
       destination_rule = None
-      for dr in destination_rule_descriptor.get('items'):
+      for dr in destination_rule_descriptor:
           if(dr['metadata']['name'] == 'reviews'):
               destination_rule = dr
               break
@@ -183,7 +171,7 @@ def test_service_detail_with_destination_rule(kiali_client):
       with timeout(seconds=60, error_message='Timed out waiting for destination rule deletion'):
         while True:
           service_details = kiali_client.request(method_name='serviceDetails', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}).json()
-          if service_details != None and len(service_details.get('destinationRules').get('items')) == pre_dr_count:
+          if service_details != None and len(service_details.get('destinationRules')) == pre_dr_count:
             break
 
           time.sleep(1)
