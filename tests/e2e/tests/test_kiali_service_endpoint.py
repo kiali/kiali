@@ -2,7 +2,12 @@ import pytest
 import tests.conftest as conftest
 from utils.command_exec import command_exec
 from utils.timeout import timeout
+import calendar
 import time
+
+gmt = time.gmtime
+
+
 
 BOOKINFO_EXPECTED_SERVICES = 4
 BOOKINFO_EXPECTED_SERVICES_MONGODB = 5
@@ -15,11 +20,8 @@ METRICS_PARAMS = {"direction": "outbound", "reporter": "destination"}
 def test_service_list_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    service_list_json = kiali_client.request(method_name='serviceList', path={'namespace': bookinfo_namespace}).json()
-    assert service_list_json.get('namespace').get('name') == bookinfo_namespace
-
-    services = service_list_json.get('services')
-    assert (len (services) == BOOKINFO_EXPECTED_SERVICES) or (len (services) == BOOKINFO_EXPECTED_SERVICES_MONGODB)
+    services = get_service_list(kiali_client, bookinfo_namespace)
+    assert (len (services) == BOOKINFO_EXPECTED_SERVICES) or (len (services) >= BOOKINFO_EXPECTED_SERVICES_MONGODB)
 
     for service in services:
       assert service != None
@@ -42,17 +44,28 @@ def test_service_detail_endpoint(kiali_client):
     assert 'destinationRules' in service_details
     assert 'health' in service_details
 
-def __test_service_detail_with_virtual_service(kiali_client):
+def test_service_detail_with_virtual_service(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     try:
+      # check if we have any existing virtual services
+      v = kiali_client.request(
+          method_name='serviceDetails',
+          path={'namespace': bookinfo_namespace,
+                'service': SERVICE_TO_VALIDATE})
+      t = v.json().get('virtualServices')
+      pre_vs_count = len(kiali_client.request(
+          method_name='serviceDetails',
+          path={'namespace': bookinfo_namespace,
+                'service': SERVICE_TO_VALIDATE}).json().get('virtualServices'))
+
       # Add a virtual service that will be tested
       assert command_exec.oc_apply(VIRTUAL_SERVICE_FILE, bookinfo_namespace) == True
 
-      with timeout(seconds=30, error_message='Timed out waiting for virtual service creation'):
+      with timeout(seconds=60, error_message='Timed out waiting for virtual service creation'):
         while True:
-          service_details = kiali_client.request(method_name='serviceDetails', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}).json()
-          if service_details != None and service_details.get('virtualServices') != None and len(service_details.get('virtualServices').get('items')) > 0:
+          service_details = kiali_client.request(method_name='serviceDetails', path={'namespace': bookinfo_namespace, 'service': SERVICE_TO_VALIDATE}).json()
+          if service_details != None and service_details.get('virtualServices') != None and len(service_details.get('virtualServices')) > pre_vs_count:
             break
 
           time.sleep(1)
@@ -62,16 +75,19 @@ def __test_service_detail_with_virtual_service(kiali_client):
       virtual_service_descriptor = service_details.get('virtualServices')
       assert virtual_service_descriptor != None
 
-      permissions = virtual_service_descriptor.get('permissions')
-      assert permissions != None
-      assert permissions.get('update') == False
-      assert permissions.get('delete') == True
+      # find our virtual service
+      virtual_service = None
+      for vs in virtual_service_descriptor:
+          if(vs['metadata']['name'] == 'reviews'):
+              virtual_service = vs
+              break
+      assert virtual_service != None
 
-      virtual_service = virtual_service_descriptor.get('items')[0]
-      assert virtual_service != None  ### STUB   <----- Returns no 'items'
-      assert virtual_service.get('name') == 'reviews'
+      virtual_service_meta = virtual_service.get('metadata')
+      assert virtual_service_meta.get('name') == 'reviews'
 
-      https = virtual_service.get('http')
+      virtual_service_spec = virtual_service.get('spec')
+      https = virtual_service_spec.get('http')
       assert https != None
       assert len (https) == 1
 
@@ -93,25 +109,35 @@ def __test_service_detail_with_virtual_service(kiali_client):
     finally:
       assert command_exec.oc_delete(VIRTUAL_SERVICE_FILE, bookinfo_namespace) == True
 
-      with timeout(seconds=40, error_message='Timed out waiting for virtual service deletion'):
+      with timeout(seconds=60, error_message='Timed out waiting for virtual service deletion'):
         while True:
           service_details = kiali_client.request(method_name='serviceDetails', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}).json()
-          if service_details != None and len(service_details.get('virtualServices').get('items')) == 0:
+          if service_details != None and len(service_details.get('virtualServices')) == pre_vs_count:
             break
 
           time.sleep(1)
 
-def __test_service_detail_with_destination_rule(kiali_client):
+def test_service_detail_with_destination_rule(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
+    t = kiali_client.request(
+          method_name='serviceDetails',
+          path={'namespace': bookinfo_namespace,
+                'service':SERVICE_TO_VALIDATE})
 
     try:
+      # check if we have any existing rules
+      pre_dr_count = len(kiali_client.request(
+          method_name='serviceDetails',
+          path={'namespace': bookinfo_namespace,
+                'service':SERVICE_TO_VALIDATE}).json().get('destinationRules'))
+
       # Add a destination rule that will be tested
       assert command_exec.oc_apply(DESTINATION_RULE_FILE, bookinfo_namespace) == True
 
-      with timeout(seconds=30, error_message='Timed out waiting for destination rule creation'):
+      with timeout(seconds=60, error_message='Timed out waiting for destination rule creation'):
         while True:
           service_details = kiali_client.request(method_name='serviceDetails', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}).json()
-          if service_details != None and service_details.get('destinationRules') != None and len(service_details.get('destinationRules').get('items')) > 0:
+          if service_details != None and service_details.get('destinationRules') != None and len(service_details.get('destinationRules')) > pre_dr_count:
             break
 
           time.sleep(1)
@@ -121,17 +147,21 @@ def __test_service_detail_with_destination_rule(kiali_client):
       destination_rule_descriptor = service_details.get('destinationRules')
       assert destination_rule_descriptor != None
 
-      permissions = destination_rule_descriptor.get('permissions')
-      assert permissions != None
-      assert permissions.get('update') == False
-      assert permissions.get('delete') == True
-
-      destination_rule = destination_rule_descriptor.get('items')[0]
+      # find our destination rule
+      destination_rule = None
+      for dr in destination_rule_descriptor:
+          if(dr['metadata']['name'] == 'reviews'):
+              destination_rule = dr
+              break
       assert destination_rule != None
-      assert destination_rule.get('name') == 'reviews'
-      assert 'trafficPolicy' in destination_rule
 
-      subsets = destination_rule.get('subsets')
+      destination_rule_meta = destination_rule.get('metadata')
+      assert destination_rule_meta.get('name') == 'reviews'
+
+      destination_rule_spec = destination_rule.get('spec')
+      assert 'trafficPolicy' in destination_rule_spec
+
+      subsets = destination_rule_spec.get('subsets')
       assert subsets != None
       assert len (subsets) == 3
 
@@ -147,10 +177,10 @@ def __test_service_detail_with_destination_rule(kiali_client):
     finally:
       assert command_exec.oc_delete(DESTINATION_RULE_FILE, bookinfo_namespace) == True
 
-      with timeout(seconds=40, error_message='Timed out waiting for destination rule deletion'):
+      with timeout(seconds=60, error_message='Timed out waiting for destination rule deletion'):
         while True:
           service_details = kiali_client.request(method_name='serviceDetails', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}).json()
-          if service_details != None and len(service_details.get('destinationRules').get('items')) == 0:
+          if service_details != None and len(service_details.get('destinationRules')) == pre_dr_count:
             break
 
           time.sleep(1)
@@ -158,32 +188,30 @@ def __test_service_detail_with_destination_rule(kiali_client):
 def test_service_metrics_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    service = kiali_client.request(method_name='serviceMetrics', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}, params=METRICS_PARAMS).json()
+    service = kiali_client.request(method_name='serviceMetrics', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}, params=METRICS_PARAMS)
     assert service != None
 
-    metrics = service.get('metrics')
+    metrics = service.json()
     assert 'request_count' in metrics
     assert 'request_error_count' in metrics
     assert 'tcp_received' in metrics
     assert 'tcp_sent' in metrics
+    assert 'request_duration_millis' in metrics
+    assert 'request_size' in metrics
+    assert 'response_size' in metrics
 
-    histograms = service.get('histograms')
-    assert 'request_duration' in histograms
-    assert 'request_size' in histograms
-    assert 'response_size' in histograms
-
-def __test_service_health_endpoint(kiali_client):
+def test_service_health_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     service_health = kiali_client.request(method_name='serviceHealth', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}).json()
     assert service_health != None
 
-    envoy = service_health.get('envoy')
-    assert envoy != None
-    assert 'inbound' in envoy
-    assert 'outbound' in envoy
-
     assert 'requests' in service_health
+
+    reqs = service_health.get('requests')
+    assert reqs != None
+    assert 'inbound' in reqs
+    assert 'outbound' in reqs
 
 def test_service_validations_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
@@ -198,3 +226,55 @@ def test_service_validations_endpoint(kiali_client):
         for g in gateway:
             assert gateway.get(g).get('valid')
 
+def test_service_spans(kiali_client):
+
+    if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
+        pytest.skip()
+
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
+    services = get_service_list(kiali_client, bookinfo_namespace)
+    assert services != None
+
+    for service in services:
+        name = service.get('name')
+        spansList = kiali_client.request(method_name='appSpans', path={'namespace': bookinfo_namespace, 'service': name}, params={'startMicros': calendar.timegm(gmt())}).json()
+        assert spansList != None
+        
+        for span in spansList:
+            assert span.get('traceID') != None
+            assert span.get('spanID') != None
+            assert span.get('operationName') != None
+
+def test_service_traces_detail(kiali_client):
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
+
+    if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
+        pytest.skip()
+
+    services = get_service_list(kiali_client, bookinfo_namespace)
+    assert services != None
+
+    for service in services:
+        name = service.get('name')
+        tracesDetailsList = kiali_client.request(method_name='appTraces', path={'namespace': bookinfo_namespace, 'service': name}, params={'startMicros': calendar.timegm(gmt())}).json()
+        assert tracesDetailsList != None
+
+        for tracesDetail in tracesDetailsList.get('data'):
+            assert tracesDetail.get('traceID') != None
+            assert tracesDetail.get('spans') != None
+
+
+def get_kiali_version(kiali_client):
+    try:
+        response = kiali_client.request(method_name='getStatus')
+        kiali_version = response.json().get('status')
+    except AssertionError:
+        pytest.fail(response.content)
+
+    return kiali_version
+
+def get_service_list(kiali_client, namespace):
+    service_list_json = kiali_client.request(method_name='serviceList', path={'namespace': namespace}).json()
+    assert service_list_json.get('namespace').get('name') == namespace
+
+    return service_list_json.get('services')
