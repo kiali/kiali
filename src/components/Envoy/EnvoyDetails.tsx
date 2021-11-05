@@ -16,6 +16,7 @@ import {
   GridItem,
   Tab,
   Tabs,
+  Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
 import { SummaryTableBuilder } from './tables/BaseTable';
@@ -200,7 +201,7 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
   onCopyToClipboard = (_text: string, _result: boolean) => {
     const editor = this.aceEditorRef.current!['editor'];
     if (editor) {
-      editor.selectconfig();
+      editor.selectAll();
     }
   };
 
@@ -277,13 +278,17 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
                       label={this.state.pod.name}
                       options={this.props.workload.pods.map((pod: Pod) => pod.name).sort()}
                     />
-                    <span style={{ float: 'right' }}>
-                      <CopyToClipboard onCopy={this.onCopyToClipboard} text={this.editorContent()}>
+                    <Tooltip key="copy_config" position="top" content="Copy config dump to clipboard">
+                      <CopyToClipboard
+                        style={{ float: 'right', marginTop: '15px' }}
+                        onCopy={this.onCopyToClipboard}
+                        text={this.editorContent()}
+                      >
                         <Button variant={ButtonVariant.link} isInline>
                           <KialiIcon.Copy className={defaultIconStyle} />
                         </Button>
                       </CopyToClipboard>
-                    </span>
+                    </Tooltip>
                   </div>
                   <AceEditor
                     ref={this.aceEditorRef}
