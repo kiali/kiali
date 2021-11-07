@@ -1,10 +1,11 @@
 package workloads
 
 import (
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/models"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/models"
 )
 
 type UncoveredWorkloadChecker struct {

@@ -3,12 +3,13 @@ package workloads
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
-	"github.com/stretchr/testify/assert"
-	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
 const (
