@@ -1,9 +1,10 @@
 package models
 
 import (
-	core_v1 "k8s.io/api/core/v1"
-
+	"github.com/kiali/kiali/config"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 type ServiceOverview struct {
@@ -11,6 +12,8 @@ type ServiceOverview struct {
 	// required: true
 	// example: reviews-v1
 	Name string `json:"name"`
+	// Namespace of the Service
+	Namespace string `json:"namespace"`
 	// Define if Pods related to this Service has an IstioSidecar deployed
 	// required: true
 	// example: true
@@ -27,6 +30,8 @@ type ServiceOverview struct {
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
 	// Labels for Service
 	Labels map[string]string `json:"labels"`
+	// Selector for Service
+	Selector map[string]string `json:"selector"`
 	// Istio References
 	IstioReferences []*IstioValidationKey `json:"istioReferences"`
 	// Kiali Wizard scenario, if any
@@ -45,17 +50,16 @@ type ServiceDefinitionList struct {
 }
 
 type ServiceDetails struct {
-	Service           Service                               `json:"service"`
-	IstioSidecar      bool                                  `json:"istioSidecar"`
-	Endpoints         Endpoints                             `json:"endpoints"`
-	VirtualServices   []networking_v1alpha3.VirtualService  `json:"virtualServices"`
-	DestinationRules  []networking_v1alpha3.DestinationRule `json:"destinationRules"`
-	IstioPermissions  ResourcePermissions                   `json:"istioPermissions"`
-	Workloads         WorkloadOverviews                     `json:"workloads"`
-	Health            ServiceHealth                         `json:"health"`
-	Validations       IstioValidations                      `json:"validations"`
-	NamespaceMTLS     MTLSStatus                            `json:"namespaceMTLS"`
-	AdditionalDetails []AdditionalItem                      `json:"additionalDetails"`
+	Service          Service                               `json:"service"`
+	IstioSidecar     bool                                  `json:"istioSidecar"`
+	Endpoints        Endpoints                             `json:"endpoints"`
+	VirtualServices  []networking_v1alpha3.VirtualService  `json:"virtualServices"`
+	DestinationRules []networking_v1alpha3.DestinationRule `json:"destinationRules"`
+	IstioPermissions ResourcePermissions                   `json:"istioPermissions"`
+	Workloads        WorkloadOverviews                     `json:"workloads"`
+	Health           ServiceHealth                         `json:"health"`
+	Validations      IstioValidations                      `json:"validations"`
+	NamespaceMTLS    MTLSStatus                            `json:"namespaceMTLS"`
 }
 
 type Services []*Service
@@ -71,6 +75,7 @@ type Service struct {
 	Ports             Ports             `json:"ports"`
 	ExternalName      string            `json:"externalName"`
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
+	AdditionalDetails []AdditionalItem  `json:"additionalDetails"`
 }
 
 func (ss *Services) Parse(services []core_v1.Service) {
@@ -97,6 +102,7 @@ func (s *Service) Parse(service *core_v1.Service) {
 		s.CreatedAt = formatTime(service.CreationTimestamp.Time)
 		s.ResourceVersion = service.ResourceVersion
 		s.HealthAnnotations = GetHealthAnnotation(service.Annotations, GetHealthConfigAnnotation())
+		s.AdditionalDetails = GetAdditionalDetails(config.Get(), service.ObjectMeta.Annotations)
 		(&s.Ports).Parse(service.Spec.Ports)
 	}
 }
@@ -116,4 +122,31 @@ func (s *ServiceDetails) SetPods(pods []core_v1.Pod) {
 
 func (s *ServiceDetails) SetIstioSidecar(workloads WorkloadOverviews) {
 	s.IstioSidecar = workloads.HasIstioSidecar()
+}
+
+func (s *ServiceList) HasMatchingServices(service string) bool {
+	for _, s := range s.Services {
+		if service == s.Name {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *ServiceList) FilterServicesForSelector(selector labels.Selector) []ServiceOverview {
+	services := []ServiceOverview{}
+	for _, svc := range s.Services {
+		if selector.Matches(labels.Set(svc.Selector)) {
+			services = append(services, svc)
+		}
+	}
+	return services
+}
+
+func (s *ServiceList) GetServiceNames() []string {
+	serviceNames := make([]string, 0)
+	for _, item := range s.Services {
+		serviceNames = append(serviceNames, item.Name)
+	}
+	return serviceNames
 }

@@ -94,6 +94,9 @@ type WorkloadListItem struct {
 	// Dashboard annotations
 	// required: false
 	DashboardAnnotations map[string]string `json:"dashboardAnnotations"`
+
+	// Names of the workload service accounts
+	ServiceAccountNames []string `json:"serviceAccountNames"`
 }
 
 type WorkloadOverviews []*WorkloadListItem
@@ -121,7 +124,7 @@ type Workload struct {
 	Pods Pods `json:"pods"`
 
 	// Services that match workload selector
-	Services Services `json:"services"`
+	Services []ServiceOverview `json:"services"`
 
 	// Runtimes and associated dashboards
 	Runtimes []Runtime `json:"runtimes"`
@@ -143,6 +146,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.IstioSidecar = w.HasIstioSidecar()
 	workload.Labels = w.Labels
 	workload.PodCount = len(w.Pods)
+	workload.ServiceAccountNames = w.Pods.ServiceAccounts()
 	workload.AdditionalDetailSample = w.AdditionalDetailSample
 	workload.HealthAnnotations = w.HealthAnnotations
 	workload.IstioReferences = []*IstioValidationKey{}
@@ -377,8 +381,8 @@ func (workload *Workload) SetPods(pods []core_v1.Pod) {
 	workload.IstioSidecar = workload.HasIstioSidecar()
 }
 
-func (workload *Workload) SetServices(svcs []core_v1.Service) {
-	workload.Services.Parse(svcs)
+func (workload *Workload) SetServices(svcs *ServiceList) {
+	workload.Services = svcs.Services
 }
 
 // HasIstioSidecar return true if there is at least one pod and all pods have sidecars

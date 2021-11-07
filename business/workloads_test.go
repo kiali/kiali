@@ -21,6 +21,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
@@ -52,7 +53,8 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace", false)
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	workloadList, _ := svc.GetWorkloadList(criteria)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -95,7 +97,8 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace", false)
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	workloadList, _ := svc.GetWorkloadList(criteria)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -135,7 +138,8 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	workloadList, _ := svc.GetWorkloadList("Namespace", false)
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	workloadList, _ := svc.GetWorkloadList(criteria)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -177,7 +181,8 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	workloadList, _ := svc.GetWorkloadList("Namespace", false)
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	workloadList, _ := svc.GetWorkloadList(criteria)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -219,7 +224,8 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	workloadList, _ := svc.GetWorkloadList("Namespace", false)
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	workloadList, _ := svc.GetWorkloadList(criteria)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -261,7 +267,8 @@ func TestGetWorkloadListFromDaemonSets(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	workloadList, _ := svc.GetWorkloadList("Namespace", false)
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	workloadList, _ := svc.GetWorkloadList(criteria)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -302,7 +309,8 @@ func TestGetWorkloadListFromDepRCPod(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace", false)
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	workloadList, _ := svc.GetWorkloadList(criteria)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -335,7 +343,8 @@ func TestGetWorkloadListFromPod(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace", false)
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	workloadList, _ := svc.GetWorkloadList(criteria)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -368,7 +377,8 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace", false)
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	workloadList, _ := svc.GetWorkloadList(criteria)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -707,7 +717,8 @@ func TestDuplicatedControllers(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace", false)
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	workloadList, _ := svc.GetWorkloadList(criteria)
 	workloads := workloadList.Workloads
 
 	workload, _ := svc.GetWorkload("Namespace", "duplicated-v1", "", false)
@@ -762,7 +773,8 @@ func TestGetWorkloadListFromGenericPodController(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace", false)
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	workloadList, _ := svc.GetWorkloadList(criteria)
 	workloads := workloadList.Workloads
 
 	workload, _ := svc.GetWorkload("Namespace", owner.Name, "", false)
@@ -824,7 +836,8 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace", false)
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	workloadList, _ := svc.GetWorkloadList(criteria)
 	workloads := workloadList.Workloads
 
 	workload, _ := svc.GetWorkload("Namespace", owner.Name, "", false)
@@ -833,4 +846,43 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	assert.NotNil(workload)
 
 	assert.Equal(len(pods), len(workload.Pods))
+}
+
+func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	const logs = `2021-10-05T00:32:40.309334Z     debug   envoy http      [C57][S7648448766062793478] request end stream
+2021-10-05T00:32:40.309425Z     debug   envoy router    [C57][S7648448766062793478] cluster 'inbound|9080||' match for URL '/details/0'
+2021-10-05T00:32:40.309438Z     debug   envoy upstream  Using existing host 172.17.0.12:9080.
+2021-10-05T00:32:40.309457Z     debug   envoy router    [C57][S7648448766062793478] router decoding headers:
+2021-10-05T00:32:40.309457Z     ':authority', 'details:9080'
+2021-10-05T00:32:40.309457Z     ':path', '/details/0'
+2021-10-05T00:32:40.309457Z     ':method', 'GET'
+2021-10-05T00:32:40.309457Z     ':scheme', 'http'`
+	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(&kubernetes.PodLogs{Logs: logs}, nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	svc := setupWorkloadService(k8s)
+
+	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{IsProxy: true, PodLogOptions: core_v1.PodLogOptions{Container: "istio-proxy"}})
+
+	assert.Equal(8, len(podLogs.Entries))
+	for _, entry := range podLogs.Entries {
+		assert.Nil(entry.AccessLog)
+	}
+}
+
+func TestFilterUniqueIstioReferences(t *testing.T) {
+	assert := assert.New(t)
+	references := []*models.IstioValidationKey{
+		{ObjectType: "t1", Namespace: "ns1", Name: "n1"},
+		{ObjectType: "t1", Namespace: "ns1", Name: "n1"},
+		{ObjectType: "t2", Namespace: "ns2", Name: "n2"},
+	}
+	filtered := FilterUniqueIstioReferences(references)
+	assert.Equal(2, len(filtered))
 }

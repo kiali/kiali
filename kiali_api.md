@@ -9094,6 +9094,7 @@ to be removed in 1.21 release.
 | IstioInitContainers | [][ContainerInfo](#container-info)| `[]*ContainerInfo` |  | |  |  |
 | Labels | map of string| `map[string]string` |  | |  |  |
 | Name | string| `string` |  | |  |  |
+| ServiceAccountName | string| `string` |  | |  |  |
 | Status | string| `string` |  | |  |  |
 | StatusMessage | string| `string` |  | |  |  |
 | StatusReason | string| `string` |  | |  |  |
@@ -9673,6 +9674,7 @@ True means allowed.
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| AdditionalDetails | [][AdditionalItem](#additional-item)| `[]*AdditionalItem` |  | |  |  |
 | CreatedAt | string| `string` |  | |  |  |
 | ExternalName | string| `string` |  | |  |  |
 | HealthAnnotations | map of string| `map[string]string` |  | |  |  |
@@ -9698,7 +9700,6 @@ True means allowed.
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| AdditionalDetails | [][AdditionalItem](#additional-item)| `[]*AdditionalItem` |  | |  |  |
 | DestinationRules | [][DestinationRule](#destination-rule)| `[]*DestinationRule` |  | |  |  |
 | IstioSidecar | boolean| `bool` |  | |  |  |
 | VirtualServices | [][VirtualService](#virtual-service)| `[]*VirtualService` |  | |  |  |
@@ -9948,16 +9949,11 @@ to be removed in 1.21 release.
 | KialiWizard | string| `string` |  | | Kiali Wizard scenario, if any |  |
 | Labels | map of string| `map[string]string` |  | | Labels for Service |  |
 | Name | string| `string` | ✓ | | Name of the Service | `reviews-v1` |
+| Namespace | string| `string` |  | | Namespace of the Service |  |
+| Selector | map of string| `map[string]string` |  | | Selector for Service |  |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |
 
 
-
-### <span id="services"></span> Services
-
-
-  
-
-[][Service](#service)
 
 ### <span id="severity-level"></span> SeverityLevel
 
@@ -10659,11 +10655,12 @@ It's mapped as a pointer to show three values nil, true, false |  |
 | PodCount | int64 (formatted integer)| `int64` | ✓ | | Number of current workload pods | `1` |
 | ResourceVersion | string| `string` | ✓ | | Kubernetes ResourceVersion | `192892127` |
 | Runtimes | [][Runtime](#runtime)| `[]*Runtime` |  | | Runtimes and associated dashboards |  |
+| ServiceAccountNames | []string| `[]string` |  | | Names of the workload service accounts |  |
+| Services | [][ServiceOverview](#service-overview)| `[]*ServiceOverview` |  | | Services that match workload selector |  |
 | Type | string| `string` | ✓ | | Type of the workload | `deployment` |
 | VersionLabel | boolean| `bool` | ✓ | | Define if Pods related to this Workload has the label Version | `true` |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |
 | pods | [Pods](#pods)| `Pods` |  | |  |  |
-| services | [Services](#services)| `Services` |  | |  |  |
 
 
 
@@ -11017,6 +11014,7 @@ to be removed in 1.21 release.
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | IstioSidecar | boolean| `bool` | ✓ | | Define if all Pods related to the Workload has an IstioSidecar deployed | `true` |
+| ServiceAccountNames | []string| `[]string` | ✓ | | List of service accounts involved in this application | `productpage, reviews, details` |
 | WorkloadName | string| `string` | ✓ | | Name of a workload member of an application | `reviews-v1` |
 
 
@@ -11065,6 +11063,7 @@ It's mapped as a pointer to show three values nil, true, false |  |
 | Name | string| `string` | ✓ | | Name of the workload | `reviews-v1` |
 | PodCount | int64 (formatted integer)| `int64` | ✓ | | Number of current workload pods | `1` |
 | ResourceVersion | string| `string` | ✓ | | Kubernetes ResourceVersion | `192892127` |
+| ServiceAccountNames | []string| `[]string` |  | | Names of the workload service accounts |  |
 | Type | string| `string` | ✓ | | Type of the workload | `deployment` |
 | VersionLabel | boolean| `bool` | ✓ | | Define if Pods related to this Workload has the label Version | `true` |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |

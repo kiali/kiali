@@ -40,6 +40,11 @@ type WorkloadItem struct {
 	// required: true
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
+
+	// List of service accounts involved in this application
+	// required: true
+	// example: productpage, reviews, details
+	ServiceAccountNames []string `json:"serviceAccountNames"`
 }
 
 type App struct {

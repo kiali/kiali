@@ -35,6 +35,11 @@ type WorkloadService struct {
 	businessLayer *Layer
 }
 
+type WorkloadCriteria struct {
+	Namespace             string
+	IncludeIstioResources bool
+}
+
 // PodLog reports log entries
 type PodLog struct {
 	Entries []LogEntry `json:"entries,omitempty"`
@@ -87,9 +92,9 @@ func (in *WorkloadService) getWorkloadValidations(authpolicies []security_v1beta
 }
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
-func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources bool) (models.WorkloadList, error) {
+func (in *WorkloadService) GetWorkloadList(criteria WorkloadCriteria) (models.WorkloadList, error) {
 	workloadList := &models.WorkloadList{
-		Namespace: models.Namespace{Name: namespace, CreationTimestamp: time.Time{}},
+		Namespace: models.Namespace{Name: criteria.Namespace, CreationTimestamp: time.Time{}},
 		Workloads: []models.WorkloadListItem{},
 	}
 	var ws models.Workloads
@@ -97,7 +102,7 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 	var err error
 
 	nFetches := 1
-	if linkIstioResources {
+	if criteria.IncludeIstioResources {
 		nFetches = 2
 	}
 
@@ -108,15 +113,15 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 	go func() {
 		defer wg.Done()
 		var err2 error
-		ws, err2 = fetchWorkloads(in.businessLayer, namespace, "")
+		ws, err2 = fetchWorkloads(in.businessLayer, criteria.Namespace, "")
 		if err2 != nil {
-			log.Errorf("Error fetching Workloads per namespace %s: %s", namespace, err2)
+			log.Errorf("Error fetching Workloads per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2
 		}
 	}()
 
-	criteria := IstioConfigCriteria{
-		Namespace:                     namespace,
+	istioConfigCriteria := IstioConfigCriteria{
+		Namespace:                     criteria.Namespace,
 		IncludeAuthorizationPolicies:  true,
 		IncludeEnvoyFilters:           true,
 		IncludeGateways:               true,
@@ -126,13 +131,13 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 	}
 	var istioConfigList models.IstioConfigList
 
-	if linkIstioResources {
+	if criteria.IncludeIstioResources {
 		go func() {
 			defer wg.Done()
 			var err2 error
-			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(istioConfigCriteria)
 			if err2 != nil {
-				log.Errorf("Error fetching Istio Config per namespace %s: %s", namespace, err2)
+				log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err2)
 				errChan <- err2
 			}
 		}()
@@ -148,9 +153,9 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{}
 		wItem.ParseWorkload(w)
-		if linkIstioResources {
+		if criteria.IncludeIstioResources {
 			wSelector := labels.Set(wItem.Labels).AsSelector().String()
-			wItem.IstioReferences = FilterWorkloadReferences(wSelector, istioConfigList)
+			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(wSelector, istioConfigList))
 		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
@@ -229,6 +234,24 @@ func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConf
 	return wkdReferences
 }
 
+func FilterUniqueIstioReferences(refs []*models.IstioValidationKey) []*models.IstioValidationKey {
+	refMap := make(map[models.IstioValidationKey]struct{})
+	for _, ref := range refs {
+		if _, exist := refMap[*ref]; !exist {
+			refMap[*ref] = struct{}{}
+		}
+	}
+	filtered := make([]*models.IstioValidationKey, 0)
+	for k := range refMap {
+		filtered = append(filtered, &models.IstioValidationKey{
+			ObjectType: k.ObjectType,
+			Name:       k.Name,
+			Namespace:  k.Namespace,
+		})
+	}
+	return filtered
+}
+
 // GetWorkload is the API handler to fetch details of a specific workload.
 // If includeServices is set true, the Workload will fetch all services related
 func (in *WorkloadService) GetWorkload(namespace string, workloadName string, workloadType string, includeServices bool) (*models.Workload, error) {
@@ -254,17 +277,15 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, wo
 	}()
 
 	if includeServices {
-		var services []core_v1.Service
+		var services *models.ServiceList
 		var err error
-		// Check if namespace is cached
-		if IsNamespaceCached(namespace) {
-			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
-				services, err = kialiCache.GetServices(namespace, workload.Labels)
-			}
-		} else {
-			services, err = in.k8s.GetServices(namespace, workload.Labels)
+
+		criteria := ServiceCriteria{
+			Namespace:              namespace,
+			ServiceSelector:        labels.Set(workload.Labels).String(),
+			IncludeOnlyDefinitions: true,
 		}
+		services, err = in.businessLayer.Svc.GetServiceList(criteria)
 		if err != nil {
 			return nil, err
 		}
@@ -393,6 +414,8 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 		startTime = &k8sOpts.SinceTime.Time
 	}
 
+	engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
+
 	for _, line := range lines {
 		entry := LogEntry{
 			Message:       "",
@@ -451,9 +474,22 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 		// If this is an istio access log, then parse it out. Prefer the access log time over the k8s time
 		// as it is the actual time as opposed to the k8s store time.
 		if opts.IsProxy {
-			engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
 			al, err := engardeParser.Parse(entry.Message)
-			if err == nil {
+			// engardeParser.Parse will not throw errors even if no fields
+			// were parsed out. Checking here that some fields were actually
+			// set before setting the AccessLog to an empty object. See issue #4346.
+			if err != nil || isAccessLogEmpty(al) {
+				if err != nil {
+					log.Debugf("AccessLog parse failure: %s", err.Error())
+				}
+				// try to parse out the time manually
+				tokens := strings.SplitN(entry.Message, " ", 2)
+				timestampToken := strings.Trim(tokens[0], "[]")
+				t, err := time.Parse(time.RFC3339, timestampToken)
+				if err == nil {
+					parsedTimestamp = t
+				}
+			} else {
 				entry.AccessLog = al
 				t, err := time.Parse(time.RFC3339, al.Timestamp)
 				if err == nil {
@@ -464,15 +500,6 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 				entry.AccessLog.MixerStatus = ""
 				entry.AccessLog.OriginalMessage = ""
 				entry.AccessLog.ParseError = ""
-			} else {
-				log.Debugf("AccessLog parse failure: %s", err.Error())
-				// try to parse out the time manually
-				tokens := strings.SplitN(entry.Message, " ", 2)
-				timestampToken := strings.Trim(tokens[0], "[]")
-				t, err := time.Parse(time.RFC3339, timestampToken)
-				if err == nil {
-					parsedTimestamp = t
-				}
 			}
 		}
 
@@ -500,6 +527,38 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 // GetPodLogs returns pod logs given the provided options
 func (in *WorkloadService) GetPodLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
 	return in.getParsedLogs(namespace, name, opts)
+}
+
+func isAccessLogEmpty(al *parser.AccessLog) bool {
+	if al == nil {
+		return true
+	}
+
+	return (al.Timestamp == "" &&
+		al.Authority == "" &&
+		al.BytesReceived == "" &&
+		al.BytesSent == "" &&
+		al.DownstreamLocal == "" &&
+		al.DownstreamRemote == "" &&
+		al.Duration == "" &&
+		al.ForwardedFor == "" &&
+		al.Method == "" &&
+		al.MixerStatus == "" &&
+		al.Protocol == "" &&
+		al.RequestId == "" &&
+		al.RequestedServer == "" &&
+		al.ResponseFlags == "" &&
+		al.RouteName == "" &&
+		al.StatusCode == "" &&
+		al.TcpServiceTime == "" &&
+		al.UpstreamCluster == "" &&
+		al.UpstreamFailureReason == "" &&
+		al.UpstreamLocal == "" &&
+		al.UpstreamService == "" &&
+		al.UpstreamServiceTime == "" &&
+		al.UriParam == "" &&
+		al.UriPath == "" &&
+		al.UserAgent == "")
 }
 
 func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (models.Workloads, error) {
@@ -851,7 +910,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 	for _, cname := range cnames {
 		w := &models.Workload{
 			Pods:     models.Pods{},
-			Services: models.Services{},
+			Services: []models.ServiceOverview{},
 		}
 		ctype := controllers[cname]
 		// Flag to add a controller if it is found
@@ -1073,7 +1132,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 
 	wl := &models.Workload{
 		Pods:              models.Pods{},
-		Services:          models.Services{},
+		Services:          []models.ServiceOverview{},
 		Runtimes:          []models.Runtime{},
 		AdditionalDetails: []models.AdditionalItem{},
 	}
@@ -1415,7 +1474,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 	if _, exist := controllers[workloadName]; exist {
 		w := models.Workload{
 			Pods:              models.Pods{},
-			Services:          models.Services{},
+			Services:          []models.ServiceOverview{},
 			Runtimes:          []models.Runtime{},
 			AdditionalDetails: []models.AdditionalItem{},
 		}

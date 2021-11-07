@@ -88,8 +88,9 @@ def test_istio_config_destinationrules(kiali_client):
     assert istio_config_destinationrules != None
     assert "destinationRules" in istio_config_destinationrules
     assert istio_config_destinationrules.get('destinationRules') != None
-    istio_destinationrules = istio_config_destinationrules.get('destinationRules').get('permissions')
-    assert istio_destinationrules != None
+    for destinationRule in istio_config_destinationrules.get('destinationRules'):
+        assert destinationRule != None
+        assert destinationRule.get('kind') == 'DestinationRule'
 
 def test_istio_config_peerauthentications(kiali_client):
     
@@ -130,7 +131,7 @@ def test_istio_config_virtualservice(kiali_client):
     assert istio_config_virtualservice != None
     assert "virtualServices" in istio_config_virtualservice
     assert istio_config_virtualservice.get('virtualServices') != None
-    istio_virtualservice = istio_config_virtualservice.get('virtualServices').get('permissions')
+    istio_virtualservice = istio_config_virtualservice.get('virtualServices')
     assert istio_virtualservice != None
 
 def test_istio_config_workloadentry(kiali_client):

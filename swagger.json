@@ -7021,6 +7021,10 @@
         "proxyStatus": {
           "$ref": "#/definitions/ProxyStatus"
         },
+        "serviceAccountName": {
+          "type": "string",
+          "x-go-name": "ServiceAccountName"
+        },
         "status": {
           "type": "string",
           "x-go-name": "Status"
@@ -7447,6 +7451,13 @@
     "Service": {
       "type": "object",
       "properties": {
+        "additionalDetails": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AdditionalItem"
+          },
+          "x-go-name": "AdditionalDetails"
+        },
         "createdAt": {
           "type": "string",
           "x-go-name": "CreatedAt"
@@ -7504,13 +7515,6 @@
     "ServiceDetails": {
       "type": "object",
       "properties": {
-        "additionalDetails": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/AdditionalItem"
-          },
-          "x-go-name": "AdditionalDetails"
-        },
         "destinationRules": {
           "type": "array",
           "items": {
@@ -7772,14 +7776,20 @@
           "type": "string",
           "x-go-name": "Name",
           "example": "reviews-v1"
+        },
+        "namespace": {
+          "description": "Namespace of the Service",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "selector": {
+          "description": "Selector for Service",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Selector"
         }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "Services": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Service"
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
@@ -8430,8 +8440,21 @@
           },
           "x-go-name": "Runtimes"
         },
+        "serviceAccountNames": {
+          "description": "Names of the workload service accounts",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ServiceAccountNames"
+        },
         "services": {
-          "$ref": "#/definitions/Services"
+          "description": "Services that match workload selector",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ServiceOverview"
+          },
+          "x-go-name": "Services"
         },
         "type": {
           "description": "Type of the workload",
@@ -8695,7 +8718,8 @@
       "type": "object",
       "required": [
         "workloadName",
-        "istioSidecar"
+        "istioSidecar",
+        "serviceAccountNames"
       ],
       "properties": {
         "istioSidecar": {
@@ -8703,6 +8727,15 @@
           "type": "boolean",
           "x-go-name": "IstioSidecar",
           "example": true
+        },
+        "serviceAccountNames": {
+          "description": "List of service accounts involved in this application",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ServiceAccountNames",
+          "example": "productpage, reviews, details"
         },
         "workloadName": {
           "description": "Name of a workload member of an application",
@@ -8824,6 +8857,14 @@
           "type": "string",
           "x-go-name": "ResourceVersion",
           "example": "192892127"
+        },
+        "serviceAccountNames": {
+          "description": "Names of the workload service accounts",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ServiceAccountNames"
         },
         "type": {
           "description": "Type of the workload",

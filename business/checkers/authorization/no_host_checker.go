@@ -7,8 +7,6 @@ import (
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
-	core_v1 "k8s.io/api/core/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -18,7 +16,7 @@ type NoHostChecker struct {
 	Namespace           string
 	Namespaces          models.Namespaces
 	ServiceEntries      map[string][]string
-	Services            []core_v1.Service
+	ServiceList         models.ServiceList
 	VirtualServices     []networking_v1alpha3.VirtualService
 	RegistryStatus      []*kubernetes.RegistryStatus
 }
@@ -92,7 +90,7 @@ func (n NoHostChecker) hasMatchingService(host kubernetes.Host, itemNamespace st
 	// Only find matches for workloads and services in the same namespace
 	if localNs == itemNamespace {
 		// Check ServiceNames
-		if matches := kubernetes.HasMatchingServices(localSvc, n.Services); matches {
+		if matches := n.ServiceList.HasMatchingServices(localSvc); matches {
 			return matches
 		}
 	}

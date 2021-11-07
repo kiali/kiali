@@ -100,7 +100,7 @@ func createError(gatewayRuleName, namespace string, serverIndex, hostIndex int) 
 func parsePortAndHostnames(serverDef *api_networking_v1alpha3.Server) []Host {
 	var port int
 	if serverDef.Port != nil {
-		if n, e := intutil.Convert(serverDef.Port.Number); e != nil {
+		if n, e := intutil.Convert(serverDef.Port.Number); e == nil {
 			port = n
 		}
 	}

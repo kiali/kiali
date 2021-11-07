@@ -5,8 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -22,7 +20,7 @@ func TestNoCrashOnNil(t *testing.T) {
 		Namespace:         "test",
 		IstioConfigList:   models.IstioConfigList{},
 		ExportedResources: nil,
-		Services:          nil,
+		ServiceList:       models.ServiceList{},
 	}.Check()
 
 	assert.Empty(typeValidations)
@@ -48,7 +46,7 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 		),
 		IstioConfigList:      *fakeIstioConfigList(),
 		ExportedResources:    emptyExportedResources(),
-		Services:             fakeServiceDetails([]string{"reviews", "details", "product", "customer"}),
+		ServiceList:          fakeServiceList([]string{"reviews", "details", "product", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
@@ -77,7 +75,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 			data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
 			data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
 		),
-		Services:             fakeServiceDetails([]string{"reviews", "details", "product"}),
+		ServiceList:          fakeServiceList([]string{"reviews", "details", "product"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
@@ -101,7 +99,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 		),
 		IstioConfigList:      *fakeIstioConfigList(),
 		ExportedResources:    emptyExportedResources(),
-		Services:             fakeServiceDetails([]string{"reviews", "details", "customer"}),
+		ServiceList:          fakeServiceList([]string{"reviews", "details", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
@@ -127,7 +125,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 		),
 		IstioConfigList:      *fakeIstioConfigList(),
 		ExportedResources:    emptyExportedResources(),
-		Services:             fakeServiceDetails([]string{"reviews", "product", "customer"}),
+		ServiceList:          fakeServiceList([]string{"reviews", "product", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
@@ -146,7 +144,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 		),
 		IstioConfigList:      *fakeIstioConfigList(),
 		ExportedResources:    emptyExportedResources(),
-		Services:             fakeServiceDetails([]string{"details", "product", "customer"}),
+		ServiceList:          fakeServiceList([]string{"details", "product", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
@@ -168,7 +166,7 @@ func TestObjectWithoutGateway(t *testing.T) {
 		Namespace:            "test",
 		IstioConfigList:      *istioDetails,
 		ExportedResources:    emptyExportedResources(),
-		Services:             fakeServiceDetails([]string{"reviews", "product", "customer"}),
+		ServiceList:          fakeServiceList([]string{"reviews", "product", "customer"}),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
@@ -200,16 +198,14 @@ func emptyExportedResources() *kubernetes.ExportedResources {
 	return &kubernetes.ExportedResources{}
 }
 
-func fakeServiceDetails(services []string) []core_v1.Service {
-	items := []core_v1.Service{}
-	for _, service := range services {
-		items = append(items, core_v1.Service{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: service,
-			},
-		})
+func fakeServiceList(services []string) models.ServiceList {
+	serviceList := models.ServiceList{
+		Services: []models.ServiceOverview{},
 	}
-	return items
+	for _, service := range services {
+		serviceList.Services = append(serviceList.Services, models.ServiceOverview{Name: service})
+	}
+	return serviceList
 }
 
 func appVersionLabel(app, version string) map[string]string {

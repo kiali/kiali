@@ -89,7 +89,7 @@ Options:
 -kpf|--kubeadmin-pw-file <filename>
     The file containing the kubeadmin password. If the file is not readable by the user
     running this script, the script will attempt to read it via "sudo".
-    Default: /root/ocp4_setup_ocp4/install_dir/auth/kubeadmin-password
+    Default: /root/ocp4_cluster_ocp4/install_dir/auth/kubeadmin-password
 
 -ku|--kubeadmin-user <username>
     A username that has kubeadmin permissions.
@@ -114,7 +114,7 @@ Options:
 -oc <path to oc>
     The full path to the 'oc' command.
     If 'oc' is in your PATH, you can pass the option as '-oc \$(which oc)'
-    Default: /root/ocp4_setup_ocp4/oc
+    Default: /root/ocp4_cluster_ocp4/oc
 
 -oi|--operator-installer <helm|skip>
     How the operator is to be installed by the molecule tests. It is either installed
@@ -203,8 +203,8 @@ set -e
 
 # set up some of our defaults
 KUBEADMIN_USER="${KUBEADMIN_USER:-kubeadmin}"
-KUBEADMIN_PW_FILE="${KUBEADMIN_PW_FILE:-/root/ocp4_setup_ocp4/install_dir/auth/kubeadmin-password}"
-OC=${OC:-/root/ocp4_setup_ocp4/oc}
+KUBEADMIN_PW_FILE="${KUBEADMIN_PW_FILE:-/root/ocp4_cluster_ocp4/install_dir/auth/kubeadmin-password}"
+OC=${OC:-/root/ocp4_cluster_ocp4/oc}
 OPENSHIFT_API=${OPENSHIFT_API:-https://api.ocp4.local:6443}
 SRC="${SRC:-/tmp/KIALI-GIT}"
 DORP="${DORP:-docker}"

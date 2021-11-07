@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
-	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -147,7 +146,7 @@ func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities nam
 
 // GetNamespaceServiceHealth returns a health for all services in given Namespace (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetNamespaceServiceHealth(namespace, rateInterval string, queryTime time.Time) (models.NamespaceServiceHealth, error) {
-	var services []core_v1.Service
+	var services *models.ServiceList
 	var err error
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
@@ -155,26 +154,28 @@ func (in *HealthService) GetNamespaceServiceHealth(namespace, rateInterval strin
 		return nil, err
 	}
 
-	// Check if namespace is cached
-	if IsNamespaceCached(namespace) {
-		services, err = kialiCache.GetServices(namespace, nil)
-	} else {
-		services, err = in.k8s.GetServices(namespace, nil)
+	criteria := ServiceCriteria{
+		Namespace:              namespace,
+		IncludeOnlyDefinitions: true,
+		IncludeIstioResources:  false,
 	}
+	services, err = in.businessLayer.Svc.GetServiceList(criteria)
 	if err != nil {
 		return nil, err
 	}
 	return in.getNamespaceServiceHealth(namespace, services, rateInterval, queryTime), nil
 }
 
-func (in *HealthService) getNamespaceServiceHealth(namespace string, services []core_v1.Service, rateInterval string, queryTime time.Time) models.NamespaceServiceHealth {
+func (in *HealthService) getNamespaceServiceHealth(namespace string, services *models.ServiceList, rateInterval string, queryTime time.Time) models.NamespaceServiceHealth {
 	allHealth := make(models.NamespaceServiceHealth)
 
 	// Prepare all data (note that it's important to provide data for all services, even those which may not have any health, for overview cards)
-	for _, service := range services {
-		h := models.EmptyServiceHealth()
-		h.Requests.HealthAnnotations = models.GetHealthAnnotation(service.Annotations, HealthAnnotation)
-		allHealth[service.Name] = &h
+	if services != nil {
+		for _, service := range services.Services {
+			h := models.EmptyServiceHealth()
+			h.Requests.HealthAnnotations = service.HealthAnnotations
+			allHealth[service.Name] = &h
+		}
 	}
 
 	// Fetch services requests rates
@@ -278,11 +279,11 @@ func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterv
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
 	}
-	svc, err := in.businessLayer.Svc.getService(namespace, service)
+	svc, err := in.businessLayer.Svc.GetService(namespace, service)
 	if err != nil {
 		return rqHealth, err
 	}
-	rqHealth.HealthAnnotations = models.GetHealthAnnotation(svc.Annotations, HealthAnnotation)
+	rqHealth.HealthAnnotations = svc.HealthAnnotations
 	rqHealth.CombineReporters()
 	return rqHealth, nil
 }

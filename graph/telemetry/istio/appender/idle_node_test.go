@@ -204,31 +204,23 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	assert.Equal(idleV2Node.Cluster, cluster)
 }
 
-func mockServices(a IdleNodeAppender) []models.ServiceDetails {
+func mockServices(a IdleNodeAppender) []models.ServiceOverview {
 	if !(a.GraphType == graph.GraphTypeService || a.InjectServiceNodes) {
-		return []models.ServiceDetails{}
+		return []models.ServiceOverview{}
 	}
 
-	return []models.ServiceDetails{
+	return []models.ServiceOverview{
 		{
-			Service: models.Service{
-				Name: "customer",
-			},
+			Name: "customer",
 		},
 		{
-			Service: models.Service{
-				Name: "preference",
-			},
+			Name: "preference",
 		},
 		{
-			Service: models.Service{
-				Name: "recommendation",
-			},
+			Name: "recommendation",
 		},
 		{
-			Service: models.Service{
-				Name: "recommendation",
-			},
+			Name: "recommendation",
 		},
 	}
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	business2 "github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 )
 
@@ -55,9 +56,10 @@ func Iter8ExperimentGetYaml(w http.ResponseWriter, r *http.Request) {
 }
 func Iter8ExperimentGet(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	business, err := getBusiness(r)
 	namespace := params["namespace"]
 	name := params["name"]
+	criteria := business2.ServiceCriteria{Namespace: namespace, IncludeIstioResources: false}
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -68,7 +70,8 @@ func Iter8ExperimentGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if experiment.ExperimentItem.Kind == "Deployment" {
-		workloadList, err := business.Workload.GetWorkloadList(namespace, false)
+		criteria := business2.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false}
+		workloadList, err := business.Workload.GetWorkloadList(criteria)
 		if err != nil {
 			handleErrorResponse(w, err)
 			return
@@ -87,7 +90,7 @@ func Iter8ExperimentGet(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
-		serviceList, err := business.Svc.GetServiceList(namespace, false)
+		serviceList, err := business.Svc.GetServiceList(criteria)
 		if err != nil {
 			handleErrorResponse(w, err)
 			return

@@ -4,8 +4,6 @@ import (
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
-	core_v1 "k8s.io/api/core/v1"
-
 	"github.com/kiali/kiali/business/checkers/authorization"
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/kubernetes"
@@ -20,7 +18,7 @@ type AuthorizationPolicyChecker struct {
 	Namespaces              models.Namespaces
 	ServiceEntries          []networking_v1alpha3.ServiceEntry
 	ExportedServiceEntries  []networking_v1alpha3.ServiceEntry
-	Services                []core_v1.Service
+	ServiceList             models.ServiceList
 	WorkloadList            models.WorkloadList
 	MtlsDetails             kubernetes.MTLSDetails
 	VirtualServices         []networking_v1alpha3.VirtualService
@@ -54,7 +52,7 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy security_v1beta.Authori
 		common.SelectorNoWorkloadFoundChecker(AuthorizationPolicyCheckerType, matchLabels, a.WorkloadList),
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
 		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, Namespace: a.Namespace, Namespaces: a.Namespaces,
-			ServiceEntries: serviceHosts, Services: a.Services, VirtualServices: a.VirtualServices, RegistryStatus: a.RegistryStatus},
+			ServiceEntries: serviceHosts, ServiceList: a.ServiceList, VirtualServices: a.VirtualServices, RegistryStatus: a.RegistryStatus},
 	}
 
 	for _, checker := range enabledCheckers {

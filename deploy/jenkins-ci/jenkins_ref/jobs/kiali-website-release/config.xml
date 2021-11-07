@@ -1,5 +1,5 @@
 <?xml version='1.1' encoding='UTF-8'?>
-<flow-definition plugin="workflow-job@2.40">
+<flow-definition plugin="workflow-job@2.42">
   <actions/>
   <description>Releases the website (copies staging documentation to a versioned doc)</description>
   <keepDependencies>false</keepDependencies>
@@ -12,7 +12,9 @@
         <artifactNumToKeep>-1</artifactNumToKeep>
       </strategy>
     </jenkins.model.BuildDiscarderProperty>
-    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty>
+      <abortPrevious>false</abortPrevious>
+    </org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty>
     <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.32">
       <autoRebuild>false</autoRebuild>
       <rebuildDisabled>false</rebuildDisabled>
@@ -27,16 +29,17 @@
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>SITE_RELEASING_BRANCH</name>
-          <description>Branch of the website to checkout and run the release
+          <description>Branch of the website to checkout and run the release.
+This is only for testing purposes. In &quot;production&quot; it should be always &quot;refs/heads/staging&quot;.
 </description>
-          <defaultValue>refs/heads/master</defaultValue>
+          <defaultValue>refs/heads/staging</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
   </properties>
-  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@2.90">
-    <scm class="hudson.plugins.git.GitSCM" plugin="git@4.6.0">
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@2.94">
+    <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.0">
       <configVersion>2</configVersion>
       <userRemoteConfigs>
         <hudson.plugins.git.UserRemoteConfig>
@@ -45,11 +48,11 @@
       </userRemoteConfigs>
       <branches>
         <hudson.plugins.git.BranchSpec>
-          <name>refs/heads/master</name>
+          <name>refs/heads/staging</name>
         </hudson.plugins.git.BranchSpec>
       </branches>
       <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
-      <submoduleCfg class="list"/>
+      <submoduleCfg class="empty-list"/>
       <extensions/>
     </scm>
     <scriptPath>Jenkinsfile</scriptPath>

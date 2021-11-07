@@ -152,6 +152,31 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 	assert.Equal(1, len(secValidation.References))
 }
 
+func TestSameHostDifferentPortConfig(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
+		data.CreateEmptyGateway("validgateway", "test", map[string]string{
+			"istio": "istio-ingress",
+		}))
+
+	gwObject2 := data.AddServerToGateway(data.CreateServer([]string{"valid"}, 443, "https", "https"),
+		data.CreateEmptyGateway("validgateway", "test", map[string]string{
+			"istio": "istio-ingress",
+		}))
+
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject, *gwObject2}}
+
+	vals := MultiMatchChecker{
+		GatewaysPerNamespace: gws,
+	}.Check()
+
+	assert.Equal(0, len(vals))
+}
+
 func TestWildCardMatchingHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

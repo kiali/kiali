@@ -3,6 +3,7 @@ package appender
 import (
 	"fmt"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/models"
@@ -182,9 +183,9 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 }
 
 const (
-	serviceDefinitionListKey = "serviceDefinitionListKey" // global vendor info map[namespace]serviceDefinitionList
-	serviceEntryHostsKey     = "serviceEntryHostsKey"     // global vendor info service entries for all accessible namespaces
-	workloadListKey          = "workloadListKey"          // global vendor info map[namespace]workloadListKey
+	serviceListKey       = "serviceListKey"       // global vendor info map[namespace]serviceDefinitionList
+	serviceEntryHostsKey = "serviceEntryHostsKey" // global vendor info service entries for all accessible namespaces
+	workloadListKey      = "workloadListKey"      // global vendor info map[namespace]workloadListKey
 )
 
 type serviceEntry struct {
@@ -217,33 +218,37 @@ func (seh serviceEntryHosts) addHost(host string, se *serviceEntry) {
 	se.hosts = append(se.hosts, host)
 }
 
-func getServiceDefinitionList(namespace string, gi *graph.AppenderGlobalInfo) *models.ServiceDefinitionList {
-	var serviceDefinitionListMap map[string]*models.ServiceDefinitionList
-	if existingServiceDefinitionMap, ok := gi.Vendor[serviceDefinitionListKey]; ok {
-		serviceDefinitionListMap = existingServiceDefinitionMap.(map[string]*models.ServiceDefinitionList)
+func getServiceList(namespace string, gi *graph.AppenderGlobalInfo) *models.ServiceList {
+	var serviceListMap map[string]*models.ServiceList
+	if existingServiceMap, ok := gi.Vendor[serviceListKey]; ok {
+		serviceListMap = existingServiceMap.(map[string]*models.ServiceList)
 	} else {
-		serviceDefinitionListMap = make(map[string]*models.ServiceDefinitionList)
-		gi.Vendor[serviceDefinitionListKey] = serviceDefinitionListMap
+		serviceListMap = make(map[string]*models.ServiceList)
+		gi.Vendor[serviceListKey] = serviceListMap
 	}
 
-	if serviceDefinitionList, ok := serviceDefinitionListMap[namespace]; ok {
-		return serviceDefinitionList
+	if serviceList, ok := serviceListMap[namespace]; ok {
+		return serviceList
 	}
 
-	serviceDefinitionList, err := gi.Business.Svc.GetServiceDefinitionList(namespace)
+	criteria := business.ServiceCriteria{
+		Namespace:              namespace,
+		IncludeOnlyDefinitions: true,
+	}
+	serviceList, err := gi.Business.Svc.GetServiceList(criteria)
 	graph.CheckError(err)
-	serviceDefinitionListMap[namespace] = serviceDefinitionList
+	serviceListMap[namespace] = serviceList
 
-	return serviceDefinitionList
+	return serviceList
 }
 
-func getServiceDefinition(namespace, serviceName string, gi *graph.AppenderGlobalInfo) (*models.Service, bool) {
+func getServiceDefinition(namespace, serviceName string, gi *graph.AppenderGlobalInfo) (*models.ServiceOverview, bool) {
 	if serviceName == "" || serviceName == graph.Unknown {
 		return nil, false
 	}
-	for _, srv := range getServiceDefinitionList(namespace, gi).ServiceDefinitions {
-		if srv.Service.Name == serviceName {
-			return &srv.Service, true
+	for _, srv := range getServiceList(namespace, gi).Services {
+		if srv.Name == serviceName {
+			return &srv, true
 		}
 	}
 	return nil, false
@@ -269,7 +274,8 @@ func getWorkloadList(namespace string, gi *graph.AppenderGlobalInfo) *models.Wor
 		return workloadList
 	}
 
-	workloadList, err := gi.Business.Workload.GetWorkloadList(namespace, false)
+	criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false}
+	workloadList, err := gi.Business.Workload.GetWorkloadList(criteria)
 	graph.CheckError(err)
 	workloadListMap[namespace] = &workloadList
 
