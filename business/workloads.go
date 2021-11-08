@@ -149,7 +149,7 @@ func (in *WorkloadService) GetWorkloadList(criteria WorkloadCriteria) (models.Wo
 		return *workloadList, err
 	}
 	authpolicies = istioConfigList.AuthorizationPolicies
-	validations := in.getWorkloadValidations(authpolicies, *workloadList, namespace)
+	validations := in.getWorkloadValidations(authpolicies, *workloadList, criteria.Namespace)
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{}
 		wItem.ParseWorkload(w)

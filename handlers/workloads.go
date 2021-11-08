@@ -7,8 +7,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/models"
 )
 
 // WorkloadList is the API handler to fetch all the workloads to be displayed, related to a single namespace

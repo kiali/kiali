@@ -1,9 +1,10 @@
 package checkers
 
 import (
+	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+
 	"github.com/kiali/kiali/business/checkers/workloads"
 	"github.com/kiali/kiali/models"
-	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
 const WorkloadCheckerType = "workload"

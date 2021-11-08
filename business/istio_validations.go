@@ -5,11 +5,7 @@ import (
 	"sync"
 
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
-	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business/checkers"
@@ -98,11 +94,14 @@ func (in *IstioValidationsService) GetValidations(namespace, service, workload s
 		// No need to re-fetch deployments+pods for this
 		validations.MergeValidations(services.Validations)
 		validations = validations.FilterBySingleType("service", service)
+	} else if workload != "" {
+		workloadList := workloadsPerNamespace[namespace]
+		validations.MergeValidations(workloadList.Validations)
+		validations = validations.FilterBySingleType("workload", workload)
 	}
 
 	return validations, nil
 }
-
 
 func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioConfigList models.IstioConfigList, exportedResources kubernetes.ExportedResources, services models.ServiceList, workloadsPerNamespace map[string]models.WorkloadList, workloads models.WorkloadList, gatewaysPerNamespace [][]networking_v1alpha3.Gateway, mtlsDetails kubernetes.MTLSDetails, rbacDetails kubernetes.RBACDetails, namespaces []models.Namespace, registryStatus []*kubernetes.RegistryStatus) []ObjectChecker {
 	return []ObjectChecker{
@@ -115,6 +114,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioC
 		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, ServiceList: services, ServiceEntries: istioConfigList.ServiceEntries, ExportedServiceEntries: exportedResources.ServiceEntries, WorkloadList: workloads, MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryStatus: registryStatus},
 		checkers.SidecarChecker{Sidecars: istioConfigList.Sidecars, Namespaces: namespaces, WorkloadList: workloads, ServiceList: services, ServiceEntries: istioConfigList.ServiceEntries, ExportedServiceEntries: exportedResources.ServiceEntries},
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadList: workloads},
+		checkers.WorkloadChecker{Namespace: namespace, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, WorkloadList: workloadsPerNamespace[namespace]},
 	}
 }
 
