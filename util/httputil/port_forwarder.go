@@ -47,10 +47,7 @@ func (f forwarder) Start() error {
 func (f forwarder) Stop() {
 	// Closing the StopCh channel is closing the forwarding
 	close(f.StopCh)
-	err := Pool.FreePort(f.localPort)
-	if err != nil {
-		log.Errorf("Error stopping a port-forwarder: %v", err)
-	}
+	Pool.FreePort(f.localPort)
 }
 
 func NewPortForwarder(client *rest.Interface, clientConfig *rest.Config, namespace, pod, address, portMap string, writer io.Writer) (*PortForwarder, error) {
