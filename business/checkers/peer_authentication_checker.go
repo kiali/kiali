@@ -42,7 +42,7 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn security_v1beta.PeerAuthe
 		matchLabels = peerAuthn.Spec.Selector.MatchLabels
 	}
 	enabledCheckers = append(enabledCheckers, common.SelectorNoWorkloadFoundChecker(PeerAuthenticationCheckerType, matchLabels, m.WorkloadList))
-	if peerAuthn.Namespace == config.Get().IstioNamespace {
+	if peerAuthn.Namespace == config.Get().ExternalServices.Istio.RootNamespace {
 		enabledCheckers = append(enabledCheckers, peerauthentications.DisabledMeshWideChecker{PeerAuthn: peerAuthn, DestinationRules: m.MTLSDetails.DestinationRules})
 	} else {
 		enabledCheckers = append(enabledCheckers, peerauthentications.DisabledNamespaceWideChecker{PeerAuthn: peerAuthn, DestinationRules: m.MTLSDetails.DestinationRules})
@@ -51,7 +51,7 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn security_v1beta.PeerAuthe
 	// MeshWide and NamespaceWide validations are only needed with autoMtls disabled
 	if !m.MTLSDetails.EnabledAutoMtls {
 		// PeerAuthentications into istio control plane namespace are considered Mesh-wide objects
-		if peerAuthn.Namespace == config.Get().IstioNamespace {
+		if peerAuthn.Namespace == config.Get().ExternalServices.Istio.RootNamespace {
 			enabledCheckers = append(enabledCheckers,
 				peerauthentications.MeshMtlsChecker{MeshPolicy: peerAuthn, MTLSDetails: m.MTLSDetails, IsServiceMesh: false})
 		} else {

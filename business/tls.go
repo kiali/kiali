@@ -51,7 +51,7 @@ func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus
 
 func (in *TLSService) getMeshPeerAuthentications() ([]security_v1beta1.PeerAuthentication, error) {
 	criteria := IstioConfigCriteria{
-		Namespace:                  config.Get().IstioNamespace,
+		Namespace:                  config.Get().ExternalServices.Istio.RootNamespace,
 		IncludePeerAuthentications: true,
 	}
 	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
@@ -130,7 +130,7 @@ func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatu
 }
 
 func (in TLSService) getPeerAuthentications(namespace string) ([]security_v1beta1.PeerAuthentication, error) {
-	if namespace == config.Get().IstioNamespace {
+	if namespace == config.Get().ExternalServices.Istio.RootNamespace {
 		return []security_v1beta1.PeerAuthentication{}, nil
 	}
 	criteria := IstioConfigCriteria{
