@@ -131,6 +131,8 @@ finish() {
 
 DEFAULT_NAME_PREFIX="${USER}"
 DEFAULT_OPENSHIFT_VERSION="4.7_openshift"
+DEFAULT_PLUGIN_INSTALL="true"
+DEFAULT_PLUGIN_UPDATE="true"
 DEFAULT_REGION="us-east"
 DEFAULT_WORKER_NODES="3"
 DEFAULT_WORKER_FLAVOR="bx2.8x32"
@@ -150,6 +152,8 @@ while [[ $# -gt 0 ]]; do
 
     -np|--name-prefix)        NAME_PREFIX="$2";        shift;shift ;;
     -ov|--openshift-version)  OPENSHIFT_VERSION="$2";  shift;shift ;;
+    -pi|--plugin-install)     PLUGIN_INSTALL="$2";     shift;shift ;;
+    -pu|--plugin-update)      PLUGIN_UPDATE="$2";      shift;shift ;;
     -r|--region)              REGION="$2";             shift;shift ;;
     -wf|--worker-flavor)      WORKER_FLAVOR="$2";      shift;shift ;;
     -wn|--worker-nodes)       WORKER_NODES="$2";       shift;shift ;;
@@ -166,6 +170,16 @@ Valid options:
       The version of OpenShift to deploy. Must include at least the major.minor version.
       To see available versions, run: ibmcloud ks versions --show-version OpenShift
       Default: ${DEFAULT_OPENSHIFT_VERSION}
+  -pi|--plugin-install
+      When "true", the plugins will be installed. If the plugins are already installed, they are left as-is.
+      If you want to update the plugins that are installed, see --plugin-update.
+      If you know the plugins are already installed, you can set this to "false" to speed up the script a little bit.
+      Default: ${DEFAULT_PLUGIN_INSTALL}
+  -pu|--plugin-update
+      When "true", the plugins will be updated. If the plugins are already up-to-date, they are left as-is.
+      If the plugins are not yet installed, the script will abort - in this case, you must also use "--plugin-install true".
+      If you know the plugins are already installed and up-to-date, you can set this to "false" to speed up the script a little bit.
+      Default: ${DEFAULT_PLUGIN_UPDATE}
   -r|--region
       The region to target. Should be one of: https://cloud.ibm.com/docs/openwhisk?topic=openwhisk-cloudfunctions_regions
       Default: ${DEFAULT_REGION}
@@ -192,6 +206,8 @@ done
 # Set the config
 : ${NAME_PREFIX:=${DEFAULT_NAME_PREFIX}}
 : ${OPENSHIFT_VERSION:=${DEFAULT_OPENSHIFT_VERSION}}
+: ${PLUGIN_INSTALL:=${DEFAULT_PLUGIN_INSTALL}}
+: ${PLUGIN_UPDATE:=${DEFAULT_PLUGIN_UPDATE}}
 : ${REGION:=${DEFAULT_REGION}}
 : ${WORKER_FLAVOR:=${DEFAULT_WORKER_FLAVOR}}
 : ${WORKER_NODES:=${DEFAULT_WORKER_NODES}}
@@ -209,7 +225,10 @@ cat<<EOM
 command=$_CMD
 NAME_PREFIX=$NAME_PREFIX
 OPENSHIFT_VERSION=$OPENSHIFT_VERSION
+PLUGIN_INSTALL=$PLUGIN_INSTALL
+PLUGIN_UPDATE=$PLUGIN_UPDATE
 REGION=$REGION
+
 CLOUD_OBJECT_STORAGE_NAME=$CLOUD_OBJECT_STORAGE_NAME
 CLUSTER_NAME=$CLUSTER_NAME
 GATEWAY_NAME=$GATEWAY_NAME
@@ -248,26 +267,29 @@ else
 fi
 
 # Make sure the necessary plugins are installed
-plugins="container-service container-registry observe-service infrastructure-service"
-for p in $plugins; do
-  if ibmcloud plugin show ${p} &> /dev/null; then
-    infomsg "Plugin [${p}] already installed"
-  else
-    if ! ibmcloud plugin install ${p} ; then
-      errormsg "Plugin [${p}] failed to install"
+plugins_list="container-service container-registry observe-service infrastructure-service kubernetes-service"
+if [ "${PLUGIN_INSTALL}" == "true" ]; then
+  for p in $plugins_list; do
+    if ibmcloud plugin show ${p} &> /dev/null; then
+      infomsg "Plugin [${p}] already installed"
+    else
+      if ! ibmcloud plugin install ${p} ; then
+        errormsg "Plugin [${p}] failed to install"
+      fi
     fi
-  fi
-done
+  done
+fi
 
-# Make sure the plugins are all updated - including the kubernetes-service plugin
-plugins="${plugins} kubernetes-service"
-for p in $plugins; do
-  if ibmcloud plugin update -f ${p} &> /dev/null; then
-    infomsg "Plugin [${p}] updated"
-  else
-    errormsg "Plugin [${p}] failed to update"
-  fi
-done
+# Make sure the plugins are all updated
+if [ "${PLUGIN_UPDATE}" == "true" ]; then
+  for p in $plugins_list; do
+    if ibmcloud plugin update -f ${p} &> /dev/null; then
+      infomsg "Plugin [${p}] updated"
+    else
+      errormsg "Plugin [${p}] failed to update"
+    fi
+  done
+fi
 
 # Execute command
 
