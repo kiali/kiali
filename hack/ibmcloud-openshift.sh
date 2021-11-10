@@ -153,6 +153,7 @@ while [[ $# -gt 0 ]]; do
     -r|--region)              REGION="$2";             shift;shift ;;
     -wf|--worker-flavor)      WORKER_FLAVOR="$2";      shift;shift ;;
     -wn|--worker-nodes)       WORKER_NODES="$2";       shift;shift ;;
+    -zn|--zone-name)          ZONE_NAME="$2";          shift;shift ;;
     -h|--help )
       cat <<HELPMSG
 $0 [option...] (create|delete|status|finish)
@@ -175,6 +176,9 @@ Valid options:
   -wn|--worker-nodes
       The number of worker nodes per zone in the default worker pool. This must be set to at least 2.
       Default: ${DEFAULT_WORKER_NODES}
+  -zn|--zone-name)
+      The zone to use within the selected region.
+      Default: Whatever --region is set to, appended with "-1" (e.g. "${DEFAULT_REGION}-1").
 HELPMSG
       exit 1
       ;;
@@ -197,7 +201,7 @@ CLUSTER_NAME="${NAME_PREFIX}-cluster"
 GATEWAY_NAME="${NAME_PREFIX}-gw"
 SUBNET_NAME="${NAME_PREFIX}-sn"
 VPC_NAME="${NAME_PREFIX}-vpc"
-ZONE_NAME="${REGION}-1" # assume the -1 is the zone we want
+ZONE_NAME="${ZONE_NAME:-${REGION}-1}"
 
 # Dump config
 infomsg "==START CONFIG=="
