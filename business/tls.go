@@ -130,7 +130,7 @@ func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatu
 }
 
 func (in TLSService) getPeerAuthentications(namespace string) ([]security_v1beta1.PeerAuthentication, error) {
-	if namespace == config.Get().ExternalServices.Istio.RootNamespace {
+	if config.IsRootNamespace(namespace) {
 		return []security_v1beta1.PeerAuthentication{}, nil
 	}
 	criteria := IstioConfigCriteria{
