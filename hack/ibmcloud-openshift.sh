@@ -123,6 +123,22 @@ finish() {
   infomsg "The cluster is ready!"
 }
 
+# FUNCTION: create_apikey - Creates an API key and stores it in the file ./apikey.txt.
+create_apikey() {
+  local results="$(ibmcloud iam api-key-create ${APIKEY_NAME} --output json)"
+  if [ "$?" != "0" ]; then
+    errormsg "Failed to create the API Key"
+  fi
+
+  local outputfile="./apikey.txt"
+  echo "${results}" | jq -r '.apikey' > ${outputfile}
+  infomsg "API Key is stored in ${outputfile}. Protect that file. You can manage it further here: https://cloud.ibm.com/iam/apikeys"
+
+  local masterurl="$(ibmcloud oc cluster get -c ${CLUSTER_NAME} --output json | jq -r '.masterURL')"
+  infomsg "To use this key to log into OpenShift, run: oc login -u apikey -p \$(cat ${outputfile}) --server ${masterurl}"
+}
+
+DEFAULT_APIKEY_NAME="${USER}-apikey"
 DEFAULT_NAME_PREFIX="${USER}"
 DEFAULT_OPENSHIFT_VERSION="4.7_openshift"
 DEFAULT_PLUGIN_INSTALL="true"
@@ -141,9 +157,11 @@ while [[ $# -gt 0 ]]; do
     delete) _CMD="delete"; shift ;;
     status) _CMD="status"; shift ;;
     finish) _CMD="finish"; shift ;;
+    apikey) _CMD="apikey"; shift ;;
 
     # OPTIONS
 
+    -an|--apikey-name)        APIKEY_NAME="$2";        shift;shift ;;
     -np|--name-prefix)        NAME_PREFIX="$2";        shift;shift ;;
     -ov|--openshift-version)  OPENSHIFT_VERSION="$2";  shift;shift ;;
     -pi|--plugin-install)     PLUGIN_INSTALL="$2";     shift;shift ;;
@@ -156,6 +174,10 @@ while [[ $# -gt 0 ]]; do
       cat <<HELPMSG
 $0 [option...] (create|delete|status|finish)
 Valid options:
+  -an|--apikey-name
+      The name of the API Key that is created by the "apikey" command.
+      This is only used for the "apikey" command.
+      Default: ${DEFAULT_APIKEY_NAME}
   -np|--name-prefix
       All resources created will have names that start with this prefix.
       Typically you want this to be your username.
@@ -187,6 +209,16 @@ Valid options:
   -zn|--zone-name)
       The zone to use within the selected region.
       Default: Whatever --region is set to, appended with "-1" (e.g. "${DEFAULT_REGION}-1").
+
+Commands:
+   create: Create an OpenShift cluster and the resources it needs on IBM Cloud.
+   delete: Delete the OpenShift cluster and its resources. You may need to run this multiple times to fully clean up everything.
+   status: Get information on the OpenShift cluster and its resources, if they exist.
+   finish: If you canceled this script while it was waiting for the OpenShift cluster to be fully deployed, you can run this
+           command to finish up. This command will resume waiting for the cluster to be deployed and then complete the rest of the tasks.
+   apikey: Creates an apikey.txt file in the current directory that contains a new IBM API key that you can use to log into the cluster.
+           For more details on this, see: https://cloud.ibm.com/docs/openshift?topic=openshift-access_cluster#access_api_key
+           You can view the API keys you have created, and you can delete the keys, from here: https://cloud.ibm.com/iam/apikeys
 HELPMSG
       exit 1
       ;;
@@ -198,6 +230,7 @@ HELPMSG
 done
 
 # Set the config
+: ${APIKEY_NAME:=${DEFAULT_APIKEY_NAME}}
 : ${NAME_PREFIX:=${DEFAULT_NAME_PREFIX}}
 : ${OPENSHIFT_VERSION:=${DEFAULT_OPENSHIFT_VERSION}}
 : ${PLUGIN_INSTALL:=${DEFAULT_PLUGIN_INSTALL}}
@@ -217,6 +250,7 @@ ZONE_NAME="${ZONE_NAME:-${REGION}-1}"
 infomsg "==START CONFIG=="
 cat<<EOM
 command=$_CMD
+APIKEY_NAME=$APIKEY_NAME
 NAME_PREFIX=$NAME_PREFIX
 OPENSHIFT_VERSION=$OPENSHIFT_VERSION
 PLUGIN_INSTALL=$PLUGIN_INSTALL
@@ -295,6 +329,8 @@ elif [ "$_CMD" = "status" ]; then
   status
 elif [ "$_CMD" = "finish" ]; then
   finish
+elif [ "$_CMD" = "apikey" ]; then
+  create_apikey
 else
   errormsg "Invalid command."
 fi
