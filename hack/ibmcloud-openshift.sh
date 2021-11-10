@@ -82,7 +82,7 @@ delete() {
     infomsg "Failed to delete cluster [${CLUSTER_NAME}] ... will keep going."
   fi
 
-  if ! ibmcloud resource service-instance-delete -f ${CLOUD_OBJECT_STORAGE_NAME} ; then
+  if ! ibmcloud resource service-instance-delete -f --recursive ${CLOUD_OBJECT_STORAGE_NAME} ; then
     infomsg "Failed to delete cloud object storage [${CLOUD_OBJECT_STORAGE_NAME}] ... will keep going."
   fi
 
