@@ -81,7 +81,7 @@ func checksFor(serviceEntryName, namespace string, t *testing.T) ([]*models.Isti
 
 	return HasMatchingWorkloadEntryAddress{
 		ServiceEntry:    *serviceEntry,
-		WorkloadEntries: GroupServiceEntriesByWorkloadSelector(loader.GetResources().WorkloadEntries),
+		WorkloadEntries: GroupWorkloadEntriesByLabels(loader.GetResources().WorkloadEntries),
 	}.Check()
 }
 

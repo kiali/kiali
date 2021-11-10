@@ -20,7 +20,7 @@ type ServiceEntryChecker struct {
 func (s ServiceEntryChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	weMap := serviceentries.GroupServiceEntriesByWorkloadSelector(s.WorkloadEntries)
+	weMap := serviceentries.GroupWorkloadEntriesByLabels(s.WorkloadEntries)
 
 	for _, se := range s.ServiceEntries {
 		validations.MergeValidations(s.runSingleChecks(se, weMap))
