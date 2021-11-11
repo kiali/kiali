@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/kiali/kiali/kubernetes"
 	core_v1 "k8s.io/api/core/v1"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 type Ports []Port

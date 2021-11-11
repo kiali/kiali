@@ -1,11 +1,11 @@
 package data
 
 import (
-	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	"time"
 
 	"github.com/gogo/protobuf/types"
-	"time"
+	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 )
 
 func CreateEmptyVirtualService(name string, namespace string, hosts []string) *networking_v1alpha3.VirtualService {

@@ -3,11 +3,6 @@ package business
 import (
 	"testing"
 
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
-	"github.com/kiali/kiali/kubernetes/kubetest"
-	"github.com/kiali/kiali/tests/data"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -16,6 +11,12 @@ import (
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/tests/data"
 )
 
 func TestMeshStatusEnabled(t *testing.T) {

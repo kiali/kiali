@@ -4,22 +4,21 @@ import (
 	"fmt"
 	"testing"
 
-	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-
+	"github.com/gogo/protobuf/types"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	auth_v1 "k8s.io/api/authorization/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/gogo/protobuf/types"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestParseListParams(t *testing.T) {

@@ -4,14 +4,14 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
 func TestServiceListParsing(t *testing.T) {
