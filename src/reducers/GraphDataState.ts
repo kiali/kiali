@@ -26,6 +26,8 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showLegend: false,
     showMissingSidecars: true,
     showOperationNodes: false,
+    rank: false,
+    rankBy: [],
     showSecurity: false,
     showServiceNodes: true,
     showTrafficAnimation: false,
@@ -109,10 +111,26 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
           showIdleNodes: action.payload
         })
       });
+    case getType(GraphToolbarActions.setRankBy):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          rankBy: action.payload
+        })
+      });
     case getType(GraphToolbarActions.setTrafficRates):
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           trafficRates: action.payload
+        })
+      });
+    case getType(GraphToolbarActions.toggleRankBy):
+      const existingLabels = state.toolbarState.rankBy;
+      const rankLabels = existingLabels.includes(action.payload)
+        ? existingLabels.filter(mode => mode !== action.payload)
+        : [...existingLabels, action.payload];
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          rankBy: rankLabels
         })
       });
     case getType(GraphToolbarActions.resetSettings):
@@ -194,6 +212,12 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
         }),
         // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
         summaryData: INITIAL_GRAPH_STATE.summaryData
+      });
+    case getType(GraphToolbarActions.toggleRank):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          rank: !state.toolbarState.rank
+        })
       });
     case getType(GraphToolbarActions.toggleTrafficAnimation):
       return updateState(state, {

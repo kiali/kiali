@@ -19,6 +19,8 @@ describe('GraphDataState', () => {
         findValue: '',
         graphType: GraphType.VERSIONED_APP,
         hideValue: '',
+        rank: false,
+        rankBy: [],
         showFindHelp: false,
         showLegend: false,
         showIdleEdges: false,

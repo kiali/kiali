@@ -14,7 +14,7 @@ import {
   trafficRatesSelector
 } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
-import { GraphType, NodeParamsType, EdgeLabelMode, SummaryData, TrafficRate } from '../../../types/Graph';
+import { GraphType, NodeParamsType, EdgeLabelMode, SummaryData, TrafficRate, RankMode } from '../../../types/Graph';
 import GraphFindContainer from './GraphFind';
 import GraphSettingsContainer from './GraphSettings';
 import history, { HistoryManager, URLParam } from '../../../app/History';
@@ -37,6 +37,7 @@ type ReduxProps = {
   edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
   node?: NodeParamsType;
+  rankBy: RankMode[];
   replayActive: boolean;
   showIdleNodes: boolean;
   summaryData: SummaryData | null;
@@ -44,6 +45,7 @@ type ReduxProps = {
 
   setActiveNamespaces: (activeNamespaces: Namespace[]) => void;
   setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
+  setRankBy: (rankLabels: RankMode[]) => void;
   setGraphType: (graphType: GraphType) => void;
   setIdleNodes: (idleNodes: boolean) => void;
   setNode: (node?: NodeParamsType) => void;
@@ -84,6 +86,15 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
       }
     } else if (props.setEdgeLabels.length > 0) {
       HistoryManager.setParam(URLParam.GRAPH_EDGE_LABEL, props.edgeLabels.join(','));
+    }
+
+    const urlRankLabels = HistoryManager.getParam(URLParam.GRAPH_RANK_BY, urlParams);
+    if (!!urlRankLabels) {
+      if (urlRankLabels !== props.rankBy.join(',')) {
+        props.setRankBy(urlRankLabels.split(',') as RankMode[]);
+      }
+    } else if (props.setRankBy.length > 0) {
+      HistoryManager.setParam(URLParam.GRAPH_RANK_BY, props.rankBy.join(','));
     }
 
     const urlReplayActive = HistoryManager.getBooleanParam(URLParam.GRAPH_REPLAY_ACTIVE);
@@ -129,6 +140,12 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
       HistoryManager.deleteParam(URLParam.GRAPH_EDGE_LABEL, true);
     } else {
       HistoryManager.setParam(URLParam.GRAPH_EDGE_LABEL, String(this.props.edgeLabels));
+    }
+
+    if (this.props.rankBy?.length === 0) {
+      HistoryManager.deleteParam(URLParam.GRAPH_RANK_BY, true);
+    } else {
+      HistoryManager.setParam(URLParam.GRAPH_RANK_BY, String(this.props.rankBy));
     }
 
     if (this.props.activeNamespaces?.length === 0) {
@@ -232,6 +249,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   edgeLabels: edgeLabelsSelector(state),
   graphType: graphTypeSelector(state),
   node: state.graph.node,
+  rankBy: state.graph.toolbarState.rankBy,
   replayActive: replayActiveSelector(state),
   showIdleNodes: showIdleNodesSelector(state),
   summaryData: state.graph.summaryData,
@@ -245,6 +263,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     setGraphType: bindActionCreators(GraphToolbarActions.setGraphType, dispatch),
     setIdleNodes: bindActionCreators(GraphToolbarActions.setIdleNodes, dispatch),
     setNode: bindActionCreators(GraphActions.setNode, dispatch),
+    setRankBy: bindActionCreators(GraphToolbarActions.setRankBy, dispatch),
     setTrafficRates: bindActionCreators(GraphToolbarActions.setTrafficRates, dispatch),
     toggleReplayActive: bindActionCreators(UserSettingsActions.toggleReplayActive, dispatch)
   };

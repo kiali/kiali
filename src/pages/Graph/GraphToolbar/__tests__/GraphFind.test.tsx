@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import { GraphFind } from '../GraphFind';
+import { RankMode } from 'types/Graph';
 
 const testHandler = () => undefined;
 const testSetter = _val => undefined;
@@ -14,6 +15,8 @@ describe('Parse find value test', () => {
         edgeLabels={[]}
         findValue="testFind"
         hideValue="testHide"
+        rank={true}
+        rankBy={[RankMode.RANK_BY_INBOUND_EDGES]}
         showFindHelp={false}
         showSecurity={false}
         showIdleNodes={false}
@@ -23,6 +26,7 @@ describe('Parse find value test', () => {
         toggleFindHelp={testHandler}
         toggleGraphSecurity={testHandler}
         toggleIdleNodes={testHandler}
+        toggleRank={testHandler}
         compressOnHide={false}
         layout={{ name: '' }}
         updateTime={0}
@@ -62,6 +66,8 @@ describe('Parse find value test', () => {
     expect(instance.parseValue('operation = foo')).toEqual('node[aggregateValue = "foo"]');
     // @ts-ignore
     expect(instance.parseValue('op = foo')).toEqual('node[aggregateValue = "foo"]');
+    // @ts-ignore
+    expect(instance.parseValue('rank = 1')).toEqual('node[rank = 1]');
     // @ts-ignore
     expect(instance.parseValue('service = foo')).toEqual('node[service = "foo"]');
     // @ts-ignore
@@ -280,5 +286,9 @@ describe('Parse find value test', () => {
     expect(instance.parseValue('node = appp')).toEqual(undefined); // invalid node type
     // @ts-ignore
     expect(instance.parseValue('ns=foo AND http > 5.0')).toEqual(undefined); // Node and Edge
+    // @ts-ignore
+    expect(instance.parseValue('rank = a')).toEqual(undefined); // not a number
+    // @ts-ignore
+    expect(instance.parseValue('rank = 101')).toEqual(undefined); // outside acceptable range
   });
 });

@@ -6,7 +6,7 @@ import { bindActionCreators } from 'redux';
 import { HistoryManager, URLParam } from '../../../app/History';
 import { GraphToolbarState, KialiAppState } from '../../../store/Store';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
-import { GraphType, EdgeLabelMode, isResponseTimeMode, isThroughputMode } from '../../../types/Graph';
+import { GraphType, EdgeLabelMode, isResponseTimeMode, isThroughputMode, RankMode } from '../../../types/Graph';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import * as _ from 'lodash';
 import { edgeLabelsSelector } from 'store/Selectors';
@@ -36,6 +36,8 @@ type ReduxProps = {
   showIdleNodes: boolean;
   showMissingSidecars: boolean;
   showOperationNodes: boolean;
+  rank: boolean;
+  rankBy: RankMode[];
   showSecurity: boolean;
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
@@ -49,6 +51,8 @@ type ReduxProps = {
   toggleIdleEdges(): void;
   toggleIdleNodes(): void;
   toggleOperationNodes(): void;
+  toggleRank(): void;
+  toggleRankBy(mode: RankMode): void;
   toggleServiceNodes(): void;
   toggleTrafficAnimation(): void;
 };
@@ -137,6 +141,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       props.showOperationNodes,
       props.toggleOperationNodes
     );
+    this.handleURLBool(URLParam.GRAPH_RANK, INITIAL_GRAPH_STATE.toolbarState.rank, props.rank, props.toggleRank);
     this.handleURLBool(
       URLParam.GRAPH_SERVICE_NODES,
       INITIAL_GRAPH_STATE.toolbarState.showServiceNodes,
@@ -207,6 +212,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       prev.showOperationNodes,
       this.props.showOperationNodes
     );
+    this.alignURLBool(URLParam.GRAPH_RANK, INITIAL_GRAPH_STATE.toolbarState.rank, prev.rank, this.props.rank);
     this.alignURLBool(
       URLParam.GRAPH_SERVICE_NODES,
       INITIAL_GRAPH_STATE.toolbarState.showServiceNodes,
@@ -265,6 +271,8 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       boxByNamespace,
       compressOnHide,
       edgeLabels,
+      rank,
+      rankBy: rankLabels,
       showIdleEdges,
       showIdleNodes,
       showMissingSidecars,
@@ -286,6 +294,8 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       toggleIdleEdges,
       toggleIdleNodes,
       toggleOperationNodes,
+      toggleRank,
+      toggleRankBy: toggleRankingLabel,
       toggleServiceNodes,
       toggleTrafficAnimation
     } = this.props;
@@ -488,6 +498,23 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         )
       },
       {
+        id: 'rank',
+        labelText: 'Rank',
+        isChecked: rank,
+        onChange: toggleRank,
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            Rank graph nodes based on configurable criteria such as 'number of inbound edges'. These rankings can be
+            used in the graph find/hide feature to help highlight the most important workloads, services, and
+            applications. Rankings are normalized to fit between 1..100 and nodes may tie with each other in rank.
+            Ranking starts at 1 for the top ranked nodes so when ranking nodes based on 'number of inbound edges', the
+            node(s) with the most inbound edges would have rank 1. Node(s) with the second most inbound edges would have
+            rank 2. Each selected criteria contributes equally to a node's ranking. Although 100 rankings are possible,
+            only the required number of rankings are assigned, starting at 1.
+          </div>
+        )
+      },
+      {
         id: 'filterServiceNodes',
         disabled: this.props.graphType === GraphType.SERVICE,
         labelText: 'Service Nodes',
@@ -555,6 +582,24 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       }
     ];
 
+    const scoringOptions: DisplayOptionType[] = [
+      {
+        id: RankMode.RANK_BY_INBOUND_EDGES,
+        labelText: 'Inbound Edges',
+        isChecked: rankLabels.includes(RankMode.RANK_BY_INBOUND_EDGES),
+        onChange: () => {
+          toggleRankingLabel(RankMode.RANK_BY_INBOUND_EDGES);
+        }
+      },
+      {
+        id: RankMode.RANK_BY_OUTBOUND_EDGES,
+        labelText: 'Outbound Edges',
+        isChecked: rankLabels.includes(RankMode.RANK_BY_OUTBOUND_EDGES),
+        onChange: () => {
+          toggleRankingLabel(RankMode.RANK_BY_OUTBOUND_EDGES);
+        }
+      }
+    ];
     return (
       <BoundingClientAwareComponent
         className={containerStyle}
@@ -687,6 +732,38 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
                   <KialiIcon.Info className={infoStyle} />
                 </Tooltip>
               )}
+              {item.id === 'rank' && rank && (
+                <div>
+                  {scoringOptions.map((scoringOption: DisplayOptionType) => (
+                    <div key={scoringOption.id} className={menuEntryStyle}>
+                      <label
+                        key={scoringOption.id}
+                        className={!!scoringOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
+                        style={{ paddingLeft: '35px' }}
+                      >
+                        <Checkbox
+                          id={scoringOption.id}
+                          style={{ paddingLeft: '5px' }}
+                          name="scoringOptions"
+                          isChecked={scoringOption.isChecked}
+                          label={scoringOption.labelText}
+                          onChange={scoringOption.onChange}
+                          value={scoringOption.id}
+                        />
+                      </label>
+                      {!!scoringOption.tooltip && (
+                        <Tooltip
+                          key={`tooltip_${scoringOption.id}`}
+                          position={TooltipPosition.right}
+                          content={scoringOption.tooltip}
+                        >
+                          <KialiIcon.Info className={infoStyle} />
+                        </Tooltip>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
           <div className={titleStyle}>Show Badges</div>
@@ -759,6 +836,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showMissingSidecars: state.graph.toolbarState.showMissingSidecars,
   showOperationNodes: state.graph.toolbarState.showOperationNodes,
+  rank: state.graph.toolbarState.rank,
+  rankBy: state.graph.toolbarState.rankBy,
   showSecurity: state.graph.toolbarState.showSecurity,
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
   showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
@@ -778,6 +857,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     toggleIdleEdges: bindActionCreators(GraphToolbarActions.toggleIdleEdges, dispatch),
     toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),
     toggleOperationNodes: bindActionCreators(GraphToolbarActions.toggleOperationNodes, dispatch),
+    toggleRank: bindActionCreators(GraphToolbarActions.toggleRank, dispatch),
+    toggleRankBy: bindActionCreators(GraphToolbarActions.toggleRankBy, dispatch),
     toggleServiceNodes: bindActionCreators(GraphToolbarActions.toggleServiceNodes, dispatch),
     toggleTrafficAnimation: bindActionCreators(GraphToolbarActions.toggleTrafficAnimation, dispatch)
   };

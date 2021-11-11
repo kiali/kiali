@@ -22,7 +22,8 @@ import {
   SummaryData,
   UNKNOWN,
   BoxByType,
-  TrafficRate
+  TrafficRate,
+  RankMode
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -94,6 +95,8 @@ type ReduxProps = {
   node?: NodeParamsType;
   onNamespaceChange: () => void;
   onReady: (cytoscapeRef: any) => void;
+  rank: boolean;
+  rankBy: RankMode[];
   refreshInterval: IntervalInMilliseconds;
   replayActive: boolean;
   replayQueryTime: TimeInMilliseconds;
@@ -699,6 +702,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   layout: state.graph.layout,
   mtlsEnabled: meshWideMTLSEnabledSelector(state),
   node: state.graph.node,
+  rank: state.graph.toolbarState.rank,
+  rankBy: state.graph.toolbarState.rankBy,
   refreshInterval: refreshIntervalSelector(state),
   replayActive: replayActiveSelector(state),
   replayQueryTime: replayQueryTimeSelector(state),

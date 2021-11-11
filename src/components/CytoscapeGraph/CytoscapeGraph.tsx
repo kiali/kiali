@@ -19,6 +19,7 @@ import {
   Layout,
   NodeParamsType,
   NodeType,
+  RankMode,
   UNKNOWN
 } from '../../types/Graph';
 import { JaegerTrace } from 'types/JaegerInfo';
@@ -36,6 +37,7 @@ import { GraphHighlighter } from './graphs/GraphHighlighter';
 import TrafficRenderer from './TrafficAnimation/TrafficRenderer';
 import { serverConfig } from 'config';
 import { decoratedNodeData } from './CytoscapeGraphUtils';
+import { scoreNodes, ScoringCriteria } from './GraphScore';
 
 type CytoscapeGraphProps = {
   compressOnHide: boolean;
@@ -54,6 +56,8 @@ type CytoscapeGraphProps = {
   onEdgeTap?: (e: GraphEdgeTapEvent) => void;
   onNodeTap?: (e: GraphNodeTapEvent) => void;
   onReady?: (cytoscapeRef: any) => void;
+  rank: boolean;
+  rankBy: RankMode[];
   refreshInterval: IntervalInMilliseconds;
   setActiveNamespaces?: (namespace: Namespace[]) => void;
   setNode?: (node?: NodeParamsType) => void;
@@ -156,6 +160,8 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
       this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
       this.props.showVirtualServices !== nextProps.showVirtualServices ||
+      this.props.rank !== nextProps.rank ||
+      this.props.rankBy !== nextProps.rankBy ||
       this.props.trace !== nextProps.trace;
 
     return result;
@@ -652,8 +658,20 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       cy.nodes().positions({ x: 0, y: 0 });
     }
 
+    let scoringCriteria: ScoringCriteria[] = [];
+    if (this.props.rank) {
+      for (const ranking of this.props.rankBy) {
+        if (ranking === RankMode.RANK_BY_INBOUND_EDGES) {
+          scoringCriteria.push(ScoringCriteria.InboundEdges);
+        }
+        if (ranking === RankMode.RANK_BY_OUTBOUND_EDGES) {
+          scoringCriteria.push(ScoringCriteria.OutboundEdges);
+        }
+      }
+    }
+
     // update the entire set of nodes and edges to keep the graph up-to-date
-    cy.json({ elements: this.props.graphData.elements });
+    cy.json({ elements: scoreNodes(this.props.graphData.elements, ...scoringCriteria) });
 
     cy.endBatch();
 

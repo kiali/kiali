@@ -63,6 +63,11 @@ export const isThroughputMode = (mode: EdgeLabelMode): boolean => {
   );
 };
 
+export enum RankMode {
+  RANK_BY_INBOUND_EDGES = 'inboundEdges',
+  RANK_BY_OUTBOUND_EDGES = 'outboundEdges'
+}
+
 export const numLabels = (modes: EdgeLabelMode[]): number => {
   return modes.filter(m => m !== EdgeLabelMode.RESPONSE_TIME_GROUP && m !== EdgeLabelMode.THROUGHPUT_GROUP).length;
 };
@@ -385,6 +390,12 @@ export interface DecoratedGraphNodeData extends GraphNodeData {
 
   // computed, true if has istio namespace
   isIstio?: boolean;
+
+  // raw importance score
+  score?: number;
+  // importance in relation to other nodes. Whole number. Smaller is more important.
+  // There can be ties with other nodes.
+  rank?: number;
 }
 
 // Edge data after decorating at fetch-time (what is mainly used by ui code)

@@ -10,7 +10,7 @@ import { KialiAppAction } from '../../../actions/KialiAppAction';
 import GraphHelpFind from '../../../pages/Graph/GraphHelpFind';
 import { CyNode, CyEdge } from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import { EdgeLabelMode, NodeType, Layout } from '../../../types/Graph';
+import { EdgeLabelMode, NodeType, Layout, RankMode } from '../../../types/Graph';
 import * as AlertUtils from '../../../utils/AlertUtils';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { style } from 'typestyle';
@@ -28,6 +28,8 @@ type ReduxProps = {
   findValue: string;
   hideValue: string;
   layout: Layout;
+  rank: boolean;
+  rankBy: RankMode[];
   showFindHelp: boolean;
   showIdleNodes: boolean;
   showSecurity: boolean;
@@ -39,6 +41,7 @@ type ReduxProps = {
   toggleFindHelp: () => void;
   toggleGraphSecurity: () => void;
   toggleIdleNodes: () => void;
+  toggleRank: () => void;
 };
 
 type GraphFindProps = ReduxProps & {
@@ -94,6 +97,7 @@ const operands: string[] = [
   'operation',
   'outside',
   'protocol',
+  'rank',
   'requestrouting',
   'requesttimeout',
   'responsetime',
@@ -699,6 +703,19 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       case 'op':
       case 'operation':
         return { target: 'node', selector: `[${CyNode.aggregateValue} ${op} "${val}"]` };
+      case 'rank': {
+        if (!this.props.rank) {
+          AlertUtils.addSuccess('Enabling "rank" display option for graph find/hide expression');
+          this.props.toggleRank();
+        }
+
+        const valAsNum = Number(val);
+        if (Number.isNaN(valAsNum) || valAsNum < 1 || valAsNum > 100) {
+          return this.setError(`Invalid rank range [${val}]. Expected a number between 1..100`, isFind);
+        }
+        const s = this.getNumericSelector(CyNode.rank, op, val, expression, isFind);
+        return s ? { target: 'node', selector: s } : undefined;
+      }
       case 'svc':
       case 'service':
         return { target: 'node', selector: `[${CyNode.service} ${op} "${val}"]` };
@@ -943,6 +960,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   findValue: findValueSelector(state),
   hideValue: hideValueSelector(state),
   layout: state.graph.layout,
+  rank: state.graph.toolbarState.rank,
+  rankBy: state.graph.toolbarState.rankBy,
   showFindHelp: state.graph.toolbarState.showFindHelp,
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showSecurity: state.graph.toolbarState.showSecurity,
@@ -956,7 +975,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     setHideValue: bindActionCreators(GraphToolbarActions.setHideValue, dispatch),
     toggleFindHelp: bindActionCreators(GraphToolbarActions.toggleFindHelp, dispatch),
     toggleGraphSecurity: bindActionCreators(GraphToolbarActions.toggleGraphSecurity, dispatch),
-    toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch)
+    toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),
+    toggleRank: bindActionCreators(GraphToolbarActions.toggleRank, dispatch)
   };
 };
 

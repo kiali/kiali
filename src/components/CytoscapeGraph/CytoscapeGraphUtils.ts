@@ -72,6 +72,7 @@ export const CyNode = {
   isServiceEntry: 'isServiceEntry',
   namespace: 'namespace',
   nodeType: 'nodeType',
+  rank: 'rank',
   service: 'service',
   tcpIn: 'tcpIn',
   tcpOut: 'tcpOut',
