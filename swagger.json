@@ -8462,6 +8462,9 @@
           "x-go-name": "Type",
           "example": "deployment"
         },
+        "validations": {
+          "$ref": "#/definitions/IstioValidations"
+        },
         "versionLabel": {
           "description": "Define if Pods related to this Workload has the label Version",
           "type": "boolean",
@@ -8755,6 +8758,9 @@
       "properties": {
         "namespace": {
           "$ref": "#/definitions/namespace"
+        },
+        "validations": {
+          "$ref": "#/definitions/IstioValidations"
         },
         "workloads": {
           "description": "Workloads for a given namespace",
