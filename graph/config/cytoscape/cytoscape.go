@@ -281,10 +281,8 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			nd.IsGateway = &GWInfo{
 				IngressInfo: GWInfoIngress{Hostnames: configuredHostnames},
 			}
-		}
-
-		// node may represent an Istio Egress Gateway
-		if gateways, ok := n.Metadata[graph.IsEgressGateway]; ok {
+		} else if gateways, ok := n.Metadata[graph.IsEgressGateway]; ok {
+			// node may represent an Istio Egress Gateway
 			var configuredHostnames []string
 			for _, hosts := range gateways.(graph.GatewaysMetadata) {
 				configuredHostnames = append(configuredHostnames, hosts...)
