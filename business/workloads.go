@@ -148,8 +148,7 @@ func (in *WorkloadService) GetWorkloadList(criteria WorkloadCriteria) (models.Wo
 		err = <-errChan
 		return *workloadList, err
 	}
-	authpolicies = istioConfigList.AuthorizationPolicies
-	validations := in.getWorkloadValidations(authpolicies, *workloadList, criteria.Namespace)
+
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{}
 		wItem.ParseWorkload(w)
@@ -159,6 +158,8 @@ func (in *WorkloadService) GetWorkloadList(criteria WorkloadCriteria) (models.Wo
 		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
+	authpolicies = istioConfigList.AuthorizationPolicies
+	validations := in.getWorkloadValidations(authpolicies, *workloadList, criteria.Namespace)
 	workloadList.Validations = validations
 	return *workloadList, nil
 }
