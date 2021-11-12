@@ -80,14 +80,14 @@ create() {
 delete() {
   if ! ibmcloud oc cluster rm --cluster ${CLUSTER_NAME} -f --force-delete-storage ; then
     infomsg "Failed to delete cluster [${CLUSTER_NAME}] ... will keep going."
-  else
-    infomsg "Cluster is being deleted - waiting for it to completely go away"
-    while ibmcloud oc cluster get --cluster ${CLUSTER_NAME} &> /dev/null ; do
-      echo -n "."
-      sleep 10
-    done
-    echo "Deleted."
   fi
+
+  infomsg "Waiting for the cluster to completely go away"
+  while ibmcloud oc cluster get --cluster ${CLUSTER_NAME} &> /dev/null ; do
+    echo -n "."
+    sleep 10
+  done
+  echo "Deleted."
 
   if ! ibmcloud resource service-instance-delete -f --recursive ${CLOUD_OBJECT_STORAGE_NAME} ; then
     infomsg "Failed to delete cloud object storage [${CLOUD_OBJECT_STORAGE_NAME}] ... will keep going."
