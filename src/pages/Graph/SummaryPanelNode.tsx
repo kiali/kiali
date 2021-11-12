@@ -177,7 +177,15 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
   };
 
   private renderGatewayHostnames = (nodeData: DecoratedGraphNodeData) => {
-    return this.renderHostnamesSection(nodeData.isGateway?.ingressInfo?.hostnames!);
+    if (nodeData.isGateway?.ingressInfo?.hostnames && nodeData.isGateway?.ingressInfo?.hostnames.length > 0) {
+      return this.renderHostnamesSection(nodeData.isGateway?.ingressInfo?.hostnames);
+    }
+
+    if (nodeData.isGateway?.egressInfo?.hostnames && nodeData.isGateway?.egressInfo?.hostnames.length > 0) {
+      return this.renderHostnamesSection(nodeData.isGateway?.egressInfo?.hostnames);
+    }
+
+    return null;
   };
 
   private renderVsHostnames = (nodeData: DecoratedGraphNodeData) => {
@@ -255,7 +263,8 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       hasTCPTrafficShifting ||
       hasRequestTimeout;
     const shouldRenderGatewayHostnames =
-      nodeData.isGateway?.ingressInfo?.hostnames !== undefined && nodeData.isGateway.ingressInfo.hostnames.length !== 0;
+      (nodeData.isGateway?.ingressInfo?.hostnames !== undefined && nodeData.isGateway.ingressInfo.hostnames.length !== 0) ||
+      (nodeData.isGateway?.egressInfo?.hostnames !== undefined && nodeData.isGateway.egressInfo.hostnames.length !== 0);
     const shouldRenderVsHostnames = nodeData.hasVS?.hostnames !== undefined && nodeData.hasVS?.hostnames.length !== 0;
     return (
       <div style={{ marginTop: '10px', marginBottom: '10px' }}>
