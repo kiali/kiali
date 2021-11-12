@@ -344,6 +344,18 @@ func MatchPortNameWithValidProtocols(portName string) bool {
 	return false
 }
 
+func MatchPortAppProtocolWithValidProtocols(appProtocol *string) bool {
+	if appProtocol == nil || *appProtocol == "" {
+		return false
+	}
+	for _, protocol := range portProtocols {
+		if strings.ToLower(*appProtocol) == protocol {
+			return true
+		}
+	}
+	return false
+}
+
 // GatewayNames extracts the gateway names for easier matching
 func GatewayNames(gateways [][]networking_v1alpha3.Gateway) map[string]struct{} {
 	var empty struct{}
