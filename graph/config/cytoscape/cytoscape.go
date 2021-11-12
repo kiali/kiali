@@ -58,6 +58,8 @@ type ProtocolTraffic struct {
 type GWInfo struct {
 	// IngressInfo contains the resolved gateway configuration if the node represents an Istio ingress gateway
 	IngressInfo GWInfoIngress `json:"ingressInfo,omitempty"`
+	// EgressInfo contains the resolved gateway configuration if the node represents an Istio egress gateway
+	EgressInfo GWInfoIngress `json:"egressInfo,omitempty"`
 }
 
 // GWInfoIngress contains the resolved gateway configuration if the node represents an Istio ingress gateway
@@ -278,6 +280,16 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 			nd.IsGateway = &GWInfo{
 				IngressInfo: GWInfoIngress{Hostnames: configuredHostnames},
+			}
+		} else if gateways, ok := n.Metadata[graph.IsEgressGateway]; ok {
+			// node may represent an Istio Egress Gateway
+			var configuredHostnames []string
+			for _, hosts := range gateways.(graph.GatewaysMetadata) {
+				configuredHostnames = append(configuredHostnames, hosts...)
+			}
+
+			nd.IsGateway = &GWInfo{
+				EgressInfo: GWInfoIngress{Hostnames: configuredHostnames},
 			}
 		}
 
