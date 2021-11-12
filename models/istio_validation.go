@@ -226,6 +226,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Destination Rule disabling mesh-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},
+	"port.appprotocol.mismatch": {
+		Code:     "KIA0602",
+		Message:  "Port appProtocol must follow <protocol> form",
+		Severity: ErrorSeverity,
+	},
 	"port.name.mismatch": {
 		Code:     "KIA0601",
 		Message:  "Port name must follow <protocol>[-suffix] form",

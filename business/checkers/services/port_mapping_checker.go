@@ -28,6 +28,11 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 		for portIndex, sp := range p.Service.Spec.Ports {
 			if strings.ToLower(string(sp.Protocol)) == "udp" {
 				continue
+			} else if sp.AppProtocol != nil {
+				if !kubernetes.MatchPortAppProtocolWithValidProtocols(sp.AppProtocol) {
+					validation := models.Build("port.appprotocol.mismatch", fmt.Sprintf("spec/ports[%d]", portIndex))
+					validations = append(validations, &validation)
+				}
 			} else if !kubernetes.MatchPortNameWithValidProtocols(sp.Name) {
 				validation := models.Build("port.name.mismatch", fmt.Sprintf("spec/ports[%d]", portIndex))
 				validations = append(validations, &validation)
