@@ -133,7 +133,7 @@ finish() {
 
 # FUNCTION: create_apikey - Creates an API key and stores it in the file ./apikey.txt.
 create_apikey() {
-  local results="$(ibmcloud iam api-key-create ${APIKEY_NAME} --output json)"
+  local results="$(ibmcloud iam api-key-create -d "created by ibmcloud-openshift.sh script" ${APIKEY_NAME} --output json)"
   if [ "$?" != "0" ]; then
     errormsg "Failed to create the API Key"
   fi
