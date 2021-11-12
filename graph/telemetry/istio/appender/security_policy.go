@@ -237,9 +237,12 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		// handle clusters
 		sourceCluster, destCluster := util.HandleClusters(lSourceCluster, sourceClusterOk, lDestCluster, destClusterOk)
 
-		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
+		// don't inject a service node if any of:
+		// - destSvcName is not set
+		// - destSvcName is PassthroughCluster (see https://github.com/kiali/kiali/issues/4488)
+		// - dest node is already a service node
 		inject := false
-		if a.InjectServiceNodes && graph.IsOK(destSvcName) {
+		if a.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
 			inject = (graph.NodeTypeService != destNodeType)
 		}
