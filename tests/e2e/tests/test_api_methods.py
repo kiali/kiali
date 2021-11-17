@@ -364,10 +364,8 @@ def test_negative_400(kiali_client):
 
 
 def test_negative_404(kiali_client):
-    INVALID_PARAMS_SERVICEDETAILS = {'namespace': control_plane_namespace, 'service': 'invalid'}
     INVALID_PARAMS_WORKLOADHEALTH = {'namespace': 'bookinfo', 'workload': 'invalid'}
 
-    common_utils.get_response(kiali_client, method_name='serviceDetails', path=INVALID_PARAMS_SERVICEDETAILS, status_code_expected=404)
     common_utils.get_response(kiali_client, method_name='workloadHealth', path=INVALID_PARAMS_WORKLOADHEALTH, status_code_expected=404)
 
 def test_negative_403(kiali_client):
@@ -420,7 +418,6 @@ def test_invalid_workload_spans_list_negative_503(kiali_client):
 def test_invalid_service_traces_list_negative_503(kiali_client):
      
     common_utils.get_response(kiali_client, method_name='serviceTraces', path=INVALID_PATH_NAMESPACE_SERVICE, params={'startMicros': calendar.timegm(gmt()) }, status_code_expected=503)
-    common_utils.get_response(kiali_client, method_name='serviceTraces', path=INVALID_PATH_SERVICE_SERVICE, params={'startMicros': calendar.timegm(gmt()) }, status_code_expected=503)
     common_utils.get_response(kiali_client, method_name='serviceTraces', path=INVALID_PATH_SERVICE, params={'startMicros': calendar.timegm(gmt()) }, status_code_expected=503)
 
 def test_invalid_service_traces_list_negative_400(kiali_client):
@@ -433,7 +430,6 @@ def test_invalid_service_traces_list_negative_400(kiali_client):
 def test_invalid_service_spans_list_negative_503(kiali_client):
    	
     common_utils.get_response(kiali_client, method_name='serviceSpans', path=INVALID_PATH_NAMESPACE_SERVICE, params={'startMicros': calendar.timegm(gmt()) }, status_code_expected=503)
-    common_utils.get_response(kiali_client, method_name='serviceSpans', path=INVALID_PATH_SERVICE_SERVICE, params={'startMicros': calendar.timegm(gmt()) }, status_code_expected=503)
     common_utils.get_response(kiali_client, method_name='serviceSpans', path=INVALID_PATH_SERVICE, params={'startMicros': calendar.timegm(gmt()) }, status_code_expected=503)
 
 
@@ -450,3 +446,13 @@ def test_invalid_app_trace_list_negative_400(kiali_client):
     common_utils.get_response(kiali_client, method_name='appTraces', path=INVALID_PATH_APP_APP, params=INVALID_PARAMS_STARTMICROS, status_code_expected=400)
     common_utils.get_response(kiali_client, method_name='appTraces', path=INVALID_PATH_NAMESPACE_APP, params=INVALID_PARAMS_STARTMICROS, status_code_expected=400)
     common_utils.get_response(kiali_client, method_name='appTraces', path=INVALID_PATH_APP, params=INVALID_PARAMS_STARTMICROS, status_code_expected=400)
+
+def test_negative_502(kiali_client):
+    INVALID_PARAMS_SERVICEDETAILS = {'namespace': control_plane_namespace, 'service': 'invalid'}
+
+    common_utils.get_response(kiali_client, method_name='serviceDetails', path=INVALID_PARAMS_SERVICEDETAILS, status_code_expected=502)
+
+def test_invalid_service_spans_list_and_trace_list(kiali_client):
+   	
+    common_utils.get_response(kiali_client, method_name='serviceTraces', path=INVALID_PATH_SERVICE_SERVICE, params={'startMicros': calendar.timegm(gmt()) })
+    common_utils.get_response(kiali_client, method_name='serviceSpans', path=INVALID_PATH_SERVICE_SERVICE, params={'startMicros': calendar.timegm(gmt()) })
