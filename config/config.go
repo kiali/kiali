@@ -591,6 +591,10 @@ func NewConfig() (c *Config) {
 							Description: "Find: unknown nodes",
 							Expression:  "name = unknown",
 						},
+						{
+							Description: "Find: nodes with the 2 highest ranks",
+							Expression:  "rank <= 2",
+						},
 					},
 					HideOptions: []GraphFindOption{
 						{
