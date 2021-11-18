@@ -4,10 +4,10 @@ import core_v1 "k8s.io/api/core/v1"
 
 type Ports []Port
 type Port struct {
-	Name        string `json:"name"`
-	Protocol    string `json:"protocol"`
-	AppProtocol string `json:"appProtocol"`
-	Port        int32  `json:"port"`
+	Name        string  `json:"name"`
+	Protocol    string  `json:"protocol"`
+	AppProtocol *string `json:"appProtocol,omitempty"`
+	Port        int32   `json:"port"`
 }
 
 func (ports *Ports) Parse(ps []core_v1.ServicePort) {
@@ -21,9 +21,7 @@ func (ports *Ports) Parse(ps []core_v1.ServicePort) {
 func (port *Port) Parse(p core_v1.ServicePort) {
 	port.Name = p.Name
 	port.Protocol = string(p.Protocol)
-	if p.AppProtocol != nil {
-		port.AppProtocol = *p.AppProtocol
-	}
+	port.AppProtocol = p.AppProtocol
 	port.Port = p.Port
 }
 
