@@ -1,15 +1,16 @@
 package business
 
 import (
+	"context"
 	"strings"
 	"sync"
 	"time"
 
-	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
-
 	"github.com/kiali/kiali/jaeger"
+	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/observability"
 )
 
 type JaegerLoader = func() (jaeger.ClientInterface, error)
@@ -60,8 +61,16 @@ func (in *JaegerService) GetAppSpans(ns, app string, query models.TracingQuery) 
 	return in.getFilteredSpans(ns, app, query, nil /*no post-filtering for apps*/)
 }
 
-func (in *JaegerService) GetServiceSpans(ns, service string, query models.TracingQuery) ([]jaeger.JaegerSpan, error) {
-	app, err := in.businessLayer.Svc.GetServiceAppName(ns, service)
+func (in *JaegerService) GetServiceSpans(ctx context.Context, ns, service string, query models.TracingQuery) ([]jaeger.JaegerSpan, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetServiceSpans",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", ns),
+		observability.Attribute("service", service),
+	)
+	defer end()
+
+	app, err := in.businessLayer.Svc.GetServiceAppName(ctx, ns, service)
 	if err != nil {
 		return nil, err
 	}
@@ -82,8 +91,16 @@ func operationSpanFilter(ns, service string) SpanFilter {
 	}
 }
 
-func (in *JaegerService) GetWorkloadSpans(ns, workload string, query models.TracingQuery) ([]jaeger.JaegerSpan, error) {
-	app, err := in.businessLayer.Workload.GetWorkloadAppName(ns, workload)
+func (in *JaegerService) GetWorkloadSpans(ctx context.Context, ns, workload string, query models.TracingQuery) ([]jaeger.JaegerSpan, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetWorkloadSpans",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", ns),
+		observability.Attribute("workload", workload),
+	)
+	defer end()
+
+	app, err := in.businessLayer.Workload.GetWorkloadAppName(ctx, ns, workload)
 	if err != nil {
 		return nil, err
 	}
@@ -121,8 +138,16 @@ func (in *JaegerService) GetAppTraces(ns, app string, query models.TracingQuery)
 	return r, nil
 }
 
-func (in *JaegerService) GetServiceTraces(ns, service string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
-	app, err := in.businessLayer.Svc.GetServiceAppName(ns, service)
+func (in *JaegerService) GetServiceTraces(ctx context.Context, ns, service string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetServiceTraces",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", ns),
+		observability.Attribute("service", service),
+	)
+	defer end()
+
+	app, err := in.businessLayer.Svc.GetServiceAppName(ctx, ns, service)
 	if err != nil {
 		return nil, err
 	}
@@ -152,8 +177,16 @@ func (in *JaegerService) GetServiceTraces(ns, service string, query models.Traci
 	return r, err
 }
 
-func (in *JaegerService) GetWorkloadTraces(ns, workload string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
-	app, err := in.businessLayer.Workload.GetWorkloadAppName(ns, workload)
+func (in *JaegerService) GetWorkloadTraces(ctx context.Context, ns, workload string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetWorkloadTraces",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", ns),
+		observability.Attribute("workload", workload),
+	)
+	defer end()
+
+	app, err := in.businessLayer.Workload.GetWorkloadAppName(ctx, ns, workload)
 	if err != nil {
 		return nil, err
 	}

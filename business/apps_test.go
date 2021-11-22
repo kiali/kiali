@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"testing"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
@@ -18,11 +19,11 @@ import (
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
-func setupAppService(k8s *kubetest.K8SClientMock) AppService {
+func setupAppService(k8s *kubetest.K8SClientMock) *AppService {
 	prom := new(prometheustest.PromClientMock)
 	layer := NewWithBackends(k8s, prom, nil)
 	setupGlobalMeshConfig()
-	return AppService{k8s: k8s, prom: prom, businessLayer: layer}
+	return &AppService{k8s: k8s, prom: prom, businessLayer: layer}
 }
 
 func TestGetAppListFromDeployments(t *testing.T) {
@@ -48,7 +49,7 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
 	svc := setupAppService(k8s)
 
-	appList, _ := svc.GetAppList("Namespace", false)
+	appList, _ := svc.GetAppList(context.TODO(), "Namespace", false)
 
 	assert.Equal("Namespace", appList.Namespace.Name)
 
@@ -79,7 +80,7 @@ func TestGetAppFromDeployments(t *testing.T) {
 	config.Set(conf)
 	svc := setupAppService(k8s)
 
-	appDetails, _ := svc.GetApp("Namespace", "httpbin")
+	appDetails, _ := svc.GetApp(context.TODO(), "Namespace", "httpbin")
 
 	assert.Equal("Namespace", appDetails.Namespace.Name)
 	assert.Equal("httpbin", appDetails.Name)
@@ -113,7 +114,7 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
 	svc := setupAppService(k8s)
 
-	appList, _ := svc.GetAppList("Namespace", false)
+	appList, _ := svc.GetAppList(context.TODO(), "Namespace", false)
 
 	assert.Equal("Namespace", appList.Namespace.Name)
 
@@ -145,7 +146,7 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 
 	svc := setupAppService(k8s)
 
-	appDetails, _ := svc.GetApp("Namespace", "httpbin")
+	appDetails, _ := svc.GetApp(context.TODO(), "Namespace", "httpbin")
 
 	assert.Equal("Namespace", appDetails.Namespace.Name)
 	assert.Equal("httpbin", appDetails.Name)

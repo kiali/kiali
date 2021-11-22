@@ -25,7 +25,7 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch and build services
-	serviceList, err := business.Svc.GetServiceList(criteria)
+	serviceList, err := business.Svc.GetServiceList(r.Context(), criteria)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -59,7 +59,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 	service := params["service"]
 	queryTime := util.Clock.Now()
-	rateInterval, err = adjustRateInterval(business, namespace, rateInterval, queryTime)
+	rateInterval, err = adjustRateInterval(r.Context(), business, namespace, rateInterval, queryTime)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -73,11 +73,11 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(namespace, service)
+			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), namespace, service)
 		}()
 	}
 
-	serviceDetails, err := business.Svc.GetServiceDetails(namespace, service, rateInterval, queryTime)
+	serviceDetails, err := business.Svc.GetServiceDetails(r.Context(), namespace, service, rateInterval, queryTime)
 	if includeValidations && err == nil {
 		wg.Wait()
 		serviceDetails.Validations = istioConfigValidations
@@ -116,7 +116,7 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 	service := params["service"]
 	queryTime := util.Clock.Now()
-	rateInterval, err = adjustRateInterval(business, namespace, rateInterval, queryTime)
+	rateInterval, err = adjustRateInterval(r.Context(), business, namespace, rateInterval, queryTime)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
 		return
@@ -135,11 +135,11 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(namespace, service)
+			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), namespace, service)
 		}()
 	}
 
-	serviceDetails, err := business.Svc.UpdateService(namespace, service, rateInterval, queryTime, jsonPatch)
+	serviceDetails, err := business.Svc.UpdateService(r.Context(), namespace, service, rateInterval, queryTime, jsonPatch)
 
 	if includeValidations && err == nil {
 		wg.Wait()

@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
@@ -28,16 +30,23 @@ type ObjectChecker interface {
 // GetValidations returns an IstioValidations object with all the checks found when running
 // all the enabled checkers. If service is "" then the whole namespace is validated.
 // If service is not empty string, then all of its associated Istio objects are validated.
-func (in *IstioValidationsService) GetValidations(namespace, service string) (models.IstioValidations, error) {
+func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace, service string) (models.IstioValidations, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetValidations",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", namespace),
+		observability.Attribute("service", service),
+	)
+	defer end()
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
+	if _, err := in.businessLayer.Namespace.GetNamespace(ctx, namespace); err != nil {
 		return nil, err
 	}
 
 	// Ensure the service exists
 	if service != "" {
-		_, err := in.businessLayer.Svc.GetService(namespace, service)
+		_, err := in.businessLayer.Svc.GetService(ctx, namespace, service)
 		if err != nil {
 			if err != nil {
 				log.Warningf("Error invoking GetService %s", err)
@@ -65,13 +74,13 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	wg.Add(8) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 
 	// We fetch without target service as some validations will require full-namespace details
-	go in.fetchIstioConfigList(&istioConfigList, namespace, errChan, &wg)
-	go in.fetchExportedResources(&exportedResources, namespace, errChan, &wg)
-	go in.fetchNamespaces(&namespaces, errChan, &wg)
-	go in.fetchAllWorkloads(&workloadsPerNamespace, errChan, &wg)
-	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, namespace, errChan, &wg)
-	go in.fetchAuthorizationDetails(&rbacDetails, namespace, errChan, &wg)
-	go in.fetchServices(&services, namespace, errChan, &wg)
+	go in.fetchIstioConfigList(ctx, &istioConfigList, namespace, errChan, &wg)
+	go in.fetchExportedResources(ctx, &exportedResources, namespace, errChan, &wg)
+	go in.fetchNamespaces(ctx, &namespaces, errChan, &wg)
+	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, errChan, &wg)
+	go in.fetchNonLocalmTLSConfigs(ctx, &mtlsDetails, namespace, errChan, &wg)
+	go in.fetchAuthorizationDetails(ctx, &rbacDetails, namespace, errChan, &wg)
+	go in.fetchServices(ctx, &services, namespace, errChan, &wg)
 	go in.fetchRegistryServices(&registryServices, errChan, &wg)
 
 	wg.Wait()
@@ -112,7 +121,16 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioC
 }
 
 // GetIstioObjectValidations validates a single Istio object of the given type with the given name found in the given namespace.
-func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, objectType string, object string) (models.IstioValidations, error) {
+func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context, namespace string, objectType string, object string) (models.IstioValidations, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetIstioObjectValidations",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", namespace),
+		observability.Attribute("objectType", objectType),
+		observability.Attribute("object", object),
+	)
+	defer end()
+
 	var istioConfigList models.IstioConfigList
 	var exportedResources kubernetes.ExportedResources
 	var namespaces models.Namespaces
@@ -127,7 +145,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
+	if _, err = in.businessLayer.Namespace.GetNamespace(ctx, namespace); err != nil {
 		return nil, err
 	}
 
@@ -140,14 +158,14 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 
 	// Get all the Istio objects from a Namespace and all gateways from every namespace
 	wg.Add(9)
-	go in.fetchNamespaces(&namespaces, errChan, &wg)
-	go in.fetchIstioConfigList(&istioConfigList, namespace, errChan, &wg)
-	go in.fetchExportedResources(&exportedResources, namespace, errChan, &wg)
-	go in.fetchServices(&services, namespace, errChan, &wg)
-	go in.fetchWorkloads(&workloads, namespace, errChan, &wg)
-	go in.fetchAllWorkloads(&workloadsPerNamespace, errChan, &wg)
-	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, namespace, errChan, &wg)
-	go in.fetchAuthorizationDetails(&rbacDetails, namespace, errChan, &wg)
+	go in.fetchNamespaces(ctx, &namespaces, errChan, &wg)
+	go in.fetchIstioConfigList(ctx, &istioConfigList, namespace, errChan, &wg)
+	go in.fetchExportedResources(ctx, &exportedResources, namespace, errChan, &wg)
+	go in.fetchServices(ctx, &services, namespace, errChan, &wg)
+	go in.fetchWorkloads(ctx, &workloads, namespace, errChan, &wg)
+	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, errChan, &wg)
+	go in.fetchNonLocalmTLSConfigs(ctx, &mtlsDetails, namespace, errChan, &wg)
+	go in.fetchAuthorizationDetails(ctx, &rbacDetails, namespace, errChan, &wg)
 	go in.fetchRegistryServices(&registryServices, errChan, &wg)
 	wg.Wait()
 
@@ -228,10 +246,10 @@ func runObjectChecker(objectChecker ObjectChecker) models.IstioValidations {
 	return objectChecker.Check()
 }
 
-func (in *IstioValidationsService) fetchNamespaces(rValue *models.Namespaces, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchNamespaces(ctx context.Context, rValue *models.Namespaces, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		namespaces, err := in.businessLayer.Namespace.GetNamespaces()
+		namespaces, err := in.businessLayer.Namespace.GetNamespaces(ctx)
 		if err != nil {
 			select {
 			case errChan <- err:
@@ -243,7 +261,7 @@ func (in *IstioValidationsService) fetchNamespaces(rValue *models.Namespaces, er
 	}
 }
 
-func (in *IstioValidationsService) fetchServices(rValue *models.ServiceList, namespace string, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchServices(ctx context.Context, rValue *models.ServiceList, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
 		var services *models.ServiceList
@@ -251,7 +269,7 @@ func (in *IstioValidationsService) fetchServices(rValue *models.ServiceList, nam
 		criteria := ServiceCriteria{
 			Namespace: namespace,
 		}
-		services, err = in.businessLayer.Svc.GetServiceList(criteria)
+		services, err = in.businessLayer.Svc.GetServiceList(ctx, criteria)
 		if err != nil {
 			select {
 			case errChan <- err:
@@ -263,11 +281,11 @@ func (in *IstioValidationsService) fetchServices(rValue *models.ServiceList, nam
 	}
 }
 
-func (in *IstioValidationsService) fetchWorkloads(rValue *models.WorkloadList, namespace string, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchWorkloads(ctx context.Context, rValue *models.WorkloadList, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
 		criteria := WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false}
-		workloadList, err := in.businessLayer.Workload.GetWorkloadList(criteria)
+		workloadList, err := in.businessLayer.Workload.GetWorkloadList(ctx, criteria)
 		if err != nil {
 			select {
 			case errChan <- err:
@@ -279,10 +297,10 @@ func (in *IstioValidationsService) fetchWorkloads(rValue *models.WorkloadList, n
 	}
 }
 
-func (in *IstioValidationsService) fetchAllWorkloads(rValue *map[string]models.WorkloadList, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue *map[string]models.WorkloadList, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		nss, err := in.businessLayer.Namespace.GetNamespaces()
+		nss, err := in.businessLayer.Namespace.GetNamespaces(ctx)
 		if err != nil {
 			errChan <- err
 			return
@@ -291,7 +309,7 @@ func (in *IstioValidationsService) fetchAllWorkloads(rValue *map[string]models.W
 		allWorkloads := map[string]models.WorkloadList{}
 		for _, ns := range nss {
 			criteria := WorkloadCriteria{Namespace: ns.Name, IncludeIstioResources: false}
-			workloadList, err := in.businessLayer.Workload.GetWorkloadList(criteria)
+			workloadList, err := in.businessLayer.Workload.GetWorkloadList(ctx, criteria)
 			if err != nil {
 				select {
 				case errChan <- err:
@@ -305,7 +323,7 @@ func (in *IstioValidationsService) fetchAllWorkloads(rValue *map[string]models.W
 	}
 }
 
-func (in *IstioValidationsService) fetchIstioConfigList(rValue *models.IstioConfigList, namespace string, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rValue *models.IstioConfigList, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
 		criteria := IstioConfigCriteria{
@@ -318,7 +336,7 @@ func (in *IstioValidationsService) fetchIstioConfigList(rValue *models.IstioConf
 			IncludeRequestAuthentications: true,
 			IncludeWorkloadEntries:        true,
 		}
-		istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+		istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 		if err != nil {
 			select {
 			case errChan <- err:
@@ -330,7 +348,7 @@ func (in *IstioValidationsService) fetchIstioConfigList(rValue *models.IstioConf
 	}
 }
 
-func (in *IstioValidationsService) fetchExportedResources(exportedResources *kubernetes.ExportedResources, namespace string, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchExportedResources(ctx context.Context, exportedResources *kubernetes.ExportedResources, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) > 0 {
 		return
@@ -343,7 +361,7 @@ func (in *IstioValidationsService) fetchExportedResources(exportedResources *kub
 		IncludeServiceEntries:   true,
 		IncludeVirtualServices:  true,
 	}
-	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 	if err != nil {
 		errChan <- err
 		return
@@ -418,7 +436,7 @@ func (in *IstioValidationsService) filterSEExportToNamespaces(namespace string, 
 	return result
 }
 
-func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kubernetes.MTLSDetails, namespace string, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(ctx context.Context, mtlsDetails *kubernetes.MTLSDetails, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) > 0 {
 		return
@@ -432,7 +450,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 			Namespace:                  config.Get().ExternalServices.Istio.RootNamespace,
 			IncludePeerAuthentications: true,
 		}
-		istioConfig, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+		istioConfig, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 		if err == nil {
 			details.MeshPeerAuthentications = istioConfig.PeerAuthentications
 		} else if !checkForbidden("fetchNonLocalmTLSConfigs", err, "probably Kiali doesn't have cluster permissions") {
@@ -446,7 +464,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 			Namespace:                  namespace,
 			IncludePeerAuthentications: true,
 		}
-		istioConfig, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+		istioConfig, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 		if err == nil {
 			details.PeerAuthentications = istioConfig.PeerAuthentications
 		} else {
@@ -477,7 +495,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		}
 	}(mtlsDetails)
 
-	namespaces, err := in.businessLayer.Namespace.GetNamespaces()
+	namespaces, err := in.businessLayer.Namespace.GetNamespaces(ctx)
 	if err != nil {
 		errChan <- err
 		return
@@ -488,7 +506,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		nsNames = append(nsNames, ns.Name)
 	}
 
-	destinationRules, err := in.businessLayer.TLS.getAllDestinationRules(nsNames)
+	destinationRules, err := in.businessLayer.TLS.GetAllDestinationRules(ctx, nsNames)
 	if err != nil {
 		errChan <- err
 	} else {
@@ -496,14 +514,14 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 	}
 }
 
-func (in *IstioValidationsService) fetchAuthorizationDetails(rValue *kubernetes.RBACDetails, namespace string, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchAuthorizationDetails(ctx context.Context, rValue *kubernetes.RBACDetails, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
 		criteria := IstioConfigCriteria{
 			Namespace:                    namespace,
 			IncludeAuthorizationPolicies: true,
 		}
-		istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+		istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 		if err != nil {
 			if checkForbidden("fetchAuthorizationDetails", err, "") {
 				return

@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"sort"
 	"strings"
 	"sync"
@@ -11,6 +12,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -46,7 +48,15 @@ func buildFinalLabels(m map[string][]string) map[string]string {
 }
 
 // GetAppList is the API handler to fetch the list of applications in a given namespace
-func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (models.AppList, error) {
+func (in *AppService) GetAppList(ctx context.Context, namespace string, linkIstioResources bool) (models.AppList, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetAppList",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", namespace),
+		observability.Attribute("linkIstioResources", linkIstioResources),
+	)
+	defer end()
+
 	appList := &models.AppList{
 		Namespace: models.Namespace{Name: namespace},
 		Apps:      []models.AppListItem{},
@@ -64,15 +74,15 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 	wg.Add(nFetches)
 	errChan := make(chan error, nFetches)
 
-	go func() {
+	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
-		apps, err2 = fetchNamespaceApps(in.businessLayer, namespace, "")
+		apps, err2 = fetchNamespaceApps(ctx, in.businessLayer, namespace, "")
 		if err2 != nil {
 			log.Errorf("Error fetching Applications per namespace %s: %s", namespace, err2)
 			errChan <- err2
 		}
-	}()
+	}(ctx)
 
 	criteria := IstioConfigCriteria{
 		Namespace:                     namespace,
@@ -88,15 +98,15 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 	var istioConfigList models.IstioConfigList
 
 	if linkIstioResources {
-		go func() {
+		go func(ctx context.Context) {
 			defer wg.Done()
 			var err2 error
-			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 			if err2 != nil {
 				log.Errorf("Error fetching Istio Config per namespace %s: %s", namespace, err2)
 				errChan <- err2
 			}
-		}()
+		}(ctx)
 	}
 
 	wg.Wait()
@@ -158,14 +168,22 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 }
 
 // GetApp is the API handler to fetch the details for a given namespace and app name
-func (in *AppService) GetApp(namespace string, appName string) (models.App, error) {
+func (in *AppService) GetApp(ctx context.Context, namespace string, appName string) (models.App, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetAppList",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", namespace),
+		observability.Attribute("appName", appName),
+	)
+	defer end()
+
 	appInstance := &models.App{Namespace: models.Namespace{Name: namespace}, Name: appName}
-	ns, err := in.businessLayer.Namespace.GetNamespace(namespace)
+	ns, err := in.businessLayer.Namespace.GetNamespace(ctx, namespace)
 	if err != nil {
 		return *appInstance, err
 	}
 	appInstance.Namespace = *ns
-	namespaceApps, err := fetchNamespaceApps(in.businessLayer, namespace, appName)
+	namespaceApps, err := fetchNamespaceApps(ctx, in.businessLayer, namespace, appName)
 	if err != nil {
 		return *appInstance, err
 	}
@@ -239,7 +257,7 @@ func castAppDetails(allEntities namespaceApps, ss *models.ServiceList, w *models
 // Helper method to fetch all applications for a given namespace.
 // Optionally if appName parameter is provided, it filters apps for that name.
 // Return an error on any problem.
-func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespaceApps, error) {
+func fetchNamespaceApps(ctx context.Context, layer *Layer, namespace string, appName string) (namespaceApps, error) {
 	var ss *models.ServiceList
 	var ws models.Workloads
 	cfg := config.Get()
@@ -252,12 +270,12 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := layer.Namespace.GetNamespace(namespace); err != nil {
+	if _, err := layer.Namespace.GetNamespace(ctx, namespace); err != nil {
 		return nil, err
 	}
 
 	var err error
-	ws, err = fetchWorkloads(layer, namespace, appNameSelector)
+	ws, err = fetchWorkloads(ctx, layer, namespace, appNameSelector)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +288,7 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 			IncludeOnlyDefinitions: true,
 			ServiceSelector:        labels.Set(w.Labels).String(),
 		}
-		ss, err = layer.Svc.GetServiceList(criteria)
+		ss, err = layer.Svc.GetServiceList(ctx, criteria)
 		if err != nil {
 			return nil, err
 		}

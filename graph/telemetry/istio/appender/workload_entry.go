@@ -1,6 +1,8 @@
 package appender
 
 import (
+	"context"
+
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
@@ -49,7 +51,7 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 			continue
 		}
 
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
+		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
 			IncludeWorkloadEntries: true,
 			Namespace:              n.Namespace,
 		})

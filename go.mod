@@ -8,7 +8,7 @@ require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.2
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/gorilla/mux v1.7.4
+	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/mapstructure v1.4.0
@@ -18,8 +18,12 @@ require (
 	github.com/prometheus/common v0.15.0
 	github.com/rs/zerolog v1.20.0
 	github.com/stretchr/testify v1.7.0
-	go.uber.org/automaxprocs v1.4.0 // indirect
-	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e // indirect
+	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.27.0
+	go.opentelemetry.io/otel v1.2.0
+	go.opentelemetry.io/otel/exporters/jaeger v1.2.0
+	go.opentelemetry.io/otel/sdk v1.2.0
+	go.opentelemetry.io/otel/trace v1.2.0
+	go.uber.org/automaxprocs v1.4.0
 	golang.org/x/oauth2 v0.0.0-20201109201403-9fd604954f58 // indirect
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154

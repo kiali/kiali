@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -16,8 +17,8 @@ type promClientSupplier func() (*prometheus.Client, error)
 
 var defaultPromClientSupplier = prometheus.NewClient
 
-func checkNamespaceAccess(nsServ business.NamespaceService, namespace string) (*models.Namespace, error) {
-	if nsInfo, err := nsServ.GetNamespace(namespace); err != nil {
+func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService, namespace string) (*models.Namespace, error) {
+	if nsInfo, err := nsServ.GetNamespace(ctx, namespace); err != nil {
 		return nil, err
 	} else {
 		return nsInfo, nil
@@ -56,7 +57,7 @@ func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, p
 
 	nsInfos := make(map[string]nsInfoError)
 	for _, ns := range namespaces {
-		info, err := checkNamespaceAccess(layer.Namespace, ns)
+		info, err := checkNamespaceAccess(r.Context(), layer.Namespace, ns)
 		nsInfos[ns] = nsInfoError{info: info, err: err}
 	}
 	metrics := business.NewMetricsService(prom)

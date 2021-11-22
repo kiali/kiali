@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"bytes"
+	"context"
 	goerrors "errors"
 	"fmt"
 	"time"
@@ -9,6 +10,9 @@ import (
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	osroutes_v1 "github.com/openshift/api/route/v1"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apps_v1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/authentication/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
@@ -24,7 +28,9 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/util/httputil"
 )
 
@@ -51,7 +57,7 @@ type K8SClientInterface interface {
 	GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
 	GetSecret(namespace, name string) (*core_v1.Secret, error)
 	GetSecrets(namespace string, labelSelector string) ([]core_v1.Secret, error)
-	GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
+	GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	GetService(namespace string, name string) (*core_v1.Service, error)
 	GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
 	GetServicesByLabels(namespace string, labelsSelector string) ([]core_v1.Service, error)
@@ -470,13 +476,27 @@ func NewNotFound(name, group, resource string) error {
 }
 
 // GetSelfSubjectAccessReview provides information on Kiali permissions
-func (in *K8SClient) GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+func (in *K8SClient) GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+	if config.Get().Server.Observability.Tracing.Enabled {
+		var span trace.Span
+		ctx, span = otel.Tracer(observability.TracerName()).Start(ctx, "GetSelfSubjectAccessReview",
+			trace.WithAttributes(
+				attribute.String("package", "kubernetes"),
+				attribute.String("namspace", namespace),
+				attribute.String("api", api),
+				attribute.String("resourceType", resourceType),
+				attribute.StringSlice("verbs", verbs),
+			),
+		)
+		defer span.End()
+	}
+
 	calls := len(verbs)
 	ch := make(chan *auth_v1.SelfSubjectAccessReview, calls)
 	errChan := make(chan error)
 	for _, v := range verbs {
-		go func(verb string) {
-			res, err := in.k8s.AuthorizationV1().SelfSubjectAccessReviews().Create(in.ctx, &auth_v1.SelfSubjectAccessReview{
+		go func(ctx context.Context, verb string) {
+			res, err := in.k8s.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &auth_v1.SelfSubjectAccessReview{
 				Spec: auth_v1.SelfSubjectAccessReviewSpec{
 					ResourceAttributes: &auth_v1.ResourceAttributes{
 						Namespace: namespace,
@@ -491,7 +511,7 @@ func (in *K8SClient) GetSelfSubjectAccessReview(namespace, api, resourceType str
 			} else {
 				ch <- res
 			}
-		}(v)
+		}(ctx, v)
 	}
 
 	var err error

@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"testing"
 
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -36,8 +37,8 @@ func TestMeshStatusEnabled(t *testing.T) {
 	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	k8s.On("GetToken").Return("token")
 
-	tlsService := getTLSService(k8s, false, ns, pa, dr)
-	status, err := (tlsService).MeshWidemTLSStatus(ns)
+	TLSService := getTLSService(k8s, false, ns, pa, dr)
+	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
 
 	cleanTestGlobals()
 
@@ -59,8 +60,8 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
 
-	tlsService := getTLSService(k8s, true, ns, pa, dr)
-	status, err := (tlsService).MeshWidemTLSStatus(ns)
+	TLSService := getTLSService(k8s, true, ns, pa, dr)
+	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
 
 	cleanTestGlobals()
 
@@ -83,8 +84,8 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
 
-	tlsService := getTLSService(k8s, false, ns, pa, dr)
-	status, err := (tlsService).MeshWidemTLSStatus(ns)
+	TLSService := getTLSService(k8s, false, ns, pa, dr)
+	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
 
 	cleanTestGlobals()
 
@@ -108,8 +109,8 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 
-	tlsService := getTLSService(k8s, false, ns, pa, dr)
-	status, err := (tlsService).MeshWidemTLSStatus(ns)
+	TLSService := getTLSService(k8s, false, ns, pa, dr)
+	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
 
 	cleanTestGlobals()
 
@@ -133,8 +134,8 @@ func TestMeshStatusDisabled(t *testing.T) {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 
-	tlsService := getTLSService(k8s, false, ns, pa, dr)
-	status, err := (tlsService).MeshWidemTLSStatus(ns)
+	TLSService := getTLSService(k8s, false, ns, pa, dr)
+	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
 
 	cleanTestGlobals()
 
@@ -155,8 +156,8 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
 
-	tlsService := getTLSService(k8s, true, ns, pa, dr)
-	status, err := (tlsService).MeshWidemTLSStatus(ns)
+	TLSService := getTLSService(k8s, true, ns, pa, dr)
+	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
 
 	cleanTestGlobals()
 
@@ -286,8 +287,8 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 
 	autoMtls := false
 	kialiCache = cache.FakeTlsKialiCache("token", nss, ps, drs)
-	tlsService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil), enabledAutoMtls: &autoMtls}
-	status, err := (tlsService).NamespaceWidemTLSStatus("bookinfo")
+	TLSService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil), enabledAutoMtls: &autoMtls}
+	status, err := TLSService.NamespaceWidemTLSStatus(context.TODO(), "bookinfo")
 
 	cleanTestGlobals()
 
@@ -312,12 +313,13 @@ func testNamespaceScenario(exStatus string, drs []networking_v1alpha3.Destinatio
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&projects[0], nil)
 	k8s.On("GetToken").Return("token")
 
-	config.Set(config.NewConfig())
+	conf = config.NewConfig()
+	conf.Deployment.AccessibleNamespaces = []string{"**"}
+	config.Set(conf)
 
 	kialiCache = cache.FakeTlsKialiCache("token", nss, ps, drs)
-	tlsService := TLSService{k8s: k8s, enabledAutoMtls: &autoMtls, businessLayer: NewWithBackends(k8s, nil, nil)}
-	tlsService.businessLayer.Namespace.isAccessibleNamespaces["**"] = true
-	status, err := (tlsService).NamespaceWidemTLSStatus("bookinfo")
+	TLSService := &TLSService{k8s: k8s, enabledAutoMtls: &autoMtls, businessLayer: NewWithBackends(k8s, nil, nil)}
+	status, err := TLSService.NamespaceWidemTLSStatus(context.TODO(), "bookinfo")
 
 	cleanTestGlobals()
 

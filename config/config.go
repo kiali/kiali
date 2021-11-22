@@ -70,21 +70,38 @@ const (
 var configuration Config
 var rwMutex sync.RWMutex
 
+// Metrics provides metrics configuration for the Kiali server.
+type Metrics struct {
+	Enabled bool `yaml:"enabled,omitempty"`
+	Port    int  `yaml:"port,omitempty"`
+}
+
+// Tracing provides tracing configuration for the Kiali server.
+type Tracing struct {
+	CollectorURL string `yaml:"collector_url,omitempty"` // Endpoint for Kiali server traces
+	Enabled      bool   `yaml:"enabled,omitempty"`
+}
+
+// Observability provides configuration for tracing and metrics exported by the Kiali server.
+type Observability struct {
+	Metrics Metrics `yaml:"metrics,omitempty"`
+	Tracing Tracing `yaml:"tracing,omitempty"`
+}
+
 // Server configuration
 type Server struct {
-	Address                    string `yaml:",omitempty"`
-	AuditLog                   bool   `yaml:"audit_log,omitempty"` // When true, allows additional audit logging on Write operations
-	CORSAllowAll               bool   `yaml:"cors_allow_all,omitempty"`
-	GzipEnabled                bool   `yaml:"gzip_enabled,omitempty"`
-	MetricsEnabled             bool   `yaml:"metrics_enabled,omitempty"`
-	MetricsPort                int    `yaml:"metrics_port,omitempty"`
-	Port                       int    `yaml:",omitempty"`
-	StaticContentRootDirectory string `yaml:"static_content_root_directory,omitempty"`
-	WebFQDN                    string `yaml:"web_fqdn,omitempty"`
-	WebPort                    string `yaml:"web_port,omitempty"`
-	WebRoot                    string `yaml:"web_root,omitempty"`
-	WebHistoryMode             string `yaml:"web_history_mode,omitempty"`
-	WebSchema                  string `yaml:"web_schema,omitempty"`
+	Address                    string        `yaml:",omitempty"`
+	AuditLog                   bool          `yaml:"audit_log,omitempty"` // When true, allows additional audit logging on Write operations
+	CORSAllowAll               bool          `yaml:"cors_allow_all,omitempty"`
+	GzipEnabled                bool          `yaml:"gzip_enabled,omitempty"`
+	Observability              Observability `yaml:"observability,omitempty"`
+	Port                       int           `yaml:",omitempty"`
+	StaticContentRootDirectory string        `yaml:"static_content_root_directory,omitempty"`
+	WebFQDN                    string        `yaml:"web_fqdn,omitempty"`
+	WebPort                    string        `yaml:"web_port,omitempty"`
+	WebRoot                    string        `yaml:"web_root,omitempty"`
+	WebHistoryMode             string        `yaml:"web_history_mode,omitempty"`
+	WebSchema                  string        `yaml:"web_schema,omitempty"`
 }
 
 // Auth provides authentication data for external services
@@ -312,6 +329,7 @@ type OpenIdConfig struct {
 // DeploymentConfig provides details on how Kiali was deployed.
 type DeploymentConfig struct {
 	AccessibleNamespaces []string `yaml:"accessible_namespaces"`
+	InstanceName         string   `yaml:"instance_name"`
 	Namespace            string   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 	ViewOnlyMode         bool     `yaml:"view_only_mode,omitempty"`
 }
@@ -474,6 +492,7 @@ func NewConfig() (c *Config) {
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
 			AccessibleNamespaces: []string{"**"},
+			InstanceName:         "kiali",
 			Namespace:            "istio-system",
 			ViewOnlyMode:         false,
 		},
@@ -643,10 +662,18 @@ func NewConfig() (c *Config) {
 			SigningKey:        "kiali",
 		},
 		Server: Server{
-			AuditLog:                   true,
-			GzipEnabled:                true,
-			MetricsEnabled:             true,
-			MetricsPort:                9090,
+			AuditLog:    true,
+			GzipEnabled: true,
+			Observability: Observability{
+				Metrics: Metrics{
+					Enabled: true,
+					Port:    9090,
+				},
+				Tracing: Tracing{
+					CollectorURL: "http://jaeger-collector.istio-system:14268/api/traces",
+					Enabled:      false,
+				},
+			},
 			Port:                       20001,
 			StaticContentRootDirectory: "/opt/kiali/console",
 			WebFQDN:                    "",

@@ -19,7 +19,7 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 
 	// Fetch and build apps
-	appList, err := business.App.GetAppList(namespace, true)
+	appList, err := business.App.GetAppList(r.Context(), namespace, true)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -41,7 +41,7 @@ func AppDetails(w http.ResponseWriter, r *http.Request) {
 	app := params["app"]
 
 	// Fetch and build app
-	appDetails, err := business.App.GetApp(namespace, app)
+	appDetails, err := business.App.GetApp(r.Context(), namespace, app)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

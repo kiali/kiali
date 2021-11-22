@@ -24,7 +24,7 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch and build workloads
-	workloadList, err := business.Workload.GetWorkloadList(criteria)
+	workloadList, err := business.Workload.GetWorkloadList(r.Context(), criteria)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -49,7 +49,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	workloadType := query.Get("type")
 
 	// Fetch and build workload
-	workloadDetails, err := business.Workload.GetWorkload(namespace, workload, workloadType, true)
+	workloadDetails, err := business.Workload.GetWorkload(r.Context(), namespace, workload, workloadType, true)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -79,7 +79,7 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
 	}
 	jsonPatch := string(body)
-	workloadDetails, err := business.Workload.UpdateWorkload(namespace, workload, workloadType, true, jsonPatch)
+	workloadDetails, err := business.Workload.UpdateWorkload(r.Context(), namespace, workload, workloadType, true, jsonPatch)
 
 	if err != nil {
 		handleErrorResponse(w, err)

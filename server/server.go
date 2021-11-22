@@ -8,29 +8,44 @@ import (
 
 	"github.com/NYTimes/gziphandler"
 	"github.com/gorilla/mux"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/routing"
 )
 
 type Server struct {
 	httpServer *http.Server
 	router     *mux.Router
+	tracer     *sdktrace.TracerProvider
 }
 
 // NewServer creates a new server configured with the given settings.
 // Start and Stop it with the corresponding functions.
 func NewServer() *Server {
 	conf := config.Get()
+
 	// create a router that will route all incoming API server requests to different handlers
-
 	router := routing.NewRouter()
-
-	if conf.Server.CORSAllowAll {
-		router.Use(corsAllowed)
+	var tracingProvider *sdktrace.TracerProvider
+	if conf.Server.Observability.Tracing.Enabled {
+		log.Infof("Tracing Enabled. Initializing tracer with collector url: %s", conf.Server.Observability.Tracing.CollectorURL)
+		tracingProvider = observability.InitTracer(conf.Server.Observability.Tracing.CollectorURL)
 	}
+
+	middlewares := []mux.MiddlewareFunc{}
+	if conf.Server.CORSAllowAll {
+		middlewares = append(middlewares, corsAllowed)
+	}
+	if conf.Server.Observability.Tracing.Enabled {
+		middlewares = append(middlewares, otelmux.Middleware(observability.TracingService))
+	}
+
+	router.Use(middlewares...)
 
 	handler := http.Handler(router)
 	if conf.Server.GzipEnabled {
@@ -58,10 +73,14 @@ func NewServer() *Server {
 	}
 
 	// return our new Server
-	return &Server{
+	s := &Server{
 		httpServer: httpServer,
 		router:     router,
 	}
+	if conf.Server.Observability.Tracing.Enabled && tracingProvider != nil {
+		s.tracer = tracingProvider
+	}
+	return s
 }
 
 // Start HTTP server asynchronously. TLS may be active depending on the global configuration.
@@ -84,7 +103,7 @@ func (s *Server) Start() {
 	}()
 
 	// Start the Metrics Server
-	if conf.Server.MetricsEnabled {
+	if conf.Server.Observability.Metrics.Enabled {
 		StartMetricsServer()
 	}
 }
@@ -95,6 +114,7 @@ func (s *Server) Stop() {
 	business.Stop()
 	log.Infof("Server endpoint will stop at [%v]", s.httpServer.Addr)
 	s.httpServer.Close()
+	observability.StopTracer(s.tracer)
 }
 
 func corsAllowed(next http.Handler) http.Handler {

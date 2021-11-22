@@ -1,6 +1,8 @@
 package business
 
 import (
+	"context"
+
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
@@ -8,6 +10,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/util/mtls"
 )
 
@@ -24,13 +27,20 @@ const (
 	MTLSDisabled         = "MTLS_DISABLED"
 )
 
-func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus, error) {
+func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, namespaces []string) (models.MTLSStatus, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "MeshWidemTLSStatus",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespaces", namespaces),
+	)
+	defer end()
+
 	criteria := IstioConfigCriteria{
 		AllNamespaces:              true,
 		IncludeDestinationRules:    true,
 		IncludePeerAuthentications: true,
 	}
-	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 	if err != nil {
 		return models.MTLSStatus{}, err
 	}
@@ -50,8 +60,15 @@ func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus
 	}, nil
 }
 
-func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatus, error) {
-	nss, err := in.getNamespaces()
+func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace string) (models.MTLSStatus, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "NamespaceWidemTLSStatus",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", namespace),
+	)
+	defer end()
+
+	nss, err := in.getNamespaces(ctx)
 	if err != nil {
 		return models.MTLSStatus{}, nil
 	}
@@ -61,7 +78,7 @@ func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatu
 		IncludeDestinationRules:    true,
 		IncludePeerAuthentications: true,
 	}
-	istioConfigList, err2 := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+	istioConfigList, err2 := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 	if err2 != nil {
 		return models.MTLSStatus{}, err2
 	}
@@ -86,13 +103,20 @@ func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatu
 }
 
 // TODO refactor business/istio_validations.go
-func (in *TLSService) getAllDestinationRules(namespaces []string) ([]networking_v1alpha3.DestinationRule, error) {
+func (in *TLSService) GetAllDestinationRules(ctx context.Context, namespaces []string) ([]networking_v1alpha3.DestinationRule, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetAllDestinationRules",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespaces", namespaces),
+	)
+	defer end()
+
 	criteria := IstioConfigCriteria{
 		AllNamespaces:           true,
 		IncludeDestinationRules: true,
 	}
 
-	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 	if err != nil {
 		return nil, err
 	}
@@ -113,8 +137,8 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]networking_
 	return allDestinationRules, nil
 }
 
-func (in TLSService) getNamespaces() ([]string, error) {
-	nss, nssErr := in.businessLayer.Namespace.GetNamespaces()
+func (in *TLSService) getNamespaces(ctx context.Context) ([]string, error) {
+	nss, nssErr := in.businessLayer.Namespace.GetNamespaces(ctx)
 	if nssErr != nil {
 		return nil, nssErr
 	}

@@ -1,6 +1,8 @@
 package kubetest
 
 import (
+	"context"
+
 	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -116,8 +118,8 @@ func (o *K8SClientMock) GetSecrets(namespace string, labelSelector string) ([]co
 	return args.Get(0).([]core_v1.Secret), args.Error(1)
 }
 
-func (o *K8SClientMock) GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
-	args := o.Called(namespace, api, resourceType, verbs)
+func (o *K8SClientMock) GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+	args := o.Called(ctx, namespace, api, resourceType, verbs)
 	return args.Get(0).([]*auth_v1.SelfSubjectAccessReview), args.Error(1)
 }
 
