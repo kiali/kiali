@@ -8581,6 +8581,13 @@ set because it cannot be automatically converted. |  |
 | FieldsType | string| `string` |  | | FieldsType is the discriminator for the different fields format and version.
 There is currently only one possible value: "FieldsV1" |  |
 | Manager | string| `string` |  | | Manager is an identifier of the workflow managing these fields. |  |
+| Subresource | string| `string` |  | | Subresource is the name of the subresource used to update that object, or
+empty string if the object was updated through the main resource. The
+value of this field is used to distinguish between managers, even if they
+share the same name. For example, a status update will be distinct from a
+regular update using the same manager name.
+Note that the APIVersion field is not related to the Subresource field and
+it always corresponds to the version of the main resource. |  |
 | fieldsV1 | [FieldsV1](#fields-v1)| `FieldsV1` |  | |  |  |
 | operation | [ManagedFieldsOperationType](#managed-fields-operation-type)| `ManagedFieldsOperationType` |  | |  |  |
 | time | [Time](#time)| `Time` |  | |  |  |
@@ -8809,6 +8816,7 @@ This type is used to describe a set of objects.
 > OwnerReference contains enough information to let you identify an owning
 object. An owning object must be in the same namespace as the dependent, or
 be cluster-scoped, so there is no namespace field.
++structType=atomic
   
 
 
