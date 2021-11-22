@@ -142,10 +142,20 @@ class ServiceNetwork extends React.Component<Props> {
                   {(this.props.serviceDetails.service.ports || []).map((port, i) => {
                     return (
                       <div key={'port_' + i}>
-                        <span style={{ marginRight: '10px' }}>
+                        <span style={{ marginRight: '5px' }}>
                           {port.name} {port.port}/{port.protocol}
                         </span>
-                        {this.hasIssue(i) ? this.getPortOver(i) : undefined}
+                        {port.appProtocol && port.appProtocol !== '' ? (
+                          <Tooltip
+                            position={TooltipPosition.right}
+                            content={<div style={{ textAlign: 'left' }}>App Protocol: {port.appProtocol}</div>}
+                          >
+                            <span style={{ marginRight: '5px' }}>
+                              <KialiIcon.Info className={infoStyle} />
+                            </span>
+                          </Tooltip>
+                        ) : undefined}
+                        <span style={{ marginLeft: '5px' }}>{this.hasIssue(i) ? this.getPortOver(i) : undefined}</span>
                       </div>
                     );
                   })}

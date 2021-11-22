@@ -15,6 +15,7 @@ export interface ServicePort {
   name: string;
   port: number;
   protocol: string;
+  appProtocol?: string;
 }
 
 export interface Endpoints {
