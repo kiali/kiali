@@ -186,6 +186,7 @@ type IstioConfig struct {
 	IstioSidecarInjectorConfigMapName string              `yaml:"istio_sidecar_injector_config_map_name,omitempty"`
 	IstioSidecarAnnotation            string              `yaml:"istio_sidecar_annotation,omitempty"`
 	IstiodDeploymentName              string              `yaml:"istiod_deployment_name,omitempty"`
+	IstiodPodMonitoringPort           int                 `yaml:"istiod_pod_monitoring_port,omitempty"`
 	RootNamespace                     string              `yaml:"root_namespace,omitempty"`
 	UrlServiceVersion                 string              `yaml:"url_service_version"`
 }
@@ -534,6 +535,7 @@ func NewConfig() (c *Config) {
 				IstioSidecarInjectorConfigMapName: "istio-sidecar-injector",
 				IstioSidecarAnnotation:            "sidecar.istio.io/status",
 				IstiodDeploymentName:              "istiod",
+				IstiodPodMonitoringPort:           15014,
 				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "http://istiod:15014/version",
 			},
