@@ -7058,6 +7058,10 @@
     "Port": {
       "type": "object",
       "properties": {
+        "appProtocol": {
+          "type": "string",
+          "x-go-name": "AppProtocol"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"

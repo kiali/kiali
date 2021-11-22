@@ -87,6 +87,25 @@ func TestInvalidPortNameMatcher(t *testing.T) {
 	assert.False(t, MatchPortNameWithValidProtocols("name"))
 }
 
+func TestValidPortAppProtocolMatcher(t *testing.T) {
+	s1 := "http"
+	s2 := "mysql"
+	assert.True(t, MatchPortAppProtocolWithValidProtocols(&s1))
+	assert.True(t, MatchPortAppProtocolWithValidProtocols(&s2))
+}
+
+func TestInvalidPortAppProtocolMatcher(t *testing.T) {
+	s1 := "httpname"
+	s2 := "name"
+	s3 := "http-name"
+	s4 := ""
+	assert.False(t, MatchPortAppProtocolWithValidProtocols(&s1))
+	assert.False(t, MatchPortAppProtocolWithValidProtocols(&s2))
+	assert.False(t, MatchPortAppProtocolWithValidProtocols(&s3))
+	assert.False(t, MatchPortAppProtocolWithValidProtocols(&s4))
+	assert.False(t, MatchPortAppProtocolWithValidProtocols(nil))
+}
+
 func TestPolicyHasMtlsEnabledStructMode(t *testing.T) {
 	policy := createPeerAuthn("default", "bookinfo", nil)
 
