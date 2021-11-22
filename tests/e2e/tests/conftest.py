@@ -89,6 +89,9 @@ def get_kiali_swagger_address():
 def get_kiali_auth_method():
     return __get_environment_config__(ENV_FILE).get('kiali_auth_method')
 
+def get_mesh_bookinfo_namespace():
+    return __get_environment_config__(ENV_FILE).get('mesh_bookinfo_namespace')
+
 def get_control_plane_namespace():
     return __get_environment_config__(ENV_FILE).get('control_plane_namespace')
 
