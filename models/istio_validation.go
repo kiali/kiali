@@ -303,7 +303,7 @@ var checkDescriptors = map[string]IstioCheck{
 	},
 	"virtualservices.route.repeatedsubset": {
 		Code:     "KIA1105",
-		Message:  "This subset is already referenced in another route destination",
+		Message:  "This host subset combination is already referenced in another route destination",
 		Severity: WarningSeverity,
 	},
 	"virtualservices.singlehost": {
