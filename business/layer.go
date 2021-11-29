@@ -96,6 +96,7 @@ func Get(authInfo *api.AuthInfo) (*Layer, error) {
 	if prometheusClient == nil {
 		prom, err := prometheus.NewClient()
 		if err != nil {
+			prometheusClient = nil
 			return nil, err
 		}
 		prometheusClient = prom
@@ -106,6 +107,9 @@ func Get(authInfo *api.AuthInfo) (*Layer, error) {
 		var err error
 		if jaegerClient == nil {
 			jaegerClient, err = jaeger.NewClient(authInfo.Token)
+			if err != nil {
+				jaegerClient = nil
+			}
 		}
 		return jaegerClient, err
 	}
