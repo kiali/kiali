@@ -9,7 +9,7 @@ import { RenderComponentScroll } from '../../components/Nav/Page';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
 import GraphDataSource from 'services/GraphDataSource';
-import { drToIstioItems, vsToIstioItems, gwToIstioItems } from '../../types/IstioConfigList';
+import { drToIstioItems, vsToIstioItems, gwToIstioItems, seToIstioItems } from '../../types/IstioConfigList';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { durationSelector, meshWideMTLSEnabledSelector } from '../../store/Selectors';
@@ -100,7 +100,12 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
             this.props.serviceDetails.validations
           )
         : [];
-    const istioConfigItems = gwIstioConfigItems.concat(vsIstioConfigItems.concat(drIstioConfigItems));
+    const seIstioConfigItems = this.props.serviceDetails?.serviceEntries
+      ? seToIstioItems(this.props.serviceDetails.serviceEntries, this.props.serviceDetails.validations)
+      : [];
+    const istioConfigItems = seIstioConfigItems.concat(
+      gwIstioConfigItems.concat(vsIstioConfigItems.concat(drIstioConfigItems))
+    );
 
     // RenderComponentScroll handles height to provide an inner scroll combined with tabs
     // This height needs to be propagated to minigraph to proper resize in height

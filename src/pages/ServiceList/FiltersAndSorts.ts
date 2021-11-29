@@ -1,4 +1,4 @@
-import { ActiveFiltersInfo, FilterType, FILTER_ACTION_APPEND } from '../../types/Filters';
+import { ActiveFiltersInfo, FilterType, FILTER_ACTION_APPEND, FilterTypes } from '../../types/Filters';
 import { WithServiceHealth, hasHealth } from '../../types/Health';
 import { ServiceListItem } from '../../types/ServiceList';
 import { SortField } from '../../types/SortFilters';
@@ -141,8 +141,31 @@ const serviceNameFilter: FilterType = {
   filterValues: []
 };
 
+const serviceTypeFilter: FilterType = {
+  id: 'serviceregistry',
+  title: 'Service Type',
+  placeholder: 'Filter by Service Type',
+  filterType: FilterTypes.typeAhead,
+  action: FILTER_ACTION_APPEND,
+  filterValues: [
+    {
+      id: 'Kubernetes',
+      title: 'Kubernetes'
+    },
+    {
+      id: 'External',
+      title: 'External'
+    },
+    {
+      id: 'Federation',
+      title: 'Federation'
+    }
+  ]
+};
+
 export const availableFilters: FilterType[] = [
   serviceNameFilter,
+  serviceTypeFilter,
   istioSidecarFilter,
   istioTypeFilter,
   healthFilter,
@@ -169,6 +192,22 @@ const filterByName = (items: ServiceListItem[], names: string[]): ServiceListIte
   });
 };
 
+const filterByServiceType = (items: ServiceListItem[], serviceTypes: string[]): ServiceListItem[] => {
+  return items.filter(item => {
+    let serviceTypeFiltered = true;
+    if (serviceTypes.length > 0) {
+      serviceTypeFiltered = false;
+      for (let i = 0; i < serviceTypes.length; i++) {
+        if (item.serviceRegistry.includes(serviceTypes[i])) {
+          serviceTypeFiltered = true;
+          break;
+        }
+      }
+    }
+    return serviceTypeFiltered;
+  });
+};
+
 const filterByIstioType = (items: ServiceListItem[], istioTypes: string[]): ServiceListItem[] => {
   return items.filter(item => item.istioReferences.filter(ref => istioTypes.includes(ref.objectType)).length !== 0);
 };
@@ -186,6 +225,11 @@ export const filterBy = (
   const serviceNamesSelected = getFilterSelectedValues(serviceNameFilter, filters);
   if (serviceNamesSelected.length > 0) {
     ret = filterByName(ret, serviceNamesSelected);
+  }
+
+  const serviceTypeSelected = getFilterSelectedValues(serviceTypeFilter, filters);
+  if (serviceTypeSelected.length > 0) {
+    ret = filterByServiceType(ret, serviceTypeSelected);
   }
 
   const serviceFilterSelected = getFilterSelectedValues(labelFilter, filters);

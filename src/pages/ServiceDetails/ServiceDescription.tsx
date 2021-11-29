@@ -136,12 +136,25 @@ class ServiceDescription extends React.Component<ServiceInfoDescriptionProps, St
     );
 
     const serviceName = this.props.serviceDetails ? this.props.serviceDetails.service.name : 'Service';
+    let serviceBadge = PFBadges.Service;
+    if (this.props.serviceDetails && this.props.serviceDetails.service) {
+      switch (this.props.serviceDetails.service.type) {
+        case 'External':
+          serviceBadge = PFBadges.ExternalService;
+          break;
+        case 'Federation':
+          serviceBadge = PFBadges.FederatedService;
+          break;
+        default:
+          serviceBadge = PFBadges.Service;
+      }
+    }
     return (
       <Card id={'ServiceDescriptionCard'}>
         <CardHeader>
           <Title headingLevel="h5" size="lg">
             <div key="service-icon" className={iconStyle}>
-              <PFBadge badge={PFBadges.Service} position={TooltipPosition.top} />
+              <PFBadge badge={serviceBadge} position={TooltipPosition.top} />
             </div>
             {serviceName}
             <Tooltip

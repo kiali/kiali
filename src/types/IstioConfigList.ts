@@ -278,3 +278,26 @@ export const gwToIstioItems = (gws: Gateway[], vss: VirtualService[], validation
   });
   return istioItems;
 };
+
+export const seToIstioItems = (see: ServiceEntry[], validations: Validations): IstioConfigItem[] => {
+  const istioItems: IstioConfigItem[] = [];
+  const hasValidations = (name: string) => validations.serviceentry && validations.serviceentry[name];
+
+  const typeNameProto = dicIstioType['serviceentries']; // ex. serviceEntries -> ServiceEntry
+  const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
+  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+
+  see.forEach(se => {
+    const item = {
+      namespace: se.metadata.namespace || '',
+      type: typeName,
+      name: se.metadata.name,
+      creationTimestamp: se.metadata.creationTimestamp,
+      resourceVersion: se.metadata.resourceVersion,
+      validation: hasValidations(se.metadata.name) ? validations.serviceentry[se.metadata.name] : undefined
+    };
+    item[entryName] = se;
+    istioItems.push(item);
+  });
+  return istioItems;
+};

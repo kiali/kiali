@@ -3,6 +3,7 @@ import {
   DestinationRule,
   ObjectCheck,
   ObjectValidation,
+  ServiceEntry,
   Validations,
   ValidationTypes,
   VirtualService
@@ -16,6 +17,8 @@ export interface ServicePort {
   port: number;
   protocol: string;
   appProtocol?: string;
+  istioProtocol: string;
+  tlsMode: string;
 }
 
 export interface Endpoints {
@@ -27,6 +30,8 @@ interface EndpointAddress {
   ip: string;
   kind?: string;
   name?: string;
+  istioProtocol?: string;
+  tlsMode?: string;
 }
 
 export interface WorkloadOverview {
@@ -57,6 +62,7 @@ export interface ServiceDetailsInfo {
   istioSidecar: boolean;
   virtualServices: VirtualService[];
   destinationRules: DestinationRule[];
+  serviceEntries: ServiceEntry[];
   istioPermissions: ResourcePermissions;
   health?: ServiceHealth;
   workloads?: WorkloadOverview[];

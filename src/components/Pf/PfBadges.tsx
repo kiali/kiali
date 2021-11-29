@@ -20,6 +20,8 @@ export const PFBadges = Object.freeze({
   Container: { badge: 'C', tt: 'Container' } as PFBadgeType,
   DestinationRule: { badge: 'DR', tt: 'Destination Rule' } as PFBadgeType,
   EnvoyFilter: { badge: 'EF', tt: 'Envoy Filter' } as PFBadgeType,
+  ExternalService: { badge: 'ES', tt: 'External Service' } as PFBadgeType,
+  FederatedService: { badge: 'FS', tt: 'Federated Service' } as PFBadgeType,
   Gateway: { badge: 'G', tt: 'Gateway' } as PFBadgeType,
   Handler: { badge: 'H', tt: 'Handler' },
   Host: { badge: 'H', tt: 'Host' },

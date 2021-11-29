@@ -99,68 +99,93 @@ class ServiceNetwork extends React.Component<Props> {
                 <span>Type</span>
                 {this.props.serviceDetails.service.type}
               </li>
-              <li>
-                <span>{this.props.serviceDetails.service.type !== 'ExternalName' ? 'Service IP' : 'ExternalName'}</span>
-                {this.props.serviceDetails.service.type !== 'ExternalName'
-                  ? this.props.serviceDetails.service.ip
+              {this.props.serviceDetails.service.type !== 'External' && (
+                <li>
+                  <span>
+                    {this.props.serviceDetails.service.type !== 'ExternalName' ? 'Service IP' : 'ExternalName'}
+                  </span>
+                  {this.props.serviceDetails.service.type !== 'ExternalName'
                     ? this.props.serviceDetails.service.ip
-                    : ''
-                  : this.props.serviceDetails.service.externalName
-                  ? this.props.serviceDetails.service.externalName
-                  : ''}
-              </li>
-              <li>
-                <span>Endpoints</span>
-                <div style={{ display: 'inline-block' }}>
-                  {(this.props.serviceDetails.endpoints || []).map((endpoint, i) => {
-                    return (endpoint.addresses || []).map((address, u) => (
-                      <div key={'endpoint_' + i + '_address_' + u}>
-                        {address.name !== '' ? (
-                          <Tooltip
-                            position={TooltipPosition.right}
-                            content={
-                              <div style={{ textAlign: 'left' }}>
-                                {address.kind}: {address.name}
-                              </div>
-                            }
-                          >
-                            <span>
-                              {address.ip} <KialiIcon.Info className={infoStyle} />
+                      ? this.props.serviceDetails.service.ip
+                      : ''
+                    : this.props.serviceDetails.service.externalName
+                    ? this.props.serviceDetails.service.externalName
+                    : ''}
+                </li>
+              )}
+              {this.props.serviceDetails.endpoints && this.props.serviceDetails.endpoints.length > 0 && (
+                <li>
+                  <span>Endpoints</span>
+                  <div style={{ display: 'inline-block' }}>
+                    {(this.props.serviceDetails.endpoints || []).map((endpoint, i) => {
+                      return (endpoint.addresses || []).map((address, u) => (
+                        <div key={'endpoint_' + i + '_address_' + u}>
+                          {address.name !== '' ? (
+                            <Tooltip
+                              position={TooltipPosition.right}
+                              content={
+                                <div style={{ textAlign: 'left' }}>
+                                  {address.kind}: {address.name}
+                                </div>
+                              }
+                            >
+                              <span>
+                                {address.ip} <KialiIcon.Info className={infoStyle} />
+                              </span>
+                            </Tooltip>
+                          ) : (
+                            <>{address.name}</>
+                          )}
+                        </div>
+                      ));
+                    })}
+                  </div>
+                </li>
+              )}
+              {this.props.serviceDetails.service.ports && this.props.serviceDetails.service.ports.length > 0 && (
+                <li>
+                  <span>Ports</span>
+                  <div style={{ display: 'inline-block' }}>
+                    {(this.props.serviceDetails.service.ports || []).map((port, i) => {
+                      return (
+                        <div key={'port_' + i}>
+                          <div>
+                            <span style={{ marginRight: '10px' }}>
+                              {port.name} {port.port}
                             </span>
-                          </Tooltip>
-                        ) : (
-                          <>{address.name}</>
-                        )}
-                      </div>
-                    ));
-                  })}
-                </div>
-              </li>
-              <li>
-                <span>Ports</span>
-                <div style={{ display: 'inline-block' }}>
-                  {(this.props.serviceDetails.service.ports || []).map((port, i) => {
-                    return (
-                      <div key={'port_' + i}>
-                        <span style={{ marginRight: '5px' }}>
-                          {port.name} {port.port}/{port.protocol}
-                        </span>
-                        {port.appProtocol && port.appProtocol !== '' ? (
-                          <Tooltip
-                            position={TooltipPosition.right}
-                            content={<div style={{ textAlign: 'left' }}>App Protocol: {port.appProtocol}</div>}
-                          >
-                            <span style={{ marginRight: '5px' }}>
-                              <KialiIcon.Info className={infoStyle} />
+                            {this.hasIssue(i) ? this.getPortOver(i) : undefined}
+                            {port.appProtocol && port.appProtocol !== '' ? (
+                              <Tooltip
+                                position={TooltipPosition.right}
+                                content={<div style={{ textAlign: 'left' }}>App Protocol: {port.appProtocol}</div>}
+                              >
+                                <span style={{ marginRight: '5px' }}>
+                                  <KialiIcon.Info className={infoStyle} />
+                                </span>
+                              </Tooltip>
+                            ) : undefined}
+                          </div>
+                          <div>
+                            ({port.protocol}
+                            {port.istioProtocol !== '' && <>,{port.istioProtocol}</>}){' '}
+                            <span style={{ marginLeft: '5px' }}>
+                              {port.tlsMode === 'istio' ? (
+                                <>
+                                  <KialiIcon.MtlsLock /> mTLS
+                                </>
+                              ) : (
+                                <>
+                                  <KialiIcon.MtlsUnlock /> No mTLS{' '}
+                                </>
+                              )}
                             </span>
-                          </Tooltip>
-                        ) : undefined}
-                        <span style={{ marginLeft: '5px' }}>{this.hasIssue(i) ? this.getPortOver(i) : undefined}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </li>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </li>
+              )}
               {this.props.serviceDetails.virtualServices.length > 0 && (
                 <li>
                   <span>Hostnames</span>

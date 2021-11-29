@@ -116,7 +116,8 @@ const serviceList: ServiceListItem[] = [
     labels: { app: 'details', service: 'details' },
     validation: { name: 'details', objectType: 'service', valid: true, checks: [] },
     istioReferences: [],
-    kialiWizard: ''
+    kialiWizard: '',
+    serviceRegistry: 'Kubernetes'
   },
   {
     namespace: 'bookinfo',
@@ -126,7 +127,8 @@ const serviceList: ServiceListItem[] = [
     labels: { app: 'reviews', service: 'reviews' },
     validation: { name: 'reviews', objectType: 'service', valid: true, checks: [] },
     istioReferences: [],
-    kialiWizard: ''
+    kialiWizard: '',
+    serviceRegistry: 'Kubernetes'
   },
   {
     namespace: 'bookinfo',
@@ -136,7 +138,8 @@ const serviceList: ServiceListItem[] = [
     labels: { app: 'ratings', service: 'ratings' },
     validation: { name: 'ratings', objectType: 'service', valid: true, checks: [] },
     istioReferences: [],
-    kialiWizard: ''
+    kialiWizard: '',
+    serviceRegistry: 'Kubernetes'
   },
   {
     namespace: 'bookinfo',
@@ -146,7 +149,8 @@ const serviceList: ServiceListItem[] = [
     labels: { app: 'productpage', service: 'productpage' },
     validation: { name: 'productpage', objectType: 'service', valid: true, checks: [] },
     istioReferences: [],
-    kialiWizard: ''
+    kialiWizard: '',
+    serviceRegistry: 'Kubernetes'
   }
 ];
 
@@ -244,7 +248,8 @@ describe('LabelFilter', () => {
         labels: { app: 'details', service: 'details' },
         validation: { name: 'details', objectType: 'service', valid: true, checks: [] },
         istioReferences: [],
-        kialiWizard: ''
+        kialiWizard: '',
+        serviceRegistry: 'Kubernetes'
       }
     ]);
   });

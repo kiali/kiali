@@ -105,7 +105,8 @@ class ServiceListPageComponent extends FilterComponent.Component<
         additionalDetailSample: service.additionalDetailSample,
         labels: service.labels || {},
         istioReferences: sortIstioReferences(service.istioReferences, true),
-        kialiWizard: service.kialiWizard
+        kialiWizard: service.kialiWizard,
+        serviceRegistry: service.serviceRegistry
       }));
     }
     return [];

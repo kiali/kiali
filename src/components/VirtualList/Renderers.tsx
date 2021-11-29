@@ -88,7 +88,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
           item.istioReferences.map(ir => (
             <li>
               <PFBadge badge={PFBadges[ir.objectType]} position={TooltipPosition.top} />
-              <IstioObjectLink name={ir.name} namespace={item.namespace || ''} type={ir.objectType.toLowerCase()}>
+              <IstioObjectLink name={ir.name} namespace={ir.namespace || ''} type={ir.objectType.toLowerCase()}>
                 {ir.name}
               </IstioObjectLink>
             </li>
@@ -166,9 +166,20 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Reso
 
 export const item: Renderer<TResource> = (item: TResource, config: Resource, badge: PFBadgeType) => {
   const key = 'link_definition_' + config.name + '_' + item.namespace + '_' + item.name;
+  let serviceBadge = badge;
+  if (item['serviceRegistry']) {
+    switch (item['serviceRegistry']) {
+      case 'External':
+        serviceBadge = PFBadges.ExternalService;
+        break;
+      case 'Federation':
+        serviceBadge = PFBadges.FederatedService;
+        break;
+    }
+  }
   return (
     <td role="gridcell" key={'VirtuaItem_Item_' + item.namespace + '_' + item.name} style={{ verticalAlign: 'middle' }}>
-      <PFBadge badge={badge} position={TooltipPosition.top} />
+      <PFBadge badge={serviceBadge} position={TooltipPosition.top} />
       <Link key={key} to={getLink(item, config)} className={'virtualitem_definition_link'}>
         {item.name}
       </Link>

@@ -15,7 +15,9 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
       {
         name: 'http',
         protocol: 'TCP',
-        port: 9080
+        port: 9080,
+        istioProtocol: 'TCP',
+        tlsMode: 'istio'
       }
     ],
     resourceVersion: '2652'
@@ -44,7 +46,9 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
         {
           name: 'http',
           protocol: 'TCP',
-          port: 9080
+          port: 9080,
+          istioProtocol: 'TCP',
+          tlsMode: 'istio'
         }
       ]
     }
@@ -108,6 +112,7 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
       }
     }
   ],
+  serviceEntries: [],
   istioPermissions: {
     update: false,
     delete: false,

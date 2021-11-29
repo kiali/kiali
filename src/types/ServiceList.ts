@@ -16,6 +16,7 @@ export interface ServiceOverview {
   labels: { [key: string]: string };
   istioReferences: ObjectReference[];
   kialiWizard: string;
+  serviceRegistry: string;
 }
 
 export interface ServiceListItem extends ServiceOverview {
