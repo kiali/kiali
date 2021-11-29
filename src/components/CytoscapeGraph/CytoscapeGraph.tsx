@@ -1,7 +1,5 @@
 import * as Cy from 'cytoscape';
-import { Core } from 'cytoscape';
-import { EdgeSingular } from 'cytoscape';
-import { NodeSingular } from 'cytoscape';
+import { Core, EdgeSingular, NodeSingular } from 'cytoscape';
 import * as React from 'react';
 import ReactResizeDetector from 'react-resize-detector';
 import { GraphData } from 'pages/Graph/GraphPage';
@@ -20,6 +18,7 @@ import {
   NodeParamsType,
   NodeType,
   RankMode,
+  RankResult,
   UNKNOWN
 } from '../../types/Graph';
 import { JaegerTrace } from 'types/JaegerInfo';
@@ -56,17 +55,18 @@ type CytoscapeGraphProps = {
   onEdgeTap?: (e: GraphEdgeTapEvent) => void;
   onNodeTap?: (e: GraphNodeTapEvent) => void;
   onReady?: (cytoscapeRef: any) => void;
-  rank: boolean;
   rankBy: RankMode[];
   refreshInterval: IntervalInMilliseconds;
   setActiveNamespaces?: (namespace: Namespace[]) => void;
   setNode?: (node?: NodeParamsType) => void;
+  setRankResult?: (result: RankResult) => void;
   setTraceId?: (traceId?: string) => void;
   setUpdateTime?: (val: TimeInMilliseconds) => void;
   showIdleEdges: boolean;
   showIdleNodes: boolean;
   showMissingSidecars: boolean;
   showOperationNodes: boolean;
+  showRank: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
@@ -157,11 +157,11 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       this.props.graphData.elements !== nextProps.graphData.elements ||
       this.props.layout !== nextProps.layout ||
       this.props.compressOnHide !== nextProps.compressOnHide ||
+      this.props.rankBy !== nextProps.rankBy ||
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
+      this.props.showRank !== nextProps.showRank ||
       this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
       this.props.showVirtualServices !== nextProps.showVirtualServices ||
-      this.props.rank !== nextProps.rank ||
-      this.props.rankBy !== nextProps.rankBy ||
       this.props.trace !== nextProps.trace;
 
     return result;
@@ -648,6 +648,25 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     };
     cy.scratch(CytoscapeGlobalScratchNamespace, globalScratchData);
 
+    let elements = this.props.graphData.elements;
+    if (this.props.showRank) {
+      let scoringCriteria: ScoringCriteria[] = [];
+      for (const ranking of this.props.rankBy) {
+        if (ranking === RankMode.RANK_BY_INBOUND_EDGES) {
+          scoringCriteria.push(ScoringCriteria.InboundEdges);
+        }
+        if (ranking === RankMode.RANK_BY_OUTBOUND_EDGES) {
+          scoringCriteria.push(ScoringCriteria.OutboundEdges);
+        }
+      }
+
+      let upperBound = 0;
+      ({ elements, upperBound } = scoreNodes(this.props.graphData.elements, ...scoringCriteria));
+      if (this.props.setRankResult) {
+        this.props.setRankResult({ upperBound });
+      }
+    }
+
     cy.startBatch();
 
     // KIALI-1291 issue was caused because some layouts (can't tell if all) do reuse the existing positions.
@@ -658,20 +677,8 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       cy.nodes().positions({ x: 0, y: 0 });
     }
 
-    let scoringCriteria: ScoringCriteria[] = [];
-    if (this.props.rank) {
-      for (const ranking of this.props.rankBy) {
-        if (ranking === RankMode.RANK_BY_INBOUND_EDGES) {
-          scoringCriteria.push(ScoringCriteria.InboundEdges);
-        }
-        if (ranking === RankMode.RANK_BY_OUTBOUND_EDGES) {
-          scoringCriteria.push(ScoringCriteria.OutboundEdges);
-        }
-      }
-    }
-
     // update the entire set of nodes and edges to keep the graph up-to-date
-    cy.json({ elements: scoreNodes(this.props.graphData.elements, ...scoringCriteria) });
+    cy.json({ elements: elements });
 
     cy.endBatch();
 

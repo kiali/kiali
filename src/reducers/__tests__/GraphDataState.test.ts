@@ -10,6 +10,7 @@ describe('GraphDataState', () => {
       graphDefinition: null,
       layout: DagreGraph.getLayout(),
       node: undefined,
+      rankResult: { upperBound: 0 },
       summaryData: null,
       toolbarState: {
         boxByCluster: false,
@@ -19,7 +20,6 @@ describe('GraphDataState', () => {
         findValue: '',
         graphType: GraphType.VERSIONED_APP,
         hideValue: '',
-        rank: false,
         rankBy: [],
         showFindHelp: false,
         showLegend: false,
@@ -27,6 +27,7 @@ describe('GraphDataState', () => {
         showIdleNodes: false,
         showMissingSidecars: true,
         showOperationNodes: false,
+        showRank: false,
         showSecurity: false,
         showServiceNodes: true,
         showTrafficAnimation: false,

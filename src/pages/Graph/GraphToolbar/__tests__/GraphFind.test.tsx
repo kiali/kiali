@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import { GraphFind } from '../GraphFind';
-import { RankMode } from 'types/Graph';
 
 const testHandler = () => undefined;
 const testSetter = _val => undefined;
@@ -15,9 +14,8 @@ describe('Parse find value test', () => {
         edgeLabels={[]}
         findValue="testFind"
         hideValue="testHide"
-        rank={true}
-        rankBy={[RankMode.RANK_BY_INBOUND_EDGES]}
         showFindHelp={false}
+        showRank={true}
         showSecurity={false}
         showIdleNodes={false}
         setEdgeLabels={testSetter}

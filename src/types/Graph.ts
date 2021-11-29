@@ -68,6 +68,11 @@ export enum RankMode {
   RANK_BY_OUTBOUND_EDGES = 'outboundEdges'
 }
 
+export type RankResult = {
+  // Number of discrete rankings, N for the current scoring. N in [0..100]. 0 indicates no active rankings.
+  upperBound: number;
+};
+
 export const numLabels = (modes: EdgeLabelMode[]): number => {
   return modes.filter(m => m !== EdgeLabelMode.RESPONSE_TIME_GROUP && m !== EdgeLabelMode.THROUGHPUT_GROUP).length;
 };
@@ -391,13 +396,11 @@ export interface DecoratedGraphNodeData extends GraphNodeData {
 
   traffic: never;
 
-  // computed, true if has istio namespace
-  isIstio?: boolean;
+  // computed values...
 
-  // raw importance score
-  score?: number;
-  // importance in relation to other nodes. Whole number. Smaller is more important.
-  // There can be ties with other nodes.
+  // true if has istio namespace
+  isIstio?: boolean;
+  // assigned when node ranking is enabled. relative importance from most to least important [1..100]. Multiple nodes can have same rank.
   rank?: number;
 }
 

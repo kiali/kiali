@@ -31,13 +31,14 @@ type ReduxProps = {
   boxByNamespace: boolean;
   compressOnHide: boolean;
   edgeLabels: EdgeLabelMode[];
+  rankBy: RankMode[];
   setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
+  setRankBy: (rankBy: RankMode[]) => void;
   showIdleEdges: boolean;
   showIdleNodes: boolean;
   showMissingSidecars: boolean;
   showOperationNodes: boolean;
-  rank: boolean;
-  rankBy: RankMode[];
+  showRank: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
@@ -52,7 +53,6 @@ type ReduxProps = {
   toggleIdleNodes(): void;
   toggleOperationNodes(): void;
   toggleRank(): void;
-  toggleRankBy(mode: RankMode): void;
   toggleServiceNodes(): void;
   toggleTrafficAnimation(): void;
 };
@@ -141,7 +141,12 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       props.showOperationNodes,
       props.toggleOperationNodes
     );
-    this.handleURLBool(URLParam.GRAPH_RANK, INITIAL_GRAPH_STATE.toolbarState.rank, props.rank, props.toggleRank);
+    this.handleURLBool(
+      URLParam.GRAPH_RANK,
+      INITIAL_GRAPH_STATE.toolbarState.showRank,
+      props.showRank,
+      props.toggleRank
+    );
     this.handleURLBool(
       URLParam.GRAPH_SERVICE_NODES,
       INITIAL_GRAPH_STATE.toolbarState.showServiceNodes,
@@ -212,7 +217,12 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       prev.showOperationNodes,
       this.props.showOperationNodes
     );
-    this.alignURLBool(URLParam.GRAPH_RANK, INITIAL_GRAPH_STATE.toolbarState.rank, prev.rank, this.props.rank);
+    this.alignURLBool(
+      URLParam.GRAPH_RANK,
+      INITIAL_GRAPH_STATE.toolbarState.showRank,
+      prev.showRank,
+      this.props.showRank
+    );
     this.alignURLBool(
       URLParam.GRAPH_SERVICE_NODES,
       INITIAL_GRAPH_STATE.toolbarState.showServiceNodes,
@@ -271,7 +281,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       boxByNamespace,
       compressOnHide,
       edgeLabels,
-      rank,
+      showRank: rank,
       rankBy: rankLabels,
       showIdleEdges,
       showIdleNodes,
@@ -295,7 +305,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       toggleIdleNodes,
       toggleOperationNodes,
       toggleRank,
-      toggleRankBy: toggleRankingLabel,
       toggleServiceNodes,
       toggleTrafficAnimation
     } = this.props;
@@ -588,7 +597,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         labelText: 'Inbound Edges',
         isChecked: rankLabels.includes(RankMode.RANK_BY_INBOUND_EDGES),
         onChange: () => {
-          toggleRankingLabel(RankMode.RANK_BY_INBOUND_EDGES);
+          this.toggleRankByMode(RankMode.RANK_BY_INBOUND_EDGES);
         }
       },
       {
@@ -596,7 +605,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         labelText: 'Outbound Edges',
         isChecked: rankLabels.includes(RankMode.RANK_BY_OUTBOUND_EDGES),
         onChange: () => {
-          toggleRankingLabel(RankMode.RANK_BY_OUTBOUND_EDGES);
+          this.toggleRankByMode(RankMode.RANK_BY_OUTBOUND_EDGES);
         }
       }
     ];
@@ -824,6 +833,14 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
     const newEdgeLabels = this.props.edgeLabels.filter(l => !isThroughputMode(l));
     this.props.setEdgeLabels([...newEdgeLabels, EdgeLabelMode.THROUGHPUT_GROUP, mode]);
   };
+
+  private toggleRankByMode = (mode: RankMode) => {
+    if (this.props.rankBy.includes(mode)) {
+      this.props.setRankBy(this.props.rankBy.filter(r => r !== mode));
+    } else {
+      this.props.setRankBy([...this.props.rankBy, mode]);
+    }
+  };
 }
 
 // Allow Redux to map sections of our global app state to our props
@@ -836,8 +853,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showMissingSidecars: state.graph.toolbarState.showMissingSidecars,
   showOperationNodes: state.graph.toolbarState.showOperationNodes,
-  rank: state.graph.toolbarState.rank,
   rankBy: state.graph.toolbarState.rankBy,
+  showRank: state.graph.toolbarState.showRank,
   showSecurity: state.graph.toolbarState.showSecurity,
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
   showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
@@ -848,6 +865,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),
+    setRankBy: bindActionCreators(GraphToolbarActions.setRankBy, dispatch),
     toggleBoxByCluster: bindActionCreators(GraphToolbarActions.toggleBoxByCluster, dispatch),
     toggleBoxByNamespace: bindActionCreators(GraphToolbarActions.toggleBoxByNamespace, dispatch),
     toggleCompressOnHide: bindActionCreators(GraphToolbarActions.toggleCompressOnHide, dispatch),
@@ -858,7 +876,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),
     toggleOperationNodes: bindActionCreators(GraphToolbarActions.toggleOperationNodes, dispatch),
     toggleRank: bindActionCreators(GraphToolbarActions.toggleRank, dispatch),
-    toggleRankBy: bindActionCreators(GraphToolbarActions.toggleRankBy, dispatch),
     toggleServiceNodes: bindActionCreators(GraphToolbarActions.toggleServiceNodes, dispatch),
     toggleTrafficAnimation: bindActionCreators(GraphToolbarActions.toggleTrafficAnimation, dispatch)
   };

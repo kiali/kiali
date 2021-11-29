@@ -23,7 +23,8 @@ import {
   UNKNOWN,
   BoxByType,
   TrafficRate,
-  RankMode
+  RankMode,
+  RankResult
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -95,13 +96,13 @@ type ReduxProps = {
   node?: NodeParamsType;
   onNamespaceChange: () => void;
   onReady: (cytoscapeRef: any) => void;
-  rank: boolean;
   rankBy: RankMode[];
   refreshInterval: IntervalInMilliseconds;
   replayActive: boolean;
   replayQueryTime: TimeInMilliseconds;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
   setGraphDefinition: (graphDefinition: GraphDefinition) => void;
+  setRankResult: (result: RankResult) => void;
   setNode: (node?: NodeParamsType) => void;
   setTraceId: (traceId?: string) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
@@ -110,6 +111,7 @@ type ReduxProps = {
   showLegend: boolean;
   showMissingSidecars: boolean;
   showOperationNodes: boolean;
+  showRank: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
@@ -702,7 +704,6 @@ const mapStateToProps = (state: KialiAppState) => ({
   layout: state.graph.layout,
   mtlsEnabled: meshWideMTLSEnabledSelector(state),
   node: state.graph.node,
-  rank: state.graph.toolbarState.rank,
   rankBy: state.graph.toolbarState.rankBy,
   refreshInterval: refreshIntervalSelector(state),
   replayActive: replayActiveSelector(state),
@@ -712,6 +713,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showLegend: state.graph.toolbarState.showLegend,
   showMissingSidecars: state.graph.toolbarState.showMissingSidecars,
   showOperationNodes: state.graph.toolbarState.showOperationNodes,
+  showRank: state.graph.toolbarState.showRank,
   showSecurity: state.graph.toolbarState.showSecurity,
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
   showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
@@ -728,6 +730,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
+  setRankResult: bindActionCreators(GraphActions.setRankResult, dispatch),
   setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId)),
   setUpdateTime: (val: TimeInMilliseconds) => dispatch(GraphActions.setUpdateTime(val)),
   startTour: bindActionCreators(TourActions.startTour, dispatch),

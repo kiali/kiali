@@ -45,10 +45,10 @@ type ReduxProps = {
 
   setActiveNamespaces: (activeNamespaces: Namespace[]) => void;
   setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
-  setRankBy: (rankLabels: RankMode[]) => void;
   setGraphType: (graphType: GraphType) => void;
   setIdleNodes: (idleNodes: boolean) => void;
   setNode: (node?: NodeParamsType) => void;
+  setRankBy: (rankLabels: RankMode[]) => void;
   setTrafficRates: (rates: TrafficRate[]) => void;
   toggleReplayActive: () => void;
 };

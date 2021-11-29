@@ -9,7 +9,7 @@ import {
   renderDestServicesLinks,
   renderHealth
 } from './SummaryLink';
-import { NodeType, SummaryPanelPropType, DecoratedGraphNodeData, DestService } from '../../types/Graph';
+import { DecoratedGraphNodeData, DestService, NodeType, RankResult, SummaryPanelPropType } from '../../types/Graph';
 import { summaryHeader, summaryPanel, summaryBodyTabs, summaryFont } from './SummaryPanelCommon';
 import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
@@ -40,12 +40,15 @@ const defaultState: SummaryPanelNodeState = {
 
 type ReduxProps = {
   jaegerState: JaegerState;
+  rankResult: RankResult;
+  showRank: boolean;
 };
 
 export type SummaryPanelNodeProps = ReduxProps & SummaryPanelPropType;
 
 const expandableSectionStyle = style({
   fontSize: 'var(--graph-side-panel--font-size)',
+  paddingLeft: '1em',
   $nest: {
     '& > div': {
       marginLeft: '2em',
@@ -263,9 +266,11 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       hasTCPTrafficShifting ||
       hasRequestTimeout;
     const shouldRenderGatewayHostnames =
-      (nodeData.isGateway?.ingressInfo?.hostnames !== undefined && nodeData.isGateway.ingressInfo.hostnames.length !== 0) ||
+      (nodeData.isGateway?.ingressInfo?.hostnames !== undefined &&
+        nodeData.isGateway.ingressInfo.hostnames.length !== 0) ||
       (nodeData.isGateway?.egressInfo?.hostnames !== undefined && nodeData.isGateway.egressInfo.hostnames.length !== 0);
     const shouldRenderVsHostnames = nodeData.hasVS?.hostnames !== undefined && nodeData.hasVS?.hostnames.length !== 0;
+    const shouldRenderRank = this.props.showRank;
     return (
       <div style={{ marginTop: '10px', marginBottom: '10px' }}>
         {hasCB && (
@@ -345,6 +350,14 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
             {shouldRenderGatewayHostnames && this.renderGatewayHostnames(nodeData)}
           </>
         )}
+        {shouldRenderRank && (
+          <div>
+            <KialiIcon.Rank />
+            <span style={{ paddingLeft: '4px' }}>
+              Rank: {nodeData.rank !== undefined ? `${nodeData.rank} / ${this.props.rankResult.upperBound}` : 'N/A'}
+            </span>
+          </div>
+        )}
       </div>
     );
   };
@@ -366,7 +379,9 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerState: state.jaegerState
+  jaegerState: state.jaegerState,
+  rankResult: state.graph.rankResult,
+  showRank: state.graph.toolbarState.showRank
 });
 
 const SummaryPanelNodeContainer = connect(mapStateToProps)(SummaryPanelNode);

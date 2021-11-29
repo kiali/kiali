@@ -24,10 +24,11 @@ function scoreByEdges(
 
   let scores = new Map<string, number | undefined>();
   elements.nodes?.forEach(node => {
-    let score: number | undefined;
-    const inboundEdgeCount = edgeCountById.get(node.data.id);
-    if (inboundEdgeCount !== undefined && totalEdgeCount !== undefined) {
-      score = inboundEdgeCount / totalEdgeCount;
+    // Nodes without edges get a default score of 0.
+    let score = 0;
+    const edgeCount = edgeCountById.get(node.data.id);
+    if (edgeCount !== undefined && totalEdgeCount !== undefined) {
+      score = edgeCount / totalEdgeCount;
     }
 
     scores.set(node.data.id, score);
@@ -46,6 +47,10 @@ function scoreByOutboundEdges(elements: Readonly<DecoratedGraphElements>): Map<s
   return scoreByEdges(elements, ScoringCriteria.OutboundEdges);
 }
 
+type ScoredNode = DecoratedGraphNodeWrapper & {
+  score: number;
+};
+
 // Adds a score to the node elements based on the criteria(s).
 // Scores are all relative to the other nodes. Criteria
 // can include any source of data but typically looks at
@@ -53,16 +58,18 @@ function scoreByOutboundEdges(elements: Readonly<DecoratedGraphElements>): Map<s
 export function scoreNodes(
   elements: Readonly<DecoratedGraphElements>,
   ...criterias: ScoringCriteria[]
-): DecoratedGraphElements {
+): { elements: DecoratedGraphElements; upperBound: number } {
   // Zeroes out old scores and ranks if no ScoringCriteria is passed in.
   if (criterias.length === 0) {
     return {
-      nodes: elements.nodes?.map(node => {
-        node.data.score = undefined;
-        node.data.rank = undefined;
-        return node;
-      }),
-      edges: elements.edges
+      elements: {
+        nodes: elements.nodes?.map(node => {
+          node.data.rank = undefined;
+          return node;
+        }),
+        edges: elements.edges
+      },
+      upperBound: 0
     };
   }
 
@@ -90,15 +97,13 @@ export function scoreNodes(
   }
 
   const scoredNodes = elements.nodes?.map(node => {
-    if (totalScore.has(node.data.id)) {
-      node.data.score = totalScore.get(node.data.id);
-    }
-    return node;
+    let score = totalScore.has(node.data.id) ? totalScore.get(node.data.id) : undefined;
+    return { ...node, score: score } as ScoredNode;
   });
 
   const sortedByScore = scoredNodes?.sort((a, b) => {
-    const scoreA = a.data.score;
-    const scoreB = b.data.score;
+    const scoreA = a.score;
+    const scoreB = b.score;
     if (scoreA !== undefined && scoreB === undefined) {
       return -1;
     }
@@ -115,7 +120,7 @@ export function scoreNodes(
   let prevScore: number | undefined;
   let currentRank = 1; // Start rankings at 1
   const rankedNodes = sortedByScore?.map(node => {
-    const currentScore = node.data.score;
+    const currentScore = node.score;
     // No score means no rank
     if (currentScore === undefined) {
       return node;
@@ -137,17 +142,27 @@ export function scoreNodes(
     return node;
   });
 
-  const normalizedNodes = rankedNodes !== undefined ? normalizeRanks(rankedNodes) : undefined;
+  const { normalizedElements, upperBound } = normalizeRanks({
+    nodes: rankedNodes,
+    edges: elements.edges
+  } as DecoratedGraphElements);
 
   return {
-    nodes: normalizedNodes,
-    edges: elements.edges
+    elements: normalizedElements,
+    upperBound
   };
 }
 
 // normalizeRanks normalizes the ranks for the given nodes so that ranks for
 // all the nodes fall between 1..100.
-function normalizeRanks(nodes: Readonly<DecoratedGraphNodeWrapper[]>): DecoratedGraphNodeWrapper[] {
+function normalizeRanks(
+  elements: Readonly<DecoratedGraphElements>
+): { normalizedElements: DecoratedGraphElements; upperBound: number } {
+  const { nodes, edges } = elements;
+  if (nodes === undefined) {
+    return { normalizedElements: elements, upperBound: 0 };
+  }
+
   const minRange = 1;
   const minRank = nodes.length >= 1 ? 1 : undefined;
   let maxRank: number | undefined;
@@ -157,14 +172,15 @@ function normalizeRanks(nodes: Readonly<DecoratedGraphNodeWrapper[]>): Decorated
     }
     maxRank = node.data.rank;
   }
-  const maxRange = maxRank !== undefined && maxRank < 100 ? maxRank : 100;
 
   // If there's no min/max then we can't normalize
   if (minRank === undefined || maxRank === undefined) {
-    return [...nodes];
+    return { normalizedElements: elements, upperBound: 0 };
   }
 
-  return nodes.map(node => {
+  const upperBound = maxRank < 100 ? maxRank : 100;
+
+  const normalizedNodes = nodes.map(node => {
     if (node.data.rank === undefined) {
       return node;
     }
@@ -175,10 +191,18 @@ function normalizeRanks(nodes: Readonly<DecoratedGraphNodeWrapper[]>): Decorated
       return node;
     }
 
-    const normalizedRank = (minRange + (node.data.rank - minRank) * (maxRange - minRange)) / (maxRank! - minRank);
+    const normalizedRank = (minRange + (node.data.rank - minRank) * (upperBound - minRange)) / (maxRank! - minRank);
     // Ranks should be whole numbers
     node.data.rank = Math.ceil(normalizedRank);
 
     return node;
   });
+
+  return {
+    normalizedElements: {
+      nodes: normalizedNodes,
+      edges: edges
+    },
+    upperBound: upperBound
+  };
 }

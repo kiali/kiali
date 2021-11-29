@@ -74,6 +74,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       isOutside: undefined,
       isRoot: undefined,
       isServiceEntry: undefined,
+      rank: undefined,
       service: undefined,
       tcpIn: NaN,
       tcpOut: NaN,

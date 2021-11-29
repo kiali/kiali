@@ -15,6 +15,7 @@ import {
   Layout,
   NodeParamsType,
   RankMode,
+  RankResult,
   SummaryData,
   TrafficRate
 } from '../types/Graph';
@@ -57,12 +58,12 @@ export interface GraphToolbarState {
   boxByCluster: boolean;
   boxByNamespace: boolean;
   compressOnHide: boolean;
-  rank: boolean;
   showIdleEdges: boolean;
   showIdleNodes: boolean;
   showLegend: boolean;
   showMissingSidecars: boolean;
   showOperationNodes: boolean;
+  showRank: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
@@ -81,6 +82,7 @@ export interface GraphState {
   graphDefinition: GraphDefinition | null; // Not for consumption. Only for "Debug" dialog.
   layout: Layout;
   node?: NodeParamsType;
+  rankResult: RankResult;
   summaryData: SummaryData | null;
   toolbarState: GraphToolbarState;
   updateTime: TimeInMilliseconds;

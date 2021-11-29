@@ -10,7 +10,7 @@ import { KialiAppAction } from '../../../actions/KialiAppAction';
 import GraphHelpFind from '../../../pages/Graph/GraphHelpFind';
 import { CyNode, CyEdge } from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import { EdgeLabelMode, NodeType, Layout, RankMode } from '../../../types/Graph';
+import { EdgeLabelMode, NodeType, Layout } from '../../../types/Graph';
 import * as AlertUtils from '../../../utils/AlertUtils';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { style } from 'typestyle';
@@ -28,10 +28,9 @@ type ReduxProps = {
   findValue: string;
   hideValue: string;
   layout: Layout;
-  rank: boolean;
-  rankBy: RankMode[];
   showFindHelp: boolean;
   showIdleNodes: boolean;
+  showRank: boolean;
   showSecurity: boolean;
   updateTime: TimeInMilliseconds;
 
@@ -704,8 +703,8 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       case 'operation':
         return { target: 'node', selector: `[${CyNode.aggregateValue} ${op} "${val}"]` };
       case 'rank': {
-        if (!this.props.rank) {
-          AlertUtils.addSuccess('Enabling "rank" display option for graph find/hide expression');
+        if (!this.props.showRank) {
+          AlertUtils.addSuccess('Enabling "Rank" display option for graph find/hide expression');
           this.props.toggleRank();
         }
 
@@ -737,7 +736,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       //
       case 'destprincipal':
         if (!this.props.showSecurity) {
-          AlertUtils.addSuccess('Enabling "security" display option for graph find/hide expression');
+          AlertUtils.addSuccess('Enabling "Security" display option for graph find/hide expression');
           this.props.toggleGraphSecurity();
         }
         return { target: 'edge', selector: `[${CyEdge.destPrincipal} ${op} "${val}"]` };
@@ -785,7 +784,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       }
       case 'sourceprincipal':
         if (!this.props.showSecurity) {
-          AlertUtils.addSuccess('Enabling "security" display option for this graph find/hide expression');
+          AlertUtils.addSuccess('Enabling "Security" display option for this graph find/hide expression');
           this.props.toggleGraphSecurity();
         }
         return { target: 'edge', selector: `[${CyEdge.sourcePrincipal} ${op} "${val}"]` };
@@ -868,7 +867,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
         };
       case 'idle':
         if (!this.props.showIdleNodes) {
-          AlertUtils.addSuccess('Enabling "idle nodes" display option for graph find/hide expression');
+          AlertUtils.addSuccess('Enabling "Idle nodes" display option for graph find/hide expression');
           this.props.toggleIdleNodes();
         }
         return { target: 'node', selector: isNegation ? `[^${CyNode.isIdle}]` : `[?${CyNode.isIdle}]` };
@@ -927,7 +926,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       //
       case 'mtls':
         if (!this.props.showSecurity) {
-          AlertUtils.addSuccess('Enabling "security" display option for graph find/hide expression');
+          AlertUtils.addSuccess('Enabling "Security" display option for graph find/hide expression');
           this.props.toggleGraphSecurity();
         }
         return { target: 'edge', selector: isNegation ? `[${CyEdge.isMTLS} <= 0]` : `[${CyEdge.isMTLS} > 0]` };
@@ -960,10 +959,9 @@ const mapStateToProps = (state: KialiAppState) => ({
   findValue: findValueSelector(state),
   hideValue: hideValueSelector(state),
   layout: state.graph.layout,
-  rank: state.graph.toolbarState.rank,
-  rankBy: state.graph.toolbarState.rankBy,
   showFindHelp: state.graph.toolbarState.showFindHelp,
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
+  showRank: state.graph.toolbarState.showRank,
   showSecurity: state.graph.toolbarState.showSecurity,
   updateTime: state.graph.updateTime
 });

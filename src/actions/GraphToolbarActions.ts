@@ -25,7 +25,6 @@ export const GraphToolbarActions = {
   toggleIdleNodes: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_IDLE_NODES),
   toggleOperationNodes: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_OPERATION_NODES),
   toggleRank: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_RANK),
-  toggleRankBy: createStandardAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_RANK_BY)<RankMode>(),
   toggleServiceNodes: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_SERVICE_NODES),
   toggleTrafficAnimation: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_TRAFFIC_ANIMATION)
 };

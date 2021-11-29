@@ -114,13 +114,14 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
               layout={DagreGraph.getLayout()}
               onNodeTap={this.handleNodeTap}
               // Ranking not enabled for minigraphs yet
-              rank={false}
               rankBy={[]}
               ref={refInstance => this.setCytoscapeGraph(refInstance)}
               refreshInterval={0}
+              setRankResult={undefined}
               showIdleEdges={false}
               showMissingSidecars={true}
               showOperationNodes={false}
+              showRank={false}
               showSecurity={true}
               showServiceNodes={true}
               showTrafficAnimation={false}
