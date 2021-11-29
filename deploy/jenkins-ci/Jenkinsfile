@@ -78,7 +78,7 @@ def determineReleaseType() {
   // since EPOCH. It is assumed that this script is run weekly
   // starting in the base date. Running at different timespans
   // won't guarantee a good result.
-  return sh ('''
+  return sh (script: '''
 BASE_DATE=${BASE_DATE:-$(date -d '2018-11-30' '+%s')}
 NOW_DATE=${NOW_DATE:-$(date -d 'now' '+%s')}
 
@@ -281,18 +281,6 @@ node('kiali-build && fedora') {
               )
         }
       }
-
-      stage('Post Msg Bus Notification') {
-        if ( releaseType == "minor" ) {
-          build(job: 'kiali-release-notifier',
-              parameters: [
-              [$class: 'StringParameterValue', value: 'minor', name: 'RELEASE_TYPE'],
-              [$class: 'StringParameterValue', value: "${params.QUAY_NAME}", name: 'QUAY_NAME'],
-              [$class: 'StringParameterValue', value: quayTag, name: 'QUAY_TAG']
-              ], wait: false
-              )
-        }
-      }
     }
   } catch (e) {
     echo e.toString()
@@ -310,3 +298,4 @@ node('kiali-build && fedora') {
     cleanWs()
   }
 }
+
