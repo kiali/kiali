@@ -49,7 +49,7 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 
 func (p PortMappingChecker) hasMatchingPodsWithSidecar(service v1.Service) bool {
 	sPods := models.Pods{}
-	sPods.Parse(kubernetes.FilterPodsForService(&service, p.Pods))
+	sPods.Parse(kubernetes.FilterPodsByService(&service, p.Pods))
 	return sPods.HasIstioSidecar()
 }
 

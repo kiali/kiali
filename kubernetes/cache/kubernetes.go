@@ -37,9 +37,11 @@ func (c *kialiCacheImpl) createKubernetesInformers(namespace string, informer *t
 	(*informer)[kubernetes.ReplicaSetType] = sharedInformers.Apps().V1().ReplicaSets().Informer()
 	(*informer)[kubernetes.DaemonSetType] = sharedInformers.Apps().V1().DaemonSets().Informer()
 	(*informer)[kubernetes.ServiceType] = sharedInformers.Core().V1().Services().Informer()
+	(*informer)[kubernetes.ServiceType].AddEventHandler(c.registryRefreshHandler)
 	(*informer)[kubernetes.PodType] = sharedInformers.Core().V1().Pods().Informer()
 	(*informer)[kubernetes.ConfigMapType] = sharedInformers.Core().V1().ConfigMaps().Informer()
 	(*informer)[kubernetes.EndpointsType] = sharedInformers.Core().V1().Endpoints().Informer()
+	(*informer)[kubernetes.EndpointsType].AddEventHandler(c.registryRefreshHandler)
 }
 
 func (c *kialiCacheImpl) isKubernetesSynced(namespace string) bool {

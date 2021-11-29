@@ -72,9 +72,10 @@ type (
 		proxyStatusLock        sync.RWMutex
 		proxyStatusCreated     *time.Time
 		proxyStatusNamespaces  map[string]map[string]podProxyStatus
+		registryRefreshHandler RegistryRefreshHandler
 		registryStatusLock     sync.RWMutex
 		registryStatusCreated  *time.Time
-		registryStatus         []*kubernetes.RegistryStatus
+		registryStatus         *kubernetes.RegistryStatus
 	}
 )
 
@@ -159,6 +160,7 @@ func (c *kialiCacheImpl) createCache(namespace string) bool {
 		return true
 	}
 	informer := make(typeCache)
+	c.registryRefreshHandler = NewRegistryHandler(c, namespace)
 	c.createKubernetesInformers(namespace, &informer)
 	c.createIstioInformers(namespace, &informer)
 	c.nsCache[namespace] = informer

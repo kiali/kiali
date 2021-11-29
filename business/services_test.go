@@ -1,8 +1,11 @@
 package business
 
 import (
+	"io/ioutil"
 	"testing"
 
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	core_v1 "k8s.io/api/core/v1"
@@ -34,4 +37,40 @@ func TestServiceListParsing(t *testing.T) {
 
 	assert.Equal("reviews", reviewsOverview.Name)
 	assert.Equal("httpbin", httpbinOverview.Name)
+}
+
+func TestParseRegistryServices(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+	svc := SvcService{k8s: nil, businessLayer: nil}
+
+	servicesz := "../tests/data/registry/services-registryz.json"
+	bServicesz, err := ioutil.ReadFile(servicesz)
+	assert.NoError(err)
+	rServices := map[string][]byte{
+		"istiod1": bServicesz,
+	}
+	registryServices, err2 := kubernetes.ParseRegistryServices(rServices)
+	assert.NoError(err2)
+
+	configz := "../tests/data/registry/services-configz.json"
+	bConfigz, err2 := ioutil.ReadFile(configz)
+	assert.NoError(err2)
+	rConfig := map[string][]byte{
+		"istiod1": bConfigz,
+	}
+	registryConfig, err2 := kubernetes.ParseRegistryConfig(rConfig)
+	assert.NoError(err2)
+
+	istioConfigList := models.IstioConfigList{
+		ServiceEntries: registryConfig.ServiceEntries,
+	}
+
+	parsedServices := svc.buildRegistryServices(registryServices, istioConfigList)
+	assert.Equal(3, len(parsedServices))
+	assert.Equal(1, len(parsedServices[0].IstioReferences))
+	assert.Equal(1, len(parsedServices[1].IstioReferences))
+	assert.Equal(0, len(parsedServices[2].IstioReferences))
 }

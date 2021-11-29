@@ -58,7 +58,7 @@ func TestFilterPodsForEndpoints(t *testing.T) {
 		{ObjectMeta: meta_v1.ObjectMeta{Name: "other"}},
 	}
 
-	filtered := FilterPodsForEndpoints(&endpoints, pods)
+	filtered := FilterPodsByEndpoints(&endpoints, pods)
 	assert.Len(filtered, 3)
 	assert.Equal("pod-1", filtered[0].Name)
 	assert.Equal("pod-2", filtered[1].Name)
@@ -113,7 +113,7 @@ func TestFilterGateways(t *testing.T) {
 
 	gateways := []networking_v1alpha3.Gateway{gw1, gw2, gw3, gw4, gw5}
 
-	filtered := FilterGatewaysByVS(gateways, virtualServices)
+	filtered := FilterGatewaysByVirtualServices(gateways, virtualServices)
 	assert.Len(filtered, 4)
 	assert.Equal("gateway1", filtered[0].Name)
 	assert.Equal("gateway2", filtered[1].Name)

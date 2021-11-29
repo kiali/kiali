@@ -115,17 +115,17 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 		for _, srv := range valueApp.Services {
 			joinMap(applabels, srv.Labels)
 			if linkIstioResources {
-				vsFiltered := kubernetes.FilterVirtualServices(istioConfigList.VirtualServices, srv.Namespace, srv.Name)
+				vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name)
 				for _, v := range vsFiltered {
 					ref := models.BuildKey(v.Kind, v.Namespace, v.Name)
 					svcReferences = append(svcReferences, &ref)
 				}
-				drFiltered := kubernetes.FilterDestinationRules(istioConfigList.DestinationRules, srv.Namespace, srv.Name)
+				drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name)
 				for _, d := range drFiltered {
 					ref := models.BuildKey(d.Kind, d.Namespace, d.Name)
 					svcReferences = append(svcReferences, &ref)
 				}
-				gwFiltered := kubernetes.FilterGatewaysByVS(istioConfigList.Gateways, istioConfigList.VirtualServices)
+				gwFiltered := kubernetes.FilterGatewaysByVirtualServices(istioConfigList.Gateways, istioConfigList.VirtualServices)
 				for _, g := range gwFiltered {
 					ref := models.BuildKey(g.Kind, g.Namespace, g.Name)
 					svcReferences = append(svcReferences, &ref)

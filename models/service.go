@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -36,6 +37,11 @@ type ServiceOverview struct {
 	IstioReferences []*IstioValidationKey `json:"istioReferences"`
 	// Kiali Wizard scenario, if any
 	KialiWizard string `json:"kialiWizard"`
+	// ServiceRegistry values:
+	// Kubernetes: 	is a service registry backed by k8s API server
+	// External: 	is a service registry for externally provided ServiceEntries
+	// Federation:  special case when registry is provided from a federated environment
+	ServiceRegistry string `json:"serviceRegistry"`
 }
 
 type ServiceList struct {
@@ -55,6 +61,7 @@ type ServiceDetails struct {
 	Endpoints        Endpoints                             `json:"endpoints"`
 	VirtualServices  []networking_v1alpha3.VirtualService  `json:"virtualServices"`
 	DestinationRules []networking_v1alpha3.DestinationRule `json:"destinationRules"`
+	ServiceEntries   []networking_v1alpha3.ServiceEntry    `json:"serviceEntries"`
 	IstioPermissions ResourcePermissions                   `json:"istioPermissions"`
 	Workloads        WorkloadOverviews                     `json:"workloads"`
 	Health           ServiceHealth                         `json:"health"`
@@ -107,6 +114,19 @@ func (s *Service) Parse(service *core_v1.Service) {
 	}
 }
 
+func (s *Service) ParseRegistryService(service *kubernetes.RegistryService) {
+	if service != nil {
+		s.Name = service.Attributes.Name
+		s.Namespace = Namespace{Name: service.Attributes.Namespace}
+		s.Labels = service.Attributes.Labels
+		s.Selectors = service.Attributes.LabelSelectors
+		s.HealthAnnotations = map[string]string{}
+		// It will expect "External" or "Federation"
+		s.Type = service.Attributes.ServiceRegistry
+		s.Ports.ParseServiceRegistryPorts(service)
+	}
+}
+
 func (s *ServiceDetails) SetService(svc *core_v1.Service) {
 	s.Service.Parse(svc)
 }
@@ -115,6 +135,15 @@ func (s *ServiceDetails) SetEndpoints(eps *core_v1.Endpoints) {
 	(&s.Endpoints).Parse(eps)
 }
 
+func (s *ServiceDetails) SetRegistryEndpoints(rEps []*kubernetes.RegistryEndpoint) {
+	for i, p := range s.Service.Ports {
+		istioProtocol, istioMtls := filterRegistryEndpointTLSName(rEps, p.Name, uint32(p.Port))
+		if istioProtocol != "" && istioMtls != "" {
+			s.Service.Ports[i].IstioProtocol = istioProtocol
+			s.Service.Ports[i].TLSMode = istioMtls
+		}
+	}
+}
 func (s *ServiceDetails) SetPods(pods []core_v1.Pod) {
 	mPods := Pods{}
 	mPods.Parse(pods)

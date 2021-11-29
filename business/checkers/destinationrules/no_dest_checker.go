@@ -13,14 +13,14 @@ import (
 )
 
 type NoDestinationChecker struct {
-	Namespace       string
-	Namespaces      models.Namespaces
-	WorkloadList    models.WorkloadList
-	DestinationRule networking_v1alpha3.DestinationRule
-	VirtualServices []networking_v1alpha3.VirtualService
-	ServiceEntries  map[string][]string
-	ServiceList     models.ServiceList
-	RegistryStatus  []*kubernetes.RegistryStatus
+	Namespace        string
+	Namespaces       models.Namespaces
+	WorkloadList     models.WorkloadList
+	DestinationRule  networking_v1alpha3.DestinationRule
+	VirtualServices  []networking_v1alpha3.VirtualService
+	ServiceEntries   map[string][]string
+	ServiceList      models.ServiceList
+	RegistryServices []*kubernetes.RegistryService
 }
 
 // Check parses the DestinationRule definitions and verifies that they point to an existing service, including any subset definitions
@@ -128,9 +128,9 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 		return true
 	}
 
-	// Use RegistryStatus to check destinations that may not be covered with previous check
+	// Use RegistryService to check destinations that may not be covered with previous check
 	// i.e. Multi-cluster or Federation validations
-	if kubernetes.HasMatchingRegistryStatus(host.String(), n.RegistryStatus) {
+	if kubernetes.HasMatchingRegistryService(host.String(), n.RegistryServices) {
 		return true
 	}
 	return false

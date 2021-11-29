@@ -61,7 +61,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	queryTime := util.Clock.Now()
 	rateInterval, err = adjustRateInterval(business, namespace, rateInterval, queryTime)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
+		handleErrorResponse(w, err)
 		return
 	}
 

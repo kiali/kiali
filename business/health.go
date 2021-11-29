@@ -272,16 +272,21 @@ func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates mo
 
 func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
+	svc, err := in.businessLayer.Svc.GetService(namespace, service)
+	if err != nil {
+		return rqHealth, err
+	}
+	if svc.Type == "External" {
+		// ServiceEntry from Istio Registry
+		// Telemetry doesn't collect a namespace
+		namespace = "unknown"
+	}
 	inbound, err := in.prom.GetServiceRequestRates(namespace, service, rateInterval, queryTime)
 	if err != nil {
 		return rqHealth, errors.NewServiceUnavailable(err.Error())
 	}
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
-	}
-	svc, err := in.businessLayer.Svc.GetService(namespace, service)
-	if err != nil {
-		return rqHealth, err
 	}
 	rqHealth.HealthAnnotations = svc.HealthAnnotations
 	rqHealth.CombineReporters()

@@ -23,7 +23,7 @@ type AuthorizationPolicyChecker struct {
 	MtlsDetails             kubernetes.MTLSDetails
 	VirtualServices         []networking_v1alpha3.VirtualService
 	ExportedVirtualServices []networking_v1alpha3.VirtualService
-	RegistryStatus          []*kubernetes.RegistryStatus
+	RegistryServices        []*kubernetes.RegistryService
 }
 
 func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
@@ -57,7 +57,7 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy security_v1beta.Authori
 		common.SelectorNoWorkloadFoundChecker(AuthorizationPolicyCheckerType, matchLabels, a.WorkloadList),
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
 		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, Namespace: a.Namespace, Namespaces: a.Namespaces,
-			ServiceEntries: serviceHosts, ServiceList: a.ServiceList, VirtualServices: a.VirtualServices, RegistryStatus: a.RegistryStatus},
+			ServiceEntries: serviceHosts, ServiceList: a.ServiceList, VirtualServices: a.VirtualServices, RegistryServices: a.RegistryServices},
 	}
 
 	for _, checker := range enabledCheckers {

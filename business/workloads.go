@@ -150,7 +150,7 @@ func (in *WorkloadService) GetWorkloadList(criteria WorkloadCriteria) (models.Wo
 
 func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConfigList) []*models.IstioValidationKey {
 	wkdReferences := make([]*models.IstioValidationKey, 0)
-	gwFiltered := kubernetes.FilterGateways(wSelector, istioConfigList.Gateways)
+	gwFiltered := kubernetes.FilterGatewaysBySelector(wSelector, istioConfigList.Gateways)
 	for _, g := range gwFiltered {
 		ref := models.BuildKey(g.Kind, g.Name, g.Namespace)
 		exist := false
@@ -161,7 +161,7 @@ func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConf
 			wkdReferences = append(wkdReferences, &ref)
 		}
 	}
-	apFiltered := kubernetes.FilterAuthorizationPolicies(wSelector, istioConfigList.AuthorizationPolicies)
+	apFiltered := kubernetes.FilterAuthorizationPoliciesBySelector(wSelector, istioConfigList.AuthorizationPolicies)
 	for _, a := range apFiltered {
 		ref := models.BuildKey(a.Kind, a.Name, a.Namespace)
 		exist := false
@@ -172,7 +172,7 @@ func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConf
 			wkdReferences = append(wkdReferences, &ref)
 		}
 	}
-	paFiltered := kubernetes.FilterPeerAuthentications(wSelector, istioConfigList.PeerAuthentications)
+	paFiltered := kubernetes.FilterPeerAuthenticationsBySelector(wSelector, istioConfigList.PeerAuthentications)
 	for _, p := range paFiltered {
 		ref := models.BuildKey(p.Kind, p.Name, p.Namespace)
 		exist := false
@@ -183,7 +183,7 @@ func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConf
 			wkdReferences = append(wkdReferences, &ref)
 		}
 	}
-	scFiltered := kubernetes.FilterSidecars(wSelector, istioConfigList.Sidecars)
+	scFiltered := kubernetes.FilterSidecarsBySelector(wSelector, istioConfigList.Sidecars)
 	for _, s := range scFiltered {
 		ref := models.BuildKey(s.Kind, s.Name, s.Namespace)
 		exist := false
@@ -194,7 +194,7 @@ func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConf
 			wkdReferences = append(wkdReferences, &ref)
 		}
 	}
-	raFiltered := kubernetes.FilterRequestAuthentications(wSelector, istioConfigList.RequestAuthentications)
+	raFiltered := kubernetes.FilterRequestAuthenticationsBySelector(wSelector, istioConfigList.RequestAuthentications)
 	for _, ra := range raFiltered {
 		ref := models.BuildKey(ra.Kind, ra.Name, ra.Namespace)
 		exist := false
@@ -205,7 +205,7 @@ func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConf
 			wkdReferences = append(wkdReferences, &ref)
 		}
 	}
-	efFiltered := kubernetes.FilterEnvoyFilters(wSelector, istioConfigList.EnvoyFilters)
+	efFiltered := kubernetes.FilterEnvoyFiltersBySelector(wSelector, istioConfigList.EnvoyFilters)
 	for _, ef := range efFiltered {
 		ref := models.BuildKey(ef.Kind, ef.Name, ef.Namespace)
 		exist := false
@@ -913,7 +913,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 			}
 			if found {
 				selector := labels.Set(dep[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseDeployment(&dep[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as Deployment", cname)
@@ -931,7 +931,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 			}
 			if found {
 				selector := labels.Set(repset[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseReplicaSet(&repset[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as ReplicaSet", cname)
@@ -949,7 +949,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 			}
 			if found {
 				selector := labels.Set(repcon[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseReplicationController(&repcon[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as ReplicationController", cname)
@@ -967,7 +967,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 			}
 			if found {
 				selector := labels.Set(depcon[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseDeploymentConfig(&depcon[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as DeploymentConfig", cname)
@@ -985,7 +985,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 			}
 			if found {
 				selector := labels.Set(fulset[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseStatefulSet(&fulset[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as StatefulSet", cname)
@@ -1020,7 +1020,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 			}
 			if found {
 				selector := labels.Set(jbs[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseJob(&jbs[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as Job", cname)
@@ -1038,7 +1038,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 			}
 			if found {
 				selector := labels.Set(conjbs[iFound].Spec.JobTemplate.Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseCronJob(&conjbs[iFound])
 			} else {
 				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", cname)
@@ -1056,7 +1056,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 			}
 			if found {
 				selector := labels.Set(daeset[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseDaemonSet(&daeset[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as Deployment", cname)
@@ -1064,11 +1064,11 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 			}
 		default:
 			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
-			cPods := kubernetes.FilterPodsForController(cname, kubernetes.ReplicaSetType, pods)
+			cPods := kubernetes.FilterPodsByController(cname, kubernetes.ReplicaSetType, pods)
 			if len(cPods) == 0 {
 				// If no pods we're found for a ReplicaSet type, it's possible the controller
 				// is managing the pods itself i.e. the pod's have an owner ref directly to the controller type.
-				cPods = kubernetes.FilterPodsForController(cname, ctype, pods)
+				cPods = kubernetes.FilterPodsByController(cname, ctype, pods)
 			}
 			w.SetPods(cPods)
 
@@ -1476,7 +1476,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		case kubernetes.DeploymentType:
 			if dep != nil && dep.Name == workloadName {
 				selector := labels.Set(dep.Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseDeployment(dep)
 			} else {
 				log.Errorf("Workload %s is not found as Deployment", workloadName)
@@ -1494,7 +1494,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			}
 			if found {
 				selector := labels.Set(repset[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseReplicaSet(&repset[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as ReplicaSet", workloadName)
@@ -1512,7 +1512,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			}
 			if found {
 				selector := labels.Set(repcon[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseReplicationController(&repcon[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as ReplicationController", workloadName)
@@ -1521,7 +1521,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		case kubernetes.DeploymentConfigType:
 			if depcon != nil && depcon.Name == workloadName {
 				selector := labels.Set(depcon.Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseDeploymentConfig(depcon)
 			} else {
 				log.Errorf("Workload %s is not found as DeploymentConfig", workloadName)
@@ -1530,7 +1530,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		case kubernetes.StatefulSetType:
 			if fulset != nil && fulset.Name == workloadName {
 				selector := labels.Set(fulset.Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseStatefulSet(fulset)
 			} else {
 				log.Errorf("Workload %s is not found as StatefulSet", workloadName)
@@ -1565,7 +1565,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			}
 			if found {
 				selector := labels.Set(jbs[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseJob(&jbs[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as Job", workloadName)
@@ -1583,7 +1583,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			}
 			if found {
 				selector := labels.Set(conjbs[iFound].Spec.JobTemplate.Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseCronJob(&conjbs[iFound])
 			} else {
 				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", workloadName)
@@ -1592,7 +1592,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		case kubernetes.DaemonSetType:
 			if ds != nil && ds.Name == workloadName {
 				selector := labels.Set(ds.Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseDaemonSet(ds)
 			} else {
 				log.Errorf("Workload %s is not found as DaemonSet", workloadName)
@@ -1602,11 +1602,11 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
 			// Note, we will use the controller found in the Pod resolution, instead that the passed by parameter
 			// This will cover cornercase for https://github.com/kiali/kiali/issues/3830
-			cPods := kubernetes.FilterPodsForController(workloadName, kubernetes.ReplicaSetType, pods)
+			cPods := kubernetes.FilterPodsByController(workloadName, kubernetes.ReplicaSetType, pods)
 			if len(cPods) == 0 {
 				// If no pods we're found for a ReplicaSet type, it's possible the controller
 				// is managing the pods itself i.e. the pod's have an owner ref directly to the controller type.
-				cPods = kubernetes.FilterPodsForController(workloadName, ctype, pods)
+				cPods = kubernetes.FilterPodsByController(workloadName, ctype, pods)
 			}
 			w.SetPods(cPods)
 

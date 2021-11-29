@@ -14,6 +14,7 @@ import (
 	api_types "k8s.io/apimachinery/pkg/types"
 
 	"context"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -28,6 +29,11 @@ type IstioConfigService struct {
 }
 
 type IstioConfigCriteria struct {
+	// When AllNamespaces is true the IstioConfigService will use the Istio registry to return the configuration
+	// from all namespaces directly from the Istio registry instead of the individual API
+	// This usecase should be reserved for validations use cases only where cross-namespace validation may create a
+	// penalty
+	AllNamespaces                 bool
 	Namespace                     string
 	IncludeGateways               bool
 	IncludeVirtualServices        bool
@@ -92,7 +98,7 @@ var newSecurityConfigTypes = []string{
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
 // per a given Namespace.
 func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (models.IstioConfigList, error) {
-	if criteria.Namespace == "" {
+	if criteria.Namespace == "" && !criteria.AllNamespaces {
 		return models.IstioConfigList{}, errors.New("GetIstioConfigList needs a non empty Namespace")
 	}
 	istioConfigList := models.IstioConfigList{
@@ -110,6 +116,36 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		AuthorizationPolicies:  []security_v1beta1.AuthorizationPolicy{},
 		PeerAuthentications:    []security_v1beta1.PeerAuthentication{},
 		RequestAuthentications: []security_v1beta1.RequestAuthentication{},
+	}
+
+	// Use the Istio Registry when AllNamespaces is present
+	if criteria.AllNamespaces {
+		registryCriteria := RegistryCriteria{
+			AllNamespaces: true,
+		}
+		registryConfiguration, err := in.businessLayer.RegistryStatus.GetRegistryConfiguration(registryCriteria)
+		if err != nil {
+			return istioConfigList, err
+		}
+		if registryConfiguration == nil {
+			log.Warningf("RegistryConfiguration is nil. This is an unexpected case. Is the Kiali cache disabled ?")
+			return istioConfigList, nil
+		}
+		// AllNamespaces will return an empty namespace
+		istioConfigList.Namespace.Name = ""
+		istioConfigList.DestinationRules = registryConfiguration.DestinationRules
+		istioConfigList.EnvoyFilters = registryConfiguration.EnvoyFilters
+		istioConfigList.Gateways = registryConfiguration.Gateways
+		istioConfigList.VirtualServices = registryConfiguration.VirtualServices
+		istioConfigList.ServiceEntries = registryConfiguration.ServiceEntries
+		istioConfigList.Sidecars = registryConfiguration.Sidecars
+		istioConfigList.WorkloadEntries = registryConfiguration.WorkloadEntries
+		istioConfigList.WorkloadGroups = registryConfiguration.WorkloadGroups
+		istioConfigList.AuthorizationPolicies = registryConfiguration.AuthorizationPolicies
+		istioConfigList.PeerAuthentications = registryConfiguration.PeerAuthentications
+		istioConfigList.RequestAuthentications = registryConfiguration.RequestAuthentications
+
+		return istioConfigList, nil
 	}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
@@ -163,7 +199,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			}
 			if err == nil {
 				if isWorkloadSelector {
-					istioConfigList.EnvoyFilters = kubernetes.FilterEnvoyFilters(workloadSelector, istioConfigList.EnvoyFilters)
+					istioConfigList.EnvoyFilters = kubernetes.FilterEnvoyFiltersBySelector(workloadSelector, istioConfigList.EnvoyFilters)
 				}
 			} else {
 				errChan <- err
@@ -185,7 +221,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			}
 			if err == nil {
 				if isWorkloadSelector {
-					istioConfigList.Gateways = kubernetes.FilterGateways(workloadSelector, istioConfigList.Gateways)
+					istioConfigList.Gateways = kubernetes.FilterGatewaysBySelector(workloadSelector, istioConfigList.Gateways)
 				}
 			} else {
 				errChan <- err
@@ -224,7 +260,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			}
 			if err == nil {
 				if isWorkloadSelector {
-					istioConfigList.Sidecars = kubernetes.FilterSidecars(workloadSelector, istioConfigList.Sidecars)
+					istioConfigList.Sidecars = kubernetes.FilterSidecarsBySelector(workloadSelector, istioConfigList.Sidecars)
 				}
 			} else {
 				errChan <- err
@@ -297,7 +333,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			}
 			if err == nil {
 				if isWorkloadSelector {
-					istioConfigList.AuthorizationPolicies = kubernetes.FilterAuthorizationPolicies(workloadSelector, istioConfigList.AuthorizationPolicies)
+					istioConfigList.AuthorizationPolicies = kubernetes.FilterAuthorizationPoliciesBySelector(workloadSelector, istioConfigList.AuthorizationPolicies)
 				}
 			} else {
 				errChan <- err
@@ -318,7 +354,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			}
 			if err == nil {
 				if isWorkloadSelector {
-					istioConfigList.PeerAuthentications = kubernetes.FilterPeerAuthentications(workloadSelector, istioConfigList.PeerAuthentications)
+					istioConfigList.PeerAuthentications = kubernetes.FilterPeerAuthenticationsBySelector(workloadSelector, istioConfigList.PeerAuthentications)
 				}
 			} else {
 				errChan <- err
@@ -339,7 +375,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			}
 			if err == nil {
 				if isWorkloadSelector {
-					istioConfigList.RequestAuthentications = kubernetes.FilterRequestAuthentications(workloadSelector, istioConfigList.RequestAuthentications)
+					istioConfigList.RequestAuthentications = kubernetes.FilterRequestAuthenticationsBySelector(workloadSelector, istioConfigList.RequestAuthentications)
 				}
 			} else {
 				errChan <- err

@@ -159,6 +159,24 @@ func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// ACcess to the service details to check
+	b, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+	svc, err := b.Svc.GetService(namespace, service)
+	if err != nil {
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+
+	// "External"/"ServiceEntry" services don't use namespace in telemetry, they need to use the "unknown" parameter
+	// to collect the relevant telemetry for those services
+	if svc.Type == "External" {
+		params.Namespace = "unknown"
+	}
+
 	metrics, err := metricsService.GetMetrics(params, business.GetIstioScaler())
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())

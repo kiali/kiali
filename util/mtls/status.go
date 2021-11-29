@@ -81,7 +81,7 @@ func (m MtlsStatus) WorkloadMtlsStatus() string {
 				// Filter Svc and extract its workloads selectors
 				filteredSvcs := m.ServiceList.FilterServicesForSelector(selector)
 				for _, svc := range filteredSvcs {
-					filteredDrs := kubernetes.FilterDestinationRules(m.DestinationRules, svc.Namespace, svc.Name)
+					filteredDrs := kubernetes.FilterDestinationRulesByService(m.DestinationRules, svc.Namespace, svc.Name)
 					for _, dr := range filteredDrs {
 						enabled, mode := kubernetes.DestinationRuleHasMTLSEnabled(dr)
 						if enabled || mode == "MUTUAL" {

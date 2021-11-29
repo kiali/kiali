@@ -1,6 +1,9 @@
 package models
 
-import core_v1 "k8s.io/api/core/v1"
+import (
+	"github.com/kiali/kiali/kubernetes"
+	core_v1 "k8s.io/api/core/v1"
+)
 
 type Endpoints []Endpoint
 type Endpoint struct {
@@ -23,4 +26,15 @@ func (endpoints *Endpoints) Parse(es *core_v1.Endpoints) {
 func (endpoint *Endpoint) Parse(s core_v1.EndpointSubset) {
 	(&endpoint.Ports).ParseEndpointPorts(s.Ports)
 	(&endpoint.Addresses).Parse(s.Addresses)
+}
+
+func filterRegistryEndpointTLSName(rEs []*kubernetes.RegistryEndpoint, portName string, portNumber uint32) (string, string) {
+	for _, ep := range rEs {
+		for _, iEp := range ep.Endpoints {
+			if iEp.ServicePort.Name == portName && iEp.ServicePort.Port == portNumber {
+				return iEp.ServicePort.Protocol, iEp.Endpoint.TLSMode
+			}
+		}
+	}
+	return "", ""
 }
