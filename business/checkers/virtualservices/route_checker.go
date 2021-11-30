@@ -97,7 +97,7 @@ func (route RouteChecker) checkTcpRoutes() ([]*models.IstioCheck, bool) {
 			}
 		}
 
-		route.trackTcpTlsSubset(routeIdx, "http", destinationWeights, &validations)
+		route.trackTcpTlsSubset(routeIdx, "tcp", destinationWeights, &validations)
 	}
 
 	return validations, valid
@@ -128,7 +128,7 @@ func (route RouteChecker) checkTlsRoutes() ([]*models.IstioCheck, bool) {
 			}
 		}
 
-		route.trackTcpTlsSubset(routeIdx, "http", destinationWeights, &validations)
+		route.trackTcpTlsSubset(routeIdx, "tls", destinationWeights, &validations)
 	}
 
 	return validations, valid
