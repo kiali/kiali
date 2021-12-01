@@ -14,7 +14,7 @@ type GlobalChecker struct {
 func (gc GlobalChecker) Check() ([]*models.IstioCheck, bool) {
 	checks, valid := make([]*models.IstioCheck, 0), true
 
-	if !config.IsIstioNamespace(gc.Sidecar.Namespace) {
+	if !config.IsRootNamespace(gc.Sidecar.Namespace) {
 		return checks, valid
 	}
 
