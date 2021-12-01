@@ -38,6 +38,7 @@ type Layer struct {
 
 // Global clientfactory and prometheus clients.
 var clientFactory kubernetes.ClientFactory
+var jaegerClient jaeger.ClientInterface
 var prometheusClient prometheus.ClientInterface
 var once sync.Once
 var kialiCache cache.KialiCache
@@ -95,6 +96,7 @@ func Get(authInfo *api.AuthInfo) (*Layer, error) {
 	if prometheusClient == nil {
 		prom, err := prometheus.NewClient()
 		if err != nil {
+			prometheusClient = nil
 			return nil, err
 		}
 		prometheusClient = prom
@@ -102,7 +104,14 @@ func Get(authInfo *api.AuthInfo) (*Layer, error) {
 
 	// Create Jaeger client
 	jaegerLoader := func() (jaeger.ClientInterface, error) {
-		return jaeger.NewClient(authInfo.Token)
+		var err error
+		if jaegerClient == nil {
+			jaegerClient, err = jaeger.NewClient(authInfo.Token)
+			if err != nil {
+				jaegerClient = nil
+			}
+		}
+		return jaegerClient, err
 	}
 
 	return NewWithBackends(k8s, prometheusClient, jaegerLoader), nil

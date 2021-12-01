@@ -98,7 +98,7 @@ func NewClient(token string) (*Client, error) {
 				return nil, err
 			}
 			client := jaegerModel.NewQueryServiceClient(conn)
-
+			log.Infof("Create Jaeger GRPC client %s", address)
 			return &Client{grpcClient: client, ctx: ctx}, nil
 		} else {
 			// Legacy HTTP client
@@ -109,6 +109,7 @@ func NewClient(token string) (*Client, error) {
 				return nil, err
 			}
 			client := http.Client{Transport: transport, Timeout: timeout}
+			log.Infof("Create Jaeger HTTP client %s", u)
 			return &Client{httpClient: client, baseURL: u, ctx: ctx}, nil
 		}
 	}
