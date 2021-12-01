@@ -64,7 +64,7 @@ func (in VirtualServiceChecker) runChecks(virtualService networking_v1alpha3.Vir
 	key, rrValidation := EmptyValidValidation(virtualServiceName, virtualService.Namespace, VirtualCheckerType)
 
 	enabledCheckers := []Checker{
-		virtualservices.RouteChecker{VirtualService: virtualService},
+		virtualservices.RouteChecker{VirtualService: virtualService, Namespace: in.Namespace, Namespaces: in.Namespaces.GetNames()},
 		virtualservices.SubsetPresenceChecker{Namespace: in.Namespace, Namespaces: in.Namespaces.GetNames(), DestinationRules: in.DestinationRules, VirtualService: virtualService, ExportedDestinationRules: in.ExportedDestinationRules},
 		common.ExportToNamespaceChecker{ExportTo: virtualService.Spec.ExportTo, Namespaces: in.Namespaces},
 	}
