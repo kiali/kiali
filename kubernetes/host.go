@@ -205,8 +205,8 @@ func HasMatchingVirtualServices(host Host, virtualServices []networking_v1alpha3
 	return false
 }
 
-// HasMatchingRegistryService returns true when the FDQN of the host param matches
-// with one registry status of the registryStatus param.
+// HasMatchingRegistryService returns true when the FDQN of the host (from given namespace) param matches
+// with one registry service of the registryServices param.
 func HasMatchingRegistryService(namespace string, host string, registryServices []*RegistryService) bool {
 	for _, rStatus := range registryServices {
 		// We assume that on these cases the host.Service is provided in FQDN
