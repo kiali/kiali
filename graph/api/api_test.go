@@ -3508,6 +3508,24 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 		"source_cluster":                 "kukulcan",
 		"source_workload":                "productpage-v1",
 		"source_workload_namespace":      "bookinfo"}
+	// This is an additional test for #4488, done here because, unlike the other tests, this test is injecting service nodes
+	q2m6 := model.Metric{
+		"destination_canonical_revision": "v1",
+		"destination_canonical_service":  "kiali#4488-dest",
+		"destination_cluster":            "tzotz",
+		"destination_service":            "10.2.3.4:8080",
+		"destination_service_name":       "PassthroughCluster",
+		"destination_service_namespace":  "bookinfo",
+		"destination_workload":           "kiali#4488-dest-v1",
+		"destination_workload_namespace": "bookinfo",
+		"request_protocol":               "http",
+		"response_code":                  "200",
+		"response_flags":                 "-",
+		"source_canonical_revision":      "v1",
+		"source_canonical_service":       "kiali#4488-source",
+		"source_cluster":                 "tzotz",
+		"source_workload":                "kiali#4488-source-v1",
+		"source_workload_namespace":      "bookinfo"}
 	v2 := model.Vector{
 		&model.Sample{
 			Metric: q2m0,
@@ -3526,6 +3544,9 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 			Value:  100},
 		&model.Sample{
 			Metric: q2m5,
+			Value:  100},
+		&model.Sample{
+			Metric: q2m6,
 			Value:  100},
 	}
 

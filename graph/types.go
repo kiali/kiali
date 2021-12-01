@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	BlackHoleCluster      string = "BlackHoleCluster"
 	GraphTypeApp          string = "app"
 	GraphTypeService      string = "service" // Treated as graphType Workload, with service injection, and then condensed
 	GraphTypeVersionedApp string = "versionedApp"
@@ -18,11 +19,9 @@ const (
 	NodeTypeService       string = "service"
 	NodeTypeUnknown       string = "unknown" // The special "unknown" traffic gen node
 	NodeTypeWorkload      string = "workload"
+	PassthroughCluster    string = "PassthroughCluster"
 	TF                    string = "2006-01-02 15:04:05" // TF is the TimeFormat for timestamps
 	Unknown               string = "unknown"             // Istio unknown label value
-	// private
-	passthroughCluster string = "PassthroughCluster"
-	blackHoleCluster   string = "BlackHoleCluster"
 )
 
 type Node struct {
@@ -119,7 +118,7 @@ func NewNodeExplicit(id, cluster, namespace, workload, app, version, service, no
 		workload = ""
 		version = ""
 
-		if service == passthroughCluster || service == blackHoleCluster {
+		if service == PassthroughCluster || service == BlackHoleCluster {
 			metadata[IsEgressCluster] = true
 		}
 	case NodeTypeWorkload:

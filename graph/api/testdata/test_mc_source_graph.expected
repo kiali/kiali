@@ -280,6 +280,52 @@
       },
       {
         "data": {
+          "id": "a4dbaf34b838d0ade625d37c4a8b990e",
+          "nodeType": "app",
+          "cluster": "tzotz",
+          "namespace": "bookinfo",
+          "workload": "kiali#4488-dest-v1",
+          "app": "kiali#4488-dest",
+          "version": "v1",
+          "destServices": [
+            {
+              "cluster": "tzotz",
+              "namespace": "bookinfo",
+              "name": "PassthroughCluster"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "100.00"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "id": "a246ad10e3abcc5b72f1d1b7f7ce735b",
+          "nodeType": "app",
+          "cluster": "tzotz",
+          "namespace": "bookinfo",
+          "workload": "kiali#4488-source-v1",
+          "app": "kiali#4488-source",
+          "version": "v1",
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpOut": "100.00"
+              }
+            }
+          ],
+          "isRoot": true
+        }
+      },
+      {
+        "data": {
           "id": "91e5b39a176fbba2e97a8fcccb474095",
           "nodeType": "app",
           "cluster": "tzotz",
@@ -522,6 +568,30 @@
                 },
                 "hosts": {
                   "details.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "cff7f5ca632018a2a8cc8df280d40d3e",
+          "source": "a246ad10e3abcc5b72f1d1b7f7ce735b",
+          "target": "a4dbaf34b838d0ade625d37c4a8b990e",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "10.2.3.4:8080": "100.0"
                 }
               }
             }

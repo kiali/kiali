@@ -318,9 +318,12 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metri
 		// make code more readable by setting "host" because "destSvc" holds destination.service.host | request.host | "unknown"
 		host := destSvc
 
-		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
+		// don't inject a service node if any of:
+		// - destSvcName is not set
+		// - destSvcName is PassthroughCluster (see https://github.com/kiali/kiali/issues/4488)
+		// - dest node is already a service node
 		inject := false
-		if o.InjectServiceNodes && graph.IsOK(destSvcName) {
+		if o.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
 			inject = (graph.NodeTypeService != destNodeType)
 		}
