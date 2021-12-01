@@ -101,7 +101,7 @@ func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, 
 			// The 15014 port on Istiod is open for control plane monitoring.
 			// Here's the Istio doc page about the port usage by istio:
 			// https://istio.io/latest/docs/ops/deployment/requirements/#ports-used-by-istio
-			res, err := in.ForwardGetRequest(namespace, name, freePort, 15014, debugPath)
+			res, err := in.ForwardGetRequest(namespace, name, freePort, c.ExternalServices.Istio.IstiodPodMonitoringPort, debugPath)
 			if err != nil {
 				errChan <- fmt.Errorf("%s: %s", name, err.Error())
 			} else {
