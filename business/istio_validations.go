@@ -475,7 +475,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 	go func(details *kubernetes.MTLSDetails) {
 		defer wg.Done()
 		criteria := IstioConfigCriteria{
-			Namespace:                  config.Get().IstioNamespace,
+			Namespace:                  config.Get().ExternalServices.Istio.RootNamespace,
 			IncludePeerAuthentications: true,
 		}
 		istioConfig, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
