@@ -375,39 +375,29 @@ func (in *IstioValidationsService) fetchExportedResources(exportedResources *kub
 	if len(errChan) > 0 {
 		return
 	}
-	nss, err := in.businessLayer.Namespace.GetNamespaces()
+
+	criteria := IstioConfigCriteria{
+		AllNamespaces:           true,
+		IncludeDestinationRules: true,
+		IncludeServiceEntries:   true,
+		IncludeVirtualServices:  true,
+	}
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
 	if err != nil {
 		errChan <- err
 		return
 	}
+	// Filter VS
+	filteredVSs := in.filterVSExportToNamespaces(namespace, istioConfigList.VirtualServices)
+	exportedResources.VirtualServices = append(exportedResources.VirtualServices, filteredVSs...)
 
-	for _, ns := range nss {
-		if namespace == ns.Name {
-			continue // skip the current namespace as it is considered already in validations
-		}
-		criteria := IstioConfigCriteria{
-			Namespace:               ns.Name,
-			IncludeDestinationRules: true,
-			IncludeServiceEntries:   true,
-			IncludeVirtualServices:  true,
-		}
-		istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
-		if err != nil {
-			errChan <- err
-			return
-		}
-		// Filter VS
-		filteredVSs := in.filterVSExportToNamespaces(namespace, istioConfigList.VirtualServices)
-		exportedResources.VirtualServices = append(exportedResources.VirtualServices, filteredVSs...)
+	// Filter DR
+	filteredDRs := in.filterDRExportToNamespaces(namespace, istioConfigList.DestinationRules)
+	exportedResources.DestinationRules = append(exportedResources.DestinationRules, filteredDRs...)
 
-		// Filter DR
-		filteredDRs := in.filterDRExportToNamespaces(namespace, istioConfigList.DestinationRules)
-		exportedResources.DestinationRules = append(exportedResources.DestinationRules, filteredDRs...)
-
-		// Filter SE
-		filteredSEs := in.filterSEExportToNamespaces(namespace, istioConfigList.ServiceEntries)
-		exportedResources.ServiceEntries = append(exportedResources.ServiceEntries, filteredSEs...)
-	}
+	// Filter SE
+	filteredSEs := in.filterSEExportToNamespaces(namespace, istioConfigList.ServiceEntries)
+	exportedResources.ServiceEntries = append(exportedResources.ServiceEntries, filteredSEs...)
 }
 
 func (in *IstioValidationsService) filterVSExportToNamespaces(namespace string, vs []networking_v1alpha3.VirtualService) []networking_v1alpha3.VirtualService {
