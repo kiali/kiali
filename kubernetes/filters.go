@@ -240,11 +240,24 @@ func FilterRegistryServicesByServices(registryServices []*RegistryService, servi
 	return filtered
 }
 
-func FilterByRegistryService(hostname string, registryService *RegistryService) bool {
-	// Basic filter using Hostname
-	// TODO use the ExportTo, Namespace, ServiceRegistry and other attributes to refine the match
+func FilterByRegistryService(namespace string, hostname string, registryService *RegistryService) bool {
+	// Basic filter using Hostname, also consider exported Namespaces of Service
 	// but for a first iteration if it's found in the registry it will be considered "valid" to reduce the number of false validation errors
-	return hostname == registryService.Hostname
+	if hostname == registryService.Hostname {
+		exportTo := registryService.IstioService.Attributes.ExportTo
+		if len(exportTo) > 0 {
+			for exportToNs := range exportTo {
+				// take only namespaces where it is exported to, exported to the own namespace, or if it is exported to all namespaces
+				if exportToNs == "*" || exportToNs == namespace || (exportToNs == "." && registryService.IstioService.Attributes.Namespace == namespace) {
+					return true
+				}
+			}
+		} else {
+			// no exportTo field, means service exported to all namespaces
+			return true
+		}
+	}
+	return false
 }
 
 func FilterRequestAuthenticationsBySelector(workloadSelector string, requestauthentications []security_v1beta1.RequestAuthentication) []security_v1beta1.RequestAuthentication {

@@ -29,7 +29,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 	config.Set(conf)
 
 	vs := mockCombinedValidationService(fakeCombinedIstioConfigList(),
-		[]string{"details", "product", "customer"}, fakePods())
+		[]string{"details", "product", "customer"}, "test", fakePods())
 
 	validations, _ := vs.GetValidations("test", "")
 	assert.NotEmpty(validations)
@@ -41,7 +41,7 @@ func TestGetIstioObjectValidations(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vs := mockCombinedValidationService(fakeCombinedIstioConfigList(), []string{"details", "product", "customer"}, fakePods())
+	vs := mockCombinedValidationService(fakeCombinedIstioConfigList(), []string{"details", "product", "customer"}, "test", fakePods())
 
 	validations, _ := vs.GetIstioObjectValidations("test", "virtualservices", "product-vs")
 
@@ -143,14 +143,14 @@ func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 	k8s.MockIstio(fakeIstioObjects...)
 	mockWorkLoadService(k8s)
 
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices([]string{""}), nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices([]string{""}, ""), nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
 	k8s.On("GetMeshPolicies", mock.AnythingOfType("string")).Return(fakeMeshPolicies(), nil)
 
 	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 }
 
-func mockCombinedValidationService(istioConfigList *models.IstioConfigList, services []string, podList *core_v1.PodList) IstioValidationsService {
+func mockCombinedValidationService(istioConfigList *models.IstioConfigList, services []string, namespace string, podList *core_v1.PodList) IstioValidationsService {
 	k8s := new(kubetest.K8SClientMock)
 
 	fakeIstioObjects := []runtime.Object{}
@@ -186,7 +186,7 @@ func mockCombinedValidationService(istioConfigList *models.IstioConfigList, serv
 	}
 	k8s.MockIstio(fakeIstioObjects...)
 
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices(services), nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices(services, "test"), nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(kubetest.FakeNamespace("test"), nil)
 	k8s.On("IsOpenShift").Return(false)
@@ -250,13 +250,14 @@ func fakeNamespaces() []core_v1.Namespace {
 	}
 }
 
-func fakeCombinedServices(services []string) []core_v1.Service {
+func fakeCombinedServices(services []string, namespace string) []core_v1.Service {
 	items := []core_v1.Service{}
 
 	for _, service := range services {
 		items = append(items, core_v1.Service{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name: service,
+				Name:      service,
+				Namespace: namespace,
 				Labels: map[string]string{
 					"app":     service,
 					"version": "v1",
