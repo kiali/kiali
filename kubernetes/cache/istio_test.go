@@ -13,15 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 )
 
-type fakeInformer struct {
-	cache.SharedIndexInformer
-	Store *cache.FakeCustomStore
-}
-
-func (f *fakeInformer) GetStore() cache.Store {
-	return f.Store
-}
-
 func TestGetSidecar(t *testing.T) {
 	sidecar := &networking_v1alpha3.Sidecar{}
 	sidecar.Name = "moto-sidecar"
@@ -121,8 +112,4 @@ func createIstioIndexInformer(getter cache.Getter, resourceType string, refreshD
 		refreshDuration,
 		cache.Indexers{},
 	)
-}
-
-func TestInformer(t *testing.T) {
-
 }

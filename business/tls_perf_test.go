@@ -6,16 +6,15 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/tests/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes/kubetest"
-	"github.com/kiali/kiali/tests/data"
 )
 
 func TestTlsPerfNsDr(t *testing.T) {
@@ -69,22 +68,19 @@ func testPerfScenario(exStatus string, nss []core_v1.Namespace, drs []networking
 	config.Set(conf)
 
 	k8s := new(kubetest.K8SClientMock)
-	fakeIstioObjects := []runtime.Object{}
-	for _, d := range drs {
-		fakeIstioObjects = append(fakeIstioObjects, d.DeepCopyObject())
-	}
-	for _, p := range ps {
-		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
-	}
-	k8s.MockIstio(fakeIstioObjects...)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(nss, nil)
+	k8s.On("GetToken").Return("token")
+	nsNames := []string{}
 	for _, ns := range nss {
 		k8s.On("GetNamespace", ns.Name).Return(&ns, nil)
+		nsNames = append(nsNames, ns.Name)
 	}
+
 	config.Set(config.NewConfig())
 
+	kialiCache = cache.FakeTlsKialiCache("token", nsNames, ps, drs)
 	tlsService := TLSService{k8s: k8s, enabledAutoMtls: &autoMtls, businessLayer: NewWithBackends(k8s, nil, nil)}
 	tlsService.businessLayer.Namespace.isAccessibleNamespaces["**"] = true
 	for _, ns := range nss {
@@ -92,4 +88,6 @@ func testPerfScenario(exStatus string, nss []core_v1.Namespace, drs []networking
 		assert.NoError(err)
 		assert.Equal(exStatus, status.Status)
 	}
+
+	cleanTestGlobals()
 }

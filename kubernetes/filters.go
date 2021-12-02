@@ -71,6 +71,22 @@ func FilterDestinationRulesByHostname(allDr []networking_v1alpha3.DestinationRul
 	return destinationRules
 }
 
+func FilterDestinationRulesByNamespaces(namespaces []string, allDr []networking_v1alpha3.DestinationRule) []networking_v1alpha3.DestinationRule {
+	destinationRules := []networking_v1alpha3.DestinationRule{}
+	for _, dr := range allDr {
+		found := false
+		for _, ns := range namespaces {
+			if dr.Namespace == ns {
+				found = true
+			}
+		}
+		if found {
+			destinationRules = append(destinationRules, dr)
+		}
+	}
+	return destinationRules
+}
+
 func FilterDestinationRulesByService(allDr []networking_v1alpha3.DestinationRule, namespace string, serviceName string) []networking_v1alpha3.DestinationRule {
 	destinationRules := []networking_v1alpha3.DestinationRule{}
 	for _, destinationRule := range allDr {
@@ -155,6 +171,16 @@ func FilterPodsByController(controllerName string, controllerType string, allPod
 		}
 	}
 	return pods
+}
+
+func FilterPeerAuthenticationByNamespace(namespace string, peerauthentications []security_v1beta1.PeerAuthentication) []security_v1beta1.PeerAuthentication {
+	filtered := []security_v1beta1.PeerAuthentication{}
+	for _, pa := range peerauthentications {
+		if pa.Namespace == namespace {
+			filtered = append(filtered, pa)
+		}
+	}
+	return filtered
 }
 
 func FilterPeerAuthenticationsBySelector(workloadSelector string, peerauthentications []security_v1beta1.PeerAuthentication) []security_v1beta1.PeerAuthentication {
