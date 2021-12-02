@@ -512,18 +512,15 @@ func MatchPortAppProtocolWithValidProtocols(appProtocol *string) bool {
 }
 
 // GatewayNames extracts the gateway names for easier matching
-func GatewayNames(gateways [][]networking_v1alpha3.Gateway) map[string]struct{} {
+func GatewayNames(gateways []networking_v1alpha3.Gateway) map[string]struct{} {
 	var empty struct{}
 	names := make(map[string]struct{})
-	for _, ns := range gateways {
-		for _, gw := range ns {
-			gw := gw
-			clusterName := gw.ClusterName
-			if clusterName == "" {
-				clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
-			}
-			names[ParseHost(gw.Name, gw.Namespace, clusterName).String()] = empty
+	for _, gw := range gateways {
+		clusterName := gw.ClusterName
+		if clusterName == "" {
+			clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
 		}
+		names[ParseHost(gw.Name, gw.Namespace, clusterName).String()] = empty
 	}
 	return names
 }

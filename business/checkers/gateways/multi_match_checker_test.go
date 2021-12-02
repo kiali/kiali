@@ -22,10 +22,10 @@ func TestCorrectGateways(t *testing.T) {
 			"app": "real",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+	gws := []networking_v1alpha3.Gateway{*gwObject}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.Empty(vals)
@@ -49,10 +49,10 @@ func TestCaseMatching(t *testing.T) {
 			"app": "canidae",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+	gws := []networking_v1alpha3.Gateway{*gwObject}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -78,10 +78,10 @@ func TestDashSubdomainMatching(t *testing.T) {
 			"app": "canidae",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+	gws := []networking_v1alpha3.Gateway{*gwObject}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.Empty(vals)
@@ -105,10 +105,10 @@ func TestSameHostPortConfigInDifferentIngress(t *testing.T) {
 			"app": "istio-ingress-prv",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}, {*gwObject2}}
+	gws := []networking_v1alpha3.Gateway{*gwObject, *gwObject2}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.Equal(0, len(vals))
@@ -131,10 +131,10 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 			"app": "real",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}, {*gwObject2}}
+	gws := []networking_v1alpha3.Gateway{*gwObject, *gwObject2}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -168,10 +168,10 @@ func TestSameHostDifferentPortConfig(t *testing.T) {
 			"istio": "istio-ingress",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject, *gwObject2}}
+	gws := []networking_v1alpha3.Gateway{*gwObject, *gwObject2}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.Equal(0, len(vals))
@@ -200,10 +200,10 @@ func TestWildCardMatchingHost(t *testing.T) {
 			"istio": "istio-ingress",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}, {*gwObject2, *gwObject3}}
+	gws := []networking_v1alpha3.Gateway{*gwObject, *gwObject2, *gwObject3}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -240,10 +240,10 @@ func TestAnotherSubdomainWildcardCombination(t *testing.T) {
 			"app": "monotreme",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+	gws := []networking_v1alpha3.Gateway{*gwObject}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -269,10 +269,10 @@ func TestNoMatchOnSubdomainHost(t *testing.T) {
 			"app": "someother",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+	gws := []networking_v1alpha3.Gateway{*gwObject}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.Empty(vals)
@@ -295,10 +295,10 @@ func TestTwoWildCardsMatching(t *testing.T) {
 			"istio": "istio-ingress",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}, {*gwObject2}}
+	gws := []networking_v1alpha3.Gateway{*gwObject, *gwObject2}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -325,10 +325,10 @@ func TestDuplicateGatewaysErrorCount(t *testing.T) {
 			"app": "real",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject, *gwObjectIdentical}}
+	gws := []networking_v1alpha3.Gateway{*gwObject, *gwObjectIdentical}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -364,10 +364,10 @@ func TestNoMatchOnDifferentTargetNamespaces(t *testing.T) {
 			"app": "ingressgateway",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+	gws := []networking_v1alpha3.Gateway{*gwObject}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.Empty(vals)
@@ -390,10 +390,10 @@ func TestMatchOnSameTargetNamespace(t *testing.T) {
 			"app": "ingressgateway",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+	gws := []networking_v1alpha3.Gateway{*gwObject}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -420,10 +420,10 @@ func TestMatchOnWildcardTargetNamespace(t *testing.T) {
 			"app": "ingressgateway",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+	gws := []networking_v1alpha3.Gateway{*gwObject}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -450,10 +450,10 @@ func TestMatchOnImplicitWildcardTargetNamespace(t *testing.T) {
 			"app": "ingressgateway",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+	gws := []networking_v1alpha3.Gateway{*gwObject}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)

@@ -18,7 +18,6 @@ type NoServiceChecker struct {
 	ExportedResources    *kubernetes.ExportedResources
 	ServiceList          models.ServiceList
 	WorkloadList         models.WorkloadList
-	GatewaysPerNamespace [][]networking_v1alpha3.Gateway
 	AuthorizationDetails *kubernetes.RBACDetails
 	RegistryServices     []*kubernetes.RegistryService
 }
@@ -31,7 +30,7 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	}
 
 	serviceHosts := kubernetes.ServiceEntryHostnames(append(in.IstioConfigList.ServiceEntries, in.ExportedResources.ServiceEntries...))
-	gatewayNames := kubernetes.GatewayNames(in.GatewaysPerNamespace)
+	gatewayNames := kubernetes.GatewayNames(in.IstioConfigList.Gateways)
 
 	for _, virtualService := range in.IstioConfigList.VirtualServices {
 		validations.MergeValidations(runVirtualServiceCheck(virtualService, in.Namespace, in.ServiceList, serviceHosts, in.Namespaces, in.RegistryServices))
