@@ -1,8 +1,6 @@
 package business
 
 import (
-	"sync"
-
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
@@ -59,44 +57,28 @@ func (in *TLSService) getMeshPeerAuthentications() ([]security_v1beta1.PeerAuthe
 }
 
 func (in *TLSService) getAllDestinationRules(namespaces []string) ([]networking_v1alpha3.DestinationRule, error) {
-	drChan := make(chan []networking_v1alpha3.DestinationRule, len(namespaces))
-	errChan := make(chan error, 1)
-	wg := sync.WaitGroup{}
-
-	wg.Add(len(namespaces))
-
-	for _, namespace := range namespaces {
-		go func(ns string) {
-			defer wg.Done()
-			criteria := IstioConfigCriteria{
-				Namespace:               ns,
-				IncludeDestinationRules: true,
-			}
-			istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
-			if err != nil {
-				errChan <- err
-				return
-			}
-
-			drChan <- istioConfigList.DestinationRules
-		}(namespace)
+	criteria := IstioConfigCriteria{
+		AllNamespaces:           true,
+		IncludeDestinationRules: true,
 	}
 
-	wg.Wait()
-	close(errChan)
-	close(drChan)
-
-	for err := range errChan {
-		if err != nil {
-			return nil, err
-		}
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+	if err != nil {
+		return nil, err
 	}
 
 	allDestinationRules := make([]networking_v1alpha3.DestinationRule, 0)
-	for drs := range drChan {
-		allDestinationRules = append(allDestinationRules, drs...)
+	for _, dr := range istioConfigList.DestinationRules {
+		found := false
+		for _, ns := range namespaces {
+			if dr.Namespace == ns {
+				found = true
+			}
+		}
+		if found {
+			allDestinationRules = append(allDestinationRules, dr)
+		}
 	}
-
 	return allDestinationRules, nil
 }
 
