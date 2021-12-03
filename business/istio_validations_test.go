@@ -54,7 +54,7 @@ func TestGatewayValidation(t *testing.T) {
 	config.Set(conf)
 
 	v := mockMultiNamespaceGatewaysValidationService()
-	validations, _ := v.GetIstioObjectValidations("test", "gateways", "second")
+	validations, _ := v.GetIstioObjectValidations("test", "gateways", "first")
 	assert.NotEmpty(validations)
 }
 
