@@ -335,6 +335,16 @@ type GraphFindOption struct {
 	Expression  string `yaml:"expression,omitempty" json:"expression,omitempty"`
 }
 
+// GraphSettings affect the graph visualization.
+// FontLabel: font used for node text (edge label font is determined from this value)
+// MinFontBadge: smallest effective font (zoomed font) before removing node badges
+// MinFontLabel: smallest effective node text font (zoomed font) before removing labels
+type GraphSettings struct {
+	FontLabel    float32 `yaml:"font_label,omitempty" json:"fontLabel,omitempty"`
+	MinFontBadge float32 `yaml:"min_font_badge,omitempty" json:"minFontBadge,omitempty"`
+	MinFontLabel float32 `yaml:"min_font_label,omitempty" json:"minFontLabel,omitempty"`
+}
+
 // GraphTraffic defines the protocol-specific rates used to determine traffic for graph generation.
 // grpc options : none | sent (messages) | received (messages) | requests (default) | total (messages)
 // http options : none | requests (default)
@@ -349,6 +359,7 @@ type GraphTraffic struct {
 type GraphUIDefaults struct {
 	FindOptions []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
 	HideOptions []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
+	Settings    GraphSettings     `yaml:"settings,omitempty" json:"settings,omitempty"`
 	Traffic     GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
 }
 
@@ -576,6 +587,10 @@ func NewConfig() (c *Config) {
 			VersionLabelName:   "version",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
+			CertificatesInformationIndicators: CertificatesInformationIndicators{
+				Enabled: true,
+				Secrets: []string{"cacerts", "istio-ca-secret"},
+			},
 			IstioInjectionAction: true,
 			IstioUpgradeAction:   false,
 			UIDefaults: UIDefaults{
@@ -612,6 +627,11 @@ func NewConfig() (c *Config) {
 							Expression:  "rank > 2",
 						},
 					},
+					Settings: GraphSettings{
+						FontLabel:    13,
+						MinFontBadge: 7,
+						MinFontLabel: 10,
+					},
 					Traffic: GraphTraffic{
 						Grpc: "requests",
 						Http: "requests",
@@ -626,10 +646,6 @@ func NewConfig() (c *Config) {
 			},
 			Validations: Validations{
 				Ignore: make([]string, 0),
-			},
-			CertificatesInformationIndicators: CertificatesInformationIndicators{
-				Enabled: true,
-				Secrets: []string{"cacerts", "istio-ca-secret"},
 			},
 		},
 		KubernetesConfig: KubernetesConfig{
