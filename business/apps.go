@@ -75,6 +75,7 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 	}()
 
 	criteria := IstioConfigCriteria{
+		AllNamespaces:                 true,
 		Namespace:                     namespace,
 		IncludeAuthorizationPolicies:  true,
 		IncludeDestinationRules:       true,
