@@ -62,7 +62,8 @@ GatewaySearch:
 
 		hostname := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName)
 		for gw := range s.GatewayNames {
-			if found := kubernetes.FilterByHost(hostname.String(), hostname.Namespace, gw, namespace); found {
+			gwHostname := kubernetes.ParseHost(gw, namespace, clusterName)
+			if found := kubernetes.FilterByHost(hostname.String(), hostname.Namespace, gw, gwHostname.Namespace); found {
 				continue GatewaySearch
 			}
 		}
