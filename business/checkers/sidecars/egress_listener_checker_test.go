@@ -37,6 +37,24 @@ func TestEgressHostFormatCorrect(t *testing.T) {
 	assert.True(valid)
 }
 
+func TestEgressHostNotFoundService(t *testing.T) {
+	assert := assert.New(t)
+
+	vals, valid := EgressHostChecker{
+		ServiceList:    fakeServiceList([]string{"reviews"}),
+		ServiceEntries: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{data.CreateExternalServiceEntry()}),
+		Sidecar: *sidecarWithHosts([]string{
+			"bookinfo2/reviews.bookinfo2.svc.cluster.local",
+		}),
+	}.Check()
+
+	assert.NotEmpty(vals)
+	assert.True(valid)
+	assert.Equal(models.WarningSeverity, vals[0].Severity)
+	assert.Equal("spec/egress[0]/hosts[0]", vals[0].Path)
+	assert.NoError(validations.ConfirmIstioCheckMessage("sidecar.egress.servicenotfound", vals[0]))
+}
+
 func TestEgressExportedInternalServiceEntryPresent(t *testing.T) {
 	assert := assert.New(t)
 

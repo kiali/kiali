@@ -92,7 +92,7 @@ func (elc EgressHostChecker) HasMatchingService(host kubernetes.Host, itemNamesp
 	if host.IsWildcard() && host.Namespace == itemNamespace {
 		return true
 	}
-	if elc.ServiceList.HasMatchingServices(host.Service) {
+	if host.Namespace == itemNamespace && elc.ServiceList.HasMatchingServices(host.Service) {
 		return true
 	}
 	if kubernetes.HasMatchingServiceEntries(host.String(), elc.ServiceEntries) {
