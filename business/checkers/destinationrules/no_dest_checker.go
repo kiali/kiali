@@ -165,7 +165,7 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ClusterName, n.Namespaces.GetNames())
 						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
 						// TODO Host could be in another namespace (FQDN)
-						if kubernetes.FilterByHost(vsHost.String(), drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
+						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
 							vss = append(vss, virtualService)
 						}
 					}
@@ -188,7 +188,7 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ClusterName, n.Namespaces.GetNames())
 						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
 						// TODO Host could be in another namespace (FQDN)
-						if kubernetes.FilterByHost(vsHost.String(), drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
+						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
 							vss = append(vss, virtualService)
 						}
 					}
@@ -211,7 +211,7 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ClusterName, n.Namespaces.GetNames())
 						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
 						// TODO Host could be in another namespace (FQDN)
-						if kubernetes.FilterByHost(vsHost.String(), drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
+						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
 							vss = append(vss, virtualService)
 						}
 					}

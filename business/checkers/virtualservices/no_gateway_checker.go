@@ -60,9 +60,9 @@ GatewaySearch:
 		// Gateways should be using <namespace>/<gateway>
 		checkNomenclature(gate, index, validations)
 
-		hostname := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName).String()
+		hostname := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName)
 		for gw := range s.GatewayNames {
-			if found := kubernetes.FilterByHost(hostname, gw, namespace); found {
+			if found := kubernetes.FilterByHost(hostname.String(), hostname.Namespace, gw, namespace); found {
 				continue GatewaySearch
 			}
 		}
