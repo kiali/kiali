@@ -43,7 +43,7 @@ func (ucw UncoveredWorkloadChecker) hasCoveringAuthPolicy(wlSelector labels.Labe
 			apSelector = labels.SelectorFromSet(apLabels)
 		}
 
-		if config.IsIstioNamespace(apNamespace) || apNamespace == ucw.Namespace {
+		if config.IsRootNamespace(apNamespace) || apNamespace == ucw.Namespace {
 			if apSelector == nil || apSelector.Matches(wlSelector) {
 				return true
 			}
