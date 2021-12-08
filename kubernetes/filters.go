@@ -275,6 +275,16 @@ func FilterRegistryServicesByServices(registryServices []*RegistryService, servi
 	return filtered
 }
 
+func FilterRegistryServicesBySelector(selector labels.Selector, registryServices []*RegistryService) []*RegistryService {
+	filtered := []*RegistryService{}
+	for _, rSvc := range registryServices {
+		if selector.Matches(labels.Set(rSvc.IstioService.Attributes.Labels)) {
+			filtered = append(filtered, rSvc)
+		}
+	}
+	return filtered
+}
+
 func FilterByRegistryService(namespace string, hostname string, registryService *RegistryService) bool {
 	// Basic filter using Hostname, also consider exported Namespaces of Service
 	// but for a first iteration if it's found in the registry it will be considered "valid" to reduce the number of false validation errors

@@ -24,6 +24,7 @@ type MtlsStatus struct {
 	ServiceList         models.ServiceList
 	AutoMtlsEnabled     bool
 	AllowPermissive     bool
+	RegistryServices    []*kubernetes.RegistryService
 }
 
 type TlsStatus struct {
@@ -82,6 +83,18 @@ func (m MtlsStatus) WorkloadMtlsStatus() string {
 				filteredSvcs := m.ServiceList.FilterServicesForSelector(selector)
 				for _, svc := range filteredSvcs {
 					filteredDrs := kubernetes.FilterDestinationRulesByService(m.DestinationRules, svc.Namespace, svc.Name)
+					for _, dr := range filteredDrs {
+						enabled, mode := kubernetes.DestinationRuleHasMTLSEnabled(dr)
+						if enabled || mode == "MUTUAL" {
+							return MTLSEnabled
+						} else if mode == "DISABLE" {
+							return MTLSDisabled
+						}
+					}
+				}
+				filteredRSvcs := kubernetes.FilterRegistryServicesBySelector(selector, m.RegistryServices)
+				for _, rSvc := range filteredRSvcs {
+					filteredDrs := kubernetes.FilterDestinationRulesByService(m.DestinationRules, rSvc.IstioService.Attributes.Namespace, rSvc.IstioService.Attributes.Name)
 					for _, dr := range filteredDrs {
 						enabled, mode := kubernetes.DestinationRuleHasMTLSEnabled(dr)
 						if enabled || mode == "MUTUAL" {

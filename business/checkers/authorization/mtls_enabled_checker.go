@@ -22,6 +22,7 @@ type MtlsEnabledChecker struct {
 	MtlsDetails           kubernetes.MTLSDetails
 	ServiceList           models.ServiceList
 	ServiceEntries        []networking_v1alpha3.ServiceEntry
+	RegistryServices      []*kubernetes.RegistryService
 }
 
 // Checks if mTLS is enabled, mark all Authz Policies with error
@@ -135,6 +136,7 @@ func (c MtlsEnabledChecker) IsMtlsEnabledFor(labels labels.Set) bool {
 		Namespace:           c.Namespace,
 		PeerAuthentications: c.MtlsDetails.PeerAuthentications,
 		ServiceList:         c.ServiceList,
+		RegistryServices:    c.RegistryServices,
 	}.WorkloadMtlsStatus()
 
 	if workloadmTlsStatus == mtls.MTLSEnabled {
