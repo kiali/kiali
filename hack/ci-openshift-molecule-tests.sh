@@ -290,6 +290,8 @@ INSTALL_ISTIO=$INSTALL_ISTIO
 IRC_ROOM=$IRC_ROOM
 KIALI_BRANCH=$KIALI_BRANCH
 KIALI_FORK=$KIALI_FORK
+UI_BRANCH=$UI_BRANCH
+UI_FORK=$UI_FORK
 KIALI_OPERATOR_BRANCH=$KIALI_OPERATOR_BRANCH
 KIALI_OPERATOR_FORK=$KIALI_OPERATOR_FORK
 KUBEADMIN_PW_FILE=$KUBEADMIN_PW_FILE
@@ -391,10 +393,10 @@ if [ "${USE_DEV_IMAGES}" == "true" ]; then
   infomsg "Dev images are to be tested. Will prepare them now."
 
   infomsg "Building server..."
-  make -e OC="${OC}" -e DORP="${DORP}" -e CONSOLE_LOCAL_DIR="../kiali-ui" clean build test
+  make -e OC="${OC}" -e DORP="${DORP}" -e CONSOLE_LOCAL_DIR="${SRC}/kiali-ui" -e GOPATH="${SRC}/kiali/src/github.com/kiali/kiali" clean build test
 
   infomsg "Building UI..."
-  pushd ../kiali-ui
+  pushd ${SRC}/kiali-ui
   yarn && yarn run build
   popd
 
@@ -402,7 +404,7 @@ if [ "${USE_DEV_IMAGES}" == "true" ]; then
   eval $(make -e OC="${OC}" -e DORP="${DORP}" cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
 
   infomsg "Pushing the images into the cluster..."
-  make -e OC="${OC}" -e DORP="${DORP}" -e CONSOLE_LOCAL_DIR="../kiali-ui" cluster-push
+  make -e OC="${OC}" -e DORP="${DORP}" -e CONSOLE_LOCAL_DIR="${SRC}/kiali-ui" cluster-push
 else
   infomsg "Will test the latest published images"
 fi
