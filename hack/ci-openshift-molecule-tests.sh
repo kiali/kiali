@@ -390,10 +390,11 @@ infomsg "Log into the cluster [${OPENSHIFT_API}] as kubeadmin user named [${KUBE
 $OC login -u ${KUBEADMIN_USER} -p ${KUBEADMIN_PW} ${OPENSHIFT_API}
 
 if [ "${USE_DEV_IMAGES}" == "true" ]; then
-  infomsg "Dev images are to be tested. Will prepare them now."
+  GOPATH="${SRC}/kiali/src/github.com/kiali/kiali"
+  infomsg "Dev images are to be tested. Will prepare them now using GOPATH=${GOPATH}"
 
   infomsg "Building server..."
-  make -e OC="${OC}" -e DORP="${DORP}" -e CONSOLE_LOCAL_DIR="${SRC}/kiali-ui" -e GOPATH="${SRC}/kiali/src/github.com/kiali/kiali" clean build test
+  make -e OC="${OC}" -e DORP="${DORP}" -e CONSOLE_LOCAL_DIR="${SRC}/kiali-ui" -e GOPATH="${GOPATH}" clean build test
 
   infomsg "Building UI..."
   pushd ${SRC}/kiali-ui
@@ -404,7 +405,7 @@ if [ "${USE_DEV_IMAGES}" == "true" ]; then
   eval $(make -e OC="${OC}" -e DORP="${DORP}" cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
 
   infomsg "Pushing the images into the cluster..."
-  make -e OC="${OC}" -e DORP="${DORP}" -e CONSOLE_LOCAL_DIR="${SRC}/kiali-ui" cluster-push
+  make -e OC="${OC}" -e DORP="${DORP}" -e CONSOLE_LOCAL_DIR="${SRC}/kiali-ui" -e GOPATH="${GOPATH}" cluster-push
 else
   infomsg "Will test the latest published images"
 fi
