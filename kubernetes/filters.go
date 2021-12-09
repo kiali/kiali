@@ -275,10 +275,11 @@ func FilterRegistryServicesByServices(registryServices []*RegistryService, servi
 	return filtered
 }
 
-func FilterRegistryServicesBySelector(selector labels.Selector, registryServices []*RegistryService) []*RegistryService {
+func FilterRegistryServicesBySelector(selector labels.Selector, namespace string, registryServices []*RegistryService) []*RegistryService {
 	filtered := []*RegistryService{}
 	for _, rSvc := range registryServices {
-		if selector.Matches(labels.Set(rSvc.IstioService.Attributes.Labels)) {
+		// here is a hack with providing own hostname
+		if FilterByRegistryService(namespace, rSvc.Hostname, rSvc) && selector.Matches(labels.Set(rSvc.IstioService.Attributes.Labels)) {
 			filtered = append(filtered, rSvc)
 		}
 	}
