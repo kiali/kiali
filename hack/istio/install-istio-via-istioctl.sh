@@ -19,6 +19,7 @@ CLIENT_EXE_NAME="oc"
 CLUSTER_NAME="cluster-default"
 CONFIG_PROFILE="" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
 DELETE_ISTIO="false"
+PURGE_UNINSTALL="true"
 ISTIOCTL=
 ISTIO_DIR=
 ISTIO_EGRESSGATEWAY_ENABLED="true"
@@ -59,6 +60,15 @@ while [[ $# -gt 0 ]]; do
         DELETE_ISTIO="$2"
       else
         echo "ERROR: The --delete-istio flag must be 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
+    -pu|--purge-uninstall)
+      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
+        PURGE_UNINSTALL="$2"
+      else
+        echo "ERROR: The --purge-uninstall flag must be 'true' or 'false'"
         exit 1
       fi
       shift;shift
@@ -146,7 +156,12 @@ Valid command line arguments:
        Default: "demo" on non-OpenShift platforms, "openshift" on OpenShift
   -di|--delete-istio (true|false):
        Set to 'true' if you want to delete Istio, rather than install it.
+       By default, it will remove all Istio resources, including cluster-scoped resources.
+       If you want to keep Istio control planes in other namespaces, set --purge-uninstall to 'false'.
        Default: false
+  -pu|--purge-uninstall (true|false):
+       Set to 'true' if you want to remove all Istio resources, including cluster-scoped resources.
+       Default: true
   -ic|--istioctl <path to istioctl binary>:
        Where the istioctl executable is found. Use this when developing Istio installer and testing it.
        Default: "istioctl" found in the bin/ directory of the Istio directory (--istio-dir).
@@ -328,7 +343,15 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   done
 
   echo Deleting Core Istio
-  ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} delete -f -
+  if [ "${PURGE_UNINSTALL}" == "true" ]; then
+    echo "Purging all Istio resources"
+    # Although the 'uninstall' command has been available since Istio 1.7 and is listed in the official istio doc,
+    # it's still available in 'experimental' (x) scope, so it might change in the future.
+    # The optional --purge flag will remove all Istio resources, including cluster-scoped resources that may be shared with other Istio control planes.
+    ${ISTIOCTL} x uninstall --purge -y
+  else
+    ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} delete -f -
+  fi
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     echo "===== IMPORTANT ====="
     echo "For each namespace in the mesh, run these commands to remove previously created resources:"
