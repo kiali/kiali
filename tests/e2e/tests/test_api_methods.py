@@ -456,3 +456,8 @@ def test_invalid_service_spans_list_and_trace_list(kiali_client):
    	
     common_utils.get_response(kiali_client, method_name='serviceTraces', path=INVALID_PATH_SERVICE_SERVICE, params={'startMicros': calendar.timegm(gmt()) })
     common_utils.get_response(kiali_client, method_name='serviceSpans', path=INVALID_PATH_SERVICE_SERVICE, params={'startMicros': calendar.timegm(gmt()) })
+
+def test_test_test_test(kiali_client):
+     // Do nothing test
+     print('Do Nothing test')
+
