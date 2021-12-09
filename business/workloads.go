@@ -108,7 +108,6 @@ func (in *WorkloadService) GetWorkloadList(criteria WorkloadCriteria) (models.Wo
 	}()
 
 	istioConfigCriteria := IstioConfigCriteria{
-		AllNamespaces:                 true,
 		Namespace:                     criteria.Namespace,
 		IncludeAuthorizationPolicies:  true,
 		IncludeEnvoyFilters:           true,
