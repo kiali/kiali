@@ -36,6 +36,7 @@ func TestGetServiceHealth(t *testing.T) {
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Service{}, nil)
 
+	setupGlobalMeshConfig()
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
 	health, _ := hs.GetServiceHealth("ns", "httpbin", "1m", queryTime)

@@ -252,11 +252,67 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 	return services
 }
 
+// The istiod registry doesn't have a explicit flag when a service is deployed in a different control plane.
+// The only way to identify it is to check that the service has an address in the current cluster.
+// To avoid side effects, Kiali will process only services that belongs to the current cluster.
+// This should be revisited on more multi-cluster deployments scenarios.
+//     "hostname": "test-svc.evil.svc.cluster.local",
+//    "clusterVIPs": {
+//      "Addresses": {
+//        "istio-west": [
+//          "0.0.0.0"
+//        ]
+//      }
+//    },
+func (in *SvcService) getClusterId() string {
+	// By default Istio uses "Kubernetes" as clusterId for single control planes scenarios.
+	// This clusterId is propagated into the Istio Registry and we need it to filter services in multi-cluster scenarios.
+	// I.e.:
+	//    "clusterVIPs": {
+	//      "Addresses": {
+	//        "Kubernetes": [
+	//          "10.217.4.189"
+	//        ]
+	//      }
+	//    }
+	clusterId := DefaultClusterID
+	// Protection on tests
+	if in.businessLayer != nil {
+		if cluster, err := in.businessLayer.Mesh.ResolveKialiControlPlaneCluster(nil); err == nil {
+			clusterId = cluster.Name
+		} else {
+			log.Errorf("Cluster Id resolution failed: %s", err)
+		}
+	}
+	return clusterId
+}
+
+func filterIstioServiceByClusterId(clusterId string, item *kubernetes.RegistryService) bool {
+	if clusterId == "Kubernetes" {
+		return true
+	}
+	// External and Federation services are always local to the control plane
+	if item.Attributes.ServiceRegistry != "Kubernetes" {
+		return true
+	}
+	if _, ok := item.ClusterVIPs12.Addresses[clusterId]; ok {
+		return true
+	}
+	if _, ok := item.ClusterVIPs11[clusterId]; ok {
+		return true
+	}
+	return false
+}
+
 func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService, istioConfigList models.IstioConfigList) []models.ServiceOverview {
-	services := make([]models.ServiceOverview, len(rSvcs))
+	services := []models.ServiceOverview{}
 	conf := config.Get()
 
-	for i, item := range rSvcs {
+	clusterId := in.getClusterId()
+	for _, item := range rSvcs {
+		if !filterIstioServiceByClusterId(clusterId, item) {
+			continue
+		}
 		_, appLabel := item.Attributes.LabelSelectors[conf.IstioLabels.AppLabelName]
 		// ServiceEntry/External and Federation will be marked as hasSidecar == true as they will have telemetry
 		hasSidecar := true
@@ -287,7 +343,7 @@ func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService,
 		}
 		svcReferences = FilterUniqueIstioReferences(svcReferences)
 		// External Istio registries may have references to ServiceEntry and/or Federation
-		services[i] = models.ServiceOverview{
+		service := models.ServiceOverview{
 			Name:              item.Attributes.Name,
 			Namespace:         item.Attributes.Namespace,
 			IstioSidecar:      hasSidecar,
@@ -298,6 +354,7 @@ func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService,
 			IstioReferences:   svcReferences,
 			ServiceRegistry:   item.Attributes.ServiceRegistry,
 		}
+		services = append(services, service)
 	}
 	return services
 }

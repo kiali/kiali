@@ -18,6 +18,13 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
+// Setup Mesh cache to avoid duplicate mesh_test.go logic into other business/*_test.go
+func setupGlobalMeshConfig() {
+	SetKialiControlPlaneCluster(&Cluster{
+		Name: DefaultClusterID,
+	})
+}
+
 func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	check := assert.New(t)
 
