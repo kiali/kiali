@@ -1,0 +1,81 @@
+[
+  {
+    "Attributes": {
+      "ServiceRegistry": "Kubernetes",
+      "Name": "zipkin",
+      "Namespace": "istio-system",
+      "Labels": {
+        "name": "zipkin"
+      },
+      "ExportTo": null,
+      "LabelSelectors": {
+        "app": "jaeger"
+      },
+      "ClusterExternalAddresses": {
+        "Addresses": null
+      },
+      "ClusterExternalPorts": null
+    },
+    "ports": [
+      {
+        "name": "http-query",
+        "port": 9411,
+        "protocol": "HTTP"
+      }
+    ],
+    "creationTime": "2021-12-13T09:37:04Z",
+    "hostname": "zipkin.istio-system.svc.cluster.local",
+    "clusterVIPs": {
+      "Addresses": {
+        "istio-east": [
+          "10.105.195.30"
+        ],
+        "istio-west": [
+          "10.96.208.234"
+        ]
+      }
+    },
+    "defaultAddress": "10.105.195.30",
+    "Resolution": 0,
+    "MeshExternal": false,
+    "ResourceVersion": "1068"
+  },
+  {
+    "Attributes": {
+      "ServiceRegistry": "Kubernetes",
+      "Name": "bookstore",
+      "Namespace": "electronic-shop",
+      "Labels": {
+        "app": "bookstore"
+      },
+      "ExportTo": null,
+      "LabelSelectors": {
+        "app": "bookstore"
+      },
+      "ClusterExternalAddresses": {
+        "Addresses": null
+      },
+      "ClusterExternalPorts": null
+    },
+    "ports": [
+      {
+        "name": "http",
+        "port": 8888,
+        "protocol": "HTTP"
+      }
+    ],
+    "creationTime": "2021-12-13T11:43:57Z",
+    "hostname": "bookstore.electronic-shop.svc.cluster.local",
+    "clusterVIPs": {
+      "Addresses": {
+        "istio-west": [
+          "10.100.251.249"
+        ]
+      }
+    },
+    "defaultAddress": "10.100.251.249",
+    "Resolution": 0,
+    "MeshExternal": false,
+    "ResourceVersion": "11880"
+  }
+]

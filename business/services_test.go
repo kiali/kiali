@@ -25,6 +25,7 @@ func TestServiceListParsing(t *testing.T) {
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	conf := config.NewConfig()
 	config.Set(conf)
+	setupGlobalMeshConfig()
 	svc := SvcService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 
 	criteria := ServiceCriteria{Namespace: "Namespace", IncludeIstioResources: false}
@@ -44,7 +45,11 @@ func TestParseRegistryServices(t *testing.T) {
 
 	conf := config.NewConfig()
 	config.Set(conf)
-	svc := SvcService{k8s: nil, businessLayer: nil}
+
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("IsOpenShift").Return(false)
+	setupGlobalMeshConfig()
+	svc := SvcService{k8s: nil, businessLayer: NewWithBackends(k8s, nil, nil)}
 
 	servicesz := "../tests/data/registry/services-registryz.json"
 	bServicesz, err := ioutil.ReadFile(servicesz)
@@ -55,6 +60,8 @@ func TestParseRegistryServices(t *testing.T) {
 	registryServices, err2 := kubernetes.ParseRegistryServices(rServices)
 	assert.NoError(err2)
 
+	assert.Equal(3, len(registryServices))
+
 	configz := "../tests/data/registry/services-configz.json"
 	bConfigz, err2 := ioutil.ReadFile(configz)
 	assert.NoError(err2)
@@ -63,6 +70,8 @@ func TestParseRegistryServices(t *testing.T) {
 	}
 	registryConfig, err2 := kubernetes.ParseRegistryConfig(rConfig)
 	assert.NoError(err2)
+
+	assert.Equal(2, len(registryConfig.ServiceEntries))
 
 	istioConfigList := models.IstioConfigList{
 		ServiceEntries: registryConfig.ServiceEntries,
@@ -73,4 +82,23 @@ func TestParseRegistryServices(t *testing.T) {
 	assert.Equal(1, len(parsedServices[0].IstioReferences))
 	assert.Equal(1, len(parsedServices[1].IstioReferences))
 	assert.Equal(0, len(parsedServices[2].IstioReferences))
+}
+
+func TestFilterLocalIstioRegistry(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	servicesz := "../tests/data/registry/istio-east-registryz.json"
+	bServicesz, err := ioutil.ReadFile(servicesz)
+	assert.NoError(err)
+	rServices := map[string][]byte{
+		"istiod1": bServicesz,
+	}
+	registryServices, err2 := kubernetes.ParseRegistryServices(rServices)
+	assert.NoError(err2)
+
+	assert.Equal(true, filterIstioServiceByClusterId("istio-east", registryServices[0]))
+	assert.Equal(false, filterIstioServiceByClusterId("istio-east", registryServices[1]))
 }
