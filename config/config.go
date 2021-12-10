@@ -592,7 +592,7 @@ func NewConfig() (c *Config) {
 							Expression:  "name = unknown",
 						},
 						{
-							Description: "Find: nodes with the 2 highest ranks",
+							Description: "Find: nodes with the 2 top rankings",
 							Expression:  "rank <= 2",
 						},
 					},
@@ -606,7 +606,7 @@ func NewConfig() (c *Config) {
 							Expression:  "name = unknown",
 						},
 						{
-							Description: "Hide: nodes ranked lower than the 2 highest ranks",
+							Description: "Hide: nodes ranked lower than the 2 top rankings",
 							Expression:  "rank > 2",
 						},
 					},
