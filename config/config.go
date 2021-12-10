@@ -605,6 +605,10 @@ func NewConfig() (c *Config) {
 							Description: "Hide: unknown nodes",
 							Expression:  "name = unknown",
 						},
+						{
+							Description: "Hide: nodes ranked lower than the 2 highest ranks",
+							Expression:  "rank > 2",
+						},
 					},
 					Traffic: GraphTraffic{
 						Grpc: "requests",
