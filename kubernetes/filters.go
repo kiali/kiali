@@ -276,6 +276,7 @@ func FilterRegistryServicesByServices(registryServices []*RegistryService, servi
 }
 
 func FilterRegistryServicesBySelector(selector labels.Selector, namespace string, registryServices []*RegistryService) []*RegistryService {
+	// From given Registry Services, this method filters those services which are exported to given namespace and have labels matching the given selector
 	filtered := []*RegistryService{}
 	for _, rSvc := range registryServices {
 		// here is a hack with providing own hostname
