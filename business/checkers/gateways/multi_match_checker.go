@@ -151,24 +151,24 @@ func (m MultiMatchChecker) findMatch(host Host, selector string) (bool, []Host) 
 						continue
 					}
 
-				    // lazily compile hostname Regex
-				    if host.hostnameRegexp == nil {
-				    	host.hostnameRegexp = regexpFromHostname(host.Hostname)
-				    }
-				    if h.hostnameRegexp == nil {
-				    	h.hostnameRegexp = regexpFromHostname(h.Hostname)
-				    }
+					// DNS is case-insensitive
+					current := strings.ToLower(host.Hostname)
+					previous := strings.ToLower(h.Hostname)
 
-				    // Either one could include wildcards, so we need to check both ways and fix "*" -> ".*" for regexp engine
-				    current := strings.ToLower(strings.Replace(host.Hostname, "*", ".*", -1))
-				    previous := strings.ToLower(strings.Replace(h.Hostname, "*", ".*", -1))
+					// lazily compile hostname Regex
+					if host.hostnameRegexp == nil {
+						host.hostnameRegexp = regexpFromHostname(current)
+					}
+					if h.hostnameRegexp == nil {
+						h.hostnameRegexp = regexpFromHostname(previous)
+					}
 
-				    if host.hostnameRegexp.MatchString(previous) ||
-				    	h.hostnameRegexp.MatchString(current) {
-				    	duplicates = append(duplicates, host)
-				    	duplicates = append(duplicates, h)
-				    	continue
-				    }
+					if host.hostnameRegexp.MatchString(previous) ||
+						h.hostnameRegexp.MatchString(current) {
+						duplicates = append(duplicates, host)
+						duplicates = append(duplicates, h)
+						continue
+					}
 				}
 			}
 		}
