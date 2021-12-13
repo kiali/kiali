@@ -18,6 +18,7 @@ require (
 	github.com/prometheus/common v0.15.0
 	github.com/rs/zerolog v1.20.0
 	github.com/stretchr/testify v1.7.0
+	go.uber.org/automaxprocs v1.4.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20201109201403-9fd604954f58 // indirect
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154
