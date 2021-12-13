@@ -205,7 +205,7 @@ EOF
 >       - 'http://${MINIKUBE_IP}/kiali'
 >       - 'http://kiali-proxy.${MINIKUBE_IP}.nip.io:30805/oauth2/callback'
 >       name: 'Kiali'
->       secret: notNeeded
+>       secret: dontTellAnyone
 EOF
     [ "$?" != "0" ] && echo "ERROR: Failed to patch dex file" && exit 1
 
@@ -235,7 +235,7 @@ data:
     pass_authorization_header = true
     set_authorization_header = true
     ssl_insecure_skip_verify = true
-    client_secret="notNeeded"
+    client_secret="dontTellAnyone"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -296,6 +296,7 @@ EOF
   echo "Deploying dex..."
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create namespace dex
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create secret tls dex.example.com.tls --cert=${CERTS_PATH}/cert.pem --key=${CERTS_PATH}/key.pem -n dex
+
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- apply -n dex -f ${DEX_VERSION_PATH}/examples/k8s/dex.kiali.yaml
   [ "$?" != "0" ] && echo "ERROR: Failed to install dex" && exit 1
   echo "Deploying oauth2 proxy..."
@@ -320,6 +321,10 @@ EOF
     --extra-config=apiserver.oidc-groups-claim=groups
   [ "$?" != "0" ] && echo "ERROR: Failed to restart minikube in preparation for dex" && exit 1
 
+  echo "Need to create the OpenID secret now - assuming Kiali will eventually be installed in istio-system"
+  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create namespace istio-system
+  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create secret generic kiali --from-literal="oidc-secret=dontTellAnyone" -n istio-system
+
   echo "Minikube should now be configured with OpenID connect. Just wait for all pods to start."
   cat <<EOF
 Commands to query Dex deployments and pods:
@@ -340,6 +345,10 @@ OpenID user is:
   Password: password
 
 Kiali reverse proxy URL: http://kiali-proxy.${MINIKUBE_IP}.nip.io:30805
+
+The Kiali OIDC secret named 'kiali' has been created in istio-system namespace.
+If you need to recreate this OIDC secret, run this command:
+  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create secret generic kiali --from-literal="oidc-secret=dontTellAnyone" -n istio-system
 
 EOF
 
