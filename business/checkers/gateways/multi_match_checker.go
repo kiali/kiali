@@ -34,6 +34,7 @@ type Host struct {
 	HostIndex       int
 	GatewayRuleName string
 	TargetNamespace string
+	hostnameRegexp  *regexp.Regexp
 }
 
 // Check validates that no two gateways share the same host+port combination
@@ -150,31 +151,41 @@ func (m MultiMatchChecker) findMatch(host Host, selector string) (bool, []Host) 
 						continue
 					}
 
-					// Either one could include wildcards, so we need to check both ways and fix "*" -> ".*" for regexp engine
-					current := strings.ToLower(strings.Replace(host.Hostname, "*", ".*", -1))
-					previous := strings.ToLower(strings.Replace(h.Hostname, "*", ".*", -1))
+				    // lazily compile hostname Regex
+				    if host.hostnameRegexp == nil {
+				    	host.hostnameRegexp = regexpFromHostname(host.Hostname)
+				    }
+				    if h.hostnameRegexp == nil {
+				    	h.hostnameRegexp = regexpFromHostname(h.Hostname)
+				    }
 
-					// Escaping dot chars for RegExp. Dot char means all possible chars.
-					// This protects this validation to false positive for (api-dev.example.com and api.dev.example.com)
-					escapedCurrent := strings.Replace(host.Hostname, ".", "\\.", -1)
-					escapedPrevious := strings.Replace(h.Hostname, ".", "\\.", -1)
+				    // Either one could include wildcards, so we need to check both ways and fix "*" -> ".*" for regexp engine
+				    current := strings.ToLower(strings.Replace(host.Hostname, "*", ".*", -1))
+				    previous := strings.ToLower(strings.Replace(h.Hostname, "*", ".*", -1))
 
-					// We anchor the beginning and end of the string when it's
-					// to be used as a regex, so that we don't get spurious
-					// substring matches, e.g., "example.com" matching
-					// "foo.example.com".
-					currentRegexp := strings.Join([]string{"^", escapedCurrent, "$"}, "")
-					previousRegexp := strings.Join([]string{"^", escapedPrevious, "$"}, "")
-
-					if regexp.MustCompile(currentRegexp).MatchString(previous) ||
-						regexp.MustCompile(previousRegexp).MatchString(current) {
-						duplicates = append(duplicates, host)
-						duplicates = append(duplicates, h)
-						continue
-					}
+				    if host.hostnameRegexp.MatchString(previous) ||
+				    	h.hostnameRegexp.MatchString(current) {
+				    	duplicates = append(duplicates, host)
+				    	duplicates = append(duplicates, h)
+				    	continue
+				    }
 				}
 			}
 		}
 	}
 	return len(duplicates) > 0, duplicates
+}
+
+func regexpFromHostname(hostname string) *regexp.Regexp {
+	// Escaping dot chars for RegExp. Dot char means all possible chars.
+	// This protects this validation to false positive for (api-dev.example.com and api.dev.example.com)
+	escaped := strings.Replace(hostname, ".", "\\.", -1)
+
+	// We anchor the beginning and end of the string when it's
+	// to be used as a regex, so that we don't get spurious
+	// substring matches, e.g., "example.com" matching
+	// "foo.example.com".
+	anchored := strings.Join([]string{"^", escaped, "$"}, "")
+
+	return regexp.MustCompile(anchored)
 }
