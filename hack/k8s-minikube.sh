@@ -261,6 +261,12 @@ spec:
         env: []
         image: quay.io/oauth2-proxy/oauth2-proxy:latest
         imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 4180
+          initialDelaySeconds: 10
+          periodSeconds: 20
         name: oauth2-proxy
         ports:
         - containerPort: 4180
@@ -302,6 +308,7 @@ EOF
   echo "Deploying oauth2 proxy..."
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create -f ${DEX_VERSION_PATH}/examples/k8s/oauth2.proxy
   [ "$?" != "0" ] && echo "ERROR: Failed to deploy oauth2 proxy" && exit 1
+
   # Restart minikube
   echo "Restarting minikube with proper flags for API server and the autodetected registry IP..."
   ${MINIKUBE_EXEC_WITH_PROFILE} stop
