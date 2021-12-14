@@ -17,6 +17,7 @@ import (
 type MultiMatchChecker struct {
 	GatewaysPerNamespace [][]networking_v1alpha3.Gateway
 	existingList         map[string][]Host
+	hostRegexpCache      map[string]regexp.Regexp
 }
 
 const (
@@ -34,13 +35,13 @@ type Host struct {
 	HostIndex       int
 	GatewayRuleName string
 	TargetNamespace string
-	hostnameRegexp  *regexp.Regexp
 }
 
 // Check validates that no two gateways share the same host+port combination
 func (m MultiMatchChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 	m.existingList = map[string][]Host{}
+	m.hostRegexpCache = map[string]regexp.Regexp{}
 
 	for _, nsG := range m.GatewaysPerNamespace {
 		for _, g := range nsG {
@@ -156,15 +157,19 @@ func (m MultiMatchChecker) findMatch(host Host, selector string) (bool, []Host) 
 					previous := strings.ToLower(h.Hostname)
 
 					// lazily compile hostname Regex
-					if host.hostnameRegexp == nil {
-						host.hostnameRegexp = regexpFromHostname(current)
+					currentRegexp, ok := m.hostRegexpCache[current]
+					if !ok {
+						currentRegexp = *regexpFromHostname(current)
+						m.hostRegexpCache[current] = currentRegexp
 					}
-					if h.hostnameRegexp == nil {
-						h.hostnameRegexp = regexpFromHostname(previous)
+					previousRegexp, ok := m.hostRegexpCache[previous]
+					if !ok {
+						previousRegexp = *regexpFromHostname(previous)
+						m.hostRegexpCache[previous] = previousRegexp
 					}
 
-					if host.hostnameRegexp.MatchString(previous) ||
-						h.hostnameRegexp.MatchString(current) {
+					if currentRegexp.MatchString(previous) ||
+						previousRegexp.MatchString(current) {
 						duplicates = append(duplicates, host)
 						duplicates = append(duplicates, h)
 						continue
