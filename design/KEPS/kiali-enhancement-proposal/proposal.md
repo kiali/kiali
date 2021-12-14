@@ -1,12 +1,11 @@
-Kiali Enhancement Proposal
-==========================
+# Kiali Enhancement Proposal
 
 1. [Summary](#summary)
 2. [Motivation](#motivation)
-    1. [Goals](#goals)
-    2. [Non-Goals](#nongoals)
+   1. [Goals](#goals)
+   2. [Non-Goals](#nongoals)
 3. [Solution](#solution)
-    1. [Other solutions](#othersolutions)
+   1. [Other solutions](#othersolutions)
 4. [Roadmap](#roadmap)
 
 # Summary
@@ -46,12 +45,12 @@ The KEP process will be as follows:
 6. After feedback has been sufficiently addressed, proposals are either accepted or rejected by Kiali maintainers.
 7. Proposal is broken down into epics/issues and implemented. The roadmap for the proposal is updated along the way.
 
-It is expected that both proposal owners and maintainers will be active participants in any open proposals by giving and responding to feedback. Proposals should strive to reach consensus by the end of the next sprint.
+It is expected that both proposal owners and maintainers will be active participants in any open proposals by giving and responding to feedback. Since maintainers have a finite amount of time to spend on reviewing proposals and because one of the main goals of the proposal process is faster progress on enhancements, priority will be given to existing proposals over new proposals so that existing proposals can be implemented or closed.
 
-## Other solutions 
+## Other solutions
 
 - The current method of using primarily using Github discussions to facilitate discussion on formal design proposals.
 
-# Roadmap 
+# Roadmap
 
 - [ ] KEP process proposed and accepted.
