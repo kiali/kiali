@@ -24,7 +24,7 @@ set -u
 DEFAULT_CLIENT_EXE="kubectl"
 DEFAULT_DEX_ENABLED="false"
 DEFAULT_DEX_REPO="https://github.com/dexidp/dex"
-DEFAULT_DEX_VERSION="v2.24.0"
+DEFAULT_DEX_VERSION="v2.30.2"
 DEFAULT_DEX_USER_NAMESPACES="bookinfo"
 DEFAULT_INSECURE_REGISTRY_IP=""
 DEFAULT_K8S_CPU="4"
@@ -160,18 +160,19 @@ EOF
   # Patch dex file
   rm -rf ${DEX_VERSION_PATH}/examples/k8s/dex.kiali.yaml
   patch -i - -o ${DEX_VERSION_PATH}/examples/k8s/dex.kiali.yaml ${DEX_VERSION_PATH}/examples/k8s/dex.yaml << EOF
-1c1
-< apiVersion: extensions/v1beta1
+15c15
+<   replicas: 3
 ---
-> apiVersion: apps/v1
-8a9,11
->   selector:
->     matchLabels:
->       app: dex
-30,40d32
-<         env:
+>   replicas: 1
+26c26
+<       - image: dexidp/dex:v2.27.0 #or quay.io/dexidp/dex:v2.26.0
+---
+>       - image: docker.io/dexidp/dex:${DEX_VERSION}
+41c41
 <         - name: GITHUB_CLIENT_ID
-<           valueFrom:
+---
+>         - name: KUBERNETES_POD_NAMESPACE
+43,50c43,44
 <             secretKeyRef:
 <               name: github-client
 <               key: client-id
@@ -180,11 +181,14 @@ EOF
 <             secretKeyRef:
 <               name: github-client
 <               key: client-secret
-58c50
+---
+>             fieldRef:
+>               fieldPath: metadata.namespace
+75c69
 <     issuer: https://dex.example.com:32000
 ---
 >     issuer: https://${KUBE_HOSTNAME}:32000
-68,75d59
+85,92d78
 <     - type: github
 <       id: github
 <       name: GitHub
@@ -193,19 +197,15 @@ EOF
 <         clientSecret: \$GITHUB_CLIENT_SECRET
 <         redirectURI: https://dex.example.com:32000/callback
 <         org: kubernetes
-77a62
+94a81
 >       responseTypes: ["code", "id_token"]
-84a70,75
+96a84,89
 >     - id: kiali-app
 >       redirectURIs:
 >       - 'http://${MINIKUBE_IP}/kiali'
 >       - 'http://kiali-proxy.${MINIKUBE_IP}.nip.io:30805/oauth2/callback'
 >       name: 'Kiali'
->       secret: notNeeded
-139c129
-<   namespace: default  # The namespace dex is running in
----
->   namespace: dex      # The namespace dex is running in
+>       secret: dontTellAnyone
 EOF
     [ "$?" != "0" ] && echo "ERROR: Failed to patch dex file" && exit 1
 
@@ -235,7 +235,7 @@ data:
     pass_authorization_header = true
     set_authorization_header = true
     ssl_insecure_skip_verify = true
-    client_secret="notNeeded"
+    client_secret="dontTellAnyone"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -261,6 +261,12 @@ spec:
         env: []
         image: quay.io/oauth2-proxy/oauth2-proxy:latest
         imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 4180
+          initialDelaySeconds: 10
+          periodSeconds: 20
         name: oauth2-proxy
         ports:
         - containerPort: 4180
@@ -296,11 +302,13 @@ EOF
   echo "Deploying dex..."
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create namespace dex
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create secret tls dex.example.com.tls --cert=${CERTS_PATH}/cert.pem --key=${CERTS_PATH}/key.pem -n dex
+
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- apply -n dex -f ${DEX_VERSION_PATH}/examples/k8s/dex.kiali.yaml
   [ "$?" != "0" ] && echo "ERROR: Failed to install dex" && exit 1
   echo "Deploying oauth2 proxy..."
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create -f ${DEX_VERSION_PATH}/examples/k8s/oauth2.proxy
   [ "$?" != "0" ] && echo "ERROR: Failed to deploy oauth2 proxy" && exit 1
+
   # Restart minikube
   echo "Restarting minikube with proper flags for API server and the autodetected registry IP..."
   ${MINIKUBE_EXEC_WITH_PROFILE} stop
@@ -319,6 +327,10 @@ EOF
     --extra-config=apiserver.oidc-client-id=kiali-app \
     --extra-config=apiserver.oidc-groups-claim=groups
   [ "$?" != "0" ] && echo "ERROR: Failed to restart minikube in preparation for dex" && exit 1
+
+  echo "Need to create the OpenID secret now - assuming Kiali will eventually be installed in istio-system"
+  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create namespace istio-system
+  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create secret generic kiali --from-literal="oidc-secret=dontTellAnyone" -n istio-system
 
   echo "Minikube should now be configured with OpenID connect. Just wait for all pods to start."
   cat <<EOF
@@ -340,6 +352,10 @@ OpenID user is:
   Password: password
 
 Kiali reverse proxy URL: http://kiali-proxy.${MINIKUBE_IP}.nip.io:30805
+
+The Kiali OIDC secret named 'kiali' has been created in istio-system namespace.
+If you need to recreate this OIDC secret, run this command:
+  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create secret generic kiali --from-literal="oidc-secret=dontTellAnyone" -n istio-system
 
 EOF
 
