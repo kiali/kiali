@@ -16,8 +16,8 @@ export const INITIAL_GRAPH_STATE: GraphState = {
   },
   summaryData: null,
   toolbarState: {
-    boxByCluster: false,
-    boxByNamespace: false,
+    boxByCluster: true,
+    boxByNamespace: true,
     compressOnHide: true,
     edgeLabels: [],
     findValue: '',

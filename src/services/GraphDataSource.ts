@@ -400,8 +400,8 @@ export default class GraphDataSource {
   private static defaultFetchParams(duration: DurationInSeconds, namespace: string): FetchParams {
     // queryTime defaults to server's 'now', leave unset
     return {
-      boxByCluster: false,
-      boxByNamespace: false,
+      boxByCluster: false, // not the main graph default, the helpers are for detail graphs
+      boxByNamespace: false, // not the main graph default, the helpers are for detail graphs
       duration: duration,
       edgeLabels: [],
       graphType: GraphType.WORKLOAD,

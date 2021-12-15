@@ -13,8 +13,8 @@ describe('GraphDataState', () => {
       rankResult: { upperBound: 0 },
       summaryData: null,
       toolbarState: {
-        boxByCluster: false,
-        boxByNamespace: false,
+        boxByCluster: true,
+        boxByNamespace: true,
         compressOnHide: true,
         edgeLabels: [],
         findValue: '',
