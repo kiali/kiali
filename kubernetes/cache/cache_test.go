@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,11 +13,11 @@ func TestNewKialiCache_isCached(t *testing.T) {
 	assert := assert.New(t)
 
 	kialiCacheImpl := kialiCacheImpl{
-		istioClient:     kubernetes.K8SClient{},
-		refreshDuration: 0,
-		cacheNamespaces: []string{"bookinfo", "a.*", "galicia"},
-		stopChan:        nil,
-		nsCache:         map[string]typeCache{},
+		istioClient:            kubernetes.K8SClient{},
+		refreshDuration:        0,
+		cacheNamespacesRegexps: []regexp.Regexp{*regexp.MustCompile("bookinfo"), *regexp.MustCompile("a.*"), *regexp.MustCompile("galicia")},
+		stopChan:               nil,
+		nsCache:                map[string]typeCache{},
 	}
 
 	assert.True(kialiCacheImpl.isCached("bookinfo"))
