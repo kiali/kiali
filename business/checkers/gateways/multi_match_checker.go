@@ -20,8 +20,10 @@ type MultiMatchChecker struct {
 }
 
 const (
-	GatewayCheckerType = "gateway"
-	wildCardMatch      = "*"
+	GatewayCheckerType     = "gateway"
+	wildCardMatch          = "*"
+	targetNamespaceAll     = "*"
+	targetNamespaceCurrent = "."
 )
 
 type Host struct {
@@ -31,6 +33,7 @@ type Host struct {
 	ServerIndex     int
 	HostIndex       int
 	GatewayRuleName string
+	TargetNamespace string
 }
 
 // Check validates that no two gateways share the same host+port combination
@@ -57,6 +60,17 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 					host.HostIndex = hi
 					host.GatewayRuleName = gatewayRuleName
 					host.Namespace = gatewayNamespace
+					// Hostname can be given in <target-namespace>/Hostname syntax
+					host.TargetNamespace = targetNamespaceAll
+					namespaceAndHost := strings.Split(host.Hostname, "/")
+					if len(namespaceAndHost) > 1 {
+						host.Hostname = namespaceAndHost[1]
+						host.TargetNamespace = namespaceAndHost[0]
+						// replace targetNamespaceCurrent with GW namespace to simplify duplicate checking
+						if host.TargetNamespace == targetNamespaceCurrent {
+							host.TargetNamespace = gatewayNamespace
+						}
+					}
 					duplicate, dhosts := m.findMatch(host, selectorString)
 					if duplicate {
 						// The above is referenced by each one below..
@@ -126,35 +140,38 @@ func (m MultiMatchChecker) findMatch(host Host, selector string) (bool, []Host) 
 		}
 
 		for _, h := range hostGroup {
-			if h.Port == host.Port {
-				// wildcardMatches will always match
-				if host.Hostname == wildCardMatch || h.Hostname == wildCardMatch {
-					duplicates = append(duplicates, host)
-					duplicates = append(duplicates, h)
-					continue
-				}
+			// only compare hosts that share the target namespace or hosts where at least one of the pair is exported to all namespaces
+			if h.TargetNamespace == targetNamespaceAll || host.TargetNamespace == targetNamespaceAll || h.TargetNamespace == host.TargetNamespace {
+				if h.Port == host.Port {
+					// wildcardMatches will always match
+					if host.Hostname == wildCardMatch || h.Hostname == wildCardMatch {
+						duplicates = append(duplicates, host)
+						duplicates = append(duplicates, h)
+						continue
+					}
 
-				// Either one could include wildcards, so we need to check both ways and fix "*" -> ".*" for regexp engine
-				current := strings.ToLower(strings.Replace(host.Hostname, "*", ".*", -1))
-				previous := strings.ToLower(strings.Replace(h.Hostname, "*", ".*", -1))
+					// Either one could include wildcards, so we need to check both ways and fix "*" -> ".*" for regexp engine
+					current := strings.ToLower(strings.Replace(host.Hostname, "*", ".*", -1))
+					previous := strings.ToLower(strings.Replace(h.Hostname, "*", ".*", -1))
 
-				// Escaping dot chars for RegExp. Dot char means all possible chars.
-				// This protects this validation to false positive for (api-dev.example.com and api.dev.example.com)
-				escapedCurrent := strings.Replace(host.Hostname, ".", "\\.", -1)
-				escapedPrevious := strings.Replace(h.Hostname, ".", "\\.", -1)
+					// Escaping dot chars for RegExp. Dot char means all possible chars.
+					// This protects this validation to false positive for (api-dev.example.com and api.dev.example.com)
+					escapedCurrent := strings.Replace(host.Hostname, ".", "\\.", -1)
+					escapedPrevious := strings.Replace(h.Hostname, ".", "\\.", -1)
 
-				// We anchor the beginning and end of the string when it's
-				// to be used as a regex, so that we don't get spurious
-				// substring matches, e.g., "example.com" matching
-				// "foo.example.com".
-				currentRegexp := strings.Join([]string{"^", escapedCurrent, "$"}, "")
-				previousRegexp := strings.Join([]string{"^", escapedPrevious, "$"}, "")
+					// We anchor the beginning and end of the string when it's
+					// to be used as a regex, so that we don't get spurious
+					// substring matches, e.g., "example.com" matching
+					// "foo.example.com".
+					currentRegexp := strings.Join([]string{"^", escapedCurrent, "$"}, "")
+					previousRegexp := strings.Join([]string{"^", escapedPrevious, "$"}, "")
 
-				if regexp.MustCompile(currentRegexp).MatchString(previous) ||
-					regexp.MustCompile(previousRegexp).MatchString(current) {
-					duplicates = append(duplicates, host)
-					duplicates = append(duplicates, h)
-					continue
+					if regexp.MustCompile(currentRegexp).MatchString(previous) ||
+						regexp.MustCompile(previousRegexp).MatchString(current) {
+						duplicates = append(duplicates, host)
+						duplicates = append(duplicates, h)
+						continue
+					}
 				}
 			}
 		}

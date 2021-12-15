@@ -346,3 +346,119 @@ func TestDuplicateGatewaysErrorCount(t *testing.T) {
 	assert.Equal("spec/servers[0]/hosts[0]", duplicatevalidgateway.Checks[0].Path)
 	assert.Equal("spec/servers[0]/hosts[1]", duplicatevalidgateway.Checks[1].Path)
 }
+
+// One Host can be defined for multiple target namespaces without conflict
+func TestNoMatchOnDifferentTargetNamespaces(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer(
+		[]string{
+			"test1/example.com",
+			"test2/example.com",
+		}, 80, "http", "http"),
+
+		data.CreateEmptyGateway("shouldbevalid", "test", map[string]string{
+			"app": "ingressgateway",
+		}))
+
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+
+	vals := MultiMatchChecker{
+		GatewaysPerNamespace: gws,
+	}.Check()
+
+	assert.Empty(vals)
+}
+
+// target Namespace '.' means that the Host is available in the Namespace of the Gateway resource
+func TestMatchOnSameTargetNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer(
+		[]string{
+			"test/example.com",
+			"./example.com",
+		}, 80, "http", "http"),
+
+		data.CreateEmptyGateway("shouldnotbevalid", "test", map[string]string{
+			"app": "ingressgateway",
+		}))
+
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+
+	vals := MultiMatchChecker{
+		GatewaysPerNamespace: gws,
+	}.Check()
+
+	assert.NotEmpty(vals)
+	assert.Equal(1, len(vals))
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "shouldnotbevalid"}]
+	assert.True(ok)
+	assert.True(validation.Valid)
+}
+
+// target Namespace * means that the Host is available in all namespaces
+func TestMatchOnWildcardTargetNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer(
+		[]string{
+			"test/example.com",
+			"*/example.com",
+		}, 80, "http", "http"),
+
+		data.CreateEmptyGateway("shouldnotbevalid", "test", map[string]string{
+			"app": "ingressgateway",
+		}))
+
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+
+	vals := MultiMatchChecker{
+		GatewaysPerNamespace: gws,
+	}.Check()
+
+	assert.NotEmpty(vals)
+	assert.Equal(1, len(vals))
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "shouldnotbevalid"}]
+	assert.True(ok)
+	assert.True(validation.Valid)
+}
+
+// having no target namespace set is the same as having * as target Namespace
+func TestMatchOnImplicitWildcardTargetNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer(
+		[]string{
+			"test/example.com",
+			"example.com",
+		}, 80, "http", "http"),
+
+		data.CreateEmptyGateway("shouldnotbevalid", "test", map[string]string{
+			"app": "ingressgateway",
+		}))
+
+	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+
+	vals := MultiMatchChecker{
+		GatewaysPerNamespace: gws,
+	}.Check()
+
+	assert.NotEmpty(vals)
+	assert.Equal(1, len(vals))
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "shouldnotbevalid"}]
+	assert.True(ok)
+	assert.True(validation.Valid)
+}
