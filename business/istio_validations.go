@@ -365,8 +365,8 @@ func (in *IstioValidationsService) filterVSExportToNamespaces(namespace string, 
 	for _, v := range vs {
 		if len(v.Spec.ExportTo) > 0 {
 			for _, exportToNs := range v.Spec.ExportTo {
-				// take only namespaces where it is exported to, or if it is exported to all namespaces
-				if exportToNs == "*" || exportToNs == namespace {
+				// take only namespaces where it is exported to, or if it is exported to all namespaces, or export to own namespace
+				if checkExportTo(exportToNs, namespace, v.Namespace) {
 					result = append(result, v)
 				}
 			}
@@ -383,8 +383,8 @@ func (in *IstioValidationsService) filterDRExportToNamespaces(namespace string, 
 	for _, d := range dr {
 		if len(d.Spec.ExportTo) > 0 {
 			for _, exportToNs := range d.Spec.ExportTo {
-				// take only namespaces where it is exported to, or if it is exported to all namespaces
-				if exportToNs == "*" || exportToNs == namespace {
+				// take only namespaces where it is exported to, or if it is exported to all namespaces, or export to own namespace
+				if checkExportTo(exportToNs, namespace, d.Namespace) {
 					result = append(result, d)
 				}
 			}
@@ -401,8 +401,8 @@ func (in *IstioValidationsService) filterSEExportToNamespaces(namespace string, 
 	for _, s := range se {
 		if len(s.Spec.ExportTo) > 0 {
 			for _, exportToNs := range s.Spec.ExportTo {
-				// take only namespaces where it is exported to, or if it is exported to all namespaces
-				if exportToNs == "*" || exportToNs == namespace {
+				// take only namespaces where it is exported to, or if it is exported to all namespaces, or export to own namespace
+				if checkExportTo(exportToNs, namespace, s.Namespace) {
 					result = append(result, s)
 				}
 			}
@@ -488,7 +488,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 	if err != nil {
 		errChan <- err
 	} else {
-		mtlsDetails.DestinationRules = destinationRules
+		mtlsDetails.DestinationRules = in.filterDRExportToNamespaces(namespace, destinationRules)
 	}
 }
 
@@ -532,6 +532,11 @@ var (
 	// used with checkForbidden - if a caller is in the map, its forbidden warning message was already logged
 	forbiddenCaller map[string]bool = map[string]bool{}
 )
+
+func checkExportTo(exportToNs string, namespace string, ownNs string) bool {
+	// check if namespaces where it is exported to, or if it is exported to all namespaces, or export to own namespace
+	return exportToNs == "*" || exportToNs == namespace || (exportToNs == "." && ownNs == namespace)
+}
 
 func checkForbidden(caller string, err error, context string) bool {
 	// Some checks return 'forbidden' errors if user doesn't have cluster permissions

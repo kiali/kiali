@@ -86,6 +86,7 @@ func FilterDestinationRulesByNamespaces(namespaces []string, allDr []networking_
 		for _, ns := range namespaces {
 			if dr.Namespace == ns {
 				found = true
+				break
 			}
 		}
 		if found {
