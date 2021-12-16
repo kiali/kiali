@@ -19,7 +19,7 @@ import (
 
 type SessionPersistor interface {
 	CreateSession(r *http.Request, w http.ResponseWriter, strategy string, expiresOn time.Time, payload interface{}) error
-	ReadSession(r *http.Request, w http.ResponseWriter) (expiresOn time.Time, payload interface{}, err error)
+	ReadSession(r *http.Request, w http.ResponseWriter) (payload interface{}, err error)
 	TerminateSession(w http.ResponseWriter, r *http.Request)
 }
 
@@ -217,14 +217,14 @@ func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWr
 	//}
 }
 
-func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWriter) (time.Time, interface{}, error) {
+func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWriter) (interface{}, error) {
 	authCookie, err := r.Cookie(config.TokenCookieName + "-aes")
 	if err != nil {
 		if err == http.ErrNoCookie {
 			log.Tracef("The AES cookie is missing.")
-			return time.Time{}, nil, nil
+			return nil, nil
 		}
-		return time.Time{}, nil, fmt.Errorf("unable to read the -aes cookie: %w", err)
+		return nil, fmt.Errorf("unable to read the -aes cookie: %w", err)
 	}
 
 	// Initially, take the value of the "-aes" cookie as the session data.
@@ -239,12 +239,12 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 	if chunksCookieErr == nil {
 		numChunks, convErr := strconv.Atoi(numChunksCookie.Value)
 		if convErr != nil {
-			return time.Time{}, nil, fmt.Errorf("unable to read the chunks cookie: %w", convErr)
+			return nil, fmt.Errorf("unable to read the chunks cookie: %w", convErr)
 		}
 
 		// It's known that major browsers have a limit of 180 cookies per domain.
 		if numChunks <= 0 || numChunks > 180 {
-			return time.Time{}, nil, fmt.Errorf("number of session cookies is %d, but limit is 1 through 180", numChunks)
+			return nil, fmt.Errorf("number of session cookies is %d, but limit is 1 through 180", numChunks)
 		}
 
 		// Read session data chunks and save into a buffer
@@ -256,7 +256,7 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 			cookieName := fmt.Sprintf("%s-aes-%d", config.TokenCookieName, i)
 			authChunkCookie, chunkErr := r.Cookie(cookieName)
 			if chunkErr != nil {
-				return time.Time{}, nil, fmt.Errorf("failed to read session cookie chunk number %d: %w", i, chunkErr)
+				return nil, fmt.Errorf("failed to read session cookie chunk number %d: %w", i, chunkErr)
 			}
 
 			sessionDataBuffer.WriteString(authChunkCookie.Value)
@@ -266,22 +266,22 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 		base64SessionData = sessionDataBuffer.String()
 	} else if chunksCookieErr != http.ErrNoCookie {
 		// Tolerate a "no cookie" error, but if error is something else, throw up the error.
-		return time.Time{}, nil, fmt.Errorf("failed to read the chunks cookie: %w", chunksCookieErr)
+		return nil, fmt.Errorf("failed to read the chunks cookie: %w", chunksCookieErr)
 	}
 
 	cipherSessionData, err := base64.StdEncoding.DecodeString(base64SessionData)
 	if err != nil {
-		return time.Time{}, nil, fmt.Errorf("unable to decode session data: %w", err)
+		return nil, fmt.Errorf("unable to decode session data: %w", err)
 	}
 
 	block, err := aes.NewCipher([]byte(config.GetSigningKey()))
 	if err != nil {
-		return time.Time{}, nil, fmt.Errorf("error when restoring the session - failed to create the cipher: %w", err)
+		return nil, fmt.Errorf("error when restoring the session - failed to create the cipher: %w", err)
 	}
 
 	aesGCM, err := cipher.NewGCM(block)
 	if err != nil {
-		return time.Time{}, nil, fmt.Errorf("error when restoring the session - failed to create gcm: %w", err)
+		return nil, fmt.Errorf("error when restoring the session - failed to create gcm: %w", err)
 	}
 
 	nonceSize := aesGCM.NonceSize()
@@ -289,30 +289,30 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 
 	sessionDataJson, err := aesGCM.Open(nil, nonce, cipherSessionData, nil)
 	if err != nil {
-		return time.Time{}, nil, fmt.Errorf("error when restoring the session - failed to decrypt: %w", err)
+		return nil, fmt.Errorf("error when restoring the session - failed to decrypt: %w", err)
 	}
 
 	var sData sessionData
 	err = json.Unmarshal(sessionDataJson, &sData)
 	if err != nil {
-		return time.Time{}, nil, fmt.Errorf("error when restoring the session - failed to parse the session data: %w", err)
+		return nil, fmt.Errorf("error when restoring the session - failed to parse the session data: %w", err)
 	}
 
 	if sData.Strategy != config.Get().Auth.Strategy {
 		log.Tracef("Session is invalid because it was created with authentication strategy %s, but current authentication strategy is %s", sData.Strategy, config.Get().Auth.Strategy)
 		p.TerminateSession(r, w) // Kill the spurious session
 
-		return time.Time{}, nil, nil
+		return nil, nil
 	}
 
 	if !util.Clock.Now().Before(sData.ExpiresOn) {
 		log.Tracef("Session is invalid because it expired on %s", sData.ExpiresOn.Format(time.RFC822))
 		p.TerminateSession(r, w) // Clean the expired session
 
-		return time.Time{}, nil, nil
+		return nil, nil
 	}
 
-	return sData.ExpiresOn, sData.Payload, nil
+	return sData.Payload, nil
 }
 
 func (p CookieSessionPersistor) TerminateSession(r *http.Request, w http.ResponseWriter) {
