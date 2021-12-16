@@ -1,8 +1,6 @@
 package business
 
 import (
-	"sync"
-
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
@@ -27,15 +25,18 @@ const (
 )
 
 func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus, error) {
-	pas, error := in.getMeshPeerAuthentications()
-	if error != nil {
-		return models.MTLSStatus{}, error
+	criteria := IstioConfigCriteria{
+		AllNamespaces:              true,
+		IncludeDestinationRules:    true,
+		IncludePeerAuthentications: true,
+	}
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+	if err != nil {
+		return models.MTLSStatus{}, err
 	}
 
-	drs, error := in.getAllDestinationRules(namespaces)
-	if error != nil {
-		return models.MTLSStatus{}, error
-	}
+	pas := kubernetes.FilterPeerAuthenticationByNamespace(config.Get().ExternalServices.Istio.RootNamespace, istioConfigList.PeerAuthentications)
+	drs := kubernetes.FilterDestinationRulesByNamespaces(namespaces, istioConfigList.DestinationRules)
 
 	mtlsStatus := mtls.MtlsStatus{
 		PeerAuthentications: pas,
@@ -49,72 +50,27 @@ func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus
 	}, nil
 }
 
-func (in *TLSService) getMeshPeerAuthentications() ([]security_v1beta1.PeerAuthentication, error) {
-	criteria := IstioConfigCriteria{
-		Namespace:                  config.Get().ExternalServices.Istio.RootNamespace,
-		IncludePeerAuthentications: true,
-	}
-	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
-	return istioConfigList.PeerAuthentications, err
-}
-
-func (in *TLSService) getAllDestinationRules(namespaces []string) ([]networking_v1alpha3.DestinationRule, error) {
-	drChan := make(chan []networking_v1alpha3.DestinationRule, len(namespaces))
-	errChan := make(chan error, 1)
-	wg := sync.WaitGroup{}
-
-	wg.Add(len(namespaces))
-
-	for _, namespace := range namespaces {
-		go func(ns string) {
-			defer wg.Done()
-			criteria := IstioConfigCriteria{
-				Namespace:               ns,
-				IncludeDestinationRules: true,
-			}
-			istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
-			if err != nil {
-				errChan <- err
-				return
-			}
-
-			drChan <- istioConfigList.DestinationRules
-		}(namespace)
-	}
-
-	wg.Wait()
-	close(errChan)
-	close(drChan)
-
-	for err := range errChan {
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	allDestinationRules := make([]networking_v1alpha3.DestinationRule, 0)
-	for drs := range drChan {
-		allDestinationRules = append(allDestinationRules, drs...)
-	}
-
-	return allDestinationRules, nil
-}
-
 func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatus, error) {
-	pas, err := in.getPeerAuthentications(namespace)
-	if err != nil {
-		return models.MTLSStatus{}, nil
-	}
-
 	nss, err := in.getNamespaces()
 	if err != nil {
 		return models.MTLSStatus{}, nil
 	}
 
-	drs, err := in.getAllDestinationRules(nss)
-	if err != nil {
-		return models.MTLSStatus{}, nil
+	criteria := IstioConfigCriteria{
+		AllNamespaces:              true,
+		IncludeDestinationRules:    true,
+		IncludePeerAuthentications: true,
 	}
+	istioConfigList, err2 := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
+	if err2 != nil {
+		return models.MTLSStatus{}, err2
+	}
+
+	pas := kubernetes.FilterPeerAuthenticationByNamespace(namespace, istioConfigList.PeerAuthentications)
+	if config.IsRootNamespace(namespace) {
+		pas = []security_v1beta1.PeerAuthentication{}
+	}
+	drs := kubernetes.FilterDestinationRulesByNamespaces(nss, istioConfigList.DestinationRules)
 
 	mtlsStatus := mtls.MtlsStatus{
 		Namespace:           namespace,
@@ -129,16 +85,31 @@ func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatu
 	}, nil
 }
 
-func (in TLSService) getPeerAuthentications(namespace string) ([]security_v1beta1.PeerAuthentication, error) {
-	if config.IsRootNamespace(namespace) {
-		return []security_v1beta1.PeerAuthentication{}, nil
-	}
+// TODO refactor business/istio_validations.go
+func (in *TLSService) getAllDestinationRules(namespaces []string) ([]networking_v1alpha3.DestinationRule, error) {
 	criteria := IstioConfigCriteria{
-		Namespace:                  namespace,
-		IncludePeerAuthentications: true,
+		AllNamespaces:           true,
+		IncludeDestinationRules: true,
 	}
+
 	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(criteria)
-	return istioConfigList.PeerAuthentications, err
+	if err != nil {
+		return nil, err
+	}
+
+	allDestinationRules := make([]networking_v1alpha3.DestinationRule, 0)
+	for _, dr := range istioConfigList.DestinationRules {
+		found := false
+		for _, ns := range namespaces {
+			if dr.Namespace == ns {
+				found = true
+			}
+		}
+		if found {
+			allDestinationRules = append(allDestinationRules, dr)
+		}
+	}
+	return allDestinationRules, nil
 }
 
 func (in TLSService) getNamespaces() ([]string, error) {
