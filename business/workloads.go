@@ -160,6 +160,7 @@ func (in *WorkloadService) GetWorkloadList(criteria WorkloadCriteria) (models.Wo
 	}
 	authpolicies = istioConfigList.AuthorizationPolicies
 	validations := in.getWorkloadValidations(authpolicies, *workloadList, criteria.Namespace)
+	validations.StripIgnoredChecks()
 	workloadList.Validations = validations
 	return *workloadList, nil
 }
