@@ -17,6 +17,7 @@ import (
 type MultiMatchChecker struct {
 	GatewaysPerNamespace [][]networking_v1alpha3.Gateway
 	existingList         map[string][]Host
+	hostRegexpCache      map[string]regexp.Regexp
 }
 
 const (
@@ -40,6 +41,7 @@ type Host struct {
 func (m MultiMatchChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 	m.existingList = map[string][]Host{}
+	m.hostRegexpCache = map[string]regexp.Regexp{}
 
 	for _, nsG := range m.GatewaysPerNamespace {
 		for _, g := range nsG {
@@ -150,24 +152,24 @@ func (m MultiMatchChecker) findMatch(host Host, selector string) (bool, []Host) 
 						continue
 					}
 
-					// Either one could include wildcards, so we need to check both ways and fix "*" -> ".*" for regexp engine
-					current := strings.ToLower(strings.Replace(host.Hostname, "*", ".*", -1))
-					previous := strings.ToLower(strings.Replace(h.Hostname, "*", ".*", -1))
+					// DNS is case-insensitive
+					current := strings.ToLower(host.Hostname)
+					previous := strings.ToLower(h.Hostname)
 
-					// Escaping dot chars for RegExp. Dot char means all possible chars.
-					// This protects this validation to false positive for (api-dev.example.com and api.dev.example.com)
-					escapedCurrent := strings.Replace(host.Hostname, ".", "\\.", -1)
-					escapedPrevious := strings.Replace(h.Hostname, ".", "\\.", -1)
+					// lazily compile hostname Regex
+					currentRegexp, ok := m.hostRegexpCache[current]
+					if !ok {
+						currentRegexp = *regexpFromHostname(current)
+						m.hostRegexpCache[current] = currentRegexp
+					}
+					previousRegexp, ok := m.hostRegexpCache[previous]
+					if !ok {
+						previousRegexp = *regexpFromHostname(previous)
+						m.hostRegexpCache[previous] = previousRegexp
+					}
 
-					// We anchor the beginning and end of the string when it's
-					// to be used as a regex, so that we don't get spurious
-					// substring matches, e.g., "example.com" matching
-					// "foo.example.com".
-					currentRegexp := strings.Join([]string{"^", escapedCurrent, "$"}, "")
-					previousRegexp := strings.Join([]string{"^", escapedPrevious, "$"}, "")
-
-					if regexp.MustCompile(currentRegexp).MatchString(previous) ||
-						regexp.MustCompile(previousRegexp).MatchString(current) {
+					if currentRegexp.MatchString(previous) ||
+						previousRegexp.MatchString(current) {
 						duplicates = append(duplicates, host)
 						duplicates = append(duplicates, h)
 						continue
@@ -177,4 +179,18 @@ func (m MultiMatchChecker) findMatch(host Host, selector string) (bool, []Host) 
 		}
 	}
 	return len(duplicates) > 0, duplicates
+}
+
+func regexpFromHostname(hostname string) *regexp.Regexp {
+	// Escaping dot chars for RegExp. Dot char means all possible chars.
+	// This protects this validation to false positive for (api-dev.example.com and api.dev.example.com)
+	escaped := strings.Replace(hostname, ".", "\\.", -1)
+
+	// We anchor the beginning and end of the string when it's
+	// to be used as a regex, so that we don't get spurious
+	// substring matches, e.g., "example.com" matching
+	// "foo.example.com".
+	anchored := strings.Join([]string{"^", escaped, "$"}, "")
+
+	return regexp.MustCompile(anchored)
 }
