@@ -15,8 +15,8 @@ import (
 )
 
 type MultiMatchChecker struct {
-	Gateways       []networking_v1alpha3.Gateway
-	existingList   map[string][]Host
+	Gateways        []networking_v1alpha3.Gateway
+	existingList    map[string][]Host
 	hostRegexpCache map[string]regexp.Regexp
 }
 
