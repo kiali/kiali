@@ -19,14 +19,14 @@ import (
 
 type SessionPersistor interface {
 	CreateSession(r *http.Request, w http.ResponseWriter, strategy string, expiresOn time.Time, payload interface{}) error
-	ReadSession(r *http.Request, w http.ResponseWriter) (payload interface{}, err error)
-	TerminateSession(w http.ResponseWriter, r *http.Request)
+	ReadSession(r *http.Request, w http.ResponseWriter, payload interface{}) (sData *sessionData, err error)
+	TerminateSession(r *http.Request, w http.ResponseWriter)
 }
 
 type sessionData struct {
-	Strategy  string      `json:"strategy"`
-	ExpiresOn time.Time   `json:"expiresOn"`
-	Payload   interface{} `json:"payload,omitempty"`
+	Strategy  string    `json:"strategy"`
+	ExpiresOn time.Time `json:"expiresOn"`
+	Payload   string    `json:"payload,omitempty"`
 }
 
 // Acknowledgement to rinat.io user of SO.
@@ -54,10 +54,15 @@ type CookieSessionPersistor struct{}
 
 // Create Kiali's session cookie and set it in the response
 func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWriter, strategy string, expiresOn time.Time, payload interface{}) error {
+	payloadMarshalled, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("error when creating the session - failed to marshal payload: %w", err)
+	}
+
 	sData := sessionData{
 		Strategy:  strategy,
 		ExpiresOn: expiresOn,
-		Payload:   payload,
+		Payload:   string(payloadMarshalled),
 	}
 
 	sDataJson, err := json.Marshal(sData)
@@ -217,7 +222,7 @@ func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWr
 	//}
 }
 
-func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWriter) (interface{}, error) {
+func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWriter, payload interface{}) (*sessionData, error) {
 	authCookie, err := r.Cookie(config.TokenCookieName + "-aes")
 	if err != nil {
 		if err == http.ErrNoCookie {
@@ -298,6 +303,13 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 		return nil, fmt.Errorf("error when restoring the session - failed to parse the session data: %w", err)
 	}
 
+	if payload != nil {
+		payloadErr := json.Unmarshal([]byte(sData.Payload), payload)
+		if payloadErr != nil {
+			return nil, fmt.Errorf("error when restoring the session - failed to parse the session payload: %w", payloadErr)
+		}
+	}
+
 	if sData.Strategy != config.Get().Auth.Strategy {
 		log.Tracef("Session is invalid because it was created with authentication strategy %s, but current authentication strategy is %s", sData.Strategy, config.Get().Auth.Strategy)
 		p.TerminateSession(r, w) // Kill the spurious session
@@ -312,7 +324,7 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 		return nil, nil
 	}
 
-	return sData.Payload, nil
+	return &sData, nil
 }
 
 func (p CookieSessionPersistor) TerminateSession(r *http.Request, w http.ResponseWriter) {

@@ -1,12 +1,14 @@
 package authentication
 
 import (
-	"k8s.io/client-go/tools/clientcmd/api"
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"gopkg.in/square/go-jose.v2/jwt"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -15,53 +17,99 @@ import (
 )
 
 type AuthController interface {
-	Authenticate(w http.ResponseWriter, r *http.Request) bool
-	ValidateSession(w http.ResponseWriter, r *http.Request) (int, string)
+	Authenticate(r *http.Request, w http.ResponseWriter) bool
+	ValidateSession(r *http.Request, w http.ResponseWriter) (int, string)
+	TerminateSession(r *http.Request, w http.ResponseWriter)
 }
 
 type TokenAuthController struct {
-	sessionStore SessionPersistor
+	SessionStore SessionPersistor
 }
 
 type sessionPayload struct {
-	token string `json:"token,omitempty"`
+	Token string `json:"token,omitempty"`
 }
 
-func (c TokenAuthController) Authenticate(w http.ResponseWriter, r *http.Request) bool {
+// TokenResponse tokenResponse
+//
+// This is used for returning the token
+//
+// swagger:model TokenResponse
+type TokenResponse struct {
+	// The expired time for the token
+	// A string with the Datetime when the token will be expired
+	//
+	// example: Thu, 07 Mar 2019 17:50:26 +0000
+	// required: true
+	ExpiresOn time.Time `json:"expiresOn"`
+
+	// The username for the token
+	// A string with the user's username
+	//
+	// example: admin
+	// required: true
+	Username string `json:"username"`
+
+	// The authentication token
+	// A string with the authentication token for the user
+	//
+	// example: zI1NiIsIsR5cCI6IkpXVCJ9.ezJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI5NTIzNjU0fQ.PPZvRGnR6VA4v7FmgSfQcGQr-VD
+	// required: true
+	Token string
+}
+
+type AuthenticationFailureError struct {
+	Reason string
+	Detail error
+}
+
+func (e *AuthenticationFailureError) Error() string {
+	if e.Detail != nil {
+		return fmt.Sprintf("%s: %v", e.Reason, e.Detail)
+	}
+
+	return e.Reason
+}
+
+func (c TokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*TokenResponse, error) {
 	err := r.ParseForm()
 
 	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Error parsing form data from client", err.Error())
-		return false
+		return nil, fmt.Errorf("error parsing form data from client: %w", err)
+		//handlers.RespondWithDetailedError(w, http.StatusInternalServerError, "Error parsing form data from client", err.Error())
 	}
 
 	token := r.Form.Get("token")
 
 	if token == "" {
-		RespondWithError(w, http.StatusInternalServerError, "Token is empty.")
-		return false
+		return nil, errors.New("token is empty")
+		//handlers.RespondWithError(w, http.StatusInternalServerError, "Token is empty.")
+		//return false
 	}
 
 	business, err := business.Get(&api.AuthInfo{Token: token})
 	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
-		return false
+		return nil, fmt.Errorf("error instantiating the business layer: %w", err)
+		//handlers.RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
+		//return false
 	}
 
 	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
 	// anonymous access, so it's not feasible to use the version API for token verification.
 	nsList, err := business.Namespace.GetNamespaces()
 	if err != nil {
-		c.sessionStore.TerminateSession(w, r)
-		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired", err.Error())
-		return false
+		c.SessionStore.TerminateSession(r, w)
+		return nil, &AuthenticationFailureError{Reason: "token is not valid or is expired", Detail: err}
+		//handlers.RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired", err.Error())
+		//return false
 	}
 
 	// If namespace list is empty, return unauthorized error
 	if len(nsList) == 0 {
-		c.sessionStore.TerminateSession(w, r)
-		RespondWithError(w, http.StatusUnauthorized, "Not enough privileges to login")
-		return false
+		c.SessionStore.TerminateSession(r, w)
+		return nil, &AuthenticationFailureError{Reason: "not enough privileges to login"}
+		//handlers.RespondWithError(w, http.StatusUnauthorized, "Not enough privileges to login")
+		//return false
 	}
 
 	// Now that we know that the ServiceAccount token is valid, parse/decode it to extract
@@ -70,7 +118,7 @@ func (c TokenAuthController) Authenticate(w http.ResponseWriter, r *http.Request
 
 	// Create the user session
 	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
-	err = c.sessionStore.CreateSession(r, w, "token", timeExpire, sessionPayload{token: token})
+	err = c.SessionStore.CreateSession(r, w, "token", timeExpire, sessionPayload{Token: token})
 
 	//tokenClaims := config.IanaClaims{
 	//	SessionId: token,
@@ -82,8 +130,9 @@ func (c TokenAuthController) Authenticate(w http.ResponseWriter, r *http.Request
 	//}
 	//tokenString, err := config.GetSignedTokenString(tokenClaims)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return false
+		return nil, err
+		//handlers.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		//return false
 	}
 
 	//tokenCookie := http.Cookie{
@@ -96,25 +145,34 @@ func (c TokenAuthController) Authenticate(w http.ResponseWriter, r *http.Request
 	//}
 	//http.SetCookie(w, &tokenCookie)
 
-	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: timeExpire.Format(time.RFC1123Z), Username: tokenSubject})
-	return true
+	//handlers.RespondWithJSONIndent(w, http.StatusOK, TokenResponse{ExpiresOn: timeExpire.Format(time.RFC1123Z), Username: tokenSubject})
+	return &TokenResponse{ExpiresOn: timeExpire, Username: tokenSubject, Token: token}, nil
 }
 
-func (c TokenAuthController) ValidateSession(w http.ResponseWriter, r *http.Request) (int, string) {
-	payload, err := c.sessionStore.ReadSession(r, w)
-	sPayload := payload.(sessionPayload)
-
-	business, err := business.Get(&api.AuthInfo{Token: sPayload.token})
+func (c TokenAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*TokenResponse, error) {
+	sPayload := sessionPayload{}
+	sData, err := c.SessionStore.ReadSession(r, w, &sPayload)
 	if err != nil {
-		log.Warningf("Could not get the business layer!!!: %v", err)
-		return http.StatusInternalServerError, ""
+		log.Warningf("Could not read the session: %v", err)
+		return nil, nil
+	}
+	if sData == nil {
+		return nil, nil
+	}
+
+	business, err := business.Get(&api.AuthInfo{Token: sPayload.Token})
+	if err != nil {
+		//log.Warningf("Could not get the business layer!!!: %v", err)
+		return nil, fmt.Errorf("could not get the business layer: %w", err)
+		//return http.StatusInternalServerError, ""
 	}
 
 	_, err = business.Namespace.GetNamespaces()
 	if err == nil {
 		// Internal header used to propagate the subject of the request for audit purposes
-		r.Header.Add("Kiali-User", extractSubjectFromK8sToken(sPayload.token))
-		return http.StatusOK, sPayload.token
+		r.Header.Add("Kiali-User", extractSubjectFromK8sToken(sPayload.Token))
+		return &TokenResponse{ExpiresOn: sData.ExpiresOn, Username: extractSubjectFromK8sToken(sPayload.Token), Token: sPayload.Token}, nil
+		//return http.StatusOK, sPayload.token
 	}
 
 	log.Warningf("Token error!!: %v", err)
@@ -145,7 +203,11 @@ func (c TokenAuthController) ValidateSession(w http.ResponseWriter, r *http.Requ
 	//	log.Warningf("Token error!!: %v", err)
 	//}
 
-	return http.StatusUnauthorized, ""
+	return nil, nil
+}
+
+func (c TokenAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) {
+	c.SessionStore.TerminateSession(r, w)
 }
 
 func extractSubjectFromK8sToken(token string) string {

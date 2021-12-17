@@ -20,6 +20,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -662,8 +663,19 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 
 			authInfo = &api.AuthInfo{Token: token}
 		case config.AuthStrategyToken:
-			statusCode, token = checkTokenSession(w, r)
-			authInfo = &api.AuthInfo{Token: token}
+			th := authentication.TokenAuthController{
+				SessionStore: authentication.CookieSessionPersistor{},
+			}
+			session, validateErr := th.ValidateSession(r, w)
+			if validateErr != nil {
+				statusCode = http.StatusInternalServerError
+			} else if session != nil {
+				token = session.Token
+				authInfo = &api.AuthInfo{Token: session.Token}
+				statusCode = http.StatusOK
+			} else {
+				statusCode = http.StatusUnauthorized
+			}
 		case config.AuthStrategyAnonymous:
 			log.Tracef("Access to the server endpoint is not secured with credentials - letting request come in. Url: [%s]", r.URL.String())
 			token = aHandler.saToken
@@ -711,7 +723,19 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 	case config.AuthStrategyOpenId:
 		performOpenIdAuthentication(w, r)
 	case config.AuthStrategyToken:
-		performTokenAuthentication(w, r)
+		th := authentication.TokenAuthController{
+			SessionStore: authentication.CookieSessionPersistor{},
+		}
+		response, err := th.Authenticate(r, w)
+		if err != nil {
+			if e, ok := err.(*authentication.AuthenticationFailureError); ok {
+				RespondWithError(w, http.StatusUnauthorized, e.Error())
+			} else {
+				RespondWithError(w, http.StatusInternalServerError, e.Error())
+			}
+		} else {
+			RespondWithJSONIndent(w, http.StatusOK, response)
+		}
 	case config.AuthStrategyHeader:
 		performHeaderAuthentication(w, r)
 	case config.AuthStrategyAnonymous:
@@ -753,20 +777,33 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 			httputil.GuessKialiURL(r))
 	}
 
-	token := getTokenStringFromRequest(r)
-	claims, _ := config.GetTokenClaimsIfValid(token)
-	if claims == nil && conf.Auth.Strategy == config.AuthStrategyOpenId {
-		var aes error
-		claims, aes = business.GetOpenIdAesSession(r)
-		if aes != nil {
-			log.Warningf("Apparently, there is no AES session: %s ", aes.Error())
+	if conf.Auth.Strategy != config.AuthStrategyToken {
+		token := getTokenStringFromRequest(r)
+		claims, _ := config.GetTokenClaimsIfValid(token)
+		if claims == nil && conf.Auth.Strategy == config.AuthStrategyOpenId {
+			var aes error
+			claims, aes = business.GetOpenIdAesSession(r)
+			if aes != nil {
+				log.Warningf("Apparently, there is no AES session: %s ", aes.Error())
+			}
 		}
-	}
 
-	if claims != nil {
-		response.SessionInfo = sessionInfo{
-			ExpiresOn: time.Unix(claims.ExpiresAt, 0).Format(time.RFC1123Z),
-			Username:  claims.Subject,
+		if claims != nil {
+			response.SessionInfo = sessionInfo{
+				ExpiresOn: time.Unix(claims.ExpiresAt, 0).Format(time.RFC1123Z),
+				Username:  claims.Subject,
+			}
+		}
+	} else {
+		th := authentication.TokenAuthController{
+			SessionStore: authentication.CookieSessionPersistor{},
+		}
+		session, _ := th.ValidateSession(r, w)
+		if session != nil {
+			response.SessionInfo = sessionInfo{
+				ExpiresOn: session.ExpiresOn.Format(time.RFC1123Z),
+				Username:  session.Username,
+			}
 		}
 	}
 
@@ -774,18 +811,27 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	deleteTokenCookies(w, r)
-
-	// We need to perform an extra step to invalidate the user token when using OpenShift OAuth
 	conf := config.Get()
-	if conf.Auth.Strategy == config.AuthStrategyOpenshift {
-		code, err := performOpenshiftLogout(r)
-		if err != nil {
-			RespondWithError(w, code, err.Error())
+
+	if conf.Auth.Strategy != config.AuthStrategyToken {
+		deleteTokenCookies(w, r)
+
+		// We need to perform an extra step to invalidate the user token when using OpenShift OAuth
+		if conf.Auth.Strategy == config.AuthStrategyOpenshift {
+			code, err := performOpenshiftLogout(r)
+			if err != nil {
+				RespondWithError(w, code, err.Error())
+			} else {
+				RespondWithCode(w, code)
+			}
 		} else {
-			RespondWithCode(w, code)
+			RespondWithCode(w, http.StatusNoContent)
 		}
 	} else {
+		th := authentication.TokenAuthController{
+			SessionStore: authentication.CookieSessionPersistor{},
+		}
+		th.TerminateSession(r, w)
 		RespondWithCode(w, http.StatusNoContent)
 	}
 }
