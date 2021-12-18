@@ -663,10 +663,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 
 			authInfo = &api.AuthInfo{Token: token}
 		case config.AuthStrategyToken:
-			th := authentication.TokenAuthController{
-				SessionStore: authentication.CookieSessionPersistor{},
-			}
-			session, validateErr := th.ValidateSession(r, w)
+			session, validateErr := authentication.GetAuthController().ValidateSession(r, w)
 			if validateErr != nil {
 				statusCode = http.StatusInternalServerError
 			} else if session != nil {
@@ -723,10 +720,7 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 	case config.AuthStrategyOpenId:
 		performOpenIdAuthentication(w, r)
 	case config.AuthStrategyToken:
-		th := authentication.TokenAuthController{
-			SessionStore: authentication.CookieSessionPersistor{},
-		}
-		response, err := th.Authenticate(r, w)
+		response, err := authentication.GetAuthController().Authenticate(r, w)
 		if err != nil {
 			if e, ok := err.(*authentication.AuthenticationFailureError); ok {
 				RespondWithError(w, http.StatusUnauthorized, e.Error())
@@ -795,10 +789,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
-		th := authentication.TokenAuthController{
-			SessionStore: authentication.CookieSessionPersistor{},
-		}
-		session, _ := th.ValidateSession(r, w)
+		session, _ := authentication.GetAuthController().ValidateSession(r, w)
 		if session != nil {
 			response.SessionInfo = sessionInfo{
 				ExpiresOn: session.ExpiresOn.Format(time.RFC1123Z),
@@ -828,10 +819,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 			RespondWithCode(w, http.StatusNoContent)
 		}
 	} else {
-		th := authentication.TokenAuthController{
-			SessionStore: authentication.CookieSessionPersistor{},
-		}
-		th.TerminateSession(r, w)
+		authentication.GetAuthController().TerminateSession(r, w)
 		RespondWithCode(w, http.StatusNoContent)
 	}
 }

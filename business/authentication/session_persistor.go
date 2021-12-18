@@ -5,8 +5,8 @@ import (
 	"crypto/cipher"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/kiali/kiali/log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,6 +14,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
 )
 
@@ -23,42 +24,43 @@ type SessionPersistor interface {
 	TerminateSession(r *http.Request, w http.ResponseWriter)
 }
 
+type CookieSessionPersistor struct{}
+
 type sessionData struct {
 	Strategy  string    `json:"strategy"`
 	ExpiresOn time.Time `json:"expiresOn"`
 	Payload   string    `json:"payload,omitempty"`
 }
 
-// Acknowledgement to rinat.io user of SO.
-// Taken from https://stackoverflow.com/a/48479355 with a few modifications
-func chunkString(s string, chunkSize int) []string {
-	if len(s) <= chunkSize {
-		return []string{s}
+// CreateSession starts a user session using HTTP Cookies for persistance across HTTP requests.
+// For improved security, the data of the session is encrypted using the AES-GCM algorithm and
+// the encrypted data is what is sent in cookies. The strategy, expiresOn and payload arguments
+// are all required.
+func (p CookieSessionPersistor) CreateSession(_ *http.Request, w http.ResponseWriter, strategy string, expiresOn time.Time, payload interface{}) error {
+	// Validate that there is a payload and a strategy. The strategy is required just in case Kiali is reconfigured with a
+	// different strategy and drop any stale session. The payload is required because it does not make sense to start a session
+	// if there is no data to persist.
+	if payload == nil || len(strategy) == 0 {
+		return errors.New("a session cannot be created without strategy, or with a nil payload")
 	}
 
-	numChunks := len(s)/chunkSize + 1
-	chunks := make([]string, 0, numChunks)
-	runes := []rune(s)
-
-	for i := 0; i < len(runes); i += chunkSize {
-		nn := i + chunkSize
-		if nn > len(runes) {
-			nn = len(runes)
-		}
-		chunks = append(chunks, string(runes[i:nn]))
+	// Reject expiration time that is already in the past.
+	if !util.Clock.Now().Before(expiresOn) {
+		return errors.New("the expiration time of a session cannot be in the past")
 	}
-	return chunks
-}
 
-type CookieSessionPersistor struct{}
-
-// Create Kiali's session cookie and set it in the response
-func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWriter, strategy string, expiresOn time.Time, payload interface{}) error {
+	// Serialize the payload. The resulting string will be re-serialized along some metadata.
+	// It may not sound very efficient to serialize twice (the sessionData struct may declare
+	//  its Payload field as interface{}). However, this allows de-serialization
+	// to the original type in the ReadSession function, rather than manually parsing a generic map[string]interface{}.
+	// Read more in the ReadSession function.
 	payloadMarshalled, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("error when creating the session - failed to marshal payload: %w", err)
 	}
 
+	// Add some metadata to the session and serialize this structure. The resulting string
+	// is what will be encrypted and stored in cookies.
 	sData := sessionData{
 		Strategy:  strategy,
 		ExpiresOn: expiresOn,
@@ -67,10 +69,12 @@ func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWr
 
 	sDataJson, err := json.Marshal(sData)
 	if err != nil {
-		return fmt.Errorf("error when creating the session - failed to marshal json: %w", err)
+		return fmt.Errorf("error when creating the session - failed to marshal JSON: %w", err)
 	}
 
-	// Cipher the session data and encode to base64
+	// The sDataJson string holds the session data that we want to persist.
+	// It's time to encrypt this data which will result in an illegible sequence of bytes which are then
+	// encoded to base64 get a string that is suitable to store in browser cookies.
 	block, err := aes.NewCipher([]byte(config.GetSigningKey()))
 	if err != nil {
 		return fmt.Errorf("error when creating the session - failed to create cipher: %w", err)
@@ -89,6 +93,9 @@ func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWr
 	cipherSessionData := aesGcm.Seal(aesGcmNonce, aesGcmNonce, sDataJson, nil)
 	base64SessionData := base64.StdEncoding.EncodeToString(cipherSessionData)
 
+	// The base64SessionData holds what we want to store in browser cookies.
+	// It's time to set/send the browser cookies to persist the session.
+
 	// If the resulting session data is large, it may not fit in one cookie. So, the resulting
 	// session data is broken in chunks and multiple cookies are used, as is needed.
 	conf := config.Get()
@@ -98,7 +105,9 @@ func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWr
 		var cookieName string
 		if i == 0 {
 			// Set a cookie with the regular cookie name with the first chunk of session data.
-			// This is for backwards compatibility
+			// Notice that an "-aes" suffix is being used in the cookie names. This is for backwards compatibility and
+			// is/was meant to be able to differentiate between a session using cookies holding encrypted data, and the older
+			// less secure sessions using cookies holding JWTs.
 			cookieName = config.TokenCookieName + "-aes"
 		} else {
 			// If there are more chunks of session data (usually because of larger tokens from the IdP),
@@ -133,96 +142,17 @@ func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWr
 	}
 
 	return nil
-
-	// For the OpenId's "authorization code" flow we don't want
-	// any of the session data to be readable even in the browser's
-	// developer console. So, we cipher the session data using AES-GCM
-	// which allows to leave aside the usage of JWT tokens. So, this
-	// builds a bare JSON serialized into a string, cipher it and
-	// set a cookie with the ciphered string. Yet, we use the
-	// "IanaClaims" type just for convenience to avoid creating new types and
-	// to bring some type convergence on types for the auth source code.
-	//
-	//sessionData := business.BuildOpenIdJwtClaims(openIdParams, useAccessToken)
-	//sessionDataJson, err := json.Marshal(sessionData)
-	//if err != nil {
-	//	msg := fmt.Sprintf("Error when creating credentials - failed to marshal json: %s", err.Error())
-	//	log.Error(msg)
-	//	http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
-	//	return true
-	//}
-	//
-	// Cipher the session data and encode to base64
-	//block, err := aes.NewCipher([]byte(config.GetSigningKey()))
-	//if err != nil {
-	//	msg := fmt.Sprintf("Error when creating credentials - failed to create cipher: %s", err.Error())
-	//	log.Error(msg)
-	//	http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
-	//	return true
-	//}
-	//
-	//aesGcm, err := cipher.NewGCM(block)
-	//if err != nil {
-	//	msg := fmt.Sprintf("Error when creating credentials - failed to create gcm: %s", err.Error())
-	//	log.Error(msg)
-	//	http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
-	//	return true
-	//}
-	//
-	//aesGcmNonce, err := util.CryptoRandomBytes(aesGcm.NonceSize())
-	//if err != nil {
-	//	msg := fmt.Sprintf("Error when creating credentials - failed to generate random bytes: %s", err.Error())
-	//	log.Error(msg)
-	//	http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
-	//	return true
-	//}
-	//
-	//cipherSessionData := aesGcm.Seal(aesGcmNonce, aesGcmNonce, sessionDataJson, nil)
-	//base64SessionData := base64.StdEncoding.EncodeToString(cipherSessionData)
-	//
-	//// If resulting session data is large, it may not fit in one cookie. So, the resulting
-	//// session data is broken in chunks and multiple cookies are used, as is needed.
-	//sessionDataChunks := chunkString(base64SessionData, business.SessionCookieMaxSize)
-	//for i, chunk := range sessionDataChunks {
-	//	var cookieName string
-	//	if i == 0 {
-	//		// Set a cookie with the regular cookie name with the first chunk of session data.
-	//		// This is for backwards compatibility
-	//		cookieName = config.TokenCookieName + "-aes"
-	//	} else {
-	//		// If there are more chunks of session data (usually because of larger tokens from the IdP),
-	//		// store the remainder data to numbered cookies.
-	//		cookieName = fmt.Sprintf("%s-aes-%d", config.TokenCookieName, i)
-	//	}
-	//
-	//	authCookie := http.Cookie{
-	//		Name:     cookieName,
-	//		Value:    chunk,
-	//		Expires:  openIdParams.ExpiresOn,
-	//		HttpOnly: true,
-	//		Path:     conf.Server.WebRoot,
-	//		SameSite: http.SameSiteStrictMode,
-	//	}
-	//	http.SetCookie(w, &authCookie)
-	//}
-	//
-	//if len(sessionDataChunks) > 1 {
-	//	// Set a cookie with the number of chunks of the session data.
-	//	// This is to protect against reading spurious chunks of data if there is
-	//	// any failure when killing the session or logging out.
-	//	chunksCookie := http.Cookie{
-	//		Name:     config.TokenCookieName + "-chunks",
-	//		Value:    strconv.Itoa(len(sessionDataChunks)),
-	//		Expires:  openIdParams.ExpiresOn,
-	//		HttpOnly: true,
-	//		Path:     conf.Server.WebRoot,
-	//		SameSite: http.SameSiteStrictMode,
-	//	}
-	//	http.SetCookie(w, &chunksCookie)
-	//}
 }
 
+// ReadSession restores (decrypts) and returns the data that was persisted when using the CreateSession function.
+// If a payload is provided, the original data is parsed and stored in the payload argument. As part of restoring
+// the session, validation of expiration time is performed and no data is returned assuming the session is stale.
+// Also, it is verified that the currently configured authentication strategy is the same as when the session was
+// created.
 func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWriter, payload interface{}) (*sessionData, error) {
+	// This CookieSessionPersistor only deals with sessions using cookies holding encrypted data.
+	// Thus, presence for a cookie with the "-aes" suffix is checked and it's assumed no active session
+	// if such cookie is not found in the request.
 	authCookie, err := r.Cookie(config.TokenCookieName + "-aes")
 	if err != nil {
 		if err == http.ErrNoCookie {
@@ -274,6 +204,8 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 		return nil, fmt.Errorf("failed to read the chunks cookie: %w", chunksCookieErr)
 	}
 
+	// Persisted data has been read, but it's base64 encoded and it's also encrypted (per
+	// the process in CreateSession function). Reverse the encoding and, then, decrypt the data.
 	cipherSessionData, err := base64.StdEncoding.DecodeString(base64SessionData)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode session data: %w", err)
@@ -297,19 +229,15 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 		return nil, fmt.Errorf("error when restoring the session - failed to decrypt: %w", err)
 	}
 
+	// sessionDataJson is holding the decrypted data as a string. This should be a JSON document. Let's parse it.
 	var sData sessionData
 	err = json.Unmarshal(sessionDataJson, &sData)
 	if err != nil {
 		return nil, fmt.Errorf("error when restoring the session - failed to parse the session data: %w", err)
 	}
 
-	if payload != nil {
-		payloadErr := json.Unmarshal([]byte(sData.Payload), payload)
-		if payloadErr != nil {
-			return nil, fmt.Errorf("error when restoring the session - failed to parse the session payload: %w", payloadErr)
-		}
-	}
-
+	// Check that the currently configured strategy matches the strategy set in the session.
+	// This is to prevent taking a session as valid if somebody re-configured Kiali with a different auth strategy.
 	if sData.Strategy != config.Get().Auth.Strategy {
 		log.Tracef("Session is invalid because it was created with authentication strategy %s, but current authentication strategy is %s", sData.Strategy, config.Get().Auth.Strategy)
 		p.TerminateSession(r, w) // Kill the spurious session
@@ -317,6 +245,9 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 		return nil, nil
 	}
 
+	// Check that the session has not expired.
+	// This is just a sanity check, because browser cookies are set to expire at this date and the browser
+	// shouldn't send expired cookies.
 	if !util.Clock.Now().Before(sData.ExpiresOn) {
 		log.Tracef("Session is invalid because it expired on %s", sData.ExpiresOn.Format(time.RFC822))
 		p.TerminateSession(r, w) // Clean the expired session
@@ -324,9 +255,24 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 		return nil, nil
 	}
 
+	// The Payload field of the parsed JSON contains yet another JSON document. This is where we see the advantage
+	// of the double serialization of the payload. Here in ReadSession we are receiving a payload argument. If the caller
+	// passes an object with the original type of the payload that was passed to CreateSession, we can let the json
+	// library to parse and set the data in the payload variable/argument, removing the need to deal with a
+	// Payload typed as map[string]interface{}.
+	if payload != nil {
+		payloadErr := json.Unmarshal([]byte(sData.Payload), payload)
+		if payloadErr != nil {
+			return nil, fmt.Errorf("error when restoring the session - failed to parse the session payload: %w", payloadErr)
+		}
+	}
+
 	return &sData, nil
 }
 
+// TerminateSession destroys any persisted data of a session created by the CreateSession function.
+// The session is terminated unconditionally (that is, there is no validation of the session), allowing
+// clearing any stale cookies/session.
 func (p CookieSessionPersistor) TerminateSession(r *http.Request, w http.ResponseWriter) {
 	conf := config.Get()
 	var cookiesToDrop []string
@@ -365,4 +311,25 @@ func (p CookieSessionPersistor) TerminateSession(r *http.Request, w http.Respons
 			http.SetCookie(w, &tokenCookie)
 		}
 	}
+}
+
+// Acknowledgement to rinat.io user of SO.
+// Taken from https://stackoverflow.com/a/48479355 with a few modifications
+func chunkString(s string, chunkSize int) []string {
+	if len(s) <= chunkSize {
+		return []string{s}
+	}
+
+	numChunks := len(s)/chunkSize + 1
+	chunks := make([]string, 0, numChunks)
+	runes := []rune(s)
+
+	for i := 0; i < len(runes); i += chunkSize {
+		nn := i + chunkSize
+		if nn > len(runes) {
+			nn = len(runes)
+		}
+		chunks = append(chunks, string(runes[i:nn]))
+	}
+	return chunks
 }
