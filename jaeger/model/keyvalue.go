@@ -301,9 +301,9 @@ func KeyValueCompare(this *KeyValue, that interface{}) int {
 	}
 	return 0
 }
-func (t *KeyValue) Equal(that interface{}) bool {
+func (this *KeyValue) Equal(that interface{}) bool {
 	if that == nil {
-		return t == nil
+		return this == nil
 	}
 
 	that1, ok := that.(*KeyValue)
@@ -316,29 +316,29 @@ func (t *KeyValue) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return t == nil
-	} else if t == nil {
+		return this == nil
+	} else if this == nil {
 		return false
 	}
-	if t.Key != that1.Key {
+	if this.Key != that1.Key {
 		return false
 	}
-	if t.VType != that1.VType {
+	if this.VType != that1.VType {
 		return false
 	}
-	if t.VStr != that1.VStr {
+	if this.VStr != that1.VStr {
 		return false
 	}
-	if t.VBool != that1.VBool {
+	if this.VBool != that1.VBool {
 		return false
 	}
-	if t.VInt64 != that1.VInt64 {
+	if this.VInt64 != that1.VInt64 {
 		return false
 	}
-	if t.VFloat64 != that1.VFloat64 {
+	if this.VFloat64 != that1.VFloat64 {
 		return false
 	}
-	if !bytes.Equal(t.VBinary, that1.VBinary) {
+	if !bytes.Equal(this.VBinary, that1.VBinary) {
 		return false
 	}
 	return true
