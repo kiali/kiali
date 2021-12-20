@@ -551,7 +551,7 @@ func (in *SvcService) GetServiceAppName(namespace, service string) (string, erro
 
 	svc, err := in.GetService(namespace, service)
 	if err != nil {
-		return "", fmt.Errorf("Service [namespace: %s] [name: %s] doesn't exist.", namespace, service)
+		return "", fmt.Errorf("service [namespace: %s] [name: %s] doesn't exist", namespace, service)
 	}
 
 	appLabelName := config.Get().IstioLabels.AppLabelName

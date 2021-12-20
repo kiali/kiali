@@ -362,10 +362,10 @@ func prepareStatsQueries(w http.ResponseWriter, r *http.Request, rawQ []models.M
 			continue
 		}
 		if nsInfoErr, ok := nsInfos[q.Target.Namespace]; !ok {
-			errors.Add(fmt.Errorf("Missing info for namespace '%s'", q.Target.Namespace))
+			errors.Add(fmt.Errorf("missing info for namespace '%s'", q.Target.Namespace))
 			continue
 		} else if nsInfoErr.err != nil {
-			errors.Add(fmt.Errorf("Namespace '%s': %v", q.Target.Namespace, nsInfoErr.err))
+			errors.Add(fmt.Errorf("namespace '%s': %v", q.Target.Namespace, nsInfoErr.err))
 			continue
 		} else {
 			namespaceInfo := nsInfoErr.info

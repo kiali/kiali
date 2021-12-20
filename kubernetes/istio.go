@@ -404,7 +404,7 @@ func GetIstioConfigMap(istioConfig *core_v1.ConfigMap) (*IstioMeshConfig, error)
 	meshConfigYaml, ok := istioConfig.Data["mesh"]
 	log.Tracef("meshConfig: %v", meshConfigYaml)
 	if !ok {
-		errMsg := "GetIstioConfigMap: Cannot find Istio mesh configuration [%v]."
+		errMsg := "GetIstioConfigMap: Cannot find Istio mesh configuration [%v]"
 		log.Warningf(errMsg, istioConfig)
 		return nil, fmt.Errorf(errMsg, istioConfig)
 	}

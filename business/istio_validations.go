@@ -42,7 +42,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 			if err != nil {
 				log.Warningf("Error invoking GetService %s", err)
 			}
-			return nil, fmt.Errorf("Service [namespace: %s] [name: %s] doesn't exist for Validations.", namespace, service)
+			return nil, fmt.Errorf("service [namespace: %s] [name: %s] doesn't exist for Validations", namespace, service)
 		}
 	}
 

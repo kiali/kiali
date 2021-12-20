@@ -50,7 +50,7 @@ func graphNamespacesIstio(business *business.Layer, prom *prometheus.Client, o g
 // GraphNode generates a node graph using the provided options
 func GraphNode(business *business.Layer, o graph.Options) (code int, config interface{}) {
 	if len(o.Namespaces) != 1 {
-		graph.Error(fmt.Sprintf("Node graph does not support the 'namespaces' query parameter or the 'all' namespace"))
+		graph.Error("Node graph does not support the 'namespaces' query parameter or the 'all' namespace")
 	}
 
 	// time how long it takes to generate this graph

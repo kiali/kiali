@@ -267,7 +267,7 @@ func requestWithTimeout(method string, url string, auth *string, timeout time.Du
 	request, err := http.NewRequest(method, strings.Join([]string{serverPrefix, url}, ""), nil)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create request for api endpoint [%s] for oauth consumption, error: %s", url, err)
+		return nil, fmt.Errorf("failed to create request for api endpoint [%s] for oauth consumption, error: %s", url, err)
 	}
 
 	if auth != nil {
@@ -277,7 +277,7 @@ func requestWithTimeout(method string, url string, auth *string, timeout time.Du
 	response, err := client.Do(request)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get response for api endpoint [%s] for oauth consumption, error: %s", url, err)
+		return nil, fmt.Errorf("failed to get response for api endpoint [%s] for oauth consumption, error: %s", url, err)
 	}
 
 	defer response.Body.Close()
@@ -285,11 +285,11 @@ func requestWithTimeout(method string, url string, auth *string, timeout time.Du
 	body, err := ioutil.ReadAll(response.Body)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read response body for api endpoint [%s] for oauth consumption, error: %s", url, err)
+		return nil, fmt.Errorf("failed to read response body for api endpoint [%s] for oauth consumption, error: %s", url, err)
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Failed to get OK status from api endpoint [%s] for oauth consumption, error: %s", url, string(body))
+		return nil, fmt.Errorf("failed to get OK status from api endpoint [%s] for oauth consumption, error: %s", url, string(body))
 	}
 
 	return body, nil

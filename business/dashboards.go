@@ -75,7 +75,7 @@ func (in *DashboardsService) prom() (prometheus.ClientInterface, error) {
 func (in *DashboardsService) loadRawDashboardResource(template string) (*dashboards.MonitoringDashboard, error) {
 	dashboard, ok := in.dashboards[template]
 	if !ok {
-		return nil, fmt.Errorf("Dashboard [%v] does not exist or is disabled", template)
+		return nil, fmt.Errorf("dashboard [%v] does not exist or is disabled", template)
 	}
 
 	return &dashboard, nil

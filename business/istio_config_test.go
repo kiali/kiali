@@ -1,7 +1,6 @@
 package business
 
 import (
-	"fmt"
 	"testing"
 
 	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
@@ -501,7 +500,7 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 func TestFilterIstioObjectsForWorkloadSelector(t *testing.T) {
 	assert := assert.New(t)
 
-	path := fmt.Sprintf("../tests/data/filters/workload-selector-filter.yaml")
+	path := "../tests/data/filters/workload-selector-filter.yaml"
 	loader := &validations.YamlFixtureLoader{Filename: path}
 	err := loader.Load()
 

@@ -210,7 +210,7 @@ func (kvs KeyValues) Hash(w io.Writer) error {
 }
 
 // Hash implements Hash from Hashable.
-func (kv KeyValue) Hash(w io.Writer) error {
+func (kv *KeyValue) Hash(w io.Writer) error {
 	if _, err := w.Write([]byte(kv.Key)); err != nil {
 		return err
 	}
@@ -245,9 +245,9 @@ func KeyValueCompare(this *KeyValue, that interface{}) int {
 
 	that1, ok := that.(*KeyValue)
 	if !ok {
-		that2, ok := that.(KeyValue)
+		that2, ok := that.(*KeyValue)
 		if ok {
-			that1 = &that2
+			that1 = that2
 		} else {
 			return 1
 		}
@@ -301,44 +301,44 @@ func KeyValueCompare(this *KeyValue, that interface{}) int {
 	}
 	return 0
 }
-func (this *KeyValue) Equal(that interface{}) bool {
+func (t *KeyValue) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		return t == nil
 	}
 
 	that1, ok := that.(*KeyValue)
 	if !ok {
-		that2, ok := that.(KeyValue)
+		that2, ok := that.(*KeyValue)
 		if ok {
-			that1 = &that2
+			that1 = that2
 		} else {
 			return false
 		}
 	}
 	if that1 == nil {
-		return this == nil
-	} else if this == nil {
+		return t == nil
+	} else if t == nil {
 		return false
 	}
-	if this.Key != that1.Key {
+	if t.Key != that1.Key {
 		return false
 	}
-	if this.VType != that1.VType {
+	if t.VType != that1.VType {
 		return false
 	}
-	if this.VStr != that1.VStr {
+	if t.VStr != that1.VStr {
 		return false
 	}
-	if this.VBool != that1.VBool {
+	if t.VBool != that1.VBool {
 		return false
 	}
-	if this.VInt64 != that1.VInt64 {
+	if t.VInt64 != that1.VInt64 {
 		return false
 	}
-	if this.VFloat64 != that1.VFloat64 {
+	if t.VFloat64 != that1.VFloat64 {
 		return false
 	}
-	if !bytes.Equal(this.VBinary, that1.VBinary) {
+	if !bytes.Equal(t.VBinary, that1.VBinary) {
 		return false
 	}
 	return true

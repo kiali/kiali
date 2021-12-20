@@ -209,7 +209,7 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload) (IstioC
 	// Warn users that their kiali config might be wrong
 	if componentNotFound == len(statusComponents) {
 		return isc, fmt.Errorf(
-			"Kiali is unable to find any Istio deployment in namespace %s. Are you sure the Istio namespace is configured correctly in Kiali?",
+			"kiali is unable to find any Istio deployment in namespace %s. Are you sure the Istio namespace is configured correctly in Kiali?",
 			config.Get().IstioNamespace)
 	}
 
