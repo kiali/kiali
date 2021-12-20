@@ -91,7 +91,7 @@ func UseRemoteCreds(remoteSecret *RemoteSecret) (*rest.Config, error) {
 
 	serverParse := strings.Split(remoteSecret.Clusters[0].Cluster.Server, ":")
 	if len(serverParse) != 3 && len(serverParse) != 2 {
-		return nil, errors.New("invalid remote API server URL")
+		return nil, errors.New("Invalid remote API server URL")
 	}
 	host := strings.TrimPrefix(serverParse[1], "//")
 
@@ -101,7 +101,7 @@ func UseRemoteCreds(remoteSecret *RemoteSecret) (*rest.Config, error) {
 	}
 
 	if !strings.EqualFold(serverParse[0], "https") {
-		return nil, errors.New("only HTTPS protocol is allowed in remote API server URL")
+		return nil, errors.New("Only HTTPS protocol is allowed in remote API server URL")
 	}
 
 	// There's no need to add the BearerToken because it's ignored later on

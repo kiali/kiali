@@ -235,7 +235,7 @@ func readSpansStream(stream SpansStreamer) (map[jaegerModel.TraceID]*jaegerModel
 				break
 			}
 			log.Errorf("jaeger GRPC client, stream error: %v", err)
-			return nil, fmt.Errorf("jaeger GRPC client, stream error: %v", err)
+			return nil, fmt.Errorf("Jaeger GRPC client, stream error: %v", err)
 		}
 		for i, span := range received.Spans {
 			traceId := jaegerModel.TraceID{}

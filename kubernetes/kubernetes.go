@@ -534,7 +534,7 @@ func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workl
 	case DaemonSetType:
 		_, err = in.k8s.AppsV1().DaemonSets(namespace).Patch(in.ctx, workloadName, types.MergePatchType, bytePatch, emptyPatchOptions)
 	default:
-		err = fmt.Errorf("workload type %s not found", workloadType)
+		err = fmt.Errorf("Workload type %s not found", workloadType)
 	}
 	return err
 }

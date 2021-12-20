@@ -342,7 +342,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 		duration, err := time.ParseDuration(duration)
 
 		if err != nil {
-			return nil, fmt.Errorf("invalid duration [%s]: %v", duration, err)
+			return nil, fmt.Errorf("Invalid duration [%s]: %v", duration, err)
 		}
 
 		opts.Duration = &duration
@@ -354,7 +354,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 		numTime, err := strconv.ParseInt(sinceTime, 10, 64)
 
 		if err != nil {
-			return nil, fmt.Errorf("invalid sinceTime [%s]: %v", sinceTime, err)
+			return nil, fmt.Errorf("Invalid sinceTime [%s]: %v", sinceTime, err)
 		}
 
 		opts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
@@ -366,7 +366,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 				opts.TailLines = &numLines
 			}
 		} else {
-			return nil, fmt.Errorf("invalid tailLines [%s]: %v", tailLines, err)
+			return nil, fmt.Errorf("Invalid tailLines [%s]: %v", tailLines, err)
 		}
 	}
 

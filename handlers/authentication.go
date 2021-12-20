@@ -478,7 +478,7 @@ func performOpenshiftLogout(r *http.Request) (int, error) {
 	tokenString := getTokenStringFromRequest(r)
 	if tokenString == "" {
 		// No token on logout, so we assume we're already logged out
-		return http.StatusUnauthorized, errors.New("already logged out")
+		return http.StatusUnauthorized, errors.New("Already logged out")
 	}
 	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
 		log.Warningf("Token is invalid: %v", err)

@@ -144,7 +144,7 @@ func (c *kialiCacheImpl) isIstioSynced(namespace string) bool {
 
 func (c *kialiCacheImpl) GetDestinationRule(namespace, name string) (*networking_v1alpha3.DestinationRule, error) {
 	if !c.CheckIstioResource(kubernetes.DestinationRules) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.DestinationRuleType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.DestinationRuleType)
 	}
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
@@ -169,7 +169,7 @@ func (c *kialiCacheImpl) GetDestinationRule(namespace, name string) (*networking
 
 func (c *kialiCacheImpl) GetDestinationRules(namespace, labelSelector string) ([]networking_v1alpha3.DestinationRule, error) {
 	if !c.CheckIstioResource(kubernetes.DestinationRules) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.DestinationRuleType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.DestinationRuleType)
 	}
 	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
 		l := nsCache[kubernetes.DestinationRuleType].GetStore().List()
@@ -207,7 +207,7 @@ func (c *kialiCacheImpl) GetDestinationRules(namespace, labelSelector string) ([
 
 func (c *kialiCacheImpl) GetEnvoyFilter(namespace, name string) (*networking_v1alpha3.EnvoyFilter, error) {
 	if !c.CheckIstioResource(kubernetes.EnvoyFilters) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.EnvoyFilterType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.EnvoyFilterType)
 	}
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
@@ -231,7 +231,7 @@ func (c *kialiCacheImpl) GetEnvoyFilter(namespace, name string) (*networking_v1a
 
 func (c *kialiCacheImpl) GetEnvoyFilters(namespace, labelSelector string) ([]networking_v1alpha3.EnvoyFilter, error) {
 	if !c.CheckIstioResource(kubernetes.EnvoyFilters) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.EnvoyFilterType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.EnvoyFilterType)
 	}
 	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
 		l := nsCache[kubernetes.EnvoyFilterType].GetStore().List()
@@ -268,7 +268,7 @@ func (c *kialiCacheImpl) GetEnvoyFilters(namespace, labelSelector string) ([]net
 
 func (c *kialiCacheImpl) GetGateway(namespace, name string) (*networking_v1alpha3.Gateway, error) {
 	if !c.CheckIstioResource(kubernetes.Gateways) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.GatewayType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.GatewayType)
 	}
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
@@ -292,7 +292,7 @@ func (c *kialiCacheImpl) GetGateway(namespace, name string) (*networking_v1alpha
 
 func (c *kialiCacheImpl) GetGateways(namespace, labelSelector string) ([]networking_v1alpha3.Gateway, error) {
 	if !c.CheckIstioResource(kubernetes.Gateways) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.Gateways)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.Gateways)
 	}
 	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
 		l := nsCache[kubernetes.GatewayType].GetStore().List()
@@ -329,7 +329,7 @@ func (c *kialiCacheImpl) GetGateways(namespace, labelSelector string) ([]network
 
 func (c *kialiCacheImpl) GetServiceEntry(namespace, name string) (*networking_v1alpha3.ServiceEntry, error) {
 	if !c.CheckIstioResource(kubernetes.ServiceEntries) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.ServiceEntryType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.ServiceEntryType)
 	}
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
@@ -353,7 +353,7 @@ func (c *kialiCacheImpl) GetServiceEntry(namespace, name string) (*networking_v1
 
 func (c *kialiCacheImpl) GetServiceEntries(namespace, labelSelector string) ([]networking_v1alpha3.ServiceEntry, error) {
 	if !c.CheckIstioResource(kubernetes.ServiceEntries) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.ServiceEntryType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.ServiceEntryType)
 	}
 	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
 		l := nsCache[kubernetes.ServiceEntryType].GetStore().List()
@@ -390,7 +390,7 @@ func (c *kialiCacheImpl) GetServiceEntries(namespace, labelSelector string) ([]n
 
 func (c *kialiCacheImpl) GetSidecar(namespace, name string) (*networking_v1alpha3.Sidecar, error) {
 	if !c.CheckIstioResource(kubernetes.Sidecars) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.SidecarType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.SidecarType)
 	}
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
@@ -414,7 +414,7 @@ func (c *kialiCacheImpl) GetSidecar(namespace, name string) (*networking_v1alpha
 
 func (c *kialiCacheImpl) GetSidecars(namespace, labelSelector string) ([]networking_v1alpha3.Sidecar, error) {
 	if !c.CheckIstioResource(kubernetes.Sidecars) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.SidecarType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.SidecarType)
 	}
 	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
 		l := nsCache[kubernetes.SidecarType].GetStore().List()
@@ -451,7 +451,7 @@ func (c *kialiCacheImpl) GetSidecars(namespace, labelSelector string) ([]network
 
 func (c *kialiCacheImpl) GetVirtualService(namespace, name string) (*networking_v1alpha3.VirtualService, error) {
 	if !c.CheckIstioResource(kubernetes.VirtualServices) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.VirtualServiceType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.VirtualServiceType)
 	}
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
@@ -475,7 +475,7 @@ func (c *kialiCacheImpl) GetVirtualService(namespace, name string) (*networking_
 
 func (c *kialiCacheImpl) GetVirtualServices(namespace, labelSelector string) ([]networking_v1alpha3.VirtualService, error) {
 	if !c.CheckIstioResource(kubernetes.VirtualServices) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.VirtualServiceType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.VirtualServiceType)
 	}
 	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
 		l := nsCache[kubernetes.VirtualServiceType].GetStore().List()
@@ -512,7 +512,7 @@ func (c *kialiCacheImpl) GetVirtualServices(namespace, labelSelector string) ([]
 
 func (c *kialiCacheImpl) GetWorkloadEntry(namespace, name string) (*networking_v1alpha3.WorkloadEntry, error) {
 	if !c.CheckIstioResource(kubernetes.WorkloadEntries) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadEntryType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadEntryType)
 	}
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
@@ -536,7 +536,7 @@ func (c *kialiCacheImpl) GetWorkloadEntry(namespace, name string) (*networking_v
 
 func (c *kialiCacheImpl) GetWorkloadEntries(namespace, labelSelector string) ([]networking_v1alpha3.WorkloadEntry, error) {
 	if !c.CheckIstioResource(kubernetes.WorkloadEntries) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadEntryType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadEntryType)
 	}
 	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
 		l := nsCache[kubernetes.WorkloadEntryType].GetStore().List()
@@ -573,7 +573,7 @@ func (c *kialiCacheImpl) GetWorkloadEntries(namespace, labelSelector string) ([]
 
 func (c *kialiCacheImpl) GetWorkloadGroup(namespace, name string) (*networking_v1alpha3.WorkloadGroup, error) {
 	if !c.CheckIstioResource(kubernetes.WorkloadGroups) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroupType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroupType)
 	}
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
@@ -597,7 +597,7 @@ func (c *kialiCacheImpl) GetWorkloadGroup(namespace, name string) (*networking_v
 
 func (c *kialiCacheImpl) GetWorkloadGroups(namespace, labelSelector string) ([]networking_v1alpha3.WorkloadGroup, error) {
 	if !c.CheckIstioResource(kubernetes.WorkloadGroups) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroups)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroups)
 	}
 	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
 		l := nsCache[kubernetes.WorkloadGroupType].GetStore().List()
@@ -634,7 +634,7 @@ func (c *kialiCacheImpl) GetWorkloadGroups(namespace, labelSelector string) ([]n
 
 func (c *kialiCacheImpl) GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error) {
 	if !c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.AuthorizationPoliciesType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.AuthorizationPoliciesType)
 	}
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
@@ -658,7 +658,7 @@ func (c *kialiCacheImpl) GetAuthorizationPolicy(namespace, name string) (*securi
 
 func (c *kialiCacheImpl) GetAuthorizationPolicies(namespace, labelSelector string) ([]security_v1beta1.AuthorizationPolicy, error) {
 	if !c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.AuthorizationPolicies)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.AuthorizationPolicies)
 	}
 	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
 		l := nsCache[kubernetes.AuthorizationPoliciesType].GetStore().List()
@@ -695,7 +695,7 @@ func (c *kialiCacheImpl) GetAuthorizationPolicies(namespace, labelSelector strin
 
 func (c *kialiCacheImpl) GetPeerAuthentication(namespace, name string) (*security_v1beta1.PeerAuthentication, error) {
 	if !c.CheckIstioResource(kubernetes.PeerAuthentications) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.PeerAuthenticationsType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.PeerAuthenticationsType)
 	}
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
@@ -719,7 +719,7 @@ func (c *kialiCacheImpl) GetPeerAuthentication(namespace, name string) (*securit
 
 func (c *kialiCacheImpl) GetPeerAuthentications(namespace, labelSelector string) ([]security_v1beta1.PeerAuthentication, error) {
 	if !c.CheckIstioResource(kubernetes.PeerAuthentications) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.PeerAuthenticationsType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.PeerAuthenticationsType)
 	}
 	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
 		l := nsCache[kubernetes.PeerAuthenticationsType].GetStore().List()
@@ -756,7 +756,7 @@ func (c *kialiCacheImpl) GetPeerAuthentications(namespace, labelSelector string)
 
 func (c *kialiCacheImpl) GetRequestAuthentication(namespace, name string) (*security_v1beta1.RequestAuthentication, error) {
 	if !c.CheckIstioResource(kubernetes.RequestAuthentications) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.RequestAuthentications)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.RequestAuthentications)
 	}
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
@@ -780,7 +780,7 @@ func (c *kialiCacheImpl) GetRequestAuthentication(namespace, name string) (*secu
 
 func (c *kialiCacheImpl) GetRequestAuthentications(namespace, labelSelector string) ([]security_v1beta1.RequestAuthentication, error) {
 	if !c.CheckIstioResource(kubernetes.RequestAuthentications) {
-		return nil, fmt.Errorf("kiali cache doesn't support [resourceType: %s]", kubernetes.RequestAuthenticationsType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.RequestAuthenticationsType)
 	}
 	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
 		l := nsCache[kubernetes.RequestAuthenticationsType].GetStore().List()
