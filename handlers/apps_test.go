@@ -263,5 +263,5 @@ func TestAppDetailsEndpoint(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
 	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
 	k8s.AssertNumberOfCalls(t, "GetPods", 1)
-	k8s.AssertNumberOfCalls(t, "GetServices", 1)
+	k8s.AssertNumberOfCalls(t, "GetServices", 2)
 }
