@@ -32,6 +32,14 @@ func FilterAuthorizationPoliciesBySelector(workloadSelector string, authorizatio
 	return filtered
 }
 
+// FilterByHost returns true if a (host, hostNamespace) combination is making
+// reference to a (serviceName, svcNamespace) combination.
+// Presumably, the host is part of the definition of some Istio Resource. Thus, it
+// can take the form of "host", "host.namespace" or "host.namespace.svc", or the
+// FQDN "host.namespace.svc.<identity_domain_suffix>". For the cases where
+// the host argument takes the simplistic form of only "host", you need to provide
+// the hostNamespace argument, which should be set to the namespace of the involved Istio Resource.
+// For the other cases, it is safe to omit it. The other arguments are always mandatory.
 func FilterByHost(host, hostNamespace, serviceName, svcNamespace string) bool {
 	// Check single name
 	if host == serviceName && hostNamespace == svcNamespace {
