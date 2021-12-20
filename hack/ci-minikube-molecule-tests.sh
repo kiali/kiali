@@ -21,6 +21,10 @@ You can use this as a cronjob to test Kiali periodically.
 
 Options:
 
+-at|--all-tests
+    Space-separated list of all the molecule tests to be run.
+    The default is all the tests found in the operator/molecule directory in the Kiali source home directory.
+
 -ce|--client-exe <path to kubectl>
     The 'kubectl' command, if not in PATH then must be a full path.
     Default: kubectl
@@ -81,6 +85,7 @@ HELP
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -at|--all-tests)              ALL_TESTS="$2";       shift;shift; ;;
     -ce|--client-exe)             CLIENT_EXE="$2";      shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";            shift;shift; ;;
     -ir|--irc-room)               IRC_ROOM="$2";        shift;shift; ;;
@@ -156,6 +161,12 @@ else
   olm_enabled_arg="--olm-enabled false"
 fi
 
+if [ "${ALL_TESTS:-}" == "" ]; then
+  echo "Will run all tests"
+else
+  echo "Will only run tests: ${ALL_TESTS}"
+fi
+
 if ! ${minikube_sh} status; then
 
   ${minikube_sh} start --dex-enabled true ${olm_enabled_arg}
@@ -203,7 +214,7 @@ else
 fi
 
 # Run the tests!
-${hack_dir}/run-molecule-tests.sh --cluster-type minikube --minikube-profile ${minikube_profile} --color false --minikube-exe ${MINIKUBE_EXE} --client-exe ${CLIENT_EXE} -dorp ${DORP} ${operator_installer_arg} ${test_logs_dir_arg} > ${redirect_output_to}
+${hack_dir}/run-molecule-tests.sh --cluster-type minikube --minikube-profile ${minikube_profile} --color false --minikube-exe ${MINIKUBE_EXE} --client-exe ${CLIENT_EXE} -dorp ${DORP} --all-tests "${ALL_TESTS:-}" ${operator_installer_arg} ${test_logs_dir_arg} > ${redirect_output_to}
 
 # Upload the logs if requested
 if [ "${UPLOAD_LOGS}" == "true" ]; then
