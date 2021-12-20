@@ -206,36 +206,34 @@ type appDetails struct {
 // NamespaceApps is a map of app_name x AppDetails
 type namespaceApps = map[string]*appDetails
 
-func castAppDetails(ss *models.ServiceList, ws models.Workloads) namespaceApps {
-	allEntities := make(namespaceApps)
+func castAppDetails(allEntities namespaceApps, ss *models.ServiceList, w *models.Workload) {
 	appLabel := config.Get().IstioLabels.AppLabelName
-	if ss != nil {
-		for _, service := range ss.Services {
-			if app, ok := service.Selector[appLabel]; ok {
+
+	if app, ok := w.Labels[appLabel]; ok {
+		if appEntities, ok := allEntities[app]; ok {
+			appEntities.Workloads = append(appEntities.Workloads, w)
+		} else {
+			allEntities[app] = &appDetails{
+				app:       app,
+				Workloads: models.Workloads{w},
+			}
+		}
+		if ss != nil {
+			for _, service := range ss.Services {
 				if appEntities, ok := allEntities[app]; ok {
-					appEntities.Services = append(appEntities.Services, service)
-				} else {
-					allEntities[app] = &appDetails{
-						app:      app,
-						Services: []models.ServiceOverview{service},
+					found := false
+					for _, s := range appEntities.Services {
+						if s.Name == service.Name && s.Namespace == service.Namespace {
+							found = true
+						}
+					}
+					if !found {
+						appEntities.Services = append(appEntities.Services, service)
 					}
 				}
 			}
 		}
 	}
-	for _, w := range ws {
-		if app, ok := w.Labels[appLabel]; ok {
-			if appEntities, ok := allEntities[app]; ok {
-				appEntities.Workloads = append(appEntities.Workloads, w)
-			} else {
-				allEntities[app] = &appDetails{
-					app:       app,
-					Workloads: models.Workloads{w},
-				}
-			}
-		}
-	}
-	return allEntities
 }
 
 // Helper method to fetch all applications for a given namespace.
@@ -258,42 +256,26 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 		return nil, err
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-	errChan := make(chan error, 2)
-
-	go func() {
-		defer wg.Done()
-		var err error
+	var err error
+	ws, err = fetchWorkloads(layer, namespace, appNameSelector)
+	if err != nil {
+		return nil, err
+	}
+	allEntities := make(namespaceApps)
+	for _, w := range ws {
 		// Check if namespace is cached
 		criteria := ServiceCriteria{
 			Namespace:              namespace,
 			IncludeIstioResources:  false,
 			IncludeOnlyDefinitions: true,
-			ServiceSelector:        appNameSelector,
+			ServiceSelector:        labels.Set(w.Labels).String(),
 		}
 		ss, err = layer.Svc.GetServiceList(criteria)
 		if err != nil {
-			log.Errorf("Error fetching Services per namespace %s: %s", namespace, err)
-			errChan <- err
+			return nil, err
 		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		var err error
-		ws, err = fetchWorkloads(layer, namespace, appNameSelector)
-		if err != nil {
-			log.Errorf("Error fetching Workload per namespace %s: %s", namespace, err)
-			errChan <- err
-		}
-	}()
-
-	wg.Wait()
-	if len(errChan) != 0 {
-		err := <-errChan
-		return nil, err
+		castAppDetails(allEntities, ss, w)
 	}
 
-	return castAppDetails(ss, ws), nil
+	return allEntities, nil
 }
