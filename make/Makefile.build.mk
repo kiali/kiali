@@ -56,7 +56,7 @@ build-system-test:
 ## build-test: Run tests and install test deps, excluding third party tests under vendor. Runs `go test -i`
 build-test:
 	@echo Building and installing test dependencies to help speed up test runs.
-	${GO} test -i $(shell ${GO} list ./... | grep -v -e /vendor/)
+	${GO} test $(shell ${GO} list ./... | grep -v -e /vendor/)
 
 ## test: Run tests, excluding third party tests under vendor. Runs `go test` internally
 test:
