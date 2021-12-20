@@ -28,6 +28,8 @@ type TokenAuthController struct {
 }
 
 type sessionPayload struct {
+	// Token is the string that the user entered in the Kiali login screen. It should be
+	// a token that can be used against the Kubernetes API
 	Token string `json:"token,omitempty"`
 }
 
