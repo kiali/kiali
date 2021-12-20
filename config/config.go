@@ -593,6 +593,10 @@ func NewConfig() (c *Config) {
 							Description: "Find: unknown nodes",
 							Expression:  "name = unknown",
 						},
+						{
+							Description: "Find: nodes with the 2 top rankings",
+							Expression:  "rank <= 2",
+						},
 					},
 					HideOptions: []GraphFindOption{
 						{
@@ -602,6 +606,10 @@ func NewConfig() (c *Config) {
 						{
 							Description: "Hide: unknown nodes",
 							Expression:  "name = unknown",
+						},
+						{
+							Description: "Hide: nodes ranked lower than the 2 top rankings",
+							Expression:  "rank > 2",
 						},
 					},
 					Traffic: GraphTraffic{
