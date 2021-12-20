@@ -96,10 +96,8 @@ func TestFoundGateway(t *testing.T) {
 	config.Set(conf)
 
 	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway", "mesh"}, data.CreateVirtualService())
-	gatewayNames := kubernetes.GatewayNames([][]networking_v1alpha3.Gateway{
-		{
-			*data.CreateEmptyGateway("my-gateway", "test", make(map[string]string)),
-		},
+	gatewayNames := kubernetes.GatewayNames([]networking_v1alpha3.Gateway{
+		*data.CreateEmptyGateway("my-gateway", "test", make(map[string]string)),
 	})
 
 	checker := NoGatewayChecker{
@@ -118,10 +116,8 @@ func TestFoundGatewayTwoPartNaming(t *testing.T) {
 	config.Set(conf)
 
 	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway.test", "mesh"}, data.CreateVirtualService())
-	gatewayNames := kubernetes.GatewayNames([][]networking_v1alpha3.Gateway{
-		{
-			*data.CreateEmptyGateway("my-gateway", "test", make(map[string]string)),
-		},
+	gatewayNames := kubernetes.GatewayNames([]networking_v1alpha3.Gateway{
+		*data.CreateEmptyGateway("my-gateway", "test", make(map[string]string)),
 	})
 
 	checker := NoGatewayChecker{
@@ -143,10 +139,8 @@ func TestFQDNFoundGateway(t *testing.T) {
 	config.Set(conf)
 
 	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway.test.svc.cluster.local", "mesh"}, data.CreateVirtualService())
-	gatewayNames := kubernetes.GatewayNames([][]networking_v1alpha3.Gateway{
-		{
-			*data.CreateEmptyGateway("my-gateway", "test", make(map[string]string)),
-		},
+	gatewayNames := kubernetes.GatewayNames([]networking_v1alpha3.Gateway{
+		*data.CreateEmptyGateway("my-gateway", "test", make(map[string]string)),
 	})
 
 	checker := NoGatewayChecker{
@@ -169,10 +163,8 @@ func TestFQDNFoundOtherNamespaceGateway(t *testing.T) {
 
 	// virtualService is in "test" namespace
 	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway.istio-system.svc.cluster.local", "mesh"}, data.CreateVirtualService())
-	gatewayNames := kubernetes.GatewayNames([][]networking_v1alpha3.Gateway{
-		{
-			*data.CreateEmptyGateway("my-gateway", "istio-system", make(map[string]string)),
-		},
+	gatewayNames := kubernetes.GatewayNames([]networking_v1alpha3.Gateway{
+		*data.CreateEmptyGateway("my-gateway", "istio-system", make(map[string]string)),
 	})
 
 	checker := NoGatewayChecker{
@@ -195,10 +187,8 @@ func TestNewIstioGatewayNameFormat(t *testing.T) {
 
 	// virtualService is in "test" namespace
 	virtualService := data.AddGatewaysToVirtualService([]string{"istio-system/my-gateway"}, data.CreateVirtualService())
-	gatewayNames := kubernetes.GatewayNames([][]networking_v1alpha3.Gateway{
-		{
-			*data.CreateEmptyGateway("my-gateway", "istio-system", make(map[string]string)),
-		},
+	gatewayNames := kubernetes.GatewayNames([]networking_v1alpha3.Gateway{
+		*data.CreateEmptyGateway("my-gateway", "istio-system", make(map[string]string)),
 	})
 
 	checker := NoGatewayChecker{
