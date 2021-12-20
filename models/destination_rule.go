@@ -9,7 +9,7 @@ import (
 )
 
 func HasDRCircuitBreaker(dr *networking_v1alpha3.DestinationRule, namespace, serviceName, version string) bool {
-	if kubernetes.FilterByHost(dr.Spec.Host, serviceName, namespace) {
+	if kubernetes.FilterByHost(dr.Spec.Host, dr.Namespace, serviceName, namespace) {
 		if isCB(dr.Spec.TrafficPolicy) {
 			return true
 		}

@@ -32,22 +32,30 @@ func FilterAuthorizationPoliciesBySelector(workloadSelector string, authorizatio
 	return filtered
 }
 
-func FilterByHost(host, serviceName, namespace string) bool {
+// FilterByHost returns true if a (host, hostNamespace) combination is making
+// reference to a (serviceName, svcNamespace) combination.
+// Presumably, the host is part of the definition of some Istio Resource. Thus, it
+// can take the form of "host", "host.namespace" or "host.namespace.svc", or the
+// FQDN "host.namespace.svc.<identity_domain_suffix>". For the cases where
+// the host argument takes the simplistic form of only "host", you need to provide
+// the hostNamespace argument, which should be set to the namespace of the involved Istio Resource.
+// For the other cases, it is safe to omit it. The other arguments are always mandatory.
+func FilterByHost(host, hostNamespace, serviceName, svcNamespace string) bool {
 	// Check single name
-	if host == serviceName {
+	if host == serviceName && hostNamespace == svcNamespace {
 		return true
 	}
 	// Check service.namespace
-	if host == fmt.Sprintf("%s.%s", serviceName, namespace) {
+	if host == fmt.Sprintf("%s.%s", serviceName, svcNamespace) {
 		return true
 	}
 	// Check the FQDN. <service>.<namespace>.svc
-	if host == fmt.Sprintf("%s.%s.%s", serviceName, namespace, "svc") {
+	if host == fmt.Sprintf("%s.%s.%s", serviceName, svcNamespace, "svc") {
 		return true
 	}
 
 	// Check the FQDN. <service>.<namespace>.svc.<zone>
-	if host == fmt.Sprintf("%s.%s.%s", serviceName, namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain) {
+	if host == fmt.Sprintf("%s.%s.%s", serviceName, svcNamespace, config.Get().ExternalServices.Istio.IstioIdentityDomain) {
 		return true
 	}
 
@@ -91,7 +99,7 @@ func FilterDestinationRulesByService(allDr []networking_v1alpha3.DestinationRule
 	destinationRules := []networking_v1alpha3.DestinationRule{}
 	for _, destinationRule := range allDr {
 		appendDestinationRule := serviceName == ""
-		if FilterByHost(destinationRule.Spec.Host, serviceName, namespace) {
+		if FilterByHost(destinationRule.Spec.Host, destinationRule.Namespace, serviceName, namespace) {
 			appendDestinationRule = true
 		}
 		if appendDestinationRule {
@@ -401,7 +409,7 @@ func FilterVirtualServicesByService(allVs []networking_v1alpha3.VirtualService, 
 			for _, httpRoute := range vs.Spec.Http {
 				if httpRoute != nil {
 					for _, dest := range httpRoute.Route {
-						if dest.Destination != nil && FilterByHost(dest.Destination.Host, serviceName, namespace) {
+						if dest.Destination != nil && FilterByHost(dest.Destination.Host, vs.Namespace, serviceName, namespace) {
 							appendVirtualService = true
 						}
 					}
@@ -411,7 +419,7 @@ func FilterVirtualServicesByService(allVs []networking_v1alpha3.VirtualService, 
 				for _, tcpRoute := range vs.Spec.Tcp {
 					if tcpRoute != nil {
 						for _, dest := range tcpRoute.Route {
-							if dest.Destination != nil && FilterByHost(dest.Destination.Host, serviceName, namespace) {
+							if dest.Destination != nil && FilterByHost(dest.Destination.Host, vs.Namespace, serviceName, namespace) {
 								appendVirtualService = true
 							}
 						}
@@ -422,7 +430,7 @@ func FilterVirtualServicesByService(allVs []networking_v1alpha3.VirtualService, 
 				for _, tlsRoute := range vs.Spec.Tls {
 					if tlsRoute != nil {
 						for _, dest := range tlsRoute.Route {
-							if dest.Destination != nil && FilterByHost(dest.Destination.Host, serviceName, namespace) {
+							if dest.Destination != nil && FilterByHost(dest.Destination.Host, vs.Namespace, serviceName, namespace) {
 								appendVirtualService = true
 							}
 						}
@@ -464,7 +472,7 @@ func FilterVirtualServiceByRoute(vs *networking_v1alpha3.VirtualService, service
 		}
 	}
 	for _, h := range hosts {
-		if FilterByHost(h, service, namespace) {
+		if FilterByHost(h, vs.Namespace, service, namespace) {
 			return true
 		}
 	}

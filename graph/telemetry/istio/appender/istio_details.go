@@ -45,15 +45,19 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *grap
 
 func addBadging(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	// Currently no other appenders use DestinationRules or VirtualServices, so they are not cached in AppenderNamespaceInfo
-	istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
+	istioCfgDestionationRules, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
 		IncludeDestinationRules: true,
-		IncludeVirtualServices:  true,
 		Namespace:               namespaceInfo.Namespace,
 	})
 	graph.CheckError(err)
+	istioCfgVirtualServices, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
+		IncludeVirtualServices: true,
+		AllNamespaces:          true,
+	})
+	graph.CheckError(err)
 
-	applyCircuitBreakers(trafficMap, namespaceInfo.Namespace, istioCfg)
-	applyVirtualServices(trafficMap, namespaceInfo.Namespace, istioCfg)
+	applyCircuitBreakers(trafficMap, namespaceInfo.Namespace, istioCfgDestionationRules)
+	applyVirtualServices(trafficMap, namespaceInfo.Namespace, istioCfgVirtualServices)
 }
 
 func applyCircuitBreakers(trafficMap graph.TrafficMap, namespace string, istioCfg models.IstioConfigList) {
@@ -109,11 +113,8 @@ NODES:
 		if n.NodeType != graph.NodeTypeService {
 			continue
 		}
-		if n.Namespace != namespace {
-			continue
-		}
 		for _, virtualService := range istioCfg.VirtualServices {
-			if models.IsVSValidHost(&virtualService, namespace, n.Service) {
+			if models.IsVSValidHost(&virtualService, n.Namespace, n.Service) {
 				var vsMetadata graph.VirtualServicesMetadata
 				var vsOk bool
 				if vsMetadata, vsOk = n.Metadata[graph.HasVS].(graph.VirtualServicesMetadata); !vsOk {
