@@ -53,11 +53,6 @@ build-system-test:
 	${GO} test -c -covermode=count -coverpkg $(shell ${GO} list ./... | grep -v test |  awk -vORS=, "{ print $$1 }" | sed "s/,$$//") \
 	  -o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
-## build-test: Run tests and install test deps, excluding third party tests under vendor. Runs `go test -i`
-build-test:
-	@echo Building and installing test dependencies to help speed up test runs.
-	${GO} test -i $(shell ${GO} list ./... | grep -v -e /vendor/)
-
 ## test: Run tests, excluding third party tests under vendor. Runs `go test` internally
 test:
 	@echo Running tests, excluding third party tests under vendor
