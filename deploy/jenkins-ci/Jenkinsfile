@@ -90,7 +90,7 @@ WEEKS_ELAPSED=$(( $DAYS_ELAPSED / 7))
 # This value will be used to determine the type of the release
 WEEKS_MOD3=$(( $WEEKS_ELAPSED % 3 ))
 
-# Between Dec 23th 2021 and Jan 13th 2022, use Mod6 (six-week sprint)
+# Between Dec 23th 2021 and Jan 14th 2022, use Mod6 (six-week sprint)
 if [ $NOW_DATE -ge $(date -d '2021-12-23' '+%s') ] && [ $NOW_DATE -lt $(date -d '2022-01-14' '+%s') ];
 then
   WEEKS_MOD3=$(( $WEEKS_ELAPSED % 6 ))
