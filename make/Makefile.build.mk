@@ -107,7 +107,7 @@ swagger-gen:
 
 ## swagger-serve: Serve the swagger.json in a website in local. Runs `swagger serve` internally
 swagger-serve: swagger-validate
-	@swagger serve ./swagger.json
+	@swagger serve ./swagger.json --no-open
 
 ## swagger-ci: Check that swagger.json is the correct one
 swagger-ci: swagger-validate
