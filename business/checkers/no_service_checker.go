@@ -49,7 +49,6 @@ func runVirtualServiceCheck(virtualService networking_v1alpha3.VirtualService, n
 	result, valid := virtualservices.NoHostChecker{
 		Namespace:         namespace,
 		Namespaces:        clusterNamespaces,
-		ServiceList:       services,
 		VirtualService:    virtualService,
 		ServiceEntryHosts: serviceHosts,
 		RegistryServices:  registryStatus,

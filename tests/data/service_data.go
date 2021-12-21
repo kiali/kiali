@@ -32,3 +32,12 @@ func CreateFakeRegistryServices(host string, namespace string, exportToNamespace
 
 	return []*kubernetes.RegistryService{&registryService}
 }
+
+func CreateFakeMultiRegistryServices(hosts []string, namespace string, exportToNamespace string) []*kubernetes.RegistryService {
+	result := make([]*kubernetes.RegistryService, 0)
+	for _, host := range hosts {
+		result = append(result, CreateFakeRegistryServices(host, namespace, exportToNamespace)...)
+	}
+
+	return result
+}

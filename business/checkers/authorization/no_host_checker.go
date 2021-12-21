@@ -7,6 +7,7 @@ import (
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -16,7 +17,6 @@ type NoHostChecker struct {
 	Namespace           string
 	Namespaces          models.Namespaces
 	ServiceEntries      map[string][]string
-	ServiceList         models.ServiceList
 	VirtualServices     []networking_v1alpha3.VirtualService
 	RegistryServices    []*kubernetes.RegistryService
 }
@@ -49,7 +49,10 @@ func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1beta.Rule_
 	if len(to) == 0 {
 		return nil, true
 	}
-
+	namespace, clusterName := n.AuthorizationPolicy.Namespace, n.AuthorizationPolicy.ClusterName
+	if clusterName == "" {
+		clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
+	}
 	checks, valid := make([]*models.IstioCheck, 0, len(to)), true
 	for toIdx, t := range to {
 		if t == nil {
@@ -65,8 +68,8 @@ func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1beta.Rule_
 		}
 
 		for hostIdx, h := range t.Operation.Hosts {
-			fqdn := kubernetes.GetHost(h, n.AuthorizationPolicy.Namespace, n.AuthorizationPolicy.ClusterName, n.Namespaces.GetNames())
-			if !n.hasMatchingService(fqdn, n.AuthorizationPolicy.Namespace) {
+			fqdn := kubernetes.GetHost(h, namespace, clusterName, n.Namespaces.GetNames())
+			if !n.hasMatchingService(fqdn, namespace) {
 				path := fmt.Sprintf("spec/rules[%d]/to[%d]/operation/hosts[%d]", ruleIdx, toIdx, hostIdx)
 				validation := models.Build("authorizationpolicy.nodest.matchingregistry", path)
 				valid = false
@@ -80,19 +83,11 @@ func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1beta.Rule_
 
 func (n NoHostChecker) hasMatchingService(host kubernetes.Host, itemNamespace string) bool {
 	// Covering 'servicename.namespace' host format scenario
-	localSvc, localNs := kubernetes.ParseTwoPartHost(host)
+	_, localNs := kubernetes.ParseTwoPartHost(host)
 
 	// Check wildcard hosts - needs to match "*" and "*.suffix" also..
 	if host.IsWildcard() && localNs == itemNamespace {
 		return true
-	}
-
-	// Only find matches for workloads and services in the same namespace
-	if localNs == itemNamespace {
-		// Check ServiceNames
-		if matches := n.ServiceList.HasMatchingServices(localSvc); matches {
-			return matches
-		}
 	}
 
 	// Check ServiceEntries
