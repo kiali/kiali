@@ -42,6 +42,6 @@ func InitializeAuthenticationController(strategy string) {
 	persistor := CookieSessionPersistor{}
 
 	if strategy == config.AuthStrategyToken {
-		authController = &TokenAuthController{SessionStore: persistor}
+		authController = NewTokenAuthController(persistor, nil)
 	}
 }

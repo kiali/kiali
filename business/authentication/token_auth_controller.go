@@ -22,7 +22,12 @@ import (
 // In it's simplest form, it can be a ServiceAccount token. However, it can
 // be any kind of token that can be passed using HTTP Bearer authentication
 // in requests to the Kubernetes API.
-type TokenAuthController struct {
+type tokenAuthController struct {
+	// businessInstantiator is a function that returns an already initialized
+	// business layer. Normally, it should be set to the business.Get function.
+	// For tests, it can be set to something else that returns a compatible API.
+	businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)
+
 	// SessionStore persists the session between HTTP requests.
 	SessionStore SessionPersistor
 }
@@ -81,6 +86,20 @@ func (e *AuthenticationFailureError) Error() string {
 	return e.Reason
 }
 
+// NewTokenAuthController initializesa new controller for handling token authentication, with the
+// given persistor and the given businessInstantiator. The businessInstantiator can be nil and
+// the initialized contoller will use the business.Get function.
+func NewTokenAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *tokenAuthController {
+	if businessInstantiator == nil {
+		businessInstantiator = business.Get
+	}
+
+	return &tokenAuthController{
+		businessInstantiator: businessInstantiator,
+		SessionStore:         persistor,
+	}
+}
+
 // Authenticate handles an HTTP request that contains a token passed in the "token" field of form data of
 // the body of the request (POST, PATCH or PUT methods). The token should be valid to be used in the
 // Kubernetes API, thus the token is verified by trying a request to the Kubernetes API.
@@ -90,7 +109,7 @@ func (e *AuthenticationFailureError) Error() string {
 // user won't be able to see any data in Kiali.
 // An AuthenticationFailureError is returned if the authentication request is rejected (unauthorized). Any
 // other kind of error means that something unexpected happened.
-func (c TokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+func (c tokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	// Get the token from HTTP form data
 	err := r.ParseForm()
 	if err != nil {
@@ -103,7 +122,7 @@ func (c TokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter
 	}
 
 	// Create a bs layer with the received token to check its validity.
-	bs, err := business.Get(&api.AuthInfo{Token: token})
+	bs, err := c.businessInstantiator(&api.AuthInfo{Token: token})
 	if err != nil {
 		return nil, fmt.Errorf("error instantiating the business layer: %w", err)
 	}
@@ -137,7 +156,7 @@ func (c TokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter
 // is done: only token validity is re-checked by making a request to the Kubernetes API, like in the Authenticate
 // function. However, privileges are not re-checked.
 // If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
-func (c TokenAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+func (c tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	// Restore a previously started session.
 	sPayload := sessionPayload{}
 	sData, err := c.SessionStore.ReadSession(r, w, &sPayload)
@@ -150,7 +169,7 @@ func (c TokenAuthController) ValidateSession(r *http.Request, w http.ResponseWri
 	}
 
 	// Check token validity.
-	bs, err := business.Get(&api.AuthInfo{Token: sPayload.Token})
+	bs, err := c.businessInstantiator(&api.AuthInfo{Token: sPayload.Token})
 	if err != nil {
 		return nil, fmt.Errorf("could not get the business layer: %w", err)
 	}
@@ -170,7 +189,7 @@ func (c TokenAuthController) ValidateSession(r *http.Request, w http.ResponseWri
 }
 
 // TerminateSession unconditionally terminates any existing session without any validation.
-func (c TokenAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) {
+func (c tokenAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) {
 	c.SessionStore.TerminateSession(r, w)
 }
 
