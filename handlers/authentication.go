@@ -561,7 +561,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 				statusCode = http.StatusInternalServerError
 			} else if session != nil {
 				token = session.Token
-				authInfo = &api.AuthInfo{Token: session.Token}
+				authInfo = &api.AuthInfo{Token: token}
 				statusCode = http.StatusOK
 			} else {
 				statusCode = http.StatusUnauthorized

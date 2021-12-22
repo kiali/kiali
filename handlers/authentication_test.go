@@ -25,11 +25,6 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
-type dummyHandler struct {
-}
-
-func (t dummyHandler) ServeHTTP(http.ResponseWriter, *http.Request) {}
-
 // TestStrategyTokenAuthentication checks that a user with no active
 // session is logged in successfully
 func TestStrategyTokenAuthentication(t *testing.T) {
