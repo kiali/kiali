@@ -618,7 +618,7 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 			if e, ok := err.(*authentication.AuthenticationFailureError); ok {
 				RespondWithError(w, http.StatusUnauthorized, e.Error())
 			} else {
-				RespondWithError(w, http.StatusInternalServerError, e.Error())
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
 			}
 		} else {
 			RespondWithJSONIndent(w, http.StatusOK, response)

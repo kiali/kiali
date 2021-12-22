@@ -20,6 +20,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -41,6 +42,8 @@ func TestStrategyTokenAuthentication(t *testing.T) {
 	cfg.LoginToken.SigningKey = util.RandomString(16)
 	cfg.KubernetesConfig.CacheEnabled = false
 	config.Set(cfg)
+
+	authentication.InitializeAuthenticationController("token")
 
 	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 	util.Clock = util.ClockMock{Time: clockTime}
@@ -71,20 +74,9 @@ func TestStrategyTokenAuthentication(t *testing.T) {
 	assert.Len(t, response.Cookies(), 1)
 
 	cookie := response.Cookies()[0]
-	assert.Equal(t, config.TokenCookieName, cookie.Name)
+	assert.Equal(t, config.TokenCookieName+"-aes", cookie.Name)
 	assert.True(t, cookie.HttpOnly)
-
-	// Build the token that we known we should receive
-	newToken, _ := config.GetSignedTokenString(config.IanaClaims{
-		SessionId: "foo",
-		StandardClaims: jwt.StandardClaims{
-			Subject:   "token",
-			ExpiresAt: clockTime.Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds)).Unix(),
-			Issuer:    config.AuthStrategyTokenIssuer,
-		},
-	})
-
-	assert.Equal(t, cookie.Value, newToken)
+	assert.NotEmpty(t, cookie.Value)
 	assert.Equal(t, clockTime.Add(time.Second*time.Duration(cfg.LoginToken.ExpirationSeconds)), cookie.Expires)
 }
 
