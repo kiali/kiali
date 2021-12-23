@@ -105,7 +105,7 @@ func TestNamespacesGraphWithServiceInjection(t *testing.T) {
 	assert.Equal(graph.NodeTypeAggregate, pp.Edges[1].Dest.NodeType)
 
 	topReviews := pp.Edges[0].Dest
-	if topReviews.Metadata[graph.AggregateValue] != "Top" {
+	if "Top" != topReviews.Metadata[graph.AggregateValue] {
 		topReviews = pp.Edges[1].Dest
 	}
 	assert.Equal("request_operation", topReviews.Metadata[graph.Aggregate])
@@ -116,7 +116,7 @@ func TestNamespacesGraphWithServiceInjection(t *testing.T) {
 	assert.Equal(graph.NodeTypeService, topReviews.Edges[0].Dest.NodeType)
 
 	allReviews := pp.Edges[1].Dest
-	if allReviews.Metadata[graph.AggregateValue] != "All" {
+	if "All" != allReviews.Metadata[graph.AggregateValue] {
 		allReviews = pp.Edges[0].Dest
 	}
 	assert.Equal("request_operation", allReviews.Metadata[graph.Aggregate])
@@ -231,7 +231,7 @@ func TestNamespacesGraphNoServiceInjection(t *testing.T) {
 	assert.Equal(graph.NodeTypeAggregate, pp.Edges[1].Dest.NodeType)
 
 	topReviews := pp.Edges[0].Dest
-	if topReviews.Metadata[graph.AggregateValue] != "Top" {
+	if "Top" != topReviews.Metadata[graph.AggregateValue] {
 		topReviews = pp.Edges[1].Dest
 	}
 	assert.Equal("request_operation", topReviews.Metadata[graph.Aggregate])
@@ -241,7 +241,7 @@ func TestNamespacesGraphNoServiceInjection(t *testing.T) {
 	assert.Equal(graph.NodeTypeApp, topReviews.Edges[0].Dest.NodeType)
 
 	allReviews := pp.Edges[1].Dest
-	if allReviews.Metadata[graph.AggregateValue] != "All" {
+	if "All" != allReviews.Metadata[graph.AggregateValue] {
 		allReviews = pp.Edges[0].Dest
 	}
 	assert.Equal("request_operation", allReviews.Metadata[graph.Aggregate])
