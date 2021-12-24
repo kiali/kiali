@@ -116,6 +116,15 @@ type ObjectTypeParam struct {
 	Name string `json:"object_type"`
 }
 
+// swagger:parameters istioConfigList istioConfigDetails serviceDetails serviceUpdate
+type ValidateParam struct {
+	// Enable validation or not
+	//
+	// in: query
+	// required: false
+	Name string `json:"validate"`
+}
+
 // swagger:parameters podDetails podLogs podProxyDump podProxyResource podProxyLogging
 type PodParam struct {
 	// The pod name.

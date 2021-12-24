@@ -2731,6 +2731,7 @@ Endpoint to get the Istio Config of an Istio object
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | object | `path` | string | `string` |  | ✓ |  | The Istio object name. |
 | object_type | `path` | string | `string` |  | ✓ |  | The Istio object type. |
+| validate | `query` | string | `string` |  |  |  | Enable validation or not |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -2849,6 +2850,7 @@ Endpoint to get the list of Istio Config of a namespace
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
+| validate | `query` | string | `string` |  |  |  | Enable validation or not |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -4561,7 +4563,14 @@ Endpoint to set pod proxy log level
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | pod | `path` | string | `string` |  | ✓ |  | The pod name. |
-| level | `query` | string | `string` |  | ✓ |  | The log level for the pod's proxy. |
+| level | `query` | string | `string` |  | ✓ |  | The log level for the pod's proxy.
+off ProxyLogLevelOff
+trace ProxyLogLevelTrace
+debug ProxyLogLevelDebug
+info ProxyLogLevelInfo
+warning ProxyLogLevelWarning
+error ProxyLogLevelError
+critical ProxyLogLevelCritical |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -5018,6 +5027,7 @@ Endpoint to get the details of a given service
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | service | `path` | string | `string` |  | ✓ |  | The service name. |
+| validate | `query` | string | `string` |  |  |  | Enable validation or not |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -5538,6 +5548,7 @@ PATCH /api/namespaces/{namespace}/services/{service}
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | service | `path` | string | `string` |  | ✓ |  | The service name. |
+| validate | `query` | string | `string` |  |  |  | Enable validation or not |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |

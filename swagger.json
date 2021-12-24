@@ -2108,6 +2108,13 @@
             "name": "namespace",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Enable validation or not",
+            "name": "validate",
+            "in": "query"
           }
         ],
         "responses": {
@@ -2208,6 +2215,13 @@
             "name": "object_type",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Enable validation or not",
+            "name": "validate",
+            "in": "query"
           }
         ],
         "responses": {
@@ -2539,8 +2553,9 @@
               "critical"
             ],
             "type": "string",
+            "x-go-enum-desc": "off ProxyLogLevelOff\ntrace ProxyLogLevelTrace\ndebug ProxyLogLevelDebug\ninfo ProxyLogLevelInfo\nwarning ProxyLogLevelWarning\nerror ProxyLogLevelError\ncritical ProxyLogLevelCritical",
             "x-go-name": "Level",
-            "description": "The log level for the pod's proxy.",
+            "description": "The log level for the pod's proxy.\noff ProxyLogLevelOff\ntrace ProxyLogLevelTrace\ndebug ProxyLogLevelDebug\ninfo ProxyLogLevelInfo\nwarning ProxyLogLevelWarning\nerror ProxyLogLevelError\ncritical ProxyLogLevelCritical",
             "name": "level",
             "in": "query",
             "required": true
@@ -2704,6 +2719,13 @@
           {
             "type": "string",
             "x-go-name": "Name",
+            "description": "Enable validation or not",
+            "name": "validate",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
             "description": "The service name.",
             "name": "service",
             "in": "path",
@@ -2746,6 +2768,13 @@
             "name": "namespace",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Enable validation or not",
+            "name": "validate",
+            "in": "query"
           },
           {
             "type": "string",
