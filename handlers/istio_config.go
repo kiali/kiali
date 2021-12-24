@@ -88,9 +88,9 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 
 func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	namespace := params["namespace"]
-	objectType := params["object_type"]
-	object := params["object"]
+	namespace := strings.TrimSpace(params["namespace"])
+	objectType := strings.TrimSpace(strings.ToLower(params["object_type"]))
+	object := strings.TrimSpace(params["object"])
 
 	includeValidations := false
 	query := r.URL.Query()
