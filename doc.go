@@ -200,17 +200,17 @@ type AppendersParam struct {
 	//
 	// in: query
 	// required: false
-	// default: run all appenders
+	// default: ""
 	Name string `json:"appenders"`
 }
 
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
 type BoxByParam struct {
-	// Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].
+	// Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace].
 	//
 	// in: query
 	// required: false
-	// default: none
+	// default: ""
 	Name string `json:"boxBy"`
 }
 

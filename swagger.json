@@ -597,7 +597,7 @@
         "parameters": [
           {
             "type": "string",
-            "default": "run all appenders",
+            "default": "\"\"",
             "x-go-name": "Name",
             "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
@@ -605,9 +605,9 @@
           },
           {
             "type": "string",
-            "default": "none",
+            "default": "\"\"",
             "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace].",
             "name": "boxBy",
             "in": "query"
           },
@@ -1083,7 +1083,7 @@
           },
           {
             "type": "string",
-            "default": "run all appenders",
+            "default": "\"\"",
             "x-go-name": "Name",
             "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
@@ -1091,9 +1091,9 @@
           },
           {
             "type": "string",
-            "default": "none",
+            "default": "\"\"",
             "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace].",
             "name": "boxBy",
             "in": "query"
           },
@@ -1239,7 +1239,7 @@
           },
           {
             "type": "string",
-            "default": "run all appenders",
+            "default": "\"\"",
             "x-go-name": "Name",
             "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
@@ -1247,9 +1247,9 @@
           },
           {
             "type": "string",
-            "default": "none",
+            "default": "\"\"",
             "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace].",
             "name": "boxBy",
             "in": "query"
           },
@@ -2945,7 +2945,7 @@
           },
           {
             "type": "string",
-            "default": "run all appenders",
+            "default": "\"\"",
             "x-go-name": "Name",
             "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
@@ -2953,9 +2953,9 @@
           },
           {
             "type": "string",
-            "default": "none",
+            "default": "\"\"",
             "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace].",
             "name": "boxBy",
             "in": "query"
           },
@@ -3710,7 +3710,7 @@
           },
           {
             "type": "string",
-            "default": "run all appenders",
+            "default": "\"\"",
             "x-go-name": "Name",
             "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
@@ -3718,9 +3718,9 @@
           },
           {
             "type": "string",
-            "default": "none",
+            "default": "\"\"",
             "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace].",
             "name": "boxBy",
             "in": "query"
           },
