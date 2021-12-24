@@ -1916,7 +1916,7 @@ The backing JSON for an app node detail graph. (supported graphTypes: app | vers
 | boxBy | `query` | string | `string` |  |  | `"none"` | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none]. |
 | container | `query` | string | `string` |  |  |  | The cluster name. If not supplied queries/results will not be constrained by cluster. |
 | duration | `query` | string | `string` |  |  | `"10m"` | Query time-range duration (Golang string duration). |
-| graphType | `query` | string | `string` |  |  | `"workload"` | Graph type. Available graph types: [app, service, versionedApp, workload]. |
+| graphType | `query` | string | `string` |  | ✓ |  | Graph type. Available graph types: [app, versionedApp]. |
 | includeIdleEdges | `query` | string | `string` |  |  | `"false"` | Flag for including edges that have no request traffic for the time period. |
 | injectServiceNodes | `query` | string | `string` |  |  | `"false"` | Flag for injecting the requested service node between source and destination nodes. |
 | queryTime | `query` | string | `string` |  |  | `"now"` | Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now. |
@@ -2023,7 +2023,7 @@ The backing JSON for a versioned app node detail graph. (supported graphTypes: a
 | boxBy | `query` | string | `string` |  |  | `"none"` | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none]. |
 | container | `query` | string | `string` |  |  |  | The cluster name. If not supplied queries/results will not be constrained by cluster. |
 | duration | `query` | string | `string` |  |  | `"10m"` | Query time-range duration (Golang string duration). |
-| graphType | `query` | string | `string` |  |  | `"workload"` | Graph type. Available graph types: [app, service, versionedApp, workload]. |
+| graphType | `query` | string | `string` |  | ✓ |  | Graph type. Available graph types: [app, versionedApp]. |
 | includeIdleEdges | `query` | string | `string` |  |  | `"false"` | Flag for including edges that have no request traffic for the time period. |
 | injectServiceNodes | `query` | string | `string` |  |  | `"false"` | Flag for injecting the requested service node between source and destination nodes. |
 | queryTime | `query` | string | `string` |  |  | `"now"` | Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now. |
@@ -2731,6 +2731,7 @@ Endpoint to get the Istio Config of an Istio object
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | object | `path` | string | `string` |  | ✓ |  | The Istio object name. |
 | object_type | `path` | string | `string` |  | ✓ |  | The Istio object type. |
+| validate | `query` | string | `string` |  |  |  | Enable validation or not |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -2849,6 +2850,7 @@ Endpoint to get the list of Istio Config of a namespace
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
+| validate | `query` | string | `string` |  |  |  | Enable validation or not |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -5018,6 +5020,7 @@ Endpoint to get the details of a given service
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | service | `path` | string | `string` |  | ✓ |  | The service name. |
+| validate | `query` | string | `string` |  |  |  | Enable validation or not |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -5538,6 +5541,7 @@ PATCH /api/namespaces/{namespace}/services/{service}
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | service | `path` | string | `string` |  | ✓ |  | The service name. |
+| validate | `query` | string | `string` |  |  |  | Enable validation or not |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |

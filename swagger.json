@@ -1107,11 +1107,11 @@
           },
           {
             "type": "string",
-            "default": "workload",
             "x-go-name": "Name",
-            "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
+            "description": "Graph type. Available graph types: [app, versionedApp].",
             "name": "graphType",
-            "in": "query"
+            "in": "query",
+            "required": true
           },
           {
             "type": "string",
@@ -1263,11 +1263,11 @@
           },
           {
             "type": "string",
-            "default": "workload",
             "x-go-name": "Name",
-            "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
+            "description": "Graph type. Available graph types: [app, versionedApp].",
             "name": "graphType",
-            "in": "query"
+            "in": "query",
+            "required": true
           },
           {
             "type": "string",
@@ -2108,6 +2108,13 @@
             "name": "namespace",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Enable validation or not",
+            "name": "validate",
+            "in": "query"
           }
         ],
         "responses": {
@@ -2208,6 +2215,13 @@
             "name": "object_type",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Enable validation or not",
+            "name": "validate",
+            "in": "query"
           }
         ],
         "responses": {
@@ -2704,6 +2718,13 @@
           {
             "type": "string",
             "x-go-name": "Name",
+            "description": "Enable validation or not",
+            "name": "validate",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
             "description": "The service name.",
             "name": "service",
             "in": "path",
@@ -2746,6 +2767,13 @@
             "name": "namespace",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Enable validation or not",
+            "name": "validate",
+            "in": "query"
           },
           {
             "type": "string",
