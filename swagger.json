@@ -15,7 +15,7 @@
     "title": "Kiali",
     "version": "_"
   },
-  "basePath": "/api",
+  "basePath": "/kiali/api",
   "paths": {
     "/": {
       "get": {
