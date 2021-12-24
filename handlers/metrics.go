@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -203,7 +204,11 @@ func extractIstioMetricsQueryParams(r *http.Request, q *models.IstioMetricsQuery
 		q.Direction = dir
 	}
 	requestProtocol := queryParams.Get("requestProtocol")
-	if requestProtocol != "" {
+	if requestProtocol != "grpc" && requestProtocol != "http" && requestProtocol != "" {
+		return errors.New("bad request, query parameter 'requestProtocol' must be either 'http' or 'grpc'")
+	} else if requestProtocol == "" {
+		q.RequestProtocol = "http"
+	} else {
 		q.RequestProtocol = requestProtocol
 	}
 	reporter := queryParams.Get("reporter")
@@ -218,7 +223,11 @@ func extractIstioMetricsQueryParams(r *http.Request, q *models.IstioMetricsQuery
 
 func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQuery, namespaceInfo *models.Namespace) error {
 	if ri := queryParams.Get("rateInterval"); ri != "" {
-		q.RateInterval = ri
+		if legal, _ := regexp.MatchString("((^[1-9]*)(ms|s|m|h|d|w|y))+", ri); legal {
+			q.RateInterval = ri
+		} else {
+			return errors.New("bad request, cannot parse query parameter 'rateInterval'")
+		}
 	}
 	if rf := queryParams.Get("rateFunc"); rf != "" {
 		if rf != "rate" && rf != "irate" {
@@ -227,14 +236,14 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQu
 		q.RateFunc = rf
 	}
 	if queryTime := queryParams.Get("queryTime"); queryTime != "" {
-		if num, err := strconv.ParseInt(queryTime, 10, 64); err == nil {
+		if num, err := strconv.ParseInt(queryTime, 10, 64); err == nil && num > 0 {
 			q.End = time.Unix(num, 0)
 		} else {
 			return errors.New("bad request, cannot parse query parameter 'queryTime'")
 		}
 	}
 	if dur := queryParams.Get("duration"); dur != "" {
-		if num, err := strconv.ParseInt(dur, 10, 64); err == nil {
+		if num, err := strconv.ParseInt(dur, 10, 64); err == nil && num > 0 {
 			duration := time.Duration(num) * time.Second
 			q.Start = q.End.Add(-duration)
 		} else {
@@ -242,7 +251,7 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQu
 		}
 	}
 	if step := queryParams.Get("step"); step != "" {
-		if num, err := strconv.Atoi(step); err == nil {
+		if num, err := strconv.Atoi(step); err == nil && num > 0 {
 			q.Step = time.Duration(num) * time.Second
 		} else {
 			return errors.New("bad request, cannot parse query parameter 'step'")

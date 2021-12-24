@@ -433,7 +433,7 @@ type RequestProtocolParam struct {
 	//
 	// in: query
 	// required: false
-	// default: all protocols
+	// default: http
 	Name string `json:"requestProtocol"`
 }
 
