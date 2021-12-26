@@ -44,7 +44,7 @@ func TestExtractMetricsQueryParams(t *testing.T) {
 	q.Add("filters[]", "request_size")
 	q.Add("reporter", "destination")
 	q.Add("direction", "outbound")
-	q.Add("requestProtocol", "http")
+	q.Add("requestProtocol", "")
 	req.URL.RawQuery = q.Encode()
 
 	mq := models.IstioMetricsQuery{Namespace: "ns"}
@@ -68,6 +68,20 @@ func TestExtractMetricsQueryParams(t *testing.T) {
 	assert.Equal(t, 20, mq.Start.Second())
 	assert.Equal(t, time.Unix(1523364061, 0), mq.End)
 	assert.Equal(t, 1, mq.End.Second())
+}
+
+func TestExtractMetricsQueryParamsWithInvalidProtocol(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://host/api/namespaces/ns/services/svc/metrics", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := req.URL.Query()
+	q.Add("requestProtocol", "xyz")
+	req.URL.RawQuery = q.Encode()
+
+	mq := models.IstioMetricsQuery{Namespace: "ns"}
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	assert.EqualError(t, err, "bad request, query parameter 'requestProtocol' must be either 'http' or 'grpc'")
 }
 
 func TestExtractMetricsQueryParamsStepLimitCase(t *testing.T) {
