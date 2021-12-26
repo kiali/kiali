@@ -84,6 +84,83 @@ func TestExtractMetricsQueryParamsWithInvalidProtocol(t *testing.T) {
 	assert.EqualError(t, err, "bad request, query parameter 'requestProtocol' must be either 'http' or 'grpc'")
 }
 
+func TestExtractMetricsQueryParamsWithInvalidStep(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://host/api/namespaces/ns/services/svc/metrics", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := req.URL.Query()
+	q.Add("step", "-1")
+	req.URL.RawQuery = q.Encode()
+
+	mq := models.IstioMetricsQuery{Namespace: "ns"}
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	assert.EqualError(t, err, "bad request, cannot parse query parameter 'step'")
+}
+
+func TestExtractMetricsQueryParamsWithInvalidDuration(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://host/api/namespaces/ns/services/svc/metrics", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := req.URL.Query()
+	q.Add("duration", "-1000")
+	req.URL.RawQuery = q.Encode()
+
+	mq := models.IstioMetricsQuery{Namespace: "ns"}
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	assert.EqualError(t, err, "bad request, cannot parse query parameter 'duration'")
+}
+
+func TestExtractMetricsQueryParamsWithInvalidQuerytime(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://host/api/namespaces/ns/services/svc/metrics", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := req.URL.Query()
+	q.Add("queryTime", "-1")
+	req.URL.RawQuery = q.Encode()
+
+	mq := models.IstioMetricsQuery{Namespace: "ns"}
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	assert.EqualError(t, err, "bad request, cannot parse query parameter 'queryTime'")
+}
+
+func TestExtractMetricsQueryParamsWithInvalidRateInterval(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://host/api/namespaces/ns/services/svc/metrics", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := req.URL.Query()
+	q.Add("queryTime", "1523364060") // 2018-04-10T12:41:00
+	q.Add("duration", "1000")        // Makes start = 2018-04-10T12:24:20
+	q.Add("rateInterval", "100")
+	req.URL.RawQuery = q.Encode()
+
+	mq := models.IstioMetricsQuery{Namespace: "ns"}
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	assert.EqualError(t, err, "bad request, cannot parse query parameter 'rateInterval'")
+
+	q.Set("rateInterval", "100xyz")
+	req.URL.RawQuery = q.Encode()
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	assert.EqualError(t, err, "bad request, cannot parse query parameter 'rateInterval'")
+
+	q.Set("rateInterval", "-1")
+	req.URL.RawQuery = q.Encode()
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	assert.EqualError(t, err, "bad request, cannot parse query parameter 'rateInterval'")
+
+	q.Set("rateInterval", "35s")
+	req.URL.RawQuery = q.Encode()
+	_ = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	assert.Equal(t, "35s", mq.RateInterval)
+
+	q.Set("rateInterval", "5m35s")
+	req.URL.RawQuery = q.Encode()
+	_ = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	assert.Equal(t, "5m35s", mq.RateInterval)
+}
 func TestExtractMetricsQueryParamsStepLimitCase(t *testing.T) {
 	req, err := http.NewRequest("GET", "http://host/api/namespaces/ns/services/svc/metrics", nil)
 	if err != nil {
