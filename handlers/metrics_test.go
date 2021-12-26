@@ -96,6 +96,12 @@ func TestExtractMetricsQueryParamsWithInvalidStep(t *testing.T) {
 	mq := models.IstioMetricsQuery{Namespace: "ns"}
 	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
 	assert.EqualError(t, err, "bad request, cannot parse query parameter 'step'")
+
+	q.Add("step", "0")
+	req.URL.RawQuery = q.Encode()
+
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	assert.EqualError(t, err, "bad request, cannot parse query parameter 'step'")
 }
 
 func TestExtractMetricsQueryParamsWithInvalidDuration(t *testing.T) {
@@ -110,6 +116,12 @@ func TestExtractMetricsQueryParamsWithInvalidDuration(t *testing.T) {
 	mq := models.IstioMetricsQuery{Namespace: "ns"}
 	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
 	assert.EqualError(t, err, "bad request, cannot parse query parameter 'duration'")
+
+	q.Add("duration", "0")
+	req.URL.RawQuery = q.Encode()
+
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	assert.EqualError(t, err, "bad request, cannot parse query parameter 'duration'")
 }
 
 func TestExtractMetricsQueryParamsWithInvalidQuerytime(t *testing.T) {
@@ -122,6 +134,12 @@ func TestExtractMetricsQueryParamsWithInvalidQuerytime(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 
 	mq := models.IstioMetricsQuery{Namespace: "ns"}
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	assert.EqualError(t, err, "bad request, cannot parse query parameter 'queryTime'")
+
+	q.Add("queryTime", "0")
+	req.URL.RawQuery = q.Encode()
+
 	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
 	assert.EqualError(t, err, "bad request, cannot parse query parameter 'queryTime'")
 }
