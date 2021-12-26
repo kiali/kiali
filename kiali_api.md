@@ -127,7 +127,7 @@ _
 | Method  | URI     | Name   | Summary |
 |---------|---------|--------|---------|
 | GET | /api/config | [get config](#get-config) |  |
-| GET | /api/healthz | [healthz](#healthz) |  |
+| GET | /healthz | [healthz](#healthz) |  |
 | GET | /api | [root](#root) |  |
   
 
@@ -2415,7 +2415,7 @@ Status: Internal Server Error
 ### <span id="healthz"></span> healthz (*healthz*)
 
 ```
-GET /api/healthz
+GET /healthz
 ```
 
 Endpoint to get the health of Kiali
