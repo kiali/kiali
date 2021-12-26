@@ -9306,7 +9306,7 @@ hosts: ["another-host.com"]
 ```
 
 You can fine tune the authorization policy to set different requirement per path. For example,
-to require JWT on all paths, except /healthz, the same `RequestAuthentication` can be used, but the
+to require JWT on all paths, except /api/healthz, the same `RequestAuthentication` can be used, but the
 authorization policy could be:
 
 ```yaml
@@ -9325,7 +9325,7 @@ source:
 requestPrincipals: ["*"]
 to:
 operation:
-paths: ["/healthz"]
+paths: ["/api/healthz"]
 ```
 
 <!-- crd generation tags

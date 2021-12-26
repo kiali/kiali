@@ -40,7 +40,7 @@ func NewRoutes() (r *Routes) {
 		{
 			"Healthz",
 			"GET",
-			"/healthz",
+			"/api/healthz",
 			handlers.Healthz,
 			false,
 		},

@@ -74,7 +74,7 @@ func TestSimpleRoute(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	resp, err := http.Get(ts.URL + "/healthz")
+	resp, err := http.Get(ts.URL + "/api/healthz")
 	if err != nil {
 		t.Fatal(err)
 	}
