@@ -49,7 +49,7 @@ func TestNamespaceAppHealth(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
-	k8s.AssertNumberOfCalls(t, "GetServices", 1)
+	k8s.AssertNumberOfCalls(t, "GetServices", 3)
 	k8s.AssertNumberOfCalls(t, "GetPods", 1)
 	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
 	k8s.AssertNumberOfCalls(t, "GetReplicaSets", 1)
