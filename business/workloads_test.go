@@ -785,6 +785,104 @@ func TestGetWorkloadListFromGenericPodController(t *testing.T) {
 	assert.Equal(len(pods), len(workload.Pods))
 }
 
+func TestGetWorkloadListKindsWithSameName(t *testing.T) {
+	assert := assert.New(t)
+
+	rs := FakeRSSyncedWithPods()
+	pods := FakePodsSyncedWithDeployments()
+	pods[0].OwnerReferences[0].APIVersion = "shiny.new.apps/v1"
+	pods[0].OwnerReferences[0].Kind = "ReplicaSet"
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("IsOpenShift").Return(true)
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
+	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(rs, nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
+	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
+	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(pods, nil)
+	k8s.On("GetPod", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(pods[0], nil)
+	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(pods, nil)
+
+	notfound := fmt.Errorf("not found")
+	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&apps_v1.Deployment{}, nil)
+	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&osapps_v1.DeploymentConfig{}, notfound)
+	k8s.On("GetStatefulSet", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&apps_v1.StatefulSet{}, nil)
+	k8s.On("GetDaemonSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
+	k8s.On("GetDaemonSet", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&apps_v1.DaemonSet{}, notfound)
+
+	// Disabling CustomDashboards on Workload details testing
+	conf := config.Get()
+	conf.ExternalServices.CustomDashboards.Enabled = false
+	config.Set(conf)
+
+	svc := setupWorkloadService(k8s)
+
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	workloadList, _ := svc.GetWorkloadList(criteria)
+	workloads := workloadList.Workloads
+
+	assert.Equal(0, len(workloads))
+}
+
+func TestGetWorkloadListRSWithoutPrefix(t *testing.T) {
+	assert := assert.New(t)
+
+	rs := FakeRSSyncedWithPods()
+	// Doesn't matter what the type is as long as kiali doesn't recognize it as a workload.
+	owner := &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			// Random prefix
+			Name: "h79a3h-controlling-workload",
+			UID:  types.UID("f9952f02-5552-4b2c-afdb-441d859dbb36"),
+		},
+		TypeMeta: v1.TypeMeta{
+			Kind: "ConfigMap",
+		},
+	}
+	rs[0].OwnerReferences = []v1.OwnerReference{*v1.NewControllerRef(owner, core_v1.SchemeGroupVersion.WithKind(owner.Kind))}
+	pods := FakePodsSyncedWithDeployments()
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("IsOpenShift").Return(true)
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
+	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(rs, nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
+	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
+	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(pods, nil)
+	k8s.On("GetPod", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(pods[0], nil)
+	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(pods, nil)
+
+	notfound := fmt.Errorf("not found")
+	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&apps_v1.Deployment{}, nil)
+	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&osapps_v1.DeploymentConfig{}, notfound)
+	k8s.On("GetStatefulSet", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&apps_v1.StatefulSet{}, nil)
+	k8s.On("GetDaemonSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
+	k8s.On("GetDaemonSet", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&apps_v1.DaemonSet{}, notfound)
+
+	// Disabling CustomDashboards on Workload details testing
+	conf := config.Get()
+	conf.ExternalServices.CustomDashboards.Enabled = false
+	config.Set(conf)
+
+	svc := setupWorkloadService(k8s)
+
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	workloadList, _ := svc.GetWorkloadList(criteria)
+	workloads := workloadList.Workloads
+
+	assert.Equal(1, len(workloads))
+}
+
 func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	assert := assert.New(t)
 
@@ -793,13 +891,14 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	// Doesn't matter what the type is as long as kiali doesn't recognize it as a workload.
 	owner := &core_v1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{
-			// The name matters to the implementation.
-			// RS name must have this as a prefix to match.
-			Name: replicaSets[0].OwnerReferences[0].Name,
+			Name: "controlling-workload",
 			UID:  types.UID("f9952f02-5552-4b2c-afdb-441d859dbb36"),
 		},
+		TypeMeta: v1.TypeMeta{
+			Kind: "ConfigMap",
+		},
 	}
-	ref := v1.NewControllerRef(owner, core_v1.SchemeGroupVersion.WithKind("ConfigMap"))
+	ref := v1.NewControllerRef(owner, core_v1.SchemeGroupVersion.WithKind(owner.Kind))
 
 	for i := range replicaSets {
 		replicaSets[i].OwnerReferences = []v1.OwnerReference{*ref}

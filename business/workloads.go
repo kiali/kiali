@@ -1063,27 +1063,36 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 				cnFound = false
 			}
 		default:
+			// Two scenarios:
+			// 1. Custom controller with replicaset
+			// 2. Custom controller without replicaset controlling pods directly.
+			//
 			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
-			cPods := kubernetes.FilterPodsByController(cname, kubernetes.ReplicaSetType, pods)
+			// Note, we will use the controller found in the Pod resolution, instead that the passed by parameter
+			// This will cover cornercase for https://github.com/kiali/kiali/issues/3830
+			var cPods []core_v1.Pod
+			for _, rs := range repset {
+				rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
+				if rsOwnerRef != nil && rsOwnerRef.Name == cname && rsOwnerRef.Kind == ctype {
+					w.ParseReplicaSetParent(&rs, cname, ctype)
+					for _, pod := range pods {
+						if meta_v1.IsControlledBy(&pod, &rs) {
+							cPods = append(cPods, pod)
+						}
+					}
+					break
+				}
+			}
 			if len(cPods) == 0 {
 				// If no pods we're found for a ReplicaSet type, it's possible the controller
 				// is managing the pods itself i.e. the pod's have an owner ref directly to the controller type.
 				cPods = kubernetes.FilterPodsByController(cname, ctype, pods)
-			}
-			w.SetPods(cPods)
-
-			rsParsed := false
-			for _, rs := range repset {
-				if strings.HasPrefix(rs.Name, cname) {
-					w.ParseReplicaSetParent(&rs, cname, ctype)
-					rsParsed = true
-					break
+				if len(cPods) > 0 {
+					w.ParsePods(cname, ctype, cPods)
+					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", cname, ctype)
 				}
 			}
-			if !rsParsed {
-				log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", cname, ctype)
-				w.ParsePods(cname, ctype, cPods)
-			}
+			w.SetPods(cPods)
 		}
 
 		// Add the Proxy Status to the workload
@@ -1599,29 +1608,36 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				cnFound = false
 			}
 		default:
+			// Two scenarios:
+			// 1. Custom controller with replicaset
+			// 2. Custom controller without replicaset controlling pods directly.
+			//
 			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
 			// Note, we will use the controller found in the Pod resolution, instead that the passed by parameter
 			// This will cover cornercase for https://github.com/kiali/kiali/issues/3830
-			cPods := kubernetes.FilterPodsByController(workloadName, kubernetes.ReplicaSetType, pods)
+			var cPods []core_v1.Pod
+			for _, rs := range repset {
+				rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
+				if rsOwnerRef != nil && rsOwnerRef.Name == workloadName && rsOwnerRef.Kind == ctype {
+					w.ParseReplicaSetParent(&rs, workloadName, ctype)
+					for _, pod := range pods {
+						if meta_v1.IsControlledBy(&pod, &rs) {
+							cPods = append(cPods, pod)
+						}
+					}
+					break
+				}
+			}
 			if len(cPods) == 0 {
 				// If no pods we're found for a ReplicaSet type, it's possible the controller
 				// is managing the pods itself i.e. the pod's have an owner ref directly to the controller type.
 				cPods = kubernetes.FilterPodsByController(workloadName, ctype, pods)
-			}
-			w.SetPods(cPods)
-
-			rsParsed := false
-			for _, rs := range repset {
-				if strings.HasPrefix(rs.Name, workloadName) {
-					w.ParseReplicaSetParent(&rs, workloadName, ctype)
-					rsParsed = true
-					break
+				if len(cPods) > 0 {
+					w.ParsePods(workloadName, ctype, cPods)
+					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", workloadName, ctype)
 				}
 			}
-			if !rsParsed {
-				log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", workloadName, ctype)
-				w.ParsePods(workloadName, ctype, cPods)
-			}
+			w.SetPods(cPods)
 		}
 
 		// Add the Proxy Status to the workload
