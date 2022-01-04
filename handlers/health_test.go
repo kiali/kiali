@@ -62,6 +62,7 @@ func setupNamespaceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8S
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	business.SetWithBackends(mockClientFactory, prom)
+	business.SetKialiControlPlaneCluster(&business.Cluster{Name: business.DefaultClusterID})
 
 	setupMockData(k8s)
 

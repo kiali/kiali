@@ -195,6 +195,8 @@ func mockCombinedValidationService(istioConfigList *models.IstioConfigList, serv
 
 	mockWorkLoadService(k8s)
 
+	setupGlobalMeshConfig()
+
 	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 }
 

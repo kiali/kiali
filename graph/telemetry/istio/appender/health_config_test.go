@@ -145,7 +145,9 @@ func setupHealthConfig(services []core_v1.Service, deployments []apps_v1.Deploym
 	k8s.On("GetDaemonSets", mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return(services, nil)
 	config.Set(config.NewConfig())
-
+	business.SetKialiControlPlaneCluster(&business.Cluster{
+		Name: business.DefaultClusterID,
+	})
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	return businessLayer
 }

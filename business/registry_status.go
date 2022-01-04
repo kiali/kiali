@@ -10,6 +10,8 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
+var refreshLock sync.Mutex
+
 type RegistryStatusService struct {
 	k8s           kubernetes.ClientInterface
 	businessLayer *Layer
@@ -28,15 +30,9 @@ func (in *RegistryStatusService) GetRegistryConfiguration(criteria RegistryCrite
 	if kialiCache == nil {
 		return nil, nil
 	}
-
-	if !kialiCache.CheckRegistryStatus() {
-		registryStatus, err := in.refreshRegistryStatus()
-		if err != nil {
-			return nil, err
-		}
-		kialiCache.SetRegistryStatus(registryStatus)
+	if err := in.checkAndRefresh(); err != nil {
+		return nil, err
 	}
-
 	registryStatus := kialiCache.GetRegistryStatus()
 	registryConfiguration := filterRegistryConfiguration(registryStatus, criteria)
 	return registryConfiguration, nil
@@ -46,12 +42,8 @@ func (in *RegistryStatusService) GetRegistryEndpoints(criteria RegistryCriteria)
 	if kialiCache == nil {
 		return nil, nil
 	}
-	if !kialiCache.CheckRegistryStatus() {
-		registryStatus, err := in.refreshRegistryStatus()
-		if err != nil {
-			return nil, err
-		}
-		kialiCache.SetRegistryStatus(registryStatus)
+	if err := in.checkAndRefresh(); err != nil {
+		return nil, err
 	}
 	registryStatus := kialiCache.GetRegistryStatus()
 	registryEndpoints := filterRegistryEndpoints(registryStatus, criteria)
@@ -63,15 +55,9 @@ func (in *RegistryStatusService) GetRegistryServices(criteria RegistryCriteria) 
 	if kialiCache == nil {
 		return nil, nil
 	}
-
-	if !kialiCache.CheckRegistryStatus() {
-		registryStatus, err := in.refreshRegistryStatus()
-		if err != nil {
-			return nil, err
-		}
-		kialiCache.SetRegistryStatus(registryStatus)
+	if err := in.checkAndRefresh(); err != nil {
+		return nil, err
 	}
-
 	registryStatus := kialiCache.GetRegistryStatus()
 	registryServices := filterRegistryServices(registryStatus, criteria)
 	return registryServices, nil
@@ -208,6 +194,25 @@ func filterRegistryServices(registryStatus *kubernetes.RegistryStatus, criteria 
 		}
 	}
 	return filteredRegistryServices
+}
+
+func (in *RegistryStatusService) checkAndRefresh() error {
+	if !kialiCache.CheckRegistryStatus() {
+		refreshLock.Lock()
+		if !kialiCache.CheckRegistryStatus() {
+			registryStatus, err := in.refreshRegistryStatus()
+			if err != nil {
+				refreshLock.Unlock()
+				return err
+			}
+			kialiCache.SetRegistryStatus(registryStatus)
+			log.Debugf("Lock acquired. Update the Registry")
+		} else {
+			log.Debugf("Lock acquired but registry updated. Doing nothing")
+		}
+		refreshLock.Unlock()
+	}
+	return nil
 }
 
 func (in *RegistryStatusService) refreshRegistryStatus() (*kubernetes.RegistryStatus, error) {
