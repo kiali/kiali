@@ -24,6 +24,8 @@ import (
 	"regexp"
 	"strings"
 
+	_ "go.uber.org/automaxprocs"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
