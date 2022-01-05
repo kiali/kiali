@@ -3,11 +3,12 @@ package cache
 import (
 	"time"
 
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/models"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 )
 
 type fakeInformer struct {

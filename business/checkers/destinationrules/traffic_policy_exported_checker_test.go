@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 )
 
 // Context: MeshPolicy Enabling mTLS
