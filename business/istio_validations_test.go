@@ -79,6 +79,7 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 	v := mockEmptyValidationService()
 	filteredVSs := v.filterVSExportToNamespaces("bookinfo", currentIstioObjects)
 	var expectedVS []networking_v1alpha3.VirtualService
+	expectedVS = append(expectedVS, vs1tothis)
 	expectedVS = append(expectedVS, vs2to1)
 	expectedVS = append(expectedVS, vs3toall)
 	filteredKeys := []string{}

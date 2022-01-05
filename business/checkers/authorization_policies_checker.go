@@ -39,6 +39,8 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 		Namespace:             a.Namespace,
 		AuthorizationPolicies: a.AuthorizationPolicies,
 		MtlsDetails:           a.MtlsDetails,
+		ServiceList:           a.ServiceList,
+		RegistryServices:      a.RegistryServices,
 	}.Check())
 
 	return validations

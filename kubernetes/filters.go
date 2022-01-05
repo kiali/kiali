@@ -86,6 +86,7 @@ func FilterDestinationRulesByNamespaces(namespaces []string, allDr []networking_
 		for _, ns := range namespaces {
 			if dr.Namespace == ns {
 				found = true
+				break
 			}
 		}
 		if found {
@@ -269,6 +270,18 @@ func FilterRegistryServicesByServices(registryServices []*RegistryService, servi
 	}
 	for _, rSvc := range registryServices {
 		if _, ok := keys[rSvc.Attributes.Namespace][rSvc.Attributes.Name]; !ok {
+			filtered = append(filtered, rSvc)
+		}
+	}
+	return filtered
+}
+
+func FilterRegistryServicesBySelector(selector labels.Selector, namespace string, registryServices []*RegistryService) []*RegistryService {
+	// From given Registry Services, this method filters those services which are exported to given namespace and have labels matching the given selector
+	filtered := []*RegistryService{}
+	for _, rSvc := range registryServices {
+		// here is a hack with providing own hostname
+		if FilterByRegistryService(namespace, rSvc.Hostname, rSvc) && selector.Matches(labels.Set(rSvc.IstioService.Attributes.Labels)) {
 			filtered = append(filtered, rSvc)
 		}
 	}

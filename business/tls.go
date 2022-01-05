@@ -103,6 +103,7 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]networking_
 		for _, ns := range namespaces {
 			if dr.Namespace == ns {
 				found = true
+				break
 			}
 		}
 		if found {

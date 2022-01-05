@@ -24,12 +24,18 @@ type MtlsStatus struct {
 	ServiceList         models.ServiceList
 	AutoMtlsEnabled     bool
 	AllowPermissive     bool
+	RegistryServices    []*kubernetes.RegistryService
 }
 
 type TlsStatus struct {
 	DestinationRuleStatus    string
 	PeerAuthenticationStatus string
 	OverallStatus            string
+}
+
+type NameNamespace struct {
+	Name      string
+	Namespace string
 }
 
 func (m MtlsStatus) hasPeerAuthnNamespacemTLSDefinition() string {
@@ -80,8 +86,16 @@ func (m MtlsStatus) WorkloadMtlsStatus() string {
 				// Fetch hosts from DRs and its mtls mode [details, ISTIO_STATUS]
 				// Filter Svc and extract its workloads selectors
 				filteredSvcs := m.ServiceList.FilterServicesForSelector(selector)
+				filteredRSvcs := kubernetes.FilterRegistryServicesBySelector(selector, m.Namespace, m.RegistryServices)
+				nameNamespaces := []NameNamespace{}
 				for _, svc := range filteredSvcs {
-					filteredDrs := kubernetes.FilterDestinationRulesByService(m.DestinationRules, svc.Namespace, svc.Name)
+					nameNamespaces = append(nameNamespaces, NameNamespace{svc.Name, svc.Namespace})
+				}
+				for _, rSvc := range filteredRSvcs {
+					nameNamespaces = append(nameNamespaces, NameNamespace{rSvc.IstioService.Attributes.Name, rSvc.IstioService.Attributes.Namespace})
+				}
+				for _, nameNamespace := range nameNamespaces {
+					filteredDrs := kubernetes.FilterDestinationRulesByService(m.DestinationRules, nameNamespace.Namespace, nameNamespace.Name)
 					for _, dr := range filteredDrs {
 						enabled, mode := kubernetes.DestinationRuleHasMTLSEnabled(dr)
 						if enabled || mode == "MUTUAL" {
@@ -91,6 +105,7 @@ func (m MtlsStatus) WorkloadMtlsStatus() string {
 						}
 					}
 				}
+
 				return MTLSNotEnabled
 			}
 		}
