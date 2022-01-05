@@ -210,7 +210,7 @@ func (kvs KeyValues) Hash(w io.Writer) error {
 }
 
 // Hash implements Hash from Hashable.
-func (kv *KeyValue) Hash(w io.Writer) error {
+func (kv KeyValue) Hash(w io.Writer) error {
 	if _, err := w.Write([]byte(kv.Key)); err != nil {
 		return err
 	}
@@ -245,9 +245,9 @@ func KeyValueCompare(this *KeyValue, that interface{}) int {
 
 	that1, ok := that.(*KeyValue)
 	if !ok {
-		that2, ok := that.(*KeyValue)
+		that2, ok := that.(KeyValue)
 		if ok {
-			that1 = that2
+			that1 = &that2
 		} else {
 			return 1
 		}
@@ -308,9 +308,9 @@ func (this *KeyValue) Equal(that interface{}) bool {
 
 	that1, ok := that.(*KeyValue)
 	if !ok {
-		that2, ok := that.(*KeyValue)
+		that2, ok := that.(KeyValue)
 		if ok {
-			that1 = that2
+			that1 = &that2
 		} else {
 			return false
 		}
