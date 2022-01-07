@@ -10,7 +10,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/util"
 )
@@ -73,7 +72,7 @@ func TestCreateSessionWithChunks(t *testing.T) {
 
 	// Create a long enough payload to overflow our maximum size of a cookie.
 	payload := testSessionPayload{
-		FirstField: strings.Repeat("1234567890", business.SessionCookieMaxSize/len("1234567890")),
+		FirstField: strings.Repeat("1234567890", SessionCookieMaxSize/len("1234567890")),
 	}
 
 	rr := httptest.NewRecorder()
@@ -218,7 +217,7 @@ func TestReadSessionWithTwoCookies(t *testing.T) {
 	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
 	util.Clock = util.ClockMock{Time: clockTime}
 
-	payloadStr := strings.Repeat("FooBar", business.SessionCookieMaxSize/len("FooBar"))
+	payloadStr := strings.Repeat("FooBar", SessionCookieMaxSize/len("FooBar"))
 	payload := testSessionPayload{
 		FirstField: payloadStr,
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/log"
@@ -86,20 +87,20 @@ func NewRouter() *mux.Router {
 			Handler(handlerFunction)
 	}
 
+	if authController := authentication.GetAuthController(); authController != nil {
+		authController.PostRoutes(appRouter)
+	}
+
 	// All client-side routes are prefixed with /console.
 	// They are forwarded to index.html and will be handled by react-router.
 	appRouter.PathPrefix("/console").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		serveIndexFile(w)
 	})
 
-	if conf.Auth.Strategy == config.AuthStrategyOpenId {
-		rootRouter.Methods("GET").Path(webRootWithSlash).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if !handlers.OpenIdCodeFlowHandler(w, r) {
-				// If the OpenID handler does not handle the request, pass the
-				// request to the file server.
-				fileServerHandler(w, r)
-			}
-		})
+	if authController := authentication.GetAuthController(); authController != nil {
+		if authCallback := authController.GetAuthCallbackHandler(http.HandlerFunc(fileServerHandler)); authCallback != nil {
+			rootRouter.Methods("GET").Path(webRootWithSlash).Handler(authCallback)
+		}
 	}
 
 	rootRouter.PathPrefix(webRootWithSlash).HandlerFunc(fileServerHandler)

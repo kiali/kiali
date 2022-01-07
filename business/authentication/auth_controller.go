@@ -1,6 +1,7 @@
 package authentication
 
 import (
+	"github.com/gorilla/mux"
 	"net/http"
 
 	"github.com/kiali/kiali/config"
@@ -16,6 +17,10 @@ type AuthController interface {
 	// An AuthenticationFailureError is returned if the authentication request is rejected (unauthorized). Any
 	// other kind of error means that something unexpected happened.
 	Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error)
+
+	GetAuthCallbackHandler(fallbackHandler http.Handler) http.Handler
+
+	PostRoutes(router *mux.Router)
 
 	// ValidateSession restores a session previously created by the Authenticate function. The validity of
 	// the restored should be verified as much as possible by the implementing controllers.
@@ -43,5 +48,7 @@ func InitializeAuthenticationController(strategy string) {
 
 	if strategy == config.AuthStrategyToken {
 		authController = NewTokenAuthController(persistor, nil)
+	} else if strategy == config.AuthStrategyOpenId {
+		authController = NewOidcAuthController(persistor, nil)
 	}
 }

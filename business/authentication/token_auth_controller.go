@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
 	"gopkg.in/square/go-jose.v2/jwt"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -63,18 +64,20 @@ type UserSessionData struct {
 	//
 	// example: zI1NiIsIsR5cCI6IkpXVCJ9.ezJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI5NTIzNjU0fQ.PPZvRGnR6VA4v7FmgSfQcGQr-VD
 	// required: true
-	Token string
+	Token string `json:"-"`
 }
 
 // AuthenticationFailureError is a helper Error to assist callers of the TokenAuthController.Authenticate
 // function in distinguishing between authentication failures and
 // unexpected errors.
 type AuthenticationFailureError struct {
-	// A description of the authentication failure
-	Reason string
-
 	// Wraps the error causing the authentication failure
 	Detail error
+
+	HttpStatus int
+
+	// A description of the authentication failure
+	Reason string
 }
 
 // Error returns the string representation of an AuthenticationFailureError
@@ -150,6 +153,13 @@ func (c tokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter
 	}
 
 	return &UserSessionData{ExpiresOn: timeExpire, Username: extractSubjectFromK8sToken(token), Token: token}, nil
+}
+
+func (c tokenAuthController) GetAuthCallbackHandler(_ http.Handler) http.Handler {
+	return nil
+}
+
+func (c tokenAuthController) PostRoutes(_ *mux.Router) {
 }
 
 // ValidateSession restores a session previously created by the Authenticate function. A minimal re-validation
