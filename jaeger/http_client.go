@@ -29,7 +29,7 @@ func getAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app strin
 }
 
 func getTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*JaegerSingleTrace, error) {
-	u := endpoint
+	u := *endpoint
 	u.Path = path.Join(u.Path, "/api/traces/"+traceID)
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
@@ -40,7 +40,7 @@ func getTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (
 	if len(resp) == 0 {
 		return nil, nil
 	}
-	response, err := unmarshal(resp, u)
+	response, err := unmarshal(resp, &u)
 	if err != nil {
 		return nil, err
 	}
