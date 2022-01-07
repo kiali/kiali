@@ -86,7 +86,7 @@ func (e *AuthenticationFailureError) Error() string {
 	return e.Reason
 }
 
-// NewTokenAuthController initializesa new controller for handling token authentication, with the
+// NewTokenAuthController initializes a new controller for handling token authentication, with the
 // given persistor and the given businessInstantiator. The businessInstantiator can be nil and
 // the initialized contoller will use the business.Get function.
 func NewTokenAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *tokenAuthController {
@@ -162,7 +162,7 @@ func (c tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWri
 	sData, err := c.SessionStore.ReadSession(r, w, &sPayload)
 	if err != nil {
 		log.Warningf("Could not read the session: %v", err)
-		return nil, nil
+		return nil, err
 	}
 	if sData == nil {
 		return nil, nil
@@ -175,17 +175,16 @@ func (c tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWri
 	}
 
 	_, err = bs.Namespace.GetNamespaces()
-	if err == nil {
-		// Internal header used to propagate the subject of the request for audit purposes
-		r.Header.Add("Kiali-User", extractSubjectFromK8sToken(sPayload.Token))
-		return &UserSessionData{ExpiresOn: sData.ExpiresOn, Username: extractSubjectFromK8sToken(sPayload.Token), Token: sPayload.Token}, nil
+	if err != nil {
+		// The Kubernetes API rejected the token.
+		// Return no data (which means no active session).
+		log.Warningf("Token error!!: %v", err)
+		return nil, nil
 	}
 
-	// If we are here, the Kubernetes API rejected the token.
-	// Return no data (which means no active session).
-	log.Warningf("Token error!!: %v", err)
-
-	return nil, nil
+	// If we are here, the session looks valid. Return the session details.
+	r.Header.Add("Kiali-User", extractSubjectFromK8sToken(sPayload.Token)) // Internal header used to propagate the subject of the request for audit purposes
+	return &UserSessionData{ExpiresOn: sData.ExpiresOn, Username: extractSubjectFromK8sToken(sPayload.Token), Token: sPayload.Token}, nil
 }
 
 // TerminateSession unconditionally terminates any existing session without any validation.

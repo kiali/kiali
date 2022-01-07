@@ -24,6 +24,18 @@ type SessionPersistor interface {
 	TerminateSession(r *http.Request, w http.ResponseWriter)
 }
 
+const (
+	AESSessionCookieName       = config.TokenCookieName + "-aes"
+	AESSessionChunksCookieName = config.TokenCookieName + "-chunks"
+)
+
+// CookieSessionPersistor is a session storage based on browser cookies. Session
+// persistence is achieved by storing all session data in browser cookies. Only
+// client-side storage is used and no back-end storage is needed.
+// Browser cookies have size constraints and the workaround for large session data/payload
+// is using multiple cookies. There is still a (browser dependant) limit on the
+// number of cookies that a website can set but we haven't heard of a user
+// facing problems because of reaching this limit.
 type CookieSessionPersistor struct{}
 
 type sessionData struct {
@@ -108,7 +120,7 @@ func (p CookieSessionPersistor) CreateSession(_ *http.Request, w http.ResponseWr
 			// Notice that an "-aes" suffix is being used in the cookie names. This is for backwards compatibility and
 			// is/was meant to be able to differentiate between a session using cookies holding encrypted data, and the older
 			// less secure sessions using cookies holding JWTs.
-			cookieName = config.TokenCookieName + "-aes"
+			cookieName = AESSessionCookieName
 		} else {
 			// If there are more chunks of session data (usually because of larger tokens from the IdP),
 			// store the remainder data to numbered cookies.
@@ -131,7 +143,7 @@ func (p CookieSessionPersistor) CreateSession(_ *http.Request, w http.ResponseWr
 		// This is to protect against reading spurious chunks of data if there is
 		// any failure when killing the session or logging out.
 		chunksCookie := http.Cookie{
-			Name:     config.TokenCookieName + "-chunks",
+			Name:     AESSessionChunksCookieName,
 			Value:    strconv.Itoa(len(sessionDataChunks)),
 			Expires:  expiresOn,
 			HttpOnly: true,
