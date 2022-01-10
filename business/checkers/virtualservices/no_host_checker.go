@@ -96,12 +96,6 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 }
 
 func (n NoHostChecker) checkDestination(sHost string, itemNamespace string) bool {
-	// We need to check for namespace equivalent so that two services from different namespaces do not collide
-	/**for _, service := range n.ServiceList.Services {
-		if kubernetes.FilterByHost(sHost, itemNamespace, service.Name, service.Namespace) {
-			return true
-		}
-	}*/
 	// Check ServiceEntries
 	for k := range n.ServiceEntryHosts {
 		hostKey := k
