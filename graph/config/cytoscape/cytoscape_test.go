@@ -110,3 +110,34 @@ func TestHasWorkloadEntryEmpty(t *testing.T) {
 	cytoNode := cytoConfig.Elements.Nodes[0]
 	assert.Empty(cytoNode.Data.HasWorkloadEntry)
 }
+
+func TestHTTPToTrafficRate(t *testing.T) {
+	assert := assert.New(t)
+
+	traffic := graph.NewTrafficMap()
+
+	svc := graph.NewNode("testCluster", "appNamespace", "ratings", "appNamespace", "", "ratings", "", graph.GraphTypeVersionedApp)
+	traffic[svc.ID] = &svc
+
+	v1 := graph.NewNode("testCluster", "appNamespace", "", "appNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
+	traffic[v1.ID] = &v1
+
+	e := svc.AddEdge(&v1)
+	e.Metadata[graph.HTTP.EdgeResponses] = graph.Responses{
+		"200": &graph.ResponseDetail{
+			Flags: graph.ResponseFlags{
+				"-": 0.3333999999,
+			},
+			Hosts: graph.ResponseHosts{
+				svc.Service: 0.3333999999,
+			},
+		},
+	}
+	e.Metadata[graph.MetadataKey("http")] = 1.00
+
+	cytoConfig := NewConfig(traffic, graph.ConfigOptions{})
+
+	cytoNode := cytoConfig.Elements.Edges[0]
+	assert.NotNil(cytoNode.Data.Traffic)
+	assert.NotNil(cytoNode.Data.Traffic.Rates)
+}
