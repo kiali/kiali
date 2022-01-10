@@ -100,13 +100,13 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioConfigList models.IstioConfigList, exportedResources kubernetes.ExportedResources, services models.ServiceList, workloadsPerNamespace map[string]models.WorkloadList, workloads models.WorkloadList, mtlsDetails kubernetes.MTLSDetails, rbacDetails kubernetes.RBACDetails, namespaces []models.Namespace, registryServices []*kubernetes.RegistryService) []ObjectChecker {
 	return []ObjectChecker{
 		checkers.NoServiceChecker{Namespace: namespace, Namespaces: namespaces, IstioConfigList: istioConfigList, ExportedResources: &exportedResources, ServiceList: services, WorkloadList: workloads, AuthorizationDetails: &rbacDetails, RegistryServices: registryServices},
-		checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, VirtualServices: istioConfigList.VirtualServices, ExportedDestinationRules: exportedResources.DestinationRules, ExportedVirtualServices: exportedResources.VirtualServices},
-		checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, ExportedDestinationRules: exportedResources.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioConfigList.ServiceEntries},
+		checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, ExportedDestinationRules: exportedResources.DestinationRules, ExportedVirtualServices: exportedResources.VirtualServices},
+		checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, ExportedDestinationRules: exportedResources.DestinationRules, MTLSDetails: mtlsDetails, ExportedServiceEntries: exportedResources.ServiceEntries},
 		checkers.GatewayChecker{Gateways: istioConfigList.Gateways, Namespace: namespace, WorkloadsPerNamespace: workloadsPerNamespace},
 		checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails, WorkloadList: workloads},
 		checkers.ServiceEntryChecker{ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries},
-		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, ServiceList: services, ServiceEntries: istioConfigList.ServiceEntries, ExportedServiceEntries: exportedResources.ServiceEntries, WorkloadList: workloads, MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices},
-		checkers.SidecarChecker{Sidecars: istioConfigList.Sidecars, Namespaces: namespaces, WorkloadList: workloads, ServiceList: services, ServiceEntries: istioConfigList.ServiceEntries, ExportedServiceEntries: exportedResources.ServiceEntries, RegistryServices: registryServices},
+		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, ServiceList: services, ExportedServiceEntries: exportedResources.ServiceEntries, WorkloadList: workloads, MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices},
+		checkers.SidecarChecker{Sidecars: istioConfigList.Sidecars, Namespaces: namespaces, WorkloadList: workloads, ServiceList: services, ExportedServiceEntries: exportedResources.ServiceEntries, RegistryServices: registryServices},
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadList: workloads},
 	}
 }
@@ -159,21 +159,21 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 			checkers.GatewayChecker{Gateways: istioConfigList.Gateways, Namespace: namespace, WorkloadsPerNamespace: workloadsPerNamespace},
 		}
 	case kubernetes.VirtualServices:
-		virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, DestinationRules: istioConfigList.DestinationRules, ExportedDestinationRules: exportedResources.DestinationRules, ExportedVirtualServices: exportedResources.VirtualServices}
+		virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, ExportedDestinationRules: exportedResources.DestinationRules, ExportedVirtualServices: exportedResources.VirtualServices}
 		objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
 	case kubernetes.DestinationRules:
-		destinationRulesChecker := checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, ExportedDestinationRules: exportedResources.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioConfigList.ServiceEntries}
+		destinationRulesChecker := checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, ExportedDestinationRules: exportedResources.DestinationRules, MTLSDetails: mtlsDetails, ExportedServiceEntries: exportedResources.ServiceEntries}
 		objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
 	case kubernetes.ServiceEntries:
 		serviceEntryChecker := checkers.ServiceEntryChecker{ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries}
 		objectCheckers = []ObjectChecker{serviceEntryChecker}
 	case kubernetes.Sidecars:
 		sidecarsChecker := checkers.SidecarChecker{Sidecars: istioConfigList.Sidecars, Namespaces: namespaces,
-			WorkloadList: workloads, ServiceList: services, ServiceEntries: istioConfigList.ServiceEntries, ExportedServiceEntries: exportedResources.ServiceEntries, RegistryServices: registryServices}
+			WorkloadList: workloads, ServiceList: services, ExportedServiceEntries: exportedResources.ServiceEntries, RegistryServices: registryServices}
 		objectCheckers = []ObjectChecker{sidecarsChecker}
 	case kubernetes.AuthorizationPolicies:
 		authPoliciesChecker := checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies,
-			Namespace: namespace, Namespaces: namespaces, ServiceList: services, ServiceEntries: istioConfigList.ServiceEntries, ExportedServiceEntries: exportedResources.ServiceEntries,
+			Namespace: namespace, Namespaces: namespaces, ServiceList: services, ExportedServiceEntries: exportedResources.ServiceEntries,
 			WorkloadList: workloads, MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices}
 		objectCheckers = []ObjectChecker{authPoliciesChecker}
 	case kubernetes.PeerAuthentications:
