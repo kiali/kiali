@@ -209,17 +209,16 @@ type AppendersParam struct {
 	//
 	// in: query
 	// required: false
-	// default: run all appenders
+	// default: aggregateNode,deadNode,healthConfig,idleNode,istio,responseTime,securityPolicy,serviceEntry,sidecarsCheck,throughput
 	Name string `json:"appenders"`
 }
 
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
 type BoxByParam struct {
-	// Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].
+	// Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace].
 	//
 	// in: query
 	// required: false
-	// default: none
 	Name string `json:"boxBy"`
 }
 
