@@ -110,14 +110,14 @@ swagger-ci: swagger-validate
 	@cmp -s swagger.json swagger_copy.json; \
 	RETVAL=$$?; \
 	if [ $$RETVAL -ne 0 ]; then \
-	  echo "swagger.json is not correct, remember to run `make swagger-gen` to update swagger.json"; exit 1; \
+	  echo "swagger.json is not correct, remember to run make swagger-gen to update swagger.json"; exit 1; \
 	fi
 
 	@swagger generate markdown --quiet --spec ./swagger.json --output ./kiali_api_copy.md
 	@cmp -s kiali_api.md kiali_api_copy.md; \
 	RETVAL=$$?; \
 	if [ $$RETVAL -ne 0 ]; then \
-	  echo "kiali_api.md is not correct, remember to run `make swagger-gen` to update kiali_api.md"; exit 1; \
+	  echo "kiali_api.md is not correct, remember to run make swagger-gen to update kiali_api.md"; exit 1; \
 	fi
 
 	rm swagger_copy.json kiali_api_copy.md
