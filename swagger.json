@@ -2553,9 +2553,8 @@
               "critical"
             ],
             "type": "string",
-            "x-go-enum-desc": "off ProxyLogLevelOff\ntrace ProxyLogLevelTrace\ndebug ProxyLogLevelDebug\ninfo ProxyLogLevelInfo\nwarning ProxyLogLevelWarning\nerror ProxyLogLevelError\ncritical ProxyLogLevelCritical",
             "x-go-name": "Level",
-            "description": "The log level for the pod's proxy.\noff ProxyLogLevelOff\ntrace ProxyLogLevelTrace\ndebug ProxyLogLevelDebug\ninfo ProxyLogLevelInfo\nwarning ProxyLogLevelWarning\nerror ProxyLogLevelError\ncritical ProxyLogLevelCritical",
+            "description": "The log level for the pod's proxy.",
             "name": "level",
             "in": "query",
             "required": true

@@ -4563,14 +4563,7 @@ Endpoint to set pod proxy log level
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | pod | `path` | string | `string` |  | ✓ |  | The pod name. |
-| level | `query` | string | `string` |  | ✓ |  | The log level for the pod's proxy.
-off ProxyLogLevelOff
-trace ProxyLogLevelTrace
-debug ProxyLogLevelDebug
-info ProxyLogLevelInfo
-warning ProxyLogLevelWarning
-error ProxyLogLevelError
-critical ProxyLogLevelCritical |
+| level | `query` | string | `string` |  | ✓ |  | The log level for the pod's proxy. |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
