@@ -32,6 +32,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	conf := config.NewConfig()
 	conf.InCluster = false
 	conf.KubernetesConfig.CacheEnabled = false
+	kialiCache = nil
 	config.Set(conf)
 
 	// As we are not interested in caches in this test, make sure
