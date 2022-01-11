@@ -51,6 +51,7 @@ func (s NoGatewayChecker) ValidateVirtualServiceGateways(validations *[]*models.
 }
 
 func (s NoGatewayChecker) checkGateways(gateways []string, namespace, clusterName string, validations *[]*models.IstioCheck, location string) bool {
+	result := true
 GatewaySearch:
 	for index, gate := range gateways {
 		if gate == "mesh" {
@@ -70,9 +71,9 @@ GatewaySearch:
 		path := fmt.Sprintf("%s/gateways[%d]", location, index)
 		validation := models.Build("virtualservices.nogateway", path)
 		*validations = append(*validations, &validation)
-		return false
+		result = false
 	}
-	return true
+	return result
 }
 
 func checkNomenclature(gateway string, index int, validations *[]*models.IstioCheck) {
