@@ -116,6 +116,15 @@ type ObjectTypeParam struct {
 	Name string `json:"object_type"`
 }
 
+// swagger:parameters istioConfigList istioConfigDetails serviceDetails serviceUpdate
+type ValidateParam struct {
+	// Enable validation or not
+	//
+	// in: query
+	// required: false
+	Name string `json:"validate"`
+}
+
 // swagger:parameters podDetails podLogs podProxyDump podProxyResource podProxyLogging
 type PodParam struct {
 	// The pod name.
@@ -224,13 +233,22 @@ type DurationGraphParam struct {
 	Name string `json:"duration"`
 }
 
-// swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
+// swagger:parameters graphNamespaces graphService graphWorkload
 type GraphTypeParam struct {
 	// Graph type. Available graph types: [app, service, versionedApp, workload].
 	//
 	// in: query
 	// required: false
 	// default: workload
+	Name string `json:"graphType"`
+}
+
+// swagger:parameters graphApp graphAppVersion
+type AppGraphTypeParam struct {
+	// Graph type. Available graph types: [app, versionedApp].
+	//
+	// in: query
+	// required: true
 	Name string `json:"graphType"`
 }
 
