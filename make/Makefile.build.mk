@@ -88,7 +88,7 @@ swagger-install:
 ifeq ($(GOARCH), ppc64le)
 	curl https://github.com/go-swagger/go-swagger/archive/v${SWAGGER_VERSION}.tar.gz --create-dirs -Lo /tmp/v${SWAGGER_VERSION}.tar.gz && tar -xzf /tmp/v${SWAGGER_VERSION}.tar.gz -C /tmp/ && src_dir='pwd' && cd /tmp/go-swagger-${SWAGGER_VERSION} && ${GO} install ./cmd/swagger && cd ${src_dir}
 else
-	curl https://github.com/go-swagger/go-swagger/releases/download/v${SWAGGER_VERSION}/swagger_linux_${GOARCH} --create-dirs -Lo ${GOPATH}/bin/swagger && chmod +x ${GOPATH}/bin/swagger
+	curl https://github.com/go-swagger/go-swagger/releases/download/v${SWAGGER_VERSION}/swagger_$(GOOS)_${GOARCH} --create-dirs -Lo ${GOPATH}/bin/swagger && chmod +x ${GOPATH}/bin/swagger
 endif
 
 ## swagger-validate: Validate that swagger.json is correctly. Runs `swagger validate` internally
@@ -110,8 +110,17 @@ swagger-ci: swagger-validate
 	@cmp -s swagger.json swagger_copy.json; \
 	RETVAL=$$?; \
 	if [ $$RETVAL -ne 0 ]; then \
-	  echo "SWAGGER FILE IS NOT CORRECT"; exit 1; \
+	  echo "swagger.json is not correct, remember to run `make swagger-gen` to update swagger.json"; exit 1; \
 	fi
+
+	@swagger generate markdown --quiet --spec ./swagger.json --output ./kiali_api_copy.md
+	@cmp -s kiali_api.md kiali_api_copy.md; \
+	RETVAL=$$?; \
+	if [ $$RETVAL -ne 0 ]; then \
+	  echo "kiali_api.md is not correct, remember to run `make swagger-gen` to update kiali_api.md"; exit 1; \
+	fi
+
+	rm swagger_copy.json kiali_api_copy.md
 
 #
 # Lint targets
