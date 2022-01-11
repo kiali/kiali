@@ -1912,8 +1912,8 @@ The backing JSON for an app node detail graph. (supported graphTypes: app | vers
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | app | `path` | string | `string` |  | ✓ |  | The app name (label value). |
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
-| appenders | `query` | string | `string` |  |  | `"run all appenders"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
-| boxBy | `query` | string | `string` |  |  | `"none"` | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none]. |
+| appenders | `query` | string | `string` |  |  | `"aggregateNode,deadNode,healthConfig,idleNode,istio,responseTime,securityPolicy,serviceEntry,sidecarsCheck,throughput"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
+| boxBy | `query` | string | `string` |  |  |  | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace]. |
 | container | `query` | string | `string` |  |  |  | The cluster name. If not supplied queries/results will not be constrained by cluster. |
 | duration | `query` | string | `string` |  |  | `"10m"` | Query time-range duration (Golang string duration). |
 | graphType | `query` | string | `string` |  |  | `"workload"` | Graph type. Available graph types: [app, service, versionedApp, workload]. |
@@ -2019,8 +2019,8 @@ The backing JSON for a versioned app node detail graph. (supported graphTypes: a
 | app | `path` | string | `string` |  | ✓ |  | The app name (label value). |
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | version | `path` | string | `string` |  | ✓ |  | The app version (label value). |
-| appenders | `query` | string | `string` |  |  | `"run all appenders"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
-| boxBy | `query` | string | `string` |  |  | `"none"` | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none]. |
+| appenders | `query` | string | `string` |  |  | `"aggregateNode,deadNode,healthConfig,idleNode,istio,responseTime,securityPolicy,serviceEntry,sidecarsCheck,throughput"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
+| boxBy | `query` | string | `string` |  |  |  | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace]. |
 | container | `query` | string | `string` |  |  |  | The cluster name. If not supplied queries/results will not be constrained by cluster. |
 | duration | `query` | string | `string` |  |  | `"10m"` | Query time-range duration (Golang string duration). |
 | graphType | `query` | string | `string` |  |  | `"workload"` | Graph type. Available graph types: [app, service, versionedApp, workload]. |
@@ -2121,8 +2121,8 @@ GET /api/namespaces/graph
 
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
 |------|--------|------|---------|-----------| :------: |---------|-------------|
-| appenders | `query` | string | `string` |  |  | `"run all appenders"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
-| boxBy | `query` | string | `string` |  |  | `"none"` | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none]. |
+| appenders | `query` | string | `string` |  |  | `"aggregateNode,deadNode,healthConfig,idleNode,istio,responseTime,securityPolicy,serviceEntry,sidecarsCheck,throughput"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
+| boxBy | `query` | string | `string` |  |  |  | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace]. |
 | duration | `query` | string | `string` |  |  | `"10m"` | Query time-range duration (Golang string duration). |
 | graphType | `query` | string | `string` |  |  | `"workload"` | Graph type. Available graph types: [app, service, versionedApp, workload]. |
 | includeIdleEdges | `query` | string | `string` |  |  | `"false"` | Flag for including edges that have no request traffic for the time period. |
@@ -2225,8 +2225,8 @@ GET /api/namespaces/{namespace}/services/{service}/graph
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | service | `path` | string | `string` |  | ✓ |  | The service name. |
-| appenders | `query` | string | `string` |  |  | `"run all appenders"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
-| boxBy | `query` | string | `string` |  |  | `"none"` | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none]. |
+| appenders | `query` | string | `string` |  |  | `"aggregateNode,deadNode,healthConfig,idleNode,istio,responseTime,securityPolicy,serviceEntry,sidecarsCheck,throughput"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
+| boxBy | `query` | string | `string` |  |  |  | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace]. |
 | container | `query` | string | `string` |  |  |  | The cluster name. If not supplied queries/results will not be constrained by cluster. |
 | duration | `query` | string | `string` |  |  | `"10m"` | Query time-range duration (Golang string duration). |
 | graphType | `query` | string | `string` |  |  | `"workload"` | Graph type. Available graph types: [app, service, versionedApp, workload]. |
@@ -2327,8 +2327,8 @@ GET /api/namespaces/{namespace}/workloads/{workload}/graph
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | workload | `path` | string | `string` |  | ✓ |  | The workload name. |
-| appenders | `query` | string | `string` |  |  | `"run all appenders"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
-| boxBy | `query` | string | `string` |  |  | `"none"` | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none]. |
+| appenders | `query` | string | `string` |  |  | `"aggregateNode,deadNode,healthConfig,idleNode,istio,responseTime,securityPolicy,serviceEntry,sidecarsCheck,throughput"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
+| boxBy | `query` | string | `string` |  |  |  | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace]. |
 | container | `query` | string | `string` |  |  |  | The cluster name. If not supplied queries/results will not be constrained by cluster. |
 | duration | `query` | string | `string` |  |  | `"10m"` | Query time-range duration (Golang string duration). |
 | graphType | `query` | string | `string` |  |  | `"workload"` | Graph type. Available graph types: [app, service, versionedApp, workload]. |

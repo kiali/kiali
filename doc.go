@@ -200,7 +200,7 @@ type AppendersParam struct {
 	//
 	// in: query
 	// required: false
-	// default: ""
+	// default: aggregateNode,deadNode,healthConfig,idleNode,istio,responseTime,securityPolicy,serviceEntry,sidecarsCheck,throughput
 	Name string `json:"appenders"`
 }
 
@@ -210,7 +210,6 @@ type BoxByParam struct {
 	//
 	// in: query
 	// required: false
-	// default: ""
 	Name string `json:"boxBy"`
 }
 
