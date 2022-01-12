@@ -117,9 +117,6 @@ def test_grafana_info(kiali_client):
     
 def test_get_permissions(kiali_client):
     common_utils.get_response(kiali_client, method_name='getPermissions')
-    
-def test_iter8_experiments(kiali_client):
-    common_utils.get_response(kiali_client, method_name='iter8Experiments')
 
 def test_istio_status(kiali_client):
     common_utils.get_response(kiali_client, method_name='istioStatus')  

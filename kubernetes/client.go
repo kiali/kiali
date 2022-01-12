@@ -11,9 +11,6 @@ import (
 
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/version"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -42,7 +39,6 @@ type ClientInterface interface {
 	IsOpenShift() bool
 	K8SClientInterface
 	IstioClientInterface
-	Iter8ClientInterface
 	OSClientInterface
 }
 
@@ -52,7 +48,6 @@ type K8SClient struct {
 	ClientInterface
 	token          string
 	k8s            *kube.Clientset
-	iter8Api       *rest.RESTClient
 	istioClientset *istio.Clientset
 	// Used in REST queries after bump to client-go v0.20.x
 	ctx context.Context
@@ -60,11 +55,6 @@ type K8SClient struct {
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsOpenShift() for more details.
 	isOpenShift *bool
-
-	// isIter8Api private variable will check if extension Iter8 API is present.
-	// It is represented as a pointer to include the initialization phase.
-	// See iter8.go#IsIter8Api() for more details
-	isIter8Api *bool
 }
 
 // GetK8sApi returns the clientset referencing all K8s rest clients
@@ -162,63 +152,11 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 	}
 	client.k8s = k8s
 
-	// Istio is a CRD extension of Kubernetes API, so any custom type should be registered here.
-	// KnownTypes registers the Istio objects we use, as soon as we get more info we will increase the number of types.
-	types := runtime.NewScheme()
-	schemeBuilder := runtime.NewSchemeBuilder(
-		func(scheme *runtime.Scheme) error {
-			// Register Extension (iter8) types
-			for _, rt := range iter8Types {
-				// We will use a Iter8ExperimentObject which only contains metadata and spec with interfaces
-				// model objects will be responsible to parse it
-				scheme.AddKnownTypeWithName(Iter8GroupVersion.WithKind(rt.objectKind), &Iter8ExperimentObject{})
-				scheme.AddKnownTypeWithName(Iter8GroupVersion.WithKind(rt.collectionKind), &Iter8ExperimentObjectList{})
-			}
-
-			meta_v1.AddToGroupVersion(scheme, Iter8GroupVersion)
-			return nil
-		})
-
-	err = schemeBuilder.AddToScheme(types)
-	if err != nil {
-		return nil, err
-	}
-
-	iter8Api, err := newClientForAPI(config, Iter8GroupVersion, types)
-	if err != nil {
-		return nil, err
-	}
-
 	client.istioClientset, err = istio.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
-	client.iter8Api = iter8Api
 	client.ctx = context.Background()
 	return &client, nil
-}
-
-func newClientForAPI(fromCfg *rest.Config, groupVersion schema.GroupVersion, scheme *runtime.Scheme) (*rest.RESTClient, error) {
-	cfg := rest.Config{
-		Host:    fromCfg.Host,
-		APIPath: "/apis",
-		ContentConfig: rest.ContentConfig{
-			GroupVersion:         &groupVersion,
-			NegotiatedSerializer: serializer.WithoutConversionCodecFactory{CodecFactory: serializer.NewCodecFactory(scheme)},
-			ContentType:          runtime.ContentTypeJSON,
-		},
-		BearerToken:     fromCfg.BearerToken,
-		TLSClientConfig: fromCfg.TLSClientConfig,
-		QPS:             fromCfg.QPS,
-		Burst:           fromCfg.Burst,
-	}
-
-	if fromCfg.Impersonate.UserName != "" {
-		cfg.Impersonate.UserName = fromCfg.Impersonate.UserName
-		cfg.Impersonate.Groups = fromCfg.Impersonate.Groups
-		cfg.Impersonate.Extra = fromCfg.Impersonate.Extra
-	}
-
-	return rest.RESTClientFor(&cfg)
 }

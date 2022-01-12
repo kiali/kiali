@@ -328,11 +328,6 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 	return nil, err
 }
 
-// Check Iter8 Supported Version
-func IsIter8Supported(analyticsImgVersion string) bool {
-	return validateVersion(config.Iter8VersionSupported, analyticsImgVersion)
-}
-
 func isMaistraExternalService(esi *ExternalServiceInfo) bool {
 	return esi.Name == istioProductNameOSSM || esi.Name == istioProductNameMaistra || esi.Name == istioProductNameMaistraProject
 }

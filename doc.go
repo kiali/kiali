@@ -79,22 +79,13 @@ type LoggingParam struct {
 	Level ProxyLogLevel `json:"level"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments podProxyDump podProxyResource podProxyLogging
+// swagger:parameters istioConfigList workloadList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging
 type NamespaceParam struct {
 	// The namespace name.
 	//
 	// in: path
 	// required: true
 	Name string `json:"namespace"`
-}
-
-// swagger:parameters getIter8Experiments patchIter8Experiments deleteIter8Experiments
-type NameParam struct {
-	// The name param
-	//
-	// in: path
-	// required: true
-	Name string `json:"name"`
 }
 
 // swagger:parameters istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype
@@ -797,27 +788,6 @@ type NameIstioValidation map[string]models.IstioValidation
 type swaggIstioConfigPermissions struct {
 	// in:body
 	Body models.IstioConfigPermissions
-}
-
-// Return Iter8 Info
-// swagger:response iter8StatusResponse
-type Iter8StatusResponse struct {
-	// in: body
-	Body models.Iter8Info
-}
-
-// Return a Iter8 Experiment detail
-// swagger:response iter8ExperimentGetDetailResponse
-type Iter8ExperimentsGetDetailResponse struct {
-	// in: body
-	Body models.Iter8ExperimentDetail
-}
-
-// Return a list of Iter8 Experiment Items
-// swagger:response iter8ExperimentsResponse
-type Iter8ExperimentsResponnse struct {
-	// in: body
-	Body []models.Iter8ExperimentItem
 }
 
 // Return a list of Istio components along its status
