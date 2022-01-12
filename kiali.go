@@ -159,7 +159,7 @@ func validateConfig() error {
 		return fmt.Errorf("Invalid authentication strategy [%v]", auth.Strategy)
 	}
 
-	// Check the signing key for the JWT token is valid
+	// Check the ciphering key for sessions
 	signingKey := cfg.LoginToken.SigningKey
 	if err := config.ValidateSigningKey(signingKey, auth.Strategy); err != nil {
 		return err

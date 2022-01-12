@@ -47,10 +47,10 @@ func GetSigningKey() string {
 }
 
 func ValidateSigningKey(signingKey string, authStrategy string) error {
-	if authStrategy != AuthStrategyAnonymous && (len(signingKey) == 0 || signingKey == "kiali") {
-		// "kiali" is a well-known signing key reported in a CVE. We ban it's usage.
-		// An empty key is also just not allowed.
-		return errors.New("signing key for login tokens is invalid")
+	if authStrategy != AuthStrategyAnonymous {
+		if len(signingKey) != 16 && len(signingKey) != 24 && len(signingKey) != 32 {
+			return errors.New("signing key for sessions must be 16, 24 or 32 bytes length")
+		}
 	}
 
 	return nil
