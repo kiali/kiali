@@ -197,7 +197,7 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
               </Tooltip>
             )}
             <TourStopContainer info={GraphTourStops.Display}>
-              <GraphSettingsContainer graphType={this.props.graphType} />
+              <GraphSettingsContainer graphType={this.props.graphType} disabled={this.props.disabled} />
             </TourStopContainer>
           </div>
           <GraphFindContainer cy={this.props.cy} />

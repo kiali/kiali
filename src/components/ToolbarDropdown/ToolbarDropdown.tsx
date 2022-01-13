@@ -80,6 +80,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
           return (
             <SelectOption
               key={key}
+              isDisabled={this.props.disabled}
               isSelected={key === String(this.props.value || this.state.currentValue)}
               value={`${key}`}
             >

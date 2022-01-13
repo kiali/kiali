@@ -63,11 +63,10 @@ class GraphTraffic extends React.PureComponent<GraphTrafficProps, GraphTrafficSt
     return (
       <Dropdown
         toggle={
-          <DropdownToggle id="graph-traffic-dropdown" onToggle={this.onToggle}>
+          <DropdownToggle id="graph-traffic-dropdown" isDisabled={this.props.disabled} onToggle={this.onToggle}>
             Traffic
           </DropdownToggle>
         }
-        disabled={this.props.disabled}
         isOpen={this.state.isOpen}
       >
         {this.getPopoverContent()}
@@ -209,6 +208,7 @@ class GraphTraffic extends React.PureComponent<GraphTrafficProps, GraphTrafficSt
                   id={trafficRateOption.id}
                   name="trafficRateOptions"
                   isChecked={trafficRateOption.isChecked}
+                  isDisabled={this.props.disabled}
                   label={trafficRateOption.labelText}
                   onChange={this.toggleTrafficRate}
                   value={trafficRateOption.id}
@@ -237,6 +237,7 @@ class GraphTraffic extends React.PureComponent<GraphTrafficProps, GraphTrafficSt
                           style={{ paddingLeft: '5px' }}
                           name="grpcOptions"
                           isChecked={grpcOption.isChecked}
+                          isDisabled={this.props.disabled}
                           label={grpcOption.labelText}
                           onChange={this.toggleTrafficRateGrpc}
                           value={grpcOption.id}
@@ -269,6 +270,7 @@ class GraphTraffic extends React.PureComponent<GraphTrafficProps, GraphTrafficSt
                           style={{ paddingLeft: '5px' }}
                           name="httpOptions"
                           isChecked={httpOption.isChecked}
+                          isDisabled={this.props.disabled}
                           label={httpOption.labelText}
                           onChange={this.toggleTrafficRateHttp}
                           value={httpOption.id}
@@ -301,6 +303,7 @@ class GraphTraffic extends React.PureComponent<GraphTrafficProps, GraphTrafficSt
                           style={{ paddingLeft: '5px' }}
                           name="tcpOptions"
                           isChecked={tcpOption.isChecked}
+                          isDisabled={this.props.disabled}
                           label={tcpOption.labelText}
                           onChange={this.toggleTrafficRateTcp}
                           value={tcpOption.id}
