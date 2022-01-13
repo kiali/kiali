@@ -57,7 +57,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
       if (workload.labels[serverConfig.istioLabels.appLabelName]) {
         apps.push(workload.labels[serverConfig.istioLabels.appLabelName]);
       }
-      workload.services.forEach(s => services.push(s.name));
+      workload.services?.forEach(s => services.push(s.name));
     }
 
     const isTemplateLabels =
