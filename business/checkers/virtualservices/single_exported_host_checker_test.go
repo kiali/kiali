@@ -21,8 +21,7 @@ func TestOneVirtualServicePerHostExported(t *testing.T) {
 	}
 	vals := SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	emptyValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -37,8 +36,7 @@ func TestOneVirtualServicePerHostExported(t *testing.T) {
 	}
 	vals = SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	emptyValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -53,8 +51,7 @@ func TestOneVirtualServicePerHostExported(t *testing.T) {
 	}
 	vals = SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	emptyValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -69,8 +66,7 @@ func TestOneVirtualServicePerHostExported(t *testing.T) {
 	}
 	vals = SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	emptyValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -86,8 +82,7 @@ func TestOneVirtualServicePerFQDNHostExported(t *testing.T) {
 	}
 	vals := SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	emptyValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -103,8 +98,7 @@ func TestOneVirtualServicePerFQDNWildcardHostExported(t *testing.T) {
 	}
 	vals := SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	emptyValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -124,8 +118,7 @@ func TestRepeatingSimpleHostExported(t *testing.T) {
 	}
 	vals := SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -156,8 +149,7 @@ func TestRepeatingSimpleHostWithGatewayExported(t *testing.T) {
 	}
 	vals := SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	noObjectValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -171,8 +163,7 @@ func TestRepeatingSimpleHostWithGatewayExported(t *testing.T) {
 	}
 	vals = SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	noObjectValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -186,8 +177,7 @@ func TestRepeatingSimpleHostWithGatewayExported(t *testing.T) {
 	}
 	vals = SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	refKey := models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo2", Name: "virtual-2"}
@@ -212,8 +202,7 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 			{Name: "bookinfo"},
 			{Name: "bookinfo2"},
 		},
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -231,8 +220,7 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 			{Name: "bookinfo"},
 			{Name: "bookinfo2"},
 		},
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -251,8 +239,7 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 			{Name: "bookinfo"},
 			{Name: "bookinfo2"},
 		},
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -270,8 +257,7 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 			{Name: "bookinfo"},
 			{Name: "bookinfo2"},
 		},
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -289,8 +275,7 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 			{Name: "bookinfo"},
 			{Name: "bookinfo2"},
 		},
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	noObjectValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -310,8 +295,7 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 			{Name: "bookinfo"},
 			{Name: "bookinfo2"},
 		},
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	noObjectValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -330,8 +314,7 @@ func TestRepeatingFQDNHostExported(t *testing.T) {
 	}
 	vals := SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -363,8 +346,7 @@ func TestRepeatingFQDNWildcardHostExported(t *testing.T) {
 	}
 	vals := SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -396,8 +378,7 @@ func TestIncludedIntoWildCardExported(t *testing.T) {
 	}
 	vals := SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -428,8 +409,7 @@ func TestIncludedIntoWildCardExported(t *testing.T) {
 	}
 	vals = SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -461,8 +441,7 @@ func TestShortHostNameIncludedIntoWildCardExported(t *testing.T) {
 	}
 	vals := SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -494,8 +473,7 @@ func TestWildcardisMarkedInvalidExported(t *testing.T) {
 	}
 	vals := SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -527,8 +505,7 @@ func TestMultipleHostsFailingExported(t *testing.T) {
 	}
 	vals := SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
@@ -554,8 +531,7 @@ func TestMultipleHostsPassingExported(t *testing.T) {
 	}
 	vals := SingleHostChecker{
 		Namespace:               "bookinfo",
-		VirtualServices:         vss,
-		ExportedVirtualServices: evss,
+		ExportedVirtualServices: append(vss, evss...),
 	}.Check()
 
 	emptyValidationTestNS(t, vals, "virtual-1", "bookinfo")

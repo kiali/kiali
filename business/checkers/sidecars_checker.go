@@ -13,7 +13,6 @@ const SidecarCheckerType = "sidecar"
 
 type SidecarChecker struct {
 	Sidecars               []networking_v1alpha3.Sidecar
-	ServiceEntries         []networking_v1alpha3.ServiceEntry
 	ExportedServiceEntries []networking_v1alpha3.ServiceEntry
 	ServiceList            models.ServiceList
 	Namespaces             models.Namespaces
@@ -57,7 +56,7 @@ func (s SidecarChecker) runIndividualChecks() models.IstioValidations {
 func (s SidecarChecker) runChecks(sidecar networking_v1alpha3.Sidecar) models.IstioValidations {
 	policyName := sidecar.Name
 	key, rrValidation := EmptyValidValidation(policyName, sidecar.Namespace, SidecarCheckerType)
-	serviceHosts := kubernetes.ServiceEntryHostnames(append(s.ServiceEntries, s.ExportedServiceEntries...))
+	serviceHosts := kubernetes.ServiceEntryHostnames(s.ExportedServiceEntries)
 	selectorLabels := make(map[string]string)
 	if sidecar.Spec.WorkloadSelector != nil {
 		selectorLabels = sidecar.Spec.WorkloadSelector.Labels

@@ -16,7 +16,6 @@ type AuthorizationPolicyChecker struct {
 	AuthorizationPolicies   []security_v1beta.AuthorizationPolicy
 	Namespace               string
 	Namespaces              models.Namespaces
-	ServiceEntries          []networking_v1alpha3.ServiceEntry
 	ExportedServiceEntries  []networking_v1alpha3.ServiceEntry
 	ServiceList             models.ServiceList
 	WorkloadList            models.WorkloadList
@@ -50,7 +49,7 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 func (a AuthorizationPolicyChecker) runChecks(authPolicy security_v1beta.AuthorizationPolicy) models.IstioValidations {
 	policyName := authPolicy.Name
 	key, rrValidation := EmptyValidValidation(policyName, authPolicy.Namespace, AuthorizationPolicyCheckerType)
-	serviceHosts := kubernetes.ServiceEntryHostnames(append(a.ServiceEntries, a.ExportedServiceEntries...))
+	serviceHosts := kubernetes.ServiceEntryHostnames(a.ExportedServiceEntries)
 	matchLabels := make(map[string]string)
 	if authPolicy.Spec.Selector != nil {
 		matchLabels = authPolicy.Spec.Selector.MatchLabels

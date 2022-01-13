@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -117,6 +118,7 @@ func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(fakeNamespaces(), nil)
+	k8s.On("GetToken").Return("token")
 
 	fakeIstioObjects := []runtime.Object{}
 	istioConfigList := fakeCombinedIstioConfigList()
@@ -135,14 +137,10 @@ func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 	for _, p := range fakePolicies() {
 		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
 	}
-	for _, g := range getGateway("first", "test") {
-		fakeIstioObjects = append(fakeIstioObjects, g.DeepCopyObject())
-	}
-	for _, g := range getGateway("second", "test2") {
-		fakeIstioObjects = append(fakeIstioObjects, g.DeepCopyObject())
-	}
 	k8s.MockIstio(fakeIstioObjects...)
 	mockWorkLoadService(k8s)
+
+	kialiCache = cache.FakeGatewaysKialiCache(append(getGateway("first", "test"), getGateway("second", "test2")...))
 
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices([]string{""}, ""), nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)

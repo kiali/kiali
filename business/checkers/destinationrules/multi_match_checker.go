@@ -13,7 +13,6 @@ import (
 const DestinationRulesCheckerType = "destinationrule"
 
 type MultiMatchChecker struct {
-	DestinationRules         []networking_v1alpha3.DestinationRule
 	ExportedDestinationRules []networking_v1alpha3.DestinationRule
 	ServiceEntries           map[string][]string
 	Namespaces               models.Namespaces
@@ -37,7 +36,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	// Equality search is: [fqdn.String()][subset] except for ServiceEntry targets which use [host][subset]
 	seenHostSubsets := make(map[string]map[string][]rule)
 
-	for _, dr := range append(m.DestinationRules, m.ExportedDestinationRules...) {
+	for _, dr := range m.ExportedDestinationRules {
 		destinationRulesName := dr.Name
 		destinationRulesNamespace := dr.Namespace
 		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, dr.ClusterName, m.Namespaces.GetNames())
