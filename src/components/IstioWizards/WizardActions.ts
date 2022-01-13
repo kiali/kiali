@@ -1145,6 +1145,8 @@ export const buildGraphSidecars = (namespace: string, graph: GraphDefinition): S
         node.data.version
       ) {
         const sc: Sidecar = {
+          kind: 'Sidecar',
+          apiVersion: 'networking.istio.io/v1alpha3',
           metadata: {
             name: node.data.workload,
             namespace: namespace,
@@ -1199,6 +1201,8 @@ export const buildGraphSidecars = (namespace: string, graph: GraphDefinition): S
 
 export const buildGraphAuthorizationPolicy = (namespace: string, graph: GraphDefinition): AuthorizationPolicy[] => {
   const denyAll: AuthorizationPolicy = {
+    kind: 'AuthorizationPolicy',
+    apiVersion: 'security.istio.io/v1beta1',
     metadata: {
       name: 'deny-all-' + namespace,
       namespace: namespace,
@@ -1221,6 +1225,8 @@ export const buildGraphAuthorizationPolicy = (namespace: string, graph: GraphDef
         node.data.version
       ) {
         const ap: AuthorizationPolicy = {
+          kind: 'AuthorizationPolicy',
+          apiVersion: 'security.istio.io/v1beta1',
           metadata: {
             name: node.data.workload,
             namespace: namespace,

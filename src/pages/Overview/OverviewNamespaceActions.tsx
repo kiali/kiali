@@ -13,7 +13,7 @@ import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 export type OverviewNamespaceAction = {
   isGroup: boolean;
   isSeparator: boolean;
-  isDisabled: boolean;
+  isDisabled?: boolean;
   isExternal?: boolean;
   title?: string;
   children?: OverviewNamespaceAction[];

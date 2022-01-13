@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {
-  Button,
   Card,
   CardActions,
   CardBody,
@@ -11,7 +10,6 @@ import {
   EmptyStateVariant,
   Grid,
   GridItem,
-  Modal,
   Title,
   Tooltip,
   TooltipPosition
@@ -40,6 +38,7 @@ import NamespaceMTLSStatusContainer from '../../components/MTls/NamespaceMTLSSta
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import OverviewCardContentCompact from './OverviewCardContentCompact';
 import OverviewCardContentExpanded from './OverviewCardContentExpanded';
+import OverviewTrafficPolicies from './OverviewTrafficPolicies';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import { KialiAppState } from '../../store/Store';
@@ -56,17 +55,9 @@ import { PFColors } from '../../components/Pf/PfColors';
 import VirtualList from '../../components/VirtualList/VirtualList';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNamespaceActions';
 import history, { HistoryManager, URLParam } from '../../app/History';
-import {
-  buildGraphAuthorizationPolicy,
-  buildGraphSidecars,
-  buildNamespaceInjectionPatch
-} from '../../components/IstioWizards/WizardActions';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
-import GraphDataSource from '../../services/GraphDataSource';
-import { AuthorizationPolicy, Sidecar, ValidationStatus } from '../../types/IstioObjects';
-import { IstioPermissions } from '../../types/IstioConfigDetails';
-import { AUTHORIZATION_POLICIES } from '../IstioConfigNew/AuthorizationPolicyForm';
+import { ValidationStatus } from '../../types/IstioObjects';
 import ValidationSummaryLink from '../../components/Link/ValidationSummaryLink';
 import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
 import { ExternalLink } from '../../types/Dashboards';
@@ -135,8 +126,8 @@ type State = {
   namespaces: NamespaceInfo[];
   type: OverviewType;
   displayMode: OverviewDisplayMode;
-  permissions: IstioPermissions;
-  showConfirmModal: boolean;
+  showTrafficPoliciesModal: boolean;
+  kind: string;
   nsTarget: string;
   opTarget: string;
   grafanaLinks: ExternalLink[];
@@ -164,8 +155,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       namespaces: [],
       type: OverviewToolbar.currentOverviewType(),
       displayMode: display ? Number(display) : OverviewDisplayMode.EXPAND,
-      permissions: {},
-      showConfirmModal: false,
+      showTrafficPoliciesModal: false,
+      kind: '',
       nsTarget: '',
       opTarget: '',
       grafanaLinks: []
@@ -238,7 +229,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
               type: type,
               namespaces: Sorts.sortFunc(allNamespaces, sortField, isAscending),
               displayMode: displayMode,
-              showConfirmModal: prevState.showConfirmModal,
+              showTrafficPoliciesModal: prevState.showTrafficPoliciesModal,
+              kind: prevState.kind,
               nsTarget: prevState.nsTarget,
               opTarget: prevState.opTarget
             };
@@ -247,7 +239,6 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             this.fetchHealth(isAscending, sortField, type);
             this.fetchTLS(isAscending, sortField);
             this.fetchValidations(isAscending, sortField);
-            this.fetchPermissions();
             if (displayMode !== OverviewDisplayMode.COMPACT) {
               this.fetchMetrics();
             }
@@ -458,16 +449,6 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       .catch(err => this.handleAxiosError('Could not fetch validations status', err));
   }
 
-  fetchPermissions() {
-    this.promises
-      .register('namespacepermissions', API.getIstioPermissions(this.state.namespaces.map(ns => ns.name)))
-      .then(result => {
-        this.setState({
-          permissions: result.data
-        });
-      });
-  }
-
   handleAxiosError(message: string, error: AxiosError) {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
   }
@@ -534,35 +515,30 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           {
             isGroup: true,
             isSeparator: false,
-            isDisabled: false,
             title: 'Graph',
             action: (ns: string) => this.show(Show.GRAPH, ns, this.state.type)
           },
           {
             isGroup: true,
             isSeparator: false,
-            isDisabled: false,
             title: 'Applications',
             action: (ns: string) => this.show(Show.APPLICATIONS, ns, this.state.type)
           },
           {
             isGroup: true,
             isSeparator: false,
-            isDisabled: false,
             title: 'Workloads',
             action: (ns: string) => this.show(Show.WORKLOADS, ns, this.state.type)
           },
           {
             isGroup: true,
             isSeparator: false,
-            isDisabled: false,
             title: 'Services',
             action: (ns: string) => this.show(Show.SERVICES, ns, this.state.type)
           },
           {
             isGroup: true,
             isSeparator: false,
-            isDisabled: false,
             title: 'Istio Config',
             action: (ns: string) => this.show(Show.ISTIO_CONFIG, ns, this.state.type)
           }
@@ -572,43 +548,33 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     // We are going to assume that if the user can create/update Istio AuthorizationPolicies in a namespace
     // then it can use the Istio Injection Actions.
     // RBAC allow more fine granularity but Kiali won't check that in detail.
-    let canWrite = false;
-    if (
-      this.state.permissions &&
-      this.state.permissions[nsInfo.name] &&
-      this.state.permissions[nsInfo.name][AUTHORIZATION_POLICIES]
-    ) {
-      const resourcePermission = this.state.permissions[nsInfo.name][AUTHORIZATION_POLICIES];
-      canWrite = resourcePermission.create && resourcePermission.update && resourcePermission.delete;
-    }
 
     if (serverConfig.istioNamespace !== nsInfo.name) {
       if (serverConfig.kialiFeatureFlags.istioInjectionAction && !serverConfig.kialiFeatureFlags.istioUpgradeAction) {
         namespaceActions.push({
           isGroup: false,
-          isSeparator: true,
-          isDisabled: false
+          isSeparator: true
         });
         const enableAction = {
           isGroup: false,
           isSeparator: false,
-          isDisabled: !canWrite,
           title: 'Enable Auto Injection',
-          action: (ns: string) => this.onAddRemoveAutoInjection(ns, true, false)
+          action: (ns: string) =>
+            this.setState({ showTrafficPoliciesModal: true, nsTarget: ns, opTarget: 'enable', kind: 'injection' })
         };
         const disableAction = {
           isGroup: false,
           isSeparator: false,
-          isDisabled: !canWrite,
           title: 'Disable Auto Injection',
-          action: (ns: string) => this.onAddRemoveAutoInjection(ns, false, false)
+          action: (ns: string) =>
+            this.setState({ showTrafficPoliciesModal: true, nsTarget: ns, opTarget: 'disable', kind: 'injection' })
         };
         const removeAction = {
           isGroup: false,
           isSeparator: false,
-          isDisabled: !canWrite,
           title: 'Remove Auto Injection',
-          action: (ns: string) => this.onAddRemoveAutoInjection(ns, false, true)
+          action: (ns: string) =>
+            this.setState({ showTrafficPoliciesModal: true, nsTarget: ns, opTarget: 'remove', kind: 'injection' })
         };
         if (
           nsInfo.labels &&
@@ -641,22 +607,21 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       ) {
         namespaceActions.push({
           isGroup: false,
-          isSeparator: true,
-          isDisabled: false
+          isSeparator: true
         });
         const upgradeAction = {
           isGroup: false,
           isSeparator: false,
-          isDisabled: !canWrite,
           title: 'Upgrade to ' + serverConfig.istioCanaryRevision.upgrade + ' revision',
-          action: (ns: string) => this.onUpgradeDowngradeIstio(ns, serverConfig.istioCanaryRevision.upgrade)
+          action: (ns: string) =>
+            this.setState({ opTarget: 'upgrade', kind: 'canary', nsTarget: ns, showTrafficPoliciesModal: true })
         };
         const downgradeAction = {
           isGroup: false,
           isSeparator: false,
-          isDisabled: !canWrite,
           title: 'Downgrade to ' + serverConfig.istioCanaryRevision.current + ' revision',
-          action: (ns: string) => this.onUpgradeDowngradeIstio(ns, serverConfig.istioCanaryRevision.current)
+          action: (ns: string) =>
+            this.setState({ opTarget: 'current', kind: 'canary', nsTarget: ns, showTrafficPoliciesModal: true })
         };
         if (
           nsInfo.labels &&
@@ -668,8 +633,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           namespaceActions.push(upgradeAction);
           namespaceActions.push({
             isGroup: false,
-            isSeparator: true,
-            isDisabled: false
+            isSeparator: true
           });
         } else if (
           nsInfo.labels &&
@@ -679,8 +643,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           namespaceActions.push(downgradeAction);
           namespaceActions.push({
             isGroup: false,
-            isSeparator: true,
-            isDisabled: false
+            isSeparator: true
           });
         }
       }
@@ -688,22 +651,22 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       const addAuthorizationAction = {
         isGroup: false,
         isSeparator: false,
-        isDisabled: !canWrite,
         title: (aps.length === 0 ? 'Create ' : 'Update') + ' Traffic Policies',
         action: (ns: string) => {
-          if (aps.length === 0) {
-            this.onCreateTrafficPolicies(ns);
-          } else {
-            this.onUpdateTrafficPolicies(ns);
-          }
+          this.setState({
+            opTarget: aps.length === 0 ? 'create' : 'update',
+            nsTarget: ns,
+            showTrafficPoliciesModal: true,
+            kind: 'policy'
+          });
         }
       };
       const removeAuthorizationAction = {
         isGroup: false,
         isSeparator: false,
-        isDisabled: !canWrite,
         title: 'Delete Traffic Policies',
-        action: (ns: string) => this.onDeleteTrafficPolicies(ns)
+        action: (ns: string) =>
+          this.setState({ opTarget: 'delete', nsTarget: ns, showTrafficPoliciesModal: true, kind: 'policy' })
       };
       namespaceActions.push(addAuthorizationAction);
       if (aps.length > 0) {
@@ -713,14 +676,12 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       // Istio namespace will render external Grafana dashboards
       namespaceActions.push({
         isGroup: false,
-        isSeparator: true,
-        isDisabled: false
+        isSeparator: true
       });
       this.state.grafanaLinks.forEach(link => {
         const grafanaDashboard = {
           isGroup: false,
           isSeparator: false,
-          isDisabled: false,
           isExternal: true,
           title: link.name,
           action: (_ns: string) => {
@@ -735,150 +696,13 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     return namespaceActions;
   };
 
-  onAddRemoveAutoInjection = (ns: string, enable: boolean, remove: boolean): void => {
-    const jsonPatch = buildNamespaceInjectionPatch(enable, remove, null);
-    API.updateNamespace(ns, jsonPatch)
-      .then(_ => {
-        AlertUtils.add('Namespace ' + ns + ' updated', 'default', MessageType.SUCCESS);
-        this.load();
-      })
-      .catch(error => {
-        AlertUtils.addError('Could not update namespace ' + ns, error);
-      });
-  };
-
-  onUpgradeDowngradeIstio = (ns: string, revision: string): void => {
-    const jsonPatch = buildNamespaceInjectionPatch(false, false, revision);
-    API.updateNamespace(ns, jsonPatch)
-      .then(_ => {
-        AlertUtils.add('Namespace ' + ns + ' updated', 'default', MessageType.SUCCESS);
-        this.load();
-      })
-      .catch(error => {
-        AlertUtils.addError('Could not update namespace ' + ns, error);
-      });
-  };
-
-  onCreateTrafficPolicies = (ns: string) => {
-    this.onAddRemoveTrafficPolicies(ns, [], [], false);
-  };
-
-  onUpdateTrafficPolicies = (ns: string) => {
+  hideTrafficManagement = () => {
     this.setState({
-      showConfirmModal: true,
-      nsTarget: ns,
-      opTarget: 'update'
-    });
-  };
-
-  onDeleteTrafficPolicies = (ns: string) => {
-    this.setState({
-      showConfirmModal: true,
-      nsTarget: ns,
-      opTarget: 'delete'
-    });
-  };
-
-  onAddRemoveTrafficPolicies = (
-    ns: string,
-    authorizationPolicies: AuthorizationPolicy[],
-    sidecars: Sidecar[],
-    remove: boolean
-  ): void => {
-    if (authorizationPolicies.length > 0 && sidecars.length > 0) {
-      this.promises
-        .registerAll(
-          'trafficPoliciesDelete',
-          authorizationPolicies
-            .map(ap => API.deleteIstioConfigDetail(ns, 'authorizationpolicies', ap.metadata.name))
-            .concat(sidecars.map(sc => API.deleteIstioConfigDetail(ns, 'sidecars', sc.metadata.name)))
-        )
-        .then(_ => {
-          if (!remove) {
-            this.createTrafficPolicies(ns, this.load);
-          } else {
-            this.load();
-          }
-        })
-        .catch(errorDelete => {
-          if (!errorDelete.isCanceled) {
-            AlertUtils.addError('Could not delete traffic policies.', errorDelete);
-          }
-        });
-    } else {
-      if (!remove) {
-        this.createTrafficPolicies(ns, this.load);
-      } else {
-        AlertUtils.addInfo('Namespace ' + ns + " doesn't have traffic policies config.");
-      }
-    }
-  };
-
-  createTrafficPolicies = (ns: string, callback: () => void) => {
-    const graphDataSource = new GraphDataSource();
-    graphDataSource.on('fetchSuccess', () => {
-      const aps = buildGraphAuthorizationPolicy(ns, graphDataSource.graphDefinition);
-      const scs = buildGraphSidecars(ns, graphDataSource.graphDefinition);
-
-      this.promises
-        .registerAll(
-          'trafficPoliciesCreate',
-          aps
-            .map(ap => API.createIstioConfigDetail(ns, 'authorizationpolicies', JSON.stringify(ap)))
-            .concat(scs.map(sc => API.createIstioConfigDetail(ns, 'sidecars', JSON.stringify(sc))))
-        )
-        .then(results => {
-          if (results.length > 0) {
-            AlertUtils.add('Traffic policies created for ' + ns + ' namespace.', 'default', MessageType.SUCCESS);
-          }
-          callback();
-        })
-        .catch(errorCreate => {
-          if (!errorCreate.isCanceled) {
-            AlertUtils.addError('Could not create traffic policies.', errorCreate);
-          }
-        });
-    });
-    graphDataSource.on('fetchError', (errorMessage: string | null) => {
-      if (errorMessage !== '') {
-        errorMessage = 'Could not fetch traffic data: ' + errorMessage;
-      } else {
-        errorMessage = 'Could not fetch traffic data.';
-      }
-      AlertUtils.addError(errorMessage);
-    });
-    graphDataSource.fetchForNamespace(this.props.duration, ns);
-  };
-
-  hideConfirmModal = () => {
-    this.setState({
-      showConfirmModal: false,
+      showTrafficPoliciesModal: false,
       nsTarget: '',
-      opTarget: ''
+      opTarget: '',
+      kind: ''
     });
-  };
-
-  onConfirmModal = () => {
-    let aps: AuthorizationPolicy[] = [];
-    let scs: Sidecar[] = [];
-    for (let i = 0; i < this.state.namespaces.length; i++) {
-      const nsInfo = this.state.namespaces[i];
-      if (this.state.namespaces[i].name === this.state.nsTarget) {
-        aps = nsInfo.istioConfig?.authorizationPolicies || [];
-        scs = nsInfo.istioConfig?.sidecars || [];
-        break;
-      }
-    }
-    const nsTarget = this.state.nsTarget;
-    const remove = this.state.opTarget === 'delete';
-    this.setState(
-      {
-        showConfirmModal: false,
-        nsTarget: '',
-        opTarget: ''
-      },
-      () => this.onAddRemoveTrafficPolicies(nsTarget, aps, scs, remove)
-    );
   };
 
   render() {
@@ -893,10 +717,6 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       const actions = this.getNamespaceActions(ns);
       return <OverviewNamespaceActions key={'namespaceAction_' + i} namespace={ns.name} actions={actions} />;
     });
-    const modalAction =
-      this.state.opTarget.length > 0
-        ? this.state.opTarget.charAt(0).toLocaleUpperCase() + this.state.opTarget.slice(1)
-        : '';
     return (
       <>
         <OverviewToolbarContainer
@@ -970,26 +790,16 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             </EmptyState>
           </div>
         )}
-        <Modal
-          isSmall={true}
-          title={'Confirm ' + modalAction + ' Traffic Policies ?'}
-          isOpen={this.state.showConfirmModal}
-          onClose={this.hideConfirmModal}
-          actions={[
-            <Button key="cancel" variant="secondary" onClick={this.hideConfirmModal}>
-              Cancel
-            </Button>,
-            <Button key="confirm" variant="danger" onClick={this.onConfirmModal}>
-              {modalAction}
-            </Button>
-          ]}
-        >
-          {'Namespace ' +
-            this.state.nsTarget +
-            ' has existing traffic policies objects. Do you want to ' +
-            this.state.opTarget +
-            ' them ?'}
-        </Modal>
+        <OverviewTrafficPolicies
+          opTarget={this.state.opTarget}
+          isOpen={this.state.showTrafficPoliciesModal}
+          kind={this.state.kind}
+          hideConfirmModal={this.hideTrafficManagement}
+          nsTarget={this.state.nsTarget}
+          nsInfo={this.state.namespaces.filter(ns => ns.name === this.state.nsTarget)[0]}
+          duration={this.props.duration}
+          load={this.load}
+        />
       </>
     );
   }
