@@ -184,7 +184,7 @@ func getDRKialiScenario(dr []networking_v1alpha3.DestinationRule) string {
 }
 
 func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v1.Service, rSvcs []*kubernetes.RegistryService, pods []core_v1.Pod, deployments []apps_v1.Deployment, istioConfigList models.IstioConfigList) *models.ServiceList {
-	var services []models.ServiceOverview
+	services := []models.ServiceOverview{}
 	validations := in.getServiceValidations(svcs, deployments, pods)
 
 	kubernetesServices := in.buildKubernetesServices(svcs, pods, istioConfigList)
