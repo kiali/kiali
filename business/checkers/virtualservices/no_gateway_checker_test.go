@@ -32,6 +32,27 @@ func TestMissingGateway(t *testing.T) {
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", vals[0]))
 }
 
+func TestMissingGateways(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway", "my-gateway2", "mesh"}, data.CreateVirtualService())
+	checker := NoGatewayChecker{
+		VirtualService: *virtualService,
+		GatewayNames:   make(map[string]struct{}),
+	}
+
+	vals, valid := checker.Check()
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 2)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", vals[0]))
+	assert.Equal(models.ErrorSeverity, vals[1].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", vals[1]))
+}
+
 func TestMissingGatewayInHTTPMatch(t *testing.T) {
 	cases := []struct {
 		name     string
