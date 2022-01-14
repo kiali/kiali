@@ -22,12 +22,14 @@ type Props = {
 };
 
 const cellStyle = style({
-  overflow: 'hidden',
-  fontSize: '.7rem',
+  alignItems: 'center',
   borderRadius: 3,
   display: 'flex',
+  fontSize: '.7rem',
   justifyContent: 'center',
-  alignItems: 'center'
+  overflow: 'hidden',
+  textOverflow: 'clip',
+  whiteSpace: 'nowrap'
 });
 
 export class HeatMap extends React.Component<Props> {
