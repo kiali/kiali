@@ -15,7 +15,7 @@ type DestinationRulesChecker struct {
 	DestinationRules         []networking_v1alpha3.DestinationRule
 	ExportedDestinationRules []networking_v1alpha3.DestinationRule
 	MTLSDetails              kubernetes.MTLSDetails
-	ExportedServiceEntries   []networking_v1alpha3.ServiceEntry
+	ServiceEntries           []networking_v1alpha3.ServiceEntry
 	Namespaces               []models.Namespace
 }
 
@@ -31,7 +31,7 @@ func (in DestinationRulesChecker) Check() models.IstioValidations {
 func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	seHosts := kubernetes.ServiceEntryHostnames(in.ExportedServiceEntries)
+	seHosts := kubernetes.ServiceEntryHostnames(in.ServiceEntries)
 
 	enabledDRCheckers := []GroupChecker{
 		destinationrules.MultiMatchChecker{Namespaces: in.Namespaces, ServiceEntries: seHosts, ExportedDestinationRules: in.ExportedDestinationRules},
