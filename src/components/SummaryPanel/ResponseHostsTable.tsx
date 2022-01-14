@@ -3,6 +3,7 @@ import _ from 'lodash';
 import { style } from 'typestyle';
 import { Responses } from '../../types/Graph';
 import { Tooltip } from '@patternfly/react-core';
+import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
 
 type ResponseHostsTableProps = {
   responses: Responses;
@@ -30,7 +31,7 @@ export class ResponseHostsTable extends React.PureComponent<ResponseHostsTablePr
       <>
         {rows.length > 0 ? (
           <>
-            <strong>{this.props.title}</strong>
+            <div className={summaryTitle}>{this.props.title}</div>
             <table className="table" style={{ tableLayout: 'fixed', width: '100%' }}>
               <thead>
                 <tr key="table-header">

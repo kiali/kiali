@@ -18,11 +18,13 @@ import { Response } from '../../services/Api';
 import {
   getDatapoints,
   getFirstDatapoints,
+  getTitle,
   hr,
   shouldRefreshData,
   summaryBodyTabs,
   summaryFont,
-  summaryHeader
+  summaryHeader,
+  summaryPanelWidth
 } from './SummaryPanelCommon';
 import { Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
@@ -114,10 +116,10 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   static readonly panelStyle = {
     height: '100%',
     margin: 0,
-    minWidth: '25em',
+    minWidth: summaryPanelWidth,
     overflowY: 'auto' as 'auto',
     backgroundColor: PFColors.White,
-    width: '25em'
+    width: summaryPanelWidth
   };
 
   private graphTraffic?: SummaryPanelGraphTraffic;
@@ -171,8 +173,8 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       return null;
     }
 
-    const numSvc = cy.$(`node[nodeType = "${NodeType.SERVICE}"]`).size();
-    const numWorkloads = cy.$(`node[nodeType = "${NodeType.WORKLOAD}"]`).size();
+    const numSvc = cy.nodes(`[nodeType = "${NodeType.SERVICE}"]`).size();
+    const numWorkloads = cy.nodes(`[nodeType = "${NodeType.WORKLOAD}"]`).size();
     const { numApps, numVersions } = this.countApps(cy);
     const numEdges = cy.edges().size();
 
@@ -182,9 +184,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     return (
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
         <div className="panel-heading" style={summaryHeader}>
-          <strong>Current Graph:</strong>
-          <br />
-          <br />
+          {getTitle('Current Graph')}
           {this.renderNamespacesSummary()}
           <br />
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
@@ -298,8 +298,8 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   private getGraphTraffic = (): SummaryPanelGraphTraffic => {
     // when getting total traffic rates don't count requests from injected service nodes
     const cy = this.props.data.summaryTarget;
-    const totalEdges = cy.$(`node[nodeType != "${NodeType.SERVICE}"][!isBox]`).edgesTo('*');
-    const inboundEdges = cy.$(`node[?${CyNode.isRoot}]`).edgesTo('*');
+    const totalEdges = cy.nodes(`[nodeType != "${NodeType.SERVICE}"][!isBox]`).edgesTo('*');
+    const inboundEdges = cy.nodes(`[?${CyNode.isRoot}]`).edgesTo('*');
     const outboundEdges = cy.nodes().leaves(`node[?${CyNode.isOutside}],[?${CyNode.isServiceEntry}]`).connectedEdges();
 
     return {
@@ -626,7 +626,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     });
   };
 
-  fetchValidationsChunk(chunk: Namespace[], validationsMap: ValidationsMap) {
+  private fetchValidationsChunk(chunk: Namespace[], validationsMap: ValidationsMap) {
     return Promise.all(
       chunk.map(ns => {
         return API.getNamespaceValidations(ns.name).then(rs => ({ validation: rs.data, ns: ns }));

@@ -100,9 +100,9 @@ const legendData: GraphLegendItem[] = [
       { label: 'Mirroring', icon: badgeMirroringImage },
       { label: 'Missing Sidecar', icon: badgeMissingSidecarImage },
       { label: 'Request Timeout', icon: badgeRequestTimeoutImage },
-      { label: 'Traffic Shifting/TCP Traffic Shifting', icon: badgeTrafficShiftingSourceImage },
+      { label: 'Traffic Shifting / TCP Traffic Shifting', icon: badgeTrafficShiftingSourceImage },
       { label: 'Traffic Source', icon: badgeTrafficSourceImage },
-      { label: 'Virtual Service/Request Routing', icon: badgeVirtualServicesImage },
+      { label: 'Virtual Service / Request Routing', icon: badgeVirtualServicesImage },
       { label: 'Workload Entry', icon: badgeWorkloadEntryImage }
     ]
   }

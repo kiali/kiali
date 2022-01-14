@@ -60,8 +60,8 @@ export class GraphFindOptions extends React.PureComponent<GraphFindOptionsProps,
   private getOptionItems = (kind: FindKind): React.ReactFragment[] => {
     const options =
       kind === 'find'
-        ? serverConfig.kialiFeatureFlags.uiDefaults!.graph.findOptions
-        : serverConfig.kialiFeatureFlags.uiDefaults!.graph.hideOptions;
+        ? serverConfig.kialiFeatureFlags.uiDefaults.graph.findOptions
+        : serverConfig.kialiFeatureFlags.uiDefaults.graph.hideOptions;
     return options.map(o => {
       return (
         <DropdownItem key={o.description} onClick={() => this.props.onSelect(o.expression)}>

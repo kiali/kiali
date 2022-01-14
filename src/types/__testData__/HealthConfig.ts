@@ -7,7 +7,26 @@ export const healthConfig = {
       enabled: true
     },
     istioInjectionAction: true,
-    istioUpgradeAction: false
+    istioUpgradeAction: false,
+    uiDefaults: {
+      graph: {
+        findOptions: [],
+        hideOptions: [],
+        settings: {
+          fontLabel: 13,
+          minFontBadge: 7,
+          minFontLabel: 10
+        },
+        traffic: {
+          grpc: 'requests',
+          http: 'requests',
+          tcp: 'sent'
+        }
+      },
+      metricsPerRefresh: '1m',
+      namespaces: [],
+      refreshInterval: '15s'
+    }
   },
   healthConfig: {
     rate: [

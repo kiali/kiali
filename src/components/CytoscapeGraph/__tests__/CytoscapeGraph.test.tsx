@@ -87,6 +87,7 @@ describe('CytoscapeGraph component test', () => {
           showServiceNodes={true}
           showTrafficAnimation={false}
           showVirtualServices={true}
+          summaryData={null}
           toggleIdleNodes={() => undefined}
         />
       );

@@ -14,7 +14,8 @@ import {
   hr,
   summaryPanel,
   mergeMetricsResponses,
-  getDatapoints
+  getDatapoints,
+  getTitle
 } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
 import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
@@ -24,6 +25,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import { decoratedNodeData, CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { Dropdown, DropdownPosition, DropdownItem, KebabToggle, DropdownGroup } from '@patternfly/react-core';
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
+import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 type SummaryPanelAppBoxMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -121,6 +123,7 @@ export default class SummaryPanelAppBox extends React.Component<SummaryPanelProp
   render() {
     const appBox = this.props.data.summaryTarget;
     const nodeData = decoratedNodeData(appBox);
+
     const serviceList = this.renderServiceList(appBox);
     const workloadList = this.renderWorkloadList(appBox);
     const hasGrpc = this.hasGrpcTraffic(appBox);
@@ -149,8 +152,10 @@ export default class SummaryPanelAppBox extends React.Component<SummaryPanelProp
     return (
       <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
         <div className="panel-heading" style={summaryHeader}>
-          <div>
-            {renderBadgedLink(nodeData)}
+          {getTitle('Application')}
+          <span>
+            <PFBadge badge={PFBadges.Namespace} style={{ marginBottom: '2px' }} />
+            {nodeData.namespace}
             {actions && (
               <Dropdown
                 id="summary-appbox-actions"
@@ -163,8 +168,9 @@ export default class SummaryPanelAppBox extends React.Component<SummaryPanelProp
                 isGrouped={true}
               />
             )}
-          </div>
-          <div>{renderHealth(nodeData.health)}</div>
+            {renderBadgedLink(nodeData)}
+            {renderHealth(nodeData.health)}
+          </span>
           <div>
             {this.renderBadgeSummary(appBox)}
             {serviceList.length > 0 && <div>{serviceList}</div>}

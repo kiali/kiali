@@ -1,3 +1,4 @@
+import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
 import * as React from 'react';
 import { renderInOutRateChartHttp, renderInOutRateChartGrpc } from './RateChart';
 
@@ -23,7 +24,7 @@ export class InOutRateTableGrpc extends React.Component<InOutRateTableGrpcPropTy
 
     return (
       <div>
-        <strong>{this.props.title}</strong>
+        <div className={summaryTitle}>{this.props.title}</div>
         <table className="table">
           <thead>
             <tr>
@@ -104,7 +105,7 @@ export class InOutRateTableHttp extends React.Component<InOutRateTableHttpPropTy
 
     return (
       <div>
-        <strong>{this.props.title}</strong>
+        <div className={summaryTitle}>{this.props.title}</div>
         <table className="table" style={{ marginBottom: '10px' }}>
           <thead>
             <tr style={{ backgroundColor: 'white' }}>

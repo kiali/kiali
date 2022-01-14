@@ -8,24 +8,27 @@ import {
   BoxByType,
   CLUSTER_DEFAULT,
   CytoscapeBaseEvent,
-  CytoscapeClickEvent,
+  CytoscapeEvent,
   CytoscapeGlobalScratchData,
   CytoscapeGlobalScratchNamespace,
-  CytoscapeMouseInEvent,
-  CytoscapeMouseOutEvent,
   EdgeLabelMode,
   Layout,
   NodeParamsType,
   NodeType,
   RankMode,
   RankResult,
+  SummaryData,
   UNKNOWN
 } from '../../types/Graph';
 import { JaegerTrace } from 'types/JaegerInfo';
 import Namespace from '../../types/Namespace';
 import { addInfo } from 'utils/AlertUtils';
 import { angleBetweenVectors, squaredDistance, normalize } from '../../utils/MathUtils';
-import { CytoscapeContextMenuWrapper, NodeContextMenuType, EdgeContextMenuType } from './CytoscapeContextMenu';
+import {
+  CytoscapeContextMenuWrapper,
+  NodeContextMenuComponentType,
+  EdgeContextMenuComponentType
+} from './CytoscapeContextMenu';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 import { CyNode, isCore, isEdge, isNode } from './CytoscapeGraphUtils';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
@@ -41,9 +44,8 @@ import { scoreNodes, ScoringCriteria } from './GraphScore';
 type CytoscapeGraphProps = {
   compressOnHide: boolean;
   containerClassName?: string;
-  contextMenuEdgeComponent?: EdgeContextMenuType;
-  contextMenuGroupComponent?: NodeContextMenuType;
-  contextMenuNodeComponent?: NodeContextMenuType;
+  contextMenuEdgeComponent?: EdgeContextMenuComponentType;
+  contextMenuNodeComponent?: NodeContextMenuComponentType;
   edgeLabels: EdgeLabelMode[];
   graphData: GraphData;
   focusSelector?: string;
@@ -71,9 +73,15 @@ type CytoscapeGraphProps = {
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
+  summaryData: SummaryData | null;
   toggleIdleNodes: () => void;
   trace?: JaegerTrace;
-  updateSummary?: (event: CytoscapeClickEvent) => void;
+  updateSummary?: (event: CytoscapeEvent) => void;
+};
+
+type CytoscapeGraphState = {
+  // Used to trigger updates when the zoom value crosses a threshold and affects label rendering.
+  zoomThresholdTime: TimeInMilliseconds;
 };
 
 export interface GraphEdgeTapEvent {
@@ -103,13 +111,21 @@ export interface GraphNodeTapEvent {
 export interface GraphNodeDoubleTapEvent extends GraphNodeTapEvent {}
 
 // exporting this class for testing
-export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps> {
+export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps, CytoscapeGraphState> {
   static contextTypes = {
     router: () => null
   };
   static defaultProps = {
     isMiniGraph: false
   };
+
+  // for hover support
+  static hoverInMs = 260;
+  static hoverOutMs = 100;
+  static mouseInTarget: any;
+  static mouseInTimeout: any;
+  static mouseOutTimeout: any;
+
   // for dbl-click support
   static doubleTapMs = 350;
   static tapTarget: any;
@@ -125,9 +141,11 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
   private namespaceChanged: boolean;
   private needsInitialLayout: boolean;
   private nodeChanged: boolean;
-  private resetSelection: boolean = false;
   private trafficRenderer?: TrafficRenderer;
   private userBoxSelected?: Cy.Collection;
+  private zoom: number; // the current zoom value, used for checking threshold crossing
+  private zoomIgnore: boolean; // used to ignore zoom events when cy sometimes generates 'intermediate' values
+  private zoomThresholds?: number[];
 
   constructor(props: CytoscapeGraphProps) {
     super(props);
@@ -138,13 +156,21 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     this.namespaceChanged = false;
     this.needsInitialLayout = false;
     this.nodeChanged = false;
+    this.zoom = 1; // 1 is the default cy zoom
+    this.zoomIgnore = true; // ignore zoom events prior to the first rendering
+    const settings = serverConfig.kialiFeatureFlags.uiDefaults.graph.settings;
+    this.zoomThresholds = Array.from(
+      new Set([settings.minFontLabel / settings.fontLabel, settings.minFontBadge / settings.fontLabel])
+    );
+
+    this.state = { zoomThresholdTime: 0 };
   }
 
   componentDidMount() {
     this.cyInitialization(this.getCy()!);
   }
 
-  shouldComponentUpdate(nextProps: CytoscapeGraphProps) {
+  shouldComponentUpdate(nextProps: CytoscapeGraphProps, nextState: CytoscapeGraphState) {
     this.nodeChanged =
       this.nodeChanged || this.props.graphData.fetchParams.node !== nextProps.graphData.fetchParams.node;
 
@@ -162,22 +188,23 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       this.props.showRank !== nextProps.showRank ||
       this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
       this.props.showVirtualServices !== nextProps.showVirtualServices ||
-      this.props.trace !== nextProps.trace;
+      this.props.trace !== nextProps.trace ||
+      this.state.zoomThresholdTime !== nextState.zoomThresholdTime;
 
     return result;
   }
 
-  componentDidUpdate(prevProps: CytoscapeGraphProps) {
-    if (this.props.graphData.isLoading) {
-      return;
-    }
-
+  componentDidUpdate(prevProps: CytoscapeGraphProps, _prevState: CytoscapeGraphState) {
     const cy = this.getCy();
     if (!cy) {
       return;
     }
+    if (this.props.graphData.isLoading) {
+      return;
+    }
 
-    let updateLayout = false;
+    // Check to see if we should run a layout when we process the graphUpdate
+    let needsLayout = false;
     if (
       this.needsInitialLayout ||
       this.nodeNeedsRelayout() ||
@@ -185,11 +212,12 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       this.elementsNeedRelayout(prevProps.graphData.elements, this.props.graphData.elements) ||
       this.props.layout.name !== prevProps.layout.name
     ) {
-      updateLayout = true;
       this.needsInitialLayout = false;
+      needsLayout = true;
     }
 
-    this.processGraphUpdate(cy, updateLayout).then(_response => {
+    this.zoomIgnore = true;
+    this.processGraphUpdate(cy, needsLayout).then(_response => {
       // pre-select node if provided
       const node = this.props.graphData.fetchParams.node;
       if (node && cy && cy.$(':selected').length === 0) {
@@ -238,6 +266,17 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     });
   }
 
+  componentWillUnmount() {
+    if (CytoscapeGraph.mouseInTimeout) {
+      clearTimeout(CytoscapeGraph.mouseInTimeout);
+      CytoscapeGraph.mouseInTimeout = null;
+    }
+    if (CytoscapeGraph.mouseOutTimeout) {
+      clearTimeout(CytoscapeGraph.mouseOutTimeout);
+      CytoscapeGraph.mouseOutTimeout = null;
+    }
+  }
+
   render() {
     return (
       <div id="cytoscape-container" className={this.props.containerClassName}>
@@ -255,9 +294,8 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
         >
           <CytoscapeContextMenuWrapper
             ref={this.contextMenuRef}
-            edgeContextMenuContent={this.props.contextMenuEdgeComponent}
-            nodeContextMenuContent={this.props.contextMenuNodeComponent}
-            groupContextMenuContent={this.props.contextMenuGroupComponent}
+            contextMenuEdgeComponent={this.props.contextMenuEdgeComponent}
+            contextMenuNodeComponent={this.props.contextMenuNodeComponent}
           />
           <CytoscapeReactWrapper ref={e => this.setCytoscapeReactWrapperRef(e)} />
         </EmptyGraphLayout>
@@ -269,7 +307,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     return this.cytoscapeReactWrapperRef.current ? this.cytoscapeReactWrapperRef.current.getCy() : null;
   }
 
-  static buildTapEventArgs(event: CytoscapeClickEvent): GraphNodeTapEvent | GraphEdgeTapEvent {
+  static buildTapEventArgs(event: CytoscapeEvent): GraphNodeTapEvent | GraphEdgeTapEvent {
     const target = event.summaryTarget;
     const targetType = event.summaryType;
     const targetOrBoxChildren = targetType === 'box' ? target.descendants() : target;
@@ -390,6 +428,16 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
         clearTimeout(CytoscapeGraph.tapTimeout);
         CytoscapeGraph.tapTimeout = null;
 
+        // cancel any active hover timers
+        if (CytoscapeGraph.mouseInTimeout) {
+          clearTimeout(CytoscapeGraph.mouseInTimeout);
+          CytoscapeGraph.mouseInTimeout = null;
+        }
+        if (CytoscapeGraph.mouseOutTimeout) {
+          clearTimeout(CytoscapeGraph.mouseOutTimeout);
+          CytoscapeGraph.mouseOutTimeout = null;
+        }
+
         if (tapped === CytoscapeGraph.tapTarget) {
           // if we click the same target again, perform double-tap
           tapped = null;
@@ -408,8 +456,27 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
           CytoscapeGraph.tapTarget = null;
           const cytoscapeEvent = getCytoscapeBaseEvent(event);
           if (cytoscapeEvent) {
-            this.handleTap(cytoscapeEvent);
-            this.selectTarget(event.target, true);
+            // ignore if clicking the graph background and this is not the main graph
+            if (
+              cytoscapeEvent.summaryType === 'graph' &&
+              (this.props.isMiniGraph || this.props.graphData.fetchParams.node)
+            ) {
+              return;
+            }
+
+            // if clicking the same target, then unselect it (by re-selecting the graph)
+            if (
+              this.props.summaryData &&
+              cytoscapeEvent.summaryType !== 'graph' &&
+              cytoscapeEvent.summaryType === this.props.summaryData.summaryType &&
+              cytoscapeEvent.summaryTarget === this.props.summaryData.summaryTarget
+            ) {
+              this.handleTap({ summaryType: 'graph', summaryTarget: cy } as SummaryData);
+              this.selectTarget(cy);
+            } else {
+              this.handleTap(cytoscapeEvent);
+              this.selectTarget(event.target);
+            }
           }
         }, CytoscapeGraph.doubleTapMs);
       }
@@ -446,16 +513,45 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
 
     cy.on('mouseover', 'node,edge', (evt: Cy.EventObject) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
-      if (cytoscapeEvent) {
-        this.handleMouseIn(cytoscapeEvent);
+      if (!cytoscapeEvent) {
+        return;
       }
+
+      // cancel any active mouseOut timer
+      if (CytoscapeGraph.mouseOutTimeout) {
+        clearTimeout(CytoscapeGraph.mouseOutTimeout);
+        CytoscapeGraph.mouseOutTimeout = null;
+      }
+
+      // start mouseIn timer
+      CytoscapeGraph.mouseInTimeout = setTimeout(() => {
+        // timer expired without a mouseout so perform highlighting and show hover contextInfo
+        this.handleMouseIn(cytoscapeEvent);
+        this.contextMenuRef!.current!.handleContextMenu(cytoscapeEvent.summaryTarget, true);
+      }, CytoscapeGraph.hoverInMs);
     });
 
     cy.on('mouseout', 'node,edge', (evt: Cy.EventObject) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
-      if (cytoscapeEvent) {
-        this.handleMouseOut(cytoscapeEvent);
+
+      if (!cytoscapeEvent) {
+        return;
       }
+
+      // cancel any active mouseIn timer
+      if (CytoscapeGraph.mouseInTimeout) {
+        clearTimeout(CytoscapeGraph.mouseInTimeout);
+        CytoscapeGraph.mouseInTimeout = null;
+      }
+
+      // start mouseOut timer
+      CytoscapeGraph.mouseOutTimeout = setTimeout(() => {
+        // timer expired so remove contextInfo
+        this.contextMenuRef!.current!.hideContextMenu(true);
+      }, CytoscapeGraph.hoverOutMs);
+
+      // remove highlighting
+      this.handleMouseOut(cytoscapeEvent);
     });
 
     cy.on('viewport', (evt: Cy.EventObject) => {
@@ -465,11 +561,37 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       }
     });
 
-    // 'fit' is a custom event that we emit allowing us to reset cytoscapeGraph.customViewport
-    cy.on('fit', (evt: Cy.EventObject) => {
+    // 'kiali-fit' is a custom event that we emit allowing us to reset cytoscapeGraph.customViewport
+    cy.on('kiali-fit', (evt: Cy.EventObject) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
       if (cytoscapeEvent) {
         this.customViewport = false;
+      }
+    });
+
+    // Crossing a zoom threshold can affect labeling, and so we need an update to re-render the labels.
+    // Some cy 'zoom' events need to be ignored, typically while a layout or drag-zoom 'box' event is
+    // in progress, as cy can generate unwanted 'intermediate' values.  So we set zoomIgnore=true, it will
+    // be set false after the update.
+    cy.on('zoom', (evt: Cy.EventObject) => {
+      const cytoscapeEvent = getCytoscapeBaseEvent(evt);
+      if (!cytoscapeEvent || this.zoomIgnore) {
+        return;
+      }
+
+      const oldZoom = this.zoom;
+      const newZoom = cy.zoom();
+      this.zoom = newZoom;
+
+      const thresholdCrossed = this.zoomThresholds!.some(zoomThresh => {
+        return (newZoom < zoomThresh && oldZoom >= zoomThresh) || (newZoom >= zoomThresh && oldZoom < zoomThresh);
+      });
+
+      if (thresholdCrossed) {
+        // Update state to re-render with the label changes.
+        // start a zoomIgnore which will end after the layout (this.processGraphUpdate()) completes.
+        this.zoomIgnore = true;
+        this.setState({ zoomThresholdTime: Date.now() });
       }
     });
 
@@ -628,13 +750,6 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     this.trafficRenderer!.pause();
 
     const isTheGraphSelected = cy.$(':selected').length === 0;
-    if (this.resetSelection) {
-      if (!isTheGraphSelected) {
-        this.selectTarget();
-        this.handleTap({ summaryType: 'graph', summaryTarget: cy });
-      }
-      this.resetSelection = false;
-    }
 
     const globalScratchData: CytoscapeGlobalScratchData = {
       activeNamespaces: this.props.graphData.fetchParams.namespaces,
@@ -698,6 +813,13 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
   }
 
   private finishGraphUpdate(cy: Cy.Core, isTheGraphSelected: boolean) {
+    // For reasons unknown, box label positions can be wrong after a graph update.
+    // It seems limited to outer nested compound nodes and looks like a cy bug to me,
+    // but maybe it has to do with either the html node-label extension, or our BoxLayout.
+    // Anyway, refreshing them here seems to fix the positioning (for now, just refresh
+    // box nodes, but we may find the need to do all nodes).
+    (cy as any).nodeHtmlLabel().updateNodeLabel(cy.nodes(':parent'));
+
     // We opt-in for manual selection to be able to control when to select a node/edge
     // https://github.com/cytoscape/cytoscape.js/issues/1145#issuecomment-153083828
     cy.nodes().unselectify();
@@ -712,16 +834,17 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       this.trafficRenderer!.start(cy.edges());
     }
 
+    // When the update is complete, set the resulting zoom level and re-enable zoom changes.
+    this.zoom = cy.zoom();
+    this.zoomIgnore = false;
+
     // notify that the graph has been updated
     if (this.props.setUpdateTime) {
       this.props.setUpdateTime(Date.now());
     }
   }
 
-  private selectTarget = (target?: Cy.NodeSingular | Cy.EdgeSingular | Cy.Core, isTapped: boolean = false) => {
-    if (this.props.isMiniGraph && isTapped) {
-      return;
-    }
+  private selectTarget = (target?: Cy.NodeSingular | Cy.EdgeSingular | Cy.Core) => {
     if (this.cy) {
       this.cy.$(':selected').selectify().unselect().unselectify();
       if (target && !isCore(target)) {
@@ -732,7 +855,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
 
   private selectTargetAndUpdateSummary = (target: Cy.NodeSingular | Cy.EdgeSingular) => {
     this.selectTarget(target);
-    const event: CytoscapeClickEvent = {
+    const event: CytoscapeEvent = {
       summaryType: target.data(CyNode.isBox) ? 'box' : 'node',
       summaryTarget: target
     };
@@ -742,13 +865,13 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     this.graphHighlighter!.onClick(event);
   };
 
-  private handleDoubleTap = (event: CytoscapeClickEvent) => {
+  private handleDoubleTap = (event: CytoscapeEvent) => {
     if (this.props.onNodeDoubleTap && CytoscapeGraph.isCyNodeClickEvent(event)) {
       this.props.onNodeDoubleTap(CytoscapeGraph.buildTapEventArgs(event) as GraphNodeTapEvent);
     }
   };
 
-  private handleTap = (event: CytoscapeClickEvent) => {
+  private handleTap = (event: CytoscapeEvent) => {
     if (this.props.updateSummary) {
       this.props.updateSummary(event);
     }
@@ -764,11 +887,11 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     }
   };
 
-  private handleMouseIn = (event: CytoscapeMouseInEvent) => {
+  private handleMouseIn = (event: CytoscapeEvent) => {
     this.graphHighlighter!.onMouseIn(event);
   };
 
-  private handleMouseOut = (event: CytoscapeMouseOutEvent) => {
+  private handleMouseOut = (event: CytoscapeEvent) => {
     this.graphHighlighter!.onMouseOut(event);
   };
 
@@ -788,7 +911,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     return needsRelayout;
   }
 
-  static isCyNodeClickEvent(event: CytoscapeClickEvent): boolean {
+  static isCyNodeClickEvent(event: CytoscapeEvent): boolean {
     const targetType = event.summaryType;
     if (targetType !== 'node' && targetType !== 'box') {
       return false;
@@ -797,7 +920,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     return true;
   }
 
-  static isCyEdgeClickEvent(event: CytoscapeClickEvent): boolean {
+  static isCyEdgeClickEvent(event: CytoscapeEvent): boolean {
     const targetType = event.summaryType;
     return targetType === 'edge';
   }

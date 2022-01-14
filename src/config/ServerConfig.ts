@@ -78,7 +78,23 @@ const defaultServerConfig: ComputedServerConfig = {
       enabled: true
     },
     istioInjectionAction: true,
-    istioUpgradeAction: false
+    istioUpgradeAction: false,
+    uiDefaults: {
+      graph: {
+        findOptions: [],
+        hideOptions: [],
+        settings: {
+          fontLabel: 13,
+          minFontBadge: 7,
+          minFontLabel: 10
+        },
+        traffic: {
+          grpc: 'requests',
+          http: 'requests',
+          tcp: 'sent'
+        }
+      }
+    }
   },
   prometheus: {
     globalScrapeInterval: 15,
@@ -110,6 +126,7 @@ export const setServerConfig = (cfg: ServerConfig) => {
     ...defaultServerConfig,
     ...cfg
   };
+
   serverConfig.healthConfig = cfg.healthConfig ? parseHealthConfig(cfg.healthConfig) : serverConfig.healthConfig;
 
   computeValidDurations(serverConfig);

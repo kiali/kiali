@@ -127,6 +127,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
               showTrafficAnimation={false}
               showIdleNodes={false}
               showVirtualServices={true}
+              summaryData={null}
             />
           </div>
         </CardBody>

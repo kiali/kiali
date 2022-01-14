@@ -20,7 +20,9 @@ import {
   summaryHeader,
   summaryBodyTabs,
   hr,
-  getDatapoints
+  getDatapoints,
+  summaryPanelWidth,
+  getTitle
 } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
 import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
@@ -112,10 +114,10 @@ export default class SummaryPanelNamespaceBox extends React.Component<
   static readonly panelStyle = {
     height: '100%',
     margin: 0,
-    minWidth: '25em',
+    minWidth: summaryPanelWidth,
     overflowY: 'auto' as 'auto',
     backgroundColor: PFColors.White,
-    width: '25em'
+    width: summaryPanelWidth
   };
 
   private boxTraffic?: SummaryPanelNamespaceBoxTraffic;
@@ -175,6 +177,7 @@ export default class SummaryPanelNamespaceBox extends React.Component<
     return (
       <div className="panel panel-default" style={SummaryPanelNamespaceBox.panelStyle}>
         <div className="panel-heading" style={summaryHeader}>
+          {getTitle('Namespace')}
           {this.renderNamespace(namespace)}
           <br />
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
@@ -580,7 +583,7 @@ export default class SummaryPanelNamespaceBox extends React.Component<
       })
       .catch(error => {
         if (error.isCanceled) {
-          console.debug('SummaryPanelGraph: Ignore fetch error (canceled).');
+          console.debug('SummaryPanelNamespaceBox: Ignore fetch error (canceled).');
           return;
         }
         const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;

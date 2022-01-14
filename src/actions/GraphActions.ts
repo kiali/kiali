@@ -1,5 +1,5 @@
 import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
-import { CytoscapeClickEvent, GraphDefinition, Layout, NodeParamsType, RankResult } from '../types/Graph';
+import { CytoscapeEvent, GraphDefinition, Layout, NodeParamsType, RankResult } from '../types/Graph';
 import { ActionKeys } from './ActionKeys';
 import { TimeInMilliseconds } from 'types/Common';
 
@@ -10,7 +10,7 @@ export const GraphActions = {
   setNode: createStandardAction(ActionKeys.GRAPH_SET_NODE)<NodeParamsType | undefined>(),
   setRankResult: createStandardAction(ActionKeys.GRAPH_SET_RANK_RESULT)<RankResult>(),
   setUpdateTime: createStandardAction(ActionKeys.GRAPH_SET_UPDATE_TIME)<TimeInMilliseconds>(),
-  updateSummary: createStandardAction(ActionKeys.GRAPH_UPDATE_SUMMARY)<CytoscapeClickEvent>()
+  updateSummary: createStandardAction(ActionKeys.GRAPH_UPDATE_SUMMARY)<CytoscapeEvent>()
 };
 
 export type GraphAction = ActionType<typeof GraphActions>;

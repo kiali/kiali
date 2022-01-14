@@ -11,7 +11,7 @@ import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSe
 import { MessageType } from '../../types/MessageCenter';
 import Namespace from '../../types/Namespace';
 import {
-  CytoscapeClickEvent,
+  CytoscapeEvent,
   DecoratedGraphElements,
   EdgeLabelMode,
   GraphDefinition,
@@ -67,6 +67,7 @@ import { JaegerTrace } from 'types/JaegerInfo';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import GraphTour from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
+import { EdgeContextMenu } from 'components/CytoscapeGraph/ContextMenu/EdgeContextMenu';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -122,7 +123,7 @@ type ReduxProps = {
   trafficRates: TrafficRate[];
   toggleIdleNodes: () => void;
   toggleLegend: () => void;
-  updateSummary: (event: CytoscapeClickEvent) => void;
+  updateSummary: (event: CytoscapeEvent) => void;
 };
 
 export type GraphPageProps = RouteComponentProps<Partial<GraphURLPathProps>> & ReduxProps;
@@ -433,7 +434,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
               {(!this.props.replayActive || isReplayReady) && (
                 <CytoscapeGraph
                   containerClassName={cytoscapeGraphContainerStyle}
-                  contextMenuGroupComponent={NodeContextMenuContainer}
+                  contextMenuEdgeComponent={EdgeContextMenu}
                   contextMenuNodeComponent={NodeContextMenuContainer}
                   focusSelector={this.focusSelector}
                   graphData={this.state.graphData}
@@ -736,7 +737,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   startTour: bindActionCreators(TourActions.startTour, dispatch),
   toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),
   toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch),
-  updateSummary: (event: CytoscapeClickEvent) => dispatch(GraphActions.updateSummary(event))
+  updateSummary: (event: CytoscapeEvent) => dispatch(GraphActions.updateSummary(event))
 });
 
 const GraphPageContainer = connect(mapStateToProps, mapDispatchToProps)(GraphPage);

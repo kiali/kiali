@@ -7,6 +7,7 @@ import { toVCLine } from 'utils/VictoryChartsUtils';
 import { SparklineChart } from 'components/Charts/SparklineChart';
 
 import 'components/Charts/Charts.css';
+import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
 
 export type ResponseTimeUnit = 's' | 'ms';
 type ResponseTimeChartTypeProp = {
@@ -43,9 +44,7 @@ export class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp
       <>
         {!this.props.hide && (
           <div>
-            <div>
-              <strong>{this.props.label}:</strong>
-            </div>
+            <div className={summaryTitle}>{this.props.label}</div>{' '}
             {this.thereIsTrafficData() ? (
               <SparklineChart
                 name={'rt'}

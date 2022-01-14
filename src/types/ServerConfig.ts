@@ -37,9 +37,16 @@ interface GraphTraffic {
   tcp: string;
 }
 
+interface GraphSettings {
+  fontLabel: number;
+  minFontBadge: number;
+  minFontLabel: number;
+}
+
 interface GraphUIDefaults {
   findOptions: GraphFindOption[];
   hideOptions: GraphFindOption[];
+  settings: GraphSettings;
   traffic: GraphTraffic;
 }
 
@@ -58,7 +65,7 @@ interface KialiFeatureFlags {
   certificatesInformationIndicators: CertificatesInformationIndicators;
   istioInjectionAction: boolean;
   istioUpgradeAction: boolean;
-  uiDefaults?: UIDefaults;
+  uiDefaults: UIDefaults;
 }
 
 interface IstioCanaryRevision {

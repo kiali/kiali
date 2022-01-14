@@ -218,9 +218,7 @@ export interface CytoscapeBaseEvent {
   summaryTarget: any; // the cytoscape element that was the target of the event
 }
 
-export interface CytoscapeClickEvent extends CytoscapeBaseEvent {}
-export interface CytoscapeMouseInEvent extends CytoscapeBaseEvent {}
-export interface CytoscapeMouseOutEvent extends CytoscapeBaseEvent {}
+export interface CytoscapeEvent extends CytoscapeBaseEvent {}
 
 // Graph Structures
 
@@ -281,6 +279,17 @@ export const hasProtocolTraffic = (protocolTraffic: ProtocolTraffic): protocolTr
     (protocolTraffic as ProtocolWithTraffic).rates !== undefined &&
     (protocolTraffic as ProtocolWithTraffic).responses !== undefined
   );
+};
+
+export const prettyProtocol = (protocol: ValidProtocols): string => {
+  switch (protocol.toLowerCase()) {
+    case 'http':
+      return 'HTTP';
+    case 'tcp':
+      return 'TCP';
+    default:
+      return 'gRPC';
+  }
 };
 
 export interface DestService {

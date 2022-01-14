@@ -2,18 +2,21 @@
 
 exports[`GraphLegend test should render correctly 1`] = `
 <div
-  className="f19vkxmv"
+  className="fsg7me4"
+  style={
+    Object {
+      "fontSize": "var(--graph-side-panel--font-size)",
+    }
+  }
 >
   <div
-    className="f1xvjjtv"
+    className="fsgo6a1 f1bv0l2s"
   >
-    <span
-      className="f1i76bsh"
-    >
+    <span>
       Legend
     </span>
     <span
-      className="f1vrdyv8"
+      className="f1blspom"
     >
       <Tooltip
         appendTo={[Function]}
@@ -62,525 +65,583 @@ exports[`GraphLegend test should render correctly 1`] = `
     </span>
   </div>
   <div
-    className="f1hnvrw2"
+    className="f6nw80o"
   >
-    <div
-      className="fkhz08q"
-    >
+    <div>
       <div
-        className="fls9dm1"
+        className="f10krlro"
       >
         <div
-          className="f1unvj7z"
+          className="fng0jlu"
           key="Node Shapes"
         >
           Node Shapes
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Workload"
                 src="node.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Workload
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="app.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="App"
                 src="app.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               App
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="aggregate.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Operation"
                 src="aggregate.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Operation
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="service.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Service"
                 src="service.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Service
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="service-entry.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Service Entry"
                 src="service-entry.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Service Entry
             </span>
           </div>
         </div>
         <div
-          className="f1unvj7z"
+          className="fng0jlu"
           key="Node Colors"
         >
           Node Colors
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node-color-normal.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Normal"
                 src="node-color-normal.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Normal
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node-color-warning.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Warn"
                 src="node-color-warning.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Warn
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node-color-danger.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Danger"
                 src="node-color-danger.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Danger
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node-color-idle.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Idle"
                 src="node-color-idle.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Idle
             </span>
           </div>
         </div>
         <div
-          className="f1unvj7z"
+          className="fng0jlu"
           key="Node Background"
         >
           Node Background
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="external-namespace.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Unselected Namespace"
                 src="external-namespace.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Unselected Namespace
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="restricted-namespace.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Restricted / External"
                 src="restricted-namespace.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Restricted / External
             </span>
           </div>
         </div>
         <div
-          className="f1unvj7z"
+          className="fng0jlu"
           key="Edges"
         >
           Edges
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="edge-danger.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Failure"
                 src="edge-danger.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Failure
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="edge-warn.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Degraded"
                 src="edge-warn.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Degraded
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="edge-success.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Healthy"
                 src="edge-success.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Healthy
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="edge-tcp.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="TCP Connection"
                 src="edge-tcp.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               TCP Connection
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="edge-idle.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Idle"
                 src="edge-idle.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Idle
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="mtls-badge.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="mTLS (badge)"
                 src="mtls-badge.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               mTLS (badge)
             </span>
           </div>
         </div>
         <div
-          className="f1unvj7z"
+          className="fng0jlu"
           key="Traffic Animation"
         >
           Traffic Animation
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="traffic-normal-request.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Normal Request"
                 src="traffic-normal-request.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Normal Request
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="traffic-failed-request.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Failed Request"
                 src="traffic-failed-request.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Failed Request
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="traffic-tcp.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="TCP Traffic"
                 src="traffic-tcp.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               TCP Traffic
             </span>
           </div>
         </div>
         <div
-          className="f1unvj7z"
+          className="fng0jlu"
           key="Node Badges"
         >
           Node Badges
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node-badge-circuit-breaker.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Circuit Breaker"
                 src="node-badge-circuit-breaker.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Circuit Breaker
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node-badge-fault-injection.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Fault Injection"
                 src="node-badge-fault-injection.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Fault Injection
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node-badge-gateways.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Gateway"
                 src="node-badge-gateways.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Gateway
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node-badge-mirroring.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Mirroring"
                 src="node-badge-mirroring.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Mirroring
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node-badge-missing-sidecar.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Missing Sidecar"
                 src="node-badge-missing-sidecar.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Missing Sidecar
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node-badge-request-timeout.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Request Timeout"
                 src="node-badge-request-timeout.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Request Timeout
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node-badge-traffic-shifting.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
-                alt="Traffic Shifting/TCP Traffic Shifting"
+                alt="Traffic Shifting / TCP Traffic Shifting"
                 src="node-badge-traffic-shifting.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
-              Traffic Shifting/TCP Traffic Shifting
+              Traffic Shifting / TCP Traffic Shifting
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node-badge-traffic-source.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Traffic Source"
                 src="node-badge-traffic-source.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Traffic Source
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node-badge-virtual-services.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
-                alt="Virtual Service/Request Routing"
+                alt="Virtual Service / Request Routing"
                 src="node-badge-virtual-services.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
-              Virtual Service/Request Routing
+              Virtual Service / Request Routing
             </span>
           </div>
           <div
-            className="f1n8a700"
+            className="f13es1gb"
             key="node-badge-workload-entry.svg"
           >
-            <span>
+            <span
+              className="f1irbq61"
+            >
               <img
                 alt="Workload Entry"
                 src="node-badge-workload-entry.svg"
               />
             </span>
             <span
-              className="f1hob5wc"
+              className="fgzdi7m"
             >
               Workload Entry
             </span>

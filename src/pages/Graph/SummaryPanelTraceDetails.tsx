@@ -25,7 +25,7 @@ import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils
 import FocusAnimation from 'components/CytoscapeGraph/FocusAnimation';
 import { FormattedTraceInfo, shortIDStyle } from 'components/JaegerIntegration/JaegerResults/FormattedTraceInfo';
 import SimplerSelect from 'components/SimplerSelect';
-import { summaryFont } from './SummaryPanelCommon';
+import { summaryFont, summaryTitle } from './SummaryPanelCommon';
 import { NodeParamsType, GraphType } from 'types/Graph';
 import { bindActionCreators } from 'redux';
 import responseFlags from 'utils/ResponseFlags';
@@ -42,11 +42,6 @@ type Props = {
 type State = {
   selectedSpanID: string | undefined;
 };
-
-const textHeaderStyle = style({
-  fontWeight: 'bold',
-  fontSize: '16px'
-});
 
 const closeBoxStyle = style({
   float: 'right',
@@ -124,14 +119,16 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
     }
     return (
       <>
-        <span className={textHeaderStyle}>Trace</span>
-        <span className={closeBoxStyle}>
-          <Tooltip content="Close and clear trace selection">
-            <Button id="close-trace" variant="plain" onClick={this.props.close}>
-              <CloseIcon />
-            </Button>
-          </Tooltip>
-        </span>
+        <div className={summaryTitle}>
+          <span>Trace</span>
+          <span className={closeBoxStyle}>
+            <Tooltip content="Close and clear trace selection">
+              <Button id="close-trace" variant="plain" onClick={this.props.close}>
+                <CloseIcon />
+              </Button>
+            </Tooltip>
+          </span>
+        </div>
         <div>
           {tracesDetailsURL ? (
             <Tooltip content={`View trace details for: ${info.name()}`}>

@@ -1,18 +1,39 @@
-import { BoxByType, CytoscapeClickEvent, CytoscapeMouseInEvent, CytoscapeMouseOutEvent } from '../../../types/Graph';
+import { BoxByType, CytoscapeBaseEvent } from '../../../types/Graph';
 import { CyNode } from '../CytoscapeGraphUtils';
 import { DimClass, HoveredClass, HighlightClass } from './GraphStyles';
 
-// When a node or edge is selected we highlight the end-to-end paths (nodes and edges) for which the
-// element participates.  Other nodes and edges are dimmed.
+// There are three special states for a Node or Edge:
 //
-// When no node or edge is selected, hovering on a node or edge will highlight it and its neighborhood. Other
-// nodes and edges are dimmed.
+//   - selected: The node has been single-clicked and is 'selected' in cytoscape
+//   - hovered: The mouse is currently over the element.  It is marked with HoveredClass
+//   - highlighted: The element is to be emphasized (see below).  It is marked with HighlightClass.
 //
-// When a box is selected, we will highlight the contained nodes and their related nodes (including edges).
+// When a node or edge is selected:
+//   - highlight the end-to-end paths (nodes and edges) for which the element participates.
+//   - dim the unhighlighted elements
+//   - hovering is ignored while an element is selected
+//
+// When a box is selected:
+//   - highlight the contained nodes and their related nodes (including edges).
+//
+// When no element is selected and a node is hovered:
+//   - mark the node, and only that node, as Hovered and Highlighted.
+//   - all other elements are undecorated.
+//
+// When no element is selected and an edge is hovered:
+//   - mark the edge, and only that edge, as Hovered and Highlighted.
+//   - mark the source and destination nodes as Highlighted.
+//   - all other elements are undecorated.
+//
+// When a boxed node is highlighted it's surrounding boxes are highlighted as well.
+//
+// Note that this code is responsible only for maintaining the element class assignments, the actual
+// visualization changes, given the class assignments, is up to GraphStyles.ts.
+//
 export class GraphHighlighter {
   cy: any;
-  selected: CytoscapeClickEvent;
-  hovered?: CytoscapeMouseInEvent;
+  selected: CytoscapeBaseEvent;
+  hovered?: CytoscapeBaseEvent;
 
   constructor(cy: any) {
     this.cy = cy;
@@ -25,7 +46,7 @@ export class GraphHighlighter {
   // Need to define these methods using the "public class fields syntax", to be able to keep
   // *this* binded when passing it to events handlers (or use the annoying syntax)
   // https://reactjs.org/docs/handling-events.html
-  onClick = (event: CytoscapeClickEvent) => {
+  onClick = (event: CytoscapeBaseEvent) => {
     // ignore clicks on the currently selected element
     if (this.selected.summaryTarget === event.summaryTarget) {
       return;
@@ -48,17 +69,16 @@ export class GraphHighlighter {
     }
   };
 
-  onMouseIn = (event: CytoscapeMouseInEvent) => {
-    // only highlight on hover when the graph is currently selected, otherwise leave the
-    // selected element highlighted
-    if (this.selected.summaryType === 'graph' && ['node', 'edge', 'box'].indexOf(event.summaryType) !== -1) {
+  onMouseIn = (event: CytoscapeBaseEvent) => {
+    // only set Hovered when the graph is currently selected, otherwise just leave the selected element as-is
+    if (this.selected.summaryType === 'graph' && ['node', 'edge', 'box'].includes(event.summaryType)) {
       this.hovered = event;
       this.hovered.summaryTarget.addClass(HoveredClass);
       this.refresh();
     }
   };
 
-  onMouseOut = (event: CytoscapeMouseOutEvent) => {
+  onMouseOut = (event: CytoscapeBaseEvent) => {
     if (this.hovered && this.hovered.summaryTarget === event.summaryTarget) {
       this.clearHover();
       this.unhighlight();
@@ -120,20 +140,19 @@ export class GraphHighlighter {
   }
 
   getEdgeHighlight(edge: any, isHover: boolean) {
-    let elems;
-    if (isHover) {
-      elems = edge.connectedNodes();
-    } else {
-      const source = edge.source();
-      const target = edge.target();
-      elems = source.add(target).add(source.predecessors()).add(target.successors());
+    const source = edge.source();
+    const target = edge.target();
+    let elems = source.add(target);
+
+    if (!isHover) {
+      elems = elems.add(source.predecessors()).add(target.successors());
     }
     return this.includeAncestorNodes(elems.add(edge));
   }
 
   getBoxHighlight(box: any, isHover: boolean): { toHighlight: any; dimOthers: boolean } {
     // treat App boxes in a typical way, but to reduce "flashing", Namespace and Cluster
-    // boxes highlight themselves and there anscestors.
+    // boxes highlight themselves and their anscestors.
     if (box.data(CyNode.isBox) === BoxByType.APP) {
       let elems;
       if (isHover) {

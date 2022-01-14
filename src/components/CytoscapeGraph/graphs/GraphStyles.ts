@@ -13,7 +13,7 @@ import {
   TrafficRate,
   UNKNOWN
 } from '../../../types/Graph';
-import { icons } from '../../../config';
+import { icons, serverConfig } from '../../../config';
 import NodeImageTopology from '../../../assets/img/node-background-topology.png';
 import NodeImageKey from '../../../assets/img/node-background-key.png';
 import { CyNode, decoratedEdgeData, decoratedNodeData } from '../CytoscapeGraphUtils';
@@ -36,10 +36,11 @@ const EdgeIconMTLS = icons.istio.mtls.ascii; // lock
 let EdgeTextOutlineColor: PFColorVal;
 const EdgeTextOutlineWidth = '1px';
 const EdgeTextFont = 'Verdana,Arial,Helvetica,sans-serif,pficon';
-const EdgeTextFontSize = '6px';
-const EdgeTextFontSizeHover = '10px';
 const EdgeWidth = 2;
 const EdgeWidthSelected = 4;
+const FontSizeRatioEdgeText = 0.8;
+const FontSizeRatioHover = 1.2;
+const FontSizeRatioHoverBox = 1.3;
 const NodeBorderWidth = '1px';
 const NodeBorderWidthSelected = '3px';
 let NodeColorBorder: PFColorVal;
@@ -71,34 +72,27 @@ const NodeTextColor = PFColors.Black1000;
 const NodeTextColorBox = PFColors.White;
 const NodeTextBackgroundColor = PFColors.White;
 const NodeTextBackgroundColorBox = PFColors.Black700;
-const NodeBadgeBackgroundColor = PFColors.Purple400;
+const NodeBadgeBackgroundColor = PFColors.Purple500;
 const NodeBadgeColor = PFColors.White;
-const NodeBadgeFontSize = '12px';
 const NodeTextFont = EdgeTextFont;
-const NodeTextFontSize = '8px';
-const NodeTextFontSizeBox = '10px';
-const NodeTextFontSizeHover = '11px';
-const NodeTextFontSizeHoverBox = '13px';
 const NodeWidth = NodeHeight;
 
 // Puts a little more space between icons when a badge has multiple icons
-const iconMargin = (existingIcons: string) =>
+const badgeMargin = (existingIcons: string) =>
   existingIcons === '' ? style({ marginLeft: '1px' }) : style({ marginRight: '2px' });
 
-const iconsDefault = style({
+const badgesDefault = style({
   alignItems: 'center',
   backgroundColor: NodeBadgeBackgroundColor,
   borderTopLeftRadius: '3px',
   borderBottomLeftRadius: '3px',
   color: NodeBadgeColor,
   display: 'flex',
-  fontSize: NodeBadgeFontSize,
   padding: '3px 3px'
 });
 
 const contentBoxPfBadge = style({
   backgroundColor: PFColors.Badge,
-  fontSize: NodeTextFontSizeBox,
   marginRight: '5px',
   minWidth: '24px', // reduce typical minWidth for badge to save label space
   paddingLeft: '0px',
@@ -111,15 +105,12 @@ const contentDefault = style({
   borderRadius: '3px',
   borderWidth: '1px',
   color: NodeTextColor,
-  display: 'flex',
-  fontSize: NodeTextFontSize,
   padding: '3px 5px'
 });
 
 const contentBox = style({
   backgroundColor: NodeTextBackgroundColorBox,
-  color: NodeTextColorBox,
-  fontSize: NodeTextFontSizeBox
+  color: NodeTextColorBox
 });
 
 const contentWithBadges = style({
@@ -133,9 +124,9 @@ const contentWithBadges = style({
 const hostsClass = style({
   borderTop: `1px solid ${PFColors.Black600}`,
   textAlign: 'initial',
-  fontSize: NodeTextFontSize,
   marginTop: '0.5em',
   paddingTop: '0.5em',
+  display: 'block',
   $nest: {
     '& div:last-child': {
       display: 'none'
@@ -154,10 +145,8 @@ const labelDefault = style({
   boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 2px 8px 0 rgba(0, 0, 0, 0.19)',
   display: 'inline-flex',
   fontFamily: NodeTextFont,
-  fontSize: '0',
   fontWeight: 'normal',
   marginTop: '4px',
-  lineHeight: '11px',
   textAlign: 'center'
 });
 
@@ -203,6 +192,11 @@ export class GraphStyles {
   }
 
   static getNodeLabel(ele: Cy.NodeSingular) {
+    const settings = serverConfig.kialiFeatureFlags.uiDefaults.graph.settings;
+    const zoom = ele.cy().zoom();
+    const noBadge = zoom < settings.minFontBadge / settings.fontLabel;
+    const noContent = zoom < settings.minFontLabel / settings.fontLabel;
+
     const getCyGlobalData = (ele: Cy.NodeSingular): CytoscapeGlobalScratchData => {
       return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
     };
@@ -230,13 +224,15 @@ export class GraphStyles {
     const isMultiNamespace = cyGlobal.activeNamespaces.length > 1;
     const isOutside = node.isOutside;
 
-    let icons = '';
+    // Badges portion of label...
+
+    let badges = '';
     if (cyGlobal.showMissingSidecars && node.hasMissingSC) {
-      icons = `<span class="${NodeIconMS} ${iconMargin(icons)}"></span> ${icons}`;
+      badges = `<span class="${NodeIconMS} ${badgeMargin(badges)}"></span> ${badges}`;
     }
     if (cyGlobal.showVirtualServices) {
       if (node.hasCB) {
-        icons = `<span class="${NodeIconCB} ${iconMargin(icons)}"></span> ${icons}`;
+        badges = `<span class="${NodeIconCB} ${badgeMargin(badges)}"></span> ${badges}`;
       }
       // If there's an additional traffic scenario present then it's assumed
       // that there is a VS present so the VS badge is omitted.
@@ -249,61 +245,65 @@ export class GraphStyles {
           node.hasTCPTrafficShifting ||
           node.hasTrafficShifting;
         if (!hasKialiScenario) {
-          icons = `<span class="${NodeIconVS} ${iconMargin(icons)}"></span> ${icons}`;
+          badges = `<span class="${NodeIconVS} ${badgeMargin(badges)}"></span> ${badges}`;
         } else {
           if (node.hasFaultInjection) {
-            icons = `<span class="${NodeIconFaultInjection} ${iconMargin(icons)}"></span> ${icons}`;
+            badges = `<span class="${NodeIconFaultInjection} ${badgeMargin(badges)}"></span> ${badges}`;
           }
           if (node.hasMirroring) {
-            icons = `<span class="${NodeIconMirroring}  ${iconMargin(icons)} ${style({
+            badges = `<span class="${NodeIconMirroring}  ${badgeMargin(badges)} ${style({
               marginTop: '1px'
-            })}"></span> ${icons}`;
+            })}"></span> ${badges}`;
           }
           if (node.hasTrafficShifting || node.hasTCPTrafficShifting) {
-            icons = `<span class="${NodeIconTrafficShifting} ${iconMargin(icons)}"></span> ${icons}`;
+            badges = `<span class="${NodeIconTrafficShifting} ${badgeMargin(badges)}"></span> ${badges}`;
           }
           if (node.hasRequestTimeout) {
-            icons = `<span class="${NodeIconRequestTimeout} ${iconMargin(icons)}"></span> ${icons}`;
+            badges = `<span class="${NodeIconRequestTimeout} ${badgeMargin(badges)}"></span> ${badges}`;
           }
           if (node.hasRequestRouting) {
-            icons = `<span class="${NodeIconRequestRouting} ${iconMargin(icons)}"></span> ${icons}`;
+            badges = `<span class="${NodeIconRequestRouting} ${badgeMargin(badges)}"></span> ${badges}`;
           }
+        }
+      }
+
+      if (node.hasWorkloadEntry) {
+        badges = `<span class="${NodeIconWorkloadEntry} ${badgeMargin(badges)}"></span> ${badges}`;
+      }
+      if (node.isRoot) {
+        if (node.isGateway?.ingressInfo?.hostnames?.length !== undefined) {
+          badges = `<span class="${NodeIconGateway} ${badgeMargin(badges)}"></span> ${badges}`;
+        }
+        badges = `<span class="${NodeIconRoot} ${badgeMargin(badges)}"></span> ${badges}`;
+      } else {
+        if (node.isGateway?.egressInfo?.hostnames?.length !== undefined) {
+          badges = `<span class="${NodeIconGateway} ${badgeMargin(badges)}"></span> ${badges}`;
         }
       }
     }
 
-    if (node.hasWorkloadEntry) {
-      icons = `<span class="${NodeIconWorkloadEntry} ${iconMargin(icons)}"></span> ${icons}`;
+    const hasBadges = badges.length > 0;
+    const noLabel = noContent && (noBadge || !hasBadges);
+
+    if (hasBadges) {
+      const badgesStyle = noLabel || !noBadge ? '' : 'display:none;';
+      badges = `<div class="${badgesDefault}" style="${badgesStyle}">${badges}</div>`;
     }
 
-    if (node.isRoot) {
-      if (node.isGateway?.ingressInfo?.hostnames?.length !== undefined) {
-        icons = `<span class='${NodeIconGateway} ${iconMargin(icons)}'></span> ${icons}`;
-      }
-      icons = `<span class='${NodeIconRoot} ${iconMargin(icons)}'></span> ${icons}`;
-    } else {
-      if (node.isGateway?.egressInfo?.hostnames?.length !== undefined) {
-        icons = `<span class='${NodeIconGateway} ${iconMargin(icons)}'></span> ${icons}`;
-      }
-    }
-
-    const hasIcon = icons.length > 0;
-    if (hasIcon) {
-      icons = `<div class=${iconsDefault}>${icons}</div>`;
-    }
-
-    let labelStyle = '';
-    if (ele.hasClass(HighlightClass)) {
-      labelStyle += 'font-size: ' + NodeTextFontSizeHover + ';';
-    }
-    if (ele.hasClass(DimClass)) {
-      labelStyle += 'opacity: 0.6;';
-    }
+    // Content portion of label (i.e. the text)...
 
     let contentStyle = '';
     if (ele.hasClass(HighlightClass)) {
-      const fontSize = isBox && isBox !== BoxByType.APP ? NodeTextFontSizeHoverBox : NodeTextFontSizeHover;
-      contentStyle += 'font-size: ' + fontSize + ';';
+      const fontSize =
+        isBox && isBox !== BoxByType.APP
+          ? settings.fontLabel * FontSizeRatioHoverBox
+          : settings.fontLabel * FontSizeRatioHover;
+      contentStyle = `font-size:${fontSize}px;`;
+    } else {
+      contentStyle = `font-size:${settings.fontLabel}px;`;
+    }
+    if (!noLabel && noContent) {
+      contentStyle += 'display:none;';
     }
 
     const content: string[] = [];
@@ -380,27 +380,42 @@ export class GraphStyles {
     }
 
     const contentText = content.join('<br/>');
-    const contentClasses = hasIcon ? `${contentDefault} ${contentWithBadges}` : `${contentDefault}`;
-    let appBoxStyle = '';
+    const contentClasses = hasBadges && !noBadge ? `${contentDefault} ${contentWithBadges}` : `${contentDefault}`;
+
+    // The final label...
+    let fontSize = settings.fontLabel;
+    if (ele.hasClass(HighlightClass)) {
+      fontSize = fontSize * FontSizeRatioHover;
+    }
+    const lineHeight = fontSize + 1;
+    let labelStyle = `font-size:${fontSize}px;line-height:${lineHeight}px;`;
+    if (ele.hasClass(DimClass)) {
+      labelStyle += 'opacity:0.6;';
+    }
+    if (noLabel) {
+      labelStyle += 'display:none;';
+    }
+
     if (isBox) {
-      let badge = '';
+      let appBoxStyle = '';
+      let pfBadge = '';
       switch (isBox) {
         case BoxByType.APP:
-          badge = PFBadges.App.badge;
-          appBoxStyle += `font-size: ${NodeTextFontSize};`;
+          pfBadge = PFBadges.App.badge;
+          appBoxStyle += `font-size: ${settings.fontLabel}px;`;
           break;
         case BoxByType.CLUSTER:
-          badge = PFBadges.Cluster.badge;
+          pfBadge = PFBadges.Cluster.badge;
           break;
         case BoxByType.NAMESPACE:
-          badge = PFBadges.Namespace.badge;
+          pfBadge = PFBadges.Namespace.badge;
           break;
         default:
           console.warn(`GraphSyles: Unexpected box [${isBox}] `);
       }
-      const contentBadge = `<span class="pf-c-badge pf-m-unread ${contentBoxPfBadge}" style="${appBoxStyle}">${badge}</span>`;
-      const contentSpan = `<span class="${contentClasses} ${contentBox}" style=" ${appBoxStyle}${contentStyle}">${contentBadge}${contentText}</span>`;
-      return `<div class="${labelDefault} ${labelBox}" style="${labelStyle}">${icons}${contentSpan}</div>`;
+      const contentPfBadge = `<span class="pf-c-badge pf-m-unread ${contentBoxPfBadge}" style="${appBoxStyle}">${pfBadge}</span>`;
+      const contentSpan = `<span class="${contentClasses} ${contentBox}" style="${appBoxStyle} ${contentStyle}">${contentPfBadge}${contentText}</span>`;
+      return `<div class="${labelDefault} ${labelBox}" style="${labelStyle}">${badges}${contentSpan}</div>`;
     }
 
     let hosts: string[] = [];
@@ -419,13 +434,13 @@ export class GraphStyles {
             : `${hosts.length - config.graph.maxHosts} more hosts...`
         );
       }
-      htmlHosts = `<div class='${hostsClass}'><div>${hosts.length} ${
+      htmlHosts = `<div class="${hostsClass}"><div>${hosts.length} ${
         hosts.length === 1 ? 'host' : 'hosts'
-      }</div><div>${hostsToShow.join('<br/>')}</div></div>`;
+      }</div><div>${hostsToShow.join('<br />')}</div></div>`;
     }
 
-    const contentSpan = `<div class="${contentClasses}" style="display: block; ${contentStyle}"><div>${contentText}</div><div></div>${htmlHosts}</div></div>`;
-    return `<div class="${labelDefault}" style="${labelStyle}">${icons}${contentSpan}</div>`;
+    const contentSpan = `<div class="${contentClasses}" style="${contentStyle}"><div>${contentText}</div>${htmlHosts}</div></div>`;
+    return `<div class="${labelDefault}" style="${labelStyle}">${badges}${contentSpan}</div>`;
   }
 
   static htmlNodeLabels(cy: Cy.Core) {
@@ -477,6 +492,14 @@ export class GraphStyles {
     };
 
     const getEdgeLabel = (ele: Cy.EdgeSingular, isVerbose?: boolean): string => {
+      const settings = serverConfig.kialiFeatureFlags.uiDefaults.graph.settings;
+      const zoom = ele.cy().zoom();
+      const noLabel = zoom < settings.minFontLabel / settings.fontLabel;
+
+      if (noLabel) {
+        return '';
+      }
+
       const cyGlobal = getCyGlobalData(ele);
       const edgeLabels = cyGlobal.edgeLabels;
       const edgeData = decoratedEdgeData(ele);
@@ -766,13 +789,6 @@ export class GraphStyles {
         selector: 'node:selected',
         style: nodeSelectedStyle
       },
-      // Node is highlighted (see GraphHighlighter.ts)
-      {
-        selector: `node.${HighlightClass}`,
-        style: {
-          'font-size': NodeTextFontSizeHover
-        }
-      },
       // Node other than Box is highlighted (see GraphHighlighter.ts)
       {
         selector: `node.${HighlightClass}[^isBox]`,
@@ -811,7 +827,9 @@ export class GraphStyles {
         css: {
           'curve-style': 'bezier',
           'font-family': EdgeTextFont,
-          'font-size': EdgeTextFontSize,
+          'font-size': `${
+            serverConfig.kialiFeatureFlags.uiDefaults.graph.settings.fontLabel * FontSizeRatioEdgeText
+          }px`,
           label: (ele: Cy.EdgeSingular) => {
             return getEdgeLabel(ele);
           },
@@ -847,14 +865,14 @@ export class GraphStyles {
       {
         selector: `edge.${HighlightClass}`,
         style: {
-          'font-size': EdgeTextFontSizeHover
+          'font-size': `${serverConfig.kialiFeatureFlags.uiDefaults.graph.settings.fontLabel}px`
         }
       },
       {
         selector: `edge.${HoveredClass}`,
         style: {
           label: (ele: Cy.EdgeSingular) => {
-            return getEdgeLabel(ele, true);
+            return getEdgeLabel(ele);
           }
         }
       },

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { style } from 'typestyle';
-import { SummaryPanelPropType, BoxByType } from '../../types/Graph';
+import { SummaryPanelPropType, BoxByType, SummaryData } from '../../types/Graph';
 import SummaryPanelEdge from './SummaryPanelEdge';
 import SummaryPanelGraph from './SummaryPanelGraph';
 import SummaryPanelAppBox from './SummaryPanelAppBox';
@@ -15,6 +15,7 @@ import SummaryPanelNamespaceBox from './SummaryPanelNamespaceBox';
 import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import TourStopContainer from 'components/Tour/TourStop';
+import { summaryPanelWidth } from './SummaryPanelCommon';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -45,8 +46,8 @@ const collapsedStyle = style({
 
 const summaryPanelBottomSplit = style({
   height: '50%',
-  width: '25em',
-  minWidth: '25em',
+  width: summaryPanelWidth,
+  minWidth: summaryPanelWidth,
   overflowY: 'auto'
 });
 
@@ -54,12 +55,12 @@ const toggleSidePanelStyle = style({
   backgroundColor: 'white',
   border: '1px #ddd solid',
   borderRadius: '3px',
+  bottom: 0,
   cursor: 'pointer',
   left: '-1.6em',
   minWidth: '5em',
   position: 'absolute',
   textAlign: 'center',
-  top: '6.5em',
   transform: 'rotate(-90deg)',
   transformOrigin: 'left top 0'
 });
@@ -82,15 +83,13 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
     if (!this.props.isPageVisible || !this.props.data.summaryTarget) {
       return null;
     }
-    const summaryType = this.props.data.summaryType as string;
-    const boxType: BoxByType | undefined =
-      summaryType === 'box' ? this.props.data.summaryTarget.data(CyNode.isBox) : undefined;
 
     const mainTopStyle = this.state.isVisible
       ? this.props.jaegerState.selectedTrace
         ? expandedHalfStyle
         : expandedStyle
       : collapsedStyle;
+
     return (
       <TourStopContainer info={[GraphTourStops.Graph, GraphTourStops.ContextualMenu, GraphTourStops.SidePanel]}>
         <div id="graph-side-panel" className={mainStyle}>
@@ -106,72 +105,7 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
                 </>
               )}
             </div>
-            {summaryType === 'box' && boxType === 'app' && (
-              <SummaryPanelAppBox
-                data={this.props.data}
-                duration={this.props.duration}
-                graphType={this.props.graphType}
-                injectServiceNodes={this.props.injectServiceNodes}
-                namespaces={this.props.data.summaryTarget.namespaces}
-                queryTime={this.props.queryTime}
-                rateInterval={this.props.rateInterval}
-                step={this.props.step}
-                trafficRates={this.props.trafficRates}
-              />
-            )}
-            {summaryType === 'box' && boxType === 'cluster' && (
-              <SummaryPanelClusterBox
-                data={this.props.data}
-                duration={this.props.duration}
-                graphType={this.props.graphType}
-                injectServiceNodes={this.props.injectServiceNodes}
-                namespaces={this.props.data.summaryTarget.namespaces}
-                queryTime={this.props.queryTime}
-                rateInterval={this.props.rateInterval}
-                step={this.props.step}
-                trafficRates={this.props.trafficRates}
-              />
-            )}
-            {summaryType === 'box' && boxType === 'namespace' && (
-              <SummaryPanelNamespaceBox
-                data={this.props.data}
-                duration={this.props.duration}
-                graphType={this.props.graphType}
-                injectServiceNodes={this.props.injectServiceNodes}
-                namespaces={this.props.data.summaryTarget.namespaces}
-                queryTime={this.props.queryTime}
-                rateInterval={this.props.rateInterval}
-                step={this.props.step}
-                trafficRates={this.props.trafficRates}
-              />
-            )}
-            {summaryType === 'edge' && <SummaryPanelEdge {...this.props} />}
-            {summaryType === 'graph' && (
-              <SummaryPanelGraph
-                data={this.props.data}
-                duration={this.props.duration}
-                graphType={this.props.graphType}
-                injectServiceNodes={this.props.injectServiceNodes}
-                namespaces={this.props.namespaces}
-                queryTime={this.props.queryTime}
-                rateInterval={this.props.rateInterval}
-                step={this.props.step}
-                trafficRates={this.props.trafficRates}
-              />
-            )}
-            {this.props.data.summaryType === 'node' && (
-              <SummaryPanelNodeContainer
-                data={this.props.data}
-                duration={this.props.duration}
-                graphType={this.props.graphType}
-                injectServiceNodes={this.props.injectServiceNodes}
-                namespaces={this.props.namespaces}
-                rateInterval={this.props.rateInterval}
-                queryTime={this.props.queryTime}
-                step={this.props.step}
-                trafficRates={this.props.trafficRates}
-              />
-            )}
+            {this.getSummaryPanel(this.props.data)}
           </div>
           {this.props.jaegerState.selectedTrace && this.state.isVisible && (
             <div className={`panel panel-default ${summaryPanelBottomSplit}`}>
@@ -189,6 +123,95 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
       </TourStopContainer>
     );
   }
+
+  private getSummaryPanel = (summary: SummaryData): React.ReactFragment => {
+    const summaryType = summary.summaryType as string;
+
+    switch (summaryType) {
+      case 'box': {
+        const boxType: BoxByType | undefined =
+          summaryType === 'box' ? this.props.data.summaryTarget.data(CyNode.isBox) : undefined;
+        switch (boxType) {
+          case 'app':
+            return (
+              <SummaryPanelAppBox
+                data={this.props.data}
+                duration={this.props.duration}
+                graphType={this.props.graphType}
+                injectServiceNodes={this.props.injectServiceNodes}
+                namespaces={this.props.data.summaryTarget.namespaces}
+                queryTime={this.props.queryTime}
+                rateInterval={this.props.rateInterval}
+                step={this.props.step}
+                trafficRates={this.props.trafficRates}
+              />
+            );
+          case 'cluster':
+            return (
+              <SummaryPanelClusterBox
+                data={this.props.data}
+                duration={this.props.duration}
+                graphType={this.props.graphType}
+                injectServiceNodes={this.props.injectServiceNodes}
+                namespaces={this.props.data.summaryTarget.namespaces}
+                queryTime={this.props.queryTime}
+                rateInterval={this.props.rateInterval}
+                step={this.props.step}
+                trafficRates={this.props.trafficRates}
+              />
+            );
+          case 'namespace':
+            return (
+              <SummaryPanelNamespaceBox
+                data={this.props.data}
+                duration={this.props.duration}
+                graphType={this.props.graphType}
+                injectServiceNodes={this.props.injectServiceNodes}
+                namespaces={this.props.data.summaryTarget.namespaces}
+                queryTime={this.props.queryTime}
+                rateInterval={this.props.rateInterval}
+                step={this.props.step}
+                trafficRates={this.props.trafficRates}
+              />
+            );
+          default:
+            return <></>;
+        }
+      }
+      case 'edge':
+        return <SummaryPanelEdge {...this.props} />;
+      case 'graph':
+        return (
+          <SummaryPanelGraph
+            data={summary}
+            duration={this.props.duration}
+            graphType={this.props.graphType}
+            injectServiceNodes={this.props.injectServiceNodes}
+            namespaces={this.props.namespaces}
+            queryTime={this.props.queryTime}
+            rateInterval={this.props.rateInterval}
+            step={this.props.step}
+            trafficRates={this.props.trafficRates}
+          />
+        );
+      case 'node':
+        return (
+          <SummaryPanelNodeContainer
+            data={this.props.data}
+            duration={this.props.duration}
+            graphType={this.props.graphType}
+            injectServiceNodes={this.props.injectServiceNodes}
+            namespaces={this.props.namespaces}
+            rateInterval={this.props.rateInterval}
+            queryTime={this.props.queryTime}
+            step={this.props.step}
+            trafficRates={this.props.trafficRates}
+          />
+        );
+      default:
+        return <></>;
+    }
+  };
 
   private togglePanel = () => {
     this.setState((state: SummaryPanelState) => ({

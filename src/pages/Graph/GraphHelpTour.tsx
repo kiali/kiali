@@ -44,12 +44,13 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
   Layout: {
     name: 'Layout selection',
     description:
-      'Select the graph layout for the mesh. Different layouts work best with different meshes. Find the layout that works best. Other buttons here provide zoom and fit-to-screen options.'
+      'Select the graph layout for the mesh. Different layouts work best with different meshes. Find the layout that works best. Other buttons here provide zoom and fit-to-screen options.',
+    position: PopoverPosition.right
   },
   Legend: {
     name: 'Legend',
     description: 'Display the legend to learn about what the different shapes, colors and backgrounds mean.',
-    position: PopoverPosition.top
+    position: PopoverPosition.auto
   },
   Namespaces: {
     name: 'Namespaces',

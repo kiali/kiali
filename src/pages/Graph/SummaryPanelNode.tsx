@@ -10,7 +10,7 @@ import {
   renderHealth
 } from './SummaryLink';
 import { DecoratedGraphNodeData, DestService, NodeType, RankResult, SummaryPanelPropType } from '../../types/Graph';
-import { summaryHeader, summaryPanel, summaryBodyTabs, summaryFont } from './SummaryPanelCommon';
+import { summaryHeader, summaryPanel, summaryBodyTabs, summaryFont, getTitle } from './SummaryPanelCommon';
 import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
@@ -29,6 +29,7 @@ import SummaryPanelNodeTraces from './SummaryPanelNodeTraces';
 import SimpleTabs from 'components/Tab/SimpleTabs';
 import { JaegerState } from 'reducers/JaegerState';
 import { classes, style } from 'typestyle';
+import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -116,21 +117,26 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     return (
       <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
         <div className="panel-heading" style={summaryHeader}>
+          {getTitle(nodeType)}
           <div>
-            {renderBadgedLink(nodeData)}
-            {actions && (
-              <Dropdown
-                id="summary-node-actions"
-                style={{ float: 'right' }}
-                isPlain={true}
-                dropdownItems={actions}
-                isOpen={this.state.isActionOpen}
-                position={DropdownPosition.right}
-                toggle={<KebabToggle id="summary-node-kebab" onToggle={this.onToggleActions} />}
-              />
-            )}
+            <span>
+              <PFBadge badge={PFBadges.Namespace} style={{ marginBottom: '2px' }} />
+              {nodeData.namespace}
+              {actions && (
+                <Dropdown
+                  id="summary-node-actions"
+                  style={{ float: 'right' }}
+                  isPlain={true}
+                  dropdownItems={actions}
+                  isOpen={this.state.isActionOpen}
+                  position={DropdownPosition.right}
+                  toggle={<KebabToggle id="summary-node-kebab" onToggle={this.onToggleActions} />}
+                />
+              )}
+              {renderBadgedLink(nodeData)}
+              {renderHealth(nodeData.health)}
+            </span>
           </div>
-          <div>{renderHealth(nodeData.health)}</div>
           <div>
             {this.renderBadgeSummary(nodeData)}
             {shouldRenderDestsList && <div>{destsList}</div>}

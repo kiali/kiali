@@ -9,7 +9,8 @@ import {
   SummaryPanelPropType,
   DecoratedGraphNodeData,
   UNKNOWN,
-  TrafficRate
+  TrafficRate,
+  prettyProtocol
 } from '../../types/Graph';
 import { renderBadgedLink } from './SummaryLink';
 import {
@@ -23,7 +24,8 @@ import {
   summaryHeader,
   summaryBodyTabs,
   summaryPanel,
-  summaryFont
+  summaryFont,
+  getTitle
 } from './SummaryPanelCommon';
 import { Metric, Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
 import { Response } from '../../services/Api';
@@ -161,6 +163,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     return (
       <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
         <div className="panel-heading" style={summaryHeader}>
+          {getTitle(`Edge (${prettyProtocol(protocol)})`)}
           {renderBadgedLink(source, undefined, 'From:  ')}
           {renderBadgedLink(dest, undefined, 'To:        ')}
         </div>

@@ -10,6 +10,7 @@ import { toVCLine } from 'utils/VictoryChartsUtils';
 import { RichDataPoint, VCDataPoint, VCLine, VCLines } from 'types/VictoryChartInfo';
 
 import 'components/Charts/Charts.css';
+import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
 
 type RequestChartProp = {
   label: string;
@@ -72,9 +73,7 @@ export class RequestChart extends React.Component<RequestChartProp, {}> {
       <>
         {!this.props.hide && (
           <div className={blockStyle}>
-            <div>
-              <strong>{this.props.label} min / max:</strong>
-            </div>
+            <div className={summaryTitle}>{this.props.label} min / max:</div>
             {this.renderContent()}
           </div>
         )}
@@ -133,9 +132,7 @@ export class StreamChart extends React.Component<StreamChartProp, {}> {
       <>
         {!this.props.hide && (
           <div className={blockStyle}>
-            <div>
-              <strong>{this.props.label} - min / max:</strong>
-            </div>
+            <div className={summaryTitle}>{this.props.label} min / max:</div>
             {this.renderContent()}
           </div>
         )}
