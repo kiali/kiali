@@ -243,9 +243,8 @@ func testValidationAdded(t *testing.T, destinationRules []networking_v1alpha3.De
 	assert := assert.New(t)
 
 	vals := TrafficPolicyChecker{
-		DestinationRules:         destinationRules,
-		ExportedDestinationRules: []networking_v1alpha3.DestinationRule{},
-		MTLSDetails:              mTLSDetails,
+		DestinationRules: destinationRules,
+		MTLSDetails:      mTLSDetails,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -268,9 +267,8 @@ func testValidationsNotAdded(t *testing.T, destinationRules []networking_v1alpha
 	assert := assert.New(t)
 
 	vals := TrafficPolicyChecker{
-		DestinationRules:         destinationRules,
-		ExportedDestinationRules: []networking_v1alpha3.DestinationRule{},
-		MTLSDetails:              mTLSDetails,
+		DestinationRules: destinationRules,
+		MTLSDetails:      mTLSDetails,
 	}.Check()
 
 	assert.Empty(vals)

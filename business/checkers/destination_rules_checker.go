@@ -12,11 +12,10 @@ import (
 const DestinationRuleCheckerType = "destinationrule"
 
 type DestinationRulesChecker struct {
-	DestinationRules         []networking_v1alpha3.DestinationRule
-	ExportedDestinationRules []networking_v1alpha3.DestinationRule
-	MTLSDetails              kubernetes.MTLSDetails
-	ServiceEntries           []networking_v1alpha3.ServiceEntry
-	Namespaces               []models.Namespace
+	DestinationRules []networking_v1alpha3.DestinationRule
+	MTLSDetails      kubernetes.MTLSDetails
+	ServiceEntries   []networking_v1alpha3.ServiceEntry
+	Namespaces       []models.Namespace
 }
 
 func (in DestinationRulesChecker) Check() models.IstioValidations {
@@ -34,12 +33,12 @@ func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 	seHosts := kubernetes.ServiceEntryHostnames(in.ServiceEntries)
 
 	enabledDRCheckers := []GroupChecker{
-		destinationrules.MultiMatchChecker{Namespaces: in.Namespaces, ServiceEntries: seHosts, ExportedDestinationRules: in.ExportedDestinationRules},
+		destinationrules.MultiMatchChecker{Namespaces: in.Namespaces, ServiceEntries: seHosts, DestinationRules: in.DestinationRules},
 	}
 
 	// Appending validations that only applies to non-autoMTLS meshes
 	if !in.MTLSDetails.EnabledAutoMtls {
-		enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, ExportedDestinationRules: in.ExportedDestinationRules, MTLSDetails: in.MTLSDetails})
+		enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails})
 	}
 
 	for _, checker := range enabledDRCheckers {

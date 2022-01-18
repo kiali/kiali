@@ -10,9 +10,8 @@ import (
 )
 
 type TrafficPolicyChecker struct {
-	DestinationRules         []networking_v1alpha3.DestinationRule
-	ExportedDestinationRules []networking_v1alpha3.DestinationRule
-	MTLSDetails              kubernetes.MTLSDetails
+	DestinationRules []networking_v1alpha3.DestinationRule
+	MTLSDetails      kubernetes.MTLSDetails
 }
 
 func (t TrafficPolicyChecker) Check() models.IstioValidations {
@@ -22,7 +21,7 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 
 	// Check whether DRs override mTLS.
 	for _, dr := range t.DestinationRules {
-		drSameHosts := sameHostDestinationRules(dr, refdMtls, t.ExportedDestinationRules)
+		drSameHosts := sameHostDestinationRules(dr, refdMtls, t.DestinationRules)
 
 		// Continue if there aren't DestinationRules enabling mTLS non-locally
 		// and pointing to same host as dr.
@@ -75,6 +74,10 @@ func sameHostDestinationRules(dr networking_v1alpha3.DestinationRule, mdrs []net
 	}
 
 	for _, edr := range edrs {
+		// skip the current DR
+		if edr.Name == dr.Name && edr.Namespace == dr.Namespace {
+			continue
+		}
 		dHost := edr.Spec.Host
 		if ismTLSEnabled(edr) &&
 			(dHost == fmt.Sprintf("*.%s.%s", drHost.Namespace, drHost.Cluster) || dHost == drHost.String()) {
