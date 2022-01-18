@@ -9,16 +9,16 @@ import (
 )
 
 type SingleHostChecker struct {
-	Namespace               string
-	Namespaces              models.Namespaces
-	ExportedVirtualServices []networking_v1alpha3.VirtualService
+	Namespace       string
+	Namespaces      models.Namespaces
+	VirtualServices []networking_v1alpha3.VirtualService
 }
 
 func (s SingleHostChecker) Check() models.IstioValidations {
 	hostCounter := make(map[string]map[string]map[string]map[string][]*networking_v1alpha3.VirtualService)
 	validations := models.IstioValidations{}
 
-	for _, vs := range s.ExportedVirtualServices {
+	for _, vs := range s.VirtualServices {
 		for _, host := range s.getHosts(vs) {
 			storeHost(hostCounter, vs, host)
 		}
