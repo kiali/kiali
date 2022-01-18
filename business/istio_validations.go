@@ -173,7 +173,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		objectCheckers = []ObjectChecker{sidecarsChecker}
 	case kubernetes.AuthorizationPolicies:
 		authPoliciesChecker := checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies,
-			Namespace: namespace, Namespaces: namespaces, ServiceList: services, ExportedServiceEntries: exportedResources.ServiceEntries,
+			Namespace: namespace, Namespaces: namespaces, ServiceList: services, ServiceEntries: exportedResources.ServiceEntries,
 			WorkloadList: workloads, MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices}
 		objectCheckers = []ObjectChecker{authPoliciesChecker}
 	case kubernetes.PeerAuthentications:
