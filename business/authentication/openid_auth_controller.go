@@ -68,21 +68,25 @@ func (e badOidcRequest) Error() string {
 	return e.Detail
 }
 
-type oidcAuthController struct {
+type openIdAuthController struct {
+	// businessInstantiator is a function that returns an already initialized
+	// business layer. Normally, it should be set to the business.Get function.
+	// For tests, it can be set to something else that returns a compatible API.
+	businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)
+
 	// SessionStore persists the session between HTTP requests.
 	SessionStore SessionPersistor
 }
 
-func NewOidcAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *oidcAuthController {
-	return &oidcAuthController{
-		SessionStore: persistor,
+func NewOpenIdAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *openIdAuthController {
+	return &openIdAuthController{
+		businessInstantiator: businessInstantiator,
+		SessionStore:         persistor,
 	}
 }
 
-func (c oidcAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
-	//conf := config.Get()
-
-	flow := openidFlowHelper{}
+func (c openIdAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+	flow := openidFlowHelper{businessInstantiator: c.businessInstantiator}
 	sPayload := flow.
 		extractOpenIdCallbackParams(r).
 		callbackCleanup(w).
@@ -93,7 +97,6 @@ func (c oidcAuthController) Authenticate(r *http.Request, w http.ResponseWriter)
 		checkAllowedDomains().
 		checkUserPrivileges().
 		createSession(r, w, c.SessionStore)
-	openIdParams := &flow
 	err := flow.Error
 
 	if err != nil {
@@ -104,19 +107,19 @@ func (c oidcAuthController) Authenticate(r *http.Request, w http.ResponseWriter)
 	}
 
 	return &UserSessionData{
-		ExpiresOn: openIdParams.ExpiresOn,
+		ExpiresOn: flow.ExpiresOn,
 		Username:  sPayload.Subject,
 		Token:     sPayload.Token,
 	}, nil
 }
 
-func (c oidcAuthController) GetAuthCallbackHandler(fallbackHandler http.Handler) http.Handler {
+func (c openIdAuthController) GetAuthCallbackHandler(fallbackHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c.authenticateWithAuthorizationCodeFlow(r, w, fallbackHandler)
 	})
 }
 
-func (c oidcAuthController) PostRoutes(router *mux.Router) {
+func (c openIdAuthController) PostRoutes(router *mux.Router) {
 	// swagger:route GET /auth/openid_redirect auth openidRedirect
 	// ---
 	// Endpoint to redirect the browser of the user to the authentication
@@ -140,7 +143,7 @@ func (c oidcAuthController) PostRoutes(router *mux.Router) {
 		HandlerFunc(c.redirectToAuthServerHandler)
 }
 
-func (c oidcAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+func (c openIdAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	// Restore a previously started session.
 	sPayload := oidcSessionPayload{}
 	sData, err := c.SessionStore.ReadSession(r, w, &sPayload)
@@ -158,7 +161,7 @@ func (c oidcAuthController) ValidateSession(r *http.Request, w http.ResponseWrit
 		return nil, nil
 	}
 
-	business, err := business.Get(&api.AuthInfo{Token: sPayload.Token})
+	bs, err := business.Get(&api.AuthInfo{Token: sPayload.Token})
 	if err != nil {
 		log.Warningf("Could not get the business layer!!: %v", err)
 		return nil, fmt.Errorf("could not get the business layer: %w", err)
@@ -194,7 +197,7 @@ func (c oidcAuthController) ValidateSession(r *http.Request, w http.ResponseWrit
 	var token string
 	if !conf.Auth.OpenId.DisableRBAC {
 		// If RBAC is ENABLED, check that the user has privileges on the cluster.
-		_, err = business.Namespace.GetNamespaces(r.Context())
+		_, err = bs.Namespace.GetNamespaces(r.Context())
 		if err != nil {
 			log.Warningf("Token error!: %v", err)
 			return nil, nil
@@ -222,20 +225,21 @@ func (c oidcAuthController) ValidateSession(r *http.Request, w http.ResponseWrit
 }
 
 // TerminateSession unconditionally terminates any existing session without any validation.
-func (c oidcAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) {
+func (c openIdAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) {
 	c.SessionStore.TerminateSession(r, w)
 }
 
-func (c oidcAuthController) authenticateWithAuthorizationCodeFlow(r *http.Request, w http.ResponseWriter, fallbackHandler http.Handler) {
+func (c openIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Request, w http.ResponseWriter, fallbackHandler http.Handler) {
 	conf := config.Get()
 	webRoot := conf.Server.WebRoot
 	webRootWithSlash := webRoot + "/"
 
-	flow := openidFlowHelper{}
+	flow := openidFlowHelper{businessInstantiator: c.businessInstantiator}
 	flow.
 		extractOpenIdCallbackParams(r).
-		checkOpenIdAuthorizationCodeFlowParams().
 		callbackCleanup(w).
+		checkOpenIdAuthorizationCodeFlowParams().
+		//callbackCleanup(w). Subido
 		validateOpenIdState().
 		requestOpenIdToken(httputil.GuessKialiURL(r)).
 		parseOpenIdToken().
@@ -276,9 +280,14 @@ type openidFlowHelper struct {
 
 	Error                  error
 	ShouldTerminateSession bool
+
+	// businessInstantiator is a function that returns an already initialized
+	// business layer. Normally, it should be set to the business.Get function.
+	// For tests, it can be set to something else that returns a compatible API.
+	businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)
 }
 
-func (c oidcAuthController) redirectToAuthServerHandler(w http.ResponseWriter, r *http.Request) {
+func (c openIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter, r *http.Request) {
 	conf := config.Get()
 
 	// This endpoint should be available only if OpenId strategy is configured
@@ -535,7 +544,7 @@ func (p *openidFlowHelper) checkUserPrivileges() *openidFlowHelper {
 			apiToken = p.AccessToken
 			p.UseAccessToken = true
 		}
-		httpStatus, errMsg, detailedError := verifyOpenIdUserAccess(apiToken)
+		httpStatus, errMsg, detailedError := verifyOpenIdUserAccess(apiToken, p.businessInstantiator)
 		if httpStatus != http.StatusOK {
 			p.Error = &AuthenticationFailureError{
 				HttpStatus: httpStatus,
@@ -662,7 +671,7 @@ func (p *openidFlowHelper) parseOpenIdToken() *openidFlowHelper /*error*/ {
 
 	//--------------------
 
-	// Set a default value for expiration date
+	// Extract expiration date from the OpenId token
 	if expClaim, ok := claims["exp"]; !ok {
 		p.Error = errors.New("the received id_token from the OpenId provider has missing the required 'exp' claim")
 		//return errors.New("the received id_token from the OpenId provider has missing the required 'exp' claim")
@@ -1251,16 +1260,16 @@ func validateOpenTokenInHouse(openIdParams *openidFlowHelper) error {
 	return nil
 }
 
-func verifyOpenIdUserAccess(token string) (int, string, error) {
+func verifyOpenIdUserAccess(token string, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) (int, string, error) {
 	// Create business layer using the id_token
-	business, err := business.Get(&api.AuthInfo{Token: token})
+	bsLayer, err := businessInstantiator(&api.AuthInfo{Token: token})
 	if err != nil {
 		return http.StatusInternalServerError, "Error instantiating the business layer", err
 	}
 
 	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
 	// anonymous access, so it's not feasible to use the version API for token verification.
-	nsList, err := business.Namespace.GetNamespaces(context.TODO())
+	nsList, err := bsLayer.Namespace.GetNamespaces(context.TODO())
 	if err != nil {
 		return http.StatusUnauthorized, "Token is not valid or is expired", err
 	}

@@ -49,6 +49,6 @@ func InitializeAuthenticationController(strategy string) {
 	if strategy == config.AuthStrategyToken {
 		authController = NewTokenAuthController(persistor, nil)
 	} else if strategy == config.AuthStrategyOpenId {
-		authController = NewOidcAuthController(persistor, nil)
+		authController = NewOpenIdAuthController(persistor, nil)
 	}
 }
