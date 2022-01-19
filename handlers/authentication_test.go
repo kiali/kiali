@@ -38,7 +38,7 @@ func TestStrategyTokenAuthentication(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyToken
-	cfg.LoginToken.SigningKey = util.RandomString(10)
+	cfg.LoginToken.SigningKey = util.RandomString(16)
 	cfg.KubernetesConfig.CacheEnabled = false
 	config.Set(cfg)
 
@@ -95,7 +95,7 @@ func TestStrategyTokenInvalidSignature(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyToken
-	cfg.LoginToken.SigningKey = util.RandomString(10)
+	cfg.LoginToken.SigningKey = util.RandomString(16)
 	config.Set(cfg)
 
 	// Mock the clock
@@ -183,7 +183,7 @@ func TestStrategyTokenValidatesExpiration(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyToken
-	cfg.LoginToken.SigningKey = util.RandomString(10)
+	cfg.LoginToken.SigningKey = util.RandomString(16)
 	config.Set(cfg)
 
 	// Mock the clock
@@ -236,7 +236,7 @@ func TestStrategyTokenMissingUser(t *testing.T) {
 	cfg := config.NewConfig()
 	cfg.KubernetesConfig.CacheEnabled = false
 	cfg.Auth.Strategy = config.AuthStrategyToken
-	cfg.LoginToken.SigningKey = util.RandomString(10)
+	cfg.LoginToken.SigningKey = util.RandomString(16)
 	config.Set(cfg)
 	mockK8s(false)
 
@@ -288,7 +288,7 @@ func TestStrategyTokenMissingExpiration(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyToken
-	cfg.LoginToken.SigningKey = util.RandomString(10)
+	cfg.LoginToken.SigningKey = util.RandomString(16)
 	config.Set(cfg)
 
 	// Let's create a valid token that does not expire.
@@ -396,7 +396,7 @@ func TestStrategyHeaderOidcAuthentication(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyHeader
-	cfg.LoginToken.SigningKey = util.RandomString(10)
+	cfg.LoginToken.SigningKey = util.RandomString(16)
 	cfg.KubernetesConfig.CacheEnabled = false
 	config.Set(cfg)
 
@@ -456,7 +456,7 @@ func TestStrategyHeaderAuthentication(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyHeader
-	cfg.LoginToken.SigningKey = util.RandomString(10)
+	cfg.LoginToken.SigningKey = util.RandomString(16)
 	cfg.KubernetesConfig.CacheEnabled = false
 	config.Set(cfg)
 
@@ -516,7 +516,7 @@ func TestStrategyHeaderOidcWithImpersonationAuthentication(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyHeader
-	cfg.LoginToken.SigningKey = util.RandomString(10)
+	cfg.LoginToken.SigningKey = util.RandomString(16)
 	cfg.KubernetesConfig.CacheEnabled = false
 	config.Set(cfg)
 

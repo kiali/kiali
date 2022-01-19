@@ -13,7 +13,7 @@ func TestValidateWebRoot(t *testing.T) {
 	// create a base config that we know is valid
 	rand.Seed(time.Now().UnixNano())
 	conf := config.NewConfig()
-	conf.LoginToken.SigningKey = util.RandomString(10)
+	conf.LoginToken.SigningKey = util.RandomString(16)
 	conf.Server.StaticContentRootDirectory = "."
 	conf.Auth.Strategy = "anonymous"
 
@@ -55,7 +55,7 @@ func TestValidateAuthStrategy(t *testing.T) {
 	// create a base config that we know is valid
 	rand.Seed(time.Now().UnixNano())
 	conf := config.NewConfig()
-	conf.LoginToken.SigningKey = util.RandomString(10)
+	conf.LoginToken.SigningKey = util.RandomString(16)
 	conf.Server.StaticContentRootDirectory = "."
 
 	// now test some auth strategies, both valid ones and invalid ones
