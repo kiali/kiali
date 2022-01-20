@@ -22,10 +22,13 @@ func TestValidHost(t *testing.T) {
 		),
 	)
 
+	registryService1 := data.CreateFakeRegistryServices("other.bookinfo.svc.cluster.local", "bookinfo", "*")
+	registryService2 := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
+
 	vals, valid := NoHostChecker{
-		Namespace:      "bookinfo",
-		ServiceList:    data.CreateFakeServiceList([]string{"reviews", "other"}, "bookinfo"),
-		VirtualService: *virtualService,
+		Namespace:        "bookinfo",
+		RegistryServices: append(registryService1, registryService2...),
+		VirtualService:   *virtualService,
 	}.Check()
 
 	assert.True(valid)
@@ -41,11 +44,12 @@ func TestValidHostExported(t *testing.T) {
 		),
 	)
 
+	registryService := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
+
 	vals, valid := NoHostChecker{
 		Namespace:        "bookinfo",
-		ServiceList:      data.CreateFakeServiceList([]string{"other"}, "bookinfo"),
 		VirtualService:   *virtualService,
-		RegistryServices: data.CreateFakeRegistryServices("ratings.bookinfo2", "bookinfo2", "bookinfo2"),
+		RegistryServices: append(data.CreateFakeRegistryServices("ratings.bookinfo2.svc.cluster.local", "bookinfo2", "bookinfo2"), registryService...),
 	}.Check()
 
 	assert.True(valid)
@@ -56,14 +60,17 @@ func TestNoValidHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
+	registryService1 := data.CreateFakeRegistryServices("other.bookinfo.svc.cluster.local", "bookinfo", "*")
+	registryService2 := data.CreateFakeRegistryServices("details.bookinfo.svc.cluster.local", "bookinfo", "*")
+
 	assert := assert.New(t)
 
 	virtualService := data.CreateVirtualService()
 
 	vals, valid := NoHostChecker{
-		Namespace:      "test-namespace",
-		ServiceList:    data.CreateFakeServiceList([]string{"details", "other"}, "bookinfo"),
-		VirtualService: *virtualService,
+		Namespace:        "test-namespace",
+		RegistryServices: append(registryService1, registryService2...),
+		VirtualService:   *virtualService,
 	}.Check()
 
 	assert.False(valid)
@@ -78,9 +85,9 @@ func TestNoValidHost(t *testing.T) {
 	virtualService.Spec.Http = nil
 
 	vals, valid = NoHostChecker{
-		Namespace:      "test-namespace",
-		ServiceList:    data.CreateFakeServiceList([]string{"details", "other"}, "bookinfo"),
-		VirtualService: *virtualService,
+		Namespace:        "test-namespace",
+		RegistryServices: append(registryService1, registryService2...),
+		VirtualService:   *virtualService,
 	}.Check()
 
 	assert.False(valid)
@@ -92,9 +99,9 @@ func TestNoValidHost(t *testing.T) {
 	virtualService.Spec.Tcp = nil
 
 	vals, valid = NoHostChecker{
-		Namespace:      "test-namespace",
-		ServiceList:    data.CreateFakeServiceList([]string{"details", "other"}, "bookinfo"),
-		VirtualService: *virtualService,
+		Namespace:        "test-namespace",
+		RegistryServices: append(registryService1, registryService2...),
+		VirtualService:   *virtualService,
 	}.Check()
 
 	assert.False(valid)
@@ -108,6 +115,9 @@ func TestNoValidExportedHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
+	registryService1 := data.CreateFakeRegistryServices("other.bookinfo.svc.cluster.local", "bookinfo", "*")
+	registryService2 := data.CreateFakeRegistryServices("details.bookinfo.svc.cluster.local", "bookinfo", "*")
+
 	assert := assert.New(t)
 
 	virtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("ratings.bookinfo", "v1", -1),
@@ -118,9 +128,8 @@ func TestNoValidExportedHost(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		Namespace:        "bookinfo",
-		ServiceList:      data.CreateFakeServiceList([]string{"details", "other"}, "bookinfo"),
 		VirtualService:   *virtualService,
-		RegistryServices: data.CreateFakeRegistryServices("ratings", "bookinfo2", "*"),
+		RegistryServices: append(data.CreateFakeRegistryServices("ratings.bookinfo2.svc.cluster.local", "bookinfo2", "*"), append(registryService1, registryService2...)...),
 	}.Check()
 
 	assert.False(valid)
@@ -136,9 +145,8 @@ func TestNoValidExportedHost(t *testing.T) {
 
 	vals, valid = NoHostChecker{
 		Namespace:        "bookinfo",
-		ServiceList:      data.CreateFakeServiceList([]string{"details", "other"}, "bookinfo"),
 		VirtualService:   *virtualService,
-		RegistryServices: data.CreateFakeRegistryServices("ratings", "bookinfo2", "."),
+		RegistryServices: append(data.CreateFakeRegistryServices("ratings.bookinfo2.svc.cluster.local", "bookinfo2", "."), append(registryService1, registryService2...)...),
 	}.Check()
 
 	assert.False(valid)
@@ -151,9 +159,8 @@ func TestNoValidExportedHost(t *testing.T) {
 
 	vals, valid = NoHostChecker{
 		Namespace:        "bookinfo",
-		ServiceList:      data.CreateFakeServiceList([]string{"details", "other"}, "bookinfo"),
 		VirtualService:   *virtualService,
-		RegistryServices: data.CreateFakeRegistryServices("ratings", "bookinfo2", "bookinfo2"),
+		RegistryServices: append(data.CreateFakeRegistryServices("ratings.bookinfo2.svc.cluster.local", "bookinfo2", "bookinfo2"), append(registryService1, registryService2...)...),
 	}.Check()
 
 	assert.False(valid)
@@ -169,6 +176,9 @@ func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
 
 	assert := assert.New(t)
 
+	registryService1 := data.CreateFakeRegistryServices("other.bookinfo.svc.cluster.local", "bookinfo", "*")
+	registryService2 := data.CreateFakeRegistryServices("details.bookinfo.svc.cluster.local", "bookinfo", "*")
+
 	virtualService := data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("reviews.outside-namespace", "v1", -1),
 		data.CreateEmptyVirtualService("reviews", "test", []string{"reviews"}),
 	)
@@ -179,8 +189,8 @@ func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
 			models.Namespace{Name: "test"},
 			models.Namespace{Name: "outside-namespace"},
 		},
-		ServiceList:    data.CreateFakeServiceList([]string{"details", "other"}, "bookinfo"),
-		VirtualService: *virtualService,
+		RegistryServices: append(registryService1, registryService2...),
+		VirtualService:   *virtualService,
 	}.Check()
 
 	assert.False(valid)
@@ -196,6 +206,9 @@ func TestInvalidServiceNamespaceFormatExportedHost(t *testing.T) {
 
 	assert := assert.New(t)
 
+	registryService1 := data.CreateFakeRegistryServices("other.bookinfo.svc.cluster.local", "bookinfo", "*")
+	registryService2 := data.CreateFakeRegistryServices("details.bookinfo.svc.cluster.local", "bookinfo", "*")
+
 	virtualService := data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("ratings.outside-namespace", "v1", -1),
 		data.CreateEmptyVirtualService("ratings", "test", []string{"ratings"}),
 	)
@@ -206,9 +219,8 @@ func TestInvalidServiceNamespaceFormatExportedHost(t *testing.T) {
 			models.Namespace{Name: "test"},
 			models.Namespace{Name: "outside-namespace"},
 		},
-		ServiceList:      data.CreateFakeServiceList([]string{"details", "other"}, "bookinfo"),
 		VirtualService:   *virtualService,
-		RegistryServices: data.CreateFakeRegistryServices("ratings", "bookinfo2", "*"),
+		RegistryServices: append(data.CreateFakeRegistryServices("ratings.bookinfo2.svc.cluster.local", "bookinfo2", "*"), append(registryService1, registryService2...)...),
 	}.Check()
 
 	assert.False(valid)
@@ -227,9 +239,8 @@ func TestInvalidServiceNamespaceFormatExportedHost(t *testing.T) {
 			models.Namespace{Name: "bookinfo"},
 			models.Namespace{Name: "bookinfo2"},
 		},
-		ServiceList:      data.CreateFakeServiceList([]string{"details", "other"}, "bookinfo"),
 		VirtualService:   *virtualService,
-		RegistryServices: data.CreateFakeRegistryServices("ratings", "bookinfo2", "."),
+		RegistryServices: append(data.CreateFakeRegistryServices("ratings.bookinfo2.svc.cluster.local", "bookinfo2", "."), append(registryService1, registryService2...)...),
 	}.Check()
 
 	assert.False(valid)
@@ -245,12 +256,14 @@ func TestValidServiceEntryHost(t *testing.T) {
 
 	assert := assert.New(t)
 
+	registryService1 := data.CreateFakeRegistryServices("my-wiki-rule.bookinfo.svc.cluster.local", "bookinfo", "*")
+
 	virtualService := data.CreateVirtualServiceWithServiceEntryTarget()
 
 	vals, valid := NoHostChecker{
-		Namespace:      "wikipedia",
-		ServiceList:    data.CreateFakeServiceList([]string{"my-wiki-rule"}, "bookinfo"),
-		VirtualService: *virtualService,
+		Namespace:        "wikipedia",
+		VirtualService:   *virtualService,
+		RegistryServices: registryService1,
 	}.Check()
 
 	assert.False(valid)
@@ -261,9 +274,9 @@ func TestValidServiceEntryHost(t *testing.T) {
 
 	vals, valid = NoHostChecker{
 		Namespace:         "wikipedia",
-		ServiceList:       data.CreateFakeServiceList([]string{"my-wiki-rule"}, "bookinfo"),
 		VirtualService:    *virtualService,
 		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{serviceEntry}),
+		RegistryServices:  registryService1,
 	}.Check()
 
 	assert.True(valid)
@@ -276,13 +289,15 @@ func TestValidWildcardServiceEntryHost(t *testing.T) {
 
 	assert := assert.New(t)
 
+	registryService1 := data.CreateFakeRegistryServices("duckduckgo.bookinfo.svc.cluster.local", "bookinfo", "*")
+
 	virtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("www.google.com", "v1", -1),
 		data.CreateEmptyVirtualService("googleIt", "google", []string{"www.google.com"}))
 
 	vals, valid := NoHostChecker{
-		Namespace:      "google",
-		ServiceList:    data.CreateFakeServiceList([]string{"duckduckgo"}, "bookinfo"),
-		VirtualService: *virtualService,
+		Namespace:        "google",
+		VirtualService:   *virtualService,
+		RegistryServices: registryService1,
 	}.Check()
 
 	assert.False(valid)
@@ -293,9 +308,9 @@ func TestValidWildcardServiceEntryHost(t *testing.T) {
 
 	vals, valid = NoHostChecker{
 		Namespace:         "google",
-		ServiceList:       data.CreateFakeServiceList([]string{"duckduckgo"}, "bookinfo"),
 		VirtualService:    *virtualService,
 		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		RegistryServices:  registryService1,
 	}.Check()
 
 	assert.True(valid)
@@ -314,7 +329,6 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		Namespace:      "bookinfo",
-		ServiceList:    data.CreateFakeServiceList([]string{""}, "bookinfo"),
 		VirtualService: *virtualService,
 	}.Check()
 
@@ -323,7 +337,6 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	vals, valid = NoHostChecker{
 		Namespace:        "bookinfo",
-		ServiceList:      data.CreateFakeServiceList([]string{""}, "bookinfo"),
 		VirtualService:   *virtualService,
 		RegistryServices: data.CreateFakeRegistryServices("ratings.mesh2-bookinfo.svc.mesh1-imports.local", "bookinfo", "bookinfo"),
 	}.Check()
@@ -333,7 +346,6 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	vals, valid = NoHostChecker{
 		Namespace:        "bookinfo",
-		ServiceList:      data.CreateFakeServiceList([]string{""}, "bookinfo"),
 		VirtualService:   *virtualService,
 		RegistryServices: data.CreateFakeRegistryServices("ratings2.mesh2-bookinfo.svc.mesh1-imports.local", "bookinfo", "."),
 	}.Check()

@@ -58,7 +58,7 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy security_v1beta.Authori
 		common.SelectorNoWorkloadFoundChecker(AuthorizationPolicyCheckerType, matchLabels, a.WorkloadList),
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
 		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, Namespace: a.Namespace, Namespaces: a.Namespaces,
-			ServiceEntries: serviceHosts, ServiceList: a.ServiceList, VirtualServices: a.VirtualServices, RegistryServices: a.RegistryServices},
+			ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices, RegistryServices: a.RegistryServices},
 	}
 
 	for _, checker := range enabledCheckers {

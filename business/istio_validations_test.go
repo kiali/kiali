@@ -30,7 +30,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 	config.Set(conf)
 
 	vs := mockCombinedValidationService(fakeCombinedIstioConfigList(),
-		[]string{"details", "product", "customer"}, "test", fakePods())
+		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
 	validations, _ := vs.GetValidations("test", "")
 	assert.NotEmpty(validations)
@@ -42,7 +42,8 @@ func TestGetIstioObjectValidations(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vs := mockCombinedValidationService(fakeCombinedIstioConfigList(), []string{"details", "product", "customer"}, "test", fakePods())
+	vs := mockCombinedValidationService(fakeCombinedIstioConfigList(),
+		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
 	validations, _ := vs.GetIstioObjectValidations("test", "virtualservices", "product-vs")
 
@@ -142,6 +143,7 @@ func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 
 	kialiCache = cache.FakeGatewaysKialiCache(append(getGateway("first", "test"), getGateway("second", "test2")...))
 
+	k8s.On("GetToken").Return("token")
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices([]string{""}, ""), nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
 	k8s.On("GetMeshPolicies", mock.AnythingOfType("string")).Return(fakeMeshPolicies(), nil)
@@ -185,6 +187,9 @@ func mockCombinedValidationService(istioConfigList *models.IstioConfigList, serv
 	}
 	k8s.MockIstio(fakeIstioObjects...)
 
+	kialiCache = cache.FakeServicesKialiCache(data.CreateFakeMultiRegistryServices(services, "test", "*"))
+
+	k8s.On("GetToken").Return("token")
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices(services, "test"), nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(kubetest.FakeNamespace("test"), nil)
