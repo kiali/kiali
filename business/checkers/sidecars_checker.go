@@ -14,7 +14,6 @@ const SidecarCheckerType = "sidecar"
 type SidecarChecker struct {
 	Sidecars         []networking_v1alpha3.Sidecar
 	ServiceEntries   []networking_v1alpha3.ServiceEntry
-	ServiceList      models.ServiceList
 	Namespaces       models.Namespaces
 	WorkloadList     models.WorkloadList
 	RegistryServices []*kubernetes.RegistryService
@@ -64,7 +63,7 @@ func (s SidecarChecker) runChecks(sidecar networking_v1alpha3.Sidecar) models.Is
 
 	enabledCheckers := []Checker{
 		common.WorkloadSelectorNoWorkloadFoundChecker(SidecarCheckerType, selectorLabels, s.WorkloadList),
-		sidecars.EgressHostChecker{Sidecar: sidecar, ServiceList: s.ServiceList, ServiceEntries: serviceHosts, RegistryServices: s.RegistryServices},
+		sidecars.EgressHostChecker{Sidecar: sidecar, ServiceEntries: serviceHosts, RegistryServices: s.RegistryServices},
 		sidecars.GlobalChecker{Sidecar: sidecar},
 	}
 
