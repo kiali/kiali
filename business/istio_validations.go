@@ -108,7 +108,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 
 func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioConfigList models.IstioConfigList, exportedResources kubernetes.ExportedResources, services models.ServiceList, workloadsPerNamespace map[string]models.WorkloadList, workloads models.WorkloadList, mtlsDetails kubernetes.MTLSDetails, rbacDetails kubernetes.RBACDetails, namespaces []models.Namespace, registryServices []*kubernetes.RegistryService) []ObjectChecker {
 	return []ObjectChecker{
-		checkers.NoServiceChecker{Namespace: namespace, Namespaces: namespaces, IstioConfigList: istioConfigList, ExportedResources: &exportedResources, ServiceList: services, WorkloadList: workloads, AuthorizationDetails: &rbacDetails, RegistryServices: registryServices},
+		checkers.NoServiceChecker{Namespace: namespace, Namespaces: namespaces, ExportedResources: &exportedResources, WorkloadList: workloads, AuthorizationDetails: &rbacDetails, RegistryServices: registryServices},
 		checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, VirtualServices: exportedResources.VirtualServices, DestinationRules: exportedResources.DestinationRules},
 		checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: exportedResources.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: exportedResources.ServiceEntries},
 		checkers.GatewayChecker{Gateways: exportedResources.Gateways, Namespace: namespace, WorkloadsPerNamespace: workloadsPerNamespace},
@@ -169,7 +169,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	go in.fetchRegistryServices(&registryServices, errChan, &wg)
 	wg.Wait()
 
-	noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, Namespaces: namespaces, IstioConfigList: istioConfigList, ExportedResources: &exportedResources, ServiceList: services, WorkloadList: workloads, AuthorizationDetails: &rbacDetails, RegistryServices: registryServices}
+	noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, Namespaces: namespaces, ExportedResources: &exportedResources, WorkloadList: workloads, AuthorizationDetails: &rbacDetails, RegistryServices: registryServices}
 
 	switch objectType {
 	case kubernetes.Gateways:

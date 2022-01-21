@@ -31,8 +31,8 @@ func TestValidHost(t *testing.T) {
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
 		),
-		ServiceList:     fakeServicesReview(),
-		DestinationRule: *data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
+		RegistryServices: fakeServicesReview(),
+		DestinationRule:  *data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
 
 	assert.True(valid)
@@ -48,7 +48,7 @@ func TestValidWildcardHost(t *testing.T) {
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
 		),
-		ServiceList: fakeServicesReview(),
+		RegistryServices: fakeServicesReview(),
 		DestinationRule: *data.CreateTestDestinationRule("test-namespace",
 			"name", "*.test-namespace.svc.cluster.local"),
 	}.Check()
@@ -69,8 +69,8 @@ func TestValidMeshWideHost(t *testing.T) {
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
 		),
-		ServiceList:     fakeServicesReview(),
-		DestinationRule: *data.CreateTestDestinationRule("test-namespace", "name", "*.local"),
+		RegistryServices: fakeServicesReview(),
+		DestinationRule:  *data.CreateTestDestinationRule("test-namespace", "name", "*.local"),
 	}.Check()
 
 	assert.True(valid)
@@ -89,8 +89,8 @@ func TestValidServiceNamespace(t *testing.T) {
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
 		),
-		ServiceList:     fakeServicesReview(),
-		DestinationRule: *data.CreateTestDestinationRule("test-namespace", "name", "reviews.test-namespace"),
+		RegistryServices: fakeServicesReview(),
+		DestinationRule:  *data.CreateTestDestinationRule("test-namespace", "name", "reviews.test-namespace"),
 	}.Check()
 
 	assert.True(valid)
@@ -113,8 +113,8 @@ func TestValidServiceNamespaceInvalid(t *testing.T) {
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
 		),
-		ServiceList:     fakeServicesReview(),
-		DestinationRule: *data.CreateTestDestinationRule("test-namespace", "name", "reviews.not-a-namespace"),
+		RegistryServices: fakeServicesReview(),
+		DestinationRule:  *data.CreateTestDestinationRule("test-namespace", "name", "reviews.not-a-namespace"),
 	}.Check()
 
 	assert.False(valid)
@@ -140,10 +140,10 @@ func TestValidServiceNamespaceCrossNamespace(t *testing.T) {
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
 		),
-		ServiceList:     fakeServicesReview(),
 		DestinationRule: *data.CreateTestDestinationRule("test-namespace", "name", "reviews.outside-ns.svc.cluster.local"),
 		// Note that a cross-namespace service should be visible in the registry, otherwise won't be visible
-		RegistryServices: data.CreateFakeRegistryServices("reviews.outside-ns.svc.cluster.local", "test-namespace", "."),
+		RegistryServices: append(data.CreateFakeRegistryServices("reviews.outside-ns.svc.cluster.local", "test-namespace", "."),
+			fakeServicesReview()...),
 	}.Check()
 
 	assert.True(valid)
@@ -163,8 +163,8 @@ func TestNoValidHost(t *testing.T) {
 			data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
 			data.CreateWorkloadListItem("otherv1", appVersionLabel("other", "v1")),
 		),
-		ServiceList:     models.ServiceList{},
-		DestinationRule: *data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
+		RegistryServices: []*kubernetes.RegistryService{&kubernetes.RegistryService{}},
+		DestinationRule:  *data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
 
 	assert.False(valid)
@@ -186,8 +186,8 @@ func TestNoMatchingSubset(t *testing.T) {
 		WorkloadList: data.CreateWorkloadList("test-namespace",
 			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v1")),
 		),
-		ServiceList:     fakeServicesReview(),
-		DestinationRule: *data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
+		RegistryServices: fakeServicesReview(),
+		DestinationRule:  *data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
 		VirtualServices: []networking_v1alpha3.VirtualService{*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 55),
 			data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v2", 45),
 				data.CreateEmptyVirtualService("reviews", "test-namespace", []string{"reviews"}),
@@ -230,8 +230,8 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v2")),
 		),
-		ServiceList:     fakeServicesReview(),
-		DestinationRule: *dr,
+		RegistryServices: fakeServicesReview(),
+		DestinationRule:  *dr,
 		VirtualServices: []networking_v1alpha3.VirtualService{*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "reviewsv1", 55),
 			data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "reviewsv2", 100),
 				data.CreateEmptyVirtualService("reviews", "test-namespace", []string{"reviews"}),
@@ -264,9 +264,9 @@ func TestSubsetNotReferenced(t *testing.T) {
 			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v2")),
 		),
-		ServiceList:     fakeServicesReview(),
-		DestinationRule: *dr,
-		VirtualServices: []networking_v1alpha3.VirtualService{},
+		RegistryServices: fakeServicesReview(),
+		DestinationRule:  *dr,
+		VirtualServices:  []networking_v1alpha3.VirtualService{},
 	}.Check()
 
 	assert.True(valid)
@@ -296,9 +296,9 @@ func TestSubsetReferenced(t *testing.T) {
 			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v2")),
 		),
-		ServiceList:     fakeServicesReview(),
-		DestinationRule: *dr,
-		VirtualServices: []networking_v1alpha3.VirtualService{*vs},
+		RegistryServices: fakeServicesReview(),
+		DestinationRule:  *dr,
+		VirtualServices:  []networking_v1alpha3.VirtualService{*vs},
 	}.Check()
 
 	assert.False(valid)
@@ -332,9 +332,9 @@ func TestSubsetPresentMatchingNotReferenced(t *testing.T) {
 			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v2")),
 		),
-		ServiceList:     fakeServicesReview(),
-		DestinationRule: *dr,
-		VirtualServices: []networking_v1alpha3.VirtualService{*vs},
+		RegistryServices: fakeServicesReview(),
+		DestinationRule:  *dr,
+		VirtualServices:  []networking_v1alpha3.VirtualService{*vs},
 	}.Check()
 
 	assert.True(valid)
@@ -361,9 +361,9 @@ func TestWronglyReferenced(t *testing.T) {
 			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v2")),
 		),
-		ServiceList:     fakeServicesReview(),
-		DestinationRule: *dr,
-		VirtualServices: []networking_v1alpha3.VirtualService{*vs},
+		RegistryServices: fakeServicesReview(),
+		DestinationRule:  *dr,
+		VirtualServices:  []networking_v1alpha3.VirtualService{*vs},
 	}.Check()
 
 	assert.True(valid)
@@ -373,20 +373,19 @@ func TestWronglyReferenced(t *testing.T) {
 	assert.Equal("spec/subsets[0]", vals[0].Path)
 }
 
-func fakeServicesReview() models.ServiceList {
-	serviceList := models.ServiceList{
-		Services: []models.ServiceOverview{
-			{
-				Name:      "reviews",
-				Namespace: "test-namespace",
-				Labels: map[string]string{
-					"app":     "reviews",
-					"version": "v1"},
-				Selector: map[string]string{"app": "reviews"},
-			},
-		},
-	}
-	return serviceList
+func fakeServicesReview() []*kubernetes.RegistryService {
+	registryService := kubernetes.RegistryService{}
+	registryService.Hostname = "reviews.test-namespace.svc.cluster.com"
+	registryService.IstioService.Attributes.Namespace = "test-namespace"
+	registryService.IstioService.Attributes.ExportTo = make(map[string]bool)
+	registryService.IstioService.Attributes.ExportTo["*"] = true
+	registryService.IstioService.Attributes.Labels = make(map[string]string)
+	registryService.IstioService.Attributes.Labels["app"] = "reviews"
+	registryService.IstioService.Attributes.Labels["version"] = "v1"
+	registryService.IstioService.Attributes.LabelSelectors = make(map[string]string)
+	registryService.IstioService.Attributes.LabelSelectors["app"] = "reviews"
+
+	return []*kubernetes.RegistryService{&registryService}
 }
 
 func TestFailCrossNamespaceHost(t *testing.T) {
@@ -398,11 +397,11 @@ func TestFailCrossNamespaceHost(t *testing.T) {
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
 		),
-		ServiceList: fakeServicesReview(),
 		// Intentionally using the same serviceName, but different NS. This shouldn't fail to match the above workloads
 		DestinationRule: *data.CreateTestDestinationRule("test-namespace", "name", "reviews.different-ns.svc.cluster.local"),
 		// Note that a cross-namespace service should be visible in the registry, otherwise won't be visible
-		RegistryServices: data.CreateFakeRegistryServices("reviews.different-ns.svc.cluster.local", "test-namespace", "test-namespace"),
+		RegistryServices: append(data.CreateFakeRegistryServices("reviews.different-ns.svc.cluster.local", "test-namespace", "test-namespace"),
+			fakeServicesReview()...),
 	}.Check()
 
 	assert.True(valid)
@@ -618,8 +617,8 @@ func TestNoLabelsInSubset(t *testing.T) {
 			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
 			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
 		),
-		ServiceList:     fakeServicesReview(),
-		DestinationRule: *data.CreateNoLabelsDestinationRule("test-namespace", "name", "reviews"),
+		RegistryServices: fakeServicesReview(),
+		DestinationRule:  *data.CreateNoLabelsDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
 
 	assert.True(valid)

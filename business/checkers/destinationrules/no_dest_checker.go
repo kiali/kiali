@@ -19,7 +19,6 @@ type NoDestinationChecker struct {
 	DestinationRule  networking_v1alpha3.DestinationRule
 	VirtualServices  []networking_v1alpha3.VirtualService
 	ServiceEntries   map[string][]string
-	ServiceList      models.ServiceList
 	RegistryServices []*kubernetes.RegistryService
 }
 
@@ -75,9 +74,9 @@ func (n NoDestinationChecker) hasMatchingWorkload(service string, subsetLabels m
 	var selectors map[string]string
 
 	// Find the correct service
-	for _, s := range n.ServiceList.Services {
-		if s.Name == svc {
-			selectors = s.Selector
+	for _, s := range n.RegistryServices {
+		if s.Attributes.Name == svc {
+			selectors = s.Attributes.LabelSelectors
 		}
 	}
 
@@ -114,11 +113,6 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 	if localNs == itemNamespace {
 		// Check Workloads
 		if matches := kubernetes.HasMatchingWorkloads(localSvc, n.WorkloadList.GetLabels()); matches {
-			return matches
-		}
-
-		// Check ServiceNames
-		if matches := n.ServiceList.HasMatchingServices(localSvc); matches {
 			return matches
 		}
 	}
