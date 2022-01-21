@@ -10,10 +10,10 @@ import (
 )
 
 type SubsetPresenceChecker struct {
-	Namespace                string
-	Namespaces               []string
-	ExportedDestinationRules []networking_v1alpha3.DestinationRule
-	VirtualService           networking_v1alpha3.VirtualService
+	Namespace        string
+	Namespaces       []string
+	DestinationRules []networking_v1alpha3.DestinationRule
+	VirtualService   networking_v1alpha3.VirtualService
 }
 
 func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
@@ -110,9 +110,9 @@ func (checker SubsetPresenceChecker) subsetPresent(host string, subset string) b
 }
 
 func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost string) ([]networking_v1alpha3.DestinationRule, bool) {
-	drs := make([]networking_v1alpha3.DestinationRule, 0, len(checker.ExportedDestinationRules))
+	drs := make([]networking_v1alpha3.DestinationRule, 0, len(checker.DestinationRules))
 
-	for _, destinationRule := range checker.ExportedDestinationRules {
+	for _, destinationRule := range checker.DestinationRules {
 		host := destinationRule.Spec.Host
 
 		drHost := kubernetes.GetHost(host, destinationRule.Namespace, destinationRule.ClusterName, checker.Namespaces)

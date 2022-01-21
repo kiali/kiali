@@ -13,16 +13,15 @@ import (
 const AuthorizationPolicyCheckerType = "authorizationpolicy"
 
 type AuthorizationPolicyChecker struct {
-	AuthorizationPolicies   []security_v1beta.AuthorizationPolicy
-	Namespace               string
-	Namespaces              models.Namespaces
-	ServiceEntries          []networking_v1alpha3.ServiceEntry
-	ServiceList             models.ServiceList
-	WorkloadList            models.WorkloadList
-	MtlsDetails             kubernetes.MTLSDetails
-	VirtualServices         []networking_v1alpha3.VirtualService
-	ExportedVirtualServices []networking_v1alpha3.VirtualService
-	RegistryServices        []*kubernetes.RegistryService
+	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
+	Namespace             string
+	Namespaces            models.Namespaces
+	ServiceEntries        []networking_v1alpha3.ServiceEntry
+	ServiceList           models.ServiceList
+	WorkloadList          models.WorkloadList
+	MtlsDetails           kubernetes.MTLSDetails
+	VirtualServices       []networking_v1alpha3.VirtualService
+	RegistryServices      []*kubernetes.RegistryService
 }
 
 func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
