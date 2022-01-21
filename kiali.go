@@ -26,6 +26,7 @@ import (
 
 	_ "go.uber.org/automaxprocs"
 
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -88,6 +89,8 @@ func main() {
 	status.Put(status.CoreVersion, version)
 	status.Put(status.CoreCommitHash, commitHash)
 	status.Put(status.ContainerVersion, determineContainerVersion(version))
+
+	authentication.InitializeAuthenticationController(config.Get().Auth.Strategy)
 
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()

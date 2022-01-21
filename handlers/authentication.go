@@ -20,6 +20,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -397,83 +398,6 @@ func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 }
 
-func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
-	err := r.ParseForm()
-
-	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Error parsing form data from client", err.Error())
-		return false
-	}
-
-	token := r.Form.Get("token")
-
-	if token == "" {
-		RespondWithError(w, http.StatusInternalServerError, "Token is empty.")
-		return false
-	}
-
-	business, err := business.Get(&api.AuthInfo{Token: token})
-	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
-		return false
-	}
-
-	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
-	// anonymous access, so it's not feasible to use the version API for token verification.
-	nsList, err := business.Namespace.GetNamespaces()
-	if err != nil {
-		deleteTokenCookies(w, r)
-		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired", err.Error())
-		return false
-	}
-
-	// If namespace list is empty, return unauthorized error
-	if len(nsList) == 0 {
-		deleteTokenCookies(w, r)
-		RespondWithError(w, http.StatusUnauthorized, "Not enough privileges to login")
-		return false
-	}
-
-	// Now that we know that the ServiceAccount token is valid, parse/decode it to extract
-	// the name of the service account. The "subject" is passed to the front-end to be displayed.
-	tokenSubject := "token" // Set a default value
-
-	parsedClusterToken, _, err := new(jwt.Parser).ParseUnverified(token, &jwt.StandardClaims{})
-	if err == nil {
-		tokenSubject = parsedClusterToken.Claims.(*jwt.StandardClaims).Subject
-		tokenSubject = strings.TrimPrefix(tokenSubject, "system:serviceaccount:") // Shorten the subject displayed in UI.
-	}
-
-	// Build the Kiali token
-	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
-	tokenClaims := config.IanaClaims{
-		SessionId: token,
-		StandardClaims: jwt.StandardClaims{
-			Subject:   tokenSubject,
-			ExpiresAt: timeExpire.Unix(),
-			Issuer:    config.AuthStrategyTokenIssuer,
-		},
-	}
-	tokenString, err := config.GetSignedTokenString(tokenClaims)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return false
-	}
-
-	tokenCookie := http.Cookie{
-		Name:     config.TokenCookieName,
-		Value:    tokenString,
-		Expires:  timeExpire,
-		HttpOnly: true,
-		Path:     config.Get().Server.WebRoot,
-		SameSite: http.SameSiteStrictMode,
-	}
-	http.SetCookie(w, &tokenCookie)
-
-	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: timeExpire.Format(time.RFC1123Z), Username: tokenSubject})
-	return true
-}
-
 func performOpenshiftLogout(r *http.Request) (int, error) {
 	tokenString := getTokenStringFromRequest(r)
 	if tokenString == "" {
@@ -600,36 +524,6 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	return http.StatusOK, claims.SessionId
 }
 
-func checkTokenSession(w http.ResponseWriter, r *http.Request) (int, string) {
-	tokenString := getTokenStringFromRequest(r)
-	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
-		log.Warningf("Token is invalid!!!: %v", err)
-	} else {
-		// Session ID claim must be present
-		if len(claims.SessionId) == 0 {
-			log.Warning("Token is invalid: sid claim is required")
-			return http.StatusUnauthorized, ""
-		}
-
-		business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
-		if err != nil {
-			log.Warningf("Could not get the business layer!!!: %v", err)
-			return http.StatusInternalServerError, ""
-		}
-
-		_, err = business.Namespace.GetNamespaces()
-		if err == nil {
-			// Internal header used to propagate the subject of the request for audit purposes
-			r.Header.Add("Kiali-User", claims.Subject)
-			return http.StatusOK, claims.SessionId
-		}
-
-		log.Warningf("Token error!!: %v", err)
-	}
-
-	return http.StatusUnauthorized, ""
-}
-
 func NewAuthenticationHandler() (AuthenticationHandler, error) {
 	// Read token from the filesystem
 	saToken, err := kubernetes.GetKialiToken()
@@ -662,8 +556,16 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 
 			authInfo = &api.AuthInfo{Token: token}
 		case config.AuthStrategyToken:
-			statusCode, token = checkTokenSession(w, r)
-			authInfo = &api.AuthInfo{Token: token}
+			session, validateErr := authentication.GetAuthController().ValidateSession(r, w)
+			if validateErr != nil {
+				statusCode = http.StatusInternalServerError
+			} else if session != nil {
+				token = session.Token
+				authInfo = &api.AuthInfo{Token: token}
+				statusCode = http.StatusOK
+			} else {
+				statusCode = http.StatusUnauthorized
+			}
 		case config.AuthStrategyAnonymous:
 			log.Tracef("Access to the server endpoint is not secured with credentials - letting request come in. Url: [%s]", r.URL.String())
 			token = aHandler.saToken
@@ -711,7 +613,16 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 	case config.AuthStrategyOpenId:
 		performOpenIdAuthentication(w, r)
 	case config.AuthStrategyToken:
-		performTokenAuthentication(w, r)
+		response, err := authentication.GetAuthController().Authenticate(r, w)
+		if err != nil {
+			if e, ok := err.(*authentication.AuthenticationFailureError); ok {
+				RespondWithError(w, http.StatusUnauthorized, e.Error())
+			} else {
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
+			}
+		} else {
+			RespondWithJSONIndent(w, http.StatusOK, response)
+		}
 	case config.AuthStrategyHeader:
 		performHeaderAuthentication(w, r)
 	case config.AuthStrategyAnonymous:
@@ -753,20 +664,30 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 			httputil.GuessKialiURL(r))
 	}
 
-	token := getTokenStringFromRequest(r)
-	claims, _ := config.GetTokenClaimsIfValid(token)
-	if claims == nil && conf.Auth.Strategy == config.AuthStrategyOpenId {
-		var aes error
-		claims, aes = business.GetOpenIdAesSession(r)
-		if aes != nil {
-			log.Warningf("Apparently, there is no AES session: %s ", aes.Error())
+	if conf.Auth.Strategy != config.AuthStrategyToken {
+		token := getTokenStringFromRequest(r)
+		claims, _ := config.GetTokenClaimsIfValid(token)
+		if claims == nil && conf.Auth.Strategy == config.AuthStrategyOpenId {
+			var aes error
+			claims, aes = business.GetOpenIdAesSession(r)
+			if aes != nil {
+				log.Warningf("Apparently, there is no AES session: %s ", aes.Error())
+			}
 		}
-	}
 
-	if claims != nil {
-		response.SessionInfo = sessionInfo{
-			ExpiresOn: time.Unix(claims.ExpiresAt, 0).Format(time.RFC1123Z),
-			Username:  claims.Subject,
+		if claims != nil {
+			response.SessionInfo = sessionInfo{
+				ExpiresOn: time.Unix(claims.ExpiresAt, 0).Format(time.RFC1123Z),
+				Username:  claims.Subject,
+			}
+		}
+	} else {
+		session, _ := authentication.GetAuthController().ValidateSession(r, w)
+		if session != nil {
+			response.SessionInfo = sessionInfo{
+				ExpiresOn: session.ExpiresOn.Format(time.RFC1123Z),
+				Username:  session.Username,
+			}
 		}
 	}
 
@@ -774,18 +695,24 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	deleteTokenCookies(w, r)
-
-	// We need to perform an extra step to invalidate the user token when using OpenShift OAuth
 	conf := config.Get()
-	if conf.Auth.Strategy == config.AuthStrategyOpenshift {
-		code, err := performOpenshiftLogout(r)
-		if err != nil {
-			RespondWithError(w, code, err.Error())
+
+	if conf.Auth.Strategy != config.AuthStrategyToken {
+		deleteTokenCookies(w, r)
+
+		// We need to perform an extra step to invalidate the user token when using OpenShift OAuth
+		if conf.Auth.Strategy == config.AuthStrategyOpenshift {
+			code, err := performOpenshiftLogout(r)
+			if err != nil {
+				RespondWithError(w, code, err.Error())
+			} else {
+				RespondWithCode(w, code)
+			}
 		} else {
-			RespondWithCode(w, code)
+			RespondWithCode(w, http.StatusNoContent)
 		}
 	} else {
+		authentication.GetAuthController().TerminateSession(r, w)
 		RespondWithCode(w, http.StatusNoContent)
 	}
 }
