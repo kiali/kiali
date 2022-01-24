@@ -458,6 +458,254 @@ func TestOpenIdImplicitFlowShouldRejectRequestWithMissingNonceInToken(t *testing
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 }
 
+func TestOpenIdImplicitFlowRejectsTokenWithoutDomainIfAllowedDomainsAreConfigured(t *testing.T) {
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	cfg := config.NewConfig()
+	cfg.LoginToken.SigningKey = "kiali67890123456"
+	cfg.LoginToken.ExpirationSeconds = 1
+	cfg.Auth.OpenId.AllowedDomains = []string{
+		"foo.com",
+	}
+	config.Set(cfg)
+
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), config.GetSigningKey())))
+
+	requestBody := strings.NewReader(fmt.Sprintf("id_token=%s&state=%x-%s", openIdTestToken, stateHash, clockTime.UTC().Format("060102150405")))
+	request := httptest.NewRequest(http.MethodPost, "/api/authenticate", requestBody)
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.AddCookie(&http.Cookie{
+		Name:  OpenIdNonceCookieName,
+		Value: "nonceString",
+	})
+
+	controller := NewOpenIdAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
+		assert.Failf(t, "business instantiator shouldn't have been called", "")
+		return nil, nil
+	})
+
+	rr := httptest.NewRecorder()
+	sData, err := controller.Authenticate(request, rr)
+
+	assert.Equal(t, "cannot detect hosted domain on OpenID for the email  ", err.Error())
+	assert.Nil(t, sData)
+
+	// nonce cookie cleanup
+	response := rr.Result()
+	assert.Len(t, response.Cookies(), 1)
+	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+}
+
+func TestOpenIdImplicitFlowRejectsTokenWithoutAnAllowedDomainInEmailClaim(t *testing.T) {
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	cfg := config.NewConfig()
+	cfg.LoginToken.SigningKey = "kiali67890123456"
+	cfg.LoginToken.ExpirationSeconds = 1
+	cfg.Auth.OpenId.AllowedDomains = []string{
+		"foo.com",
+	}
+	config.Set(cfg)
+
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), config.GetSigningKey())))
+
+	// Same as openIdTestToken, but with an added email=jdoe@domain.com claim
+	oidcToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZG9lQGRvbWFpbi5jb20iLCJlbWFpbCI6Impkb2VAZG9tYWluLmNvbSIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMiwibm9uY2UiOiIxYmE5YjgzNGQwOGFjODFmZWIzNGUyMDg0MDJlYjE4ZTkwOWJlMDg0NTE4YzMyODUxMDk0MDE4NCIsImV4cCI6MTYzODMxNjgwMX0.8oA-SgrQveJgmzCVOCrAQyQlswYwlWMAuUvGMJ8T748"
+	requestBody := strings.NewReader(fmt.Sprintf("id_token=%s&state=%x-%s", oidcToken, stateHash, clockTime.UTC().Format("060102150405")))
+	request := httptest.NewRequest(http.MethodPost, "/api/authenticate", requestBody)
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.AddCookie(&http.Cookie{
+		Name:  OpenIdNonceCookieName,
+		Value: "nonceString",
+	})
+
+	controller := NewOpenIdAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
+		assert.Failf(t, "business instantiator shouldn't have been called", "")
+		return nil, nil
+	})
+
+	rr := httptest.NewRecorder()
+	sData, err := controller.Authenticate(request, rr)
+
+	assert.Equal(t, "domain domain.com not allowed to login", err.Error())
+	assert.Nil(t, sData)
+
+	// nonce cookie cleanup
+	response := rr.Result()
+	assert.Len(t, response.Cookies(), 1)
+	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+}
+
+func TestOpenIdImplicitFlowRejectsTokenWithoutAnAllowedDomainInHdClaim(t *testing.T) {
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	cfg := config.NewConfig()
+	cfg.LoginToken.SigningKey = "kiali67890123456"
+	cfg.LoginToken.ExpirationSeconds = 1
+	cfg.Auth.OpenId.AllowedDomains = []string{
+		"foo.com",
+	}
+	config.Set(cfg)
+
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), config.GetSigningKey())))
+
+	// Same as openIdTestToken, but with added email=jdoe@foo.com and hd=domail.com claim
+	oidcToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZG9lQGRvbWFpbi5jb20iLCJlbWFpbCI6Impkb2VAZm9vLmNvbSIsImhkIjoiZG9tYWluLmNvbSIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMiwibm9uY2UiOiIxYmE5YjgzNGQwOGFjODFmZWIzNGUyMDg0MDJlYjE4ZTkwOWJlMDg0NTE4YzMyODUxMDk0MDE4NCIsImV4cCI6MTYzODMxNjgwMX0.LambAMoRezERKTUfZBgCb5h-DEVEW2enQOVxnieG8K4"
+	requestBody := strings.NewReader(fmt.Sprintf("id_token=%s&state=%x-%s", oidcToken, stateHash, clockTime.UTC().Format("060102150405")))
+	request := httptest.NewRequest(http.MethodPost, "/api/authenticate", requestBody)
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.AddCookie(&http.Cookie{
+		Name:  OpenIdNonceCookieName,
+		Value: "nonceString",
+	})
+
+	controller := NewOpenIdAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
+		assert.Failf(t, "business instantiator shouldn't have been called", "")
+		return nil, nil
+	})
+
+	rr := httptest.NewRecorder()
+	sData, err := controller.Authenticate(request, rr)
+
+	assert.Equal(t, "domain domain.com not allowed to login", err.Error())
+	assert.Nil(t, sData)
+
+	// nonce cookie cleanup
+	response := rr.Result()
+	assert.Len(t, response.Cookies(), 1)
+	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+}
+
+func TestOpenIdImplicitFlowAllowsLoginWithAllowedDomainInHdClaim(t *testing.T) {
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	cfg := config.NewConfig()
+	cfg.LoginToken.SigningKey = "kiali67890123456"
+	cfg.LoginToken.ExpirationSeconds = 1
+	cfg.Auth.OpenId.AllowedDomains = []string{
+		"domain.com",
+	}
+	config.Set(cfg)
+
+	// Returning some namespace when a cluster API call is made should have the result of
+	// a successful authentication.
+	k8s := kubetest.NewK8SClientMock()
+	k8s.On("GetProjects", "").Return([]osproject_v1.Project{
+		{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
+	}, nil)
+
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), config.GetSigningKey())))
+
+	// Same as openIdTestToken, but with added email=jdoe@foo.com and hd=domail.com claim
+	oidcToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZG9lQGRvbWFpbi5jb20iLCJlbWFpbCI6Impkb2VAZm9vLmNvbSIsImhkIjoiZG9tYWluLmNvbSIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMiwibm9uY2UiOiIxYmE5YjgzNGQwOGFjODFmZWIzNGUyMDg0MDJlYjE4ZTkwOWJlMDg0NTE4YzMyODUxMDk0MDE4NCIsImV4cCI6MTYzODMxNjgwMX0.LambAMoRezERKTUfZBgCb5h-DEVEW2enQOVxnieG8K4"
+	requestBody := strings.NewReader(fmt.Sprintf("id_token=%s&state=%x-%s", oidcToken, stateHash, clockTime.UTC().Format("060102150405")))
+	request := httptest.NewRequest(http.MethodPost, "/api/authenticate", requestBody)
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.AddCookie(&http.Cookie{
+		Name:  OpenIdNonceCookieName,
+		Value: "nonceString",
+	})
+
+	controller := NewOpenIdAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
+		if authInfo.Token != oidcToken {
+			return nil, errors.New("unexpected token")
+		}
+		return business.NewWithBackends(k8s, nil, nil), nil
+	})
+
+	rr := httptest.NewRecorder()
+	sData, err := controller.Authenticate(request, rr)
+
+	expectedExpiration := time.Date(2021, 12, 1, 0, 0, 1, 0, time.UTC)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, sData)
+	assert.Equal(t, "jdoe@domain.com", sData.Username)
+	assert.Equal(t, oidcToken, sData.Token)
+	assert.True(t, expectedExpiration.Equal(sData.ExpiresOn))
+
+	// Simply check that some cookie is set and has the right expiration. Testing cookie content is left to the session_persistor_test.go
+	response := rr.Result()
+	assert.Len(t, response.Cookies(), 2)
+
+	// nonce cookie cleanup
+	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+
+	// Session cookie
+	assert.Equal(t, config.TokenCookieName+"-aes", response.Cookies()[1].Name)
+	assert.Equal(t, expectedExpiration, response.Cookies()[1].Expires)
+}
+
+func TestOpenIdImplicitFlowAllowsLoginWithAllowedDomainInEmailClaim(t *testing.T) {
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	cfg := config.NewConfig()
+	cfg.LoginToken.SigningKey = "kiali67890123456"
+	cfg.LoginToken.ExpirationSeconds = 1
+	cfg.Auth.OpenId.AllowedDomains = []string{
+		"domain.com",
+	}
+	config.Set(cfg)
+
+	// Returning some namespace when a cluster API call is made should have the result of
+	// a successful authentication.
+	k8s := kubetest.NewK8SClientMock()
+	k8s.On("GetProjects", "").Return([]osproject_v1.Project{
+		{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
+	}, nil)
+
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), config.GetSigningKey())))
+
+	// Same as openIdTestToken, but with an added email=jdoe@domain.com claim
+	oidcToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZG9lQGRvbWFpbi5jb20iLCJlbWFpbCI6Impkb2VAZG9tYWluLmNvbSIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMiwibm9uY2UiOiIxYmE5YjgzNGQwOGFjODFmZWIzNGUyMDg0MDJlYjE4ZTkwOWJlMDg0NTE4YzMyODUxMDk0MDE4NCIsImV4cCI6MTYzODMxNjgwMX0.8oA-SgrQveJgmzCVOCrAQyQlswYwlWMAuUvGMJ8T748"
+	requestBody := strings.NewReader(fmt.Sprintf("id_token=%s&state=%x-%s", oidcToken, stateHash, clockTime.UTC().Format("060102150405")))
+	request := httptest.NewRequest(http.MethodPost, "/api/authenticate", requestBody)
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.AddCookie(&http.Cookie{
+		Name:  OpenIdNonceCookieName,
+		Value: "nonceString",
+	})
+
+	controller := NewOpenIdAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
+		if authInfo.Token != oidcToken {
+			return nil, errors.New("unexpected token")
+		}
+		return business.NewWithBackends(k8s, nil, nil), nil
+	})
+
+	rr := httptest.NewRecorder()
+	sData, err := controller.Authenticate(request, rr)
+
+	expectedExpiration := time.Date(2021, 12, 1, 0, 0, 1, 0, time.UTC)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, sData)
+	assert.Equal(t, "jdoe@domain.com", sData.Username)
+	assert.Equal(t, oidcToken, sData.Token)
+	assert.True(t, expectedExpiration.Equal(sData.ExpiresOn))
+
+	// Simply check that some cookie is set and has the right expiration. Testing cookie content is left to the session_persistor_test.go
+	response := rr.Result()
+	assert.Len(t, response.Cookies(), 2)
+
+	// nonce cookie cleanup
+	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+
+	// Session cookie
+	assert.Equal(t, config.TokenCookieName+"-aes", response.Cookies()[1].Name)
+	assert.Equal(t, expectedExpiration, response.Cookies()[1].Expires)
+}
+
 /*** Authorization code flow tests ***/
 
 func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *testing.T) {
