@@ -61,13 +61,6 @@ const (
 	// Request Authentications
 	RequestAuthentications     = "requestauthentications"
 	RequestAuthenticationsType = "RequestAuthentication"
-
-	// Iter8 types
-
-	Iter8Experiments        = "experiments"
-	Iter8ExperimentType     = "Experiment"
-	Iter8ExperimentTypeList = "ExperimentList"
-	Iter8ConfigMap          = "iter8config-metrics"
 )
 
 var (
@@ -82,23 +75,6 @@ var (
 		Version: "v1beta1",
 	}
 	ApiSecurityVersion = SecurityGroupVersion.Group + "/" + SecurityGroupVersion.Version
-
-	// We will add a new extesion API in a similar way as we added the Kubernetes + Istio APIs
-	Iter8GroupVersion = schema.GroupVersion{
-		Group:   "iter8.tools",
-		Version: "v1alpha2",
-	}
-	ApiIter8Version = Iter8GroupVersion.Group + "/" + Iter8GroupVersion.Version
-
-	iter8Types = []struct {
-		objectKind     string
-		collectionKind string
-	}{
-		{
-			objectKind:     Iter8ExperimentType,
-			collectionKind: Iter8ExperimentTypeList,
-		},
-	}
 
 	PluralType = map[string]string{
 		// Networking
@@ -115,9 +91,6 @@ var (
 		AuthorizationPolicies:  AuthorizationPoliciesType,
 		PeerAuthentications:    PeerAuthenticationsType,
 		RequestAuthentications: RequestAuthenticationsType,
-
-		// Iter8
-		Iter8Experiments: Iter8ExperimentType,
 	}
 
 	ResourceTypesToAPI = map[string]string{
@@ -132,8 +105,6 @@ var (
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,
 		RequestAuthentications: SecurityGroupVersion.Group,
-		// Extensions
-		Iter8Experiments: Iter8GroupVersion.Group,
 	}
 
 	ApiToVersion = map[string]string{

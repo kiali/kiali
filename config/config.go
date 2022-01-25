@@ -34,7 +34,6 @@ const (
 	IstioVersionSupported   = ">= 1.0"
 	MaistraVersionSupported = ">= 0.7.0"
 	OSSMVersionSupported    = ">= 1.0"
-	Iter8VersionSupported   = ">= 0.2"
 )
 
 // The valid auth strategies and values for cookie handling
@@ -206,18 +205,6 @@ type ComponentStatus struct {
 	IsCore    bool   `yaml:"is_core,omitempty"`
 	IsProxy   bool   `yaml:"is_proxy,omitempty"`
 	Namespace string `yaml:"namespace,omitempty"`
-}
-
-type Iter8Config struct {
-	Enabled bool `yaml:"enabled"`
-	// Define which namespace Iter8 is installed on, default to iter8
-	Namespace string `yaml:"namespace"`
-}
-
-// Extensions struct describes configuration for Kiali add-ons (extensions)
-// New add-on/extension configuration should create a specific config and be located under this
-type Extensions struct {
-	Iter8 Iter8Config `yaml:"iter_8,omitempty"`
 }
 
 // ExternalServices holds configurations for other systems that Kiali depends on
@@ -433,7 +420,6 @@ type Config struct {
 	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
 	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
-	Extensions               Extensions                          `yaml:"extensions,omitempty"`
 	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
 	HealthConfig             HealthConfig                        `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
 	Identity                 security.Identity                   `yaml:",omitempty"`
@@ -490,12 +476,6 @@ func NewConfig() (c *Config) {
 			AccessibleNamespaces: []string{"**"},
 			Namespace:            "istio-system",
 			ViewOnlyMode:         false,
-		},
-		Extensions: Extensions{
-			Iter8: Iter8Config{
-				Enabled:   false,
-				Namespace: "iter8",
-			},
 		},
 		ExternalServices: ExternalServices{
 			CustomDashboards: CustomDashboardsConfig{

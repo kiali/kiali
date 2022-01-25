@@ -25,13 +25,6 @@ type ClusterInfo struct {
 	Network string `json:"network,omitempty"`
 }
 
-type Iter8Config struct {
-	Enabled   bool   `json:"enabled"`
-	Namespace string `json:"namespace"`
-}
-type Extensions struct {
-	Iter8 Iter8Config `json:"iter8,omitempty"`
-}
 type IstioAnnotations struct {
 	IstioInjectionAnnotation string `json:"istioInjectionAnnotation,omitempty"`
 }
@@ -57,7 +50,6 @@ type DeploymentConfig struct {
 type PublicConfig struct {
 	ClusterInfo         ClusterInfo                 `json:"clusterInfo,omitempty"`
 	Clusters            map[string]business.Cluster `json:"clusters,omitempty"`
-	Extensions          Extensions                  `json:"extensions,omitempty"`
 	Deployment          DeploymentConfig            `json:"deployment,omitempty"`
 	HealthConfig        config.HealthConfig         `json:"healthConfig,omitempty"`
 	InstallationTag     string                      `json:"installationTag,omitempty"`
@@ -82,12 +74,6 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	config := config.Get()
 	publicConfig := PublicConfig{
 		Clusters: make(map[string]business.Cluster),
-		Extensions: Extensions{
-			Iter8: Iter8Config{
-				Enabled:   config.Extensions.Iter8.Enabled,
-				Namespace: config.Extensions.Iter8.Namespace,
-			},
-		},
 		Deployment: DeploymentConfig{
 			ViewOnlyMode: config.Deployment.ViewOnlyMode,
 		},

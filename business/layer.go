@@ -20,7 +20,6 @@ type Layer struct {
 	IstioConfig    IstioConfigService
 	IstioStatus    IstioStatusService
 	IstioCerts     IstioCertsService
-	Iter8          Iter8Service
 	Jaeger         JaegerService
 	k8s            kubernetes.ClientInterface
 	Mesh           MeshService
@@ -132,7 +131,6 @@ func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInter
 	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.IstioStatus = IstioStatusService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.IstioCerts = IstioCertsService{k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.Iter8 = Iter8Service{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Jaeger = JaegerService{loader: jaegerClient, businessLayer: temporaryLayer}
 	temporaryLayer.k8s = k8s
 	temporaryLayer.Mesh = NewMeshService(k8s, temporaryLayer, nil)
