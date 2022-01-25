@@ -6,7 +6,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/models"
 )
 
 const (
@@ -21,7 +20,6 @@ type MtlsStatus struct {
 	PeerAuthentications []security_v1beta.PeerAuthentication
 	DestinationRules    []networking_v1alpha3.DestinationRule
 	MatchingLabels      labels.Labels
-	ServiceList         models.ServiceList
 	AutoMtlsEnabled     bool
 	AllowPermissive     bool
 	RegistryServices    []*kubernetes.RegistryService
@@ -85,12 +83,8 @@ func (m MtlsStatus) WorkloadMtlsStatus() string {
 				// Filter DR that applies to the Services matching with the selector
 				// Fetch hosts from DRs and its mtls mode [details, ISTIO_STATUS]
 				// Filter Svc and extract its workloads selectors
-				filteredSvcs := m.ServiceList.FilterServicesForSelector(selector)
 				filteredRSvcs := kubernetes.FilterRegistryServicesBySelector(selector, m.Namespace, m.RegistryServices)
 				nameNamespaces := []NameNamespace{}
-				for _, svc := range filteredSvcs {
-					nameNamespaces = append(nameNamespaces, NameNamespace{svc.Name, svc.Namespace})
-				}
 				for _, rSvc := range filteredRSvcs {
 					nameNamespaces = append(nameNamespaces, NameNamespace{rSvc.IstioService.Attributes.Name, rSvc.IstioService.Attributes.Namespace})
 				}

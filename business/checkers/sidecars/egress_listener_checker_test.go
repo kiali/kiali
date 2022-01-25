@@ -16,11 +16,8 @@ import (
 func TestEgressHostFormatCorrect(t *testing.T) {
 	assert := assert.New(t)
 
-	registryService1 := data.CreateFakeRegistryServices("details.bookinfo.svc.cluster.local", "bookinfo", "*")
-	registryService2 := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
-
 	vals, valid := EgressHostChecker{
-		RegistryServices: append(registryService1, registryService2...),
+		RegistryServices: data.CreateFakeMultiRegistryServices([]string{"details.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo", "*"),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{data.CreateExternalServiceEntry()}),
 		Sidecar: *sidecarWithHosts([]string{
 			"*/*",
@@ -44,7 +41,7 @@ func TestEgressHostNotFoundService(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := EgressHostChecker{
-		RegistryServices: data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*"),
+		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "bookinfo"),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{data.CreateExternalServiceEntry()}),
 		Sidecar: *sidecarWithHosts([]string{
 			"bookinfo2/reviews.bookinfo2.svc.cluster.local",

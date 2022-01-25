@@ -19,7 +19,7 @@ func TestNoCrashOnEmpty(t *testing.T) {
 	typeValidations := NoServiceChecker{
 		Namespace:         "test",
 		ExportedResources: emptyExportedResources(),
-		RegistryServices:  emptyRegistryServices(),
+		RegistryServices:  data.CreateEmptyRegistryServices(),
 	}.Check()
 
 	assert.Empty(typeValidations)
@@ -171,10 +171,6 @@ func TestObjectWithoutGateway(t *testing.T) {
 	assert.False(productVs.Valid)
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", productVs.Checks[0]))
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", productVs.Checks[1]))
-}
-
-func emptyRegistryServices() []*kubernetes.RegistryService {
-	return []*kubernetes.RegistryService{&kubernetes.RegistryService{}}
 }
 
 func emptyExportedResources() *kubernetes.ExportedResources {

@@ -7,6 +7,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
@@ -243,7 +244,7 @@ func mtlsCheckerTestPrep(scenario string, autoMtls bool, t *testing.T) models.Is
 	validations := MtlsEnabledChecker{
 		Namespace:             "bookinfo",
 		AuthorizationPolicies: loader.GetResources().AuthorizationPolicies,
-		ServiceList:           fakeServices([]string{"ratings"}),
+		RegistryServices:      data.CreateFakeRegistryServicesLabels("ratings", "bookinfo"),
 		MtlsDetails: kubernetes.MTLSDetails{
 			DestinationRules:        loader.GetResources().DestinationRules,
 			MeshPeerAuthentications: loader.FindPeerAuthenticationIn("istio-system"),
