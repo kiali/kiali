@@ -125,15 +125,6 @@ const conf = {
       istioConfigCreate: (namespace: string, objectType: string) => `api/namespaces/${namespace}/istio/${objectType}`,
       istioConfigDetail: (namespace: string, objectType: string, object: string) =>
         `api/namespaces/${namespace}/istio/${objectType}/${object}`,
-      iter8: `api/iter8`,
-      iter8Metrics: 'api/iter8/metrics',
-      iter8Experiments: `api/iter8/experiments`,
-      iter8ExperimentsByNamespace: (namespace: string) => `api/iter8/namespaces/${namespace}/experiments`,
-      iter8Experiment: (namespace: string, name: string) => `api/iter8/namespaces/${namespace}/experiments/${name}`,
-      iter8ExperimentYAML: (namespace: string, name: string) =>
-        `api/iter8/namespaces/${namespace}/experiments/${name}/yaml`,
-      iter8ExperimentUpdate: (namespace: string, name: string) =>
-        `api/iter8/namespaces/${namespace}/experiments/${name}`,
       istioPermissions: 'api/istio/permissions',
       jaeger: 'api/jaeger',
       appTraces: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/traces`,

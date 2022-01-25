@@ -11,10 +11,6 @@ import GraphPageContainer from './pages/Graph/GraphPage';
 import { Paths } from './config';
 import ServiceDetailsPageContainer from './pages/ServiceDetails/ServiceDetailsPage';
 import IstioConfigNewPageContainer from './pages/IstioConfigNew/IstioConfigNewPage';
-import ExperimentListPage from './pages/extensions/iter8/Iter8ExperimentList/ExperimentListPage';
-import ExperimentCreatePageContainer from './pages/extensions/iter8/Iter8ExperimentDetails/ExperimentCreatePage';
-import ExperimentDetailsPage from './pages/extensions/iter8/Iter8ExperimentDetails/ExperimentDetailsPage';
-import ExperimentCreateFromFileContainer from './pages/extensions/iter8/Iter8ExperimentDetails/ExperimentCreateFromFile';
 import MeshPage from 'pages/Mesh/MeshPage';
 
 /**
@@ -59,14 +55,6 @@ const navItems: MenuItem[] = [
   {
     title: 'Mesh',
     to: '/mesh'
-  }
-];
-
-const extensionsItems: MenuItem[] = [
-  {
-    title: 'Iter8 Experiments',
-    to: '/extensions/iter8',
-    pathsActive: [/^\/extensions\/iter8/, new RegExp('^/extensions/namespaces/(.*)/iter8')]
   }
 ];
 
@@ -147,26 +135,4 @@ const pathRoutes: Path[] = [
   }
 ];
 
-const extensionsRoutes: Path[] = [
-  // Keep routes ordered with the more specific URLs first
-  // Extension will follow /extensions/<extension>/namespaces/:namespace/experiments/:name pattern
-  // To make RenderPage.tsx routes easy to filter without regex
-  {
-    path: '/extensions/namespaces/:namespace/iter8/:name',
-    component: ExperimentDetailsPage
-  },
-  {
-    path: '/extensions/iter8/new',
-    component: ExperimentCreatePageContainer
-  },
-  {
-    path: '/extensions/iter8/newFromFile',
-    component: ExperimentCreateFromFileContainer
-  },
-  {
-    path: '/extensions/iter8',
-    component: ExperimentListPage
-  }
-];
-
-export { defaultRoute, navItems, extensionsItems, pathRoutes, extensionsRoutes };
+export { defaultRoute, navItems, pathRoutes };

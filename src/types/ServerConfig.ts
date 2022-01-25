@@ -3,18 +3,9 @@ import { MeshCluster } from './Mesh';
 
 export type IstioLabelKey = 'appLabelName' | 'versionLabelName' | 'injectionLabelName' | 'injectionLabelRev';
 
-interface iter8Config {
-  enabled: boolean;
-}
-
 interface ClusterInfo {
   name: string;
   network: string;
-}
-
-// Kiali addons/extensions specific
-interface Extensions {
-  iter8: iter8Config;
 }
 
 interface DeploymentConfig {
@@ -105,7 +96,6 @@ export interface ToleranceConfig {
 export interface ServerConfig {
   clusterInfo?: ClusterInfo;
   clusters: { [key: string]: MeshCluster };
-  extensions?: Extensions;
   deployment: DeploymentConfig;
   healthConfig: HealthConfig;
   installationTag?: string;

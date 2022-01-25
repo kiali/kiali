@@ -22,7 +22,6 @@ import { IstioConfigDetails, IstioPermissions } from '../types/IstioConfigDetail
 import { IstioConfigList } from '../types/IstioConfigList';
 import { Pod, PodLogs, ValidationStatus, EnvoyProxyDump } from '../types/IstioObjects';
 import { ComponentStatus } from '../types/IstioStatus';
-import { Iter8ExpDetailsInfo, Iter8Experiment, Iter8Info, ExperimentSpec } from '../types/Iter8';
 import { JaegerInfo, JaegerResponse, JaegerSingleResponse } from '../types/JaegerInfo';
 import { MeshClusters } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
@@ -592,42 +591,6 @@ export const getWorkloadSpans = (namespace: string, workload: string, params: Tr
 
 export const getIstioPermissions = (namespaces: string[]) => {
   return newRequest<IstioPermissions>(HTTP_VERBS.GET, urls.istioPermissions, { namespaces: namespaces.join(',') }, {});
-};
-
-export const getIter8Info = () => {
-  return newRequest<Iter8Info>(HTTP_VERBS.GET, urls.iter8, {}, {});
-};
-
-export const getIter8Metrics = () => {
-  return newRequest<string[]>(HTTP_VERBS.GET, urls.iter8Metrics, {}, {});
-};
-
-export const getExperiments = (namespaces: string[]) => {
-  return newRequest<Iter8Experiment[]>(HTTP_VERBS.GET, urls.iter8Experiments, { namespaces: namespaces.join(',') }, {});
-};
-
-export const getExperimentsByNamespace = (namespace: string) => {
-  return newRequest<Iter8Experiment>(HTTP_VERBS.GET, urls.iter8ExperimentsByNamespace(namespace), {}, {});
-};
-
-export const getExperiment = (namespace: string, name: string) => {
-  return newRequest<Iter8ExpDetailsInfo>(HTTP_VERBS.GET, urls.iter8Experiment(namespace, name), {}, {});
-};
-
-export const getExperimentYAML = (namespace: string, name: string) => {
-  return newRequest<ExperimentSpec>(HTTP_VERBS.GET, urls.iter8ExperimentYAML(namespace, name), {}, {});
-};
-
-export const deleteExperiment = (namespace: string, name: string) => {
-  return newRequest<Iter8Experiment>(HTTP_VERBS.DELETE, urls.iter8Experiment(namespace, name), {}, {});
-};
-
-export const createExperiment = (namespace: string, specBody: string, params) => {
-  return newRequest<string>(HTTP_VERBS.POST, urls.iter8ExperimentsByNamespace(namespace), params, specBody);
-};
-
-export const updateExperiment = (namespace: string, name: string, specBody: string) => {
-  return newRequest<Iter8Experiment>(HTTP_VERBS.PATCH, urls.iter8Experiment(namespace, name), {}, specBody);
 };
 
 export const getMetricsStats = (queries: MetricsStatsQuery[]) => {

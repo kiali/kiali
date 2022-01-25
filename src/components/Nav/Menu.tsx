@@ -6,7 +6,7 @@ import { Nav, NavList, NavItem, PageSidebar } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 
 import history from '../../app/History';
-import { navItems, extensionsItems } from '../../routes';
+import { navItems } from '../../routes';
 import { serverConfig } from '../../config';
 
 const ExternalLink = ({ href, name }) => (
@@ -50,7 +50,7 @@ class Menu extends React.Component<MenuProps, MenuState> {
 
   renderMenuItems = () => {
     const { location } = this.props;
-    const allNavItems = navItems.concat(extensionsItems);
+    const allNavItems = navItems;
     const activeItem = allNavItems.find(item => {
       let isRoute = matchPath(location.pathname, { path: item.to, exact: true, strict: false }) ? true : false;
       if (!isRoute && item.pathsActive) {
@@ -61,10 +61,7 @@ class Menu extends React.Component<MenuProps, MenuState> {
 
     return allNavItems
       .filter(item => {
-        // Extensions Nav Menu Items are conditionally rendered
-        if (item.title === 'Iter8 Experiments') {
-          return serverConfig.extensions!.iter8!.enabled;
-        } else if (item.title === 'Mesh') {
+        if (item.title === 'Mesh') {
           return serverConfig.clusterInfo?.name !== undefined;
         }
         return true;

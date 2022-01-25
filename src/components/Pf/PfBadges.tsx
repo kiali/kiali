@@ -26,7 +26,6 @@ export const PFBadges = Object.freeze({
   Handler: { badge: 'H', tt: 'Handler' },
   Host: { badge: 'H', tt: 'Host' },
   Instance: { badge: 'I', tt: 'Instance' },
-  Iter8: { badge: 'IT8', tt: 'Iter8 Experiment' },
   MeshPolicy: { badge: 'MP', tt: 'Mesh Policy' } as PFBadgeType,
   Namespace: { badge: 'NS', tt: 'Namespace' } as PFBadgeType,
   Operation: { badge: 'O', tt: 'Operation' } as PFBadgeType,

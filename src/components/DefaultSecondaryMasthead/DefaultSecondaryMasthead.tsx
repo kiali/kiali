@@ -3,17 +3,7 @@ import { Title } from '@patternfly/react-core';
 import NamespaceDropdownContainer from '../NamespaceDropdown';
 import { style } from 'typestyle';
 
-const titles = [
-  'applications',
-  'istio',
-  'istio/new',
-  'mesh',
-  'services',
-  'workloads',
-  'extensions/iter8',
-  'extensions/iter8/new',
-  'extensions/iter8/newfromfile'
-];
+const titles = ['applications', 'istio', 'istio/new', 'mesh', 'services', 'workloads'];
 
 type Props = {
   actionsToolbar?: JSX.Element;
@@ -52,13 +42,6 @@ export default class DefaultSecondaryMasthead extends React.Component<Props> {
         title = 'Create ' + objectType;
       } else if (path === 'istio') {
         title = 'Istio Config';
-      } else if (path === 'extensions/iter8') {
-        title = 'Iter8 Experiments';
-      } else if (path === 'extensions/iter8/new') {
-        title = 'Create New Iter8 Experiment';
-        disabled = true;
-      } else if (path === 'extensions/iter8/newfromfile') {
-        title = 'Create New Iter8 Experiment from File';
       } else if (path === 'mesh') {
         title = 'Clusters';
       }
