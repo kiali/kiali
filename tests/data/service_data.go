@@ -1,6 +1,8 @@
 package data
 
 import (
+	"strings"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -27,6 +29,7 @@ func CreateFakeRegistryServices(host string, namespace string, exportToNamespace
 	registryService := kubernetes.RegistryService{}
 	registryService.Hostname = host
 	registryService.IstioService.Attributes.Namespace = namespace
+	registryService.IstioService.Attributes.Name = strings.Split(host, ".")[0]
 	registryService.IstioService.Attributes.ExportTo = make(map[string]bool)
 	registryService.IstioService.Attributes.ExportTo[exportToNamespace] = true
 

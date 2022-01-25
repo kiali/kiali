@@ -2,12 +2,12 @@ package destinationrules
 
 import (
 	"strconv"
-	"strings"
 
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -27,9 +27,14 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	valid := true
 	validations := make([]*models.IstioCheck, 0)
 
-	fqdn := kubernetes.GetHost(n.DestinationRule.Spec.Host, n.DestinationRule.Namespace, n.DestinationRule.ClusterName, n.Namespaces.GetNames())
+	namespace, clusterName := n.DestinationRule.Namespace, n.DestinationRule.ClusterName
+	if clusterName == "" {
+		clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
+	}
+
+	fqdn := kubernetes.GetHost(n.DestinationRule.Spec.Host, namespace, clusterName, n.Namespaces.GetNames())
 	// Testing Kubernetes Services + Istio ServiceEntries + Istio Runtime Registry (cross namespace)
-	if !n.hasMatchingService(fqdn, n.DestinationRule.Namespace) {
+	if !n.hasMatchingService(fqdn, namespace) {
 		validation := models.Build("destinationrules.nodest.matchingregistry", "spec/host")
 		valid = false
 		validations = append(validations, &validation)
@@ -37,7 +42,7 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 		// Check that each subset has a matching workload somewhere..
 		for i, subset := range n.DestinationRule.Spec.Subsets {
 			if len(subset.Labels) > 0 {
-				if !n.hasMatchingWorkload(fqdn.Service, subset.Labels) {
+				if !n.hasMatchingWorkload(fqdn, subset.Labels) {
 					validation := models.Build("destinationrules.nodest.subsetlabels",
 						"spec/subsets["+strconv.Itoa(i)+"]")
 					if n.isSubsetReferenced(n.DestinationRule.Spec.Host, subset.Name) {
@@ -58,25 +63,22 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	return validations, valid
 }
 
-func (n NoDestinationChecker) hasMatchingWorkload(service string, subsetLabels map[string]string) bool {
+func (n NoDestinationChecker) hasMatchingWorkload(host kubernetes.Host, subsetLabels map[string]string) bool {
 	// Check wildcard hosts - needs to match "*" and "*.suffix" also..
-	if strings.HasPrefix(service, "*") {
+	if host.IsWildcard() {
 		return true
 	}
 
 	// Covering 'servicename.namespace' host format scenario
-	svc := service
-	svcParts := strings.Split(service, ".")
-	if len(svcParts) > 1 {
-		svc = svcParts[0]
-	}
+	localSvc, localNs := kubernetes.ParseTwoPartHost(host)
 
 	var selectors map[string]string
 
 	// Find the correct service
 	for _, s := range n.RegistryServices {
-		if s.Attributes.Name == svc {
+		if s.Attributes.Name == localSvc && s.Attributes.Namespace == localNs {
 			selectors = s.Attributes.LabelSelectors
+			break
 		}
 	}
 
