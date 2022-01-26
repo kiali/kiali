@@ -512,7 +512,7 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 
 	if !conf.Auth.OpenId.DisableRBAC {
 		// If RBAC is ENABLED, check that the user has privilges on the cluster.
-		_, err = business.Namespace.GetNamespaces()
+		_, err = business.Namespace.GetNamespaces(r.Context())
 		if err != nil {
 			log.Warningf("Token error!: %v", err)
 			return http.StatusUnauthorized, ""

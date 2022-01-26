@@ -3,6 +3,7 @@ package graph
 // Options.go holds the option settings for a single graph request.
 
 import (
+	"context"
 	"fmt"
 	net_http "net/http"
 	"net/url"
@@ -383,7 +384,7 @@ func getAccessibleNamespaces(authInfo *api.AuthInfo) map[string]time.Time {
 	business, err := business.Get(authInfo)
 	CheckError(err)
 
-	namespaces, err := business.Namespace.GetNamespaces()
+	namespaces, err := business.Namespace.GetNamespaces(context.TODO())
 	CheckError(err)
 
 	// Create a map to store the namespaces

@@ -18,6 +18,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/observability"
 )
 
 const allResources string = "*"
@@ -96,7 +97,13 @@ var newSecurityConfigTypes = []string{
 
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
 // per a given Namespace.
-func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (models.IstioConfigList, error) {
+func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria IstioConfigCriteria) (models.IstioConfigList, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetIstioConfigList",
+		observability.Attribute("package", "business"),
+	)
+	defer end()
+
 	if criteria.Namespace == "" && !criteria.AllNamespaces {
 		return models.IstioConfigList{}, errors.New("GetIstioConfigList needs a non empty Namespace")
 	}
@@ -149,7 +156,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespace(criteria.Namespace); err != nil {
+	if _, err := in.businessLayer.Namespace.GetNamespace(ctx, criteria.Namespace); err != nil {
 		return models.IstioConfigList{}, err
 	}
 
@@ -165,9 +172,8 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	wg.Add(11)
 
 	listOpts := meta_v1.ListOptions{LabelSelector: criteria.LabelSelector}
-	ctx := context.TODO()
 
-	go func(errChan chan error) {
+	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
 		if criteria.Include(kubernetes.DestinationRules) {
 			var err error
@@ -183,9 +189,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				errChan <- err
 			}
 		}
-	}(errChan)
+	}(ctx, errChan)
 
-	go func(errChan chan error) {
+	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
 		if criteria.Include(kubernetes.EnvoyFilters) {
 			var err error
@@ -204,9 +210,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				errChan <- err
 			}
 		}
-	}(errChan)
+	}(ctx, errChan)
 
-	go func(errChan chan error) {
+	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
 		if criteria.Include(kubernetes.Gateways) {
 			var err error
@@ -226,9 +232,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				errChan <- err
 			}
 		}
-	}(errChan)
+	}(ctx, errChan)
 
-	go func(errChan chan error) {
+	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
 		if criteria.Include(kubernetes.ServiceEntries) {
 			var err error
@@ -244,9 +250,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				errChan <- err
 			}
 		}
-	}(errChan)
+	}(ctx, errChan)
 
-	go func(errChan chan error) {
+	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
 		if criteria.Include(kubernetes.Sidecars) {
 			var err error
@@ -265,9 +271,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				errChan <- err
 			}
 		}
-	}(errChan)
+	}(ctx, errChan)
 
-	go func(errChan chan error) {
+	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
 		if criteria.Include(kubernetes.VirtualServices) {
 			var err error
@@ -283,9 +289,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				errChan <- err
 			}
 		}
-	}(errChan)
+	}(ctx, errChan)
 
-	go func(errChan chan error) {
+	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
 		if criteria.Include(kubernetes.WorkloadEntries) {
 			var err error
@@ -300,9 +306,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				errChan <- err
 			}
 		}
-	}(errChan)
+	}(ctx, errChan)
 
-	go func(errChan chan error) {
+	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
 		if criteria.Include(kubernetes.WorkloadGroups) {
 			var err error
@@ -317,9 +323,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				errChan <- err
 			}
 		}
-	}(errChan)
+	}(ctx, errChan)
 
-	go func(errChan chan error) {
+	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
 		if criteria.Include(kubernetes.AuthorizationPolicies) {
 			var err error
@@ -338,9 +344,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				errChan <- err
 			}
 		}
-	}(errChan)
+	}(ctx, errChan)
 
-	go func(errChan chan error) {
+	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
 		if criteria.Include(kubernetes.PeerAuthentications) {
 			var err error
@@ -359,9 +365,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				errChan <- err
 			}
 		}
-	}(errChan)
+	}(ctx, errChan)
 
-	go func(errChan chan error) {
+	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
 		if criteria.Include(kubernetes.RequestAuthentications) {
 			var err error
@@ -380,7 +386,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				errChan <- err
 			}
 		}
-	}(errChan)
+	}(ctx, errChan)
 
 	wg.Wait()
 
@@ -400,7 +406,16 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 // - "namespace": 		namespace where configuration is stored
 // - "objectType":		type of the configuration
 // - "object":			name of the configuration
-func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, object string) (models.IstioConfigDetails, error) {
+func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, namespace, objectType, object string) (models.IstioConfigDetails, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetIstioConfigDetails",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", namespace),
+		observability.Attribute("objectType", objectType),
+		observability.Attribute("object", object),
+	)
+	defer end()
+
 	var err error
 
 	istioConfigDetail := models.IstioConfigDetails{}
@@ -409,24 +424,23 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
+	if _, err := in.businessLayer.Namespace.GetNamespace(ctx, namespace); err != nil {
 		return istioConfigDetail, err
 	}
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	go func() {
+	go func(ctx context.Context) {
 		defer wg.Done()
-		canCreate, canUpdate, canDelete := getPermissions(in.k8s, namespace, objectType)
+		canCreate, canUpdate, canDelete := getPermissions(ctx, in.k8s, namespace, objectType)
 		istioConfigDetail.Permissions = models.ResourcePermissions{
 			Create: canCreate,
 			Update: canUpdate,
 			Delete: canDelete,
 		}
-	}()
+	}(ctx)
 
-	ctx := context.TODO()
 	getOpts := meta_v1.GetOptions{}
 
 	switch objectType {
@@ -681,7 +695,14 @@ func (in *IstioConfigService) CreateIstioConfigDetail(namespace, resourceType st
 	return istioConfigDetail, err
 }
 
-func (in *IstioConfigService) GetIstioConfigPermissions(namespaces []string) models.IstioConfigPermissions {
+func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, namespaces []string) models.IstioConfigPermissions {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetIstioConfigPermissions",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespaces", namespaces),
+	)
+	defer end()
+
 	istioConfigPermissions := make(models.IstioConfigPermissions, len(namespaces))
 
 	if len(namespaces) > 0 {
@@ -704,9 +725,9 @@ func (in *IstioConfigService) GetIstioConfigPermissions(namespaces []string) mod
 				Synced with:
 				https://github.com/kiali/kiali-operator/blob/master/roles/default/kiali-deploy/templates/kubernetes/role.yaml#L62
 			*/
-			go func(namespace string, wg *sync.WaitGroup, networkingPermissions *models.ResourcesPermissions) {
+			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, networkingPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(in.k8s, namespace, kubernetes.NetworkingGroupVersion.Group, allResources)
+				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, in.k8s, namespace, kubernetes.NetworkingGroupVersion.Group, allResources)
 				for _, rs := range newNetworkingConfigTypes {
 					networkingRP[rs] = &models.ResourcePermissions{
 						Create: canCreate,
@@ -714,11 +735,11 @@ func (in *IstioConfigService) GetIstioConfigPermissions(namespaces []string) mod
 						Delete: canDelete,
 					}
 				}
-			}(ns, &wg, &networkingRP)
+			}(ctx, ns, &wg, &networkingRP)
 
-			go func(namespace string, wg *sync.WaitGroup, securityPermissions *models.ResourcesPermissions) {
+			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, securityPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(in.k8s, namespace, kubernetes.SecurityGroupVersion.Group, allResources)
+				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, in.k8s, namespace, kubernetes.SecurityGroupVersion.Group, allResources)
 				for _, rs := range newSecurityConfigTypes {
 					securityRP[rs] = &models.ResourcePermissions{
 						Create: canCreate,
@@ -726,7 +747,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(namespaces []string) mod
 						Delete: canDelete,
 					}
 				}
-			}(ns, &wg, &securityRP)
+			}(ctx, ns, &wg, &securityRP)
 		}
 		wg.Wait()
 
@@ -745,17 +766,17 @@ func (in *IstioConfigService) GetIstioConfigPermissions(namespaces []string) mod
 	return istioConfigPermissions
 }
 
-func getPermissions(k8s kubernetes.ClientInterface, namespace, objectType string) (bool, bool, bool) {
+func getPermissions(ctx context.Context, k8s kubernetes.ClientInterface, namespace, objectType string) (bool, bool, bool) {
 	var canCreate, canPatch, canDelete bool
 
 	if api, ok := kubernetes.ResourceTypesToAPI[objectType]; ok {
 		resourceType := objectType
-		return getPermissionsApi(k8s, namespace, api, resourceType)
+		return getPermissionsApi(ctx, k8s, namespace, api, resourceType)
 	}
 	return canCreate, canPatch, canDelete
 }
 
-func getPermissionsApi(k8s kubernetes.ClientInterface, namespace, api, resourceType string) (bool, bool, bool) {
+func getPermissionsApi(ctx context.Context, k8s kubernetes.ClientInterface, namespace, api, resourceType string) (bool, bool, bool) {
 	var canCreate, canPatch, canDelete bool
 
 	// In view only mode, there is not need to check RBAC permissions, return false early
@@ -772,7 +793,7 @@ func getPermissionsApi(k8s kubernetes.ClientInterface, namespace, api, resourceT
 		Synced with:
 		https://github.com/kiali/kiali-operator/blob/master/roles/default/kiali-deploy/templates/kubernetes/role.yaml#L62
 	*/
-	ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, resourceType, []string{"create", "patch", "delete"})
+	ssars, permErr := k8s.GetSelfSubjectAccessReview(ctx, namespace, api, resourceType, []string{"create", "patch", "delete"})
 	if permErr == nil {
 		for _, ssar := range ssars {
 			if ssar.Spec.ResourceAttributes != nil {

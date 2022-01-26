@@ -33,7 +33,7 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	info, err := checkNamespaceAccess(layer.Namespace, namespace)
+	info, err := checkNamespaceAccess(r.Context(), layer.Namespace, namespace)
 	if err != nil {
 		RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
 		return
@@ -48,7 +48,7 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 
 	var wkd *models.Workload
 	if params.Workload != "" {
-		wkd, err = layer.Workload.GetWorkload(namespace, params.Workload, params.WorkloadType, false)
+		wkd, err = layer.Workload.GetWorkload(r.Context(), namespace, params.Workload, params.WorkloadType, false)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				RespondWithError(w, http.StatusNotFound, err.Error())
@@ -165,7 +165,7 @@ func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
-	svc, err := b.Svc.GetService(namespace, service)
+	svc, err := b.Svc.GetService(r.Context(), namespace, service)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return

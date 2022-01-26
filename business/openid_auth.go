@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
@@ -741,7 +742,7 @@ func VerifyOpenIdUserAccess(token string) (int, string, error) {
 
 	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
 	// anonymous access, so it's not feasible to use the version API for token verification.
-	nsList, err := business.Namespace.GetNamespaces()
+	nsList, err := business.Namespace.GetNamespaces(context.TODO())
 	if err != nil {
 		return http.StatusUnauthorized, "Token is not valid or is expired", err
 	}

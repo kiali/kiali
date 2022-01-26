@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"time"
@@ -31,7 +32,7 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Adjust rate interval
-	rateInterval, err := adjustRateInterval(business, p.Namespace, p.RateInterval, p.QueryTime)
+	rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime)
 	if err != nil {
 		handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 		return
@@ -39,21 +40,21 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 
 	switch p.Type {
 	case "app":
-		health, err := business.Health.GetNamespaceAppHealth(p.Namespace, rateInterval, p.QueryTime)
+		health, err := business.Health.GetNamespaceAppHealth(r.Context(), p.Namespace, rateInterval, p.QueryTime)
 		if err != nil {
 			handleErrorResponse(w, err, "Error while fetching app health: "+err.Error())
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, health)
 	case "service":
-		health, err := business.Health.GetNamespaceServiceHealth(p.Namespace, rateInterval, p.QueryTime)
+		health, err := business.Health.GetNamespaceServiceHealth(r.Context(), p.Namespace, rateInterval, p.QueryTime)
 		if err != nil {
 			handleErrorResponse(w, err, "Error while fetching service health: "+err.Error())
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, health)
 	case "workload":
-		health, err := business.Health.GetNamespaceWorkloadHealth(p.Namespace, rateInterval, p.QueryTime)
+		health, err := business.Health.GetNamespaceWorkloadHealth(r.Context(), p.Namespace, rateInterval, p.QueryTime)
 		if err != nil {
 			handleErrorResponse(w, err, "Error while fetching workload health: "+err.Error())
 			return
@@ -72,13 +73,13 @@ func AppHealth(w http.ResponseWriter, r *http.Request) {
 
 	p := appHealthParams{}
 	p.extract(r)
-	rateInterval, err := adjustRateInterval(business, p.Namespace, p.RateInterval, p.QueryTime)
+	rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime)
 	if err != nil {
 		handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 		return
 	}
 
-	health, err := business.Health.GetAppHealth(p.Namespace, p.App, rateInterval, p.QueryTime)
+	health, err := business.Health.GetAppHealth(r.Context(), p.Namespace, p.App, rateInterval, p.QueryTime)
 	handleHealthResponse(w, health, err)
 }
 
@@ -92,14 +93,14 @@ func WorkloadHealth(w http.ResponseWriter, r *http.Request) {
 
 	p := workloadHealthParams{}
 	p.extract(r)
-	rateInterval, err := adjustRateInterval(business, p.Namespace, p.RateInterval, p.QueryTime)
+	rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime)
 	if err != nil {
 		handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 		return
 	}
 	p.RateInterval = rateInterval
 
-	health, err := business.Health.GetWorkloadHealth(p.Namespace, p.Workload, p.WorkloadType, rateInterval, p.QueryTime)
+	health, err := business.Health.GetWorkloadHealth(r.Context(), p.Namespace, p.Workload, p.WorkloadType, rateInterval, p.QueryTime)
 	handleHealthResponse(w, health, err)
 }
 
@@ -113,13 +114,13 @@ func ServiceHealth(w http.ResponseWriter, r *http.Request) {
 
 	p := serviceHealthParams{}
 	p.extract(r)
-	rateInterval, err := adjustRateInterval(business, p.Namespace, p.RateInterval, p.QueryTime)
+	rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime)
 	if err != nil {
 		handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 		return
 	}
 
-	health, err := business.Health.GetServiceHealth(p.Namespace, p.Service, rateInterval, p.QueryTime)
+	health, err := business.Health.GetServiceHealth(r.Context(), p.Namespace, p.Service, rateInterval, p.QueryTime)
 	handleHealthResponse(w, health, err)
 }
 
@@ -243,8 +244,8 @@ func (p *workloadHealthParams) extract(r *http.Request) {
 	p.WorkloadType = query.Get("type")
 }
 
-func adjustRateInterval(business *business.Layer, namespace, rateInterval string, queryTime time.Time) (string, error) {
-	namespaceInfo, err := business.Namespace.GetNamespace(namespace)
+func adjustRateInterval(ctx context.Context, business *business.Layer, namespace, rateInterval string, queryTime time.Time) (string, error) {
+	namespaceInfo, err := business.Namespace.GetNamespace(ctx, namespace)
 	if err != nil {
 		return "", err
 	}

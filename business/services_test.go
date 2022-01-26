@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"io/ioutil"
 	"testing"
 
@@ -29,7 +30,7 @@ func TestServiceListParsing(t *testing.T) {
 	svc := SvcService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 
 	criteria := ServiceCriteria{Namespace: "Namespace", IncludeIstioResources: false}
-	serviceList, _ := svc.GetServiceList(criteria)
+	serviceList, _ := svc.GetServiceList(context.TODO(), criteria)
 
 	assert.Equal("Namespace", serviceList.Namespace.Name)
 	assert.Len(serviceList.Services, 2)

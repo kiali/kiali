@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/kiali/kiali/business"
@@ -235,7 +236,7 @@ func getServiceList(namespace string, gi *graph.AppenderGlobalInfo) *models.Serv
 		Namespace:              namespace,
 		IncludeOnlyDefinitions: true,
 	}
-	serviceList, err := gi.Business.Svc.GetServiceList(criteria)
+	serviceList, err := gi.Business.Svc.GetServiceList(context.TODO(), criteria)
 	graph.CheckError(err)
 	serviceListMap[namespace] = serviceList
 
@@ -275,7 +276,7 @@ func getWorkloadList(namespace string, gi *graph.AppenderGlobalInfo) *models.Wor
 	}
 
 	criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false}
-	workloadList, err := gi.Business.Workload.GetWorkloadList(criteria)
+	workloadList, err := gi.Business.Workload.GetWorkloadList(context.TODO(), criteria)
 	graph.CheckError(err)
 	workloadListMap[namespace] = &workloadList
 

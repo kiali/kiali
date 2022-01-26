@@ -129,7 +129,7 @@ func (c tokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter
 
 	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
 	// anonymous access, so it's not feasible to use the version API for token verification.
-	nsList, err := bs.Namespace.GetNamespaces()
+	nsList, err := bs.Namespace.GetNamespaces(r.Context())
 	if err != nil {
 		c.SessionStore.TerminateSession(r, w)
 		return nil, &AuthenticationFailureError{Reason: "token is not valid or is expired", Detail: err}
@@ -174,7 +174,7 @@ func (c tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWri
 		return nil, fmt.Errorf("could not get the business layer: %w", err)
 	}
 
-	_, err = bs.Namespace.GetNamespaces()
+	_, err = bs.Namespace.GetNamespaces(r.Context())
 	if err != nil {
 		// The Kubernetes API rejected the token.
 		// Return no data (which means no active session).

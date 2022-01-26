@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -45,12 +46,12 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *grap
 
 func addBadging(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	// Currently no other appenders use DestinationRules or VirtualServices, so they are not cached in AppenderNamespaceInfo
-	istioCfgDestionationRules, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
+	istioCfgDestionationRules, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
 		IncludeDestinationRules: true,
 		Namespace:               namespaceInfo.Namespace,
 	})
 	graph.CheckError(err)
-	istioCfgVirtualServices, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
+	istioCfgVirtualServices, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
 		IncludeVirtualServices: true,
 		AllNamespaces:          true,
 	})
@@ -286,7 +287,7 @@ func (a IstioAppender) getIstioComponentWorkloads(component string, globalInfo *
 	componentWorkloads := make(map[string][]models.WorkloadListItem)
 	for namespace := range a.AccessibleNamespaces {
 		criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false}
-		wList, err := globalInfo.Business.Workload.GetWorkloadList(criteria)
+		wList, err := globalInfo.Business.Workload.GetWorkloadList(context.TODO(), criteria)
 		graph.CheckError(err)
 
 		// Find Istio component deployments
@@ -305,7 +306,7 @@ func (a IstioAppender) getIstioComponentWorkloads(component string, globalInfo *
 func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) []networking_v1alpha3.Gateway {
 	retVal := []networking_v1alpha3.Gateway{}
 	for namespace := range a.AccessibleNamespaces {
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
+		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
 			IncludeGateways: true,
 			Namespace:       namespace,
 		})

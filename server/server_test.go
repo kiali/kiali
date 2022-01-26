@@ -192,8 +192,8 @@ func TestSecureComm(t *testing.T) {
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
 	conf.Server.StaticContentRootDirectory = tmpDir
-	conf.Server.MetricsEnabled = true
-	conf.Server.MetricsPort = testMetricsPort
+	conf.Server.Observability.Metrics.Enabled = true
+	conf.Server.Observability.Metrics.Port = testMetricsPort
 	conf.Auth.Strategy = "anonymous"
 	util.Clock = util.RealClock{}
 
@@ -273,6 +273,36 @@ func TestSecureComm(t *testing.T) {
 		t.Fatalf("Failed: Should not have been able to use TLS 1.1")
 	}
 
+}
+
+func TestTracingConfigured(t *testing.T) {
+	testPort, err := getFreePort(testHostname)
+	if err != nil {
+		t.Fatalf("Cannot get a free port to run tests on host [%v]", testHostname)
+	} else {
+		t.Logf("Will use free port [%v] on host [%v] for tests", testPort, testHostname)
+	}
+
+	testServerHostPort := fmt.Sprintf("%v:%v", testHostname, testPort)
+
+	conf := new(config.Config)
+	conf.Server.Address = testHostname
+	conf.Server.Port = testPort
+	conf.Server.StaticContentRootDirectory = tmpDir
+	conf.Server.Observability.Tracing.Enabled = true
+	conf.Auth.Strategy = "anonymous"
+
+	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
+
+	config.Set(conf)
+
+	server := NewServer()
+	server.Start()
+	t.Logf("Started test http server: %v", serverURL)
+	defer func() {
+		server.Stop()
+		t.Logf("Stopped test server: %v", serverURL)
+	}()
 }
 
 func TestConfigureGzipHandler(t *testing.T) {

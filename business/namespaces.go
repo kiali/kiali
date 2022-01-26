@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"regexp"
 
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -12,9 +13,10 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/observability"
 )
 
-// Namespace deals with fetching k8s namespaces / OpenShift projects and convert to kiali model
+// NamespaceService deals with fetching k8s namespaces / OpenShift projects and convert to kiali model
 type NamespaceService struct {
 	k8s                    kubernetes.ClientInterface
 	hasProjects            bool
@@ -35,7 +37,6 @@ func IsAccessibleError(err error) bool {
 }
 
 func NewNamespaceService(k8s kubernetes.ClientInterface) NamespaceService {
-
 	var hasProjects bool
 
 	if k8s != nil && k8s.IsOpenShift() {
@@ -58,7 +59,13 @@ func NewNamespaceService(k8s kubernetes.ClientInterface) NamespaceService {
 }
 
 // Returns a list of the given namespaces / projects
-func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
+func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespace, error) {
+	var end observability.EndFunc
+	_, end = observability.StartSpan(ctx, "GetNamespaces",
+		observability.Attribute("package", "business"),
+	)
+	defer end()
+
 	if kialiCache != nil {
 		if ns := kialiCache.GetNamespaces(in.k8s.GetToken()); ns != nil {
 			return ns, nil
@@ -172,7 +179,14 @@ func (in *NamespaceService) isExcludedNamespace(namespace string) bool {
 }
 
 // GetNamespace returns the definition of the specified namespace.
-func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, error) {
+func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) (*models.Namespace, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetNamespace",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", namespace),
+	)
+	defer end()
+
 	var err error
 
 	// Cache already has included/excluded namespaces applied
@@ -208,16 +222,24 @@ func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, e
 	}
 	// Refresh cache in case of cache expiration
 	if kialiCache != nil {
-		if _, err = in.GetNamespaces(); err != nil {
+		if _, err = in.GetNamespaces(ctx); err != nil {
 			return nil, err
 		}
 	}
 	return &result, nil
 }
 
-func (in *NamespaceService) UpdateNamespace(namespace string, jsonPatch string) (*models.Namespace, error) {
+func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace string, jsonPatch string) (*models.Namespace, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "UpdateNamespace",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", namespace),
+		observability.Attribute("jsonPatch", jsonPatch),
+	)
+	defer end()
+
 	// A first check to run the accessible/excluded logic and not run the Update operation on filtered namespaces
-	_, err := in.GetNamespace(namespace)
+	_, err := in.GetNamespace(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +255,7 @@ func (in *NamespaceService) UpdateNamespace(namespace string, jsonPatch string) 
 		kialiCache.RefreshTokenNamespaces()
 	}
 	// Call GetNamespace to update the caching
-	return in.GetNamespace(namespace)
+	return in.GetNamespace(ctx, namespace)
 }
 
 func (in *NamespaceService) getNamespacesUsingKialiSA(labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {

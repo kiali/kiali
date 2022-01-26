@@ -226,6 +226,26 @@ make lint-install
 make format lint
 ----
 
+=== Enable tracing
+
+Kiali itself is instrumented with opentelemetry tracing to help provide insights and surface performance issues for the kiali server. To enable, set the `server.observability.tracing.enabled` and `server.observability.tracing.collector_url` configuration options.
+
+[source,yaml]
+----
+apiVersion: kiali.io/v1alpha1
+kind: Kiali
+metadata:
+  name: kiali
+spec:
+...
+  server:
+    observability:
+      tracing:
+        collector_url: http://jaeger-collector.istio-system:14268/api/traces
+        enabled: true
+...
+----
+
 === Running Standalone
 
 You may want to run Kiali outside of any cluster environment for debugging purposes. To do this, you

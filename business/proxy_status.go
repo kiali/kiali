@@ -1,6 +1,8 @@
 package business
 
 import (
+	"context"
+
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -92,7 +94,7 @@ func (in *ProxyStatusService) GetConfigDumpResourceEntries(namespace, pod, resou
 		return nil, err
 	}
 
-	namespaces, err := in.businessLayer.Namespace.GetNamespaces()
+	namespaces, err := in.businessLayer.Namespace.GetNamespaces(context.TODO())
 	if err != nil {
 		return nil, err
 	}

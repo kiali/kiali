@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -39,7 +40,7 @@ func TestGetServiceHealth(t *testing.T) {
 	setupGlobalMeshConfig()
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	health, _ := hs.GetServiceHealth("ns", "httpbin", "1m", queryTime)
+	health, _ := hs.GetServiceHealth(context.TODO(), "ns", "httpbin", "1m", queryTime)
 
 	prom.AssertNumberOfCalls(t, "GetServiceRequestRates", 1)
 	var result = map[string]map[string]float64{
@@ -77,7 +78,7 @@ func TestGetAppHealth(t *testing.T) {
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
 
-	health, _ := hs.GetAppHealth("ns", "reviews", "1m", queryTime)
+	health, _ := hs.GetAppHealth(context.TODO(), "ns", "reviews", "1m", queryTime)
 
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 1)
 	var result = map[string]map[string]float64{
@@ -120,7 +121,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "", "1m", queryTime)
+	health, _ := hs.GetWorkloadHealth(context.TODO(), "ns", "reviews-v1", "", "1m", queryTime)
 
 	k8s.AssertNumberOfCalls(t, "GetDeployment", 2)
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 1)
@@ -163,7 +164,7 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	health, _ := hs.GetAppHealth("ns", "reviews", "1m", queryTime)
+	health, _ := hs.GetAppHealth(context.TODO(), "ns", "reviews", "1m", queryTime)
 
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 0)
 	assert.Equal(emptyResult, health.Requests.Inbound)
@@ -191,7 +192,7 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "", "1m", queryTime)
+	health, _ := hs.GetWorkloadHealth(context.TODO(), "ns", "reviews-v1", "", "1m", queryTime)
 
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 0)
 	assert.Equal(emptyResult, health.Requests.Inbound)
@@ -214,7 +215,7 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	_, _ = hs.GetNamespaceAppHealth("ns", "1m", time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC))
+	_, _ = hs.GetNamespaceAppHealth(context.TODO(), "ns", "1m", time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC))
 
 	// Make sure unnecessary call isn't performed
 	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 0)
@@ -236,7 +237,7 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	health, err := hs.GetNamespaceServiceHealth("tutorial", "1m", time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC))
+	health, err := hs.GetNamespaceServiceHealth(context.TODO(), "tutorial", "1m", time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC))
 
 	assert.Nil(err)
 	// Make sure we get services with N/A health

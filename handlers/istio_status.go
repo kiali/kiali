@@ -13,7 +13,7 @@ func IstioStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	istioStatus, err := business.IstioStatus.GetStatus()
+	istioStatus, err := business.IstioStatus.GetStatus(r.Context())
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

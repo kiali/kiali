@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -79,13 +80,14 @@ func testPerfScenario(exStatus string, nss []core_v1.Namespace, drs []networking
 		nsNames = append(nsNames, ns.Name)
 	}
 
-	config.Set(config.NewConfig())
+	conf = config.NewConfig()
+	conf.Deployment.AccessibleNamespaces = []string{"**"}
+	config.Set(conf)
 
 	kialiCache = cache.FakeTlsKialiCache("token", nsNames, ps, drs)
-	tlsService := TLSService{k8s: k8s, enabledAutoMtls: &autoMtls, businessLayer: NewWithBackends(k8s, nil, nil)}
-	tlsService.businessLayer.Namespace.isAccessibleNamespaces["**"] = true
+	TLSService := TLSService{k8s: k8s, enabledAutoMtls: &autoMtls, businessLayer: NewWithBackends(k8s, nil, nil)}
 	for _, ns := range nss {
-		status, err := (tlsService).NamespaceWidemTLSStatus(ns.Name)
+		status, err := (TLSService).NamespaceWidemTLSStatus(context.TODO(), ns.Name)
 		assert.NoError(err)
 		assert.Equal(exStatus, status.Status)
 	}
