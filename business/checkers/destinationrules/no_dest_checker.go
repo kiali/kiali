@@ -7,7 +7,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -28,9 +27,6 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
 	namespace, clusterName := n.DestinationRule.Namespace, n.DestinationRule.ClusterName
-	if clusterName == "" {
-		clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
-	}
 
 	fqdn := kubernetes.GetHost(n.DestinationRule.Spec.Host, namespace, clusterName, n.Namespaces.GetNames())
 	// Testing Kubernetes Services + Istio ServiceEntries + Istio Runtime Registry (cross namespace)

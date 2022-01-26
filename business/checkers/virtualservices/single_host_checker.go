@@ -2,8 +2,7 @@ package virtualservices
 
 import (
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-
-	"github.com/kiali/kiali/config"
+	
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -141,9 +140,6 @@ func storeHost(hostCounter map[string]map[string]map[string]map[string][]*networ
 
 func (s SingleHostChecker) getHosts(virtualService networking_v1alpha3.VirtualService) []kubernetes.Host {
 	namespace, clusterName := virtualService.Namespace, virtualService.ClusterName
-	if clusterName == "" {
-		clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
-	}
 
 	if len(virtualService.Spec.Hosts) == 0 {
 		return []kubernetes.Host{}
