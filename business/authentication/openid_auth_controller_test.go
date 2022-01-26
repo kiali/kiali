@@ -5,21 +5,23 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes/kubetest"
-	"github.com/kiali/kiali/util"
-	osproject_v1 "github.com/openshift/api/project/v1"
-	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/clientcmd/api"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 	"time"
+
+	osproject_v1 "github.com/openshift/api/project/v1"
+	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/util"
 )
 
 // Token built with the debugger at jwt.io. Subject is system:serviceaccount:k8s_user
@@ -808,17 +810,17 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
 			w.WriteHeader(200)
-			w.Write(oidcMetadata)
+			_, _ = w.Write(oidcMetadata)
 		}
 		if r.URL.Path == "/token" {
-			r.ParseForm()
+			_ = r.ParseForm()
 			assert.Equal(t, "f0code", r.Form.Get("code"))
 			assert.Equal(t, "authorization_code", r.Form.Get("grant_type"))
 			assert.Equal(t, "kiali-client", r.Form.Get("client_id"))
 			assert.Equal(t, "https://kiali.io:44/kiali-test", r.Form.Get("redirect_uri"))
 
 			w.WriteHeader(200)
-			w.Write([]byte("{ \"id_token\": \"" + openIdTestToken + "\" }"))
+			_, _ = w.Write([]byte("{ \"id_token\": \"" + openIdTestToken + "\" }"))
 		}
 	}))
 	defer testServer.Close()
@@ -899,11 +901,11 @@ func TestOpenIdCodeFlowShouldFailWithMissingIdTokenFromOpenIdServer(t *testing.T
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
 			w.WriteHeader(200)
-			w.Write(oidcMetadata)
+			_, _ = w.Write(oidcMetadata)
 		}
 		if r.URL.Path == "/token" {
 			w.WriteHeader(200)
-			w.Write([]byte("{ \"access_token\": \"" + openIdTestToken + "\" }"))
+			_, _ = w.Write([]byte("{ \"access_token\": \"" + openIdTestToken + "\" }"))
 		}
 	}))
 	defer testServer.Close()
@@ -969,11 +971,11 @@ func TestOpenIdCodeFlowShouldFailWithBadResponseFromTokenEndpoint(t *testing.T) 
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
 			w.WriteHeader(200)
-			w.Write(oidcMetadata)
+			_, _ = w.Write(oidcMetadata)
 		}
 		if r.URL.Path == "/token" {
 			w.WriteHeader(500)
-			w.Write([]byte("{ }"))
+			_, _ = w.Write([]byte("{ }"))
 		}
 	}))
 	defer testServer.Close()
@@ -1039,11 +1041,11 @@ func TestOpenIdCodeFlowShouldFailWithNonJsonResponse(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
 			w.WriteHeader(200)
-			w.Write(oidcMetadata)
+			_, _ = w.Write(oidcMetadata)
 		}
 		if r.URL.Path == "/token" {
 			w.WriteHeader(200)
-			w.Write([]byte("\"id_token\": \"foo\""))
+			_, _ = w.Write([]byte("\"id_token\": \"foo\""))
 		}
 	}))
 	defer testServer.Close()
@@ -1109,11 +1111,11 @@ func TestOpenIdCodeFlowShouldFailWithNonJwtIdToken(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
 			w.WriteHeader(200)
-			w.Write(oidcMetadata)
+			_, _ = w.Write(oidcMetadata)
 		}
 		if r.URL.Path == "/token" {
 			w.WriteHeader(200)
-			w.Write([]byte("{ \"id_token\": \"foo\" }"))
+			_, _ = w.Write([]byte("{ \"id_token\": \"foo\" }"))
 		}
 	}))
 	defer testServer.Close()
@@ -1219,11 +1221,11 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithoutExpiration(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
 			w.WriteHeader(200)
-			w.Write(oidcMetadata)
+			_, _ = w.Write(oidcMetadata)
 		}
 		if r.URL.Path == "/token" {
 			w.WriteHeader(200)
-			w.Write([]byte("{ \"id_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZG9lQGRvbWFpbi5jb20iLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsIm5vbmNlIjoiMWJhOWI4MzRkMDhhYzgxZmViMzRlMjA4NDAyZWIxOGU5MDliZTA4NDUxOGMzMjg1MTA5NDAxODQifQ.ih34Mh3Sao9bnXCjaobfAEO1BnHnuuLBWxihAzwUqw8\" }"))
+			_, _ = w.Write([]byte("{ \"id_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZG9lQGRvbWFpbi5jb20iLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsIm5vbmNlIjoiMWJhOWI4MzRkMDhhYzgxZmViMzRlMjA4NDAyZWIxOGU5MDliZTA4NDUxOGMzMjg1MTA5NDAxODQifQ.ih34Mh3Sao9bnXCjaobfAEO1BnHnuuLBWxihAzwUqw8\" }"))
 		}
 	}))
 	defer testServer.Close()
@@ -1289,11 +1291,11 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithNonNumericExpClaim(t *testing.T)
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
 			w.WriteHeader(200)
-			w.Write(oidcMetadata)
+			_, _ = w.Write(oidcMetadata)
 		}
 		if r.URL.Path == "/token" {
 			w.WriteHeader(200)
-			w.Write([]byte("{ \"id_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZG9lQGRvbWFpbi5jb20iLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsIm5vbmNlIjoiMWJhOWI4MzRkMDhhYzgxZmViMzRlMjA4NDAyZWIxOGU5MDliZTA4NDUxOGMzMjg1MTA5NDAxODQiLCJleHAiOiJmb28ifQ.wdM3yQPwAXLaqZbVku_fcXpisC3tzES8_UUwjbxSPrc\" }"))
+			_, _ = w.Write([]byte("{ \"id_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZG9lQGRvbWFpbi5jb20iLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsIm5vbmNlIjoiMWJhOWI4MzRkMDhhYzgxZmViMzRlMjA4NDAyZWIxOGU5MDliZTA4NDUxOGMzMjg1MTA5NDAxODQiLCJleHAiOiJmb28ifQ.wdM3yQPwAXLaqZbVku_fcXpisC3tzES8_UUwjbxSPrc\" }"))
 		}
 	}))
 	defer testServer.Close()
@@ -1520,11 +1522,11 @@ func TestOpenIdCodeFlowShouldRejectMissingNonceInToken(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
 			w.WriteHeader(200)
-			w.Write(oidcMetadata)
+			_, _ = w.Write(oidcMetadata)
 		}
 		if r.URL.Path == "/token" {
 			w.WriteHeader(200)
-			w.Write([]byte("{ \"id_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZG9lQGRvbWFpbi5jb20iLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTMxMTI4MTk3MH0.xAoq7T-wti__Je1PDuTgNonoVSu059FzpOHsNm26YTg\" }"))
+			_, _ = w.Write([]byte("{ \"id_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZG9lQGRvbWFpbi5jb20iLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTMxMTI4MTk3MH0.xAoq7T-wti__Je1PDuTgNonoVSu059FzpOHsNm26YTg\" }"))
 		}
 	}))
 	defer testServer.Close()
