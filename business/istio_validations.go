@@ -91,7 +91,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 		}
 	}
 
-	objectCheckers := in.getAllObjectCheckers(namespace, istioConfigList, exportedResources, services, workloadsPerNamespace, workloadsPerNamespace[namespace], mtlsDetails, rbacDetails, namespaces, registryServices)
+	objectCheckers := in.getAllObjectCheckers(namespace, istioConfigList, exportedResources, workloadsPerNamespace, workloadsPerNamespace[namespace], mtlsDetails, rbacDetails, namespaces, registryServices)
 
 	// Get group validations for same kind istio objects
 	validations := runObjectCheckers(objectCheckers)
@@ -106,7 +106,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 	return validations, nil
 }
 
-func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioConfigList models.IstioConfigList, exportedResources kubernetes.ExportedResources, services models.ServiceList, workloadsPerNamespace map[string]models.WorkloadList, workloads models.WorkloadList, mtlsDetails kubernetes.MTLSDetails, rbacDetails kubernetes.RBACDetails, namespaces []models.Namespace, registryServices []*kubernetes.RegistryService) []ObjectChecker {
+func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioConfigList models.IstioConfigList, exportedResources kubernetes.ExportedResources, workloadsPerNamespace map[string]models.WorkloadList, workloads models.WorkloadList, mtlsDetails kubernetes.MTLSDetails, rbacDetails kubernetes.RBACDetails, namespaces []models.Namespace, registryServices []*kubernetes.RegistryService) []ObjectChecker {
 	return []ObjectChecker{
 		checkers.NoServiceChecker{Namespace: namespace, Namespaces: namespaces, ExportedResources: &exportedResources, WorkloadList: workloads, AuthorizationDetails: &rbacDetails, RegistryServices: registryServices},
 		checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, VirtualServices: exportedResources.VirtualServices, DestinationRules: exportedResources.DestinationRules},
