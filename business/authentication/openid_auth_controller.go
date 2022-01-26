@@ -133,6 +133,12 @@ func NewOpenIdAuthController(persistor SessionPersistor, businessInstantiator fu
 	}
 }
 
+// Authenticate is the entry point to handle OpenId authentication using the implicit flow. The HTTP request
+// should contain "id_token" and "state" as URL parameters. If RBAC is enabled, the id_token should be
+// valid to be used in the Kubernetes API (thus, privileges are verified to allow login); else, only token
+// validity is checked and users will share the same privileges.
+// An AuthenticationFailureError is returned if the authentication failed. Any
+// other kind of error means that something unexpected happened.
 func (c openIdAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	flow := openidFlowHelper{businessInstantiator: c.businessInstantiator}
 	sPayload := flow.
@@ -161,12 +167,18 @@ func (c openIdAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 	}, nil
 }
 
+// GetAuthCallbackHandler returns an http handler for authentication requests done to Kiali's web_root.
+// This handler catches callbacks from the OpenId server. If it cannot be determined that the request
+// is a callback from the authentication server, the request is passed to the fallbackHandler.
 func (c openIdAuthController) GetAuthCallbackHandler(fallbackHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c.authenticateWithAuthorizationCodeFlow(r, w, fallbackHandler)
 	})
 }
 
+// PostRoutes adds the additional endpoints are needed on the Kiali's router
+// in order to properly enable OpenId authentication. Only one new route is added to
+// do a redirection from Kiali to the OpenId server to initiate authentication.
 func (c openIdAuthController) PostRoutes(router *mux.Router) {
 	// swagger:route GET /auth/openid_redirect auth openidRedirect
 	// ---
@@ -191,6 +203,10 @@ func (c openIdAuthController) PostRoutes(router *mux.Router) {
 		HandlerFunc(c.redirectToAuthServerHandler)
 }
 
+// ValidateSession restores a session previously created by the Authenticate function. A sanity check of
+// the id_token is performed if Kiali is not configured to use the access_token. Also, if RBAC is enabled,
+// a privilege check is performed to verify that the user still has privileges to use Kiali.
+// If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
 func (c openIdAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	// Restore a previously started session.
 	sPayload := oidcSessionPayload{}
@@ -203,16 +219,10 @@ func (c openIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		return nil, nil
 	}
 
-	// Session ID claim must be present
+	// The OpenId token must be present in the session
 	if len(sPayload.Token) == 0 {
 		log.Warning("Session is invalid: the OIDC token is absent")
 		return nil, nil
-	}
-
-	bs, err := business.Get(&api.AuthInfo{Token: sPayload.Token})
-	if err != nil {
-		log.Warningf("Could not get the business layer!!: %v", err)
-		return nil, fmt.Errorf("could not get the business layer: %w", err)
 	}
 
 	conf := config.Get()
@@ -245,6 +255,12 @@ func (c openIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 	var token string
 	if !conf.Auth.OpenId.DisableRBAC {
 		// If RBAC is ENABLED, check that the user has privileges on the cluster.
+		bs, err := business.Get(&api.AuthInfo{Token: sPayload.Token})
+		if err != nil {
+			log.Warningf("Could not get the business layer!!: %v", err)
+			return nil, fmt.Errorf("could not get the business layer: %w", err)
+		}
+
 		_, err = bs.Namespace.GetNamespaces(r.Context())
 		if err != nil {
 			log.Warningf("Token error!: %v", err)
@@ -277,6 +293,13 @@ func (c openIdAuthController) TerminateSession(r *http.Request, w http.ResponseW
 	c.SessionStore.TerminateSession(r, w)
 }
 
+// authenticateWithAuthorizationCodeFlow is the entry point to handle OpenId authentication using the authorization
+// code flow. The HTTP request should contain "code" and "state" as URL parameters. Kiali will exchange the code
+// for a token by contacting the OpenId server. If RBAC is enabled, the id_token should be valid to be used in the
+// Kubernetes API (thus, privileges are verified to allow login); else, only token validity is checked and users will
+// share the same privileges.
+// An AuthenticationFailureError is returned if the authentication failed. Any
+// other kind of error means that something unexpected happened.
 func (c openIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Request, w http.ResponseWriter, fallbackHandler http.Handler) {
 	conf := config.Get()
 	webRoot := conf.Server.WebRoot
@@ -312,28 +335,12 @@ func (c openIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Requ
 	http.Redirect(w, r, webRootWithSlash, http.StatusFound)
 }
 
-type openidFlowHelper struct {
-	AccessToken    string
-	Code           string
-	ExpiresOn      time.Time
-	IdToken        string
-	Nonce          string
-	NonceHash      []byte
-	ParsedIdToken  *jwt.JSONWebToken
-	IdTokenPayload map[string]interface{}
-	State          string
-	Subject        string
-	UseAccessToken bool
-
-	Error                  error
-	ShouldTerminateSession bool
-
-	// businessInstantiator is a function that returns an already initialized
-	// business layer. Normally, it should be set to the business.Get function.
-	// For tests, it can be set to something else that returns a compatible API.
-	businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)
-}
-
+// redirectToAuthServerHandler prepares the redirection to initiate authentication with an OpenId Server.
+// It find what's the authentication endpoint of the OpenId server to redirect the user to. Then, creates
+// the "nonce" and the "state" codes and forms the final URL to reply with a "302 Found" HTTP status and
+// post the redirection in a "Location" HTTP header, with the needed parameters given the OpenId server
+// capabilities. A Cookie is set to store the source of the calculated codes and be able to verify the
+// authentication intent when the OpenId server calls back.
 func (c openIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter, r *http.Request) {
 	conf := config.Get()
 
@@ -430,6 +437,66 @@ func (c openIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 	http.Redirect(w, r, redirectUri, http.StatusFound)
 }
 
+// openidFlowHelper is a helper type to implement both the authorization code and the implicit
+// flows of the OpenId specification. This is mainly for de-duplicating code. Previously, the same
+// code was copied on two functions: one to handle implicit flow and one to handle authorization
+// code flow. The differences were mainly because of the way error handling is done on each flow (one
+// had to return an http response with a JSON error, while the other did http redirects). This helper
+// uses Go errors and let the caller do the appropriate response, depending on the situation.
+// Fields in this struct are filled and read as needed.
+type openidFlowHelper struct {
+	// AccessToken stores the access_token returned by the OpenId server, if Kiali is
+	// configured to use it instead of the id_token.
+	AccessToken string
+
+	// Code is the authorization code provided during the callback of the authorization code flow.
+	Code string
+
+	// ExpiresOn is the expiration time of the id_token.
+	ExpiresOn time.Time
+
+	// IdToken is the identity token provided by the OpenId server, either during the callback
+	// of the implicit flow, or on the request to exchange the authorization code.
+	IdToken string
+
+	// Nonce is the code used to mitigate replay attacks. It's read from an HTTP Cookie.
+	Nonce string
+
+	// NonceHash is the sha256 hash of the nonce code. It is calculated after reading the nonce from its http cookie.
+	NonceHash []byte
+
+	// ParsedIdToken is the parsed form of the id_token, since it's known that it is a JWT.
+	ParsedIdToken *jwt.JSONWebToken
+
+	// IdTokenPayload holds the claims part of the id_token.
+	IdTokenPayload map[string]interface{}
+
+	// State is the code used to mitigate CSRF attacks.
+	State string
+
+	// Subject is the resolved username of the person that authenticated through an OpenId server.
+	Subject string
+
+	// UseAccessToken stores whether to use the OpenId access_token against the cluster API instead
+	// of the id_token.
+	UseAccessToken bool
+
+	// Error is nil unless there was an error during some phase of the authentication. A non-nil
+	// value cancels the authentication request.
+	Error error
+
+	// ShouldTerminateSession is set to a true value if an existing user session should be terminated
+	// as a consequence of a failure of a new authentication attempt (i.e if the Error field is not nil).
+	ShouldTerminateSession bool
+
+	// businessInstantiator is a function that returns an already initialized
+	// business layer. Normally, it should be set to the business.Get function.
+	// For tests, it can be set to something else that returns a compatible API.
+	businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)
+}
+
+// callbackCleanup deletes the nonce cookie that was generated during the redirection from Kiali to
+// the OpenId server to initiate authentication (see openIdAuthController.redirectToAuthServerHandler).
 func (p *openidFlowHelper) callbackCleanup(w http.ResponseWriter) *openidFlowHelper {
 	// Do nothing if there was an error in previous flow steps.
 	if p.Error != nil {
@@ -450,13 +517,15 @@ func (p *openidFlowHelper) callbackCleanup(w http.ResponseWriter) *openidFlowHel
 	return p
 }
 
-func (p *openidFlowHelper) extractOpenIdCallbackParams(r *http.Request) *openidFlowHelper /*(params *openidFlowHelper, err error)*/ {
+// extractOpenIdCallbackParams reads callback parameters from the HTTP request, once the OpenId server
+// redirects back to Kiali with the credentials. It also reads the nonce cookie with the code generated
+// during the initial redirection from Kiali to the OpenId Server (see openIdAuthController.redirectToAuthServerHandler).
+func (p *openidFlowHelper) extractOpenIdCallbackParams(r *http.Request) *openidFlowHelper {
 	// Do nothing if there was an error in previous flow steps.
 	if p.Error != nil {
 		return p
 	}
 
-	//params = &openidFlowHelper{}
 	var err error
 
 	// Get the nonce code hash
@@ -477,7 +546,6 @@ func (p *openidFlowHelper) extractOpenIdCallbackParams(r *http.Request) *openidF
 			Reason:     "failed to read OpenId callback params",
 			Detail:     fmt.Errorf("error parsing form info: %w", err),
 		}
-		//err = fmt.Errorf("error parsing form info: %w", err)
 	} else {
 		// Read relevant form data parameters
 		p.Code = r.Form.Get("code")
@@ -490,7 +558,9 @@ func (p *openidFlowHelper) extractOpenIdCallbackParams(r *http.Request) *openidF
 	return p
 }
 
-func (p *openidFlowHelper) checkOpenIdImplicitFlowParams() *openidFlowHelper /*string*/ {
+// checkOpenIdImplicitFlowParams verifies that the callback parameters for the implicit flow
+// are all present, as required by Kiali.
+func (p *openidFlowHelper) checkOpenIdImplicitFlowParams() *openidFlowHelper {
 	// Do nothing if there was an error in previous flow steps.
 	if p.Error != nil {
 		return p
@@ -514,11 +584,12 @@ func (p *openidFlowHelper) checkOpenIdImplicitFlowParams() *openidFlowHelper /*s
 		}
 	}
 
-	//return ""
 	return p
 }
 
-func (p *openidFlowHelper) checkOpenIdAuthorizationCodeFlowParams() *openidFlowHelper /*string*/ {
+// checkOpenIdAuthorizationCodeFlowParams verifies that the callback parameters for the authorization
+// code flow are all present, as required by Kiali.
+func (p *openidFlowHelper) checkOpenIdAuthorizationCodeFlowParams() *openidFlowHelper {
 	// Do nothing if there was an error in previous flow steps.
 	if p.Error != nil {
 		return p
@@ -526,20 +597,25 @@ func (p *openidFlowHelper) checkOpenIdAuthorizationCodeFlowParams() *openidFlowH
 
 	if p.NonceHash == nil {
 		p.Error = &badOidcRequest{Detail: "no nonce code present - login window may have timed out"}
-		//return "No nonce code present. Login window timed out."
 	}
 	if p.State == "" {
 		p.Error = &badOidcRequest{Detail: "state parameter is empty or invalid"}
-		//return "State parameter is empty or invalid."
 	}
 	if p.Code == "" {
 		p.Error = &badOidcRequest{Detail: "no authorization code is present"}
-		//return "No authorization code is present."
 	}
 
 	return p
 }
 
+// checkAllowedDomains verifies that the "hd" or the "email" claims of the id_token (with
+// priority for the "hd" claim) contain a domain from a list of predefined domains that
+// are allowed to login into Kiali.
+//
+// The list of allowed domains can be specified in the
+// Kiali CR and is useful for public auth servers that accept credentials from any
+// of their registered users (from any organization), even if Kiali was registered under a
+// specific organization account.
 func (p *openidFlowHelper) checkAllowedDomains() *openidFlowHelper {
 	// Do nothing if there was an error in previous flow steps.
 	if p.Error != nil {
@@ -551,13 +627,20 @@ func (p *openidFlowHelper) checkAllowedDomains() *openidFlowHelper {
 	if len(conf.Auth.OpenId.AllowedDomains) > 0 {
 		if err := checkDomain(p.IdTokenPayload, conf.Auth.OpenId.AllowedDomains); err != nil {
 			p.Error = &AuthenticationFailureError{Reason: err.Error()}
-			//return nil, &AuthenticationFailureError{Reason: err.Error()}
 		}
 	}
 
 	return p
 }
 
+// checkUserPrivileges verifies the privileges of the OpenId token, or validity of the token,
+// depending if RBAC is enabled.
+//
+// If RBAC is enabled, either the id_token or the access_token (as specified by the api_token in
+// the config) is tested agains the cluster API to check if the user has enough privileges
+// to login to Kiali.
+//
+// If RBAC is disabled, then only validity of the id_token is verified (see validateOpenIdTokenInHouse).
 func (p *openidFlowHelper) checkUserPrivileges() *openidFlowHelper {
 	// Do nothing if there was an error in previous flow steps.
 	if p.Error != nil {
@@ -570,7 +653,7 @@ func (p *openidFlowHelper) checkUserPrivileges() *openidFlowHelper {
 		// When RBAC is on, we delegate some validations to the Kubernetes cluster. However, if RBAC is off
 		// the token must be fully validated, as we no longer pass the OpenId token to the cluster API server.
 		// Since the configuration indicates RBAC is off, we do the validations:
-		err := validateOpenTokenInHouse(p)
+		err := validateOpenIdTokenInHouse(p)
 		if err != nil {
 			p.Error = &AuthenticationFailureError{
 				HttpStatus: http.StatusForbidden,
@@ -602,6 +685,7 @@ func (p *openidFlowHelper) checkUserPrivileges() *openidFlowHelper {
 	return p
 }
 
+// createSession asks the SessionPersistor to start a session.
 func (p *openidFlowHelper) createSession(r *http.Request, w http.ResponseWriter, sessionStore SessionPersistor) *oidcSessionPayload {
 	// Do nothing if there was an error in previous flow steps.
 	if p.Error != nil {
@@ -612,17 +696,79 @@ func (p *openidFlowHelper) createSession(r *http.Request, w http.ResponseWriter,
 	err := sessionStore.CreateSession(r, w, config.AuthStrategyOpenId, p.ExpiresOn, sPayload)
 	if err != nil {
 		p.Error = err
-		//return nil, err
-		//msg := fmt.Sprintf("Error when creating credentials - failed to marshal json: %s", err.Error())
-		//log.Error(msg)
-		//http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
-		//return
 	}
 
 	return sPayload
 }
 
-func (p *openidFlowHelper) validateOpenIdNonceCode() *openidFlowHelper /*(validationFailure string)*/ {
+// parseOpenIdToken parses the OpenId id_token which is a JWT. This is to extract it's claims
+// and be able to process them in later steps of the authentication flow.
+func (p *openidFlowHelper) parseOpenIdToken() *openidFlowHelper {
+	// Do nothing if there was an error in previous flow steps.
+	if p.Error != nil {
+		return p
+	}
+
+	// Parse the received id_token from the IdP (it is a JWT token) without validating its signature
+	parsedOidcToken, err := jwt.ParseSigned(p.IdToken)
+	if err != nil {
+		p.Error = &AuthenticationFailureError{
+			Reason: "cannot parse received id_token from the OpenId provider",
+			Detail: err,
+		}
+		p.ShouldTerminateSession = true
+		return p
+	}
+	p.ParsedIdToken = parsedOidcToken
+
+	var claims map[string]interface{} // generic map to store parsed token
+	err = parsedOidcToken.UnsafeClaimsWithoutVerification(&claims)
+	if err != nil {
+		p.Error = &AuthenticationFailureError{
+			Reason: "cannot parse the payload of the id_token from the OpenId provider",
+			Detail: err,
+		}
+		p.ShouldTerminateSession = true
+		return p
+	}
+	p.IdTokenPayload = claims
+
+	// Extract expiration date from the OpenId token
+	if expClaim, ok := claims["exp"]; !ok {
+		p.Error = &AuthenticationFailureError{
+			Reason: "the received id_token from the OpenId provider has missing the required 'exp' claim",
+		}
+		p.ShouldTerminateSession = true
+		return p
+	} else {
+		// If the expiration date is present on the claim, we use that
+		expiresInNumber, err := parseTimeClaim(expClaim)
+		if err != nil {
+			p.Error = &AuthenticationFailureError{
+				Reason: "token exp claim is present, but invalid",
+				Detail: err,
+			}
+			p.ShouldTerminateSession = true
+			return p
+		}
+
+		p.ExpiresOn = time.Unix(expiresInNumber, 0)
+	}
+
+	// Extract the name of the user from the id_token. The "subject" is passed to the front-end to be displayed.
+	p.Subject = "OpenId User" // Set a default value
+	if userClaim, ok := claims[config.Get().Auth.OpenId.UsernameClaim]; ok && len(userClaim.(string)) > 0 {
+		p.Subject = userClaim.(string)
+	}
+
+	return p
+}
+
+// validateOpenIdNonceCode checks that the nonce hash that is present in the id_token is the right
+// hash, given the nonce code present in the http cookie.
+//
+// This is the replay attack mitigation.
+func (p *openidFlowHelper) validateOpenIdNonceCode() *openidFlowHelper {
 	// Do nothing if there was an error in previous flow steps.
 	if p.Error != nil {
 		return p
@@ -635,13 +781,15 @@ func (p *openidFlowHelper) validateOpenIdNonceCode() *openidFlowHelper /*(valida
 			HttpStatus: http.StatusForbidden,
 			Reason:     "OpenId token rejected: nonce code mismatch",
 		}
-		//validationFailure = "nonce code mismatch"
 	}
 	return p
 }
 
-// - CSRF mitigation
-func (p *openidFlowHelper) validateOpenIdState() *openidFlowHelper /*(validationFailure string)*/ {
+// validateOpenIdState verifies that the "state" parameter passed during the callback to Kiali
+// has the expected value, given the value of the nonce cookie and Kiali's signing key.
+//
+// This is the CSRF attack mitigation.
+func (p *openidFlowHelper) validateOpenIdState() *openidFlowHelper {
 	// Do nothing if there was an error in previous flow steps.
 	if p.Error != nil {
 		return p
@@ -670,75 +818,15 @@ func (p *openidFlowHelper) validateOpenIdState() *openidFlowHelper /*(validation
 	return p
 }
 
-func (p *openidFlowHelper) parseOpenIdToken() *openidFlowHelper /*error*/ {
+// requestOpenIdToken makes a request to the OpenId server to exchange the received code (of the
+// authorization code flow) with a proper identity token (id_token) and an access_token (if applicable).
+func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHelper {
 	// Do nothing if there was an error in previous flow steps.
 	if p.Error != nil {
 		return p
 	}
 
-	// Parse the received id_token from the IdP (it is a JWT token) without validating its signature
-	parsedOidcToken, err := jwt.ParseSigned(p.IdToken)
-	if err != nil {
-		p.Error = &AuthenticationFailureError{
-			Reason: "cannot parse received id_token from the OpenId provider",
-			Detail: err,
-		}
-		p.ShouldTerminateSession = true
-		return p
-		//return fmt.Errorf("cannot parse received id_token from the OpenId provider: %w", err)
-	}
-	p.ParsedIdToken = parsedOidcToken
-
-	var claims map[string]interface{} // generic map to store parsed token
-	err = parsedOidcToken.UnsafeClaimsWithoutVerification(&claims)
-	if err != nil {
-		p.Error = &AuthenticationFailureError{
-			Reason: "cannot parse the payload of the id_token from the OpenId provider",
-			Detail: err,
-		}
-		//return fmt.Errorf("cannot parse the payload of the id_token from the OpenId provider: %w", err)
-		p.ShouldTerminateSession = true
-		return p
-	}
-	p.IdTokenPayload = claims
-
-	//--------------------
-
-	// Extract expiration date from the OpenId token
-	if expClaim, ok := claims["exp"]; !ok {
-		p.Error = errors.New("the received id_token from the OpenId provider has missing the required 'exp' claim")
-		//return errors.New("the received id_token from the OpenId provider has missing the required 'exp' claim")
-		p.ShouldTerminateSession = true
-		return p
-	} else {
-		// If the expiration date is present on the claim, we use that
-		expiresInNumber, err := parseTimeClaim(expClaim)
-		if err != nil {
-			p.Error = fmt.Errorf("token exp claim is present, but invalid: %w", err)
-			p.ShouldTerminateSession = true
-			return p
-			//return fmt.Errorf("token exp claim is present, but invalid: %w", err)
-		}
-
-		p.ExpiresOn = time.Unix(expiresInNumber, 0)
-	}
-
-	// Extract the name of the user from the id_token. The "subject" is passed to the front-end to be displayed.
-	p.Subject = "OpenId User" // Set a default value
-	if userClaim, ok := claims[config.Get().Auth.OpenId.UsernameClaim]; ok && len(userClaim.(string)) > 0 {
-		p.Subject = userClaim.(string)
-	}
-
-	return p
-}
-
-func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHelper /*error*/ {
-	// Do nothing if there was an error in previous flow steps.
-	if p.Error != nil {
-		return p
-	}
-
-	openIdMetadata, err := getOpenIdMetadata()
+	oidcMeta, err := getOpenIdMetadata()
 	if err != nil {
 		p.Error = err
 		return p
@@ -746,7 +834,7 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 
 	cfg := config.Get().Auth.OpenId
 
-	httpClient, err := createHttpClient(openIdMetadata.TokenURL)
+	httpClient, err := createHttpClient(oidcMeta.TokenURL)
 	if err != nil {
 		p.Error = fmt.Errorf("failure when creating http client to request open id token: %w", err)
 		return p
@@ -761,7 +849,7 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 		requestParams.Set("client_id", cfg.ClientId)
 	}
 
-	tokenRequest, err := http.NewRequest(http.MethodPost, openIdMetadata.TokenURL, strings.NewReader(requestParams.Encode()))
+	tokenRequest, err := http.NewRequest(http.MethodPost, oidcMeta.TokenURL, strings.NewReader(requestParams.Encode()))
 	if err != nil {
 		p.Error = fmt.Errorf("failure when creating the token request: %w", err)
 		return p
@@ -813,6 +901,8 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 	return p
 }
 
+// buildSessionPayload returns a struct that should be used as a payload for a call to SessionPersistor.CreateSession.
+// It contains enough data to restore a session started with the OpenId auth strategy.
 func buildSessionPayload(openIdParams *openidFlowHelper) *oidcSessionPayload {
 	token := openIdParams.IdToken
 	if openIdParams.UseAccessToken {
@@ -825,6 +915,10 @@ func buildSessionPayload(openIdParams *openidFlowHelper) *oidcSessionPayload {
 	}
 }
 
+// checkDomain verifies that the "hd" or the "email" claims in tokenClaims contain a domain
+// from the provided list in allowedDomains (with priority for the "hd" domain).
+//
+// See also: openidFlowHelper.checkAllowedDomains.
 func checkDomain(tokenClaims map[string]interface{}, allowedDomains []string) error {
 	var hostedDomain string
 	foundDomain := false
@@ -855,6 +949,8 @@ func checkDomain(tokenClaims map[string]interface{}, allowedDomains []string) er
 	return nil
 }
 
+// createHttpClient is a helper for creating and configuring an http client that is ready
+// to do requests to the url in toUrl, which should be and endpoint of the OpenId server.
 func createHttpClient(toUrl string) (*http.Client, error) {
 	cfg := config.Get().Auth.OpenId
 	parsedUrl, err := url.Parse(toUrl)
@@ -903,6 +999,8 @@ func createHttpClient(toUrl string) (*http.Client, error) {
 	return &httpClient, nil
 }
 
+// isOpenIdCodeFlowPossible determines if the "authorization code" flow can be used
+// to do user authentication.
 func isOpenIdCodeFlowPossible() bool {
 	// Kiali's signing key length must be 16, 24 or 32 bytes in order to be able to use
 	// encoded cookies.
@@ -951,6 +1049,16 @@ func getConfiguredOpenIdScopes() []string {
 	return scopes
 }
 
+// getJwkFromKeySet retrieves the Key with the specified keyId from the OpenId server. The key
+// is used to verify the signature an id_token.
+//
+// The OpenId server publishes "key sets" which rotate constantly. This function fetches the currently
+// published key set and returns the key with the matching keyId, if found.
+//
+// The retrieved key sets are cached to prevent flooding the OpenId server. Key sets are
+// refreshed as needed, when the requested keyId is not available in the cached key set.
+//
+// See also getOpenIdJwks, validateOpenIdTokenInHouse.
 func getJwkFromKeySet(keyId string) (*jose.JSONWebKey, error) {
 	// Helper function to find a key with a certain key id in a key-set.
 	var findJwkFunc = func(kid string, jwks *jose.JSONWebKeySet) *jose.JSONWebKey {
@@ -984,6 +1092,8 @@ func getJwkFromKeySet(keyId string) (*jose.JSONWebKey, error) {
 	return foundKey, nil
 }
 
+// getOpenIdJwks fetches the currently published key set from the OpenId server.
+// It's better to use the getJwkFromKeySet function rather than this one.
 func getOpenIdJwks() (*jose.JSONWebKeySet, error) {
 	fetchedKeySet, fetchError, _ := openIdFlightGroup.Do("jwks", func() (interface{}, error) {
 		oidcMetadata, err := getOpenIdMetadata()
@@ -1124,6 +1234,13 @@ func getOpenIdMetadata() (*openIdMetadata, error) {
 	return fetchedMetadata.(*openIdMetadata), nil
 }
 
+// getProxyForUrl returns a function which, in turn, returns the URL of the proxy server that should
+// be used to reach the targetURL. Both httpProxy and httpsProxy are URLs of proxy servers (can be the same).
+// The httpProxy is used if the targetURL has the plain HTTP protocol. The httpsProxy is used if the targetURL
+// has the secure HTTPS protocol.
+//
+// Proxies are used for environments where the cluster does not have direct access to the internet and
+// all out-of-cluster/non-internal traffic is required to go through a proxy server.
 func getProxyForUrl(targetURL *url.URL, httpProxy string, httpsProxy string) func(req *http.Request) (*url.URL, error) {
 	return func(req *http.Request) (*url.URL, error) {
 		var proxyUrl *url.URL
@@ -1143,6 +1260,8 @@ func getProxyForUrl(targetURL *url.URL, httpProxy string, httpsProxy string) fun
 	}
 }
 
+// parseTimeClaim parses the "exp" claim of a JWT token.
+//
 // As it turns out, the response from time claims can be either a f64 and
 // a json.Number. With this, we take care of it, converting to the int64
 // that we need to use timestamps in go.
@@ -1168,7 +1287,11 @@ func parseTimeClaim(claimValue interface{}) (int64, error) {
 	return parsedTime, nil
 }
 
-func validateOpenTokenInHouse(openIdParams *openidFlowHelper) error {
+// validateOpenIdTokenInHouse checks that the id_token provided by the OpenId server
+// is valid. Its claims are validated to check that the expected values are present.
+// If the claims look OK, the signature is checked against the key sets published by
+// the OpenId server.
+func validateOpenIdTokenInHouse(openIdParams *openidFlowHelper) error {
 	oidCfg := config.Get().Auth.OpenId
 	oidMetadata, err := getOpenIdMetadata()
 	if err != nil {
@@ -1219,8 +1342,11 @@ func validateOpenTokenInHouse(openIdParams *openidFlowHelper) error {
 		}
 	}
 
+	if len(openIdParams.ParsedIdToken.Headers) != 1 {
+		return fmt.Errorf("the OpenId token has unexpected number of headers [%d]", len(openIdParams.ParsedIdToken.Headers))
+	}
+
 	// Currently, we only support tokens with an RSA signature with SHA-256, which is the default in the OIDC spec
-	// TODO: Think about the Header array
 	if openIdParams.ParsedIdToken.Headers[0].Algorithm != "RS256" {
 		return fmt.Errorf("the OpenId token has unexpected alg header claim; got alg = '%s'", openIdParams.ParsedIdToken.Headers[0].Algorithm)
 	}
@@ -1293,6 +1419,8 @@ func validateOpenTokenInHouse(openIdParams *openidFlowHelper) error {
 	return nil
 }
 
+// verifyOpenIdUserAccess checks that the provided token has enough privileges on the cluster to
+// allow a login to Kiali.
 func verifyOpenIdUserAccess(token string, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) (int, string, error) {
 	// Create business layer using the id_token
 	bsLayer, err := businessInstantiator(&api.AuthInfo{Token: token})
