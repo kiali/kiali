@@ -231,6 +231,10 @@ func HostWithinWildcardHost(subdomain, wildcardDomain string) bool {
 }
 
 func ParseGatewayAsHost(gateway, currentNamespace, currentCluster string) Host {
+	if currentCluster == "" {
+		currentCluster = config.Get().ExternalServices.Istio.IstioIdentityDomain
+	}
+
 	host := Host{
 		Service:       gateway,
 		Namespace:     currentNamespace,
