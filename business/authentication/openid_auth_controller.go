@@ -30,16 +30,39 @@ import (
 )
 
 const (
+	// OpenIdNonceCookieName is the cookie name used to store a nonce code
+	// when user is starting authentication with the external server. This code
+	// is used to mitigate replay attacks.
 	OpenIdNonceCookieName = config.TokenCookieName + "-openid-nonce"
-	OpenIdServerCAFile    = "/kiali-cabundle/openid-server-ca.crt"
+
+	// OpenIdServerCAFile is a certificate file used to connect to the OpenID server.
+	// This is for cases when the authentication server is using TLS with a self-signed
+	// certificate.
+	OpenIdServerCAFile = "/kiali-cabundle/openid-server-ca.crt"
 )
 
-var cachedOpenIdKeySet *jose.JSONWebKeySet
+// cachedOpenIdKeySet stores the metadata obtained from the /.well-known/openid-configuration
+// endpoint of the OpenId server. Once the metadata is obtained for the first time, subsequent
+// retrievals are served from this cached value rather than doing another request to the
+// metadata endpoint of the OpenId server.
 var cachedOpenIdMetadata *openIdMetadata
+
+// cachedOpenIdKeySet stores the public key sets used for verification of the received
+// id_tokens from the OpenId server. Its purpose is to prevent repeated queries to the JWKS
+// endpoint of the OpenId server. However, since the keys can rotate, this is refreshed
+// each time an id_token is signed with a key that is not present in the cached key set.
+var cachedOpenIdKeySet *jose.JSONWebKeySet
+
+// openIdFlightGroup is used to synchronize different threads of different HTTP requests so
+// that only one request active to the metadata or jwks endpoints of the OpenId server. This
+// prevents fetching the same data twice at the same time.
 var openIdFlightGroup singleflight.Group
 
+// openIdMetadata is a helper struct to parse the response from the metadata
+// endpoint /.well-known/openid-configuration of the OpenID server.
+// This was borrowed from https://github.com/coreos/go-oidc/blob/8d771559cf6e5111c9b9159810d0e4538e7cdc82/oidc.go
+// and some additional fields were added.
 type openIdMetadata struct {
-	// Taken from https://github.com/coreos/go-oidc/blob/8d771559cf6e5111c9b9159810d0e4538e7cdc82/oidc.go
 	Issuer      string   `json:"issuer"`
 	AuthURL     string   `json:"authorization_endpoint"`
 	TokenURL    string   `json:"token_endpoint"`
@@ -52,22 +75,44 @@ type openIdMetadata struct {
 	ResponseTypesSupported []string `json:"response_types_supported"`
 }
 
+// oidcSessionPayload is a helper type used as session data storage. An instance
+// of this type is used with the SessionPersistor for session creation and persistance.
 type oidcSessionPayload struct {
+	// Subject is the resolved name of the user that logged into Kiali.
 	Subject string `json:"subject,omitempty"`
 
-	// Token is the string that the user entered in the Kiali login screen. It should be
-	// a token that can be used against the Kubernetes API
+	// Token is the string provided by the OpenId server. It can be the id_token or
+	// the access_token, depending on the Kiali configuration. If RBAC is enabled,
+	// this is the token that can be used against the Kubernetes API.
 	Token string `json:"token,omitempty"`
 }
 
+// badOidcRequest is an helper type implementing Go's error interface. It's used to assist in
+// error handling on the OpenId authentication flow. For the authorization code flow, this
+// indicates that the authentication is not going to be handled and the http request should be
+// handled by the next handler. In the implicit flow, the error details are returned to the user.
+//
+// The difference in behavior is because on the implicit flow the auth request is done to a dedicated
+// authentication endpoint, so it is evident that any error should be returned to the user. In contrast,
+// on the authorization code flow, the authentication is done to the Kiali's web_root, so it is hard to
+// differentiate between an auth callback versus a first user request to Kiali.
 type badOidcRequest struct {
+	// Detail contains the description of the error.
 	Detail string
 }
 
+// Error returns the text representation of an badOidcRequest error.
 func (e badOidcRequest) Error() string {
 	return e.Detail
 }
 
+// openIdAuthController contains the backing logic to implement
+// Kiali's "openid" authentication strategy. The implicit flow and
+// the authorization code flow are implemented.
+//
+// RBAC is supported, although it requires that the cluster is configured
+// with OpenId integration. Thus, it is possible to turn off RBAC
+// for simpler setups.
 type openIdAuthController struct {
 	// businessInstantiator is a function that returns an already initialized
 	// business layer. Normally, it should be set to the business.Get function.
@@ -78,6 +123,9 @@ type openIdAuthController struct {
 	SessionStore SessionPersistor
 }
 
+// NewOpenIdAuthController initializes a new controller for handling openid authentication, with the
+// given persistor and the given businessInstantiator. The businessInstantiator can be nil and
+// the initialized contoller will use the business.Get function.
 func NewOpenIdAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *openIdAuthController {
 	return &openIdAuthController{
 		businessInstantiator: businessInstantiator,
@@ -239,7 +287,6 @@ func (c openIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Requ
 		extractOpenIdCallbackParams(r).
 		callbackCleanup(w).
 		checkOpenIdAuthorizationCodeFlowParams().
-		//callbackCleanup(w). Subido
 		validateOpenIdState().
 		requestOpenIdToken(httputil.GuessKialiURL(r)).
 		parseOpenIdToken().
@@ -530,9 +577,6 @@ func (p *openidFlowHelper) checkUserPrivileges() *openidFlowHelper {
 				Reason:     "the OpenID token was rejected",
 				Detail:     err,
 			}
-			//msg := fmt.Sprintf("the OpenID token was rejected: %s", err.Error())
-			//log.Error(msg)
-			//http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
 			return p
 		}
 	} else {
@@ -553,17 +597,6 @@ func (p *openidFlowHelper) checkUserPrivileges() *openidFlowHelper {
 			}
 			return p
 		}
-
-		//if detailedError != nil {
-		//	msg := fmt.Sprintf("%s: %s", errMsg, detailedError.Error())
-		//	log.Errorf("Error when verifying user privileges: %s", msg)
-		//	http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
-		//	return
-		//} else if httpStatus != http.StatusOK {
-		//	log.Errorf("Error when verifying user privileges: %s", errMsg)
-		//	http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(errMsg)), http.StatusFound)
-		//	return
-		//}
 	}
 
 	return p

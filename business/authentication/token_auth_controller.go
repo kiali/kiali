@@ -17,7 +17,7 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
-// TokenAuthController contains the backing logic to implement
+// tokenAuthController contains the backing logic to implement
 // Kiali's "token" authentication strategy. It assumes that the
 // user will use a token that is valid to be used against the Cluster API.
 // In it's simplest form, it can be a ServiceAccount token. However, it can

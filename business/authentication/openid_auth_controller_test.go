@@ -11,6 +11,7 @@ import (
 	"github.com/kiali/kiali/util"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"net/http"
@@ -706,6 +707,99 @@ func TestOpenIdImplicitFlowAllowsLoginWithAllowedDomainInEmailClaim(t *testing.T
 	assert.Equal(t, expectedExpiration, response.Cookies()[1].Expires)
 }
 
+func TestOpenIdImplicitFlowRejectsTokenWithoutPrivileges(t *testing.T) {
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	cfg := config.NewConfig()
+	cfg.LoginToken.SigningKey = "kiali67890123456"
+	cfg.LoginToken.ExpirationSeconds = 1
+	config.Set(cfg)
+
+	// No namespaces should result in auth failure
+	k8s := kubetest.NewK8SClientMock()
+	k8s.On("GetProjects", "").Return([]osproject_v1.Project{}, nil)
+
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), config.GetSigningKey())))
+
+	requestBody := strings.NewReader(fmt.Sprintf("id_token=%s&state=%x-%s", openIdTestToken, stateHash, clockTime.UTC().Format("060102150405")))
+	request := httptest.NewRequest(http.MethodPost, "/api/authenticate", requestBody)
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.AddCookie(&http.Cookie{
+		Name:  OpenIdNonceCookieName,
+		Value: "nonceString",
+	})
+
+	controller := NewOpenIdAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
+		if authInfo.Token != openIdTestToken {
+			return nil, errors.New("unexpected token")
+		}
+		return business.NewWithBackends(k8s, nil, nil), nil
+	})
+
+	rr := httptest.NewRecorder()
+	sData, err := controller.Authenticate(request, rr)
+
+	assert.NotNil(t, err)
+	assert.IsType(t, &AuthenticationFailureError{}, err)
+	assert.Equal(t, 401, err.(*AuthenticationFailureError).HttpStatus)
+	assert.Contains(t, err.Error(), "RBAC")
+	assert.Nil(t, sData)
+
+	// nonce cookie cleanup
+	response := rr.Result()
+	assert.Len(t, response.Cookies(), 1)
+	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+}
+
+func TestOpenIdImplicitFlowRejectsTokenNotAcceptedByK8sAPI(t *testing.T) {
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	cfg := config.NewConfig()
+	cfg.LoginToken.SigningKey = "kiali67890123456"
+	cfg.LoginToken.ExpirationSeconds = 1
+	config.Set(cfg)
+
+	// Error from API to simulate a bad token
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("IsOpenShift").Return(false)
+	k8s.On("GetKialiToken").Return("")
+	k8s.On("GetNamespaces", "").Return([]v1.Namespace{}, errors.New("token rejected"))
+
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), config.GetSigningKey())))
+	requestBody := strings.NewReader(fmt.Sprintf("id_token=%s&state=%x-%s", openIdTestToken, stateHash, clockTime.UTC().Format("060102150405")))
+	request := httptest.NewRequest(http.MethodPost, "/api/authenticate", requestBody)
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.AddCookie(&http.Cookie{
+		Name:  OpenIdNonceCookieName,
+		Value: "nonceString",
+	})
+
+	controller := NewOpenIdAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
+		if authInfo.Token != openIdTestToken {
+			return nil, errors.New("unexpected token")
+		}
+		return business.NewWithBackends(k8s, nil, nil), nil
+	})
+
+	rr := httptest.NewRecorder()
+	sData, err := controller.Authenticate(request, rr)
+
+	assert.NotNil(t, err)
+	assert.IsType(t, &AuthenticationFailureError{}, err)
+	assert.Equal(t, 401, err.(*AuthenticationFailureError).HttpStatus)
+	assert.Contains(t, err.Error(), "Token is not valid")
+	assert.Nil(t, sData)
+
+	// nonce cookie cleanup
+	response := rr.Result()
+	assert.Len(t, response.Cookies(), 1)
+	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+}
+
 /*** Authorization code flow tests ***/
 
 func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *testing.T) {
@@ -1079,6 +1173,46 @@ func TestOpenIdCodeFlowShouldFailWithNonJwtIdToken(t *testing.T) {
 	assert.Equal(t, http.StatusFound, response.StatusCode)
 }
 
+func TestOpenIdCodeFlowShouldRejectMissingAuthorizationCode(t *testing.T) {
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	cfg := config.NewConfig()
+	cfg.Server.WebRoot = "/kiali-test"
+	cfg.LoginToken.SigningKey = "kiali67890123456"
+	cfg.LoginToken.ExpirationSeconds = 1
+	config.Set(cfg)
+
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), config.GetSigningKey())))
+	uri := fmt.Sprintf("/api/authenticate?state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
+	request := httptest.NewRequest(http.MethodGet, uri, nil)
+	request.AddCookie(&http.Cookie{
+		Name:  OpenIdNonceCookieName,
+		Value: "nonceString",
+	})
+
+	controller := NewOpenIdAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
+		assert.Fail(t, "Business layer should not be instantiated")
+		return nil, nil
+	})
+
+	callbackCalled := false
+	rr := httptest.NewRecorder()
+	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callbackCalled = true
+	})).ServeHTTP(rr, request)
+
+	// nonce cookie cleanup// Check that cookies are set and have the right expiration.
+	response := rr.Result()
+	assert.Len(t, response.Cookies(), 1)
+	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+
+	// A missing State parameter has the effect that the auth controller ignores the request and
+	// passes it to the next handler.
+	assert.True(t, callbackCalled)
+}
+
 func TestOpenIdCodeFlowShouldFailWithIdTokenWithoutExpiration(t *testing.T) {
 	cachedOpenIdMetadata = nil
 	var oidcMetadata []byte
@@ -1219,154 +1353,6 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithNonNumericExpClaim(t *testing.T)
 	assert.Equal(t, http.StatusFound, response.StatusCode)
 }
 
-func TestOpenIdCodeFlowShouldRejectMissingNonceCookie(t *testing.T) {
-	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
-	util.Clock = util.ClockMock{Time: clockTime}
-
-	cfg := config.NewConfig()
-	cfg.Server.WebRoot = "/kiali-test"
-	cfg.LoginToken.SigningKey = "kiali67890123456"
-	cfg.LoginToken.ExpirationSeconds = 1
-	config.Set(cfg)
-
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), config.GetSigningKey())))
-	uri := fmt.Sprintf("/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
-	request := httptest.NewRequest(http.MethodGet, uri, nil)
-
-	controller := NewOpenIdAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
-		assert.Fail(t, "Business layer should not be instantiated")
-		return nil, nil
-	})
-
-	callbackCalled := false
-	rr := httptest.NewRecorder()
-	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		callbackCalled = true
-	})).ServeHTTP(rr, request)
-
-	// Check that cookies are set and have the right expiration.
-	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
-
-	// nonce cookie cleanup
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
-	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
-
-	// A missing nonce cookie has the effect that the auth controller ignores the request and
-	// passes it to the next handler.
-	assert.True(t, callbackCalled)
-}
-
-func TestOpenIdCodeFlowShouldRejectMissingNonceInToken(t *testing.T) {
-	cachedOpenIdMetadata = nil
-	var oidcMetadata []byte
-	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/.well-known/openid-configuration" {
-			w.WriteHeader(200)
-			w.Write(oidcMetadata)
-		}
-		if r.URL.Path == "/token" {
-			w.WriteHeader(200)
-			w.Write([]byte("{ \"id_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZG9lQGRvbWFpbi5jb20iLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTMxMTI4MTk3MH0.xAoq7T-wti__Je1PDuTgNonoVSu059FzpOHsNm26YTg\" }"))
-		}
-	}))
-	defer testServer.Close()
-
-	oidcMeta := openIdMetadata{
-		Issuer:                 testServer.URL,
-		AuthURL:                testServer.URL + "/auth",
-		TokenURL:               testServer.URL + "/token",
-		JWKSURL:                testServer.URL + "/jwks",
-		UserInfoURL:            "",
-		Algorithms:             nil,
-		ScopesSupported:        []string{"openid"},
-		ResponseTypesSupported: []string{"code"},
-	}
-	oidcMetadata, err := json.Marshal(oidcMeta)
-	assert.Nil(t, err)
-
-	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
-	util.Clock = util.ClockMock{Time: clockTime}
-
-	cfg := config.NewConfig()
-	cfg.Server.WebRoot = "/kiali-test"
-	cfg.LoginToken.SigningKey = "kiali67890123456"
-	cfg.LoginToken.ExpirationSeconds = 1
-	cfg.Auth.OpenId.IssuerUri = testServer.URL
-	cfg.Auth.OpenId.ClientId = "kiali-client"
-	config.Set(cfg)
-
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), config.GetSigningKey())))
-	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
-	request := httptest.NewRequest(http.MethodGet, uri, nil)
-	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
-		Value: "nonceString",
-	})
-
-	controller := NewOpenIdAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
-		assert.Fail(t, "Business layer should not be instantiated")
-		return nil, nil
-	})
-
-	rr := httptest.NewRecorder()
-	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Failf(t, "Callback function shouldn't have been called.", "")
-	})).ServeHTTP(rr, request)
-
-	// nonce cookie cleanup
-	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
-	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
-
-	// Redirection to boot the UI
-	q := url.Values{}
-	q.Add("openid_error", "OpenId token rejected: nonce code mismatch")
-	assert.Equal(t, "/kiali-test/?"+q.Encode(), response.Header.Get("Location"))
-	assert.Equal(t, http.StatusFound, response.StatusCode)
-}
-
-func TestOpenIdCodeFlowShouldRejectMissingAuthorizationCode(t *testing.T) {
-	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
-	util.Clock = util.ClockMock{Time: clockTime}
-
-	cfg := config.NewConfig()
-	cfg.Server.WebRoot = "/kiali-test"
-	cfg.LoginToken.SigningKey = "kiali67890123456"
-	cfg.LoginToken.ExpirationSeconds = 1
-	config.Set(cfg)
-
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), config.GetSigningKey())))
-	uri := fmt.Sprintf("/api/authenticate?state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
-	request := httptest.NewRequest(http.MethodGet, uri, nil)
-	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
-		Value: "nonceString",
-	})
-
-	controller := NewOpenIdAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
-		assert.Fail(t, "Business layer should not be instantiated")
-		return nil, nil
-	})
-
-	callbackCalled := false
-	rr := httptest.NewRecorder()
-	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		callbackCalled = true
-	})).ServeHTTP(rr, request)
-
-	// nonce cookie cleanup// Check that cookies are set and have the right expiration.
-	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
-	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
-
-	// A missing State parameter has the effect that the auth controller ignores the request and
-	// passes it to the next handler.
-	assert.True(t, callbackCalled)
-}
-
 func TestOpenIdCodeFlowShouldRejectInvalidState(t *testing.T) {
 	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
 	util.Clock = util.ClockMock{Time: clockTime}
@@ -1488,4 +1474,112 @@ func TestOpenIdCodeFlowShouldRejectMissingState(t *testing.T) {
 	// A missing State parameter has the effect that the auth controller ignores the request and
 	// passes it to the next handler.
 	assert.True(t, callbackCalled)
+}
+
+func TestOpenIdCodeFlowShouldRejectMissingNonceCookie(t *testing.T) {
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	cfg := config.NewConfig()
+	cfg.Server.WebRoot = "/kiali-test"
+	cfg.LoginToken.SigningKey = "kiali67890123456"
+	cfg.LoginToken.ExpirationSeconds = 1
+	config.Set(cfg)
+
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), config.GetSigningKey())))
+	uri := fmt.Sprintf("/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
+	request := httptest.NewRequest(http.MethodGet, uri, nil)
+
+	controller := NewOpenIdAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
+		assert.Fail(t, "Business layer should not be instantiated")
+		return nil, nil
+	})
+
+	callbackCalled := false
+	rr := httptest.NewRecorder()
+	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callbackCalled = true
+	})).ServeHTTP(rr, request)
+
+	// Check that cookies are set and have the right expiration.
+	response := rr.Result()
+	assert.Len(t, response.Cookies(), 1)
+
+	// nonce cookie cleanup
+	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+
+	// A missing nonce cookie has the effect that the auth controller ignores the request and
+	// passes it to the next handler.
+	assert.True(t, callbackCalled)
+}
+
+func TestOpenIdCodeFlowShouldRejectMissingNonceInToken(t *testing.T) {
+	cachedOpenIdMetadata = nil
+	var oidcMetadata []byte
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/.well-known/openid-configuration" {
+			w.WriteHeader(200)
+			w.Write(oidcMetadata)
+		}
+		if r.URL.Path == "/token" {
+			w.WriteHeader(200)
+			w.Write([]byte("{ \"id_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZG9lQGRvbWFpbi5jb20iLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTMxMTI4MTk3MH0.xAoq7T-wti__Je1PDuTgNonoVSu059FzpOHsNm26YTg\" }"))
+		}
+	}))
+	defer testServer.Close()
+
+	oidcMeta := openIdMetadata{
+		Issuer:                 testServer.URL,
+		AuthURL:                testServer.URL + "/auth",
+		TokenURL:               testServer.URL + "/token",
+		JWKSURL:                testServer.URL + "/jwks",
+		UserInfoURL:            "",
+		Algorithms:             nil,
+		ScopesSupported:        []string{"openid"},
+		ResponseTypesSupported: []string{"code"},
+	}
+	oidcMetadata, err := json.Marshal(oidcMeta)
+	assert.Nil(t, err)
+
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	cfg := config.NewConfig()
+	cfg.Server.WebRoot = "/kiali-test"
+	cfg.LoginToken.SigningKey = "kiali67890123456"
+	cfg.LoginToken.ExpirationSeconds = 1
+	cfg.Auth.OpenId.IssuerUri = testServer.URL
+	cfg.Auth.OpenId.ClientId = "kiali-client"
+	config.Set(cfg)
+
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), config.GetSigningKey())))
+	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
+	request := httptest.NewRequest(http.MethodGet, uri, nil)
+	request.AddCookie(&http.Cookie{
+		Name:  OpenIdNonceCookieName,
+		Value: "nonceString",
+	})
+
+	controller := NewOpenIdAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
+		assert.Fail(t, "Business layer should not be instantiated")
+		return nil, nil
+	})
+
+	rr := httptest.NewRecorder()
+	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Failf(t, "Callback function shouldn't have been called.", "")
+	})).ServeHTTP(rr, request)
+
+	// nonce cookie cleanup
+	response := rr.Result()
+	assert.Len(t, response.Cookies(), 1)
+	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+
+	// Redirection to boot the UI
+	q := url.Values{}
+	q.Add("openid_error", "OpenId token rejected: nonce code mismatch")
+	assert.Equal(t, "/kiali-test/?"+q.Encode(), response.Header.Get("Location"))
+	assert.Equal(t, http.StatusFound, response.StatusCode)
 }
