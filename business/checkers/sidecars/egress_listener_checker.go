@@ -13,7 +13,6 @@ import (
 type EgressHostChecker struct {
 	Sidecar          networking_v1alpha3.Sidecar
 	ServiceEntries   map[string][]string
-	ServiceList      models.ServiceList
 	RegistryServices []*kubernetes.RegistryService
 }
 
@@ -90,9 +89,6 @@ func (elc EgressHostChecker) validateHost(host string, egrIdx, hostIdx int) ([]*
 func (elc EgressHostChecker) HasMatchingService(host kubernetes.Host, itemNamespace string) bool {
 	// Check wildcard hosts - needs to match "*" and "*.suffix" also.
 	if host.IsWildcard() && host.Namespace == itemNamespace {
-		return true
-	}
-	if host.Namespace == itemNamespace && elc.ServiceList.HasMatchingServices(host.Service) {
 		return true
 	}
 	if kubernetes.HasMatchingServiceEntries(host.String(), elc.ServiceEntries) {
