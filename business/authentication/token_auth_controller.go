@@ -74,6 +74,7 @@ type AuthenticationFailureError struct {
 	// Wraps the error causing the authentication failure
 	Detail error
 
+	// The status code that should have the HTTP response for this error.
 	HttpStatus int
 
 	// A description of the authentication failure
@@ -155,10 +156,14 @@ func (c tokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter
 	return &UserSessionData{ExpiresOn: timeExpire, Username: extractSubjectFromK8sToken(token), Token: token}, nil
 }
 
+// GetAuthCallbackHandler returns nil, because the tokenAuthController does not handle
+// authentication callbacks from third-parties.
 func (c tokenAuthController) GetAuthCallbackHandler(_ http.Handler) http.Handler {
 	return nil
 }
 
+// PostRoutes does noop, because the tokenAuthController does not need any additional
+// endpoints.
 func (c tokenAuthController) PostRoutes(_ *mux.Router) {
 }
 
