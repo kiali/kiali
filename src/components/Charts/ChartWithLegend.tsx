@@ -152,7 +152,9 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
         }
       });
     }
-    this.props.data.forEach((s, idx) => this.registerEvents(events, idx, ['serie-' + idx, 'serie-reg-' + idx], s.legendItem.name));
+    this.props.data.forEach((s, idx) =>
+      this.registerEvents(events, idx, ['serie-' + idx, 'serie-reg-' + idx], s.legendItem.name)
+    );
     let useSecondAxis = showOverlay;
     let normalizedOverlay: RawOrBucket<O>[] = [];
     let overlayFactor = 1.0;
@@ -397,53 +399,59 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
     const groupOffset = this.props.groupOffset || 0;
     return (
       <ChartGroup offset={groupOffset} height={height}>
-        {this.props.data.map((serie, idx) => {
-          if (this.state.hiddenSeries.has(serie.legendItem.name)) {
-            return undefined;
-          }
-          const plot = React.cloneElement(
-            this.props.seriesComponent,
-            this.withStyle(
-              {
-                key: 'serie-' + idx,
-                name: 'serie-' + idx,
-                data: serie.datapoints,
-                interpolation: INTERPOLATION_STRATEGY
-              },
-              serie.color
-            )
-          );
-
-          if (this.props.showTrendline === true) {
-            const first_dpx = (serie.datapoints[0].x as Date).getTime() / 1000;
-            const datapoints = serie.datapoints.map(d => [((d.x as Date).getTime()/1000 - first_dpx) / 10000, parseFloat(d.y.toString())]);
-            const linearRegression = regression.linear(datapoints, { precision: 10 });
-
-            let regressionDatapoints = serie.datapoints.map(d => ({
-              ...d,
-              name: d.name + ' (trendline)',
-              y: linearRegression.predict(((d.x as Date).getTime()/1000 - first_dpx) / 10000)[1]
-            }));
-
-            const regressionPlot = React.cloneElement(
+        {this.props.data
+          .map((serie, idx) => {
+            if (this.state.hiddenSeries.has(serie.legendItem.name)) {
+              return undefined;
+            }
+            const plot = React.cloneElement(
               this.props.seriesComponent,
               this.withStyle(
                 {
-                  key: 'serie-reg-' + idx,
-                  name: 'serie-reg-' + idx,
-                  data: regressionDatapoints,
+                  key: 'serie-' + idx,
+                  name: 'serie-' + idx,
+                  data: serie.datapoints,
                   interpolation: INTERPOLATION_STRATEGY
                 },
-                serie.color,
-                true
+                serie.color
               )
             );
 
-            return [plot, regressionPlot];
-          }
+            // serie.datapoints may contain undefined values in certain scenarios i.e. "unknown" values
+            if (this.props.showTrendline === true && serie.datapoints[0]) {
+              const first_dpx = (serie.datapoints[0].x as Date).getTime() / 1000;
+              const datapoints = serie.datapoints.map(d => [
+                ((d.x as Date).getTime() / 1000 - first_dpx) / 10000,
+                parseFloat(d.y.toString())
+              ]);
+              const linearRegression = regression.linear(datapoints, { precision: 10 });
 
-          return [plot];
-        }).flat()}
+              let regressionDatapoints = serie.datapoints.map(d => ({
+                ...d,
+                name: d.name + ' (trendline)',
+                y: linearRegression.predict(((d.x as Date).getTime() / 1000 - first_dpx) / 10000)[1]
+              }));
+
+              const regressionPlot = React.cloneElement(
+                this.props.seriesComponent,
+                this.withStyle(
+                  {
+                    key: 'serie-reg-' + idx,
+                    name: 'serie-reg-' + idx,
+                    data: regressionDatapoints,
+                    interpolation: INTERPOLATION_STRATEGY
+                  },
+                  serie.color,
+                  true
+                )
+              );
+
+              return [plot, regressionPlot];
+            }
+
+            return [plot];
+          })
+          .flat()}
       </ChartGroup>
     );
   };
@@ -477,7 +485,13 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
       ? props
       : {
           ...props,
-          style: { data: { fill: this.props.fill ? color : undefined, stroke: this.props.stroke ? color : undefined, strokeDasharray: strokeDasharray === true ? "3 5" : undefined } }
+          style: {
+            data: {
+              fill: this.props.fill ? color : undefined,
+              stroke: this.props.stroke ? color : undefined,
+              strokeDasharray: strokeDasharray === true ? '3 5' : undefined
+            }
+          }
         };
   };
 
