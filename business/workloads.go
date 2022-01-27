@@ -746,7 +746,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 	for _, pod := range pods {
 		if len(pod.OwnerReferences) != 0 {
 			for _, ref := range pod.OwnerReferences {
-				if ref.Controller != nil && *ref.Controller {
+				if ref.Controller != nil && *ref.Controller && !isWorkloadIncluded(ref.Kind) {
 					if _, exist := controllers[ref.Name]; !exist {
 						controllers[ref.Name] = ref.Kind
 					} else {
@@ -1355,7 +1355,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 	for _, pod := range pods {
 		if len(pod.OwnerReferences) != 0 {
 			for _, ref := range pod.OwnerReferences {
-				if ref.Controller != nil && *ref.Controller {
+				if ref.Controller != nil && *ref.Controller && !isWorkloadIncluded(ref.Kind) {
 					if _, exist := controllers[ref.Name]; !exist {
 						controllers[ref.Name] = ref.Kind
 					} else {
