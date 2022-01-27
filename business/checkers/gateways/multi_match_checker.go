@@ -76,10 +76,15 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 				if duplicate {
 					// The above is referenced by each one below..
 					currentHostValidation := createError(host.GatewayRuleName, host.Namespace, host.ServerIndex, host.HostIndex)
-
-					// CurrentHostValidation is always the first one, so we skip it
-					for i := 1; i < len(dhosts); i++ {
+					existingHosts := make(map[string]bool)
+					for i := 0; i < len(dhosts); i++ {
 						dh := dhosts[i]
+						// we skip CurrentHostValidation
+						// skip duplicate references when one gateway has several duplicate hosts
+						if (dh.Namespace == gatewayNamespace && dh.GatewayRuleName == gatewayRuleName) || existingHosts[dh.Namespace+"/"+dh.GatewayRuleName] {
+							continue
+						}
+						existingHosts[dh.Namespace+"/"+dh.GatewayRuleName] = true
 						refValidation := createError(dh.GatewayRuleName, dh.Namespace, dh.ServerIndex, dh.HostIndex)
 						refValidation = refValidation.MergeReferences(currentHostValidation)
 						currentHostValidation = currentHostValidation.MergeReferences(refValidation)
