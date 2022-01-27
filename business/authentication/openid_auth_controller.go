@@ -176,7 +176,7 @@ func (c openIdAuthController) GetAuthCallbackHandler(fallbackHandler http.Handle
 	})
 }
 
-// PostRoutes adds the additional endpoints are needed on the Kiali's router
+// PostRoutes adds the additional endpoints needed on the Kiali's router
 // in order to properly enable OpenId authentication. Only one new route is added to
 // do a redirection from Kiali to the OpenId server to initiate authentication.
 func (c openIdAuthController) PostRoutes(router *mux.Router) {
