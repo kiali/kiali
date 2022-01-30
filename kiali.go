@@ -91,6 +91,21 @@ func main() {
 	status.Put(status.ContainerVersion, determineContainerVersion(version))
 
 	authentication.InitializeAuthenticationController(config.Get().Auth.Strategy)
+	meshName, meshVersion, err := status.GetMeshInfo()
+	if err != nil || meshName == "" {
+		log.Warningf("Fail to get mesh version or mesh is not supported, please check if url_service_version is configured correctly.")
+	} else {
+		ok := status.CheckMeshVersion(meshName, meshVersion, version)
+		if ok {
+			log.Info("Mesh Name: %v Mesh Version: %v", meshName, meshVersion)
+			status.Put(status.MeshVersion, meshVersion)
+			status.Put(status.MeshName, meshName)
+		} else {
+			log.Warningf("Kiali %v is not compatible with %v %v", version, meshName, meshVersion)
+		}
+	}
+
+	authentication.InitializeAuthenticationController(config.Get().Auth.Strategy)
 
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()

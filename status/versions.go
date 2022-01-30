@@ -108,6 +108,56 @@ func validateVersion(requiredVersion string, installedVersion string) bool {
 	return false
 }
 
+// checkMeshVersion check mesh if its version is compatible with kiali
+func CheckMeshVersion(meshName string, meshVersion string, kialiVersion string) bool {
+	ok := true
+	if strings.Contains(meshName, "Istio") {
+		ok = checkIstioVersion(meshVersion, kialiVersion)
+		return ok
+	}
+	return ok
+}
+
+// checkIstioVersion check istio if its version is compatible with kiali
+func checkIstioVersion(istioVersion string, kialiVersion string) bool {
+	ok := false
+	versionMap := config.NewVersionMap()
+	istioVersionRange := versionMap["istio"]
+	for i := 0; i < istioVersionRange.Length; i++ {
+		if istioVersionRange.MeshVersion[i] == istioVersion {
+			low := istioVersionRange.KialiLow[i]
+			high := istioVersionRange.KialiHigh[i]
+			ok = checkRange(low, high, kialiVersion)
+			break
+		}
+	}
+	return ok
+}
+
+// checkRange check if version is in target range
+func checkRange(low string, high string, version string) bool {
+	ok := true
+	ok1 := true
+	if low != "" {
+		low = ">= " + low
+		ok = validateVersion(low, version)
+	}
+	if high != "" {
+		high = "<= " + high
+		ok1 = validateVersion(high, version)
+	}
+	return ok && ok1
+}
+
+// GetMeshInfo get mesh name/version from istiod service
+func GetMeshInfo() (string, string, error) {
+	istioInfo, err := istioVersion()
+	if err != nil || istioInfo.Name == istioProductNameUnknown {
+		return "", "", err
+	}
+	return istioInfo.Name, istioInfo.Version, nil
+}
+
 // istioVersion returns the current istio version information
 func istioVersion() (*ExternalServiceInfo, error) {
 	istioConfig := config.Get().ExternalServices.Istio

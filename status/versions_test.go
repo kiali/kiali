@@ -301,3 +301,96 @@ func TestValidateVersion(t *testing.T) {
 	}
 
 }
+
+func TestIstioVersionCompatible(t *testing.T) {
+
+	type versionsToTestStruct struct {
+		meshVersion string
+		name        string
+		version     string
+		supported   bool
+	}
+
+	// see config.go/[Maistra,Istio]VersionSupported for what versions are supported
+	versionsToTest := []versionsToTestStruct{
+		{
+			name:        "Istio",
+			version:     "1.43.0",
+			meshVersion: "1.12",
+			supported:   true,
+		},
+		{
+			name:        "Istio",
+			version:     "1.41.0",
+			meshVersion: "1.12",
+			supported:   false,
+		},
+		{
+			name:        "Istio",
+			version:     "1.38.2",
+			meshVersion: "1.11",
+			supported:   true,
+		},
+		{
+			name:        "Istio Snapshot",
+			version:     "1.38.0",
+			meshVersion: "1.11",
+			supported:   false,
+		},
+		{
+			name:        "Istio Snapshot",
+			version:     "1.34.2",
+			meshVersion: "1.10",
+			supported:   true,
+		},
+		{
+			name:        "Istio Snapshot",
+			version:     "1.38.1",
+			meshVersion: "1.10",
+			supported:   false,
+		},
+		{
+			name:        "Istio Snapshot",
+			version:     "1.29.2",
+			meshVersion: "1.9",
+			supported:   true,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.36",
+			meshVersion: "1.9",
+			supported:   false,
+		},
+		{
+			name:        "Istio RC",
+			version:     "1.29.1",
+			meshVersion: "1.8",
+			supported:   false,
+		},
+		{
+			name:        "Istio RC",
+			version:     "1.26.2",
+			meshVersion: "1.8",
+			supported:   true,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.22.2",
+			meshVersion: "1.7",
+			supported:   true,
+		},
+		{
+			name:        "Istio RC",
+			version:     "1.18.2",
+			meshVersion: "1.6",
+			supported:   true,
+		},
+	}
+
+	for _, versionToTest := range versionsToTest {
+		p := CheckMeshVersion(versionToTest.name, versionToTest.meshVersion, versionToTest.version)
+		if p != versionToTest.supported {
+			t.Errorf("Cannot validate [%+v] - version range is incorrect: %+v", versionToTest, p)
+		}
+	}
+}

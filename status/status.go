@@ -6,6 +6,8 @@ const (
 	ContainerVersion = name + " container version"
 	ConsoleVersion   = name + " console version"
 	CoreVersion      = name + " core version"
+	MeshName         = "Mesh name"
+	MeshVersion      = "Mesh version"
 	CoreCommitHash   = name + " core commit hash"
 	State            = name + " state"
 	ClusterMTLS      = "Istio mTLS"

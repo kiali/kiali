@@ -431,6 +431,29 @@ type HealthConfig struct {
 	Rate []Rate `yaml:"rate,omitempty" json:"rate,omitempty"`
 }
 
+// VersionRange version ranges
+type VersionRange struct {
+	Length      int
+	MeshVersion []string
+	KialiLow    []string
+	KialiHigh   []string
+}
+
+// NewVersionMap return compatible kiali version for istio
+func NewVersionMap() map[string]VersionRange {
+	versionMap := make(map[string]VersionRange)
+	meshVersion := []string{"1.12", "1.11", "1.10", "1.9", "1.8", "1.7", "1.6"}
+	kialiLow := []string{"1.42", "1.38.1", "1.34.1", "1.29.1", "1.26.0", "1.22.1", "1.18.1"}
+	kialiHigh := []string{"", "1.41", "1.37", "1.33", "1.28", "1.25", "1.21"}
+	versionMap["istio"] = VersionRange{
+		MeshVersion: meshVersion,
+		KialiLow:    kialiLow,
+		KialiHigh:   kialiHigh,
+		Length:      len(meshVersion),
+	}
+	return versionMap
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
