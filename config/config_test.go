@@ -236,3 +236,13 @@ func TestRaces(t *testing.T) {
 
 	wg.Wait()
 }
+
+func TestMarshalUnmarshalVersions(t *testing.T) {
+	versions, err := NewVersions()
+
+	if err != nil {
+		t.Errorf("Failed to marshal: %v", err)
+	}
+	fmt.Printf("%+v", *versions)
+	t.Logf("Config from versions: %+v", *versions)
+}

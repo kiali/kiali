@@ -304,6 +304,7 @@ func TestValidateVersion(t *testing.T) {
 
 func TestIstioVersionCompatible(t *testing.T) {
 
+	// versionsToTestStruct struct for version compatibility test cases
 	type versionsToTestStruct struct {
 		meshVersion string
 		name        string
@@ -311,7 +312,6 @@ func TestIstioVersionCompatible(t *testing.T) {
 		supported   bool
 	}
 
-	// see config.go/[Maistra,Istio]VersionSupported for what versions are supported
 	versionsToTest := []versionsToTestStruct{
 		{
 			name:        "Istio",
@@ -384,6 +384,12 @@ func TestIstioVersionCompatible(t *testing.T) {
 			version:     "1.18.2",
 			meshVersion: "1.6",
 			supported:   true,
+		},
+		{
+			name:        "Istio RC",
+			version:     "1.22",
+			meshVersion: "1.6",
+			supported:   false,
 		},
 	}
 

@@ -110,7 +110,7 @@ func validateVersion(requiredVersion string, installedVersion string) bool {
 
 // checkMeshVersion check mesh if its version is compatible with kiali
 func CheckMeshVersion(meshName string, meshVersion string, kialiVersion string) bool {
-	ok := true
+	ok := false
 	if strings.Contains(meshName, "Istio") {
 		ok = checkIstioVersion(meshVersion, kialiVersion)
 		return ok
@@ -121,14 +121,21 @@ func CheckMeshVersion(meshName string, meshVersion string, kialiVersion string) 
 // checkIstioVersion check istio if its version is compatible with kiali
 func checkIstioVersion(istioVersion string, kialiVersion string) bool {
 	ok := false
-	versionMap := config.NewVersionMap()
-	istioVersionRange := versionMap["istio"]
-	for i := 0; i < istioVersionRange.Length; i++ {
-		if istioVersionRange.MeshVersion[i] == istioVersion {
-			low := istioVersionRange.KialiLow[i]
-			high := istioVersionRange.KialiHigh[i]
-			ok = checkRange(low, high, kialiVersion)
-			break
+	Versions, err := config.NewVersions()
+
+	if err != nil {
+		log.Warningf("Can not load version file.%v", err)
+	}
+
+	if Versions.MeshName == "istio" {
+		for _, version := range Versions.VersionRange {
+			if strings.Contains(istioVersion, version.MeshVersion) {
+				low := strings.TrimSpace(version.KialiLow)
+				high := strings.TrimSpace(version.KialiHigh)
+				// fmt.Printf("Low: %v High: %v istioVersion: %v KialiVersion: %v\n", low, high, istioVersion, kialiVersion)
+				ok = checkRange(low, high, kialiVersion)
+				break
+			}
 		}
 	}
 	return ok
@@ -152,8 +159,10 @@ func checkRange(low string, high string, version string) bool {
 // GetMeshInfo get mesh name/version from istiod service
 func GetMeshInfo() (string, string, error) {
 	istioInfo, err := istioVersion()
-	if err != nil || istioInfo.Name == istioProductNameUnknown {
+	if err != nil {
 		return "", "", err
+	} else if istioInfo.Name == istioProductNameUnknown {
+		return "Unknown", "", nil
 	}
 	return istioInfo.Name, istioInfo.Version, nil
 }

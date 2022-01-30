@@ -431,27 +431,36 @@ type HealthConfig struct {
 	Rate []Rate `yaml:"rate,omitempty" json:"rate,omitempty"`
 }
 
-// VersionRange version ranges
-type VersionRange struct {
-	Length      int
-	MeshVersion []string
-	KialiLow    []string
-	KialiHigh   []string
+// Versions version ranges
+type Versions struct {
+	MeshName     string `yaml:"meshName"`
+	VersionRange []struct {
+		MeshVersion string `yaml:"meshVersion"`
+		KialiLow    string `yaml:"kialiLow"`
+		KialiHigh   string `yaml:"kialiHigh"`
+	} `yaml:"versionRange"`
 }
 
-// NewVersionMap return compatible kiali version for istio
-func NewVersionMap() map[string]VersionRange {
-	versionMap := make(map[string]VersionRange)
-	meshVersion := []string{"1.12", "1.11", "1.10", "1.9", "1.8", "1.7", "1.6"}
-	kialiLow := []string{"1.42", "1.38.1", "1.34.1", "1.29.1", "1.26.0", "1.22.1", "1.18.1"}
-	kialiHigh := []string{"", "1.41", "1.37", "1.33", "1.28", "1.25", "1.21"}
-	versionMap["istio"] = VersionRange{
-		MeshVersion: meshVersion,
-		KialiLow:    kialiLow,
-		KialiHigh:   kialiHigh,
-		Length:      len(meshVersion),
+// NewVersions return compatible kiali versions for mesh
+func NewVersions() (*Versions, error) {
+	path, _ := os.Getwd()
+	file := path + "/../version.yaml"
+
+	in, err := ioutil.ReadFile(file)
+	if err != nil {
+		log.Warningf("Can not load version file %v", err)
+		return nil, err
 	}
-	return versionMap
+
+	var versions Versions
+
+	err = yaml.Unmarshal(in, &versions)
+	if err != nil {
+		log.Warningf("Can not Unmarshal version file %v", err)
+		return nil, err
+	}
+
+	return &versions, nil
 }
 
 // Config defines full YAML configuration.

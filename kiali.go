@@ -90,18 +90,34 @@ func main() {
 	status.Put(status.CoreCommitHash, commitHash)
 	status.Put(status.ContainerVersion, determineContainerVersion(version))
 
-	authentication.InitializeAuthenticationController(config.Get().Auth.Strategy)
+	// check kiali version compatibility with istio
 	meshName, meshVersion, err := status.GetMeshInfo()
-	if err != nil || meshName == "" {
-		log.Warningf("Fail to get mesh version or mesh is not supported, please check if url_service_version is configured correctly.")
+
+	ok := false
+	if err != nil {
+		log.Warningf("Failed to get mesh version, please check if url_service_version is configured correctly.")
+		status.Put(status.IsCompatible, "false")
+		status.AddWarningMessages("Failed to get mesh version, please check if url_service_version is configured correctly.")
+	} else if meshName == "Unknown" {
+		log.Warningf("Unknown Istio Implementation")
+		status.Put(status.MeshVersion, meshVersion)
+		status.Put(status.MeshName, meshName)
+		status.AddWarningMessages("Unknown Istio Implementation")
+	} else if !strings.Contains(meshName, "Istio") {
+		log.Info("Mesh Name: %v Mesh Version: %v", meshName, meshVersion)
+		status.Put(status.MeshVersion, meshVersion)
+		status.Put(status.MeshName, meshName)
 	} else {
-		ok := status.CheckMeshVersion(meshName, meshVersion, version)
+		ok = status.CheckMeshVersion(meshName, meshVersion, version)
 		if ok {
 			log.Info("Mesh Name: %v Mesh Version: %v", meshName, meshVersion)
 			status.Put(status.MeshVersion, meshVersion)
 			status.Put(status.MeshName, meshName)
+			status.Put(status.IsCompatible, "true")
 		} else {
 			log.Warningf("Kiali %v is not compatible with %v %v", version, meshName, meshVersion)
+			status.AddWarningMessages(fmt.Sprintf("Kiali %v is not compatible with %v %v", version, meshName, meshVersion))
+			status.Put(status.IsCompatible, "false")
 		}
 	}
 

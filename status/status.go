@@ -8,6 +8,7 @@ const (
 	CoreVersion      = name + " core version"
 	MeshName         = "Mesh name"
 	MeshVersion      = "Mesh version"
+	IsCompatible     = "compatibility"
 	CoreCommitHash   = name + " core commit hash"
 	State            = name + " state"
 	ClusterMTLS      = "Istio mTLS"
@@ -86,6 +87,10 @@ func Put(name, value string) (previous string, hasPrevious bool) {
 	previous, hasPrevious = info.Status[name]
 	info.Status[name] = value
 	return previous, hasPrevious
+}
+
+func AddWarningMessages(warningMessages string) {
+	info.WarningMessages = append(info.WarningMessages, warningMessages)
 }
 
 // Get returns a copy of the current status info.
