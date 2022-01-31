@@ -5328,6 +5328,9 @@
         "permissions": {
           "$ref": "#/definitions/ResourcePermissions"
         },
+        "references": {
+          "$ref": "#/definitions/IstioReferences"
+        },
         "requestAuthentication": {
           "$ref": "#/definitions/RequestAuthentication"
         },
@@ -5468,6 +5471,56 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/status"
+    },
+    "IstioReference": {
+      "type": "object",
+      "title": "IstioReference is the key value composed of an Istio ObjectType and Name.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "objectType": {
+          "type": "string",
+          "x-go-name": "ObjectType"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "IstioReferences": {
+      "description": "IstioReferences represents a sets of different references",
+      "type": "object",
+      "properties": {
+        "objectReferences": {
+          "description": "Related Istio objects",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioReference"
+          },
+          "x-go-name": "ObjectReferences"
+        },
+        "serviceReferences": {
+          "description": "Related Istio objects",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ServiceReference"
+          },
+          "x-go-name": "ServiceReferences"
+        },
+        "workloadReferences": {
+          "description": "Related Istio objects",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WorkloadReference"
+          },
+          "x-go-name": "WorkloadReferences"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "IstioStatus": {
       "type": "object",
@@ -7141,6 +7194,21 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "ServiceReference": {
+      "type": "object",
+      "title": "ServiceReference is the key value composed of a Name and Namespace.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "SeverityLevel": {
       "type": "string",
       "x-go-package": "github.com/kiali/kiali/models"
@@ -8238,6 +8306,21 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/WorkloadListItem"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "WorkloadReference": {
+      "type": "object",
+      "title": "WorkloadReference is the key value composed of a Name and Namespace.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
+        }
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
