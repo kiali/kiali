@@ -33,6 +33,7 @@ type Layer struct {
 	TLS            TLSService
 	TokenReview    TokenReviewService
 	Validations    IstioValidationsService
+	References     IstioReferencesService
 	Workload       WorkloadService
 }
 
@@ -158,6 +159,7 @@ func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInter
 	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.TokenReview = NewTokenReview(k8s)
 	temporaryLayer.Validations = IstioValidationsService{k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.References = IstioReferencesService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Workload = WorkloadService{k8s: k8s, prom: prom, businessLayer: temporaryLayer}
 
 	return temporaryLayer
