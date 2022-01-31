@@ -198,7 +198,7 @@ EOF
 <         redirectURI: https://dex.example.com:32000/callback
 <         org: kubernetes
 94a81
->       responseTypes: ["code", "id_token"]
+>       responseTypes: ["id_token"]
 96a84,89
 >     - id: kiali-app
 >       redirectURIs:
