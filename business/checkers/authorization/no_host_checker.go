@@ -7,7 +7,6 @@ import (
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -50,9 +49,6 @@ func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1beta.Rule_
 		return nil, true
 	}
 	namespace, clusterName := n.AuthorizationPolicy.Namespace, n.AuthorizationPolicy.ClusterName
-	if clusterName == "" {
-		clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
-	}
 	checks, valid := make([]*models.IstioCheck, 0, len(to)), true
 	for toIdx, t := range to {
 		if t == nil {

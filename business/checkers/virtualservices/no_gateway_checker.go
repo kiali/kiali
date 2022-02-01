@@ -6,7 +6,6 @@ import (
 
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -30,9 +29,7 @@ func (s NoGatewayChecker) ValidateVirtualServiceGateways(validations *[]*models.
 	namespace := s.VirtualService.Namespace
 	clusterName := s.VirtualService.ClusterName
 	valid := true
-	if clusterName == "" {
-		clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
-	}
+
 	if len(s.VirtualService.Spec.Gateways) > 0 {
 		valid = s.checkGateways(s.VirtualService.Spec.Gateways, namespace, clusterName, validations, "spec")
 	}

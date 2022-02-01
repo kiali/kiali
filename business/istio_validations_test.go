@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
@@ -162,18 +163,6 @@ func mockCombinedValidationService(istioConfigList *models.IstioConfigList, serv
 	for _, r := range istioConfigList.RequestAuthentications {
 		fakeIstioObjects = append(fakeIstioObjects, r.DeepCopyObject())
 	}
-	for _, v := range fakeCombinedIstioConfigList().VirtualServices {
-		fakeIstioObjects = append(fakeIstioObjects, v.DeepCopyObject())
-	}
-	for _, d := range fakeCombinedIstioConfigList().DestinationRules {
-		fakeIstioObjects = append(fakeIstioObjects, d.DeepCopyObject())
-	}
-	for _, s := range fakeCombinedIstioConfigList().ServiceEntries {
-		fakeIstioObjects = append(fakeIstioObjects, s.DeepCopyObject())
-	}
-	for _, g := range fakeCombinedIstioConfigList().Gateways {
-		fakeIstioObjects = append(fakeIstioObjects, g.DeepCopyObject())
-	}
 	for _, p := range fakeMeshPolicies() {
 		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
 	}
@@ -188,7 +177,11 @@ func mockCombinedValidationService(istioConfigList *models.IstioConfigList, serv
 	}
 	k8s.MockIstio(fakeIstioObjects...)
 
-	kialiCache = cache.FakeServicesKialiCache(data.CreateFakeMultiRegistryServices(services, "test", "*"))
+	kialiCache = cache.FakeServicesKialiCache(data.CreateFakeMultiRegistryServices(services, "test", "*"),
+		fakeExportedResources().Gateways,
+		fakeExportedResources().VirtualServices,
+		fakeExportedResources().DestinationRules,
+		fakeExportedResources().ServiceEntries)
 
 	k8s.On("GetToken").Return("token")
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices(services, "test"), nil)
@@ -214,20 +207,23 @@ func mockEmptyValidationService() IstioValidationsService {
 }
 
 func fakeCombinedIstioConfigList() *models.IstioConfigList {
-	istioConfigList := models.IstioConfigList{}
+	return &models.IstioConfigList{}
+}
 
-	istioConfigList.VirtualServices = []networking_v1alpha3.VirtualService{
+func fakeExportedResources() *kubernetes.ExportedResources {
+	exportedResources := kubernetes.ExportedResources{}
+
+	exportedResources.VirtualServices = []networking_v1alpha3.VirtualService{
 		*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("product", "v1", -1),
 			data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("product", "v1", -1),
 				data.CreateEmptyVirtualService("product-vs", "test", []string{"product"})))}
 
-	istioConfigList.DestinationRules = []networking_v1alpha3.DestinationRule{
+	exportedResources.DestinationRules = []networking_v1alpha3.DestinationRule{
 		*data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule("test", "product-dr", "product")),
 		*data.CreateEmptyDestinationRule("test", "customer-dr", "customer"),
 	}
-	return &istioConfigList
+	return &exportedResources
 }
-
 func fakeMeshPolicies() []security_v1beta.PeerAuthentication {
 	return []security_v1beta.PeerAuthentication{
 		*data.CreateEmptyMeshPeerAuthentication("default", nil),

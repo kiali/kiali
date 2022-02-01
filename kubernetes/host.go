@@ -61,6 +61,10 @@ func ParseHost(hostName, namespace, cluster string) Host {
 // GetHost parses hostName and returns a Host struct. It considers Namespaces in the cluster to be more accurate
 // when deciding if the hostName is a ServiceEntry or a service.namespace host definition.
 func GetHost(hostName, namespace, cluster string, clusterNamespaces []string) Host {
+	if cluster == "" {
+		cluster = config.Get().ExternalServices.Istio.IstioIdentityDomain
+	}
+
 	hParts := strings.Split(hostName, ".")
 	// It might be a service entry or a 2-format host specification
 	if len(hParts) == 2 {
@@ -227,6 +231,10 @@ func HostWithinWildcardHost(subdomain, wildcardDomain string) bool {
 }
 
 func ParseGatewayAsHost(gateway, currentNamespace, currentCluster string) Host {
+	if currentCluster == "" {
+		currentCluster = config.Get().ExternalServices.Istio.IstioIdentityDomain
+	}
+
 	host := Host{
 		Service:       gateway,
 		Namespace:     currentNamespace,
