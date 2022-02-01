@@ -90,23 +90,18 @@ func main() {
 	status.Put(status.CoreCommitHash, commitHash)
 	status.Put(status.ContainerVersion, determineContainerVersion(version))
 
-	// check kiali version compatibility with istio
+	// check kiali version compatibility with mesh
 	meshName, meshVersion, err := status.GetMeshInfo()
 
 	ok := false
 	if err != nil {
 		log.Warningf("Failed to get mesh version, please check if url_service_version is configured correctly.")
-		status.Put(status.IsCompatible, "false")
 		status.AddWarningMessages("Failed to get mesh version, please check if url_service_version is configured correctly.")
 	} else if meshName == "Unknown" {
 		log.Warningf("Unknown Istio Implementation")
 		status.Put(status.MeshVersion, meshVersion)
 		status.Put(status.MeshName, meshName)
 		status.AddWarningMessages("Unknown Istio Implementation")
-	} else if !strings.Contains(meshName, "Istio") {
-		log.Info("Mesh Name: %v Mesh Version: %v", meshName, meshVersion)
-		status.Put(status.MeshVersion, meshVersion)
-		status.Put(status.MeshName, meshName)
 	} else {
 		ok = status.CheckMeshVersion(meshName, meshVersion, version)
 		if ok {

@@ -432,19 +432,20 @@ type HealthConfig struct {
 }
 
 // Versions version ranges
-type Versions struct {
+type Versions []struct {
 	MeshName     string `yaml:"meshName"`
 	VersionRange []struct {
-		MeshVersion string `yaml:"meshVersion"`
-		KialiLow    string `yaml:"kialiLow"`
-		KialiHigh   string `yaml:"kialiHigh"`
+		MeshVersion         string `yaml:"meshVersion"`
+		SMCPVersion         string `yaml:"SMCPVersion"`
+		KialiMinimumVersion string `yaml:"kialiMinimumVersion"`
+		KialiMaximumVersion string `yaml:"kialiMaximumVersion"`
 	} `yaml:"versionRange"`
 }
 
 // NewVersions return compatible kiali versions for mesh
-func NewVersions() (*Versions, error) {
+func NewVersions() (Versions, error) {
 	path, _ := os.Getwd()
-	file := path + "/../version.yaml"
+	file := path + "/../version-compatibility-matrix.yaml"
 
 	in, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -460,7 +461,7 @@ func NewVersions() (*Versions, error) {
 		return nil, err
 	}
 
-	return &versions, nil
+	return versions, nil
 }
 
 // Config defines full YAML configuration.

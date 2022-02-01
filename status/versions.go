@@ -111,10 +111,40 @@ func validateVersion(requiredVersion string, installedVersion string) bool {
 // checkMeshVersion check mesh if its version is compatible with kiali
 func CheckMeshVersion(meshName string, meshVersion string, kialiVersion string) bool {
 	ok := false
+	if meshName == istioProductNameUnknown {
+		return ok
+	}
 	if strings.Contains(meshName, "Istio") {
 		ok = checkIstioVersion(meshVersion, kialiVersion)
 		return ok
+	} else if strings.Contains(meshName, "Maistra") {
+		ok = checkMaistraVersion(meshVersion, kialiVersion)
+		return ok
 	}
+	return ok
+}
+
+// checkMaistraVersion check Maistra if its version is compatible with kiali
+func checkMaistraVersion(maistraVersion string, kialiVersion string) bool {
+	ok := false
+	Versions, err := config.NewVersions()
+
+	if err != nil {
+		log.Warningf("Can not load version file.%v", err)
+	}
+
+	for _, version := range Versions {
+		if version.MeshName == "Maistra" {
+			for _, version := range version.VersionRange {
+				if maistraVersion == version.MeshVersion && kialiVersion == strings.TrimSpace(version.KialiMinimumVersion) {
+					ok = true
+					// SMCPVersion := strings.TrimSpace(version.SMCPVersion)
+					break
+				}
+			}
+		}
+	}
+
 	return ok
 }
 
@@ -127,14 +157,16 @@ func checkIstioVersion(istioVersion string, kialiVersion string) bool {
 		log.Warningf("Can not load version file.%v", err)
 	}
 
-	if Versions.MeshName == "istio" {
-		for _, version := range Versions.VersionRange {
-			if strings.Contains(istioVersion, version.MeshVersion) {
-				low := strings.TrimSpace(version.KialiLow)
-				high := strings.TrimSpace(version.KialiHigh)
-				// fmt.Printf("Low: %v High: %v istioVersion: %v KialiVersion: %v\n", low, high, istioVersion, kialiVersion)
-				ok = checkRange(low, high, kialiVersion)
-				break
+	for _, version := range Versions {
+		if version.MeshName == "Istio" {
+			for _, version := range version.VersionRange {
+				if strings.Contains(istioVersion, version.MeshVersion) {
+					minimumVersion := strings.TrimSpace(version.KialiMinimumVersion)
+					maximumVersion := strings.TrimSpace(version.KialiMaximumVersion)
+					// fmt.Printf("Low: %v High: %v istioVersion: %v KialiVersion: %v\n", low, high, istioVersion, kialiVersion)
+					ok = checkRange(minimumVersion, maximumVersion, kialiVersion)
+					break
+				}
 			}
 		}
 	}

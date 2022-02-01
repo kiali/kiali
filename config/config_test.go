@@ -243,6 +243,6 @@ func TestMarshalUnmarshalVersions(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to marshal: %v", err)
 	}
-	fmt.Printf("%+v", *versions)
-	t.Logf("Config from versions: %+v", *versions)
+	fmt.Printf("%+v", versions)
+	t.Logf("Config from versions: %+v", versions)
 }
