@@ -59,13 +59,13 @@ func (in *IstioReferencesService) GetIstioObjectReferences(ctx context.Context, 
 	close(errChan)
 	for e := range errChan {
 		if e != nil { // Check that default value wasn't returned
-			return models.IstioReferences{}, err
+			return models.IstioReferences{}, e
 		}
 	}
 
 	switch objectType {
 	case kubernetes.Gateways:
-		// References on Gateways
+		// References on Gateways are not yet in place
 	case kubernetes.VirtualServices:
 		referenceChecker = references.VirtualServiceReferences{Namespace: namespace, Namespaces: namespaces, VirtualService: *istioConfigDetails.VirtualService}
 	case kubernetes.DestinationRules:
