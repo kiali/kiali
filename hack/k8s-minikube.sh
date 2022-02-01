@@ -198,7 +198,7 @@ EOF
 <         redirectURI: https://dex.example.com:32000/callback
 <         org: kubernetes
 94a81
->       responseTypes: ["id_token"]
+>       responseTypes: ["code", "id_token"]
 96a84,89
 >     - id: kiali-app
 >       redirectURIs:
@@ -304,6 +304,10 @@ EOF
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create secret tls dex.example.com.tls --cert=${CERTS_PATH}/cert.pem --key=${CERTS_PATH}/key.pem -n dex
 
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- apply -n dex -f ${DEX_VERSION_PATH}/examples/k8s/dex.kiali.yaml
+  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- get cm -n dex dex -o yaml | \
+    sed 's/name: dex/name: dex-oidc/g' | \
+    sed 's/responseTypes.*/responseTypes: ["id_token"]/g' | \
+    ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- apply -f -
   [ "$?" != "0" ] && echo "ERROR: Failed to install dex" && exit 1
   echo "Deploying oauth2 proxy..."
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create -f ${DEX_VERSION_PATH}/examples/k8s/oauth2.proxy
