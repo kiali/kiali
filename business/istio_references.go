@@ -56,6 +56,13 @@ func (in *IstioReferencesService) GetIstioObjectReferences(ctx context.Context, 
 	go in.fetchIstioConfigDetails(ctx, &istioConfigDetails, namespace, objectType, object, errChan, &wg)
 	wg.Wait()
 
+	close(errChan)
+	for e := range errChan {
+		if e != nil { // Check that default value wasn't returned
+			return models.IstioReferences{}, err
+		}
+	}
+
 	switch objectType {
 	case kubernetes.Gateways:
 		// References on Gateways
@@ -77,13 +84,6 @@ func (in *IstioReferencesService) GetIstioObjectReferences(ctx context.Context, 
 		// Validation on EnvoyFilters are not yet in place
 	default:
 		err = fmt.Errorf("object type not found: %v", objectType)
-	}
-
-	close(errChan)
-	for e := range errChan {
-		if e != nil { // Check that default value wasn't returned
-			return models.IstioReferences{}, err
-		}
 	}
 
 	if referenceChecker == nil {

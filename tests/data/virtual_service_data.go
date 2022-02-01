@@ -46,6 +46,11 @@ func AddTcpRoutesToVirtualService(route *api_networking_v1alpha3.TCPRoute, vs *n
 	return vs
 }
 
+func AddTlsRoutesToVirtualService(route *api_networking_v1alpha3.TLSRoute, vs *networking_v1alpha3.VirtualService) *networking_v1alpha3.VirtualService {
+	vs.Spec.Tls = append(vs.Spec.Tls, route)
+	return vs
+}
+
 func CreateHttpRouteDestination(host string, subset string, weight int32) *api_networking_v1alpha3.HTTPRouteDestination {
 	httpRouteDestination := &api_networking_v1alpha3.HTTPRouteDestination{
 		Destination: &api_networking_v1alpha3.Destination{
@@ -59,6 +64,22 @@ func CreateHttpRouteDestination(host string, subset string, weight int32) *api_n
 
 func CreateTcpRoute(host string, subset string, weight int32) *api_networking_v1alpha3.TCPRoute {
 	route := api_networking_v1alpha3.TCPRoute{
+		Route: []*api_networking_v1alpha3.RouteDestination{
+			{
+				Destination: &api_networking_v1alpha3.Destination{
+					Host:   host,
+					Subset: subset,
+				},
+				Weight: weight,
+			},
+		},
+	}
+	return &route
+}
+
+func CreateTlsRoute(host string, subset string, weight int32) *api_networking_v1alpha3.TLSRoute {
+	route := api_networking_v1alpha3.TLSRoute{
+		// TODO Add "Match", currently Route host is needed
 		Route: []*api_networking_v1alpha3.RouteDestination{
 			{
 				Destination: &api_networking_v1alpha3.Destination{
