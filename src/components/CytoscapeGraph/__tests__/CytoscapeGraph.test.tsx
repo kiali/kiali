@@ -52,6 +52,7 @@ describe('CytoscapeGraph component test', () => {
           edgeLabels={myEdgeLabelMode}
           graphData={{
             elements: dataSource.graphData,
+            elementsChanged: true,
             isLoading: false,
             fetchParams: {
               includeHealth: false,

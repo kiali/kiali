@@ -45,6 +45,7 @@ type ReduxProps = {
 
 type GraphFindProps = ReduxProps & {
   cy: any;
+  elementsChanged: boolean;
 };
 
 type GraphFindState = {
@@ -179,15 +180,16 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     const findErrorChanged = this.state.findError !== nextState.findError;
     const hideErrorChanged = this.state.hideError !== nextState.hideError;
 
-    return (
+    const shouldUpdate =
       cyChanged ||
       findChanged ||
       hideChanged ||
       graphChanged ||
       showFindHelpChanged ||
       findErrorChanged ||
-      hideErrorChanged
-    );
+      hideErrorChanged;
+
+    return shouldUpdate;
   }
 
   // Note that we may have redux hide/find values set at mount-time. But because the toolbar mounts prior to
@@ -203,6 +205,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     const findChanged = this.props.findValue !== prevProps.findValue;
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
     const graphChanged = this.props.updateTime !== prevProps.updateTime;
+    const graphElementsChanged = graphChanged && this.props.elementsChanged;
 
     // ensure redux state and URL are aligned
     if (findChanged) {
@@ -237,7 +240,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       }
 
       const compressOnHideChanged = this.props.compressOnHide !== prevProps.compressOnHide;
-      this.handleHide(this.props.cy, hideChanged, graphChanged, compressOnHideChanged);
+      this.handleHide(this.props.cy, hideChanged, graphChanged, graphElementsChanged, compressOnHideChanged);
     }
   }
 
@@ -439,7 +442,13 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     this.props.setHideValue(val);
   };
 
-  private handleHide = (cy: any, hideChanged: boolean, graphChanged: boolean, compressOnHideChanged: boolean) => {
+  private handleHide = (
+    cy: any,
+    hideChanged: boolean,
+    graphChanged: boolean,
+    graphElementsChanged: boolean,
+    compressOnHideChanged: boolean
+  ) => {
     const selector = this.parseValue(this.props.hideValue, false);
     console.debug(`Hide selector=[${selector}]`);
 
@@ -489,8 +498,11 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     cy.endBatch();
 
     const hasRemovedElements: boolean = !!this.removedElements && this.removedElements.length > 0;
-    if (hideChanged || (compressOnHideChanged && selector) || hasRemovedElements) {
-      CytoscapeGraphUtils.runLayout(cy, this.props.layout);
+    if (hideChanged || (compressOnHideChanged && selector) || (hasRemovedElements && graphElementsChanged)) {
+      cy.emit('kiali-zoomignore', [true]);
+      CytoscapeGraphUtils.runLayout(cy, this.props.layout).then(() => {
+        // do nothing, defer to CytoscapeGraph.tsx 'onlayout' event handler
+      });
     }
   };
 

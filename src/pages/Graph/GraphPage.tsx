@@ -68,6 +68,7 @@ import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import GraphTour from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 import { EdgeContextMenu } from 'components/CytoscapeGraph/ContextMenu/EdgeContextMenu';
+import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -130,6 +131,7 @@ export type GraphPageProps = RouteComponentProps<Partial<GraphURLPathProps>> & R
 
 export type GraphData = {
   elements: DecoratedGraphElements;
+  elementsChanged: boolean; // true if current elements differ from previous fetch, can be used as an optimization.
   errorMessage?: string;
   fetchParams: FetchParams;
   isLoading: boolean;
@@ -287,6 +289,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
     this.state = {
       graphData: {
         elements: { edges: [], nodes: [] },
+        elementsChanged: false,
         fetchParams: this.graphDataSource.fetchParameters,
         isLoading: true,
         timestamp: 0
@@ -399,7 +402,12 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       <>
         <FlexView className={conStyle} column={true}>
           <div>
-            <GraphToolbarContainer cy={cy} disabled={this.state.graphData.isLoading} onToggleHelp={this.toggleHelp} />
+            <GraphToolbarContainer
+              cy={cy}
+              disabled={this.state.graphData.isLoading}
+              elementsChanged={this.state.graphData.elementsChanged}
+              onToggleHelp={this.toggleHelp}
+            />
           </div>
           <FlexView
             grow={true}
@@ -447,7 +455,10 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
               )}
               {isReady && (
                 <div className={cytoscapeToolbarWrapperDivStyle}>
-                  <CytoscapeToolbarContainer cytoscapeGraphRef={this.cytoscapeGraphRef} />
+                  <CytoscapeToolbarContainer
+                    cytoscapeGraphRef={this.cytoscapeGraphRef}
+                    disabled={this.state.graphData.isLoading}
+                  />
                 </div>
               )}
             </ErrorBoundary>
@@ -480,9 +491,11 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
     elements: DecoratedGraphElements,
     fetchParams: FetchParams
   ) => {
+    const prevElements = this.state.graphData.elements;
     this.setState({
       graphData: {
         elements: elements,
+        elementsChanged: CytoscapeGraphUtils.elementsChanged(prevElements, elements),
         isLoading: false,
         fetchParams: fetchParams,
         timestamp: graphTimestamp * 1000
@@ -492,9 +505,11 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
   };
 
   private handleGraphDataSourceError = (errorMessage: string | null, fetchParams: FetchParams) => {
+    const prevElements = this.state.graphData.elements;
     this.setState({
       graphData: {
-        elements: { edges: [], nodes: [] },
+        elements: EMPTY_GRAPH_DATA,
+        elementsChanged: CytoscapeGraphUtils.elementsChanged(prevElements, EMPTY_GRAPH_DATA),
         errorMessage: !!errorMessage ? errorMessage : undefined,
         isError: true,
         isLoading: false,
@@ -505,9 +520,11 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
   };
 
   private handleGraphDataSourceEmpty = (fetchParams: FetchParams) => {
+    const prevElements = this.state.graphData.elements;
     this.setState({
       graphData: {
         elements: EMPTY_GRAPH_DATA,
+        elementsChanged: CytoscapeGraphUtils.elementsChanged(prevElements, EMPTY_GRAPH_DATA),
         isLoading: false,
         fetchParams: fetchParams,
         timestamp: Date.now()
@@ -519,6 +536,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
     this.setState({
       graphData: {
         elements: isPreviousDataInvalid ? EMPTY_GRAPH_DATA : this.state.graphData.elements,
+        elementsChanged: false,
         fetchParams: fetchParams,
         isLoading: true,
         timestamp: isPreviousDataInvalid ? Date.now() : this.state.graphData.timestamp

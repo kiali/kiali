@@ -74,7 +74,7 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
     return <div id="cy" className="graph" style={styleContainer} ref={this.divParentRef} />;
   }
 
-  build() {
+  private build() {
     if (this.cy) {
       this.destroy();
     }
@@ -90,7 +90,7 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
     (this.cy as any).nodeHtmlLabel(GraphStyles.htmlNodeLabels(this.cy));
   }
 
-  destroy() {
+  private destroy() {
     if (this.cy) {
       this.cy.destroy();
       this.cy = undefined;

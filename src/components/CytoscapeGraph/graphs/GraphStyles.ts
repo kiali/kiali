@@ -192,16 +192,16 @@ export class GraphStyles {
   }
 
   static getNodeLabel(ele: Cy.NodeSingular) {
-    const settings = serverConfig.kialiFeatureFlags.uiDefaults.graph.settings;
-    const zoom = ele.cy().zoom();
-    const noBadge = zoom < settings.minFontBadge / settings.fontLabel;
-    const noContent = zoom < settings.minFontLabel / settings.fontLabel;
-
     const getCyGlobalData = (ele: Cy.NodeSingular): CytoscapeGlobalScratchData => {
       return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
     };
 
     const cyGlobal = getCyGlobalData(ele);
+    const settings = serverConfig.kialiFeatureFlags.uiDefaults.graph.settings;
+    const zoom = ele.cy().zoom();
+    const noBadge = !cyGlobal.forceLabels && zoom < settings.minFontBadge / settings.fontLabel;
+    const noContent = !cyGlobal.forceLabels && zoom < settings.minFontLabel / settings.fontLabel;
+
     const node = decoratedNodeData(ele);
     const app = node.app || '';
     const cluster = node.cluster;
@@ -446,7 +446,31 @@ export class GraphStyles {
   static htmlNodeLabels(cy: Cy.Core) {
     return [
       {
-        query: 'node:visible',
+        query: 'node[^isBox]:visible', // leaf nodes
+        halign: 'center',
+        valign: 'bottom',
+        halignBox: 'center',
+        valignBox: 'bottom',
+        tpl: (data: any) => this.getNodeLabel(cy.$id(data.id))
+      },
+      {
+        query: 'node[isBox = "app"]:visible', // app box nodes
+        halign: 'center',
+        valign: 'bottom',
+        halignBox: 'center',
+        valignBox: 'bottom',
+        tpl: (data: any) => this.getNodeLabel(cy.$id(data.id))
+      },
+      {
+        query: 'node[isBox = "namespace"]:visible', // ns box nodes
+        halign: 'center',
+        valign: 'bottom',
+        halignBox: 'center',
+        valignBox: 'bottom',
+        tpl: (data: any) => this.getNodeLabel(cy.$id(data.id))
+      },
+      {
+        query: 'node[isBox = "cluster"]:visible', // cluster box nodes
         halign: 'center',
         valign: 'bottom',
         halignBox: 'center',

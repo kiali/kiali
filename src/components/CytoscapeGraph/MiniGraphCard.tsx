@@ -100,6 +100,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
               }
               graphData={{
                 elements: this.state.graphData,
+                elementsChanged: true,
                 errorMessage: !!this.props.dataSource.errorMessage ? this.props.dataSource.errorMessage : undefined,
                 isError: this.props.dataSource.isError,
                 isLoading: this.props.dataSource.isLoading,

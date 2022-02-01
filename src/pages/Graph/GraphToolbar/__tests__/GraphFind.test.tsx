@@ -12,6 +12,7 @@ describe('Parse find value test', () => {
       <GraphFind
         cy={undefined}
         edgeLabels={[]}
+        elementsChanged={true}
         findValue="testFind"
         hideValue="testHide"
         showFindHelp={false}

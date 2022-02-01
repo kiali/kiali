@@ -220,6 +220,11 @@ export default class BoxLayout {
       this.emit('layoutstop');
     });
 
+    // Avoid propagating any local layout events up to cy, this would yield a global operation before the nodes are ready.
+    layout.on('layoutstart layoutready layoutstop', _event => {
+      return false;
+    });
+
     layout.run();
   }
 

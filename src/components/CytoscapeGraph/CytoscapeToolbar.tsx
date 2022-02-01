@@ -38,6 +38,7 @@ type ReduxProps = {
 
 type CytoscapeToolbarProps = ReduxProps & {
   cytoscapeGraphRef: any;
+  disabled: boolean;
 };
 
 type CytoscapeToolbarState = {
@@ -143,11 +144,12 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
               id="toolbar_layout_default"
               aria-label="Graph Layout Default Style"
               className={buttonStyle}
-              variant="plain"
-              onClick={() => {
-                this.props.setLayout(DagreGraph.getLayout());
-              }}
               isActive={this.props.layout.name === DagreGraph.getLayout().name}
+              isDisabled={this.props.disabled}
+              onClick={() => {
+                this.setLayout(DagreGraph.getLayout());
+              }}
+              variant="plain"
             >
               <TopologyIcon
                 className={this.props.layout.name === DagreGraph.getLayout().name ? activeButtonStyle : undefined}
@@ -163,11 +165,12 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
                 id="toolbar_layout1"
                 aria-label="Graph Layout Style 1"
                 className={buttonStyle}
-                variant="plain"
-                onClick={() => {
-                  this.props.setLayout(CoseGraph.getLayout());
-                }}
                 isActive={this.props.layout.name === CoseGraph.getLayout().name}
+                isDisabled={this.props.disabled}
+                onClick={() => {
+                  this.setLayout(CoseGraph.getLayout());
+                }}
+                variant="plain"
               >
                 <TopologyIcon
                   className={this.props.layout.name === CoseGraph.getLayout().name ? activeButtonStyle : undefined}
@@ -183,11 +186,12 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
               id="toolbar_layout2"
               aria-label="Graph Layout Style 2"
               className={buttonStyle}
-              variant="plain"
-              onClick={() => {
-                this.props.setLayout(ColaGraph.getLayout());
-              }}
               isActive={this.props.layout.name === ColaGraph.getLayout().name}
+              isDisabled={this.props.disabled}
+              onClick={() => {
+                this.setLayout(ColaGraph.getLayout());
+              }}
+              variant="plain"
             >
               <TopologyIcon
                 className={this.props.layout.name === ColaGraph.getLayout().name ? activeButtonStyle : undefined}
@@ -258,6 +262,12 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
     const cy = this.getCy();
     if (cy) {
       CytoscapeGraphUtils.safeFit(cy);
+    }
+  };
+
+  private setLayout = (layout: Layout) => {
+    if (layout.name !== this.props.layout.name) {
+      this.props.setLayout(layout);
     }
   };
 }

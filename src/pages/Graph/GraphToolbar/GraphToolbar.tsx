@@ -56,6 +56,7 @@ type ReduxProps = {
 type GraphToolbarProps = ReduxProps & {
   cy: any;
   disabled: boolean;
+  elementsChanged: boolean;
   onToggleHelp: () => void;
   onRefresh?: () => void;
 };
@@ -200,7 +201,7 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
               <GraphSettingsContainer graphType={this.props.graphType} disabled={this.props.disabled} />
             </TourStopContainer>
           </div>
-          <GraphFindContainer cy={this.props.cy} />
+          <GraphFindContainer cy={this.props.cy} elementsChanged={this.props.elementsChanged} />
 
           <TourStopContainer info={GraphTourStops.Shortcuts}>
             <ToolbarGroup className={rightToolbarStyle} aria-label="graph_refresh_toolbar">
