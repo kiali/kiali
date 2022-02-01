@@ -51,6 +51,11 @@ operator-delete: .ensure-oc-exists kiali-delete kiali-purge
 	${OC} delete --ignore-not-found=true customresourcedefinitions monitoringdashboards.monitoring.kiali.io
 	${OC} delete --ignore-not-found=true namespace "${OPERATOR_NAMESPACE}"
 
+## operator-reload-image: Restarts the Kiali Operator pod by deleting it which forces a redeployment
+operator-reload-image: .ensure-oc-exists
+	@echo Refreshing Kiali Operator pod within namespace ${OPERATOR_NAMESPACE}
+	${OC} delete pod --selector=app.kubernetes.io/name=kiali-operator -n ${OPERATOR_NAMESPACE}
+
 ## kiali-create: Create a Kiali CR to the cluster, informing the Kiali operator to install Kiali.
 kiali-create: .ensure-operator-repo-exists .prepare-cluster
 	@echo Deploy Kiali using the settings found in ${KIALI_CR_FILE}
