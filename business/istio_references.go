@@ -50,7 +50,7 @@ func (in *IstioReferencesService) GetIstioObjectReferences(ctx context.Context, 
 	wg := sync.WaitGroup{}
 	errChan := make(chan error, 1)
 
-	// Get all the Istio objects from a Namespace and all gateways from every namespace
+	// Get all namespaces and the requested Istio object details
 	wg.Add(2)
 	go in.fetchNamespaces(ctx, &namespaces, errChan, &wg)
 	go in.fetchIstioConfigDetails(ctx, &istioConfigDetails, namespace, objectType, object, errChan, &wg)
