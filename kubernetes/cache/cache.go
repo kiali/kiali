@@ -33,6 +33,9 @@ type (
 		// Stop all caches
 		Stop()
 
+		// Kubernetes Client used for cache
+		GetClient() *kubernetes.K8SClient
+
 		KubernetesCache
 		IstioCache
 		NamespacesCache
@@ -245,4 +248,8 @@ func (c *kialiCacheImpl) Stop() {
 	for ns := range c.nsCache {
 		delete(c.nsCache, ns)
 	}
+}
+
+func (c *kialiCacheImpl) GetClient() *kubernetes.K8SClient {
+	return &c.istioClient
 }
