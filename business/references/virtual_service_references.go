@@ -7,6 +7,8 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
+const GatewayObjectType = "gateway"
+
 type VirtualServiceReferences struct {
 	Namespace      string
 	Namespaces     models.Namespaces
@@ -108,7 +110,7 @@ func getGagewayReferences(gateways []string, namespace string, clusterName strin
 		}
 		gw := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName)
 		if !gw.IsWildcard() {
-			result = append(result, models.IstioReference{Name: gw.Service, Namespace: gw.Namespace, ObjectType: kubernetes.Gateways})
+			result = append(result, models.IstioReference{Name: gw.Service, Namespace: gw.Namespace, ObjectType: GatewayObjectType})
 		}
 	}
 	return result
