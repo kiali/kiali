@@ -79,22 +79,13 @@ type LoggingParam struct {
 	Level ProxyLogLevel `json:"level"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments podProxyDump podProxyResource podProxyLogging
+// swagger:parameters istioConfigList workloadList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging
 type NamespaceParam struct {
 	// The namespace name.
 	//
 	// in: path
 	// required: true
 	Name string `json:"namespace"`
-}
-
-// swagger:parameters getIter8Experiments patchIter8Experiments deleteIter8Experiments
-type NameParam struct {
-	// The name param
-	//
-	// in: path
-	// required: true
-	Name string `json:"name"`
 }
 
 // swagger:parameters istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype
@@ -114,6 +105,15 @@ type ObjectTypeParam struct {
 	// required: true
 	// pattern: ^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$
 	Name string `json:"object_type"`
+}
+
+// swagger:parameters istioConfigList istioConfigDetails serviceDetails serviceUpdate
+type ValidateParam struct {
+	// Enable validation or not
+	//
+	// in: query
+	// required: false
+	Name string `json:"validate"`
 }
 
 // swagger:parameters podDetails podLogs podProxyDump podProxyResource podProxyLogging
@@ -200,17 +200,16 @@ type AppendersParam struct {
 	//
 	// in: query
 	// required: false
-	// default: run all appenders
+	// default: aggregateNode,deadNode,healthConfig,idleNode,istio,responseTime,securityPolicy,serviceEntry,sidecarsCheck,throughput
 	Name string `json:"appenders"`
 }
 
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
 type BoxByParam struct {
-	// Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].
+	// Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace].
 	//
 	// in: query
 	// required: false
-	// default: none
 	Name string `json:"boxBy"`
 }
 
@@ -224,13 +223,22 @@ type DurationGraphParam struct {
 	Name string `json:"duration"`
 }
 
-// swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
+// swagger:parameters graphNamespaces graphService graphWorkload
 type GraphTypeParam struct {
 	// Graph type. Available graph types: [app, service, versionedApp, workload].
 	//
 	// in: query
 	// required: false
 	// default: workload
+	Name string `json:"graphType"`
+}
+
+// swagger:parameters graphApp graphAppVersion
+type AppGraphTypeParam struct {
+	// Graph type. Available graph types: [app, versionedApp].
+	//
+	// in: query
+	// required: true
 	Name string `json:"graphType"`
 }
 
@@ -782,27 +790,6 @@ type swaggIstioConfigPermissions struct {
 	Body models.IstioConfigPermissions
 }
 
-// Return Iter8 Info
-// swagger:response iter8StatusResponse
-type Iter8StatusResponse struct {
-	// in: body
-	Body models.Iter8Info
-}
-
-// Return a Iter8 Experiment detail
-// swagger:response iter8ExperimentGetDetailResponse
-type Iter8ExperimentsGetDetailResponse struct {
-	// in: body
-	Body models.Iter8ExperimentDetail
-}
-
-// Return a list of Iter8 Experiment Items
-// swagger:response iter8ExperimentsResponse
-type Iter8ExperimentsResponnse struct {
-	// in: body
-	Body []models.Iter8ExperimentItem
-}
-
 // Return a list of Istio components along its status
 // swagger:response istioStatusResponse
 type IstioStatusResponse struct {
@@ -829,13 +816,6 @@ type MetricsStatsQueryBody struct {
 type MetricsStatsResponse struct {
 	// in: body
 	Body models.MetricsStats
-}
-
-// Return a list of Cluster items
-// swagger:response clustersResponse
-type ClustersResponse struct {
-	// in: body
-	Body []business.Cluster
 }
 
 // swagger:enum ProxyLogLevel

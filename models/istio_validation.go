@@ -227,6 +227,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Destination Rule disabling mesh-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},
+	"port.appprotocol.mismatch": {
+		Code:     "KIA0602",
+		Message:  "Port appProtocol must follow <protocol> form",
+		Severity: ErrorSeverity,
+	},
 	"port.name.mismatch": {
 		Code:     "KIA0601",
 		Message:  "Port name must follow <protocol>[-suffix] form",
@@ -299,7 +304,7 @@ var checkDescriptors = map[string]IstioCheck{
 	},
 	"virtualservices.route.repeatedsubset": {
 		Code:     "KIA1105",
-		Message:  "This subset is already referenced in another route destination",
+		Message:  "This host subset combination is already referenced in another route destination",
 		Severity: WarningSeverity,
 	},
 	"virtualservices.singlehost": {

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -59,7 +60,8 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		go func(namespace string, istioConfigValidations *models.IstioValidations, err *error) {
 			defer wg.Done()
 			// We don't filter by objects when calling validations, because certain validations require fetching all types to get the correct errors
-			istioConfigValidationResults, errValidations := business.Validations.GetValidations(namespace, "", "")
+
+			istioConfigValidationResults, errValidations := business.Validations.GetValidations(context.TODO(), namespace, "", "")
 			if errValidations != nil && *err == nil {
 				*err = errValidations
 			} else {
@@ -71,7 +73,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		}(namespace, &istioConfigValidations, &err)
 	}
 
-	istioConfig, err := business.IstioConfig.GetIstioConfigList(criteria)
+	istioConfig, err := business.IstioConfig.GetIstioConfigList(r.Context(), criteria)
 	if includeValidations {
 		// Add validation results to the IstioConfigList once they're available (previously done in the UI layer)
 		wg.Wait()
@@ -117,7 +119,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func(istioConfigValidations *models.IstioValidations, err *error) {
 			defer wg.Done()
-			istioConfigValidationResults, errValidations := business.Validations.GetIstioObjectValidations(namespace, objectType, object)
+			istioConfigValidationResults, errValidations := business.Validations.GetIstioObjectValidations(r.Context(), namespace, objectType, object)
 			if errValidations != nil && *err == nil {
 				*err = errValidations
 			} else {
@@ -126,7 +128,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		}(&istioConfigValidations, &err)
 	}
 
-	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(namespace, objectType, object)
+	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(context.TODO(), namespace, objectType, object)
 
 	if includeValidations && err == nil {
 		wg.Wait()
@@ -262,7 +264,7 @@ func IstioConfigPermissions(w http.ResponseWriter, r *http.Request) {
 	istioConfigPermissions := models.IstioConfigPermissions{}
 	if len(namespaces) > 0 {
 		ns := strings.Split(namespaces, ",")
-		istioConfigPermissions = business.IstioConfig.GetIstioConfigPermissions(ns)
+		istioConfigPermissions = business.IstioConfig.GetIstioConfigPermissions(r.Context(), ns)
 	}
 	RespondWithJSON(w, http.StatusOK, istioConfigPermissions)
 }

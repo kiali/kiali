@@ -10,7 +10,7 @@ import (
 const GatewayCheckerType = "gateway"
 
 type GatewayChecker struct {
-	GatewaysPerNamespace  [][]networking_v1alpha3.Gateway
+	Gateways              []networking_v1alpha3.Gateway
 	Namespace             string
 	WorkloadsPerNamespace map[string]models.WorkloadList
 }
@@ -19,15 +19,12 @@ type GatewayChecker struct {
 func (g GatewayChecker) Check() models.IstioValidations {
 	// Multinamespace checkers
 	validations := gateways.MultiMatchChecker{
-		GatewaysPerNamespace: g.GatewaysPerNamespace,
+		Gateways: g.Gateways,
 	}.Check()
 
-	// Single namespace
-	for _, nssGw := range g.GatewaysPerNamespace {
-		for _, gw := range nssGw {
-			if gw.Namespace == g.Namespace {
-				validations.MergeValidations(g.runSingleChecks(gw))
-			}
+	for _, gw := range g.Gateways {
+		if gw.Namespace == g.Namespace {
+			validations.MergeValidations(g.runSingleChecks(gw))
 		}
 	}
 

@@ -78,16 +78,9 @@ def determineReleaseType() {
   // since EPOCH. It is assumed that this script is run weekly
   // starting in the base date. Running at different timespans
   // won't guarantee a good result.
-  return sh ('''
-BASE_DATE=${BASE_DATE:-$(date -d '2018-11-30' '+%s')}
+  return sh (script: '''
+BASE_DATE=${BASE_DATE:-$(date -d '2021-12-03' '+%s')} # Use last day of Sprint #66 as the base date for calcs
 NOW_DATE=${NOW_DATE:-$(date -d 'now' '+%s')}
-
-# At end of Sprint #33, we use it's last day as the base date
-cond=$(date -d '2020-01-10' '+%s')
-if [ $NOW_DATE -ge $cond ];
-then
-  BASE_DATE=$cond
-fi
 
 # Transitional calculations
 DATE_DIFF=$(( $NOW_DATE - $BASE_DATE ))
@@ -97,11 +90,10 @@ WEEKS_ELAPSED=$(( $DAYS_ELAPSED / 7))
 # This value will be used to determine the type of the release
 WEEKS_MOD3=$(( $WEEKS_ELAPSED % 3 ))
 
-# Sprint #33 is 4 weeks long. Return 'snapshot.2' between Jan 3rd and Jan 9th
-if [ $NOW_DATE -ge $(date -d '2020-01-03' '+%s') ] && [ $NOW_DATE -lt $(date -d '2020-01-10' '+%s') ];
+# Between Dec 23th 2021 and Jan 14th 2022, use Mod6 (six-week sprint)
+if [ $NOW_DATE -ge $(date -d '2021-12-23' '+%s') ] && [ $NOW_DATE -lt $(date -d '2022-01-14' '+%s') ];
 then
-  echo 'snapshot.2'
-  exit 0
+  WEEKS_MOD3=$(( $WEEKS_ELAPSED % 6 ))
 fi
 
 case $WEEKS_MOD3 in
@@ -111,6 +103,12 @@ case $WEEKS_MOD3 in
     RELEASE_TYPE='snapshot.0' ;;
   2)
     RELEASE_TYPE='snapshot.1' ;;
+  3)
+    RELEASE_TYPE='snapshot.2' ;;
+  4)
+    RELEASE_TYPE='snapshot.3' ;;
+  5)
+    RELEASE_TYPE='snapshot.4' ;;
 esac
 
 # Print the determined type
@@ -281,18 +279,6 @@ node('kiali-build && fedora') {
               )
         }
       }
-
-      stage('Post Msg Bus Notification') {
-        if ( releaseType == "minor" ) {
-          build(job: 'kiali-release-notifier',
-              parameters: [
-              [$class: 'StringParameterValue', value: 'minor', name: 'RELEASE_TYPE'],
-              [$class: 'StringParameterValue', value: "${params.QUAY_NAME}", name: 'QUAY_NAME'],
-              [$class: 'StringParameterValue', value: quayTag, name: 'QUAY_TAG']
-              ], wait: false
-              )
-        }
-      }
     }
   } catch (e) {
     echo e.toString()
@@ -310,3 +296,4 @@ node('kiali-build && fedora') {
     cleanWs()
   }
 }
+

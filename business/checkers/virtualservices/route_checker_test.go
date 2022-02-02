@@ -16,7 +16,11 @@ func TestServiceWellVirtualServiceValidation(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	vals, valid := RouteChecker{*fakeValidVirtualService()}.Check()
+	vals, valid := RouteChecker{
+		Namespace:      "test",
+		Namespaces:     []string{"test"},
+		VirtualService: *fakeValidVirtualService(),
+	}.Check()
 
 	// Well configured object
 	assert.True(valid)
@@ -27,7 +31,11 @@ func TestServiceWellVirtualServiceValidation(t *testing.T) {
 func TestServiceMultipleChecks(t *testing.T) {
 	assert := assert.New(t)
 
-	vals, valid := RouteChecker{*fakeOneRouteUnder100()}.Check()
+	vals, valid := RouteChecker{
+		Namespace:      "test",
+		Namespaces:     []string{"test"},
+		VirtualService: *fakeOneRouteUnder100(),
+	}.Check()
 
 	// wrong weight'ed route rule
 	assert.True(valid)
@@ -41,16 +49,39 @@ func TestServiceMultipleChecks(t *testing.T) {
 func TestVSWithRepeatingSubsets(t *testing.T) {
 	assert := assert.New(t)
 
-	vals, valid := RouteChecker{*fakeRepeatedSubset()}.Check()
+	vals, valid := RouteChecker{
+		Namespace:      "test",
+		Namespaces:     []string{"test"},
+		VirtualService: *fakeRepeatedSubset(),
+	}.Check()
 	assert.True(valid)
 	assert.NotEmpty(vals)
 	assert.Len(vals, 4)
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.route.repeatedsubset", vals[0]))
 	assert.Equal(vals[0].Severity, models.WarningSeverity)
-	assert.Regexp(`spec\/http\[0\]\/route\[[0,2]\]\/subset`, vals[0].Path)
+	assert.Regexp(`spec\/http\[0\]\/route\[[0,2]\]\/host`, vals[0].Path)
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.route.repeatedsubset", vals[3]))
 	assert.Equal(vals[3].Severity, models.WarningSeverity)
-	assert.Regexp(`spec\/http\[0\]\/route\[[1,3]\]\/subset`, vals[3].Path)
+	assert.Regexp(`spec\/http\[0\]\/route\[[1,3]\]\/host`, vals[3].Path)
+}
+
+func TestVSWithRepeatingHostsNoSubsets(t *testing.T) {
+	assert := assert.New(t)
+
+	vals, valid := RouteChecker{
+		Namespace:      "test",
+		Namespaces:     []string{"test"},
+		VirtualService: *fakeRepeatedHosts(),
+	}.Check()
+	assert.True(valid)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 4)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.route.repeatedsubset", vals[0]))
+	assert.Equal(vals[0].Severity, models.WarningSeverity)
+	assert.Regexp(`spec\/http\[0\]\/route\[[0,2]\]\/host`, vals[0].Path)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.route.repeatedsubset", vals[3]))
+	assert.Equal(vals[3].Severity, models.WarningSeverity)
+	assert.Regexp(`spec\/http\[0\]\/route\[[1,3]\]\/host`, vals[3].Path)
 }
 
 func fakeValidVirtualService() *networking_v1alpha3.VirtualService {
@@ -76,6 +107,20 @@ func fakeRepeatedSubset() *networking_v1alpha3.VirtualService {
 		data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 45),
 			data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v2", 55),
 				data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v2", 45),
+					data.CreateEmptyVirtualService("reviews-repeated", "test", []string{"reviews"}),
+				),
+			),
+		),
+	)
+
+	return validVirtualService
+}
+
+func fakeRepeatedHosts() *networking_v1alpha3.VirtualService {
+	validVirtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews.test.svc.cluster.local", "", 55),
+		data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews.test.svc.cluster.local", "", 45),
+			data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews.test.svc.cluster.local", "", 55),
+				data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews.test.svc.cluster.local", "", 45),
 					data.CreateEmptyVirtualService("reviews-repeated", "test", []string{"reviews"}),
 				),
 			),

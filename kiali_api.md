@@ -110,18 +110,6 @@ _
   
 
 
-###  iter8
-
-| Method  | URI     | Name   | Summary |
-|---------|---------|--------|---------|
-| DELETE | /api/iter8/experiments/namespaces/{namespace}/name/{name} | [delete iter8 experiments](#delete-iter8-experiments) |  |
-| GET | /api/iter8/namespaces/{namespace}/experiments/{name} | [get iter8 experiments](#get-iter8-experiments) |  |
-| GET | /api/iter8/experiments | [iter8 experiments](#iter8-experiments) | Endpoint to fetch iter8 experiments for all namespaces user have access. |
-| PATCH | /api/iter8/experiments/{namespace}/name/{name} | [patch iter8 experiments](#patch-iter8-experiments) |  |
-| POST | /api/iter8/namespaces/{namespace}/experiments | [post iter8 experiments](#post-iter8-experiments) | Endpoint to create new iter8 experiments for a given namespace. |
-  
-
-
 ###  kiali
 
 | Method  | URI     | Name   | Summary |
@@ -1185,73 +1173,6 @@ Status: Service Unavailable
 
 
 
-### <span id="delete-iter8-experiments"></span> delete iter8 experiments (*deleteIter8Experiments*)
-
-```
-DELETE /api/iter8/experiments/namespaces/{namespace}/name/{name}
-```
-
-Endpoint to delete   iter8 experiments
-
-#### URI Schemes
-  * http
-  * https
-
-#### Produces
-  * application/json
-
-#### Parameters
-
-| Name | Source | Type | Go type | Separator | Required | Default | Description |
-|------|--------|------|---------|-----------| :------: |---------|-------------|
-| name | `path` | string | `string` |  | ✓ |  | The name param |
-| namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
-
-#### All responses
-| Code | Status | Description | Has headers | Schema |
-|------|--------|-------------|:-----------:|--------|
-| [200](#delete-iter8-experiments-200) | OK | Return Iter8 Info |  | [schema](#delete-iter8-experiments-200-schema) |
-| [500](#delete-iter8-experiments-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#delete-iter8-experiments-500-schema) |
-
-#### Responses
-
-
-##### <span id="delete-iter8-experiments-200"></span> 200 - Return Iter8 Info
-Status: OK
-
-###### <span id="delete-iter8-experiments-200-schema"></span> Schema
-   
-  
-
-[Iter8Info](#iter8-info)
-
-##### <span id="delete-iter8-experiments-500"></span> 500 - A Internal is the error message that means something has gone wrong
-Status: Internal Server Error
-
-###### <span id="delete-iter8-experiments-500-schema"></span> Schema
-   
-  
-
-[DeleteIter8ExperimentsInternalServerErrorBody](#delete-iter8-experiments-internal-server-error-body)
-
-###### Inlined models
-
-**<span id="delete-iter8-experiments-internal-server-error-body"></span> DeleteIter8ExperimentsInternalServerErrorBody**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
-| Message | string| `string` |  | |  |  |
-
-
-
 ### <span id="error-traces"></span> error traces (*errorTraces*)
 
 ```
@@ -1386,73 +1307,6 @@ Status: Internal Server Error
 ###### Inlined models
 
 **<span id="get-config-internal-server-error-body"></span> GetConfigInternalServerErrorBody**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
-| Message | string| `string` |  | |  |  |
-
-
-
-### <span id="get-iter8-experiments"></span> get iter8 experiments (*getIter8Experiments*)
-
-```
-GET /api/iter8/namespaces/{namespace}/experiments/{name}
-```
-
-Endpoint to fetch iter8 experiments by namespace and name
-
-#### URI Schemes
-  * http
-  * https
-
-#### Produces
-  * application/json
-
-#### Parameters
-
-| Name | Source | Type | Go type | Separator | Required | Default | Description |
-|------|--------|------|---------|-----------| :------: |---------|-------------|
-| name | `path` | string | `string` |  | ✓ |  | The name param |
-| namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
-
-#### All responses
-| Code | Status | Description | Has headers | Schema |
-|------|--------|-------------|:-----------:|--------|
-| [200](#get-iter8-experiments-200) | OK | Return a Iter8 Experiment detail |  | [schema](#get-iter8-experiments-200-schema) |
-| [500](#get-iter8-experiments-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#get-iter8-experiments-500-schema) |
-
-#### Responses
-
-
-##### <span id="get-iter8-experiments-200"></span> 200 - Return a Iter8 Experiment detail
-Status: OK
-
-###### <span id="get-iter8-experiments-200-schema"></span> Schema
-   
-  
-
-[Iter8ExperimentDetail](#iter8-experiment-detail)
-
-##### <span id="get-iter8-experiments-500"></span> 500 - A Internal is the error message that means something has gone wrong
-Status: Internal Server Error
-
-###### <span id="get-iter8-experiments-500-schema"></span> Schema
-   
-  
-
-[GetIter8ExperimentsInternalServerErrorBody](#get-iter8-experiments-internal-server-error-body)
-
-###### Inlined models
-
-**<span id="get-iter8-experiments-internal-server-error-body"></span> GetIter8ExperimentsInternalServerErrorBody**
 
 
   
@@ -1912,11 +1766,11 @@ The backing JSON for an app node detail graph. (supported graphTypes: app | vers
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | app | `path` | string | `string` |  | ✓ |  | The app name (label value). |
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
-| appenders | `query` | string | `string` |  |  | `"run all appenders"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
-| boxBy | `query` | string | `string` |  |  | `"none"` | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none]. |
+| appenders | `query` | string | `string` |  |  | `"aggregateNode,deadNode,healthConfig,idleNode,istio,responseTime,securityPolicy,serviceEntry,sidecarsCheck,throughput"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
+| boxBy | `query` | string | `string` |  |  |  | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace]. |
 | container | `query` | string | `string` |  |  |  | The cluster name. If not supplied queries/results will not be constrained by cluster. |
 | duration | `query` | string | `string` |  |  | `"10m"` | Query time-range duration (Golang string duration). |
-| graphType | `query` | string | `string` |  |  | `"workload"` | Graph type. Available graph types: [app, service, versionedApp, workload]. |
+| graphType | `query` | string | `string` |  | ✓ |  | Graph type. Available graph types: [app, versionedApp]. |
 | includeIdleEdges | `query` | string | `string` |  |  | `"false"` | Flag for including edges that have no request traffic for the time period. |
 | injectServiceNodes | `query` | string | `string` |  |  | `"false"` | Flag for injecting the requested service node between source and destination nodes. |
 | queryTime | `query` | string | `string` |  |  | `"now"` | Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now. |
@@ -2019,11 +1873,11 @@ The backing JSON for a versioned app node detail graph. (supported graphTypes: a
 | app | `path` | string | `string` |  | ✓ |  | The app name (label value). |
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | version | `path` | string | `string` |  | ✓ |  | The app version (label value). |
-| appenders | `query` | string | `string` |  |  | `"run all appenders"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
-| boxBy | `query` | string | `string` |  |  | `"none"` | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none]. |
+| appenders | `query` | string | `string` |  |  | `"aggregateNode,deadNode,healthConfig,idleNode,istio,responseTime,securityPolicy,serviceEntry,sidecarsCheck,throughput"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
+| boxBy | `query` | string | `string` |  |  |  | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace]. |
 | container | `query` | string | `string` |  |  |  | The cluster name. If not supplied queries/results will not be constrained by cluster. |
 | duration | `query` | string | `string` |  |  | `"10m"` | Query time-range duration (Golang string duration). |
-| graphType | `query` | string | `string` |  |  | `"workload"` | Graph type. Available graph types: [app, service, versionedApp, workload]. |
+| graphType | `query` | string | `string` |  | ✓ |  | Graph type. Available graph types: [app, versionedApp]. |
 | includeIdleEdges | `query` | string | `string` |  |  | `"false"` | Flag for including edges that have no request traffic for the time period. |
 | injectServiceNodes | `query` | string | `string` |  |  | `"false"` | Flag for injecting the requested service node between source and destination nodes. |
 | queryTime | `query` | string | `string` |  |  | `"now"` | Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now. |
@@ -2121,8 +1975,8 @@ GET /api/namespaces/graph
 
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
 |------|--------|------|---------|-----------| :------: |---------|-------------|
-| appenders | `query` | string | `string` |  |  | `"run all appenders"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
-| boxBy | `query` | string | `string` |  |  | `"none"` | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none]. |
+| appenders | `query` | string | `string` |  |  | `"aggregateNode,deadNode,healthConfig,idleNode,istio,responseTime,securityPolicy,serviceEntry,sidecarsCheck,throughput"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
+| boxBy | `query` | string | `string` |  |  |  | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace]. |
 | duration | `query` | string | `string` |  |  | `"10m"` | Query time-range duration (Golang string duration). |
 | graphType | `query` | string | `string` |  |  | `"workload"` | Graph type. Available graph types: [app, service, versionedApp, workload]. |
 | includeIdleEdges | `query` | string | `string` |  |  | `"false"` | Flag for including edges that have no request traffic for the time period. |
@@ -2225,8 +2079,8 @@ GET /api/namespaces/{namespace}/services/{service}/graph
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | service | `path` | string | `string` |  | ✓ |  | The service name. |
-| appenders | `query` | string | `string` |  |  | `"run all appenders"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
-| boxBy | `query` | string | `string` |  |  | `"none"` | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none]. |
+| appenders | `query` | string | `string` |  |  | `"aggregateNode,deadNode,healthConfig,idleNode,istio,responseTime,securityPolicy,serviceEntry,sidecarsCheck,throughput"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
+| boxBy | `query` | string | `string` |  |  |  | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace]. |
 | container | `query` | string | `string` |  |  |  | The cluster name. If not supplied queries/results will not be constrained by cluster. |
 | duration | `query` | string | `string` |  |  | `"10m"` | Query time-range duration (Golang string duration). |
 | graphType | `query` | string | `string` |  |  | `"workload"` | Graph type. Available graph types: [app, service, versionedApp, workload]. |
@@ -2327,8 +2181,8 @@ GET /api/namespaces/{namespace}/workloads/{workload}/graph
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | workload | `path` | string | `string` |  | ✓ |  | The workload name. |
-| appenders | `query` | string | `string` |  |  | `"run all appenders"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
-| boxBy | `query` | string | `string` |  |  | `"none"` | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none]. |
+| appenders | `query` | string | `string` |  |  | `"aggregateNode,deadNode,healthConfig,idleNode,istio,responseTime,securityPolicy,serviceEntry,sidecarsCheck,throughput"` | Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput]. |
+| boxBy | `query` | string | `string` |  |  |  | Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace]. |
 | container | `query` | string | `string` |  |  |  | The cluster name. If not supplied queries/results will not be constrained by cluster. |
 | duration | `query` | string | `string` |  |  | `"10m"` | Query time-range duration (Golang string duration). |
 | graphType | `query` | string | `string` |  |  | `"workload"` | Graph type. Available graph types: [app, service, versionedApp, workload]. |
@@ -2731,6 +2585,7 @@ Endpoint to get the Istio Config of an Istio object
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | object | `path` | string | `string` |  | ✓ |  | The Istio object name. |
 | object_type | `path` | string | `string` |  | ✓ |  | The Istio object type. |
+| validate | `query` | string | `string` |  |  |  | Enable validation or not |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -2849,6 +2704,7 @@ Endpoint to get the list of Istio Config of a namespace
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
+| validate | `query` | string | `string` |  |  |  | Enable validation or not |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -3088,66 +2944,6 @@ Status: Internal Server Error
 
 
 **<span id="istio-status-internal-server-error-body"></span> IstioStatusInternalServerErrorBody**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
-| Message | string| `string` |  | |  |  |
-
-
-
-### <span id="iter8-experiments"></span> Endpoint to fetch iter8 experiments for all namespaces user have access. (*iter8Experiments*)
-
-```
-GET /api/iter8/experiments
-```
-
-User can define a comman separated list of namespaces.
-
-#### URI Schemes
-  * http
-  * https
-
-#### Produces
-  * application/json
-
-#### All responses
-| Code | Status | Description | Has headers | Schema |
-|------|--------|-------------|:-----------:|--------|
-| [200](#iter8-experiments-200) | OK | Return a list of Iter8 Experiment Items |  | [schema](#iter8-experiments-200-schema) |
-| [500](#iter8-experiments-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#iter8-experiments-500-schema) |
-
-#### Responses
-
-
-##### <span id="iter8-experiments-200"></span> 200 - Return a list of Iter8 Experiment Items
-Status: OK
-
-###### <span id="iter8-experiments-200-schema"></span> Schema
-   
-  
-
-[][Iter8ExperimentItem](#iter8-experiment-item)
-
-##### <span id="iter8-experiments-500"></span> 500 - A Internal is the error message that means something has gone wrong
-Status: Internal Server Error
-
-###### <span id="iter8-experiments-500-schema"></span> Schema
-   
-  
-
-[Iter8ExperimentsInternalServerErrorBody](#iter8-experiments-internal-server-error-body)
-
-###### Inlined models
-
-**<span id="iter8-experiments-internal-server-error-body"></span> Iter8ExperimentsInternalServerErrorBody**
 
 
   
@@ -4190,73 +3986,6 @@ Status: Internal Server Error
 
 
 
-### <span id="patch-iter8-experiments"></span> patch iter8 experiments (*patchIter8Experiments*)
-
-```
-PATCH /api/iter8/experiments/{namespace}/name/{name}
-```
-
-Endpoint to update new iter8 experiment (for abort purpose)
-
-#### URI Schemes
-  * http
-  * https
-
-#### Produces
-  * application/json
-
-#### Parameters
-
-| Name | Source | Type | Go type | Separator | Required | Default | Description |
-|------|--------|------|---------|-----------| :------: |---------|-------------|
-| name | `path` | string | `string` |  | ✓ |  | The name param |
-| namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
-
-#### All responses
-| Code | Status | Description | Has headers | Schema |
-|------|--------|-------------|:-----------:|--------|
-| [200](#patch-iter8-experiments-200) | OK | Return a Iter8 Experiment detail |  | [schema](#patch-iter8-experiments-200-schema) |
-| [500](#patch-iter8-experiments-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#patch-iter8-experiments-500-schema) |
-
-#### Responses
-
-
-##### <span id="patch-iter8-experiments-200"></span> 200 - Return a Iter8 Experiment detail
-Status: OK
-
-###### <span id="patch-iter8-experiments-200-schema"></span> Schema
-   
-  
-
-[Iter8ExperimentDetail](#iter8-experiment-detail)
-
-##### <span id="patch-iter8-experiments-500"></span> 500 - A Internal is the error message that means something has gone wrong
-Status: Internal Server Error
-
-###### <span id="patch-iter8-experiments-500-schema"></span> Schema
-   
-  
-
-[PatchIter8ExperimentsInternalServerErrorBody](#patch-iter8-experiments-internal-server-error-body)
-
-###### Inlined models
-
-**<span id="patch-iter8-experiments-internal-server-error-body"></span> PatchIter8ExperimentsInternalServerErrorBody**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
-| Message | string| `string` |  | |  |  |
-
-
-
 ### <span id="pod-details"></span> pod details (*podDetails*)
 
 ```
@@ -4770,70 +4499,6 @@ Status: Internal Server Error
 
 
 
-### <span id="post-iter8-experiments"></span> Endpoint to create new iter8 experiments for a given namespace. (*postIter8Experiments*)
-
-```
-POST /api/iter8/namespaces/{namespace}/experiments
-```
-
-#### URI Schemes
-  * http
-  * https
-
-#### Produces
-  * application/json
-
-#### Parameters
-
-| Name | Source | Type | Go type | Separator | Required | Default | Description |
-|------|--------|------|---------|-----------| :------: |---------|-------------|
-| namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
-
-#### All responses
-| Code | Status | Description | Has headers | Schema |
-|------|--------|-------------|:-----------:|--------|
-| [200](#post-iter8-experiments-200) | OK | Return a Iter8 Experiment detail |  | [schema](#post-iter8-experiments-200-schema) |
-| [500](#post-iter8-experiments-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#post-iter8-experiments-500-schema) |
-
-#### Responses
-
-
-##### <span id="post-iter8-experiments-200"></span> 200 - Return a Iter8 Experiment detail
-Status: OK
-
-###### <span id="post-iter8-experiments-200-schema"></span> Schema
-   
-  
-
-[Iter8ExperimentDetail](#iter8-experiment-detail)
-
-##### <span id="post-iter8-experiments-500"></span> 500 - A Internal is the error message that means something has gone wrong
-Status: Internal Server Error
-
-###### <span id="post-iter8-experiments-500-schema"></span> Schema
-   
-  
-
-[PostIter8ExperimentsInternalServerErrorBody](#post-iter8-experiments-internal-server-error-body)
-
-###### Inlined models
-
-**<span id="post-iter8-experiments-internal-server-error-body"></span> PostIter8ExperimentsInternalServerErrorBody**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
-| Message | string| `string` |  | |  |  |
-
-
-
 ### <span id="root"></span> root (*root*)
 
 ```
@@ -5018,6 +4683,7 @@ Endpoint to get the details of a given service
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | service | `path` | string | `string` |  | ✓ |  | The service name. |
+| validate | `query` | string | `string` |  |  |  | Enable validation or not |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -5538,6 +5204,7 @@ PATCH /api/namespaces/{namespace}/services/{service}
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | service | `path` | string | `string` |  | ✓ |  | The service name. |
+| validate | `query` | string | `string` |  |  |  | Enable validation or not |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -6504,6 +6171,7 @@ Status: Internal Server Error
 | IP | string| `string` |  | |  |  |
 | Kind | string| `string` |  | |  |  |
 | Name | string| `string` |  | |  |  |
+| Port | uint32 (formatted integer)| `uint32` |  | |  |  |
 
 
 
@@ -6923,11 +6591,7 @@ to be removed in 1.21 release.
 ### <span id="cluster"></span> Cluster
 
 
-> Cluster holds some metadata about a cluster that is
-part of the mesh.
   
-
-
 
 
 
@@ -6935,12 +6599,12 @@ part of the mesh.
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| ApiEndpoint | string| `string` |  | | ApiEndpoint is the URL where the Kubernetes/Cluster API Server can be contacted |  |
-| IsKialiHome | boolean| `bool` |  | | IsKialiHome specifies if this cluster is hosting this Kiali instance (and the observed Mesh Control Plane) |  |
-| KialiInstances | [][KialiInstance](#kiali-instance)| `[]*KialiInstance` |  | | KialiInstances is the list of Kialis discovered in the cluster. |  |
-| Name | string| `string` |  | | Name specifies the CLUSTER_ID as known by the Control Plane |  |
-| Network | string| `string` |  | | Network specifies the logical NETWORK_ID as known by the Control Plane |  |
-| SecretName | string| `string` |  | | SecretName is the name of the kubernetes "remote secret" where data of this cluster was resolved |  |
+| DestinationRule | string| `string` |  | |  |  |
+| Direction | string| `string` |  | |  |  |
+| Port | int64 (formatted integer)| `int64` |  | |  |  |
+| Subset | string| `string` |  | |  |  |
+| Type | string| `string` |  | |  |  |
+| service_fqdn | [Host](#host)| `Host` |  | |  |  |
 
 
 
@@ -7022,24 +6686,6 @@ part of the mesh.
 | IsProxy | boolean| `bool` |  | |  |  |
 | IsReady | boolean| `bool` |  | |  |  |
 | Name | string| `string` |  | |  |  |
-
-
-
-### <span id="counter-metric"></span> CounterMetric
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Name | string| `string` |  | |  |  |
-| PreferredDirection | string| `string` |  | |  |  |
-| QueryTemplate | string| `string` |  | |  |  |
-| Unit | string| `string` |  | |  |  |
 
 
 
@@ -7563,6 +7209,7 @@ The exact format is defined in sigs.k8s.io/structured-merge-diff
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| egressInfo | [GWInfoIngress](#g-w-info-ingress)| `GWInfoIngress` |  | |  |  |
 | ingressInfo | [GWInfoIngress](#g-w-info-ingress)| `GWInfoIngress` |  | |  |  |
 
 
@@ -7757,39 +7404,6 @@ to be removed in 1.21 release.
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | ExternalLinks | [][ExternalLink](#external-link)| `[]*ExternalLink` |  | |  |  |
-
-
-
-### <span id="http-match-request"></span> HTTPMatchRequest
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Headers | [][HTTPMatchRule](#http-match-rule)| `[]*HTTPMatchRule` |  | |  |  |
-| uri | [HTTPMatchRule](#http-match-rule)| `HTTPMatchRule` |  | |  |  |
-
-
-
-### <span id="http-match-rule"></span> HTTPMatchRule
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Key | string| `string` |  | |  |  |
-| Match | string| `string` |  | |  |  |
-| StringMatch | string| `string` |  | |  |  |
 
 
 
@@ -8048,363 +7662,6 @@ generation is still in progress.  See https://istio.io/latest/docs/reference/con
 
 [interface{}](#interface)
 
-### <span id="iter8-candidate-status"></span> Iter8CandidateStatus
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| CriteriaAssessments | [][Iter8CriterionAssessment](#iter8-criterion-assessment)| `[]*Iter8CriterionAssessment` |  | |  |  |
-| Name | string| `string` |  | |  |  |
-| Request_Count | int32 (formatted integer)| `int32` |  | |  |  |
-| Version | string| `string` |  | |  |  |
-| Weight | int32 (formatted integer)| `int32` |  | |  |  |
-| WinProbability | float (formatted number)| `float32` |  | |  |  |
-
-
-
-### <span id="iter8-criteria"></span> Iter8Criteria
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| IsReward | boolean| `bool` |  | |  |  |
-| Metric | string| `string` |  | |  |  |
-| StopOnFailure | boolean| `bool` |  | |  |  |
-| Tolerance | float (formatted number)| `float32` |  | |  |  |
-| ToleranceType | string| `string` |  | |  |  |
-
-
-
-### <span id="iter8-criteria-detail"></span> Iter8CriteriaDetail
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Name | string| `string` |  | |  |  |
-| criteria | [Iter8Criteria](#iter8-criteria)| `Iter8Criteria` |  | |  |  |
-| metric | [Iter8Metric](#iter8-metric)| `Iter8Metric` |  | |  |  |
-
-
-
-### <span id="iter8-criterion-assessment"></span> Iter8CriterionAssessment
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| ID | string| `string` |  | |  |  |
-| MetricID | string| `string` |  | |  |  |
-| statistics | [Statistics](#statistics)| `Statistics` |  | |  |  |
-| threshold_assessment | [ThresholdAssessment](#threshold-assessment)| `ThresholdAssessment` |  | |  |  |
-
-
-
-#### Inlined models
-
-**<span id="statistics"></span> Statistics**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Value | float (formatted number)| `float32` |  | |  |  |
-| ratio_statistics | [RatioStatistics](#ratio-statistics)| `RatioStatistics` |  | |  |  |
-
-
-
-**<span id="ratio-statistics"></span> RatioStatistics**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| ProbabilityOfBeatingBaseline | float (formatted number)| `float32` |  | |  |  |
-| ProbabilityOfBeingBestVersion | float (formatted number)| `float32` |  | |  |  |
-| credible_interval | [CredibleInterval](#credible-interval)| `CredibleInterval` |  | |  |  |
-| improvement_over_baseline | [ImprovementOverBaseline](#improvement-over-baseline)| `ImprovementOverBaseline` |  | |  |  |
-
-
-
-**<span id="credible-interval"></span> CredibleInterval**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Lower | float (formatted number)| `float32` |  | |  |  |
-| Upper | float (formatted number)| `float32` |  | |  |  |
-
-
-
-**<span id="improvement-over-baseline"></span> ImprovementOverBaseline**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Lower | float (formatted number)| `float32` |  | |  |  |
-| Upper | float (formatted number)| `float32` |  | |  |  |
-
-
-
-**<span id="threshold-assessment"></span> ThresholdAssessment**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| ProbabilityOfSatisfyingTHreshold | float (formatted number)| `float32` |  | |  |  |
-| ThresholdBreached | boolean| `bool` |  | |  |  |
-
-
-
-### <span id="iter8-duration"></span> Iter8Duration
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Interval | string| `string` |  | |  |  |
-| MaxIterations | int32 (formatted integer)| `int32` |  | |  |  |
-
-
-
-### <span id="iter8-experiment-detail"></span> Iter8ExperimentDetail
-
-
-> For Displaying Iter8 Experiment Tabs
-  
-
-
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Action | string| `string` |  | |  |  |
-| CriteriaDetails | [][Iter8CriteriaDetail](#iter8-criteria-detail)| `[]*Iter8CriteriaDetail` |  | |  |  |
-| ExperimentType | string| `string` |  | |  |  |
-| duration | [Iter8Duration](#iter8-duration)| `Iter8Duration` |  | |  |  |
-| experimentItem | [Iter8ExperimentItem](#iter8-experiment-item)| `Iter8ExperimentItem` |  | |  |  |
-| networking | [Iter8Networking](#iter8-networking)| `Iter8Networking` |  | |  |  |
-| permissions | [ResourcePermissions](#resource-permissions)| `ResourcePermissions` |  | |  |  |
-| trafficControl | [Iter8TrafficControl](#iter8-traffic-control)| `Iter8TrafficControl` |  | |  |  |
-
-
-
-### <span id="iter8-experiment-item"></span> Iter8ExperimentItem
-
-
-> For Displaying Iter8 Experiment Details
-  
-
-
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Candidates | [][Iter8CandidateStatus](#iter8-candidate-status)| `[]*Iter8CandidateStatus` |  | |  |  |
-| EndTime | string| `string` |  | |  |  |
-| ExperimentType | string| `string` |  | |  |  |
-| InitTime | string| `string` |  | |  |  |
-| Kind | string| `string` |  | |  |  |
-| Name | string| `string` |  | |  |  |
-| Namespace | string| `string` |  | |  |  |
-| Phase | string| `string` |  | |  |  |
-| StartTime | string| `string` |  | |  |  |
-| Status | string| `string` |  | |  |  |
-| TargetService | string| `string` |  | |  |  |
-| TargetServiceNamespace | string| `string` |  | |  |  |
-| baseline | [Iter8CandidateStatus](#iter8-candidate-status)| `Iter8CandidateStatus` |  | |  |  |
-| winner | [Iter8SuccessCrideriaStatus](#iter8-success-crideria-status)| `Iter8SuccessCrideriaStatus` |  | |  |  |
-
-
-
-### <span id="iter8-host"></span> Iter8Host
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Gateway | string| `string` |  | |  |  |
-| Name | string| `string` |  | |  |  |
-
-
-
-### <span id="iter8-info"></span> Iter8Info
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| AnalyticsImageVersion | string| `string` |  | |  |  |
-| ControllerImageVersion | string| `string` |  | |  |  |
-| Enabled | boolean| `bool` |  | |  |  |
-| Namespace | string| `string` |  | |  |  |
-| SupportedVersion | boolean| `bool` |  | |  |  |
-
-
-
-### <span id="iter8-match"></span> Iter8Match
-
-
-> Match contains matching criteria for requests
-  
-
-
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| HTTP | [][HTTPMatchRequest](#http-match-request)| `[]*HTTPMatchRequest` |  | |  |  |
-
-
-
-### <span id="iter8-metric"></span> Iter8Metric
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Name | string| `string` |  | |  |  |
-| PreferredDirection | string| `string` |  | |  |  |
-| ZeroToOne | boolean| `bool` |  | |  |  |
-| denominator | [CounterMetric](#counter-metric)| `CounterMetric` |  | |  |  |
-| numerator | [CounterMetric](#counter-metric)| `CounterMetric` |  | |  |  |
-
-
-
-### <span id="iter8-networking"></span> Iter8Networking
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Hosts | [][Iter8Host](#iter8-host)| `[]*Iter8Host` |  | | List of hosts used to receive external traffic
-+optional |  |
-| ID | string| `string` |  | | id of router
-+optional |  |
-
-
-
-### <span id="iter8-success-crideria-status"></span> Iter8SuccessCrideriaStatus
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Name | string| `string` |  | |  |  |
-| Probability | float (formatted number)| `float32` |  | |  |  |
-| Winner | string| `string` |  | |  |  |
-| WinnerFound | boolean| `bool` |  | |  |  |
-
-
-
-### <span id="iter8-traffic-control"></span> Iter8TrafficControl
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| MaxIncrement | int32 (formatted integer)| `int32` |  | |  |  |
-| OnTermination | string| `string` |  | |  |  |
-| Percentage | int32 (formatted integer)| `int32` |  | |  |  |
-| Strategy | string| `string` |  | |  |  |
-| match | [Iter8Match](#iter8-match)| `Iter8Match` |  | |  |  |
-
-
-
 ### <span id="jaeger-info"></span> JaegerInfo
 
 
@@ -8466,33 +7723,6 @@ generation is still in progress.  See https://istio.io/latest/docs/reference/con
 | Key | string| `string` |  | |  |  |
 | Value | [interface{}](#interface)| `interface{}` |  | |  |  |
 | type | [ValueType](#value-type)| `ValueType` |  | |  |  |
-
-
-
-### <span id="kiali-instance"></span> KialiInstance
-
-
-> KialiInstance represents a Kiali installation. It holds some data about
-where and how Kiali was deployed.
-  
-
-
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Namespace | string| `string` |  | | Namespace is the name of the namespace where is Kiali installed on. |  |
-| OperatorResource | string| `string` |  | | OperatorResource contains the namespace and the name of the Kiali CR that the user
-created to install Kiali via the operator. This can be blank if the operator wasn't used
-to install Kiali. This resource is populated from annotations in the Service. It has
-the format "namespace/resource_name". |  |
-| ServiceName | string| `string` |  | | ServiceName is the name of the Kubernetes service associated to the Kiali installation. The Kiali Service is the
-entity that is looked for in order to determine if a Kiali instance is available. |  |
-| Url | string| `string` |  | | Url is the URI that can be used to access Kiali. |  |
-| Version | string| `string` |  | | Version is the Kiali version as reported by annotations in the Service. |  |
 
 
 
@@ -8580,6 +7810,13 @@ set because it cannot be automatically converted. |  |
 | FieldsType | string| `string` |  | | FieldsType is the discriminator for the different fields format and version.
 There is currently only one possible value: "FieldsV1" |  |
 | Manager | string| `string` |  | | Manager is an identifier of the workflow managing these fields. |  |
+| Subresource | string| `string` |  | | Subresource is the name of the subresource used to update that object, or
+empty string if the object was updated through the main resource. The
+value of this field is used to distinguish between managers, even if they
+share the same name. For example, a status update will be distinct from a
+regular update using the same manager name.
+Note that the APIVersion field is not related to the Subresource field and
+it always corresponds to the version of the main resource. |  |
 | fieldsV1 | [FieldsV1](#fields-v1)| `FieldsV1` |  | |  |  |
 | operation | [ManagedFieldsOperationType](#managed-fields-operation-type)| `ManagedFieldsOperationType` |  | |  |  |
 | time | [Time](#time)| `Time` |  | |  |  |
@@ -8808,6 +8045,7 @@ This type is used to describe a set of objects.
 > OwnerReference contains enough information to let you identify an owning
 object. An owning object must be in the same namespace as the dependent, or
 be cluster-scoped, so there is no namespace field.
++structType=atomic
   
 
 
@@ -9124,9 +8362,16 @@ to be removed in 1.21 release.
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| AppProtocol | string| `string` |  | |  |  |
+| IstioProtocol | string| `string` |  | |  |  |
 | Name | string| `string` |  | |  |  |
 | Port | int32 (formatted integer)| `int32` |  | |  |  |
 | Protocol | string| `string` |  | |  |  |
+| TLSMode | string| `string` |  | | TLSMode endpoint is injected with istio sidecar and ready to configure Istio mTLS
+DisabledTLSModeLabel implies that this endpoint should receive traffic as is (mostly plaintext)
+DisabledTLSModeLabel = "disabled"
+IstioMutualTLSModeLabel implies that the endpoint is ready to receive Istio mTLS connections.
+IstioMutualTLSModeLabel = "istio" |  |
 
 
 
@@ -9702,6 +8947,7 @@ True means allowed.
 |------|------|---------|:--------:| ------- |-------------|---------|
 | DestinationRules | [][DestinationRule](#destination-rule)| `[]*DestinationRule` |  | |  |  |
 | IstioSidecar | boolean| `bool` |  | |  |  |
+| ServiceEntries | [][ServiceEntry](#service-entry)| `[]*ServiceEntry` |  | |  |  |
 | VirtualServices | [][VirtualService](#virtual-service)| `[]*VirtualService` |  | |  |  |
 | endpoints | [Endpoints](#endpoints)| `Endpoints` |  | |  |  |
 | health | [ServiceHealth](#service-health)| `ServiceHealth` |  | |  |  |
@@ -9951,6 +9197,10 @@ to be removed in 1.21 release.
 | Name | string| `string` | ✓ | | Name of the Service | `reviews-v1` |
 | Namespace | string| `string` |  | | Namespace of the Service |  |
 | Selector | map of string| `map[string]string` |  | | Selector for Service |  |
+| ServiceRegistry | string| `string` |  | | ServiceRegistry values:
+Kubernetes: 	is a service registry backed by k8s API server
+External: 	is a service registry for externally provided ServiceEntries
+Federation:  special case when registry is provided from a federated environment |  |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |
 
 
@@ -11014,7 +10264,7 @@ to be removed in 1.21 release.
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | IstioSidecar | boolean| `bool` | ✓ | | Define if all Pods related to the Workload has an IstioSidecar deployed | `true` |
-| ServiceAccountNames | []string| `[]string` | ✓ | | List of service accounts involved in this application | `productpage, reviews, details` |
+| ServiceAccountNames | []string| `[]string` | ✓ | | List of service accounts involved in this application |  |
 | WorkloadName | string| `string` | ✓ | | Name of a workload member of an application | `reviews-v1` |
 
 

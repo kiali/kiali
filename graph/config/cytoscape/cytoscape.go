@@ -58,6 +58,8 @@ type ProtocolTraffic struct {
 type GWInfo struct {
 	// IngressInfo contains the resolved gateway configuration if the node represents an Istio ingress gateway
 	IngressInfo GWInfoIngress `json:"ingressInfo,omitempty"`
+	// EgressInfo contains the resolved gateway configuration if the node represents an Istio egress gateway
+	EgressInfo GWInfoIngress `json:"egressInfo,omitempty"`
 }
 
 // GWInfoIngress contains the resolved gateway configuration if the node represents an Istio ingress gateway
@@ -278,6 +280,16 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 			nd.IsGateway = &GWInfo{
 				IngressInfo: GWInfoIngress{Hostnames: configuredHostnames},
+			}
+		} else if gateways, ok := n.Metadata[graph.IsEgressGateway]; ok {
+			// node may represent an Istio Egress Gateway
+			var configuredHostnames []string
+			for _, hosts := range gateways.(graph.GatewaysMetadata) {
+				configuredHostnames = append(configuredHostnames, hosts...)
+			}
+
+			nd.IsGateway = &GWInfo{
+				EgressInfo: GWInfoIngress{Hostnames: configuredHostnames},
 			}
 		}
 
@@ -529,13 +541,15 @@ func boxByNamespace(nodes *[]*NodeWrapper) {
 	box := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
-		if nw.Data.Parent == "" {
+		// never box unknown
+		if nw.Data.Parent == "" && nw.Data.Namespace != graph.Unknown {
 			k := fmt.Sprintf("box_%s_%s", nw.Data.Cluster, nw.Data.Namespace)
 			box[k] = append(box[k], nw.Data)
 		}
 	}
-
-	generateBoxCompoundNodes(box, nodes, graph.BoxByNamespace)
+	if len(box) > 1 {
+		generateBoxCompoundNodes(box, nodes, graph.BoxByNamespace)
+	}
 }
 
 // boxByCluster adds compound nodes to box nodes in the same cluster
@@ -543,18 +557,20 @@ func boxByCluster(nodes *[]*NodeWrapper) {
 	box := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
-		if nw.Data.Parent == "" {
+		// never box unknown
+		if nw.Data.Parent == "" && nw.Data.Cluster != graph.Unknown {
 			k := fmt.Sprintf("box_%s", nw.Data.Cluster)
 			box[k] = append(box[k], nw.Data)
 		}
 	}
-
-	generateBoxCompoundNodes(box, nodes, graph.BoxByCluster)
+	if len(box) > 1 {
+		generateBoxCompoundNodes(box, nodes, graph.BoxByCluster)
+	}
 }
 
 func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper, boxBy string) {
 	for k, members := range box {
-		if boxBy != graph.BoxByApp || len(members) > 1 {
+		if len(members) > 1 {
 			// create the compound (parent) node for the member nodes
 			nodeID := nodeHash(k)
 			namespace := ""

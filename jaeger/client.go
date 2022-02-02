@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/kiali/kiali/config"
 	jaegerModel "github.com/kiali/kiali/jaeger/model"
@@ -23,8 +25,6 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
-	"google.golang.org/protobuf/types/known/durationpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // ClientInterface for mocks (only mocked function are necessary here)
@@ -98,7 +98,7 @@ func NewClient(token string) (*Client, error) {
 				return nil, err
 			}
 			client := jaegerModel.NewQueryServiceClient(conn)
-
+			log.Infof("Create Jaeger GRPC client %s", address)
 			return &Client{grpcClient: client, ctx: ctx}, nil
 		} else {
 			// Legacy HTTP client
@@ -109,6 +109,7 @@ func NewClient(token string) (*Client, error) {
 				return nil, err
 			}
 			client := http.Client{Transport: transport, Timeout: timeout}
+			log.Infof("Create Jaeger HTTP client %s", u)
 			return &Client{httpClient: client, baseURL: u, ctx: ctx}, nil
 		}
 	}

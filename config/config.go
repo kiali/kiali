@@ -34,7 +34,6 @@ const (
 	IstioVersionSupported   = ">= 1.0"
 	MaistraVersionSupported = ">= 0.7.0"
 	OSSMVersionSupported    = ">= 1.0"
-	Iter8VersionSupported   = ">= 0.2"
 )
 
 // The valid auth strategies and values for cookie handling
@@ -71,21 +70,38 @@ const (
 var configuration Config
 var rwMutex sync.RWMutex
 
+// Metrics provides metrics configuration for the Kiali server.
+type Metrics struct {
+	Enabled bool `yaml:"enabled,omitempty"`
+	Port    int  `yaml:"port,omitempty"`
+}
+
+// Tracing provides tracing configuration for the Kiali server.
+type Tracing struct {
+	CollectorURL string `yaml:"collector_url,omitempty"` // Endpoint for Kiali server traces
+	Enabled      bool   `yaml:"enabled,omitempty"`
+}
+
+// Observability provides configuration for tracing and metrics exported by the Kiali server.
+type Observability struct {
+	Metrics Metrics `yaml:"metrics,omitempty"`
+	Tracing Tracing `yaml:"tracing,omitempty"`
+}
+
 // Server configuration
 type Server struct {
-	Address                    string `yaml:",omitempty"`
-	AuditLog                   bool   `yaml:"audit_log,omitempty"` // When true, allows additional audit logging on Write operations
-	CORSAllowAll               bool   `yaml:"cors_allow_all,omitempty"`
-	GzipEnabled                bool   `yaml:"gzip_enabled,omitempty"`
-	MetricsEnabled             bool   `yaml:"metrics_enabled,omitempty"`
-	MetricsPort                int    `yaml:"metrics_port,omitempty"`
-	Port                       int    `yaml:",omitempty"`
-	StaticContentRootDirectory string `yaml:"static_content_root_directory,omitempty"`
-	WebFQDN                    string `yaml:"web_fqdn,omitempty"`
-	WebPort                    string `yaml:"web_port,omitempty"`
-	WebRoot                    string `yaml:"web_root,omitempty"`
-	WebHistoryMode             string `yaml:"web_history_mode,omitempty"`
-	WebSchema                  string `yaml:"web_schema,omitempty"`
+	Address                    string        `yaml:",omitempty"`
+	AuditLog                   bool          `yaml:"audit_log,omitempty"` // When true, allows additional audit logging on Write operations
+	CORSAllowAll               bool          `yaml:"cors_allow_all,omitempty"`
+	GzipEnabled                bool          `yaml:"gzip_enabled,omitempty"`
+	Observability              Observability `yaml:"observability,omitempty"`
+	Port                       int           `yaml:",omitempty"`
+	StaticContentRootDirectory string        `yaml:"static_content_root_directory,omitempty"`
+	WebFQDN                    string        `yaml:"web_fqdn,omitempty"`
+	WebPort                    string        `yaml:"web_port,omitempty"`
+	WebRoot                    string        `yaml:"web_root,omitempty"`
+	WebHistoryMode             string        `yaml:"web_history_mode,omitempty"`
+	WebSchema                  string        `yaml:"web_schema,omitempty"`
 }
 
 // Auth provides authentication data for external services
@@ -186,6 +202,7 @@ type IstioConfig struct {
 	IstioSidecarInjectorConfigMapName string              `yaml:"istio_sidecar_injector_config_map_name,omitempty"`
 	IstioSidecarAnnotation            string              `yaml:"istio_sidecar_annotation,omitempty"`
 	IstiodDeploymentName              string              `yaml:"istiod_deployment_name,omitempty"`
+	IstiodPodMonitoringPort           int                 `yaml:"istiod_pod_monitoring_port,omitempty"`
 	RootNamespace                     string              `yaml:"root_namespace,omitempty"`
 	UrlServiceVersion                 string              `yaml:"url_service_version"`
 }
@@ -205,18 +222,6 @@ type ComponentStatus struct {
 	IsCore    bool   `yaml:"is_core,omitempty"`
 	IsProxy   bool   `yaml:"is_proxy,omitempty"`
 	Namespace string `yaml:"namespace,omitempty"`
-}
-
-type Iter8Config struct {
-	Enabled bool `yaml:"enabled"`
-	// Define which namespace Iter8 is installed on, default to iter8
-	Namespace string `yaml:"namespace"`
-}
-
-// Extensions struct describes configuration for Kiali add-ons (extensions)
-// New add-on/extension configuration should create a specific config and be located under this
-type Extensions struct {
-	Iter8 Iter8Config `yaml:"iter_8,omitempty"`
 }
 
 // ExternalServices holds configurations for other systems that Kiali depends on
@@ -324,6 +329,7 @@ type OpenIdConfig struct {
 // DeploymentConfig provides details on how Kiali was deployed.
 type DeploymentConfig struct {
 	AccessibleNamespaces []string `yaml:"accessible_namespaces"`
+	InstanceName         string   `yaml:"instance_name"`
 	Namespace            string   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 	ViewOnlyMode         bool     `yaml:"view_only_mode,omitempty"`
 }
@@ -332,6 +338,16 @@ type DeploymentConfig struct {
 type GraphFindOption struct {
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 	Expression  string `yaml:"expression,omitempty" json:"expression,omitempty"`
+}
+
+// GraphSettings affect the graph visualization.
+// FontLabel: font used for node text (edge label font is determined from this value)
+// MinFontBadge: smallest effective font (zoomed font) before removing node badges
+// MinFontLabel: smallest effective node text font (zoomed font) before removing labels
+type GraphSettings struct {
+	FontLabel    float32 `yaml:"font_label,omitempty" json:"fontLabel,omitempty"`
+	MinFontBadge float32 `yaml:"min_font_badge,omitempty" json:"minFontBadge,omitempty"`
+	MinFontLabel float32 `yaml:"min_font_label,omitempty" json:"minFontLabel,omitempty"`
 }
 
 // GraphTraffic defines the protocol-specific rates used to determine traffic for graph generation.
@@ -348,6 +364,7 @@ type GraphTraffic struct {
 type GraphUIDefaults struct {
 	FindOptions []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
 	HideOptions []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
+	Settings    GraphSettings     `yaml:"settings,omitempty" json:"settings,omitempty"`
 	Traffic     GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
 }
 
@@ -421,7 +438,6 @@ type Config struct {
 	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
 	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
-	Extensions               Extensions                          `yaml:"extensions,omitempty"`
 	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
 	HealthConfig             HealthConfig                        `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
 	Identity                 security.Identity                   `yaml:",omitempty"`
@@ -476,14 +492,9 @@ func NewConfig() (c *Config) {
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
 			AccessibleNamespaces: []string{"**"},
+			InstanceName:         "kiali",
 			Namespace:            "istio-system",
 			ViewOnlyMode:         false,
-		},
-		Extensions: Extensions{
-			Iter8: Iter8Config{
-				Enabled:   false,
-				Namespace: "iter8",
-			},
 		},
 		ExternalServices: ExternalServices{
 			CustomDashboards: CustomDashboardsConfig{
@@ -534,6 +545,7 @@ func NewConfig() (c *Config) {
 				IstioSidecarInjectorConfigMapName: "istio-sidecar-injector",
 				IstioSidecarAnnotation:            "sidecar.istio.io/status",
 				IstiodDeploymentName:              "istiod",
+				IstiodPodMonitoringPort:           15014,
 				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "http://istiod:15014/version",
 			},
@@ -574,6 +586,10 @@ func NewConfig() (c *Config) {
 			VersionLabelName:   "version",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
+			CertificatesInformationIndicators: CertificatesInformationIndicators{
+				Enabled: true,
+				Secrets: []string{"cacerts", "istio-ca-secret"},
+			},
 			IstioInjectionAction: true,
 			IstioUpgradeAction:   false,
 			UIDefaults: UIDefaults{
@@ -591,6 +607,10 @@ func NewConfig() (c *Config) {
 							Description: "Find: unknown nodes",
 							Expression:  "name = unknown",
 						},
+						{
+							Description: "Find: nodes with the 2 top rankings",
+							Expression:  "rank <= 2",
+						},
 					},
 					HideOptions: []GraphFindOption{
 						{
@@ -601,6 +621,15 @@ func NewConfig() (c *Config) {
 							Description: "Hide: unknown nodes",
 							Expression:  "name = unknown",
 						},
+						{
+							Description: "Hide: nodes ranked lower than the 2 top rankings",
+							Expression:  "rank > 2",
+						},
+					},
+					Settings: GraphSettings{
+						FontLabel:    13,
+						MinFontBadge: 7,
+						MinFontLabel: 10,
 					},
 					Traffic: GraphTraffic{
 						Grpc: "requests",
@@ -616,10 +645,6 @@ func NewConfig() (c *Config) {
 			},
 			Validations: Validations{
 				Ignore: make([]string, 0),
-			},
-			CertificatesInformationIndicators: CertificatesInformationIndicators{
-				Enabled: true,
-				Secrets: []string{"cacerts", "istio-ca-secret"},
 			},
 		},
 		KubernetesConfig: KubernetesConfig{
@@ -637,10 +662,18 @@ func NewConfig() (c *Config) {
 			SigningKey:        "kiali",
 		},
 		Server: Server{
-			AuditLog:                   true,
-			GzipEnabled:                true,
-			MetricsEnabled:             true,
-			MetricsPort:                9090,
+			AuditLog:    true,
+			GzipEnabled: true,
+			Observability: Observability{
+				Metrics: Metrics{
+					Enabled: true,
+					Port:    9090,
+				},
+				Tracing: Tracing{
+					CollectorURL: "http://jaeger-collector.istio-system:14268/api/traces",
+					Enabled:      false,
+				},
+			},
 			Port:                       20001,
 			StaticContentRootDirectory: "/opt/kiali/console",
 			WebFQDN:                    "",

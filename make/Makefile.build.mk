@@ -53,11 +53,6 @@ build-system-test:
 	${GO} test -c -covermode=count -coverpkg $(shell ${GO} list ./... | grep -v test |  awk -vORS=, "{ print $$1 }" | sed "s/,$$//") \
 	  -o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
-## build-test: Run tests and install test deps, excluding third party tests under vendor. Runs `go test -i`
-build-test:
-	@echo Building and installing test dependencies to help speed up test runs.
-	${GO} test -i $(shell ${GO} list ./... | grep -v -e /vendor/)
-
 ## test: Run tests, excluding third party tests under vendor. Runs `go test` internally
 test:
 	@echo Running tests, excluding third party tests under vendor
@@ -93,7 +88,7 @@ swagger-install:
 ifeq ($(GOARCH), ppc64le)
 	curl https://github.com/go-swagger/go-swagger/archive/v${SWAGGER_VERSION}.tar.gz --create-dirs -Lo /tmp/v${SWAGGER_VERSION}.tar.gz && tar -xzf /tmp/v${SWAGGER_VERSION}.tar.gz -C /tmp/ && src_dir='pwd' && cd /tmp/go-swagger-${SWAGGER_VERSION} && ${GO} install ./cmd/swagger && cd ${src_dir}
 else
-	curl https://github.com/go-swagger/go-swagger/releases/download/v${SWAGGER_VERSION}/swagger_linux_${GOARCH} --create-dirs -Lo ${GOPATH}/bin/swagger && chmod +x ${GOPATH}/bin/swagger
+	curl https://github.com/go-swagger/go-swagger/releases/download/v${SWAGGER_VERSION}/swagger_$(GOOS)_${GOARCH} --create-dirs -Lo ${GOPATH}/bin/swagger && chmod +x ${GOPATH}/bin/swagger
 endif
 
 ## swagger-validate: Validate that swagger.json is correctly. Runs `swagger validate` internally
@@ -107,7 +102,7 @@ swagger-gen:
 
 ## swagger-serve: Serve the swagger.json in a website in local. Runs `swagger serve` internally
 swagger-serve: swagger-validate
-	@swagger serve ./swagger.json
+	@swagger serve ./swagger.json --no-open
 
 ## swagger-ci: Check that swagger.json is the correct one
 swagger-ci: swagger-validate
@@ -115,8 +110,17 @@ swagger-ci: swagger-validate
 	@cmp -s swagger.json swagger_copy.json; \
 	RETVAL=$$?; \
 	if [ $$RETVAL -ne 0 ]; then \
-	  echo "SWAGGER FILE IS NOT CORRECT"; exit 1; \
+	  echo "swagger.json is not correct, remember to run make swagger-gen to update swagger.json"; exit 1; \
 	fi
+
+	@swagger generate markdown --quiet --spec ./swagger.json --output ./kiali_api_copy.md
+	@cmp -s kiali_api.md kiali_api_copy.md; \
+	RETVAL=$$?; \
+	if [ $$RETVAL -ne 0 ]; then \
+	  echo "kiali_api.md is not correct, remember to run make swagger-gen to update kiali_api.md"; exit 1; \
+	fi
+
+	rm swagger_copy.json kiali_api_copy.md
 
 #
 # Lint targets
@@ -129,4 +133,4 @@ lint-install:
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	golangci-lint run --skip-files "doc\.go" --tests --timeout 5m
+	golangci-lint run -c ./.github/workflows/config/.golangci.yml --skip-files "doc\.go" --tests --timeout 5m

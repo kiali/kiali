@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -14,13 +15,15 @@ import (
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestGetNamespaceValidations(t *testing.T) {
@@ -29,9 +32,10 @@ func TestGetNamespaceValidations(t *testing.T) {
 	config.Set(conf)
 
 	vs := mockCombinedValidationService(fakeCombinedIstioConfigList(),
-		[]string{"details", "product", "customer"}, fakePods())
+		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
-	validations, _ := vs.GetValidations("test", "", "")
+
+	validations, _ := vs.GetValidations(context.TODO(), "test", "", "")
 	assert.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
 }
@@ -41,9 +45,10 @@ func TestGetIstioObjectValidations(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vs := mockCombinedValidationService(fakeCombinedIstioConfigList(), []string{"details", "product", "customer"}, fakePods())
+	vs := mockCombinedValidationService(fakeCombinedIstioConfigList(),
+		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
-	validations, _ := vs.GetIstioObjectValidations("test", "virtualservices", "product-vs")
+	validations, _ := vs.GetIstioObjectValidations(context.TODO(), "test", "virtualservices", "product-vs")
 
 	assert.NotEmpty(validations)
 }
@@ -54,7 +59,7 @@ func TestGatewayValidation(t *testing.T) {
 	config.Set(conf)
 
 	v := mockMultiNamespaceGatewaysValidationService()
-	validations, _ := v.GetIstioObjectValidations("test", "gateways", "second")
+	validations, _ := v.GetIstioObjectValidations(context.TODO(), "test", "gateways", "first")
 	assert.NotEmpty(validations)
 }
 
@@ -79,6 +84,7 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 	v := mockEmptyValidationService()
 	filteredVSs := v.filterVSExportToNamespaces("bookinfo", currentIstioObjects)
 	var expectedVS []networking_v1alpha3.VirtualService
+	expectedVS = append(expectedVS, vs1tothis)
 	expectedVS = append(expectedVS, vs2to1)
 	expectedVS = append(expectedVS, vs3toall)
 	filteredKeys := []string{}
@@ -116,6 +122,7 @@ func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(fakeNamespaces(), nil)
+	k8s.On("GetToken").Return("token")
 
 	fakeIstioObjects := []runtime.Object{}
 	istioConfigList := fakeCombinedIstioConfigList()
@@ -134,23 +141,20 @@ func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 	for _, p := range fakePolicies() {
 		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
 	}
-	for _, g := range getGateway("first", "test") {
-		fakeIstioObjects = append(fakeIstioObjects, g.DeepCopyObject())
-	}
-	for _, g := range getGateway("second", "test2") {
-		fakeIstioObjects = append(fakeIstioObjects, g.DeepCopyObject())
-	}
 	k8s.MockIstio(fakeIstioObjects...)
 	mockWorkLoadService(k8s)
 
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices([]string{""}), nil)
+	kialiCache = cache.FakeGatewaysKialiCache(append(getGateway("first", "test"), getGateway("second", "test2")...))
+
+	k8s.On("GetToken").Return("token")
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices([]string{""}, ""), nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
 	k8s.On("GetMeshPolicies", mock.AnythingOfType("string")).Return(fakeMeshPolicies(), nil)
 
 	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 }
 
-func mockCombinedValidationService(istioConfigList *models.IstioConfigList, services []string, podList *core_v1.PodList) IstioValidationsService {
+func mockCombinedValidationService(istioConfigList *models.IstioConfigList, services []string, namespace string, podList *core_v1.PodList) IstioValidationsService {
 	k8s := new(kubetest.K8SClientMock)
 
 	fakeIstioObjects := []runtime.Object{}
@@ -159,18 +163,6 @@ func mockCombinedValidationService(istioConfigList *models.IstioConfigList, serv
 	}
 	for _, r := range istioConfigList.RequestAuthentications {
 		fakeIstioObjects = append(fakeIstioObjects, r.DeepCopyObject())
-	}
-	for _, v := range fakeCombinedIstioConfigList().VirtualServices {
-		fakeIstioObjects = append(fakeIstioObjects, v.DeepCopyObject())
-	}
-	for _, d := range fakeCombinedIstioConfigList().DestinationRules {
-		fakeIstioObjects = append(fakeIstioObjects, d.DeepCopyObject())
-	}
-	for _, s := range fakeCombinedIstioConfigList().ServiceEntries {
-		fakeIstioObjects = append(fakeIstioObjects, s.DeepCopyObject())
-	}
-	for _, g := range fakeCombinedIstioConfigList().Gateways {
-		fakeIstioObjects = append(fakeIstioObjects, g.DeepCopyObject())
 	}
 	for _, p := range fakeMeshPolicies() {
 		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
@@ -186,7 +178,14 @@ func mockCombinedValidationService(istioConfigList *models.IstioConfigList, serv
 	}
 	k8s.MockIstio(fakeIstioObjects...)
 
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices(services), nil)
+	kialiCache = cache.FakeServicesKialiCache(data.CreateFakeMultiRegistryServices(services, "test", "*"),
+		fakeExportedResources().Gateways,
+		fakeExportedResources().VirtualServices,
+		fakeExportedResources().DestinationRules,
+		fakeExportedResources().ServiceEntries)
+
+	k8s.On("GetToken").Return("token")
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices(services, "test"), nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(kubetest.FakeNamespace("test"), nil)
 	k8s.On("IsOpenShift").Return(false)
@@ -194,6 +193,8 @@ func mockCombinedValidationService(istioConfigList *models.IstioConfigList, serv
 	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(fakeNamespaces(), nil)
 
 	mockWorkLoadService(k8s)
+
+	setupGlobalMeshConfig()
 
 	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 }
@@ -207,20 +208,23 @@ func mockEmptyValidationService() IstioValidationsService {
 }
 
 func fakeCombinedIstioConfigList() *models.IstioConfigList {
-	istioConfigList := models.IstioConfigList{}
+	return &models.IstioConfigList{}
+}
 
-	istioConfigList.VirtualServices = []networking_v1alpha3.VirtualService{
+func fakeExportedResources() *kubernetes.ExportedResources {
+	exportedResources := kubernetes.ExportedResources{}
+
+	exportedResources.VirtualServices = []networking_v1alpha3.VirtualService{
 		*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("product", "v1", -1),
 			data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("product", "v1", -1),
 				data.CreateEmptyVirtualService("product-vs", "test", []string{"product"})))}
 
-	istioConfigList.DestinationRules = []networking_v1alpha3.DestinationRule{
+	exportedResources.DestinationRules = []networking_v1alpha3.DestinationRule{
 		*data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule("test", "product-dr", "product")),
 		*data.CreateEmptyDestinationRule("test", "customer-dr", "customer"),
 	}
-	return &istioConfigList
+	return &exportedResources
 }
-
 func fakeMeshPolicies() []security_v1beta.PeerAuthentication {
 	return []security_v1beta.PeerAuthentication{
 		*data.CreateEmptyMeshPeerAuthentication("default", nil),
@@ -250,13 +254,14 @@ func fakeNamespaces() []core_v1.Namespace {
 	}
 }
 
-func fakeCombinedServices(services []string) []core_v1.Service {
+func fakeCombinedServices(services []string, namespace string) []core_v1.Service {
 	items := []core_v1.Service{}
 
 	for _, service := range services {
 		items = append(items, core_v1.Service{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name: service,
+				Name:      service,
+				Namespace: namespace,
 				Labels: map[string]string{
 					"app":     service,
 					"version": "v1",

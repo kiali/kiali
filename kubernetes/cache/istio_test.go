@@ -7,20 +7,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/kiali/kiali/kubernetes"
-	"k8s.io/apimachinery/pkg/fields"
 )
-
-type fakeInformer struct {
-	cache.SharedIndexInformer
-	Store *cache.FakeCustomStore
-}
-
-func (f *fakeInformer) GetStore() cache.Store {
-	return f.Store
-}
 
 func TestGetSidecar(t *testing.T) {
 	sidecar := &networking_v1alpha3.Sidecar{}
@@ -121,8 +112,4 @@ func createIstioIndexInformer(getter cache.Getter, resourceType string, refreshD
 		refreshDuration,
 		cache.Indexers{},
 	)
-}
-
-func TestInformer(t *testing.T) {
-
 }

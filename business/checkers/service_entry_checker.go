@@ -11,10 +11,9 @@ import (
 const ServiceEntryCheckerType = "serviceentry"
 
 type ServiceEntryChecker struct {
-	ServiceEntries         []networking_v1alpha3.ServiceEntry
-	ExportedServiceEntries []networking_v1alpha3.ServiceEntry
-	Namespaces             models.Namespaces
-	WorkloadEntries        []networking_v1alpha3.WorkloadEntry
+	ServiceEntries  []networking_v1alpha3.ServiceEntry
+	Namespaces      models.Namespaces
+	WorkloadEntries []networking_v1alpha3.WorkloadEntry
 }
 
 func (s ServiceEntryChecker) Check() models.IstioValidations {

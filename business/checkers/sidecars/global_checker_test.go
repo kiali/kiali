@@ -29,7 +29,7 @@ func TestSidecarWithoutSelectorInControlPlane(t *testing.T) {
 	config.Set(conf)
 
 	vals, valid := GlobalChecker{
-		Sidecar: *data.CreateSidecar("sidecar1", conf.IstioNamespace),
+		Sidecar: *data.CreateSidecar("sidecar1", conf.ExternalServices.Istio.RootNamespace),
 	}.Check()
 
 	assert.Empty(vals)
@@ -58,7 +58,7 @@ func TestSidecarWithSelectorInControlPlane(t *testing.T) {
 	vals, valid := GlobalChecker{
 		Sidecar: *data.AddSelectorToSidecar(map[string]string{
 			"app": "reviews",
-		}, data.CreateSidecar("sidecar1", conf.IstioNamespace)),
+		}, data.CreateSidecar("sidecar1", conf.ExternalServices.Istio.RootNamespace)),
 	}.Check()
 
 	assert.NotEmpty(vals)

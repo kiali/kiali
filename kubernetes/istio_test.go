@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,33 +15,33 @@ func TestFilterByHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	assert.True(t, FilterByHost("reviews", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("reviews-bad", "reviews", "bookinfo"))
+	assert.True(t, FilterByHost("reviews", "bookinfo", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews-bad", "bookinfo", "reviews", "bookinfo"))
 
-	assert.True(t, FilterByHost("reviews.bookinfo", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("reviews-bad.bookinfo", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("reviews.bookinfo-bad", "reviews", "bookinfo"))
+	assert.True(t, FilterByHost("reviews.bookinfo", "bookinfo", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews-bad.bookinfo", "bookinfo", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews.bookinfo-bad", "bookinfo-bad", "reviews", "bookinfo"))
 
-	assert.True(t, FilterByHost("reviews.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("reviews-bad.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("reviews.bookinfo-bad.svc.cluster.local", "reviews", "bookinfo"))
+	assert.True(t, FilterByHost("reviews.bookinfo.svc.cluster.local", "bookinfo", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews-bad.bookinfo.svc.cluster.local", "bookinfo", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews.bookinfo-bad.svc.cluster.local", "bookinfo-bad", "reviews", "bookinfo"))
 }
 
 func TestFQDNHostname(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	assert.True(t, FilterByHost("reviews.bookinfo.svc", "reviews", "bookinfo"))
-	assert.True(t, FilterByHost("reviews.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.True(t, FilterByHost("reviews.bookinfo.svc", "bookinfo", "reviews", "bookinfo"))
+	assert.True(t, FilterByHost("reviews.bookinfo.svc.cluster.local", "bookinfo", "reviews", "bookinfo"))
 
-	assert.False(t, FilterByHost("reviews.foo.svc", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("reviews.foo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews.foo.svc", "foo", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews.foo.svc.cluster.local", "foo", "reviews", "bookinfo"))
 
-	assert.False(t, FilterByHost("ratings.bookinfo.svc", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("ratings.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("ratings.bookinfo.svc", "bookinfo", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("ratings.bookinfo.svc.cluster.local", "bookinfo", "reviews", "bookinfo"))
 
-	assert.False(t, FilterByHost("ratings.foo.svc", "reviews", "bookinfo"))
-	assert.False(t, FilterByHost("ratings.foo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("ratings.foo.svc", "foo", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("ratings.foo.svc.cluster.local", "foo", "reviews", "bookinfo"))
 }
 
 func TestExactProtocolNameMatcher(t *testing.T) {
@@ -87,6 +88,25 @@ func TestInvalidPortNameMatcher(t *testing.T) {
 	assert.False(t, MatchPortNameWithValidProtocols("name"))
 }
 
+func TestValidPortAppProtocolMatcher(t *testing.T) {
+	s1 := "http"
+	s2 := "mysql"
+	assert.True(t, MatchPortAppProtocolWithValidProtocols(&s1))
+	assert.True(t, MatchPortAppProtocolWithValidProtocols(&s2))
+}
+
+func TestInvalidPortAppProtocolMatcher(t *testing.T) {
+	s1 := "httpname"
+	s2 := "name"
+	s3 := "http-name"
+	s4 := ""
+	assert.False(t, MatchPortAppProtocolWithValidProtocols(&s1))
+	assert.False(t, MatchPortAppProtocolWithValidProtocols(&s2))
+	assert.False(t, MatchPortAppProtocolWithValidProtocols(&s3))
+	assert.False(t, MatchPortAppProtocolWithValidProtocols(&s4))
+	assert.False(t, MatchPortAppProtocolWithValidProtocols(nil))
+}
+
 func TestPolicyHasMtlsEnabledStructMode(t *testing.T) {
 	policy := createPeerAuthn("default", "bookinfo", nil)
 
@@ -131,4 +151,65 @@ func createPeerAuthn(name, namespace string, mtls *api_security_v1beta1.PeerAuth
 	pa.Namespace = namespace
 	pa.Spec.Mtls = mtls
 	return pa
+}
+
+func TestParseRegistryConfig(t *testing.T) {
+	assert := assert.New(t)
+
+	configz := "../tests/data/registry/registry-configz.json"
+	bRegistryz, err := ioutil.ReadFile(configz)
+	assert.NoError(err)
+
+	rConfig := map[string][]byte{
+		"istiod1": bRegistryz,
+	}
+	registry, err2 := ParseRegistryConfig(rConfig)
+	assert.NoError(err2)
+	assert.NotNil(registry)
+
+	assert.Equal(2, len(registry.DestinationRules))
+	assert.Equal(12, len(registry.EnvoyFilters))
+	assert.Equal(1, len(registry.Gateways))
+	assert.Equal(1, len(registry.Gateways))
+	assert.Equal(11, len(registry.Sidecars))
+	assert.Equal(3, len(registry.VirtualServices))
+	assert.Equal(12, len(registry.AuthorizationPolicies))
+}
+
+func TestParseRegistryEndpoints(t *testing.T) {
+	assert := assert.New(t)
+
+	endpointz := "../tests/data/registry/registry-endpointz.json"
+	bEndpointz, err := ioutil.ReadFile(endpointz)
+	assert.NoError(err)
+
+	rEndpoints := map[string][]byte{
+		"istiod1": bEndpointz,
+	}
+
+	registry, err2 := ParseRegistryEndpoints(rEndpoints)
+	assert.NoError(err2)
+	assert.NotNil(registry)
+
+	assert.Equal(101, len(registry))
+	assert.Equal("*.msn.com:http-port", registry[0].Service)
+}
+
+func TestRegistryServices(t *testing.T) {
+	assert := assert.New(t)
+
+	registryz := "../tests/data/registry/registry-registryz.json"
+	bRegistryz, err := ioutil.ReadFile(registryz)
+	assert.NoError(err)
+
+	rRegistry := map[string][]byte{
+		"istiod1": bRegistryz,
+	}
+
+	registry, err2 := ParseRegistryServices(rRegistry)
+	assert.NoError(err2)
+	assert.NotNil(registry)
+
+	assert.Equal(79, len(registry))
+	assert.Equal("*.msn.com", registry[0].Attributes.Name)
 }

@@ -82,6 +82,13 @@ delete() {
     infomsg "Failed to delete cluster [${CLUSTER_NAME}] ... will keep going."
   fi
 
+  infomsg "Waiting for the cluster to completely go away"
+  while ibmcloud oc cluster get --cluster ${CLUSTER_NAME} &> /dev/null ; do
+    echo -n "."
+    sleep 10
+  done
+  echo "Deleted."
+
   if ! ibmcloud resource service-instance-delete -f --recursive ${CLOUD_OBJECT_STORAGE_NAME} ; then
     infomsg "Failed to delete cloud object storage [${CLOUD_OBJECT_STORAGE_NAME}] ... will keep going."
   fi
@@ -116,6 +123,7 @@ finish() {
     echo -n "."
     sleep 10
   done
+  echo "Deployed."
 
   infomsg "Adding you as a cluster admin user"
   ibmcloud oc cluster config --cluster ${CLUSTER_NAME} --admin
@@ -125,7 +133,7 @@ finish() {
 
 # FUNCTION: create_apikey - Creates an API key and stores it in the file ./apikey.txt.
 create_apikey() {
-  local results="$(ibmcloud iam api-key-create ${APIKEY_NAME} --output json)"
+  local results="$(ibmcloud iam api-key-create -d "created by ibmcloud-openshift.sh script" ${APIKEY_NAME} --output json)"
   if [ "$?" != "0" ]; then
     errormsg "Failed to create the API Key"
   fi
@@ -140,7 +148,7 @@ create_apikey() {
 
 DEFAULT_APIKEY_NAME="${USER}-apikey"
 DEFAULT_NAME_PREFIX="${USER}"
-DEFAULT_OPENSHIFT_VERSION="4.7_openshift"
+DEFAULT_OPENSHIFT_VERSION="4.8_openshift"
 DEFAULT_PLUGIN_INSTALL="true"
 DEFAULT_PLUGIN_UPDATE="true"
 DEFAULT_REGION="us-east"

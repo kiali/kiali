@@ -18,7 +18,7 @@ func NamespaceList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	namespaces, err := business.Namespace.GetNamespaces()
+	namespaces, err := business.Namespace.GetNamespaces(r.Context())
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -43,7 +43,8 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 
 	var validationSummary models.IstioValidationSummary
 
-	istioConfigValidationResults, errValidations := business.Validations.GetValidations(namespace, "", "")
+
+	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), namespace, "", "")
 	if errValidations != nil {
 		log.Error(errValidations)
 		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
@@ -69,7 +70,7 @@ func NamespaceUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonPatch := string(body)
 
-	ns, err := business.Namespace.UpdateNamespace(namespace, jsonPatch)
+	ns, err := business.Namespace.UpdateNamespace(r.Context(), namespace, jsonPatch)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

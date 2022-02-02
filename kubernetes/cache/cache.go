@@ -33,6 +33,9 @@ type (
 		// Stop all caches
 		Stop()
 
+		// Kubernetes Client used for cache
+		GetClient() *kubernetes.K8SClient
+
 		KubernetesCache
 		IstioCache
 		NamespacesCache
@@ -61,7 +64,7 @@ type (
 		k8sApi                 kube.Interface
 		istioApi               istio.Interface
 		refreshDuration        time.Duration
-		cacheNamespaces        []string
+		cacheNamespacesRegexps []regexp.Regexp
 		cacheIstioTypes        map[string]bool
 		stopChan               map[string]chan struct{}
 		nsCache                map[string]typeCache
@@ -72,9 +75,10 @@ type (
 		proxyStatusLock        sync.RWMutex
 		proxyStatusCreated     *time.Time
 		proxyStatusNamespaces  map[string]map[string]podProxyStatus
+		registryRefreshHandler RegistryRefreshHandler
 		registryStatusLock     sync.RWMutex
 		registryStatusCreated  *time.Time
-		registryStatus         []*kubernetes.RegistryStatus
+		registryStatus         *kubernetes.RegistryStatus
 	}
 )
 
@@ -125,10 +129,15 @@ func NewKialiCache() (KialiCache, error) {
 		stopChan[ns] = make(chan struct{})
 	}
 
+	cacheNamespacesRegexps := make([]regexp.Regexp, len(cacheNamespaces))
+	for i, ns := range cacheNamespaces {
+		cacheNamespacesRegexps[i] = *regexp.MustCompile(strings.TrimSpace(ns))
+	}
+
 	kialiCacheImpl := kialiCacheImpl{
 		istioClient:            *istioClient,
 		refreshDuration:        refreshDuration,
-		cacheNamespaces:        cacheNamespaces,
+		cacheNamespacesRegexps: cacheNamespacesRegexps,
 		cacheIstioTypes:        cacheIstioTypes,
 		stopChan:               stopChan,
 		nsCache:                make(map[string]typeCache),
@@ -146,8 +155,8 @@ func NewKialiCache() (KialiCache, error) {
 
 // It will indicate if a namespace should have a cache
 func (c *kialiCacheImpl) isCached(namespace string) bool {
-	for _, cacheNs := range c.cacheNamespaces {
-		if matches, _ := regexp.MatchString(strings.TrimSpace(cacheNs), namespace); matches {
+	for _, cacheNs := range c.cacheNamespacesRegexps {
+		if cacheNs.MatchString(namespace) {
 			return true
 		}
 	}
@@ -159,6 +168,7 @@ func (c *kialiCacheImpl) createCache(namespace string) bool {
 		return true
 	}
 	informer := make(typeCache)
+	c.registryRefreshHandler = NewRegistryHandler(c, namespace)
 	c.createKubernetesInformers(namespace, &informer)
 	c.createIstioInformers(namespace, &informer)
 	c.nsCache[namespace] = informer
@@ -238,4 +248,8 @@ func (c *kialiCacheImpl) Stop() {
 	for ns := range c.nsCache {
 		delete(c.nsCache, ns)
 	}
+}
+
+func (c *kialiCacheImpl) GetClient() *kubernetes.K8SClient {
+	return &c.istioClient
 }

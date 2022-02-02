@@ -1,0 +1,213 @@
+package authentication
+
+import (
+	"errors"
+	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
+	"gopkg.in/square/go-jose.v2/jwt"
+	"k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util"
+)
+
+// TokenAuthController contains the backing logic to implement
+// Kiali's "token" authentication strategy. It assumes that the
+// user will use a token that is valid to be used against the Cluster API.
+// In it's simplest form, it can be a ServiceAccount token. However, it can
+// be any kind of token that can be passed using HTTP Bearer authentication
+// in requests to the Kubernetes API.
+type tokenAuthController struct {
+	// businessInstantiator is a function that returns an already initialized
+	// business layer. Normally, it should be set to the business.Get function.
+	// For tests, it can be set to something else that returns a compatible API.
+	businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)
+
+	// SessionStore persists the session between HTTP requests.
+	SessionStore SessionPersistor
+}
+
+type sessionPayload struct {
+	// Token is the string that the user entered in the Kiali login screen. It should be
+	// a token that can be used against the Kubernetes API
+	Token string `json:"token,omitempty"`
+}
+
+// UserSessionData tokenResponse
+//
+// This is used for returning the token
+//
+// swagger:model UserSessionData
+type UserSessionData struct {
+	// The expired time for the token
+	// A string with the Datetime when the token will be expired
+	//
+	// example: Thu, 07 Mar 2019 17:50:26 +0000
+	// required: true
+	ExpiresOn time.Time `json:"expiresOn"`
+
+	// The username for the token
+	// A string with the user's username
+	//
+	// example: admin
+	// required: true
+	Username string `json:"username"`
+
+	// The authentication token
+	// A string with the authentication token for the user
+	//
+	// example: zI1NiIsIsR5cCI6IkpXVCJ9.ezJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI5NTIzNjU0fQ.PPZvRGnR6VA4v7FmgSfQcGQr-VD
+	// required: true
+	Token string
+}
+
+// AuthenticationFailureError is a helper Error to assist callers of the TokenAuthController.Authenticate
+// function in distinguishing between authentication failures and
+// unexpected errors.
+type AuthenticationFailureError struct {
+	// A description of the authentication failure
+	Reason string
+
+	// Wraps the error causing the authentication failure
+	Detail error
+}
+
+// Error returns the string representation of an AuthenticationFailureError
+func (e *AuthenticationFailureError) Error() string {
+	if e.Detail != nil {
+		return fmt.Sprintf("%s: %v", e.Reason, e.Detail)
+	}
+
+	return e.Reason
+}
+
+// NewTokenAuthController initializes a new controller for handling token authentication, with the
+// given persistor and the given businessInstantiator. The businessInstantiator can be nil and
+// the initialized contoller will use the business.Get function.
+func NewTokenAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *tokenAuthController {
+	if businessInstantiator == nil {
+		businessInstantiator = business.Get
+	}
+
+	return &tokenAuthController{
+		businessInstantiator: businessInstantiator,
+		SessionStore:         persistor,
+	}
+}
+
+// Authenticate handles an HTTP request that contains a token passed in the "token" field of form data of
+// the body of the request (POST, PATCH or PUT methods). The token should be valid to be used in the
+// Kubernetes API, thus the token is verified by trying a request to the Kubernetes API.
+// If the Kubernetes API rejects the token, authentication fails with an invalid/expired token error. If
+// the token is accepted, privileges to read some namespace is checked. If some namespace is readable,
+// authentication succeeds and a session is started; else, authentication is rejected because the
+// user won't be able to see any data in Kiali.
+// An AuthenticationFailureError is returned if the authentication request is rejected (unauthorized). Any
+// other kind of error means that something unexpected happened.
+func (c tokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+	// Get the token from HTTP form data
+	err := r.ParseForm()
+	if err != nil {
+		return nil, fmt.Errorf("error parsing form data from client: %w", err)
+	}
+
+	token := r.PostForm.Get("token")
+	if token == "" {
+		return nil, errors.New("token is empty")
+	}
+
+	// Create a bs layer with the received token to check its validity.
+	bs, err := c.businessInstantiator(&api.AuthInfo{Token: token})
+	if err != nil {
+		return nil, fmt.Errorf("error instantiating the business layer: %w", err)
+	}
+
+	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
+	// anonymous access, so it's not feasible to use the version API for token verification.
+	nsList, err := bs.Namespace.GetNamespaces(r.Context())
+	if err != nil {
+		c.SessionStore.TerminateSession(r, w)
+		return nil, &AuthenticationFailureError{Reason: "token is not valid or is expired", Detail: err}
+	}
+
+	// If namespace list is empty, return authentication failure.
+	if len(nsList) == 0 {
+		c.SessionStore.TerminateSession(r, w)
+		return nil, &AuthenticationFailureError{Reason: "not enough privileges to login"}
+	}
+
+	// Token was valid against the Kubernetes API, and it has privileges to read some namespace.
+	// Accept the token. Create the user session.
+	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
+	err = c.SessionStore.CreateSession(r, w, "token", timeExpire, sessionPayload{Token: token})
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserSessionData{ExpiresOn: timeExpire, Username: extractSubjectFromK8sToken(token), Token: token}, nil
+}
+
+// ValidateSession restores a session previously created by the Authenticate function. A minimal re-validation
+// is done: only token validity is re-checked by making a request to the Kubernetes API, like in the Authenticate
+// function. However, privileges are not re-checked.
+// If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
+func (c tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+	// Restore a previously started session.
+	sPayload := sessionPayload{}
+	sData, err := c.SessionStore.ReadSession(r, w, &sPayload)
+	if err != nil {
+		log.Warningf("Could not read the session: %v", err)
+		return nil, err
+	}
+	if sData == nil {
+		return nil, nil
+	}
+
+	// Check token validity.
+	bs, err := c.businessInstantiator(&api.AuthInfo{Token: sPayload.Token})
+	if err != nil {
+		return nil, fmt.Errorf("could not get the business layer: %w", err)
+	}
+
+	_, err = bs.Namespace.GetNamespaces(r.Context())
+	if err != nil {
+		// The Kubernetes API rejected the token.
+		// Return no data (which means no active session).
+		log.Warningf("Token error!!: %v", err)
+		return nil, nil
+	}
+
+	// If we are here, the session looks valid. Return the session details.
+	r.Header.Add("Kiali-User", extractSubjectFromK8sToken(sPayload.Token)) // Internal header used to propagate the subject of the request for audit purposes
+	return &UserSessionData{ExpiresOn: sData.ExpiresOn, Username: extractSubjectFromK8sToken(sPayload.Token), Token: sPayload.Token}, nil
+}
+
+// TerminateSession unconditionally terminates any existing session without any validation.
+func (c tokenAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) {
+	c.SessionStore.TerminateSession(r, w)
+}
+
+// extractSubjectFromK8sToken returns the string stored in the "sub" claim of a JWT.
+// If the sub claim is prefixed with the "system:serviceaccount:" this prefix is removed.
+// If the token is not a JWT, or if it does not have a "sub" claim, a generic "token" string
+// is returned.
+func extractSubjectFromK8sToken(token string) string {
+	subject := "token" // Set a default value
+
+	// Decode the Kubernetes token (it is a JWT token) without validating its signature
+	var claims map[string]interface{} // generic map to store parsed token
+	parsedJWSToken, err := jwt.ParseSigned(token)
+	if err == nil {
+		err = parsedJWSToken.UnsafeClaimsWithoutVerification(&claims)
+		if err == nil {
+			subject = strings.TrimPrefix(claims["sub"].(string), "system:serviceaccount:") // Shorten the subject displayed in UI.
+		}
+	}
+
+	return subject
+}

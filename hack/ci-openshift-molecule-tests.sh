@@ -95,6 +95,16 @@ Options:
     A username that has kubeadmin permissions.
     Default: kubeadmin
 
+-kuib|--kiali-ui-branch <branch name>
+    The kiali-ui branch to clone.
+    This is only needed if --use-dev-images is true and thus the UI needs to be built.
+    Default: master
+
+-kuif|--kiali-ui-fork <name>
+    The kiali-ui fork/org to clone.
+    This is only needed if --use-dev-images is true and thus the UI needs to be built.
+    Default: kiali
+
 -lb|--logs-branch <branch name>
     The logs branch to clone.
     Default: openshift
@@ -182,6 +192,8 @@ while [[ $# -gt 0 ]]; do
     -kp|--kubeadmin-pw)           KUBEADMIN_PW="$2";          shift;shift; ;;
     -kpf|--kubeadmin-pw-file)     KUBEADMIN_PW_FILE="$2";     shift;shift; ;;
     -ku|--kubeadmin-user)         KUBEADMIN_USER="$2";        shift;shift; ;;
+    -kuib|--kiali-ui-branch)      UI_BRANCH="$2";             shift;shift; ;;
+    -kuif|--kiali-ui-fork)        UI_FORK="$2";               shift;shift; ;;
     -lb|--logs-branch)            LOGS_BRANCH="$2";           shift;shift; ;;
     -lf|--logs-fork)              LOGS_FORK="$2";             shift;shift; ;;
     -lpn|--logs-project-name)     LOGS_PROJECT_NAME="$2";     shift;shift; ;;
@@ -215,6 +227,8 @@ HELM_FORK="${HELM_FORK:-kiali}"
 HELM_BRANCH="${HELM_BRANCH:-master}"
 KIALI_FORK="${KIALI_FORK:-kiali}"
 KIALI_BRANCH="${KIALI_BRANCH:-master}"
+UI_FORK="${UI_FORK:-kiali}"
+UI_BRANCH="${UI_BRANCH:-master}"
 KIALI_OPERATOR_FORK="${KIALI_OPERATOR_FORK:-kiali}"
 KIALI_OPERATOR_BRANCH="${KIALI_OPERATOR_BRANCH:-master}"
 
@@ -239,6 +253,8 @@ HELM_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${HELM_FORK}/helm-charts.git"
 HELM_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${HELM_FORK}/helm-charts.git"
 KIALI_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${KIALI_FORK}/kiali.git"
 KIALI_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${KIALI_FORK}/kiali.git"
+UI_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${UI_FORK}/kiali-ui.git"
+UI_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${UI_FORK}/kiali-ui.git"
 KIALI_OPERATOR_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${KIALI_OPERATOR_FORK}/kiali-operator.git"
 KIALI_OPERATOR_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${KIALI_OPERATOR_FORK}/kiali-operator.git"
 LOGS_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${LOGS_FORK}/${LOGS_PROJECT_NAME}.git"
@@ -274,6 +290,8 @@ INSTALL_ISTIO=$INSTALL_ISTIO
 IRC_ROOM=$IRC_ROOM
 KIALI_BRANCH=$KIALI_BRANCH
 KIALI_FORK=$KIALI_FORK
+UI_BRANCH=$UI_BRANCH
+UI_FORK=$UI_FORK
 KIALI_OPERATOR_BRANCH=$KIALI_OPERATOR_BRANCH
 KIALI_OPERATOR_FORK=$KIALI_OPERATOR_FORK
 KUBEADMIN_PW_FILE=$KUBEADMIN_PW_FILE
@@ -299,11 +317,13 @@ EOM
 if [ "${GIT_CLONE_PROTOCOL}" == "git" ]; then
   HELM_GITHUB_GITCLONE="${HELM_GITHUB_GITCLONE_GIT}"
   KIALI_GITHUB_GITCLONE="${KIALI_GITHUB_GITCLONE_GIT}"
+  UI_GITHUB_GITCLONE="${UI_GITHUB_GITCLONE_GIT}"
   KIALI_OPERATOR_GITHUB_GITCLONE="${KIALI_OPERATOR_GITHUB_GITCLONE_GIT}"
   LOGS_GITHUB_GITCLONE="${LOGS_GITHUB_GITCLONE_GIT}"
 elif [ "${GIT_CLONE_PROTOCOL}" == "https" ]; then
   HELM_GITHUB_GITCLONE="${HELM_GITHUB_GITCLONE_HTTPS}"
   KIALI_GITHUB_GITCLONE="${KIALI_GITHUB_GITCLONE_HTTPS}"
+  UI_GITHUB_GITCLONE="${UI_GITHUB_GITCLONE_HTTPS}"
   KIALI_OPERATOR_GITHUB_GITCLONE="${KIALI_OPERATOR_GITHUB_GITCLONE_HTTPS}"
   LOGS_GITHUB_GITCLONE="${LOGS_GITHUB_GITCLONE_HTTPS}"
   if [ "${UPLOAD_LOGS}" == "true" ]; then
@@ -326,6 +346,7 @@ if [ "${LOGS_PROJECT_NAME}" == "" ]; then
 fi
 test -d ${SRC}/helm-charts && rm -rf ${SRC}/helm-charts
 test -d ${SRC}/kiali-operator && rm -rf ${SRC}/kiali-operator
+test -d ${SRC}/kiali-ui && rm -rf ${SRC}/kiali-ui
 test -d ${SRC}/kiali && rm -rf ${SRC}/kiali
 test -d ${SRC}/${LOGS_PROJECT_NAME:-invalid} && [ "${SRC}/${LOGS_PROJECT_NAME}" != "/" ] && rm -rf ${SRC}/${LOGS_PROJECT_NAME:-invalid}
 mkdir -p ${SRC}
@@ -351,6 +372,11 @@ git clone --single-branch --branch ${LOGS_BRANCH} ${LOGS_GITHUB_GITCLONE}
 infomsg "Cloning helm-charts [${HELM_FORK}/helm-charts:${HELM_BRANCH}] from [${HELM_GITHUB_GITCLONE}]..."
 git clone --single-branch --branch ${HELM_BRANCH} ${HELM_GITHUB_GITCLONE}
 
+if [ "${USE_DEV_IMAGES}" == "true" ]; then
+  infomsg "Cloning kiali-ui [${UI_FORK}/kiali-ui:${UI_BRANCH}] from [${UI_GITHUB_GITCLONE}]..."
+  git clone --single-branch --branch ${UI_BRANCH} ${UI_GITHUB_GITCLONE}
+fi
+
 infomsg "Cloning kiali [${KIALI_FORK}/kiali:${KIALI_BRANCH}] from [${KIALI_GITHUB_GITCLONE}]..."
 git clone --single-branch --branch ${KIALI_BRANCH} ${KIALI_GITHUB_GITCLONE}
 
@@ -364,16 +390,22 @@ infomsg "Log into the cluster [${OPENSHIFT_API}] as kubeadmin user named [${KUBE
 $OC login -u ${KUBEADMIN_USER} -p ${KUBEADMIN_PW} ${OPENSHIFT_API}
 
 if [ "${USE_DEV_IMAGES}" == "true" ]; then
-  infomsg "Dev images are to be tested. Will prepare them now."
+  GOPATH="${SRC}/kiali/src/github.com/kiali/kiali"
+  infomsg "Dev images are to be tested. Will prepare them now using GOPATH=${GOPATH}"
 
-  infomsg "Building dev image..."
-  make -e OC="${OC}" -e DORP="${DORP}" clean build test
+  infomsg "Building server..."
+  make -e OC="${OC}" -e DORP="${DORP}" -e CONSOLE_LOCAL_DIR="${SRC}/kiali-ui" -e GOPATH="${GOPATH}" clean build test
+
+  infomsg "Building UI..."
+  pushd ${SRC}/kiali-ui
+  yarn && yarn run build
+  popd
 
   infomsg "Logging into the image registry..."
   eval $(make -e OC="${OC}" -e DORP="${DORP}" cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
 
   infomsg "Pushing the images into the cluster..."
-  make -e OC="${OC}" -e DORP="${DORP}" cluster-push
+  make -e OC="${OC}" -e DORP="${DORP}" -e CONSOLE_LOCAL_DIR="${SRC}/kiali-ui" -e GOPATH="${GOPATH}" cluster-push
 else
   infomsg "Will test the latest published images"
 fi

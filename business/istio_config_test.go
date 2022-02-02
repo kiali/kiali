@@ -1,25 +1,24 @@
 package business
 
 import (
-	"fmt"
+	"context"
 	"testing"
 
-	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-
+	"github.com/gogo/protobuf/types"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	auth_v1 "k8s.io/api/authorization/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/gogo/protobuf/types"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestParseListParams(t *testing.T) {
@@ -105,7 +104,7 @@ func TestGetIstioConfigList(t *testing.T) {
 
 	configService := mockGetIstioConfigList()
 
-	istioconfigList, err := configService.GetIstioConfigList(criteria)
+	istioconfigList, err := configService.GetIstioConfigList(context.TODO(), criteria)
 
 	assert.Equal(0, len(istioconfigList.Gateways))
 	assert.Equal(0, len(istioconfigList.VirtualServices))
@@ -115,7 +114,7 @@ func TestGetIstioConfigList(t *testing.T) {
 
 	criteria.IncludeGateways = true
 
-	istioconfigList, err = configService.GetIstioConfigList(criteria)
+	istioconfigList, err = configService.GetIstioConfigList(context.TODO(), criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(0, len(istioconfigList.VirtualServices))
@@ -125,7 +124,7 @@ func TestGetIstioConfigList(t *testing.T) {
 
 	criteria.IncludeVirtualServices = true
 
-	istioconfigList, err = configService.GetIstioConfigList(criteria)
+	istioconfigList, err = configService.GetIstioConfigList(context.TODO(), criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -135,7 +134,7 @@ func TestGetIstioConfigList(t *testing.T) {
 
 	criteria.IncludeDestinationRules = true
 
-	istioconfigList, err = configService.GetIstioConfigList(criteria)
+	istioconfigList, err = configService.GetIstioConfigList(context.TODO(), criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -145,7 +144,7 @@ func TestGetIstioConfigList(t *testing.T) {
 
 	criteria.IncludeServiceEntries = true
 
-	istioconfigList, err = configService.GetIstioConfigList(criteria)
+	istioconfigList, err = configService.GetIstioConfigList(context.TODO(), criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -161,31 +160,31 @@ func TestGetIstioConfigDetails(t *testing.T) {
 
 	configService := mockGetIstioConfigDetails()
 
-	istioConfigDetails, err := configService.GetIstioConfigDetails("test", "gateways", "gw-1")
+	istioConfigDetails, err := configService.GetIstioConfigDetails(context.TODO(), "test", "gateways", "gw-1")
 	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
 	assert.True(istioConfigDetails.Permissions.Update)
 	assert.False(istioConfigDetails.Permissions.Delete)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "virtualservices", "reviews")
+	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), "test", "virtualservices", "reviews")
 	assert.Equal("reviews", istioConfigDetails.VirtualService.Name)
 	assert.Equal("VirtualService", istioConfigDetails.VirtualService.Kind)
 	assert.Equal("networking.istio.io/v1alpha3", istioConfigDetails.VirtualService.APIVersion)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "destinationrules", "reviews-dr")
+	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), "test", "destinationrules", "reviews-dr")
 	assert.Equal("reviews-dr", istioConfigDetails.DestinationRule.Name)
 	assert.Equal("DestinationRule", istioConfigDetails.DestinationRule.Kind)
 	assert.Equal("networking.istio.io/v1alpha3", istioConfigDetails.DestinationRule.APIVersion)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "serviceentries", "googleapis")
+	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), "test", "serviceentries", "googleapis")
 	assert.Equal("googleapis", istioConfigDetails.ServiceEntry.Name)
 	assert.Equal("ServiceEntry", istioConfigDetails.ServiceEntry.Kind)
 	assert.Equal("networking.istio.io/v1alpha3", istioConfigDetails.ServiceEntry.APIVersion)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "rules-bad", "stdio")
+	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), "test", "rules-bad", "stdio")
 	assert.Error(err)
 }
 
@@ -380,7 +379,7 @@ func mockGetIstioConfigDetails() IstioConfigService {
 
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetSelfSubjectAccessReview", "test", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]string")).Return(fakeGetSelfSubjectAccessReview(), nil)
+	k8s.On("GetSelfSubjectAccessReview", mock.Anything, "test", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]string")).Return(fakeGetSelfSubjectAccessReview(), nil)
 
 	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 }
@@ -393,9 +392,9 @@ func TestIsValidHost(t *testing.T) {
 	vs = data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v2", 50), vs)
 	vs = data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v3", 50), vs)
 
-	assert.False(t, models.IsVSValidHost(vs, "", ""))
-	assert.False(t, models.IsVSValidHost(vs, "", "ratings"))
-	assert.True(t, models.IsVSValidHost(vs, "", "reviews"))
+	assert.False(t, models.IsVSValidHost(vs, "test", ""))
+	assert.False(t, models.IsVSValidHost(vs, "test", "ratings"))
+	assert.True(t, models.IsVSValidHost(vs, "test", "reviews"))
 }
 
 func TestHasCircuitBreaker(t *testing.T) {
@@ -418,13 +417,13 @@ func TestHasCircuitBreaker(t *testing.T) {
 	dRule1 = data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), dRule1)
 	dRule1 = data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"), dRule1)
 
-	assert.False(t, models.HasDRCircuitBreaker(dRule1, "", "", ""))
-	assert.True(t, models.HasDRCircuitBreaker(dRule1, "", "reviews", ""))
-	assert.False(t, models.HasDRCircuitBreaker(dRule1, "", "reviews-bad", ""))
-	assert.True(t, models.HasDRCircuitBreaker(dRule1, "", "reviews", "v1"))
-	assert.True(t, models.HasDRCircuitBreaker(dRule1, "", "reviews", "v2"))
-	assert.True(t, models.HasDRCircuitBreaker(dRule1, "", "reviews", "v3"))
-	assert.False(t, models.HasDRCircuitBreaker(dRule1, "", "reviews-bad", "v2"))
+	assert.False(t, models.HasDRCircuitBreaker(dRule1, "test", "", ""))
+	assert.True(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews", ""))
+	assert.False(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews-bad", ""))
+	assert.True(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews", "v1"))
+	assert.True(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews", "v2"))
+	assert.True(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews", "v3"))
+	assert.False(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews-bad", "v2"))
 
 	dRule2 := data.CreateEmptyDestinationRule("test", "reviews", "reviews")
 	dRule2 = data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), dRule2)
@@ -442,10 +441,10 @@ func TestHasCircuitBreaker(t *testing.T) {
 		},
 	}
 
-	assert.True(t, models.HasDRCircuitBreaker(dRule2, "", "reviews", ""))
-	assert.False(t, models.HasDRCircuitBreaker(dRule2, "", "reviews", "v1"))
-	assert.True(t, models.HasDRCircuitBreaker(dRule2, "", "reviews", "v2"))
-	assert.False(t, models.HasDRCircuitBreaker(dRule2, "", "reviews-bad", "v2"))
+	assert.True(t, models.HasDRCircuitBreaker(dRule2, "test", "reviews", ""))
+	assert.False(t, models.HasDRCircuitBreaker(dRule2, "test", "reviews", "v1"))
+	assert.True(t, models.HasDRCircuitBreaker(dRule2, "test", "reviews", "v2"))
+	assert.False(t, models.HasDRCircuitBreaker(dRule2, "test", "reviews-bad", "v2"))
 }
 
 func TestDeleteIstioConfigDetails(t *testing.T) {
@@ -501,7 +500,7 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 func TestFilterIstioObjectsForWorkloadSelector(t *testing.T) {
 	assert := assert.New(t)
 
-	path := fmt.Sprintf("../tests/data/filters/workload-selector-filter.yaml")
+	path := "../tests/data/filters/workload-selector-filter.yaml"
 	loader := &validations.YamlFixtureLoader{Filename: path}
 	err := loader.Load()
 
@@ -512,29 +511,29 @@ func TestFilterIstioObjectsForWorkloadSelector(t *testing.T) {
 	istioConfigList := loader.GetResources()
 
 	s := "app=my-gateway"
-	gw := kubernetes.FilterGateways(s, istioConfigList.Gateways)
+	gw := kubernetes.FilterGatewaysBySelector(s, istioConfigList.Gateways)
 	assert.Equal(1, len(gw))
 	assert.Equal("my-gateway", gw[0].Name)
 
 	s = "app=my-envoyfilter"
-	ef := kubernetes.FilterEnvoyFilters(s, istioConfigList.EnvoyFilters)
+	ef := kubernetes.FilterEnvoyFiltersBySelector(s, istioConfigList.EnvoyFilters)
 	assert.Equal(1, len(ef))
 	assert.Equal("my-envoyfilter", ef[0].Name)
 
 	s = "app=my-sidecar"
-	sc := kubernetes.FilterSidecars(s, istioConfigList.Sidecars)
+	sc := kubernetes.FilterSidecarsBySelector(s, istioConfigList.Sidecars)
 	assert.Equal(1, len(sc))
 	assert.Equal("my-sidecar", sc[0].Name)
 
 	s = "app=my-security"
-	ap := kubernetes.FilterAuthorizationPolicies(s, istioConfigList.AuthorizationPolicies)
+	ap := kubernetes.FilterAuthorizationPoliciesBySelector(s, istioConfigList.AuthorizationPolicies)
 	assert.Equal(1, len(ap))
 
 	s = "app=my-security"
-	ra := kubernetes.FilterRequestAuthentications(s, istioConfigList.RequestAuthentications)
+	ra := kubernetes.FilterRequestAuthenticationsBySelector(s, istioConfigList.RequestAuthentications)
 	assert.Equal(1, len(ra))
 
 	s = "app=my-security"
-	pa := kubernetes.FilterPeerAuthentications(s, istioConfigList.PeerAuthentications)
+	pa := kubernetes.FilterPeerAuthenticationsBySelector(s, istioConfigList.PeerAuthentications)
 	assert.Equal(1, len(pa))
 }

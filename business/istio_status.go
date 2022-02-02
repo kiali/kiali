@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/util/httputil"
 )
 
@@ -56,12 +58,18 @@ const (
 	Unreachable string = "Unreachable"
 )
 
-func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
+func (iss *IstioStatusService) GetStatus(ctx context.Context) (IstioComponentStatus, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetStatus",
+		observability.Attribute("package", "business"),
+	)
+	defer end()
+
 	if !config.Get().ExternalServices.Istio.ComponentStatuses.Enabled {
 		return IstioComponentStatus{}, nil
 	}
 
-	ics, err := iss.getIstioComponentStatus()
+	ics, err := iss.getIstioComponentStatus(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -69,9 +77,9 @@ func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 	return ics.merge(iss.getAddonComponentStatus()), nil
 }
 
-func (iss *IstioStatusService) getIstioComponentStatus() (IstioComponentStatus, error) {
+func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context) (IstioComponentStatus, error) {
 	// Fetching workloads from component namespaces
-	workloads, err := iss.getComponentNamespacesWorkloads()
+	workloads, err := iss.getComponentNamespacesWorkloads(ctx)
 	if err != nil {
 		return IstioComponentStatus{}, err
 	}
@@ -89,7 +97,7 @@ func (iss *IstioStatusService) getIstioComponentStatus() (IstioComponentStatus, 
 	return deploymentStatus.merge(istiodStatus), nil
 }
 
-func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]*models.Workload, error) {
+func (iss *IstioStatusService) getComponentNamespacesWorkloads(ctx context.Context) ([]*models.Workload, error) {
 	var wg sync.WaitGroup
 
 	nss := map[string]bool{}
@@ -105,14 +113,14 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]*models.Work
 			wg.Add(1)
 			nss[n] = true
 
-			go func(n string, wliChan chan []*models.Workload, errChan chan error) {
+			go func(ctx context.Context, n string, wliChan chan []*models.Workload, errChan chan error) {
 				defer wg.Done()
 				var wls models.Workloads
 				var err error
-				wls, err = fetchWorkloads(iss.businessLayer, n, "")
+				wls, err = fetchWorkloads(ctx, iss.businessLayer, n, "")
 				wliChan <- wls
 				errChan <- err
-			}(n, wlChan, errChan)
+			}(ctx, n, wlChan, errChan)
 		}
 	}
 

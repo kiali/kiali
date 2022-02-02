@@ -73,7 +73,7 @@ func ServiceTraces(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	traces, err := business.Jaeger.GetServiceTraces(namespace, service, q)
+	traces, err := business.Jaeger.GetServiceTraces(r.Context(), namespace, service, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -95,7 +95,7 @@ func WorkloadTraces(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	traces, err := business.Jaeger.GetWorkloadTraces(namespace, workload, q)
+	traces, err := business.Jaeger.GetWorkloadTraces(r.Context(), namespace, workload, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -191,7 +191,7 @@ func ServiceSpans(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	spans, err := business.Jaeger.GetServiceSpans(namespace, service, q)
+	spans, err := business.Jaeger.GetServiceSpans(r.Context(), namespace, service, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -217,7 +217,7 @@ func WorkloadSpans(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	spans, err := business.Jaeger.GetWorkloadSpans(namespace, workload, q)
+	spans, err := business.Jaeger.GetWorkloadSpans(r.Context(), namespace, workload, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return

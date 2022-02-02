@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -178,6 +179,12 @@ var kialiControlPlaneClusterCached bool
 // kialiControlPlaneCluster holds the cached home cluster (it may be nil when mesh is not configured)
 var kialiControlPlaneCluster *Cluster
 
+// Global helper used for test mockup
+func SetKialiControlPlaneCluster(cluster *Cluster) {
+	kialiControlPlaneClusterCached = true
+	kialiControlPlaneCluster = cluster
+}
+
 // ResolveKialiControlPlaneCluster tries to resolve the metadata about the cluster where
 // Kiali is installed. This assumes that the mesh Control Plane is installed in the
 // same cluster as Kiali.
@@ -238,8 +245,14 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 		return nil, err
 	}
 
+	var ctx context.Context
+	if r != nil {
+		ctx = r.Context()
+	} else {
+		ctx = context.Background()
+	}
 	// Discover ourselves
-	kialiInstances := findKialiInNamespace(os.Getenv("ACTIVE_NAMESPACE"), myClusterName, in.layer)
+	kialiInstances := findKialiInNamespace(ctx, os.Getenv("ACTIVE_NAMESPACE"), myClusterName, in.layer)
 	if len(kialiInstances) > 0 && r != nil {
 		for i := range kialiInstances {
 			// If URL is already populated (because of an annotation), trust that because it's user configuration.
@@ -278,8 +291,8 @@ func convertKialiServiceToInstance(svc *core_v1.Service) KialiInstance {
 // The clientSet argument should be an already initialized REST client to the API server of the
 // cluster. The namespace argument specifies the namespace where a Kiali instance will be looked for.
 // The clusterName argument is for logging purposes only.
-func findKialiInNamespace(namespace string, clusterName string, layer *Layer) (instances []KialiInstance) {
-	kialiNs, getNsErr := layer.Namespace.GetNamespace(namespace)
+func findKialiInNamespace(ctx context.Context, namespace string, clusterName string, layer *Layer) (instances []KialiInstance) {
+	kialiNs, getNsErr := layer.Namespace.GetNamespace(ctx, namespace)
 	if getNsErr != nil && !errors.IsNotFound(getNsErr) {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed: %s", clusterName, getNsErr.Error())
 		return

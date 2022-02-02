@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -45,15 +46,19 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *grap
 
 func addBadging(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	// Currently no other appenders use DestinationRules or VirtualServices, so they are not cached in AppenderNamespaceInfo
-	istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
+	istioCfgDestionationRules, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
 		IncludeDestinationRules: true,
-		IncludeVirtualServices:  true,
 		Namespace:               namespaceInfo.Namespace,
 	})
 	graph.CheckError(err)
+	istioCfgVirtualServices, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
+		IncludeVirtualServices: true,
+		AllNamespaces:          true,
+	})
+	graph.CheckError(err)
 
-	applyCircuitBreakers(trafficMap, namespaceInfo.Namespace, istioCfg)
-	applyVirtualServices(trafficMap, namespaceInfo.Namespace, istioCfg)
+	applyCircuitBreakers(trafficMap, namespaceInfo.Namespace, istioCfgDestionationRules)
+	applyVirtualServices(trafficMap, namespaceInfo.Namespace, istioCfgVirtualServices)
 }
 
 func applyCircuitBreakers(trafficMap graph.TrafficMap, namespace string, istioCfg models.IstioConfigList) {
@@ -109,11 +114,8 @@ NODES:
 		if n.NodeType != graph.NodeTypeService {
 			continue
 		}
-		if n.Namespace != namespace {
-			continue
-		}
 		for _, virtualService := range istioCfg.VirtualServices {
-			if models.IsVSValidHost(&virtualService, namespace, n.Service) {
+			if models.IsVSValidHost(&virtualService, n.Namespace, n.Service) {
 				var vsMetadata graph.VirtualServicesMetadata
 				var vsOk bool
 				if vsMetadata, vsOk = n.Metadata[graph.HasVS].(graph.VirtualServicesMetadata); !vsOk {
@@ -206,82 +208,105 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 	}
 }
 
-func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	// Get ingress-gateways deployments in the namespace. Then, find if the graph is showing any of them. If so, flag the GW nodes.
-	ingressWorkloads := a.getIngressGatewayWorkloads(globalInfo)
-	istioAppLabelName := config.Get().IstioLabels.AppLabelName
+func decorateMatchingGateways(gwCrd networking_v1alpha3.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
+	gwSelector := labels.Set(gwCrd.Spec.Selector).AsSelector()
+	for gw, nodes := range gatewayNodeMapping {
+		if gwSelector.Matches(labels.Set(gw.Labels)) {
 
-	ingressNodeMapping := make(map[*models.WorkloadListItem][]*graph.Node)
-	for ingressNs, ingressWorkloadsList := range ingressWorkloads {
-		for _, gw := range ingressWorkloadsList {
-			for _, node := range trafficMap {
-				if _, ok := node.Metadata[graph.IsIngressGateway]; !ok {
-					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App == gw.Labels[istioAppLabelName] && node.Namespace == ingressNs {
-						node.Metadata[graph.IsIngressGateway] = graph.GatewaysMetadata{}
-						ingressNodeMapping[&gw] = append(ingressNodeMapping[&gw], node)
-					}
+			// If we are here, the GatewayCrd selects the Gateway workload.
+			// So, all node graphs associated with the GW workload should be listening
+			// requests for the hostnames listed in the GatewayCRD.
+
+			// Let's extract the hostnames and add them to the node metadata.
+			for _, node := range nodes {
+				gwServers := gwCrd.Spec.Servers
+				var hostnames []string
+
+				for _, gwServer := range gwServers {
+					gwHosts := gwServer.Hosts
+					hostnames = append(hostnames, gwHosts...)
 				}
-			}
-		}
-	}
 
-	// If there is any ingress gateway node in the processing namespace, find Gateway CRDs and
-	// match them against gateways in the graph.
-	if len(ingressNodeMapping) != 0 {
-		gatewaysCrds := a.getIstioGatewayResources(globalInfo)
-
-		for _, gwCrd := range gatewaysCrds {
-			gwSelector := labels.Set(gwCrd.Spec.Selector).AsSelector()
-			for gw, nodes := range ingressNodeMapping {
-				if gwSelector.Matches(labels.Set(gw.Labels)) {
-
-					// If we are here, the GatewayCrd selects the Gateway workload.
-					// So, all node graphs associated with the GW workload should be listening
-					// requests for the hostnames listed in the GatewayCRD.
-
-					// Let's extract the hostnames and add them to the node metadata.
-					for _, node := range nodes {
-						gwServers := gwCrd.Spec.Servers
-						var hostnames []string
-
-						for _, gwServer := range gwServers {
-							gwHosts := gwServer.Hosts
-							hostnames = append(hostnames, gwHosts...)
-						}
-
-						// Metadata format: { gatewayName => array of hostnames }
-						node.Metadata[graph.IsIngressGateway].(graph.GatewaysMetadata)[gwCrd.Name] = hostnames
-					}
-				}
+				// Metadata format: { gatewayName => array of hostnames }
+				node.Metadata[nodeMetadataKey].(graph.GatewaysMetadata)[gwCrd.Name] = hostnames
 			}
 		}
 	}
 }
 
-func (a IstioAppender) getIngressGatewayWorkloads(globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
-	ingressWorkloads := make(map[string][]models.WorkloadListItem)
-	for namespace := range a.AccessibleNamespaces {
-		criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false}
-		wList, err := globalInfo.Business.Workload.GetWorkloadList(criteria)
-		graph.CheckError(err)
+func resolveGatewayNodeMapping(gatewayWorkloads map[string][]models.WorkloadListItem, nodeMetadataKey graph.MetadataKey, trafficMap graph.TrafficMap) map[*models.WorkloadListItem][]*graph.Node {
+	istioAppLabelName := config.Get().IstioLabels.AppLabelName
 
-		// Find Ingress Gateway deployments
-		for _, workload := range wList.Workloads {
-			if workload.Type == "Deployment" {
-				if labelValue, ok := workload.Labels["operator.istio.io/component"]; ok && labelValue == "IngressGateways" {
-					ingressWorkloads[namespace] = append(ingressWorkloads[namespace], workload)
+	gatewayNodeMapping := make(map[*models.WorkloadListItem][]*graph.Node)
+	for gwNs, gwWorkloadsList := range gatewayWorkloads {
+		for _, gw := range gwWorkloadsList {
+			for _, node := range trafficMap {
+				if _, ok := node.Metadata[nodeMetadataKey]; !ok {
+					if (node.NodeType == graph.NodeTypeApp || node.NodeType == graph.NodeTypeWorkload) && node.App == gw.Labels[istioAppLabelName] && node.Namespace == gwNs {
+						node.Metadata[nodeMetadataKey] = graph.GatewaysMetadata{}
+						gatewayNodeMapping[&gw] = append(gatewayNodeMapping[&gw], node)
+					}
 				}
 			}
 		}
 	}
 
-	return ingressWorkloads
+	return gatewayNodeMapping
+}
+
+func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+	// Get ingress-gateways deployments in the namespace. Then, find if the graph is showing any of them. If so, flag the GW nodes.
+	ingressWorkloads := a.getIngressGatewayWorkloads(globalInfo)
+	ingressNodeMapping := resolveGatewayNodeMapping(ingressWorkloads, graph.IsIngressGateway, trafficMap)
+
+	// Get egress-gateways deployments in the namespace. (Same logic as in the previous chunk of code)
+	egressWorkloads := a.getEgressGatewayWorkloads(globalInfo)
+	egressNodeMapping := resolveGatewayNodeMapping(egressWorkloads, graph.IsEgressGateway, trafficMap)
+
+	// If there is any ingress or egress gateway node in the processing namespace, find Gateway CRDs and
+	// match them against gateways in the graph.
+	if len(ingressNodeMapping) != 0 || len(egressNodeMapping) != 0 {
+		gatewaysCrds := a.getIstioGatewayResources(globalInfo)
+
+		for _, gwCrd := range gatewaysCrds {
+			decorateMatchingGateways(gwCrd, ingressNodeMapping, graph.IsIngressGateway)
+			decorateMatchingGateways(gwCrd, egressNodeMapping, graph.IsEgressGateway)
+		}
+	}
+}
+
+func (a IstioAppender) getEgressGatewayWorkloads(globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
+	return a.getIstioComponentWorkloads("EgressGateways", globalInfo)
+}
+
+func (a IstioAppender) getIngressGatewayWorkloads(globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
+	return a.getIstioComponentWorkloads("IngressGateways", globalInfo)
+}
+
+func (a IstioAppender) getIstioComponentWorkloads(component string, globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
+	componentWorkloads := make(map[string][]models.WorkloadListItem)
+	for namespace := range a.AccessibleNamespaces {
+		criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false}
+		wList, err := globalInfo.Business.Workload.GetWorkloadList(context.TODO(), criteria)
+		graph.CheckError(err)
+
+		// Find Istio component deployments
+		for _, workload := range wList.Workloads {
+			if workload.Type == "Deployment" {
+				if labelValue, ok := workload.Labels["operator.istio.io/component"]; ok && labelValue == component {
+					componentWorkloads[namespace] = append(componentWorkloads[namespace], workload)
+				}
+			}
+		}
+	}
+
+	return componentWorkloads
 }
 
 func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) []networking_v1alpha3.Gateway {
 	retVal := []networking_v1alpha3.Gateway{}
 	for namespace := range a.AccessibleNamespaces {
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
+		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
 			IncludeGateways: true,
 			Namespace:       namespace,
 		})

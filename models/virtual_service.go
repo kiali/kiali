@@ -12,7 +12,7 @@ func IsVSValidHost(vs *networking_v1alpha3.VirtualService, namespace string, ser
 		return false
 	}
 
-	return kubernetes.FilterVSByRoute(vs, serviceName, namespace)
+	return kubernetes.FilterVirtualServiceByRoute(vs, serviceName, namespace)
 }
 
 // HasVSRequestTimeout determines if the spec has an http timeout set.

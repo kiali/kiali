@@ -15,13 +15,16 @@ import (
 )
 
 type MultiMatchChecker struct {
-	GatewaysPerNamespace [][]networking_v1alpha3.Gateway
-	existingList         map[string][]Host
+	Gateways        []networking_v1alpha3.Gateway
+	existingList    map[string][]Host
+	hostRegexpCache map[string]regexp.Regexp
 }
 
 const (
-	GatewayCheckerType = "gateway"
-	wildCardMatch      = "*"
+	GatewayCheckerType     = "gateway"
+	wildCardMatch          = "*"
+	targetNamespaceAll     = "*"
+	targetNamespaceCurrent = "."
 )
 
 type Host struct {
@@ -31,49 +34,60 @@ type Host struct {
 	ServerIndex     int
 	HostIndex       int
 	GatewayRuleName string
+	TargetNamespace string
 }
 
 // Check validates that no two gateways share the same host+port combination
 func (m MultiMatchChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 	m.existingList = map[string][]Host{}
+	m.hostRegexpCache = map[string]regexp.Regexp{}
 
-	for _, nsG := range m.GatewaysPerNamespace {
-		for _, g := range nsG {
-			gatewayRuleName := g.Name
-			gatewayNamespace := g.Namespace
+	for _, g := range m.Gateways {
+		gatewayRuleName := g.Name
+		gatewayNamespace := g.Namespace
 
-			selectorString := ""
-			if len(g.Spec.Selector) > 0 {
-				selectorString = labels.Set(g.Spec.Selector).String()
+		selectorString := ""
+		if len(g.Spec.Selector) > 0 {
+			selectorString = labels.Set(g.Spec.Selector).String()
+		}
+		for i, server := range g.Spec.Servers {
+			if server == nil {
+				continue
 			}
-			for i, server := range g.Spec.Servers {
-				if server == nil {
-					continue
-				}
-				hosts := parsePortAndHostnames(server)
-				for hi, host := range hosts {
-					host.ServerIndex = i
-					host.HostIndex = hi
-					host.GatewayRuleName = gatewayRuleName
-					host.Namespace = gatewayNamespace
-					duplicate, dhosts := m.findMatch(host, selectorString)
-					if duplicate {
-						// The above is referenced by each one below..
-						currentHostValidation := createError(host.GatewayRuleName, host.Namespace, host.ServerIndex, host.HostIndex)
-
-						// CurrentHostValidation is always the first one, so we skip it
-						for i := 1; i < len(dhosts); i++ {
-							dh := dhosts[i]
-							refValidation := createError(dh.GatewayRuleName, dh.Namespace, dh.ServerIndex, dh.HostIndex)
-							refValidation = refValidation.MergeReferences(currentHostValidation)
-							currentHostValidation = currentHostValidation.MergeReferences(refValidation)
-							validations = validations.MergeValidations(refValidation)
-						}
-						validations = validations.MergeValidations(currentHostValidation)
+			hosts := parsePortAndHostnames(server)
+			for hi, host := range hosts {
+				host.ServerIndex = i
+				host.HostIndex = hi
+				host.GatewayRuleName = gatewayRuleName
+				host.Namespace = gatewayNamespace
+				// Hostname can be given in <target-namespace>/Hostname syntax
+				host.TargetNamespace = targetNamespaceAll
+				namespaceAndHost := strings.Split(host.Hostname, "/")
+				if len(namespaceAndHost) > 1 {
+					host.Hostname = namespaceAndHost[1]
+					host.TargetNamespace = namespaceAndHost[0]
+					// replace targetNamespaceCurrent with GW namespace to simplify duplicate checking
+					if host.TargetNamespace == targetNamespaceCurrent {
+						host.TargetNamespace = gatewayNamespace
 					}
-					m.existingList[selectorString] = append(m.existingList[selectorString], host)
 				}
+				duplicate, dhosts := m.findMatch(host, selectorString)
+				if duplicate {
+					// The above is referenced by each one below..
+					currentHostValidation := createError(host.GatewayRuleName, host.Namespace, host.ServerIndex, host.HostIndex)
+
+					// CurrentHostValidation is always the first one, so we skip it
+					for i := 1; i < len(dhosts); i++ {
+						dh := dhosts[i]
+						refValidation := createError(dh.GatewayRuleName, dh.Namespace, dh.ServerIndex, dh.HostIndex)
+						refValidation = refValidation.MergeReferences(currentHostValidation)
+						currentHostValidation = currentHostValidation.MergeReferences(refValidation)
+						validations = validations.MergeValidations(refValidation)
+					}
+					validations = validations.MergeValidations(currentHostValidation)
+				}
+				m.existingList[selectorString] = append(m.existingList[selectorString], host)
 			}
 		}
 	}
@@ -126,38 +140,55 @@ func (m MultiMatchChecker) findMatch(host Host, selector string) (bool, []Host) 
 		}
 
 		for _, h := range hostGroup {
-			if h.Port == host.Port {
-				// wildcardMatches will always match
-				if host.Hostname == wildCardMatch || h.Hostname == wildCardMatch {
-					duplicates = append(duplicates, host)
-					duplicates = append(duplicates, h)
-					continue
-				}
+			// only compare hosts that share the target namespace or hosts where at least one of the pair is exported to all namespaces
+			if h.TargetNamespace == targetNamespaceAll || host.TargetNamespace == targetNamespaceAll || h.TargetNamespace == host.TargetNamespace {
+				if h.Port == host.Port {
+					// wildcardMatches will always match
+					if host.Hostname == wildCardMatch || h.Hostname == wildCardMatch {
+						duplicates = append(duplicates, host)
+						duplicates = append(duplicates, h)
+						continue
+					}
 
-				// Either one could include wildcards, so we need to check both ways and fix "*" -> ".*" for regexp engine
-				current := strings.ToLower(strings.Replace(host.Hostname, "*", ".*", -1))
-				previous := strings.ToLower(strings.Replace(h.Hostname, "*", ".*", -1))
+					// DNS is case-insensitive
+					current := strings.ToLower(host.Hostname)
+					previous := strings.ToLower(h.Hostname)
 
-				// Escaping dot chars for RegExp. Dot char means all possible chars.
-				// This protects this validation to false positive for (api-dev.example.com and api.dev.example.com)
-				escapedCurrent := strings.Replace(host.Hostname, ".", "\\.", -1)
-				escapedPrevious := strings.Replace(h.Hostname, ".", "\\.", -1)
+					// lazily compile hostname Regex
+					currentRegexp, ok := m.hostRegexpCache[current]
+					if !ok {
+						currentRegexp = *regexpFromHostname(current)
+						m.hostRegexpCache[current] = currentRegexp
+					}
+					previousRegexp, ok := m.hostRegexpCache[previous]
+					if !ok {
+						previousRegexp = *regexpFromHostname(previous)
+						m.hostRegexpCache[previous] = previousRegexp
+					}
 
-				// We anchor the beginning and end of the string when it's
-				// to be used as a regex, so that we don't get spurious
-				// substring matches, e.g., "example.com" matching
-				// "foo.example.com".
-				currentRegexp := strings.Join([]string{"^", escapedCurrent, "$"}, "")
-				previousRegexp := strings.Join([]string{"^", escapedPrevious, "$"}, "")
-
-				if regexp.MustCompile(currentRegexp).MatchString(previous) ||
-					regexp.MustCompile(previousRegexp).MatchString(current) {
-					duplicates = append(duplicates, host)
-					duplicates = append(duplicates, h)
-					continue
+					if currentRegexp.MatchString(previous) ||
+						previousRegexp.MatchString(current) {
+						duplicates = append(duplicates, host)
+						duplicates = append(duplicates, h)
+						continue
+					}
 				}
 			}
 		}
 	}
 	return len(duplicates) > 0, duplicates
+}
+
+func regexpFromHostname(hostname string) *regexp.Regexp {
+	// Escaping dot chars for RegExp. Dot char means all possible chars.
+	// This protects this validation to false positive for (api-dev.example.com and api.dev.example.com)
+	escaped := strings.Replace(hostname, ".", "\\.", -1)
+
+	// We anchor the beginning and end of the string when it's
+	// to be used as a regex, so that we don't get spurious
+	// substring matches, e.g., "example.com" matching
+	// "foo.example.com".
+	anchored := strings.Join([]string{"^", escaped, "$"}, "")
+
+	return regexp.MustCompile(anchored)
 }

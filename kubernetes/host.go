@@ -61,6 +61,10 @@ func ParseHost(hostName, namespace, cluster string) Host {
 // GetHost parses hostName and returns a Host struct. It considers Namespaces in the cluster to be more accurate
 // when deciding if the hostName is a ServiceEntry or a service.namespace host definition.
 func GetHost(hostName, namespace, cluster string, clusterNamespaces []string) Host {
+	if cluster == "" {
+		cluster = config.Get().ExternalServices.Istio.IstioIdentityDomain
+	}
+
 	hParts := strings.Split(hostName, ".")
 	// It might be a service entry or a 2-format host specification
 	if len(hParts) == 2 {
@@ -205,13 +209,13 @@ func HasMatchingVirtualServices(host Host, virtualServices []networking_v1alpha3
 	return false
 }
 
-// HasMatchingRegistryStatus returns true when the FDQN of the host param matches
-// with one registry status of the registryStatus param.
-func HasMatchingRegistryStatus(host string, registryStatus []*RegistryStatus) bool {
-	for _, rStatus := range registryStatus {
+// HasMatchingRegistryService returns true when the FDQN of the host (from given namespace) param matches
+// with one registry service of the registryServices param.
+func HasMatchingRegistryService(namespace string, host string, registryServices []*RegistryService) bool {
+	for _, rStatus := range registryServices {
 		// We assume that on these cases the host.Service is provided in FQDN
 		// i.e. ratings.mesh2-bookinfo.svc.mesh1-imports.local
-		if FilterByRegistryStatus(host, rStatus) {
+		if FilterByRegistryService(namespace, host, rStatus) {
 			return true
 		}
 	}
@@ -227,6 +231,10 @@ func HostWithinWildcardHost(subdomain, wildcardDomain string) bool {
 }
 
 func ParseGatewayAsHost(gateway, currentNamespace, currentCluster string) Host {
+	if currentCluster == "" {
+		currentCluster = config.Get().ExternalServices.Istio.IstioIdentityDomain
+	}
+
 	host := Host{
 		Service:       gateway,
 		Namespace:     currentNamespace,

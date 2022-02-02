@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -155,7 +156,7 @@ func (a ServiceEntryAppender) getServiceEntry(namespace, serviceName string, glo
 	serviceEntryHosts, found := getServiceEntryHosts(globalInfo)
 	if !found {
 		for ns := range a.AccessibleNamespaces {
-			istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
+			istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
 				IncludeServiceEntries: true,
 				Namespace:             ns,
 			})

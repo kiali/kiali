@@ -26,59 +26,41 @@ const (
 
 	// Networking
 
-	DestinationRules        = "destinationrules"
-	DestinationRuleType     = "DestinationRule"
-	DestinationRuleTypeList = "DestinationRuleList"
+	DestinationRules    = "destinationrules"
+	DestinationRuleType = "DestinationRule"
 
-	Gateways        = "gateways"
-	GatewayType     = "Gateway"
-	GatewayTypeList = "GatewayList"
+	Gateways    = "gateways"
+	GatewayType = "Gateway"
 
-	EnvoyFilters        = "envoyfilters"
-	EnvoyFilterType     = "EnvoyFilter"
-	EnvoyFilterTypeList = "EnvoyFilterList"
+	EnvoyFilters    = "envoyfilters"
+	EnvoyFilterType = "EnvoyFilter"
 
-	Sidecars        = "sidecars"
-	SidecarType     = "Sidecar"
-	SidecarTypeList = "SidecarList"
+	Sidecars    = "sidecars"
+	SidecarType = "Sidecar"
 
-	ServiceEntries       = "serviceentries"
-	ServiceEntryType     = "ServiceEntry"
-	ServiceentryTypeList = "ServiceEntryList"
+	ServiceEntries   = "serviceentries"
+	ServiceEntryType = "ServiceEntry"
 
-	VirtualServices        = "virtualservices"
-	VirtualServiceType     = "VirtualService"
-	VirtualServiceTypeList = "VirtualServiceList"
+	VirtualServices    = "virtualservices"
+	VirtualServiceType = "VirtualService"
 
-	WorkloadEntries       = "workloadentries"
-	WorkloadEntryType     = "WorkloadEntry"
-	WorkloadEntryTypeList = "WorkloadEntryList"
+	WorkloadEntries   = "workloadentries"
+	WorkloadEntryType = "WorkloadEntry"
 
-	WorkloadGroups        = "workloadgroups"
-	WorkloadGroupType     = "WorkloadGroup"
-	WorkloadGroupTypeList = "WorkloadGroupList"
+	WorkloadGroups    = "workloadgroups"
+	WorkloadGroupType = "WorkloadGroup"
 
 	// Authorization PeerAuthentications
-	AuthorizationPolicies         = "authorizationpolicies"
-	AuthorizationPoliciesType     = "AuthorizationPolicy"
-	AuthorizationPoliciesTypeList = "AuthorizationPolicyList"
+	AuthorizationPolicies     = "authorizationpolicies"
+	AuthorizationPoliciesType = "AuthorizationPolicy"
 
 	// Peer Authentications
-	PeerAuthentications         = "peerauthentications"
-	PeerAuthenticationsType     = "PeerAuthentication"
-	PeerAuthenticationsTypeList = "PeerAuthenticationList"
+	PeerAuthentications     = "peerauthentications"
+	PeerAuthenticationsType = "PeerAuthentication"
 
 	// Request Authentications
-	RequestAuthentications         = "requestauthentications"
-	RequestAuthenticationsType     = "RequestAuthentication"
-	RequestAuthenticationsTypeList = "RequestAuthenticationList"
-
-	// Iter8 types
-
-	Iter8Experiments        = "experiments"
-	Iter8ExperimentType     = "Experiment"
-	Iter8ExperimentTypeList = "ExperimentList"
-	Iter8ConfigMap          = "iter8config-metrics"
+	RequestAuthentications     = "requestauthentications"
+	RequestAuthenticationsType = "RequestAuthentication"
 )
 
 var (
@@ -93,23 +75,6 @@ var (
 		Version: "v1beta1",
 	}
 	ApiSecurityVersion = SecurityGroupVersion.Group + "/" + SecurityGroupVersion.Version
-
-	// We will add a new extesion API in a similar way as we added the Kubernetes + Istio APIs
-	Iter8GroupVersion = schema.GroupVersion{
-		Group:   "iter8.tools",
-		Version: "v1alpha2",
-	}
-	ApiIter8Version = Iter8GroupVersion.Group + "/" + Iter8GroupVersion.Version
-
-	iter8Types = []struct {
-		objectKind     string
-		collectionKind string
-	}{
-		{
-			objectKind:     Iter8ExperimentType,
-			collectionKind: Iter8ExperimentTypeList,
-		},
-	}
 
 	PluralType = map[string]string{
 		// Networking
@@ -126,9 +91,6 @@ var (
 		AuthorizationPolicies:  AuthorizationPoliciesType,
 		PeerAuthentications:    PeerAuthenticationsType,
 		RequestAuthentications: RequestAuthenticationsType,
-
-		// Iter8
-		Iter8Experiments: Iter8ExperimentType,
 	}
 
 	ResourceTypesToAPI = map[string]string{
@@ -143,8 +105,6 @@ var (
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,
 		RequestAuthentications: SecurityGroupVersion.Group,
-		// Extensions
-		Iter8Experiments: Iter8GroupVersion.Group,
 	}
 
 	ApiToVersion = map[string]string{
@@ -177,6 +137,7 @@ type ExportedResources struct {
 	VirtualServices  []networking_v1alpha3.VirtualService  `json:"virtualservices"`
 	DestinationRules []networking_v1alpha3.DestinationRule `json:"destinationrules"`
 	ServiceEntries   []networking_v1alpha3.ServiceEntry    `json:"serviceentries"`
+	Gateways         []networking_v1alpha3.Gateway         `json:"gateways"`
 }
 
 type ProxyStatus struct {
@@ -199,22 +160,122 @@ type SyncStatus struct {
 	EndpointAcked string `json:"endpoint_acked,omitempty"`
 }
 
-type RegistryStatus struct {
+// RegistryConfiguration will hold the Istio configuration required for Kiali validations
+// Resources not used (i.e. EnvoyFilters) are not added, those will require update them in the future
+type RegistryConfiguration struct {
+	// Networking
+	DestinationRules []networking_v1alpha3.DestinationRule
+	EnvoyFilters     []networking_v1alpha3.EnvoyFilter
+	Gateways         []networking_v1alpha3.Gateway
+	ServiceEntries   []networking_v1alpha3.ServiceEntry
+	Sidecars         []networking_v1alpha3.Sidecar
+	VirtualServices  []networking_v1alpha3.VirtualService
+	WorkloadEntries  []networking_v1alpha3.WorkloadEntry
+	WorkloadGroups   []networking_v1alpha3.WorkloadGroup
+	// Security
+	AuthorizationPolicies  []security_v1beta.AuthorizationPolicy
+	PeerAuthentications    []security_v1beta.PeerAuthentication
+	RequestAuthentications []security_v1beta.RequestAuthentication
+}
+
+type RegistryEndpoint struct {
 	pilot string
-	RegistryService
+	IstioEndpoint
+}
+
+type IstioEndpoint struct {
+	Service   string `json:"svc"`
+	Endpoints []struct {
+		Service     IstioService `json:"service,omitempty"`
+		ServicePort struct {
+			Name     string `json:"name,omitempty"`
+			Port     uint32 `json:"port,omitempty"`
+			Protocol string `json:"protocol,omitempty"`
+		} `json:"servicePort,omitempty"`
+		Endpoint struct {
+			Labels          map[string]string `json:"Labels,omitempty"`
+			Address         string            `json:"Address,omitempty"`
+			ServicePortName string            `json:"ServicePortName,omitempty"`
+			// EnvoyEndpoint is not mapped into the model
+			ServiceAccount string `json:"ServiceAccount,omitempty"`
+			Network        string `json:"Network,omitempty"`
+			Locality       struct {
+				Label     string `json:"Label,omitempty"`
+				ClusterID string `json:"ClusterID,omitempty"`
+			} `json:"Locality,omitempty"`
+			EndpointPort uint32 `json:"EndpointPort,omitempty"`
+			LbWeight     uint32 `json:"LbWeight,omitempty"`
+			TLSMode      string `json:"TLSMode,omitempty"`
+			Namespace    string `json:"Namespace,omitempty"`
+			WorkloadName string `json:"WorkloadName,omitempty"`
+			HostName     string `json:"HostName,omitempty"`
+			SubDomain    string `json:"SubDomain,omitempty"`
+			// TunnelAbility and DiscoverabilityPolicy are not mapped into the model
+		} `json:"endpoint"`
+	} `json:"ep"`
 }
 
 type RegistryService struct {
-	Attributes           map[string]interface{}   `json:"Attributes,omitempty"`
-	Ports                []map[string]interface{} `json:"ports"`
-	ServiceAccounts      []string                 `json:"serviceAccounts,omitempty"`
-	CreationTime         time.Time                `json:"creationTime,omitempty"`
-	Hostname             string                   `json:"hostname"`
-	Address              string                   `json:"address,omitempty"`
-	AutoAllocatedAddress string                   `json:"autoAllocatedAddress,omitempty"`
-	ClusterVIPs          map[string]string        `json:"cluster-vips,omitempty"`
-	Resolution           int                      `json:"Resolution,omitempty"`
-	MeshExternal         bool                     `json:"MeshExternal,omitempty"`
+	pilot string
+	IstioService
+}
+
+// Mapped from https://github.com/istio/istio/blob/master/pilot/pkg/model/service.go
+// It's a helper to fetch the /debug/registryz results before to parse it to the Kiali's Service model
+// Not all fields from /debug/registryz are mapped, only those needed by Kiali
+// There may be differences between Istio 1.11.x and 1.12.x to be addressed case by case in the mapping
+type IstioService struct {
+	Attributes struct {
+		// ServiceRegistry values:
+		// Kubernetes: 	is a service registry backed by k8s API server
+		// External: 	is a service registry for externally provided ServiceEntries
+		// Federation:  special case when registry is provided from a federated environment
+		ServiceRegistry string            `json:"ServiceRegistry,omitempty"`
+		Name            string            `json:"Name,omitempty"`
+		Namespace       string            `json:"Namespace,omitempty"`
+		Labels          map[string]string `json:"Labels,omitempty"`
+		// UID is present in Istio 1.11.x but not in 1.12.x
+		UID string `json:"UID,omitempty"`
+		// ExportTo key values:
+		// ".":		Private implies namespace local config
+		// "*":		Public implies config is visible to all
+		// "~":		None implies service is visible to no one. Used for services only
+		ExportTo       map[string]bool   `json:"ExportTo,omitempty"`
+		LabelSelectors map[string]string `json:"LabelSelectors,omitempty"`
+		// ClusterExternalAddresses and ClusterExternalPorts are not mapped into the model
+		// Kiali won't use it yet and these attributes changes between Istio 1.11.x and Istio 1.12.x and may bring conflicts
+	} `json:"Attributes,omitempty"`
+	Ports []struct {
+		Name     string `json:"name,omitempty"`
+		Port     int    `json:"port"`
+		Protocol string `json:"protocol,omitempty"`
+	} `json:"ports"`
+	ServiceAccounts []string  `json:"serviceAccounts,omitempty"`
+	CreationTime    time.Time `json:"creationTime,omitempty"`
+	Hostname        string    `json:"hostname"`
+	// Address is present in Istio 1.11.x but not in 1.12.x
+	Address              string `json:"address,omitempty"`
+	AutoAllocatedAddress string `json:"autoAllocatedAddress,omitempty"`
+	// ClusterVIPs defined in Istio 1.11.x
+	ClusterVIPs11 map[string]string `json:"cluster-vips,omitempty"`
+	// ClusterVIPs defined in Istio 1.12.x
+	ClusterVIPs12 struct {
+		Addresses map[string][]string `json:"Addresses,omitempty"`
+	} `json:"clusterVIPs,omitempty"`
+	// Resolution values, as the debug endpoint doesn't perform a conversion
+	// 0:	ClientSideLB
+	// 1:   DNSLB
+	// 2:   Passthrough
+	Resolution   int  `json:"Resolution,omitempty"`
+	MeshExternal bool `json:"MeshExternal,omitempty"`
+	// ResourceVersion attribute is not mapped into the model
+	// Kiali won't use it yet and it is only present on Istio 1.12.x
+}
+
+type RegistryStatus struct {
+	Configuration *RegistryConfiguration
+	Endpoints     []*RegistryEndpoint
+	Services      []*RegistryService
 }
 
 func (imc IstioMeshConfig) GetEnableAutoMtls() bool {

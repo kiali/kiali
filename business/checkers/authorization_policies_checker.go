@@ -13,17 +13,14 @@ import (
 const AuthorizationPolicyCheckerType = "authorizationpolicy"
 
 type AuthorizationPolicyChecker struct {
-	AuthorizationPolicies   []security_v1beta.AuthorizationPolicy
-	Namespace               string
-	Namespaces              models.Namespaces
-	ServiceEntries          []networking_v1alpha3.ServiceEntry
-	ExportedServiceEntries  []networking_v1alpha3.ServiceEntry
-	ServiceList             models.ServiceList
-	WorkloadList            models.WorkloadList
-	MtlsDetails             kubernetes.MTLSDetails
-	VirtualServices         []networking_v1alpha3.VirtualService
-	ExportedVirtualServices []networking_v1alpha3.VirtualService
-	RegistryStatus          []*kubernetes.RegistryStatus
+	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
+	Namespace             string
+	Namespaces            models.Namespaces
+	ServiceEntries        []networking_v1alpha3.ServiceEntry
+	WorkloadList          models.WorkloadList
+	MtlsDetails           kubernetes.MTLSDetails
+	VirtualServices       []networking_v1alpha3.VirtualService
+	RegistryServices      []*kubernetes.RegistryService
 }
 
 func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
@@ -39,6 +36,7 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 		Namespace:             a.Namespace,
 		AuthorizationPolicies: a.AuthorizationPolicies,
 		MtlsDetails:           a.MtlsDetails,
+		RegistryServices:      a.RegistryServices,
 	}.Check())
 
 	return validations
@@ -48,7 +46,7 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 func (a AuthorizationPolicyChecker) runChecks(authPolicy security_v1beta.AuthorizationPolicy) models.IstioValidations {
 	policyName := authPolicy.Name
 	key, rrValidation := EmptyValidValidation(policyName, authPolicy.Namespace, AuthorizationPolicyCheckerType)
-	serviceHosts := kubernetes.ServiceEntryHostnames(append(a.ServiceEntries, a.ExportedServiceEntries...))
+	serviceHosts := kubernetes.ServiceEntryHostnames(a.ServiceEntries)
 	matchLabels := make(map[string]string)
 	if authPolicy.Spec.Selector != nil {
 		matchLabels = authPolicy.Spec.Selector.MatchLabels
@@ -57,7 +55,7 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy security_v1beta.Authori
 		common.SelectorNoWorkloadFoundChecker(AuthorizationPolicyCheckerType, matchLabels, a.WorkloadList),
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
 		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, Namespace: a.Namespace, Namespaces: a.Namespaces,
-			ServiceEntries: serviceHosts, ServiceList: a.ServiceList, VirtualServices: a.VirtualServices, RegistryStatus: a.RegistryStatus},
+			ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices, RegistryServices: a.RegistryServices},
 	}
 
 	for _, checker := range enabledCheckers {

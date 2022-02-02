@@ -6,7 +6,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/models"
 )
 
 const (
@@ -21,15 +20,20 @@ type MtlsStatus struct {
 	PeerAuthentications []security_v1beta.PeerAuthentication
 	DestinationRules    []networking_v1alpha3.DestinationRule
 	MatchingLabels      labels.Labels
-	ServiceList         models.ServiceList
 	AutoMtlsEnabled     bool
 	AllowPermissive     bool
+	RegistryServices    []*kubernetes.RegistryService
 }
 
 type TlsStatus struct {
 	DestinationRuleStatus    string
 	PeerAuthenticationStatus string
 	OverallStatus            string
+}
+
+type NameNamespace struct {
+	Name      string
+	Namespace string
 }
 
 func (m MtlsStatus) hasPeerAuthnNamespacemTLSDefinition() string {
@@ -79,9 +83,13 @@ func (m MtlsStatus) WorkloadMtlsStatus() string {
 				// Filter DR that applies to the Services matching with the selector
 				// Fetch hosts from DRs and its mtls mode [details, ISTIO_STATUS]
 				// Filter Svc and extract its workloads selectors
-				filteredSvcs := m.ServiceList.FilterServicesForSelector(selector)
-				for _, svc := range filteredSvcs {
-					filteredDrs := kubernetes.FilterDestinationRules(m.DestinationRules, svc.Namespace, svc.Name)
+				filteredRSvcs := kubernetes.FilterRegistryServicesBySelector(selector, m.Namespace, m.RegistryServices)
+				nameNamespaces := []NameNamespace{}
+				for _, rSvc := range filteredRSvcs {
+					nameNamespaces = append(nameNamespaces, NameNamespace{rSvc.IstioService.Attributes.Name, rSvc.IstioService.Attributes.Namespace})
+				}
+				for _, nameNamespace := range nameNamespaces {
+					filteredDrs := kubernetes.FilterDestinationRulesByService(m.DestinationRules, nameNamespace.Namespace, nameNamespace.Name)
 					for _, dr := range filteredDrs {
 						enabled, mode := kubernetes.DestinationRuleHasMTLSEnabled(dr)
 						if enabled || mode == "MUTUAL" {
@@ -91,6 +99,7 @@ func (m MtlsStatus) WorkloadMtlsStatus() string {
 						}
 					}
 				}
+
 				return MTLSNotEnabled
 			}
 		}

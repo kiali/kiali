@@ -6,7 +6,6 @@ import (
 
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -30,9 +29,7 @@ func (s NoGatewayChecker) ValidateVirtualServiceGateways(validations *[]*models.
 	namespace := s.VirtualService.Namespace
 	clusterName := s.VirtualService.ClusterName
 	valid := true
-	if clusterName == "" {
-		clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
-	}
+
 	if len(s.VirtualService.Spec.Gateways) > 0 {
 		valid = s.checkGateways(s.VirtualService.Spec.Gateways, namespace, clusterName, validations, "spec")
 	}
@@ -51,6 +48,7 @@ func (s NoGatewayChecker) ValidateVirtualServiceGateways(validations *[]*models.
 }
 
 func (s NoGatewayChecker) checkGateways(gateways []string, namespace, clusterName string, validations *[]*models.IstioCheck, location string) bool {
+	result := true
 GatewaySearch:
 	for index, gate := range gateways {
 		if gate == "mesh" {
@@ -60,18 +58,19 @@ GatewaySearch:
 		// Gateways should be using <namespace>/<gateway>
 		checkNomenclature(gate, index, validations)
 
-		hostname := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName).String()
+		hostname := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName)
 		for gw := range s.GatewayNames {
-			if found := kubernetes.FilterByHost(hostname, gw, namespace); found {
+			gwHostname := kubernetes.ParseHost(gw, namespace, clusterName)
+			if found := kubernetes.FilterByHost(hostname.String(), hostname.Namespace, gw, gwHostname.Namespace); found {
 				continue GatewaySearch
 			}
 		}
 		path := fmt.Sprintf("%s/gateways[%d]", location, index)
 		validation := models.Build("virtualservices.nogateway", path)
 		*validations = append(*validations, &validation)
-		return false
+		result = false
 	}
-	return true
+	return result
 }
 
 func checkNomenclature(gateway string, index int, validations *[]*models.IstioCheck) {

@@ -22,10 +22,10 @@ func TestCorrectGateways(t *testing.T) {
 			"app": "real",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+	gws := []networking_v1alpha3.Gateway{*gwObject}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.Empty(vals)
@@ -49,10 +49,10 @@ func TestCaseMatching(t *testing.T) {
 			"app": "canidae",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+	gws := []networking_v1alpha3.Gateway{*gwObject}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -78,10 +78,10 @@ func TestDashSubdomainMatching(t *testing.T) {
 			"app": "canidae",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+	gws := []networking_v1alpha3.Gateway{*gwObject}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.Empty(vals)
@@ -105,10 +105,10 @@ func TestSameHostPortConfigInDifferentIngress(t *testing.T) {
 			"app": "istio-ingress-prv",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}, {*gwObject2}}
+	gws := []networking_v1alpha3.Gateway{*gwObject, *gwObject2}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.Equal(0, len(vals))
@@ -131,10 +131,10 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 			"app": "real",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}, {*gwObject2}}
+	gws := []networking_v1alpha3.Gateway{*gwObject, *gwObject2}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -168,10 +168,10 @@ func TestSameHostDifferentPortConfig(t *testing.T) {
 			"istio": "istio-ingress",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject, *gwObject2}}
+	gws := []networking_v1alpha3.Gateway{*gwObject, *gwObject2}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.Equal(0, len(vals))
@@ -200,10 +200,10 @@ func TestWildCardMatchingHost(t *testing.T) {
 			"istio": "istio-ingress",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}, {*gwObject2, *gwObject3}}
+	gws := []networking_v1alpha3.Gateway{*gwObject, *gwObject2, *gwObject3}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -240,10 +240,10 @@ func TestAnotherSubdomainWildcardCombination(t *testing.T) {
 			"app": "monotreme",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+	gws := []networking_v1alpha3.Gateway{*gwObject}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -269,10 +269,10 @@ func TestNoMatchOnSubdomainHost(t *testing.T) {
 			"app": "someother",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}}
+	gws := []networking_v1alpha3.Gateway{*gwObject}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.Empty(vals)
@@ -295,10 +295,10 @@ func TestTwoWildCardsMatching(t *testing.T) {
 			"istio": "istio-ingress",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject}, {*gwObject2}}
+	gws := []networking_v1alpha3.Gateway{*gwObject, *gwObject2}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -325,10 +325,10 @@ func TestDuplicateGatewaysErrorCount(t *testing.T) {
 			"app": "real",
 		}))
 
-	gws := [][]networking_v1alpha3.Gateway{{*gwObject, *gwObjectIdentical}}
+	gws := []networking_v1alpha3.Gateway{*gwObject, *gwObjectIdentical}
 
 	vals := MultiMatchChecker{
-		GatewaysPerNamespace: gws,
+		Gateways: gws,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -345,4 +345,120 @@ func TestDuplicateGatewaysErrorCount(t *testing.T) {
 	assert.Equal(2, len(duplicatevalidgateway.Checks))
 	assert.Equal("spec/servers[0]/hosts[0]", duplicatevalidgateway.Checks[0].Path)
 	assert.Equal("spec/servers[0]/hosts[1]", duplicatevalidgateway.Checks[1].Path)
+}
+
+// One Host can be defined for multiple target namespaces without conflict
+func TestNoMatchOnDifferentTargetNamespaces(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer(
+		[]string{
+			"test1/example.com",
+			"test2/example.com",
+		}, 80, "http", "http"),
+
+		data.CreateEmptyGateway("shouldbevalid", "test", map[string]string{
+			"app": "ingressgateway",
+		}))
+
+	gws := []networking_v1alpha3.Gateway{*gwObject}
+
+	vals := MultiMatchChecker{
+		Gateways: gws,
+	}.Check()
+
+	assert.Empty(vals)
+}
+
+// target Namespace '.' means that the Host is available in the Namespace of the Gateway resource
+func TestMatchOnSameTargetNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer(
+		[]string{
+			"test/example.com",
+			"./example.com",
+		}, 80, "http", "http"),
+
+		data.CreateEmptyGateway("shouldnotbevalid", "test", map[string]string{
+			"app": "ingressgateway",
+		}))
+
+	gws := []networking_v1alpha3.Gateway{*gwObject}
+
+	vals := MultiMatchChecker{
+		Gateways: gws,
+	}.Check()
+
+	assert.NotEmpty(vals)
+	assert.Equal(1, len(vals))
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "shouldnotbevalid"}]
+	assert.True(ok)
+	assert.True(validation.Valid)
+}
+
+// target Namespace * means that the Host is available in all namespaces
+func TestMatchOnWildcardTargetNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer(
+		[]string{
+			"test/example.com",
+			"*/example.com",
+		}, 80, "http", "http"),
+
+		data.CreateEmptyGateway("shouldnotbevalid", "test", map[string]string{
+			"app": "ingressgateway",
+		}))
+
+	gws := []networking_v1alpha3.Gateway{*gwObject}
+
+	vals := MultiMatchChecker{
+		Gateways: gws,
+	}.Check()
+
+	assert.NotEmpty(vals)
+	assert.Equal(1, len(vals))
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "shouldnotbevalid"}]
+	assert.True(ok)
+	assert.True(validation.Valid)
+}
+
+// having no target namespace set is the same as having * as target Namespace
+func TestMatchOnImplicitWildcardTargetNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer(
+		[]string{
+			"test/example.com",
+			"example.com",
+		}, 80, "http", "http"),
+
+		data.CreateEmptyGateway("shouldnotbevalid", "test", map[string]string{
+			"app": "ingressgateway",
+		}))
+
+	gws := []networking_v1alpha3.Gateway{*gwObject}
+
+	vals := MultiMatchChecker{
+		Gateways: gws,
+	}.Check()
+
+	assert.NotEmpty(vals)
+	assert.Equal(1, len(vals))
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "shouldnotbevalid"}]
+	assert.True(ok)
+	assert.True(validation.Valid)
 }

@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -192,7 +193,7 @@ func TestGrafanaWorking(t *testing.T) {
 	defer httpServ.Close()
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
-	icsl, error := iss.GetStatus()
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// Requests to AddOns have to be 1
@@ -217,7 +218,7 @@ func TestGrafanaDisabled(t *testing.T) {
 	config.Set(conf)
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
-	icsl, error := iss.GetStatus()
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// Only two Istio components are missing
@@ -255,7 +256,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 	config.Set(conf)
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
-	icsl, error := iss.GetStatus()
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// Grafana and two Istio comps missing
@@ -278,7 +279,7 @@ func TestFailingTracingService(t *testing.T) {
 	defer httpServ.Close()
 
 	iss := NewWithBackends(k8s, nil, mockFailingJaeger).IstioStatus
-	icsl, error := iss.GetStatus()
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// Requests to AddOns have to be 1
@@ -299,7 +300,7 @@ func TestOverriddenUrls(t *testing.T) {
 	defer httpServ.Close()
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
-	icsl, error := iss.GetStatus()
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// Requests to AddOns have to be 1
@@ -324,7 +325,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	config.Set(conf)
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
-	icsl, error := iss.GetStatus()
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
 	// Requests to AddOns have to be 1
@@ -344,7 +345,7 @@ func TestNoIstioComponentFoundError(t *testing.T) {
 	defer httpServ.Close()
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
-	_, error := iss.GetStatus()
+	_, error := iss.GetStatus(context.TODO())
 	assert.Error(error)
 }
 
@@ -362,7 +363,7 @@ func TestDefaults(t *testing.T) {
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 
-	icsl, err := iss.GetStatus()
+	icsl, err := iss.GetStatus(context.TODO())
 	assert.NoError(err)
 	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, true)
 	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
@@ -403,7 +404,7 @@ func TestNonDefaults(t *testing.T) {
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 
-	icsl, error := iss.GetStatus()
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, false)
 	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
@@ -447,7 +448,7 @@ func TestIstiodNotReady(t *testing.T) {
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 
-	icsl, error := iss.GetStatus()
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, false)
 	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
@@ -494,7 +495,7 @@ func TestIstiodUnreachable(t *testing.T) {
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 
-	icsl, error := iss.GetStatus()
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, false)
 	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
@@ -542,7 +543,7 @@ func TestCustomizedAppLabel(t *testing.T) {
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 
-	icsl, error := iss.GetStatus()
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, false)
 	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
@@ -587,7 +588,7 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 
-	icsl, error := iss.GetStatus()
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
 
@@ -633,7 +634,7 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 
-	icsl, error := iss.GetStatus()
+	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 	assertComponent(assert, icsl, "istio-ingressgateway", Unhealthy, false)
 	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
