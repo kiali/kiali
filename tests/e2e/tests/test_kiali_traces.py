@@ -12,8 +12,11 @@ def test_service_traces_endpoint(kiali_client):
     if response.status_code == 404 or response.status_code == 500:
         pytest.skip()  
     elif response.status_code == 200:
-        traceID = response.json().get('data')[0].get('traceID')
-        assert traceID != None
+        data = response.json().get('data')
+        assert data != None, f"Data not found in json: {response.json()}"
+        assert len(data) != 0, f"Data not found in json: {response.json()}"
+        traceID = data[0].get('traceID')
+        assert traceID != None, f"TraceID not found in json: {response.json()}"
         spans_list = response.json().get('data')[0].get('spans')
         assert spans_list != None
         for traceID in spans_list:
@@ -26,8 +29,11 @@ def test_workload_traces_endpoint(kiali_client):
     if response.status_code == 404 or response.status_code == 500:
         pytest.skip()  
     elif response.status_code == 200:
-        traceID = response.json().get('data')[0].get('traceID')
-        assert traceID != None
+        data = response.json().get('data')
+        assert data != None, f"Data not found in json: {response.json()}"
+        assert len(data) != 0, f"Data not found in json: {response.json()}"
+        traceID = data[0].get('traceID')
+        assert traceID != None, f"TraceID not found in json: {response.json()}"
         spans_list = response.json().get('data')[0].get('spans')
         assert spans_list != None
         for traceID in spans_list:
@@ -40,8 +46,11 @@ def test_app_traces_endpoint(kiali_client):
     if response.status_code == 404 or response.status_code == 500:
         pytest.skip()  
     elif response.status_code == 200:
-        traceID = response.json().get('data')[0].get('traceID')
-        assert traceID != None
+        data = response.json().get('data')
+        assert data != None, f"Data not found in json: {response.json()}"
+        assert len(data) != 0, f"Data not found in json: {response.json()}"
+        traceID = data[0].get('traceID')
+        assert traceID != None, f"TraceID not found in json: {response.json()}"
         spans_list = response.json().get('data')[0].get('spans')
         assert spans_list != None
         for traceID in spans_list:
