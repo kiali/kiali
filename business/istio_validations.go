@@ -37,7 +37,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("service", service),
-    observability.Attribute("workload", workload),
+		observability.Attribute("workload", workload),
 	)
 	defer end()
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
@@ -291,7 +291,7 @@ func (in *IstioValidationsService) fetchServices(ctx context.Context, rValue *mo
 func (in *IstioValidationsService) fetchWorkloads(ctx context.Context, rValue *models.WorkloadList, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		criteria := WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false}
+		criteria := WorkloadCriteria{Namespace: namespace, IncludeIstioResources: true}
 		workloadList, err := in.businessLayer.Workload.GetWorkloadList(ctx, criteria)
 		if err != nil {
 			select {
@@ -315,7 +315,7 @@ func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue
 		}
 		allWorkloads := map[string]models.WorkloadList{}
 		for _, ns := range nss {
-			criteria := WorkloadCriteria{Namespace: ns.Name, IncludeIstioResources: false}
+			criteria := WorkloadCriteria{Namespace: ns.Name, IncludeIstioResources: true}
 			workloadList, err := in.businessLayer.Workload.GetWorkloadList(ctx, criteria)
 			if err != nil {
 				select {
