@@ -237,6 +237,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Deployment exposing same port as Service not found",
 		Severity: WarningSeverity,
 	},
+	"serviceentries.workloadentries.addressmatch": {
+		Code:     "KIA1201",
+		Message:  "Missing one or more addresses from matching WorkloadEntries",
+		Severity: WarningSeverity,
+	},
 	"servicerole.invalid.services": {
 		Code:     "KIA0901",
 		Message:  "Unable to find all the defined services",

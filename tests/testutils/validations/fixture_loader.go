@@ -2,6 +2,9 @@ package validations
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
 	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
@@ -9,11 +12,8 @@ import (
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 
-	"encoding/json"
-	"fmt"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"io"
 )
 
 type FixtureLoader interface {
@@ -149,6 +149,24 @@ func (l YamlFixtureLoader) FindDestinationRule(name, namespace string) *networki
 
 func (l YamlFixtureLoader) FindVirtualService(name, namespace string) *networking_v1alpha3.VirtualService {
 	for _, v := range l.istioConfigList.VirtualServices {
+		if v.Name == name && v.Namespace == namespace {
+			return &v
+		}
+	}
+	return nil
+}
+
+func (l YamlFixtureLoader) FindServiceEntry(name, namespace string) *networking_v1alpha3.ServiceEntry {
+	for _, v := range l.istioConfigList.ServiceEntries {
+		if v.Name == name && v.Namespace == namespace {
+			return &v
+		}
+	}
+	return nil
+}
+
+func (l YamlFixtureLoader) FindWorkloadEntry(name, namespace string) *networking_v1alpha3.WorkloadEntry {
+	for _, v := range l.istioConfigList.WorkloadEntries {
 		if v.Name == name && v.Namespace == namespace {
 			return &v
 		}
