@@ -154,12 +154,12 @@ func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInter
 	temporaryLayer.ProxyStatus = ProxyStatusService{k8s: k8s, businessLayer: temporaryLayer}
 	// Out of order because it relies on ProxyStatus
 	temporaryLayer.ProxyLogging = ProxyLoggingService{k8s: k8s, proxyStatus: &temporaryLayer.ProxyStatus}
+	temporaryLayer.References = IstioReferencesService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.RegistryStatus = RegistryStatusService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.TokenReview = NewTokenReview(k8s)
 	temporaryLayer.Validations = IstioValidationsService{k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.References = IstioReferencesService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Workload = WorkloadService{k8s: k8s, prom: prom, businessLayer: temporaryLayer}
 
 	return temporaryLayer

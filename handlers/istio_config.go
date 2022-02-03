@@ -99,7 +99,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		includeValidations = true
 	}
 
-	includeReferences := false
+	includeReferences := true
 	if _, found := query["references"]; found {
 		includeReferences = true
 	}

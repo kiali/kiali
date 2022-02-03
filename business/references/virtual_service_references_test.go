@@ -1,6 +1,7 @@
 package references
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +10,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func prepareTestForVirtualService(vs *networking_v1alpha3.VirtualService) models.IstioReferences {
@@ -30,15 +32,30 @@ func TestVirtualServiceReferences(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForVirtualService(fakeVirtualServices())
+	references := prepareTestForVirtualService(fakeVirtualService(t))
 	assert.NotEmpty(references.ServiceReferences)
 
 	// Check Service references
 	assert.Len(references.ServiceReferences, 2)
-	assert.Equal(references.ServiceReferences[1].Name, "reviews")
-	assert.Equal(references.ServiceReferences[1].Namespace, "bookinfo")
-	assert.Equal(references.ServiceReferences[0].Name, "reviews2")
+	assert.Equal(references.ServiceReferences[0].Name, "reviews")
 	assert.Equal(references.ServiceReferences[0].Namespace, "bookinfo")
+	assert.Equal(references.ServiceReferences[1].Name, "reviews2")
+	assert.Equal(references.ServiceReferences[1].Namespace, "bookinfo")
+
+	// Check Gateway references
+	assert.Len(references.ObjectReferences, 4)
+	assert.Equal(references.ObjectReferences[0].Name, "gateway1")
+	assert.Equal(references.ObjectReferences[0].Namespace, "bookinfo")
+	assert.Equal(references.ObjectReferences[0].ObjectType, "gateway")
+	assert.Equal(references.ObjectReferences[1].Name, "gateway2")
+	assert.Equal(references.ObjectReferences[1].Namespace, "bookinfo2")
+	assert.Equal(references.ObjectReferences[1].ObjectType, "gateway")
+	assert.Equal(references.ObjectReferences[2].Name, "mesh")
+	assert.Equal(references.ObjectReferences[2].Namespace, "")
+	assert.Equal(references.ObjectReferences[2].ObjectType, "gateway")
+	assert.Equal(references.ObjectReferences[3].Name, "valid-gateway")
+	assert.Equal(references.ObjectReferences[3].Namespace, "bookinfo")
+	assert.Equal(references.ObjectReferences[3].ObjectType, "gateway")
 }
 
 func TestVirtualServiceNoReferences(t *testing.T) {
@@ -55,7 +72,7 @@ func TestVirtualServiceMultipleReferences(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	references := prepareTestForVirtualService(fakeVirtualServicesMultipleExported())
+	references := prepareTestForVirtualService(fakeVirtualServiceMultipleExported())
 	assert.NotEmpty(references.ServiceReferences)
 
 	// Check Service references
@@ -68,17 +85,22 @@ func TestVirtualServiceMultipleReferences(t *testing.T) {
 	assert.Equal(references.ServiceReferences[2].Namespace, "bookinfo3")
 }
 
-func fakeVirtualServices() *networking_v1alpha3.VirtualService {
-	validVirtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews.bookinfo.svc.cluster.local", "v1", 55),
-		data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews2.bookinfo.svc.cluster.local", "v2", 45),
-			data.CreateEmptyVirtualService("reviews-well", "bookinfo", []string{"reviews.prod.svc.cluster.local"}),
-		),
-	)
-
-	return validVirtualService
+func yamlFixtureLoader(file string) *validations.YamlFixtureLoader {
+	path := fmt.Sprintf("../../tests/data/references/virtualservices/%s", file)
+	return &validations.YamlFixtureLoader{Filename: path}
 }
 
-func fakeVirtualServicesMultipleExported() *networking_v1alpha3.VirtualService {
+func fakeVirtualService(t *testing.T) *networking_v1alpha3.VirtualService {
+	loader := yamlFixtureLoader("multiple-gateways.yaml")
+	err := loader.Load()
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
+
+	return loader.FindVirtualService("reviews-well", "bookinfo")
+}
+
+func fakeVirtualServiceMultipleExported() *networking_v1alpha3.VirtualService {
 	virtualService := data.CreateEmptyVirtualService("reviews-multiple", "bookinfo", []string{})
 	validVirtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews.bookinfo.svc.cluster.local", "v1", 33), virtualService)
 	validVirtualService = data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("reviews2.bookinfo2.svc.cluster.local", "v2", 33),

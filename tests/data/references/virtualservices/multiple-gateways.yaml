@@ -1,0 +1,27 @@
+kind: VirtualService
+apiVersion: networking.istio.io/v1alpha3
+metadata:
+  name: reviews-well
+  namespace: bookinfo
+spec:
+  hosts:
+    - 'reviews.prod.svc.cluster.local'
+  gateways:
+    - gateway1
+    - bookinfo2/gateway2
+    - mesh
+  http:
+    - match:
+        - gateways:
+            - valid-gateway
+        - uri:
+            exact: /static
+      route:
+        - destination:
+            host: reviews.bookinfo.svc.cluster.local
+            subset: v1
+          weight: 33
+        - destination:
+            host: reviews2
+            subset: v2
+          weight: 67
