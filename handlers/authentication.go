@@ -329,16 +329,6 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		case config.AuthStrategyOpenshift:
 			statusCode, token = checkOpenshiftSession(w, r)
 			authInfo = &api.AuthInfo{Token: token}
-		//case config.AuthStrategyOpenId:
-		//	statusCode, token = checkOpenIdSession(w, r)
-		//	if conf.Auth.OpenId.DisableRBAC {
-		//		// If RBAC is off, it's assumed that the kubernetes cluster will reject the OpenId token.
-		//		// Instead, we use the Kiali token an this has the side effect that all users will share the
-		//		// same privileges.
-		//		token = aHandler.saToken
-		//	}
-		//
-		//	authInfo = &api.AuthInfo{Token: token}
 		case config.AuthStrategyToken, config.AuthStrategyOpenId:
 			session, validateErr := authentication.GetAuthController().ValidateSession(r, w)
 			if validateErr != nil {
