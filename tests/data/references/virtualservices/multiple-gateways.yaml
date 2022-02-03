@@ -25,3 +25,13 @@ spec:
             host: reviews2
             subset: v2
           weight: 67
+  tls:
+    - match:
+        - gateways:
+            - valid-gateway2
+        - port: 443
+          sniHosts:
+            - reviews.bookinfo.com
+      route:
+        - destination:
+            host: reviews3.bookinfo3.svc.cluster.local

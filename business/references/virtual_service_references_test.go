@@ -36,14 +36,16 @@ func TestVirtualServiceReferences(t *testing.T) {
 	assert.NotEmpty(references.ServiceReferences)
 
 	// Check Service references
-	assert.Len(references.ServiceReferences, 2)
+	assert.Len(references.ServiceReferences, 3)
 	assert.Equal(references.ServiceReferences[0].Name, "reviews")
 	assert.Equal(references.ServiceReferences[0].Namespace, "bookinfo")
 	assert.Equal(references.ServiceReferences[1].Name, "reviews2")
 	assert.Equal(references.ServiceReferences[1].Namespace, "bookinfo")
+	assert.Equal(references.ServiceReferences[2].Name, "reviews3")
+	assert.Equal(references.ServiceReferences[2].Namespace, "bookinfo3")
 
 	// Check Gateway references
-	assert.Len(references.ObjectReferences, 4)
+	assert.Len(references.ObjectReferences, 5)
 	assert.Equal(references.ObjectReferences[0].Name, "gateway1")
 	assert.Equal(references.ObjectReferences[0].Namespace, "bookinfo")
 	assert.Equal(references.ObjectReferences[0].ObjectType, "gateway")
@@ -56,6 +58,9 @@ func TestVirtualServiceReferences(t *testing.T) {
 	assert.Equal(references.ObjectReferences[3].Name, "valid-gateway")
 	assert.Equal(references.ObjectReferences[3].Namespace, "bookinfo")
 	assert.Equal(references.ObjectReferences[3].ObjectType, "gateway")
+	assert.Equal(references.ObjectReferences[4].Name, "valid-gateway2")
+	assert.Equal(references.ObjectReferences[4].Namespace, "bookinfo")
+	assert.Equal(references.ObjectReferences[4].ObjectType, "gateway")
 }
 
 func TestVirtualServiceNoReferences(t *testing.T) {
@@ -66,23 +71,6 @@ func TestVirtualServiceNoReferences(t *testing.T) {
 	// Setup mocks
 	references := prepareTestForVirtualService(data.CreateEmptyVirtualService("reviews-well", "bookinfo", []string{"reviews.prod.svc.cluster.local"}))
 	assert.Empty(references.ServiceReferences)
-}
-
-func TestVirtualServiceMultipleReferences(t *testing.T) {
-	assert := assert.New(t)
-
-	// Setup mocks
-	references := prepareTestForVirtualService(fakeVirtualServiceMultipleExported())
-	assert.NotEmpty(references.ServiceReferences)
-
-	// Check Service references
-	assert.Len(references.ServiceReferences, 3)
-	assert.Equal(references.ServiceReferences[0].Name, "reviews")
-	assert.Equal(references.ServiceReferences[0].Namespace, "bookinfo")
-	assert.Equal(references.ServiceReferences[1].Name, "reviews2")
-	assert.Equal(references.ServiceReferences[1].Namespace, "bookinfo2")
-	assert.Equal(references.ServiceReferences[2].Name, "reviews3")
-	assert.Equal(references.ServiceReferences[2].Namespace, "bookinfo3")
 }
 
 func yamlFixtureLoader(file string) *validations.YamlFixtureLoader {
@@ -98,15 +86,4 @@ func fakeVirtualService(t *testing.T) *networking_v1alpha3.VirtualService {
 	}
 
 	return loader.FindVirtualService("reviews-well", "bookinfo")
-}
-
-func fakeVirtualServiceMultipleExported() *networking_v1alpha3.VirtualService {
-	virtualService := data.CreateEmptyVirtualService("reviews-multiple", "bookinfo", []string{})
-	validVirtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews.bookinfo.svc.cluster.local", "v1", 33), virtualService)
-	validVirtualService = data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("reviews2.bookinfo2.svc.cluster.local", "v2", 33),
-		validVirtualService)
-	validVirtualService = data.AddTlsRoutesToVirtualService(data.CreateTlsRoute("reviews3.bookinfo3.svc.cluster.local", "v2", 34),
-		validVirtualService)
-
-	return validVirtualService
 }
