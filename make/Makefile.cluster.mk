@@ -18,15 +18,19 @@
 	@$(eval CLUSTER_OPERATOR_INTERNAL_NAME ?= ${CLUSTER_REPO_INTERNAL}/${OPERATOR_CONTAINER_NAME})
 	@$(eval CLUSTER_OPERATOR_NAME ?= ${CLUSTER_REPO}/${OPERATOR_CONTAINER_NAME})
 	@$(eval CLUSTER_OPERATOR_TAG ?= ${CLUSTER_OPERATOR_NAME}:${OPERATOR_CONTAINER_VERSION})
+	@$(eval KIALI_IMAGE_NAMESPACE ?= $(shell echo ${CLUSTER_KIALI_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/'))
+	@$(eval OPERATOR_IMAGE_NAMESPACE ?= $(shell echo ${CLUSTER_OPERATOR_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/'))
 	@if [ "${CLUSTER_REPO_INTERNAL}" == "" -o "${CLUSTER_REPO_INTERNAL}" == "<none>" ]; then echo "Cannot determine OCP internal registry hostname. Make sure you 'oc login' to your cluster."; exit 1; fi
 	@if [ "${CLUSTER_REPO}" == "" -o "${CLUSTER_REPO}" == "<none>" ]; then echo "Cannot determine OCP external registry hostname. The OpenShift image registry has not been made available for external client access"; exit 1; fi
 	@echo "OCP repos: external=[${CLUSTER_REPO}] internal=[${CLUSTER_REPO_INTERNAL}]"
-	@${OC} get namespace $(shell echo ${CLUSTER_KIALI_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/') > /dev/null 2>&1 || \
-     ${OC} create namespace $(shell echo ${CLUSTER_KIALI_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/') > /dev/null 2>&1
-	@${OC} policy add-role-to-group system:image-puller system:serviceaccounts:${NAMESPACE} --namespace=$(shell echo ${CLUSTER_KIALI_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/') > /dev/null 2>&1
-	@${OC} get namespace $(shell echo ${CLUSTER_OPERATOR_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/') > /dev/null 2>&1 || \
-     ${OC} create namespace $(shell echo ${CLUSTER_OPERATOR_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/') > /dev/null 2>&1
-	@${OC} policy add-role-to-group system:image-puller system:serviceaccounts:${OPERATOR_NAMESPACE} --namespace=$(shell echo ${CLUSTER_OPERATOR_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/') > /dev/null 2>&1
+	@${OC} get namespace ${KIALI_IMAGE_NAMESPACE} &> /dev/null || \
+	  ${OC} create namespace ${KIALI_IMAGE_NAMESPACE} &> /dev/null
+	@${OC} policy add-role-to-group system:image-puller system:serviceaccounts:${NAMESPACE} --namespace=${KIALI_IMAGE_NAMESPACE} &> /dev/null
+	@${OC} get namespace ${OPERATOR_IMAGE_NAMESPACE} &> /dev/null || \
+	  ${OC} create namespace ${OPERATOR_IMAGE_NAMESPACE} &> /dev/null
+	@${OC} policy add-role-to-group system:image-puller system:serviceaccounts:${OPERATOR_NAMESPACE} --namespace=${OPERATOR_IMAGE_NAMESPACE} &> /dev/null
+	@# we need to make sure the 'default' service account is created - we'll need it later for the pull secret
+	@for i in {1..5}; do ${OC} get sa default -n ${OPERATOR_IMAGE_NAMESPACE} &> /dev/null && break || echo -n "." && sleep 1; done; echo
 
 .prepare-minikube: .ensure-oc-exists .ensure-minikube-exists
 	@$(eval CLUSTER_REPO_INTERNAL ?= localhost:5000)

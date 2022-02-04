@@ -12,13 +12,32 @@
 	done ; \
 	exit 0
 
+.prepare-operator-pull-secret: .prepare-cluster
+ifeq ($(CLUSTER_TYPE),openshift)
+	@# base64 encode a pull secret (using the 'default' sa secret) that can be used to pull the operator image from the OpenShift internal registry
+	@$(eval OPERATOR_IMAGE_PULL_SECRET_JSON = $(shell ${OC} registry login --registry="$(shell ${OC} registry info --internal)" --namespace=${OPERATOR_IMAGE_NAMESPACE} -z default --to=- | base64 -w0))
+	@$(eval OPERATOR_IMAGE_PULL_SECRET_NAME ?= kiali-operator-pull-secret)
+else
+	@$(eval OPERATOR_IMAGE_PULL_SECRET_JSON = )
+	@$(eval OPERATOR_IMAGE_PULL_SECRET_NAME = )
+endif
+
+.create-operator-pull-secret: .prepare-operator-pull-secret
+	@if [ -n "${OPERATOR_IMAGE_PULL_SECRET_JSON}" ] && ! (${OC} get secret ${OPERATOR_IMAGE_PULL_SECRET_NAME} --namespace ${OPERATOR_NAMESPACE} &> /dev/null); then \
+		echo "${OPERATOR_IMAGE_PULL_SECRET_JSON}" | base64 -d > /tmp/kiali-operator-pull-secret.json; \
+		${OC} get namespace ${OPERATOR_NAMESPACE} &> /dev/null || ${OC} create namespace ${OPERATOR_NAMESPACE}; \
+		${OC} create secret generic ${OPERATOR_IMAGE_PULL_SECRET_NAME} --from-file=.dockerconfigjson=/tmp/kiali-operator-pull-secret.json --type=kubernetes.io/dockerconfigjson --namespace=${OPERATOR_NAMESPACE}; \
+		${OC} label secret ${OPERATOR_IMAGE_PULL_SECRET_NAME} --namespace ${OPERATOR_NAMESPACE} app.kubernetes.io/name=kiali-operator; \
+		rm /tmp/kiali-operator-pull-secret.json; \
+	fi
+
 ## operator-create: Deploy the Kiali operator to the cluster using the install script.
 # By default, this target will not deploy Kiali - it will only deploy the operator.
 # You can tell it to also install Kiali by setting OPERATOR_INSTALL_KIALI=true.
 # The Kiali operator does not create secrets, but this calls the install script
 # which can create a Kiali secret for you as a convienence so you don't have
 # to remember to do it yourself. It will only do this if it was told to install Kiali.
-operator-create: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists .find-helm-exe operator-delete .ensure-operator-ns-does-not-exist .prepare-cluster
+operator-create: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists .find-helm-exe operator-delete .ensure-operator-ns-does-not-exist .create-operator-pull-secret
 	@echo Deploy Operator
 	${ROOTDIR}/operator/deploy/deploy-kiali-operator.sh \
     --helm-chart                    "$(shell ls -dt1 ${HELM_CHARTS_REPO}/_output/charts/kiali-operator*.tgz | head -n 1)" \
@@ -26,6 +45,7 @@ operator-create: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists
     --helm-set                      "debug.enableProfiler=${OPERATOR_PROFILER_ENABLED}" \
     --helm-set                      "allowAdHocKialiNamespace=${OPERATOR_ALLOW_AD_HOC_KIALI_NAMESPACE}" \
     --helm-set                      "allowAdHocKialiImage=${OPERATOR_ALLOW_AD_HOC_KIALI_IMAGE}" \
+    --helm-set                      "image.pullSecrets={${OPERATOR_IMAGE_PULL_SECRET_NAME}}" \
     --operator-cluster-role-creator "true" \
     --operator-image-name           "${CLUSTER_OPERATOR_INTERNAL_NAME}" \
     --operator-image-pull-policy    "${OPERATOR_IMAGE_PULL_POLICY}" \
@@ -45,7 +65,7 @@ operator-create: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists
 ## operator-delete: Remove the Kiali operator resources from the cluster along with Kiali itself
 operator-delete: .ensure-oc-exists kiali-delete kiali-purge
 	@echo Remove Operator
-	${OC} delete --ignore-not-found=true all,sa,deployments --selector="app.kubernetes.io/name=kiali-operator" -n "${OPERATOR_NAMESPACE}"
+	${OC} delete --ignore-not-found=true all,sa,deployments,secrets --selector="app.kubernetes.io/name=kiali-operator" -n "${OPERATOR_NAMESPACE}"
 	${OC} delete --ignore-not-found=true clusterroles,clusterrolebindings --selector="app.kubernetes.io/name=kiali-operator"
 	${OC} delete --ignore-not-found=true customresourcedefinitions kialis.kiali.io
 	${OC} delete --ignore-not-found=true customresourcedefinitions monitoringdashboards.monitoring.kiali.io
