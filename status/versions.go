@@ -120,7 +120,33 @@ func CheckMeshVersion(meshName string, meshVersion string, kialiVersion string) 
 	} else if strings.Contains(meshName, "Maistra") {
 		ok = checkMaistraVersion(meshVersion, kialiVersion)
 		return ok
+	} else if strings.Contains(meshName, "OpenShift Service Mesh") {
+		ok = checkOSSMVersion(meshVersion, kialiVersion)
+		return ok
 	}
+	return ok
+}
+
+// checkOSSMVersion check OpenShift Service Mesh if its version is compatible with kiali
+func checkOSSMVersion(ossmVersion string, kialiVersion string) bool {
+	ok := false
+	Versions, err := config.NewVersions()
+
+	if err != nil {
+		log.Warningf("Can not load version file.%v", err)
+	}
+
+	for _, version := range Versions {
+		if version.MeshName == "OpenShift Service Mesh" {
+			for _, versions := range version.VersionRange {
+				if ossmVersion == strings.TrimSpace(versions.MeshVersion) && kialiVersion == strings.TrimSpace(versions.KialiMinimumVersion) {
+					ok = true
+					break
+				}
+			}
+		}
+	}
+
 	return ok
 }
 
@@ -135,10 +161,9 @@ func checkMaistraVersion(maistraVersion string, kialiVersion string) bool {
 
 	for _, version := range Versions {
 		if version.MeshName == "Maistra" {
-			for _, version := range version.VersionRange {
-				if maistraVersion == version.MeshVersion && kialiVersion == strings.TrimSpace(version.KialiMinimumVersion) {
+			for _, versions := range version.VersionRange {
+				if maistraVersion == strings.TrimSpace(versions.MeshVersion) && kialiVersion == strings.TrimSpace(versions.KialiMinimumVersion) {
 					ok = true
-					// SMCPVersion := strings.TrimSpace(version.SMCPVersion)
 					break
 				}
 			}
@@ -159,11 +184,10 @@ func checkIstioVersion(istioVersion string, kialiVersion string) bool {
 
 	for _, version := range Versions {
 		if version.MeshName == "Istio" {
-			for _, version := range version.VersionRange {
-				if strings.Contains(istioVersion, version.MeshVersion) {
-					minimumVersion := strings.TrimSpace(version.KialiMinimumVersion)
-					maximumVersion := strings.TrimSpace(version.KialiMaximumVersion)
-					// fmt.Printf("Low: %v High: %v istioVersion: %v KialiVersion: %v\n", low, high, istioVersion, kialiVersion)
+			for _, versions := range version.VersionRange {
+				if strings.Contains(istioVersion, versions.MeshVersion) {
+					minimumVersion := strings.TrimSpace(versions.KialiMinimumVersion)
+					maximumVersion := strings.TrimSpace(versions.KialiMaximumVersion)
 					ok = checkRange(minimumVersion, maximumVersion, kialiVersion)
 					break
 				}
