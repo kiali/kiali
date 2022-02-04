@@ -127,6 +127,10 @@ type openIdAuthController struct {
 // given persistor and the given businessInstantiator. The businessInstantiator can be nil and
 // the initialized contoller will use the business.Get function.
 func NewOpenIdAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *openIdAuthController {
+	if businessInstantiator == nil {
+		businessInstantiator = business.Get
+	}
+
 	return &openIdAuthController{
 		businessInstantiator: businessInstantiator,
 		SessionStore:         persistor,
