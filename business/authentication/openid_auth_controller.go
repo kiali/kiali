@@ -312,8 +312,12 @@ func (c openIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Requ
 	flow := openidFlowHelper{businessInstantiator: c.businessInstantiator}
 	flow.
 		extractOpenIdCallbackParams(r).
-		callbackCleanup(w).
 		checkOpenIdAuthorizationCodeFlowParams().
+		// We cannot do a cleanup if we are not handling the auth here. So,
+		// the callbackCleanup func cannot be called before checkOpenIdAuthorizationCodeFlowParams().
+		// It may sound reasonable to do a cleanup as early as possible (i.e. delete cookies), however
+		// if we do it, we break the "implicit" flow, because the requried cookies will no longer exist.
+		callbackCleanup(w).
 		validateOpenIdState().
 		requestOpenIdToken(httputil.GuessKialiURL(r)).
 		parseOpenIdToken().
@@ -534,13 +538,16 @@ func (p *openidFlowHelper) extractOpenIdCallbackParams(r *http.Request) *openidF
 
 	// Get the nonce code hash
 	var nonceCookie *http.Cookie
+	log.Errorf("Try to check nonce cookie")
 	if nonceCookie, err = r.Cookie(OpenIdNonceCookieName); err == nil {
+		log.Errorf("Nonce cookie = %v", nonceCookie.Value)
 		p.Nonce = nonceCookie.Value
 
 		hash := sha256.Sum224([]byte(nonceCookie.Value))
 		p.NonceHash = make([]byte, sha256.Size224)
 		copy(p.NonceHash, hash[:])
 	}
+	log.Errorf("Finish try to check nonce cookie")
 
 	// Parse/fetch received form data
 	err = r.ParseForm()
