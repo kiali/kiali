@@ -141,6 +141,12 @@ func TestParseIstioRawVersion(t *testing.T) {
 			supported:  true,
 		},
 		{
+			rawVersion: "1.10-dev-65a124dc2ab69f91331298fbf6d9b4335abcf0fd-Clean",
+			name:       "Istio Dev",
+			version:    "1.10 (dev 65a124dc2ab69f91331298fbf6d9b4335abcf0fd)",
+			supported:  true,
+		},
+		{
 			rawVersion: "root@f72e3d3ef3c2-docker.io/1.6.0-beta.0",
 			name:       "Istio RC",
 			version:    "1.6.0 (beta.0)",
