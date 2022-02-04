@@ -17,9 +17,9 @@ import { KialiAppState } from '../../store/Store';
 import { PFColors } from '../Pf/PfColors';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 import { Layout } from '../../types/Graph';
-import { ColaGraph } from './graphs/ColaGraph';
-import { CoseGraph } from './graphs/CoseGraph';
+import { ConcentricGraph } from './graphs/ConcentricGraph';
 import { DagreGraph } from './graphs/DagreGraph';
+import { GridGraph } from './graphs/GridGraph';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphActions } from '../../actions/GraphActions';
 import { HistoryManager, URLParam } from '../../app/History';
@@ -160,20 +160,20 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
 
         <TourStopContainer info={GraphTourStops.Layout}>
           <ToolbarItem>
-            <Tooltip content={'Layout 1 ' + CoseGraph.getLayout().name} position={TooltipPosition.right}>
+            <Tooltip content={'Layout 1 ' + GridGraph.getLayout().name} position={TooltipPosition.right}>
               <Button
                 id="toolbar_layout1"
                 aria-label="Graph Layout Style 1"
                 className={buttonStyle}
-                isActive={this.props.layout.name === CoseGraph.getLayout().name}
+                isActive={this.props.layout.name === GridGraph.getLayout().name}
                 isDisabled={this.props.disabled}
                 onClick={() => {
-                  this.setLayout(CoseGraph.getLayout());
+                  this.setLayout(GridGraph.getLayout());
                 }}
                 variant="plain"
               >
                 <TopologyIcon
-                  className={this.props.layout.name === CoseGraph.getLayout().name ? activeButtonStyle : undefined}
+                  className={this.props.layout.name === GridGraph.getLayout().name ? activeButtonStyle : undefined}
                 />
               </Button>
             </Tooltip>
@@ -181,20 +181,20 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
         </TourStopContainer>
 
         <ToolbarItem>
-          <Tooltip content={'Layout 2 ' + ColaGraph.getLayout().name} position={TooltipPosition.right}>
+          <Tooltip content={'Layout 2 ' + ConcentricGraph.getLayout().name} position={TooltipPosition.right}>
             <Button
               id="toolbar_layout2"
               aria-label="Graph Layout Style 2"
               className={buttonStyle}
-              isActive={this.props.layout.name === ColaGraph.getLayout().name}
+              isActive={this.props.layout.name === ConcentricGraph.getLayout().name}
               isDisabled={this.props.disabled}
               onClick={() => {
-                this.setLayout(ColaGraph.getLayout());
+                this.setLayout(ConcentricGraph.getLayout());
               }}
               variant="plain"
             >
               <TopologyIcon
-                className={this.props.layout.name === ColaGraph.getLayout().name ? activeButtonStyle : undefined}
+                className={this.props.layout.name === ConcentricGraph.getLayout().name ? activeButtonStyle : undefined}
               />
             </Button>
           </Tooltip>

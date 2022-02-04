@@ -1,12 +1,11 @@
-export class ColaGraph {
+export class GridGraph {
   static getLayout() {
     return {
-      name: 'cola',
+      name: 'grid',
       animate: false,
       fit: false,
-      flow: { axis: 'x' },
       nodeDimensionsIncludeLabels: true,
-      randomize: false
+      padding: 0
     };
   }
 }

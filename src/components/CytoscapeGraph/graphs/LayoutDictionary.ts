@@ -1,12 +1,12 @@
-import { ColaGraph } from './ColaGraph';
-import { CoseGraph } from './CoseGraph';
 import { DagreGraph } from './DagreGraph';
 import { Layout } from '../../../types/Graph';
+import { GridGraph } from './GridGraph';
+import { ConcentricGraph } from './ConcentricGraph';
 
 const LayoutMap = {
-  cola: ColaGraph.getLayout(),
   dagre: DagreGraph.getLayout(),
-  'cose-bilkent': CoseGraph.getLayout()
+  grid: GridGraph.getLayout(),
+  concentric: ConcentricGraph.getLayout()
 };
 
 const getLayout = (layout: Layout) =>

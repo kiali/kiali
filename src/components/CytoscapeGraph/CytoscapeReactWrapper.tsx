@@ -4,17 +4,13 @@ import * as Cy from 'cytoscape';
 import { GraphStyles } from './graphs/GraphStyles';
 import canvas from 'cytoscape-canvas';
 import cytoscape from 'cytoscape';
-import cycola from 'cytoscape-cola';
 import dagre from 'cytoscape-dagre';
-import coseBilkent from 'cytoscape-cose-bilkent';
 import BoxLayout from './Layout/BoxLayout';
 import popper from 'cytoscape-popper';
 const nodeHtmlLabel = require('cy-node-html-label');
 
 cytoscape.use(canvas);
-cytoscape.use(cycola);
 cytoscape.use(dagre);
-cytoscape.use(coseBilkent);
 cytoscape.use(popper);
 cytoscape('layout', 'box-layout', BoxLayout);
 nodeHtmlLabel(cytoscape);

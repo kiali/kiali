@@ -120,6 +120,7 @@ export const runLayout = (cy: Cy.Core, layout: Layout): Promise<any> => {
       ...layoutOptions,
       name: 'box-layout',
       appBoxLayout: 'dagre',
+      namespaceBoxLayout: 'dagre',
       defaultLayout: layout.name
     });
   } else {

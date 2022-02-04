@@ -1,7 +1,7 @@
-export class CoseGraph {
+export class ConcentricGraph {
   static getLayout() {
     return {
-      name: 'cose-bilkent',
+      name: 'concentric',
       animate: false,
       fit: false,
       nodeDimensionsIncludeLabels: true
