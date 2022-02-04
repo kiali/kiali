@@ -131,15 +131,6 @@ type RBACDetails struct {
 	AuthorizationPolicies []security_v1beta.AuthorizationPolicy `json:"authorizationpolicies"`
 }
 
-// ExportedResources is a wrapper to group all exported Istio objects
-// Used to provide exported resources to validation
-type ExportedResources struct {
-	VirtualServices  []networking_v1alpha3.VirtualService  `json:"virtualservices"`
-	DestinationRules []networking_v1alpha3.DestinationRule `json:"destinationrules"`
-	ServiceEntries   []networking_v1alpha3.ServiceEntry    `json:"serviceentries"`
-	Gateways         []networking_v1alpha3.Gateway         `json:"gateways"`
-}
-
 type ProxyStatus struct {
 	pilot string
 	SyncStatus

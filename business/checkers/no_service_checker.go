@@ -14,7 +14,7 @@ const ServiceRoleCheckerType = "servicerole"
 type NoServiceChecker struct {
 	Namespace            string
 	Namespaces           models.Namespaces
-	ExportedResources    *kubernetes.ExportedResources
+	IstioConfigList      *models.IstioConfigList
 	WorkloadList         models.WorkloadList
 	AuthorizationDetails *kubernetes.RBACDetails
 	RegistryServices     []*kubernetes.RegistryService
@@ -27,16 +27,16 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 		return validations
 	}
 
-	serviceHosts := kubernetes.ServiceEntryHostnames(in.ExportedResources.ServiceEntries)
-	gatewayNames := kubernetes.GatewayNames(in.ExportedResources.Gateways)
+	serviceHosts := kubernetes.ServiceEntryHostnames(in.IstioConfigList.ServiceEntries)
+	gatewayNames := kubernetes.GatewayNames(in.IstioConfigList.Gateways)
 
-	for _, virtualService := range in.ExportedResources.VirtualServices {
+	for _, virtualService := range in.IstioConfigList.VirtualServices {
 		validations.MergeValidations(runVirtualServiceCheck(virtualService, in.Namespace, serviceHosts, in.Namespaces, in.RegistryServices))
 
 		validations.MergeValidations(runGatewayCheck(virtualService, gatewayNames))
 	}
-	for _, destinationRule := range in.ExportedResources.DestinationRules {
-		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.Namespace, in.WorkloadList, serviceHosts, in.Namespaces, in.RegistryServices, in.ExportedResources.VirtualServices))
+	for _, destinationRule := range in.IstioConfigList.DestinationRules {
+		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.Namespace, in.WorkloadList, serviceHosts, in.Namespaces, in.RegistryServices, in.IstioConfigList.VirtualServices))
 	}
 	return validations
 }
