@@ -90,31 +90,16 @@ func main() {
 	status.Put(status.CoreCommitHash, commitHash)
 	status.Put(status.ContainerVersion, determineContainerVersion(version))
 
-	// check kiali version compatibility with mesh
+	//get mesh name and version info
 	meshName, meshVersion, err := status.GetMeshInfo()
 
-	ok := false
 	if err != nil {
 		log.Warningf("Failed to get mesh version, please check if url_service_version is configured correctly.")
 		status.AddWarningMessages("Failed to get mesh version, please check if url_service_version is configured correctly.")
-	} else if meshName == "Unknown" {
-		log.Warningf("Unknown Istio Implementation")
-		status.Put(status.MeshVersion, meshVersion)
-		status.Put(status.MeshName, meshName)
-		status.AddWarningMessages("Unknown Istio Implementation")
-	} else {
-		ok = status.CheckMeshVersion(meshName, meshVersion, version)
-		if ok {
-			log.Info("Mesh Name: %v Mesh Version: %v", meshName, meshVersion)
-			status.Put(status.MeshVersion, meshVersion)
-			status.Put(status.MeshName, meshName)
-			status.Put(status.IsCompatible, "true")
-		} else {
-			log.Warningf("Kiali %v is not compatible with %v %v", version, meshName, meshVersion)
-			status.AddWarningMessages(fmt.Sprintf("Kiali %v is not compatible with %v %v", version, meshName, meshVersion))
-			status.Put(status.IsCompatible, "false")
-		}
 	}
+
+	// check kiali version compatibility with mesh
+	checkVersionCompatibility(meshName, meshVersion)
 
 	authentication.InitializeAuthenticationController(config.Get().Auth.Strategy)
 
@@ -236,4 +221,26 @@ func determineContainerVersion(defaultVersion string) string {
 		return defaultVersion
 	}
 	return v
+}
+
+func checkVersionCompatibility(meshName string, meshVersion string) {
+	ok := false
+	if meshName == "Unknown" {
+		log.Warningf("Unknown Istio Implementation")
+		status.Put(status.MeshVersion, meshVersion)
+		status.Put(status.MeshName, meshName)
+		status.AddWarningMessages("Unknown Istio Implementation")
+	} else {
+		ok = status.CheckMeshVersion(meshName, meshVersion, version)
+		if ok {
+			log.Info("Mesh Name: %v Mesh Version: %v", meshName, meshVersion)
+			status.Put(status.MeshVersion, meshVersion)
+			status.Put(status.MeshName, meshName)
+			status.Put(status.IsCompatible, "true")
+		} else {
+			log.Warningf("Kiali %v is not compatible with %v %v", version, meshName, meshVersion)
+			status.AddWarningMessages(fmt.Sprintf("Kiali %v is not compatible with %v %v", version, meshName, meshVersion))
+			status.Put(status.IsCompatible, "false")
+		}
+	}
 }
