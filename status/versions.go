@@ -38,7 +38,7 @@ var (
 	maistraProductVersionExpr = regexp.MustCompile(`maistra-([0-9]+\.[0-9]+\.[0-9]+)`)
 	ossmVersionExpr           = regexp.MustCompile(`(?:OSSM_|openshift-service-mesh-)([0-9]+\.[0-9]+\.[0-9]+)`)
 	maistraProjectVersionExpr = regexp.MustCompile(`(?:Maistra_|openshift-istio.*-)([0-9]+\.[0-9]+\.[0-9]+)`)
-	istioDevVersionExpr       = regexp.MustCompile(`((\d+\.\d+)-alpha\.([[:alnum:]]+)-.*)|(\d+\.\d+)-(?:dev)`)
+	istioDevVersionExpr       = regexp.MustCompile(`(\d+\.\d+)-alpha\.([[:alnum:]]+)-.*|(\d+\.\d+)-dev-([[:alnum:]]+)-.*`)
 	istioRCVersionExpr        = regexp.MustCompile(`(\d+\.\d+.\d+)-((?:alpha|beta|rc|RC)\.\d+)`)
 	istioSnapshotVersionExpr  = regexp.MustCompile(`istio-release-([0-9]+\.[0-9]+)(-[0-9]{8})`)
 	istioVersionExpr          = regexp.MustCompile(`([0-9]+\.[0-9]+\.[0-9]+)`)
@@ -214,10 +214,20 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 	istioVersionStringArr = istioDevVersionExpr.FindStringSubmatch(rawVersion)
 	if istioVersionStringArr != nil {
 		log.Debugf("Detected Istio dev version [%v]", rawVersion)
-		if len(istioVersionStringArr) > 2 {
+		if strings.Contains(istioVersionStringArr[0], "alpha") && len(istioVersionStringArr) > 2 {
 			product.Name = istioProductNameUpstreamDev
 			majorMinor := istioVersionStringArr[1] // regex group #1 is the "#.#" version numbers
 			buildHash := istioVersionStringArr[2]  // regex group #2 is the build hash
+			product.Version = fmt.Sprintf("%s (dev %s)", majorMinor, buildHash)
+			if !validateVersion(config.IstioVersionSupported, majorMinor) {
+				info.WarningMessages = append(info.WarningMessages, "Istio dev version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
+			}
+			// we know this is Istio upstream - either a supported or unsupported version - return now
+			return &product, nil
+		} else if strings.Contains(istioVersionStringArr[0], "dev") && len(istioVersionStringArr) > 4 {
+			product.Name = istioProductNameUpstreamDev
+			majorMinor := istioVersionStringArr[3] // regex group #3 is the "#.#" version numbers
+			buildHash := istioVersionStringArr[4]  // regex group #4 is the build hash
 			product.Version = fmt.Sprintf("%s (dev %s)", majorMinor, buildHash)
 			if !validateVersion(config.IstioVersionSupported, majorMinor) {
 				info.WarningMessages = append(info.WarningMessages, "Istio dev version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
