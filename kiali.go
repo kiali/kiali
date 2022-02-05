@@ -90,7 +90,7 @@ func main() {
 	status.Put(status.CoreCommitHash, commitHash)
 	status.Put(status.ContainerVersion, determineContainerVersion(version))
 
-	//get mesh name and version info
+	// get mesh name and version info
 	meshName, meshVersion, err := status.GetMeshInfo()
 
 	if err != nil {

@@ -134,6 +134,7 @@ func checkOSSMVersion(ossmVersion string, kialiVersion string) bool {
 
 	if err != nil {
 		log.Warningf("Can not load version file.%v", err)
+		return ok
 	}
 
 	for _, version := range Versions {
@@ -157,6 +158,7 @@ func checkMaistraVersion(maistraVersion string, kialiVersion string) bool {
 
 	if err != nil {
 		log.Warningf("Can not load version file.%v", err)
+		return ok
 	}
 
 	for _, version := range Versions {
@@ -180,6 +182,7 @@ func checkIstioVersion(istioVersion string, kialiVersion string) bool {
 
 	if err != nil {
 		log.Warningf("Can not load version file.%v", err)
+		return ok
 	}
 
 	for _, version := range Versions {
