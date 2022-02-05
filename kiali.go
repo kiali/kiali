@@ -96,10 +96,10 @@ func main() {
 	if err != nil {
 		log.Warningf("Failed to get mesh version, please check if url_service_version is configured correctly.")
 		status.AddWarningMessages("Failed to get mesh version, please check if url_service_version is configured correctly.")
+	} else {
+		// check kiali version compatibility with mesh
+		checkVersionCompatibility(meshName, meshVersion)
 	}
-
-	// check kiali version compatibility with mesh
-	checkVersionCompatibility(meshName, meshVersion)
 
 	authentication.InitializeAuthenticationController(config.Get().Auth.Strategy)
 
@@ -224,16 +224,14 @@ func determineContainerVersion(defaultVersion string) string {
 }
 
 func checkVersionCompatibility(meshName string, meshVersion string) {
-	ok := false
 	if meshName == "Unknown" {
 		log.Warningf("Unknown Istio Implementation")
 		status.Put(status.MeshVersion, meshVersion)
 		status.Put(status.MeshName, meshName)
 		status.AddWarningMessages("Unknown Istio Implementation")
 	} else {
-		ok = status.CheckMeshVersion(meshName, meshVersion, version)
-		if ok {
-			log.Info("Mesh Name: %v Mesh Version: %v", meshName, meshVersion)
+		if ok := status.CheckMeshVersion(meshName, meshVersion, version); ok {
+			log.Infof("Mesh Name: %v Mesh Version: %v", meshName, meshVersion)
 			status.Put(status.MeshVersion, meshVersion)
 			status.Put(status.MeshName, meshName)
 			status.Put(status.IsCompatible, "true")
