@@ -223,6 +223,8 @@ func determineContainerVersion(defaultVersion string) string {
 	return v
 }
 
+// checkVersionCompatibility check kiali version compatibility with mesh.
+// The user session is not affected no matter what this check returns, just warning logs.
 func checkVersionCompatibility(meshName string, meshVersion string) {
 	if meshName == "Unknown" {
 		log.Warningf("Unknown Istio Implementation")
