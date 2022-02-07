@@ -30,7 +30,6 @@ type ObjectChecker interface {
 // GetValidations returns an IstioValidations object with all the checks found when running
 // all the enabled checkers. If service is "" then the whole namespace is validated.
 // If service is not empty string, then all of its associated Istio objects are validated.
-
 func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace, service, workload string) (models.IstioValidations, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetValidations",
