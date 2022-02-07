@@ -63,7 +63,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(namespace, "", workload)
+			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), namespace, "", workload)
 		}()
 	}
 
@@ -118,7 +118,7 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(namespace, "", workload)
+			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), namespace, "", workload)
 		}()
 	}
 
