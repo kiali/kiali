@@ -21,9 +21,9 @@ func prepareTestForVirtualService(vs *networking_v1alpha3.VirtualService) models
 			{Name: "bookinfo2"},
 			{Name: "bookinfo3"},
 		},
-		VirtualService: *vs,
+		VirtualServices: []networking_v1alpha3.VirtualService{*vs},
 	}
-	return virtualServiceReferences.References()
+	return *virtualServiceReferences.References()[models.IstioReferenceKey{ObjectType: "virtualservice", Namespace: vs.Namespace, Name: vs.Name}]
 }
 
 func TestVirtualServiceReferences(t *testing.T) {

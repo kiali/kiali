@@ -10,6 +10,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business/checkers"
+	"github.com/kiali/kiali/business/references"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -25,6 +26,10 @@ type IstioValidationsService struct {
 
 type ObjectChecker interface {
 	Check() models.IstioValidations
+}
+
+type ReferenceChecker interface {
+	References() models.IstioReferencesMap
 }
 
 // GetValidations returns an IstioValidations object with all the checks found when running
@@ -128,7 +133,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioC
 }
 
 // GetIstioObjectValidations validates a single Istio object of the given type with the given name found in the given namespace.
-func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context, namespace string, objectType string, object string) (models.IstioValidations, error) {
+func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context, namespace string, objectType string, object string) (models.IstioValidations, models.IstioReferencesMap, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioObjectValidations",
 		observability.Attribute("package", "business"),
@@ -146,11 +151,13 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	var registryServices []*kubernetes.RegistryService
 	var err error
 	var objectCheckers []ObjectChecker
+	var referenceChecker ReferenceChecker
+	istioReferences := models.IstioReferencesMap{}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if _, err = in.businessLayer.Namespace.GetNamespace(ctx, namespace); err != nil {
-		return nil, err
+		return nil, istioReferences, err
 	}
 
 	// time this function execution so we can capture how long it takes to fully validate this istio object
@@ -178,6 +185,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	case kubernetes.VirtualServices:
 		virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, DestinationRules: istioConfigList.DestinationRules}
 		objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
+		referenceChecker = references.VirtualServiceReferences{Namespace: namespace, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices}
 	case kubernetes.DestinationRules:
 		destinationRulesChecker := checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioConfigList.ServiceEntries}
 		objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
@@ -214,15 +222,19 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	close(errChan)
 	for e := range errChan {
 		if e != nil { // Check that default value wasn't returned
-			return nil, err
+			return nil, istioReferences, err
 		}
 	}
 
-	if objectCheckers == nil {
-		return models.IstioValidations{}, err
+	if referenceChecker != nil {
+		istioReferences = runObjectReferenceChecker(referenceChecker)
 	}
 
-	return runObjectCheckers(objectCheckers).FilterByKey(models.ObjectTypeSingular[objectType], object), nil
+	if objectCheckers == nil {
+		return models.IstioValidations{}, istioReferences, err
+	}
+
+	return runObjectCheckers(objectCheckers).FilterByKey(models.ObjectTypeSingular[objectType], object), istioReferences, nil
 }
 
 func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {
@@ -243,6 +255,13 @@ func runObjectChecker(objectChecker ObjectChecker) models.IstioValidations {
 	promtimer := internalmetrics.GetCheckerProcessingTimePrometheusTimer(fmt.Sprintf("%T", objectChecker))
 	defer promtimer.ObserveDuration()
 	return objectChecker.Check()
+}
+
+func runObjectReferenceChecker(referenceChecker ReferenceChecker) models.IstioReferencesMap {
+	// tracking the time it takes to execute the Check
+	promtimer := internalmetrics.GetCheckerProcessingTimePrometheusTimer(fmt.Sprintf("%T", referenceChecker))
+	defer promtimer.ObserveDuration()
+	return referenceChecker.References()
 }
 
 func (in *IstioValidationsService) fetchServices(ctx context.Context, rValue *models.ServiceList, namespace string, errChan chan error, wg *sync.WaitGroup) {

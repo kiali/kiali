@@ -99,11 +99,6 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		includeValidations = true
 	}
 
-	includeReferences := true
-	if _, found := query["references"]; found {
-		includeReferences = true
-	}
-
 	if !checkObjectType(objectType) {
 		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
 		return
@@ -117,33 +112,21 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var istioConfigValidations models.IstioValidations
-	var istioConfigReferences models.IstioReferences
+	var istioConfigReferences models.IstioReferencesMap
 
 	wg := sync.WaitGroup{}
 	if includeValidations {
 		wg.Add(1)
-		go func(istioConfigValidations *models.IstioValidations, err *error) {
+		go func(istioConfigValidations *models.IstioValidations, istioConfigReferences *models.IstioReferencesMap, err *error) {
 			defer wg.Done()
-			istioConfigValidationResults, errValidations := business.Validations.GetIstioObjectValidations(r.Context(), namespace, objectType, object)
+			istioConfigValidationResults, istioConfigReferencesResults, errValidations := business.Validations.GetIstioObjectValidations(r.Context(), namespace, objectType, object)
 			if errValidations != nil && *err == nil {
 				*err = errValidations
 			} else {
 				*istioConfigValidations = istioConfigValidationResults
-			}
-		}(&istioConfigValidations, &err)
-	}
-
-	if includeReferences {
-		wg.Add(1)
-		go func(istioConfigReferences *models.IstioReferences, err *error) {
-			defer wg.Done()
-			istioConfigReferencesResults, errRefs := business.References.GetIstioObjectReferences(r.Context(), namespace, objectType, object)
-			if errRefs != nil && *err == nil {
-				*err = errRefs
-			} else {
 				*istioConfigReferences = istioConfigReferencesResults
 			}
-		}(&istioConfigReferences, &err)
+		}(&istioConfigValidations, &istioConfigReferences, &err)
 	}
 
 	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(context.TODO(), namespace, objectType, object)
@@ -154,11 +137,9 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		if validation, found := istioConfigValidations[models.IstioValidationKey{ObjectType: models.ObjectTypeSingular[objectType], Namespace: namespace, Name: object}]; found {
 			istioConfigDetails.IstioValidation = validation
 		}
-	}
-
-	if includeReferences && err == nil {
-		wg.Wait()
-		istioConfigDetails.IstioReferences = &istioConfigReferences
+		if references, found := istioConfigReferences[models.IstioReferenceKey{ObjectType: models.ObjectTypeSingular[objectType], Namespace: namespace, Name: object}]; found {
+			istioConfigDetails.IstioReferences = references
+		}
 	}
 
 	if err != nil {

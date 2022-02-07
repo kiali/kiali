@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
@@ -31,7 +32,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 	config.Set(conf)
 
 	vs := mockCombinedValidationService(fakeEmptyIstioConfigList(),
-		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
+		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
 	validations, _ := vs.GetValidations(context.TODO(), "test", "", "")
 	assert.NotEmpty(validations)
@@ -46,7 +47,7 @@ func TestGetIstioObjectValidations(t *testing.T) {
 	vs := mockCombinedValidationService(fakeEmptyIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
-	validations, _ := vs.GetIstioObjectValidations(context.TODO(), "test", "virtualservices", "product-vs")
+	validations, _, _ := vs.GetIstioObjectValidations(context.TODO(), "test", "virtualservices", "product-vs")
 
 	assert.NotEmpty(validations)
 }
@@ -57,7 +58,7 @@ func TestGatewayValidation(t *testing.T) {
 	config.Set(conf)
 
 	v := mockMultiNamespaceGatewaysValidationService()
-	validations, _ := v.GetIstioObjectValidations(context.TODO(), "test", "gateways", "first")
+	validations, _, _ := v.GetIstioObjectValidations(context.TODO(), "test", "gateways", "first")
 	assert.NotEmpty(validations)
 }
 
@@ -94,6 +95,41 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 		expectedKeys = append(expectedKeys, fmt.Sprintf("%s/%s", vs.Name, vs.Namespace))
 	}
 	assert.EqualValues(filteredKeys, expectedKeys)
+}
+
+func TestGetVSReferences(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	vs := mockCombinedValidationService(fakeEmptyIstioConfigList(), []string{}, "test", fakePods())
+
+	_, referencesMap, err := vs.GetIstioObjectValidations(context.TODO(), "test", kubernetes.VirtualServices, "product-vs")
+	references := referencesMap[models.IstioReferenceKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
+
+	// Check Service references
+	assert.Nil(err)
+	assert.NotNil(references)
+	assert.NotEmpty(references.ServiceReferences)
+	assert.Len(references.ServiceReferences, 2)
+	assert.Equal(references.ServiceReferences[0].Name, "product")
+	assert.Equal(references.ServiceReferences[0].Namespace, "test")
+	assert.Equal(references.ServiceReferences[1].Name, "product2")
+	assert.Equal(references.ServiceReferences[1].Namespace, "test")
+}
+
+func TestGetVSReferencesNotExisting(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	vs := mockCombinedValidationService(fakeEmptyIstioConfigList(), []string{}, "test", fakePods())
+
+	_, referencesMap, err := vs.GetIstioObjectValidations(context.TODO(), "wrong", "virtualservices", "wrong")
+	references := referencesMap[models.IstioReferenceKey{ObjectType: "wrong", Namespace: "wrong", Name: "product-vs"}]
+
+	assert.Nil(err)
+	assert.Nil(references)
 }
 
 func mockWorkLoadService(k8s *kubetest.K8SClientMock) WorkloadService {
@@ -192,7 +228,7 @@ func fakeIstioConfigList() *models.IstioConfigList {
 
 	istioConfigList.VirtualServices = []networking_v1alpha3.VirtualService{
 		*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("product", "v1", -1),
-			data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("product", "v1", -1),
+			data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("product2", "v1", -1),
 				data.CreateEmptyVirtualService("product-vs", "test", []string{"product"})))}
 
 	istioConfigList.DestinationRules = []networking_v1alpha3.DestinationRule{

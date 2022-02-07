@@ -7,29 +7,31 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-const GatewayObjectType = "gateway"
-
 type VirtualServiceReferences struct {
-	Namespace      string
-	Namespaces     models.Namespaces
-	VirtualService networking_v1alpha3.VirtualService
+	Namespace       string
+	Namespaces      models.Namespaces
+	VirtualServices []networking_v1alpha3.VirtualService
 }
 
-func (n VirtualServiceReferences) References() models.IstioReferences {
-	references := models.IstioReferences{}
+func (n VirtualServiceReferences) References() models.IstioReferencesMap {
+	result := models.IstioReferencesMap{}
 
-	references.ServiceReferences = n.getServiceReferences()
+	for _, vs := range n.VirtualServices {
+		key := models.IstioReferenceKey{Namespace: vs.Namespace, Name: vs.Name, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]}
+		references := &models.IstioReferences{}
+		references.ServiceReferences = n.getServiceReferences(vs)
+		references.ObjectReferences = n.getConfigReferences(vs)
+		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
+	}
 
-	references.ObjectReferences = n.getConfigReferences()
-
-	return references
+	return result
 }
 
-func (n VirtualServiceReferences) getServiceReferences() []models.ServiceReference {
+func (n VirtualServiceReferences) getServiceReferences(vs networking_v1alpha3.VirtualService) []models.ServiceReference {
 	result := make([]models.ServiceReference, 0)
-	namespace, clusterName := n.VirtualService.Namespace, n.VirtualService.ClusterName
+	namespace, clusterName := vs.Namespace, vs.ClusterName
 
-	for _, httpRoute := range n.VirtualService.Spec.Http {
+	for _, httpRoute := range vs.Spec.Http {
 		if httpRoute != nil {
 			for _, dest := range httpRoute.Route {
 				if dest != nil {
@@ -46,7 +48,7 @@ func (n VirtualServiceReferences) getServiceReferences() []models.ServiceReferen
 		}
 	}
 
-	for _, tcpRoute := range n.VirtualService.Spec.Tcp {
+	for _, tcpRoute := range vs.Spec.Tcp {
 		if tcpRoute != nil {
 			for _, dest := range tcpRoute.Route {
 				if dest != nil {
@@ -63,7 +65,7 @@ func (n VirtualServiceReferences) getServiceReferences() []models.ServiceReferen
 		}
 	}
 
-	for _, tlsRoute := range n.VirtualService.Spec.Tls {
+	for _, tlsRoute := range vs.Spec.Tls {
 		if tlsRoute != nil {
 			for _, dest := range tlsRoute.Route {
 				if dest != nil {
@@ -82,14 +84,14 @@ func (n VirtualServiceReferences) getServiceReferences() []models.ServiceReferen
 	return result
 }
 
-func (n VirtualServiceReferences) getConfigReferences() []models.IstioReference {
+func (n VirtualServiceReferences) getConfigReferences(vs networking_v1alpha3.VirtualService) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
-	namespace, clusterName := n.VirtualService.Namespace, n.VirtualService.ClusterName
-	if len(n.VirtualService.Spec.Gateways) > 0 {
-		result = append(result, getGatewayReferences(n.VirtualService.Spec.Gateways, namespace, clusterName)...)
+	namespace, clusterName := vs.Namespace, vs.ClusterName
+	if len(vs.Spec.Gateways) > 0 {
+		result = append(result, getGatewayReferences(vs.Spec.Gateways, namespace, clusterName)...)
 	}
-	if len(n.VirtualService.Spec.Http) > 0 {
-		for _, httpRoute := range n.VirtualService.Spec.Http {
+	if len(vs.Spec.Http) > 0 {
+		for _, httpRoute := range vs.Spec.Http {
 			if httpRoute != nil {
 				for _, match := range httpRoute.Match {
 					if match != nil {
@@ -99,8 +101,8 @@ func (n VirtualServiceReferences) getConfigReferences() []models.IstioReference 
 			}
 		}
 	}
-	if len(n.VirtualService.Spec.Tls) > 0 {
-		for _, tlsRoute := range n.VirtualService.Spec.Tls {
+	if len(vs.Spec.Tls) > 0 {
+		for _, tlsRoute := range vs.Spec.Tls {
 			if tlsRoute != nil {
 				for _, match := range tlsRoute.Match {
 					if match != nil {
@@ -119,9 +121,9 @@ func getGatewayReferences(gateways []string, namespace string, clusterName strin
 		gw := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName)
 		if !gw.IsWildcard() {
 			if gate == "mesh" {
-				result = append(result, models.IstioReference{Name: gw.Service, ObjectType: GatewayObjectType})
+				result = append(result, models.IstioReference{Name: gw.Service, ObjectType: models.ObjectTypeSingular[kubernetes.Gateways]})
 			} else {
-				result = append(result, models.IstioReference{Name: gw.Service, Namespace: gw.Namespace, ObjectType: GatewayObjectType})
+				result = append(result, models.IstioReference{Name: gw.Service, Namespace: gw.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.Gateways]})
 			}
 		}
 	}
