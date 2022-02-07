@@ -146,6 +146,7 @@
     "ini": "1.3.7",
     "kind-of": "6.0.3",
     "lodash": "4.17.21",
+    "node-fetch": "2.6.7",
     "parse-link-header": "2.0.0",
     "prismjs": "1.25.0",
     "serialize-javascript": "4.0.0",
