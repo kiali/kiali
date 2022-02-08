@@ -3,8 +3,6 @@ package authentication
 import (
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	"github.com/kiali/kiali/config"
 )
 
@@ -18,22 +16,6 @@ type AuthController interface {
 	// An AuthenticationFailureError is returned if the authentication request is rejected (unauthorized). Any
 	// other kind of error means that something unexpected happened.
 	Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error)
-
-	// GetAuthCallbackHandler returns an http handler for authentication requests done to Kiali's web_root.
-	// This handler should determine if the request is an authentication request and perform
-	// authentication if needed. If it is not possible to reliably determine that a request is an
-	// authentication request, the fallbackHandler should be invoked to further handle the request.
-	//
-	// Usually, authentication requests done to the Kiali's web_root are because of callbacks of
-	// third-party authentication systems.
-	//
-	// This function can return a nil handler if the implementing AuthController does not handle
-	// authentication requests through the Kiali's web_root.
-	GetAuthCallbackHandler(fallbackHandler http.Handler) http.Handler
-
-	// PostRoutes adds any additional endpoints needed on the Kiali's router
-	// by the implementing AuthController.
-	PostRoutes(router *mux.Router)
 
 	// ValidateSession restores a session previously created by the Authenticate function. The validity of
 	// the restored should be verified as much as possible by the implementing controllers.

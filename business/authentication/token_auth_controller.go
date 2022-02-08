@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
 	"gopkg.in/square/go-jose.v2/jwt"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -154,17 +153,6 @@ func (c tokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter
 	}
 
 	return &UserSessionData{ExpiresOn: timeExpire, Username: extractSubjectFromK8sToken(token), Token: token}, nil
-}
-
-// GetAuthCallbackHandler returns nil, because the tokenAuthController does not handle
-// authentication callbacks from third-parties.
-func (c tokenAuthController) GetAuthCallbackHandler(_ http.Handler) http.Handler {
-	return nil
-}
-
-// PostRoutes does noop, because the tokenAuthController does not need any additional
-// endpoints.
-func (c tokenAuthController) PostRoutes(_ *mux.Router) {
 }
 
 // ValidateSession restores a session previously created by the Authenticate function. A minimal re-validation

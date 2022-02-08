@@ -88,7 +88,9 @@ func NewRouter() *mux.Router {
 	}
 
 	if authController := authentication.GetAuthController(); authController != nil {
-		authController.PostRoutes(appRouter)
+		if ac, ok := authController.(*authentication.OpenIdAuthController); ok {
+			ac.PostRoutes(appRouter)
+		}
 	}
 
 	// All client-side routes are prefixed with /console.
@@ -98,7 +100,8 @@ func NewRouter() *mux.Router {
 	})
 
 	if authController := authentication.GetAuthController(); authController != nil {
-		if authCallback := authController.GetAuthCallbackHandler(http.HandlerFunc(fileServerHandler)); authCallback != nil {
+		if ac, ok := authController.(*authentication.OpenIdAuthController); ok {
+			authCallback := ac.GetAuthCallbackHandler(http.HandlerFunc(fileServerHandler))
 			rootRouter.Methods("GET").Path(webRootWithSlash).Handler(authCallback)
 		}
 	}

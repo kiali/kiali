@@ -106,14 +106,14 @@ func (e badOidcRequest) Error() string {
 	return e.Detail
 }
 
-// openIdAuthController contains the backing logic to implement
+// OpenIdAuthController contains the backing logic to implement
 // Kiali's "openid" authentication strategy. The implicit flow and
 // the authorization code flow are implemented.
 //
 // RBAC is supported, although it requires that the cluster is configured
 // with OpenId integration. Thus, it is possible to turn off RBAC
 // for simpler setups.
-type openIdAuthController struct {
+type OpenIdAuthController struct {
 	// businessInstantiator is a function that returns an already initialized
 	// business layer. Normally, it should be set to the business.Get function.
 	// For tests, it can be set to something else that returns a compatible API.
@@ -126,12 +126,12 @@ type openIdAuthController struct {
 // NewOpenIdAuthController initializes a new controller for handling openid authentication, with the
 // given persistor and the given businessInstantiator. The businessInstantiator can be nil and
 // the initialized contoller will use the business.Get function.
-func NewOpenIdAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *openIdAuthController {
+func NewOpenIdAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *OpenIdAuthController {
 	if businessInstantiator == nil {
 		businessInstantiator = business.Get
 	}
 
-	return &openIdAuthController{
+	return &OpenIdAuthController{
 		businessInstantiator: businessInstantiator,
 		SessionStore:         persistor,
 	}
@@ -143,7 +143,7 @@ func NewOpenIdAuthController(persistor SessionPersistor, businessInstantiator fu
 // validity is checked and users will share the same privileges.
 // An AuthenticationFailureError is returned if the authentication failed. Any
 // other kind of error means that something unexpected happened.
-func (c openIdAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+func (c OpenIdAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	flow := openidFlowHelper{businessInstantiator: c.businessInstantiator}
 	sPayload := flow.
 		extractOpenIdCallbackParams(r).
@@ -174,7 +174,7 @@ func (c openIdAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 // GetAuthCallbackHandler returns an http handler for authentication requests done to Kiali's web_root.
 // This handler catches callbacks from the OpenId server. If it cannot be determined that the request
 // is a callback from the authentication server, the request is passed to the fallbackHandler.
-func (c openIdAuthController) GetAuthCallbackHandler(fallbackHandler http.Handler) http.Handler {
+func (c OpenIdAuthController) GetAuthCallbackHandler(fallbackHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c.authenticateWithAuthorizationCodeFlow(r, w, fallbackHandler)
 	})
@@ -183,7 +183,7 @@ func (c openIdAuthController) GetAuthCallbackHandler(fallbackHandler http.Handle
 // PostRoutes adds the additional endpoints needed on the Kiali's router
 // in order to properly enable OpenId authentication. Only one new route is added to
 // do a redirection from Kiali to the OpenId server to initiate authentication.
-func (c openIdAuthController) PostRoutes(router *mux.Router) {
+func (c OpenIdAuthController) PostRoutes(router *mux.Router) {
 	// swagger:route GET /auth/openid_redirect auth openidRedirect
 	// ---
 	// Endpoint to redirect the browser of the user to the authentication
@@ -211,7 +211,7 @@ func (c openIdAuthController) PostRoutes(router *mux.Router) {
 // the id_token is performed if Kiali is not configured to use the access_token. Also, if RBAC is enabled,
 // a privilege check is performed to verify that the user still has privileges to use Kiali.
 // If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
-func (c openIdAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	// Restore a previously started session.
 	sPayload := oidcSessionPayload{}
 	sData, err := c.SessionStore.ReadSession(r, w, &sPayload)
@@ -293,7 +293,7 @@ func (c openIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 }
 
 // TerminateSession unconditionally terminates any existing session without any validation.
-func (c openIdAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) {
+func (c OpenIdAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) {
 	c.SessionStore.TerminateSession(r, w)
 }
 
@@ -304,7 +304,7 @@ func (c openIdAuthController) TerminateSession(r *http.Request, w http.ResponseW
 // share the same privileges.
 // An AuthenticationFailureError is returned if the authentication failed. Any
 // other kind of error means that something unexpected happened.
-func (c openIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Request, w http.ResponseWriter, fallbackHandler http.Handler) {
+func (c OpenIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Request, w http.ResponseWriter, fallbackHandler http.Handler) {
 	conf := config.Get()
 	webRoot := conf.Server.WebRoot
 	webRootWithSlash := webRoot + "/"
@@ -349,7 +349,7 @@ func (c openIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Requ
 // post the redirection in a "Location" HTTP header, with the needed parameters given the OpenId server
 // capabilities. A Cookie is set to store the source of the calculated codes and be able to verify the
 // authentication intent when the OpenId server calls back.
-func (c openIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter, r *http.Request) {
+func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter, r *http.Request) {
 	conf := config.Get()
 
 	// This endpoint should be available only if OpenId strategy is configured
@@ -504,7 +504,7 @@ type openidFlowHelper struct {
 }
 
 // callbackCleanup deletes the nonce cookie that was generated during the redirection from Kiali to
-// the OpenId server to initiate authentication (see openIdAuthController.redirectToAuthServerHandler).
+// the OpenId server to initiate authentication (see OpenIdAuthController.redirectToAuthServerHandler).
 func (p *openidFlowHelper) callbackCleanup(w http.ResponseWriter) *openidFlowHelper {
 	// Do nothing if there was an error in previous flow steps.
 	if p.Error != nil {
@@ -527,7 +527,7 @@ func (p *openidFlowHelper) callbackCleanup(w http.ResponseWriter) *openidFlowHel
 
 // extractOpenIdCallbackParams reads callback parameters from the HTTP request, once the OpenId server
 // redirects back to Kiali with the credentials. It also reads the nonce cookie with the code generated
-// during the initial redirection from Kiali to the OpenId Server (see openIdAuthController.redirectToAuthServerHandler).
+// during the initial redirection from Kiali to the OpenId Server (see OpenIdAuthController.redirectToAuthServerHandler).
 func (p *openidFlowHelper) extractOpenIdCallbackParams(r *http.Request) *openidFlowHelper {
 	// Do nothing if there was an error in previous flow steps.
 	if p.Error != nil {
