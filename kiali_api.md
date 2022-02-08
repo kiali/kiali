@@ -9911,6 +9911,7 @@ It's mapped as a pointer to show three values nil, true, false |  |
 | VersionLabel | boolean| `bool` | ✓ | | Define if Pods related to this Workload has the label Version | `true` |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |
 | pods | [Pods](#pods)| `Pods` |  | |  |  |
+| validations | [IstioValidations](#istio-validations)| `IstioValidations` |  | |  |  |
 
 
 
@@ -10282,6 +10283,7 @@ to be removed in 1.21 release.
 |------|------|---------|:--------:| ------- |-------------|---------|
 | Workloads | [][WorkloadListItem](#workload-list-item)| `[]*WorkloadListItem` | ✓ | | Workloads for a given namespace |  |
 | namespace | [Namespace](#namespace)| `Namespace` | ✓ | |  |  |
+| validations | [IstioValidations](#istio-validations)| `IstioValidations` |  | |  |  |
 
 
 
