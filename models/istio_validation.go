@@ -108,6 +108,7 @@ var ObjectTypeSingular = map[string]string{
 	"sidecars":               "sidecar",
 	"peerauthentications":    "peerauthentication",
 	"requestauthentications": "requestauthentication",
+	"workloads":              "workload",
 }
 
 var checkDescriptors = map[string]IstioCheck{
@@ -320,6 +321,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Code:     "KIA0001",
 		Message:  "Unable to verify the validity, cross-namespace validation is not supported for this field",
 		Severity: Unknown,
+	},
+	"workload.authorizationpolicy.needstobecovered": {
+		Code:     "KIA1201",
+		Message:  "This workload is not covered by any authorization policy",
+		Severity: WarningSeverity,
 	},
 }
 

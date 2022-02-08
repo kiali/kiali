@@ -30,12 +30,13 @@ type ObjectChecker interface {
 // GetValidations returns an IstioValidations object with all the checks found when running
 // all the enabled checkers. If service is "" then the whole namespace is validated.
 // If service is not empty string, then all of its associated Istio objects are validated.
-func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace, service string) (models.IstioValidations, error) {
+func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace, service, workload string) (models.IstioValidations, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetValidations",
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("service", service),
+		observability.Attribute("workload", workload),
 	)
 	defer end()
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
@@ -101,6 +102,10 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 		// No need to re-fetch deployments+pods for this
 		validations.MergeValidations(services.Validations)
 		validations = validations.FilterBySingleType("service", service)
+	} else if workload != "" {
+		workloadList := workloadsPerNamespace[namespace]
+		validations.MergeValidations(workloadList.Validations)
+		validations = validations.FilterBySingleType("workload", workload)
 	}
 
 	return validations, nil
@@ -117,6 +122,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioC
 		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, ServiceEntries: exportedResources.ServiceEntries, WorkloadList: workloads, MtlsDetails: mtlsDetails, VirtualServices: exportedResources.VirtualServices, RegistryServices: registryServices},
 		checkers.SidecarChecker{Sidecars: istioConfigList.Sidecars, Namespaces: namespaces, WorkloadList: workloads, ServiceEntries: exportedResources.ServiceEntries, RegistryServices: registryServices},
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadList: workloads},
+		checkers.WorkloadChecker{Namespace: namespace, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, WorkloadList: workloadsPerNamespace[namespace]},
 	}
 }
 
@@ -284,7 +290,7 @@ func (in *IstioValidationsService) fetchServices(ctx context.Context, rValue *mo
 func (in *IstioValidationsService) fetchWorkloads(ctx context.Context, rValue *models.WorkloadList, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		criteria := WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false}
+		criteria := WorkloadCriteria{Namespace: namespace, IncludeIstioResources: true}
 		workloadList, err := in.businessLayer.Workload.GetWorkloadList(ctx, criteria)
 		if err != nil {
 			select {
@@ -308,7 +314,7 @@ func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue
 		}
 		allWorkloads := map[string]models.WorkloadList{}
 		for _, ns := range nss {
-			criteria := WorkloadCriteria{Namespace: ns.Name, IncludeIstioResources: false}
+			criteria := WorkloadCriteria{Namespace: ns.Name, IncludeIstioResources: true}
 			workloadList, err := in.businessLayer.Workload.GetWorkloadList(ctx, criteria)
 			if err != nil {
 				select {

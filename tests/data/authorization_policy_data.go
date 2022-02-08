@@ -41,3 +41,25 @@ func CreateAuthorizationPolicy(sourceNamespaces, operationMethods, operationHost
 	}
 	return &ap
 }
+
+func CreateEmptyAuthorizationPolicy(name, namespace string) *security_v1beta1.AuthorizationPolicy {
+	ap := security_v1beta1.AuthorizationPolicy{}
+	ap.Name = name
+	ap.Namespace = namespace
+	ap.Spec = api_security_v1beta1.AuthorizationPolicy{}
+	return &ap
+}
+
+func CreateEmptyMeshAuthorizationPolicy(name string) *security_v1beta1.AuthorizationPolicy {
+	return CreateEmptyAuthorizationPolicy(name, "istio-system")
+}
+
+func CreateAuthorizationPolicyWithMetaAndSelector(name, namespace string, selector map[string]string) *security_v1beta1.AuthorizationPolicy {
+	ap := security_v1beta1.AuthorizationPolicy{}
+	ap.Name = name
+	ap.Namespace = namespace
+	ap.Spec.Selector = &api_v1beta1.WorkloadSelector{
+		MatchLabels: selector,
+	}
+	return &ap
+}
