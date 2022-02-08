@@ -488,8 +488,8 @@ export const getWorkloads = (namespace: string) => {
   return newRequest<WorkloadNamespaceResponse>(HTTP_VERBS.GET, urls.workloads(namespace), {}, {});
 };
 
-export const getWorkload = (namespace: string, name: string) => {
-  return newRequest<Workload>(HTTP_VERBS.GET, urls.workload(namespace, name), {}, {});
+export const getWorkload = (namespace: string, name: string, validate?: boolean) => {
+  return newRequest<Workload>(HTTP_VERBS.GET, urls.workload(namespace, name), validate ? { validate: true } : {}, {});
 };
 
 export const updateWorkload = (

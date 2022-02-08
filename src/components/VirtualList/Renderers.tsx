@@ -30,6 +30,7 @@ import ValidationSummaryLink from '../Link/ValidationSummaryLink';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import MissingLabel from '../MissingLabel/MissingLabel';
+import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
 
 // Links
 
@@ -63,6 +64,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   const hasMissingVersion = isWorkload && !item['versionLabel'];
   const additionalDetails = (item as WorkloadListItem | ServiceListItem).additionalDetailSample;
   const spacer = hasMissingSC && additionalDetails && additionalDetails.icon;
+  const hasMissingAP = isWorkload && (item as WorkloadListItem).notCoveredAuthPolicy;
 
   return (
     <td
@@ -71,6 +73,11 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
       style={{ verticalAlign: 'middle', whiteSpace: 'nowrap' }}
     >
       <ul>
+        {hasMissingAP && (
+          <li>
+            <MissingAuthPolicy namespace={item.namespace} />
+          </li>
+        )}
         {hasMissingSC && (
           <li>
             <MissingSidecar namespace={item.namespace} />

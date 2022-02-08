@@ -1,6 +1,6 @@
 import Namespace from './Namespace';
 import { WorkloadHealth } from './Health';
-import { ObjectReference, Pod, Service } from './IstioObjects';
+import { ObjectReference, Pod, Service, Validations } from './IstioObjects';
 
 export interface WorkloadId {
   namespace: string;
@@ -23,6 +23,7 @@ export interface Workload {
   services: Service[];
   runtimes: Runtime[];
   additionalDetails: AdditionalItem[];
+  validations?: Validations;
 }
 
 export const emptyWorkload: Workload = {
@@ -63,6 +64,7 @@ export interface WorkloadOverview {
   versionLabel: boolean;
   labels: { [key: string]: string };
   istioReferences: ObjectReference[];
+  notCoveredAuthPolicy: boolean;
 }
 
 export interface WorkloadListItem extends WorkloadOverview {
@@ -73,6 +75,7 @@ export interface WorkloadListItem extends WorkloadOverview {
 export interface WorkloadNamespaceResponse {
   namespace: Namespace;
   workloads: WorkloadOverview[];
+  validations: Validations;
 }
 
 export interface Runtime {

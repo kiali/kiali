@@ -2,7 +2,7 @@ import deepFreeze from 'deep-freeze';
 
 import solidPinIcon from '../assets/img/solid-pin.png';
 import hollowPinIcon from '../assets/img/hollow-pin.png';
-import { BlueprintIcon, WrenchIcon } from '@patternfly/react-icons';
+import { BlueprintIcon, WrenchIcon, SecurityIcon } from '@patternfly/react-icons';
 
 export { solidPinIcon, hollowPinIcon };
 
@@ -24,6 +24,14 @@ const mutIcons = {
     faultInjection: { className: 'fa fa-ban', type: 'fa', name: 'ban', ascii: '\uf05e ' },
     gateway: { className: 'pf-icon pf-icon-globe-route', type: 'pf', name: 'globe-route' },
     mirroring: { className: 'pf-icon pf-icon-migration', type: 'pf', name: 'migration' },
+    missingAuthPolicy: {
+      icon: SecurityIcon,
+      className: 'pf-icon pf-icon-security',
+      type: 'pf',
+      name: 'security',
+      ascii: '\ue915 ',
+      color: 'red'
+    },
     missingSidecar: {
       icon: BlueprintIcon,
       className: 'pf-icon pf-icon-blueprint',

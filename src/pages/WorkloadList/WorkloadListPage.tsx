@@ -19,6 +19,7 @@ import { connect } from 'react-redux';
 import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
+import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 
 type WorkloadListPageState = FilterComponent.State<WorkloadListItem>;
 
@@ -109,7 +110,8 @@ class WorkloadListPageComponent extends FilterComponent.Component<
           deployment.istioSidecar
         ),
         labels: deployment.labels,
-        istioReferences: sortIstioReferences(deployment.istioReferences, true)
+        istioReferences: sortIstioReferences(deployment.istioReferences, true),
+        notCoveredAuthPolicy: hasMissingAuthPolicy(deployment.name, data.validations)
       }));
     }
     return [];

@@ -77,7 +77,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
   }
 
   private fetchWorkload = () => {
-    API.getWorkload(this.props.match.params.namespace, this.props.match.params.workload)
+    API.getWorkload(this.props.match.params.namespace, this.props.match.params.workload, true)
       .then(details => {
         this.setState({
           workload: details.data

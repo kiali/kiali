@@ -14,6 +14,8 @@ import { serverConfig } from '../../config';
 import MissingSidecar from '../../components/MissingSidecar/MissingSidecar';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import MissingLabel from '../../components/MissingLabel/MissingLabel';
+import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
+import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 
 type WorkloadDescriptionProps = {
   workload?: Workload;
@@ -139,6 +141,14 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
             </span>
             {this.props.workload && !this.props.workload.istioSidecar && (
               <MissingSidecar
+                namespace={this.props.namespace}
+                tooltip={true}
+                style={{ marginLeft: '10px' }}
+                text={''}
+              />
+            )}
+            {this.props.workload && hasMissingAuthPolicy(this.props.workload.name, this.props.workload.validations) && (
+              <MissingAuthPolicy
                 namespace={this.props.namespace}
                 tooltip={true}
                 style={{ marginLeft: '10px' }}

@@ -1,5 +1,5 @@
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
-import { ConnectionPoolSettings, IstioObject, OutlierDetection } from '../types/IstioObjects';
+import { ConnectionPoolSettings, IstioObject, ObjectCheck, OutlierDetection, Validations } from '../types/IstioObjects';
 import _ from 'lodash';
 
 export const mergeJsonPatch = (objectModified: object, object?: object): object => {
@@ -156,4 +156,24 @@ export const isValidOutlierDetection = (outlierDetection: OutlierDetection): boo
     return false;
   }
   return true;
+};
+
+export const hasMissingAuthPolicy = (workloadName: string, validations: Validations | undefined): boolean => {
+  let hasMissingAP = false;
+
+  if (!validations) {
+    return hasMissingAP;
+  }
+
+  if (validations['workload'] && validations['workload'][workloadName]) {
+    const workloadValidation = validations['workload'][workloadName];
+
+    workloadValidation.checks.forEach((check: ObjectCheck) => {
+      if (check.code === 'KIA1201') {
+        hasMissingAP = true;
+      }
+    });
+  }
+
+  return hasMissingAP;
 };

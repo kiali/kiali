@@ -48,7 +48,8 @@ const workloadList: WorkloadListItem[] = [
     labels: { app: 'details', version: 'v1' },
     appLabel: true,
     versionLabel: true,
-    istioReferences: []
+    istioReferences: [],
+    notCoveredAuthPolicy: false
   },
   {
     namespace: 'bookinfo',
@@ -59,7 +60,8 @@ const workloadList: WorkloadListItem[] = [
     labels: { app: 'productpage', version: 'v1' },
     appLabel: true,
     versionLabel: true,
-    istioReferences: []
+    istioReferences: [],
+    notCoveredAuthPolicy: false
   },
   {
     namespace: 'bookinfo',
@@ -70,7 +72,8 @@ const workloadList: WorkloadListItem[] = [
     labels: { app: 'ratings', version: 'v1' },
     appLabel: true,
     versionLabel: true,
-    istioReferences: []
+    istioReferences: [],
+    notCoveredAuthPolicy: false
   },
   {
     namespace: 'bookinfo',
@@ -81,7 +84,8 @@ const workloadList: WorkloadListItem[] = [
     labels: { app: 'reviews', version: 'v1' },
     appLabel: true,
     versionLabel: true,
-    istioReferences: []
+    istioReferences: [],
+    notCoveredAuthPolicy: false
   },
   {
     namespace: 'bookinfo',
@@ -92,7 +96,8 @@ const workloadList: WorkloadListItem[] = [
     labels: { app: 'reviews', version: 'v2' },
     appLabel: true,
     versionLabel: true,
-    istioReferences: []
+    istioReferences: [],
+    notCoveredAuthPolicy: false
   },
   {
     namespace: 'bookinfo',
@@ -103,7 +108,8 @@ const workloadList: WorkloadListItem[] = [
     labels: { app: 'reviews', version: 'v3' },
     appLabel: true,
     versionLabel: true,
-    istioReferences: []
+    istioReferences: [],
+    notCoveredAuthPolicy: false
   }
 ];
 
@@ -205,7 +211,8 @@ describe('LabelFilter', () => {
         labels: { app: 'reviews', version: 'v1' },
         appLabel: true,
         versionLabel: true,
-        istioReferences: []
+        istioReferences: [],
+        notCoveredAuthPolicy: false
       },
       {
         namespace: 'bookinfo',
@@ -216,7 +223,8 @@ describe('LabelFilter', () => {
         labels: { app: 'reviews', version: 'v2' },
         appLabel: true,
         versionLabel: true,
-        istioReferences: []
+        istioReferences: [],
+        notCoveredAuthPolicy: false
       },
       {
         namespace: 'bookinfo',
@@ -227,7 +235,8 @@ describe('LabelFilter', () => {
         labels: { app: 'reviews', version: 'v3' },
         appLabel: true,
         versionLabel: true,
-        istioReferences: []
+        istioReferences: [],
+        notCoveredAuthPolicy: false
       }
     ]);
   });
