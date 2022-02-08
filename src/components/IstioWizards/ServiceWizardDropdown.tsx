@@ -281,7 +281,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
 
   getDropdownItemTooltipMessage = (): string => {
     if (serverConfig.deployment.viewOnlyMode) {
-      return 'User has not permissions';
+      return 'User does not have permission';
     } else if (this.hasTrafficRouting()) {
       return 'Traffic routing already exists for this service';
     } else {

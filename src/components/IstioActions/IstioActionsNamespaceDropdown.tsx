@@ -78,7 +78,7 @@ class IstioActionsNamespaceDropdown extends React.Component<Props, State> {
         className="kiali-group-menu"
         children={dropdownItemsRaw.map(r =>
           serverConfig.deployment.viewOnlyMode
-            ? this.renderTooltip(r.name, TooltipPosition.left, 'User has not permissions', r.action)
+            ? this.renderTooltip(r.name, TooltipPosition.left, 'User does not have permission', r.action)
             : r.action
         )}
       />

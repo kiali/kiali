@@ -75,7 +75,7 @@ class IstioActionDropdown extends React.Component<Props, State> {
       </DropdownItem>
     );
     const deleteActionWrapper = serverConfig.deployment.viewOnlyMode
-      ? this.renderTooltip('delete', TooltipPosition.left, 'User has not permissions', deleteAction)
+      ? this.renderTooltip('delete', TooltipPosition.left, 'User does not have permission', deleteAction)
       : deleteAction;
 
     return (

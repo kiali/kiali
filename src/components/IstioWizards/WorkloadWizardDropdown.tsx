@@ -129,7 +129,12 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         </DropdownItem>
       );
       const enableActionWrapper = serverConfig.deployment.viewOnlyMode
-        ? this.renderTooltip('enable_auto_injection', TooltipPosition.left, 'User has not permissions', enableAction)
+        ? this.renderTooltip(
+            'enable_auto_injection',
+            TooltipPosition.left,
+            'User does not have permission',
+            enableAction
+          )
         : enableAction;
 
       const disableAction = (
@@ -143,7 +148,12 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         </DropdownItem>
       );
       const disableActionWrapper = serverConfig.deployment.viewOnlyMode
-        ? this.renderTooltip('disable_auto_injection', TooltipPosition.left, 'User has not permissions', disableAction)
+        ? this.renderTooltip(
+            'disable_auto_injection',
+            TooltipPosition.left,
+            'User does not have permission',
+            disableAction
+          )
         : disableAction;
 
       const removeAction = (
@@ -157,7 +167,12 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         </DropdownItem>
       );
       const removeActionWrapper = serverConfig.deployment.viewOnlyMode
-        ? this.renderTooltip('remove_auto_injection', TooltipPosition.left, 'User has not permissions', removeAction)
+        ? this.renderTooltip(
+            'remove_auto_injection',
+            TooltipPosition.left,
+            'User does not have permission',
+            removeAction
+          )
         : removeAction;
 
       if (this.props.workload.istioInjectionAnnotation !== undefined && this.props.workload.istioInjectionAnnotation) {
@@ -202,7 +217,7 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
           ? this.renderTooltip(
               'tooltip_wizard_actions',
               TooltipPosition.top,
-              'User has not permissions on this Workload',
+              'User does not have permission on this Workload',
               dropdown
             )
           : dropdown}
