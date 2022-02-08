@@ -30,7 +30,7 @@ jobs:
         - if [ "$TRAVIS_EVENT_TYPE" != "push" ]; then snyk test --org=kiali --prune-repeated-subdependencies; fi
 
 go:
-- 1.14.7
+- 1.17.2
 
 cache:
   directories:
