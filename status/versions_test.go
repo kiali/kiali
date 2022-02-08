@@ -316,6 +316,30 @@ func TestMeshVersionCompatible(t *testing.T) {
 	versionsToTest := []versionsToTestStruct{
 		{
 			name:        "Istio",
+			version:     "1.45.1",
+			meshVersion: "1.13",
+			supported:   true,
+		},
+		{
+			name:        "Istio",
+			version:     "1.44.0",
+			meshVersion: "1.13",
+			supported:   false,
+		},
+		{
+			name:        "Istio",
+			version:     "1.44.0",
+			meshVersion: "1.12",
+			supported:   true,
+		},
+		{
+			name:        "Istio",
+			version:     "1.44.1",
+			meshVersion: "1.12",
+			supported:   false,
+		},
+		{
+			name:        "Istio",
 			version:     "1.43.0",
 			meshVersion: "1.12",
 			supported:   true,

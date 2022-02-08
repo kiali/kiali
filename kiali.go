@@ -238,8 +238,8 @@ func checkVersionCompatibility(meshName string, meshVersion string) {
 			status.Put(status.MeshName, meshName)
 			status.Put(status.IsCompatible, "true")
 		} else {
-			log.Warningf("Kiali %v is not compatible with %v %v", version, meshName, meshVersion)
-			status.AddWarningMessages(fmt.Sprintf("Kiali %v is not compatible with %v %v", version, meshName, meshVersion))
+			log.Warningf("Kiali %v may not be compatible with %v %v, and is not recommended. See kiali.io for version compatibility", version, meshName, meshVersion)
+			status.AddWarningMessages(fmt.Sprintf("Kiali %v may not be compatible with %v %v, and is not recommended. See kiali.io for version compatibility", version, meshName, meshVersion))
 			status.Put(status.IsCompatible, "false")
 		}
 	}
