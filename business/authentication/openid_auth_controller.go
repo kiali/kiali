@@ -1315,7 +1315,6 @@ func validateOpenIdTokenInHouse(openIdParams *openidFlowHelper) error {
 	}
 
 	// Check the aud claim contains our client-id
-	checkAzpClaim := false
 	if audienceClaim, ok := openIdParams.IdTokenPayload["aud"]; !ok {
 		return errors.New("the OpenId token has no aud claim")
 	} else {
@@ -1325,31 +1324,14 @@ func validateOpenIdTokenInHouse(openIdParams *openidFlowHelper) error {
 				return fmt.Errorf("the OpenId token is not targeted for Kiali; got aud = '%s'", audienceClaim)
 			}
 		case []string:
-			audFound := false
-			for _, audItem := range ac {
-				if oidCfg.ClientId == audItem {
-					audFound = true
-				}
+			if len(ac) != 1 {
+				return fmt.Errorf("the OpenId token was rejected because it has more than one audience; got aud = %v", audienceClaim)
 			}
-			if !audFound {
-				return fmt.Errorf("the OpenId token is not targeted for Kiali; got aud = %v", audienceClaim)
+			if oidCfg.ClientId != ac[0] {
+				return fmt.Errorf("the OpenId token is not targeted for Kiali; got []aud = '%v'", audienceClaim)
 			}
-
-			// The OIDC Spec says that if the aud claim contains multiple audiences, we "SHOULD" check
-			// the azp claim is present. In Kiali, there is currently no known reason to omit this
-			// check, so we do it.
-			checkAzpClaim = true
 		default:
 			return fmt.Errorf("the OpenId token has an unexpected audience claim; got '%v'", audienceClaim)
-		}
-	}
-
-	if checkAzpClaim {
-		// Check that the azp claim is present and contains our client_id
-		if authorizedPartyClaim, ok := openIdParams.IdTokenPayload["azp"].(string); !ok {
-			return fmt.Errorf("the OpenId token has an invalid 'azp' claim")
-		} else if oidCfg.ClientId != authorizedPartyClaim {
-			return fmt.Errorf("the OpenId token is not targeted for Kiali; got azp = %v", authorizedPartyClaim)
 		}
 	}
 
