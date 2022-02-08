@@ -114,13 +114,13 @@ func CheckMeshVersion(meshName string, meshVersion string, kialiVersion string) 
 	if meshName == istioProductNameUnknown {
 		return ok
 	}
-	if strings.Contains(meshName, "Istio") {
+	if strings.Contains(meshName, istioProductNameUpstream) {
 		ok = checkIstioVersion(meshVersion, kialiVersion)
 		return ok
-	} else if strings.Contains(meshName, "Maistra") {
+	} else if strings.Contains(meshName, istioProductNameMaistra) {
 		ok = checkMaistraVersion(meshVersion, kialiVersion)
 		return ok
-	} else if strings.Contains(meshName, "OpenShift Service Mesh") {
+	} else if strings.Contains(meshName, istioProductNameOSSM) {
 		ok = checkOSSMVersion(meshVersion, kialiVersion)
 		return ok
 	}
@@ -138,7 +138,7 @@ func checkOSSMVersion(ossmVersion string, kialiVersion string) bool {
 	}
 
 	for _, version := range Versions {
-		if version.MeshName == "OpenShift Service Mesh" {
+		if version.MeshName == istioProductNameOSSM {
 			for _, versions := range version.VersionRange {
 				if ossmVersion == strings.TrimSpace(versions.MeshVersion) && kialiVersion == strings.TrimSpace(versions.KialiMinimumVersion) {
 					ok = true
@@ -162,7 +162,7 @@ func checkMaistraVersion(maistraVersion string, kialiVersion string) bool {
 	}
 
 	for _, version := range Versions {
-		if version.MeshName == "Maistra" {
+		if version.MeshName == istioProductNameMaistra {
 			for _, versions := range version.VersionRange {
 				if maistraVersion == strings.TrimSpace(versions.MeshVersion) && kialiVersion == strings.TrimSpace(versions.KialiMinimumVersion) {
 					ok = true
@@ -181,12 +181,12 @@ func checkIstioVersion(istioVersion string, kialiVersion string) bool {
 	Versions, err := config.NewVersions()
 
 	if err != nil {
-		log.Warningf("Can not load version file.%v", err)
+		log.Warningf("Can not load version file: %v", err)
 		return ok
 	}
 
 	for _, version := range Versions {
-		if version.MeshName == "Istio" {
+		if version.MeshName == istioProductNameUpstream {
 			for _, versions := range version.VersionRange {
 				if strings.Contains(istioVersion, versions.MeshVersion) {
 					minimumVersion := strings.TrimSpace(versions.KialiMinimumVersion)
@@ -222,7 +222,7 @@ func checkRange(low string, high string, version string) bool {
 	return ok && ok1
 }
 
-// GetMeshInfo get mesh name/version from istiod service
+// GetMeshInfo get mesh name/version from mesh service
 func GetMeshInfo() (string, string, error) {
 	istioInfo, err := istioVersion()
 	if err != nil {

@@ -89,6 +89,7 @@ func Put(name, value string) (previous string, hasPrevious bool) {
 	return previous, hasPrevious
 }
 
+// AddWarningMessages add warning messages to status
 func AddWarningMessages(warningMessages string) {
 	info.WarningMessages = append(info.WarningMessages, warningMessages)
 }
