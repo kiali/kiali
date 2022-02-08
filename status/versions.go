@@ -204,10 +204,17 @@ func checkIstioVersion(istioVersion string, kialiVersion string) bool {
 func checkRange(low string, high string, version string) bool {
 	ok := true
 	ok1 := true
+	if low == high {
+		equal := "== " + low
+		ok = validateVersion(equal, version)
+		return ok
+	}
+
 	if low != "" {
 		low = ">= " + low
 		ok = validateVersion(low, version)
 	}
+
 	if high != "" {
 		high = "<= " + high
 		ok1 = validateVersion(high, version)
