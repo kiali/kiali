@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
@@ -71,14 +71,13 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
 
-	wg.Add(7) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
+	wg.Add(6) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 
 	// We fetch without target service as some validations will require full-namespace details
-	go in.fetchIstioConfigList(ctx, &istioConfigList, namespace, errChan, &wg)
+	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, namespace, errChan, &wg)
 	go in.fetchNamespaces(ctx, &namespaces, errChan, &wg)
 	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, errChan, &wg)
-	go in.fetchNonLocalmTLSConfigs(ctx, &mtlsDetails, namespace, errChan, &wg)
-	go in.fetchAuthorizationDetails(ctx, &rbacDetails, namespace, errChan, &wg)
+	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
 	go in.fetchServices(ctx, &services, namespace, errChan, &wg)
 	go in.fetchRegistryServices(&registryServices, errChan, &wg)
 
@@ -160,14 +159,13 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	errChan := make(chan error, 1)
 
 	// Get all the Istio objects from a Namespace and all gateways from every namespace
-	wg.Add(8)
+	wg.Add(7)
 	go in.fetchNamespaces(ctx, &namespaces, errChan, &wg)
-	go in.fetchIstioConfigList(ctx, &istioConfigList, namespace, errChan, &wg)
+	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, namespace, errChan, &wg)
 	go in.fetchServices(ctx, &services, namespace, errChan, &wg)
 	go in.fetchWorkloads(ctx, &workloads, namespace, errChan, &wg)
 	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, errChan, &wg)
-	go in.fetchNonLocalmTLSConfigs(ctx, &mtlsDetails, namespace, errChan, &wg)
-	go in.fetchAuthorizationDetails(ctx, &rbacDetails, namespace, errChan, &wg)
+	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
 	go in.fetchRegistryServices(&registryServices, errChan, &wg)
 	wg.Wait()
 
@@ -325,7 +323,7 @@ func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue
 	}
 }
 
-func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rValue *models.IstioConfigList, namespace string, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rValue *models.IstioConfigList, mtlsDetails *kubernetes.MTLSDetails, rbacDetails *kubernetes.RBACDetails, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) > 0 {
 		return
@@ -340,6 +338,8 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 		IncludeSidecars:               true,
 		IncludeRequestAuthentications: true,
 		IncludeWorkloadEntries:        true,
+		IncludeAuthorizationPolicies:  true,
+		IncludePeerAuthentications:    true,
 	}
 	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 	if err != nil {
@@ -353,6 +353,7 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 	// Filter DR
 	filteredDRs := in.filterDRExportToNamespaces(namespace, istioConfigList.DestinationRules)
 	rValue.DestinationRules = append(rValue.DestinationRules, filteredDRs...)
+	mtlsDetails.DestinationRules = append(mtlsDetails.DestinationRules, filteredDRs...)
 
 	// Filter SE
 	filteredSEs := in.filterSEExportToNamespaces(namespace, istioConfigList.ServiceEntries)
@@ -369,6 +370,29 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 
 	// All WorkloadEntries
 	rValue.WorkloadEntries = append(rValue.WorkloadEntries, istioConfigList.WorkloadEntries...)
+
+	in.filterPeerAuths(namespace, mtlsDetails, istioConfigList.PeerAuthentications)
+
+	in.filterAuthPolicies(namespace, rbacDetails, istioConfigList.AuthorizationPolicies)
+}
+
+func (in *IstioValidationsService) filterPeerAuths(namespace string, mtlsDetails *kubernetes.MTLSDetails, peerAuths []security_v1beta.PeerAuthentication) {
+	rootNs := config.Get().ExternalServices.Istio.RootNamespace
+	for _, pa := range peerAuths {
+		if pa.Namespace == rootNs {
+			mtlsDetails.MeshPeerAuthentications = append(mtlsDetails.MeshPeerAuthentications, pa)
+		} else if pa.Namespace == namespace {
+			mtlsDetails.PeerAuthentications = append(mtlsDetails.PeerAuthentications, pa)
+		}
+	}
+}
+
+func (in *IstioValidationsService) filterAuthPolicies(namespace string, rbacDetails *kubernetes.RBACDetails, authPolicies []security_v1beta.AuthorizationPolicy) {
+	for _, ap := range authPolicies {
+		if ap.Namespace == namespace {
+			rbacDetails.AuthorizationPolicies = append(rbacDetails.AuthorizationPolicies, ap)
+		}
+	}
 }
 
 func (in *IstioValidationsService) filterVSExportToNamespaces(namespace string, vs []networking_v1alpha3.VirtualService) []networking_v1alpha3.VirtualService {
@@ -425,103 +449,30 @@ func (in *IstioValidationsService) filterSEExportToNamespaces(namespace string, 
 	return result
 }
 
-func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(ctx context.Context, mtlsDetails *kubernetes.MTLSDetails, namespace string, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kubernetes.MTLSDetails, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) > 0 {
 		return
 	}
 
-	wg.Add(3)
+	cfg := config.Get()
 
-	go func(details *kubernetes.MTLSDetails) {
-		defer wg.Done()
-		criteria := IstioConfigCriteria{
-			Namespace:                  config.Get().ExternalServices.Istio.RootNamespace,
-			IncludePeerAuthentications: true,
-		}
-		istioConfig, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
-		if err == nil {
-			details.MeshPeerAuthentications = istioConfig.PeerAuthentications
-		} else if !checkForbidden("fetchNonLocalmTLSConfigs", err, "probably Kiali doesn't have cluster permissions") {
-			errChan <- err
-		}
-	}(mtlsDetails)
-
-	go func(details *kubernetes.MTLSDetails) {
-		defer wg.Done()
-		criteria := IstioConfigCriteria{
-			Namespace:                  namespace,
-			IncludePeerAuthentications: true,
-		}
-		istioConfig, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
-		if err == nil {
-			details.PeerAuthentications = istioConfig.PeerAuthentications
-		} else {
-			errChan <- err
-		}
-	}(mtlsDetails)
-
-	go func(details *kubernetes.MTLSDetails) {
-		defer wg.Done()
-		cfg := config.Get()
-
-		var istioConfig *core_v1.ConfigMap
-		var err error
-		if IsNamespaceCached(cfg.IstioNamespace) {
-			istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
-		} else {
-			istioConfig, err = in.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
-		}
-		if err != nil {
-			errChan <- err
-			return
-		}
-		icm, err := kubernetes.GetIstioConfigMap(istioConfig)
-		if err != nil {
-			errChan <- err
-		} else {
-			details.EnabledAutoMtls = icm.GetEnableAutoMtls()
-		}
-	}(mtlsDetails)
-
-	namespaces, err := in.businessLayer.Namespace.GetNamespaces(ctx)
+	var istioConfig *core_v1.ConfigMap
+	var err error
+	if IsNamespaceCached(cfg.IstioNamespace) {
+		istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+	} else {
+		istioConfig, err = in.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+	}
 	if err != nil {
 		errChan <- err
 		return
 	}
-
-	nsNames := make([]string, 0, len(namespaces))
-	for _, ns := range namespaces {
-		nsNames = append(nsNames, ns.Name)
-	}
-
-	destinationRules, err := in.businessLayer.TLS.GetAllDestinationRules(ctx, nsNames)
+	icm, err := kubernetes.GetIstioConfigMap(istioConfig)
 	if err != nil {
 		errChan <- err
 	} else {
-		mtlsDetails.DestinationRules = in.filterDRExportToNamespaces(namespace, destinationRules)
-	}
-}
-
-func (in *IstioValidationsService) fetchAuthorizationDetails(ctx context.Context, rValue *kubernetes.RBACDetails, namespace string, errChan chan error, wg *sync.WaitGroup) {
-	defer wg.Done()
-	if len(errChan) == 0 {
-		criteria := IstioConfigCriteria{
-			Namespace:                    namespace,
-			IncludeAuthorizationPolicies: true,
-		}
-		istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
-		if err != nil {
-			if checkForbidden("fetchAuthorizationDetails", err, "") {
-				return
-			}
-			select {
-			case errChan <- err:
-			default:
-			}
-		} else {
-			rValue.AuthorizationPolicies = istioConfigList.AuthorizationPolicies
-		}
+		mtlsDetails.EnabledAutoMtls = icm.GetEnableAutoMtls()
 	}
 }
 
@@ -539,46 +490,7 @@ func (in *IstioValidationsService) fetchRegistryServices(rValue *[]*kubernetes.R
 	}
 }
 
-var (
-	// used with checkForbidden - if a caller is in the map, its forbidden warning message was already logged
-	forbiddenCaller map[string]bool = map[string]bool{}
-)
-
 func checkExportTo(exportToNs string, namespace string, ownNs string) bool {
 	// check if namespaces where it is exported to, or if it is exported to all namespaces, or export to own namespace
 	return exportToNs == "*" || exportToNs == namespace || (exportToNs == "." && ownNs == namespace)
-}
-
-func checkForbidden(caller string, err error, context string) bool {
-	// Some checks return 'forbidden' errors if user doesn't have cluster permissions
-	// On this case we log it internally but we don't consider it as an internal error
-	if errors.IsForbidden(err) {
-		// These messages are expected when we do not have cluster permissions. Therefore, we want to
-		// avoid flooding the logs with these forbidden messages when we do not have cluster permissions.
-		// When we do not have cluster permissions, only log the message once per caller.
-		// If we do expect to have cluster permissions, then something is really wrong and
-		// we need to log this caller's message all the time.
-		// We expect to have cluster permissions if accessible namespaces is "**".
-		logTheMessage := true
-		an := config.Get().Deployment.AccessibleNamespaces
-		if !(len(an) == 1 && an[0] == "**") {
-			// We do not expect to have cluster role permissions, so these forbidden errors are expected,
-			// however, we do want to log the message once per caller.
-			if _, ok := forbiddenCaller[caller]; ok {
-				logTheMessage = false
-			} else {
-				forbiddenCaller[caller] = true
-			}
-		}
-
-		if logTheMessage {
-			if context == "" {
-				log.Warningf("%s validation failed due to insufficient permissions. Error: %s", caller, err)
-			} else {
-				log.Warningf("%s validation failed due to insufficient permissions (%s). Error: %s", caller, context, err)
-			}
-		}
-		return true
-	}
-	return false
 }
