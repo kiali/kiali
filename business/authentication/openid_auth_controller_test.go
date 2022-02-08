@@ -1204,11 +1204,9 @@ func TestOpenIdCodeFlowShouldRejectMissingAuthorizationCode(t *testing.T) {
 		callbackCalled = true
 	})).ServeHTTP(rr, request)
 
-	// nonce cookie cleanup// Check that cookies are set and have the right expiration.
 	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
-	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+	// No cleanup is done if there are not enough params so that the authorization code flow is triggered
+	assert.Len(t, response.Cookies(), 0)
 
 	// A missing State parameter has the effect that the auth controller ignores the request and
 	// passes it to the next handler.
@@ -1467,11 +1465,9 @@ func TestOpenIdCodeFlowShouldRejectMissingState(t *testing.T) {
 		callbackCalled = true
 	})).ServeHTTP(rr, request)
 
-	// nonce cookie cleanup
 	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
-	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+	// No cleanup is done if there are not enough params so that the authorization code flow is triggered
+	assert.Len(t, response.Cookies(), 0)
 
 	// A missing State parameter has the effect that the auth controller ignores the request and
 	// passes it to the next handler.
@@ -1503,13 +1499,9 @@ func TestOpenIdCodeFlowShouldRejectMissingNonceCookie(t *testing.T) {
 		callbackCalled = true
 	})).ServeHTTP(rr, request)
 
-	// Check that cookies are set and have the right expiration.
+	// No cleanup is done if there are not enough params so that the authorization code flow is triggered
 	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
-
-	// nonce cookie cleanup
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
-	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+	assert.Len(t, response.Cookies(), 0)
 
 	// A missing nonce cookie has the effect that the auth controller ignores the request and
 	// passes it to the next handler.
