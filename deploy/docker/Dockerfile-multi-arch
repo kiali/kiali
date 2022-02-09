@@ -21,6 +21,7 @@ ARG TARGETARCH
 COPY kiali-${TARGETARCH} $KIALI_HOME/kiali
 
 ADD console $KIALI_HOME/console/
+ADD version-compatibility-matrix.yaml $KIALI_HOME
 
 RUN chown -R kiali:kiali $KIALI_HOME/console && \
     chmod -R g=u $KIALI_HOME/console
