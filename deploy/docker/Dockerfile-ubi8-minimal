@@ -15,7 +15,6 @@ RUN microdnf install -y shadow-utils && \
 COPY kiali $KIALI_HOME/
 
 ADD console $KIALI_HOME/console/
-ADD version-compatibility-matrix.yaml $KIALI_HOME
 
 RUN chown -R kiali:kiali $KIALI_HOME/console && \
     chmod -R g=u $KIALI_HOME/console

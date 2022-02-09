@@ -9,7 +9,6 @@
 	@mkdir -p ${OUTDIR}/docker
 	@cp -r deploy/docker/* ${OUTDIR}/docker
 	@cp ${GOPATH}/bin/kiali* ${OUTDIR}/docker
-	@cp ${VERSION_MATRIX_LOCAL_DIR} ${OUTDIR}/docker
 
 ## container-build-kiali: Build Kiali container image.
 container-build-kiali: .prepare-kiali-image-files

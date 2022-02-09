@@ -1,7 +1,9 @@
 package config
 
 import (
+	"embed"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"sort"
@@ -431,6 +433,9 @@ type HealthConfig struct {
 	Rate []Rate `yaml:"rate,omitempty" json:"rate,omitempty"`
 }
 
+//go:embed *
+var versionMatrix embed.FS
+
 // Versions version ranges
 type Versions []struct {
 	MeshName     string `yaml:"meshName"`
@@ -444,10 +449,8 @@ type Versions []struct {
 
 // NewVersions return compatible kiali versions for mesh
 func NewVersions() (Versions, error) {
-	path, _ := os.Getwd()
-	file := path + "/../version-compatibility-matrix.yaml"
 
-	in, err := ioutil.ReadFile(file)
+	in, err := fs.ReadFile(versionMatrix, "version-compatibility-matrix.yaml")
 	if err != nil {
 		log.Warningf("Can not load version file %v", err)
 		return nil, err
