@@ -1,4 +1,4 @@
-# The Compatible Version Metrix between upstream Istio and Kiali
+# The Compatible Version Matrix between upstream Istio and Kiali
 - meshName: "Istio"
   versionRange: 
     - meshVersion: "1.13"
@@ -58,7 +58,7 @@
       kialiMinimumVersion: "1.17"
       kialiMaximumVersion: "1.17"
 
-# The Compatible Version Metrix between Maistra and Kiali
+# The Compatible Version Matrix between Maistra and Kiali
 - meshName: "Maistra"
   versionRange: 
     - meshVersion: "2.1"
@@ -86,7 +86,7 @@
       kialiMinimumVersion: "1.12"
       kialiMaximumVersion: ""
 
-# The Compatible Version Metrix between OpenShift Service Mesh and Kiali
+# The Compatible Version Matrix between OpenShift Service Mesh and Kiali
 - meshName: "OpenShift Service Mesh"
   versionRange: 
     - meshVersion: "2.1"
