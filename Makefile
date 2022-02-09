@@ -19,6 +19,9 @@ COMMIT_HASH ?= $(shell git rev-parse HEAD)
 # output in the $UI_SRC_ROOT/build/ subdirectory.
 CONSOLE_LOCAL_DIR ?= ${ROOTDIR}/../../../../../kiali-ui
 
+# The path where the version-compatibility-matrix.yaml has been git cloned.
+VERSION_METRIX_LOCAL_DIR ?= ${ROOTDIR}/version-compatibility-matrix.yaml
+
 # Version label is used in the OpenShift/K8S resources to identify
 # their specific instances. Kiali resources will have labels of
 # "app.kubernetes.io/name: kiali" and "app.kubernetes.io/version: ${VERSION_LABEL}"
