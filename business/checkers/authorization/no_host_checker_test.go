@@ -347,25 +347,6 @@ func authPolicyWithHost(hostList []string) *security_v1beta.AuthorizationPolicy 
 	return data.CreateAuthorizationPolicy(nss, methods, hostList, selector)
 }
 
-func fakeServices(serviceNames []string) models.ServiceList {
-	serviceList := models.ServiceList{
-		Services: []models.ServiceOverview{},
-	}
-	for _, sName := range serviceNames {
-		service := models.ServiceOverview{
-			Name:      sName,
-			Namespace: "bookinfo",
-			Labels: map[string]string{
-				"app":     sName,
-				"version": "v1",
-			},
-			Selector: map[string]string{"app": sName},
-		}
-		serviceList.Services = append(serviceList.Services, service)
-	}
-	return serviceList
-}
-
 func TestValidServiceRegistry(t *testing.T) {
 	assert := assert.New(t)
 

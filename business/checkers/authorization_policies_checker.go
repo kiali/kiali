@@ -17,7 +17,6 @@ type AuthorizationPolicyChecker struct {
 	Namespace             string
 	Namespaces            models.Namespaces
 	ServiceEntries        []networking_v1alpha3.ServiceEntry
-	ServiceList           models.ServiceList
 	WorkloadList          models.WorkloadList
 	MtlsDetails           kubernetes.MTLSDetails
 	VirtualServices       []networking_v1alpha3.VirtualService
@@ -37,7 +36,6 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 		Namespace:             a.Namespace,
 		AuthorizationPolicies: a.AuthorizationPolicies,
 		MtlsDetails:           a.MtlsDetails,
-		ServiceList:           a.ServiceList,
 		RegistryServices:      a.RegistryServices,
 	}.Check())
 

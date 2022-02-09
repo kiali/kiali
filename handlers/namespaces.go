@@ -42,8 +42,7 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var validationSummary models.IstioValidationSummary
-
-	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), namespace, "")
+	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), namespace, "", "")
 	if errValidations != nil {
 		log.Error(errValidations)
 		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())

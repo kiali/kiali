@@ -12,6 +12,7 @@ import (
 
 	"github.com/nitishm/engarde/pkg/parser"
 	osapps_v1 "github.com/openshift/api/apps/v1"
+	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
@@ -20,6 +21,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -81,6 +83,16 @@ func isWorkloadIncluded(workload string) bool {
 	return !excludedWorkloads[workload]
 }
 
+func (in *WorkloadService) getWorkloadValidations(authpolicies []security_v1beta1.AuthorizationPolicy, workloads models.WorkloadList, namespace string) models.IstioValidations {
+	validations := checkers.WorkloadChecker{
+		Namespace:             namespace,
+		AuthorizationPolicies: authpolicies,
+		WorkloadList:          workloads,
+	}.Check()
+
+	return validations
+}
+
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
 func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria WorkloadCriteria) (models.WorkloadList, error) {
 	var end observability.EndFunc
@@ -94,6 +106,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		Workloads: []models.WorkloadListItem{},
 	}
 	var ws models.Workloads
+	var authpolicies []security_v1beta1.AuthorizationPolicy
 	var err error
 
 	nFetches := 1
@@ -153,6 +166,10 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
+	authpolicies = istioConfigList.AuthorizationPolicies
+	validations := in.getWorkloadValidations(authpolicies, *workloadList, criteria.Namespace)
+	validations.StripIgnoredChecks()
+	workloadList.Validations = validations
 	return *workloadList, nil
 }
 

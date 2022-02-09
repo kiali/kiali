@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"sync"
 
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -44,9 +45,20 @@ var kialiCache cache.KialiCache
 
 func initKialiCache() {
 	if config.Get().KubernetesConfig.CacheEnabled {
+		log.Infof("Initializing Kiali Cache")
 		if cache, err := cache.NewKialiCache(); err != nil {
 			log.Errorf("Error initializing Kiali Cache. Details: %s", err)
 		} else {
+			// Temporal NamespaceService to initialize the cache informers
+			initK8sClient := cache.GetClient()
+			initNamespaceService := NewNamespaceService(initK8sClient)
+			if nss, err := initNamespaceService.GetNamespaces(context.Background()); err != nil {
+				log.Errorf("Error fetching initial namespaces for populating the Kiali Cache. Details: %s", err)
+			} else {
+				for _, ns := range nss {
+					cache.CheckNamespace(ns.Name)
+				}
+			}
 			kialiCache = cache
 		}
 	}
@@ -71,11 +83,13 @@ func IsResourceCached(namespace string, resource string) bool {
 	return ok
 }
 
-// Get the business.Layer
-func Get(authInfo *api.AuthInfo) (*Layer, error) {
+func Start() {
 	// Kiali Cache will be initialized once at first use of Business layer
 	once.Do(initKialiCache)
+}
 
+// Get the business.Layer
+func Get(authInfo *api.AuthInfo) (*Layer, error) {
 	// Use an existing client factory if it exists, otherwise create and use in the future
 	if clientFactory == nil {
 		userClient, err := kubernetes.GetClientFactory()

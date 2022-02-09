@@ -106,6 +106,9 @@ func (s *Server) Start() {
 	if conf.Server.Observability.Metrics.Enabled {
 		StartMetricsServer()
 	}
+
+	// Start the business to initialize cache dependencies
+	business.Start()
 }
 
 // Stop the HTTP server
