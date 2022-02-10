@@ -573,7 +573,7 @@ func TestMeshVersionCompatible(t *testing.T) {
 			supported:   true,
 		},
 		{
-			name:        "Maistre",
+			name:        "MaistrX",
 			version:     "1.12",
 			meshVersion: "2.0",
 			supported:   false,

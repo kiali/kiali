@@ -237,13 +237,13 @@ func TestRaces(t *testing.T) {
 	wg.Wait()
 }
 
-func TestMarshalUnmarshalVersions(t *testing.T) {
-	versions, err := NewVersions()
+func TestMarshalUnmarshalCompatibilityMatrix(t *testing.T) {
+	matrix, err := NewCompatibilityMatrix()
 
 	if err != nil {
 		t.Errorf("Failed to marshal: %v", err)
 	}
 
-	fmt.Printf("%+v", versions)
-	t.Logf("Config from versions: %+v", versions)
+	fmt.Printf("%+v", matrix)
+	t.Logf("Config from compatibility matrix file: %+v", matrix)
 }
