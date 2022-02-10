@@ -95,7 +95,6 @@ func main() {
 
 	if err != nil {
 		log.Warningf("Failed to get mesh version, please check if url_service_version is configured correctly.")
-		status.AddWarningMessages("Failed to get mesh version, please check if url_service_version is configured correctly.")
 	} else {
 		// Check kiali version compatibility with mesh
 		// Note this method will not affect kiali running status, just throw warning logs out
@@ -230,19 +229,11 @@ func determineContainerVersion(defaultVersion string) string {
 func checkVersionCompatibility(meshName string, meshVersion string) {
 	if meshName == "Unknown" {
 		log.Warningf("Unknown Istio Implementation")
-		status.Put(status.MeshVersion, meshVersion)
-		status.Put(status.MeshName, meshName)
-		status.AddWarningMessages("Unknown Istio Implementation")
 	} else {
 		if ok := status.CheckMeshVersion(meshName, meshVersion, version); ok {
 			log.Infof("Mesh Name: %v Mesh Version: %v", meshName, meshVersion)
-			status.Put(status.MeshVersion, meshVersion)
-			status.Put(status.MeshName, meshName)
-			status.Put(status.IsCompatible, "true")
 		} else {
 			log.Warningf("Kiali %v may not be compatible with %v %v, and is not recommended. See kiali.io for version compatibility", version, meshName, meshVersion)
-			status.AddWarningMessages(fmt.Sprintf("Kiali %v may not be compatible with %v %v, and is not recommended. See kiali.io for version compatibility", version, meshName, meshVersion))
-			status.Put(status.IsCompatible, "false")
 		}
 	}
 }

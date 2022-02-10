@@ -236,12 +236,31 @@ func istioVersion() (*ExternalServiceInfo, error) {
 	istioConfig := config.Get().ExternalServices.Istio
 	body, code, err := httputil.HttpGet(istioConfig.UrlServiceVersion, nil, 10*time.Second, nil)
 	if err != nil {
+		AddWarningMessages("Failed to get mesh version, please check if url_service_version is configured correctly.")
+		Put(IsCompatible, "false")
 		return nil, err
 	}
 	if code >= 400 {
 		return nil, fmt.Errorf("getting istio version returned error code %d", code)
 	}
 	rawVersion := string(body)
+
+	istioInfo, _ := parseIstioRawVersion(rawVersion)
+	meshName, meshVersion := istioInfo.Name, istioInfo.Version
+	status := GetStatus()
+	kialiVersion := status[CoreVersion]
+
+	if ok := CheckMeshVersion(meshName, meshVersion, kialiVersion); ok {
+		Put(MeshVersion, meshVersion)
+		Put(MeshName, meshName)
+		Put(IsCompatible, "true")
+	} else {
+		Put(MeshVersion, meshVersion)
+		Put(MeshName, meshName)
+		AddWarningMessages(fmt.Sprintf("Kiali %v may not be compatible with %v %v, and is not recommended. See kiali.io for version compatibility", kialiVersion, meshName, meshVersion))
+		Put(IsCompatible, "false")
+	}
+
 	return parseIstioRawVersion(rawVersion)
 }
 

@@ -117,6 +117,11 @@ func Get() (status StatusInfo) {
 	return info
 }
 
+// GetStatus returns current status
+func GetStatus() map[string]string {
+	return info.Status
+}
+
 // IsMaistra returns true if we are running in a Maistra environment
 func IsMaistra() bool {
 	if info.IstioEnvironment == nil {
