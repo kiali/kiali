@@ -538,16 +538,13 @@ func (p *openidFlowHelper) extractOpenIdCallbackParams(r *http.Request) *openidF
 
 	// Get the nonce code hash
 	var nonceCookie *http.Cookie
-	log.Errorf("Try to check nonce cookie")
 	if nonceCookie, err = r.Cookie(OpenIdNonceCookieName); err == nil {
-		log.Errorf("Nonce cookie = %v", nonceCookie.Value)
 		p.Nonce = nonceCookie.Value
 
 		hash := sha256.Sum224([]byte(nonceCookie.Value))
 		p.NonceHash = make([]byte, sha256.Size224)
 		copy(p.NonceHash, hash[:])
 	}
-	log.Errorf("Finish try to check nonce cookie")
 
 	// Parse/fetch received form data
 	err = r.ParseForm()
