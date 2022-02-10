@@ -486,7 +486,7 @@ func (iv *IstioValidations) StripIgnoredChecks() {
 				for _, cti := range codesToIgnore {
 					if cti == curCheck.Code {
 						ignoreCheck = true
-						log.Infof("Ignoring validation failure [%+v] for object [%s:%s] in namespace [%s]", curCheck, curValidationKey.ObjectType, curValidationKey.Name, curValidationKey.Namespace)
+						log.Debugf("Ignoring validation failure [%+v] for object [%s:%s] in namespace [%s]", curCheck, curValidationKey.ObjectType, curValidationKey.Name, curValidationKey.Namespace)
 						break
 					}
 				}
