@@ -78,6 +78,7 @@ export type ServiceWizardProps = {
   namespace: string;
   serviceName: string;
   tlsStatus?: TLSStatus;
+  createOrUpdate: boolean;
   workloads: WorkloadOverview[];
   virtualServices: VirtualService[];
   destinationRules: DestinationRule[];
@@ -96,9 +97,19 @@ export type ServiceWizardValid = {
   od: boolean;
 };
 
+export type WizardPreviews = {
+  dr: DestinationRule;
+  vs: VirtualService;
+  gw?: Gateway;
+  pa?: PeerAuthentication;
+};
+
 export type ServiceWizardState = {
   showWizard: boolean;
   showAdvanced: boolean;
+  showPreview: boolean;
+  confirmationModal: boolean;
+  previews?: WizardPreviews;
   advancedTabKey: number;
   workloads: WorkloadWeight[];
   rules: Rule[];
@@ -128,6 +139,8 @@ export type WorkloadWizardState = {
 
 export const KIALI_WIZARD_LABEL = 'kiali_wizard';
 export const KIALI_RELATED_LABEL = 'kiali_wizard_related';
+
+export const ISTIO_NETWORKING_VERSION = 'networking.istio.io/v1alpha3';
 
 export const fqdnServiceName = (serviceName: string, namespace: string): string => {
   return serviceName + '.' + namespace + '.' + serverConfig.istioIdentityDomain;
@@ -232,10 +245,7 @@ export const getGatewayName = (namespace: string, serviceName: string, gatewayNa
   return gatewayName;
 };
 
-export const buildIstioConfig = (
-  wProps: ServiceWizardProps,
-  wState: ServiceWizardState
-): [DestinationRule, VirtualService, Gateway?, PeerAuthentication?] => {
+export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWizardState): WizardPreviews => {
   const wkdNameVersion: { [key: string]: string } = {};
 
   // DestinationRule from the labels
@@ -245,6 +255,8 @@ export const buildIstioConfig = (
     drName = wProps.destinationRules[0].metadata.name;
   }
   const wizardDR: DestinationRule = {
+    kind: 'DestinationRule',
+    apiVersion: ISTIO_NETWORKING_VERSION,
     metadata: {
       namespace: wProps.namespace,
       name: drName,
@@ -287,6 +299,8 @@ export const buildIstioConfig = (
     vsName = wProps.virtualServices[0].metadata.name;
   }
   const wizardVS: VirtualService = {
+    kind: 'VirtualService',
+    apiVersion: ISTIO_NETWORKING_VERSION,
     metadata: {
       namespace: wProps.namespace,
       name: vsName,
@@ -304,6 +318,8 @@ export const buildIstioConfig = (
   const wizardGW: Gateway | undefined =
     wState.gateway && wState.gateway.addGateway && wState.gateway.newGateway
       ? {
+          kind: 'Gateway',
+          apiVersion: ISTIO_NETWORKING_VERSION,
           metadata: {
             namespace: wProps.namespace,
             name: fullNewGatewayName.substr(wProps.namespace.length + 1),
@@ -645,7 +661,7 @@ export const buildIstioConfig = (
   } else {
     wizardVS.spec.gateways = null;
   }
-  return [wizardDR, wizardVS, wizardGW, wizardPA];
+  return { dr: wizardDR, vs: wizardVS, gw: wizardGW, pa: wizardPA };
 };
 
 const getWorkloadsByVersion = (
@@ -1146,7 +1162,7 @@ export const buildGraphSidecars = (namespace: string, graph: GraphDefinition): S
       ) {
         const sc: Sidecar = {
           kind: 'Sidecar',
-          apiVersion: 'networking.istio.io/v1alpha3',
+          apiVersion: ISTIO_NETWORKING_VERSION,
           metadata: {
             name: node.data.workload,
             namespace: namespace,

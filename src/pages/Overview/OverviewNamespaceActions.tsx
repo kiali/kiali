@@ -85,7 +85,7 @@ export class OverviewNamespaceActions extends React.Component<Props, State> {
                 ? this.renderTooltip(
                     'tooltip_' + itemKey,
                     TooltipPosition.left,
-                    'User has not enough permissions for this action',
+                    'User does not have enough permission for this action',
                     item
                   )
                 : item;
@@ -106,7 +106,7 @@ export class OverviewNamespaceActions extends React.Component<Props, State> {
           ? this.renderTooltip(
               'tooltip_action_' + i,
               TooltipPosition.left,
-              'User has not enough permissions for this action',
+              'User does not have enough permission for this action',
               item
             )
           : item;

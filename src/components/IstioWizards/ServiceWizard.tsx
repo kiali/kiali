@@ -36,21 +36,32 @@ import {
   getInitTimeoutRetryRoute,
   getInitConnectionPool,
   getInitOutlierDetection,
-  WIZARD_TCP_TRAFFIC_SHIFTING
+  WIZARD_TCP_TRAFFIC_SHIFTING,
+  WizardPreviews
 } from './WizardActions';
 import { MessageType } from '../../types/MessageCenter';
 import GatewaySelector, { GatewaySelectorState } from './GatewaySelector';
 import VirtualServiceHosts from './VirtualServiceHosts';
-import { DestinationRule, PeerAuthentication, PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
+import {
+  DestinationRule,
+  Gateway,
+  PeerAuthentication,
+  PeerAuthenticationMutualTLSMode,
+  VirtualService
+} from '../../types/IstioObjects';
 import { style } from 'typestyle';
 import RequestTimeouts, { TimeoutRetryRoute } from './RequestTimeouts';
 import CircuitBreaker, { CircuitBreakerState } from './CircuitBreaker';
 import _ from 'lodash';
+import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 
 const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState => {
   return {
     showWizard: false,
     showAdvanced: false,
+    showPreview: false,
+    confirmationModal: false,
+    previews: undefined,
     advancedTabKey: 0,
     workloads: [],
     rules: [],
@@ -228,6 +239,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
 
       this.setState({
         showWizard: this.props.show,
+        showPreview: false,
         workloads: [],
         rules: [],
         valid: {
@@ -274,7 +286,10 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
       case WIZARD_REQUEST_TIMEOUTS:
-        const [dr, vs, gw, pa] = buildIstioConfig(this.props, this.state);
+        const dr = this.state.previews!.dr;
+        const vs = this.state.previews!.vs;
+        const gw = this.state.previews!.gw;
+        const pa = this.state.previews!.pa;
         // Gateway is only created when user has explicit selected this option
         if (gw) {
           promises.push(API.createIstioConfigDetail(this.props.namespace, 'gateways', JSON.stringify(gw)));
@@ -472,146 +487,232 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
     });
   };
 
+  onPreview = () => {
+    this.setState(
+      {
+        previews: buildIstioConfig(this.props, this.state)
+      },
+      () => this.setState({ showPreview: true })
+    );
+  };
+
+  onConfirmPreview = (items: ConfigPreviewItem[]) => {
+    const dr = items.filter(it => it.type === 'destinationrule')[0];
+    const gw = items.filter(it => it.type === 'gateway')[0];
+    const pa = items.filter(it => it.type === 'peerauthentications')[0];
+    const vs = items.filter(it => it.type === 'virtualservice')[0];
+    const previews: WizardPreviews = {
+      dr: dr.items[0] as DestinationRule,
+      gw: gw ? (gw.items[0] as Gateway) : undefined,
+      pa: pa ? (pa.items[0] as PeerAuthentication) : undefined,
+      vs: vs.items[0] as VirtualService
+    };
+    this.setState({ previews, showPreview: false, showWizard: false, confirmationModal: true });
+  };
+
+  getItems = () => {
+    const items: ConfigPreviewItem[] = [];
+    if (this.state.previews) {
+      if (this.state.previews.dr) {
+        items.push({ type: 'destinationrule', items: [this.state.previews.dr], title: 'Destination Rule' });
+      }
+      if (this.state.previews.gw) {
+        items.push({ type: 'gateway', items: [this.state.previews.gw], title: 'Gateway' });
+      }
+      if (this.state.previews.pa) {
+        items.push({ type: 'peerauthentications', items: [this.state.previews.pa], title: 'Peer Authentication' });
+      }
+      if (this.state.previews.vs) {
+        items.push({ type: 'virtualservice', items: [this.state.previews.vs], title: 'VirtualService' });
+      }
+    }
+
+    return items;
+  };
+
   render() {
     const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
+    const titleAction =
+      this.props.type.length > 0
+        ? this.props.update
+          ? 'Update ' + WIZARD_TITLES[this.props.type]
+          : 'Create ' + WIZARD_TITLES[this.props.type]
+        : '';
     return (
-      <Modal
-        width={'75%'}
-        title={
-          this.props.type.length > 0
-            ? this.props.update
-              ? 'Update ' + WIZARD_TITLES[this.props.type]
-              : 'Create ' + WIZARD_TITLES[this.props.type]
-            : ''
-        }
-        isOpen={this.state.showWizard}
-        onClose={() => this.onClose(false)}
-        onKeyPress={e => {
-          if (e.key === 'Enter' && this.isValid(this.state)) {
-            this.onCreateUpdate();
+      <>
+        <Modal
+          isSmall={true}
+          title={titleAction}
+          isOpen={this.state.confirmationModal}
+          onClose={() => this.onClose(false)}
+          actions={[
+            <Button key="cancel" variant="secondary" onClick={() => this.onClose(false)}>
+              Cancel
+            </Button>,
+            <Button key="confirm" variant={'primary'} onClick={this.onCreateUpdate}>
+              {this.props.update ? 'Update' : 'Create'}
+            </Button>
+          ]}
+        >
+          <>
+            You're going to {this.props.update ? 'update' : 'create'} istio objects in Namespace {this.props.namespace}.
+            Are you sure?
+          </>
+        </Modal>
+        <Modal
+          width={'75%'}
+          title={
+            this.props.type.length > 0
+              ? this.props.update
+                ? 'Update ' + WIZARD_TITLES[this.props.type]
+                : 'Create ' + WIZARD_TITLES[this.props.type]
+              : ''
           }
-        }}
-        actions={[
-          <Button key="cancel" variant="secondary" onClick={() => this.onClose(false)}>
-            Cancel
-          </Button>,
-          <Button isDisabled={!this.isValid(this.state)} key="confirm" variant="primary" onClick={this.onCreateUpdate}>
-            {this.props.update ? 'Update' : 'Create'}
-          </Button>
-        ]}
-      >
-        {this.props.type === WIZARD_REQUEST_ROUTING && (
-          <RequestRouting
-            serviceName={this.props.serviceName}
-            workloads={this.props.workloads}
-            initRules={getInitRules(this.props.workloads, this.props.virtualServices, this.props.destinationRules)}
-            onChange={this.onRulesChange}
-          />
-        )}
-        {this.props.type === WIZARD_FAULT_INJECTION && (
-          <FaultInjection
-            initFaultInjectionRoute={getInitFaultInjectionRoute(
-              this.props.workloads,
-              this.props.virtualServices,
-              this.props.destinationRules
-            )}
-            onChange={this.onFaultInjectionRouteChange}
-          />
-        )}
-        {(this.props.type === WIZARD_TRAFFIC_SHIFTING || this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING) && (
-          <TrafficShifting
-            showValid={true}
-            workloads={this.props.workloads}
-            initWeights={getInitWeights(this.props.workloads, this.props.virtualServices, this.props.destinationRules)}
-            showMirror={this.props.type === WIZARD_TRAFFIC_SHIFTING}
-            onChange={this.onWeightsChange}
-          />
-        )}
-        {this.props.type === WIZARD_REQUEST_TIMEOUTS && (
-          <RequestTimeouts
-            initTimeoutRetry={getInitTimeoutRetryRoute(
-              this.props.workloads,
-              this.props.virtualServices,
-              this.props.destinationRules
-            )}
-            onChange={this.onTimeoutRetryRouteChange}
-          />
-        )}
-        {(this.props.type === WIZARD_REQUEST_ROUTING ||
-          this.props.type === WIZARD_FAULT_INJECTION ||
-          this.props.type === WIZARD_TRAFFIC_SHIFTING ||
-          this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING ||
-          this.props.type === WIZARD_REQUEST_TIMEOUTS) && (
-          <Expandable
-            className={advancedOptionsStyle}
-            isExpanded={this.state.showAdvanced}
-            toggleText={(this.state.showAdvanced ? 'Hide' : 'Show') + ' Advanced Options'}
-            onToggle={() => {
-              this.setState({
-                showAdvanced: !this.state.showAdvanced
-              });
+          isOpen={this.state.showWizard}
+          onClose={() => this.onClose(false)}
+          onKeyPress={e => {
+            if (e.key === 'Enter' && this.isValid(this.state)) {
+              this.onPreview();
+            }
+          }}
+          actions={[
+            <Button key="cancel" variant="secondary" onClick={() => this.onClose(false)}>
+              Cancel
+            </Button>,
+            <Button isDisabled={!this.isValid(this.state)} key="confirm" variant="primary" onClick={this.onPreview}>
+              Preview
+            </Button>
+          ]}
+        >
+          <IstioConfigPreview
+            isOpen={this.state.showPreview}
+            title={titleAction}
+            ns={this.props.namespace}
+            opTarget={this.props.update ? 'update' : 'create'}
+            disableAction={!this.props.createOrUpdate}
+            items={this.getItems()}
+            onClose={() => this.setState({ showPreview: false })}
+            onConfirm={(items: ConfigPreviewItem[]) => {
+              this.onConfirmPreview(items);
             }}
-          >
-            <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
-              <Tab eventKey={0} title={'Destination Hosts'}>
-                <div style={{ marginTop: '20px' }}>
-                  <VirtualServiceHosts
-                    vsHosts={this.state.vsHosts}
-                    gateway={this.state.gateway}
-                    onVsHostsChange={this.onVsHosts}
-                  />
-                </div>
-              </Tab>
-              <Tab eventKey={1} title={'Gateways'}>
-                <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                  <GatewaySelector
-                    serviceName={this.props.serviceName}
-                    hasGateway={hasGateway(this.props.virtualServices)}
-                    gateway={gatewaySelected}
-                    isMesh={isMesh}
-                    gateways={this.props.gateways}
-                    vsHosts={this.state.vsHosts}
-                    onGatewayChange={this.onGateway}
-                  />
-                </div>
-              </Tab>
-              <Tab eventKey={2} title={'Traffic Policy'}>
-                <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                  <TrafficPolicyContainer
-                    mtlsMode={this.state.trafficPolicy.mtlsMode}
-                    clientCertificate={this.state.trafficPolicy.clientCertificate}
-                    privateKey={this.state.trafficPolicy.privateKey}
-                    caCertificates={this.state.trafficPolicy.caCertificates}
-                    hasLoadBalancer={this.state.trafficPolicy.addLoadBalancer}
-                    loadBalancer={this.state.trafficPolicy.loadBalancer}
-                    nsWideStatus={this.props.tlsStatus}
-                    hasPeerAuthentication={this.state.trafficPolicy.peerAuthnSelector.addPeerAuthentication}
-                    peerAuthenticationMode={this.state.trafficPolicy.peerAuthnSelector.mode}
-                    addConnectionPool={this.state.trafficPolicy.addConnectionPool}
-                    connectionPool={this.state.trafficPolicy.connectionPool}
-                    addOutlierDetection={this.state.trafficPolicy.addOutlierDetection}
-                    outlierDetection={this.state.trafficPolicy.outlierDetection}
-                    onTrafficPolicyChange={this.onTrafficPolicy}
-                  />
-                </div>
-              </Tab>
-              {this.props.type !== WIZARD_TCP_TRAFFIC_SHIFTING && (
-                <Tab eventKey={3} title={'Circuit Breaker'}>
-                  <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                    <CircuitBreaker
-                      hasConnectionPool={this.state.trafficPolicy.addConnectionPool}
-                      connectionPool={this.state.trafficPolicy.connectionPool}
-                      hasOutlierDetection={this.state.trafficPolicy.addOutlierDetection}
-                      outlierDetection={this.state.trafficPolicy.outlierDetection}
-                      onCircuitBreakerChange={this.onCircuitBreaker}
+          />
+          {this.props.type === WIZARD_REQUEST_ROUTING && (
+            <RequestRouting
+              serviceName={this.props.serviceName}
+              workloads={this.props.workloads}
+              initRules={getInitRules(this.props.workloads, this.props.virtualServices, this.props.destinationRules)}
+              onChange={this.onRulesChange}
+            />
+          )}
+          {this.props.type === WIZARD_FAULT_INJECTION && (
+            <FaultInjection
+              initFaultInjectionRoute={getInitFaultInjectionRoute(
+                this.props.workloads,
+                this.props.virtualServices,
+                this.props.destinationRules
+              )}
+              onChange={this.onFaultInjectionRouteChange}
+            />
+          )}
+          {(this.props.type === WIZARD_TRAFFIC_SHIFTING || this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING) && (
+            <TrafficShifting
+              showValid={true}
+              workloads={this.props.workloads}
+              initWeights={getInitWeights(
+                this.props.workloads,
+                this.props.virtualServices,
+                this.props.destinationRules
+              )}
+              showMirror={this.props.type === WIZARD_TRAFFIC_SHIFTING}
+              onChange={this.onWeightsChange}
+            />
+          )}
+          {this.props.type === WIZARD_REQUEST_TIMEOUTS && (
+            <RequestTimeouts
+              initTimeoutRetry={getInitTimeoutRetryRoute(
+                this.props.workloads,
+                this.props.virtualServices,
+                this.props.destinationRules
+              )}
+              onChange={this.onTimeoutRetryRouteChange}
+            />
+          )}
+          {(this.props.type === WIZARD_REQUEST_ROUTING ||
+            this.props.type === WIZARD_FAULT_INJECTION ||
+            this.props.type === WIZARD_TRAFFIC_SHIFTING ||
+            this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING ||
+            this.props.type === WIZARD_REQUEST_TIMEOUTS) && (
+            <Expandable
+              className={advancedOptionsStyle}
+              isExpanded={this.state.showAdvanced}
+              toggleText={(this.state.showAdvanced ? 'Hide' : 'Show') + ' Advanced Options'}
+              onToggle={() => {
+                this.setState({
+                  showAdvanced: !this.state.showAdvanced
+                });
+              }}
+            >
+              <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
+                <Tab eventKey={0} title={'Destination Hosts'}>
+                  <div style={{ marginTop: '20px' }}>
+                    <VirtualServiceHosts
+                      vsHosts={this.state.vsHosts}
+                      gateway={this.state.gateway}
+                      onVsHostsChange={this.onVsHosts}
                     />
                   </div>
                 </Tab>
-              )}
-            </Tabs>
-          </Expandable>
-        )}
-      </Modal>
+                <Tab eventKey={1} title={'Gateways'}>
+                  <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                    <GatewaySelector
+                      serviceName={this.props.serviceName}
+                      hasGateway={hasGateway(this.props.virtualServices)}
+                      gateway={gatewaySelected}
+                      isMesh={isMesh}
+                      gateways={this.props.gateways}
+                      vsHosts={this.state.vsHosts}
+                      onGatewayChange={this.onGateway}
+                    />
+                  </div>
+                </Tab>
+                <Tab eventKey={2} title={'Traffic Policy'}>
+                  <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                    <TrafficPolicyContainer
+                      mtlsMode={this.state.trafficPolicy.mtlsMode}
+                      clientCertificate={this.state.trafficPolicy.clientCertificate}
+                      privateKey={this.state.trafficPolicy.privateKey}
+                      caCertificates={this.state.trafficPolicy.caCertificates}
+                      hasLoadBalancer={this.state.trafficPolicy.addLoadBalancer}
+                      loadBalancer={this.state.trafficPolicy.loadBalancer}
+                      nsWideStatus={this.props.tlsStatus}
+                      hasPeerAuthentication={this.state.trafficPolicy.peerAuthnSelector.addPeerAuthentication}
+                      peerAuthenticationMode={this.state.trafficPolicy.peerAuthnSelector.mode}
+                      addConnectionPool={this.state.trafficPolicy.addConnectionPool}
+                      connectionPool={this.state.trafficPolicy.connectionPool}
+                      addOutlierDetection={this.state.trafficPolicy.addOutlierDetection}
+                      outlierDetection={this.state.trafficPolicy.outlierDetection}
+                      onTrafficPolicyChange={this.onTrafficPolicy}
+                    />
+                  </div>
+                </Tab>
+                {this.props.type !== WIZARD_TCP_TRAFFIC_SHIFTING && (
+                  <Tab eventKey={3} title={'Circuit Breaker'}>
+                    <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                      <CircuitBreaker
+                        hasConnectionPool={this.state.trafficPolicy.addConnectionPool}
+                        connectionPool={this.state.trafficPolicy.connectionPool}
+                        hasOutlierDetection={this.state.trafficPolicy.addOutlierDetection}
+                        outlierDetection={this.state.trafficPolicy.outlierDetection}
+                        onCircuitBreakerChange={this.onCircuitBreaker}
+                      />
+                    </div>
+                  </Tab>
+                )}
+              </Tabs>
+            </Expandable>
+          )}
+        </Modal>
+      </>
     );
   }
 }

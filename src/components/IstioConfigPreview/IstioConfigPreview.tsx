@@ -3,14 +3,21 @@ import {
   Button,
   ButtonVariant,
   Modal,
-  Tabs,
   Tab,
+  Tabs,
   Toolbar,
   ToolbarGroup,
   ToolbarItem,
   Tooltip
 } from '@patternfly/react-core';
-import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
+import {
+  AuthorizationPolicy,
+  DestinationRule,
+  Gateway,
+  PeerAuthentication,
+  Sidecar,
+  VirtualService
+} from 'types/IstioObjects';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { style } from 'typestyle';
 import { KialiIcon, defaultIconStyle } from '../../config/KialiIcon';
@@ -18,64 +25,71 @@ import { safeDumpOptions } from '../../types/IstioConfigDetails';
 import { jsYaml } from '../../types/AceValidations';
 import { EditResources } from './EditResources';
 import { cloneDeep } from 'lodash';
+import { PFColors } from '../Pf/PfColors';
 import _ from 'lodash';
 
-type PolicyItem = AuthorizationPolicy | Sidecar;
+export type IstioConfigItem =
+  | AuthorizationPolicy
+  | Sidecar
+  | DestinationRule
+  | PeerAuthentication
+  | Gateway
+  | VirtualService;
+
+export interface ConfigPreviewItem {
+  title: string;
+  type: string;
+  items: IstioConfigItem[];
+}
 
 interface Props {
   isOpen: boolean;
   ns: string;
-  authorizationPolicies: AuthorizationPolicy[];
-  sidecars: Sidecar[];
+  title?: string;
+  actions?: any;
+  disableAction?: boolean;
+  items: ConfigPreviewItem[];
   opTarget: string;
   onClose: () => void;
-  onConfirm: (authorizationPolicies, sidecars) => void;
+  onKeyPress?: (e: any) => void;
+  onConfirm: (items: ConfigPreviewItem[]) => void;
 }
 
 interface State {
-  sidecars: Sidecar[];
-  authorizationPolicies: AuthorizationPolicy[];
+  items: ConfigPreviewItem[];
   mainTab: string;
 }
 
 const separator = '\n---\n\n';
-const authorizationPoliciesTitle = 'Authorization Policies';
-const sidecarsTitle = 'Sidecars';
 
 export class IstioConfigPreview extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      mainTab: authorizationPoliciesTitle.toLocaleLowerCase().replace(/\s/g, ''),
-      sidecars: cloneDeep(this.props.sidecars),
-      authorizationPolicies: cloneDeep(this.props.authorizationPolicies)
+      mainTab: this.props.items.length > 0 ? this.props.items[0].title.toLocaleLowerCase().replace(/\s/g, '') : '',
+      items: cloneDeep(this.props.items)
     };
   }
-
   componentDidUpdate(prevProps: Props) {
-    if (
-      !_.isEqual(prevProps.sidecars, this.props.sidecars) ||
-      !_.isEqual(prevProps.authorizationPolicies, this.props.authorizationPolicies)
-    ) {
-      this.setStateValues(this.props.sidecars, this.props.authorizationPolicies);
+    if (!_.isEqual(prevProps.items, this.props.items)) {
+      this.setStateValues(this.props.items);
     }
   }
 
-  setStateValues = (sidecars: Sidecar[], authorizationPolicies: AuthorizationPolicy[]) => {
+  setStateValues = (items: ConfigPreviewItem[]) => {
     this.setState({
-      sidecars: cloneDeep(sidecars),
-      authorizationPolicies: cloneDeep(authorizationPolicies)
+      mainTab: items.length > 0 ? items[0].title.toLocaleLowerCase().replace(/\s/g, '') : '',
+      items: cloneDeep(items)
     });
   };
 
-  trafficToText = (
-    authorizationPolicies: AuthorizationPolicy[] = this.state.authorizationPolicies,
-    sidecars: Sidecar[] = this.state.sidecars
-  ) => {
+  trafficToText = () => {
     var trafficPoliciesYaml = '';
-    trafficPoliciesYaml = authorizationPolicies.map(obj => jsYaml.safeDump(obj, safeDumpOptions)).join(separator);
-    trafficPoliciesYaml += separator;
-    trafficPoliciesYaml += sidecars.map(obj => jsYaml.safeDump(obj, safeDumpOptions)).join(separator);
+    this.state.items.map(obj => {
+      trafficPoliciesYaml += obj.items.map(item => jsYaml.safeDump(item, safeDumpOptions)).join(separator);
+      trafficPoliciesYaml += separator;
+      return undefined;
+    });
     return trafficPoliciesYaml;
   };
 
@@ -89,31 +103,31 @@ export class IstioConfigPreview extends React.Component<Props, State> {
   };
 
   onConfirm = () => {
-    this.props.onConfirm(this.state.authorizationPolicies, this.state.sidecars);
-    this.setState({
-      mainTab: authorizationPoliciesTitle.toLocaleLowerCase().replace(/\s/g, ''),
-      sidecars: [],
-      authorizationPolicies: []
-    });
+    this.props.onConfirm(this.state.items);
+    this.setStateValues([]);
   };
 
-  editorChange = (object: PolicyItem, index: number) => {
-    const authorizationPolicies = this.state.authorizationPolicies;
-    const sidecars = this.state.sidecars;
-    object.metadata!.labels!['kiali_wizard'] === 'AuthorizationPolicy'
-      ? (authorizationPolicies[index] = object as AuthorizationPolicy)
-      : (sidecars[index] = object as Sidecar);
-    this.setState({ sidecars, authorizationPolicies });
+  editorChange = (object: IstioConfigItem, index: number, title: string) => {
+    const items = this.state.items;
+    const ind = items.findIndex(it => it.title === title);
+    const config = items[ind];
+    config.items[index] = object;
+    items[ind] = config;
+    this.setState({ items });
   };
 
-  addResource = (title: string, items: PolicyItem[], orig: PolicyItem[]) => {
-    const key = title.toLocaleLowerCase().replace(/\s/g, '');
+  addResource = (item: ConfigPreviewItem) => {
+    const key = item.title.toLocaleLowerCase().replace(/\s/g, '');
+    const propItems =
+      this.props.items.length > 0 ? this.props.items.filter(it => it.title === item.title)[0].items : undefined;
     return (
-      items.length > 0 && (
-        <Tab eventKey={key} key={key} title={title}>
-          <EditResources items={items} orig={orig} onChange={(obj, index) => this.editorChange(obj, index)} />
-        </Tab>
-      )
+      <Tab eventKey={key} key={key + '_tab_preview'} title={item.title}>
+        <EditResources
+          items={item.items}
+          orig={propItems as IstioConfigItem[]}
+          onChange={(obj, index) => this.editorChange(obj, index, item.title)}
+        />
+      </Tab>
     );
   };
 
@@ -121,21 +135,27 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     return (
       <Modal
         width={'75%'}
-        title={'Preview Traffic Policies '}
+        title={this.props.title ? this.props.title : 'Preview Traffic Policies '}
         isOpen={this.props.isOpen}
         onClose={this.props.onClose}
-        actions={[
-          <Button key="cancel" variant="secondary" onClick={this.props.onClose}>
-            Cancel
-          </Button>,
-          <Button
-            key={this.props.opTarget}
-            variant={this.props.opTarget === 'delete' ? 'danger' : 'primary'}
-            onClick={this.onConfirm}
-          >
-            {this.props.opTarget && this.props.opTarget[0].toUpperCase() + this.props.opTarget.substr(1)}
-          </Button>
-        ]}
+        onKeyPress={e => (this.props.onKeyPress ? this.props.onKeyPress(e) : {})}
+        actions={
+          this.props.actions
+            ? this.props.actions
+            : [
+                <Button key="cancel" variant="secondary" onClick={this.props.onClose}>
+                  Cancel
+                </Button>,
+                <Button
+                  key={this.props.opTarget}
+                  variant={this.props.opTarget === 'delete' ? 'danger' : 'primary'}
+                  isDisabled={this.props.disableAction}
+                  onClick={this.onConfirm}
+                >
+                  {this.props.opTarget && this.props.opTarget[0].toUpperCase() + this.props.opTarget.substr(1)}
+                </Button>
+              ]
+        }
       >
         <Toolbar>
           <ToolbarGroup
@@ -167,19 +187,18 @@ export class IstioConfigPreview extends React.Component<Props, State> {
             </ToolbarItem>
           </ToolbarGroup>
         </Toolbar>
-        {(this.state.authorizationPolicies.length > 0 || this.state.sidecars.length > 0) && (
+
+        {this.state.items.length > 0 && (
           <Tabs
             activeKey={this.state.mainTab}
             onSelect={(_, tab) => this.setState({ mainTab: String(tab) })}
             isFilled={true}
           >
-            {this.addResource(
-              authorizationPoliciesTitle,
-              this.state.authorizationPolicies,
-              this.props.authorizationPolicies
-            )}
-            {this.addResource(sidecarsTitle, this.state.sidecars, this.props.sidecars)}
+            {this.state.items.map(item => this.addResource(item))}
           </Tabs>
+        )}
+        {this.props.disableAction && (
+          <div className={style({ color: PFColors.Danger })}>User does not have enough permission for this action.</div>
         )}
       </Modal>
     );

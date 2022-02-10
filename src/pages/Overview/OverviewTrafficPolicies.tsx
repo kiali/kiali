@@ -5,7 +5,7 @@ import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
 import { MessageType } from 'types/MessageCenter';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds } from 'types/Common';
-import { IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
+import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import * as AlertUtils from 'utils/AlertUtils';
 import * as API from 'services/Api';
 import { serverConfig } from '../../config';
@@ -44,7 +44,7 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
   constructor(props: OverviewTrafficPoliciesProps) {
     super(props);
     this.state = {
-      confirmationModal: false,
+      confirmationModal: this.confirmationModalStatus(),
       authorizationPolicies: [],
       sidecars: [],
       loaded: this.props.opTarget === 'update',
@@ -53,27 +53,32 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
     };
   }
 
+  confirmationModalStatus = () => {
+    return this.props.kind === 'canary' || this.props.kind === 'injection';
+  };
+
   componentDidUpdate(prevProps: OverviewTrafficPoliciesProps) {
     if (prevProps.nsTarget !== this.props.nsTarget || prevProps.opTarget !== this.props.opTarget) {
       switch (this.props.kind) {
         case 'injection':
-          this.fetchPermission();
+          this.fetchPermission(true);
           break;
         case 'canary':
           this.setState({ canaryVersion: serverConfig.istioCanaryRevision[this.props.opTarget] }, () =>
-            this.fetchPermission()
+            this.fetchPermission(true)
           );
           break;
         default:
           if (this.props.opTarget === 'create') {
             this.generateTrafficPolicies();
+            this.fetchPermission();
           } else if (this.props.opTarget === 'update') {
             var authorizationPolicies = this.props.nsInfo?.istioConfig?.authorizationPolicies || [];
             var sidecars = this.props.nsInfo?.istioConfig?.sidecars || [];
             const remove = ['uid', 'resourceVersion', 'generation', 'creationTimestamp', 'managedFields'];
             sidecars.map(sdc => remove.map(key => delete sdc.metadata[key]));
             authorizationPolicies.map(ap => remove.map(key => delete ap.metadata[key]));
-            this.setState({ authorizationPolicies, sidecars, loaded: true });
+            this.setState({ authorizationPolicies, sidecars }, () => this.fetchPermission());
           } else if (this.props.opTarget === 'delete') {
             var nsInfo = this.props.nsInfo.istioConfig;
             this.setState(
@@ -81,7 +86,7 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
                 authorizationPolicies: nsInfo?.authorizationPolicies || [],
                 sidecars: nsInfo?.sidecars || []
               },
-              () => this.fetchPermission()
+              () => this.fetchPermission(true)
             );
           }
           break;
@@ -89,13 +94,17 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
     }
   }
 
-  fetchPermission = () => {
+  fetchPermission = (
+    confirmationModal: boolean = false,
+    loaded: boolean = this.props.opTarget === 'update' || this.props.opTarget === 'create'
+  ) => {
     this.promises.register('namespacepermissions', API.getIstioPermissions([this.props.nsTarget])).then(result => {
       const permission = result.data[this.props.nsTarget][AUTHORIZATION_POLICIES];
       const disableOp = !(permission.create && permission.update && permission.delete);
       this.setState({
-        confirmationModal: true,
-        disableOp
+        confirmationModal,
+        disableOp,
+        loaded
       });
     });
   };
@@ -105,7 +114,7 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
     graphDataSource.on('fetchSuccess', () => {
       const aps = buildGraphAuthorizationPolicy(this.props.nsTarget, graphDataSource.graphDefinition);
       const scs = buildGraphSidecars(this.props.nsTarget, graphDataSource.graphDefinition);
-      this.setState({ authorizationPolicies: aps, sidecars: scs, loaded: true });
+      this.setState({ authorizationPolicies: aps, sidecars: scs });
     });
     graphDataSource.fetchForNamespace(this.props.duration, this.props.nsTarget);
   };
@@ -225,8 +234,25 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
     graphDataSource.fetchForNamespace(duration, ns);
   };
 
-  onConfirmPreviewPoliciesModal = (aps: AuthorizationPolicy[], sds: Sidecar[]) => {
-    this.setState({ authorizationPolicies: aps, sidecars: sds, loaded: false }, () => this.fetchPermission());
+  getItemsPreview = () => {
+    const items: ConfigPreviewItem[] = [];
+    this.state.authorizationPolicies.length > 0 &&
+      items.push({
+        type: 'authorizationPolicy',
+        items: this.state.authorizationPolicies,
+        title: 'Authorization Policies'
+      });
+    this.state.sidecars.length > 0 && items.push({ type: 'sidecar', items: this.state.sidecars, title: 'Sidecars' });
+    return items;
+  };
+
+  onConfirmPreviewPoliciesModal = (items: ConfigPreviewItem[]) => {
+    const aps = items.filter(i => i.type === 'authorizationPolicy')[0];
+    const sds = items.filter(i => i.type === 'sidecar')[0];
+    this.setState(
+      { authorizationPolicies: aps.items as AuthorizationPolicy[], sidecars: sds.items as Sidecar[], loaded: false },
+      () => this.fetchPermission(true, false)
+    );
   };
 
   onHideConfirmModal = () => {
@@ -261,11 +287,11 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
               this.props.opTarget !== 'delete' &&
               this.state.authorizationPolicies.length > 0
             }
+            disableAction={this.state.disableOp}
             onClose={this.onHideConfirmModal}
             onConfirm={this.onConfirmPreviewPoliciesModal}
             ns={this.props.nsTarget}
-            authorizationPolicies={this.state.authorizationPolicies}
-            sidecars={this.state.sidecars}
+            items={this.getItemsPreview()}
             opTarget={this.props.opTarget}
           />
         )}
@@ -280,9 +306,9 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
             </Button>,
             <Button
               key="confirm"
+              isDisabled={this.state.disableOp}
               variant={colorAction as colorButton}
               onClick={this.onConfirm}
-              isDisabled={this.state.disableOp}
             >
               {modalAction}
             </Button>
@@ -303,6 +329,7 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
               policies objects. Do you want to {this.props.opTarget} them ?
             </>
           )}
+          {}
         </Modal>
       </>
     );

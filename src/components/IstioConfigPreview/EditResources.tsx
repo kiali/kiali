@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
+import { IstioConfigItem } from './IstioConfigPreview';
 import { jsYaml } from '../../types/AceValidations';
 import AceEditor from 'react-ace';
 import { Tab, Tabs } from '@patternfly/react-core';
@@ -7,11 +7,9 @@ import { EditorPreview } from './EditorPreview';
 import { safeDumpOptions } from '../../types/IstioConfigDetails';
 import _ from 'lodash';
 
-type PolicyItem = AuthorizationPolicy | Sidecar;
-
 interface Props {
-  items: PolicyItem[];
-  orig: PolicyItem[];
+  items: IstioConfigItem[];
+  orig: IstioConfigItem[];
   onChange: (obj, index) => void;
 }
 
