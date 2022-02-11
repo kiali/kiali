@@ -75,7 +75,7 @@ func (n DestinationRuleReferences) getWorkloadReferences(dr networking_v1alpha3.
 				wlLabelSet := labels.Set(wl.Labels)
 				if selector.Matches(wlLabelSet) {
 					if subsetSelector.Matches(wlLabelSet) {
-						result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: wl.})
+						result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: "TODO"})
 					}
 				}
 			}
