@@ -90,6 +90,17 @@ func main() {
 	status.Put(status.CoreCommitHash, commitHash)
 	status.Put(status.ContainerVersion, determineContainerVersion(version))
 
+	// get mesh name and version info
+	meshName, meshVersion, err := status.GetMeshInfo()
+
+	if err != nil {
+		log.Warning("Failed to get mesh version, please check if url_service_version is configured correctly.")
+	} else {
+		// Check kiali version compatibility with mesh
+		// Note this method will not affect kiali running status, just throw warning logs out
+		checkVersionCompatibility(meshName, meshVersion)
+	}
+
 	authentication.InitializeAuthenticationController(config.Get().Auth.Strategy)
 
 	// prepare our internal metrics so Prometheus can scrape them
@@ -210,4 +221,19 @@ func determineContainerVersion(defaultVersion string) string {
 		return defaultVersion
 	}
 	return v
+}
+
+// checkVersionCompatibility check kiali version compatibility with mesh.
+// The user session is not affected no matter what this check returns, just warning logs.
+// The complete compatible version matrix is recorded in version-compatibility-matrix.yaml
+func checkVersionCompatibility(meshName string, meshVersion string) {
+	if meshName == "Unknown" {
+		log.Warningf("Unknown Istio Implementation")
+	} else {
+		if ok := status.CheckMeshVersion(meshName, meshVersion, version); ok {
+			log.Infof("Mesh Name: [%v], Mesh Version: [%v]", meshName, meshVersion)
+		} else {
+			log.Warningf("Kiali [%v] may not be compatible with [%v %v] and is not recommended. See kiali.io for version compatibility", version, meshName, meshVersion)
+		}
+	}
 }

@@ -307,3 +307,338 @@ func TestValidateVersion(t *testing.T) {
 	}
 
 }
+
+// TestMeshVersionCompatible check meshVersion compatibility witk Kiali
+func TestMeshVersionCompatible(t *testing.T) {
+
+	// versionsToTestStruct struct for version compatibility test cases
+	type versionsToTestStruct struct {
+		meshVersion string
+		name        string
+		version     string
+		supported   bool
+	}
+
+	versionsToTest := []versionsToTestStruct{
+		{
+			name:        "Istio",
+			version:     "1.45.1",
+			meshVersion: "1.13",
+			supported:   true,
+		},
+		{
+			name:        "Istio",
+			version:     "1.44.0",
+			meshVersion: "1.13",
+			supported:   false,
+		},
+		{
+			name:        "Istio",
+			version:     "1.44.0",
+			meshVersion: "1.12",
+			supported:   true,
+		},
+		{
+			name:        "Istio",
+			version:     "1.44.1",
+			meshVersion: "1.12",
+			supported:   false,
+		},
+		{
+			name:        "Istio",
+			version:     "1.43.0",
+			meshVersion: "1.12",
+			supported:   true,
+		},
+		{
+			name:        "Istio",
+			version:     "1.41.0",
+			meshVersion: "1.12.1",
+			supported:   false,
+		},
+		{
+			name:        "Istio",
+			version:     "1.38.2",
+			meshVersion: "1.11.2",
+			supported:   true,
+		},
+		{
+			name:        "Istio Snapshot",
+			version:     "1.38.0",
+			meshVersion: "1.11",
+			supported:   false,
+		},
+		{
+			name:        "Istio Snapshot",
+			version:     "1.34.2",
+			meshVersion: "1.10",
+			supported:   true,
+		},
+		{
+			name:        "Istio Snapshot",
+			version:     "1.38.1",
+			meshVersion: "1.10",
+			supported:   false,
+		},
+		{
+			name:        "Istio Snapshot",
+			version:     "1.29.2",
+			meshVersion: "1.9",
+			supported:   true,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.36",
+			meshVersion: "1.9",
+			supported:   false,
+		},
+		{
+			name:        "Istio RC",
+			version:     "1.29.1",
+			meshVersion: "1.8",
+			supported:   false,
+		},
+		{
+			name:        "Istio RC",
+			version:     "1.26.2",
+			meshVersion: "1.8.1",
+			supported:   true,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.22.2",
+			meshVersion: "1.7",
+			supported:   true,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.22.2",
+			meshVersion: "1.7.3",
+			supported:   true,
+		},
+		{
+			name:        "Istio RC",
+			version:     "1.18.2",
+			meshVersion: "1.6",
+			supported:   true,
+		},
+		{
+			name:        "Istio RC",
+			version:     "1.18.2",
+			meshVersion: "1.6.1",
+			supported:   true,
+		},
+		{
+			name:        "Istio RC",
+			version:     "1.22",
+			meshVersion: "1.6",
+			supported:   false,
+		},
+		{
+			name:        "Istio RC",
+			version:     "1.22",
+			meshVersion: "1.5",
+			supported:   false,
+		},
+		{
+			name:        "Istio RC",
+			version:     "1.22",
+			meshVersion: "1.5",
+			supported:   false,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.22",
+			meshVersion: "1.5.1",
+			supported:   false,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.17",
+			meshVersion: "1.0",
+			supported:   true,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.19",
+			meshVersion: "1.0",
+			supported:   false,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.17",
+			meshVersion: "1.1",
+			supported:   true,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.19",
+			meshVersion: "1.1",
+			supported:   false,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.17",
+			meshVersion: "1.2",
+			supported:   true,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.19",
+			meshVersion: "1.2",
+			supported:   false,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.17",
+			meshVersion: "1.3",
+			supported:   true,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.19",
+			meshVersion: "1.3",
+			supported:   false,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.17",
+			meshVersion: "1.4",
+			supported:   true,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.19",
+			meshVersion: "1.4",
+			supported:   false,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.17",
+			meshVersion: "1.5",
+			supported:   true,
+		},
+		{
+			name:        "Istio Dev",
+			version:     "1.19",
+			meshVersion: "1.5",
+			supported:   false,
+		},
+		{
+			name:        "istioProductNameUnknown",
+			version:     "1.18.2",
+			meshVersion: "1.6.1",
+			supported:   false,
+		},
+		{
+			name:        "Maistra",
+			version:     "1.36",
+			meshVersion: "2.1",
+			supported:   true,
+		},
+		{
+			name:        "Maistra Project",
+			version:     "1.24",
+			meshVersion: "2.1",
+			supported:   true,
+		},
+		{
+			name:        "Maistra Project",
+			version:     "1.12",
+			meshVersion: "2.1",
+			supported:   true,
+		},
+		{
+			name:        "Maistra Project",
+			version:     "1.24",
+			meshVersion: "2.0",
+			supported:   true,
+		},
+		{
+			name:        "Maistra",
+			version:     "1.12",
+			meshVersion: "2.0",
+			supported:   true,
+		},
+		{
+			name:        "Maistra Project",
+			version:     "1.12",
+			meshVersion: "1.1",
+			supported:   true,
+		},
+		{
+			name:        "Maistra",
+			version:     "1.12",
+			meshVersion: "2.0",
+			supported:   true,
+		},
+		{
+			name:        "MaistrX",
+			version:     "1.12",
+			meshVersion: "2.0",
+			supported:   false,
+		},
+		{
+			name:        "Maistra",
+			version:     "1.23",
+			meshVersion: "2.0",
+			supported:   false,
+		},
+		{
+			name:        "Maistra",
+			version:     "1.23",
+			meshVersion: "2.1",
+			supported:   false,
+		},
+		{
+			name:        "Maistra",
+			version:     "1.23",
+			meshVersion: "1.1",
+			supported:   false,
+		},
+		{
+			name:        "Maistra",
+			version:     "1.12",
+			meshVersion: "3.4",
+			supported:   false,
+		},
+		{
+			name:        "OpenShift Service Mesh",
+			version:     "1.36",
+			meshVersion: "2.1",
+			supported:   true,
+		},
+		{
+			name:        "OpenShift Service Mesh",
+			version:     "1.24",
+			meshVersion: "2.0",
+			supported:   true,
+		},
+		{
+			name:        "OpenShift Service Mesh",
+			version:     "1.12",
+			meshVersion: "1.1",
+			supported:   true,
+		},
+		{
+			name:        "OpenShift Service Mesh",
+			version:     "1.12",
+			meshVersion: "1.15",
+			supported:   false,
+		},
+		{
+			name:        "OpenShift Service Mesh",
+			version:     "1.18",
+			meshVersion: "1.1",
+			supported:   false,
+		},
+	}
+
+	for _, versionToTest := range versionsToTest {
+		p := CheckMeshVersion(versionToTest.name, versionToTest.meshVersion, versionToTest.version)
+		t.Logf("Checking:\n[%+v]\n", versionToTest)
+		if p != versionToTest.supported {
+			t.Errorf("Cannot validate [%+v] - version range is incorrect: %+v", versionToTest, p)
+		}
+	}
+}

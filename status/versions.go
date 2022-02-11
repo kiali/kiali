@@ -109,17 +109,160 @@ func validateVersion(requiredVersion string, installedVersion string) bool {
 	return false
 }
 
+// CheckMeshVersion check mesh if its version is compatible with kiali
+func CheckMeshVersion(meshName string, meshVersion string, kialiVersion string) bool {
+	ok := false
+	if meshName == istioProductNameUnknown {
+		return ok
+	}
+	if strings.Contains(meshName, istioProductNameUpstream) {
+		ok = checkIstioVersion(meshVersion, kialiVersion)
+		return ok
+	} else if strings.Contains(meshName, istioProductNameMaistra) {
+		ok = checkMaistraVersion(meshVersion, kialiVersion)
+		return ok
+	} else if strings.Contains(meshName, istioProductNameOSSM) {
+		ok = checkOSSMVersion(meshVersion, kialiVersion)
+		return ok
+	}
+	return ok
+}
+
+// checkOSSMVersion check OpenShift Service Mesh if its version is compatible with kiali. There is a 1-to-1 relationship between compatible versions.
+// So there is no range checking. The kiali minimum version is checked (kiali maximum version is ignored).
+func checkOSSMVersion(ossmVersion string, kialiVersion string) bool {
+	ok := false
+	matrix, err := config.NewCompatibilityMatrix()
+
+	if err != nil {
+		return ok
+	}
+
+	for _, version := range matrix {
+		if version.MeshName == istioProductNameOSSM {
+			for _, versions := range version.VersionRange {
+				if ossmVersion == strings.TrimSpace(versions.MeshVersion) && kialiVersion == strings.TrimSpace(versions.KialiMinimumVersion) {
+					ok = true
+					break
+				}
+			}
+		}
+	}
+
+	return ok
+}
+
+// checkMaistraVersion check Maistra if its version is compatible with kiali. There is a 1-to-1 relationship between compatible versions.
+// So there is no range checking. The kiali minimum version is checked (kiali maximum version is ignored).
+func checkMaistraVersion(maistraVersion string, kialiVersion string) bool {
+	ok := false
+	matrix, err := config.NewCompatibilityMatrix()
+
+	if err != nil {
+		return ok
+	}
+
+	for _, version := range matrix {
+		if version.MeshName == istioProductNameMaistra {
+			for _, versions := range version.VersionRange {
+				if maistraVersion == strings.TrimSpace(versions.MeshVersion) && kialiVersion == strings.TrimSpace(versions.KialiMinimumVersion) {
+					ok = true
+					break
+				}
+			}
+		}
+	}
+
+	return ok
+}
+
+// checkIstioVersion check istio if its version is compatible with kiali
+func checkIstioVersion(istioVersion string, kialiVersion string) bool {
+	ok := false
+	matrix, err := config.NewCompatibilityMatrix()
+
+	if err != nil {
+		return ok
+	}
+
+	for _, version := range matrix {
+		if version.MeshName == istioProductNameUpstream {
+			for _, versions := range version.VersionRange {
+				if strings.Contains(istioVersion, versions.MeshVersion) {
+					minimumVersion := strings.TrimSpace(versions.KialiMinimumVersion)
+					maximumVersion := strings.TrimSpace(versions.KialiMaximumVersion)
+					ok = checkRange(minimumVersion, maximumVersion, kialiVersion)
+					break
+				}
+			}
+		}
+	}
+	return ok
+}
+
+// checkRange check if version is in target range
+func checkRange(low string, high string, version string) bool {
+	ok := true
+	ok1 := true
+	if low == high {
+		equal := "== " + low
+		ok = validateVersion(equal, version)
+		return ok
+	}
+
+	if low != "" {
+		low = ">= " + low
+		ok = validateVersion(low, version)
+	}
+
+	if high != "" {
+		high = "<= " + high
+		ok1 = validateVersion(high, version)
+	}
+	return ok && ok1
+}
+
+// GetMeshInfo get mesh name/version from mesh service
+func GetMeshInfo() (string, string, error) {
+	istioInfo, err := istioVersion()
+	if err != nil {
+		return "", "", err
+	} else if istioInfo.Name == istioProductNameUnknown {
+		return "Unknown", "", nil
+	}
+	return istioInfo.Name, istioInfo.Version, nil
+}
+
 // istioVersion returns the current istio version information
 func istioVersion() (*ExternalServiceInfo, error) {
 	istioConfig := config.Get().ExternalServices.Istio
 	body, code, err := httputil.HttpGet(istioConfig.UrlServiceVersion, nil, 10*time.Second, nil)
 	if err != nil {
+		AddWarningMessages("Failed to get mesh version, please check if url_service_version is configured correctly.")
+		Put(IsCompatible, "false")
 		return nil, err
 	}
 	if code >= 400 {
-		return nil, fmt.Errorf("getting istio version returned error code %d", code)
+		return nil, fmt.Errorf("getting istio version returned error code [%d]", code)
 	}
 	rawVersion := string(body)
+
+	istioInfo, _ := parseIstioRawVersion(rawVersion)
+	meshName, meshVersion := istioInfo.Name, istioInfo.Version
+	status := GetStatus()
+	kialiVersion := status[CoreVersion]
+
+	if ok := CheckMeshVersion(meshName, meshVersion, kialiVersion); ok {
+		Put(MeshVersion, meshVersion)
+		Put(MeshName, meshName)
+		Put(IsCompatible, "true")
+	} else {
+		Put(MeshVersion, meshVersion)
+		Put(MeshName, meshName)
+		AddWarningMessages(fmt.Sprintf("Kiali [%v] may not be compatible with [%v %v], and is not recommended. See kiali.io for version compatibility", kialiVersion, meshName, meshVersion))
+		Put(IsCompatible, "false")
+	}
+
 	return parseIstioRawVersion(rawVersion)
 }
 
