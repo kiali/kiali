@@ -434,37 +434,36 @@ type HealthConfig struct {
 }
 
 //go:embed *
-var versionMatrix embed.FS
+var compatibilityMatrixFile embed.FS
 
-// Versions version ranges
-type Versions []struct {
+// CompatibilityMatric version ranges for compatibility details between Istio and Kiali
+type CompatibilityMatrix []struct {
 	MeshName     string `yaml:"meshName"`
 	VersionRange []struct {
 		MeshVersion         string `yaml:"meshVersion"`
-		SMCPVersion         string `yaml:"SMCPVersion"`
 		KialiMinimumVersion string `yaml:"kialiMinimumVersion"`
 		KialiMaximumVersion string `yaml:"kialiMaximumVersion"`
 	} `yaml:"versionRange"`
 }
 
-// NewVersions return compatible kiali versions for mesh
-func NewVersions() (Versions, error) {
+// NewCompatibilityMatrix return compatible kiali versions for mesh
+func NewCompatibilityMatrix() (CompatibilityMatrix, error) {
 
-	in, err := fs.ReadFile(versionMatrix, "version-compatibility-matrix.yaml")
+	in, err := fs.ReadFile(compatibilityMatrixFile, "version-compatibility-matrix.yaml")
 	if err != nil {
-		log.Warningf("Can not load version file %v", err)
+		log.Warningf("Can not load compatibility matrix file. Error: %v", err)
 		return nil, err
 	}
 
-	var versions Versions
+	var matrix CompatibilityMatrix
 
-	err = yaml.Unmarshal(in, &versions)
+	err = yaml.Unmarshal(in, &matrix)
 	if err != nil {
-		log.Warningf("Can not Unmarshal version file %v", err)
+		log.Warningf("Can not unmarshal compatibility matrix file. Error: %v", err)
 		return nil, err
 	}
 
-	return versions, nil
+	return matrix, nil
 }
 
 // Config defines full YAML configuration.
