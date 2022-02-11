@@ -74,7 +74,7 @@ func TestVirtualServiceNoReferences(t *testing.T) {
 }
 
 func yamlFixtureLoader(file string) *validations.YamlFixtureLoader {
-	path := fmt.Sprintf("../../tests/data/references/virtualservices/%s", file)
+	path := fmt.Sprintf("../../tests/data/references/%s", file)
 	return &validations.YamlFixtureLoader{Filename: path}
 }
 

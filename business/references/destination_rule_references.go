@@ -10,11 +10,11 @@ import (
 )
 
 type DestinationRuleReferences struct {
-	Namespace        string
-	Namespaces       models.Namespaces
-	DestinationRules []networking_v1alpha3.DestinationRule
-	WorkloadList     models.WorkloadList
-	RegistryServices []*kubernetes.RegistryService
+	Namespace             string
+	Namespaces            models.Namespaces
+	DestinationRules      []networking_v1alpha3.DestinationRule
+	WorkloadsPerNamespace map[string]models.WorkloadList
+	RegistryServices      []*kubernetes.RegistryService
 }
 
 func (n DestinationRuleReferences) References() models.IstioReferencesMap {
@@ -71,11 +71,11 @@ func (n DestinationRuleReferences) getWorkloadReferences(dr networking_v1alpha3.
 			subsetLabelSet := labels.Set(subset.Labels)
 			subsetSelector := labels.SelectorFromSet(subsetLabelSet)
 
-			for _, wl := range n.WorkloadList.Workloads {
+			for _, wl := range n.WorkloadsPerNamespace[localNs].Workloads {
 				wlLabelSet := labels.Set(wl.Labels)
 				if selector.Matches(wlLabelSet) {
 					if subsetSelector.Matches(wlLabelSet) {
-						result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: "TODO"})
+						result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: localNs})
 					}
 				}
 			}
