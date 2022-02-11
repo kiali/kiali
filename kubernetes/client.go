@@ -119,16 +119,25 @@ func ConfigClient() (*rest.Config, error) {
 		}
 		incluster.QPS = kialiConfig.Get().KubernetesConfig.QPS
 		incluster.Burst = kialiConfig.Get().KubernetesConfig.Burst
+
 		return incluster, nil
 	}
-	host, port := os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT")
-	if len(host) == 0 || len(port) == 0 {
+
+	// Read apiserver Host and Port from config
+	apiserverServiceHost := kialiConfig.Get().KubernetesConfig.APIServerServiceName
+	apiserverServicePort := kialiConfig.Get().KubernetesConfig.APIServerServicePort
+	// If apiserver Host or Port is empty, read them from env
+	if apiserverServiceHost == "" || apiserverServicePort == "" {
+		apiserverServiceHost, apiserverServicePort = os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT")
+	}
+
+	if len(apiserverServiceHost) == 0 || len(apiserverServicePort) == 0 {
 		return nil, fmt.Errorf("unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT must be defined")
 	}
 
 	return &rest.Config{
 		// TODO: switch to using cluster DNS.
-		Host:  "http://" + net.JoinHostPort(host, port),
+		Host:  "http://" + net.JoinHostPort(apiserverServiceHost, apiserverServicePort),
 		QPS:   kialiConfig.Get().KubernetesConfig.QPS,
 		Burst: kialiConfig.Get().KubernetesConfig.Burst,
 	}, nil
