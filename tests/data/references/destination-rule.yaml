@@ -18,3 +18,26 @@ spec:
     - name: v3
       labels:
         version: v3
+---
+kind: VirtualService
+apiVersion: networking.istio.io/v1alpha3
+metadata:
+  name: reviews
+  namespace: test-namespace
+spec:
+  hosts:
+    - reviews.test-namespace.svc.cluster.local
+  http:
+    - route:
+        - destination:
+            host: reviews.test-namespace.svc.cluster.local
+            subset: v1
+          weight: 30
+        - destination:
+            host: reviews
+            subset: v2
+          weight: 30
+        - destination:
+            host: reviews.test-namespace
+            subset: v3
+          weight: 40

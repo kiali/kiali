@@ -11,7 +11,7 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForDestinationRule(dr *networking_v1alpha3.DestinationRule) models.IstioReferences {
+func prepareTestForDestinationRule(dr *networking_v1alpha3.DestinationRule, vs *networking_v1alpha3.VirtualService) models.IstioReferences {
 	drReferences := DestinationRuleReferences{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
@@ -20,6 +20,7 @@ func prepareTestForDestinationRule(dr *networking_v1alpha3.DestinationRule) mode
 			{Name: "bookinfo3"},
 		},
 		DestinationRules: []networking_v1alpha3.DestinationRule{*dr},
+		VirtualServices:  []networking_v1alpha3.VirtualService{*vs},
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
 			"test-namespace": data.CreateWorkloadList("test-namespace",
 				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -38,7 +39,7 @@ func TestDestinationRuleReferences(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForDestinationRule(fakeDestinationRule(t))
+	references := prepareTestForDestinationRule(fakeDestinationRule(t), getVirtualService(t))
 	assert.NotEmpty(references.ServiceReferences)
 
 	// Check Service references
@@ -54,6 +55,12 @@ func TestDestinationRuleReferences(t *testing.T) {
 	assert.Equal(references.WorkloadReferences[1].Namespace, "test-namespace")
 	assert.Equal(references.WorkloadReferences[2].Name, "reviewsv3")
 	assert.Equal(references.WorkloadReferences[2].Namespace, "test-namespace")
+
+	// Check VS references
+	assert.Len(references.ObjectReferences, 1)
+	assert.Equal(references.ObjectReferences[0].Name, "reviews")
+	assert.Equal(references.ObjectReferences[0].Namespace, "test-namespace")
+	assert.Equal(references.ObjectReferences[0].ObjectType, "virtualservice")
 }
 
 func TestDestinationRuleNoWorkloadReferences(t *testing.T) {
@@ -62,7 +69,7 @@ func TestDestinationRuleNoWorkloadReferences(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForDestinationRule(data.CreateEmptyDestinationRule("reviews", "bookinfo", "reviews.bookinfo.svc.cluster.local"))
+	references := prepareTestForDestinationRule(data.CreateEmptyDestinationRule("reviews", "bookinfo", "reviews.bookinfo.svc.cluster.local"), getVirtualService(t))
 	assert.NotEmpty(references.ServiceReferences)
 	assert.Empty(references.WorkloadReferences)
 }
@@ -75,6 +82,16 @@ func fakeDestinationRule(t *testing.T) *networking_v1alpha3.DestinationRule {
 	}
 
 	return loader.FindDestinationRule("reviews", "test-namespace")
+}
+
+func getVirtualService(t *testing.T) *networking_v1alpha3.VirtualService {
+	loader := yamlFixtureLoader("destination-rule.yaml")
+	err := loader.Load()
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
+
+	return loader.FindVirtualService("reviews", "test-namespace")
 }
 
 func appVersionLabel(app, version string) map[string]string {

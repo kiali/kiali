@@ -13,6 +13,7 @@ type DestinationRuleReferences struct {
 	Namespace             string
 	Namespaces            models.Namespaces
 	DestinationRules      []networking_v1alpha3.DestinationRule
+	VirtualServices       []networking_v1alpha3.VirtualService
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	RegistryServices      []*kubernetes.RegistryService
 }
@@ -25,6 +26,7 @@ func (n DestinationRuleReferences) References() models.IstioReferencesMap {
 		references := &models.IstioReferences{}
 		references.ServiceReferences = n.getServiceReferences(dr)
 		references.WorkloadReferences = n.getWorkloadReferences(dr)
+		references.ObjectReferences = n.getConfigReferences(dr)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
 	}
 
@@ -39,6 +41,8 @@ func (n DestinationRuleReferences) getServiceReferences(dr networking_v1alpha3.D
 }
 
 func (n DestinationRuleReferences) getWorkloadReferences(dr networking_v1alpha3.DestinationRule) []models.WorkloadReference {
+	keys := make(map[string]bool)
+	allWorklaods := make([]models.WorkloadReference, 0)
 	result := make([]models.WorkloadReference, 0)
 
 	host := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, dr.ClusterName, n.Namespaces.GetNames())
@@ -75,10 +79,103 @@ func (n DestinationRuleReferences) getWorkloadReferences(dr networking_v1alpha3.
 				wlLabelSet := labels.Set(wl.Labels)
 				if selector.Matches(wlLabelSet) {
 					if subsetSelector.Matches(wlLabelSet) {
-						result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: localNs})
+						allWorklaods = append(allWorklaods, models.WorkloadReference{Name: wl.Name, Namespace: localNs})
 					}
 				}
 			}
+		}
+	}
+	// filter unique references
+	for _, wl := range allWorklaods {
+		if !keys[wl.Name+"/"+wl.Namespace] {
+			result = append(result, wl)
+			keys[wl.Name+"/"+wl.Namespace] = true
+		}
+	}
+	return result
+}
+
+func (n DestinationRuleReferences) getConfigReferences(dr networking_v1alpha3.DestinationRule) []models.IstioReference {
+	keys := make(map[string]bool)
+	allConfigs := make([]models.IstioReference, 0)
+	result := make([]models.IstioReference, 0)
+	for _, subset := range dr.Spec.Subsets {
+		if len(subset.Labels) > 0 {
+			for _, virtualService := range n.VirtualServices {
+
+				if len(virtualService.Spec.Http) > 0 {
+					for _, httpRoute := range virtualService.Spec.Http {
+						if httpRoute == nil {
+							continue
+						}
+						if len(httpRoute.Route) > 0 {
+							for _, dest := range httpRoute.Route {
+								if dest == nil || dest.Destination == nil {
+									continue
+								}
+								host := dest.Destination.Host
+								drSubset := dest.Destination.Subset
+								drHost := kubernetes.GetHost(host, dr.Namespace, dr.ClusterName, n.Namespaces.GetNames())
+								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+								if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && drSubset == subset.Name {
+									allConfigs = append(allConfigs, models.IstioReference{Name: virtualService.Name, Namespace: virtualService.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
+								}
+							}
+						}
+					}
+				}
+
+				if len(virtualService.Spec.Tcp) > 0 {
+					for _, tcpRoute := range virtualService.Spec.Tcp {
+						if tcpRoute == nil {
+							continue
+						}
+						if len(tcpRoute.Route) > 0 {
+							for _, dest := range tcpRoute.Route {
+								if dest == nil || dest.Destination == nil {
+									continue
+								}
+								host := dest.Destination.Host
+								drSubset := dest.Destination.Subset
+								drHost := kubernetes.GetHost(host, dr.Namespace, dr.ClusterName, n.Namespaces.GetNames())
+								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+								if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && drSubset == subset.Name {
+									allConfigs = append(allConfigs, models.IstioReference{Name: virtualService.Name, Namespace: virtualService.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
+								}
+							}
+						}
+					}
+				}
+
+				if len(virtualService.Spec.Tls) > 0 {
+					for _, tlsRoute := range virtualService.Spec.Tls {
+						if tlsRoute == nil {
+							continue
+						}
+						if len(tlsRoute.Route) > 0 {
+							for _, dest := range tlsRoute.Route {
+								if dest == nil || dest.Destination == nil {
+									continue
+								}
+								host := dest.Destination.Host
+								drSubset := dest.Destination.Subset
+								drHost := kubernetes.GetHost(host, dr.Namespace, dr.ClusterName, n.Namespaces.GetNames())
+								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+								if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && drSubset == subset.Name {
+									allConfigs = append(allConfigs, models.IstioReference{Name: virtualService.Name, Namespace: virtualService.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	// filter unique references
+	for _, cf := range allConfigs {
+		if !keys[cf.Name+"."+cf.Namespace+"/"+cf.ObjectType] {
+			result = append(result, cf)
+			keys[cf.Name+"."+cf.Namespace+"/"+cf.ObjectType] = true
 		}
 	}
 	return result

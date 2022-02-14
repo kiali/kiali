@@ -28,6 +28,8 @@ func (n VirtualServiceReferences) References() models.IstioReferencesMap {
 }
 
 func (n VirtualServiceReferences) getServiceReferences(vs networking_v1alpha3.VirtualService) []models.ServiceReference {
+	keys := make(map[string]bool)
+	allServices := make([]models.ServiceReference, 0)
 	result := make([]models.ServiceReference, 0)
 	namespace, clusterName := vs.Namespace, vs.ClusterName
 
@@ -41,7 +43,7 @@ func (n VirtualServiceReferences) getServiceReferences(vs networking_v1alpha3.Vi
 					}
 					fqdn := kubernetes.GetHost(host, namespace, clusterName, n.Namespaces.GetNames())
 					if !fqdn.IsWildcard() {
-						result = append(result, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
+						allServices = append(allServices, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
 					}
 				}
 			}
@@ -58,7 +60,7 @@ func (n VirtualServiceReferences) getServiceReferences(vs networking_v1alpha3.Vi
 					}
 					fqdn := kubernetes.GetHost(host, namespace, clusterName, n.Namespaces.GetNames())
 					if !fqdn.IsWildcard() {
-						result = append(result, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
+						allServices = append(allServices, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
 					}
 				}
 			}
@@ -75,27 +77,36 @@ func (n VirtualServiceReferences) getServiceReferences(vs networking_v1alpha3.Vi
 					}
 					fqdn := kubernetes.GetHost(host, namespace, clusterName, n.Namespaces.GetNames())
 					if !fqdn.IsWildcard() {
-						result = append(result, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
+						allServices = append(allServices, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
 					}
 				}
 			}
+		}
+	}
+	// filter unique references
+	for _, sv := range allServices {
+		if !keys[sv.Name+"."+sv.Namespace] {
+			result = append(result, sv)
+			keys[sv.Name+"."+sv.Namespace] = true
 		}
 	}
 	return result
 }
 
 func (n VirtualServiceReferences) getConfigReferences(vs networking_v1alpha3.VirtualService) []models.IstioReference {
+	keys := make(map[string]bool)
 	result := make([]models.IstioReference, 0)
+	allGateways := make([]models.IstioReference, 0)
 	namespace, clusterName := vs.Namespace, vs.ClusterName
 	if len(vs.Spec.Gateways) > 0 {
-		result = append(result, getGatewayReferences(vs.Spec.Gateways, namespace, clusterName)...)
+		allGateways = append(allGateways, getGatewayReferences(vs.Spec.Gateways, namespace, clusterName)...)
 	}
 	if len(vs.Spec.Http) > 0 {
 		for _, httpRoute := range vs.Spec.Http {
 			if httpRoute != nil {
 				for _, match := range httpRoute.Match {
 					if match != nil {
-						result = append(result, getGatewayReferences(match.Gateways, namespace, clusterName)...)
+						allGateways = append(allGateways, getGatewayReferences(match.Gateways, namespace, clusterName)...)
 					}
 				}
 			}
@@ -106,10 +117,17 @@ func (n VirtualServiceReferences) getConfigReferences(vs networking_v1alpha3.Vir
 			if tlsRoute != nil {
 				for _, match := range tlsRoute.Match {
 					if match != nil {
-						result = append(result, getGatewayReferences(match.Gateways, namespace, clusterName)...)
+						allGateways = append(allGateways, getGatewayReferences(match.Gateways, namespace, clusterName)...)
 					}
 				}
 			}
+		}
+	}
+	// filter unique references
+	for _, gw := range allGateways {
+		if !keys[gw.Name+"/"+gw.Namespace] {
+			result = append(result, gw)
+			keys[gw.Name+"/"+gw.Namespace] = true
 		}
 	}
 	return result

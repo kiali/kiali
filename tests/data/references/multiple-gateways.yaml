@@ -14,6 +14,7 @@ spec:
     - match:
         - gateways:
             - valid-gateway
+            - gateway1
         - uri:
             exact: /static
       route:
@@ -24,10 +25,15 @@ spec:
         - destination:
             host: reviews2
             subset: v2
-          weight: 67
+          weight: 65
+        - destination:
+            host: reviews2
+            subset: v2
+            weight: 2
   tls:
     - match:
         - gateways:
+            - valid-gateway
             - valid-gateway2
         - port: 443
           sniHosts:
