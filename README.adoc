@@ -62,7 +62,7 @@ Once you have the required developer tools, you can get and build the code with 
 # Checkout the source code
 mkdir kiali_sources
 cd kiali_sources
-export KIALI_SOURCES=$(realpath .)
+export KIALI_SOURCES=$(pwd)
 
 git clone https://github.com/kiali/kiali.git
 git clone https://github.com/kiali/kiali-ui.git
