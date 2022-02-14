@@ -85,6 +85,11 @@ type RequestedAppenders struct {
 	AppenderNames []string
 }
 
+type RequestedFinalizers struct {
+	All            bool
+	FinalizerNames []string
+}
+
 type RequestedRates struct {
 	Grpc string
 	Http string
@@ -94,9 +99,10 @@ type RequestedRates struct {
 // TelemetryOptions are those supplied to Telemetry Vendors
 type TelemetryOptions struct {
 	AccessibleNamespaces map[string]time.Time
-	Appenders            RequestedAppenders // requested appenders, nil if param not supplied
-	IncludeIdleEdges     bool               // include edges with request rates of 0
-	InjectServiceNodes   bool               // inject destination service nodes between source and destination nodes.
+	Appenders            RequestedAppenders  // requested appenders, nil if param not supplied
+	Finalizers           RequestedFinalizers // requested finalizers, nil if param not supplied
+	IncludeIdleEdges     bool                // include edges with request rates of 0
+	InjectServiceNodes   bool                // inject destination service nodes between source and destination nodes.
 	Namespaces           NamespaceInfoMap
 	Rates                RequestedRates
 	CommonOptions
@@ -133,6 +139,7 @@ func NewOptions(r *net_http.Request) Options {
 	cluster := params.Get("cluster")
 	configVendor := params.Get("configVendor")
 	durationString := params.Get("duration")
+	finalizers := RequestedFinalizers{All: true}
 	graphType := params.Get("graphType")
 	includeIdleEdgesString := params.Get("includeIdleEdges")
 	injectServiceNodesString := params.Get("injectServiceNodes")
@@ -150,7 +157,6 @@ func NewOptions(r *net_http.Request) Options {
 		}
 		appenders = RequestedAppenders{All: false, AppenderNames: appenderNames}
 	}
-
 	if cluster == "" {
 		cluster = Unknown
 	}
@@ -168,6 +174,14 @@ func NewOptions(r *net_http.Request) Options {
 			BadRequest(fmt.Sprintf("Invalid duration [%s]", durationString))
 		}
 	}
+	if _, ok := params["finalizers"]; ok {
+		finalizerNames := strings.Split(params.Get("finalizers"), ",")
+		for i, finalizerName := range finalizerNames {
+			finalizerNames[i] = strings.TrimSpace(finalizerName)
+		}
+		finalizers = RequestedFinalizers{All: false, FinalizerNames: finalizerNames}
+	}
+
 	if graphType == "" {
 		graphType = defaultGraphType
 	} else if graphType != GraphTypeApp && graphType != GraphTypeService && graphType != GraphTypeVersionedApp && graphType != GraphTypeWorkload {
@@ -338,6 +352,7 @@ func NewOptions(r *net_http.Request) Options {
 		TelemetryOptions: TelemetryOptions{
 			AccessibleNamespaces: accessibleNamespaces,
 			Appenders:            appenders,
+			Finalizers:           finalizers,
 			IncludeIdleEdges:     includeIdleEdges,
 			InjectServiceNodes:   injectServiceNodes,
 			Namespaces:           namespaceMap,
