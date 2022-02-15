@@ -8,7 +8,7 @@
 # See the main Makefile for more info.
 
 DIR=$(dirname $0)/..
-CONSOLE_DIR=${CONSOLE_LOCAL_DIR:-$DIR/../../../../../kiali-ui}
+CONSOLE_DIR=${CONSOLE_LOCAL_DIR:-$DIR/../kiali-ui}
 
 mkdir -p $DIR/_output/docker
 

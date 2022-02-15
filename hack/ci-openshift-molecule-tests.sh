@@ -390,7 +390,7 @@ infomsg "Log into the cluster [${OPENSHIFT_API}] as kubeadmin user named [${KUBE
 $OC login -u ${KUBEADMIN_USER} -p ${KUBEADMIN_PW} ${OPENSHIFT_API}
 
 if [ "${USE_DEV_IMAGES}" == "true" ]; then
-  GOPATH="${SRC}/kiali/src/github.com/kiali/kiali"
+  GOPATH="${GOPATH:-/tmp}"
   infomsg "Dev images are to be tested. Will prepare them now using GOPATH=${GOPATH}"
 
   infomsg "Building server..."

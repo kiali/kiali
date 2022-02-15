@@ -17,7 +17,7 @@ COMMIT_HASH ?= $(shell git rev-parse HEAD)
 # have been built before trying to create a kiali server container
 # image. The UI project is configured to place its build
 # output in the $UI_SRC_ROOT/build/ subdirectory.
-CONSOLE_LOCAL_DIR ?= ${ROOTDIR}/../../../../../kiali-ui
+CONSOLE_LOCAL_DIR ?= ${ROOTDIR}/../kiali-ui
 
 # Version label is used in the OpenShift/K8S resources to identify
 # their specific instances. Kiali resources will have labels of
