@@ -145,6 +145,8 @@ type PrometheusConfig struct {
 	IsCore          bool              `yaml:"is_core,omitempty"`
 	ThanosProxy     ThanosProxy       `yaml:"thanos_proxy,omitempty"`
 	URL             string            `yaml:"url,omitempty"`
+	// Custom Additional Labels to scrape metrics from Prometheus
+	CustomLabels map[string]string `yaml:"custom_labels,omitempty"`
 }
 
 // CustomDashboardsConfig describes configuration specific to Custom Dashboards
@@ -599,6 +601,7 @@ func NewConfig() (c *Config) {
 				// Prom Cache expires and it forces to repopulate cache
 				CacheExpiration: 300,
 				CustomHeaders:   map[string]string{},
+				CustomLabels:    map[string]string{},
 				URL:             "http://prometheus.istio-system:9090",
 			},
 			Tracing: TracingConfig{
