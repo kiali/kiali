@@ -351,7 +351,8 @@ func (in *IstioValidationsService) filterPeerAuths(namespace string, mtlsDetails
 	for _, pa := range peerAuths {
 		if pa.Namespace == rootNs {
 			mtlsDetails.MeshPeerAuthentications = append(mtlsDetails.MeshPeerAuthentications, pa)
-		} else if pa.Namespace == namespace {
+		}
+		if pa.Namespace == namespace {
 			mtlsDetails.PeerAuthentications = append(mtlsDetails.PeerAuthentications, pa)
 		}
 	}
