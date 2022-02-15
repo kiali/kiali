@@ -840,10 +840,7 @@ func buildNodeTrafficMap(cluster, namespace string, n graph.Node, o graph.Teleme
 func buildCustomLabelsFromConfig() string {
 	customLabels := config.Get().ExternalServices.Prometheus.CustomLabels
 	if len(customLabels) == 0 {
-		customLabels = config.Get().ExternalServices.CustomDashboards.Prometheus.CustomLabels
-		if len(customLabels) == 0 {
-			return ""
-		}
+		return ""
 	}
 	return buildCustomLabels(customLabels)
 }
