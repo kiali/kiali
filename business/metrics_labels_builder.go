@@ -3,6 +3,8 @@ package business
 import (
 	"fmt"
 	"strings"
+
+	"github.com/kiali/kiali/config"
 )
 
 const (
@@ -115,6 +117,16 @@ func (lb *MetricsLabelsBuilder) Protocol(name string) *MetricsLabelsBuilder {
 
 func (lb *MetricsLabelsBuilder) Aggregate(key, value string) *MetricsLabelsBuilder {
 	return lb.Add(key, value)
+}
+
+// QueryScope adds scope labels, if configured
+func (lb *MetricsLabelsBuilder) QueryScope() *MetricsLabelsBuilder {
+	scope := config.Get().ExternalServices.Prometheus.QueryScope
+
+	for labelName, labelValue := range scope {
+		lb.Add(labelName, labelValue)
+	}
+	return lb
 }
 
 func (lb *MetricsLabelsBuilder) Build() string {

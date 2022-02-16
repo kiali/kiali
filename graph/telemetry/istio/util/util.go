@@ -122,3 +122,20 @@ func IsBadDestTelemetry(cluster string, clusterOK bool, svcNs, svc, svcName, wl 
 	}
 	return false
 }
+
+// GetQueryScope returns "" if there is no configured queryScope, otherwise queryScope with/without a trailing comma
+func GetQueryScope(prefix, suffix string) string {
+	queryScope := config.Get().ExternalServices.Prometheus.QueryScope
+	if len(queryScope) == 0 {
+		return ""
+	}
+
+	separator := ""
+	scope := ""
+	for labelName, labelValue := range queryScope {
+		scope = fmt.Sprintf("%s%s%s=\"%s\"", scope, separator, labelName, labelValue)
+		separator = ","
+	}
+
+	return fmt.Sprintf("%s%s%s", prefix, scope, suffix)
+}

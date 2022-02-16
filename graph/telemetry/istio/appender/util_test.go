@@ -14,7 +14,15 @@ import (
 // Setup mocks
 
 func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, error) {
-	config.Set(config.NewConfig())
+	return setupMockedWithQueryScope("")
+}
+
+func setupMockedWithQueryScope(meshId string) (*prometheus.Client, *prometheustest.PromAPIMock, error) {
+	testConfig := config.NewConfig()
+	if meshId != "" {
+		testConfig.ExternalServices.Prometheus.QueryScope = map[string]string{"mesh_id": meshId}
+	}
+	config.Set(testConfig)
 	api := new(prometheustest.PromAPIMock)
 	client, err := prometheus.NewClient()
 	if err != nil {

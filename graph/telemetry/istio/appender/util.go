@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
@@ -17,6 +18,16 @@ import (
 // package-private util functions (used by multiple files)
 
 func promQuery(query string, queryTime time.Time, ctx context.Context, api prom_v1.API, a graph.Appender) model.Vector {
+	if query == "" {
+		return model.Vector{}
+	}
+
+	// add scope if necessary
+	scope := util.GetQueryScope("{", ",")
+	if scope != "" {
+		query = strings.ReplaceAll(query, "{", scope)
+	}
+
 	// wrap with a round() to be in line with metrics api
 	query = fmt.Sprintf("round(%s,0.001)", query)
 	log.Tracef("Appender query:\n%s&time=%v (now=%v, %v)\n", query, queryTime.Format(graph.TF), time.Now().Format(graph.TF), queryTime.Unix())

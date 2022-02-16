@@ -126,20 +126,16 @@ type ThanosProxy struct {
 
 // PrometheusConfig describes configuration of the Prometheus component
 type PrometheusConfig struct {
-	Auth Auth `yaml:"auth,omitempty"`
-	// Cache duration per query expressed in seconds
-	CacheDuration int `yaml:"cache_duration,omitempty"`
-	// Enable cache for Prometheus queries
-	CacheEnabled bool `yaml:"cache_enabled,omitempty"`
-	// Global cache expiration expressed in seconds
-	CacheExpiration int               `yaml:"cache_expiration,omitempty"`
+	Auth            Auth              `yaml:"auth,omitempty"`
+	CacheDuration   int               `yaml:"cache_duration,omitempty"`   // Cache duration per query expressed in seconds
+	CacheEnabled    bool              `yaml:"cache_enabled,omitempty"`    // Enable cache for Prometheus queries
+	CacheExpiration int               `yaml:"cache_expiration,omitempty"` // Global cache expiration expressed in seconds
 	CustomHeaders   map[string]string `yaml:"custom_headers,omitempty"`
 	HealthCheckUrl  string            `yaml:"health_check_url,omitempty"`
 	IsCore          bool              `yaml:"is_core,omitempty"`
+	QueryScope      map[string]string `yaml:"query_scope,omitempty"`
 	ThanosProxy     ThanosProxy       `yaml:"thanos_proxy,omitempty"`
 	URL             string            `yaml:"url,omitempty"`
-	// Custom Additional Labels to scrape metrics from Prometheus
-	CustomLabels map[string]string `yaml:"custom_labels,omitempty"`
 }
 
 // CustomDashboardsConfig describes configuration specific to Custom Dashboards
@@ -583,19 +579,19 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
+				// 1/2 Prom Scrape Interval
+				CacheDuration: 7,
+				CacheEnabled:  true,
+				// Prom Cache expires and it forces to repopulate cache
+				CacheExpiration: 300,
+				CustomHeaders:   map[string]string{},
+				QueryScope:      map[string]string{},
 				ThanosProxy: ThanosProxy{
 					Enabled:         false,
 					RetentionPeriod: "7d",
 					ScrapeInterval:  "30s",
 				},
-				CacheEnabled: true,
-				// 1/2 Prom Scrape Interval
-				CacheDuration: 7,
-				// Prom Cache expires and it forces to repopulate cache
-				CacheExpiration: 300,
-				CustomHeaders:   map[string]string{},
-				CustomLabels:    map[string]string{},
-				URL:             "http://prometheus.istio-system:9090",
+				URL: "http://prometheus.istio-system:9090",
 			},
 			Tracing: TracingConfig{
 				Auth: Auth{

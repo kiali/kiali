@@ -383,6 +383,10 @@ func (in *DashboardsService) buildLabelsQueryString(namespace string, labelsFilt
 	for k, v := range labelsFilters {
 		labels += fmt.Sprintf(`,%s="%s"`, prometheus.SanitizeLabelName(k), v)
 	}
+	for labelName, labelValue := range in.promConfig.QueryScope {
+		labels += fmt.Sprintf(`,%s="%s"`, labelName, labelValue)
+	}
+
 	labels += "}"
 	return labels
 }
