@@ -1,0 +1,16 @@
+language: go
+go: 1.17.5
+os: linux
+dist: focal
+arch: ppc64le
+env:
+        global:
+                - GOROOT="/usr/local/go"
+                - GOPATH="$HOME/go"
+                - PATH=$PATH:$GOROOT/bin:$GOPATH/bin	
+script:
+        - make build test
+        - go test -v ./...
+
+after_success:
+        - echo "Build completed"
