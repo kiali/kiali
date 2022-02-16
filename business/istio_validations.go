@@ -182,7 +182,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		objectCheckers = []ObjectChecker{
 			checkers.GatewayChecker{Gateways: istioConfigList.Gateways, Namespace: namespace, WorkloadsPerNamespace: workloadsPerNamespace},
 		}
-		referenceChecker = references.GatewayReferences{Gateways: exportedResources.Gateways, WorkloadsPerNamespace: workloadsPerNamespace}
+		referenceChecker = references.GatewayReferences{Gateways: istioConfigList.Gateways, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.VirtualServices:
 		virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, DestinationRules: istioConfigList.DestinationRules}
 		objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
@@ -190,7 +190,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	case kubernetes.DestinationRules:
 		destinationRulesChecker := checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioConfigList.ServiceEntries}
 		objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
-		referenceChecker = references.DestinationRuleReferences{Namespace: namespace, Namespaces: namespaces, DestinationRules: exportedResources.DestinationRules, VirtualServices: exportedResources.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace, RegistryServices: registryServices}
+		referenceChecker = references.DestinationRuleReferences{Namespace: namespace, Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace, RegistryServices: registryServices}
 	case kubernetes.ServiceEntries:
 		serviceEntryChecker := checkers.ServiceEntryChecker{ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries}
 		objectCheckers = []ObjectChecker{serviceEntryChecker}
