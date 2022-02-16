@@ -158,6 +158,16 @@ func (l YamlFixtureLoader) FindVirtualService(name, namespace string) *networkin
 	return nil
 }
 
+func (l YamlFixtureLoader) FindVirtualServiceIn(namespace string) []networking_v1alpha3.VirtualService {
+	vs := []networking_v1alpha3.VirtualService{}
+	for _, v := range l.istioConfigList.VirtualServices {
+		if v.Namespace == namespace {
+			vs = append(vs, v)
+		}
+	}
+	return vs
+}
+
 func (l YamlFixtureLoader) FindServiceEntry(name, namespace string) *networking_v1alpha3.ServiceEntry {
 	for _, v := range l.istioConfigList.ServiceEntries {
 		if v.Name == name && v.Namespace == namespace {

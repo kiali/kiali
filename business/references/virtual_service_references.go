@@ -112,6 +112,7 @@ func (n VirtualServiceReferences) getConfigReferences(vs networking_v1alpha3.Vir
 			}
 		}
 	}
+	// TODO TCPMatch is not completely supported in Istio yet
 	if len(vs.Spec.Tls) > 0 {
 		for _, tlsRoute := range vs.Spec.Tls {
 			if tlsRoute != nil {
