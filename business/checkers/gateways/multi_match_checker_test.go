@@ -224,6 +224,40 @@ func TestWildCardMatchingHost(t *testing.T) {
 	}
 }
 
+func TestSameWildcardHostPortConfigInDifferentNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer([]string{"*"}, 80, "http", "http"),
+		data.CreateEmptyGateway("bookinfo-gateway-auto-host", "bookinfo", map[string]string{}))
+
+	// Another namespace
+	gwObject2 := data.AddServerToGateway(data.CreateServer([]string{"*"}, 80, "http", "http"),
+		data.CreateEmptyGateway("bookinfo-gateway-auto-host-copy", "bookinfo2", map[string]string{}))
+
+	gws := []networking_v1alpha3.Gateway{*gwObject, *gwObject2}
+
+	vals := MultiMatchChecker{
+		Gateways: gws,
+	}.Check()
+
+	assert.NotEmpty(vals)
+	assert.Equal(2, len(vals))
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "bookinfo2", Name: "bookinfo-gateway-auto-host-copy"}]
+	assert.True(ok)
+	assert.True(validation.Valid)
+
+	secValidation, ok := vals[models.IstioValidationKey{ObjectType: "gateway", Namespace: "bookinfo", Name: "bookinfo-gateway-auto-host"}]
+	assert.True(ok)
+	assert.True(secValidation.Valid)
+
+	// Check references
+	assert.Equal(1, len(validation.References))
+	assert.Equal(1, len(secValidation.References))
+}
+
 func TestAnotherSubdomainWildcardCombination(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
