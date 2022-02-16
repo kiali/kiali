@@ -15,7 +15,7 @@ func (f *TrafficGeneratorFinalizer) Name() string {
 	return OutsiderFinalizerName
 }
 
-// FinalizeGraph implements Appender
+// FinalizeGraph implements Finalizer
 func (f *TrafficGeneratorFinalizer) FinalizeGraph(trafficMap graph.TrafficMap, finalizerInfo *graph.FinalizerInfo, o graph.TelemetryOptions) {
 	if len(trafficMap) == 0 {
 		return
