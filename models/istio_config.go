@@ -3,6 +3,8 @@ package models
 import (
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+
+	"github.com/kiali/kiali/config"
 )
 
 // IstioConfigList istioConfigList
@@ -28,8 +30,7 @@ type IstioConfigList struct {
 	AuthorizationPolicies  []security_v1beta.AuthorizationPolicy   `json:"authorizationPolicies"`
 	PeerAuthentications    []security_v1beta.PeerAuthentication    `json:"peerAuthentications"`
 	RequestAuthentications []security_v1beta.RequestAuthentication `json:"requestAuthentications"`
-
-	IstioValidations IstioValidations `json:"validations"`
+	IstioValidations       IstioValidations                        `json:"validations"`
 }
 
 type IstioConfigDetails struct {
@@ -49,9 +50,10 @@ type IstioConfigDetails struct {
 	PeerAuthentication    *security_v1beta.PeerAuthentication    `json:"peerAuthentication"`
 	RequestAuthentication *security_v1beta.RequestAuthentication `json:"requestAuthentication"`
 
-	Permissions     ResourcePermissions `json:"permissions"`
-	IstioValidation *IstioValidation    `json:"validation"`
-	IstioReferences *IstioReferences    `json:"references"`
+	Permissions           ResourcePermissions      `json:"permissions"`
+	IstioValidation       *IstioValidation         `json:"validation"`
+	IstioReferences       *IstioReferences         `json:"references"`
+	IstioConfigHelpFields []config.IstioConfigHelp `json:"help"`
 }
 
 // ResourcePermissions holds permission flags for an object type

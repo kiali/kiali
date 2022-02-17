@@ -99,6 +99,11 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		includeValidations = true
 	}
 
+	includeHelp := false
+	if _, found := query["help"]; found {
+		includeHelp = true
+	}
+
 	if !checkObjectType(objectType) {
 		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
 		return
@@ -130,6 +135,10 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(context.TODO(), namespace, objectType, object)
+
+	if includeHelp {
+		istioConfigDetails.IstioConfigHelpFields = config.Get().IstioConfigHelpMessages[objectType]
+	}
 
 	if includeValidations && err == nil {
 		wg.Wait()

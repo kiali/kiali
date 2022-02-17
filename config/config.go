@@ -244,6 +244,12 @@ type IstioLabels struct {
 	VersionLabelName   string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
+// IstioConfigHelp represents a help message for a given Istio object type and field
+type IstioConfigHelp struct {
+	ObjectField string `yaml:"object_field" json:"objectField"`
+	Message     string `yaml:"message" json:"message"`
+}
+
 // AdditionalDisplayItem holds some display-related configuration, like which annotations are to be displayed
 type AdditionalDisplayItem struct {
 	Annotation     string `yaml:"annotation"`
@@ -469,6 +475,7 @@ type Config struct {
 	Identity                 security.Identity                   `yaml:",omitempty"`
 	InCluster                bool                                `yaml:"in_cluster,omitempty"`
 	InstallationTag          string                              `yaml:"installation_tag,omitempty"`
+	IstioConfigHelpMessages  map[string][]IstioConfigHelp        `yaml:"istio_config_help_messages,omitempty" json:"help,omitempty"`
 	IstioLabels              IstioLabels                         `yaml:"istio_labels,omitempty"`
 	IstioNamespace           string                              `yaml:"istio_namespace,omitempty"` // default component namespace
 	KialiFeatureFlags        KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
@@ -713,6 +720,22 @@ func NewConfig() (c *Config) {
 	return
 }
 
+func (conf *Config) AddHelpDefault() {
+	istioConfigHelpMessages := map[string][]IstioConfigHelp{
+		"virtualservices": {
+			{ObjectField: "spec.hosts", Message: "The destination hosts to which traffic is being sent. Could be a DNS name with wildcard prefix or an IP address. Depending on the platform, short-names can also be used instead of a FQDN (i.e. has no dots in the name)."},
+			{ObjectField: "spec.gateways", Message: "The names of gateways and sidecars that should apply these routes. Gateways in other namespaces may be referred to by <gateway namespace>/<gateway name>; specifying a gateway with no namespace qualifier is the same as specifying the VirtualService’s namespace. To apply the rules to both gateways and sidecars, specify mesh as one of the gateway names."},
+			{ObjectField: "spec.http", Message: "An ordered list of route rules for HTTP traffic."},
+			{ObjectField: "spec.exportTo", Message: "A list of namespaces to which this virtual service is exported. Exporting a virtual service allows it to be used by sidecars and gateways defined in other namespaces."},
+			{ObjectField: "spec.http.match", Message: "Match conditions to be satisfied for the rule to be activated."},
+			{ObjectField: "spec.http.route", Message: "A HTTP rule can either redirect or forward (default) traffic. The forwarding target can be one of several versions of a service. Weights associated with the service version determine the proportion of traffic it receives."},
+			{ObjectField: "spec.http.route.destination.host", Message: "The name of a service from the service registry. Service names are looked up from the platform’s service registry (e.g., Kubernetes services, Consul services, etc.) and from the hosts declared by ServiceEntry."},
+			{ObjectField: "spec.http.route.destination.subset", Message: "The name of a subset within the service. Applicable only to services within the mesh. The subset must be defined in a corresponding DestinationRule."},
+		},
+	}
+	conf.IstioConfigHelpMessages = istioConfigHelpMessages
+}
+
 // AddHealthDefault Configuration
 func (conf *Config) AddHealthDefault() {
 	// Health default configuration
@@ -767,6 +790,7 @@ func Set(conf *Config) {
 	rwMutex.Lock()
 	defer rwMutex.Unlock()
 	conf.AddHealthDefault()
+	conf.AddHelpDefault()
 	configuration = *conf
 }
 

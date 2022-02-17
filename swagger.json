@@ -5315,6 +5315,13 @@
         "gateway": {
           "$ref": "#/definitions/Gateway"
         },
+        "help": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioConfigHelp"
+          },
+          "x-go-name": "IstioConfigHelpFields"
+        },
         "namespace": {
           "$ref": "#/definitions/namespace"
         },
@@ -5354,6 +5361,21 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "IstioConfigHelp": {
+      "description": "IstioConfigHelp represents a help message for a given Istio object type and field",
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "objectField": {
+          "type": "string",
+          "x-go-name": "ObjectField"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/config"
     },
     "IstioConfigList": {
       "description": "This type is used for returning a response of IstioConfigList",
