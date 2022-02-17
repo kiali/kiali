@@ -41,3 +41,15 @@ spec:
       route:
         - destination:
             host: reviews3.bookinfo3.svc.cluster.local
+---
+kind: DestinationRule
+apiVersion: networking.istio.io/v1alpha3
+metadata:
+  name: reviews
+  namespace: bookinfo
+spec:
+  host: reviews
+  subsets:
+    - name: v1
+      labels:
+        version: v1

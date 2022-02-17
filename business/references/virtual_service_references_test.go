@@ -13,7 +13,7 @@ import (
 	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
-func prepareTestForVirtualService(vs *networking_v1alpha3.VirtualService) models.IstioReferences {
+func prepareTestForVirtualService(vs *networking_v1alpha3.VirtualService, dr *networking_v1alpha3.DestinationRule) models.IstioReferences {
 	virtualServiceReferences := VirtualServiceReferences{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
@@ -21,7 +21,8 @@ func prepareTestForVirtualService(vs *networking_v1alpha3.VirtualService) models
 			{Name: "bookinfo2"},
 			{Name: "bookinfo3"},
 		},
-		VirtualServices: []networking_v1alpha3.VirtualService{*vs},
+		VirtualServices:  []networking_v1alpha3.VirtualService{*vs},
+		DestinationRules: []networking_v1alpha3.DestinationRule{*dr},
 	}
 	return *virtualServiceReferences.References()[models.IstioReferenceKey{ObjectType: "virtualservice", Namespace: vs.Namespace, Name: vs.Name}]
 }
@@ -32,7 +33,7 @@ func TestVirtualServiceReferences(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForVirtualService(fakeVirtualService(t))
+	references := prepareTestForVirtualService(fakeVirtualService(t), findDestinationRule(t))
 	assert.NotEmpty(references.ServiceReferences)
 
 	// Check Service references
@@ -44,8 +45,8 @@ func TestVirtualServiceReferences(t *testing.T) {
 	assert.Equal(references.ServiceReferences[2].Name, "reviews3")
 	assert.Equal(references.ServiceReferences[2].Namespace, "bookinfo3")
 
+	assert.Len(references.ObjectReferences, 6)
 	// Check Gateway references
-	assert.Len(references.ObjectReferences, 5)
 	assert.Equal(references.ObjectReferences[0].Name, "gateway1")
 	assert.Equal(references.ObjectReferences[0].Namespace, "bookinfo")
 	assert.Equal(references.ObjectReferences[0].ObjectType, "gateway")
@@ -61,6 +62,11 @@ func TestVirtualServiceReferences(t *testing.T) {
 	assert.Equal(references.ObjectReferences[4].Name, "valid-gateway2")
 	assert.Equal(references.ObjectReferences[4].Namespace, "bookinfo")
 	assert.Equal(references.ObjectReferences[4].ObjectType, "gateway")
+
+	// Check DR references
+	assert.Equal(references.ObjectReferences[5].Name, "reviews")
+	assert.Equal(references.ObjectReferences[5].Namespace, "bookinfo")
+	assert.Equal(references.ObjectReferences[5].ObjectType, "destinationrule")
 }
 
 func TestVirtualServiceNoReferences(t *testing.T) {
@@ -69,7 +75,7 @@ func TestVirtualServiceNoReferences(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForVirtualService(data.CreateEmptyVirtualService("reviews-well", "bookinfo", []string{"reviews.prod.svc.cluster.local"}))
+	references := prepareTestForVirtualService(data.CreateEmptyVirtualService("reviews-well", "bookinfo", []string{"reviews.prod.svc.cluster.local"}), findDestinationRule(t))
 	assert.Empty(references.ServiceReferences)
 }
 
@@ -86,4 +92,14 @@ func fakeVirtualService(t *testing.T) *networking_v1alpha3.VirtualService {
 	}
 
 	return loader.FindVirtualService("reviews-well", "bookinfo")
+}
+
+func findDestinationRule(t *testing.T) *networking_v1alpha3.DestinationRule {
+	loader := yamlFixtureLoader("multiple-gateways.yaml")
+	err := loader.Load()
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
+
+	return loader.FindDestinationRule("reviews", "bookinfo")
 }
