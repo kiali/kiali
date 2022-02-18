@@ -17,9 +17,9 @@ func TestNoCrashOnEmpty(t *testing.T) {
 	assert := assert.New(t)
 
 	typeValidations := NoServiceChecker{
-		Namespace:         "test",
-		ExportedResources: emptyExportedResources(),
-		RegistryServices:  data.CreateEmptyRegistryServices(),
+		Namespace:        "test",
+		IstioConfigList:  emptyIstioConfigList(),
+		RegistryServices: data.CreateEmptyRegistryServices(),
 	}.Check()
 
 	assert.Empty(typeValidations)
@@ -33,17 +33,18 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 
 	vals := NoServiceChecker{
 		Namespace: "test",
-		WorkloadList: data.CreateWorkloadList("test",
-			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
-			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
-			data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
-			data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
-			data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
-			data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
-			data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
-			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
-		),
-		ExportedResources:    fakeExportedResources(),
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test": data.CreateWorkloadList("test",
+				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+				data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+				data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
+				data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
+				data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
+				data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
+				data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
+				data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2"))),
+		},
+		IstioConfigList:      fakeIstioConfigList(),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 		RegistryServices: append(data.CreateFakeRegistryServices("product.test.svc.cluster.local", "test", "test"),
 			data.CreateFakeMultiRegistryServices([]string{"reviews.test.svc.cluster.local", "details.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", "*")...),
@@ -63,16 +64,17 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert := assert.New(t)
 
 	vals := NoServiceChecker{
-		Namespace:         "test",
-		ExportedResources: fakeExportedResources(),
-		WorkloadList: data.CreateWorkloadList("test",
-			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
-			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
-			data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
-			data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
-			data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
-			data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
-		),
+		Namespace:       "test",
+		IstioConfigList: fakeIstioConfigList(),
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test": data.CreateWorkloadList("test",
+				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+				data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+				data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
+				data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
+				data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
+				data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2"))),
+		},
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 		RegistryServices: append(data.CreateFakeRegistryServices("product.test.svc.cluster.local", "test", "."),
 			data.CreateFakeMultiRegistryServices([]string{"reviews.test.svc.cluster.local", "details.test.svc.cluster.local"}, "test", "*")...),
@@ -88,15 +90,16 @@ func TestDetectObjectWithoutService(t *testing.T) {
 
 	vals = NoServiceChecker{
 		Namespace: "test",
-		WorkloadList: data.CreateWorkloadList("test",
-			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
-			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
-			data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
-			data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
-			data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
-			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
-		),
-		ExportedResources:    fakeExportedResources(),
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test": data.CreateWorkloadList("test",
+				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+				data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+				data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
+				data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
+				data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
+				data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2"))),
+		},
+		IstioConfigList:      fakeIstioConfigList(),
 		RegistryServices:     data.CreateFakeMultiRegistryServices([]string{"reviews.test.svc.cluster.local", "details.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", "*"),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -113,15 +116,16 @@ func TestDetectObjectWithoutService(t *testing.T) {
 
 	vals = NoServiceChecker{
 		Namespace: "test",
-		WorkloadList: data.CreateWorkloadList("test",
-			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
-			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
-			data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
-			data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
-			data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
-			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
-		),
-		ExportedResources:    fakeExportedResources(),
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test": data.CreateWorkloadList("test",
+				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+				data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+				data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
+				data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
+				data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
+				data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2"))),
+		},
+		IstioConfigList:      fakeIstioConfigList(),
 		RegistryServices:     data.CreateFakeMultiRegistryServices([]string{"reviews.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", "*"),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -131,15 +135,16 @@ func TestDetectObjectWithoutService(t *testing.T) {
 
 	vals = NoServiceChecker{
 		Namespace: "test",
-		WorkloadList: data.CreateWorkloadList("test",
-			data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
-			data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
-			data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
-			data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
-			data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
-			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
-		),
-		ExportedResources:    fakeExportedResources(),
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test": data.CreateWorkloadList("test",
+				data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
+				data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
+				data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
+				data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
+				data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
+				data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2"))),
+		},
+		IstioConfigList:      fakeIstioConfigList(),
 		RegistryServices:     data.CreateFakeMultiRegistryServices([]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", "*"),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -153,14 +158,14 @@ func TestObjectWithoutGateway(t *testing.T) {
 	config.Set(conf)
 	assert := assert.New(t)
 
-	istioDetails := fakeExportedResources()
+	istioDetails := fakeIstioConfigList()
 	gateways := make([]string, 1)
 	gateways = append(gateways, "non-existant-gateway")
 
 	istioDetails.VirtualServices[0].Spec.Gateways = gateways
 	vals := NoServiceChecker{
 		Namespace:            "test",
-		ExportedResources:    istioDetails,
+		IstioConfigList:      istioDetails,
 		RegistryServices:     data.CreateFakeMultiRegistryServices([]string{"reviews.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", "*"),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -173,12 +178,12 @@ func TestObjectWithoutGateway(t *testing.T) {
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", productVs.Checks[1]))
 }
 
-func emptyExportedResources() *kubernetes.ExportedResources {
-	return &kubernetes.ExportedResources{}
+func emptyIstioConfigList() *models.IstioConfigList {
+	return &models.IstioConfigList{}
 }
 
-func fakeExportedResources() *kubernetes.ExportedResources {
-	result := kubernetes.ExportedResources{}
+func fakeIstioConfigList() *models.IstioConfigList {
+	result := models.IstioConfigList{}
 
 	result.VirtualServices = []networking_v1alpha3.VirtualService{
 		*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("product", "v1", -1),

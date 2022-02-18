@@ -270,10 +270,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="1.36.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="1.39.0"
 
 # The default version of the crc bundle - this is typically the version included with the CRC download
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.9.8"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.9.15"
 
 # The default virtual CPUs assigned to the CRC VM
 DEFAULT_CRC_CPUS="5"
@@ -560,7 +560,7 @@ else
       exit 1
     fi
   fi
-  tar xvf "${CRC_EXE_PATH}.tar.xz" -C "$(dirname ${CRC_EXE_PATH})" --strip 1 '*/crc'
+  tar xvf "${CRC_EXE_PATH}.tar.xz" --wildcards -C "$(dirname ${CRC_EXE_PATH})" --strip 1 '*/crc'
   chmod +x ${CRC_EXE_PATH}
   rm "${CRC_EXE_PATH}.tar.xz"
 fi

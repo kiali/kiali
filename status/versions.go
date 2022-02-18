@@ -247,7 +247,7 @@ func istioVersion() (*ExternalServiceInfo, error) {
 	}
 	rawVersion := string(body)
 
-	istioInfo, _ := parseIstioRawVersion(rawVersion)
+	istioInfo, err := parseIstioRawVersion(rawVersion)
 	meshName, meshVersion := istioInfo.Name, istioInfo.Version
 	status := GetStatus()
 	kialiVersion := status[CoreVersion]
@@ -263,7 +263,7 @@ func istioVersion() (*ExternalServiceInfo, error) {
 		Put(IsCompatible, "false")
 	}
 
-	return parseIstioRawVersion(rawVersion)
+	return istioInfo, err
 }
 
 func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {

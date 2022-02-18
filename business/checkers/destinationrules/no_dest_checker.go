@@ -12,13 +12,13 @@ import (
 )
 
 type NoDestinationChecker struct {
-	Namespace        string
-	Namespaces       models.Namespaces
-	WorkloadList     models.WorkloadList
-	DestinationRule  networking_v1alpha3.DestinationRule
-	VirtualServices  []networking_v1alpha3.VirtualService
-	ServiceEntries   map[string][]string
-	RegistryServices []*kubernetes.RegistryService
+	Namespace             string
+	Namespaces            models.Namespaces
+	WorkloadsPerNamespace map[string]models.WorkloadList
+	DestinationRule       networking_v1alpha3.DestinationRule
+	VirtualServices       []networking_v1alpha3.VirtualService
+	ServiceEntries        map[string][]string
+	RegistryServices      []*kubernetes.RegistryService
 }
 
 // Check parses the DestinationRule definitions and verifies that they point to an existing service, including any subset definitions
@@ -88,7 +88,7 @@ func (n NoDestinationChecker) hasMatchingWorkload(host kubernetes.Host, subsetLa
 	subsetLabelSet := labels.Set(subsetLabels)
 	subsetSelector := labels.SelectorFromSet(subsetLabelSet)
 
-	for _, wl := range n.WorkloadList.Workloads {
+	for _, wl := range n.WorkloadsPerNamespace[localNs].Workloads {
 		wlLabelSet := labels.Set(wl.Labels)
 		if selector.Matches(wlLabelSet) {
 			if subsetSelector.Matches(wlLabelSet) {
@@ -110,7 +110,7 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 
 	if localNs == itemNamespace {
 		// Check Workloads
-		if matches := kubernetes.HasMatchingWorkloads(localSvc, n.WorkloadList.GetLabels()); matches {
+		if matches := kubernetes.HasMatchingWorkloads(localSvc, n.WorkloadsPerNamespace[localNs].GetLabels()); matches {
 			return matches
 		}
 	}
@@ -156,7 +156,7 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						subset := dest.Destination.Subset
 						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ClusterName, n.Namespaces.GetNames())
 						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
-						// TODO Host could be in another namespace (FQDN)
+						// Host could be in another namespace (FQDN)
 						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
 							vss = append(vss, virtualService)
 						}
@@ -179,7 +179,7 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						subset := dest.Destination.Subset
 						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ClusterName, n.Namespaces.GetNames())
 						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
-						// TODO Host could be in another namespace (FQDN)
+						// Host could be in another namespace (FQDN)
 						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
 							vss = append(vss, virtualService)
 						}
@@ -202,7 +202,7 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						subset := dest.Destination.Subset
 						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ClusterName, n.Namespaces.GetNames())
 						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
-						// TODO Host could be in another namespace (FQDN)
+						// Host could be in another namespace (FQDN)
 						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
 							vss = append(vss, virtualService)
 						}
