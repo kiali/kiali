@@ -112,19 +112,21 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var istioConfigValidations models.IstioValidations
+	var istioConfigReferences models.IstioReferencesMap
 
 	wg := sync.WaitGroup{}
 	if includeValidations {
 		wg.Add(1)
-		go func(istioConfigValidations *models.IstioValidations, err *error) {
+		go func(istioConfigValidations *models.IstioValidations, istioConfigReferences *models.IstioReferencesMap, err *error) {
 			defer wg.Done()
-			istioConfigValidationResults, errValidations := business.Validations.GetIstioObjectValidations(r.Context(), namespace, objectType, object)
+			istioConfigValidationResults, istioConfigReferencesResults, errValidations := business.Validations.GetIstioObjectValidations(r.Context(), namespace, objectType, object)
 			if errValidations != nil && *err == nil {
 				*err = errValidations
 			} else {
 				*istioConfigValidations = istioConfigValidationResults
+				*istioConfigReferences = istioConfigReferencesResults
 			}
-		}(&istioConfigValidations, &err)
+		}(&istioConfigValidations, &istioConfigReferences, &err)
 	}
 
 	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(context.TODO(), namespace, objectType, object)
@@ -134,6 +136,9 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 
 		if validation, found := istioConfigValidations[models.IstioValidationKey{ObjectType: models.ObjectTypeSingular[objectType], Namespace: namespace, Name: object}]; found {
 			istioConfigDetails.IstioValidation = validation
+		}
+		if references, found := istioConfigReferences[models.IstioReferenceKey{ObjectType: models.ObjectTypeSingular[objectType], Namespace: namespace, Name: object}]; found {
+			istioConfigDetails.IstioReferences = references
 		}
 	}
 

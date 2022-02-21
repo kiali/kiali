@@ -7507,6 +7507,7 @@ Can be True, False, Unknown. |  |
 | namespace | [Namespace](#namespace)| `Namespace` |  | |  |  |
 | peerAuthentication | [PeerAuthentication](#peer-authentication)| `PeerAuthentication` |  | |  |  |
 | permissions | [ResourcePermissions](#resource-permissions)| `ResourcePermissions` |  | |  |  |
+| references | [IstioReferences](#istio-references)| `IstioReferences` |  | |  |  |
 | requestAuthentication | [RequestAuthentication](#request-authentication)| `RequestAuthentication` |  | |  |  |
 | serviceEntry | [ServiceEntry](#service-entry)| `ServiceEntry` |  | |  |  |
 | sidecar | [Sidecar](#sidecar)| `Sidecar` |  | |  |  |
@@ -7572,6 +7573,43 @@ Can be True, False, Unknown. |  |
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | IsMaistra | boolean| `bool` | ✓ | | If true, the Istio implementation is a variant of Maistra. |  |
+
+
+
+### <span id="istio-reference"></span> IstioReference
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Name | string| `string` |  | |  |  |
+| Namespace | string| `string` |  | |  |  |
+| ObjectType | string| `string` |  | |  |  |
+
+
+
+### <span id="istio-references"></span> IstioReferences
+
+
+> IstioReferences represents a sets of different references
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| ObjectReferences | [][IstioReference](#istio-reference)| `[]*IstioReference` |  | | Related Istio objects |  |
+| ServiceReferences | [][ServiceReference](#service-reference)| `[]*ServiceReference` |  | | Related Istio objects |  |
+| WorkloadReferences | [][WorkloadReference](#workload-reference)| `[]*WorkloadReference` |  | | Related Istio objects |  |
 
 
 
@@ -9205,6 +9243,22 @@ Federation:  special case when registry is provided from a federated environment
 
 
 
+### <span id="service-reference"></span> ServiceReference
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Name | string| `string` |  | |  |  |
+| Namespace | string| `string` |  | |  |  |
+
+
+
 ### <span id="severity-level"></span> SeverityLevel
 
 
@@ -10328,6 +10382,22 @@ It's mapped as a pointer to show three values nil, true, false |  |
   
 
 [][WorkloadListItem](#workload-list-item)
+
+### <span id="workload-reference"></span> WorkloadReference
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Name | string| `string` |  | |  |  |
+| Namespace | string| `string` |  | |  |  |
+
+
 
 ### <span id="workload-status"></span> WorkloadStatus
 
