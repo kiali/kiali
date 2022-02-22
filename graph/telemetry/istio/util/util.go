@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/prometheus/common/model"
 
@@ -123,19 +124,18 @@ func IsBadDestTelemetry(cluster string, clusterOK bool, svcNs, svc, svcName, wl 
 	return false
 }
 
-// GetQueryScope returns "" if there is no configured queryScope, otherwise queryScope with/without a trailing comma
-func GetQueryScope(prefix, suffix string) string {
+// AddQueryScope returns the prom query unchanged if there is no configured queryScope, otherwise
+// it returns the query with the queryScope injected after each occurrence of a leading '{'.
+func AddQueryScope(query string) string {
 	queryScope := config.Get().ExternalServices.Prometheus.QueryScope
 	if len(queryScope) == 0 {
-		return ""
+		return query
 	}
 
-	separator := ""
-	scope := ""
+	scope := "{"
 	for labelName, labelValue := range queryScope {
-		scope = fmt.Sprintf("%s%s%s=\"%s\"", scope, separator, labelName, labelValue)
-		separator = ","
+		scope = fmt.Sprintf("%s%s=\"%s\",", scope, labelName, labelValue)
 	}
 
-	return fmt.Sprintf("%s%s%s", prefix, scope, suffix)
+	return strings.ReplaceAll(query, "{", scope)
 }

@@ -23,10 +23,7 @@ func promQuery(query string, queryTime time.Time, ctx context.Context, api prom_
 	}
 
 	// add scope if necessary
-	scope := util.GetQueryScope("{", ",")
-	if scope != "" {
-		query = strings.ReplaceAll(query, "{", scope)
-	}
+	query = util.AddQueryScope(query)
 
 	// wrap with a round() to be in line with metrics api
 	query = fmt.Sprintf("round(%s,0.001)", query)
