@@ -203,6 +203,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 			Namespace: namespace, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries,
 			WorkloadList: workloadsPerNamespace[namespace], MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices}
 		objectCheckers = []ObjectChecker{authPoliciesChecker}
+		referenceChecker = references.AuthorizationPolicyReferences{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.PeerAuthentications:
 		// Validations on PeerAuthentications
 		peerAuthnChecker := checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails, WorkloadList: workloadsPerNamespace[namespace]}

@@ -1,0 +1,113 @@
+package references
+
+import (
+	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+
+	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
+)
+
+type AuthorizationPolicyReferences struct {
+	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
+	Namespace             string
+	Namespaces            models.Namespaces
+	ServiceEntries        []networking_v1alpha3.ServiceEntry
+	VirtualServices       []networking_v1alpha3.VirtualService
+	RegistryServices      []*kubernetes.RegistryService
+	WorkloadsPerNamespace map[string]models.WorkloadList
+}
+
+func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
+	result := models.IstioReferencesMap{}
+
+	for _, ap := range n.AuthorizationPolicies {
+		namespace, clusterName := ap.Namespace, ap.ClusterName
+		key := models.IstioReferenceKey{Namespace: namespace, Name: ap.Name, ObjectType: models.ObjectTypeSingular[kubernetes.AuthorizationPolicies]}
+		references := &models.IstioReferences{}
+		for _, rule := range ap.Spec.Rules {
+			if rule == nil {
+				continue
+			}
+			if len(rule.To) > 0 {
+				for _, t := range rule.To {
+					if t == nil {
+						continue
+					}
+					if t.Operation == nil {
+						continue
+					}
+					if len(t.Operation.Hosts) == 0 {
+						continue
+					}
+					for _, h := range t.Operation.Hosts {
+						fqdn := kubernetes.GetHost(h, namespace, clusterName, n.Namespaces.GetNames())
+						if !fqdn.IsWildcard() {
+							configRef := n.getConfigReferences(fqdn, namespace)
+							references.ObjectReferences = append(references.ObjectReferences, configRef...)
+							// if No ServiceEntry or VS is found, look into Services as RegistryServices contains all
+							if len(configRef) == 0 {
+								references.ServiceReferences = append(references.ServiceReferences, n.getServiceReferences(fqdn, namespace)...)
+							}
+						}
+					}
+				}
+			}
+		}
+		references.WorkloadReferences = append(references.WorkloadReferences, n.getWorkloadReferences(ap)...)
+		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
+	}
+
+	return result
+}
+
+func (n AuthorizationPolicyReferences) getServiceReferences(host kubernetes.Host, itemNamespace string) []models.ServiceReference {
+	result := make([]models.ServiceReference, 0)
+	if kubernetes.HasMatchingRegistryService(itemNamespace, host.String(), n.RegistryServices) {
+		result = append(result, models.ServiceReference{Name: host.Service, Namespace: host.Namespace})
+	}
+	return result
+}
+
+func (n AuthorizationPolicyReferences) getConfigReferences(host kubernetes.Host, itemNamespace string) []models.IstioReference {
+	result := make([]models.IstioReference, 0)
+	for _, se := range n.ServiceEntries {
+		for _, seHost := range se.Spec.Hosts {
+			if seHost == host.String() {
+				result = append(result, models.IstioReference{Name: se.Name, Namespace: se.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.ServiceEntries]})
+				continue
+			}
+		}
+	}
+	for _, vs := range n.VirtualServices {
+		for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
+			vHost := vs.Spec.Hosts[hostIdx]
+
+			hostS := kubernetes.ParseHost(vHost, vs.Namespace, vs.ClusterName)
+			if hostS.String() == host.String() {
+				result = append(result, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
+				continue
+			}
+		}
+	}
+	return result
+}
+
+func (n AuthorizationPolicyReferences) getWorkloadReferences(ap security_v1beta.AuthorizationPolicy) []models.WorkloadReference {
+	result := make([]models.WorkloadReference, 0)
+	if ap.Spec.Selector != nil {
+		selector := labels.SelectorFromSet(ap.Spec.Selector.MatchLabels)
+
+		for _, wls := range n.WorkloadsPerNamespace {
+			for _, wl := range wls.Workloads {
+				wlLabelSet := labels.Set(wl.Labels)
+				if selector.Matches(wlLabelSet) {
+					return []models.WorkloadReference{{Name: wl.Name, Namespace: wls.Namespace.Name}}
+				}
+			}
+		}
+	}
+	return result
+}
