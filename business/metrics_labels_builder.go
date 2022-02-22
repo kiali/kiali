@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/prometheus"
 )
 
 const (
@@ -124,7 +125,7 @@ func (lb *MetricsLabelsBuilder) QueryScope() *MetricsLabelsBuilder {
 	scope := config.Get().ExternalServices.Prometheus.QueryScope
 
 	for labelName, labelValue := range scope {
-		lb.Add(labelName, labelValue)
+		lb.Add(prometheus.SanitizeLabelName(labelName), labelValue)
 	}
 	return lb
 }

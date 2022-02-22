@@ -10,6 +10,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/prometheus"
 )
 
 // badServiceMatcher looks for a physical IP address with optional port (e.g. 10.11.12.13:80)
@@ -134,7 +135,7 @@ func AddQueryScope(query string) string {
 
 	scope := "{"
 	for labelName, labelValue := range queryScope {
-		scope = fmt.Sprintf("%s%s=\"%s\",", scope, labelName, labelValue)
+		scope = fmt.Sprintf("%s%s=\"%s\",", scope, prometheus.SanitizeLabelName(labelName), labelValue)
 	}
 
 	return strings.ReplaceAll(query, "{", scope)
