@@ -33,13 +33,7 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 			}
 			if len(rule.To) > 0 {
 				for _, t := range rule.To {
-					if t == nil {
-						continue
-					}
-					if t.Operation == nil {
-						continue
-					}
-					if len(t.Operation.Hosts) == 0 {
+					if t == nil || t.Operation == nil || len(t.Operation.Hosts) == 0 {
 						continue
 					}
 					for _, h := range t.Operation.Hosts {

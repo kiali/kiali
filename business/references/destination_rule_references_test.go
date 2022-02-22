@@ -28,6 +28,7 @@ func prepareTestForDestinationRule(dr *networking_v1alpha3.DestinationRule, vs *
 				data.CreateWorkloadListItem("reviewsv3", appVersionLabel("reviews", "v3")),
 				data.CreateWorkloadListItem("reviewsv4", appVersionLabel("reviews", "v4"))),
 		},
+		ServiceEntries:   []networking_v1alpha3.ServiceEntry{*fakeServiceEntry()},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 	}
 	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "destinationrule", Namespace: dr.Namespace, Name: dr.Name}]
@@ -63,14 +64,14 @@ func TestDestinationRuleReferences(t *testing.T) {
 	assert.Equal(references.ObjectReferences[0].ObjectType, "virtualservice")
 }
 
-func TestDestinationRuleNoWorkloadReferences(t *testing.T) {
+func TestDestinationRuleNoReferences(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
 
 	// Setup mocks
 	references := prepareTestForDestinationRule(data.CreateEmptyDestinationRule("reviews", "bookinfo", "reviews.bookinfo.svc.cluster.local"), getVirtualService(t))
-	assert.NotEmpty(references.ServiceReferences)
+	assert.Empty(references.ServiceReferences)
 	assert.Empty(references.WorkloadReferences)
 }
 
