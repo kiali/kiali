@@ -39,7 +39,7 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 					for _, h := range t.Operation.Hosts {
 						fqdn := kubernetes.GetHost(h, namespace, clusterName, n.Namespaces.GetNames())
 						if !fqdn.IsWildcard() {
-							configRef := n.getConfigReferences(fqdn, namespace)
+							configRef := n.getConfigReferences(fqdn)
 							references.ObjectReferences = append(references.ObjectReferences, configRef...)
 							// if No ServiceEntry or VS is found, look into Services as RegistryServices contains all
 							if len(configRef) == 0 {
@@ -65,7 +65,7 @@ func (n AuthorizationPolicyReferences) getServiceReferences(host kubernetes.Host
 	return result
 }
 
-func (n AuthorizationPolicyReferences) getConfigReferences(host kubernetes.Host, itemNamespace string) []models.IstioReference {
+func (n AuthorizationPolicyReferences) getConfigReferences(host kubernetes.Host) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 	for _, se := range n.ServiceEntries {
 		for _, seHost := range se.Spec.Hosts {
