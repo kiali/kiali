@@ -38,6 +38,7 @@ const (
 	IsOutside             MetadataKey = "isOutside"
 	IsRoot                MetadataKey = "isRoot"
 	IsServiceEntry        MetadataKey = "isServiceEntry"
+	Labels                MetadataKey = "labels"
 	ProtocolKey           MetadataKey = "protocol"
 	ResponseTime          MetadataKey = "responseTime"
 	SourcePrincipal       MetadataKey = "sourcePrincipal"
@@ -59,4 +60,5 @@ func (dsm DestServicesMetadata) Add(key string, service ServiceName) DestService
 }
 
 type GatewaysMetadata map[string][]string
+type LabelsMetadata map[string]string
 type VirtualServicesMetadata map[string][]string

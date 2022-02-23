@@ -7764,6 +7764,13 @@ generation is still in progress.  See https://istio.io/latest/docs/reference/con
 
 
 
+### <span id="labels-metadata"></span> LabelsMetadata
+
+
+  
+
+[LabelsMetadata](#labels-metadata)
+
 ### <span id="listener"></span> Listener
 
 
@@ -8059,6 +8066,7 @@ This type is used to describe a set of objects.
 | hasVS | [VSInfo](#v-s-info)| `VSInfo` |  | |  |  |
 | isGateway | [GWInfo](#g-w-info)| `GWInfo` |  | |  |  |
 | isServiceEntry | [SEInfo](#s-e-info)| `SEInfo` |  | |  |  |
+| labels | [LabelsMetadata](#labels-metadata)| `LabelsMetadata` |  | |  |  |
 
 
 

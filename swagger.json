@@ -5772,6 +5772,13 @@
       },
       "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
+    "LabelsMetadata": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "x-go-package": "github.com/kiali/kiali/graph"
+    },
     "Listener": {
       "type": "object",
       "properties": {
@@ -6141,6 +6148,9 @@
         },
         "isServiceEntry": {
           "$ref": "#/definitions/SEInfo"
+        },
+        "labels": {
+          "$ref": "#/definitions/LabelsMetadata"
         },
         "namespace": {
           "type": "string",
