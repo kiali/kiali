@@ -4,7 +4,6 @@ package telemetry
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
@@ -43,76 +42,6 @@ func MergeTrafficMaps(trafficMap graph.TrafficMap, ns string, nsTrafficMap graph
 			}
 		} else {
 			trafficMap[nsID] = nsNode
-		}
-	}
-}
-
-// MarkOutsideOrInaccessible sets metadata for outsider and inaccessible nodes.  It should be called
-// after all appender work is completed.
-func MarkOutsideOrInaccessible(trafficMap graph.TrafficMap, o graph.TelemetryOptions) {
-	for _, n := range trafficMap {
-		switch n.NodeType {
-		case graph.NodeTypeUnknown:
-			n.Metadata[graph.IsInaccessible] = true
-		case graph.NodeTypeService:
-			if n.Namespace == graph.Unknown {
-				n.Metadata[graph.IsInaccessible] = true
-			} else if n.Metadata[graph.IsEgressCluster] == true {
-				n.Metadata[graph.IsInaccessible] = true
-			} else {
-				if isOutside(n, o.Namespaces) {
-					n.Metadata[graph.IsOutside] = true
-				}
-			}
-		default:
-			if isOutside(n, o.Namespaces) {
-				n.Metadata[graph.IsOutside] = true
-			}
-		}
-		if isOutsider, ok := n.Metadata[graph.IsOutside]; ok && isOutsider.(bool) {
-			if _, ok2 := n.Metadata[graph.IsInaccessible]; !ok2 {
-				if isInaccessible(n, o.AccessibleNamespaces) {
-					n.Metadata[graph.IsInaccessible] = true
-				}
-			}
-		}
-	}
-}
-
-func isOutside(n *graph.Node, namespaces map[string]graph.NamespaceInfo) bool {
-	if n.Namespace == graph.Unknown {
-		return false
-	}
-	for _, ns := range namespaces {
-		if n.Namespace == ns.Name {
-			return false
-		}
-	}
-	return true
-}
-
-func isInaccessible(n *graph.Node, accessibleNamespaces map[string]time.Time) bool {
-	if _, found := accessibleNamespaces[n.Namespace]; !found {
-		return true
-	} else {
-		return false
-	}
-}
-
-// MarkTrafficGenerators set IsRoot metadata. It is called after appender work is complete.
-func MarkTrafficGenerators(trafficMap graph.TrafficMap) {
-	destMap := make(map[string]*graph.Node)
-	for _, n := range trafficMap {
-		for _, e := range n.Edges {
-			destMap[e.Dest.ID] = e.Dest
-		}
-	}
-	for _, n := range trafficMap {
-		if len(n.Edges) == 0 {
-			continue
-		}
-		if _, isDest := destMap[n.ID]; !isDest {
-			n.Metadata[graph.IsRoot] = true
 		}
 	}
 }
