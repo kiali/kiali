@@ -218,7 +218,7 @@ else
   $ISTIOCTL kube-inject -f ${BOOKINFO_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
 fi
 
-$CLIENT_EXE create -n ${NAMESPACE} -f ${GATEWAY_YAML}
+$CLIENT_EXE apply -n ${NAMESPACE} -f ${GATEWAY_YAML}
 
 if [ "${MONGO_ENABLED}" == "true" ]; then
   echo "Installing Mongo DB and a ratings service that uses it"
@@ -263,7 +263,7 @@ if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
   $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
   if [ "${IS_MAISTRA}" != "true" ]; then
-    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
+    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} apply -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
@@ -314,7 +314,7 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
 
   if [ "${INGRESS_ROUTE}" != "" ] ; then
     # TODO - these access the "openshift" yaml files - but there are no kubernetes specific versions. using --validate=false
-    curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION='0s' ROUTE="http://${INGRESS_ROUTE}/productpage" RATE="${RATE}" envsubst | $CLIENT_EXE create -n ${NAMESPACE} -f -
-    curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml | $CLIENT_EXE create --validate=false -n ${NAMESPACE} -f -
+    curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION='0s' ROUTE="http://${INGRESS_ROUTE}/productpage" RATE="${RATE}" envsubst | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+    curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml | $CLIENT_EXE apply --validate=false -n ${NAMESPACE} -f -
   fi
 fi
