@@ -57,6 +57,7 @@ interface Props {
 
 interface State {
   items: ConfigPreviewItem[];
+  newIstioPage: boolean;
   mainTab: string;
 }
 
@@ -65,8 +66,10 @@ const separator = '\n---\n\n';
 export class IstioConfigPreview extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
+    const newIstioPage = window.location.pathname.split('/')[2] === 'istio';
     this.state = {
       mainTab: this.props.items.length > 0 ? this.props.items[0].title.toLocaleLowerCase().replace(/\s/g, '') : '',
+      newIstioPage: newIstioPage,
       items: cloneDeep(this.props.items)
     };
   }
@@ -109,9 +112,17 @@ export class IstioConfigPreview extends React.Component<Props, State> {
 
   editorChange = (object: IstioConfigItem, index: number, title: string) => {
     const items = this.state.items;
-    const ind = items.findIndex(it => it.title === title);
+    const ind = items.findIndex(it =>
+      this.state.newIstioPage
+        ? it.title === title && it.items.find(t => t.metadata.namespace === object.metadata.namespace)
+        : it.title === title
+    );
     const config = items[ind];
-    config.items[index] = object;
+    config.items[
+      this.state.newIstioPage
+        ? config.items.findIndex(fi => fi.metadata.namespace === object.metadata.namespace)
+        : index
+    ] = object;
     items[ind] = config;
     this.setState({ items });
   };
@@ -119,16 +130,40 @@ export class IstioConfigPreview extends React.Component<Props, State> {
   addResource = (item: ConfigPreviewItem) => {
     const key = item.title.toLocaleLowerCase().replace(/\s/g, '');
     const propItems =
-      this.props.items.length > 0 ? this.props.items.filter(it => it.title === item.title)[0].items : undefined;
+      this.props.items.length > 0
+        ? (this.state.newIstioPage ? this.groupItems(this.props.items) : this.props.items).filter(
+            it => it.title === item.title
+          )[0].items
+        : [];
     return (
       <Tab eventKey={key} key={key + '_tab_preview'} title={item.title}>
         <EditResources
-          items={item.items}
-          orig={propItems as IstioConfigItem[]}
+          items={
+            this.state.newIstioPage
+              ? item.items.sort((a, b) => a.metadata.namespace!.localeCompare(b.metadata.namespace!))
+              : item.items
+          }
+          orig={
+            (this.state.newIstioPage
+              ? propItems.sort((a, b) => a.metadata.namespace!.localeCompare(b.metadata.namespace!))
+              : propItems) as IstioConfigItem[]
+          }
+          isIstioNew={this.state.newIstioPage}
           onChange={(obj, index) => this.editorChange(obj, index, item.title)}
         />
       </Tab>
     );
+  };
+
+  groupItems = (list: ConfigPreviewItem[] = this.state.items) => {
+    const types = _.uniq(list.map(item => item.type));
+    const itemsGrouped: ConfigPreviewItem[] = types.map(type => {
+      const filtered = list.filter(it => it.type === type);
+      const item: ConfigPreviewItem = { type: type, title: filtered[0].title, items: [] };
+      filtered.map(f => item.items.push(f.items[0]));
+      return item;
+    });
+    return itemsGrouped;
   };
 
   render() {
@@ -194,7 +229,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
             onSelect={(_, tab) => this.setState({ mainTab: String(tab) })}
             isFilled={true}
           >
-            {this.state.items.map(item => this.addResource(item))}
+            {(this.state.newIstioPage ? this.groupItems() : this.state.items).map(item => this.addResource(item))}
           </Tabs>
         )}
         {this.props.disableAction && (

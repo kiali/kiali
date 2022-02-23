@@ -1,16 +1,7 @@
 import * as React from 'react';
-import {
-  Dropdown,
-  DropdownGroup,
-  DropdownItem,
-  DropdownPosition,
-  DropdownToggle,
-  Tooltip,
-  TooltipPosition
-} from '@patternfly/react-core';
+import { Dropdown, DropdownGroup, DropdownItem, DropdownPosition, DropdownToggle } from '@patternfly/react-core';
 import history from '../../app/History';
 import { NEW_ISTIO_RESOURCE } from '../../pages/IstioConfigNew/IstioConfigNewPage';
-import { serverConfig } from 'config';
 
 type Props = {};
 
@@ -47,24 +38,12 @@ class IstioActionsNamespaceDropdown extends React.Component<Props, State> {
     history.push('/istio/new/' + type);
   };
 
-  renderTooltip = (key, position, msg, child): JSX.Element => {
-    return (
-      <Tooltip key={'tooltip_' + key} position={position} content={<>{msg}</>}>
-        <div style={{ display: 'inline-block', cursor: 'not-allowed', textAlign: 'left' }}>{child}</div>
-      </Tooltip>
-    );
-  };
-
   render() {
     const dropdownItemsRaw = NEW_ISTIO_RESOURCE.map(
       (r): ActionItem => ({
         name: r.value,
         action: (
-          <DropdownItem
-            isDisabled={serverConfig.deployment.viewOnlyMode}
-            key={'createIstioConfig_' + r.value}
-            onClick={() => this.onClickCreate(r.value)}
-          >
+          <DropdownItem key={'createIstioConfig_' + r.value} onClick={() => this.onClickCreate(r.value)}>
             {r.label}
           </DropdownItem>
         )
@@ -76,11 +55,7 @@ class IstioActionsNamespaceDropdown extends React.Component<Props, State> {
         key={'group_create'}
         label={'Create'}
         className="kiali-group-menu"
-        children={dropdownItemsRaw.map(r =>
-          serverConfig.deployment.viewOnlyMode
-            ? this.renderTooltip(r.name, TooltipPosition.left, 'User does not have permission', r.action)
-            : r.action
-        )}
+        children={dropdownItemsRaw.map(r => r.action)}
       />
     ];
     return (

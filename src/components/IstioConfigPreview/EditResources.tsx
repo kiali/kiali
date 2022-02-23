@@ -10,6 +10,7 @@ import _ from 'lodash';
 interface Props {
   items: IstioConfigItem[];
   orig: IstioConfigItem[];
+  isIstioNew?: boolean;
   onChange: (obj, index) => void;
 }
 
@@ -29,7 +30,11 @@ export class EditResources extends React.Component<Props, State> {
     return (
       <Tabs activeKey={this.state.resourceTab} onSelect={(_, tab) => this.setState({ resourceTab: Number(tab) })}>
         {this.props.items
-          .sort((a, b) => a.metadata.name.localeCompare(b.metadata.name))
+          .sort((a, b) =>
+            this.props.isIstioNew
+              ? a.metadata.namespace!.localeCompare(b.metadata.namespace!)
+              : a.metadata.name.localeCompare(b.metadata.name)
+          )
           .map((item, i) => {
             return (
               <Tab
@@ -37,8 +42,15 @@ export class EditResources extends React.Component<Props, State> {
                 key={i}
                 title={
                   <>
-                    {item.metadata.name}{' '}
-                    {!_.isEqual(item, this.props.orig.filter(it => it.metadata.name === item.metadata.name)[0]) && '*'}
+                    {this.props.isIstioNew ? item.metadata.namespace : item.metadata.name}{' '}
+                    {!_.isEqual(
+                      item,
+                      this.props.orig.filter(it =>
+                        this.props.isIstioNew
+                          ? it.metadata.namespace === item.metadata.namespace
+                          : it.metadata.name === item.metadata.name
+                      )[0]
+                    ) && '*'}
                   </>
                 }
               >

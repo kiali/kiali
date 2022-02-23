@@ -141,6 +141,7 @@ export const KIALI_WIZARD_LABEL = 'kiali_wizard';
 export const KIALI_RELATED_LABEL = 'kiali_wizard_related';
 
 export const ISTIO_NETWORKING_VERSION = 'networking.istio.io/v1alpha3';
+export const ISTIO_SECURITY_VERSION = 'security.istio.io/v1beta1';
 
 export const fqdnServiceName = (serviceName: string, namespace: string): string => {
   return serviceName + '.' + namespace + '.' + serverConfig.istioIdentityDomain;
@@ -558,6 +559,8 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
     ];
 
     wizardPA = {
+      apiVersion: ISTIO_SECURITY_VERSION,
+      kind: 'PeerAuthentication',
       metadata: {
         namespace: wProps.namespace,
         name: wProps.serviceName,
@@ -1054,6 +1057,8 @@ export const buildAuthorizationPolicy = (
   state: AuthorizationPolicyState
 ): AuthorizationPolicy => {
   const ap: AuthorizationPolicy = {
+    apiVersion: ISTIO_SECURITY_VERSION,
+    kind: 'AuthorizationPolicy',
     metadata: {
       name: name,
       namespace: namespace,
@@ -1066,15 +1071,11 @@ export const buildAuthorizationPolicy = (
 
   // DENY_ALL and ALLOW_ALL are two specific cases
   if (state.policy === 'DENY_ALL') {
-    ap.spec.action = undefined;
-    ap.spec.selector = undefined;
-    ap.spec.rules = undefined;
     return ap;
   }
 
   if (state.policy === 'ALLOW_ALL') {
     ap.spec.action = ALLOW;
-    ap.spec.selector = undefined;
     ap.spec.rules = [{}];
     return ap;
   }
@@ -1098,9 +1099,9 @@ export const buildAuthorizationPolicy = (
     ap.spec.rules = [];
     state.rules.forEach(rule => {
       const appRule: AuthorizationPolicyRule = {
-        from: undefined,
-        to: undefined,
-        when: undefined
+        from: [],
+        to: [],
+        when: []
       };
       if (rule.from.length > 0) {
         appRule.from = rule.from.map(fromItem => {
@@ -1127,7 +1128,9 @@ export const buildAuthorizationPolicy = (
       if (rule.when.length > 0) {
         appRule.when = rule.when.map(condition => {
           const cond: Condition = {
-            key: condition.key
+            key: condition.key,
+            values: [],
+            notValues: []
           };
           if (condition.values && condition.values.length > 0) {
             cond.values = condition.values;
@@ -1242,7 +1245,7 @@ export const buildGraphAuthorizationPolicy = (namespace: string, graph: GraphDef
       ) {
         const ap: AuthorizationPolicy = {
           kind: 'AuthorizationPolicy',
-          apiVersion: 'security.istio.io/v1beta1',
+          apiVersion: ISTIO_NETWORKING_VERSION,
           metadata: {
             name: node.data.workload,
             namespace: namespace,
@@ -1304,6 +1307,8 @@ export const buildGraphAuthorizationPolicy = (namespace: string, graph: GraphDef
 
 export const buildGateway = (name: string, namespace: string, state: GatewayState): Gateway => {
   const gw: Gateway = {
+    kind: 'Gateway',
+    apiVersion: ISTIO_NETWORKING_VERSION,
     metadata: {
       name: name,
       namespace: namespace,
@@ -1317,7 +1322,7 @@ export const buildGateway = (name: string, namespace: string, state: GatewayStat
       servers: state.gatewayServers.map(s => ({
         port: s.port,
         hosts: s.hosts,
-        tls: s.tls
+        tls: s.tls || {}
       }))
     }
   };
@@ -1340,6 +1345,8 @@ export const buildPeerAuthentication = (
   state: PeerAuthenticationState
 ): PeerAuthentication => {
   const pa: PeerAuthentication = {
+    apiVersion: ISTIO_SECURITY_VERSION,
+    kind: 'PeerAuthentication',
     metadata: {
       name: name,
       namespace: namespace,
@@ -1389,6 +1396,8 @@ export const buildRequestAuthentication = (
   state: RequestAuthenticationState
 ): RequestAuthentication => {
   const ra: RequestAuthentication = {
+    apiVersion: ISTIO_SECURITY_VERSION,
+    kind: 'RequestAuthentication',
     metadata: {
       name: name,
       namespace: namespace,
@@ -1423,6 +1432,8 @@ export const buildRequestAuthentication = (
 
 export const buildServiceEntry = (name: string, namespace: string, state: ServiceEntryState): ServiceEntry => {
   const se: ServiceEntry = {
+    apiVersion: ISTIO_NETWORKING_VERSION,
+    kind: 'ServiceEntry',
     metadata: {
       name: name,
       namespace: namespace,
@@ -1437,6 +1448,8 @@ export const buildServiceEntry = (name: string, namespace: string, state: Servic
 
 export const buildSidecar = (name: string, namespace: string, state: SidecarState): Sidecar => {
   const sc: Sidecar = {
+    apiVersion: ISTIO_NETWORKING_VERSION,
+    kind: 'Sidecar',
     metadata: {
       name: name,
       namespace: namespace,

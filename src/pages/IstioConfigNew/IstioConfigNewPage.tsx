@@ -55,6 +55,7 @@ import ServiceEntryForm, {
   SERVICE_ENTRY,
   ServiceEntryState
 } from './ServiceEntryForm';
+import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 
 export interface IstioConfigNewPageId {
   objectType: string;
@@ -66,6 +67,8 @@ type Props = RouteComponentProps<IstioConfigNewPageId> & {
 
 type State = {
   name: string;
+  showPreview: boolean;
+  itemsPreview: ConfigPreviewItem[];
   istioPermissions: IstioPermissions;
   authorizationPolicy: AuthorizationPolicyState;
   gateway: GatewayState;
@@ -106,6 +109,8 @@ export const NEW_ISTIO_RESOURCE = [
 const initState = (): State => ({
   name: '',
   istioPermissions: {},
+  showPreview: false,
+  itemsPreview: [],
   authorizationPolicy: initAuthorizationPolicy(),
   gateway: initGateway(),
   peerAuthentication: initPeerAuthentication(),
@@ -183,47 +188,10 @@ class IstioConfigNewPage extends React.Component<Props, State> {
   };
 
   onIstioResourceCreate = () => {
-    const jsonIstioObjects: { namespace: string; json: string }[] = [];
-    this.props.activeNamespaces.forEach(ns => {
-      switch (this.props.match.params.objectType) {
-        case AUTHORIZACION_POLICY:
-          jsonIstioObjects.push({
-            namespace: ns.name,
-            json: JSON.stringify(buildAuthorizationPolicy(this.state.name, ns.name, this.state.authorizationPolicy))
-          });
-          break;
-        case GATEWAY:
-          jsonIstioObjects.push({
-            namespace: ns.name,
-            json: JSON.stringify(buildGateway(this.state.name, ns.name, this.state.gateway))
-          });
-          break;
-        case PEER_AUTHENTICATION:
-          jsonIstioObjects.push({
-            namespace: ns.name,
-            json: JSON.stringify(buildPeerAuthentication(this.state.name, ns.name, this.state.peerAuthentication))
-          });
-          break;
-        case REQUEST_AUTHENTICATION:
-          jsonIstioObjects.push({
-            namespace: ns.name,
-            json: JSON.stringify(buildRequestAuthentication(this.state.name, ns.name, this.state.requestAuthentication))
-          });
-          break;
-        case SERVICE_ENTRY:
-          jsonIstioObjects.push({
-            namespace: ns.name,
-            json: JSON.stringify(buildServiceEntry(this.state.name, ns.name, this.state.serviceEntry))
-          });
-          break;
-        case SIDECAR:
-          jsonIstioObjects.push({
-            namespace: ns.name,
-            json: JSON.stringify(buildSidecar(this.state.name, ns.name, this.state.sidecar))
-          });
-          break;
-      }
-    });
+    const jsonIstioObjects: { namespace: string; json: string }[] = this.state.itemsPreview.map(item => ({
+      namespace: item.items[0].metadata.namespace || '',
+      json: JSON.stringify(item.items[0])
+    }));
 
     this.promises
       .registerAll(
@@ -241,6 +209,58 @@ class IstioConfigNewPage extends React.Component<Props, State> {
       .catch(error => {
         AlertUtils.addError('Could not create Istio ' + this.props.match.params.objectType + ' objects.', error);
       });
+  };
+
+  showPreview = () => {
+    const items: ConfigPreviewItem[] = [];
+    this.props.activeNamespaces.forEach(ns => {
+      switch (this.props.match.params.objectType) {
+        case AUTHORIZACION_POLICY:
+          items.push({
+            title: 'Authorization Policy',
+            type: 'authorizationpolicy',
+            items: [buildAuthorizationPolicy(this.state.name, ns.name, this.state.authorizationPolicy)]
+          });
+          break;
+        case GATEWAY:
+          items.push({
+            title: 'Gateway',
+            type: 'gateway',
+            items: [buildGateway(this.state.name, ns.name, this.state.gateway)]
+          });
+          break;
+        case PEER_AUTHENTICATION:
+          items.push({
+            title: 'Peer Authentication',
+            type: 'peerauthentication',
+            items: [buildPeerAuthentication(this.state.name, ns.name, this.state.peerAuthentication)]
+          });
+          break;
+        case REQUEST_AUTHENTICATION:
+          items.push({
+            title: 'Request Authentication',
+            type: 'requestauthentication',
+            items: [buildRequestAuthentication(this.state.name, ns.name, this.state.requestAuthentication)]
+          });
+          break;
+        case SERVICE_ENTRY:
+          items.push({
+            title: 'Service Entry',
+            type: 'serviceentry',
+            items: [buildServiceEntry(this.state.name, ns.name, this.state.serviceEntry)]
+          });
+          break;
+        case SIDECAR:
+          items.push({
+            title: 'Sidecar',
+            type: 'sidecar',
+            items: [buildSidecar(this.state.name, ns.name, this.state.sidecar)]
+          });
+          break;
+      }
+    });
+    this.setState({ itemsPreview: items, showPreview: true });
+    //this.onIstioResourceCreate()
   };
 
   backToList = () => {
@@ -333,7 +353,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
     const canCreate = this.props.activeNamespaces.every(ns => this.canCreate(ns.name));
     const isNameValid = isValidK8SName(this.state.name);
     const isNamespacesValid = this.props.activeNamespaces.length > 0;
-    const isFormValid = canCreate && isNameValid && isNamespacesValid && this.isIstioFormValid();
+    const isFormValid = isNameValid && isNamespacesValid && this.isIstioFormValid();
     return (
       <>
         <div style={{ backgroundColor: '#fff' }}>
@@ -387,8 +407,8 @@ class IstioConfigNewPage extends React.Component<Props, State> {
               <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
             )}
             <ActionGroup>
-              <Button variant="primary" isDisabled={!isFormValid} onClick={() => this.onIstioResourceCreate()}>
-                Create
+              <Button variant="primary" isDisabled={!isFormValid} onClick={() => this.showPreview()}>
+                Preview
               </Button>
               <Button variant="secondary" onClick={() => this.backToList()}>
                 Cancel
@@ -398,6 +418,18 @@ class IstioConfigNewPage extends React.Component<Props, State> {
               )}
             </ActionGroup>
           </Form>
+          <IstioConfigPreview
+            isOpen={this.state.showPreview}
+            items={this.state.itemsPreview}
+            title={'Preview new istio objects'}
+            opTarget={'create'}
+            disableAction={!canCreate}
+            ns={this.props.activeNamespaces.join(',')}
+            onConfirm={items =>
+              this.setState({ showPreview: false, itemsPreview: items }, () => this.onIstioResourceCreate())
+            }
+            onClose={() => this.setState({ showPreview: false })}
+          />
         </RenderContent>
       </>
     );
