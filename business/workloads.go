@@ -40,6 +40,9 @@ type WorkloadService struct {
 type WorkloadCriteria struct {
 	Namespace             string
 	IncludeIstioResources bool
+	Health                bool
+	RateInterval          string
+	QueryTime             time.Time
 }
 
 // PodLog reports log entries
@@ -158,11 +161,17 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	}
 
 	for _, w := range ws {
-		wItem := &models.WorkloadListItem{}
+		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
 		wItem.ParseWorkload(w)
 		if criteria.IncludeIstioResources {
 			wSelector := labels.Set(wItem.Labels).AsSelector().String()
 			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(wSelector, istioConfigList))
+		}
+		if criteria.Health {
+			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, criteria.Namespace, wItem.Name, wItem.Type, criteria.RateInterval, criteria.QueryTime)
+			if err != nil {
+				log.Errorf("Error fetching Health in namespace %s for workload %s: %s", criteria.Namespace, wItem.Name, err)
+			}
 		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}

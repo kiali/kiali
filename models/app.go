@@ -28,6 +28,9 @@ type AppListItem struct {
 
 	// Istio References
 	IstioReferences []*IstioValidationKey `json:"istioReferences"`
+
+	// Health
+	Health AppHealth `json:"health,omitempty"`
 }
 
 type WorkloadItem struct {

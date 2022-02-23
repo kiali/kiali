@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -26,6 +27,9 @@ type AppService struct {
 type AppCriteria struct {
 	Namespace             string
 	IncludeIstioResources bool
+	Health                bool
+	RateInterval          string
+	QueryTime             time.Time
 }
 
 func joinMap(m1 map[string][]string, m2 map[string]string) {
@@ -59,6 +63,8 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", criteria.Namespace),
 		observability.Attribute("linkIstioResources", criteria.IncludeIstioResources),
+		observability.Attribute("rateInterval", criteria.RateInterval),
+		observability.Attribute("queryTime", criteria.QueryTime),
 	)
 	defer end()
 
@@ -124,6 +130,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 		appItem := &models.AppListItem{
 			Name:         keyApp,
 			IstioSidecar: true,
+			Health:       models.EmptyAppHealth(),
 		}
 		applabels := make(map[string][]string)
 		svcReferences := make([]*models.IstioValidationKey, 0)
@@ -164,6 +171,12 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 		for _, w := range valueApp.Workloads {
 			if appItem.IstioSidecar = w.IstioSidecar; !appItem.IstioSidecar {
 				break
+			}
+		}
+		if criteria.Health {
+			appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, appItem.Name, criteria.RateInterval, criteria.QueryTime)
+			if err != nil {
+				log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, appItem.Name, err)
 			}
 		}
 		(*appList).Apps = append((*appList).Apps, *appItem)

@@ -12,16 +12,48 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
+// serviceListParams holds the path and query parameters for ServiceList
+//
+// swagger:parameters serviceList
+type serviceListParams struct {
+	baseHealthParams
+	// The target workload
+	//
+	// in: path
+	Namespace string `json:"namespace"`
+	// Optional
+	Health bool `json:"health"`
+}
+
+func (p *serviceListParams) extract(r *http.Request) {
+	vars := mux.Vars(r)
+	query := r.URL.Query()
+	p.baseExtract(r, vars)
+	p.Namespace = vars["namespace"]
+	p.Health = query.Get("health") != ""
+}
+
 // ServiceList is the API handler to fetch the list of services in a given namespace
 func ServiceList(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	namespace := params["namespace"]
-	criteria := business.ServiceCriteria{Namespace: namespace, IncludeIstioResources: true}
+	p := serviceListParams{}
+	p.extract(r)
+
+	criteria := business.ServiceCriteria{Namespace: p.Namespace, IncludeIstioResources: true, Health: p.Health, RateInterval: "", QueryTime: p.QueryTime}
+
 	// Get business layer
 	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
+	}
+
+	if criteria.Health {
+		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime)
+		if err != nil {
+			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
+			return
+		}
+		criteria.RateInterval = rateInterval
 	}
 
 	// Fetch and build services
