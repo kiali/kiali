@@ -186,6 +186,15 @@ func (l YamlFixtureLoader) FindWorkloadEntry(name, namespace string) *networking
 	return nil
 }
 
+func (l YamlFixtureLoader) FindSidecar(name, namespace string) *networking_v1alpha3.Sidecar {
+	for _, v := range l.istioConfigList.Sidecars {
+		if v.Name == name && v.Namespace == namespace {
+			return &v
+		}
+	}
+	return nil
+}
+
 func (l YamlFixtureLoader) FindPeerAuthenticationIn(namespace string) []security_v1beta.PeerAuthentication {
 	pa := []security_v1beta.PeerAuthentication{}
 	for _, p := range l.istioConfigList.PeerAuthentications {

@@ -84,3 +84,17 @@ spec:
     - name: v3
       labels:
         version: v3
+---
+kind: Sidecar
+apiVersion: networking.istio.io/v1alpha3
+metadata:
+  name: foo-sidecar
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      app: istio-ingressgateway
+  egress:
+    - hosts:
+        - istio-system/foo-dev.istio-system.svc.cluster.local
+        - istio-system/foo-service
