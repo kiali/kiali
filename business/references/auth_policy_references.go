@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -94,11 +95,15 @@ func (n AuthorizationPolicyReferences) getWorkloadReferences(ap security_v1beta.
 	if ap.Spec.Selector != nil {
 		selector := labels.SelectorFromSet(ap.Spec.Selector.MatchLabels)
 
+		// AuthPolicy searches Workloads from own namespace, or from all namespaces when AuthPolicy is in root namespace
 		for _, wls := range n.WorkloadsPerNamespace {
+			if !config.IsRootNamespace(ap.Namespace) && wls.Namespace.Name != ap.Namespace {
+				continue
+			}
 			for _, wl := range wls.Workloads {
 				wlLabelSet := labels.Set(wl.Labels)
 				if selector.Matches(wlLabelSet) {
-					return []models.WorkloadReference{{Name: wl.Name, Namespace: wls.Namespace.Name}}
+					result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: wls.Namespace.Name})
 				}
 			}
 		}

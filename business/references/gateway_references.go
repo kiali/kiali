@@ -36,11 +36,12 @@ func (n GatewayReferences) getWorkloadReferences(gw networking_v1alpha3.Gateway)
 	result := make([]models.WorkloadReference, 0)
 	selector := labels.SelectorFromSet(gw.Spec.Selector)
 
+	// Gateway searches Workloads from all namespace
 	for _, wls := range n.WorkloadsPerNamespace {
 		for _, wl := range wls.Workloads {
 			wlLabelSet := labels.Set(wl.Labels)
 			if selector.Matches(wlLabelSet) {
-				return []models.WorkloadReference{{Name: wl.Name, Namespace: wls.Namespace.Name}}
+				result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: wls.Namespace.Name})
 			}
 		}
 	}
