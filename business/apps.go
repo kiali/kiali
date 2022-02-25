@@ -170,7 +170,7 @@ func (in *AppService) GetAppList(ctx context.Context, namespace string, linkIsti
 // GetApp is the API handler to fetch the details for a given namespace and app name
 func (in *AppService) GetApp(ctx context.Context, namespace string, appName string) (models.App, error) {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "GetAppList",
+	ctx, end = observability.StartSpan(ctx, "GetApp",
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("appName", appName),
