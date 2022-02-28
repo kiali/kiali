@@ -12,11 +12,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
 )
+
+// SessionCookieMaxSize is the maximum size of session cookies. This is 3.5K.
+// Major browsers limit cookie size to 4K, but this includes
+// metadata like expiration date, the cookie name, etc. So
+// use 3.5K for cookie data and leave 0.5K for metadata.
+const SessionCookieMaxSize = 3584
 
 type SessionPersistor interface {
 	CreateSession(r *http.Request, w http.ResponseWriter, strategy string, expiresOn time.Time, payload interface{}) error
@@ -112,7 +117,7 @@ func (p CookieSessionPersistor) CreateSession(_ *http.Request, w http.ResponseWr
 	// session data is broken in chunks and multiple cookies are used, as is needed.
 	conf := config.Get()
 
-	sessionDataChunks := chunkString(base64SessionData, business.SessionCookieMaxSize)
+	sessionDataChunks := chunkString(base64SessionData, SessionCookieMaxSize)
 	for i, chunk := range sessionDataChunks {
 		var cookieName string
 		if i == 0 {
@@ -196,7 +201,7 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 
 		// Read session data chunks and save into a buffer
 		var sessionDataBuffer strings.Builder
-		sessionDataBuffer.Grow(numChunks * business.SessionCookieMaxSize)
+		sessionDataBuffer.Grow(numChunks * SessionCookieMaxSize)
 		sessionDataBuffer.WriteString(base64SessionData)
 
 		for i := 1; i < numChunks; i++ {

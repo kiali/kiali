@@ -16,7 +16,7 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
-// TokenAuthController contains the backing logic to implement
+// tokenAuthController contains the backing logic to implement
 // Kiali's "token" authentication strategy. It assumes that the
 // user will use a token that is valid to be used against the Cluster API.
 // In it's simplest form, it can be a ServiceAccount token. However, it can
@@ -63,18 +63,21 @@ type UserSessionData struct {
 	//
 	// example: zI1NiIsIsR5cCI6IkpXVCJ9.ezJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI5NTIzNjU0fQ.PPZvRGnR6VA4v7FmgSfQcGQr-VD
 	// required: true
-	Token string
+	Token string `json:"-"`
 }
 
 // AuthenticationFailureError is a helper Error to assist callers of the TokenAuthController.Authenticate
 // function in distinguishing between authentication failures and
 // unexpected errors.
 type AuthenticationFailureError struct {
-	// A description of the authentication failure
-	Reason string
-
 	// Wraps the error causing the authentication failure
 	Detail error
+
+	// The status code that should have the HTTP response for this error.
+	HttpStatus int
+
+	// A description of the authentication failure
+	Reason string
 }
 
 // Error returns the string representation of an AuthenticationFailureError

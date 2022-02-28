@@ -2,15 +2,9 @@ package handlers
 
 import (
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -70,27 +64,6 @@ type TokenResponse struct {
 	// example: Thu, 07 Mar 2019 17:50:26 +0000
 	// required: true
 	ExpiresOn string `json:"expiresOn"`
-}
-
-// Acknowledgement to rinat.io user of SO.
-// Taken from https://stackoverflow.com/a/48479355 with a few modifications
-func chunkString(s string, chunkSize int) []string {
-	if len(s) <= chunkSize {
-		return []string{s}
-	}
-
-	numChunks := len(s)/chunkSize + 1
-	chunks := make([]string, 0, numChunks)
-	runes := []rune(s)
-
-	for i := 0; i < len(runes); i += chunkSize {
-		nn := i + chunkSize
-		if nn > len(runes) {
-			nn = len(runes)
-		}
-		chunks = append(chunks, string(runes[i:nn]))
-	}
-	return chunks
 }
 
 func getTokenStringFromRequest(r *http.Request) string {
@@ -204,125 +177,6 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 	http.SetCookie(w, &tokenCookie)
 
 	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: expiresOn.Format(time.RFC1123Z), Username: user.Metadata.Name})
-	return true
-}
-
-func checkDomain(tokenClaims map[string]interface{}, allowedDomains []string) error {
-	var hostedDomain string
-	foundDomain := false
-	if v, ok := tokenClaims["hd"]; ok {
-		hostedDomain = v.(string)
-	} else {
-		//domains like gmail.com don't have the hosted domain (hd) on claims
-		//fields, so we try to get the domain on email claim
-		var email string
-		if v, ok := tokenClaims["email"]; ok {
-			email = v.(string)
-		}
-		splitedEmail := strings.Split(email, "@")
-		if len(splitedEmail) < 2 {
-			return fmt.Errorf("cannot detect hosted domain on OpenID for the email %s ", email)
-		}
-		hostedDomain = splitedEmail[1]
-	}
-	for _, d := range allowedDomains {
-		if hostedDomain == d {
-			foundDomain = true
-			break
-		}
-	}
-	if !foundDomain {
-		return fmt.Errorf("domain %s not allowed to login", hostedDomain)
-	}
-	return nil
-}
-
-func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
-	conf := config.Get()
-
-	// Read received HTTP params and check for data completeness
-	openIdParams, err := business.ExtractOpenIdCallbackParams(r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return false
-	}
-
-	business.CallbackCleanup(w)
-
-	if checkFailure := business.CheckOpenIdImplicitFlowParams(openIdParams); len(checkFailure) != 0 {
-		RespondWithError(w, http.StatusBadRequest, checkFailure)
-		return false
-	}
-
-	// CSRF mitigation
-	if stateError := business.ValidateOpenIdState(openIdParams); len(stateError) > 0 {
-		RespondWithError(w, http.StatusForbidden, fmt.Sprintf("Request rejected: %s", stateError))
-		return false
-	}
-
-	// Parse the received id_token from the IdP and check nonce code
-	if err := business.ParseOpenIdToken(openIdParams); err != nil {
-		deleteTokenCookies(w, r)
-		RespondWithError(w, http.StatusUnauthorized, err.Error())
-		return false
-	}
-	if nonceError := business.ValidateOpenIdNonceCode(openIdParams); len(nonceError) > 0 {
-		RespondWithError(w, http.StatusForbidden, fmt.Sprintf("OpenId token rejected: %s", nonceError))
-		return false
-	}
-
-	// Check if the domain is allowed
-	if len(conf.Auth.OpenId.AllowedDomains) > 0 {
-		err := checkDomain(openIdParams.ParsedIdToken.Claims.(jwt.MapClaims), conf.Auth.OpenId.AllowedDomains)
-		if err != nil {
-			RespondWithError(w, http.StatusUnauthorized, err.Error())
-			return false
-		}
-	}
-
-	if conf.Auth.OpenId.DisableRBAC {
-		// When RBAC is on, we delegate some validations to the Kubernetes cluster. However, if RBAC is off
-		// the token must be fully validated, as we no longer pass the OpenId token to the cluster API server.
-		// Since the configuration indicates RBAC is off, we do the validations:
-		err = business.ValidateOpenTokenInHouse(openIdParams)
-		if err != nil {
-			RespondWithDetailedError(w, http.StatusForbidden, "the OpenID token was rejected", err.Error())
-			return true
-		}
-	} else {
-		// Check if user trying to login has enough privileges to login. This check is only done if
-		// config indicates that RBAC is on. For cases where RBAC is off, we simply assume that the
-		// Kiali ServiceAccount token should have enough privileges and skip this privilege check.
-		httpStatus, errMsg, detailedError := business.VerifyOpenIdUserAccess(openIdParams.IdToken)
-		if detailedError != nil {
-			RespondWithDetailedError(w, httpStatus, errMsg, detailedError.Error())
-			return false
-		} else if httpStatus != http.StatusOK {
-			RespondWithError(w, httpStatus, errMsg)
-			return false
-		}
-	}
-
-	// Now that we know that the OpenId token is valid, build our session cookie
-	// and send it to the browser.
-	tokenClaims := business.BuildOpenIdJwtClaims(openIdParams, false)
-	tokenString, err := config.GetSignedTokenString(tokenClaims)
-	if err != nil {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, err)
-		return false
-	}
-
-	tokenCookie := http.Cookie{
-		Name:     config.TokenCookieName,
-		Value:    tokenString,
-		Expires:  openIdParams.ExpiresOn,
-		HttpOnly: true,
-		Path:     conf.Server.WebRoot,
-		SameSite: http.SameSiteStrictMode,
-	}
-	http.SetCookie(w, &tokenCookie)
-
-	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: openIdParams.ExpiresOn.Format(time.RFC1123Z), Username: openIdParams.Subject})
 	return true
 }
 
@@ -454,76 +308,6 @@ func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string)
 	return http.StatusUnauthorized, ""
 }
 
-func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
-	// First, check presence of a session for the "implicit flow"
-	var claims *config.IanaClaims
-
-	tokenString := getTokenStringFromRequest(r)
-	if len(tokenString) != 0 {
-		var err error
-		if claims, err = config.GetTokenClaimsIfValid(tokenString); err != nil {
-			log.Warningf("Token is invalid!!: %v", err)
-			return http.StatusUnauthorized, ""
-		}
-	} else {
-		// If not present, check presence of a session for the "authorization code" flow
-		var err error
-		claims, err = business.GetOpenIdAesSession(r)
-		if err != nil {
-			log.Warningf("There was an error when decoding the session: %v", err)
-			return http.StatusUnauthorized, ""
-		}
-		if claims == nil {
-			log.Warning("User seems to not be logged in")
-			return http.StatusUnauthorized, ""
-		}
-	}
-
-	// Session ID claim must be present
-	if len(claims.SessionId) == 0 {
-		log.Warning("Token is invalid: sid claim is required")
-		return http.StatusUnauthorized, ""
-	}
-
-	business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
-	if err != nil {
-		log.Warningf("Could not get the business layer!!: %v", err)
-		return http.StatusInternalServerError, ""
-	}
-
-	conf := config.Get()
-
-	// If the id_token is being used to make calls to the cluster API, it's known that
-	// this token is a JWT and some of its structure; so, it's possible to do some sanity
-	// checks on the token. However, if the access_token is being used, this token is opaque
-	// and these sanity checks must be skipped.
-	if conf.Auth.OpenId.ApiToken != "access_token" {
-		// Parse the sid claim (id_token) to check that the sub claim matches to the configured "username" claim of the id_token
-		parsedIdToken, _, err := new(jwt.Parser).ParseUnverified(claims.SessionId, jwt.MapClaims{})
-		if err != nil {
-			log.Warningf("Cannot parse sid claim of the Kiali token!: %v", err)
-			return http.StatusInternalServerError, ""
-		}
-		if userClaim, ok := parsedIdToken.Claims.(jwt.MapClaims)[config.Get().Auth.OpenId.UsernameClaim]; ok && claims.Subject != userClaim {
-			log.Warning("Kiali token rejected because of subject claim mismatch")
-			return http.StatusUnauthorized, ""
-		}
-	}
-
-	if !conf.Auth.OpenId.DisableRBAC {
-		// If RBAC is ENABLED, check that the user has privilges on the cluster.
-		_, err = business.Namespace.GetNamespaces(r.Context())
-		if err != nil {
-			log.Warningf("Token error!: %v", err)
-			return http.StatusUnauthorized, ""
-		}
-	}
-
-	// Internal header used to propagate the subject of the request for audit purposes
-	r.Header.Add("Kiali-User", claims.Subject)
-	return http.StatusOK, claims.SessionId
-}
-
 func NewAuthenticationHandler() (AuthenticationHandler, error) {
 	// Read token from the filesystem
 	saToken, err := kubernetes.GetKialiToken()
@@ -545,17 +329,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		case config.AuthStrategyOpenshift:
 			statusCode, token = checkOpenshiftSession(w, r)
 			authInfo = &api.AuthInfo{Token: token}
-		case config.AuthStrategyOpenId:
-			statusCode, token = checkOpenIdSession(w, r)
-			if conf.Auth.OpenId.DisableRBAC {
-				// If RBAC is off, it's assumed that the kubernetes cluster will reject the OpenId token.
-				// Instead, we use the Kiali token an this has the side effect that all users will share the
-				// same privileges.
-				token = aHandler.saToken
-			}
-
-			authInfo = &api.AuthInfo{Token: token}
-		case config.AuthStrategyToken:
+		case config.AuthStrategyToken, config.AuthStrategyOpenId:
 			session, validateErr := authentication.GetAuthController().ValidateSession(r, w)
 			if validateErr != nil {
 				statusCode = http.StatusInternalServerError
@@ -610,13 +384,15 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 	switch conf.Auth.Strategy {
 	case config.AuthStrategyOpenshift:
 		performOpenshiftAuthentication(w, r)
-	case config.AuthStrategyOpenId:
-		performOpenIdAuthentication(w, r)
-	case config.AuthStrategyToken:
+	case config.AuthStrategyToken, config.AuthStrategyOpenId:
 		response, err := authentication.GetAuthController().Authenticate(r, w)
 		if err != nil {
 			if e, ok := err.(*authentication.AuthenticationFailureError); ok {
-				RespondWithError(w, http.StatusUnauthorized, e.Error())
+				status := http.StatusUnauthorized
+				if e.HttpStatus != 0 {
+					status = e.HttpStatus
+				}
+				RespondWithError(w, status, e.Error())
 			} else {
 				RespondWithError(w, http.StatusInternalServerError, err.Error())
 			}
@@ -664,16 +440,9 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 			httputil.GuessKialiURL(r))
 	}
 
-	if conf.Auth.Strategy != config.AuthStrategyToken {
+	if conf.Auth.Strategy != config.AuthStrategyToken && conf.Auth.Strategy != config.AuthStrategyOpenId {
 		token := getTokenStringFromRequest(r)
 		claims, _ := config.GetTokenClaimsIfValid(token)
-		if claims == nil && conf.Auth.Strategy == config.AuthStrategyOpenId {
-			var aes error
-			claims, aes = business.GetOpenIdAesSession(r)
-			if aes != nil {
-				log.Warningf("Apparently, there is no AES session: %s ", aes.Error())
-			}
-		}
 
 		if claims != nil {
 			response.SessionInfo = sessionInfo{
@@ -697,7 +466,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 func Logout(w http.ResponseWriter, r *http.Request) {
 	conf := config.Get()
 
-	if conf.Auth.Strategy != config.AuthStrategyToken {
+	if conf.Auth.Strategy != config.AuthStrategyToken && conf.Auth.Strategy != config.AuthStrategyOpenId {
 		deleteTokenCookies(w, r)
 
 		// We need to perform an extra step to invalidate the user token when using OpenShift OAuth
@@ -715,285 +484,6 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		authentication.GetAuthController().TerminateSession(r, w)
 		RespondWithCode(w, http.StatusNoContent)
 	}
-}
-
-func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
-	conf := config.Get()
-
-	// This endpoint should be available only when OpenId strategy
-	if conf.Auth.Strategy != config.AuthStrategyOpenId {
-		RespondWithError(w, http.StatusNotFound, "OpenId strategy is not enabled")
-		return
-	}
-
-	// Build scopes string
-	scopes := strings.Join(business.GetConfiguredOpenIdScopes(), " ")
-
-	// Determine authorization endpoint
-	authorizationEndpoint := conf.Auth.OpenId.AuthorizationEndpoint
-	if len(authorizationEndpoint) == 0 {
-		openIdMetadata, err := business.GetOpenIdMetadata()
-		if err != nil {
-			RespondWithDetailedError(w, http.StatusInternalServerError, "Error fetching OpenID provider metadata.", err.Error())
-			return
-		}
-		authorizationEndpoint = openIdMetadata.AuthURL
-	}
-
-	// Create a "nonce" code and set a cookie with the code
-	// It was chosen 15 chars arbitrarily. Probably, it's not worth to make this value configurable.
-	nonceCode, err := util.CryptoRandomString(15)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Random number generator failed")
-		return
-	}
-
-	nowTime := util.Clock.Now()
-	expirationTime := nowTime.Add(time.Duration(conf.Auth.OpenId.AuthenticationTimeout) * time.Second)
-	nonceCookie := http.Cookie{
-		Expires:  expirationTime,
-		HttpOnly: true,
-		Name:     business.OpenIdNonceCookieName,
-		Path:     conf.Server.WebRoot,
-		SameSite: http.SameSiteLaxMode,
-		Value:    nonceCode,
-	}
-	http.SetCookie(w, &nonceCookie)
-
-	// Instead of sending the nonce code to the IdP, send a cryptographic hash.
-	// This way, if an attacker manages to steal the id_token returned by the IdP, he still
-	// needs to craft the cookie (which is hopefully very, very hard to do).
-	nonceHash := sha256.Sum224([]byte(nonceCode))
-
-	// OpenID spec recommends the use of "state" parameter. Although it's just a recommendation,
-	// some identity providers have chosen to require the "state" parameter, effectively blocking
-	// authentication with Kiali.
-	// The state parameter is to mitigate CSRF attacks. Mitigation is usually done with
-	// a token and it's implementation *could* be similar to the nonce code, but this would
-	// require a second cookie.
-	// To reduce the usage of cookies, let's use the already generated nonce as a session_id,
-	// and the "nowTime" to generate a hash and use it as CSRF token. The Kiali's signing key is also used to
-	// add a component that is not traveling over the network.
-	// Although this "binds" the id_token returned by the IdP with the CSRF mitigation, this should be OK
-	// because we are including a "secret" key (i.e. should an attacker steal the nonce code, he still needs to know
-	// the Kiali's signing key).
-	csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCode, nowTime.UTC().Format("060102150405"), config.GetSigningKey())))
-
-	// Use OpenId's "implicit flow" by default. Use "authorization code" flow if possible.
-	responseType := "id_token"
-	if business.IsOpenIdCodeFlowPossible() {
-		responseType = "code"
-	}
-
-	// Send redirection to browser
-	redirectUri := fmt.Sprintf("%s?client_id=%s&response_type=%s&redirect_uri=%s&scope=%s&nonce=%s&state=%s",
-		authorizationEndpoint,
-		url.QueryEscape(conf.Auth.OpenId.ClientId),
-		responseType,
-		url.QueryEscape(httputil.GuessKialiURL(r)),
-		url.QueryEscape(scopes),
-		url.QueryEscape(fmt.Sprintf("%x", nonceHash)),
-		url.QueryEscape(fmt.Sprintf("%x-%s", csrfHash, nowTime.UTC().Format("060102150405"))),
-	)
-
-	if len(conf.Auth.OpenId.AdditionalRequestParams) > 0 {
-		urlParams := make([]string, 0, len(conf.Auth.OpenId.AdditionalRequestParams))
-		for k, v := range conf.Auth.OpenId.AdditionalRequestParams {
-			urlParams = append(urlParams, fmt.Sprintf("%s=%s", url.QueryEscape(k), url.QueryEscape(v)))
-		}
-		redirectUri = fmt.Sprintf("%s&%s", redirectUri, strings.Join(urlParams, "&"))
-	}
-
-	http.Redirect(w, r, redirectUri, http.StatusFound)
-}
-
-func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
-	conf := config.Get()
-	webRoot := conf.Server.WebRoot
-	webRootWithSlash := webRoot + "/"
-
-	// Read received HTTP params and check for data completeness
-	openIdParams, err := business.ExtractOpenIdCallbackParams(r)
-	if err != nil {
-		log.Errorf("Error when reading URL parameters passed by the OpenID provider: %s", err.Error())
-		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape("Error when reading URL parameters passed by the OpenID provider")), http.StatusFound)
-		return true // Return true to mark request as handled (because an error is already being sent back)
-	}
-
-	if checkFailure := business.CheckOpenIdAuthorizationCodeFlowParams(openIdParams); len(checkFailure) != 0 {
-		log.Infof("Not handling OpenId code flow authentication: %s", checkFailure)
-		return false
-	}
-
-	// Start handling the callback for OpenId authentication (code flow)
-	business.CallbackCleanup(w)
-
-	// CSRF mitigation
-	if stateError := business.ValidateOpenIdState(openIdParams); len(stateError) > 0 {
-		log.Errorf("OpenID authentication rejected: %s", stateError)
-		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape("Request rejected: invalid state")), http.StatusFound)
-		return true
-	}
-
-	// Exchange the received code for a token
-	if err := business.RequestOpenIdToken(openIdParams, httputil.GuessKialiURL(r)); err != nil {
-		msg := fmt.Sprintf("Failure when retrieving user identity: %s", err.Error())
-		log.Error(msg)
-		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
-		return true
-	}
-
-	if err := business.ParseOpenIdToken(openIdParams); err != nil {
-		deleteTokenCookies(w, r)
-		log.Errorf("Error when parsing the OpenId token: %s", err.Error())
-		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(err.Error())), http.StatusFound)
-		return true
-	}
-
-	// Replay attack mitigation
-	if nonceError := business.ValidateOpenIdNonceCode(openIdParams); len(nonceError) > 0 {
-		msg := fmt.Sprintf("OpenId token rejected: %s", nonceError)
-		log.Error(msg)
-		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
-		return true
-	}
-
-	// Check if the domain is allowed
-	if len(conf.Auth.OpenId.AllowedDomains) > 0 {
-		err := checkDomain(openIdParams.ParsedIdToken.Claims.(jwt.MapClaims), conf.Auth.OpenId.AllowedDomains)
-		if err != nil {
-			log.Error(err.Error())
-			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(err.Error())), http.StatusFound)
-			return true
-		}
-	}
-
-	useAccessToken := false
-	if conf.Auth.OpenId.DisableRBAC {
-		// When RBAC is on, we delegate some validations to the Kubernetes cluster. However, if RBAC is off
-		// the token must be fully validated, as we no longer pass the OpenId token to the cluster API server.
-		// Since the configuration indicates RBAC is off, we do the validations:
-		err = business.ValidateOpenTokenInHouse(openIdParams)
-		if err != nil {
-			msg := fmt.Sprintf("the OpenID token was rejected: %s", err.Error())
-			log.Error(msg)
-			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
-			return true
-		}
-	} else {
-		// Check if user trying to login has enough privileges to login. This check is only done if
-		// config indicates that RBAC is on. For cases where RBAC is off, we simply assume that the
-		// Kiali ServiceAccount token should have enough privileges and skip this privilege check.
-		apiToken := openIdParams.IdToken
-		if conf.Auth.OpenId.ApiToken == "access_token" {
-			apiToken = openIdParams.AccessToken
-			useAccessToken = true
-		}
-		httpStatus, errMsg, detailedError := business.VerifyOpenIdUserAccess(apiToken)
-		if detailedError != nil {
-			msg := fmt.Sprintf("%s: %s", errMsg, detailedError.Error())
-			log.Errorf("Error when verifying user privileges: %s", msg)
-			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
-			return true
-		} else if httpStatus != http.StatusOK {
-			log.Errorf("Error when verifying user privileges: %s", errMsg)
-			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(errMsg)), http.StatusFound)
-			return true
-		}
-	}
-
-	// Create Kiali's session cookie and set it in the response
-
-	// For the OpenId's "authorization code" flow we don't want
-	// any of the session data to be readable even in the browser's
-	// developer console. So, we cipher the session data using AES-GCM
-	// which allows to leave aside the usage of JWT tokens. So, this
-	// builds a bare JSON serialized into a string, cipher it and
-	// set a cookie with the ciphered string. Yet, we use the
-	// "IanaClaims" type just for convenience to avoid creating new types and
-	// to bring some type convergence on types for the auth source code.
-	sessionData := business.BuildOpenIdJwtClaims(openIdParams, useAccessToken)
-	sessionDataJson, err := json.Marshal(sessionData)
-	if err != nil {
-		msg := fmt.Sprintf("Error when creating credentials - failed to marshal json: %s", err.Error())
-		log.Error(msg)
-		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
-		return true
-	}
-
-	// Cipher the session data and encode to base64
-	block, err := aes.NewCipher([]byte(config.GetSigningKey()))
-	if err != nil {
-		msg := fmt.Sprintf("Error when creating credentials - failed to create cipher: %s", err.Error())
-		log.Error(msg)
-		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
-		return true
-	}
-
-	aesGcm, err := cipher.NewGCM(block)
-	if err != nil {
-		msg := fmt.Sprintf("Error when creating credentials - failed to create gcm: %s", err.Error())
-		log.Error(msg)
-		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
-		return true
-	}
-
-	aesGcmNonce, err := util.CryptoRandomBytes(aesGcm.NonceSize())
-	if err != nil {
-		msg := fmt.Sprintf("Error when creating credentials - failed to generate random bytes: %s", err.Error())
-		log.Error(msg)
-		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
-		return true
-	}
-
-	cipherSessionData := aesGcm.Seal(aesGcmNonce, aesGcmNonce, sessionDataJson, nil)
-	base64SessionData := base64.StdEncoding.EncodeToString(cipherSessionData)
-
-	// If resulting session data is large, it may not fit in one cookie. So, the resulting
-	// session data is broken in chunks and multiple cookies are used, as is needed.
-	sessionDataChunks := chunkString(base64SessionData, business.SessionCookieMaxSize)
-	for i, chunk := range sessionDataChunks {
-		var cookieName string
-		if i == 0 {
-			// Set a cookie with the regular cookie name with the first chunk of session data.
-			// This is for backwards compatibility
-			cookieName = config.TokenCookieName + "-aes"
-		} else {
-			// If there are more chunks of session data (usually because of larger tokens from the IdP),
-			// store the remainder data to numbered cookies.
-			cookieName = fmt.Sprintf("%s-aes-%d", config.TokenCookieName, i)
-		}
-
-		authCookie := http.Cookie{
-			Name:     cookieName,
-			Value:    chunk,
-			Expires:  openIdParams.ExpiresOn,
-			HttpOnly: true,
-			Path:     conf.Server.WebRoot,
-			SameSite: http.SameSiteStrictMode,
-		}
-		http.SetCookie(w, &authCookie)
-	}
-
-	if len(sessionDataChunks) > 1 {
-		// Set a cookie with the number of chunks of the session data.
-		// This is to protect against reading spurious chunks of data if there is
-		// any failure when killing the session or logging out.
-		chunksCookie := http.Cookie{
-			Name:     config.TokenCookieName + "-chunks",
-			Value:    strconv.Itoa(len(sessionDataChunks)),
-			Expires:  openIdParams.ExpiresOn,
-			HttpOnly: true,
-			Path:     conf.Server.WebRoot,
-			SameSite: http.SameSiteStrictMode,
-		}
-		http.SetCookie(w, &chunksCookie)
-	}
-
-	// Let's redirect (remove the openid params) to let the Kiali-UI to boot
-	http.Redirect(w, r, webRootWithSlash, http.StatusFound)
-
-	return true
 }
 
 func deleteTokenCookies(w http.ResponseWriter, r *http.Request) {
