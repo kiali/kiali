@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -40,6 +41,10 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 		}
 	}
 
+	// Ignoring istio-system Services as some ports are used for debug purposes and not exposed in deployments
+	if config.IsIstioNamespace(p.Service.Namespace) {
+		return validations, len(validations) == 0
+	}
 	if deployment := p.findMatchingDeployment(p.Service.Spec.Selector); deployment != nil {
 		p.matchPorts(&p.Service, deployment, &validations)
 	}
