@@ -31,6 +31,11 @@ func (a IstioAppender) Name() string {
 	return IstioAppenderName
 }
 
+// IsFinalizer implements Appender
+func (a IstioAppender) IsFinalizer() bool {
+	return false
+}
+
 // AppendGraph implements Appender
 func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {

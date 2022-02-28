@@ -1,4 +1,4 @@
-package finalizer
+package appender
 
 import (
 	"context"
@@ -8,28 +8,33 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-const LabelerFinalizerName = "labeler"
+const LabelerAppenderName = "labeler"
 
-// LabelerFinalizer is responsible for obtaining and attaching all k8s labels to all nodes in the graph.
+// LabelerAppender is responsible for obtaining and attaching all k8s labels to all nodes in the graph.
 // Name: labeler
-type LabelerFinalizer struct{}
+type LabelerAppender struct{}
 
-// Name implements Finalizer
-func (f *LabelerFinalizer) Name() string {
-	return LabelerFinalizerName
+// Name implements Appender
+func (f *LabelerAppender) Name() string {
+	return LabelerAppenderName
 }
 
-// FinalizeGraph implements Appender
-func (f *LabelerFinalizer) FinalizeGraph(trafficMap graph.TrafficMap, finalizerInfo *graph.FinalizerInfo, o graph.TelemetryOptions) {
+// IsFinalizer implements Appender
+func (a LabelerAppender) IsFinalizer() bool {
+	return true
+}
+
+// AppendGraph implements Appender
+func (f *LabelerAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
 
-	labelNodes(trafficMap, finalizerInfo)
+	labelNodes(trafficMap, globalInfo)
 }
 
 // labelNodes puts all k8s labels in the metadata for all nodes.
-func labelNodes(trafficMap graph.TrafficMap, fi *graph.FinalizerInfo) {
+func labelNodes(trafficMap graph.TrafficMap, fi *graph.AppenderGlobalInfo) {
 	// We need to know the names of the Istio labels for app and version because we do not label the nodes with those.
 	// There is no need to get the Istio label names multiple times, so get them once now.
 	istioLabelNames := config.Get().IstioLabels

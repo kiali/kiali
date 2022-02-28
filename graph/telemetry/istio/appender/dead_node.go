@@ -23,6 +23,11 @@ func (a DeadNodeAppender) Name() string {
 	return DeadNodeAppenderName
 }
 
+// IsFinalizer implements Appender
+func (a DeadNodeAppender) IsFinalizer() bool {
+	return false
+}
+
 // AppendGraph implements Appender
 func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {

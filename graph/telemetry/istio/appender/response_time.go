@@ -40,6 +40,11 @@ func (a ResponseTimeAppender) Name() string {
 	return ResponseTimeAppenderName
 }
 
+// IsFinalizer implements Appender
+func (a ResponseTimeAppender) IsFinalizer() bool {
+	return false
+}
+
 // AppendGraph implements Appender
 func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {

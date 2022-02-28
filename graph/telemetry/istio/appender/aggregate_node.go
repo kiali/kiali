@@ -35,6 +35,11 @@ func (a AggregateNodeAppender) Name() string {
 	return AggregateNodeAppenderName
 }
 
+// IsFinalizer implements Appender
+func (a AggregateNodeAppender) IsFinalizer() bool {
+	return false
+}
+
 // AppendGraph implements Appender
 func (a AggregateNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {

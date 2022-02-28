@@ -49,6 +49,11 @@ func (a ServiceEntryAppender) Name() string {
 	return ServiceEntryAppenderName
 }
 
+// IsFinalizer implements Appender
+func (a ServiceEntryAppender) IsFinalizer() bool {
+	return false
+}
+
 // AppendGraph implements Appender
 func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {

@@ -37,7 +37,6 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry"
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
-	"github.com/kiali/kiali/graph/telemetry/istio/finalizer"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
@@ -57,8 +56,7 @@ var (
 func BuildNamespacesTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	log.Tracef("Build [%s] graph for [%d] namespaces [%v]", o.GraphType, len(o.Namespaces), o.Namespaces)
 
-	appenders := appender.ParseAppenders(o)
-	finalizers := finalizer.ParseFinalizers(o)
+	appenders, finalizers := appender.ParseAppenders(o)
 	trafficMap := graph.NewTrafficMap()
 
 	for _, namespace := range o.Namespaces {
@@ -78,12 +76,8 @@ func BuildNamespacesTrafficMap(o graph.TelemetryOptions, client *prometheus.Clie
 	}
 
 	// The finalizers can perform final manipulations on the complete graph
-	finalizerInfo := graph.FinalizerInfo{
-		Business:    globalInfo.Business,
-		HomeCluster: globalInfo.HomeCluster,
-	}
 	for _, f := range finalizers {
-		f.FinalizeGraph(trafficMap, &finalizerInfo, o)
+		f.AppendGraph(trafficMap, globalInfo, nil)
 	}
 
 	if graph.GraphTypeService == o.GraphType {
@@ -441,8 +435,7 @@ func BuildNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, gl
 
 	log.Tracef("Build graph for node [%+v]", n)
 
-	appenders := appender.ParseAppenders(o)
-	finalizers := finalizer.ParseFinalizers(o)
+	appenders, finalizers := appender.ParseAppenders(o)
 	trafficMap := buildNodeTrafficMap(o.Cluster, o.NodeOptions.Namespace, n, o, client)
 
 	namespaceInfo := graph.NewAppenderNamespaceInfo(o.NodeOptions.Namespace)
@@ -454,12 +447,8 @@ func BuildNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, gl
 	}
 
 	// The finalizers can perform final manipulations on the complete graph
-	finalizerInfo := graph.FinalizerInfo{
-		Business:    globalInfo.Business,
-		HomeCluster: globalInfo.HomeCluster,
-	}
 	for _, f := range finalizers {
-		f.FinalizeGraph(trafficMap, &finalizerInfo, o)
+		f.AppendGraph(trafficMap, globalInfo, nil)
 	}
 
 	// Note that this is where we would call reduceToServiceGraph for graphTypeService but
@@ -827,8 +816,7 @@ func handleAggregateNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.
 	if !o.Appenders.All {
 		o.Appenders.AppenderNames = append(o.Appenders.AppenderNames, appender.AggregateNodeAppenderName)
 	}
-	appenders := appender.ParseAppenders(o)
-	finalizers := finalizer.ParseFinalizers(o)
+	appenders, finalizers := appender.ParseAppenders(o)
 	trafficMap := buildAggregateNodeTrafficMap(o.NodeOptions.Namespace, n, o, client)
 
 	namespaceInfo := graph.NewAppenderNamespaceInfo(o.NodeOptions.Namespace)
@@ -840,12 +828,8 @@ func handleAggregateNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.
 	}
 
 	// The finalizers can perform final manipulations on the complete graph
-	finalizerInfo := graph.FinalizerInfo{
-		Business:    globalInfo.Business,
-		HomeCluster: globalInfo.HomeCluster,
-	}
 	for _, f := range finalizers {
-		f.FinalizeGraph(trafficMap, &finalizerInfo, o)
+		f.AppendGraph(trafficMap, globalInfo, nil)
 	}
 
 	return trafficMap
