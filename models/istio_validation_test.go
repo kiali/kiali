@@ -13,12 +13,12 @@ func TestIstioValidationsMarshal(t *testing.T) {
 	assert := assert.New(t)
 
 	validations := IstioValidations{
-		IstioValidationKey{ObjectType: "virtualservice", Name: "foo"}: &IstioValidation{
+		IstioValidationKey{ObjectType: "virtualservice", Name: "foo", Namespace: "test"}: &IstioValidation{
 			Name:       "foo",
 			ObjectType: "virtualservice",
 			Valid:      true,
 		},
-		IstioValidationKey{ObjectType: "virtualservice", Name: "bar"}: &IstioValidation{
+		IstioValidationKey{ObjectType: "virtualservice", Name: "bar", Namespace: "test2"}: &IstioValidation{
 			Name:       "bar",
 			ObjectType: "virtualservice",
 			Valid:      false,
@@ -26,7 +26,7 @@ func TestIstioValidationsMarshal(t *testing.T) {
 	}
 	b, err := json.Marshal(validations)
 	assert.NoError(err)
-	assert.Equal(string(b), `{"virtualservice":{"bar":{"name":"bar","objectType":"virtualservice","valid":false,"checks":null,"references":null},"foo":{"name":"foo","objectType":"virtualservice","valid":true,"checks":null,"references":null}}}`)
+	assert.Equal(string(b), `{"virtualservice":{"bar.test2":{"name":"bar","objectType":"virtualservice","valid":false,"checks":null,"references":null},"foo.test":{"name":"foo","objectType":"virtualservice","valid":true,"checks":null,"references":null}}}`)
 }
 
 func TestIstioValidationKeyMarshal(t *testing.T) {
