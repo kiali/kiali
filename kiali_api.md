@@ -7764,13 +7764,6 @@ generation is still in progress.  See https://istio.io/latest/docs/reference/con
 
 
 
-### <span id="labels-metadata"></span> LabelsMetadata
-
-
-  
-
-[LabelsMetadata](#labels-metadata)
-
 ### <span id="listener"></span> Listener
 
 
@@ -8055,6 +8048,7 @@ This type is used to describe a set of objects.
 | IsInaccessible | boolean| `bool` |  | |  |  |
 | IsOutside | boolean| `bool` |  | |  |  |
 | IsRoot | boolean| `bool` |  | |  |  |
+| Labels | map of string| `map[string]string` |  | |  |  |
 | Namespace | string| `string` |  | |  |  |
 | NodeType | string| `string` |  | | App Fields (not required by Cytoscape) |  |
 | Parent | string| `string` |  | |  |  |
@@ -8066,7 +8060,6 @@ This type is used to describe a set of objects.
 | hasVS | [VSInfo](#v-s-info)| `VSInfo` |  | |  |  |
 | isGateway | [GWInfo](#g-w-info)| `GWInfo` |  | |  |  |
 | isServiceEntry | [SEInfo](#s-e-info)| `SEInfo` |  | |  |  |
-| labels | [LabelsMetadata](#labels-metadata)| `LabelsMetadata` |  | |  |  |
 
 
 
