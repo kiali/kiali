@@ -52,33 +52,42 @@ func labelNodes(trafficMap graph.TrafficMap, fi *graph.AppenderGlobalInfo) {
 
 		switch n.NodeType {
 		case graph.NodeTypeApp:
-			// QUESTION: Is the following the right thing to do?
-			// GetApp returns a list of workloads that make up the app. Capture the superset of all labels on all workloads.
-			// However, throw away any labels that have different values across the different workloads.
-			labelsMetadata = graph.LabelsMetadata{}
-			if app, err := fi.Business.App.GetApp(context.TODO(), n.Namespace, n.App); err == nil {
-				differentLabels := map[string]bool{}
-				for _, w := range app.Workloads {
-					// We do not know the workload's type, so pass in empty string and hope the API returns what we want.
-					if r, err := fi.Business.Workload.GetWorkload(context.TODO(), n.Namespace, w.WorkloadName, "", false); err == nil {
-						for k, v := range r.Labels {
-							if _, skipIt := differentLabels[k]; !skipIt {
-								if existingValue, ok := labelsMetadata[k]; ok {
-									if existingValue != v {
-										differentLabels[k] = true
-										delete(labelsMetadata, k)
-									}
-								} else {
-									labelsMetadata[k] = v
-								}
-							}
-						}
-					} else {
-						log.Debugf("Failed to obtain app [%+v] workload details for [%v]. err=%v", n, w.WorkloadName, err)
-					}
+			if n.Version != "" {
+				// the node is a "versioned-app" node
+				if wl, err := fi.Business.Workload.GetWorkload(context.TODO(), n.Namespace, n.Workload, "", false); err == nil {
+					labelsMetadata = copyMap(wl.Labels)
+				} else {
+					log.Debugf("Failed to obtain versioned-app details for [%+v]. err=%v", n, err)
 				}
 			} else {
-				log.Debugf("Failed to obtain app details for [%+v]. err=%v", n, err)
+				// QUESTION: Is the following the right thing to do?
+				// GetApp returns a list of workloads that make up the app. Capture the superset of all labels on all workloads.
+				// However, throw away any labels that have different values across the different workloads.
+				labelsMetadata = graph.LabelsMetadata{}
+				if app, err := fi.Business.App.GetApp(context.TODO(), n.Namespace, n.App); err == nil {
+					differentLabels := map[string]bool{}
+					for _, w := range app.Workloads {
+						// We do not know the workload's type, so pass in empty string and hope the API returns what we want.
+						if r, err := fi.Business.Workload.GetWorkload(context.TODO(), n.Namespace, w.WorkloadName, "", false); err == nil {
+							for k, v := range r.Labels {
+								if _, skipIt := differentLabels[k]; !skipIt {
+									if existingValue, ok := labelsMetadata[k]; ok {
+										if existingValue != v {
+											differentLabels[k] = true
+											delete(labelsMetadata, k)
+										}
+									} else {
+										labelsMetadata[k] = v
+									}
+								}
+							}
+						} else {
+							log.Debugf("Failed to obtain app [%+v] workload details for [%v]. err=%v", n, w.WorkloadName, err)
+						}
+					}
+				} else {
+					log.Debugf("Failed to obtain app details for [%+v]. err=%v", n, err)
+				}
 			}
 		case graph.NodeTypeService:
 			if svc, err := fi.Business.Svc.GetService(context.TODO(), n.Namespace, n.Service); err == nil {
