@@ -58,14 +58,12 @@ func labelNodes(trafficMap graph.TrafficMap, gi *graph.AppenderGlobalInfo) {
 					log.Debugf("Failed to obtain versioned-app details for [%+v]", n)
 				}
 			} else {
-				// QUESTION: Is the following the right thing to do?
-				// GetApp returns a list of workloads that make up the app. Capture the superset of all labels on all workloads.
+				// getApp returns a list of workloads that make up the app. Capture the superset of all labels on all workloads.
 				// However, throw away any labels that have different values across the different workloads.
 				labelsMetadata = graph.LabelsMetadata{}
 				if app, ok := getApp(n.Namespace, n.App, gi); ok {
 					differentLabels := map[string]bool{}
 					for _, w := range app.Workloads {
-						// We do not know the workload's type, so pass in empty string and hope the API returns what we want.
 						if r, ok := getWorkload(n.Namespace, w.WorkloadName, gi); ok {
 							for k, v := range r.Labels {
 								if _, skipIt := differentLabels[k]; !skipIt {
@@ -94,7 +92,6 @@ func labelNodes(trafficMap graph.TrafficMap, gi *graph.AppenderGlobalInfo) {
 				log.Debugf("Failed to obtain service details for [%+v]", n)
 			}
 		case graph.NodeTypeWorkload:
-			// We do not know the workload's type, so pass in empty string and hope the API returns what we want.
 			if wl, ok := getWorkload(n.Namespace, n.Workload, gi); ok {
 				labelsMetadata = copyMap(wl.Labels)
 			} else {
