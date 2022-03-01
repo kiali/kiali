@@ -12,6 +12,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -43,6 +44,7 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 
 	// Ignoring istio-system Services as some ports are used for debug purposes and not exposed in deployments
 	if config.IsIstioNamespace(p.Service.Namespace) {
+		log.Debugf("Skipping Port matching check for Service %s from Istio Namespace %s", p.Service.Name, p.Service.Namespace)
 		return validations, len(validations) == 0
 	}
 	if deployment := p.findMatchingDeployment(p.Service.Spec.Selector); deployment != nil {
