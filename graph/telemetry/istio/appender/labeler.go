@@ -34,7 +34,7 @@ func (f *LabelerAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 }
 
 // labelNodes puts all k8s labels in the metadata for all nodes.
-func labelNodes(trafficMap graph.TrafficMap, fi *graph.AppenderGlobalInfo) {
+func labelNodes(trafficMap graph.TrafficMap, gi *graph.AppenderGlobalInfo) {
 	// We need to know the names of the Istio labels for app and version because we do not label the nodes with those.
 	// There is no need to get the Istio label names multiple times, so get them once now.
 	istioLabelNames := config.Get().IstioLabels
@@ -54,21 +54,21 @@ func labelNodes(trafficMap graph.TrafficMap, fi *graph.AppenderGlobalInfo) {
 		case graph.NodeTypeApp:
 			if n.Version != "" {
 				// the node is a "versioned-app" node
-				if wl, err := fi.Business.Workload.GetWorkload(context.TODO(), n.Namespace, n.Workload, "", false); err == nil {
+				if wl, ok := getWorkload(n.Namespace, n.Workload, gi); ok {
 					labelsMetadata = copyMap(wl.Labels)
 				} else {
-					log.Debugf("Failed to obtain versioned-app details for [%+v]. err=%v", n, err)
+					log.Debugf("Failed to obtain versioned-app details for [%+v]", n)
 				}
 			} else {
 				// QUESTION: Is the following the right thing to do?
 				// GetApp returns a list of workloads that make up the app. Capture the superset of all labels on all workloads.
 				// However, throw away any labels that have different values across the different workloads.
 				labelsMetadata = graph.LabelsMetadata{}
-				if app, err := fi.Business.App.GetApp(context.TODO(), n.Namespace, n.App); err == nil {
+				if app, err := gi.Business.App.GetApp(context.TODO(), n.Namespace, n.App); err == nil {
 					differentLabels := map[string]bool{}
 					for _, w := range app.Workloads {
 						// We do not know the workload's type, so pass in empty string and hope the API returns what we want.
-						if r, err := fi.Business.Workload.GetWorkload(context.TODO(), n.Namespace, w.WorkloadName, "", false); err == nil {
+						if r, ok := getWorkload(n.Namespace, w.WorkloadName, gi); ok {
 							for k, v := range r.Labels {
 								if _, skipIt := differentLabels[k]; !skipIt {
 									if existingValue, ok := labelsMetadata[k]; ok {
@@ -82,7 +82,7 @@ func labelNodes(trafficMap graph.TrafficMap, fi *graph.AppenderGlobalInfo) {
 								}
 							}
 						} else {
-							log.Debugf("Failed to obtain app [%+v] workload details for [%v]. err=%v", n, w.WorkloadName, err)
+							log.Debugf("Failed to obtain app [%+v] workload details for [%v]", n, w.WorkloadName)
 						}
 					}
 				} else {
@@ -90,17 +90,17 @@ func labelNodes(trafficMap graph.TrafficMap, fi *graph.AppenderGlobalInfo) {
 				}
 			}
 		case graph.NodeTypeService:
-			if svc, err := fi.Business.Svc.GetService(context.TODO(), n.Namespace, n.Service); err == nil {
+			if svc, ok := getServiceDefinition(n.Namespace, n.Service, gi); ok {
 				labelsMetadata = copyMap(svc.Labels)
 			} else {
-				log.Debugf("Failed to obtain service details for [%+v]. err=%v", n, err)
+				log.Debugf("Failed to obtain service details for [%+v]", n)
 			}
 		case graph.NodeTypeWorkload:
 			// We do not know the workload's type, so pass in empty string and hope the API returns what we want.
-			if wl, err := fi.Business.Workload.GetWorkload(context.TODO(), n.Namespace, n.Workload, "", false); err == nil {
+			if wl, ok := getWorkload(n.Namespace, n.Workload, gi); ok {
 				labelsMetadata = copyMap(wl.Labels)
 			} else {
-				log.Debugf("Failed to obtain workload details for [%+v]. err=%v", n, err)
+				log.Debugf("Failed to obtain workload details for [%+v].", n)
 			}
 		default:
 			// skip any other nodes
