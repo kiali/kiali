@@ -1,8 +1,6 @@
 package appender
 
 import (
-	"context"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
@@ -64,7 +62,7 @@ func labelNodes(trafficMap graph.TrafficMap, gi *graph.AppenderGlobalInfo) {
 				// GetApp returns a list of workloads that make up the app. Capture the superset of all labels on all workloads.
 				// However, throw away any labels that have different values across the different workloads.
 				labelsMetadata = graph.LabelsMetadata{}
-				if app, err := gi.Business.App.GetApp(context.TODO(), n.Namespace, n.App); err == nil {
+				if app, ok := getApp(n.Namespace, n.App, gi); ok {
 					differentLabels := map[string]bool{}
 					for _, w := range app.Workloads {
 						// We do not know the workload's type, so pass in empty string and hope the API returns what we want.
@@ -86,7 +84,7 @@ func labelNodes(trafficMap graph.TrafficMap, gi *graph.AppenderGlobalInfo) {
 						}
 					}
 				} else {
-					log.Debugf("Failed to obtain app details for [%+v]. err=%v", n, err)
+					log.Debugf("Failed to obtain app details for [%+v]", n)
 				}
 			}
 		case graph.NodeTypeService:

@@ -208,6 +208,7 @@ const (
 	serviceListKey       = "serviceListKey"       // global vendor info map[namespace]serviceDefinitionList
 	serviceEntryHostsKey = "serviceEntryHostsKey" // global vendor info service entries for all accessible namespaces
 	workloadListKey      = "workloadListKey"      // global vendor info map[namespace]workloadListKey
+	appsMapKey           = "appsMapKey"           // global vendor info map[namespace]appsMap
 )
 
 type serviceEntry struct {
@@ -219,6 +220,8 @@ type serviceEntry struct {
 }
 
 type serviceEntryHosts map[string][]*serviceEntry
+
+type appsMap map[string]*models.App
 
 func newServiceEntryHosts() serviceEntryHosts {
 	return make(map[string][]*serviceEntry)
@@ -336,4 +339,37 @@ func getAppWorkloads(namespace, app, version string, gi *graph.AppenderGlobalInf
 		}
 	}
 	return result
+}
+
+func getApp(namespace, appName string, gi *graph.AppenderGlobalInfo) (*models.App, bool) {
+	if appName == "" || appName == graph.Unknown {
+		return nil, false
+	}
+
+	var allAppsMap map[string]appsMap
+	if existingAllAppsMap, ok := gi.Vendor[appsMapKey]; ok {
+		allAppsMap = existingAllAppsMap.(map[string]appsMap)
+	} else {
+		allAppsMap = make(map[string]appsMap)
+		gi.Vendor[appsMapKey] = allAppsMap
+	}
+
+	var namespaceApps appsMap
+	if existingNamespaceApps, ok := allAppsMap[namespace]; ok {
+		if app, ok := existingNamespaceApps[appName]; ok {
+			return app, true
+		} else {
+			namespaceApps = existingNamespaceApps
+		}
+	} else {
+		namespaceApps = appsMap{}
+		allAppsMap[namespace] = namespaceApps
+	}
+
+	if app, err := gi.Business.App.GetApp(context.TODO(), namespace, appName); err == nil {
+		namespaceApps[appName] = &app
+		return &app, true
+	} else {
+		return nil, false
+	}
 }
