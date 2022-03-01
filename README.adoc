@@ -99,6 +99,10 @@ Type: ClusterIP
 ...
 ----
 
+=== Integration Testing
+
+Integration testing is done with cypress. More information can be found link:./cypress/README.md[here].
+
 === Styling
 https://www.patternfly.org/[PatternFly] is the main UI components framework. It defines style based on SASS preprocessor.
 All Patternfly build assets are copied to `src`.

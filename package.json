@@ -39,6 +39,9 @@
     "build:dev": "sh -ac 'source ./.env.upstream; npm run lint && npm run build:kiali'",
     "build:kiali": "npm run build-css && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) GENERATE_SOURCEMAP=false EXTEND_ESLINT=true react-scripts build",
     "build:prod": "sh -ac 'source ./.env.downstream; npm run build:kiali'",
+    "cypress": "cypress open",
+    "cypress:run": "cypress run",
+    "cypress:bdd": "cypress open --config-file cypress-bdd.json",
     "lint": "eslint --ext js,ts,tsx src",
     "lint:precommit": "if git diff --name-only HEAD | grep -E '\\.tsx?$'; then npm run lint; else true; fi",
     "lintfix": "eslint --ext js,ts,tsx --fix src",
@@ -106,6 +109,7 @@
     "@storybook/node-logger": "^6.2.9",
     "@storybook/preset-create-react-app": "^3.1.7",
     "@storybook/react": "^6.2.9",
+    "@types/cypress-cucumber-preprocessor": "^4.0.1",
     "@types/cytoscape": "3.14.0",
     "@types/enzyme": "3.10.5",
     "@types/jest": "23.3.10",
@@ -117,6 +121,8 @@
     "@types/react-router-dom": "5.1.5",
     "axios-mock-adapter": "1.16.0",
     "babel-core": "6.26.3",
+    "cypress": "^9.2.1",
+    "cypress-cucumber-preprocessor": "^4.3.1",
     "enzyme": "3.11.0",
     "enzyme-adapter-react-16": "1.15.2",
     "enzyme-to-json": "3.4.4",
@@ -189,5 +195,8 @@
         }
       }
     ]
+  },
+  "cypress-cucumber-preprocessor": {
+    "nonGlobalStepDefinitions": true
   }
 }
