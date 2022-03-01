@@ -82,14 +82,14 @@ func labelNodes(trafficMap graph.TrafficMap, fi *graph.AppenderGlobalInfo) {
 			}
 		case graph.NodeTypeService:
 			if svc, err := fi.Business.Svc.GetService(context.TODO(), n.Namespace, n.Service); err == nil {
-				labelsMetadata = svc.Labels
+				labelsMetadata = copyMap(svc.Labels)
 			} else {
 				log.Debugf("Failed to obtain service details for [%+v]. err=%v", n, err)
 			}
 		case graph.NodeTypeWorkload:
 			// We do not know the workload's type, so pass in empty string and hope the API returns what we want.
 			if wl, err := fi.Business.Workload.GetWorkload(context.TODO(), n.Namespace, n.Workload, "", false); err == nil {
-				labelsMetadata = wl.Labels
+				labelsMetadata = copyMap(wl.Labels)
 			} else {
 				log.Debugf("Failed to obtain workload details for [%+v]. err=%v", n, err)
 			}
@@ -103,4 +103,12 @@ func labelNodes(trafficMap graph.TrafficMap, fi *graph.AppenderGlobalInfo) {
 			delete(n.Metadata[graph.Labels].(graph.LabelsMetadata), istioLabelNames.VersionLabelName)
 		}
 	}
+}
+
+func copyMap(orig map[string]string) map[string]string {
+	c := make(map[string]string, len(orig))
+	for k, v := range orig {
+		c[k] = v
+	}
+	return c
 }
