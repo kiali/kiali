@@ -469,7 +469,7 @@ func (iv IstioValidations) MarshalJSON() ([]byte, error) {
 		if !ok {
 			out[k.ObjectType] = make(map[string]*IstioValidation)
 		}
-		out[k.ObjectType][k.Name] = v
+		out[k.ObjectType][k.Name+"."+k.Namespace] = v
 	}
 	return json.Marshal(out)
 }
