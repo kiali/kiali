@@ -193,7 +193,12 @@ func parseProxyStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
 
 func ParseRegistryServices(registries map[string][]byte) ([]*RegistryService, error) {
 	var fullRegistryServices []*RegistryService
+	isRegistryLoaded := false
 	for pilot, registry := range registries {
+		// skip reading registry configs multiple times in a case of multiple istiod pods
+		if isRegistryLoaded {
+			break
+		}
 		var rr []*RegistryService
 		err := json.Unmarshal(registry, &rr)
 		if err != nil {
@@ -204,6 +209,9 @@ func ParseRegistryServices(registries map[string][]byte) ([]*RegistryService, er
 			r.pilot = pilot
 		}
 		fullRegistryServices = append(fullRegistryServices, rr...)
+		if len(rr) > 0 {
+			isRegistryLoaded = true
+		}
 	}
 	return fullRegistryServices, nil
 }
@@ -227,7 +235,12 @@ func ParseRegistryEndpoints(endpoints map[string][]byte) ([]*RegistryEndpoint, e
 
 func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, error) {
 	registry := RegistryConfiguration{}
+	isRegistryLoaded := false
 	for istiod, bRegistry := range config {
+		// skip reading registry configs multiple times in a case of multiple istiod pods
+		if isRegistryLoaded {
+			break
+		}
 		r := bytes.NewReader(bRegistry)
 		dec := json.NewDecoder(r)
 		var jRegistry interface{}
@@ -334,6 +347,7 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 				}
 			}
 		}
+		isRegistryLoaded = true
 	}
 	return &registry, nil
 }
