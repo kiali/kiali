@@ -11,7 +11,7 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-func prepareTestForServiceEntry(ap *security_v1beta.AuthorizationPolicy, dr *networking_v1alpha3.DestinationRule, se *networking_v1alpha3.ServiceEntry) models.IstioReferences {
+func prepareTestForServiceEntry(ap *security_v1beta.AuthorizationPolicy, dr *networking_v1alpha3.DestinationRule, se *networking_v1alpha3.ServiceEntry, sc *networking_v1alpha3.Sidecar) models.IstioReferences {
 	drReferences := ServiceEntryReferences{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
@@ -21,6 +21,7 @@ func prepareTestForServiceEntry(ap *security_v1beta.AuthorizationPolicy, dr *net
 		},
 		AuthorizationPolicies: []security_v1beta.AuthorizationPolicy{*ap},
 		ServiceEntries:        []networking_v1alpha3.ServiceEntry{*se},
+		Sidecars:              []networking_v1alpha3.Sidecar{*sc},
 		DestinationRules:      []networking_v1alpha3.DestinationRule{*dr},
 	}
 	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "serviceentry", Namespace: se.Namespace, Name: se.Name}]
@@ -32,21 +33,25 @@ func TestServiceEntryReferences(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForServiceEntry(getAuthPolicy(t), getAPDestinationRule(t), getAPServiceEntry(t))
+	references := prepareTestForServiceEntry(getAuthPolicy(t), getAPDestinationRule(t), getAPServiceEntry(t), getSidecar(t))
 	assert.Empty(references.ServiceReferences)
 
 	// Check Workload references empty
 	assert.Empty(references.WorkloadReferences)
 
 	// Check DR and AuthPolicy references
-	assert.Len(references.ObjectReferences, 2)
+	assert.Len(references.ObjectReferences, 3)
 	assert.Equal(references.ObjectReferences[0].Name, "foo-dev")
 	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
 	assert.Equal(references.ObjectReferences[0].ObjectType, "destinationrule")
 
-	assert.Equal(references.ObjectReferences[1].Name, "allow-foo")
+	assert.Equal(references.ObjectReferences[1].Name, "foo-sidecar")
 	assert.Equal(references.ObjectReferences[1].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[1].ObjectType, "authorizationpolicy")
+	assert.Equal(references.ObjectReferences[1].ObjectType, "sidecar")
+
+	assert.Equal(references.ObjectReferences[2].Name, "allow-foo")
+	assert.Equal(references.ObjectReferences[2].Namespace, "istio-system")
+	assert.Equal(references.ObjectReferences[2].ObjectType, "authorizationpolicy")
 }
 
 func TestServiceEntryNoReferences(t *testing.T) {
@@ -55,7 +60,7 @@ func TestServiceEntryNoReferences(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForServiceEntry(getAuthPolicy(t), getAPDestinationRule(t), fakeServiceEntry())
+	references := prepareTestForServiceEntry(getAuthPolicy(t), getAPDestinationRule(t), fakeServiceEntry(), getSidecar(t))
 	assert.Empty(references.ServiceReferences)
 	assert.Empty(references.WorkloadReferences)
 	assert.Empty(references.ObjectReferences)

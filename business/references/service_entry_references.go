@@ -12,6 +12,7 @@ type ServiceEntryReferences struct {
 	Namespace             string
 	Namespaces            models.Namespaces
 	ServiceEntries        []networking_v1alpha3.ServiceEntry
+	Sidecars              []networking_v1alpha3.Sidecar
 	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
 	DestinationRules      []networking_v1alpha3.DestinationRule
 }
@@ -39,6 +40,32 @@ func (n ServiceEntryReferences) getConfigReferences(se networking_v1alpha3.Servi
 				if seHost == fqdn.String() {
 					result = append(result, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.DestinationRules]})
 					continue
+				}
+			}
+		}
+	}
+	for _, sc := range n.Sidecars {
+		for _, ei := range sc.Spec.Egress {
+			if ei == nil {
+				continue
+			}
+			if len(ei.Hosts) > 0 {
+				for _, h := range ei.Hosts {
+					hostNs, dnsName, _ := getHostComponents(h)
+					if hostNs == "*" || hostNs == "~" || hostNs == "." || dnsName == "*" {
+						continue
+					}
+					fqdn := kubernetes.ParseHost(dnsName, hostNs, sc.ClusterName)
+
+					if se.Namespace != hostNs {
+						continue
+					}
+					for _, seHost := range se.Spec.Hosts {
+						if seHost == fqdn.String() {
+							result = append(result, models.IstioReference{Name: sc.Name, Namespace: sc.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.Sidecars]})
+							break
+						}
+					}
 				}
 			}
 		}
