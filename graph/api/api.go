@@ -1,8 +1,10 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
@@ -14,7 +16,7 @@ import (
 )
 
 // GraphNamespaces generates a namespaces graph using the provided options
-func GraphNamespaces(business *business.Layer, o graph.Options) (code int, config interface{}) {
+func GraphNamespaces(business *business.Layer, o graph.Options, bs *business.Layer, ctx context.Context) (code int, config interface{}) {
 	// time how long it takes to generate this graph
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
@@ -23,7 +25,7 @@ func GraphNamespaces(business *business.Layer, o graph.Options) (code int, confi
 	case graph.VendorIstio:
 		prom, err := prometheus.NewClient()
 		graph.CheckError(err)
-		code, config = graphNamespacesIstio(business, prom, o)
+		code, config = graphNamespacesIstio(business, prom, o, bs, ctx)
 	default:
 		graph.Error(fmt.Sprintf("TelemetryVendor [%s] not supported", o.TelemetryVendor))
 	}
@@ -35,20 +37,20 @@ func GraphNamespaces(business *business.Layer, o graph.Options) (code int, confi
 }
 
 // graphNamespacesIstio provides a test hook that accepts mock clients
-func graphNamespacesIstio(business *business.Layer, prom *prometheus.Client, o graph.Options) (code int, config interface{}) {
+func graphNamespacesIstio(business *business.Layer, prom *prometheus.Client, o graph.Options, bs *business.Layer, ctx context.Context) (code int, config interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = business
 
 	trafficMap := istio.BuildNamespacesTrafficMap(o.TelemetryOptions, prom, globalInfo)
-	code, config = generateGraph(trafficMap, o)
+	code, config = generateGraph(trafficMap, o, bs, ctx)
 
 	return code, config
 }
 
 // GraphNode generates a node graph using the provided options
-func GraphNode(business *business.Layer, o graph.Options) (code int, config interface{}) {
+func GraphNode(business *business.Layer, o graph.Options, bs *business.Layer, ctx context.Context) (code int, config interface{}) {
 	if len(o.Namespaces) != 1 {
 		graph.Error("Node graph does not support the 'namespaces' query parameter or the 'all' namespace")
 	}
@@ -61,7 +63,7 @@ func GraphNode(business *business.Layer, o graph.Options) (code int, config inte
 	case graph.VendorIstio:
 		prom, err := prometheus.NewClient()
 		graph.CheckError(err)
-		code, config = graphNodeIstio(business, prom, o)
+		code, config = graphNodeIstio(business, prom, o, bs, ctx)
 	default:
 		graph.Error(fmt.Sprintf("TelemetryVendor [%s] not supported", o.TelemetryVendor))
 	}
@@ -72,19 +74,19 @@ func GraphNode(business *business.Layer, o graph.Options) (code int, config inte
 }
 
 // graphNodeIstio provides a test hook that accepts mock clients
-func graphNodeIstio(business *business.Layer, client *prometheus.Client, o graph.Options) (code int, config interface{}) {
+func graphNodeIstio(business *business.Layer, client *prometheus.Client, o graph.Options, bs *business.Layer, ctx context.Context) (code int, config interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = business
 
 	trafficMap := istio.BuildNodeTrafficMap(o.TelemetryOptions, client, globalInfo)
-	code, config = generateGraph(trafficMap, o)
+	code, config = generateGraph(trafficMap, o, bs, ctx)
 
 	return code, config
 }
 
-func generateGraph(trafficMap graph.TrafficMap, o graph.Options) (int, interface{}) {
+func generateGraph(trafficMap graph.TrafficMap, o graph.Options, bs *business.Layer, ctx context.Context) (int, interface{}) {
 	log.Tracef("Generating config for [%s] graph...", o.ConfigVendor)
 
 	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
@@ -93,11 +95,86 @@ func generateGraph(trafficMap graph.TrafficMap, o graph.Options) (int, interface
 	var vendorConfig interface{}
 	switch o.ConfigVendor {
 	case graph.VendorCytoscape:
-		vendorConfig = cytoscape.NewConfig(trafficMap, o.ConfigOptions)
+		vc := cytoscape.NewConfig(trafficMap, o.ConfigOptions)
+		err := collectGraphHealth(&vc, o.ConfigOptions, bs, ctx)
+		vendorConfig = &vc
+		if err != nil {
+			graph.Error(fmt.Sprintf("Error collecting graph health: %s", err.Error()))
+		}
 	default:
 		graph.Error(fmt.Sprintf("ConfigVendor [%s] not supported", o.ConfigVendor))
 	}
 
 	log.Tracef("Done generating config for [%s] graph", o.ConfigVendor)
 	return http.StatusOK, vendorConfig
+}
+
+func collectGraphHealth(vendorConfig *cytoscape.Config, o graph.ConfigOptions, bs *business.Layer, ctx context.Context) error {
+	healthReqs := make(map[string]map[string]bool)
+
+	// Determine what health to fetch
+	for _, node := range vendorConfig.Elements.Nodes {
+		kind := ""
+		namespace := node.Data.Namespace
+
+		nodeType := node.Data.NodeType
+		workloadOk := len(node.Data.Workload) != 0 && node.Data.Workload != graph.Unknown
+
+		useWorkloadHealth := nodeType == graph.NodeTypeWorkload || (nodeType == graph.NodeTypeApp && workloadOk)
+		if useWorkloadHealth {
+			kind = "workload"
+		} else {
+			switch nodeType {
+			case graph.NodeTypeApp:
+				kind = "app"
+			case graph.NodeTypeBox:
+				if node.Data.IsBox == graph.BoxByApp {
+					kind = "app"
+				}
+			case graph.NodeTypeService:
+				kind = "service"
+			}
+		}
+
+		if len(kind) != 0 {
+			if _, nsOk := healthReqs[namespace]; !nsOk {
+				healthReqs[namespace] = make(map[string]bool)
+			}
+
+			healthReqs[namespace][kind] = true
+		}
+	}
+
+	// Fetch health
+	vendorConfig.Health = make(cytoscape.GraphHealth)
+	for namespace, kinds := range healthReqs {
+		var namespaceHealth cytoscape.GraphHealthType
+
+		for kind := range kinds {
+			switch kind {
+			case "app":
+				health, err := bs.Health.GetNamespaceAppHealth(ctx, namespace, o.RawDuration, time.Unix(o.QueryTime, 0))
+				if err != nil {
+					return err
+				}
+				namespaceHealth.AppHealth = health
+			case "service":
+				health, err := bs.Health.GetNamespaceServiceHealth(ctx, namespace, o.RawDuration, time.Unix(o.QueryTime, 0))
+				if err != nil {
+					return err
+				}
+				namespaceHealth.ServiceHealth = health
+			case "workload":
+				health, err := bs.Health.GetNamespaceWorkloadHealth(ctx, namespace, o.RawDuration, time.Unix(o.QueryTime, 0))
+				if err != nil {
+					return err
+				}
+				namespaceHealth.WorkloadHealth = health
+			}
+		}
+
+		vendorConfig.Health[namespace] = namespaceHealth
+	}
+
+	return nil
 }

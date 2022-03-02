@@ -33,7 +33,6 @@ const (
 	BoxByCluster              string = "cluster"
 	BoxByNamespace            string = "namespace"
 	BoxByNone                 string = "none"
-	NamespaceIstio            string = "istio-system"
 	RateNone                  string = "none"
 	RateReceived              string = "received" // tcp bytes received, grpc response messages, etc
 	RateRequests              string = "requests" // request count
@@ -68,10 +67,11 @@ type NodeOptions struct {
 
 // CommonOptions are those supplied to Telemetry and Config Vendors
 type CommonOptions struct {
-	Duration  time.Duration
-	GraphType string
-	Params    url.Values // make available the raw query params for vendor-specific handling
-	QueryTime int64      // unix time in seconds
+	RawDuration string
+	Duration    time.Duration
+	GraphType   string
+	Params      url.Values // make available the raw query params for vendor-specific handling
+	QueryTime   int64      // unix time in seconds
 }
 
 // ConfigOptions are those supplied to Config Vendors
@@ -158,6 +158,7 @@ func NewOptions(r *net_http.Request) Options {
 	} else if configVendor != VendorCytoscape {
 		BadRequest(fmt.Sprintf("Invalid configVendor [%s]", configVendor))
 	}
+	rawDuration := defaultDuration
 	if durationString == "" {
 		duration, _ = model.ParseDuration(defaultDuration)
 	} else {
@@ -166,6 +167,7 @@ func NewOptions(r *net_http.Request) Options {
 		if durationErr != nil {
 			BadRequest(fmt.Sprintf("Invalid duration [%s]", durationString))
 		}
+		rawDuration = durationString
 	}
 
 	if graphType == "" {
@@ -329,10 +331,11 @@ func NewOptions(r *net_http.Request) Options {
 		ConfigOptions: ConfigOptions{
 			BoxBy: boxBy,
 			CommonOptions: CommonOptions{
-				Duration:  time.Duration(duration),
-				GraphType: graphType,
-				Params:    params,
-				QueryTime: queryTime,
+				RawDuration: rawDuration,
+				Duration:    time.Duration(duration),
+				GraphType:   graphType,
+				Params:      params,
+				QueryTime:   queryTime,
 			},
 		},
 		TelemetryOptions: TelemetryOptions{
@@ -343,10 +346,11 @@ func NewOptions(r *net_http.Request) Options {
 			Namespaces:           namespaceMap,
 			Rates:                rates,
 			CommonOptions: CommonOptions{
-				Duration:  time.Duration(duration),
-				GraphType: graphType,
-				Params:    params,
-				QueryTime: queryTime,
+				RawDuration: rawDuration,
+				Duration:    time.Duration(duration),
+				GraphType:   graphType,
+				Params:      params,
+				QueryTime:   queryTime,
 			},
 			NodeOptions: NodeOptions{
 				Aggregate:      aggregate,

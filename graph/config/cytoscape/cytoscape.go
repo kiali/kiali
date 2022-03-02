@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/models"
 )
 
 // ResponseFlags is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:
@@ -143,11 +144,20 @@ type Elements struct {
 	Edges []*EdgeWrapper `json:"edges"`
 }
 
+type GraphHealth map[string]GraphHealthType
+
+type GraphHealthType struct {
+	AppHealth      models.NamespaceAppHealth      `json:"apps"`
+	ServiceHealth  models.NamespaceServiceHealth  `json:"services"`
+	WorkloadHealth models.NamespaceWorkloadHealth `json:"workloads"`
+}
+
 type Config struct {
-	Timestamp int64    `json:"timestamp"`
-	Duration  int64    `json:"duration"`
-	GraphType string   `json:"graphType"`
-	Elements  Elements `json:"elements"`
+	Timestamp int64       `json:"timestamp"`
+	Duration  int64       `json:"duration"`
+	GraphType string      `json:"graphType"`
+	Elements  Elements    `json:"elements"`
+	Health    GraphHealth `json:"health,omitempty"`
 }
 
 func nodeHash(id string) string {

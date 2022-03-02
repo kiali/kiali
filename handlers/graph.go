@@ -48,7 +48,7 @@ func GraphNamespaces(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	graph.CheckError(err)
 
-	code, payload := api.GraphNamespaces(business, o)
+	code, payload := api.GraphNamespaces(business, o, business, r.Context())
 	respond(w, code, payload)
 }
 
@@ -61,7 +61,7 @@ func GraphNode(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	graph.CheckError(err)
 
-	code, payload := api.GraphNode(business, o)
+	code, payload := api.GraphNode(business, o, business, r.Context())
 	respond(w, code, payload)
 }
 
