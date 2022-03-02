@@ -31,7 +31,6 @@ spec:
     - route:
         - destination:
             host: reviews.test-namespace.svc.cluster.local
-            subset: v1
           weight: 30
         - destination:
             host: reviews
@@ -39,5 +38,5 @@ spec:
           weight: 30
         - destination:
             host: reviews.test-namespace
-            subset: v3
+            subset: not-exist
           weight: 40

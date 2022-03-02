@@ -205,7 +205,7 @@ func getAllGateways(vs networking_v1alpha3.VirtualService) []models.IstioReferen
 		for _, httpRoute := range vs.Spec.Http {
 			if httpRoute != nil {
 				for _, match := range httpRoute.Match {
-					if match != nil {
+					if match != nil && match.Gateways != nil {
 						allGateways = append(allGateways, getGatewayReferences(match.Gateways, namespace, clusterName)...)
 					}
 				}
