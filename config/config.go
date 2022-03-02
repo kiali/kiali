@@ -537,7 +537,7 @@ func NewConfig() (c *Config) {
 				DiscoveryAutoThreshold: 10,
 				Enabled:                true,
 				IsCore:                 false,
-				NamespaceLabel:         "kubernetes_namespace",
+				NamespaceLabel:         "namespace",
 				Prometheus: PrometheusConfig{
 					ThanosProxy: ThanosProxy{
 						Enabled: false,

@@ -37,7 +37,7 @@ func NewDashboardsService(namespace *models.Namespace, workload *models.Workload
 	}
 	nsLabel := cfg.ExternalServices.CustomDashboards.NamespaceLabel
 	if nsLabel == "" {
-		nsLabel = "kubernetes_namespace"
+		nsLabel = "namespace"
 	}
 
 	// Overwrite Custom dashboards defined at Namespace level
