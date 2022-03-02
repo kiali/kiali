@@ -42,6 +42,7 @@ const (
 	defaultDuration           string = "10m"
 	defaultGraphType          string = GraphTypeWorkload
 	defaultIncludeIdleEdges   bool   = false
+	defaultIncludeHealth      bool   = false
 	defaultInjectServiceNodes bool   = false
 	defaultRateGrpc           string = RateRequests
 	defaultRateHttp           string = RateRequests
@@ -67,11 +68,12 @@ type NodeOptions struct {
 
 // CommonOptions are those supplied to Telemetry and Config Vendors
 type CommonOptions struct {
-	RawDuration string
-	Duration    time.Duration
-	GraphType   string
-	Params      url.Values // make available the raw query params for vendor-specific handling
-	QueryTime   int64      // unix time in seconds
+	RawDuration   string
+	Duration      time.Duration
+	IncludeHealth bool
+	GraphType     string
+	Params        url.Values // make available the raw query params for vendor-specific handling
+	QueryTime     int64      // unix time in seconds
 }
 
 // ConfigOptions are those supplied to Config Vendors
@@ -126,6 +128,7 @@ func NewOptions(r *net_http.Request) Options {
 	params := r.URL.Query()
 	var duration model.Duration
 	var includeIdleEdges bool
+	var includeHealth bool
 	var injectServiceNodes bool
 	var queryTime int64
 	appenders := RequestedAppenders{All: true}
@@ -136,6 +139,7 @@ func NewOptions(r *net_http.Request) Options {
 	graphType := params.Get("graphType")
 	includeIdleEdgesString := params.Get("includeIdleEdges")
 	injectServiceNodesString := params.Get("injectServiceNodes")
+	includeHealthString := params.Get("includeHealth")
 	namespaces := params.Get("namespaces") // csl of namespaces
 	queryTimeString := params.Get("queryTime")
 	rateGrpc := params.Get("rateGrpc")
@@ -202,6 +206,15 @@ func NewOptions(r *net_http.Request) Options {
 		includeIdleEdges, includeIdleEdgesErr = strconv.ParseBool(includeIdleEdgesString)
 		if includeIdleEdgesErr != nil {
 			BadRequest(fmt.Sprintf("Invalid includeIdleEdges [%s]", includeIdleEdgesString))
+		}
+	}
+	if includeHealthString == "" {
+		includeHealth = defaultIncludeHealth
+	} else {
+		var includeHealthErr error
+		includeHealth, includeHealthErr = strconv.ParseBool(includeHealthString)
+		if includeHealthErr != nil {
+			BadRequest(fmt.Sprintf("Invalid includeHealth [%s]", includeHealthString))
 		}
 	}
 	if injectServiceNodesString == "" {
@@ -331,11 +344,12 @@ func NewOptions(r *net_http.Request) Options {
 		ConfigOptions: ConfigOptions{
 			BoxBy: boxBy,
 			CommonOptions: CommonOptions{
-				RawDuration: rawDuration,
-				Duration:    time.Duration(duration),
-				GraphType:   graphType,
-				Params:      params,
-				QueryTime:   queryTime,
+				RawDuration:   rawDuration,
+				Duration:      time.Duration(duration),
+				GraphType:     graphType,
+				IncludeHealth: includeHealth,
+				Params:        params,
+				QueryTime:     queryTime,
 			},
 		},
 		TelemetryOptions: TelemetryOptions{
@@ -346,11 +360,12 @@ func NewOptions(r *net_http.Request) Options {
 			Namespaces:           namespaceMap,
 			Rates:                rates,
 			CommonOptions: CommonOptions{
-				RawDuration: rawDuration,
-				Duration:    time.Duration(duration),
-				GraphType:   graphType,
-				Params:      params,
-				QueryTime:   queryTime,
+				RawDuration:   rawDuration,
+				Duration:      time.Duration(duration),
+				GraphType:     graphType,
+				IncludeHealth: includeHealth,
+				Params:        params,
+				QueryTime:     queryTime,
 			},
 			NodeOptions: NodeOptions{
 				Aggregate:      aggregate,

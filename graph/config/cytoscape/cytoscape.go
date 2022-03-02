@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/models"
 )
 
 // ResponseFlags is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:
@@ -106,6 +105,7 @@ type NodeData struct {
 	HasTrafficShifting    bool                `json:"hasTrafficShifting,omitempty"`    // true (vs has traffic shifting) | false
 	HasVS                 *VSInfo             `json:"hasVS,omitempty"`                 // it can be empty if there is a VS without hostnames
 	HasWorkloadEntry      []graph.WEInfo      `json:"hasWorkloadEntry,omitempty"`      // static workload entry information | empty if there are no workload entries
+	HealthData            interface{}         `json:"healthData"`                      // data to calculate health status from configurations
 	IsBox                 string              `json:"isBox,omitempty"`                 // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
 	IsDead                bool                `json:"isDead,omitempty"`                // true (has no pods) | false
 	IsGateway             *GWInfo             `json:"isGateway,omitempty"`             // Istio ingress/egress gateway information
@@ -144,20 +144,11 @@ type Elements struct {
 	Edges []*EdgeWrapper `json:"edges"`
 }
 
-type GraphHealth map[string]GraphHealthType
-
-type GraphHealthType struct {
-	AppHealth      models.NamespaceAppHealth      `json:"apps"`
-	ServiceHealth  models.NamespaceServiceHealth  `json:"services"`
-	WorkloadHealth models.NamespaceWorkloadHealth `json:"workloads"`
-}
-
 type Config struct {
-	Timestamp int64       `json:"timestamp"`
-	Duration  int64       `json:"duration"`
-	GraphType string      `json:"graphType"`
-	Elements  Elements    `json:"elements"`
-	Health    GraphHealth `json:"health,omitempty"`
+	Timestamp int64    `json:"timestamp"`
+	Duration  int64    `json:"duration"`
+	GraphType string   `json:"graphType"`
+	Elements  Elements `json:"elements"`
 }
 
 func nodeHash(id string) string {

@@ -96,11 +96,13 @@ func generateGraph(trafficMap graph.TrafficMap, o graph.Options, bs *business.La
 	switch o.ConfigVendor {
 	case graph.VendorCytoscape:
 		vc := cytoscape.NewConfig(trafficMap, o.ConfigOptions)
-		err := collectGraphHealth(&vc, o.ConfigOptions, bs, ctx)
-		vendorConfig = &vc
-		if err != nil {
-			graph.Error(fmt.Sprintf("Error collecting graph health: %s", err.Error()))
+		if o.ConfigOptions.IncludeHealth {
+			err := collectGraphHealth(&vc, o.ConfigOptions, bs, ctx)
+			if err != nil {
+				graph.Error(fmt.Sprintf("Error collecting graph health: %s", err.Error()))
+			}
 		}
+		vendorConfig = &vc
 	default:
 		graph.Error(fmt.Sprintf("ConfigVendor [%s] not supported", o.ConfigVendor))
 	}
@@ -110,13 +112,16 @@ func generateGraph(trafficMap graph.TrafficMap, o graph.Options, bs *business.La
 }
 
 func collectGraphHealth(vendorConfig *cytoscape.Config, o graph.ConfigOptions, bs *business.Layer, ctx context.Context) error {
-	healthReqs := make(map[string]map[string]bool)
+	healthReqs := make(map[string]map[string][]*cytoscape.NodeWrapper)
 
-	// Determine what health to fetch
+	// Limit health fetches to only the necessary namespaces for the necessary types
 	for _, node := range vendorConfig.Elements.Nodes {
+		if node.Data.IsInaccessible {
+			continue
+		}
+
 		kind := ""
 		namespace := node.Data.Namespace
-
 		nodeType := node.Data.NodeType
 		workloadOk := len(node.Data.Workload) != 0 && node.Data.Workload != graph.Unknown
 
@@ -138,42 +143,58 @@ func collectGraphHealth(vendorConfig *cytoscape.Config, o graph.ConfigOptions, b
 
 		if len(kind) != 0 {
 			if _, nsOk := healthReqs[namespace]; !nsOk {
-				healthReqs[namespace] = make(map[string]bool)
+				healthReqs[namespace] = make(map[string][]*cytoscape.NodeWrapper)
 			}
 
-			healthReqs[namespace][kind] = true
+			healthReqs[namespace][kind] = append(healthReqs[namespace][kind], node)
 		}
 	}
 
-	// Fetch health
-	vendorConfig.Health = make(cytoscape.GraphHealth)
+	// Execute health fetches and attach retrieved health data to nodes
 	for namespace, kinds := range healthReqs {
-		var namespaceHealth cytoscape.GraphHealthType
-
-		for kind := range kinds {
+		for kind, nodeWrappers := range kinds {
 			switch kind {
 			case "app":
 				health, err := bs.Health.GetNamespaceAppHealth(ctx, namespace, o.RawDuration, time.Unix(o.QueryTime, 0))
 				if err != nil {
 					return err
 				}
-				namespaceHealth.AppHealth = health
+				for _, nodeWrap := range nodeWrappers {
+					if h, ok := health[nodeWrap.Data.App]; ok {
+						nodeWrap.Data.HealthData = h
+					} else {
+						nodeWrap.Data.HealthData = []int{}
+						log.Debugf("No health found for [%s] [%s]", nodeWrap.Data.NodeType, nodeWrap.Data.App)
+					}
+				}
 			case "service":
 				health, err := bs.Health.GetNamespaceServiceHealth(ctx, namespace, o.RawDuration, time.Unix(o.QueryTime, 0))
 				if err != nil {
 					return err
 				}
-				namespaceHealth.ServiceHealth = health
+				for _, nodeWrap := range nodeWrappers {
+					if h, ok := health[nodeWrap.Data.Service]; ok {
+						nodeWrap.Data.HealthData = h
+					} else {
+						nodeWrap.Data.HealthData = []int{}
+						log.Debugf("No health found for [%s] [%s]", nodeWrap.Data.NodeType, nodeWrap.Data.Service)
+					}
+				}
 			case "workload":
 				health, err := bs.Health.GetNamespaceWorkloadHealth(ctx, namespace, o.RawDuration, time.Unix(o.QueryTime, 0))
 				if err != nil {
 					return err
 				}
-				namespaceHealth.WorkloadHealth = health
+				for _, nodeWrap := range nodeWrappers {
+					if h, ok := health[nodeWrap.Data.Workload]; ok {
+						nodeWrap.Data.HealthData = h
+					} else {
+						nodeWrap.Data.HealthData = []int{}
+						log.Debugf("No health found for [%s] [%s]", nodeWrap.Data.NodeType, nodeWrap.Data.Workload)
+					}
+				}
 			}
 		}
-
-		vendorConfig.Health[namespace] = namespaceHealth
 	}
 
 	return nil
