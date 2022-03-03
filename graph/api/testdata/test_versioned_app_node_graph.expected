@@ -11,6 +11,7 @@
           "cluster": "unknown",
           "namespace": "bookinfo",
           "app": "reviews",
+          "healthData": null,
           "isBox": "app"
         }
       },
@@ -40,7 +41,8 @@
                 "httpIn5xx": "20.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -73,7 +75,8 @@
                 "tcpOut": "31.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -100,7 +103,8 @@
                 "httpIn": "20.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -127,7 +131,8 @@
                 "httpIn": "20.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -154,7 +159,8 @@
                 "httpIn": "20.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -180,7 +186,8 @@
                 "tcpIn": "31.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -200,6 +207,7 @@
               }
             }
           ],
+          "healthData": null,
           "isInaccessible": true,
           "isOutside": true,
           "isRoot": true
@@ -221,6 +229,7 @@
               }
             }
           ],
+          "healthData": null,
           "isInaccessible": true
         }
       },
@@ -241,6 +250,7 @@
               }
             }
           ],
+          "healthData": null,
           "isInaccessible": true,
           "isRoot": true
         }

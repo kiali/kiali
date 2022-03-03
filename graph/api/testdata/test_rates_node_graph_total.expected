@@ -30,7 +30,8 @@
                 "httpIn5xx": "20.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -69,7 +70,8 @@
                 "tcpOut": "93.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -95,7 +97,8 @@
                 "httpIn": "20.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -121,7 +124,8 @@
                 "httpIn": "20.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -147,7 +151,8 @@
                 "httpIn": "20.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -179,7 +184,8 @@
                 "tcpIn": "93.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -199,6 +205,7 @@
               }
             }
           ],
+          "healthData": null,
           "isInaccessible": true,
           "isOutside": true,
           "isRoot": true
@@ -220,6 +227,7 @@
               }
             }
           ],
+          "healthData": null,
           "isInaccessible": true
         }
       },
@@ -240,6 +248,7 @@
               }
             }
           ],
+          "healthData": null,
           "isInaccessible": true,
           "isRoot": true
         }

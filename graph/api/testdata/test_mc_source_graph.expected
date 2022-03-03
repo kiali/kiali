@@ -11,6 +11,7 @@
           "cluster": "kukulcan",
           "namespace": "bookinfo",
           "app": "reviews",
+          "healthData": null,
           "isBox": "app"
         }
       },
@@ -21,6 +22,7 @@
           "cluster": "tzotz",
           "namespace": "bookinfo",
           "app": "reviews",
+          "healthData": null,
           "isBox": "app"
         }
       },
@@ -46,7 +48,8 @@
                 "httpOut": "100.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -71,7 +74,8 @@
                 "httpOut": "100.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -96,7 +100,8 @@
                 "httpOut": "200.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -122,7 +127,8 @@
                 "httpIn": "100.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -149,7 +155,8 @@
                 "httpOut": "500.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -176,7 +183,8 @@
                 "httpIn": "100.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -204,7 +212,8 @@
                 "httpOut": "100.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -224,6 +233,7 @@
               }
             }
           ],
+          "healthData": null,
           "isOutside": true,
           "isRoot": true
         }
@@ -250,7 +260,8 @@
                 "httpOut": "100.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -275,7 +286,8 @@
                 "httpOut": "200.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -301,7 +313,8 @@
                 "httpIn": "100.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -321,6 +334,7 @@
               }
             }
           ],
+          "healthData": null,
           "isRoot": true
         }
       },
@@ -347,7 +361,8 @@
                 "httpIn": "100.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -374,7 +389,8 @@
                 "httpIn": "100.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -401,7 +417,8 @@
                 "httpIn": "100.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       }
     ],

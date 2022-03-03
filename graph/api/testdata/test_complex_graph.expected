@@ -25,7 +25,8 @@
                 "httpIn": "300.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -51,7 +52,8 @@
                 "httpIn": "100.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -71,6 +73,7 @@
               }
             }
           ],
+          "healthData": null,
           "isRoot": true
         }
       },
@@ -97,7 +100,8 @@
                 "httpIn": "700.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -131,7 +135,8 @@
                 "httpInNoResponse": "500.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -151,6 +156,7 @@
               }
             }
           ],
+          "healthData": null,
           "isInaccessible": true,
           "isOutside": true,
           "isRoot": true
@@ -186,7 +192,8 @@
                 "httpOut": "1950.00"
               }
             }
-          ]
+          ],
+          "healthData": null
         }
       },
       {
@@ -211,6 +218,7 @@
               }
             }
           ],
+          "healthData": null,
           "isInaccessible": true
         }
       },
@@ -237,6 +245,7 @@
               }
             }
           ],
+          "healthData": null,
           "isInaccessible": true
         }
       },
@@ -263,6 +272,7 @@
               }
             }
           ],
+          "healthData": null,
           "isInaccessible": true,
           "isRoot": true
         }

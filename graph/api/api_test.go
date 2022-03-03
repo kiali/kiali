@@ -1069,13 +1069,13 @@ func TestAppGraph(t *testing.T) {
 		return
 	}
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
@@ -1108,13 +1108,13 @@ func TestVersionedAppGraph(t *testing.T) {
 		return
 	}
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
@@ -1147,13 +1147,13 @@ func TestServiceGraph(t *testing.T) {
 		return
 	}
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
@@ -1186,13 +1186,13 @@ func TestWorkloadGraph(t *testing.T) {
 		return
 	}
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
@@ -1225,13 +1225,13 @@ func TestRatesGraphSent(t *testing.T) {
 		return
 	}
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
@@ -1264,13 +1264,13 @@ func TestRatesGraphReceived(t *testing.T) {
 		return
 	}
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
@@ -1303,13 +1303,13 @@ func TestRatesGraphTotal(t *testing.T) {
 		return
 	}
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
@@ -1342,13 +1342,13 @@ func TestRatesGraphNone(t *testing.T) {
 		return
 	}
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
@@ -1618,13 +1618,13 @@ func TestWorkloadNodeGraph(t *testing.T) {
 	mockQuery(xapi, q2, &v2)
 	mockQuery(xapi, q3, &v3)
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
@@ -1894,13 +1894,13 @@ func TestAppNodeGraph(t *testing.T) {
 	mockQuery(xapi, q2, &v2)
 	mockQuery(xapi, q3, &v3)
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/applications/{app}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
@@ -2170,13 +2170,13 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 	mockQuery(xapi, q2, &v2)
 	mockQuery(xapi, q3, &v3)
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/applications/{app}/versions/{version}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
@@ -2256,13 +2256,13 @@ func TestServiceNodeGraph(t *testing.T) {
 	mockQuery(xapi, q1, &v1)
 	mockQuery(xapi, q2, &v2)
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
@@ -2623,13 +2623,13 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 	mockQuery(xapi, q8, &v8)
 	mockQuery(xapi, q9, &v9)
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
@@ -3126,13 +3126,13 @@ func TestComplexGraph(t *testing.T) {
 	mockQuery(xapi, q16, &v16)
 	mockQuery(xapi, q17, &v17)
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
@@ -3413,13 +3413,13 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 	mockQuery(xapi, q4, &v4)
 	mockQuery(xapi, q5, &v5)
 
-	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
+	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options, ctx context.Context) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
-			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)), context)
 			respond(w, code, config)
 		}))
 
