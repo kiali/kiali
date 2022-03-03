@@ -218,7 +218,12 @@ func ParseRegistryServices(registries map[string][]byte) ([]*RegistryService, er
 
 func ParseRegistryEndpoints(endpoints map[string][]byte) ([]*RegistryEndpoint, error) {
 	var fullRegistryEndpoints []*RegistryEndpoint
+	isRegistryLoaded := false
 	for pilot, endpoint := range endpoints {
+		// skip reading registry endpoints multiple times in a case of multiple istiod pods
+		if isRegistryLoaded {
+			break
+		}
 		var eps []*RegistryEndpoint
 		err := json.Unmarshal(endpoint, &eps)
 		if err != nil {
@@ -229,6 +234,9 @@ func ParseRegistryEndpoints(endpoints map[string][]byte) ([]*RegistryEndpoint, e
 			ep.pilot = pilot
 		}
 		fullRegistryEndpoints = append(fullRegistryEndpoints, eps...)
+		if len(eps) > 0 {
+			isRegistryLoaded = true
+		}
 	}
 	return fullRegistryEndpoints, nil
 }
