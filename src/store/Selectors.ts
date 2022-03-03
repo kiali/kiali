@@ -31,6 +31,10 @@ const edgeLabels = (state: KialiAppState) => state.graph.toolbarState.edgeLabels
 
 export const edgeLabelsSelector = createIdentitySelector(edgeLabels);
 
+const edgeMode = (state: KialiAppState) => state.graph.edgeMode;
+
+export const edgeModeSelector = createIdentitySelector(edgeMode);
+
 const findValue = (state: KialiAppState) => state.graph.toolbarState.findValue;
 
 export const findValueSelector = createIdentitySelector(findValue);

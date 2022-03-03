@@ -1,4 +1,4 @@
-import { Layout, EdgeLabelMode, NodeType, NodeParamsType, GraphType, TrafficRate } from '../../types/Graph';
+import { Layout, EdgeLabelMode, NodeType, NodeParamsType, GraphType, TrafficRate, EdgeMode } from '../../types/Graph';
 import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 import { URLParam } from '../../app/History';
@@ -8,6 +8,7 @@ export type GraphUrlParams = {
   activeNamespaces: Namespace[];
   duration: DurationInSeconds;
   edgeLabels: EdgeLabelMode[];
+  edgeMode: EdgeMode;
   graphLayout: Layout;
   graphType: GraphType;
   node?: NodeParamsType;
@@ -21,6 +22,7 @@ export type GraphUrlParams = {
 
 const buildCommonQueryParams = (params: GraphUrlParams): string => {
   let q = `&${URLParam.GRAPH_EDGE_LABEL}=${params.edgeLabels}`;
+  q += `&${URLParam.GRAPH_EDGE_MODE}=${params.edgeMode}`;
   q += `&${URLParam.GRAPH_LAYOUT}=${params.graphLayout.name}`;
   q += `&${URLParam.GRAPH_IDLE_EDGES}=${params.showIdleEdges}`;
   q += `&${URLParam.GRAPH_IDLE_NODES}=${params.showIdleNodes}`;

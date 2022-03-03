@@ -2,12 +2,13 @@ import { getType } from 'typesafe-actions';
 import { GraphActions } from '../actions/GraphActions';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { GraphState } from '../store/Store';
-import { GraphType, TrafficRate } from '../types/Graph';
+import { EdgeMode, GraphType, TrafficRate } from '../types/Graph';
 import { GraphToolbarActions } from '../actions/GraphToolbarActions';
 import { DagreGraph } from '../components/CytoscapeGraph/graphs/DagreGraph';
 import { updateState } from '../utils/Reducer';
 
 export const INITIAL_GRAPH_STATE: GraphState = {
+  edgeMode: EdgeMode.ALL,
   graphDefinition: null,
   layout: DagreGraph.getLayout(),
   node: undefined,
@@ -54,6 +55,9 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       return updateState(state, {
         summaryData: INITIAL_GRAPH_STATE.summaryData
       });
+    case getType(GraphActions.setEdgeMode): {
+      return updateState(state, { edgeMode: action.payload });
+    }
     case getType(GraphActions.setGraphDefinition):
       return updateState(state, { graphDefinition: action.payload });
     case getType(GraphActions.setLayout):

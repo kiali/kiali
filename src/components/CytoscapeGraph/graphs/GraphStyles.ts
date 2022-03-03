@@ -19,13 +19,12 @@ import NodeImageKey from '../../../assets/img/node-background-key.png';
 import { CyNode, decoratedEdgeData, decoratedNodeData } from '../CytoscapeGraphUtils';
 import _ from 'lodash';
 import * as Cy from 'cytoscape';
-import { getEdgeHealth } from '../../../types/ErrorRate';
 import { PFBadges } from 'components/Pf/PfBadges';
 import { config } from 'config/Config';
 
-export const DimClass = 'mousedim';
 export const HighlightClass = 'mousehighlight';
 export const HoveredClass = 'mousehover';
+export const UnhighlightClass = 'mouseunhighlight';
 
 let EdgeColor: PFColorVal;
 let EdgeColorDead: PFColorVal;
@@ -76,6 +75,8 @@ const NodeBadgeBackgroundColor = PFColors.Purple500;
 const NodeBadgeColor = PFColors.White;
 const NodeTextFont = EdgeTextFont;
 const NodeWidth = NodeHeight;
+const OpacityOverlay = 0.3;
+const OpacityUnhighlight = 0.1;
 
 // Puts a little more space between icons when a badge has multiple icons
 const badgeMargin = (existingIcons: string) =>
@@ -389,7 +390,7 @@ export class GraphStyles {
     }
     const lineHeight = fontSize + 1;
     let labelStyle = `font-size:${fontSize}px;line-height:${lineHeight}px;`;
-    if (ele.hasClass(DimClass)) {
+    if (ele.hasClass(UnhighlightClass)) {
       labelStyle += 'opacity:0.6;';
     }
     if (noLabel) {
@@ -489,7 +490,6 @@ export class GraphStyles {
 
     const getEdgeColor = (ele: Cy.EdgeSingular): string => {
       const edgeData = decoratedEdgeData(ele);
-      const cyGlobal = getCyGlobalData(ele);
 
       if (!edgeData.hasTraffic) {
         return EdgeColorDead;
@@ -497,18 +497,11 @@ export class GraphStyles {
       if (edgeData.protocol === 'tcp') {
         return EdgeColorTCPWithTraffic;
       }
-      if (edgeData.protocol === 'grpc' && !cyGlobal.trafficRates.includes(TrafficRate.GRPC_REQUEST)) {
-        return EdgeColor;
-      }
 
-      const sourceNodeData = decoratedNodeData(ele.source());
-      const destNodeData = decoratedNodeData(ele.target());
-      const statusEdge = getEdgeHealth(edgeData, sourceNodeData, destNodeData);
-
-      switch (statusEdge.status) {
-        case FAILURE:
+      switch (edgeData.healthStatus) {
+        case FAILURE.name:
           return EdgeColorFailure;
-        case DEGRADED:
+        case DEGRADED.name:
           return EdgeColorDegraded;
         default:
           return EdgeColor;
@@ -839,11 +832,11 @@ export class GraphStyles {
           }
         }
       },
-      // Node is dimmed (see GraphHighlighter.ts)
+      // Node is unhighlighted (see GraphHighlighter.ts)
       {
-        selector: `node.${DimClass}`,
+        selector: `node.${UnhighlightClass}`,
         style: {
-          opacity: 0.6
+          opacity: OpacityUnhighlight
         }
       },
       {
@@ -901,9 +894,9 @@ export class GraphStyles {
         }
       },
       {
-        selector: `edge.${DimClass}`,
+        selector: `edge.${UnhighlightClass}`,
         style: {
-          opacity: 0.3
+          opacity: OpacityUnhighlight
         }
       },
       {
@@ -911,7 +904,7 @@ export class GraphStyles {
         style: {
           'overlay-color': PFColorVals.Gold400,
           'overlay-padding': '7px',
-          'overlay-opacity': 0.3
+          'overlay-opacity': OpacityOverlay
         }
       },
       {
@@ -919,7 +912,7 @@ export class GraphStyles {
         style: {
           'overlay-color': PFColorVals.Purple200,
           'overlay-padding': '7px',
-          'overlay-opacity': 0.3
+          'overlay-opacity': OpacityOverlay
         }
       }
     ];

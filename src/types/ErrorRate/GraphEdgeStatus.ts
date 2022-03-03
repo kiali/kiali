@@ -1,14 +1,64 @@
 import { ToleranceConfig } from '../ServerConfig';
-import { ascendingThresholdCheck, ThresholdStatus, RATIO_NA, HEALTHY, NA, RequestType } from '../Health';
-import { DecoratedGraphEdgeData, DecoratedGraphNodeData, Responses } from '../Graph';
+import {
+  ascendingThresholdCheck,
+  ThresholdStatus,
+  RATIO_NA,
+  HEALTHY,
+  NA,
+  RequestType,
+  FAILURE,
+  DEGRADED
+} from '../Health';
+import {
+  CytoscapeGlobalScratchNamespace,
+  DecoratedGraphEdgeData,
+  DecoratedGraphNodeData,
+  Responses,
+  TrafficRate
+} from '../Graph';
 import { aggregate, checkExpr, getRateHealthConfig, transformEdgeResponses } from './utils';
 import { RequestTolerance } from './types';
 import { RateHealth } from '../HealthAnnotation';
-// Graph Edge
+import { decoratedEdgeData, decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
+
+export const assignEdgeHealth = (cy: any) => {
+  const cyGlobal = cy.scratch(CytoscapeGlobalScratchNamespace);
+
+  cy.edges().forEach(ele => {
+    const edgeData = decoratedEdgeData(ele);
+
+    if (!edgeData.hasTraffic) {
+      return;
+    }
+    if (edgeData.protocol === 'tcp') {
+      return;
+    }
+    if (edgeData.protocol === 'grpc' && !cyGlobal.trafficRates.includes(TrafficRate.GRPC_REQUEST)) {
+      return;
+    }
+
+    const sourceNodeData = decoratedNodeData(ele.source());
+    const destNodeData = decoratedNodeData(ele.target());
+    const statusEdge = getEdgeHealth(edgeData, sourceNodeData, destNodeData);
+
+    switch (statusEdge.status) {
+      case FAILURE:
+        edgeData.healthStatus = FAILURE.name;
+        return;
+      case DEGRADED:
+        edgeData.healthStatus = DEGRADED.name;
+        return;
+      default:
+        // unset implies healthy or n/a
+        return;
+    }
+  });
+};
+
 /*
  Return the status for the edge from source to target
 */
-export const getEdgeHealth = (
+const getEdgeHealth = (
   edge: DecoratedGraphEdgeData,
   source: DecoratedGraphNodeData,
   target: DecoratedGraphNodeData

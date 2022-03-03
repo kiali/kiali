@@ -29,6 +29,7 @@ export enum URLParam {
   GRAPH_BOX_NAMESPACE = 'boxNamespace',
   GRAPH_COMPRESS_ON_HIDE = 'graphCompressOnHide',
   GRAPH_EDGE_LABEL = 'edges',
+  GRAPH_EDGE_MODE = 'edgeMode',
   GRAPH_FIND = 'graphFind',
   GRAPH_HIDE = 'graphHide',
   GRAPH_IDLE_EDGES = 'idleEdges',

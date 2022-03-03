@@ -12,6 +12,7 @@ import {
   CytoscapeGlobalScratchData,
   CytoscapeGlobalScratchNamespace,
   EdgeLabelMode,
+  EdgeMode,
   Layout,
   NodeParamsType,
   NodeType,
@@ -40,6 +41,7 @@ import TrafficRenderer from './TrafficAnimation/TrafficRenderer';
 import { serverConfig } from 'config';
 import { decoratedNodeData } from './CytoscapeGraphUtils';
 import { scoreNodes, ScoringCriteria } from './GraphScore';
+import { assignEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
 
 type CytoscapeGraphProps = {
   compressOnHide: boolean;
@@ -47,6 +49,7 @@ type CytoscapeGraphProps = {
   contextMenuEdgeComponent?: EdgeContextMenuComponentType;
   contextMenuNodeComponent?: NodeContextMenuComponentType;
   edgeLabels: EdgeLabelMode[];
+  edgeMode: EdgeMode;
   focusSelector?: string;
   graphData: GraphData;
   isMiniGraph: boolean;
@@ -139,7 +142,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
   private userBoxSelected?: Cy.Collection;
   private zoom: number; // the current zoom value, used for checking threshold crossing
   private zoomIgnore: boolean; // used to ignore zoom events when cy sometimes generates 'intermediate' values
-  private zoomThresholds?: number[];
+  private zoomThresholds: number[];
 
   constructor(props: CytoscapeGraphProps) {
     super(props);
@@ -513,7 +516,15 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       CytoscapeGraph.mouseInTimeout = setTimeout(() => {
         // timer expired without a mouseout so perform highlighting and show hover contextInfo
         this.handleMouseIn(cytoscapeEvent);
-        this.contextMenuRef!.current!.handleContextMenu(cytoscapeEvent.summaryTarget, true);
+
+        // if we are not showing labels (due to zoom level), show contextInfo
+        const zoom = cy.zoom();
+        const noLabels = this.zoomThresholds.some(zoomThresh => {
+          return zoom <= zoomThresh;
+        });
+        if (noLabels) {
+          this.contextMenuRef!.current!.handleContextMenu(cytoscapeEvent.summaryTarget, true);
+        }
       }, CytoscapeGraph.hoverInMs);
     });
 
@@ -582,7 +593,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       const newZoom = cy.zoom();
       this.zoom = newZoom;
 
-      const thresholdCrossed = this.zoomThresholds!.some(zoomThresh => {
+      const thresholdCrossed = this.zoomThresholds.some(zoomThresh => {
         return (newZoom < zoomThresh && oldZoom >= zoomThresh) || (newZoom >= zoomThresh && oldZoom < zoomThresh);
       });
 
@@ -801,6 +812,9 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     cy.json({ elements: elements });
 
     cy.endBatch();
+
+    // Compute edge healths one time for the graph
+    assignEdgeHealth(cy);
 
     // Run layout outside of the batch operation for it to take effect on the new nodes,
     // Layouts can run async so wait until it completes to finish the graph update.

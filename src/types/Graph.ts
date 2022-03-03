@@ -32,6 +32,12 @@ export interface SummaryPanelPropType {
   trafficRates: TrafficRate[];
 }
 
+export enum EdgeMode {
+  ALL = 'all',
+  NONE = 'none',
+  UNHEALTHY = 'unhealthy'
+}
+
 export enum EdgeLabelMode {
   RESPONSE_TIME_GROUP = 'responseTime',
   RESPONSE_TIME_AVERAGE = 'avg',
@@ -441,6 +447,11 @@ export interface DecoratedGraphEdgeData extends GraphEdgeData {
   responseTime: number;
   // Default value NaN
   throughput: number;
+
+  // computed values...
+
+  // assigned when graph is updated, the edge health depends on the node health, traffic, and config
+  healthStatus?: string; // status name
 }
 
 export interface DecoratedGraphNodeWrapper {

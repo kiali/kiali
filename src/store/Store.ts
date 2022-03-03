@@ -10,6 +10,7 @@ import {
 } from '../types/Common';
 import {
   EdgeLabelMode,
+  EdgeMode,
   GraphDefinition,
   GraphType,
   Layout,
@@ -79,6 +80,7 @@ export interface MessageCenterState {
 }
 
 export interface GraphState {
+  edgeMode: EdgeMode;
   graphDefinition: GraphDefinition | null; // Not for consumption. Only for "Debug" dialog.
   layout: Layout;
   node?: NodeParamsType;

@@ -2,11 +2,10 @@ import * as React from 'react';
 import * as Cy from 'cytoscape';
 import { Button, Toolbar, ToolbarItem, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import {
+  LongArrowAltRightIcon,
   ExpandArrowsAltIcon,
   MapIcon,
   PficonDragdropIcon,
-  SearchMinusIcon,
-  SearchPlusIcon,
   TopologyIcon
 } from '@patternfly/react-icons';
 import { style } from 'typestyle';
@@ -16,8 +15,8 @@ import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppState } from '../../store/Store';
 import { PFColors } from '../Pf/PfColors';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
-import { Layout } from '../../types/Graph';
 import { ConcentricGraph } from './graphs/ConcentricGraph';
+import { EdgeMode, Layout } from '../../types/Graph';
 import { DagreGraph } from './graphs/DagreGraph';
 import { GridGraph } from './graphs/GridGraph';
 import { KialiAppAction } from '../../actions/KialiAppAction';
@@ -27,11 +26,14 @@ import * as LayoutDictionary from './graphs/LayoutDictionary';
 import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import TourStopContainer from 'components/Tour/TourStop';
+import { edgeModeSelector } from 'store/Selectors';
 
 type ReduxProps = {
+  edgeMode: EdgeMode;
   layout: Layout;
   showLegend: boolean;
 
+  setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: Layout) => void;
   toggleLegend: () => void;
 };
@@ -57,8 +59,6 @@ const activeButtonStyle = style({
 const cytoscapeToolbarStyle = style({
   width: '20px'
 });
-
-const ZOOM_STEP = 0.2;
 
 export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps, CytoscapeToolbarState> {
   constructor(props: CytoscapeToolbarProps) {
@@ -99,32 +99,6 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
           </Tooltip>
         </ToolbarItem>
         <ToolbarItem>
-          <Tooltip content="Zoom In" position={TooltipPosition.right}>
-            <Button
-              id="toolbar_zoom_in"
-              aria-label="Zoom In"
-              className={buttonStyle}
-              variant="plain"
-              onClick={() => this.zoomIn()}
-            >
-              <SearchPlusIcon />
-            </Button>
-          </Tooltip>
-        </ToolbarItem>
-        <ToolbarItem>
-          <Tooltip content="Zoom Out" position={TooltipPosition.right}>
-            <Button
-              id="toolbar_zoom_out"
-              aria-label="Zoom Out"
-              className={buttonStyle}
-              variant="plain"
-              onClick={() => this.zoomOut()}
-            >
-              <SearchMinusIcon />
-            </Button>
-          </Tooltip>
-        </ToolbarItem>
-        <ToolbarItem>
           <Tooltip content="Zoom to Fit" position={TooltipPosition.right}>
             <Button
               id="toolbar_graph_fit"
@@ -134,6 +108,42 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
               onClick={() => this.fit()}
             >
               <ExpandArrowsAltIcon />
+            </Button>
+          </Tooltip>
+        </ToolbarItem>
+        <ToolbarItem>
+          <Tooltip content="Hide healthy edges" position={TooltipPosition.right}>
+            <Button
+              id="toolbar_edge_mode_unhealthy"
+              aria-label="Hide Healthy Edges"
+              className={buttonStyle}
+              variant="plain"
+              onClick={() => {
+                this.handleEdgeModeClick(EdgeMode.UNHEALTHY);
+              }}
+              isActive={this.props.edgeMode === EdgeMode.UNHEALTHY}
+            >
+              <LongArrowAltRightIcon
+                className={this.props.edgeMode === EdgeMode.UNHEALTHY ? activeButtonStyle : undefined}
+              />
+            </Button>
+          </Tooltip>
+        </ToolbarItem>
+        <ToolbarItem>
+          <Tooltip content="Hide all edges" position={TooltipPosition.right}>
+            <Button
+              id="toolbar_edge_mode_none"
+              aria-label="Hide All Edges"
+              className={buttonStyle}
+              variant="plain"
+              onClick={() => {
+                this.handleEdgeModeClick(EdgeMode.NONE);
+              }}
+              isActive={this.props.edgeMode === EdgeMode.NONE}
+            >
+              <LongArrowAltRightIcon
+                className={this.props.edgeMode === EdgeMode.NONE ? activeButtonStyle : undefined}
+              />
             </Button>
           </Tooltip>
         </ToolbarItem>
@@ -236,28 +246,6 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
     this.setState({ allowGrab: !this.state.allowGrab });
   };
 
-  private zoom = (step: number) => {
-    const cy = this.getCy();
-    const container = cy ? cy.container() : undefined;
-    if (cy && container) {
-      cy.zoom({
-        level: cy.zoom() * (1 + step),
-        renderedPosition: {
-          x: container.offsetWidth / 2,
-          y: container.offsetHeight / 2
-        }
-      });
-    }
-  };
-
-  private zoomIn = () => {
-    this.zoom(ZOOM_STEP);
-  };
-
-  private zoomOut = () => {
-    this.zoom(-ZOOM_STEP);
-  };
-
   private fit = () => {
     const cy = this.getCy();
     if (cy) {
@@ -270,14 +258,20 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
       this.props.setLayout(layout);
     }
   };
+
+  private handleEdgeModeClick = (edgeMode: EdgeMode) => {
+    this.props.setEdgeMode(edgeMode === this.props.edgeMode ? EdgeMode.ALL : edgeMode);
+  };
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
+  edgeMode: edgeModeSelector(state),
   layout: state.graph.layout,
   showLegend: state.graph.toolbarState.showLegend
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+  setEdgeMode: bindActionCreators(GraphActions.setEdgeMode, dispatch),
   setLayout: bindActionCreators(GraphActions.setLayout, dispatch),
   toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch)
 });

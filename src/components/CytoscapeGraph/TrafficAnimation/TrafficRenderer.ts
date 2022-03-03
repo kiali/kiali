@@ -1,5 +1,5 @@
 import { Point, clamp, quadraticBezier, linearInterpolation, distance, bezierLength } from '../../../utils/MathUtils';
-import { DimClass, HoveredClass } from '../graphs/GraphStyles';
+import { UnhighlightClass, HoveredClass } from '../graphs/GraphStyles';
 import { PFColorVals } from '../../Pf/PfColors';
 import {
   TrafficPointCircleRenderer,
@@ -324,12 +324,12 @@ export default class TrafficRenderer {
   };
 
   /**
-   * Renders the points inside the TrafficEdge (unless is dimmed)
+   * Renders the points inside the TrafficEdge (unless unhighlighted)
    *
    */
   private render(trafficEdge: TrafficEdge) {
     const edge = trafficEdge.getEdge();
-    if (edge.hasClass(DimClass) || edge.hasClass(HoveredClass)) {
+    if (edge.hasClass(UnhighlightClass) || edge.hasClass(HoveredClass)) {
       return;
     }
     trafficEdge.getPoints().forEach((point: TrafficPoint) => {

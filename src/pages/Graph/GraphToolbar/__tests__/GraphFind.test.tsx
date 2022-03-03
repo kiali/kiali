@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import { GraphFind } from '../GraphFind';
+import { EdgeMode } from 'types/Graph';
 
 const testHandler = () => undefined;
 const testSetter = _val => undefined;
@@ -12,6 +13,7 @@ describe('Parse find value test', () => {
       <GraphFind
         cy={undefined}
         edgeLabels={[]}
+        edgeMode={EdgeMode.ALL}
         elementsChanged={true}
         findValue="testFind"
         hideValue="testHide"

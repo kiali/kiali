@@ -24,7 +24,8 @@ import {
   BoxByType,
   TrafficRate,
   RankMode,
-  RankResult
+  RankResult,
+  EdgeMode
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -40,6 +41,7 @@ import {
   activeNamespacesSelector,
   durationSelector,
   edgeLabelsSelector,
+  edgeModeSelector,
   graphTypeSelector,
   lastRefreshAtSelector,
   meshWideMTLSEnabledSelector,
@@ -89,6 +91,7 @@ type ReduxProps = {
   compressOnHide: boolean;
   duration: DurationInSeconds; // current duration (dropdown) setting
   edgeLabels: EdgeLabelMode[];
+  edgeMode: EdgeMode;
   endTour: () => void;
   graphType: GraphType;
   isPageVisible: boolean;
@@ -622,6 +625,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       activeNamespaces: this.state.graphData.fetchParams.namespaces,
       duration: this.state.graphData.fetchParams.duration,
       edgeLabels: this.state.graphData.fetchParams.edgeLabels,
+      edgeMode: this.props.edgeMode,
       graphLayout: this.props.layout,
       graphType: this.state.graphData.fetchParams.graphType,
       node: targetNode,
@@ -717,6 +721,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   compressOnHide: state.graph.toolbarState.compressOnHide,
   duration: durationSelector(state),
   edgeLabels: edgeLabelsSelector(state),
+  edgeMode: edgeModeSelector(state),
   graphType: graphTypeSelector(state),
   isPageVisible: state.globalState.isPageVisible,
   lastRefreshAt: lastRefreshAtSelector(state),

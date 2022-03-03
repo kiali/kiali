@@ -1,12 +1,14 @@
 import graphDataState from '../GraphDataState';
 import { GraphActions } from '../../actions/GraphActions';
 import { GlobalActions } from '../../actions/GlobalActions';
-import { DefaultTrafficRates, GraphType } from '../../types/Graph';
+import { DefaultTrafficRates, EdgeMode, GraphType } from '../../types/Graph';
 import { DagreGraph } from '../../components/CytoscapeGraph/graphs/DagreGraph';
+import { GraphState } from 'store/Store';
 
 describe('GraphDataState', () => {
   it('should return the initial state', () => {
     expect(graphDataState(undefined, GlobalActions.unknown())).toEqual({
+      edgeMode: EdgeMode.ALL,
       graphDefinition: null,
       layout: DagreGraph.getLayout(),
       node: undefined,
@@ -35,7 +37,7 @@ describe('GraphDataState', () => {
         trafficRates: DefaultTrafficRates
       },
       updateTime: 0
-    });
+    } as GraphState);
   });
 
   it('should handle UPDATE_SUMMARY', () => {
