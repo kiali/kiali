@@ -31,13 +31,6 @@ const (
 	EnvLoginTokenSigningKey = "LOGIN_TOKEN_SIGNING_KEY"
 )
 
-// The versions that Kiali requires
-const (
-	IstioVersionSupported   = ">= 1.0"
-	MaistraVersionSupported = ">= 0.7.0"
-	OSSMVersionSupported    = ">= 1.0"
-)
-
 // The valid auth strategies and values for cookie handling
 const (
 	AuthStrategyOpenshift = "openshift"
