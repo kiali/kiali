@@ -31,7 +31,7 @@ func TestGetDashboard(t *testing.T) {
 	// Setup mocks
 	service, prom := setupService("my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1")})
 
-	expectedLabels := "{kubernetes_namespace=\"my-namespace\",APP=\"my-app\"}"
+	expectedLabels := "{namespace=\"my-namespace\",APP=\"my-app\"}"
 	namespace := models.Namespace{
 		Name: "my-namespace",
 	}
@@ -73,7 +73,7 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 	// Setup mocks
 	service, prom := setupService("my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1")})
 
-	expectedLabels := "{kubernetes_namespace=\"my-namespace\",APP=\"my-app\"}"
+	expectedLabels := "{namespace=\"my-namespace\",APP=\"my-app\"}"
 	namespace := models.Namespace{
 		Name: "my-namespace",
 	}
