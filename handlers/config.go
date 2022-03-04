@@ -189,7 +189,7 @@ func getPrometheusConfig() PrometheusConfig {
 				retention, err := model.ParseDuration(retentionString)
 				if checkErr(err, fmt.Sprintf("Invalid storage.tsdb.retention.time [%s]", retentionString)) {
 					if retention == 0 {
-						log.Warningf("%s", "Prometheus storage.tsdb.retention.time configured to 0, ignoring...")
+						log.Warning("Prometheus storage.tsdb.retention.time configured to 0, ignoring...")
 					} else {
 						promConfig.StorageTsdbRetention = int64(time.Duration(retention).Seconds())
 					}
