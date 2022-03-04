@@ -210,6 +210,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		// Validations on PeerAuthentications
 		peerAuthnChecker := checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails, WorkloadList: workloadsPerNamespace[namespace]}
 		objectCheckers = []ObjectChecker{peerAuthnChecker}
+		referenceChecker = references.PeerAuthReferences{MTLSDetails: mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.WorkloadEntries:
 		// Validation on WorkloadEntries are not yet in place
 	case kubernetes.WorkloadGroups:
