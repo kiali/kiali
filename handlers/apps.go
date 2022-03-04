@@ -4,11 +4,16 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+
+	"github.com/kiali/kiali/business"
 )
 
 // AppList is the API handler to fetch all the apps to be displayed, related to a single namespace
 func AppList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
+	namespace := params["namespace"]
+
+	criteria := business.AppCriteria{Namespace: namespace, IncludeIstioResources: true}
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -16,10 +21,9 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Apps initialization error: "+err.Error())
 		return
 	}
-	namespace := params["namespace"]
 
 	// Fetch and build apps
-	appList, err := business.App.GetAppList(r.Context(), namespace, true)
+	appList, err := business.App.GetAppList(r.Context(), criteria)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

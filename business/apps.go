@@ -23,6 +23,11 @@ type AppService struct {
 	businessLayer *Layer
 }
 
+type AppCriteria struct {
+	Namespace             string
+	IncludeIstioResources bool
+}
+
 func joinMap(m1 map[string][]string, m2 map[string]string) {
 	for k, v2 := range m2 {
 		dup := false
@@ -48,17 +53,17 @@ func buildFinalLabels(m map[string][]string) map[string]string {
 }
 
 // GetAppList is the API handler to fetch the list of applications in a given namespace
-func (in *AppService) GetAppList(ctx context.Context, namespace string, linkIstioResources bool) (models.AppList, error) {
+func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (models.AppList, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetAppList",
 		observability.Attribute("package", "business"),
-		observability.Attribute("namespace", namespace),
-		observability.Attribute("linkIstioResources", linkIstioResources),
+		observability.Attribute("namespace", criteria.Namespace),
+		observability.Attribute("linkIstioResources", criteria.IncludeIstioResources),
 	)
 	defer end()
 
 	appList := &models.AppList{
-		Namespace: models.Namespace{Name: namespace},
+		Namespace: models.Namespace{Name: criteria.Namespace},
 		Apps:      []models.AppListItem{},
 	}
 
@@ -66,7 +71,7 @@ func (in *AppService) GetAppList(ctx context.Context, namespace string, linkIsti
 	var apps namespaceApps
 
 	nFetches := 1
-	if linkIstioResources {
+	if criteria.IncludeIstioResources {
 		nFetches = 2
 	}
 
@@ -77,15 +82,15 @@ func (in *AppService) GetAppList(ctx context.Context, namespace string, linkIsti
 	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
-		apps, err2 = fetchNamespaceApps(ctx, in.businessLayer, namespace, "")
+		apps, err2 = fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, "")
 		if err2 != nil {
-			log.Errorf("Error fetching Applications per namespace %s: %s", namespace, err2)
+			log.Errorf("Error fetching Applications per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2
 		}
 	}(ctx)
 
-	criteria := IstioConfigCriteria{
-		Namespace:                     namespace,
+	icCriteria := IstioConfigCriteria{
+		Namespace:                     criteria.Namespace,
 		IncludeAuthorizationPolicies:  true,
 		IncludeDestinationRules:       true,
 		IncludeEnvoyFilters:           true,
@@ -97,13 +102,13 @@ func (in *AppService) GetAppList(ctx context.Context, namespace string, linkIsti
 	}
 	var istioConfigList models.IstioConfigList
 
-	if linkIstioResources {
+	if criteria.IncludeIstioResources {
 		go func(ctx context.Context) {
 			defer wg.Done()
 			var err2 error
-			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
+			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(ctx, icCriteria)
 			if err2 != nil {
-				log.Errorf("Error fetching Istio Config per namespace %s: %s", namespace, err2)
+				log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err2)
 				errChan <- err2
 			}
 		}(ctx)
@@ -124,7 +129,7 @@ func (in *AppService) GetAppList(ctx context.Context, namespace string, linkIsti
 		svcReferences := make([]*models.IstioValidationKey, 0)
 		for _, srv := range valueApp.Services {
 			joinMap(applabels, srv.Labels)
-			if linkIstioResources {
+			if criteria.IncludeIstioResources {
 				vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name)
 				for _, v := range vsFiltered {
 					ref := models.BuildKey(v.Kind, v.Name, v.Namespace)
@@ -148,7 +153,7 @@ func (in *AppService) GetAppList(ctx context.Context, namespace string, linkIsti
 		wkdReferences := make([]*models.IstioValidationKey, 0)
 		for _, wrk := range valueApp.Workloads {
 			joinMap(applabels, wrk.Labels)
-			if linkIstioResources {
+			if criteria.IncludeIstioResources {
 				wSelector := labels.Set(wrk.Labels).AsSelector().String()
 				wkdReferences = append(wkdReferences, FilterWorkloadReferences(wSelector, istioConfigList)...)
 			}
