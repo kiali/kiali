@@ -205,10 +205,10 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 }
 
 const (
-	serviceListKey       = "serviceListKey"       // global vendor info map[namespace]serviceDefinitionList
-	serviceEntryHostsKey = "serviceEntryHostsKey" // global vendor info service entries for all accessible namespaces
-	workloadListKey      = "workloadListKey"      // global vendor info map[namespace]workloadListKey
 	appsMapKey           = "appsMapKey"           // global vendor info map[namespace]appsMap
+	serviceEntryHostsKey = "serviceEntryHostsKey" // global vendor info service entries for all accessible namespaces
+	serviceListKey       = "serviceListKey"       // global vendor info map[namespace]serviceDefinitionList
+	workloadListKey      = "workloadListKey"      // global vendor info map[namespace]workloadListKey
 )
 
 type serviceEntry struct {
