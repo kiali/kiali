@@ -8,7 +8,6 @@ const (
 	CoreVersion      = name + " core version"
 	MeshName         = "Mesh name"
 	MeshVersion      = "Mesh version"
-	IsCompatible     = "compatibility"
 	CoreCommitHash   = name + " core commit hash"
 	State            = name + " state"
 	ClusterMTLS      = "Istio mTLS"
