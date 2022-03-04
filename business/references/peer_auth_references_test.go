@@ -33,7 +33,7 @@ func TestPeerAuthReferences(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForPeerAuth(gePeerAuth(t), getPADestinationRule(t))
+	references := prepareTestForPeerAuth(getPeerAuth(t), getPADestinationRule(t))
 	assert.Empty(references.ServiceReferences)
 
 	// Check Workload references empty
@@ -60,14 +60,14 @@ func TestPeerAuthNoReferences(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForPeerAuth(getAuthPolicy(t), getPADestinationRule(t))
+	references := prepareTestForPeerAuth(data.CreateEmptyPeerAuthentication(""), getPADestinationRule(t))
 	assert.Empty(references.ServiceReferences)
 	assert.Empty(references.WorkloadReferences)
 	assert.Empty(references.ObjectReferences)
 }
 
 func getPADestinationRule(t *testing.T) *networking_v1alpha3.DestinationRule {
-	loader := yamlFixtureLoader("peer-auth.yaml")
+	loader := yamlFixtureLoader("peer-auth-disabled-meshwide.yaml")
 	err := loader.Load()
 	if err != nil {
 		t.Error("Error loading test data.")
@@ -77,7 +77,7 @@ func getPADestinationRule(t *testing.T) *networking_v1alpha3.DestinationRule {
 }
 
 func getPeerAuth(t *testing.T) *security_v1beta.PeerAuthentication {
-	loader := yamlFixtureLoader("peer-auth.yaml")
+	loader := yamlFixtureLoader("peer-auth-disabled-meshwide.yaml")
 	err := loader.Load()
 	if err != nil {
 		t.Error("Error loading test data.")
