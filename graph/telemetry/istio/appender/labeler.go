@@ -58,7 +58,6 @@ func labelNodes(trafficMap graph.TrafficMap, gi *graph.AppenderGlobalInfo) {
 					log.Debugf("Failed to obtain versioned-app details for [%+v]", n)
 				}
 			} else {
-				labelsMetadata = graph.LabelsMetadata{}
 				if app, ok := getApp(n.Namespace, n.App, gi); ok {
 					labelsMetadata = copyMap(app.Labels)
 				} else {
