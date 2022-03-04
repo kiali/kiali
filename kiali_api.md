@@ -8052,6 +8052,7 @@ This type is used to describe a set of objects.
 | HasTCPTrafficShifting | boolean| `bool` |  | |  |  |
 | HasTrafficShifting | boolean| `bool` |  | |  |  |
 | HasWorkloadEntry | [][WEInfo](#w-e-info)| `[]*WEInfo` |  | |  |  |
+| HealthData | [interface{}](#interface)| `interface{}` |  | |  |  |
 | ID | string| `string` |  | | Cytoscape Fields |  |
 | IsBox | string| `string` |  | |  |  |
 | IsDead | boolean| `bool` |  | |  |  |
