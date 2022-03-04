@@ -221,7 +221,7 @@ type serviceEntry struct {
 
 type serviceEntryHosts map[string][]*serviceEntry
 
-type appsMap map[string]*models.App
+type appsMap map[string]*models.AppListItem
 
 func newServiceEntryHosts() serviceEntryHosts {
 	return make(map[string][]*serviceEntry)
@@ -341,7 +341,7 @@ func getAppWorkloads(namespace, app, version string, gi *graph.AppenderGlobalInf
 	return result
 }
 
-func getApp(namespace, appName string, gi *graph.AppenderGlobalInfo) (*models.App, bool) {
+func getApp(namespace, appName string, gi *graph.AppenderGlobalInfo) (*models.AppListItem, bool) {
 	if appName == "" || appName == graph.Unknown {
 		return nil, false
 	}
@@ -366,10 +366,14 @@ func getApp(namespace, appName string, gi *graph.AppenderGlobalInfo) (*models.Ap
 		allAppsMap[namespace] = namespaceApps
 	}
 
-	if app, err := gi.Business.App.GetApp(context.TODO(), namespace, appName); err == nil {
-		namespaceApps[appName] = &app
-		return &app, true
-	} else {
-		return nil, false
+	if appList, err := gi.Business.App.GetAppList(context.TODO(), business.AppCriteria{Namespace: namespace, IncludeIstioResources: false}); err == nil {
+		for _, app := range appList.Apps {
+			if app.Name == appName {
+				namespaceApps[appName] = &app
+				return &app, true
+			}
+		}
 	}
+
+	return nil, false
 }
