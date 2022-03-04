@@ -44,14 +44,7 @@ const iconStyle = style({
   paddingTop: '5px'
 });
 
-const paramToTab: { [key: string]: number } = {
-  clusters: 0,
-  listeners: 1,
-  routes: 2,
-  bootstrap: 3,
-  config: 4,
-  metrics: 5
-};
+const envoyTabs = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
 
 export type ResourceSorts = { [resource: string]: ISortBy };
 
@@ -257,8 +250,11 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
     const app = this.props.workload.labels[serverConfig.istioLabels.appLabelName];
     const version = this.props.workload.labels[serverConfig.istioLabels.versionLabelName];
     const envoyMetricsDashboardRef = this.getEnvoyMetricsDashboardRef();
-
-    const tabs = Object.keys(paramToTab).map((value, index) => {
+    let filteredEnvoyTabs = envoyTabs;
+    if (!envoyMetricsDashboardRef) {
+      filteredEnvoyTabs = envoyTabs.slice(0, envoyTabs.length - 1);
+    }
+    const tabs = filteredEnvoyTabs.map((value, index) => {
       const title = value.charAt(0).toUpperCase() + value.slice(1);
       return (
         <Tab style={{ backgroundColor: 'white' }} key={'tab_' + title} eventKey={index} title={title}>
