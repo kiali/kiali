@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	defaultPrometheusGlobalScrapeInterval = 15 // seconds
+	defaultPrometheusGlobalScrapeInterval       = 15    // seconds
+	defaultPrometheusGlobalStorageTSDBRetention = 21600 // seconds
 )
 
 type ClusterInfo struct {
@@ -151,6 +152,7 @@ type PrometheusPartialConfig struct {
 func getPrometheusConfig() PrometheusConfig {
 	promConfig := PrometheusConfig{
 		GlobalScrapeInterval: defaultPrometheusGlobalScrapeInterval,
+		StorageTsdbRetention: defaultPrometheusGlobalStorageTSDBRetention,
 	}
 	// Check if thanosProxy
 	thanosConf := config.Get().ExternalServices.Prometheus.ThanosProxy
@@ -183,10 +185,14 @@ func getPrometheusConfig() PrometheusConfig {
 
 		flags, err := client.GetFlags()
 		if checkErr(err, "Failed to fetch Prometheus flags") {
-			if retentionString, ok := flags["storage.tsdb.retention"]; ok {
+			if retentionString, ok := flags["storage.tsdb.retention.time"]; ok {
 				retention, err := model.ParseDuration(retentionString)
-				if checkErr(err, fmt.Sprintf("Invalid storage.tsdb.retention [%s]", retentionString)) {
-					promConfig.StorageTsdbRetention = int64(time.Duration(retention).Seconds())
+				if checkErr(err, fmt.Sprintf("Invalid storage.tsdb.retention.time [%s]", retentionString)) {
+					if retention == 0 {
+						log.Warningf("%s", "Prometheus storage.tsdb.retention.time configured to 0, ignoring...")
+					} else {
+						promConfig.StorageTsdbRetention = int64(time.Duration(retention).Seconds())
+					}
 				}
 			}
 		}
