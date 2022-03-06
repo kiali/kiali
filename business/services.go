@@ -287,7 +287,9 @@ func (in *SvcService) getClusterId() string {
 	// Protection on tests
 	if in.businessLayer != nil {
 		if cluster, err := in.businessLayer.Mesh.ResolveKialiControlPlaneCluster(nil); err == nil {
-			clusterId = cluster.Name
+			if cluster != nil {
+				clusterId = cluster.Name
+			}
 		} else {
 			log.Errorf("Cluster Id resolution failed: %s", err)
 		}
