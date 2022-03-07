@@ -560,15 +560,9 @@ export class GraphStyles {
       }
 
       if (edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP)) {
-        // todo: remove this logging once we figure out the strangeness going on with responseTime
-        let logResponseTime = edgeData.responseTime;
-        if (!isNaN(logResponseTime) && !Number.isInteger(logResponseTime)) {
-          console.log(`Unexpected string responseTime=|${logResponseTime}|`);
-        }
-        // hack to fix responseTime is sometimes a string during runtime even though its type is number
-        const responseTimeNumber = parseInt(String(edgeData.responseTime));
-        const responseTime = responseTimeNumber > 0 ? responseTimeNumber : 0;
-        if (responseTime && responseTime > 0) {
+        let responseTime = edgeData.responseTime;
+
+        if (responseTime > 0) {
           labels.push(toFixedDuration(responseTime));
         }
       }
@@ -639,15 +633,18 @@ export class GraphStyles {
     };
 
     const toFixedRequestRate = (num: number, includeUnits: boolean, units?: string): string => {
+      num = safeNum(num);
       const rate = trimFixed(num.toFixed(2));
       return includeUnits ? `${rate} ${units || 'rps'}` : rate;
     };
 
     const toFixedErrRate = (num: number): string => {
+      num = safeNum(num);
       return `${trimFixed(num.toFixed(num < 1 ? 1 : 0))}% err`;
     };
 
     const toFixedByteRate = (num: number, includeUnits: boolean): string => {
+      num = safeNum(num);
       if (num < 1024.0) {
         const rate = num < 1.0 ? trimFixed(num.toFixed(2)) : num.toFixed(0);
         return includeUnits ? `${rate} bps` : rate;
@@ -657,14 +654,30 @@ export class GraphStyles {
     };
 
     const toFixedPercent = (num: number): string => {
+      num = safeNum(num);
       return `${trimFixed(num.toFixed(1))}%`;
     };
 
     const toFixedDuration = (num: number): string => {
+      num = safeNum(num);
       if (num < 1000) {
         return `${num.toFixed(0)}ms`;
       }
       return `${trimFixed((num / 1000.0).toFixed(2))}s`;
+    };
+
+    // This is due to us never having figured out why a tiny fraction of what-we-expect-to-be-numbers
+    // are in fact strings.  We don't know if our conversion in GraphData.ts has a flaw, or whether
+    // something else happens post-conversion.
+    const safeNum = (num: any): number => {
+      if (Number.isFinite(num)) {
+        return num;
+      }
+      if (typeof num === 'string' || num instanceof String) {
+        console.log(`Expected number but received string: |${num}|`);
+      }
+      // this will return NaN if the string is 'NaN' or any other non-number
+      return Number(num);
     };
 
     const getNodeBackgroundImage = (ele: Cy.NodeSingular): string => {
