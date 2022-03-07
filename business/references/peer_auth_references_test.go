@@ -21,8 +21,10 @@ func prepareTestForPeerAuth(pa *security_v1beta.PeerAuthentication, drs []networ
 			EnabledAutoMtls:     false,
 		},
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
-			"test": data.CreateWorkloadList("istio-system",
-				data.CreateWorkloadListItem("istio-ingressgateway", map[string]string{"istio": "ingressgateway"})),
+			"istio-system": data.CreateWorkloadList("istio-system",
+				data.CreateWorkloadListItem("grafana", map[string]string{"app": "grafana"})),
+			"bookinfo": data.CreateWorkloadList("bookinfo",
+				data.CreateWorkloadListItem("details", map[string]string{"app": "details"})),
 		},
 	}
 	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "peerauthentication", Namespace: pa.Namespace, Name: pa.Name}]
@@ -147,7 +149,7 @@ func TestMeshNamespacePeerAuthEnabledReferences(t *testing.T) {
 	assert.Equal(references.ObjectReferences[0].ObjectType, "destinationrule")
 }
 
-func TestMeshPeerAuthNoReferences(t *testing.T) {
+func TestMeshPeerAuthWorkloadReferences(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -156,11 +158,15 @@ func TestMeshPeerAuthNoReferences(t *testing.T) {
 	references := prepareTestForPeerAuth(getPeerAuth(t, "permissive-mesh-mtls", "istio-system"),
 		getPADestinationRules(t, "istio-system"))
 	assert.Empty(references.ServiceReferences)
-	assert.Empty(references.WorkloadReferences)
 	assert.Empty(references.ObjectReferences)
+
+	// Check Workload references
+	assert.Len(references.WorkloadReferences, 1)
+	assert.Equal(references.WorkloadReferences[0].Name, "grafana")
+	assert.Equal(references.WorkloadReferences[0].Namespace, "istio-system")
 }
 
-func TestNamespacePeerAuthNoReferences(t *testing.T) {
+func TestNamespacePeerAuthWorkloadReferences(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -169,8 +175,12 @@ func TestNamespacePeerAuthNoReferences(t *testing.T) {
 	references := prepareTestForPeerAuth(getPeerAuth(t, "permissive-namespace-mtls", "bookinfo"),
 		getPADestinationRules(t, "bookinfo"))
 	assert.Empty(references.ServiceReferences)
-	assert.Empty(references.WorkloadReferences)
 	assert.Empty(references.ObjectReferences)
+
+	// Check Workload references
+	assert.Len(references.WorkloadReferences, 1)
+	assert.Equal(references.WorkloadReferences[0].Name, "details")
+	assert.Equal(references.WorkloadReferences[0].Namespace, "bookinfo")
 }
 
 func getPADestinationRules(t *testing.T, namespace string) []networking_v1alpha3.DestinationRule {

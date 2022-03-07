@@ -84,6 +84,9 @@ metadata:
   name: "permissive-mesh-mtls"
   namespace: "istio-system"
 spec:
+  selector:
+    matchLabels:
+      app: grafana
   mtls:
     mode: PERMISSIVE
 ---
@@ -93,5 +96,8 @@ metadata:
   name: "permissive-namespace-mtls"
   namespace: "bookinfo"
 spec:
+  selector:
+    matchLabels:
+      app: details
   mtls:
     mode: PERMISSIVE
