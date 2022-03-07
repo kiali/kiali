@@ -84,9 +84,9 @@ func (n PeerAuthReferences) getConfigReferences(peerAuthn security_v1beta.PeerAu
 	}
 	// filter unique references
 	for _, dr := range allDRs {
-		if !keys[dr.Name+"."+dr.Namespace+"/"+dr.ObjectType] {
+		if !keys[dr.Name+"."+dr.Namespace] {
 			result = append(result, dr)
-			keys[dr.Name+"."+dr.Namespace+"/"+dr.ObjectType] = true
+			keys[dr.Name+"."+dr.Namespace] = true
 		}
 	}
 	return result

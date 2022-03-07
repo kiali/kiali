@@ -13,11 +13,12 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForPeerAuth(pa *security_v1beta.PeerAuthentication, dr *networking_v1alpha3.DestinationRule) models.IstioReferences {
+func prepareTestForPeerAuth(pa *security_v1beta.PeerAuthentication, drs []networking_v1alpha3.DestinationRule) models.IstioReferences {
 	drReferences := PeerAuthReferences{
 		MTLSDetails: kubernetes.MTLSDetails{
 			PeerAuthentications: []security_v1beta.PeerAuthentication{*pa},
-			DestinationRules:    []networking_v1alpha3.DestinationRule{*dr},
+			DestinationRules:    drs,
+			EnabledAutoMtls:     false,
 		},
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
 			"test": data.CreateWorkloadList("istio-system",
@@ -27,61 +28,167 @@ func prepareTestForPeerAuth(pa *security_v1beta.PeerAuthentication, dr *networki
 	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "peerauthentication", Namespace: pa.Namespace, Name: pa.Name}]
 }
 
-func TestPeerAuthReferences(t *testing.T) {
+func TestMeshPeerAuthDisabledReferences(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForPeerAuth(getPeerAuth(t), getPADestinationRule(t))
+	references := prepareTestForPeerAuth(getPeerAuth(t, "disable-mesh-mtls", "istio-system"),
+		getPADestinationRules(t, "istio-system"))
 	assert.Empty(references.ServiceReferences)
 
 	// Check Workload references empty
 	assert.Empty(references.WorkloadReferences)
 
 	// Check DR and AuthPolicy references
-	assert.Len(references.ObjectReferences, 3)
-	assert.Equal(references.ObjectReferences[0].Name, "foo-dev")
+	assert.Len(references.ObjectReferences, 1)
+	assert.Equal(references.ObjectReferences[0].Name, "disable-mtls")
 	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
 	assert.Equal(references.ObjectReferences[0].ObjectType, "destinationrule")
-
-	assert.Equal(references.ObjectReferences[1].Name, "foo-sidecar")
-	assert.Equal(references.ObjectReferences[1].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[1].ObjectType, "sidecar")
-
-	assert.Equal(references.ObjectReferences[2].Name, "allow-foo")
-	assert.Equal(references.ObjectReferences[2].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[2].ObjectType, "authorizationpolicy")
 }
 
-func TestPeerAuthNoReferences(t *testing.T) {
+func TestNamespacePeerAuthDisabledReferences(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForPeerAuth(data.CreateEmptyPeerAuthentication(""), getPADestinationRule(t))
+	references := prepareTestForPeerAuth(getPeerAuth(t, "disable-namespace-mtls", "bookinfo"),
+		getPADestinationRules(t, "bookinfo"))
+	assert.Empty(references.ServiceReferences)
+
+	// Check Workload references empty
+	assert.Empty(references.WorkloadReferences)
+
+	// Check DR and AuthPolicy references
+	assert.Len(references.ObjectReferences, 1)
+	assert.Equal(references.ObjectReferences[0].Name, "disable-namespace")
+	assert.Equal(references.ObjectReferences[0].Namespace, "bookinfo")
+	assert.Equal(references.ObjectReferences[0].ObjectType, "destinationrule")
+}
+
+func TestMeshNamespacePeerAuthDisabledReferences(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	references := prepareTestForPeerAuth(getPeerAuth(t, "disable-namespace-mtls", "bookinfo"),
+		getPADestinationRules(t, "istio-system"))
+	assert.Empty(references.ServiceReferences)
+
+	// Check Workload references empty
+	assert.Empty(references.WorkloadReferences)
+
+	// Check DR and AuthPolicy references
+	assert.Equal(references.ObjectReferences[0].Name, "disable-mtls")
+	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
+	assert.Equal(references.ObjectReferences[0].ObjectType, "destinationrule")
+}
+
+func TestMeshPeerAuthEnabledReferences(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	references := prepareTestForPeerAuth(getPeerAuth(t, "strict-mesh-mtls", "istio-system"),
+		getPADestinationRules(t, "istio-system"))
+	assert.Empty(references.ServiceReferences)
+
+	// Check Workload references empty
+	assert.Empty(references.WorkloadReferences)
+
+	// Check DR and AuthPolicy references
+	assert.Len(references.ObjectReferences, 1)
+	assert.Equal(references.ObjectReferences[0].Name, "enable-mtls")
+	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
+	assert.Equal(references.ObjectReferences[0].ObjectType, "destinationrule")
+}
+
+func TestNamespacePeerAuthEnabledReferences(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	references := prepareTestForPeerAuth(getPeerAuth(t, "strict-namespace-mtls", "bookinfo"),
+		getPADestinationRules(t, "bookinfo"))
+	assert.Empty(references.ServiceReferences)
+
+	// Check Workload references empty
+	assert.Empty(references.WorkloadReferences)
+
+	// Check DR and AuthPolicy references
+	assert.Len(references.ObjectReferences, 1)
+	assert.Equal(references.ObjectReferences[0].Name, "enable-namespace")
+	assert.Equal(references.ObjectReferences[0].Namespace, "bookinfo")
+	assert.Equal(references.ObjectReferences[0].ObjectType, "destinationrule")
+}
+
+func TestMeshNamespacePeerAuthEnabledReferences(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	references := prepareTestForPeerAuth(getPeerAuth(t, "strict-namespace-mtls", "bookinfo"),
+		getPADestinationRules(t, "istio-system"))
+	assert.Empty(references.ServiceReferences)
+
+	// Check Workload references empty
+	assert.Empty(references.WorkloadReferences)
+
+	// Check DR and AuthPolicy references
+	assert.Len(references.ObjectReferences, 1)
+	assert.Equal(references.ObjectReferences[0].Name, "enable-mtls")
+	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
+	assert.Equal(references.ObjectReferences[0].ObjectType, "destinationrule")
+}
+
+func TestMeshPeerAuthNoReferences(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	references := prepareTestForPeerAuth(getPeerAuth(t, "permissive-mesh-mtls", "istio-system"),
+		getPADestinationRules(t, "istio-system"))
 	assert.Empty(references.ServiceReferences)
 	assert.Empty(references.WorkloadReferences)
 	assert.Empty(references.ObjectReferences)
 }
 
-func getPADestinationRule(t *testing.T) *networking_v1alpha3.DestinationRule {
-	loader := yamlFixtureLoader("peer-auth-disabled-meshwide.yaml")
-	err := loader.Load()
-	if err != nil {
-		t.Error("Error loading test data.")
-	}
+func TestNamespacePeerAuthNoReferences(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
-	return loader.FindDestinationRule("foo-dev", "istio-system")
+	// Setup mocks
+	references := prepareTestForPeerAuth(getPeerAuth(t, "permissive-namespace-mtls", "bookinfo"),
+		getPADestinationRules(t, "bookinfo"))
+	assert.Empty(references.ServiceReferences)
+	assert.Empty(references.WorkloadReferences)
+	assert.Empty(references.ObjectReferences)
 }
 
-func getPeerAuth(t *testing.T) *security_v1beta.PeerAuthentication {
-	loader := yamlFixtureLoader("peer-auth-disabled-meshwide.yaml")
+func getPADestinationRules(t *testing.T, namespace string) []networking_v1alpha3.DestinationRule {
+	loader := yamlFixtureLoader("peer-auth-drs.yaml")
 	err := loader.Load()
 	if err != nil {
 		t.Error("Error loading test data.")
 	}
 
-	return &loader.FindPeerAuthenticationIn("istio-system")[0]
+	return loader.FindDestinationRuleIn(namespace)
+}
+
+func getPeerAuth(t *testing.T, name, namespace string) *security_v1beta.PeerAuthentication {
+	loader := yamlFixtureLoader("peer-auth-drs.yaml")
+	err := loader.Load()
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
+
+	return loader.FindPeerAuthentication(name, namespace)
 }
