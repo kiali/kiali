@@ -900,6 +900,9 @@ func promQuery(query string, queryTime time.Time, api prom_v1.API) model.Vector 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// add scope if necessary
+	query = util.AddQueryScope(query)
+
 	// wrap with a round() to be in line with metrics api
 	query = fmt.Sprintf("round(%s,0.001)", query)
 	log.Tracef("Graph query:\n%s@time=%v (now=%v, %v)\n", query, queryTime.Format(graph.TF), time.Now().Format(graph.TF), queryTime.Unix())
