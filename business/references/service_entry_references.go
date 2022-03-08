@@ -15,6 +15,7 @@ type ServiceEntryReferences struct {
 	Sidecars              []networking_v1alpha3.Sidecar
 	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
 	DestinationRules      []networking_v1alpha3.DestinationRule
+	RegistryServices      []*kubernetes.RegistryService
 }
 
 func (n ServiceEntryReferences) References() models.IstioReferencesMap {
@@ -24,6 +25,7 @@ func (n ServiceEntryReferences) References() models.IstioReferencesMap {
 		key := models.IstioReferenceKey{Namespace: se.Namespace, Name: se.Name, ObjectType: models.ObjectTypeSingular[kubernetes.ServiceEntries]}
 		references := &models.IstioReferences{}
 		references.ObjectReferences = append(references.ObjectReferences, n.getConfigReferences(se)...)
+		references.ServiceReferences = append(references.ServiceReferences, n.getServiceReferences(se)...)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
 	}
 
@@ -100,6 +102,27 @@ func (n ServiceEntryReferences) getAuthPoliciesReferences(se networking_v1alpha3
 					}
 				}
 			}
+		}
+	}
+	return result
+}
+
+func (n ServiceEntryReferences) getServiceReferences(se networking_v1alpha3.ServiceEntry) []models.ServiceReference {
+	result := make([]models.ServiceReference, 0)
+	keys := make(map[string]bool)
+	allServices := make([]models.ServiceReference, 0)
+	for _, seHost := range se.Spec.Hosts {
+		for _, rStatus := range n.RegistryServices {
+			if kubernetes.FilterByRegistryService(se.Namespace, seHost, rStatus) {
+				allServices = append(allServices, models.ServiceReference{Name: rStatus.Hostname, Namespace: rStatus.IstioService.Attributes.Namespace})
+			}
+		}
+	}
+	// filter unique references
+	for _, s := range allServices {
+		if !keys[s.Name+"."+s.Namespace] {
+			result = append(result, s)
+			keys[s.Name+"."+s.Namespace] = true
 		}
 	}
 	return result

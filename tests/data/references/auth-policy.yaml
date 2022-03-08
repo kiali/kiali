@@ -11,6 +11,7 @@ spec:
     - "."
   hosts:
     - foo-dev.istio-system.svc.cluster.local
+    - foo-dev.bookinfo.svc.cluster.local
   location: MESH_EXTERNAL
   ports:
     - name: http

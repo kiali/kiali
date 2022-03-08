@@ -9,6 +9,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tests/data"
 )
 
 func prepareTestForServiceEntry(ap *security_v1beta.AuthorizationPolicy, dr *networking_v1alpha3.DestinationRule, se *networking_v1alpha3.ServiceEntry, sc *networking_v1alpha3.Sidecar) models.IstioReferences {
@@ -23,6 +24,7 @@ func prepareTestForServiceEntry(ap *security_v1beta.AuthorizationPolicy, dr *net
 		ServiceEntries:        []networking_v1alpha3.ServiceEntry{*se},
 		Sidecars:              []networking_v1alpha3.Sidecar{*sc},
 		DestinationRules:      []networking_v1alpha3.DestinationRule{*dr},
+		RegistryServices:      append(data.CreateFakeRegistryServices("foo-dev.bookinfo.svc.cluster.local", "bookinfo", "."), data.CreateFakeRegistryServices("foo-dev.istio-system.svc.cluster.local", "istio-system", "*")...),
 	}
 	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "serviceentry", Namespace: se.Namespace, Name: se.Name}]
 }
@@ -34,10 +36,14 @@ func TestServiceEntryReferences(t *testing.T) {
 
 	// Setup mocks
 	references := prepareTestForServiceEntry(getAuthPolicy(t), getAPDestinationRule(t), getAPServiceEntry(t), getSidecar(t))
-	assert.Empty(references.ServiceReferences)
 
 	// Check Workload references empty
 	assert.Empty(references.WorkloadReferences)
+
+	// Check Service references
+	assert.Len(references.ServiceReferences, 1)
+	assert.Equal(references.ServiceReferences[0].Name, "foo-dev.istio-system.svc.cluster.local")
+	assert.Equal(references.ServiceReferences[0].Namespace, "istio-system")
 
 	// Check DR and AuthPolicy references
 	assert.Len(references.ObjectReferences, 3)
