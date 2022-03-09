@@ -7,6 +7,7 @@ import { DefaultTrafficRates, EdgeLabelMode, EdgeMode, GraphType, Layout } from 
 import EmptyGraphLayoutContainer from '../EmptyGraphLayout';
 import { decorateGraphData } from '../../../store/Selectors/GraphData';
 import GraphDataSource from '../../../services/GraphDataSource';
+import { toSafeCyFieldName } from '../CytoscapeGraphUtils';
 
 jest.mock('../../../services/Api');
 
@@ -31,12 +32,13 @@ describe('CytoscapeGraph component test', () => {
 
     const dataSource = new GraphDataSource();
     dataSource.fetchGraphData({
-      includeHealth: false,
-      injectServiceNodes: true,
-      graphType: GraphType.VERSIONED_APP,
-      namespaces: [{ name: testNamespace }],
       duration: 60,
       edgeLabels: myEdgeLabelMode,
+      graphType: GraphType.VERSIONED_APP,
+      includeHealth: false,
+      includeLabels: false,
+      injectServiceNodes: true,
+      namespaces: [{ name: testNamespace }],
       queryTime: 0,
       showIdleEdges: false,
       showIdleNodes: false,
@@ -56,12 +58,13 @@ describe('CytoscapeGraph component test', () => {
             elementsChanged: true,
             isLoading: false,
             fetchParams: {
-              includeHealth: false,
-              injectServiceNodes: true,
-              graphType: GraphType.VERSIONED_APP,
-              namespaces: [{ name: testNamespace }],
               duration: 60,
               edgeLabels: myEdgeLabelMode,
+              graphType: GraphType.VERSIONED_APP,
+              includeHealth: false,
+              includeLabels: false,
+              injectServiceNodes: true,
+              namespaces: [{ name: testNamespace }],
               queryTime: 0,
               showIdleEdges: false,
               showIdleNodes: false,
@@ -98,6 +101,16 @@ describe('CytoscapeGraph component test', () => {
       const emptyGraphDecorated = decorateGraphData(GRAPH_DATA[testNamespace].elements);
       expect(emptyGraphLayoutWrapper.prop('elements')!.nodes).toEqual(emptyGraphDecorated.nodes);
       expect(emptyGraphLayoutWrapper.prop('elements')!.edges).toEqual(emptyGraphDecorated.edges);
+
+      done();
+    });
+  });
+
+  describe('utils test', () => {
+    it('should have working utils', done => {
+      expect(toSafeCyFieldName('foo')).toEqual('foo');
+      expect(toSafeCyFieldName('label_foo')).toEqual('label_foo');
+      expect(toSafeCyFieldName('label:kiali.io/foo')).toEqual('label_kiali_io_foo');
 
       done();
     });

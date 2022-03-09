@@ -69,6 +69,7 @@ export interface FetchParams {
   edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
   includeHealth: boolean;
+  includeLabels: boolean;
   injectServiceNodes: boolean;
   namespaces: Namespace[];
   node?: NodeParamsType;
@@ -128,6 +129,7 @@ export default class GraphDataSource {
       edgeLabels: [],
       graphType: GraphType.VERSIONED_APP,
       includeHealth: true,
+      includeLabels: false,
       injectServiceNodes: true,
       namespaces: [],
       showIdleEdges: false,
@@ -180,7 +182,7 @@ export default class GraphDataSource {
     }
 
     // Some appenders are expensive so only specify an appender if needed.
-    let appenders: AppenderString = 'deadNode,sidecarsCheck,serviceEntry,workloadEntry,istio,healthConfig';
+    let appenders: AppenderString = 'deadNode,istio,healthConfig,serviceEntry,sidecarsCheck,workloadEntry';
 
     if (fetchParams.showOperationNodes) {
       appenders += ',aggregateNode';
@@ -190,6 +192,10 @@ export default class GraphDataSource {
       // note we only use the idleNode appender if this is NOT a drilled-in node graph and
       // the user specifically requests to see idle nodes.
       appenders += ',idleNode';
+    }
+
+    if (fetchParams.includeLabels) {
+      appenders += ',labeler';
     }
 
     if (fetchParams.showSecurity) {
@@ -406,6 +412,7 @@ export default class GraphDataSource {
       edgeLabels: [],
       graphType: GraphType.WORKLOAD,
       includeHealth: true,
+      includeLabels: false,
       injectServiceNodes: true,
       namespaces: [{ name: namespace }],
       node: {

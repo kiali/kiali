@@ -90,6 +90,7 @@ const operands: string[] = [
   'httpin',
   'httpout',
   'idle',
+  'label:',
   'mirroring',
   'mtls',
   'name',
@@ -490,14 +491,18 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       let hiddenElements = cy.collection();
 
       if (selector) {
+        // add elements described by the hide expression
         hiddenElements = cy.$(selector);
-        // add the edges connected to hidden nodes
-        hiddenElements = hiddenElements.add(hiddenElements.connectedEdges());
+
         // add nodes with only hidden edges (keep idle nodes as that is an explicit option)
         const visibleElements = hiddenElements.absoluteComplement();
         const nodesWithVisibleEdges = visibleElements.edges().connectedNodes();
         const nodesWithOnlyHiddenEdges = visibleElements.nodes(`[^${CyNode.isIdle}]`).subtract(nodesWithVisibleEdges);
         hiddenElements = hiddenElements.add(nodesWithOnlyHiddenEdges);
+
+        // add the edges connected to hidden nodes
+        hiddenElements = hiddenElements.add(hiddenElements.connectedEdges());
+
         // subtract any appbox hits, we only hide empty appboxes
         hiddenElements = hiddenElements.subtract(hiddenElements.filter('$node[isBox]'));
       }
@@ -858,6 +863,11 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
         return s ? { target: 'edge', selector: s } : undefined;
       }
       default:
+        // special node operand
+        if (field.startsWith('label:')) {
+          return { target: 'node', selector: `[${CytoscapeGraphUtils.toSafeCyFieldName(field)} ${op} "${val}"]` };
+        }
+
         return this.setError(`Invalid operand [${field}]`, isFind);
     }
   };
@@ -987,6 +997,12 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
         return { target: 'edge', selector: isNegation ? `[^${CyEdge.hasTraffic}]` : `[?${CyEdge.hasTraffic}]` };
       }
       default:
+        // special node operand
+        if (field.startsWith('label:')) {
+          const safeFieldName = CytoscapeGraphUtils.toSafeCyFieldName(field);
+          return { target: 'node', selector: isNegation ? `[^${safeFieldName}]` : `[?${safeFieldName}]` };
+        }
+
         return undefined;
     }
   };

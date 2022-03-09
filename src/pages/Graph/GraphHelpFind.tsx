@@ -165,10 +165,20 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
   };
   private exampleRows = (): string[][] => {
     return [
-      ['name = reviews', `"by name": nodes with app label, service name or workload name equal to 'reviews'`],
-      ['name not contains rev', `"by name": nodes with app label, service name and workload name not containing 'rev'`],
-      ['app startswith product', `nodes with app label starting with 'product'`],
-      ['app != details and version=v1', `nodes with app label not equal to 'details' and with version equal to 'v1'`],
+      ['label:region', `nodes with the 'region' label. This tests for label existence, the label value is ignored.`],
+      [
+        '!label:region',
+        `nodes without the 'region' label. This tests for label existence, the label value is ignored.`
+      ],
+      ['label:region = east', `nodes with 'region' label equal to 'east'`],
+      [
+        'label:region != east',
+        `nodes with 'region' label not equal to 'east'.  Note, "!label:region = east" is invalid, leading negation is valid only for label existence.`
+      ],
+      ['name = reviews', `nodes with app or service name or workload name equal to 'reviews'`],
+      ['name not contains rev', `"nodes with app, service name and workload name not containing 'rev'`],
+      ['app startswith product', `nodes with app starting with 'product'`],
+      ['app != details and version=v1', `nodes with app not equal to 'details' and with version equal to 'v1'`],
       ['!sc', `nodes without a sidecar`],
       ['httpin > 0.5', `nodes with inbound http rate > 0.5 rps`],
       ['tcpout >= 1000', `nodes with outbound tcp rates >= 1000 bps`],
@@ -186,19 +196,20 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
   };
   private nodeRows = (): string[][] => {
     return [
+      ['app <op> <appName>', 'tests against canonical service'],
+      ['cluster <op> <clusterName>'],
       ['grpcin <op> <number>', 'unit: requests per second'],
       ['grpcout <op> <number>', 'unit: requests per second'],
       ['httpin <op> <number>', 'unit: requests per second'],
       ['httpout <op> <number>', 'unit: requests per second'],
-      ['app <op> <appName>'],
-      ['cluster <op> <clusterName>'],
-      ['name <op> <string>', 'tests against app label, operation, service and workload names'],
+      ['label:<label> <op> <value>', '<label> is a k8s label on the service, workload, etc'],
+      ['name <op> <string>', 'tests against canonical service, operation, service and workload names'],
       ['namespace <op> <namespaceName>'],
       ['node <op> <nodeType>', 'nodeType: app | operation | service | workload | unknown'],
       ['operation <op> <operationName>'],
       ['rank <op> <number>', 'unit: 1..100'],
       ['service <op> <serviceName>'],
-      ['version <op> <string>'],
+      ['version <op> <string>', 'tests against canonical revision'],
       ['tcpin <op> <number>', 'unit: bytes per second'],
       ['tcpout <op> <number>', 'unit: bytes per second'],
       ['workload <op> <workloadName>'],
@@ -231,6 +242,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['Use "<operand> = NaN" to test for no activity. Use "!= NaN" for any activity. (e.g. httpout = NaN)'],
       [`Unary operands may optionally be prefixed with "is" or "has". (i.e. "has mtls")`],
       ['The "name" operand expands internally to an "OR" expression (an "AND" when negated).'],
+      ['For the configured app and version labels, use the "app" and "version" Node operands, as opposed to "label:".'],
       ['Abbreviate: ns|namespace, svc|service, se|serviceentry, wl|workload, we|workloadentry, op|operation'],
       ['Abbreviate: rt|responsetime, sc|sidecar, vs|virtualservice'],
       ['Abbreviate: cb|circuitbreaker, fi|faultinjection, rr|requestrouting, rto|requesttimeout, ts|trafficshifting'],

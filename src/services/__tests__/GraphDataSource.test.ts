@@ -18,6 +18,7 @@ const FETCH_PARAMS = {
   edgeLabels: [],
   graphType: GraphType.VERSIONED_APP,
   includeHealth: false,
+  includeLabels: false,
   injectServiceNodes: false,
   namespaces: [{ name: 'foo' }],
   queryTime: 0,

@@ -305,6 +305,12 @@ export interface DestService {
   name: string;
 }
 
+export interface DestService {
+  cluster: string;
+  namespace: string;
+  name: string;
+}
+
 export interface SEInfo {
   hosts: string[];
   location: string;
@@ -317,19 +323,17 @@ export interface WEInfo {
 
 // Node data expected from server
 export interface GraphNodeData {
-  id: string;
-  parent?: string;
-  nodeType: NodeType;
+  // required
   cluster: string;
+  id: string;
   namespace: string;
-  workload?: string;
-  app?: string;
-  version?: string;
-  service?: string;
+  nodeType: NodeType;
+
+  // optional
   aggregate?: string;
   aggregateValue?: string;
+  app?: string;
   destServices?: DestService[];
-  traffic?: ProtocolTraffic[];
   hasCB?: boolean;
   hasFaultInjection?: boolean;
   hasHealthConfig?: HealthAnnotationType;
@@ -359,6 +363,12 @@ export interface GraphNodeData {
   isOutside?: boolean;
   isRoot?: boolean;
   isServiceEntry?: SEInfo;
+  labels?: { [key: string]: string };
+  parent?: string;
+  service?: string;
+  traffic?: ProtocolTraffic[];
+  version?: string;
+  workload?: string;
 }
 
 // Edge data expected from server

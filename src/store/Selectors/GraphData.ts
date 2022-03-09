@@ -13,6 +13,7 @@ import {
   hasProtocolTraffic
 } from '../../types/Graph';
 import { isIstioNamespace } from '../../config/ServerConfig';
+import { toSafeCyFieldName } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 
 // When updating the cytoscape graph, the element data expects to have all the changes
 // non-provided values are taken as "this didn't change", similar as setState does.
@@ -132,6 +133,17 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
           traffic.forEach(protocol => {
             decoratedNode.data = { ...propertiesToNumber(protocol.rates), ...decoratedNode.data };
           });
+        }
+        // we can do something similar with labels, parse out each to data.label_<key>: <value>
+        // and then set the field undefined because it is not used in the cy element handling
+        if (decoratedNode.data.labels) {
+          const labels = decoratedNode.data.labels;
+          decoratedNode.data.labels = undefined;
+          const prefixedLabels: { [key: string]: string } = {};
+          for (const key in labels) {
+            prefixedLabels[toSafeCyFieldName(`label:${key}`)] = labels[key];
+          }
+          decoratedNode.data = { ...prefixedLabels, ...decoratedNode.data };
         }
         // node.aggregate is set like aggregate=aggregateValue, split into distinct fields for the ui to use
         if (!!decoratedNode.data.aggregate) {

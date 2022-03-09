@@ -220,3 +220,14 @@ export const isNode = (target: Cy.NodeSingular | Cy.EdgeSingular | Cy.Core): tar
 export const isEdge = (target: Cy.NodeSingular | Cy.EdgeSingular | Cy.Core): target is Cy.EdgeSingular => {
   return !isCore(target) && target.isEdge();
 };
+
+export const toSafeCyFieldName = (fieldName: string): string => {
+  const alnumString = /^[a-zA-Z0-9]*$/;
+  const unsafeChar = /[^a-zA-Z0-9]/g;
+
+  if (fieldName.match(alnumString)) {
+    return fieldName;
+  }
+
+  return fieldName.replace(unsafeChar, '_');
+};

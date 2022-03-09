@@ -42,7 +42,9 @@ import {
   durationSelector,
   edgeLabelsSelector,
   edgeModeSelector,
+  findValueSelector,
   graphTypeSelector,
+  hideValueSelector,
   lastRefreshAtSelector,
   meshWideMTLSEnabledSelector,
   refreshIntervalSelector,
@@ -93,7 +95,9 @@ type ReduxProps = {
   edgeLabels: EdgeLabelMode[];
   edgeMode: EdgeMode;
   endTour: () => void;
+  findValue: string;
   graphType: GraphType;
+  hideValue: string;
   isPageVisible: boolean;
   lastRefreshAt: TimeInMilliseconds;
   layout: Layout;
@@ -353,7 +357,9 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       (prev.edgeLabels !== curr.edgeLabels && // test for edge labels that invoke graph gen appenders
         (curr.edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP) ||
           curr.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP))) ||
+      (prev.findValue !== curr.findValue && curr.findValue.includes('label:')) ||
       prev.graphType !== curr.graphType ||
+      (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
       (prev.lastRefreshAt !== curr.lastRefreshAt && curr.replayQueryTime === 0) ||
       (prev.replayActive !== curr.replayActive && !curr.replayActive) ||
       prev.replayQueryTime !== curr.replayQueryTime ||
@@ -689,6 +695,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       edgeLabels: this.props.edgeLabels,
       graphType: this.props.graphType,
       includeHealth: true,
+      includeLabels: this.props.findValue.includes('label:') || this.props.hideValue.includes('label:'),
       injectServiceNodes: this.props.showServiceNodes,
       namespaces: this.props.node ? [this.props.node.namespace] : this.props.activeNamespaces,
       node: this.props.node,
@@ -722,7 +729,9 @@ const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   edgeLabels: edgeLabelsSelector(state),
   edgeMode: edgeModeSelector(state),
+  findValue: findValueSelector(state),
   graphType: graphTypeSelector(state),
+  hideValue: hideValueSelector(state),
   isPageVisible: state.globalState.isPageVisible,
   lastRefreshAt: lastRefreshAtSelector(state),
   layout: state.graph.layout,
