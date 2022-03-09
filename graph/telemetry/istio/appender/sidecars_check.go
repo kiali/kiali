@@ -21,6 +21,11 @@ func (a SidecarsCheckAppender) Name() string {
 	return SidecarsCheckAppenderName
 }
 
+// IsFinalizer implements Appender
+func (a SidecarsCheckAppender) IsFinalizer() bool {
+	return false
+}
+
 // AppendGraph implements Appender
 func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {

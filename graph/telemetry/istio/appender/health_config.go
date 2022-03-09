@@ -16,6 +16,11 @@ func (a HealthConfigAppender) Name() string {
 	return HealthConfigAppenderName
 }
 
+// IsFinalizer implements Appender
+func (a HealthConfigAppender) IsFinalizer() bool {
+	return false
+}
+
 // AppendGraph implements Appender
 func (a HealthConfigAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {

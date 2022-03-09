@@ -17,12 +17,15 @@ const (
 )
 
 // ParseAppenders determines which appenders should run for this graphing request
-func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
+func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, finalizers []graph.Appender) {
 
-	requestedAppenders := make(map[string]bool)
+	requestedAppenders := map[string]bool{}
+	requestedFinalizers := map[string]bool{}
+
 	if !o.Appenders.All {
 		for _, appenderName := range o.Appenders.AppenderNames {
 			switch appenderName {
+			// namespace appenders
 			case AggregateNodeAppenderName:
 				requestedAppenders[AggregateNodeAppenderName] = true
 			case DeadNodeAppenderName:
@@ -45,6 +48,11 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 				requestedAppenders[ThroughputAppenderName] = true
 			case WorkloadEntryAppenderName:
 				requestedAppenders[WorkloadEntryAppenderName] = true
+			// finalizer appenders
+			case LabelerAppenderName:
+				requestedFinalizers[LabelerAppenderName] = true
+			case OutsiderAppenderName, TrafficGeneratorAppenderName:
+				// skip - these are always run, ignore if specified
 			case "":
 				// skip
 			default:
@@ -60,8 +68,6 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	// - lazily inject aggregate nodes so other decorations can influence the new nodes/edges, if necessary
 	// Add orphan (idle) services
 	// Run remaining appenders
-	var appenders []graph.Appender
-
 	if _, ok := requestedAppenders[ServiceEntryAppenderName]; ok || o.Appenders.All {
 		a := ServiceEntryAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
@@ -180,12 +186,28 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 		appenders = append(appenders, a)
 	}
 
-	return appenders
+	// The finalizer order is important
+	// always run the outsider finalizer
+	finalizers = append(finalizers, &OutsiderAppender{
+		AccessibleNamespaces: o.AccessibleNamespaces,
+		Namespaces:           o.Namespaces,
+	})
+
+	// if labeler finalizer is to be run, do it after the outsider finalizer
+	if _, ok := requestedFinalizers[LabelerAppenderName]; ok {
+		finalizers = append(finalizers, &LabelerAppender{})
+	}
+
+	// always run the traffic generator finalizer
+	finalizers = append(finalizers, &TrafficGeneratorAppender{})
+
+	return appenders, finalizers
 }
 
 const (
-	serviceListKey       = "serviceListKey"       // global vendor info map[namespace]serviceDefinitionList
+	appsMapKey           = "appsMapKey"           // global vendor info map[namespace]appsMap
 	serviceEntryHostsKey = "serviceEntryHostsKey" // global vendor info service entries for all accessible namespaces
+	serviceListKey       = "serviceListKey"       // global vendor info map[namespace]serviceDefinitionList
 	workloadListKey      = "workloadListKey"      // global vendor info map[namespace]workloadListKey
 )
 
@@ -198,6 +220,8 @@ type serviceEntry struct {
 }
 
 type serviceEntryHosts map[string][]*serviceEntry
+
+type appsMap map[string]*models.AppListItem
 
 func newServiceEntryHosts() serviceEntryHosts {
 	return make(map[string][]*serviceEntry)
@@ -315,4 +339,41 @@ func getAppWorkloads(namespace, app, version string, gi *graph.AppenderGlobalInf
 		}
 	}
 	return result
+}
+
+func getApp(namespace, appName string, gi *graph.AppenderGlobalInfo) (*models.AppListItem, bool) {
+	if appName == "" || appName == graph.Unknown {
+		return nil, false
+	}
+
+	var allAppsMap map[string]appsMap
+	if existingAllAppsMap, ok := gi.Vendor[appsMapKey]; ok {
+		allAppsMap = existingAllAppsMap.(map[string]appsMap)
+	} else {
+		allAppsMap = make(map[string]appsMap)
+		gi.Vendor[appsMapKey] = allAppsMap
+	}
+
+	var namespaceApps appsMap
+	if existingNamespaceApps, ok := allAppsMap[namespace]; ok {
+		if app, ok := existingNamespaceApps[appName]; ok {
+			return app, true
+		} else {
+			namespaceApps = existingNamespaceApps
+		}
+	} else {
+		namespaceApps = appsMap{}
+		allAppsMap[namespace] = namespaceApps
+	}
+
+	if appList, err := gi.Business.App.GetAppList(context.TODO(), business.AppCriteria{Namespace: namespace, IncludeIstioResources: false}); err == nil {
+		for _, app := range appList.Apps {
+			if app.Name == appName {
+				namespaceApps[appName] = &app
+				return &app, true
+			}
+		}
+	}
+
+	return nil, false
 }

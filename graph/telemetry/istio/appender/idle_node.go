@@ -24,6 +24,11 @@ func (a IdleNodeAppender) Name() string {
 	return IdleNodeAppenderName
 }
 
+// IsFinalizer implements Appender
+func (a IdleNodeAppender) IsFinalizer() bool {
+	return false
+}
+
 // AppendGraph implements Appender
 func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if a.IsNodeGraph {

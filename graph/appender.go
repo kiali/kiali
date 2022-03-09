@@ -43,9 +43,13 @@ func NewAppenderNamespaceInfo(namespace string) *AppenderNamespaceInfo {
 // supplemental information.  On error the appender should panic and it will be
 // handled as an error response.
 type Appender interface {
-	// AppendGraph performs the appender work on the provided traffic map. The map
-	// may be initially empty. An appender is allowed to add or remove map entries.
+	// AppendGraph performs the appender work on the provided traffic map. The map may be initially empty.
+	// An appender is allowed to add or remove map entries. namespaceInfo will be nil for Finalizer appenders.
 	AppendGraph(trafficMap TrafficMap, globalInfo *AppenderGlobalInfo, namespaceInfo *AppenderNamespaceInfo)
+
+	// IsFinalizer returns true if the appender should run only on the final TrafficMap, or false if the appender should
+	// run against every requested namespace.
+	IsFinalizer() bool
 
 	// Name returns a unique appender name and which is the name used to identify the appender (e.g in 'appenders' query param)
 	Name() string

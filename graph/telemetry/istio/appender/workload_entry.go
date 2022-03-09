@@ -25,6 +25,11 @@ func (a WorkloadEntryAppender) Name() string {
 	return WorkloadEntryAppenderName
 }
 
+// IsFinalizer implements Appender
+func (a WorkloadEntryAppender) IsFinalizer() bool {
+	return true
+}
+
 // AppendGraph implements Appender
 func (a WorkloadEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
