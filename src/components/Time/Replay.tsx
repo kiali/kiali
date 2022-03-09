@@ -234,9 +234,7 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
             <DateTimePicker
               injectTimes={[maxTime]}
               maxDate={maxTime}
-              maxTime={maxTime}
               minDate={minTime}
-              minTime={minTime}
               onChange={date => this.onPickerChange(date)}
               selected={selectedTime}
             />

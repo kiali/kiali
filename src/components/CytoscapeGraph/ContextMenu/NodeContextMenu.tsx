@@ -125,7 +125,7 @@ export class NodeContextMenu extends React.PureComponent<Props> {
         <div className={contextMenuHeader}>
           {(!isBox || isBox === BoxByType.APP) && (
             <>
-              <PFBadge badge={PFBadges.Namespace} style={{ marginBottom: '2px' }} />
+              <PFBadge badge={PFBadges.Namespace} />
               {this.props.namespace}
             </>
           )}
@@ -162,7 +162,7 @@ export class NodeContextMenu extends React.PureComponent<Props> {
     return (
       <div className={contextMenu}>
         {header}
-        <hr />
+        <hr style={{ margin: '8px 0 5px 0' }} />
         {menuOptions}
       </div>
     );
