@@ -166,6 +166,42 @@ func AddToMetadata(protocol string, val float64, code, flags, host string, sourc
 	default:
 		log.Tracef("Ignore unhandled metadata protocol [%s]", protocol)
 	}
+
+	if sourceMetadata != nil {
+		if _, ok := sourceMetadata["outbound"]; !ok {
+			sourceMetadata["outbound"] = map[string]map[string]float64{}
+		}
+
+		if _, ok := sourceMetadata["outbound"].(map[string]map[string]float64)[protocol]; !ok {
+			sourceMetadata["outbound"].(map[string]map[string]float64)[protocol] = map[string]float64{
+				code: val,
+			}
+		} else {
+			if _, ok := sourceMetadata["outbound"].(map[string]map[string]float64)[protocol][code]; !ok {
+				sourceMetadata["outbound"].(map[string]map[string]float64)[protocol][code] = val
+			} else {
+				sourceMetadata["outbound"].(map[string]map[string]float64)[protocol][code] += val
+			}
+		}
+	}
+
+	if destMetadata != nil {
+		if _, ok := destMetadata["inbound"]; !ok {
+			destMetadata["inbound"] = map[string]map[string]float64{}
+		}
+
+		if _, ok := destMetadata["inbound"].(map[string]map[string]float64)[protocol]; !ok {
+			destMetadata["inbound"].(map[string]map[string]float64)[protocol] = map[string]float64{
+				code: val,
+			}
+		} else {
+			if _, ok := destMetadata["inbound"].(map[string]map[string]float64)[protocol][code]; !ok {
+				destMetadata["inbound"].(map[string]map[string]float64)[protocol][code] = val
+			} else {
+				destMetadata["inbound"].(map[string]map[string]float64)[protocol][code] += val
+			}
+		}
+	}
 }
 
 func addToMetadataGrpc(val float64, code, flags, host string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
@@ -199,6 +235,7 @@ func addToMetadataHTTP(val float64, code, flags, host string, sourceMetadata, de
 	addToMetadataValue(destMetadata, httpIn, val)
 	addToMetadataValue(edgeMetadata, http, val)
 	addToMetadataResponses(edgeMetadata, httpResponses, code, flags, host, val)
+	// addToMetadataResponses(destMetadata, httpResponses, code, flags, host, val)
 
 	// note, we don't track 2xx because it's not used downstream and can be easily
 	// calculated: 2xx = (rate - NoResponse - 3xx - 4xx - 5xx)
@@ -206,6 +243,9 @@ func addToMetadataHTTP(val float64, code, flags, host string, sourceMetadata, de
 	case code == "-":
 		addToMetadataValue(destMetadata, httpInNoResponse, val)
 		addToMetadataValue(edgeMetadata, httpNoResponse, val)
+	// case strings.HasPrefix(code, "2"):
+	// 	addToMetadataValue(destMetadata, "httpIn2xx", val)
+	// 	addToMetadataValue(sourceMetadata, "httpOut2xx", val)
 	case strings.HasPrefix(code, "3"):
 		addToMetadataValue(destMetadata, httpIn3xx, val)
 		addToMetadataValue(edgeMetadata, http3xx, val)

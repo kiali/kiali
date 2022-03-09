@@ -16,11 +16,13 @@ package cytoscape
 
 import (
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/models"
 )
 
 // ResponseFlags is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:
@@ -113,6 +115,28 @@ type NodeData struct {
 	IsOutside             bool                `json:"isOutside,omitempty"`             // true | false
 	IsRoot                bool                `json:"isRoot,omitempty"`                // true | false
 	IsServiceEntry        *graph.SEInfo       `json:"isServiceEntry,omitempty"`        // set static service entry information
+	Health                *NodeHealth         `json:"health,omitempty"`
+}
+
+// NodeHealth is an amalgamation of models.WorkloadHealth, models.AppHealth, and models.ServiceHealth.
+// It's expected that only one of those will be set based on the node type.
+// TODO: This can be a union type in go 1.18.
+type NodeHealth struct {
+	*models.WorkloadHealth `json:",omitempty"`
+	*models.ServiceHealth  `json:",omitempty"`
+	*models.AppHealth      `json:",omitempty"`
+}
+
+func (nh *NodeHealth) MarshalJSON() ([]byte, error) {
+	if nh.WorkloadHealth != nil {
+		return json.Marshal(nh.WorkloadHealth)
+	} else if nh.AppHealth != nil {
+		return json.Marshal(nh.AppHealth)
+	} else if nh.ServiceHealth != nil {
+		return json.Marshal(nh.ServiceHealth)
+	}
+
+	return nil, nil
 }
 
 type EdgeData struct {
@@ -275,6 +299,26 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// node is not accessible to the current user
 		if val, ok := n.Metadata[graph.IsInaccessible]; ok {
 			nd.IsInaccessible = val.(bool)
+		}
+
+		if val, ok := n.Metadata[graph.NodeHealth]; ok {
+			switch n.NodeType {
+			case graph.NodeTypeApp:
+				health := val.(*models.AppHealth)
+				if health != nil {
+					nd.Health = &NodeHealth{AppHealth: health}
+				}
+			case graph.NodeTypeWorkload:
+				health := val.(*models.WorkloadHealth)
+				if health != nil {
+					nd.Health = &NodeHealth{WorkloadHealth: health}
+				}
+			case graph.NodeTypeService:
+				health := val.(*models.ServiceHealth)
+				if health != nil {
+					nd.Health = &NodeHealth{ServiceHealth: health}
+				}
+			}
 		}
 
 		// node may represent an Istio Ingress Gateway

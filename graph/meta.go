@@ -39,6 +39,7 @@ const (
 	IsRoot                MetadataKey = "isRoot"
 	IsServiceEntry        MetadataKey = "isServiceEntry"
 	Labels                MetadataKey = "labels"
+	NodeHealth            MetadataKey = "health"
 	ProtocolKey           MetadataKey = "protocol"
 	ResponseTime          MetadataKey = "responseTime"
 	SourcePrincipal       MetadataKey = "sourcePrincipal"

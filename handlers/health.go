@@ -18,7 +18,7 @@ const defaultHealthRateInterval = "10m"
 // NamespaceHealth is the API handler to get app-based health of every services in the given namespace
 func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 	// Get business layer
-	business, err := getBusiness(r)
+	businessLayer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -32,29 +32,30 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Adjust rate interval
-	rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime)
+	rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime)
 	if err != nil {
 		handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 		return
 	}
 
+	criteria := business.HealthCriteria{QueryTime: p.QueryTime, RateInterval: rateInterval, WithTelemetry: true}
 	switch p.Type {
 	case "app":
-		health, err := business.Health.GetNamespaceAppHealth(r.Context(), p.Namespace, rateInterval, p.QueryTime)
+		health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), p.Namespace, criteria)
 		if err != nil {
 			handleErrorResponse(w, err, "Error while fetching app health: "+err.Error())
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, health)
 	case "service":
-		health, err := business.Health.GetNamespaceServiceHealth(r.Context(), p.Namespace, rateInterval, p.QueryTime)
+		health, err := businessLayer.Health.GetNamespaceServiceHealth(r.Context(), p.Namespace, criteria)
 		if err != nil {
 			handleErrorResponse(w, err, "Error while fetching service health: "+err.Error())
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, health)
 	case "workload":
-		health, err := business.Health.GetNamespaceWorkloadHealth(r.Context(), p.Namespace, rateInterval, p.QueryTime)
+		health, err := businessLayer.Health.GetNamespaceWorkloadHealth(r.Context(), p.Namespace, criteria)
 		if err != nil {
 			handleErrorResponse(w, err, "Error while fetching workload health: "+err.Error())
 			return
@@ -85,7 +86,7 @@ func AppHealth(w http.ResponseWriter, r *http.Request) {
 
 // WorkloadHealth is the API handler to get health of a single workload
 func WorkloadHealth(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
+	businessLayer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -93,20 +94,21 @@ func WorkloadHealth(w http.ResponseWriter, r *http.Request) {
 
 	p := workloadHealthParams{}
 	p.extract(r)
-	rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime)
+	rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime)
 	if err != nil {
 		handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 		return
 	}
 	p.RateInterval = rateInterval
 
-	health, err := business.Health.GetWorkloadHealth(r.Context(), p.Namespace, p.Workload, p.WorkloadType, rateInterval, p.QueryTime)
+	criteria := business.HealthCriteria{RateInterval: rateInterval, QueryTime: p.QueryTime, WithTelemetry: true}
+	health, err := businessLayer.Health.GetWorkloadHealth(r.Context(), p.Namespace, p.Workload, p.WorkloadType, criteria)
 	handleHealthResponse(w, health, err)
 }
 
 // ServiceHealth is the API handler to get health of a single service
 func ServiceHealth(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
+	businessLayer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -114,13 +116,14 @@ func ServiceHealth(w http.ResponseWriter, r *http.Request) {
 
 	p := serviceHealthParams{}
 	p.extract(r)
-	rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime)
+	rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime)
 	if err != nil {
 		handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 		return
 	}
 
-	health, err := business.Health.GetServiceHealth(r.Context(), p.Namespace, p.Service, rateInterval, p.QueryTime)
+	criteria := business.HealthCriteria{RateInterval: rateInterval, QueryTime: p.QueryTime, WithTelemetry: true}
+	health, err := businessLayer.Health.GetServiceHealth(r.Context(), p.Namespace, p.Service, criteria)
 	handleHealthResponse(w, health, err)
 }
 

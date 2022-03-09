@@ -364,6 +364,15 @@ func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val flo
 			addToDestServices(dest.Metadata, destCluster, destSvcNs, destSvcName)
 		}
 	}
+
+	// if dest.Metadata["health"] == nil {
+	// 	dest.Metadata["health"] = map[string]float64{}
+	// }
+	// if _, found := dest.Metadata["health"].(map[string]float64)[code]; found {
+	// 	dest.Metadata["health"].(map[string]float64)[code] += val
+	// } else {
+	// 	dest.Metadata["health"].(map[string]float64)[code] = val
+	// }
 }
 
 // addEdgeTraffic uses edgeTSHash that the metric information has not been applied to the edge. Returns true

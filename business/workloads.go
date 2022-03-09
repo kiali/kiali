@@ -168,7 +168,8 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(wSelector, istioConfigList))
 		}
 		if criteria.Health {
-			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, criteria.Namespace, wItem.Name, wItem.Type, criteria.RateInterval, criteria.QueryTime)
+			healthCriteria := HealthCriteria{RateInterval: criteria.RateInterval, QueryTime: criteria.QueryTime, WithTelemetry: true}
+			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, criteria.Namespace, wItem.Name, wItem.Type, healthCriteria)
 			if err != nil {
 				log.Errorf("Error fetching Health in namespace %s for workload %s: %s", criteria.Namespace, wItem.Name, err)
 			}

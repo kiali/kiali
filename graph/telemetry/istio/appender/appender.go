@@ -30,6 +30,8 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 				requestedAppenders[AggregateNodeAppenderName] = true
 			case DeadNodeAppenderName:
 				requestedAppenders[DeadNodeAppenderName] = true
+			case HealthAppenderName:
+				requestedAppenders[HealthAppenderName] = true
 			case HealthConfigAppenderName:
 				requestedAppenders[HealthConfigAppenderName] = true
 			case IdleNodeAppenderName:
@@ -183,6 +185,10 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		a := SidecarsCheckAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
 		}
+		appenders = append(appenders, a)
+	}
+	if _, ok := requestedAppenders[HealthAppenderName]; ok || o.Appenders.All {
+		a := HealthAppender{GraphType: o.GraphType}
 		appenders = append(appenders, a)
 	}
 
