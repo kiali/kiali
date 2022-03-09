@@ -290,7 +290,7 @@ func (in *SvcService) getClusterId() string {
 			if cluster != nil {
 				clusterId = cluster.Name
 			} else {
-				log.Debug("No Cluster ID is set in the service mesh control plane configuration. Or please check istio_deployment_name is set properly.")
+				log.Debugf("No Cluster ID is set in the service mesh control plane configuration. Or please check 'istiod_deployment_name' is set properly. Using default Cluster ID: %s", clusterId)
 			}
 		} else {
 			log.Errorf("Cluster Id resolution failed: %s", err)
