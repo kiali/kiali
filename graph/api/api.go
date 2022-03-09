@@ -16,7 +16,7 @@ import (
 )
 
 // GraphNamespaces generates a namespaces graph using the provided options
-func GraphNamespaces(business *business.Layer, o graph.Options, ctx context.Context) (code int, config interface{}) {
+func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Options) (code int, config interface{}) {
 	// time how long it takes to generate this graph
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
@@ -25,7 +25,7 @@ func GraphNamespaces(business *business.Layer, o graph.Options, ctx context.Cont
 	case graph.VendorIstio:
 		prom, err := prometheus.NewClient()
 		graph.CheckError(err)
-		code, config = graphNamespacesIstio(business, prom, o, ctx)
+		code, config = graphNamespacesIstio(ctx, business, prom, o)
 	default:
 		graph.Error(fmt.Sprintf("TelemetryVendor [%s] not supported", o.TelemetryVendor))
 	}
@@ -37,20 +37,20 @@ func GraphNamespaces(business *business.Layer, o graph.Options, ctx context.Cont
 }
 
 // graphNamespacesIstio provides a test hook that accepts mock clients
-func graphNamespacesIstio(business *business.Layer, prom *prometheus.Client, o graph.Options, ctx context.Context) (code int, config interface{}) {
+func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom *prometheus.Client, o graph.Options) (code int, config interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = business
 
 	trafficMap := istio.BuildNamespacesTrafficMap(o.TelemetryOptions, prom, globalInfo)
-	code, config = generateGraph(trafficMap, o, business, ctx)
+	code, config = generateGraph(ctx, trafficMap, o, business)
 
 	return code, config
 }
 
 // GraphNode generates a node graph using the provided options
-func GraphNode(business *business.Layer, o graph.Options, ctx context.Context) (code int, config interface{}) {
+func GraphNode(ctx context.Context, business *business.Layer, o graph.Options) (code int, config interface{}) {
 	if len(o.Namespaces) != 1 {
 		graph.Error("Node graph does not support the 'namespaces' query parameter or the 'all' namespace")
 	}
@@ -63,7 +63,7 @@ func GraphNode(business *business.Layer, o graph.Options, ctx context.Context) (
 	case graph.VendorIstio:
 		prom, err := prometheus.NewClient()
 		graph.CheckError(err)
-		code, config = graphNodeIstio(business, prom, o, ctx)
+		code, config = graphNodeIstio(ctx, business, prom, o)
 	default:
 		graph.Error(fmt.Sprintf("TelemetryVendor [%s] not supported", o.TelemetryVendor))
 	}
@@ -74,19 +74,19 @@ func GraphNode(business *business.Layer, o graph.Options, ctx context.Context) (
 }
 
 // graphNodeIstio provides a test hook that accepts mock clients
-func graphNodeIstio(business *business.Layer, client *prometheus.Client, o graph.Options, ctx context.Context) (code int, config interface{}) {
+func graphNodeIstio(ctx context.Context, business *business.Layer, client *prometheus.Client, o graph.Options) (code int, config interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = business
 
 	trafficMap := istio.BuildNodeTrafficMap(o.TelemetryOptions, client, globalInfo)
-	code, config = generateGraph(trafficMap, o, business, ctx)
+	code, config = generateGraph(ctx, trafficMap, o, business)
 
 	return code, config
 }
 
-func generateGraph(trafficMap graph.TrafficMap, o graph.Options, bs *business.Layer, ctx context.Context) (int, interface{}) {
+func generateGraph(ctx context.Context, trafficMap graph.TrafficMap, o graph.Options, bs *business.Layer) (int, interface{}) {
 	log.Tracef("Generating config for [%s] graph...", o.ConfigVendor)
 
 	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
@@ -97,7 +97,7 @@ func generateGraph(trafficMap graph.TrafficMap, o graph.Options, bs *business.La
 	case graph.VendorCytoscape:
 		vc := cytoscape.NewConfig(trafficMap, o.ConfigOptions)
 		if o.ConfigOptions.IncludeHealth {
-			err := collectGraphHealth(&vc, o.ConfigOptions, bs, ctx)
+			err := collectGraphHealth(ctx, &vc, o.ConfigOptions, bs)
 			if err != nil {
 				graph.Error(fmt.Sprintf("Error collecting graph health: %s", err.Error()))
 			}
@@ -111,7 +111,7 @@ func generateGraph(trafficMap graph.TrafficMap, o graph.Options, bs *business.La
 	return http.StatusOK, vendorConfig
 }
 
-func collectGraphHealth(vendorConfig *cytoscape.Config, o graph.ConfigOptions, bs *business.Layer, ctx context.Context) error {
+func collectGraphHealth(ctx context.Context, vendorConfig *cytoscape.Config, o graph.ConfigOptions, bs *business.Layer) error {
 	healthReqs := make(map[string]map[string][]*cytoscape.NodeWrapper)
 
 	// Limit health fetches to only the necessary namespaces for the necessary types
@@ -125,20 +125,21 @@ func collectGraphHealth(vendorConfig *cytoscape.Config, o graph.ConfigOptions, b
 		nodeType := node.Data.NodeType
 		workloadOk := len(node.Data.Workload) != 0 && node.Data.Workload != graph.Unknown
 
-		useWorkloadHealth := nodeType == graph.NodeTypeWorkload || (nodeType == graph.NodeTypeApp && workloadOk)
-		if useWorkloadHealth {
+		switch nodeType {
+		case graph.NodeTypeWorkload:
 			kind = "workload"
-		} else {
-			switch nodeType {
-			case graph.NodeTypeApp:
+		case graph.NodeTypeApp:
+			if workloadOk {
+				kind = "workload"
+			} else {
 				kind = "app"
-			case graph.NodeTypeBox:
-				if node.Data.IsBox == graph.BoxByApp {
-					kind = "app"
-				}
-			case graph.NodeTypeService:
-				kind = "service"
 			}
+		case graph.NodeTypeBox:
+			if node.Data.IsBox == graph.BoxByApp {
+				kind = "app"
+			}
+		case graph.NodeTypeService:
+			kind = "service"
 		}
 
 		if len(kind) != 0 {
