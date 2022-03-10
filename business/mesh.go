@@ -198,11 +198,13 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 	// The "cluster_id" is set in an environment variable of
 	// the "istiod" deployment. Let's try to fetch it.
 	var istioDeployment *v1.Deployment
+	var istioDeploymentConfig = conf.ExternalServices.Istio.IstiodDeploymentName
 	var err error
+
 	if IsNamespaceCached(conf.IstioNamespace) {
-		istioDeployment, err = kialiCache.GetDeployment(conf.IstioNamespace, conf.ExternalServices.Istio.IstiodDeploymentName)
+		istioDeployment, err = kialiCache.GetDeployment(conf.IstioNamespace, istioDeploymentConfig)
 	} else {
-		istioDeployment, err = in.k8s.GetDeployment(conf.IstioNamespace, conf.ExternalServices.Istio.IstiodDeploymentName)
+		istioDeployment, err = in.k8s.GetDeployment(conf.IstioNamespace, istioDeploymentConfig)
 	}
 	if err != nil && !errors.IsNotFound(err) {
 		return nil, err
