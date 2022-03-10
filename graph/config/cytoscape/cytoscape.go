@@ -93,6 +93,7 @@ type NodeData struct {
 	Aggregate             string              `json:"aggregate,omitempty"`             // set like "<aggregate>=<aggregateVal>"
 	DestServices          []graph.ServiceName `json:"destServices,omitempty"`          // requested services for [dest] node
 	Traffic               []ProtocolTraffic   `json:"traffic,omitempty"`               // traffic rates for all detected protocols
+	Labels                map[string]string   `json:"labels,omitempty"`                // k8s labels associated with the node
 	HasCB                 bool                `json:"hasCB,omitempty"`                 // true (has circuit breaker) | false
 	HasFaultInjection     bool                `json:"hasFaultInjection,omitempty"`     // true (vs has fault injection) | false
 	HasHealthConfig       HealthConfig        `json:"hasHealthConfig,omitempty"`       // set to the health config override
@@ -245,6 +246,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		}
 
 		addNodeTelemetry(n, nd)
+
+		// set k8s labels, if any
+		if val, ok := n.Metadata[graph.Labels]; ok {
+			nd.Labels = val.(graph.LabelsMetadata)
+		}
 
 		// set annotations, if available
 		if val, ok := n.Metadata[graph.HasHealthConfig]; ok {

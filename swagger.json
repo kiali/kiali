@@ -6142,6 +6142,13 @@
         "isServiceEntry": {
           "$ref": "#/definitions/SEInfo"
         },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
         "namespace": {
           "type": "string",
           "x-go-name": "Namespace"

@@ -30,8 +30,9 @@ func TestGetDashboard(t *testing.T) {
 
 	// Setup mocks
 	service, prom := setupService("my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1")})
+	service.promConfig.QueryScope = map[string]string{"mesh_id": "mesh1"}
 
-	expectedLabels := "{namespace=\"my-namespace\",APP=\"my-app\"}"
+	expectedLabels := `{namespace="my-namespace",APP="my-app",mesh_id="mesh1"}`
 	namespace := models.Namespace{
 		Name: "my-namespace",
 	}

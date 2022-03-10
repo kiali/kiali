@@ -31,6 +31,10 @@ func createMetricsLabelsBuilder(q *models.IstioMetricsQuery) *MetricsLabelsBuild
 	lb.Reporter(q.Reporter)
 
 	namespaceSet := false
+
+	// add custom labels from config if custom labels are configured
+	lb.QueryScope()
+
 	if q.Service != "" {
 		lb.Service(q.Service, q.Namespace)
 		namespaceSet = true
@@ -52,6 +56,7 @@ func createMetricsLabelsBuilder(q *models.IstioMetricsQuery) *MetricsLabelsBuild
 	if q.Aggregate != "" {
 		lb.Aggregate(q.Aggregate, q.AggregateValue)
 	}
+
 	return lb
 }
 

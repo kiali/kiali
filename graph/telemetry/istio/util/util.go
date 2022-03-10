@@ -3,12 +3,14 @@ package util
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/prometheus"
 )
 
 // badServiceMatcher looks for a physical IP address with optional port (e.g. 10.11.12.13:80)
@@ -121,4 +123,20 @@ func IsBadDestTelemetry(cluster string, clusterOK bool, svcNs, svc, svcName, wl 
 		return true
 	}
 	return false
+}
+
+// AddQueryScope returns the prom query unchanged if there is no configured queryScope, otherwise
+// it returns the query with the queryScope injected after each occurrence of a leading '{'.
+func AddQueryScope(query string) string {
+	queryScope := config.Get().ExternalServices.Prometheus.QueryScope
+	if len(queryScope) == 0 {
+		return query
+	}
+
+	scope := "{"
+	for labelName, labelValue := range queryScope {
+		scope = fmt.Sprintf("%s%s=\"%s\",", scope, prometheus.SanitizeLabelName(labelName), labelValue)
+	}
+
+	return strings.ReplaceAll(query, "{", scope)
 }

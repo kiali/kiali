@@ -8048,6 +8048,7 @@ This type is used to describe a set of objects.
 | IsInaccessible | boolean| `bool` |  | |  |  |
 | IsOutside | boolean| `bool` |  | |  |  |
 | IsRoot | boolean| `bool` |  | |  |  |
+| Labels | map of string| `map[string]string` |  | |  |  |
 | Namespace | string| `string` |  | |  |  |
 | NodeType | string| `string` |  | | App Fields (not required by Cytoscape) |  |
 | Parent | string| `string` |  | |  |  |

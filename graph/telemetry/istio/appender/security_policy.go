@@ -35,6 +35,11 @@ func (a SecurityPolicyAppender) Name() string {
 	return SecurityPolicyAppenderName
 }
 
+// IsFinalizer implements Appender
+func (a SecurityPolicyAppender) IsFinalizer() bool {
+	return false
+}
+
 // AppendGraph implements Appender
 func (a SecurityPolicyAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
