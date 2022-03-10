@@ -9,7 +9,13 @@ import { RenderComponentScroll } from '../../components/Nav/Page';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
 import GraphDataSource from 'services/GraphDataSource';
-import { drToIstioItems, vsToIstioItems, gwToIstioItems, seToIstioItems } from '../../types/IstioConfigList';
+import {
+  drToIstioItems,
+  vsToIstioItems,
+  gwToIstioItems,
+  seToIstioItems,
+  validationKey
+} from '../../types/IstioConfigList';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { durationSelector, meshWideMTLSEnabledSelector } from '../../store/Selectors';
@@ -80,7 +86,9 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
 
   private getServiceValidation(): ObjectValidation | undefined {
     if (this.props.validations && this.props.validations.service && this.props.serviceDetails) {
-      return this.props.validations.service[this.props.serviceDetails.service.name];
+      return this.props.validations.service[
+        validationKey(this.props.serviceDetails.service.name, this.props.namespace)
+      ];
     }
     return undefined;
   }

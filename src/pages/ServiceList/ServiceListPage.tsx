@@ -20,6 +20,7 @@ import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/
 import { connect } from 'react-redux';
 import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
+import { validationKey } from '../../types/IstioConfigList';
 
 type ServiceListPageState = FilterComponent.State<ServiceListItem>;
 
@@ -101,7 +102,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
         istioSidecar: service.istioSidecar,
         namespace: data.namespace.name,
         healthPromise: API.getServiceHealth(data.namespace.name, service.name, rateInterval, service.istioSidecar),
-        validation: this.getServiceValidation(service.name, data.validations),
+        validation: this.getServiceValidation(service.name, data.namespace.name, data.validations),
         additionalDetailSample: service.additionalDetailSample,
         labels: service.labels || {},
         istioReferences: sortIstioReferences(service.istioReferences, true),
@@ -145,10 +146,10 @@ class ServiceListPageComponent extends FilterComponent.Component<
       });
   }
 
-  getServiceValidation(name: string, validations: Validations): ObjectValidation | undefined {
+  getServiceValidation(name, namespace: string, validations: Validations): ObjectValidation | undefined {
     const type = 'service'; // Using 'service' directly is disallowed
-    if (validations[type] && validations[type][name]) {
-      return validations[type][name];
+    if (validations[type] && validations[type][validationKey(name, namespace)]) {
+      return validations[type][validationKey(name, namespace)];
     }
     return undefined;
   }
