@@ -53,3 +53,26 @@ spec:
     - name: v1
       labels:
         version: v1
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-foo
+  namespace: bookinfo
+spec:
+  action: DENY
+  selector:
+    matchLabels:
+      app: istio-ingressgateway
+  rules:
+    - to:
+        - operation:
+            hosts:
+              - "reviews.prod.svc.cluster.local"
+              - "foo-dev.istio-system.svc.cluster.local"
+            paths:
+              - "/foo"
+      when:
+        - key: request.headers[x-token]
+          notValues:
+            - "fooreader"

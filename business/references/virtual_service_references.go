@@ -2,16 +2,18 @@ package references
 
 import (
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type VirtualServiceReferences struct {
-	Namespace        string
-	Namespaces       models.Namespaces
-	VirtualServices  []networking_v1alpha3.VirtualService
-	DestinationRules []networking_v1alpha3.DestinationRule
+	Namespace             string
+	Namespaces            models.Namespaces
+	VirtualServices       []networking_v1alpha3.VirtualService
+	DestinationRules      []networking_v1alpha3.DestinationRule
+	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
 }
 
 func (n VirtualServiceReferences) References() models.IstioReferencesMap {
@@ -113,6 +115,14 @@ func (n VirtualServiceReferences) getConfigReferences(vs networking_v1alpha3.Vir
 			keys[dr.Name+"."+dr.Namespace+"/"+dr.ObjectType] = true
 		}
 	}
+	allAuthPolicies := n.getAuthPolicies(vs)
+	// filter unique references
+	for _, ap := range allAuthPolicies {
+		if !keys[ap.Name+"."+ap.Namespace+"/"+ap.ObjectType] {
+			result = append(result, ap)
+			keys[ap.Name+"."+ap.Namespace+"/"+ap.ObjectType] = true
+		}
+	}
 	return result
 }
 
@@ -195,7 +205,7 @@ func getAllGateways(vs networking_v1alpha3.VirtualService) []models.IstioReferen
 		for _, httpRoute := range vs.Spec.Http {
 			if httpRoute != nil {
 				for _, match := range httpRoute.Match {
-					if match != nil {
+					if match != nil && match.Gateways != nil {
 						allGateways = append(allGateways, getGatewayReferences(match.Gateways, namespace, clusterName)...)
 					}
 				}
@@ -226,6 +236,40 @@ func getGatewayReferences(gateways []string, namespace string, clusterName strin
 				result = append(result, models.IstioReference{Name: gw.Service, ObjectType: models.ObjectTypeSingular[kubernetes.Gateways]})
 			} else {
 				result = append(result, models.IstioReference{Name: gw.Service, Namespace: gw.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.Gateways]})
+			}
+		}
+	}
+	return result
+}
+
+func (n VirtualServiceReferences) getAuthPolicies(vs networking_v1alpha3.VirtualService) []models.IstioReference {
+	result := make([]models.IstioReference, 0)
+	for _, ap := range n.AuthorizationPolicies {
+		namespace, clusterName := ap.Namespace, ap.ClusterName
+		for _, rule := range ap.Spec.Rules {
+			if rule == nil {
+				continue
+			}
+			if len(rule.To) > 0 {
+				for _, t := range rule.To {
+					if t == nil || t.Operation == nil || len(t.Operation.Hosts) == 0 {
+						continue
+					}
+					for _, h := range t.Operation.Hosts {
+						fqdn := kubernetes.GetHost(h, namespace, clusterName, n.Namespaces.GetNames())
+						if !fqdn.IsWildcard() {
+							for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
+								vHost := vs.Spec.Hosts[hostIdx]
+
+								hostS := kubernetes.ParseHost(vHost, vs.Namespace, vs.ClusterName)
+								if hostS.String() == fqdn.String() {
+									result = append(result, models.IstioReference{Name: ap.Name, Namespace: ap.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.AuthorizationPolicies]})
+									continue
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
