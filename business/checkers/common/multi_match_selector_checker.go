@@ -14,6 +14,7 @@ type GenericMultiMatchChecker struct {
 	Selectors    map[int]map[string]string
 	WorkloadList models.WorkloadList
 	Path         string
+	skipSelSubj  bool
 }
 
 func PeerAuthenticationMultiMatchChecker(subjectType string, pa []security_v1beta.PeerAuthentication, workloadList models.WorkloadList) GenericMultiMatchChecker {
@@ -37,6 +38,7 @@ func PeerAuthenticationMultiMatchChecker(subjectType string, pa []security_v1bet
 		Selectors:    selectors,
 		WorkloadList: workloadList,
 		Path:         "spec/selector",
+		skipSelSubj:  false,
 	}
 }
 
@@ -55,12 +57,15 @@ func RequestAuthenticationMultiMatchChecker(subjectType string, ra []security_v1
 			selectors[i] = r.Spec.Selector.MatchLabels
 		}
 	}
+	// For RequestAuthentication, when more than one policy matches a workload, Istio combines all rules as if they were specified as a single policy.
+	// So skip multi match validation
 	return GenericMultiMatchChecker{
 		SubjectType:  subjectType,
 		Keys:         keys,
 		Selectors:    selectors,
 		WorkloadList: workloadList,
 		Path:         "spec/selector",
+		skipSelSubj:  true,
 	}
 }
 
@@ -85,6 +90,7 @@ func SidecarSelectorMultiMatchChecker(subjectType string, sc []networking_v1alph
 		Selectors:    selectors,
 		WorkloadList: workloadList,
 		Path:         "spec/workloadSelector",
+		skipSelSubj:  false,
 	}
 }
 
@@ -111,7 +117,9 @@ func (m GenericMultiMatchChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	validations.MergeValidations(m.analyzeSelectorLessSubjects())
-	validations.MergeValidations(m.analyzeSelectorSubjects())
+	if !m.skipSelSubj {
+		validations.MergeValidations(m.analyzeSelectorSubjects())
+	}
 
 	return validations
 }
