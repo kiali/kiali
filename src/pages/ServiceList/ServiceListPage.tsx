@@ -145,9 +145,12 @@ class ServiceListPageComponent extends FilterComponent.Component<
       });
   }
 
-  getServiceValidation(name: string, validations: Validations): ObjectValidation {
+  getServiceValidation(name: string, validations: Validations): ObjectValidation | undefined {
     const type = 'service'; // Using 'service' directly is disallowed
-    return validations[type][name];
+    if (validations[type] && validations[type][name]) {
+      return validations[type][name];
+    }
+    return undefined;
   }
 
   render() {

@@ -22,5 +22,5 @@ export interface ServiceOverview {
 export interface ServiceListItem extends ServiceOverview {
   namespace: string;
   healthPromise: Promise<ServiceHealth>;
-  validation: ObjectValidation;
+  validation?: ObjectValidation;
 }
