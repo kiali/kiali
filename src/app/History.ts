@@ -35,6 +35,7 @@ export enum URLParam {
   GRAPH_IDLE_EDGES = 'idleEdges',
   GRAPH_IDLE_NODES = 'idleNodes',
   GRAPH_LAYOUT = 'layout',
+  GRAPH_NAMESPACE_LAYOUT = 'namespaceLayout',
   GRAPH_OPERATION_NODES = 'operationNodes',
   GRAPH_RANK = 'rank',
   GRAPH_RANK_BY = 'rankBy',

@@ -317,7 +317,6 @@ exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
     isExpanded={false}
     onSelect={[Function]}
     onToggle={[Function]}
-    placeholderText="Cola"
     selections="cola"
   >
     <SelectOption
@@ -329,14 +328,14 @@ exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
       isFocused={false}
       isNoResultsOption={false}
       isPlaceholder={false}
-      isSelected={true}
-      key="cola"
+      isSelected={false}
+      key="kiali-grid"
       keyHandler={[Function]}
       onClick={[Function]}
       sendRef={[Function]}
-      value="cola"
+      value="kiali-grid"
     >
-      Cola
+      Grid
     </SelectOption>
     <SelectOption
       className=""
@@ -348,13 +347,13 @@ exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
       isNoResultsOption={false}
       isPlaceholder={false}
       isSelected={false}
-      key="cose-bilkent"
+      key="kiali-concentric"
       keyHandler={[Function]}
       onClick={[Function]}
       sendRef={[Function]}
-      value="cose-bilkent"
+      value="kiali-concentric"
     >
-      Cose
+      Concentric
     </SelectOption>
     <SelectOption
       className=""
@@ -366,11 +365,11 @@ exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
       isNoResultsOption={false}
       isPlaceholder={false}
       isSelected={false}
-      key="dagre"
+      key="kiali-dagre"
       keyHandler={[Function]}
       onClick={[Function]}
       sendRef={[Function]}
-      value="dagre"
+      value="kiali-dagre"
     >
       Dagre
     </SelectOption>
@@ -695,7 +694,6 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     isExpanded={false}
     onSelect={[Function]}
     onToggle={[Function]}
-    placeholderText="Cola"
     selections="cola"
   >
     <SelectOption
@@ -707,14 +705,14 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
       isFocused={false}
       isNoResultsOption={false}
       isPlaceholder={false}
-      isSelected={true}
-      key="cola"
+      isSelected={false}
+      key="kiali-grid"
       keyHandler={[Function]}
       onClick={[Function]}
       sendRef={[Function]}
-      value="cola"
+      value="kiali-grid"
     >
-      Cola
+      Grid
     </SelectOption>
     <SelectOption
       className=""
@@ -726,13 +724,13 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
       isNoResultsOption={false}
       isPlaceholder={false}
       isSelected={false}
-      key="cose-bilkent"
+      key="kiali-concentric"
       keyHandler={[Function]}
       onClick={[Function]}
       sendRef={[Function]}
-      value="cose-bilkent"
+      value="kiali-concentric"
     >
-      Cose
+      Concentric
     </SelectOption>
     <SelectOption
       className=""
@@ -744,11 +742,11 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
       isNoResultsOption={false}
       isPlaceholder={false}
       isSelected={false}
-      key="dagre"
+      key="kiali-dagre"
       keyHandler={[Function]}
       onClick={[Function]}
       sendRef={[Function]}
-      value="dagre"
+      value="kiali-dagre"
     >
       Dagre
     </SelectOption>

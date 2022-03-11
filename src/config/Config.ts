@@ -32,9 +32,9 @@ const conf = {
     },
     /** Graphs layouts types */
     graphLayouts: {
-      cola: 'Cola',
-      'cose-bilkent': 'Cose',
-      dagre: 'Dagre'
+      'kiali-grid': 'Grid',
+      'kiali-concentric': 'Concentric',
+      'kiali-dagre': 'Dagre'
     }
   },
   /** About Tracing Configuration*/

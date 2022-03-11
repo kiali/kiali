@@ -2,15 +2,16 @@ import graphDataState from '../GraphDataState';
 import { GraphActions } from '../../actions/GraphActions';
 import { GlobalActions } from '../../actions/GlobalActions';
 import { DefaultTrafficRates, EdgeMode, GraphType } from '../../types/Graph';
-import { DagreGraph } from '../../components/CytoscapeGraph/graphs/DagreGraph';
 import { GraphState } from 'store/Store';
+import { KialiDagreGraph } from '../../components/CytoscapeGraph/graphs/KialiDagreGraph';
 
 describe('GraphDataState', () => {
   it('should return the initial state', () => {
     expect(graphDataState(undefined, GlobalActions.unknown())).toEqual({
       edgeMode: EdgeMode.ALL,
       graphDefinition: null,
-      layout: DagreGraph.getLayout(),
+      layout: KialiDagreGraph.getLayout(),
+      namespaceLayout: KialiDagreGraph.getLayout(),
       node: undefined,
       rankResult: { upperBound: 0 },
       summaryData: null,

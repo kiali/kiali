@@ -28,6 +28,7 @@ const testSetHandler = () => {
 describe('CytoscapeGraph component test', () => {
   it('should set correct elements data', done => {
     const myLayout: Layout = { name: 'breadthfirst' };
+    const nsLayout: Layout = { name: 'kiali-dagre' };
     const myEdgeLabelMode: EdgeLabelMode[] = [];
 
     const dataSource = new GraphDataSource();
@@ -75,6 +76,7 @@ describe('CytoscapeGraph component test', () => {
             timestamp: 0
           }}
           layout={myLayout}
+          namespaceLayout={nsLayout}
           updateSummary={testClickHandler}
           onReady={testReadyHandler}
           onEmptyGraphAction={testClickHandler}

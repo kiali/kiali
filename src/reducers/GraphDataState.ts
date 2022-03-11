@@ -4,13 +4,14 @@ import { KialiAppAction } from '../actions/KialiAppAction';
 import { GraphState } from '../store/Store';
 import { EdgeMode, GraphType, TrafficRate } from '../types/Graph';
 import { GraphToolbarActions } from '../actions/GraphToolbarActions';
-import { DagreGraph } from '../components/CytoscapeGraph/graphs/DagreGraph';
 import { updateState } from '../utils/Reducer';
+import { KialiDagreGraph } from '../components/CytoscapeGraph/graphs/KialiDagreGraph';
 
 export const INITIAL_GRAPH_STATE: GraphState = {
   edgeMode: EdgeMode.ALL,
   graphDefinition: null,
-  layout: DagreGraph.getLayout(),
+  layout: KialiDagreGraph.getLayout(),
+  namespaceLayout: KialiDagreGraph.getLayout(),
   node: undefined,
   rankResult: {
     upperBound: 0
@@ -62,6 +63,8 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       return updateState(state, { graphDefinition: action.payload });
     case getType(GraphActions.setLayout):
       return updateState(state, { layout: action.payload });
+    case getType(GraphActions.setNamespaceLayout):
+      return updateState(state, { namespaceLayout: action.payload });
     case getType(GraphActions.setNode):
       return updateState(state, {
         node: action.payload,

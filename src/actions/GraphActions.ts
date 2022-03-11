@@ -8,6 +8,7 @@ export const GraphActions = {
   setEdgeMode: createStandardAction(ActionKeys.GRAPH_SET_EDGE_MODE)<EdgeMode>(),
   setGraphDefinition: createStandardAction(ActionKeys.GRAPH_SET_DEFINITION)<GraphDefinition>(),  
   setLayout: createStandardAction(ActionKeys.GRAPH_SET_LAYOUT)<Layout>(),
+  setNamespaceLayout: createStandardAction(ActionKeys.GRAPH_SET_NAMESPACE_LAYOUT)<Layout>(),
   setNode: createStandardAction(ActionKeys.GRAPH_SET_NODE)<NodeParamsType | undefined>(),
   setRankResult: createStandardAction(ActionKeys.GRAPH_SET_RANK_RESULT)<RankResult>(),
   setUpdateTime: createStandardAction(ActionKeys.GRAPH_SET_UPDATE_TIME)<TimeInMilliseconds>(),

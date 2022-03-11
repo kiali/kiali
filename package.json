@@ -71,7 +71,7 @@
     "cy-node-html-label": "2.0.0",
     "cytoscape": "3.15.5",
     "cytoscape-canvas": "3.0.1",
-    "cytoscape-dagre": "2.2.2",
+    "dagre": "0.8.5",
     "cytoscape-popper": "1.0.7",
     "deep-freeze": "0.0.1",
     "eventemitter3": "4.0.0",

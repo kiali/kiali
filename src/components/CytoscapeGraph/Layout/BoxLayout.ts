@@ -315,20 +315,14 @@ export default class BoxLayout {
     });
   }
 
-  async runLayout(layoutName, layout): Promise<any> {
+  async runLayout(_layoutName, layout): Promise<any> {
     // Avoid propagating any local layout events up to cy, this would yield a global operation before the nodes are ready.
     layout.on('layoutstart layoutready layoutstop', _event => {
       return false;
     });
 
-    // We know dagre is discrete, we can resolve when run() returns
-    if (layoutName === 'dagre') {
-      return layout.run();
-    }
-
-    const promise = layout.promiseOn('layoutstop');
-    layout.run();
-    return promise;
+    // We know ALL algorithms (breadthfirst, dagre, grid, contentric) are discrete, we can resolve when run() returns
+    return layout.run();
   }
 
   getBoxNodes(boxByType: BoxByType): any {

@@ -1,7 +1,7 @@
-export class DagreGraph {
+export class KialiDagreGraph {
   static getLayout() {
     return {
-      name: 'dagre',
+      name: 'kiali-dagre',
       fit: false,
       nodeDimensionsIncludeLabels: true,
       rankDir: 'LR'

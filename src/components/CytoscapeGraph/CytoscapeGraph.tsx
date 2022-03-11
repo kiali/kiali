@@ -55,6 +55,7 @@ type CytoscapeGraphProps = {
   isMiniGraph: boolean;
   isMTLSEnabled: boolean;
   layout: Layout;
+  namespaceLayout: Layout;
   onEmptyGraphAction?: () => void;
   onNodeDoubleTap?: (e: GraphNodeDoubleTapEvent) => void;
   onEdgeTap?: (e: GraphEdgeTapEvent) => void;
@@ -176,6 +177,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       this.props.graphData.isLoading !== nextProps.graphData.isLoading ||
       this.props.graphData.elements !== nextProps.graphData.elements ||
       this.props.layout !== nextProps.layout ||
+      this.props.namespaceLayout !== nextProps.namespaceLayout ||
       this.props.compressOnHide !== nextProps.compressOnHide ||
       this.props.rankBy !== nextProps.rankBy ||
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
@@ -198,7 +200,9 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
 
     // Check to see if we should run a layout when we process the graphUpdate
     let runLayout = false;
-    const newLayout = this.props.layout.name !== prevProps.layout.name;
+    const newLayout =
+      this.props.layout.name !== prevProps.layout.name ||
+      this.props.namespaceLayout.name !== prevProps.namespaceLayout.name;
 
     if (this.needsInitialLayout || newLayout || this.props.graphData.elementsChanged || this.nodeNeedsRelayout()) {
       this.needsInitialLayout = false;
@@ -820,7 +824,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     // Layouts can run async so wait until it completes to finish the graph update.
     if (runLayout) {
       return new Promise((resolve, _reject) => {
-        CytoscapeGraphUtils.runLayout(cy, this.props.layout).then(_response => {
+        CytoscapeGraphUtils.runLayout(cy, this.props.layout, this.props.namespaceLayout).then(_response => {
           this.finishGraphUpdate(cy, isTheGraphSelected, runLayout);
           resolve();
         });

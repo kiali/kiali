@@ -11,6 +11,7 @@ export type GraphUrlParams = {
   edgeMode: EdgeMode;
   graphLayout: Layout;
   graphType: GraphType;
+  namespaceLayout: Layout;
   node?: NodeParamsType;
   refreshInterval: IntervalInMilliseconds;
   showIdleEdges: boolean;
@@ -24,6 +25,7 @@ const buildCommonQueryParams = (params: GraphUrlParams): string => {
   let q = `&${URLParam.GRAPH_EDGE_LABEL}=${params.edgeLabels}`;
   q += `&${URLParam.GRAPH_EDGE_MODE}=${params.edgeMode}`;
   q += `&${URLParam.GRAPH_LAYOUT}=${params.graphLayout.name}`;
+  q += `&${URLParam.GRAPH_NAMESPACE_LAYOUT}=${params.namespaceLayout.name}`;
   q += `&${URLParam.GRAPH_IDLE_EDGES}=${params.showIdleEdges}`;
   q += `&${URLParam.GRAPH_IDLE_NODES}=${params.showIdleNodes}`;
   q += `&${URLParam.GRAPH_SERVICE_NODES}=${params.showServiceNodes}`;

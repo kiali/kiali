@@ -15,12 +15,12 @@ import GraphDataSource from '../../services/GraphDataSource';
 import { DecoratedGraphElements, EdgeMode, GraphType, NodeType } from '../../types/Graph';
 import CytoscapeGraph, { GraphEdgeTapEvent, GraphNodeTapEvent } from './CytoscapeGraph';
 import { CytoscapeGraphSelectorBuilder } from './CytoscapeGraphSelector';
-import { DagreGraph } from './graphs/DagreGraph';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { store } from 'store/ConfigStore';
 import { style } from 'typestyle';
 import { toRangeString } from '../Time/Utils';
 import { TimeInMilliseconds } from '../../types/Common';
+import { KialiDagreGraph } from './graphs/KialiDagreGraph';
 
 const initGraphContainerStyle = style({ width: '100%', height: '100%' });
 
@@ -113,7 +113,8 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
               isMTLSEnabled={this.props.mtlsEnabled}
               isMiniGraph={true}
               onEdgeTap={this.props.onEdgeTap}
-              layout={DagreGraph.getLayout()}
+              layout={KialiDagreGraph.getLayout()}
+              namespaceLayout={KialiDagreGraph.getLayout()}
               onNodeTap={this.handleNodeTap}
               // Ranking not enabled for minigraphs yet
               rankBy={[]}
@@ -236,6 +237,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
       edgeLabels: this.props.dataSource.fetchParameters.edgeLabels,
       edgeMode: EdgeMode.ALL,
       graphLayout: store.getState().graph.layout,
+      namespaceLayout: store.getState().graph.namespaceLayout,
       graphType: graphType,
       node: this.props.dataSource.fetchParameters.node!,
       refreshInterval: store.getState().userSettings.refreshInterval,

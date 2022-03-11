@@ -1,11 +1,11 @@
-export class GridGraph {
+export class KialiBreadthFirstGraph {
   static getLayout() {
     return {
-      name: 'grid',
+      name: 'kiali-breadthfirst',
       animate: false,
       fit: false,
       nodeDimensionsIncludeLabels: true,
-      padding: 0
+      padding: 30
     };
   }
 }

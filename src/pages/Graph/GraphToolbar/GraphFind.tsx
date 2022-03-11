@@ -29,6 +29,7 @@ type ReduxProps = {
   findValue: string;
   hideValue: string;
   layout: Layout;
+  namespaceLayout: Layout;
   showFindHelp: boolean;
   showIdleNodes: boolean;
   showRank: boolean;
@@ -546,7 +547,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       edgeModeChanged
     ) {
       cy.emit('kiali-zoomignore', [true]);
-      CytoscapeGraphUtils.runLayout(cy, this.props.layout).then(() => {
+      CytoscapeGraphUtils.runLayout(cy, this.props.layout, this.props.namespaceLayout).then(() => {
         // do nothing, defer to CytoscapeGraph.tsx 'onlayout' event handler
       });
     }
@@ -1029,6 +1030,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   findValue: findValueSelector(state),
   hideValue: hideValueSelector(state),
   layout: state.graph.layout,
+  namespaceLayout: state.graph.namespaceLayout,
   showFindHelp: state.graph.toolbarState.showFindHelp,
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showRank: state.graph.toolbarState.showRank,

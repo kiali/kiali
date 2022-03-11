@@ -83,6 +83,7 @@ export interface GraphState {
   edgeMode: EdgeMode;
   graphDefinition: GraphDefinition | null; // Not for consumption. Only for "Debug" dialog.
   layout: Layout;
+  namespaceLayout: Layout;
   node?: NodeParamsType;
   rankResult: RankResult;
   summaryData: SummaryData | null;

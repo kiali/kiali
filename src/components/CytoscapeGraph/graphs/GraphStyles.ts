@@ -123,22 +123,21 @@ const contentWithBadges = style({
 });
 
 const hostsClass = style({
-  borderTop: `1px solid ${PFColors.Black600}`,
-  textAlign: 'initial',
-  marginTop: '0.5em',
-  paddingTop: '0.5em',
-  display: 'block',
   $nest: {
     '& div:last-child': {
       display: 'none'
     },
     '&:hover div:last-child': {
       display: 'block'
-    },
-    '&:hover div:first-child': {
-      display: 'none'
     }
   }
+});
+
+const hostsList = style({
+  textAlign: 'initial',
+  marginTop: 2,
+  paddingTop: 2,
+  borderTop: `1px solid ${PFColors.Black600}`
 });
 
 const labelDefault = style({
@@ -381,7 +380,7 @@ export class GraphStyles {
     }
 
     const contentText = content.join('<br/>');
-    const contentClasses = hasBadges && !noBadge ? `${contentDefault} ${contentWithBadges}` : `${contentDefault}`;
+    let contentClasses = hasBadges && !noBadge ? `${contentDefault} ${contentWithBadges}` : `${contentDefault}`;
 
     // The final label...
     let fontSize = settings.fontLabel;
@@ -435,12 +434,14 @@ export class GraphStyles {
             : `${hosts.length - config.graph.maxHosts} more hosts...`
         );
       }
-      htmlHosts = `<div class="${hostsClass}"><div>${hosts.length} ${
-        hosts.length === 1 ? 'host' : 'hosts'
-      }</div><div>${hostsToShow.join('<br />')}</div></div>`;
+      htmlHosts = `<div class="${hostsList}">${hostsToShow.join('<br />')}</div>`;
     }
 
-    const contentSpan = `<div class="${contentClasses}" style="${contentStyle}"><div>${contentText}</div>${htmlHosts}</div></div>`;
+    if (hosts.length > 0) {
+      contentClasses = `${contentClasses} ${hostsClass}`;
+    }
+
+    const contentSpan = `<div class="${contentClasses}" style="${contentStyle}"><div>${contentText}</div>${htmlHosts}</div>`;
     return `<div class="${labelDefault}" style="${labelStyle}">${badges}${contentSpan}</div>`;
   }
 

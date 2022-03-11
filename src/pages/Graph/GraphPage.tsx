@@ -101,6 +101,7 @@ type ReduxProps = {
   isPageVisible: boolean;
   lastRefreshAt: TimeInMilliseconds;
   layout: Layout;
+  namespaceLayout: Layout;
   mtlsEnabled: boolean;
   node?: NodeParamsType;
   onNamespaceChange: () => void;
@@ -379,7 +380,11 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       unsetFocusSelector();
     }
 
-    if (prev.layout.name !== curr.layout.name || activeNamespacesChanged) {
+    if (
+      prev.layout.name !== curr.layout.name ||
+      prev.namespaceLayout.name !== curr.namespaceLayout.name ||
+      activeNamespacesChanged
+    ) {
       this.errorBoundaryRef.current.cleanError();
     }
 
@@ -634,6 +639,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       edgeMode: this.props.edgeMode,
       graphLayout: this.props.layout,
       graphType: this.state.graphData.fetchParams.graphType,
+      namespaceLayout: this.props.namespaceLayout,
       node: targetNode,
       refreshInterval: this.props.refreshInterval,
       showIdleEdges: this.props.showIdleEdges,
@@ -736,6 +742,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   lastRefreshAt: lastRefreshAtSelector(state),
   layout: state.graph.layout,
   mtlsEnabled: meshWideMTLSEnabledSelector(state),
+  namespaceLayout: state.graph.namespaceLayout,
   node: state.graph.node,
   rankBy: state.graph.toolbarState.rankBy,
   refreshInterval: refreshIntervalSelector(state),

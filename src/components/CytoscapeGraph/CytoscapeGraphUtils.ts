@@ -91,7 +91,7 @@ export const CyNode = {
 };
 
 export const ZoomOptions = {
-  fitPadding: 25,
+  fitPadding: 40,
   maxZoom: 2.5
 };
 
@@ -108,7 +108,7 @@ export const safeFit = (cy: Cy.Core, centerElements?: Cy.Collection) => {
 // IMPORTANT! Layouts should be performed while zoom-handling is being ignored:
 //   - call cy.emit('kiali-zoomignore', [true]) at some point prior to this call
 //   - call cy.emit('kiali-zoomignore', [false]) in the promise handler
-export const runLayout = (cy: Cy.Core, layout: Layout): Promise<any> => {
+export const runLayout = (cy: Cy.Core, layout: Layout, namespaceLayout: Layout): Promise<any> => {
   // generate all labels so the layout algorithm can take them into consideration
   refreshLabels(cy, true);
 
@@ -120,8 +120,8 @@ export const runLayout = (cy: Cy.Core, layout: Layout): Promise<any> => {
     cyLayout = cy.layout({
       ...layoutOptions,
       name: 'box-layout',
-      appBoxLayout: 'dagre',
-      namespaceBoxLayout: 'dagre',
+      appBoxLayout: namespaceLayout.name, // app and namespace will share same layout
+      namespaceBoxLayout: namespaceLayout.name,
       defaultLayout: layout.name
     });
   } else {

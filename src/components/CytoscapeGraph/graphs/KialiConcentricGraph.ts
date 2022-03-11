@@ -1,7 +1,7 @@
-export class ConcentricGraph {
+export class KialiConcentricGraph {
   static getLayout() {
     return {
-      name: 'concentric',
+      name: 'kiali-concentric',
       animate: false,
       fit: false,
       nodeDimensionsIncludeLabels: true

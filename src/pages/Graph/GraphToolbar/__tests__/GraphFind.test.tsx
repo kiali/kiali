@@ -30,6 +30,7 @@ describe('Parse find value test', () => {
         toggleRank={testHandler}
         compressOnHide={false}
         layout={{ name: '' }}
+        namespaceLayout={{ name: '' }}
         updateTime={0}
       />
     );
