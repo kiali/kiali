@@ -28,6 +28,11 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	allNamespaces := false
+	if namespace == "" {
+		allNamespaces = true
+	}
+
 	includeValidations := false
 	if _, found := query["validate"]; found {
 		includeValidations = true
@@ -43,7 +48,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		workloadSelector = query.Get("workloadSelector")
 	}
 
-	criteria := business.ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector)
+	criteria := business.ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector, allNamespaces)
 
 	// Get business layer
 	business, err := getBusiness(r)

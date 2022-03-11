@@ -25,68 +25,84 @@ func TestParseListParams(t *testing.T) {
 	namespace := "bookinfo"
 	objects := ""
 	labelSelector := ""
-	criteria := ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
+	criteria := ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
 
 	assert.Equal(t, "bookinfo", criteria.Namespace)
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.True(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.AllNamespaces)
 
 	objects = "gateways"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
 
 	assert.True(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.AllNamespaces)
+
+	criteria = ParseIstioConfigCriteria("", objects, labelSelector, "", true)
+
+	assert.True(t, criteria.IncludeGateways)
+	assert.False(t, criteria.IncludeVirtualServices)
+	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
+	assert.True(t, criteria.AllNamespaces)
 
 	objects = "virtualservices"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.AllNamespaces)
 
 	objects = "destinationrules"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.AllNamespaces)
 
 	objects = "serviceentries"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.True(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.AllNamespaces)
 
 	objects = "virtualservices"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.AllNamespaces)
 
 	objects = "destinationrules,virtualservices"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.AllNamespaces)
 
 	objects = "notsupported"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "", false)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.AllNamespaces)
 }
 
 func TestGetIstioConfigList(t *testing.T) {
