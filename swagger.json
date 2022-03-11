@@ -224,6 +224,30 @@
         }
       }
     },
+    "/istio": {
+      "get": {
+        "description": "Endpoint to get the list of Istio Config of all namespaces",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "config"
+        ],
+        "operationId": "istioConfigListAll",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/istioConfigList"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/istio/certs": {
       "get": {
         "description": "Get certificates (internal) information used by Istio",
