@@ -11,22 +11,55 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
+// workloadListParams holds the path and query parameters for WorkloadList
+//
+// swagger:parameters workloadList
+type workloadListParams struct {
+	baseHealthParams
+	// The target workload
+	//
+	// in: path
+	Namespace    string `json:"namespace"`
+	WorkloadType string `json:"type"`
+	// Optional
+	Health bool `json:"health"`
+}
+
+func (p *workloadListParams) extract(r *http.Request) {
+	vars := mux.Vars(r)
+	query := r.URL.Query()
+	p.baseExtract(r, vars)
+	p.Namespace = vars["namespace"]
+	p.WorkloadType = query.Get("type")
+	p.Health = query.Get("health") != ""
+}
+
 // WorkloadList is the API handler to fetch all the workloads to be displayed, related to a single namespace
 func WorkloadList(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	namespace := params["namespace"]
+	p := workloadListParams{}
+	p.extract(r)
 
-	criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: true}
+	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeIstioResources: true, Health: p.Health, RateInterval: "", QueryTime: p.QueryTime}
 
 	// Get business layer
-	business, err := getBusiness(r)
+	businessLayer, err := getBusiness(r)
+
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Workloads initialization error: "+err.Error())
 		return
 	}
 
+	if criteria.Health {
+		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime)
+		if err != nil {
+			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
+			return
+		}
+		criteria.RateInterval = rateInterval
+	}
+
 	// Fetch and build workloads
-	workloadList, err := business.Workload.GetWorkloadList(r.Context(), criteria)
+	workloadList, err := businessLayer.Workload.GetWorkloadList(r.Context(), criteria)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

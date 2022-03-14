@@ -630,6 +630,9 @@ Endpoint to get the list of apps for a namespace
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
+| QueryTime | `query` | date-time (formatted string) | `strfmt.DateTime` |  |  |  | The time to use for the prometheus query |
+| health | `query` | boolean | `bool` |  |  |  | Optional |
+| rateInterval | `query` | string | `string` |  |  | `"10m"` | The rate interval used for fetching error rate |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -4871,6 +4874,9 @@ Endpoint to get the details of a given service
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
+| QueryTime | `query` | date-time (formatted string) | `strfmt.DateTime` |  |  |  | The time to use for the prometheus query |
+| health | `query` | boolean | `bool` |  |  |  | Optional |
+| rateInterval | `query` | string | `string` |  |  | `"10m"` | The rate interval used for fetching error rate |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -5707,6 +5713,10 @@ Endpoint to get the list of workloads for a namespace
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
+| QueryTime | `query` | date-time (formatted string) | `strfmt.DateTime` |  |  |  | The time to use for the prometheus query |
+| health | `query` | boolean | `bool` |  |  |  | Optional |
+| rateInterval | `query` | string | `string` |  |  | `"10m"` | The rate interval used for fetching error rate |
+| type | `query` | string | `string` |  |  |  |  |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -6338,6 +6348,7 @@ Required. |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if all Pods related to the Workloads of this app has an IstioSidecar deployed | `true` |
 | Labels | map of string| `map[string]string` |  | | Labels for App |  |
 | Name | string| `string` | ✓ | | Name of the application | `reviews` |
+| health | [AppHealth](#app-health)| `AppHealth` |  | |  |  |
 
 
 
@@ -9241,6 +9252,7 @@ Kubernetes: 	is a service registry backed by k8s API server
 External: 	is a service registry for externally provided ServiceEntries
 Federation:  special case when registry is provided from a federated environment |  |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |
+| health | [ServiceHealth](#service-health)| `ServiceHealth` |  | |  |  |
 
 
 
@@ -9965,6 +9977,7 @@ It's mapped as a pointer to show three values nil, true, false |  |
 | Type | string| `string` | ✓ | | Type of the workload | `deployment` |
 | VersionLabel | boolean| `bool` | ✓ | | Define if Pods related to this Workload has the label Version | `true` |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |
+| health | [WorkloadHealth](#workload-health)| `WorkloadHealth` |  | |  |  |
 | pods | [Pods](#pods)| `Pods` |  | |  |  |
 | validations | [IstioValidations](#istio-validations)| `IstioValidations` |  | |  |  |
 
@@ -10374,6 +10387,7 @@ It's mapped as a pointer to show three values nil, true, false |  |
 | Type | string| `string` | ✓ | | Type of the workload | `deployment` |
 | VersionLabel | boolean| `bool` | ✓ | | Define if Pods related to this Workload has the label Version | `true` |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |
+| health | [WorkloadHealth](#workload-health)| `WorkloadHealth` |  | |  |  |
 
 
 

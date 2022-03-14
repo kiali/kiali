@@ -277,6 +277,7 @@ func (in *IstioValidationsService) fetchServices(ctx context.Context, rValue *mo
 		var err error
 		criteria := ServiceCriteria{
 			Namespace: namespace,
+			Health:    false,
 		}
 		services, err = in.businessLayer.Svc.GetServiceList(ctx, criteria)
 		if err != nil {
@@ -303,7 +304,7 @@ func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue
 
 		allWorkloads := map[string]models.WorkloadList{}
 		for _, ns := range nss {
-			criteria := WorkloadCriteria{Namespace: ns.Name, IncludeIstioResources: true}
+			criteria := WorkloadCriteria{Namespace: ns.Name, IncludeIstioResources: true, Health: false}
 			workloadList, err := in.businessLayer.Workload.GetWorkloadList(ctx, criteria)
 			if err != nil {
 				select {

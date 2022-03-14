@@ -199,6 +199,7 @@ func (in *HealthService) GetNamespaceServiceHealth(ctx context.Context, namespac
 		Namespace:              namespace,
 		IncludeOnlyDefinitions: true,
 		IncludeIstioResources:  false,
+		Health:                 false,
 	}
 	services, err = in.businessLayer.Svc.GetServiceList(ctx, criteria)
 	if err != nil {

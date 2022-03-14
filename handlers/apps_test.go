@@ -210,6 +210,8 @@ func TestAppsEndpoint(t *testing.T) {
 	k8s.MockIstio()
 	defer ts.Close()
 
+	setupMockData(k8s)
+
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakeDeployments(), nil)
 	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)

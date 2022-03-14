@@ -1176,6 +1176,28 @@
         "parameters": [
           {
             "type": "string",
+            "default": "10m",
+            "x-go-name": "RateInterval",
+            "description": "The rate interval used for fetching error rate",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date-time",
+            "description": "The time to use for the prometheus query",
+            "name": "QueryTime",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "x-go-name": "Health",
+            "description": "Optional",
+            "name": "health",
+            "in": "query"
+          },
+          {
+            "type": "string",
             "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
@@ -2487,6 +2509,28 @@
         "parameters": [
           {
             "type": "string",
+            "default": "10m",
+            "x-go-name": "RateInterval",
+            "description": "The rate interval used for fetching error rate",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date-time",
+            "description": "The time to use for the prometheus query",
+            "name": "QueryTime",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "x-go-name": "Health",
+            "description": "Optional",
+            "name": "health",
+            "in": "query"
+          },
+          {
+            "type": "string",
             "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
@@ -3263,6 +3307,34 @@
         ],
         "operationId": "workloadList",
         "parameters": [
+          {
+            "type": "string",
+            "default": "10m",
+            "x-go-name": "RateInterval",
+            "description": "The rate interval used for fetching error rate",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date-time",
+            "description": "The time to use for the prometheus query",
+            "name": "QueryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "WorkloadType",
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "x-go-name": "Health",
+            "description": "Optional",
+            "name": "health",
+            "in": "query"
+          },
           {
             "type": "string",
             "x-go-name": "Name",
@@ -4262,6 +4334,9 @@
         "istioSidecar"
       ],
       "properties": {
+        "health": {
+          "$ref": "#/definitions/AppHealth"
+        },
         "istioReferences": {
           "description": "Istio References",
           "type": "array",
@@ -7139,6 +7214,9 @@
           "x-go-name": "AppLabel",
           "example": true
         },
+        "health": {
+          "$ref": "#/definitions/ServiceHealth"
+        },
         "healthAnnotations": {
           "description": "Annotations of the service",
           "type": "object",
@@ -7798,6 +7876,9 @@
           "x-go-name": "DesiredReplicas",
           "example": 2
         },
+        "health": {
+          "$ref": "#/definitions/WorkloadHealth"
+        },
         "healthAnnotations": {
           "description": "HealthAnnotations",
           "type": "object",
@@ -8231,6 +8312,9 @@
             "type": "string"
           },
           "x-go-name": "DashboardAnnotations"
+        },
+        "health": {
+          "$ref": "#/definitions/WorkloadHealth"
         },
         "healthAnnotations": {
           "description": "HealthAnnotations",

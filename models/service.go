@@ -43,6 +43,9 @@ type ServiceOverview struct {
 	// External: 	is a service registry for externally provided ServiceEntries
 	// Federation:  special case when registry is provided from a federated environment
 	ServiceRegistry string `json:"serviceRegistry"`
+
+	// Health
+	Health ServiceHealth `json:"health,omitempty"`
 }
 
 type ServiceList struct {

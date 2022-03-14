@@ -33,6 +33,9 @@ type ServiceCriteria struct {
 	IncludeIstioResources  bool
 	IncludeOnlyDefinitions bool
 	ServiceSelector        string
+	Health                 bool
+	RateInterval           string
+	QueryTime              time.Time
 }
 
 // GetServiceList returns a list of all services for a given criteria
@@ -168,7 +171,20 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 	}
 
 	// Convert to Kiali model
-	return in.buildServiceList(models.Namespace{Name: criteria.Namespace}, svcs, rSvcs, pods, deployments, istioConfigList), nil
+	services := in.buildServiceList(models.Namespace{Name: criteria.Namespace}, svcs, rSvcs, pods, deployments, istioConfigList)
+
+	// Check if we need to add health
+
+	if criteria.Health {
+		for i, sv := range services.Services {
+			services.Services[i].Health, err = in.businessLayer.Health.GetServiceHealth(ctx, criteria.Namespace, sv.Name, criteria.RateInterval, criteria.QueryTime)
+			if err != nil {
+				log.Errorf("Error fetching health per service %s: %s", sv.Name, err)
+			}
+		}
+	}
+
+	return services, nil
 }
 
 func getVSKialiScenario(vs []networking_v1alpha3.VirtualService) string {
@@ -202,7 +218,6 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 	rSvcs = kubernetes.FilterRegistryServicesByServices(rSvcs, svcs)
 	registryServices := in.buildRegistryServices(rSvcs, istioConfigList)
 	services = append(services, registryServices...)
-
 	return &models.ServiceList{Namespace: namespace, Services: services, Validations: validations}
 }
 
@@ -249,6 +264,7 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 			IstioSidecar:           hasSidecar,
 			AppLabel:               appLabel,
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(conf, item.ObjectMeta.Annotations),
+			Health:                 models.EmptyServiceHealth(),
 			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()),
 			Labels:                 item.Labels,
 			Selector:               item.Spec.Selector,
@@ -360,6 +376,7 @@ func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService,
 			Namespace:         item.Attributes.Namespace,
 			IstioSidecar:      hasSidecar,
 			AppLabel:          appLabel,
+			Health:            models.EmptyServiceHealth(),
 			HealthAnnotations: map[string]string{},
 			Labels:            item.Attributes.Labels,
 			Selector:          item.Attributes.LabelSelectors,

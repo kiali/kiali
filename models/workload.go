@@ -97,6 +97,9 @@ type WorkloadListItem struct {
 
 	// Names of the workload service accounts
 	ServiceAccountNames []string `json:"serviceAccountNames"`
+
+	// Health
+	Health WorkloadHealth `json:"health,omitempty"`
 }
 
 type WorkloadOverviews []*WorkloadListItem

@@ -29,7 +29,7 @@ func TestServiceListParsing(t *testing.T) {
 	setupGlobalMeshConfig()
 	svc := SvcService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 
-	criteria := ServiceCriteria{Namespace: "Namespace", IncludeIstioResources: false}
+	criteria := ServiceCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
 	serviceList, _ := svc.GetServiceList(context.TODO(), criteria)
 
 	assert.Equal("Namespace", serviceList.Namespace.Name)
