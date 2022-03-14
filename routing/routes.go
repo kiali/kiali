@@ -234,7 +234,7 @@ func NewRoutes() (r *Routes) {
 		{
 			"IstioConfigListAll",
 			"GET",
-			"/api/istio",
+			"/api/istio/config",
 			handlers.IstioConfigList,
 			true,
 		},
