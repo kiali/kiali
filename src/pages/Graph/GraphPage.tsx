@@ -165,7 +165,7 @@ const kioskContainerStyle = style({
 });
 
 const cytoscapeGraphContainerStyle = style({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
-const cytoscapeGraphWrapperDivStyle = style({ position: 'relative', backgroundColor: PFColors.Black150 });
+const cytoscapeGraphWrapperDivStyle = style({ position: 'relative', backgroundColor: PFColors.Black200 });
 const cytoscapeToolbarWrapperDivStyle = style({
   position: 'absolute',
   bottom: '5px',

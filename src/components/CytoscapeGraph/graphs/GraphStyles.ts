@@ -172,7 +172,7 @@ export class GraphStyles {
     EdgeColorFailure = PFColorVals.Danger;
     EdgeColorTCPWithTraffic = PFColorVals.Blue600;
     EdgeTextOutlineColor = PFColorVals.White;
-    NodeColorBorder = PFColorVals.Black400;
+    NodeColorBorder = PFColorVals.Black500;
     NodeColorBorderBox = PFColorVals.Black600;
     NodeColorBorderDegraded = PFColorVals.Warning;
     NodeColorBorderFailure = PFColorVals.Danger;
@@ -180,7 +180,7 @@ export class GraphStyles {
     NodeColorBorderSelected = PFColorVals.Blue300;
     NodeColorFill = PFColorVals.White;
     NodeColorFillBoxApp = PFColorVals.White;
-    NodeColorFillBoxCluster = PFColorVals.Black200;
+    NodeColorFillBoxCluster = PFColorVals.Black300;
     NodeColorFillBoxNamespace = PFColorVals.Black100;
     NodeColorFillHover = PFColorVals.Blue50;
     NodeColorFillHoverDegraded = '#fdf2e5'; // roughly an Orange50 if it were defined
