@@ -5375,7 +5375,7 @@
           "x-go-name": "ObjectField"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/config"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "IstioConfigList": {
       "description": "This type is used for returning a response of IstioConfigList",
