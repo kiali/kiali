@@ -7,7 +7,7 @@ import {
 } from '../../types/Filters';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
 import { SortField } from '../../types/SortFilters';
-import { WithWorkloadHealth, hasHealth } from '../../types/Health';
+import { hasHealth } from '../../types/Health';
 import {
   presenceValues,
   istioSidecarFilter,
@@ -316,10 +316,7 @@ const filterByIstioType = (items: WorkloadListItem[], istioTypes: string[]): Wor
   return items.filter(item => item.istioReferences.filter(ref => istioTypes.includes(ref.objectType)).length !== 0);
 };
 
-export const filterBy = (
-  items: WorkloadListItem[],
-  filters: ActiveFiltersInfo
-): Promise<WorkloadListItem[]> | WorkloadListItem[] => {
+export const filterBy = (items: WorkloadListItem[], filters: ActiveFiltersInfo): WorkloadListItem[] => {
   const workloadTypeFilters = getFilterSelectedValues(workloadTypeFilter, filters);
   const workloadNamesSelected = getFilterSelectedValues(workloadNameFilter, filters);
   const istioSidecar = getPresenceFilterValue(istioSidecarFilter, filters);
@@ -353,17 +350,6 @@ export const sortWorkloadsItems = (
   unsorted: WorkloadListItem[],
   sortField: SortField<WorkloadListItem>,
   isAscending: boolean
-): Promise<WorkloadListItem[]> => {
-  if (sortField.title === 'Health') {
-    // In the case of health sorting, we may not have all health promises ready yet
-    // So we need to get them all before actually sorting
-    const allHealthPromises: Promise<WithWorkloadHealth<WorkloadListItem>>[] = unsorted.map(item => {
-      return item.healthPromise.then((health): WithWorkloadHealth<WorkloadListItem> => ({ ...item, health }));
-    });
-    return Promise.all(allHealthPromises).then(arr => {
-      return arr.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
-    });
-  }
-  const sorted = unsorted.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
-  return Promise.resolve(sorted);
+): WorkloadListItem[] => {
+  return unsorted.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
 };

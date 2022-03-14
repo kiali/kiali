@@ -65,11 +65,11 @@ export interface WorkloadOverview {
   labels: { [key: string]: string };
   istioReferences: ObjectReference[];
   notCoveredAuthPolicy: boolean;
+  health: WorkloadHealth;
 }
 
 export interface WorkloadListItem extends WorkloadOverview {
   namespace: string;
-  healthPromise: Promise<WorkloadHealth>;
 }
 
 export interface WorkloadNamespaceResponse {

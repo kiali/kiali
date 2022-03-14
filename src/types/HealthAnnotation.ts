@@ -25,7 +25,7 @@ export class RateHealth extends HealthAnnotation {
 
   constructor(annotations: HealthAnnotationType) {
     super(annotations);
-    this.annotation = annotations[HealthAnnotationConfig.HEALTH_RATE];
+    this.annotation = annotations[HealthAnnotationConfig.HEALTH_RATE] || '';
     if (this.annotation && this.annotation.length > 0) {
       this.isValid = this.validate();
       this.toleranceConfig = this.isValid ? this.getToleranceConfig() : undefined;

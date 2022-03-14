@@ -68,12 +68,10 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     this.promises.cancelAll();
   }
 
-  sortItemList(items: AppListItem[], sortField: SortField<AppListItem>, isAscending: boolean): Promise<AppListItem[]> {
+  sortItemList(items: AppListItem[], sortField: SortField<AppListItem>, isAscending: boolean): AppListItem[] {
     // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction
     // This ensures that the list will display the new data with the right sorting
-    return this.promises.registerChained('sort', items, unsorted =>
-      AppListFilters.sortAppsItems(unsorted, sortField, isAscending)
-    );
+    return AppListFilters.sortAppsItems(items, sortField, isAscending);
   }
 
   updateListItems() {
@@ -88,7 +86,9 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   }
 
   fetchApps(namespaces: string[], filters: ActiveFiltersInfo, rateInterval: number) {
-    const appsPromises = namespaces.map(namespace => API.getApps(namespace));
+    const appsPromises = namespaces.map(namespace =>
+      API.getApps(namespace, { health: 'true', rateInterval: String(rateInterval) + 's' })
+    );
     this.promises
       .registerAll('apps', appsPromises)
       .then(responses => {
@@ -99,18 +99,9 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
         return AppListFilters.filterBy(appListItems, filters);
       })
       .then(appListItems => {
-        this.promises.cancel('sort');
-        this.sortItemList(appListItems, this.state.currentSortField, this.state.isSortAscending)
-          .then(sorted => {
-            this.setState({
-              listItems: sorted
-            });
-          })
-          .catch(err => {
-            if (!err.isCanceled) {
-              console.debug(err);
-            }
-          });
+        this.setState({
+          listItems: this.sortItemList(appListItems, this.state.currentSortField, this.state.isSortAscending)
+        });
       })
       .catch(err => {
         if (!err.isCanceled) {

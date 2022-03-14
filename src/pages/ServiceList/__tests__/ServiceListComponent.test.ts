@@ -75,23 +75,19 @@ describe('ServiceListContainer#sortServices', () => {
   beforeAll(() => {
     setServerConfig(healthConfig);
   });
-  it('should sort ascending', done => {
+  it('should sort ascending', () => {
     const sortField = ServiceListFilters.sortFields.find(s => s.title === 'Service Name')!;
     const services = [makeService('A', {}, {}), makeService('B', {}, {})];
-    ServiceListFilters.sortServices(services, sortField, true).then(sorted => {
-      expect(sorted[0].name).toBe('A');
-      expect(sorted[1].name).toBe('B');
-      done();
-    });
+    const sorted = ServiceListFilters.sortServices(services, sortField, true);
+    expect(sorted[0].name).toBe('A');
+    expect(sorted[1].name).toBe('B');
   });
 
-  it('should sort descending', done => {
+  it('should sort descending', () => {
     const sortField = ServiceListFilters.sortFields.find(s => s.title === 'Service Name')!;
     const services = [makeService('A', {}, {}), makeService('B', {}, {})];
-    ServiceListFilters.sortServices(services, sortField, false).then(sorted => {
-      expect(sorted[0].name).toBe('B');
-      expect(sorted[1].name).toBe('A');
-      done();
-    });
+    const sorted = ServiceListFilters.sortServices(services, sortField, false);
+    expect(sorted[0].name).toBe('B');
+    expect(sorted[1].name).toBe('A');
   });
 });

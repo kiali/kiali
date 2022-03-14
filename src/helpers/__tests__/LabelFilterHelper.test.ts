@@ -1,12 +1,36 @@
 import { filterByLabel } from '../LabelFilterHelper';
 import { AppListItem } from '../../types/AppList';
+import { AppHealth, WorkloadHealth, ServiceHealth } from '../../types/Health';
 import { WorkloadListItem } from '../../types/Workload';
 import { ServiceListItem } from '../../types/ServiceList';
+import { setServerConfig } from '../../config/ServerConfig';
+import { serverRateConfig } from '../../types/ErrorRate/__testData__/ErrorRateConfig';
 
+setServerConfig(serverRateConfig);
+const emptyAppHealth = new AppHealth(
+  '',
+  '',
+  [],
+  { inbound: {}, outbound: {}, healthAnnotations: {} },
+  { rateInterval: 20, hasSidecar: true }
+);
+const emptyWorkHealth = new WorkloadHealth(
+  '',
+  '',
+  { desiredReplicas: 0, currentReplicas: 0, availableReplicas: 0, name: '', syncedProxies: 0 },
+  { inbound: {}, outbound: {}, healthAnnotations: {} },
+  { rateInterval: 20, hasSidecar: true }
+);
+const emptySvcHealth = new ServiceHealth(
+  '',
+  '',
+  { inbound: {}, outbound: {}, healthAnnotations: {} },
+  { rateInterval: 20, hasSidecar: true }
+);
 const appList: AppListItem[] = [
   {
     namespace: 'bookinfo',
-    healthPromise: new Promise(() => {}),
+    health: emptyAppHealth,
     name: 'ratings',
     istioSidecar: false,
     labels: { app: 'ratings', service: 'ratings', version: 'v1' },
@@ -14,7 +38,7 @@ const appList: AppListItem[] = [
   },
   {
     namespace: 'bookinfo',
-    healthPromise: new Promise(() => {}),
+    health: emptyAppHealth,
     name: 'productpage',
     istioSidecar: false,
     labels: { app: 'productpage', service: 'productpage', version: 'v1' },
@@ -22,7 +46,7 @@ const appList: AppListItem[] = [
   },
   {
     namespace: 'bookinfo',
-    healthPromise: new Promise(() => {}),
+    health: emptyAppHealth,
     name: 'details',
     istioSidecar: false,
     labels: { app: 'details', service: 'details', version: 'v1' },
@@ -30,7 +54,7 @@ const appList: AppListItem[] = [
   },
   {
     namespace: 'bookinfo',
-    healthPromise: new Promise(() => {}),
+    health: emptyAppHealth,
     name: 'reviews',
     istioSidecar: false,
     labels: { app: 'reviews', service: 'reviews', version: 'v1,v2,v3' },
@@ -41,7 +65,7 @@ const appList: AppListItem[] = [
 const workloadList: WorkloadListItem[] = [
   {
     namespace: 'bookinfo',
-    healthPromise: new Promise(() => {}),
+    health: emptyWorkHealth,
     name: 'details-v1',
     type: 'Deployment',
     istioSidecar: false,
@@ -53,7 +77,7 @@ const workloadList: WorkloadListItem[] = [
   },
   {
     namespace: 'bookinfo',
-    healthPromise: new Promise(() => {}),
+    health: emptyWorkHealth,
     name: 'productpage-v1',
     type: 'Deployment',
     istioSidecar: false,
@@ -65,7 +89,7 @@ const workloadList: WorkloadListItem[] = [
   },
   {
     namespace: 'bookinfo',
-    healthPromise: new Promise(() => {}),
+    health: emptyWorkHealth,
     name: 'ratings-v1',
     type: 'Deployment',
     istioSidecar: false,
@@ -77,7 +101,7 @@ const workloadList: WorkloadListItem[] = [
   },
   {
     namespace: 'bookinfo',
-    healthPromise: new Promise(() => {}),
+    health: emptyWorkHealth,
     name: 'reviews-v1',
     type: 'Deployment',
     istioSidecar: false,
@@ -89,7 +113,7 @@ const workloadList: WorkloadListItem[] = [
   },
   {
     namespace: 'bookinfo',
-    healthPromise: new Promise(() => {}),
+    health: emptyWorkHealth,
     name: 'reviews-v2',
     type: 'Deployment',
     istioSidecar: false,
@@ -101,7 +125,7 @@ const workloadList: WorkloadListItem[] = [
   },
   {
     namespace: 'bookinfo',
-    healthPromise: new Promise(() => {}),
+    health: emptyWorkHealth,
     name: 'reviews-v3',
     type: 'Deployment',
     istioSidecar: false,
@@ -116,7 +140,7 @@ const workloadList: WorkloadListItem[] = [
 const serviceList: ServiceListItem[] = [
   {
     namespace: 'bookinfo',
-    healthPromise: new Promise(() => {}),
+    health: emptySvcHealth,
     name: 'details',
     istioSidecar: false,
     labels: { app: 'details', service: 'details' },
@@ -127,7 +151,7 @@ const serviceList: ServiceListItem[] = [
   },
   {
     namespace: 'bookinfo',
-    healthPromise: new Promise(() => {}),
+    health: emptySvcHealth,
     name: 'reviews',
     istioSidecar: false,
     labels: { app: 'reviews', service: 'reviews' },
@@ -138,7 +162,7 @@ const serviceList: ServiceListItem[] = [
   },
   {
     namespace: 'bookinfo',
-    healthPromise: new Promise(() => {}),
+    health: emptySvcHealth,
     name: 'ratings',
     istioSidecar: false,
     labels: { app: 'ratings', service: 'ratings' },
@@ -149,7 +173,7 @@ const serviceList: ServiceListItem[] = [
   },
   {
     namespace: 'bookinfo',
-    healthPromise: new Promise(() => {}),
+    health: emptySvcHealth,
     name: 'productpage',
     istioSidecar: false,
     labels: { app: 'productpage', service: 'productpage' },
@@ -171,7 +195,7 @@ describe('LabelFilter', () => {
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
-        healthPromise: new Promise(() => {}),
+        health: emptyAppHealth,
         name: 'details',
         istioSidecar: false,
         labels: { app: 'details', service: 'details', version: 'v1' },
@@ -185,7 +209,7 @@ describe('LabelFilter', () => {
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
-        healthPromise: new Promise(() => {}),
+        health: emptyAppHealth,
         name: 'reviews',
         istioSidecar: false,
         labels: { app: 'reviews', service: 'reviews', version: 'v1,v2,v3' },
@@ -204,7 +228,7 @@ describe('LabelFilter', () => {
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
-        healthPromise: new Promise(() => {}),
+        health: emptyWorkHealth,
         name: 'reviews-v1',
         type: 'Deployment',
         istioSidecar: false,
@@ -216,7 +240,7 @@ describe('LabelFilter', () => {
       },
       {
         namespace: 'bookinfo',
-        healthPromise: new Promise(() => {}),
+        health: emptyWorkHealth,
         name: 'reviews-v2',
         type: 'Deployment',
         istioSidecar: false,
@@ -228,7 +252,7 @@ describe('LabelFilter', () => {
       },
       {
         namespace: 'bookinfo',
-        healthPromise: new Promise(() => {}),
+        health: emptyWorkHealth,
         name: 'reviews-v3',
         type: 'Deployment',
         istioSidecar: false,
@@ -251,7 +275,7 @@ describe('LabelFilter', () => {
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
-        healthPromise: new Promise(() => {}),
+        health: emptySvcHealth,
         name: 'details',
         istioSidecar: false,
         labels: { app: 'details', service: 'details' },

@@ -2,7 +2,7 @@ import { ActiveFiltersInfo, FILTER_ACTION_APPEND, FilterType } from '../../types
 import { calculateErrorRate } from '../../types/ErrorRate';
 import { AppListItem } from '../../types/AppList';
 import { SortField } from '../../types/SortFilters';
-import { WithAppHealth, hasHealth } from '../../types/Health';
+import { hasHealth } from '../../types/Health';
 import {
   istioSidecarFilter,
   healthFilter,
@@ -173,19 +173,8 @@ export const sortAppsItems = (
   unsorted: AppListItem[],
   sortField: SortField<AppListItem>,
   isAscending: boolean
-): Promise<AppListItem[]> => {
-  if (sortField.title === 'Health') {
-    // In the case of health sorting, we may not have all health promises ready yet
-    // So we need to get them all before actually sorting
-    const allHealthPromises: Promise<WithAppHealth<AppListItem>>[] = unsorted.map(item => {
-      return item.healthPromise.then((health): WithAppHealth<AppListItem> => ({ ...item, health }));
-    });
-    return Promise.all(allHealthPromises).then(arr => {
-      return arr.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
-    });
-  }
-  const sorted = unsorted.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
-  return Promise.resolve(sorted);
+): AppListItem[] => {
+  return unsorted.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
 };
 
 export const compareObjectReference = (a: ObjectReference, b: ObjectReference): number => {

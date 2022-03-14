@@ -1,5 +1,5 @@
 import { ActiveFiltersInfo, FilterType, FILTER_ACTION_APPEND, FilterTypes } from '../../types/Filters';
-import { WithServiceHealth, hasHealth } from '../../types/Health';
+import { hasHealth } from '../../types/Health';
 import { ServiceListItem } from '../../types/ServiceList';
 import { SortField } from '../../types/SortFilters';
 import {
@@ -212,10 +212,7 @@ const filterByIstioType = (items: ServiceListItem[], istioTypes: string[]): Serv
   return items.filter(item => item.istioReferences.filter(ref => istioTypes.includes(ref.objectType)).length !== 0);
 };
 
-export const filterBy = (
-  items: ServiceListItem[],
-  filters: ActiveFiltersInfo
-): Promise<ServiceListItem[]> | ServiceListItem[] => {
+export const filterBy = (items: ServiceListItem[], filters: ActiveFiltersInfo): ServiceListItem[] => {
   let ret = items;
   const istioSidecar = getPresenceFilterValue(istioSidecarFilter, filters);
   if (istioSidecar !== undefined) {
@@ -255,18 +252,6 @@ export const sortServices = (
   services: ServiceListItem[],
   sortField: SortField<ServiceListItem>,
   isAscending: boolean
-): Promise<ServiceListItem[]> => {
-  if (sortField.title === 'Health') {
-    // In the case of health sorting, we may not have all health promises ready yet
-    // So we need to get them all before actually sorting
-    const allHealthPromises: Promise<WithServiceHealth<ServiceListItem>>[] = services.map(item => {
-      return item.healthPromise.then((health): WithServiceHealth<ServiceListItem> => ({ ...item, health }));
-    });
-    return Promise.all(allHealthPromises).then(arr => {
-      return arr.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
-    });
-  }
-  // Default case: sorting is done synchronously
-  const sorted = services.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
-  return Promise.resolve(sorted);
+): ServiceListItem[] => {
+  return services.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
 };

@@ -12,9 +12,9 @@ export interface AppOverview {
   istioSidecar: boolean;
   labels: { [key: string]: string };
   istioReferences: ObjectReference[];
+  health: AppHealth;
 }
 
 export interface AppListItem extends AppOverview {
   namespace: string;
-  healthPromise: Promise<AppHealth>;
 }

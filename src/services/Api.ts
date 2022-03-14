@@ -202,8 +202,8 @@ export const createIstioConfigDetail = (
   return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(namespace, objectType), {}, json);
 };
 
-export const getServices = (namespace: string) => {
-  return newRequest<ServiceList>(HTTP_VERBS.GET, urls.services(namespace), {}, {});
+export const getServices = (namespace: string, params: { [key: string]: string } = {}) => {
+  return newRequest<ServiceList>(HTTP_VERBS.GET, urls.services(namespace), params, {});
 };
 
 export const getServiceMetrics = (namespace: string, service: string, params: IstioMetricsOptions) => {
@@ -232,8 +232,8 @@ export const getApp = (namespace: string, app: string) => {
   return newRequest<App>(HTTP_VERBS.GET, urls.app(namespace, app), {}, {});
 };
 
-export const getApps = (namespace: string) => {
-  return newRequest<AppList>(HTTP_VERBS.GET, urls.apps(namespace), {}, {});
+export const getApps = (namespace: string, params: any = {}) => {
+  return newRequest<AppList>(HTTP_VERBS.GET, urls.apps(namespace), params, {});
 };
 
 export const getAppMetrics = (namespace: string, app: string, params: IstioMetricsOptions) => {
@@ -484,8 +484,8 @@ export const getServiceDetail = (
   });
 };
 
-export const getWorkloads = (namespace: string) => {
-  return newRequest<WorkloadNamespaceResponse>(HTTP_VERBS.GET, urls.workloads(namespace), {}, {});
+export const getWorkloads = (namespace: string, params: { [key: string]: string } = {}) => {
+  return newRequest<WorkloadNamespaceResponse>(HTTP_VERBS.GET, urls.workloads(namespace), params, {});
 };
 
 export const getWorkload = (namespace: string, name: string, validate?: boolean) => {

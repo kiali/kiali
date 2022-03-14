@@ -159,9 +159,5 @@ export const sortIstioItems = (
   sortField: SortField<IstioConfigItem>,
   isAscending: boolean
 ) => {
-  const sortPromise: Promise<IstioConfigItem[]> = new Promise(resolve => {
-    resolve(unsorted.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a)));
-  });
-
-  return sortPromise;
+  return unsorted.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
 };

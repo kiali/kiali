@@ -30,33 +30,19 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
 
   componentDidMount() {
     if (hasHealth(this.props.item)) {
-      this.onHealthPromiseChanged(this.props.item.healthPromise);
+      this.setState({ health: this.props.item.health });
     }
   }
 
   componentDidUpdate(prevProps: VirtualItemProps) {
-    if (hasHealth(this.props.item) && this.props.item.healthPromise !== prevProps.item['healthPromise']) {
-      this.onHealthPromiseChanged(this.props.item.healthPromise);
+    if (hasHealth(this.props.item) && this.props.item.health !== prevProps.item['health']) {
+      this.setState({ health: this.props.item.health });
     }
   }
 
   componentWillUnmount() {
     this.promises.cancelAll();
   }
-
-  onHealthPromiseChanged = async (promise: Promise<Health>): Promise<void> => {
-    this.promises
-      .register('health', promise)
-      .then(h => {
-        this.setState({ health: h });
-      })
-      .catch(err => {
-        if (!err.isCanceled) {
-          this.setState({ health: undefined });
-          throw err;
-        }
-      });
-  };
 
   renderDetails = (item: RenderResource, health?: Health) => {
     return this.props.config.columns.map(object =>

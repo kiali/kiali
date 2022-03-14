@@ -17,10 +17,10 @@ export interface ServiceOverview {
   istioReferences: ObjectReference[];
   kialiWizard: string;
   serviceRegistry: string;
+  health: ServiceHealth;
 }
 
 export interface ServiceListItem extends ServiceOverview {
   namespace: string;
-  healthPromise: Promise<ServiceHealth>;
   validation?: ObjectValidation;
 }

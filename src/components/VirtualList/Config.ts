@@ -26,7 +26,7 @@ export type Renderer<R extends RenderResource> = (
 
 // Health type guard
 export function hasHealth(r: RenderResource): r is SortResource {
-  return (r as SortResource).healthPromise !== undefined;
+  return (r as SortResource).health !== undefined;
 }
 
 export const hasMissingSidecar = (r: SortResource): boolean => {

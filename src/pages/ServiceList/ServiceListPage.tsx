@@ -21,6 +21,7 @@ import { connect } from 'react-redux';
 import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { validationKey } from '../../types/IstioConfigList';
+import { ServiceHealth } from '../../types/Health';
 
 type ServiceListPageState = FilterComponent.State<ServiceListItem>;
 
@@ -77,9 +78,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
   sortItemList(services: ServiceListItem[], sortField: SortField<ServiceListItem>, isAscending: boolean) {
     // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction
     // This ensures that the list will display the new data with the right sorting
-    return this.promises.registerChained('sort', services, unsorted =>
-      ServiceListFilters.sortServices(unsorted, sortField, isAscending)
-    );
+    return ServiceListFilters.sortServices(services, sortField, isAscending);
   }
 
   updateListItems() {
@@ -101,7 +100,10 @@ class ServiceListPageComponent extends FilterComponent.Component<
         name: service.name,
         istioSidecar: service.istioSidecar,
         namespace: data.namespace.name,
-        healthPromise: API.getServiceHealth(data.namespace.name, service.name, rateInterval, service.istioSidecar),
+        health: ServiceHealth.fromJson(data.namespace.name, service.name, service.health, {
+          rateInterval: rateInterval,
+          hasSidecar: service.istioSidecar
+        }),
         validation: this.getServiceValidation(service.name, data.namespace.name, data.validations),
         additionalDetailSample: service.additionalDetailSample,
         labels: service.labels || {},
@@ -114,7 +116,9 @@ class ServiceListPageComponent extends FilterComponent.Component<
   }
 
   fetchServices(namespaces: string[], filters: ActiveFiltersInfo, rateInterval: number) {
-    const servicesPromises = namespaces.map(ns => API.getServices(ns));
+    const servicesPromises = namespaces.map(ns =>
+      API.getServices(ns, { health: 'true', rateInterval: String(rateInterval) + 's' })
+    );
 
     this.promises
       .registerAll('services', servicesPromises)
@@ -127,17 +131,9 @@ class ServiceListPageComponent extends FilterComponent.Component<
       })
       .then(serviceListItems => {
         this.promises.cancel('sort');
-        this.sortItemList(serviceListItems, this.state.currentSortField, this.state.isSortAscending)
-          .then(sorted => {
-            this.setState({
-              listItems: sorted
-            });
-          })
-          .catch(err => {
-            if (!err.isCanceled) {
-              console.debug(err);
-            }
-          });
+        this.setState({
+          listItems: this.sortItemList(serviceListItems, this.state.currentSortField, this.state.isSortAscending)
+        });
       })
       .catch(err => {
         if (!err.isCanceled) {

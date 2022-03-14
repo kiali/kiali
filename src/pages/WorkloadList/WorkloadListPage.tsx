@@ -20,6 +20,7 @@ import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/
 import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
+import { WorkloadHealth } from '../../types/Health';
 
 type WorkloadListPageState = FilterComponent.State<WorkloadListItem>;
 
@@ -76,9 +77,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   sortItemList(workloads: WorkloadListItem[], sortField: SortField<WorkloadListItem>, isAscending: boolean) {
     // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction
     // This ensures that the list will display the new data with the right sorting
-    return this.promises.registerChained('sort', workloads, unsorted =>
-      WorkloadListFilters.sortWorkloadsItems(unsorted, sortField, isAscending)
-    );
+    return WorkloadListFilters.sortWorkloadsItems(workloads, sortField, isAscending);
   }
 
   updateListItems() {
@@ -86,7 +85,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
     if (namespacesSelected.length !== 0) {
-      this.fetchWorkloads(namespacesSelected, activeFilters);
+      this.fetchWorkloads(namespacesSelected, activeFilters, this.props.duration);
     } else {
       this.setState({ listItems: [] });
     }
@@ -102,13 +101,10 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         versionLabel: deployment.versionLabel,
         istioSidecar: deployment.istioSidecar,
         additionalDetailSample: deployment.additionalDetailSample,
-        healthPromise: API.getWorkloadHealth(
-          data.namespace.name,
-          deployment.name,
-          deployment.type,
-          this.props.duration,
-          deployment.istioSidecar
-        ),
+        health: WorkloadHealth.fromJson(data.namespace.name, deployment.name, deployment.health, {
+          rateInterval: this.props.duration,
+          hasSidecar: deployment.istioSidecar
+        }),
         labels: deployment.labels,
         istioReferences: sortIstioReferences(deployment.istioReferences, true),
         notCoveredAuthPolicy: hasMissingAuthPolicy(deployment.name, data.validations)
@@ -117,8 +113,10 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     return [];
   };
 
-  fetchWorkloads(namespaces: string[], filters: ActiveFiltersInfo) {
-    const workloadsConfigPromises = namespaces.map(namespace => API.getWorkloads(namespace));
+  fetchWorkloads(namespaces: string[], filters: ActiveFiltersInfo, rateInterval: number) {
+    const workloadsConfigPromises = namespaces.map(namespace =>
+      API.getWorkloads(namespace, { health: 'true', rateInterval: String(rateInterval) + 's' })
+    );
     this.promises
       .registerAll('workloads', workloadsConfigPromises)
       .then(responses => {
@@ -130,17 +128,9 @@ class WorkloadListPageComponent extends FilterComponent.Component<
       })
       .then(workloadsItems => {
         this.promises.cancel('sort');
-        this.sortItemList(workloadsItems, this.state.currentSortField, this.state.isSortAscending)
-          .then(sorted => {
-            this.setState({
-              listItems: sorted
-            });
-          })
-          .catch(err => {
-            if (!err.isCanceled) {
-              console.debug(err);
-            }
-          });
+        this.setState({
+          listItems: this.sortItemList(workloadsItems, this.state.currentSortField, this.state.isSortAscending)
+        });
       })
       .catch(err => {
         if (!err.isCanceled) {

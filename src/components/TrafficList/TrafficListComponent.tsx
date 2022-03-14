@@ -83,8 +83,8 @@ class TrafficListComponent extends FilterComponent.Component<
     // we only care about new TrafficItems, sorting is managed locally after initial render
     if (prevProps.trafficItems !== this.props.trafficItems) {
       const listItems = this.trafficToListItems(this.props.trafficItems);
-      this.sortItemList(listItems, this.state.currentSortField, this.state.isSortAscending).then(sorted => {
-        this.setState({ listItems: sorted });
+      this.setState({
+        listItems: this.sortItemList(listItems, this.state.currentSortField, this.state.isSortAscending)
       });
     }
   }
@@ -135,9 +135,8 @@ class TrafficListComponent extends FilterComponent.Component<
     listItems: TrafficListItem[],
     sortField: SortField<TrafficListItem>,
     isAscending: boolean
-  ): Promise<TrafficListItem[]> {
-    const sorted = listItems.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
-    return Promise.resolve(sorted);
+  ): TrafficListItem[] {
+    return listItems.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
   }
 
   // Helper used for Table to sort handlers based on index column == field
