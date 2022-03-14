@@ -137,7 +137,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(context.TODO(), namespace, objectType, object)
 
 	if includeHelp {
-		istioConfigDetails.IstioConfigHelpFields = config.Get().IstioConfigHelpMessages[objectType]
+		istioConfigDetails.IstioConfigHelpFields = models.IstioConfigHelpMessages[objectType]
 	}
 
 	if includeValidations && err == nil {
