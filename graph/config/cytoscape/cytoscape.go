@@ -92,8 +92,10 @@ type NodeData struct {
 	Service               string              `json:"service,omitempty"`               // requested service for NodeTypeService
 	Aggregate             string              `json:"aggregate,omitempty"`             // set like "<aggregate>=<aggregateVal>"
 	DestServices          []graph.ServiceName `json:"destServices,omitempty"`          // requested services for [dest] node
-	Traffic               []ProtocolTraffic   `json:"traffic,omitempty"`               // traffic rates for all detected protocols
 	Labels                map[string]string   `json:"labels,omitempty"`                // k8s labels associated with the node
+	Traffic               []ProtocolTraffic   `json:"traffic,omitempty"`               // traffic rates for all detected protocols
+	HealthData            interface{}         `json:"healthData"`                      // data to calculate health status from configurations
+	HealthDataApp         interface{}         `json:"-"`                               // for local use to generate appBox health
 	HasCB                 bool                `json:"hasCB,omitempty"`                 // true (has circuit breaker) | false
 	HasFaultInjection     bool                `json:"hasFaultInjection,omitempty"`     // true (vs has fault injection) | false
 	HasHealthConfig       HealthConfig        `json:"hasHealthConfig,omitempty"`       // set to the health config override
@@ -105,7 +107,6 @@ type NodeData struct {
 	HasTrafficShifting    bool                `json:"hasTrafficShifting,omitempty"`    // true (vs has traffic shifting) | false
 	HasVS                 *VSInfo             `json:"hasVS,omitempty"`                 // it can be empty if there is a VS without hostnames
 	HasWorkloadEntry      []graph.WEInfo      `json:"hasWorkloadEntry,omitempty"`      // static workload entry information | empty if there are no workload entries
-	HealthData            interface{}         `json:"healthData"`                      // data to calculate health status from configurations
 	IsBox                 string              `json:"isBox,omitempty"`                 // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
 	IsDead                bool                `json:"isDead,omitempty"`                // true (has no pods) | false
 	IsGateway             *GWInfo             `json:"isGateway,omitempty"`             // Istio ingress/egress gateway information
@@ -247,6 +248,14 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		}
 
 		addNodeTelemetry(n, nd)
+
+		// set annotations, if available
+		if val, ok := n.Metadata[graph.HealthData]; ok {
+			nd.HealthData = val.(interface{})
+		}
+		if val, ok := n.Metadata[graph.HealthDataApp]; ok {
+			nd.HealthDataApp = val.(interface{})
+		}
 
 		// set k8s labels, if any
 		if val, ok := n.Metadata[graph.Labels]; ok {
@@ -613,6 +622,14 @@ func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper,
 
 				// For logical boxing (app), copy some member attributes to to the box node
 				if boxBy == graph.BoxByApp {
+					if nd.HealthData == nil {
+						// make sure to use app health for the app box
+						if graph.IsOK(n.Workload) {
+							nd.HealthData = n.HealthDataApp
+						} else {
+							nd.HealthData = n.HealthData
+						}
+					}
 					nd.HasMissingSC = nd.HasMissingSC || n.HasMissingSC
 					nd.IsInaccessible = nd.IsInaccessible || n.IsInaccessible
 					nd.IsOutside = nd.IsOutside || n.IsOutside
