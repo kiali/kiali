@@ -305,6 +305,7 @@ func fetchNamespaceApps(ctx context.Context, layer *Layer, namespace string, app
 			IncludeIstioResources:  false,
 			IncludeOnlyDefinitions: true,
 			ServiceSelector:        labels.Set(w.Labels).String(),
+			Health:                 false,
 		}
 		ss, err = layer.Svc.GetServiceList(ctx, criteria)
 		if err != nil {

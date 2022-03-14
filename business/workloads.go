@@ -313,6 +313,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, namespace string, wo
 			Namespace:              namespace,
 			ServiceSelector:        labels.Set(workload.Labels).String(),
 			IncludeOnlyDefinitions: true,
+			Health:                 false,
 		}
 		services, err = in.businessLayer.Svc.GetServiceList(ctx, criteria)
 		if err != nil {
