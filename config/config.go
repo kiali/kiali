@@ -244,12 +244,6 @@ type IstioLabels struct {
 	VersionLabelName   string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
-// IstioConfigHelp represents a help message for a given Istio object type and field
-type IstioConfigHelp struct {
-	ObjectField string `yaml:"object_field" json:"objectField"`
-	Message     string `yaml:"message" json:"message"`
-}
-
 // AdditionalDisplayItem holds some display-related configuration, like which annotations are to be displayed
 type AdditionalDisplayItem struct {
 	Annotation     string `yaml:"annotation"`
@@ -475,7 +469,6 @@ type Config struct {
 	Identity                 security.Identity                   `yaml:",omitempty"`
 	InCluster                bool                                `yaml:"in_cluster,omitempty"`
 	InstallationTag          string                              `yaml:"installation_tag,omitempty"`
-	IstioConfigHelpMessages  map[string][]IstioConfigHelp        `yaml:"istio_config_help_messages,omitempty" json:"help,omitempty"`
 	IstioLabels              IstioLabels                         `yaml:"istio_labels,omitempty"`
 	IstioNamespace           string                              `yaml:"istio_namespace,omitempty"` // default component namespace
 	KialiFeatureFlags        KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
@@ -774,7 +767,6 @@ func Set(conf *Config) {
 	rwMutex.Lock()
 	defer rwMutex.Unlock()
 	conf.AddHealthDefault()
-	conf.AddHelpDefault()
 	configuration = *conf
 }
 
