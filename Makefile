@@ -17,7 +17,7 @@ COMMIT_HASH ?= $(shell git rev-parse HEAD)
 # have been built before trying to create a kiali server container
 # image. The UI project is configured to place its build
 # output in the $UI_SRC_ROOT/build/ subdirectory.
-CONSOLE_LOCAL_DIR ?= ${ROOTDIR}/../../../../../kiali-ui
+CONSOLE_LOCAL_DIR ?= ${ROOTDIR}/../kiali-ui
 
 # Version label is used in the OpenShift/K8S resources to identify
 # their specific instances. Kiali resources will have labels of
@@ -35,7 +35,7 @@ SWAGGER_VERSION ?= 0.27.0
 # Identifies the Kiali container image that will be built.
 IMAGE_ORG ?= kiali
 CONTAINER_NAME ?= ${IMAGE_ORG}/kiali
-CONTAINER_VERSION ?= dev
+CONTAINER_VERSION ?= 1.54
 
 # These two vars allow Jenkins to override values.
 QUAY_NAME ?= quay.io/${CONTAINER_NAME}
