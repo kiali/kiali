@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	kialiConfig "github.com/kiali/kiali/config"
@@ -112,7 +113,11 @@ func ConfigClient() (*rest.Config, error) {
 		if remoteSecret, readErr := GetRemoteSecret(RemoteSecretData); readErr == nil {
 			incluster, err = UseRemoteCreds(remoteSecret)
 		} else {
-			incluster, err = rest.InClusterConfig()
+			if kialiConfig.Get().KubernetesConfig.SecretPath != "" {
+				incluster, err = clientcmd.BuildConfigFromFlags("", kialiConfig.Get().KubernetesConfig.SecretPath)
+			} else {
+				incluster, err = rest.InClusterConfig()
+			}
 		}
 		if err != nil {
 			return nil, err

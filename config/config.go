@@ -284,6 +284,8 @@ type KubernetesConfig struct {
 	// Configure APIServerServiceName and APIServerServicePort only work when out of cluster
 	APIServerServiceName string `yaml:"apiserver_service_name,omitempty"`
 	APIServerServicePort string `yaml:"apiserver_service_port,omitempty"`
+	// SecretPath the path of secret
+	SecretPath string `yaml:"secret_path,omitempty"`
 }
 
 // ApiConfig contains API specific configuration.
