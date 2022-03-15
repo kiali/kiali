@@ -622,11 +622,13 @@ func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper,
 
 				// For logical boxing (app), copy some member attributes to to the box node
 				if boxBy == graph.BoxByApp {
-					if nd.HealthData == nil {
-						// make sure to use app health for the app box
+					// make sure to use app health for the app box
+					if nd.HealthData == nil && n.NodeType == graph.NodeTypeApp {
 						if graph.IsOK(n.Workload) {
+							// for versionedApp node, use the app health (n.HealthData has workload health)
 							nd.HealthData = n.HealthDataApp
 						} else {
+							// for app node just ue the node's health
 							nd.HealthData = n.HealthData
 						}
 					}
