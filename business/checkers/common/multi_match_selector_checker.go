@@ -72,7 +72,12 @@ func RequestAuthenticationMultiMatchChecker(subjectType string, ra []security_v1
 func SidecarSelectorMultiMatchChecker(subjectType string, sc []networking_v1alpha3.Sidecar, workloadList models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(sc))
-	for i, s := range sc {
+	i := 0
+	for _, s := range sc {
+		if s.Namespace != workloadList.Namespace.Name {
+			// Workloads from Sidecar's own Namespaces only are considered in Selector
+			continue
+		}
 		key := models.IstioValidationKey{
 			ObjectType: subjectType,
 			Name:       s.Name,
@@ -83,6 +88,7 @@ func SidecarSelectorMultiMatchChecker(subjectType string, sc []networking_v1alph
 		if s.Spec.WorkloadSelector != nil {
 			selectors[i] = s.Spec.WorkloadSelector.Labels
 		}
+		i++
 	}
 	return GenericMultiMatchChecker{
 		SubjectType:  subjectType,

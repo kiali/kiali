@@ -72,6 +72,65 @@ func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
 	assertMultimatchFailure(t, "generic.multimatch.selector", validations, "sidecar4", []string{"sidecar1", "sidecar3"})
 }
 
+func TestSidecarsCrossNamespaces(t *testing.T) {
+	sidecars := []networking_v1alpha3.Sidecar{
+		*data.AddSelectorToSidecar(map[string]string{
+			"app":     "details",
+			"version": "v1",
+		}, data.CreateSidecar("sidecar1", "bookinfo")),
+		*data.AddSelectorToSidecar(map[string]string{
+			"app":     "details",
+			"version": "v1",
+		}, data.CreateSidecar("sidecar2", "bookinfo")),
+		*data.AddSelectorToSidecar(map[string]string{
+			"app":     "details",
+			"version": "v1",
+		}, data.CreateSidecar("sidecar3", "bookinfo2")),
+		*data.AddSelectorToSidecar(map[string]string{
+			"app":     "details",
+			"version": "v1",
+		}, data.CreateSidecar("sidecar4", "bookinfo2")),
+	}
+	validations := SidecarSelectorMultiMatchChecker(
+		"sidecar",
+		sidecars,
+		workloadList(),
+	).Check()
+
+	assertMultimatchFailure(t, "generic.multimatch.selector", validations, "sidecar1", []string{"sidecar2"})
+	assertMultimatchFailure(t, "generic.multimatch.selector", validations, "sidecar2", []string{"sidecar1"})
+}
+
+func TestSidecarsDifferentNamespaces(t *testing.T) {
+	assert := assert.New(t)
+
+	sidecars := []networking_v1alpha3.Sidecar{
+		*data.AddSelectorToSidecar(map[string]string{
+			"app":     "details",
+			"version": "v1",
+		}, data.CreateSidecar("sidecar1", "bookinfo")),
+		*data.AddSelectorToSidecar(map[string]string{
+			"app":     "details",
+			"version": "v1",
+		}, data.CreateSidecar("sidecar2", "bookinfo2")),
+		*data.AddSelectorToSidecar(map[string]string{
+			"app":     "details",
+			"version": "v1",
+		}, data.CreateSidecar("sidecar3", "bookinfo3")),
+		*data.AddSelectorToSidecar(map[string]string{
+			"app":     "details",
+			"version": "v1",
+		}, data.CreateSidecar("sidecar4", "bookinfo4")),
+	}
+	validations := SidecarSelectorMultiMatchChecker(
+		"sidecar",
+		sidecars,
+		workloadList(),
+	).Check()
+
+	assert.Empty(validations)
+}
+
 func assertMultimatchFailure(t *testing.T, code string, vals models.IstioValidations, item string, references []string) {
 	assert := assert.New(t)
 
@@ -103,5 +162,5 @@ func workloadList() models.WorkloadList {
 		data.CreateWorkloadListItem("details-v3", map[string]string{"app": "details", "version": "v3"}),
 	}
 
-	return data.CreateWorkloadList("test", wli...)
+	return data.CreateWorkloadList("bookinfo", wli...)
 }
