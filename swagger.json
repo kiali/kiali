@@ -1190,6 +1190,12 @@
             "in": "query"
           },
           {
+            "type": "string",
+            "x-go-name": "AppName",
+            "name": "app",
+            "in": "query"
+          },
+          {
             "type": "boolean",
             "x-go-name": "Health",
             "description": "Optional",
@@ -3324,6 +3330,12 @@
           },
           {
             "type": "string",
+            "x-go-name": "WorkloadName",
+            "name": "workload",
+            "in": "query"
+          },
+          {
+            "type": "string",
             "x-go-name": "WorkloadType",
             "name": "type",
             "in": "query"
@@ -3333,6 +3345,12 @@
             "x-go-name": "Health",
             "description": "Optional",
             "name": "health",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "x-go-name": "Validate",
+            "name": "validate",
             "in": "query"
           },
           {
@@ -4252,6 +4270,9 @@
         "serviceNames"
       ],
       "properties": {
+        "health": {
+          "$ref": "#/definitions/AppHealth"
+        },
         "name": {
           "description": "Name of the application",
           "type": "string",

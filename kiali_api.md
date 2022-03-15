@@ -631,6 +631,7 @@ Endpoint to get the list of apps for a namespace
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | QueryTime | `query` | date-time (formatted string) | `strfmt.DateTime` |  |  |  | The time to use for the prometheus query |
+| app | `query` | string | `string` |  |  |  |  |
 | health | `query` | boolean | `bool` |  |  |  | Optional |
 | rateInterval | `query` | string | `string` |  |  | `"10m"` | The rate interval used for fetching error rate |
 
@@ -5717,6 +5718,8 @@ Endpoint to get the list of workloads for a namespace
 | health | `query` | boolean | `bool` |  |  |  | Optional |
 | rateInterval | `query` | string | `string` |  |  | `"10m"` | The rate interval used for fetching error rate |
 | type | `query` | string | `string` |  |  |  |  |
+| validate | `query` | boolean | `bool` |  |  |  |  |
+| workload | `query` | string | `string` |  |  |  |  |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -6291,6 +6294,7 @@ Required. |  |
 | Runtimes | [][Runtime](#runtime)| `[]*Runtime` |  | | Runtimes and associated dashboards |  |
 | ServiceNames | []string| `[]string` | ✓ | | List of service names linked with an application |  |
 | Workloads | [][WorkloadItem](#workload-item)| `[]*WorkloadItem` | ✓ | | Workloads for a given application |  |
+| health | [AppHealth](#app-health)| `AppHealth` |  | |  |  |
 | namespace | [Namespace](#namespace)| `Namespace` | ✓ | |  |  |
 
 

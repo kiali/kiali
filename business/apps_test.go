@@ -81,7 +81,8 @@ func TestGetAppFromDeployments(t *testing.T) {
 	config.Set(conf)
 	svc := setupAppService(k8s)
 
-	appDetails, _ := svc.GetApp(context.TODO(), "Namespace", "httpbin")
+	criteria := AppCriteria{Namespace: "Namespace", AppName: "httpbin"}
+	appDetails, _ := svc.GetAppDetails(context.TODO(), criteria)
 
 	assert.Equal("Namespace", appDetails.Namespace.Name)
 	assert.Equal("httpbin", appDetails.Name)
@@ -148,7 +149,8 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 
 	svc := setupAppService(k8s)
 
-	appDetails, _ := svc.GetApp(context.TODO(), "Namespace", "httpbin")
+	criteria := AppCriteria{Namespace: "Namespace", AppName: "httpbin"}
+	appDetails, _ := svc.GetAppDetails(context.TODO(), criteria)
 
 	assert.Equal("Namespace", appDetails.Namespace.Name)
 	assert.Equal("httpbin", appDetails.Name)

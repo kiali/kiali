@@ -48,7 +48,7 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 
 	var wkd *models.Workload
 	if params.Workload != "" {
-		wkd, err = layer.Workload.GetWorkload(r.Context(), namespace, params.Workload, params.WorkloadType, false)
+		wkd, err = layer.Workload.GetWorkload(r.Context(), business.WorkloadCriteria{Namespace: namespace, WorkloadName: params.Workload, WorkloadType: params.WorkloadType, IncludeServices: false})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				RespondWithError(w, http.StatusNotFound, err.Error())

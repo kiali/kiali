@@ -39,7 +39,10 @@ type WorkloadService struct {
 
 type WorkloadCriteria struct {
 	Namespace             string
+	WorkloadName          string
+	WorkloadType          string
 	IncludeIstioResources bool
+	IncludeServices       bool
 	Health                bool
 	RateInterval          string
 	QueryTime             time.Time
@@ -101,6 +104,9 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadList",
 		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", criteria.Namespace),
+		observability.Attribute("rateInterval", criteria.RateInterval),
+		observability.Attribute("queryTime", criteria.QueryTime),
 	)
 	defer end()
 
@@ -273,23 +279,25 @@ func FilterUniqueIstioReferences(refs []*models.IstioValidationKey) []*models.Is
 
 // GetWorkload is the API handler to fetch details of a specific workload.
 // If includeServices is set true, the Workload will fetch all services related
-func (in *WorkloadService) GetWorkload(ctx context.Context, namespace string, workloadName string, workloadType string, includeServices bool) (*models.Workload, error) {
+func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCriteria) (*models.Workload, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkload",
 		observability.Attribute("package", "business"),
-		observability.Attribute("namespace", namespace),
-		observability.Attribute("workloadName", workloadName),
-		observability.Attribute("workloadType", workloadType),
-		observability.Attribute("includeServices", includeServices),
+		observability.Attribute("namespace", criteria.Namespace),
+		observability.Attribute("workloadName", criteria.WorkloadName),
+		observability.Attribute("workloadType", criteria.WorkloadType),
+		observability.Attribute("includeServices", criteria.IncludeServices),
+		observability.Attribute("rateInterval", criteria.RateInterval),
+		observability.Attribute("queryTime", criteria.QueryTime),
 	)
 	defer end()
 
-	ns, err := in.businessLayer.Namespace.GetNamespace(ctx, namespace)
+	ns, err := in.businessLayer.Namespace.GetNamespace(ctx, criteria.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	workload, err2 := fetchWorkload(ctx, in.businessLayer, namespace, workloadName, workloadType)
+	workload, err2 := fetchWorkload(ctx, in.businessLayer, criteria)
 	if err2 != nil {
 		return nil, err2
 	}
@@ -302,15 +310,15 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, namespace string, wo
 		conf := config.Get()
 		app := workload.Labels[conf.IstioLabels.AppLabelName]
 		version := workload.Labels[conf.IstioLabels.VersionLabelName]
-		runtimes = NewDashboardsService(ns, workload).GetCustomDashboardRefs(namespace, app, version, workload.Pods)
+		runtimes = NewDashboardsService(ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
 	}()
 
-	if includeServices {
+	if criteria.IncludeServices {
 		var services *models.ServiceList
 		var err error
 
 		criteria := ServiceCriteria{
-			Namespace:              namespace,
+			Namespace:              criteria.Namespace,
 			ServiceSelector:        labels.Set(workload.Labels).String(),
 			IncludeOnlyDefinitions: true,
 			Health:                 false,
@@ -352,7 +360,7 @@ func (in *WorkloadService) UpdateWorkload(ctx context.Context, namespace string,
 	}
 
 	// After the update we fetch the whole workload
-	return in.GetWorkload(ctx, namespace, workloadName, workloadType, includeServices)
+	return in.GetWorkload(ctx, WorkloadCriteria{Namespace: namespace, WorkloadName: workloadName, WorkloadType: workloadType, IncludeServices: includeServices})
 }
 
 func (in *WorkloadService) GetPods(ctx context.Context, namespace string, labelSelector string) (models.Pods, error) {
@@ -1177,7 +1185,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 	return ws, nil
 }
 
-func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workloadName string, workloadType string) (*models.Workload, error) {
+func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria) (*models.Workload, error) {
 	var pods []core_v1.Pod
 	var repcon []core_v1.ReplicationController
 	var dep *apps_v1.Deployment
@@ -1193,18 +1201,19 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 		Services:          []models.ServiceOverview{},
 		Runtimes:          []models.Runtime{},
 		AdditionalDetails: []models.AdditionalItem{},
+		Health:            *models.EmptyWorkloadHealth(),
 	}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := layer.Namespace.GetNamespace(ctx, namespace); err != nil {
+	if _, err := layer.Namespace.GetNamespace(ctx, criteria.Namespace); err != nil {
 		return nil, err
 	}
 
 	// Flag used for custom controllers
 	// i.e. a third party framework creates its own "Deployment" controller with extra features
 	// on this case, Kiali will collect basic info from the ReplicaSet controller
-	_, knownWorkloadType := controllerOrder[workloadType]
+	_, knownWorkloadType := controllerOrder[criteria.WorkloadType]
 
 	wg := sync.WaitGroup{}
 	wg.Add(9)
@@ -1216,13 +1225,13 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 		var err error
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
-		if IsNamespaceCached(namespace) {
-			pods, err = kialiCache.GetPods(namespace, "")
+		if IsNamespaceCached(criteria.Namespace) {
+			pods, err = kialiCache.GetPods(criteria.Namespace, "")
 		} else {
-			pods, err = layer.k8s.GetPods(namespace, "")
+			pods, err = layer.k8s.GetPods(criteria.Namespace, "")
 		}
 		if err != nil {
-			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err)
+			log.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err)
 			errChan <- err
 		}
 	}()
@@ -1231,21 +1240,21 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 		defer wg.Done()
 		var err error
 		// Check if workloadType is passed
-		if workloadType != "" && workloadType != kubernetes.DeploymentType {
+		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.DeploymentType {
 			return
 		}
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
-		if IsNamespaceCached(namespace) {
-			dep, err = kialiCache.GetDeployment(namespace, workloadName)
+		if IsNamespaceCached(criteria.Namespace) {
+			dep, err = kialiCache.GetDeployment(criteria.Namespace, criteria.WorkloadName)
 		} else {
-			dep, err = layer.k8s.GetDeployment(namespace, workloadName)
+			dep, err = layer.k8s.GetDeployment(criteria.Namespace, criteria.WorkloadName)
 		}
 		if err != nil {
 			if errors.IsNotFound(err) {
 				dep = nil
 			} else {
-				log.Errorf("Error fetching Deployment per namespace %s and name %s: %s", namespace, workloadName, err)
+				log.Errorf("Error fetching Deployment per namespace %s and name %s: %s", criteria.Namespace, criteria.WorkloadName, err)
 				errChan <- err
 			}
 		}
@@ -1255,19 +1264,19 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 		defer wg.Done()
 		// Check if workloadType is passed
 		// Unknown workload type will fetch ReplicaSet list
-		if workloadType != "" && workloadType != kubernetes.ReplicaSetType && knownWorkloadType {
+		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.ReplicaSetType && knownWorkloadType {
 			return
 		}
 		var err error
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
-		if IsNamespaceCached(namespace) {
-			repset, err = kialiCache.GetReplicaSets(namespace)
+		if IsNamespaceCached(criteria.Namespace) {
+			repset, err = kialiCache.GetReplicaSets(criteria.Namespace)
 		} else {
-			repset, err = layer.k8s.GetReplicaSets(namespace)
+			repset, err = layer.k8s.GetReplicaSets(criteria.Namespace)
 		}
 		if err != nil {
-			log.Errorf("Error fetching ReplicaSets per namespace %s: %s", namespace, err)
+			log.Errorf("Error fetching ReplicaSets per namespace %s: %s", criteria.Namespace, err)
 			errChan <- err
 		}
 	}()
@@ -1275,14 +1284,14 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 	go func() {
 		defer wg.Done()
 		// Check if workloadType is passed
-		if workloadType != "" && workloadType != kubernetes.ReplicationControllerType {
+		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.ReplicationControllerType {
 			return
 		}
 		var err error
 		if isWorkloadIncluded(kubernetes.ReplicationControllerType) {
-			repcon, err = layer.k8s.GetReplicationControllers(namespace)
+			repcon, err = layer.k8s.GetReplicationControllers(criteria.Namespace)
 			if err != nil {
-				log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", namespace, err)
+				log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", criteria.Namespace, err)
 				errChan <- err
 			}
 		}
@@ -1291,12 +1300,12 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 	go func() {
 		defer wg.Done()
 		// Check if workloadType is passed
-		if workloadType != "" && workloadType != kubernetes.DeploymentConfigType {
+		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.DeploymentConfigType {
 			return
 		}
 		var err error
 		if layer.k8s.IsOpenShift() && isWorkloadIncluded(kubernetes.DeploymentConfigType) {
-			depcon, err = layer.k8s.GetDeploymentConfig(namespace, workloadName)
+			depcon, err = layer.k8s.GetDeploymentConfig(criteria.Namespace, criteria.WorkloadName)
 			if err != nil {
 				depcon = nil
 			}
@@ -1306,15 +1315,15 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 	go func() {
 		defer wg.Done()
 		// Check if workloadType is passed
-		if workloadType != "" && workloadType != kubernetes.StatefulSetType {
+		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.StatefulSetType {
 			return
 		}
 		var err error
 		if isWorkloadIncluded(kubernetes.StatefulSetType) {
-			if IsNamespaceCached(namespace) {
-				fulset, err = kialiCache.GetStatefulSet(namespace, workloadName)
+			if IsNamespaceCached(criteria.Namespace) {
+				fulset, err = kialiCache.GetStatefulSet(criteria.Namespace, criteria.WorkloadName)
 			} else {
-				fulset, err = layer.k8s.GetStatefulSet(namespace, workloadName)
+				fulset, err = layer.k8s.GetStatefulSet(criteria.Namespace, criteria.WorkloadName)
 			}
 			if err != nil {
 				fulset = nil
@@ -1325,14 +1334,14 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 	go func() {
 		defer wg.Done()
 		// Check if workloadType is passed
-		if workloadType != "" && workloadType != kubernetes.CronJobType {
+		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.CronJobType {
 			return
 		}
 		var err error
 		if isWorkloadIncluded(kubernetes.CronJobType) {
-			conjbs, err = layer.k8s.GetCronJobs(namespace)
+			conjbs, err = layer.k8s.GetCronJobs(criteria.Namespace)
 			if err != nil {
-				log.Errorf("Error fetching CronJobs per namespace %s: %s", namespace, err)
+				log.Errorf("Error fetching CronJobs per namespace %s: %s", criteria.Namespace, err)
 				errChan <- err
 			}
 		}
@@ -1341,14 +1350,14 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 	go func() {
 		defer wg.Done()
 		// Check if workloadType is passed
-		if workloadType != "" && workloadType != kubernetes.JobType {
+		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.JobType {
 			return
 		}
 		var err error
 		if isWorkloadIncluded(kubernetes.JobType) {
-			jbs, err = layer.k8s.GetJobs(namespace)
+			jbs, err = layer.k8s.GetJobs(criteria.Namespace)
 			if err != nil {
-				log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)
+				log.Errorf("Error fetching Jobs per namespace %s: %s", criteria.Namespace, err)
 				errChan <- err
 			}
 		}
@@ -1357,12 +1366,12 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 	go func() {
 		defer wg.Done()
 		// Check if workloadType is passed
-		if workloadType != "" && workloadType != kubernetes.DaemonSetType {
+		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.DaemonSetType {
 			return
 		}
 		var err error
 		if isWorkloadIncluded(kubernetes.DaemonSetType) {
-			ds, err = layer.k8s.GetDaemonSet(namespace, workloadName)
+			ds, err = layer.k8s.GetDaemonSet(criteria.Namespace, criteria.WorkloadName)
 			if err != nil {
 				ds = nil
 			}
@@ -1529,37 +1538,39 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 
 	// Build workload from controllers
 
-	if _, exist := controllers[workloadName]; exist {
+	if _, exist := controllers[criteria.WorkloadName]; exist {
 		w := models.Workload{
 			Pods:              models.Pods{},
 			Services:          []models.ServiceOverview{},
 			Runtimes:          []models.Runtime{},
 			AdditionalDetails: []models.AdditionalItem{},
+			Health:            *models.EmptyWorkloadHealth(),
 		}
-		ctype := controllers[workloadName]
+
+		ctype := controllers[criteria.WorkloadName]
 		// Cornercase -> a controller is found but API is forcing a different workload type
 		// https://github.com/kiali/kiali/issues/3830
 		controllerType := ctype
-		if workloadType != "" && ctype != workloadType {
-			controllerType = workloadType
+		if criteria.WorkloadType != "" && ctype != criteria.WorkloadType {
+			controllerType = criteria.WorkloadType
 		}
 		// Flag to add a controller if it is found
 		cnFound := true
 		switch controllerType {
 		case kubernetes.DeploymentType:
-			if dep != nil && dep.Name == workloadName {
+			if dep != nil && dep.Name == criteria.WorkloadName {
 				selector := labels.Set(dep.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseDeployment(dep)
 			} else {
-				log.Errorf("Workload %s is not found as Deployment", workloadName)
+				log.Errorf("Workload %s is not found as Deployment", criteria.WorkloadName)
 				cnFound = false
 			}
 		case kubernetes.ReplicaSetType:
 			found := false
 			iFound := -1
 			for i, rs := range repset {
-				if rs.Name == workloadName {
+				if rs.Name == criteria.WorkloadName {
 					found = true
 					iFound = i
 					break
@@ -1570,14 +1581,14 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseReplicaSet(&repset[iFound])
 			} else {
-				log.Errorf("Workload %s is not found as ReplicaSet", workloadName)
+				log.Errorf("Workload %s is not found as ReplicaSet", criteria.WorkloadName)
 				cnFound = false
 			}
 		case kubernetes.ReplicationControllerType:
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
-				if rc.Name == workloadName {
+				if rc.Name == criteria.WorkloadName {
 					found = true
 					iFound = i
 					break
@@ -1588,32 +1599,32 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseReplicationController(&repcon[iFound])
 			} else {
-				log.Errorf("Workload %s is not found as ReplicationController", workloadName)
+				log.Errorf("Workload %s is not found as ReplicationController", criteria.WorkloadName)
 				cnFound = false
 			}
 		case kubernetes.DeploymentConfigType:
-			if depcon != nil && depcon.Name == workloadName {
+			if depcon != nil && depcon.Name == criteria.WorkloadName {
 				selector := labels.Set(depcon.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseDeploymentConfig(depcon)
 			} else {
-				log.Errorf("Workload %s is not found as DeploymentConfig", workloadName)
+				log.Errorf("Workload %s is not found as DeploymentConfig", criteria.WorkloadName)
 				cnFound = false
 			}
 		case kubernetes.StatefulSetType:
-			if fulset != nil && fulset.Name == workloadName {
+			if fulset != nil && fulset.Name == criteria.WorkloadName {
 				selector := labels.Set(fulset.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseStatefulSet(fulset)
 			} else {
-				log.Errorf("Workload %s is not found as StatefulSet", workloadName)
+				log.Errorf("Workload %s is not found as StatefulSet", criteria.WorkloadName)
 				cnFound = false
 			}
 		case kubernetes.PodType:
 			found := false
 			iFound := -1
 			for i, pod := range pods {
-				if pod.Name == workloadName {
+				if pod.Name == criteria.WorkloadName {
 					found = true
 					iFound = i
 					break
@@ -1623,14 +1634,14 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 				w.SetPods([]core_v1.Pod{pods[iFound]})
 				w.ParsePod(&pods[iFound])
 			} else {
-				log.Errorf("Workload %s is not found as Pod", workloadName)
+				log.Errorf("Workload %s is not found as Pod", criteria.WorkloadName)
 				cnFound = false
 			}
 		case kubernetes.JobType:
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
-				if jb.Name == workloadName {
+				if jb.Name == criteria.WorkloadName {
 					found = true
 					iFound = i
 					break
@@ -1641,14 +1652,14 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseJob(&jbs[iFound])
 			} else {
-				log.Errorf("Workload %s is not found as Job", workloadName)
+				log.Errorf("Workload %s is not found as Job", criteria.WorkloadName)
 				cnFound = false
 			}
 		case kubernetes.CronJobType:
 			found := false
 			iFound := -1
 			for i, cjb := range conjbs {
-				if cjb.Name == workloadName {
+				if cjb.Name == criteria.WorkloadName {
 					found = true
 					iFound = i
 					break
@@ -1659,16 +1670,16 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseCronJob(&conjbs[iFound])
 			} else {
-				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", workloadName)
+				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", criteria.WorkloadName)
 				cnFound = false
 			}
 		case kubernetes.DaemonSetType:
-			if ds != nil && ds.Name == workloadName {
+			if ds != nil && ds.Name == criteria.WorkloadName {
 				selector := labels.Set(ds.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseDaemonSet(ds)
 			} else {
-				log.Errorf("Workload %s is not found as DaemonSet", workloadName)
+				log.Errorf("Workload %s is not found as DaemonSet", criteria.WorkloadName)
 				cnFound = false
 			}
 		default:
@@ -1682,8 +1693,8 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 			var cPods []core_v1.Pod
 			for _, rs := range repset {
 				rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
-				if rsOwnerRef != nil && rsOwnerRef.Name == workloadName && rsOwnerRef.Kind == ctype {
-					w.ParseReplicaSetParent(&rs, workloadName, ctype)
+				if rsOwnerRef != nil && rsOwnerRef.Name == criteria.WorkloadName && rsOwnerRef.Kind == ctype {
+					w.ParseReplicaSetParent(&rs, criteria.WorkloadName, ctype)
 					for _, pod := range pods {
 						if meta_v1.IsControlledBy(&pod, &rs) {
 							cPods = append(cPods, pod)
@@ -1695,10 +1706,10 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 			if len(cPods) == 0 {
 				// If no pods we're found for a ReplicaSet type, it's possible the controller
 				// is managing the pods itself i.e. the pod's have an owner ref directly to the controller type.
-				cPods = kubernetes.FilterPodsByController(workloadName, ctype, pods)
+				cPods = kubernetes.FilterPodsByController(criteria.WorkloadName, ctype, pods)
 				if len(cPods) > 0 {
-					w.ParsePods(workloadName, ctype, cPods)
-					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", workloadName, ctype)
+					w.ParsePods(criteria.WorkloadName, ctype, cPods)
+					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", criteria.WorkloadName, ctype)
 				}
 			}
 			w.SetPods(cPods)
@@ -1707,9 +1718,9 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 		// Add the Proxy Status to the workload
 		for _, pod := range w.Pods {
 			if pod.HasIstioSidecar() {
-				ps, err := layer.ProxyStatus.GetPodProxyStatus(namespace, pod.Name)
+				ps, err := layer.ProxyStatus.GetPodProxyStatus(criteria.Namespace, pod.Name)
 				if err != nil {
-					log.Warningf("GetPodProxyStatus is failing for [namespace: %s] [pod: %s]: %s ", namespace, pod.Name, err.Error())
+					log.Warningf("GetPodProxyStatus is failing for [namespace: %s] [pod: %s]: %s ", criteria.Namespace, pod.Name, err.Error())
 				}
 				pod.ProxyStatus = castProxyStatus(ps)
 			}
@@ -1719,7 +1730,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, namespace string, workload
 			return &w, nil
 		}
 	}
-	return wl, kubernetes.NewNotFound(workloadName, "Kiali", "Workload")
+	return wl, kubernetes.NewNotFound(criteria.WorkloadName, "Kiali", "Workload")
 }
 
 func updateWorkload(layer *Layer, namespace string, workloadName string, workloadType string, jsonPatch string) error {
@@ -1828,7 +1839,7 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, namespace, wo
 	)
 	defer end()
 
-	wkd, err := fetchWorkload(ctx, in.businessLayer, namespace, workload, "")
+	wkd, err := fetchWorkload(ctx, in.businessLayer, WorkloadCriteria{Namespace: namespace, WorkloadName: workload, WorkloadType: ""})
 	if err != nil {
 		return "", err
 	}

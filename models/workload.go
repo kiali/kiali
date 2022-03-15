@@ -136,6 +136,9 @@ type Workload struct {
 	AdditionalDetails []AdditionalItem `json:"additionalDetails"`
 
 	Validations IstioValidations `json:"validations"`
+
+	// Health
+	Health WorkloadHealth `json:"health"`
 }
 
 type Workloads []*Workload

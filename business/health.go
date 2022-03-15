@@ -98,7 +98,7 @@ func (in *HealthService) GetWorkloadHealth(ctx context.Context, namespace, workl
 	)
 	defer end()
 
-	w, err := fetchWorkload(ctx, in.businessLayer, namespace, workload, workloadType)
+	w, err := fetchWorkload(ctx, in.businessLayer, WorkloadCriteria{Namespace: namespace, WorkloadName: workload, WorkloadType: workloadType})
 	if err != nil {
 		return models.WorkloadHealth{}, err
 	}
@@ -373,7 +373,7 @@ func (in *HealthService) getWorkloadRequestsHealth(ctx context.Context, namespac
 	for _, sample := range outbound {
 		rqHealth.AggregateOutbound(sample)
 	}
-	w, err := in.businessLayer.Workload.GetWorkload(ctx, namespace, workload, "", false)
+	w, err := in.businessLayer.Workload.GetWorkload(ctx, WorkloadCriteria{Namespace: namespace, WorkloadName: workload, WorkloadType: "", IncludeServices: false})
 	if err != nil {
 		return rqHealth, err
 	}
