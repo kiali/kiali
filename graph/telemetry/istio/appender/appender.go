@@ -25,13 +25,12 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 	if !o.Appenders.All {
 		for _, appenderName := range o.Appenders.AppenderNames {
 			switch appenderName {
+
 			// namespace appenders
 			case AggregateNodeAppenderName:
 				requestedAppenders[AggregateNodeAppenderName] = true
 			case DeadNodeAppenderName:
 				requestedAppenders[DeadNodeAppenderName] = true
-			case HealthConfigAppenderName:
-				requestedAppenders[HealthConfigAppenderName] = true
 			case IdleNodeAppenderName:
 				requestedAppenders[IdleNodeAppenderName] = true
 			case IstioAppenderName:
@@ -48,7 +47,14 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 				requestedAppenders[ThroughputAppenderName] = true
 			case WorkloadEntryAppenderName:
 				requestedAppenders[WorkloadEntryAppenderName] = true
+
 			// finalizer appenders
+			case HealthAppenderName:
+				// currently, because health is still calculated in the client, if requesting health
+				// we also need to run the healthConfig appender.  Eventually, asking for health will supply
+				// the result of a server-side health calculation.
+				requestedAppenders[HealthAppenderName] = true
+				requestedFinalizers[HealthAppenderName] = true
 			case LabelerAppenderName:
 				requestedFinalizers[LabelerAppenderName] = true
 			case OutsiderAppenderName, TrafficGeneratorAppenderName:
@@ -160,10 +166,6 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		}
 		appenders = append(appenders, a)
 	}
-	if _, ok := requestedAppenders[HealthConfigAppenderName]; ok || o.Appenders.All {
-		a := HealthConfigAppender{}
-		appenders = append(appenders, a)
-	}
 	if _, ok := requestedAppenders[IdleNodeAppenderName]; ok || o.Appenders.All {
 		hasNodeOptions := o.App != "" || o.Workload != "" || o.Service != ""
 		a := IdleNodeAppender{
@@ -192,6 +194,15 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		AccessibleNamespaces: o.AccessibleNamespaces,
 		Namespaces:           o.Namespaces,
 	})
+
+	// if health finalizer is to be run, do it after the outsider finalizer
+	if _, ok := requestedFinalizers[HealthAppenderName]; ok {
+		finalizers = append(finalizers, &HealthAppender{
+			Namespaces:        o.Namespaces,
+			QueryTime:         o.QueryTime,
+			RequestedDuration: o.Duration,
+		})
+	}
 
 	// if labeler finalizer is to be run, do it after the outsider finalizer
 	if _, ok := requestedFinalizers[LabelerAppenderName]; ok {

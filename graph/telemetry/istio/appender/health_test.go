@@ -32,7 +32,7 @@ func TestServicesHealthConfigPasses(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := HealthConfigAppender{}
+	a := HealthAppender{}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -51,7 +51,7 @@ func TestServicesHealthNoConfigPasses(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := HealthConfigAppender{}
+	a := HealthAppender{}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -70,7 +70,7 @@ func TestWorkloadHealthConfigPasses(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := HealthConfigAppender{}
+	a := HealthAppender{}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -89,7 +89,7 @@ func TestWorkloadHealthNoConfigPasses(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := HealthConfigAppender{}
+	a := HealthAppender{}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {

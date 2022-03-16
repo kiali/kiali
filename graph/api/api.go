@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
@@ -42,9 +41,10 @@ func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom *p
 	// Create a 'global' object to store the business. Global only to the request.
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = business
+	globalInfo.Context = ctx
 
 	trafficMap := istio.BuildNamespacesTrafficMap(o.TelemetryOptions, prom, globalInfo)
-	code, config = generateGraph(ctx, trafficMap, o, business)
+	code, config = generateGraph(trafficMap, o)
 
 	return code, config
 }
@@ -79,14 +79,15 @@ func graphNodeIstio(ctx context.Context, business *business.Layer, client *prome
 	// Create a 'global' object to store the business. Global only to the request.
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = business
+	globalInfo.Context = ctx
 
 	trafficMap := istio.BuildNodeTrafficMap(o.TelemetryOptions, client, globalInfo)
-	code, config = generateGraph(ctx, trafficMap, o, business)
+	code, config = generateGraph(trafficMap, o)
 
 	return code, config
 }
 
-func generateGraph(ctx context.Context, trafficMap graph.TrafficMap, o graph.Options, bs *business.Layer) (int, interface{}) {
+func generateGraph(trafficMap graph.TrafficMap, o graph.Options) (int, interface{}) {
 	log.Tracef("Generating config for [%s] graph...", o.ConfigVendor)
 
 	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
@@ -95,108 +96,11 @@ func generateGraph(ctx context.Context, trafficMap graph.TrafficMap, o graph.Opt
 	var vendorConfig interface{}
 	switch o.ConfigVendor {
 	case graph.VendorCytoscape:
-		vc := cytoscape.NewConfig(trafficMap, o.ConfigOptions)
-		if o.ConfigOptions.IncludeHealth {
-			err := collectGraphHealth(ctx, &vc, o.ConfigOptions, bs)
-			if err != nil {
-				graph.Error(fmt.Sprintf("Error collecting graph health: %s", err.Error()))
-			}
-		}
-		vendorConfig = &vc
+		vendorConfig = cytoscape.NewConfig(trafficMap, o.ConfigOptions)
 	default:
 		graph.Error(fmt.Sprintf("ConfigVendor [%s] not supported", o.ConfigVendor))
 	}
 
 	log.Tracef("Done generating config for [%s] graph", o.ConfigVendor)
 	return http.StatusOK, vendorConfig
-}
-
-func collectGraphHealth(ctx context.Context, vendorConfig *cytoscape.Config, o graph.ConfigOptions, bs *business.Layer) error {
-	healthReqs := make(map[string]map[string][]*cytoscape.NodeWrapper)
-
-	// Limit health fetches to only the necessary namespaces for the necessary types
-	for _, node := range vendorConfig.Elements.Nodes {
-		if node.Data.IsInaccessible {
-			continue
-		}
-
-		kind := ""
-		namespace := node.Data.Namespace
-		nodeType := node.Data.NodeType
-		workloadOk := len(node.Data.Workload) != 0 && node.Data.Workload != graph.Unknown
-
-		switch nodeType {
-		case graph.NodeTypeWorkload:
-			kind = "workload"
-		case graph.NodeTypeApp:
-			if workloadOk {
-				kind = "workload"
-			} else {
-				kind = "app"
-			}
-		case graph.NodeTypeBox:
-			if node.Data.IsBox == graph.BoxByApp {
-				kind = "app"
-			}
-		case graph.NodeTypeService:
-			kind = "service"
-		}
-
-		if len(kind) != 0 {
-			if _, nsOk := healthReqs[namespace]; !nsOk {
-				healthReqs[namespace] = make(map[string][]*cytoscape.NodeWrapper)
-			}
-
-			healthReqs[namespace][kind] = append(healthReqs[namespace][kind], node)
-		}
-	}
-
-	// Execute health fetches and attach retrieved health data to nodes
-	for namespace, kinds := range healthReqs {
-		for kind, nodeWrappers := range kinds {
-			switch kind {
-			case "app":
-				health, err := bs.Health.GetNamespaceAppHealth(ctx, namespace, o.RawDuration, time.Unix(o.QueryTime, 0))
-				if err != nil {
-					return err
-				}
-				for _, nodeWrap := range nodeWrappers {
-					if h, ok := health[nodeWrap.Data.App]; ok {
-						nodeWrap.Data.HealthData = h
-					} else {
-						nodeWrap.Data.HealthData = []int{}
-						log.Debugf("No health found for [%s] [%s]", nodeWrap.Data.NodeType, nodeWrap.Data.App)
-					}
-				}
-			case "service":
-				health, err := bs.Health.GetNamespaceServiceHealth(ctx, namespace, o.RawDuration, time.Unix(o.QueryTime, 0))
-				if err != nil {
-					return err
-				}
-				for _, nodeWrap := range nodeWrappers {
-					if h, ok := health[nodeWrap.Data.Service]; ok {
-						nodeWrap.Data.HealthData = h
-					} else {
-						nodeWrap.Data.HealthData = []int{}
-						log.Debugf("No health found for [%s] [%s]", nodeWrap.Data.NodeType, nodeWrap.Data.Service)
-					}
-				}
-			case "workload":
-				health, err := bs.Health.GetNamespaceWorkloadHealth(ctx, namespace, o.RawDuration, time.Unix(o.QueryTime, 0))
-				if err != nil {
-					return err
-				}
-				for _, nodeWrap := range nodeWrappers {
-					if h, ok := health[nodeWrap.Data.Workload]; ok {
-						nodeWrap.Data.HealthData = h
-					} else {
-						nodeWrap.Data.HealthData = []int{}
-						log.Debugf("No health found for [%s] [%s]", nodeWrap.Data.NodeType, nodeWrap.Data.Workload)
-					}
-				}
-			}
-		}
-	}
-
-	return nil
 }
