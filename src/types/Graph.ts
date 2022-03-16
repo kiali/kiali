@@ -321,6 +321,36 @@ export interface WEInfo {
   name: string;
 }
 
+export interface GraphRequestsHealth {
+  inbound: { [idx: string]: { [idx: string]: number } };
+  outbound: { [idx: string]: { [idx: string]: number } };
+  healthAnnotations: { [idx: string]: string };
+}
+
+export interface GraphWorkloadStatus {
+  name: string;
+  desiredReplicas: number;
+  currentReplicas: number;
+  availableReplicas: number
+  syncedProxies: number
+}
+
+export interface GraphNodeAppHealth {
+  workloadStatuses: GraphWorkloadStatus[];
+  requests: GraphRequestsHealth;
+}
+
+export interface GraphNodeWorkloadHealth {
+  workloadStatus: GraphWorkloadStatus;
+  requests: GraphRequestsHealth;
+}
+
+export interface GraphNodeServiceHealth {
+  requests: GraphRequestsHealth;
+}
+
+export type GraphNodeHealthData = GraphNodeAppHealth | GraphNodeWorkloadHealth | GraphNodeServiceHealth | [] | null;
+
 // Node data expected from server
 export interface GraphNodeData {
   // required
@@ -347,6 +377,7 @@ export interface GraphNodeData {
     hostnames?: string[];
   };
   hasWorkloadEntry?: WEInfo[];
+  healthData?: GraphNodeHealthData;
   isBox?: string;
   isDead?: boolean;
   isIdle?: boolean;

@@ -8,8 +8,6 @@ import {
   BoxByType,
   NodeParamsType,
   NodeType,
-  UNKNOWN,
-  DecoratedGraphNodeWrapper,
   TrafficRate,
   DefaultTrafficRates
 } from '../types/Graph';
@@ -20,7 +18,6 @@ import * as API from './Api';
 import { decorateGraphData } from '../store/Selectors/GraphData';
 import EventEmitter from 'eventemitter3';
 import { createSelector } from 'reselect';
-import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth, NA } from 'types/Health';
 
 export const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 const PROMISE_KEY = 'CURRENT_REQUEST';
@@ -54,12 +51,6 @@ type EmitEvents = {
     graphData: DecoratedGraphElements,
     fetchParams: FetchParams
   ): void;
-};
-
-type NamespaceHealth = NamespaceAppHealth | NamespaceServiceHealth | NamespaceWorkloadHealth;
-type NodeHealth = {
-  key: string;
-  node: DecoratedGraphNodeWrapper;
 };
 
 export interface FetchParams {
@@ -109,8 +100,9 @@ export default class GraphDataSource {
   private graphElements: GraphElements;
   private promiseRegistry: PromisesRegistry;
   private decoratedData = createSelector(
-    (graphData: GraphElements) => graphData,
-    graphData => decorateGraphData(graphData)
+    (graphData: { graphElements: GraphElements; graphDuration: number }) => graphData.graphElements,
+    (graphData: { graphElements: GraphElements; graphDuration: number }) => graphData.graphDuration,
+    (graphData, duration) => decorateGraphData(graphData, duration)
   );
 
   // Public methods
@@ -182,7 +174,11 @@ export default class GraphDataSource {
     }
 
     // Some appenders are expensive so only specify an appender if needed.
-    let appenders: AppenderString = 'deadNode,istio,healthConfig,serviceEntry,sidecarsCheck,workloadEntry';
+    let appenders: AppenderString = 'deadNode,istio,serviceEntry,sidecarsCheck,workloadEntry';
+
+    if (fetchParams.includeHealth) {
+      appenders += ',health';
+    }
 
     if (fetchParams.showOperationNodes) {
       appenders += ',aggregateNode';
@@ -444,18 +440,14 @@ export default class GraphDataSource {
         this.graphTimestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
         this.graphDuration = responseData && responseData.duration ? responseData.duration : 0;
         const decoratedGraphElements = this.graphData;
-        if (this.fetchParameters.includeHealth) {
-          this.fetchHealth(decoratedGraphElements);
-        } else {
-          this._isLoading = this._isError = false;
-          this.emit(
-            'fetchSuccess',
-            this.graphTimestamp,
-            this.graphDuration,
-            decoratedGraphElements,
-            this.fetchParameters
-          );
-        }
+        this._isLoading = this._isError = false;
+        this.emit(
+          'fetchSuccess',
+          this.graphTimestamp,
+          this.graphDuration,
+          decoratedGraphElements,
+          this.fetchParameters
+        );
       },
       error => {
         this._isLoading = false;
@@ -479,144 +471,7 @@ export default class GraphDataSource {
         this.graphTimestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
         this.graphDuration = responseData && responseData.duration ? responseData.duration : 0;
         const decoratedGraphElements = this.graphData;
-        if (this.fetchParameters.includeHealth) {
-          this.fetchHealth(decoratedGraphElements);
-        } else {
-          this._isLoading = this._isError = false;
-          this.emit(
-            'fetchSuccess',
-            this.graphTimestamp,
-            this.graphDuration,
-            decoratedGraphElements,
-            this.fetchParameters
-          );
-        }
-      },
-      error => {
-        this._isLoading = false;
-        if (error.isCanceled) {
-          return;
-        }
-
-        this._isError = true;
-        this._errorMessage = API.getErrorString(error);
-        AlertUtils.addError('Cannot load the graph', error);
-        this.emit('fetchError', this.errorMessage, this.fetchParameters);
-      }
-    );
-  };
-
-  // Limit health fetches to only the necessary namespaces for the necessary types
-  private fetchHealth = (decoratedGraphElements: DecoratedGraphElements) => {
-    if (!decoratedGraphElements.nodes || decoratedGraphElements.nodes.length === 0) {
-      this._isLoading = false;
-      this.emit('fetchSuccess', this.graphTimestamp, this.graphDuration, decoratedGraphElements, this.fetchParameters);
-
-      return;
-    }
-
-    const duration = this.graphDuration;
-    const queryTime = this.graphTimestamp;
-    const appNamespacePromises = new Map<string, Promise<NamespaceAppHealth>>();
-    const serviceNamespacePromises = new Map<string, Promise<NamespaceServiceHealth>>();
-    const workloadNamespacePromises = new Map<string, Promise<NamespaceWorkloadHealth>>();
-
-    const promiseToNode = new Map<Promise<NamespaceHealth>, NodeHealth[]>();
-
-    // Asynchronously fetch health
-    for (const node of decoratedGraphElements.nodes) {
-      // ignore nodes that can not have health calculated due lack of access or lack of info
-      // note: UNKNOWN node is already marked inaccessible
-      if (node.data.isInaccessible) {
-        continue;
-      }
-      const namespace = node.data.namespace;
-      const nodeType = node.data.nodeType;
-      const workload = node.data.workload;
-      const workloadOk = workload && workload !== '' && workload !== UNKNOWN;
-      // use workload health when workload is set and valid (workload nodes or versionApp nodes)
-      const useWorkloadHealth = nodeType === NodeType.WORKLOAD || (nodeType === NodeType.APP && workloadOk);
-
-      if (useWorkloadHealth) {
-        let promise = workloadNamespacePromises.get(namespace);
-        const nodeHealth = { node: node, key: node.data.workload! };
-        if (!promise) {
-          promise = API.getNamespaceWorkloadHealth(namespace, duration, queryTime);
-          workloadNamespacePromises.set(namespace, promise);
-          promiseToNode.set(promise, [nodeHealth]);
-        } else {
-          const nodeHealths = promiseToNode.get(promise);
-          nodeHealths!.push(nodeHealth);
-        }
-      } else {
-        switch (nodeType) {
-          case NodeType.APP: {
-            let promise = appNamespacePromises.get(namespace);
-            const nodeHealth = { node: node, key: node.data.app! };
-            if (!promise) {
-              promise = API.getNamespaceAppHealth(namespace, duration, queryTime);
-              appNamespacePromises.set(namespace, promise);
-              promiseToNode.set(promise, [nodeHealth]);
-            } else {
-              const nodeHealths = promiseToNode.get(promise);
-              nodeHealths!.push(nodeHealth);
-            }
-            break;
-          }
-          case NodeType.BOX: {
-            if (node.data.isBox === BoxByType.APP) {
-              let promise = appNamespacePromises.get(namespace);
-              const nodeHealth = { node: node, key: node.data.app! };
-              if (!promise) {
-                promise = API.getNamespaceAppHealth(namespace, duration, queryTime);
-                appNamespacePromises.set(namespace, promise);
-                promiseToNode.set(promise, [nodeHealth]);
-              } else {
-                const nodeHealths = promiseToNode.get(promise);
-                nodeHealths!.push(nodeHealth);
-              }
-            }
-            break;
-          }
-          case NodeType.SERVICE: {
-            let promise = serviceNamespacePromises.get(namespace);
-            const nodeHealth = { node: node, key: node.data.service! };
-            if (!promise) {
-              promise = API.getNamespaceServiceHealth(namespace, duration, queryTime);
-              serviceNamespacePromises.set(namespace, promise);
-              promiseToNode.set(promise, [nodeHealth]);
-            } else {
-              const nodeHealths = promiseToNode.get(promise);
-              nodeHealths!.push(nodeHealth);
-            }
-            break;
-          }
-          default:
-            break;
-        }
-      }
-    }
-
-    let healthPromises: Promise<NamespaceHealth>[] = Array.from(appNamespacePromises.values());
-    healthPromises = healthPromises.concat(Array.from(serviceNamespacePromises.values()));
-    healthPromises = healthPromises.concat(Array.from(workloadNamespacePromises.values()));
-
-    new PromisesRegistry().registerAll('HEALTH_PROMISES', healthPromises).then(
-      nsHealths => {
-        nsHealths.forEach((nsHealth, i) => {
-          promiseToNode.get(healthPromises[i])!.forEach(nh => {
-            const health = nsHealth[nh.key];
-            if (health) {
-              nh.node.data.health = health;
-              nh.node.data.healthStatus = health.getGlobalStatus().name;
-            } else {
-              nh.node.data.healthStatus = NA.name;
-              console.debug(`No health found for [${nh.node.data.nodeType}] [${nh.key}]`);
-            }
-          });
-        });
-
-        this._isLoading = false;
+        this._isLoading = this._isError = false;
         this.emit(
           'fetchSuccess',
           this.graphTimestamp,
@@ -633,7 +488,7 @@ export default class GraphDataSource {
 
         this._isError = true;
         this._errorMessage = API.getErrorString(error);
-        AlertUtils.addError('Cannot load the graph [health]', error);
+        AlertUtils.addError('Cannot load the graph', error);
         this.emit('fetchError', this.errorMessage, this.fetchParameters);
       }
     );
@@ -641,7 +496,7 @@ export default class GraphDataSource {
 
   // Getters and setters
   public get graphData(): DecoratedGraphElements {
-    return this.decoratedData(this.graphElements);
+    return this.decoratedData({ graphElements: this.graphElements, graphDuration: this.graphDuration });
   }
 
   public get graphDefinition(): GraphDefinition {

@@ -14,11 +14,12 @@ import {
 } from '../../types/Graph';
 import { isIstioNamespace } from '../../config/ServerConfig';
 import { toSafeCyFieldName } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
+import { AppHealth, NA, ServiceHealth, WorkloadHealth } from 'types/Health';
 
 // When updating the cytoscape graph, the element data expects to have all the changes
 // non-provided values are taken as "this didn't change", similar as setState does.
 // Put default values for all fields that are omitted.
-export const decorateGraphData = (graphData: GraphElements): DecoratedGraphElements => {
+export const decorateGraphData = (graphData: GraphElements, duration: number): DecoratedGraphElements => {
   const elementsDefaults = {
     edges: {
       destPrincipal: undefined,
@@ -59,6 +60,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       hasTCPTrafficShifting: undefined,
       hasTrafficShifting: undefined,
       hasVS: undefined,
+      healthData: undefined,
       health: undefined,
       httpIn: NaN,
       httpIn3xx: NaN,
@@ -150,6 +152,30 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
           const aggr = decoratedNode.data.aggregate.split('=');
           decoratedNode.data.aggregate = aggr[0];
           decoratedNode.data.aggregateValue = aggr[1];
+        }
+        // Calculate health
+        if (decoratedNode.data.healthData) {
+          if (Array.isArray(decoratedNode.data.healthData)) {
+            decoratedNode.data.healthStatus = NA.name;
+          } else if (decoratedNode.data.healthData.workloadStatus) {
+            decoratedNode.data.health = WorkloadHealth.fromJson(decoratedNode.data.namespace, decoratedNode.data.workload, decoratedNode.data.healthData, {
+              rateInterval: duration,
+              hasSidecar: true
+            })
+            decoratedNode.data.healthStatus = decoratedNode.data.health.getGlobalStatus().name;
+          } else if (decoratedNode.data.healthData.workloadStatuses) {
+            decoratedNode.data.health = AppHealth.fromJson(decoratedNode.data.namespace, decoratedNode.data.app, decoratedNode.data.healthData, {
+              rateInterval: duration,
+              hasSidecar: true
+            })
+            decoratedNode.data.healthStatus = decoratedNode.data.health.getGlobalStatus().name;
+          } else {
+            decoratedNode.data.health = ServiceHealth.fromJson(decoratedNode.data.namespace, decoratedNode.data.service, decoratedNode.data.healthData, {
+              rateInterval: duration,
+              hasSidecar: true
+            });
+            decoratedNode.data.healthStatus = decoratedNode.data.health.getGlobalStatus().name;
+          }
         }
         const isIstio = isIstioNamespace(decoratedNode.data.namespace) ? true : undefined;
         // prettier-ignore

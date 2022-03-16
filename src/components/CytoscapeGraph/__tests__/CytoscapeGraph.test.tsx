@@ -100,7 +100,7 @@ describe('CytoscapeGraph component test', () => {
       );
 
       const emptyGraphLayoutWrapper = wrapper.find(EmptyGraphLayoutContainer);
-      const emptyGraphDecorated = decorateGraphData(GRAPH_DATA[testNamespace].elements);
+      const emptyGraphDecorated = decorateGraphData(GRAPH_DATA[testNamespace].elements, 60);
       expect(emptyGraphLayoutWrapper.prop('elements')!.nodes).toEqual(emptyGraphDecorated.nodes);
       expect(emptyGraphLayoutWrapper.prop('elements')!.edges).toEqual(emptyGraphDecorated.edges);
 
