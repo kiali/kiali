@@ -1,7 +1,10 @@
 package appender
 
 import (
+	"github.com/kiali/kiali/prometheus/prometheustest"
+	"github.com/prometheus/common/model"
 	"testing"
+	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -148,6 +151,10 @@ func setupHealthConfig(services []core_v1.Service, deployments []apps_v1.Deploym
 	business.SetKialiControlPlaneCluster(&business.Cluster{
 		Name: business.DefaultClusterID,
 	})
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+
+	prom := new(prometheustest.PromClientMock)
+	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
+	prom.MockAllRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
+	businessLayer := business.NewWithBackends(k8s, prom, nil)
 	return businessLayer
 }

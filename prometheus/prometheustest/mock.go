@@ -246,9 +246,19 @@ type PromClientMock struct {
 	mock.Mock
 }
 
+// MockAllRequestRates mocks GetAllRequestRates for given namespace, rateInverval and queryTime, returning out vector
+func (o *PromClientMock) MockAllRequestRates(namespace, ratesInterval string, queryTime time.Time, out model.Vector) {
+	o.On("GetAllRequestRates", namespace, ratesInterval, queryTime).Return(out, nil)
+}
+
 // MockAppRequestRates mocks GetAppRequestRates for given namespace and app, returning in & out vectors
 func (o *PromClientMock) MockAppRequestRates(namespace, app string, in, out model.Vector) {
 	o.On("GetAppRequestRates", namespace, app, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, out, nil)
+}
+
+// MockNamespaceServicesRequestRates mocks GetNamespaceServicesRequestRates for given namespace, rateInterval and queryTime, returning out vector
+func (o *PromClientMock) MockNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time, out model.Vector) {
+	o.On("GetNamespaceServicesRequestRates", namespace, ratesInterval, queryTime).Return(out, nil)
 }
 
 // MockServiceRequestRates mocks GetServiceRequestRates for given namespace and service, returning in vector
