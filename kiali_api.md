@@ -7571,6 +7571,7 @@ Can be True, False, Unknown. |  |
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| IstioConfigHelpFields | [][IstioConfigHelp](#istio-config-help)| `[]*IstioConfigHelp` |  | |  |  |
 | ObjectType | string| `string` |  | |  |  |
 | authorizationPolicy | [AuthorizationPolicy](#authorization-policy)| `AuthorizationPolicy` |  | |  |  |
 | destinationRule | [DestinationRule](#destination-rule)| `DestinationRule` |  | |  |  |
@@ -7587,6 +7588,25 @@ Can be True, False, Unknown. |  |
 | virtualService | [VirtualService](#virtual-service)| `VirtualService` |  | |  |  |
 | workloadEntry | [WorkloadEntry](#workload-entry)| `WorkloadEntry` |  | |  |  |
 | workloadGroup | [WorkloadGroup](#workload-group)| `WorkloadGroup` |  | |  |  |
+
+
+
+### <span id="istio-config-help"></span> IstioConfigHelp
+
+
+> IstioConfigHelp represents a help message for a given Istio object type and field
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Message | string| `string` |  | |  |  |
+| ObjectField | string| `string` |  | |  |  |
 
 
 
