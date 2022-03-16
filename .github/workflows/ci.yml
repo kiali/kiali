@@ -6,9 +6,9 @@ name: Kiali-UI CI
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [ '14' ]
+        node: ['14']
     name: Node ${{ matrix.node }}
     steps:
       - uses: actions/checkout@v2
@@ -30,7 +30,11 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node }}
-      - run: yarn install
+      - name: Install dependencies and verify lockfile
+        # yarn install will update the yarn.lock file when it doesn't match the package.json.
+        # This can happen when the lockfile has been updated but the package.json file was not.
+        # The '--frozen-lockfile' flag ensures that the yarn.lock file remains the same after yarn install.
+        run: yarn install --frozen-lockfile
       - run: yarn pretty-quick --check --verbose --branch origin/master
       - run: yarn build:dev
       - run: yarn test
