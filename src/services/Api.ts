@@ -169,7 +169,11 @@ export const getIstioConfig = (
   if (workloadSelector) {
     params.workloadSelector = workloadSelector;
   }
-  return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.istioConfig(namespace), params, {});
+  if (namespace) {
+    return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.istioConfig(namespace), params, {});
+  } else {
+    return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.allIstioConfigs, params, {});
+  }
 };
 
 export const getIstioConfigDetail = (namespace: string, objectType: string, object: string, validate: boolean) => {

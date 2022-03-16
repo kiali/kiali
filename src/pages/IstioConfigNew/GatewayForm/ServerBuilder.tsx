@@ -242,7 +242,7 @@ class ServerBuilder extends React.Component<Props, State> {
           isRequired={true}
           fieldId="gateway-selector"
           helperText="One or more hosts exposed by this Gateway."
-          helperTextInvalid="Invalid hosts for this Gateway. Enter one or hosts separated by comma."
+          helperTextInvalid="Invalid hosts for this Gateway. Enter one or more hosts separated by comma."
           isValid={this.state.isHostsValid}
         >
           <TextInput

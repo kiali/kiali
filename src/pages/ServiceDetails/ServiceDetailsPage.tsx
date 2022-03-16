@@ -15,7 +15,6 @@ import TracesComponent from 'components/JaegerIntegration/TracesComponent';
 import { JaegerInfo } from 'types/JaegerInfo';
 import TrafficDetails from 'components/TrafficList/TrafficDetails';
 import * as API from '../../services/Api';
-import Namespace from '../../types/Namespace';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
@@ -84,23 +83,12 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   private fetchService = () => {
     this.promises.cancelAll();
     this.promises
-      .register('namespaces', API.getNamespaces())
-      .then(namespacesResponse => {
-        const namespaces: Namespace[] = namespacesResponse.data;
-        this.promises
-          .registerAll(
-            'gateways',
-            namespaces.map(ns => API.getIstioConfig(ns.name, ['gateways'], false, '', ''))
-          )
-          .then(responses => {
-            this.setState({ gateways: responses.map(response => response.data.gateways).flat() });
-          })
-          .catch(gwError => {
-            AlertUtils.addError('Could not fetch Gateways list.', gwError);
-          });
+      .register('gateways', API.getIstioConfig('', ['gateways'], false, '', ''))
+      .then(response => {
+        this.setState({ gateways: response.data.gateways });
       })
-      .catch(error => {
-        AlertUtils.addError('Could not fetch Namespaces list.', error);
+      .catch(gwError => {
+        AlertUtils.addError('Could not fetch Gateways list.', gwError);
       });
 
     API.getServiceDetail(this.props.match.params.namespace, this.props.match.params.service, true, this.props.duration)
@@ -126,7 +114,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   };
 
   private getGatewaysAsList(): string[] {
-    return this.state.gateways.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name);
+    return this.state.gateways.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort();
   }
 
   private renderTabs() {

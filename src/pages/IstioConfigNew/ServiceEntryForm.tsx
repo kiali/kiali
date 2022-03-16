@@ -305,7 +305,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
           isRequired={true}
           fieldId="hosts"
           helperText="The hosts associated with the ServiceEntry."
-          helperTextInvalid="Invalid hosts for this ServiceEntry. Enter one or hosts separated by comma."
+          helperTextInvalid="Invalid hosts for this ServiceEntry. Enter one or more hosts separated by comma."
           isValid={this.state.validHosts}
         >
           <TextInput
