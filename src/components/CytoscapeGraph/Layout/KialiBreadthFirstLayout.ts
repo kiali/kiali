@@ -278,8 +278,16 @@ export default class KialiBreadFirstLayout {
     }
 
     var getPosition = function (ele) {
-      var { depth, index } = getInfo(ele);
-      return layoutPositions[depth][index];
+      const eleInfo = getInfo(ele);
+      if (
+        eleInfo &&
+        eleInfo.hasOwnProperty('depth') &&
+        eleInfo.hasOwnProperty('index') &&
+        layoutPositions[eleInfo.depth]
+      ) {
+        return layoutPositions[eleInfo.depth][eleInfo.index];
+      }
+      return false;
     };
 
     eles.nodes().layoutPositions(this, options, getPosition);
