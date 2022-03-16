@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -14,7 +15,7 @@ import (
 )
 
 // GraphNamespaces generates a namespaces graph using the provided options
-func GraphNamespaces(business *business.Layer, o graph.Options) (code int, config interface{}) {
+func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Options) (code int, config interface{}) {
 	// time how long it takes to generate this graph
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
@@ -23,7 +24,7 @@ func GraphNamespaces(business *business.Layer, o graph.Options) (code int, confi
 	case graph.VendorIstio:
 		prom, err := prometheus.NewClient()
 		graph.CheckError(err)
-		code, config = graphNamespacesIstio(business, prom, o)
+		code, config = graphNamespacesIstio(ctx, business, prom, o)
 	default:
 		graph.Error(fmt.Sprintf("TelemetryVendor [%s] not supported", o.TelemetryVendor))
 	}
@@ -35,11 +36,12 @@ func GraphNamespaces(business *business.Layer, o graph.Options) (code int, confi
 }
 
 // graphNamespacesIstio provides a test hook that accepts mock clients
-func graphNamespacesIstio(business *business.Layer, prom *prometheus.Client, o graph.Options) (code int, config interface{}) {
+func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom *prometheus.Client, o graph.Options) (code int, config interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = business
+	globalInfo.Context = ctx
 
 	trafficMap := istio.BuildNamespacesTrafficMap(o.TelemetryOptions, prom, globalInfo)
 	code, config = generateGraph(trafficMap, o)
@@ -48,7 +50,7 @@ func graphNamespacesIstio(business *business.Layer, prom *prometheus.Client, o g
 }
 
 // GraphNode generates a node graph using the provided options
-func GraphNode(business *business.Layer, o graph.Options) (code int, config interface{}) {
+func GraphNode(ctx context.Context, business *business.Layer, o graph.Options) (code int, config interface{}) {
 	if len(o.Namespaces) != 1 {
 		graph.Error("Node graph does not support the 'namespaces' query parameter or the 'all' namespace")
 	}
@@ -61,7 +63,7 @@ func GraphNode(business *business.Layer, o graph.Options) (code int, config inte
 	case graph.VendorIstio:
 		prom, err := prometheus.NewClient()
 		graph.CheckError(err)
-		code, config = graphNodeIstio(business, prom, o)
+		code, config = graphNodeIstio(ctx, business, prom, o)
 	default:
 		graph.Error(fmt.Sprintf("TelemetryVendor [%s] not supported", o.TelemetryVendor))
 	}
@@ -72,11 +74,12 @@ func GraphNode(business *business.Layer, o graph.Options) (code int, config inte
 }
 
 // graphNodeIstio provides a test hook that accepts mock clients
-func graphNodeIstio(business *business.Layer, client *prometheus.Client, o graph.Options) (code int, config interface{}) {
+func graphNodeIstio(ctx context.Context, business *business.Layer, client *prometheus.Client, o graph.Options) (code int, config interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = business
+	globalInfo.Context = ctx
 
 	trafficMap := istio.BuildNodeTrafficMap(o.TelemetryOptions, client, globalInfo)
 	code, config = generateGraph(trafficMap, o)

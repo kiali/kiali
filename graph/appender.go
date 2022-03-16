@@ -1,6 +1,8 @@
 package graph
 
 import (
+	"context"
+
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/prometheus"
 )
@@ -13,6 +15,7 @@ type AppenderVendorInfo map[string]interface{}
 // is initially empty.
 type AppenderGlobalInfo struct {
 	Business    *business.Layer
+	Context     context.Context
 	HomeCluster string
 	PromClient  *prometheus.Client
 	Vendor      AppenderVendorInfo // telemetry vendor's global info

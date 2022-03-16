@@ -17,6 +17,8 @@ const (
 	AggregateValue        MetadataKey = "aggregateValue"
 	DestPrincipal         MetadataKey = "destPrincipal"
 	DestServices          MetadataKey = "destServices"
+	HealthData            MetadataKey = "healthData"
+	HealthDataApp         MetadataKey = "healthDataApp" // for storing app health on versioned app nodes
 	HasCB                 MetadataKey = "hasCB"
 	HasFaultInjection     MetadataKey = "hasFaultInjection"
 	HasHealthConfig       MetadataKey = "hasHealthConfig"

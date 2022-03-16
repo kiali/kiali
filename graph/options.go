@@ -33,7 +33,6 @@ const (
 	BoxByCluster              string = "cluster"
 	BoxByNamespace            string = "namespace"
 	BoxByNone                 string = "none"
-	NamespaceIstio            string = "istio-system"
 	RateNone                  string = "none"
 	RateReceived              string = "received" // tcp bytes received, grpc response messages, etc
 	RateRequests              string = "requests" // request count

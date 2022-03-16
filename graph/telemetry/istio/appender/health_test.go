@@ -2,9 +2,11 @@ package appender
 
 import (
 	"testing"
+	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	apps_v1 "k8s.io/api/apps/v1"
@@ -18,6 +20,7 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
 const rateDefinition = "400,10,20,http,inbound"
@@ -32,7 +35,7 @@ func TestServicesHealthConfigPasses(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := HealthConfigAppender{}
+	a := HealthAppender{}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -51,7 +54,7 @@ func TestServicesHealthNoConfigPasses(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := HealthConfigAppender{}
+	a := HealthAppender{}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -70,7 +73,7 @@ func TestWorkloadHealthConfigPasses(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := HealthConfigAppender{}
+	a := HealthAppender{}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -89,7 +92,7 @@ func TestWorkloadHealthNoConfigPasses(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := HealthConfigAppender{}
+	a := HealthAppender{}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -148,6 +151,10 @@ func setupHealthConfig(services []core_v1.Service, deployments []apps_v1.Deploym
 	business.SetKialiControlPlaneCluster(&business.Cluster{
 		Name: business.DefaultClusterID,
 	})
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+
+	prom := new(prometheustest.PromClientMock)
+	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
+	prom.MockAllRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
+	businessLayer := business.NewWithBackends(k8s, prom, nil)
 	return businessLayer
 }

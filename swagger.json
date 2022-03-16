@@ -6228,6 +6228,10 @@
           },
           "x-go-name": "HasWorkloadEntry"
         },
+        "healthData": {
+          "type": "object",
+          "x-go-name": "HealthData"
+        },
         "id": {
           "description": "Cytoscape Fields",
           "type": "string",
