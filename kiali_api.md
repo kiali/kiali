@@ -75,6 +75,7 @@ _
 | DELETE | /api/namespaces/{namespace}/istio/{object_type}/{object} | [istio config delete](#istio-config-delete) |  |
 | GET | /api/namespaces/{namespace}/istio/{object_type}/{object} | [istio config details](#istio-config-details) |  |
 | GET | /api/namespaces/{namespace}/istio | [istio config list](#istio-config-list) |  |
+| GET | /api/istio | [istio config list all](#istio-config-list-all) |  |
 | PATCH | /api/namespaces/{namespace}/istio/{object_type}/{object} | [istio config update](#istio-config-update) | Endpoint to update the Istio Config of an Istio object used for templates and adapters using Json Merge Patch strategy. |
   
 
@@ -2739,6 +2740,66 @@ Status: Internal Server Error
 ###### Inlined models
 
 **<span id="istio-config-list-internal-server-error-body"></span> IstioConfigListInternalServerErrorBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
+| Message | string| `string` |  | |  |  |
+
+
+
+### <span id="istio-config-list-all"></span> istio config list all (*istioConfigListAll*)
+
+```
+GET /api/istio
+```
+
+Endpoint to get the list of Istio Config of all namespaces
+
+#### URI Schemes
+  * http
+  * https
+
+#### Produces
+  * application/json
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#istio-config-list-all-200) | OK | HTTP status code 200 and IstioConfigList model in data |  | [schema](#istio-config-list-all-200-schema) |
+| [500](#istio-config-list-all-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#istio-config-list-all-500-schema) |
+
+#### Responses
+
+
+##### <span id="istio-config-list-all-200"></span> 200 - HTTP status code 200 and IstioConfigList model in data
+Status: OK
+
+###### <span id="istio-config-list-all-200-schema"></span> Schema
+   
+  
+
+[IstioConfigList](#istio-config-list)
+
+##### <span id="istio-config-list-all-500"></span> 500 - A Internal is the error message that means something has gone wrong
+Status: Internal Server Error
+
+###### <span id="istio-config-list-all-500-schema"></span> Schema
+   
+  
+
+[IstioConfigListAllInternalServerErrorBody](#istio-config-list-all-internal-server-error-body)
+
+###### Inlined models
+
+**<span id="istio-config-list-all-internal-server-error-body"></span> IstioConfigListAllInternalServerErrorBody**
 
 
   

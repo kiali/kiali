@@ -218,6 +218,26 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigList,
 			true,
 		},
+		// swagger:route GET /istio config istioConfigListAll
+		// ---
+		// Endpoint to get the list of Istio Config of all namespaces
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      200: istioConfigList
+		//
+		{
+			"IstioConfigListAll",
+			"GET",
+			"/api/istio/config",
+			handlers.IstioConfigList,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object} config istioConfigDetails
 		// ---
 		// Endpoint to get the Istio Config of an Istio object

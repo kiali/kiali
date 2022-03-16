@@ -844,10 +844,9 @@ func checkType(types []string, name string) bool {
 	return false
 }
 
-func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector string) IstioConfigCriteria {
+func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector string, allNamespaces bool) IstioConfigCriteria {
 	defaultInclude := objects == ""
 	criteria := IstioConfigCriteria{}
-	criteria.Namespace = namespace
 	criteria.IncludeGateways = defaultInclude
 	criteria.IncludeVirtualServices = defaultInclude
 	criteria.IncludeDestinationRules = defaultInclude
@@ -861,6 +860,12 @@ func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelecto
 	criteria.IncludeEnvoyFilters = defaultInclude
 	criteria.LabelSelector = labelSelector
 	criteria.WorkloadSelector = workloadSelector
+
+	if allNamespaces {
+		criteria.AllNamespaces = true
+	} else {
+		criteria.Namespace = namespace
+	}
 
 	if defaultInclude {
 		return criteria
