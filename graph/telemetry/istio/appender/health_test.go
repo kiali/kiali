@@ -1,13 +1,12 @@
 package appender
 
 import (
-	"github.com/kiali/kiali/prometheus/prometheustest"
-	"github.com/prometheus/common/model"
 	"testing"
 	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	apps_v1 "k8s.io/api/apps/v1"
@@ -21,6 +20,7 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
 const rateDefinition = "400,10,20,http,inbound"
