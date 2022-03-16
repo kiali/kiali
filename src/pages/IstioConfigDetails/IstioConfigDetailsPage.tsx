@@ -12,8 +12,22 @@ import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-yaml';
 import 'ace-builds/src-noconflict/theme-eclipse';
-import { ObjectReference, ObjectValidation, ValidationMessage } from '../../types/IstioObjects';
-import { AceValidations, jsYaml, parseKialiValidations, parseYamlValidations } from '../../types/AceValidations';
+import {
+  HelpMessage,
+  ObjectReference,
+  ObjectValidation,
+  ServiceReference,
+  ValidationMessage,
+  WorkloadReference
+} from '../../types/IstioObjects';
+import {
+  AceValidations,
+  jsYaml,
+  parseHelpAnnotations,
+  parseKialiValidations,
+  parseLine,
+  parseYamlValidations
+} from '../../types/AceValidations';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
 import { RenderComponentScroll, RenderHeader } from '../../components/Nav/Page';
 import './IstioConfigDetailsPage.css';
@@ -36,13 +50,10 @@ import {
 } from '@patternfly/react-core';
 import { dicIstioType } from '../../types/IstioConfigList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
-import VirtualServiceOverview from './IstioObjectDetails/VirtualServiceOverview';
-import DestinationRuleOverview from './IstioObjectDetails/DestinationRuleOverview';
 import { AxiosError } from 'axios';
-import IstioStatusMessageList from './IstioObjectDetails/IstioStatusMessageList';
-import { Annotation } from 'react-ace/types';
-import ValidationReferences from './ValidationReferences';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
+import IstioConfigOverview from './IstioObjectDetails/IstioConfigOverview';
+import { Annotation } from 'react-ace/types';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -69,6 +80,7 @@ interface IstioConfigDetailsState {
   yamlValidations?: AceValidations;
   currentTab: string;
   isExpanded: boolean;
+  selectedEditorLine?: string;
 }
 
 const tabName = 'list';
@@ -189,7 +201,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     this.fetchIstioObjectDetails();
   }
 
-  componentDidUpdate(prevProps: RouteComponentProps<IstioConfigId>, prevState: IstioConfigDetailsState) {
+  componentDidUpdate(prevProps: RouteComponentProps<IstioConfigId>, prevState: IstioConfigDetailsState): void {
     // This will ask confirmation if we want to leave page on pending changes without save
     if (this.state.isModified) {
       window.onbeforeunload = () => true;
@@ -377,16 +389,27 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   // Not all Istio types have an overview card
   hasOverview = (): boolean => {
-    return (
-      this.props.match.params.objectType === 'virtualservices' ||
-      this.props.match.params.objectType === 'destinationrules'
-    );
+    return true;
   };
 
   objectReferences = (istioConfigDetails?: IstioConfigDetails): ObjectReference[] => {
     const details: IstioConfigDetails = istioConfigDetails || ({} as IstioConfigDetails);
-    const istioValidations: ObjectValidation = details.validation || ({} as ObjectValidation);
-    return istioValidations.references || ([] as ObjectReference[]);
+    return details.references?.objectReferences || ([] as ObjectReference[]);
+  };
+
+  serviceReferences = (istioConfigDetails?: IstioConfigDetails): ServiceReference[] => {
+    const details: IstioConfigDetails = istioConfigDetails || ({} as IstioConfigDetails);
+    return details.references?.serviceReferences || ([] as ServiceReference[]);
+  };
+
+  workloadReferences = (istioConfigDetails?: IstioConfigDetails): ServiceReference[] => {
+    const details: IstioConfigDetails = istioConfigDetails || ({} as IstioConfigDetails);
+    return details.references?.workloadReferences || ([] as WorkloadReference[]);
+  };
+
+  helpMessages = (istioConfigDetails?: IstioConfigDetails): HelpMessage[] => {
+    const details: IstioConfigDetails = istioConfigDetails || ({} as IstioConfigDetails);
+    return details.help || ([] as HelpMessage[]);
   };
 
   // Aux function to calculate rows for 'status' and 'managedFields' which are typically folded
@@ -419,7 +442,10 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   isExpanded = (istioConfigDetails?: IstioConfigDetails) => {
     let isExpanded = false;
     if (istioConfigDetails) {
-      isExpanded = this.showCards(this.objectReferences(istioConfigDetails).length > 0, this.getStatusMessages(istioConfigDetails));
+      isExpanded = this.showCards(
+        this.objectReferences(istioConfigDetails).length > 0,
+        this.getStatusMessages(istioConfigDetails)
+      );
     }
     return isExpanded;
   };
@@ -428,10 +454,20 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     return refPresent || this.hasOverview() || istioStatusMsgs.length > 0;
   };
 
+  onCursorChange = (e: any) => {
+    const line = parseLine(this.fetchYaml(), e.cursor.row);
+    this.setState({ selectedEditorLine: line });
+  };
+
   renderEditor = () => {
     const yamlSource = this.fetchYaml();
     const istioStatusMsgs = this.getStatusMessages(this.state.istioObjectDetails);
+
     const objectReferences = this.objectReferences(this.state.istioObjectDetails);
+    const serviceReferences = this.serviceReferences(this.state.istioObjectDetails);
+    const workloadReferences = this.workloadReferences(this.state.istioObjectDetails);
+    const helpMessages = this.helpMessages(this.state.istioObjectDetails);
+
     const refPresent = objectReferences.length > 0;
     const showCards = this.showCards(refPresent, istioStatusMsgs);
     let editorValidations: AceValidations = {
@@ -447,28 +483,28 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       }
     }
 
+    const helpAnnotations = parseHelpAnnotations(yamlSource, helpMessages);
+    helpAnnotations.forEach(ha => editorValidations.annotations.push(ha));
+
     const panelContent = (
       <DrawerPanelContent>
         <DrawerHead>
           <div>
             {showCards && (
               <>
-                {this.state.istioObjectDetails && this.state.istioObjectDetails.virtualService && (
-                  <VirtualServiceOverview
-                    virtualService={this.state.istioObjectDetails.virtualService}
-                    validation={this.state.istioValidations}
+                {this.state.istioObjectDetails && (
+                  <IstioConfigOverview
+                    istioObjectDetails={this.state.istioObjectDetails}
+                    istioValidations={this.state.istioValidations}
                     namespace={this.state.istioObjectDetails.namespace.name}
+                    statusMessages={istioStatusMsgs}
+                    objectReferences={objectReferences}
+                    serviceReferences={serviceReferences}
+                    workloadReferences={workloadReferences}
+                    helpMessages={helpMessages}
+                    selectedLine={this.state.selectedEditorLine}
                   />
                 )}
-                {this.state.istioObjectDetails && this.state.istioObjectDetails.destinationRule && (
-                  <DestinationRuleOverview
-                    destinationRule={this.state.istioObjectDetails.destinationRule}
-                    validation={this.state.istioValidations}
-                    namespace={this.state.istioObjectDetails.namespace.name}
-                  />
-                )}
-                {istioStatusMsgs && istioStatusMsgs.length > 0 && <IstioStatusMessageList messages={istioStatusMsgs} />}
-                {refPresent && <ValidationReferences objectReferences={objectReferences} />}
               </>
             )}
           </div>
@@ -495,6 +531,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           value={this.state.istioObjectDetails ? yamlSource : undefined}
           annotations={editorValidations.annotations}
           markers={editorValidations.markers}
+          onCursorChange={this.onCursorChange}
         />
       </div>
     ) : null;

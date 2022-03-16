@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { CSSProperties } from 'react';
-import { ValidationTypes } from '../../types/IstioObjects';
+import { StatusCondition, ValidationTypes } from '../../types/IstioObjects';
 import { style } from 'typestyle';
 import { Text, TextVariants, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import Validation from './Validation';
 
 interface Props {
   id: string;
+  reconciledCondition?: StatusCondition;
   errors: number;
   warnings: number;
   objectCount?: number;
@@ -80,6 +81,11 @@ export class ValidationSummary extends React.PureComponent<Props> {
             <div key={cat}>{cat}</div>
           ))}
         </div>
+        {this.props.reconciledCondition?.status && (
+          <Text style={{ textAlign: 'left', textEmphasis: 'strong' }} component={TextVariants.p}>
+            The object is reconciled
+          </Text>
+        )}
       </>
     );
   }

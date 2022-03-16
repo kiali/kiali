@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { IstioLevelToSeverity, ValidationMessage, ValidationTypes } from '../../../types/IstioObjects';
-import { Split, SplitItem, Stack, StackItem, Title, TitleLevel, TitleSize } from '@patternfly/react-core';
+import { Flex, FlexItem, Stack, StackItem, Title, TitleLevel, TitleSize } from '@patternfly/react-core';
 import Validation from '../../../components/Validations/Validation';
 
 interface Props {
@@ -11,25 +11,27 @@ class IstioStatusMessageList extends React.Component<Props> {
   render() {
     return (
       <>
-        <Title headingLevel={TitleLevel.h3} size={TitleSize.xl}>
-          Analyzer Messages
-        </Title>
-        <Stack gutter="lg">
+        <Stack>
+          <StackItem>
+            <Title headingLevel={TitleLevel.h4} size={TitleSize.lg} style={{ paddingBottom: '10px' }}>
+              Configuration Analysis
+            </Title>
+          </StackItem>
           {this.props.messages.map((msg: ValidationMessage, i: number) => {
             const severity: ValidationTypes = IstioLevelToSeverity[msg.level || 'UNKNOWN'];
             return (
               <StackItem id={'msg-' + i} className={'validation-message'}>
-                <Split>
-                  <SplitItem>
+                <Flex>
+                  <FlexItem>
                     <Validation severity={severity} />
-                  </SplitItem>
-                  <SplitItem>
+                  </FlexItem>
+                  <FlexItem>
                     <a href={msg.documentationUrl} target="_blank" rel="noopener noreferrer">
                       {msg.type.code}
                     </a>
                     {msg.description ? ': ' + msg.description : undefined}
-                  </SplitItem>
-                </Split>
+                  </FlexItem>
+                </Flex>
               </StackItem>
             );
           })}

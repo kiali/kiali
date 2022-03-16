@@ -31,6 +31,7 @@ import { ValidationStatus } from '../../types/IstioObjects';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import MissingLabel from '../MissingLabel/MissingLabel';
 import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
+import { getReconciliationCondition } from 'utils/IstioConfigUtils';
 
 // Links
 
@@ -336,12 +337,17 @@ export const istioType: Renderer<IstioConfigItem> = (item: IstioConfigItem) => {
 
 export const istioConfiguration: Renderer<IstioConfigItem> = (item: IstioConfigItem, config: Resource) => {
   const validation = item.validation;
+  const reconciledCondition = getReconciliationCondition(item);
   const linkQuery: string = item['type'] ? 'list=yaml' : '';
   return (
     <td role="gridcell" key={'VirtuaItem_Conf_' + item.namespace + '_' + item.name} style={{ verticalAlign: 'middle' }}>
       {validation ? (
         <Link to={`${getLink(item, config, linkQuery)}`}>
-          <ValidationObjectSummary id={item.name + '-config-validation'} validations={[validation]} />
+          <ValidationObjectSummary
+            id={item.name + '-config-validation'}
+            validations={[validation]}
+            reconciledCondition={reconciledCondition}
+          />
         </Link>
       ) : (
         <>N/A</>

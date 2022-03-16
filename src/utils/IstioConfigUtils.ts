@@ -1,6 +1,7 @@
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
-import { ConnectionPoolSettings, IstioObject, ObjectCheck, OutlierDetection, Validations } from '../types/IstioObjects';
+import { ConnectionPoolSettings, IstioObject, ObjectCheck, OutlierDetection, StatusCondition, Validations } from '../types/IstioObjects';
 import _ from 'lodash';
+import { IstioConfigItem } from 'types/IstioConfigList';
 
 export const mergeJsonPatch = (objectModified: object, object?: object): object => {
   if (!object) {
@@ -19,7 +20,7 @@ export const mergeJsonPatch = (objectModified: object, object?: object): object 
   return objectModified;
 };
 
-export const getIstioObject = (istioObjectDetails?: IstioConfigDetails) => {
+export const getIstioObject = (istioObjectDetails?: IstioConfigDetails | IstioConfigItem) => {
   let istioObject: IstioObject | undefined;
   if (istioObjectDetails) {
     if (istioObjectDetails.gateway) {
@@ -176,4 +177,11 @@ export const hasMissingAuthPolicy = (workloadName: string, validations: Validati
   }
 
   return hasMissingAP;
+}
+
+export const getReconciliationCondition = (
+  istioConfigDetails?: IstioConfigDetails | IstioConfigItem
+): StatusCondition | undefined => {
+  const istioObject = getIstioObject(istioConfigDetails);
+  return istioObject?.status?.conditions?.find(condition => condition.type === 'Reconciled');
 };

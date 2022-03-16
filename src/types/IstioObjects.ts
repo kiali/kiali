@@ -6,6 +6,11 @@ import { PFColorVal } from 'components/Pf/PfColors';
 
 // Common types
 
+export interface HelpMessage {
+  objectField: string;
+  message: string;
+}
+
 export interface K8sInitializer {
   name?: string;
 }
@@ -49,7 +54,7 @@ export interface IstioObject {
 
 export interface IstioStatus {
   validationMessages?: ValidationMessage[];
-  conditions?: any[];
+  conditions?: StatusCondition[];
 }
 
 export interface ValidationMessage {
@@ -57,6 +62,12 @@ export interface ValidationMessage {
   documentationUrl: string;
   level?: string;
   type: ValidationMessageType;
+}
+
+export interface StatusCondition {
+  type: string;
+  status: boolean;
+  message: string;
 }
 
 export interface ValidationMessageType {
@@ -101,15 +112,31 @@ export interface ObjectReference {
   namespace: string;
 }
 
-export interface Reference {
+export interface PodReference {
   name: string;
   kind: string;
+}
+
+export interface References {
+  objectReferences: ObjectReference[];
+  serviceReferences: ServiceReference[];
+  workloadReferences: WorkloadReference[];
+}
+
+export interface ServiceReference {
+  name: string;
+  namespace: string;
 }
 
 export interface ValidationStatus {
   errors: number;
   objectCount?: number;
   warnings: number;
+}
+
+export interface WorkloadReference {
+  name: string;
+  namespace: string;
 }
 
 export interface ContainerInfo {
@@ -131,7 +158,7 @@ export interface Pod {
   name: string;
   labels?: { [key: string]: string };
   createdAt: string;
-  createdBy: Reference[];
+  createdBy: PodReference[];
   containers?: ContainerInfo[];
   istioContainers?: ContainerInfo[];
   istioInitContainers?: ContainerInfo[];

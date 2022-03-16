@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { ObjectValidation, ValidationTypes } from '../../types/IstioObjects';
+import { ObjectValidation, StatusCondition, ValidationTypes } from '../../types/IstioObjects';
 import ValidationSummary from './ValidationSummary';
 import { CSSProperties } from 'react';
 
 interface Props {
   id: string;
   validations: ObjectValidation[];
+  reconciledCondition?: StatusCondition;
   style?: CSSProperties;
 }
 
@@ -27,6 +28,7 @@ export class ValidationObjectSummary extends React.PureComponent<Props> {
         objectCount={1}
         errors={this.numberOfChecks(ValidationTypes.Error)}
         warnings={this.numberOfChecks(ValidationTypes.Warning)}
+        reconciledCondition={this.props.reconciledCondition}
         style={this.props.style}
       />
     );
