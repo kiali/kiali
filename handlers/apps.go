@@ -17,6 +17,7 @@ type appListParams struct {
 	//
 	// in: path
 	Namespace string `json:"namespace"`
+	AppName   string `json:"app"`
 	// Optional
 	Health bool `json:"health"`
 }
@@ -26,6 +27,7 @@ func (p *appListParams) extract(r *http.Request) {
 	query := r.URL.Query()
 	p.baseExtract(r, vars)
 	p.Namespace = vars["namespace"]
+	p.AppName = vars["app"]
 	p.Health = query.Get("health") != ""
 }
 
@@ -64,18 +66,20 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 
 // AppDetails is the API handler to fetch all details to be displayed, related to a single app
 func AppDetails(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
+	p := appListParams{}
+	p.extract(r)
+
+	criteria := business.AppCriteria{Namespace: p.Namespace, AppName: p.AppName, IncludeIstioResources: true, Health: p.Health, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+
 	// Get business layer
 	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
-	namespace := params["namespace"]
-	app := params["app"]
 
 	// Fetch and build app
-	appDetails, err := business.App.GetApp(r.Context(), namespace, app)
+	appDetails, err := business.App.GetAppDetails(r.Context(), criteria)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

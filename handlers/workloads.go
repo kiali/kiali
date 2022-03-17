@@ -20,9 +20,12 @@ type workloadListParams struct {
 	//
 	// in: path
 	Namespace    string `json:"namespace"`
+	WorkloadName string `json:"workload"`
+	// in: query
 	WorkloadType string `json:"type"`
 	// Optional
-	Health bool `json:"health"`
+	Health   bool `json:"health"`
+	Validate bool `json:"validate"`
 }
 
 func (p *workloadListParams) extract(r *http.Request) {
@@ -30,8 +33,10 @@ func (p *workloadListParams) extract(r *http.Request) {
 	query := r.URL.Query()
 	p.baseExtract(r, vars)
 	p.Namespace = vars["namespace"]
+	p.WorkloadName = vars["workload"]
 	p.WorkloadType = query.Get("type")
 	p.Health = query.Get("health") != ""
+	p.Validate = query.Get("validate") != ""
 }
 
 // WorkloadList is the API handler to fetch all the workloads to be displayed, related to a single namespace
@@ -39,7 +44,7 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	p := workloadListParams{}
 	p.extract(r)
 
-	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeIstioResources: true, Health: p.Health, RateInterval: "", QueryTime: p.QueryTime}
+	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeIstioResources: true, Health: p.Health, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
 
 	// Get business layer
 	businessLayer, err := getBusiness(r)
@@ -70,8 +75,10 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 
 // WorkloadDetails is the API handler to fetch all details to be displayed, related to a single workload
 func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	query := r.URL.Query()
+	p := workloadListParams{}
+	p.extract(r)
+
+	criteria := business.WorkloadCriteria{Namespace: p.Namespace, WorkloadName: p.WorkloadName, WorkloadType: p.WorkloadType, IncludeIstioResources: true, IncludeServices: true, Health: p.Health, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -79,12 +86,9 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Workloads initialization error: "+err.Error())
 		return
 	}
-	namespace := params["namespace"]
-	workload := params["workload"]
-	workloadType := query.Get("type")
 
 	includeValidations := false
-	if _, found := query["validate"]; found {
+	if p.Validate {
 		includeValidations = true
 	}
 
@@ -96,16 +100,23 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), namespace, "", workload)
+			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), criteria.Namespace, "", criteria.WorkloadName)
 		}()
 	}
 
 	// Fetch and build workload
-	workloadDetails, err := business.Workload.GetWorkload(r.Context(), namespace, workload, workloadType, true)
+	workloadDetails, err := business.Workload.GetWorkload(r.Context(), criteria)
 	if includeValidations && err == nil {
 		wg.Wait()
 		workloadDetails.Validations = istioConfigValidations
 		err = errValidations
+	}
+
+	if criteria.Health && err == nil {
+		workloadDetails.Health, err = business.Health.GetWorkloadHealth(r.Context(), criteria.Namespace, criteria.WorkloadName, criteria.WorkloadType, criteria.RateInterval, criteria.QueryTime)
+		if err != nil {
+			handleErrorResponse(w, err)
+		}
 	}
 
 	if err != nil {

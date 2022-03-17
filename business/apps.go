@@ -26,6 +26,7 @@ type AppService struct {
 
 type AppCriteria struct {
 	Namespace             string
+	AppName               string
 	IncludeIstioResources bool
 	Health                bool
 	RateInterval          string
@@ -174,7 +175,8 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 			}
 		}
 		if criteria.Health {
-			appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, appItem.Name, criteria.RateInterval, criteria.QueryTime)
+			criteria.AppName = appItem.Name
+			appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, criteria.AppName, criteria.RateInterval, criteria.QueryTime)
 			if err != nil {
 				log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, appItem.Name, err)
 			}
@@ -186,22 +188,24 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 }
 
 // GetApp is the API handler to fetch the details for a given namespace and app name
-func (in *AppService) GetApp(ctx context.Context, namespace string, appName string) (models.App, error) {
+func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (models.App, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetApp",
 		observability.Attribute("package", "business"),
-		observability.Attribute("namespace", namespace),
-		observability.Attribute("appName", appName),
+		observability.Attribute("namespace", criteria.Namespace),
+		observability.Attribute("appName", criteria.AppName),
+		observability.Attribute("rateInterval", criteria.RateInterval),
+		observability.Attribute("queryTime", criteria.QueryTime),
 	)
 	defer end()
 
-	appInstance := &models.App{Namespace: models.Namespace{Name: namespace}, Name: appName}
-	ns, err := in.businessLayer.Namespace.GetNamespace(ctx, namespace)
+	appInstance := &models.App{Namespace: models.Namespace{Name: criteria.Namespace}, Name: criteria.AppName, Health: models.EmptyAppHealth()}
+	ns, err := in.businessLayer.Namespace.GetNamespace(ctx, criteria.Namespace)
 	if err != nil {
 		return *appInstance, err
 	}
 	appInstance.Namespace = *ns
-	namespaceApps, err := fetchNamespaceApps(ctx, in.businessLayer, namespace, appName)
+	namespaceApps, err := fetchNamespaceApps(ctx, in.businessLayer, criteria.Namespace, criteria.AppName)
 	if err != nil {
 		return *appInstance, err
 	}
@@ -209,8 +213,8 @@ func (in *AppService) GetApp(ctx context.Context, namespace string, appName stri
 	var appDetails *appDetails
 	var ok bool
 	// Send a NewNotFound if the app is not found in the deployment list, instead to send an empty result
-	if appDetails, ok = namespaceApps[appName]; !ok {
-		return *appInstance, kubernetes.NewNotFound(appName, "Kiali", "App")
+	if appDetails, ok = namespaceApps[criteria.AppName]; !ok {
+		return *appInstance, kubernetes.NewNotFound(criteria.AppName, "Kiali", "App")
 	}
 
 	(*appInstance).Workloads = make([]models.WorkloadItem, len(appDetails.Workloads))
@@ -227,7 +231,13 @@ func (in *AppService) GetApp(ctx context.Context, namespace string, appName stri
 	for _, workload := range appDetails.Workloads {
 		pods = append(pods, workload.Pods...)
 	}
-	(*appInstance).Runtimes = NewDashboardsService(ns, nil).GetCustomDashboardRefs(namespace, appName, "", pods)
+	(*appInstance).Runtimes = NewDashboardsService(ns, nil).GetCustomDashboardRefs(criteria.Namespace, criteria.AppName, "", pods)
+	if criteria.Health {
+		(*appInstance).Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, criteria.AppName, criteria.RateInterval, criteria.QueryTime)
+		if err != nil {
+			log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, criteria.AppName, err)
+		}
+	}
 
 	return *appInstance, nil
 }

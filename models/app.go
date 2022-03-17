@@ -70,4 +70,7 @@ type App struct {
 
 	// Runtimes and associated dashboards
 	Runtimes []Runtime `json:"runtimes"`
+
+	// Health
+	Health AppHealth `json:"health"`
 }
