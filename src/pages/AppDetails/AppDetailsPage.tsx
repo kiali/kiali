@@ -12,16 +12,19 @@ import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { RenderHeader } from '../../components/Nav/Page';
-import { TimeInMilliseconds, TimeRange } from '../../types/Common';
+import { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
+import { durationSelector } from '../../store/Selectors';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import { JaegerInfo } from '../../types/JaegerInfo';
 import TracesComponent from '../../components/JaegerIntegration/TracesComponent';
 import TrafficDetails from 'components/TrafficList/TrafficDetails';
 import TimeControl from '../../components/Time/TimeControl';
+import { AppHealth } from 'types/Health';
 
 type AppDetailsState = {
   app?: App;
+  health?: AppHealth;
   // currentTab is needed to (un)mount tab components
   // when the tab is not rendered.
   currentTab: string;
@@ -29,6 +32,7 @@ type AppDetailsState = {
 
 type ReduxProps = {
   jaegerInfo?: JaegerInfo;
+  duration: DurationInSeconds;
   lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
 };
@@ -63,7 +67,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       this.props.match.params.namespace !== prevProps.match.params.namespace ||
       this.props.match.params.app !== prevProps.match.params.app ||
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
-      currentTab !== this.state.currentTab
+      currentTab !== this.state.currentTab ||
+      this.props.duration !== prevProps.duration
     ) {
       if (currentTab === 'info') {
         this.fetchApp();
@@ -75,9 +80,18 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   }
 
   private fetchApp = () => {
-    API.getApp(this.props.match.params.namespace, this.props.match.params.app)
+    const params: { [key: string]: string } = { rateInterval: String(this.props.duration) + 's', health: 'true' };
+    API.getApp(this.props.match.params.namespace, this.props.match.params.app, params)
       .then(details => {
-        this.setState({ app: details.data });
+        this.setState({
+          app: details.data,
+          health: AppHealth.fromJson(
+            this.props.match.params.namespace,
+            this.props.match.params.app,
+            details.data.health,
+            { rateInterval: this.props.duration, hasSidecar: details.data.workloads.some(w => w.istioSidecar) }
+          )
+        });
       })
       .catch(error => AlertUtils.addError('Could not fetch App Details.', error));
   };
@@ -115,7 +129,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   private staticTabs() {
     const overTab = (
       <Tab title="Overview" eventKey={0} key={'Overview'}>
-        <AppInfo app={this.state.app} />
+        <AppInfo app={this.state.app} duration={this.props.duration} health={this.state.health} />
       </Tab>
     );
 
@@ -233,6 +247,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   jaegerInfo: state.jaegerState.info,
+  duration: durationSelector(state),
   lastRefreshAt: state.globalState.lastRefreshAt
 });
 

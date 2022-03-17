@@ -12,8 +12,9 @@ import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { RenderHeader } from '../../components/Nav/Page';
 import { serverConfig } from '../../config/ServerConfig';
 import WorkloadPodLogs from './WorkloadPodLogs';
-import { TimeInMilliseconds } from '../../types/Common';
+import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
+import { durationSelector } from '../../store/Selectors';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import TracesComponent from 'components/JaegerIntegration/TracesComponent';
 import { JaegerInfo } from 'types/JaegerInfo';
@@ -22,14 +23,17 @@ import WorkloadWizardDropdown from '../../components/IstioWizards/WorkloadWizard
 import TimeControl from '../../components/Time/TimeControl';
 import EnvoyDetailsContainer from 'components/Envoy/EnvoyDetails';
 import { StatusState } from '../../types/StatusState';
+import { WorkloadHealth } from 'types/Health';
 
 type WorkloadDetailsState = {
   workload?: Workload;
+  health?: WorkloadHealth;
   currentTab: string;
 };
 
 type ReduxProps = {
   jaegerInfo?: JaegerInfo;
+  duration: DurationInSeconds;
   lastRefreshAt: TimeInMilliseconds;
   statusState: StatusState;
 };
@@ -65,7 +69,8 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       this.props.match.params.namespace !== prevProps.match.params.namespace ||
       this.props.match.params.workload !== prevProps.match.params.workload ||
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
-      currentTab !== this.state.currentTab
+      currentTab !== this.state.currentTab ||
+      this.props.duration !== prevProps.duration
     ) {
       if (currentTab === 'info' || currentTab === 'logs' || currentTab === 'envoy') {
         this.fetchWorkload();
@@ -77,10 +82,21 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
   }
 
   private fetchWorkload = () => {
-    API.getWorkload(this.props.match.params.namespace, this.props.match.params.workload, true)
+    const params: { [key: string]: string } = {
+      validate: 'true',
+      rateInterval: String(this.props.duration) + 's',
+      health: 'true'
+    };
+    API.getWorkload(this.props.match.params.namespace, this.props.match.params.workload, params)
       .then(details => {
         this.setState({
-          workload: details.data
+          workload: details.data,
+          health: WorkloadHealth.fromJson(
+            this.props.match.params.namespace,
+            this.props.match.params.workload,
+            details.data.health,
+            { rateInterval: this.props.duration, hasSidecar: details.data.istioSidecar }
+          )
         });
       })
       .catch(error => AlertUtils.addError('Could not fetch Workload.', error));
@@ -94,6 +110,8 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       <Tab title="Overview" eventKey={0} key={'Overview'}>
         <WorkloadInfo
           workload={this.state.workload}
+          duration={this.props.duration}
+          health={this.state.health}
           namespace={this.props.match.params.namespace}
           refreshWorkload={this.fetchWorkload}
         />
@@ -297,6 +315,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
 const mapStateToProps = (state: KialiAppState) => ({
   jaegerInfo: state.jaegerState.info,
+  duration: durationSelector(state),
   lastRefreshAt: state.globalState.lastRefreshAt,
   statusState: state.statusState
 });

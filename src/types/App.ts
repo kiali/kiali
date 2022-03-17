@@ -1,5 +1,6 @@
 import Namespace from './Namespace';
 import { Runtime } from './Workload';
+import { AppHealthResponse } from '../types/Health';
 
 export interface AppId {
   namespace: string;
@@ -18,4 +19,5 @@ export interface App {
   workloads: AppWorkload[];
   serviceNames: string[];
   runtimes: Runtime[];
+  health: AppHealthResponse;
 }

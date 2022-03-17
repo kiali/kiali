@@ -232,8 +232,8 @@ export const getAggregateMetrics = (
   );
 };
 
-export const getApp = (namespace: string, app: string) => {
-  return newRequest<App>(HTTP_VERBS.GET, urls.app(namespace, app), {}, {});
+export const getApp = (namespace: string, app: string, params?: { [key: string]: string }) => {
+  return newRequest<App>(HTTP_VERBS.GET, urls.app(namespace, app), params, {});
 };
 
 export const getApps = (namespace: string, params: any = {}) => {
@@ -492,8 +492,8 @@ export const getWorkloads = (namespace: string, params: { [key: string]: string 
   return newRequest<WorkloadNamespaceResponse>(HTTP_VERBS.GET, urls.workloads(namespace), params, {});
 };
 
-export const getWorkload = (namespace: string, name: string, validate?: boolean) => {
-  return newRequest<Workload>(HTTP_VERBS.GET, urls.workload(namespace, name), validate ? { validate: true } : {}, {});
+export const getWorkload = (namespace: string, name: string, params?: { [key: string]: string }) => {
+  return newRequest<Workload>(HTTP_VERBS.GET, urls.workload(namespace, name), params, {});
 };
 
 export const updateWorkload = (

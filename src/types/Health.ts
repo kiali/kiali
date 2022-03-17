@@ -47,6 +47,16 @@ export interface WorkloadStatus {
   syncedProxies: number;
 }
 
+export interface AppHealthResponse {
+  workloadStatus: WorkloadStatus[];
+  requests: RequestHealth;
+}
+
+export interface WorkloadHealthResponse {
+  workloadStatus: WorkloadStatus;
+  requests: RequestHealth;
+}
+
 export const TRAFFICSTATUS = 'Traffic Status';
 
 const createTrafficTitle = (time: string) => {

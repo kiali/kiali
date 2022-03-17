@@ -15,7 +15,7 @@ import { isIstioNamespace } from '../../config/ServerConfig';
 import { IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
-import { durationSelector, meshWideMTLSEnabledSelector } from '../../store/Selectors';
+import { meshWideMTLSEnabledSelector } from '../../store/Selectors';
 import MiniGraphCard from '../../components/CytoscapeGraph/MiniGraphCard';
 import IstioConfigCard from '../../components/IstioConfigCard/IstioConfigCard';
 import WorkloadPods from './WorkloadPods';
@@ -27,6 +27,7 @@ type WorkloadInfoProps = {
   workload?: Workload;
   duration: DurationInSeconds;
   lastRefreshAt: TimeInMilliseconds;
+  health?: WorkloadHealth;
   mtlsEnabled: boolean;
   refreshWorkload: () => void;
 };
@@ -34,7 +35,6 @@ type WorkloadInfoProps = {
 type WorkloadInfoState = {
   validations?: Validations;
   currentTab: string;
-  health?: WorkloadHealth;
   workloadIstioConfig?: IstioConfigList;
   tabHeight?: number;
 };
@@ -92,21 +92,9 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     });
     const workloadSelector = wkLabels.join(',');
 
-    Promise.all([
-      API.getWorkloadHealth(
-        this.props.namespace,
-        this.props.workload.name,
-        this.props.workload ? this.props.workload.type : '',
-        this.props.duration,
-        this.props.workload ? this.props.workload.istioSidecar : false
-      ),
-      API.getIstioConfig(this.props.namespace, workloadIstioResources, true, '', workloadSelector)
-    ])
+    API.getIstioConfig(this.props.namespace, workloadIstioResources, true, '', workloadSelector)
       .then(results => {
-        this.setState({
-          health: results[0],
-          workloadIstioConfig: results[1].data
-        });
+        this.setState({ workloadIstioConfig: results.data });
       })
       .catch(error => AlertUtils.addError('Could not fetch Health/IstioConfig.', error));
   };
@@ -265,7 +253,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
                 <StackItem>
                   <WorkloadDescription
                     workload={workload}
-                    health={this.state.health}
+                    health={this.props.health}
                     namespace={this.props.namespace}
                   />
                 </StackItem>
@@ -301,7 +289,6 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  duration: durationSelector(state),
   lastRefreshAt: state.globalState.lastRefreshAt,
   mtlsEnabled: meshWideMTLSEnabledSelector(state)
 });
