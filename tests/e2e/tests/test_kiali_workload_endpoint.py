@@ -93,7 +93,7 @@ def test_workload_metrics(kiali_client):
     assert 'request_size' in metrics
     assert 'response_size' in metrics
 
-def _test_workload_health(kiali_client):
+def __test_workload_health(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     workload = kiali_client.request(method_name='workloadHealth', path={'namespace': bookinfo_namespace, 'workload': WORKLOAD_TO_VALIDATE}).json()
