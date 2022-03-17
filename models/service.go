@@ -89,11 +89,10 @@ type Service struct {
 	AdditionalDetails []AdditionalItem  `json:"additionalDetails"`
 }
 
-// Helper to perform a conversion
-func (so *ServiceOverview) ParseToService() (*Service) {
+func (so *ServiceOverview) ParseToService() *Service {
 	svc := Service{
-		Name: so.Name,
-		Type: so.ServiceRegistry,
+		Name:              so.Name,
+		Type:              so.ServiceRegistry,
 		HealthAnnotations: so.HealthAnnotations,
 	}
 	return &svc

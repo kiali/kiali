@@ -4,13 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/prometheus/common/model"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
-	"github.com/prometheus/common/model"
 )
 
 // HealthService deals with fetching health from various sources and convert to kiali model
@@ -26,7 +26,7 @@ var HealthAnnotation = []models.AnnotationKey{models.RateHealthAnnotation}
 // GetServiceHealth returns a service health (service request error rate)
 func (in *HealthService) GetServiceHealth(ctx context.Context, namespace, service, rateInterval string, queryTime time.Time, svc *models.Service) (models.ServiceHealth, error) {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "GetServiceHealth",
+	_, end = observability.StartSpan(ctx, "GetServiceHealth",
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("service", service),
@@ -73,7 +73,7 @@ func (in *HealthService) getAppHealth(namespace, app, rateInterval string, query
 // GetWorkloadHealth returns a workload health from just Namespace and workload (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetWorkloadHealth(ctx context.Context, namespace, workload, rateInterval string, queryTime time.Time, w *models.Workload) (models.WorkloadHealth, error) {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "GetWorkloadHealth",
+	_, end = observability.StartSpan(ctx, "GetWorkloadHealth",
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("workload", workload),
