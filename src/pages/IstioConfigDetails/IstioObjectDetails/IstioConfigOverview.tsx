@@ -13,6 +13,7 @@ import {
   ObjectValidation,
   ServiceReference,
   ValidationMessage,
+  ValidationTypes,
   WorkloadReference
 } from 'types/IstioObjects';
 import { style } from 'typestyle';
@@ -63,8 +64,15 @@ const resourceListStyle = style({
 });
 
 class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
+  configurationHasWarnings = (): boolean | undefined => {
+    return this.props.istioValidations?.checks.some(check => {
+      return check.severity === ValidationTypes.Warning;
+    });
+  };
+
   render() {
     const istioObject = getIstioObject(this.props.istioObjectDetails);
+
     const resourceProperties = (
       <div key="properties-list" className={resourceListStyle}>
         <ul style={{ listStyleType: 'none' }}>
@@ -131,13 +139,13 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
           </StackItem>
         )}
 
-        {!this.props.istioValidations?.valid && this.props.istioValidations?.references && (
+        {this.props.istioValidations?.references && (
           <StackItem>
             <IstioConfigValidationReferences objectReferences={this.props.istioValidations.references} />
           </StackItem>
         )}
 
-        {this.props.istioValidations?.valid && (
+        {this.props.istioValidations?.valid && !this.configurationHasWarnings() && (
           <StackItem>
             <IstioConfigReferences
               objectReferences={this.props.objectReferences}
