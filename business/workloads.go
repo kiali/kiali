@@ -1371,7 +1371,11 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 		}
 		var err error
 		if isWorkloadIncluded(kubernetes.DaemonSetType) {
-			ds, err = layer.k8s.GetDaemonSet(criteria.Namespace, criteria.WorkloadName)
+			if IsNamespaceCached(criteria.Namespace) {
+				ds, err = kialiCache.GetDaemonSet(criteria.Namespace, criteria.WorkloadName)
+			} else {
+				ds, err = layer.k8s.GetDaemonSet(criteria.Namespace, criteria.WorkloadName)
+			}
 			if err != nil {
 				ds = nil
 			}

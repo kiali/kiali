@@ -1468,66 +1468,6 @@
         }
       }
     },
-    "/namespaces/{namespace}/apps/{app}/health": {
-      "get": {
-        "description": "Get health associated to the given app",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "apps"
-        ],
-        "operationId": "appHealth",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Namespace",
-            "description": "The namespace scope",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "default": "10m",
-            "x-go-name": "RateInterval",
-            "description": "The rate interval used for fetching error rate",
-            "name": "rateInterval",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "format": "date-time",
-            "description": "The time to use for the prometheus query",
-            "name": "QueryTime",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "App",
-            "description": "The target app",
-            "name": "app",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/appHealthResponse"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
     "/namespaces/{namespace}/apps/{app}/metrics": {
       "get": {
         "description": "Endpoint to fetch metrics to be displayed, related to a single app",
@@ -2950,66 +2890,6 @@
         }
       }
     },
-    "/namespaces/{namespace}/services/{service}/health": {
-      "get": {
-        "description": "Get health associated to the given service",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "services"
-        ],
-        "operationId": "serviceHealth",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Namespace",
-            "description": "The namespace scope",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "default": "10m",
-            "x-go-name": "RateInterval",
-            "description": "The rate interval used for fetching error rate",
-            "name": "rateInterval",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "format": "date-time",
-            "description": "The time to use for the prometheus query",
-            "name": "QueryTime",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Service",
-            "description": "The target service",
-            "name": "service",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/serviceHealthResponse"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
     "/namespaces/{namespace}/services/{service}/metrics": {
       "get": {
         "description": "Endpoint to fetch metrics to be displayed, related to a single service",
@@ -3723,72 +3603,6 @@
           },
           "400": {
             "$ref": "#/responses/badRequestError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
-    "/namespaces/{namespace}/workloads/{workload}/health": {
-      "get": {
-        "description": "Get health associated to the given workload",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "workloads"
-        ],
-        "operationId": "workloadHealth",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Namespace",
-            "description": "The namespace scope",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "default": "10m",
-            "x-go-name": "RateInterval",
-            "description": "The rate interval used for fetching error rate",
-            "name": "rateInterval",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "format": "date-time",
-            "description": "The time to use for the prometheus query",
-            "name": "QueryTime",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Workload",
-            "description": "The target workload",
-            "name": "workload",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "WorkloadType",
-            "name": "type",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/workloadHealthResponse"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalError"
