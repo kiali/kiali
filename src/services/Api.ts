@@ -260,44 +260,6 @@ export const getCustomDashboard = (ns: string, tpl: string, params: DashboardQue
   return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.customDashboard(ns, tpl), params, {});
 };
 
-export const getServiceHealth = (
-  namespace: string,
-  service: string,
-  duration: DurationInSeconds,
-  hasSidecar: boolean
-): Promise<ServiceHealth> => {
-  const params = duration ? { rateInterval: String(duration) + 's' } : {};
-  return newRequest(HTTP_VERBS.GET, urls.serviceHealth(namespace, service), params, {}).then(response =>
-    ServiceHealth.fromJson(namespace, service, response.data, { rateInterval: duration, hasSidecar: hasSidecar })
-  );
-};
-
-export const getAppHealth = (
-  namespace: string,
-  app: string,
-  duration: DurationInSeconds,
-  hasSidecar: boolean
-): Promise<AppHealth> => {
-  const params = duration ? { rateInterval: String(duration) + 's' } : {};
-  return newRequest(HTTP_VERBS.GET, urls.appHealth(namespace, app), params, {}).then(response =>
-    AppHealth.fromJson(namespace, app, response.data, { rateInterval: duration, hasSidecar: hasSidecar })
-  );
-};
-
-export const getWorkloadHealth = (
-  namespace: string,
-  workload: string,
-  workloadType: string,
-  durationSec: number,
-  hasSidecar: boolean
-): Promise<WorkloadHealth> => {
-  const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
-  params['type'] = workloadType;
-  return newRequest(HTTP_VERBS.GET, urls.workloadHealth(namespace, workload), params, {}).then(response =>
-    WorkloadHealth.fromJson(namespace, workload, response.data, { rateInterval: durationSec, hasSidecar: hasSidecar })
-  );
-};
-
 export const getNamespaceAppHealth = (
   namespace: string,
   duration: DurationInSeconds,

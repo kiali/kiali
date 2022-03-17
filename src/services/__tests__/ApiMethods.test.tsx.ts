@@ -106,11 +106,6 @@ describe('#Test Methods return a Promise', () => {
     evaluatePromise(result);
   });
 
-  it('#getServiceHealth', () => {
-    const result = API.getServiceHealth('istio-system', 'book-info', 60, true);
-    evaluatePromise(result);
-  });
-
   it('#getGrafanaInfo', () => {
     const result = API.getGrafanaInfo();
     evaluatePromise(result);
