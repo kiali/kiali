@@ -191,7 +191,7 @@ def test_workload_list(kiali_client):
 def test_workload_details(kiali_client):
     common_utils.get_response(kiali_client, method_name='workloadDetails', path={'namespace': 'bookinfo', 'workload':'details-v1'})
 
-def _test_workload_health(kiali_client):
+def __test_workload_health(kiali_client):
     common_utils.get_response(kiali_client, method_name='workloadHealth', path={'namespace': 'bookinfo', 'workload':'details-v1'})
 
 def test_workload_metrics(kiali_client):
@@ -365,7 +365,7 @@ def test_negative_404(kiali_client):
 
     common_utils.get_response(kiali_client, method_name='serviceDetails', path=INVALID_PARAMS_SERVICEDETAILS, status_code_expected=404)
 
-def _test_negative_403(kiali_client):
+def __test_negative_403(kiali_client):
     if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
         pytest.skip()
 
