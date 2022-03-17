@@ -28,7 +28,7 @@ type AppCriteria struct {
 	Namespace             string
 	AppName               string
 	IncludeIstioResources bool
-	Health                bool
+	IncludeHealth         bool
 	RateInterval          string
 	QueryTime             time.Time
 }
@@ -174,9 +174,8 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				break
 			}
 		}
-		if criteria.Health {
-			criteria.AppName = appItem.Name
-			appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, criteria.AppName, criteria.RateInterval, criteria.QueryTime)
+		if criteria.IncludeHealth {
+			appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, appItem.Name, criteria.RateInterval, criteria.QueryTime)
 			if err != nil {
 				log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, appItem.Name, err)
 			}
@@ -232,7 +231,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 		pods = append(pods, workload.Pods...)
 	}
 	(*appInstance).Runtimes = NewDashboardsService(ns, nil).GetCustomDashboardRefs(criteria.Namespace, criteria.AppName, "", pods)
-	if criteria.Health {
+	if criteria.IncludeHealth {
 		(*appInstance).Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, criteria.AppName, criteria.RateInterval, criteria.QueryTime)
 		if err != nil {
 			log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, criteria.AppName, err)

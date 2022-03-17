@@ -5775,12 +5775,6 @@ Endpoint to get the list of workloads for a namespace
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
-| QueryTime | `query` | date-time (formatted string) | `strfmt.DateTime` |  |  |  | The time to use for the prometheus query |
-| health | `query` | boolean | `bool` |  |  |  | Optional |
-| rateInterval | `query` | string | `string` |  |  | `"10m"` | The rate interval used for fetching error rate |
-| type | `query` | string | `string` |  |  |  |  |
-| validate | `query` | boolean | `bool` |  |  |  |  |
-| workload | `query` | string | `string` |  |  |  |  |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |

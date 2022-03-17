@@ -43,7 +43,7 @@ type WorkloadCriteria struct {
 	WorkloadType          string
 	IncludeIstioResources bool
 	IncludeServices       bool
-	Health                bool
+	IncludeHealth         bool
 	RateInterval          string
 	QueryTime             time.Time
 }
@@ -173,7 +173,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 			wSelector := labels.Set(wItem.Labels).AsSelector().String()
 			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(wSelector, istioConfigList))
 		}
-		if criteria.Health {
+		if criteria.IncludeHealth {
 			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, criteria.Namespace, wItem.Name, wItem.Type, criteria.RateInterval, criteria.QueryTime)
 			if err != nil {
 				log.Errorf("Error fetching Health in namespace %s for workload %s: %s", criteria.Namespace, wItem.Name, err)

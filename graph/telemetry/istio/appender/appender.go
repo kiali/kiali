@@ -311,7 +311,7 @@ func getWorkloadList(namespace string, gi *graph.AppenderGlobalInfo) *models.Wor
 		return workloadList
 	}
 
-	criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false, Health: false}
+	criteria := business.WorkloadCriteria{Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, err := gi.Business.Workload.GetWorkloadList(context.TODO(), criteria)
 	graph.CheckError(err)
 	workloadListMap[namespace] = &workloadList
@@ -378,7 +378,7 @@ func getApp(namespace, appName string, gi *graph.AppenderGlobalInfo) (*models.Ap
 		allAppsMap[namespace] = namespaceApps
 	}
 
-	if appList, err := gi.Business.App.GetAppList(context.TODO(), business.AppCriteria{Namespace: namespace, IncludeIstioResources: false, Health: false}); err == nil {
+	if appList, err := gi.Business.App.GetAppList(context.TODO(), business.AppCriteria{Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false}); err == nil {
 		for _, app := range appList.Apps {
 			if app.Name == appName {
 				namespaceApps[appName] = &app
