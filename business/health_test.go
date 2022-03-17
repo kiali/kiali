@@ -40,7 +40,10 @@ func TestGetServiceHealth(t *testing.T) {
 	setupGlobalMeshConfig()
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	health, _ := hs.GetServiceHealth(context.TODO(), "ns", "httpbin", "1m", queryTime)
+	mockSvc := models.Service{}
+	mockSvc.Name = "httpbin"
+
+	health, _ := hs.GetServiceHealth(context.TODO(), "ns", "httpbin", "1m", queryTime, &mockSvc)
 
 	prom.AssertNumberOfCalls(t, "GetServiceRequestRates", 1)
 	var result = map[string]map[string]float64{
@@ -78,7 +81,15 @@ func TestGetAppHealth(t *testing.T) {
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
 
-	health, _ := hs.GetAppHealth(context.TODO(), "ns", "reviews", "1m", queryTime)
+	mockWkd := models.Workload{}
+	mockWkd.Name = "reviews-v1"
+	mockWkd.IstioSidecar = true
+
+	mockApp := appDetails{
+		Workloads: models.Workloads{&mockWkd},
+	}
+
+	health, _ := hs.GetAppHealth(context.TODO(), "ns", "reviews", "1m", queryTime, &mockApp)
 
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 1)
 	var result = map[string]map[string]float64{
@@ -121,9 +132,12 @@ func TestGetWorkloadHealth(t *testing.T) {
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	health, _ := hs.GetWorkloadHealth(context.TODO(), "ns", "reviews-v1", "", "1m", queryTime)
+	mockWorkload := models.Workload{}
+	mockWorkload.Name = "reviews-v1"
+	mockWorkload.IstioSidecar = true
 
-	k8s.AssertNumberOfCalls(t, "GetDeployment", 2)
+	health, _ := hs.GetWorkloadHealth(context.TODO(), "ns", "reviews-v1", "1m", queryTime, &mockWorkload)
+
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 1)
 	var result = map[string]map[string]float64{
 		"http": {
@@ -164,7 +178,9 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	health, _ := hs.GetAppHealth(context.TODO(), "ns", "reviews", "1m", queryTime)
+	mockApp := appDetails{}
+
+	health, _ := hs.GetAppHealth(context.TODO(), "ns", "reviews", "1m", queryTime, &mockApp)
 
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 0)
 	assert.Equal(emptyResult, health.Requests.Inbound)
@@ -192,7 +208,10 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	health, _ := hs.GetWorkloadHealth(context.TODO(), "ns", "reviews-v1", "", "1m", queryTime)
+	mockWorkload := models.Workload{}
+	mockWorkload.Name = "reviews-v1"
+
+	health, _ := hs.GetWorkloadHealth(context.TODO(), "ns", "reviews-v1", "1m", queryTime, &mockWorkload)
 
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 0)
 	assert.Equal(emptyResult, health.Requests.Inbound)
@@ -375,33 +394,6 @@ var (
 		&sampleReviewsToHttpbinGrpc7,
 	}
 )
-
-/*
- * fakeServicesHealthReview is dead code
- */
-//func fakeServicesHealthReview() []core_v1.Service {
-//	return []core_v1.Service{
-//		{
-//			ObjectMeta: meta_v1.ObjectMeta{
-//				Name:      "reviews",
-//				Namespace: "tutorial",
-//				Labels: map[string]string{
-//					"app":     "reviews",
-//					"version": "v1"}},
-//			Spec: core_v1.ServiceSpec{
-//				ClusterIP: "fromservice",
-//				Type:      "ClusterIP",
-//				Selector:  map[string]string{"app": "reviews"},
-//				Ports: []core_v1.ServicePort{
-//					{
-//						Name:     "http",
-//						Protocol: "TCP",
-//						Port:     3001},
-//					{
-//						Name:     "http",
-//						Protocol: "TCP",
-//						Port:     3000}}}}}
-//}
 
 func fakePodsHealthReview() []core_v1.Pod {
 	return []core_v1.Pod{

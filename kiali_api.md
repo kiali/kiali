@@ -40,7 +40,6 @@ _
 |---------|---------|--------|---------|
 | GET | /api/namespaces/{namespace}/apps/{app}/dashboard | [app dashboard](#app-dashboard) |  |
 | GET | /api/namespaces/{namespace}/apps/{app} | [app details](#app-details) |  |
-| GET | /api/namespaces/{namespace}/apps/{app}/health | [app health](#app-health) |  |
 | GET | /api/namespaces/{namespace}/apps | [app list](#app-list) |  |
 | GET | /api/namespaces/{namespace}/apps/{app}/metrics | [app metrics](#app-metrics) |  |
   
@@ -151,7 +150,6 @@ _
 |---------|---------|--------|---------|
 | GET | /api/namespaces/{namespace}/services/{service}/dashboard | [service dashboard](#service-dashboard) |  |
 | GET | /api/namespaces/{namespace}/services/{service} | [service details](#service-details) |  |
-| GET | /api/namespaces/{namespace}/services/{service}/health | [service health](#service-health) |  |
 | GET | /api/namespaces/{namespace}/services | [service list](#service-list) |  |
 | GET | /api/namespaces/{namespace}/services/{service}/metrics | [service metrics](#service-metrics) |  |
 | PATCH | /api/namespaces/{namespace}/services/{service} | [service update](#service-update) | Endpoint to update the Service configuration using Json Merge Patch strategy. |
@@ -205,7 +203,6 @@ _
 |---------|---------|--------|---------|
 | GET | /api/namespaces/{namespace}/workloads/{workload}/dashboard | [workload dashboard](#workload-dashboard) |  |
 | GET | /api/namespaces/{namespace}/workloads/{workload} | [workload details](#workload-details) |  |
-| GET | /api/namespaces/{namespace}/workloads/{workload}/health | [workload health](#workload-health) |  |
 | GET | /api/namespaces/{namespace}/workloads | [workload list](#workload-list) |  |
 | GET | /api/namespaces/{namespace}/workloads/{workload}/metrics | [workload metrics](#workload-metrics) |  |
 | PATCH | /api/namespaces/{namespace}/workloads/{workload} | [workload update](#workload-update) | Endpoint to update the Workload configuration using Json Merge Patch strategy. |
@@ -501,101 +498,6 @@ Status: Internal Server Error
 
 
 **<span id="app-details-not-found-body"></span> AppDetailsNotFoundBody**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Code | int32 (formatted integer)| `int32` |  | `404`| HTTP status code | `404` |
-| Message | string| `string` |  | |  |  |
-
-
-
-### <span id="app-health"></span> app health (*appHealth*)
-
-```
-GET /api/namespaces/{namespace}/apps/{app}/health
-```
-
-Get health associated to the given app
-
-#### URI Schemes
-  * http
-  * https
-
-#### Produces
-  * application/json
-
-#### Parameters
-
-| Name | Source | Type | Go type | Separator | Required | Default | Description |
-|------|--------|------|---------|-----------| :------: |---------|-------------|
-| app | `path` | string | `string` |  | ✓ |  | The target app |
-| namespace | `path` | string | `string` |  | ✓ |  | The namespace scope |
-| QueryTime | `query` | date-time (formatted string) | `strfmt.DateTime` |  |  |  | The time to use for the prometheus query |
-| rateInterval | `query` | string | `string` |  |  | `"10m"` | The rate interval used for fetching error rate |
-
-#### All responses
-| Code | Status | Description | Has headers | Schema |
-|------|--------|-------------|:-----------:|--------|
-| [200](#app-health-200) | OK | appHealthResponse contains aggregated health from various sources, for a given app |  | [schema](#app-health-200-schema) |
-| [404](#app-health-404) | Not Found | A NotFoundError is the error message that is generated when server could not find what was requested. |  | [schema](#app-health-404-schema) |
-| [500](#app-health-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#app-health-500-schema) |
-
-#### Responses
-
-
-##### <span id="app-health-200"></span> 200 - appHealthResponse contains aggregated health from various sources, for a given app
-Status: OK
-
-###### <span id="app-health-200-schema"></span> Schema
-   
-  
-
-[AppHealth](#app-health)
-
-##### <span id="app-health-404"></span> 404 - A NotFoundError is the error message that is generated when server could not find what was requested.
-Status: Not Found
-
-###### <span id="app-health-404-schema"></span> Schema
-   
-  
-
-[AppHealthNotFoundBody](#app-health-not-found-body)
-
-##### <span id="app-health-500"></span> 500 - A Internal is the error message that means something has gone wrong
-Status: Internal Server Error
-
-###### <span id="app-health-500-schema"></span> Schema
-   
-  
-
-[AppHealthInternalServerErrorBody](#app-health-internal-server-error-body)
-
-###### Inlined models
-
-**<span id="app-health-internal-server-error-body"></span> AppHealthInternalServerErrorBody**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
-| Message | string| `string` |  | |  |  |
-
-
-
-**<span id="app-health-not-found-body"></span> AppHealthNotFoundBody**
 
 
   
@@ -4821,101 +4723,6 @@ Status: Internal Server Error
 
 
 
-### <span id="service-health"></span> service health (*serviceHealth*)
-
-```
-GET /api/namespaces/{namespace}/services/{service}/health
-```
-
-Get health associated to the given service
-
-#### URI Schemes
-  * http
-  * https
-
-#### Produces
-  * application/json
-
-#### Parameters
-
-| Name | Source | Type | Go type | Separator | Required | Default | Description |
-|------|--------|------|---------|-----------| :------: |---------|-------------|
-| namespace | `path` | string | `string` |  | ✓ |  | The namespace scope |
-| service | `path` | string | `string` |  | ✓ |  | The target service |
-| QueryTime | `query` | date-time (formatted string) | `strfmt.DateTime` |  |  |  | The time to use for the prometheus query |
-| rateInterval | `query` | string | `string` |  |  | `"10m"` | The rate interval used for fetching error rate |
-
-#### All responses
-| Code | Status | Description | Has headers | Schema |
-|------|--------|-------------|:-----------:|--------|
-| [200](#service-health-200) | OK | serviceHealthResponse contains aggregated health from various sources, for a given service |  | [schema](#service-health-200-schema) |
-| [404](#service-health-404) | Not Found | A NotFoundError is the error message that is generated when server could not find what was requested. |  | [schema](#service-health-404-schema) |
-| [500](#service-health-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#service-health-500-schema) |
-
-#### Responses
-
-
-##### <span id="service-health-200"></span> 200 - serviceHealthResponse contains aggregated health from various sources, for a given service
-Status: OK
-
-###### <span id="service-health-200-schema"></span> Schema
-   
-  
-
-[ServiceHealth](#service-health)
-
-##### <span id="service-health-404"></span> 404 - A NotFoundError is the error message that is generated when server could not find what was requested.
-Status: Not Found
-
-###### <span id="service-health-404-schema"></span> Schema
-   
-  
-
-[ServiceHealthNotFoundBody](#service-health-not-found-body)
-
-##### <span id="service-health-500"></span> 500 - A Internal is the error message that means something has gone wrong
-Status: Internal Server Error
-
-###### <span id="service-health-500-schema"></span> Schema
-   
-  
-
-[ServiceHealthInternalServerErrorBody](#service-health-internal-server-error-body)
-
-###### Inlined models
-
-**<span id="service-health-internal-server-error-body"></span> ServiceHealthInternalServerErrorBody**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
-| Message | string| `string` |  | |  |  |
-
-
-
-**<span id="service-health-not-found-body"></span> ServiceHealthNotFoundBody**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Code | int32 (formatted integer)| `int32` |  | `404`| HTTP status code | `404` |
-| Message | string| `string` |  | |  |  |
-
-
-
 ### <span id="service-list"></span> service list (*serviceList*)
 
 ```
@@ -5644,102 +5451,6 @@ Status: Internal Server Error
 
 
 **<span id="workload-details-not-found-body"></span> WorkloadDetailsNotFoundBody**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Code | int32 (formatted integer)| `int32` |  | `404`| HTTP status code | `404` |
-| Message | string| `string` |  | |  |  |
-
-
-
-### <span id="workload-health"></span> workload health (*workloadHealth*)
-
-```
-GET /api/namespaces/{namespace}/workloads/{workload}/health
-```
-
-Get health associated to the given workload
-
-#### URI Schemes
-  * http
-  * https
-
-#### Produces
-  * application/json
-
-#### Parameters
-
-| Name | Source | Type | Go type | Separator | Required | Default | Description |
-|------|--------|------|---------|-----------| :------: |---------|-------------|
-| namespace | `path` | string | `string` |  | ✓ |  | The namespace scope |
-| workload | `path` | string | `string` |  | ✓ |  | The target workload |
-| QueryTime | `query` | date-time (formatted string) | `strfmt.DateTime` |  |  |  | The time to use for the prometheus query |
-| rateInterval | `query` | string | `string` |  |  | `"10m"` | The rate interval used for fetching error rate |
-| type | `query` | string | `string` |  |  |  |  |
-
-#### All responses
-| Code | Status | Description | Has headers | Schema |
-|------|--------|-------------|:-----------:|--------|
-| [200](#workload-health-200) | OK | workloadHealthResponse contains aggregated health from various sources, for a given workload |  | [schema](#workload-health-200-schema) |
-| [404](#workload-health-404) | Not Found | A NotFoundError is the error message that is generated when server could not find what was requested. |  | [schema](#workload-health-404-schema) |
-| [500](#workload-health-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#workload-health-500-schema) |
-
-#### Responses
-
-
-##### <span id="workload-health-200"></span> 200 - workloadHealthResponse contains aggregated health from various sources, for a given workload
-Status: OK
-
-###### <span id="workload-health-200-schema"></span> Schema
-   
-  
-
-[WorkloadHealth](#workload-health)
-
-##### <span id="workload-health-404"></span> 404 - A NotFoundError is the error message that is generated when server could not find what was requested.
-Status: Not Found
-
-###### <span id="workload-health-404-schema"></span> Schema
-   
-  
-
-[WorkloadHealthNotFoundBody](#workload-health-not-found-body)
-
-##### <span id="workload-health-500"></span> 500 - A Internal is the error message that means something has gone wrong
-Status: Internal Server Error
-
-###### <span id="workload-health-500-schema"></span> Schema
-   
-  
-
-[WorkloadHealthInternalServerErrorBody](#workload-health-internal-server-error-body)
-
-###### Inlined models
-
-**<span id="workload-health-internal-server-error-body"></span> WorkloadHealthInternalServerErrorBody**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
-| Message | string| `string` |  | |  |  |
-
-
-
-**<span id="workload-health-not-found-body"></span> WorkloadHealthNotFoundBody**
 
 
   

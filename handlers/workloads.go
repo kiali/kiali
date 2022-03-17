@@ -113,7 +113,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if criteria.IncludeHealth && err == nil {
-		workloadDetails.Health, err = business.Health.GetWorkloadHealth(r.Context(), criteria.Namespace, criteria.WorkloadName, criteria.WorkloadType, criteria.RateInterval, criteria.QueryTime)
+		workloadDetails.Health, err = business.Health.GetWorkloadHealth(r.Context(), criteria.Namespace, criteria.WorkloadName, criteria.RateInterval, criteria.QueryTime, workloadDetails)
 		if err != nil {
 			handleErrorResponse(w, err)
 		}
