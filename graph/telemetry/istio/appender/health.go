@@ -119,15 +119,18 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 		err            error
 	}
 	healthCh := make(chan result)
-	errCh := make(chan error)
+	var errors []error
 
 	// Start accumulating results before fetching health info
 	doneAccumulating := make(chan struct{})
 	go func() {
+		// Need to loop over healthCh until closed, otherwise any go routines
+		// sending to this chan will remain blocked forever. Ideally as soon
+		// as we get an error we'd propagate cancellation to all the running
+		// goroutines.
 		for res := range healthCh {
 			if res.err != nil {
-				errCh <- res.err
-				return
+				errors = append(errors, res.err)
 			}
 			if res.appHealth != nil {
 				appHealth[res.namespace] = *res.appHealth
@@ -182,12 +185,10 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 	// Wait until all results have been sent on the chan until closing
 	wg.Wait()
 	close(healthCh)
-
-	select {
-	case <-doneAccumulating:
-	case err := <-errCh:
+	<-doneAccumulating
+	if len(errors) > 0 {
 		// Check for error needs to happen in the main routine or else panic won't get propagated up
-		graph.CheckError(err)
+		graph.CheckError(errors[0])
 	}
 
 	for namespace, kinds := range healthReqs {
