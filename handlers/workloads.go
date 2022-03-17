@@ -11,10 +11,10 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-// workloadListParams holds the path and query parameters for WorkloadList
+// workloadParams holds the path and query parameters for WorkloadList and WorkloadDetails
 //
-// swagger:parameters workloadList
-type workloadListParams struct {
+// swagger:parameters workloadParams
+type workloadParams struct {
 	baseHealthParams
 	// The target workload
 	//
@@ -24,27 +24,27 @@ type workloadListParams struct {
 	// in: query
 	WorkloadType string `json:"type"`
 	// Optional
-	Health   bool `json:"health"`
-	Validate bool `json:"validate"`
+	IncludeHealth bool `json:"health"`
+	Validate      bool `json:"validate"`
 }
 
-func (p *workloadListParams) extract(r *http.Request) {
+func (p *workloadParams) extract(r *http.Request) {
 	vars := mux.Vars(r)
 	query := r.URL.Query()
 	p.baseExtract(r, vars)
 	p.Namespace = vars["namespace"]
 	p.WorkloadName = vars["workload"]
 	p.WorkloadType = query.Get("type")
-	p.Health = query.Get("health") != ""
+	p.IncludeHealth = query.Get("health") != ""
 	p.Validate = query.Get("validate") != ""
 }
 
 // WorkloadList is the API handler to fetch all the workloads to be displayed, related to a single namespace
 func WorkloadList(w http.ResponseWriter, r *http.Request) {
-	p := workloadListParams{}
+	p := workloadParams{}
 	p.extract(r)
 
-	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeIstioResources: true, Health: p.Health, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeIstioResources: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
 
 	// Get business layer
 	businessLayer, err := getBusiness(r)
@@ -54,7 +54,7 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if criteria.Health {
+	if criteria.IncludeHealth {
 		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime)
 		if err != nil {
 			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
@@ -75,10 +75,10 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 
 // WorkloadDetails is the API handler to fetch all details to be displayed, related to a single workload
 func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
-	p := workloadListParams{}
+	p := workloadParams{}
 	p.extract(r)
 
-	criteria := business.WorkloadCriteria{Namespace: p.Namespace, WorkloadName: p.WorkloadName, WorkloadType: p.WorkloadType, IncludeIstioResources: true, IncludeServices: true, Health: p.Health, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+	criteria := business.WorkloadCriteria{Namespace: p.Namespace, WorkloadName: p.WorkloadName, WorkloadType: p.WorkloadType, IncludeIstioResources: true, IncludeServices: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -112,7 +112,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 		err = errValidations
 	}
 
-	if criteria.Health && err == nil {
+	if criteria.IncludeHealth && err == nil {
 		workloadDetails.Health, err = business.Health.GetWorkloadHealth(r.Context(), criteria.Namespace, criteria.WorkloadName, criteria.WorkloadType, criteria.RateInterval, criteria.QueryTime)
 		if err != nil {
 			handleErrorResponse(w, err)

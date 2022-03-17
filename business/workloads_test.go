@@ -54,7 +54,7 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
@@ -98,7 +98,7 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
@@ -139,7 +139,7 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
@@ -182,7 +182,7 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
@@ -225,7 +225,7 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
@@ -268,7 +268,7 @@ func TestGetWorkloadListFromDaemonSets(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
@@ -310,7 +310,7 @@ func TestGetWorkloadListFromDepRCPod(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
@@ -344,7 +344,7 @@ func TestGetWorkloadListFromPod(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
@@ -378,7 +378,7 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
@@ -720,7 +720,7 @@ func TestDuplicatedControllers(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
@@ -777,7 +777,7 @@ func TestGetWorkloadListFromGenericPodController(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
@@ -827,7 +827,7 @@ func TestGetWorkloadListKindsWithSameName(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
@@ -881,7 +881,7 @@ func TestGetWorkloadListRSWithoutPrefix(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
@@ -940,7 +940,7 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, Health: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
