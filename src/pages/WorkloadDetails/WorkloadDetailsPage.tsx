@@ -32,8 +32,8 @@ type WorkloadDetailsState = {
 };
 
 type ReduxProps = {
-  jaegerInfo?: JaegerInfo;
   duration: DurationInSeconds;
+  jaegerInfo?: JaegerInfo;
   lastRefreshAt: TimeInMilliseconds;
   statusState: StatusState;
 };
@@ -314,8 +314,8 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerInfo: state.jaegerState.info,
   duration: durationSelector(state),
+  jaegerInfo: state.jaegerState.info,
   lastRefreshAt: state.globalState.lastRefreshAt,
   statusState: state.statusState
 });

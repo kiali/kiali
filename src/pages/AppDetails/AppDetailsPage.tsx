@@ -31,8 +31,8 @@ type AppDetailsState = {
 };
 
 type ReduxProps = {
-  jaegerInfo?: JaegerInfo;
   duration: DurationInSeconds;
+  jaegerInfo?: JaegerInfo;
   lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
 };
@@ -246,8 +246,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerInfo: state.jaegerState.info,
   duration: durationSelector(state),
+  jaegerInfo: state.jaegerState.info,
   lastRefreshAt: state.globalState.lastRefreshAt
 });
 

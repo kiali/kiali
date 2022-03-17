@@ -23,9 +23,9 @@ import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGrap
 import history, { URLParam } from '../../app/History';
 
 type WorkloadInfoProps = {
+  duration: DurationInSeconds;
   namespace: string;
   workload?: Workload;
-  duration: DurationInSeconds;
   lastRefreshAt: TimeInMilliseconds;
   health?: WorkloadHealth;
   mtlsEnabled: boolean;

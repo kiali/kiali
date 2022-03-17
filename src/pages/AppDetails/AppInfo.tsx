@@ -16,8 +16,8 @@ import history, { URLParam } from '../../app/History';
 
 type AppInfoProps = {
   app?: App;
-  health?: AppHealth;
   duration: DurationInSeconds;
+  health?: AppHealth;
   lastRefreshAt: TimeInMilliseconds;
   mtlsEnabled: boolean;
 };

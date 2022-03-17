@@ -48,7 +48,7 @@ export interface WorkloadStatus {
 }
 
 export interface AppHealthResponse {
-  workloadStatus: WorkloadStatus[];
+  workloadStatuses: WorkloadStatus[];
   requests: RequestHealth;
 }
 
