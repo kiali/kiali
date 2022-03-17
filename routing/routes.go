@@ -877,69 +877,6 @@ func NewRoutes() (r *Routes) {
 			handlers.CustomDashboard,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services/{service}/health services serviceHealth
-		// ---
-		// Get health associated to the given service
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      200: serviceHealthResponse
-		//      404: notFoundError
-		//      500: internalError
-		//
-		{
-			"ServiceHealth",
-			"GET",
-			"/api/namespaces/{namespace}/services/{service}/health",
-			handlers.ServiceHealth,
-			true,
-		},
-		// swagger:route GET /namespaces/{namespace}/apps/{app}/health apps appHealth
-		// ---
-		// Get health associated to the given app
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      200: appHealthResponse
-		//      404: notFoundError
-		//      500: internalError
-		//
-		{
-			"AppHealth",
-			"GET",
-			"/api/namespaces/{namespace}/apps/{app}/health",
-			handlers.AppHealth,
-			true,
-		},
-		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/health workloads workloadHealth
-		// ---
-		// Get health associated to the given workload
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      200: workloadHealthResponse
-		//      404: notFoundError
-		//      500: internalError
-		//
-		{
-			"WorkloadHealth",
-			"GET",
-			"/api/namespaces/{namespace}/workloads/{workload}/health",
-			handlers.WorkloadHealth,
-			true,
-		},
 		// swagger:route GET /namespaces/{namespace}/metrics namespaces namespaceMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to a namespace

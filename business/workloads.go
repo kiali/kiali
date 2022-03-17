@@ -174,7 +174,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(wSelector, istioConfigList))
 		}
 		if criteria.IncludeHealth {
-			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, criteria.Namespace, wItem.Name, wItem.Type, criteria.RateInterval, criteria.QueryTime)
+			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, criteria.Namespace, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
 			if err != nil {
 				log.Errorf("Error fetching Health in namespace %s for workload %s: %s", criteria.Namespace, wItem.Name, err)
 			}
@@ -1371,7 +1371,11 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 		}
 		var err error
 		if isWorkloadIncluded(kubernetes.DaemonSetType) {
-			ds, err = layer.k8s.GetDaemonSet(criteria.Namespace, criteria.WorkloadName)
+			if IsNamespaceCached(criteria.Namespace) {
+				ds, err = kialiCache.GetDaemonSet(criteria.Namespace, criteria.WorkloadName)
+			} else {
+				ds, err = layer.k8s.GetDaemonSet(criteria.Namespace, criteria.WorkloadName)
+			}
 			if err != nil {
 				ds = nil
 			}

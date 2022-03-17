@@ -175,7 +175,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 			}
 		}
 		if criteria.IncludeHealth {
-			appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, appItem.Name, criteria.RateInterval, criteria.QueryTime)
+			appItem.Health, err = in.businessLayer.Health.GetAppHealth(criteria.Namespace, appItem.Name, criteria.RateInterval, criteria.QueryTime, valueApp)
 			if err != nil {
 				log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, appItem.Name, err)
 			}
@@ -232,7 +232,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 	}
 	(*appInstance).Runtimes = NewDashboardsService(ns, nil).GetCustomDashboardRefs(criteria.Namespace, criteria.AppName, "", pods)
 	if criteria.IncludeHealth {
-		(*appInstance).Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, criteria.AppName, criteria.RateInterval, criteria.QueryTime)
+		(*appInstance).Health, err = in.businessLayer.Health.GetAppHealth(criteria.Namespace, criteria.AppName, criteria.RateInterval, criteria.QueryTime, appDetails)
 		if err != nil {
 			log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, criteria.AppName, err)
 		}
