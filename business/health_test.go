@@ -89,7 +89,7 @@ func TestGetAppHealth(t *testing.T) {
 		Workloads: models.Workloads{&mockWkd},
 	}
 
-	health, _ := hs.GetAppHealth("ns", "reviews", "1m", queryTime, &mockApp)
+	health, _ := hs.GetAppHealth(context.TODO(), "ns", "reviews", "1m", queryTime, &mockApp)
 
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 1)
 	var result = map[string]map[string]float64{
@@ -180,7 +180,7 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 
 	mockApp := appDetails{}
 
-	health, _ := hs.GetAppHealth("ns", "reviews", "1m", queryTime, &mockApp)
+	health, _ := hs.GetAppHealth(context.TODO(), "ns", "reviews", "1m", queryTime, &mockApp)
 
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 0)
 	assert.Equal(emptyResult, health.Requests.Inbound)

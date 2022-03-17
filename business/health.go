@@ -40,7 +40,17 @@ func (in *HealthService) GetServiceHealth(ctx context.Context, namespace, servic
 }
 
 // GetAppHealth returns an app health from just Namespace and app name (thus, it fetches data from K8S and Prometheus)
-func (in *HealthService) GetAppHealth(namespace, app, rateInterval string, queryTime time.Time, appD *appDetails) (models.AppHealth, error) {
+func (in *HealthService) GetAppHealth(ctx context.Context, namespace, app, rateInterval string, queryTime time.Time, appD *appDetails) (models.AppHealth, error) {
+	var end observability.EndFunc
+	_, end = observability.StartSpan(ctx, "GetAppHealth",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", namespace),
+		observability.Attribute("app", app),
+		observability.Attribute("rateInterval", rateInterval),
+		observability.Attribute("queryTime", queryTime),
+	)
+	defer end()
+
 	return in.getAppHealth(namespace, app, rateInterval, queryTime, appD.Workloads)
 }
 
