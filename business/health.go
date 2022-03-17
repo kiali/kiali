@@ -4,12 +4,13 @@ import (
 	"context"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/prometheus/common/model"
-	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 // HealthService deals with fetching health from various sources and convert to kiali model
