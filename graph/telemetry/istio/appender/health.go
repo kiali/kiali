@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"sync"
 	"time"
 
 	"github.com/kiali/kiali/graph"
@@ -105,18 +106,96 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 	// Execute health fetches and attach retrieved health data to nodes
 	bs := globalInfo.Business
 	ctx := globalInfo.Context
+
+	// Gather all the health data we'll need ahead of time key'd by namespace.
+	appHealth := make(map[string]models.NamespaceAppHealth)
+	serviceHealth := make(map[string]models.NamespaceServiceHealth)
+	workloadHealth := make(map[string]models.NamespaceWorkloadHealth)
+	type result struct {
+		namespace      string
+		appHealth      *models.NamespaceAppHealth
+		serviceHealth  *models.NamespaceServiceHealth
+		workloadHealth *models.NamespaceWorkloadHealth
+		err            error
+	}
+	healthCh := make(chan result)
+	var errors []error
+
+	// Start accumulating results before fetching health info
+	doneAccumulating := make(chan struct{})
+	go func() {
+		// Need to loop over healthCh until closed, otherwise any go routines
+		// sending to this chan will remain blocked forever. Ideally as soon
+		// as we get an error we'd propagate cancellation to all the running
+		// goroutines.
+		for res := range healthCh {
+			if res.err != nil {
+				errors = append(errors, res.err)
+			}
+			if res.appHealth != nil {
+				appHealth[res.namespace] = *res.appHealth
+			} else if res.serviceHealth != nil {
+				serviceHealth[res.namespace] = *res.serviceHealth
+			} else if res.workloadHealth != nil {
+				workloadHealth[res.namespace] = *res.workloadHealth
+			}
+		}
+		doneAccumulating <- struct{}{}
+	}()
+
+	wg := sync.WaitGroup{}
 	for namespace, kinds := range healthReqs {
 		// use RequestedDuration as a default (for outsider nodes), otherwise use the safe duration for the requested namespace
 		duration := a.RequestedDuration
 		if ns, ok := a.Namespaces[namespace]; ok {
 			duration = ns.Duration
 		}
+
+		for kind := range kinds {
+			wg.Add(1)
+			go func(namespace, kind string) {
+				defer wg.Done()
+				switch kind {
+				case graph.NodeTypeApp:
+					health, err := bs.Health.GetNamespaceAppHealth(ctx, namespace, duration.String(), time.Unix(a.QueryTime, 0))
+					healthCh <- result{
+						namespace: namespace,
+						appHealth: &health,
+						err:       err,
+					}
+				case graph.NodeTypeService:
+					health, err := bs.Health.GetNamespaceServiceHealth(ctx, namespace, duration.String(), time.Unix(a.QueryTime, 0))
+					healthCh <- result{
+						namespace:     namespace,
+						serviceHealth: &health,
+						err:           err,
+					}
+				case graph.NodeTypeWorkload:
+					health, err := bs.Health.GetNamespaceWorkloadHealth(ctx, namespace, duration.String(), time.Unix(a.QueryTime, 0))
+					healthCh <- result{
+						namespace:      namespace,
+						workloadHealth: &health,
+						err:            err,
+					}
+				}
+			}(namespace, kind)
+		}
+	}
+
+	// Wait until all results have been sent on the chan until closing
+	wg.Wait()
+	close(healthCh)
+	<-doneAccumulating
+	if len(errors) > 0 {
+		// Check for error needs to happen in the main routine or else panic won't get propagated up
+		graph.CheckError(errors[0])
+	}
+
+	for namespace, kinds := range healthReqs {
 		for kind, nodes := range kinds {
 			switch kind {
 			case graph.NodeTypeApp:
-				health, err := bs.Health.GetNamespaceAppHealth(ctx, namespace, duration.String(), time.Unix(a.QueryTime, 0))
-				graph.CheckError(err)
-
+				health := appHealth[namespace]
 				for _, n := range nodes {
 					if h, ok := health[n.App]; ok {
 						// versionedApp nodes store the app health (for use with appBox health) but natively reflect workload health
@@ -131,9 +210,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 					}
 				}
 			case graph.NodeTypeService:
-				health, err := bs.Health.GetNamespaceServiceHealth(ctx, namespace, duration.String(), time.Unix(a.QueryTime, 0))
-				graph.CheckError(err)
-
+				health := serviceHealth[namespace]
 				for _, n := range nodes {
 					if h, ok := health[n.Service]; ok {
 						n.Metadata[graph.HealthData] = h
@@ -143,9 +220,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 					}
 				}
 			case graph.NodeTypeWorkload:
-				health, err := bs.Health.GetNamespaceWorkloadHealth(ctx, namespace, duration.String(), time.Unix(a.QueryTime, 0))
-				graph.CheckError(err)
-
+				health := workloadHealth[namespace]
 				for _, n := range nodes {
 					if h, ok := health[n.Workload]; ok {
 						n.Metadata[graph.HealthData] = h

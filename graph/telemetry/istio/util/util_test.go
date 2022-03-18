@@ -38,7 +38,11 @@ func TestAddScopeMultiLabel(t *testing.T) {
 	query := `sum(rate(istio_requests_total{reporter="destination",destination_workload_namespace="bookinfo"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags)`
 	scopedQuery := AddQueryScope(query)
 	expected := `sum(rate(istio_requests_total{mesh_id="mesh1",cluster="cluster1",reporter="destination",destination_workload_namespace="bookinfo"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags)`
-	assert.Equal(t, expected, scopedQuery)
+	if expected != scopedQuery {
+		// Maps are unordered so check both permutations that the labels could've been set in.
+		expected = `sum(rate(istio_requests_total{cluster="cluster1",mesh_id="mesh1",reporter="destination",destination_workload_namespace="bookinfo"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags)`
+		assert.Equal(t, expected, scopedQuery)
+	}
 }
 
 func TestAddScopeMultiSegment(t *testing.T) {

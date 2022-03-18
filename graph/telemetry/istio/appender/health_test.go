@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -100,6 +101,73 @@ func TestWorkloadHealthNoConfigPasses(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, "", srv[string(models.RateHealthAnnotation)])
 	}
+}
+
+func TestHealthDataPresent(t *testing.T) {
+	assert := assert.New(t)
+
+	config.Set(config.NewConfig())
+	svcNodes := buildServiceTrafficMap()
+	appNodes := buildAppTrafficMap()
+	wkNodes := buildWorkloadTrafficMap()
+	trafficMap := make(graph.TrafficMap)
+	for k, v := range svcNodes {
+		trafficMap[k] = v
+	}
+	for k, v := range appNodes {
+		trafficMap[k] = v
+	}
+	for k, v := range wkNodes {
+		trafficMap[k] = v
+	}
+	businessLayer := setupHealthConfig(buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
+	a := HealthAppender{}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	for _, node := range trafficMap {
+		assert.Contains(node.Metadata, graph.HealthData)
+	}
+}
+
+func TestErrorCausesPanic(t *testing.T) {
+	assert := assert.New(t)
+
+	config.Set(config.NewConfig())
+	trafficMap := buildAppTrafficMap()
+	k8s := kubetest.NewK8SClientMock()
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
+	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(buildFakeWorkloadDeploymentsHealth(rateDefinition), nil)
+	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
+	k8s.On("GetJobs", mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(buildFakePodsHealth(rateDefinition), nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
+	k8s.On("GetDaemonSets", mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{}, fmt.Errorf("test error! This should cause a panic"))
+	config.Set(config.NewConfig())
+	business.SetKialiControlPlaneCluster(&business.Cluster{
+		Name: business.DefaultClusterID,
+	})
+
+	prom := new(prometheustest.PromClientMock)
+	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
+	prom.MockAllRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
+	businessLayer := business.NewWithBackends(k8s, prom, nil)
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
+	a := HealthAppender{}
+
+	assert.Panics(func() { a.AppendGraph(trafficMap, globalInfo, namespaceInfo) })
 }
 
 func buildFakeServicesHealth(rate string) []core_v1.Service {
