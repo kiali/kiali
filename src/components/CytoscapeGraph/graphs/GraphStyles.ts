@@ -76,7 +76,10 @@ const NodeBadgeColor = PFColors.White;
 const NodeTextFont = EdgeTextFont;
 const NodeWidth = NodeHeight;
 const OpacityOverlay = 0.3;
-const OpacityUnhighlight = 0.1;
+const OpacityUnhighlightLeast = 0.5;
+const OpacityUnhighlightMedium = 0.3;
+const OpacityUnhighlightMost = 0.1;
+const OpacityUnhighlightLabel = 0.3;
 
 // Puts a little more space between icons when a badge has multiple icons
 const badgeMargin = (existingIcons: string) =>
@@ -390,7 +393,7 @@ export class GraphStyles {
     const lineHeight = fontSize + 1;
     let labelStyle = `font-size:${fontSize}px;line-height:${lineHeight}px;`;
     if (ele.hasClass(UnhighlightClass)) {
-      labelStyle += 'opacity:0.6;';
+      labelStyle += `opacity:${OpacityUnhighlightLabel};`;
     }
     if (noLabel) {
       labelStyle += 'display:none;';
@@ -846,11 +849,33 @@ export class GraphStyles {
           }
         }
       },
-      // Node is unhighlighted (see GraphHighlighter.ts)
+      // Node unhighlighting (see GraphHighlighter.ts)
+      // 1. for regular, unboxed nodes, use min opacity
       {
-        selector: `node.${UnhighlightClass}`,
+        selector: `node.${UnhighlightClass}[^isBox][^parent]`,
         style: {
-          opacity: OpacityUnhighlight
+          opacity: OpacityUnhighlightMost
+        }
+      },
+      // 2. for regular, boxed nodes, use max opacity because the box's opacity will compound the effect
+      {
+        selector: `node.${UnhighlightClass}[^isBox][parent]`,
+        style: {
+          opacity: OpacityUnhighlightLeast
+        }
+      },
+      // 3. for boxes start with medium opacity
+      {
+        selector: `node.${UnhighlightClass}[isBox]`,
+        style: {
+          opacity: OpacityUnhighlightMedium
+        }
+      },
+      // 4. but reset inner boxes or the compounded opacity is too much
+      {
+        selector: `node.${UnhighlightClass}[isBox][^parent] node[isBox]`,
+        style: {
+          opacity: 1.0
         }
       },
       {
@@ -910,7 +935,7 @@ export class GraphStyles {
       {
         selector: `edge.${UnhighlightClass}`,
         style: {
-          opacity: OpacityUnhighlight
+          opacity: OpacityUnhighlightMost
         }
       },
       {

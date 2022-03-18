@@ -47,7 +47,7 @@ export class GraphHighlighter {
 
     this.selected = event;
     this.clearHover();
-    this.unhighlight();
+    this.clearHighlighting();
 
     // only highlight when selecting something other than the graph background
     if (this.selected.summaryType !== 'graph') {
@@ -74,11 +74,11 @@ export class GraphHighlighter {
   onMouseOut = (event: CytoscapeBaseEvent) => {
     if (this.hovered && this.hovered.summaryTarget === event.summaryTarget) {
       this.clearHover();
-      this.unhighlight();
+      this.clearHighlighting();
     }
   };
 
-  unhighlight = () => {
+  clearHighlighting = () => {
     this.cy.elements(`.${UnhighlightClass}`).removeClass(UnhighlightClass);
     this.cy.elements(`.${HighlightClass}`).removeClass(HighlightClass);
   };
