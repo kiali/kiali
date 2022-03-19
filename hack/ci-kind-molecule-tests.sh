@@ -375,9 +375,9 @@ EOF
   infomsg "Create Kind LoadBalancer via MetalLB"
   lb_addr_range="255.70-255.84"
 
-  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/namespace.yaml
-  ${CLIENT_EXE} create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
-  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/metallb.yaml
+  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
+  # ${CLIENT_EXE} create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
+  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
 
   subnet=$(${DORP} network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
   subnet_trimmed=$(echo ${subnet} | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')
