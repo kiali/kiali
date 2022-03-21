@@ -50,6 +50,13 @@ else
   exit 1
 fi
 
+if [[ "$CLIENT_EXE" = *"oc" ]]; then
+  if ! ${CLIENT_EXE} whoami &> /dev/null; then
+    echo "ERROR: Using 'oc' but you are not logged in. Log in or pass in '-c kubectl' if using a non-OpenShift cluster."
+    exit 1
+  fi
+fi
+
 msg() {
   if [ "${DRY_RUN}" == "false" ]; then echo "$1"; else echo "DRY RUN: $1"; fi
 }
