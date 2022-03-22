@@ -13,6 +13,7 @@ type GatewayChecker struct {
 	Gateways              []networking_v1alpha3.Gateway
 	Namespace             string
 	WorkloadsPerNamespace map[string]models.WorkloadList
+	IsGatewayToNamespace  bool
 }
 
 // Check runs checks for the all namespaces actions as well as for the single namespace validations
@@ -38,6 +39,7 @@ func (g GatewayChecker) runSingleChecks(gw networking_v1alpha3.Gateway) models.I
 		gateways.SelectorChecker{
 			Gateway:               gw,
 			WorkloadsPerNamespace: g.WorkloadsPerNamespace,
+			IsGatewayToNamespace:  g.IsGatewayToNamespace,
 		},
 	}
 

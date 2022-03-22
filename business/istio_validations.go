@@ -180,7 +180,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	switch objectType {
 	case kubernetes.Gateways:
 		objectCheckers = []ObjectChecker{
-			checkers.GatewayChecker{Gateways: istioConfigList.Gateways, Namespace: namespace, WorkloadsPerNamespace: workloadsPerNamespace},
+			checkers.GatewayChecker{Gateways: istioConfigList.Gateways, Namespace: namespace, WorkloadsPerNamespace: workloadsPerNamespace, IsGatewayToNamespace: in.isGatewayToNamespace()},
 		}
 		referenceChecker = references.GatewayReferences{Gateways: istioConfigList.Gateways, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.VirtualServices:
@@ -485,6 +485,22 @@ func (in *IstioValidationsService) fetchRegistryServices(rValue *[]*kubernetes.R
 	} else {
 		*rValue = registryServices
 	}
+}
+
+func (in *IstioValidationsService) isGatewayToNamespace() bool {
+	gatewayToNamespace := false
+	if in.businessLayer != nil {
+		if cluster, err := in.businessLayer.Mesh.ResolveKialiControlPlaneCluster(nil); err == nil {
+			if cluster != nil {
+				gatewayToNamespace = cluster.IsGatewayToNamespace
+			} else {
+				log.Debug("No GatewayToNamespace is set in the istiod environment variables. Using default GatewayToNamespace: false")
+			}
+		} else {
+			log.Errorf("GatewayToNamespace resolution failed: %s", err)
+		}
+	}
+	return gatewayToNamespace
 }
 
 func checkExportTo(exportToNs string, namespace string, ownNs string) bool {
