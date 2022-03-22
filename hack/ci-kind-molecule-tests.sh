@@ -76,14 +76,6 @@ Options:
     The kiali fork to clone.
     Default: kiali/kiali
 
--kuib|--kiali-ui-branch <branch name>
-    The kiali-ui branch to clone.
-    Default: master
-
--kuif|--kiali-ui-fork <name>
-    The kiali-ui fork to clone.
-    Default: kiali/kiali-ui
-
 -kob|--kiali-operator-branch <branch name>
     The kiali-operator branch to clone.
     Default: master
@@ -164,8 +156,6 @@ while [[ $# -gt 0 ]]; do
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
     -kb|--kiali-branch)           KIALI_BRANCH="$2";          shift;shift; ;;
     -kf|--kiali-fork)             KIALI_FORK="$2";            shift;shift; ;;
-    -kuib|--kiali-ui-branch)      UI_BRANCH="$2";             shift;shift; ;;
-    -kuif|--kiali-ui-fork)        UI_FORK="$2";               shift;shift; ;;
     -kob|--kiali-operator-branch) KIALI_OPERATOR_BRANCH="$2"; shift;shift; ;;
     -kof|--kiali-operator-fork)   KIALI_OPERATOR_FORK="$2";   shift;shift; ;;
     -lb|--logs-branch)            LOGS_BRANCH="$2";           shift;shift; ;;
@@ -205,8 +195,6 @@ HELM_FORK="${HELM_FORK:-kiali/helm-charts}"
 HELM_BRANCH="${HELM_BRANCH:-master}"
 KIALI_FORK="${KIALI_FORK:-kiali/kiali}"
 KIALI_BRANCH="${KIALI_BRANCH:-master}"
-UI_FORK="${UI_FORK:-kiali/kiali-ui}"
-UI_BRANCH="${UI_BRANCH:-master}"
 KIALI_OPERATOR_FORK="${KIALI_OPERATOR_FORK:-kiali/kiali-operator}"
 KIALI_OPERATOR_BRANCH="${KIALI_OPERATOR_BRANCH:-master}"
 
@@ -231,8 +219,6 @@ HELM_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${HELM_FORK}.git"
 HELM_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${HELM_FORK}.git"
 KIALI_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${KIALI_FORK}.git"
 KIALI_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${KIALI_FORK}.git"
-UI_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${UI_FORK}.git"
-UI_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${UI_FORK}.git"
 KIALI_OPERATOR_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${KIALI_OPERATOR_FORK}.git"
 KIALI_OPERATOR_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${KIALI_OPERATOR_FORK}.git"
 LOGS_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${LOGS_FORK}/${LOGS_PROJECT_NAME}.git"
@@ -266,8 +252,6 @@ INSTALL_ISTIO=$INSTALL_ISTIO
 IRC_ROOM=$IRC_ROOM
 KIALI_BRANCH=$KIALI_BRANCH
 KIALI_FORK=$KIALI_FORK
-UI_BRANCH=$UI_BRANCH
-UI_FORK=$UI_FORK
 KIALI_OPERATOR_BRANCH=$KIALI_OPERATOR_BRANCH
 KIALI_OPERATOR_FORK=$KIALI_OPERATOR_FORK
 KIND_NAME=$KIND_NAME
@@ -292,13 +276,11 @@ EOM
 if [ "${GIT_CLONE_PROTOCOL}" == "git" ]; then
   HELM_GITHUB_GITCLONE="${HELM_GITHUB_GITCLONE_GIT}"
   KIALI_GITHUB_GITCLONE="${KIALI_GITHUB_GITCLONE_GIT}"
-  UI_GITHUB_GITCLONE="${UI_GITHUB_GITCLONE_GIT}"
   KIALI_OPERATOR_GITHUB_GITCLONE="${KIALI_OPERATOR_GITHUB_GITCLONE_GIT}"
   LOGS_GITHUB_GITCLONE="${LOGS_GITHUB_GITCLONE_GIT}"
 elif [ "${GIT_CLONE_PROTOCOL}" == "https" ]; then
   HELM_GITHUB_GITCLONE="${HELM_GITHUB_GITCLONE_HTTPS}"
   KIALI_GITHUB_GITCLONE="${KIALI_GITHUB_GITCLONE_HTTPS}"
-  UI_GITHUB_GITCLONE="${UI_GITHUB_GITCLONE_HTTPS}"
   KIALI_OPERATOR_GITHUB_GITCLONE="${KIALI_OPERATOR_GITHUB_GITCLONE_HTTPS}"
   LOGS_GITHUB_GITCLONE="${LOGS_GITHUB_GITCLONE_HTTPS}"
   if [ "${UPLOAD_LOGS}" == "true" ]; then
@@ -322,7 +304,6 @@ fi
 test -d ${SRC}/helm-charts && rm -rf ${SRC}/helm-charts
 test -d ${SRC}/kiali-operator && rm -rf ${SRC}/kiali-operator
 test -d ${SRC}/kiali && rm -rf ${SRC}/kiali
-test -d ${SRC}/kiali-ui && rm -rf ${SRC}/kiali-ui
 test -d ${SRC}/${LOGS_PROJECT_NAME:-invalid} && [ "${SRC}/${LOGS_PROJECT_NAME}" != "/" ] && rm -rf ${SRC}/${LOGS_PROJECT_NAME:-invalid}
 mkdir -p ${SRC}
 
@@ -401,9 +382,6 @@ fi
 if [ "${USE_DEV_IMAGES}" == "true" ]; then
   infomsg "Dev images are to be tested. Will prepare them now."
 
-  infomsg "Cloning kiali-ui [${UI_FORK}:${UI_BRANCH}] from [${UI_GITHUB_GITCLONE}]..."
-  git clone --single-branch --branch ${UI_BRANCH} ${UI_GITHUB_GITCLONE} ../kiali-ui
-
   # TODO: Remove this patch command. It's needed because of an ongoing reconciliation issue in KinD.
   # TODO: See: https://github.com/operator-framework/operator-sdk/issues/5319
   patch -i - operator/build/Dockerfile << EOF
@@ -414,14 +392,12 @@ if [ "${USE_DEV_IMAGES}" == "true" ]; then
 EOF
 
   infomsg "Building dev image..."
-  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" -e CONSOLE_LOCAL_DIR="../kiali-ui" clean build test
 
-  pushd ../kiali-ui
   yarn && yarn build
-  popd
+  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" clean build test
 
   infomsg "Pushing the images into the cluster..."
-  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="${KIND_NAME}" -e CONSOLE_LOCAL_DIR="../kiali-ui" cluster-push
+  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="${KIND_NAME}" cluster-push
 else
   infomsg "Will test the latest published images"
 fi
