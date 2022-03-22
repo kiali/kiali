@@ -24,13 +24,13 @@ start_kind() {
 config_metallb() {
   local lb_addr_range="${1}"
 
-  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/namespace.yaml
+  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
   [ "$?" != "0" ] && echo "Failed to setup metallb namespace on kind" && exit 1
 
-  ${CLIENT_EXE} create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
-  [ "$?" != "0" ] && echo "Failed to setup metallb secret on kind" && exit 1
+  #${CLIENT_EXE} create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
+  #[ "$?" != "0" ] && echo "Failed to setup metallb secret on kind" && exit 1
 
-  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/metallb.yaml
+  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
   [ "$?" != "0" ] && echo "Failed to setup metallb resources on kind" && exit 1
 
   local subnet=$(${DORP} network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
