@@ -214,11 +214,10 @@ Valid options:
   -ucd|--ui-console-dir
       A directory on the local machine containing the UI console code.
       If not specified, an attempt to find it on the local machine will be made. A search up the
-      directory tree is made, looking for any directory called "kiali-ui" that has a "build" directory under it.
-      The "build" directory of the kiali-ui is generated after you run "yarn build" to
-      generate the distributable package. So, make sure that you build the kiali-ui before
+      directory tree is made, looking for any directory called "kiali-ui" or "frontend" that has a "build" directory under it.
+      The "build" directory of the UI is generated after you run "yarn build" to
+      generate the distributable package. So, make sure that you build the UI before
       using this script and then set this option to the generated build directory.
-      For details, see: https://github.com/kiali/kiali-ui
       Default: <a local build that is auto-discovered>
 HELPMSG
       exit 1
@@ -444,11 +443,15 @@ fi
 if [ -z "${UI_CONSOLE_DIR:-}" ]; then
   infomsg "Attempting to find the UI Console directory..."
 
-  # See if the user has the typical dev environment. Go up the dir tree to find a 'kiali-ui' directory with a 'build' directory under it.
+  # See if the user has the typical dev environment. Go up the dir tree to find a 'frontend' or 'kiali-ui' directory with a 'build' directory under it.
   cur_path="${SCRIPT_DIR}"
   while [[ ${cur_path} != / ]];
   do
-    find_results="$(find "${cur_path}" -maxdepth 1 -mindepth 1 -name "kiali-ui" | head -n 1)"
+    find_results="$(find "${cur_path}" -maxdepth 1 -mindepth 1 -name "frontend" | head -n 1)"
+    if [ -z "${find_results}" ]; then
+      # do this in case you are running an older Kiali that had its kiali-ui split out into a separate repo
+      find_results="$(find "${cur_path}" -maxdepth 1 -mindepth 1 -name "kiali-ui" | head -n 1)"
+    fi
     if [ ! -z "${find_results}" ]; then
       if [ -d "${find_results}/build" ]; then
         UI_CONSOLE_DIR="${find_results}/build"
