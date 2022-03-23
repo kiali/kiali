@@ -1,6 +1,6 @@
 #!/bin/bash
 
-FILES=`find . -path './vendor' -prune -o -type f -iname '*.go' -print`
+FILES=`find . -path './vendor' -prune -o -path './frontend' -prune -o -type f -iname '*.go' -print`
 
 for gofile in $FILES; do
   awk -i inplace '
