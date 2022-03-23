@@ -1,50 +1,42 @@
-# Binaries for programs and plugins
-*.exe
-*.dll
-*.so
-*.dylib
+# See https://help.github.com/ignore-files/ for more about ignoring files.
 
-# Test binary, build with `go test -c`
-*.test
+# dependencies
+/node_modules
 
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
+# IDE
+/.idea
+/.vscode
 
-# Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
-.glide/
+# testing
+/coverage
 
-# The compiled binary
-/kiali
+# production
+/build
 
-# Files specific to our build process
-_output
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Swap files
-.*.sw*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Eclipse
-.project
-.settings/
+package-lock.json
 
-# IntelliJ
-.idea/
+# compiled patternfly assets
+src/**/*.css
+src/**/*.css.map
+!src/index.css
+!src/css/.gitkeep
+src/img/*
+!src/img/.gitkeep
+src/fonts/*
+!src/fonts/.gitkeep
+src/sass/*
+!src/sass/index.sass
 
-# VSCode
-.vscode/
-
-# The vendor directory is to be committed to the git repo
-#vendor/
-
-# Configuration files for the hack scripts
-hack/*.local.sh
-
-# E2E testing files
-tests/e2e/.pytest_cache
-tests/e2e/**/__pycache__
-tests/e2e/.kiali-e2e/
-
-# Do not commit operator code to this repo
-operator
-
-# Do not commit helm-charts code to this repo
-helm-charts
+# Commit Slider css
+!src/components/IstioWizards/Slider/styles/default.css

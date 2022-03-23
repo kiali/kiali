@@ -1,18 +1,22 @@
-**Describe the change**
+** Describe the change **
 
-_Please describe what the code change is about._
+_explanation of what it does_
 
-**Issue reference**
+** Issue reference **
 
-_Please, provide the link to the GitHub issue here._
+* If this is a fix for a JIRA, please put JIRA-reference in the PR title like _`KIALI-7 New icons`_ (Jira-id, one space, description)
+* If this is a fix for a GH-issue, please link it here
 
-**Backwards incompatible?**
+** Backwards compatible? **
 
-- Is your change introducing backwards incompatible changes?
+[ ] Is your pull-request introducing changes in behaviour?
 
-_describe the changes if appropriate._
+_Describe the changes if appropriate. E.g. a new link, a change on what a click does, etc_
 
-**Documentation**
+** Screenshot **
 
-* Does your contribution contain user-visible changes like e.g. new or changed configuration settings?
-If so, please also update [README.adoc](README.adoc)
+Add a screenshot of the UI after your changes.
+
+** Documentation **
+
+Please provide an update to documentation if appropriate. For configuration options, consider sending a PR to https://github.com/kiali/kiali/blob/master/README.adoc

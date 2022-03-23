@@ -1,0 +1,54 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Overview page renders initial layout 1`] = `
+<Fragment>
+  <Connect(OverviewToolbar)
+    displayMode={1}
+    onError={[Function]}
+    onRefresh={[Function]}
+    setDisplayMode={[Function]}
+    sort={[Function]}
+    statefulFilterRef={
+      Object {
+        "current": null,
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "#f5f5f5",
+      }
+    }
+  >
+    <EmptyState
+      className="fu1tihc"
+      variant="full"
+    >
+      <Title
+        headingLevel="h5"
+        size="lg"
+        style={
+          Object {
+            "marginTop": "50px",
+          }
+        }
+      >
+        No unfiltered namespaces
+      </Title>
+      <EmptyStateBody>
+        Either all namespaces are being filtered or the user has no permission to access namespaces.
+      </EmptyStateBody>
+    </EmptyState>
+  </div>
+  <OverviewTrafficPolicies
+    duration={600}
+    hideConfirmModal={[Function]}
+    isOpen={false}
+    kind=""
+    load={[Function]}
+    nsTarget=""
+    opTarget=""
+  />
+</Fragment>
+`;

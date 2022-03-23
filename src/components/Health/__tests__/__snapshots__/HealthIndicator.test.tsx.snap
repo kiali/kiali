@@ -1,0 +1,279 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`HealthIndicator proxy status section renders the degraded workloads 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Health indicator"
+  boundary="window"
+  className="health_indicator"
+  content={
+    <div>
+      <strong>
+        Degraded
+      </strong>
+      <HealthDetails
+        health={
+          AppHealth {
+            "health": Object {
+              "items": Array [
+                Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "class": "icon-degraded",
+                        "color": "var(--pf-global--warning-color--100)",
+                        "icon": [Function],
+                        "name": "Degraded",
+                        "priority": 3,
+                      },
+                      "text": "A: 2 / 2 (1 proxy unsynced)",
+                    },
+                  ],
+                  "status": Object {
+                    "class": "icon-degraded",
+                    "color": "var(--pf-global--warning-color--100)",
+                    "icon": [Function],
+                    "name": "Degraded",
+                    "priority": 3,
+                  },
+                  "title": "Pod Status",
+                },
+                Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "class": "icon-na",
+                        "color": "var(--pf-global--palette--black-600)",
+                        "icon": [Function],
+                        "name": "No health information",
+                        "priority": 0,
+                      },
+                      "text": "Inbound: No requests",
+                      "value": 0,
+                    },
+                    Object {
+                      "status": Object {
+                        "class": "icon-na",
+                        "color": "var(--pf-global--palette--black-600)",
+                        "icon": [Function],
+                        "name": "No health information",
+                        "priority": 0,
+                      },
+                      "text": "Outbound: No requests",
+                      "value": 0,
+                    },
+                  ],
+                  "status": Object {
+                    "class": "icon-na",
+                    "color": "var(--pf-global--palette--black-600)",
+                    "icon": [Function],
+                    "name": "No health information",
+                    "priority": 0,
+                  },
+                  "title": "Traffic Status (Last 10m)",
+                },
+              ],
+              "statusConfig": Object {
+                "status": Object {
+                  "class": "icon-na",
+                  "color": "var(--pf-global--palette--black-600)",
+                  "icon": [Function],
+                  "name": "No health information",
+                  "priority": 0,
+                },
+                "threshold": undefined,
+                "title": "Traffic Status (Last 10m)",
+                "value": -1,
+              },
+            },
+            "requests": Object {
+              "healthAnnotations": Object {},
+              "inbound": Object {},
+              "outbound": Object {},
+            },
+          }
+        }
+      />
+    </div>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <span>
+    <ExclamationTriangleIcon
+      className="icon-degraded"
+      color="var(--pf-global--warning-color--100)"
+      noVerticalAlign={false}
+      size="sm"
+      title={null}
+    />
+  </span>
+</Tooltip>
+`;
+
+exports[`HealthIndicator renders healthy 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Health indicator"
+  boundary="window"
+  className="health_indicator"
+  content={
+    <div>
+      <strong>
+        Healthy
+      </strong>
+      <HealthDetails
+        health={
+          AppHealth {
+            "health": Object {
+              "items": Array [
+                Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "class": "icon-healthy",
+                        "color": "#3e8635",
+                        "icon": [Function],
+                        "name": "Healthy",
+                        "priority": 1,
+                      },
+                      "text": "A: 1 / 1",
+                    },
+                    Object {
+                      "status": Object {
+                        "class": "icon-healthy",
+                        "color": "#3e8635",
+                        "icon": [Function],
+                        "name": "Healthy",
+                        "priority": 1,
+                      },
+                      "text": "B: 2 / 2",
+                    },
+                  ],
+                  "status": Object {
+                    "class": "icon-healthy",
+                    "color": "#3e8635",
+                    "icon": [Function],
+                    "name": "Healthy",
+                    "priority": 1,
+                  },
+                  "title": "Pod Status",
+                },
+                Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "class": "icon-na",
+                        "color": "var(--pf-global--palette--black-600)",
+                        "icon": [Function],
+                        "name": "No health information",
+                        "priority": 0,
+                      },
+                      "text": "Inbound: No requests",
+                      "value": 0,
+                    },
+                    Object {
+                      "status": Object {
+                        "class": "icon-na",
+                        "color": "var(--pf-global--palette--black-600)",
+                        "icon": [Function],
+                        "name": "No health information",
+                        "priority": 0,
+                      },
+                      "text": "Outbound: No requests",
+                      "value": 0,
+                    },
+                  ],
+                  "status": Object {
+                    "class": "icon-na",
+                    "color": "var(--pf-global--palette--black-600)",
+                    "icon": [Function],
+                    "name": "No health information",
+                    "priority": 0,
+                  },
+                  "title": "Traffic Status (Last 10m)",
+                },
+              ],
+              "statusConfig": Object {
+                "status": Object {
+                  "class": "icon-na",
+                  "color": "var(--pf-global--palette--black-600)",
+                  "icon": [Function],
+                  "name": "No health information",
+                  "priority": 0,
+                },
+                "threshold": undefined,
+                "title": "Traffic Status (Last 10m)",
+                "value": -1,
+              },
+            },
+            "requests": Object {
+              "healthAnnotations": Object {},
+              "inbound": Object {},
+              "outbound": Object {},
+            },
+          }
+        }
+      />
+    </div>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <span>
+    <CheckCircleIcon
+      className="icon-healthy"
+      color="#3e8635"
+      noVerticalAlign={false}
+      size="sm"
+      title={null}
+    />
+  </span>
+</Tooltip>
+`;
