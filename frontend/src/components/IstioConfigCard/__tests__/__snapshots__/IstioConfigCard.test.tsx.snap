@@ -1,0 +1,438 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`IstioConfigCard shows empty state when no items 1`] = `
+<Card
+  id="IstioConfigCard"
+  isCompact={true}
+>
+  <CardHead>
+    <CardActions />
+    <CardHeader>
+      <Title
+        headingLevel="h5"
+        size="lg"
+        style={
+          Object {
+            "float": "left",
+          }
+        }
+      >
+        Istio Config
+      </Title>
+    </CardHeader>
+  </CardHead>
+  <CardBody>
+    <Component
+      aria-label="list_istio_config"
+      cells={
+        Array [
+          Object {
+            "title": "Name",
+          },
+          Object {
+            "title": "Status",
+            "transforms": Array [
+              [Function],
+            ],
+          },
+        ]
+      }
+      className="table"
+      rows={
+        Array [
+          Object {
+            "cells": Array [
+              Object {
+                "props": Object {
+                  "colSpan": 2,
+                },
+                "title": <EmptyState
+                  className="fvhz1n5"
+                  variant="small"
+                >
+                  <EmptyStateBody
+                    className="fvhz1n5"
+                  >
+                    No Istio Config found for 
+                    reviews
+                  </EmptyStateBody>
+                </EmptyState>,
+              },
+            ],
+          },
+        ]
+      }
+      variant="compact"
+    >
+      <TableHeader />
+      <TableBody />
+    </Component>
+  </CardBody>
+</Card>
+`;
+
+exports[`IstioConfigCard sort by type and name 1`] = `
+<Card
+  id="IstioConfigCard"
+  isCompact={true}
+>
+  <CardHead>
+    <CardActions />
+    <CardHeader>
+      <Title
+        headingLevel="h5"
+        size="lg"
+        style={
+          Object {
+            "float": "left",
+          }
+        }
+      >
+        Istio Config
+      </Title>
+    </CardHeader>
+  </CardHead>
+  <CardBody>
+    <Component
+      aria-label="list_istio_config"
+      cells={
+        Array [
+          Object {
+            "title": "Name",
+          },
+          Object {
+            "title": "Status",
+            "transforms": Array [
+              [Function],
+            ],
+          },
+        ]
+      }
+      className="table"
+      rows={
+        Array [
+          Object {
+            "cells": Array [
+              Object {
+                "title": <span>
+                  <PFBadge
+                    badge={
+                      Object {
+                        "badge": "DR",
+                        "tt": "Destination Rule",
+                      }
+                    }
+                    position="top"
+                  />
+                  <IstioObjectLink
+                    name="reviews-v2"
+                    namespace="bookinfo"
+                    type="destinationrule"
+                  >
+                    reviews-v2
+                  </IstioObjectLink>
+                </span>,
+              },
+              Object {
+                "title": <ValidationObjectSummary
+                  id="0-config-validation"
+                  style={
+                    Object {
+                      "verticalAlign": "-0.5em",
+                    }
+                  }
+                  validations={Array []}
+                />,
+              },
+            ],
+          },
+          Object {
+            "cells": Array [
+              Object {
+                "title": <span>
+                  <PFBadge
+                    badge={
+                      Object {
+                        "badge": "DR",
+                        "tt": "Destination Rule",
+                      }
+                    }
+                    position="top"
+                  />
+                  <IstioObjectLink
+                    name="reviews-v8"
+                    namespace="bookinfo"
+                    type="destinationrule"
+                  >
+                    reviews-v8
+                  </IstioObjectLink>
+                </span>,
+              },
+              Object {
+                "title": <ValidationObjectSummary
+                  id="1-config-validation"
+                  style={
+                    Object {
+                      "verticalAlign": "-0.5em",
+                    }
+                  }
+                  validations={Array []}
+                />,
+              },
+            ],
+          },
+          Object {
+            "cells": Array [
+              Object {
+                "title": <span>
+                  <PFBadge
+                    badge={
+                      Object {
+                        "badge": "DR",
+                        "tt": "Destination Rule",
+                      }
+                    }
+                    position="top"
+                  />
+                  <IstioObjectLink
+                    name="reviews-v9"
+                    namespace="bookinfo"
+                    type="destinationrule"
+                  >
+                    reviews-v9
+                  </IstioObjectLink>
+                </span>,
+              },
+              Object {
+                "title": <ValidationObjectSummary
+                  id="2-config-validation"
+                  style={
+                    Object {
+                      "verticalAlign": "-0.5em",
+                    }
+                  }
+                  validations={Array []}
+                />,
+              },
+            ],
+          },
+          Object {
+            "cells": Array [
+              Object {
+                "title": <span>
+                  <PFBadge
+                    badge={
+                      Object {
+                        "badge": "SC",
+                        "tt": "Istio Sidecar Proxy",
+                      }
+                    }
+                    position="top"
+                  />
+                  <IstioObjectLink
+                    name="reviews-v1"
+                    namespace="bookinfo"
+                    type="sidecar"
+                  >
+                    reviews-v1
+                  </IstioObjectLink>
+                </span>,
+              },
+              Object {
+                "title": <ValidationObjectSummary
+                  id="3-config-validation"
+                  style={
+                    Object {
+                      "verticalAlign": "-0.5em",
+                    }
+                  }
+                  validations={Array []}
+                />,
+              },
+            ],
+          },
+          Object {
+            "cells": Array [
+              Object {
+                "title": <span>
+                  <PFBadge
+                    badge={
+                      Object {
+                        "badge": "SC",
+                        "tt": "Istio Sidecar Proxy",
+                      }
+                    }
+                    position="top"
+                  />
+                  <IstioObjectLink
+                    name="reviews-v3"
+                    namespace="bookinfo"
+                    type="sidecar"
+                  >
+                    reviews-v3
+                  </IstioObjectLink>
+                </span>,
+              },
+              Object {
+                "title": <ValidationObjectSummary
+                  id="4-config-validation"
+                  style={
+                    Object {
+                      "verticalAlign": "-0.5em",
+                    }
+                  }
+                  validations={Array []}
+                />,
+              },
+            ],
+          },
+          Object {
+            "cells": Array [
+              Object {
+                "title": <span>
+                  <PFBadge
+                    badge={
+                      Object {
+                        "badge": "SC",
+                        "tt": "Istio Sidecar Proxy",
+                      }
+                    }
+                    position="top"
+                  />
+                  <IstioObjectLink
+                    name="reviews-v9"
+                    namespace="bookinfo"
+                    type="sidecar"
+                  >
+                    reviews-v9
+                  </IstioObjectLink>
+                </span>,
+              },
+              Object {
+                "title": <ValidationObjectSummary
+                  id="5-config-validation"
+                  style={
+                    Object {
+                      "verticalAlign": "-0.5em",
+                    }
+                  }
+                  validations={Array []}
+                />,
+              },
+            ],
+          },
+          Object {
+            "cells": Array [
+              Object {
+                "title": <span>
+                  <PFBadge
+                    badge={
+                      Object {
+                        "badge": "VS",
+                        "tt": "Virtual Service",
+                      }
+                    }
+                    position="top"
+                  />
+                  <IstioObjectLink
+                    name="reviews-v5"
+                    namespace="bookinfo"
+                    type="virtualservice"
+                  >
+                    reviews-v5
+                  </IstioObjectLink>
+                </span>,
+              },
+              Object {
+                "title": <ValidationObjectSummary
+                  id="6-config-validation"
+                  style={
+                    Object {
+                      "verticalAlign": "-0.5em",
+                    }
+                  }
+                  validations={Array []}
+                />,
+              },
+            ],
+          },
+          Object {
+            "cells": Array [
+              Object {
+                "title": <span>
+                  <PFBadge
+                    badge={
+                      Object {
+                        "badge": "VS",
+                        "tt": "Virtual Service",
+                      }
+                    }
+                    position="top"
+                  />
+                  <IstioObjectLink
+                    name="reviews-v8"
+                    namespace="bookinfo"
+                    type="virtualservice"
+                  >
+                    reviews-v8
+                  </IstioObjectLink>
+                </span>,
+              },
+              Object {
+                "title": <ValidationObjectSummary
+                  id="7-config-validation"
+                  style={
+                    Object {
+                      "verticalAlign": "-0.5em",
+                    }
+                  }
+                  validations={Array []}
+                />,
+              },
+            ],
+          },
+          Object {
+            "cells": Array [
+              Object {
+                "title": <span>
+                  <PFBadge
+                    badge={
+                      Object {
+                        "badge": "VS",
+                        "tt": "Virtual Service",
+                      }
+                    }
+                    position="top"
+                  />
+                  <IstioObjectLink
+                    name="reviews-v9"
+                    namespace="bookinfo"
+                    type="virtualservice"
+                  >
+                    reviews-v9
+                  </IstioObjectLink>
+                </span>,
+              },
+              Object {
+                "title": <ValidationObjectSummary
+                  id="8-config-validation"
+                  style={
+                    Object {
+                      "verticalAlign": "-0.5em",
+                    }
+                  }
+                  validations={Array []}
+                />,
+              },
+            ],
+          },
+        ]
+      }
+      variant="compact"
+    >
+      <TableHeader />
+      <TableBody />
+    </Component>
+  </CardBody>
+</Card>
+`;

@@ -1,0 +1,12 @@
+name: details
+createdAt: '2018-06-01T11:16:45+02:00'
+resourceVersion: '2447'
+host: details
+trafficPolicy: ~
+subsets:
+  - labels:
+      version: v1
+    name: v1
+  - labels:
+      version: v2
+    name: v2

@@ -1,0 +1,80 @@
+name: productpage
+createdAt: '2018-06-01T11:16:45+02:00'
+resourceVersion: '2440'
+hosts:
+  - productpage
+gateways:
+  - bookinfo
+  - mesh
+http:
+  - match:
+    - uri:
+        prefix: /product1
+    route:
+      - destination:
+          name: productpage
+          subset: v1
+      - destination:
+          name: productpage
+          subset: v2
+  - match:
+    - uri:
+        prefix: /product2
+    route:
+    - destination:
+          name: productpage
+          subset: v3
+    - destination:
+          name: productpage
+          subset: v4
+  - match:
+    - uri:
+        prefix: /product3
+    route:
+      - destination:
+          name: productpage
+          subset: v5
+      - destination:
+          name: productpage
+          subset: v6
+  - match:
+    - uri:
+        prefix: /product4
+    route:
+      - destination:
+          name: productpage
+          subset: v7
+        weight: 25a
+      - destination:
+          name: productpage
+          subset: v8
+        weight: 26
+  - match:
+    - uri:
+        prefix: /product5
+    route:
+      - destination:
+          name: productpage
+          subset: v9
+        weight: 27
+      - destination:
+          name: productpage
+          subset: v10
+        weight: 28a
+tcp:
+  - match:
+    - port: 27017
+      sourceSubnet: "172.17.16.0/24"
+    route:
+    - destination:
+        host: mongo.backup.svc.cluster.local
+        port:
+          number: 5555
+  - match:
+    - port: 27018
+      sourceSubnet: "172.17.16.0/24"
+    route:
+      - destination:
+          host: mongo.backup.svc.cluster.local
+          port:
+            number: 5558

@@ -1,0 +1,63 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`#LoginPage render correctly should render LoginPage 1`] = `
+<LoginPage
+  brandImgAlt="Kiali logo"
+  brandImgSrc="logo-alt.svg"
+  footerListItems={
+    <React.Fragment>
+      <ListItem>
+        <LoginFooterItem
+          href="https://www.kiali.io/"
+        >
+          Documentation
+        </LoginFooterItem>
+      </ListItem>
+      <ListItem>
+        <LoginFooterItem
+          href="https://github.com/kiali/kiali"
+        >
+          Contribute
+        </LoginFooterItem>
+      </ListItem>
+    </React.Fragment>
+  }
+  footerListVariants="inline"
+  loginTitle="Log in Kiali"
+  textContent="Service mesh management for Istio."
+>
+  <Form>
+    <FormHelperText
+      isError={false}
+      isHidden={false}
+    />
+    <FormGroup
+      fieldId="token"
+      isRequired={true}
+      label="Token"
+    >
+      <ForwardRef
+        id="token"
+        isRequired={true}
+        onChange={[Function]}
+        type="password"
+      />
+    </FormGroup>
+    <ActionGroup>
+      <Component
+        isDisabled={false}
+        onClick={[Function]}
+        style={
+          Object {
+            "width": "100%",
+          }
+        }
+        type="submit"
+        variant="primary"
+      >
+        Log In
+      </Component>
+    </ActionGroup>
+  </Form>
+</LoginPage>
+`;
