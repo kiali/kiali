@@ -7,13 +7,15 @@ clean:
 	@echo Cleaning...
 	@rm -f kiali
 	@rm -rf ${GOPATH}/bin/kiali
-	@[ -d ${GOPATH}/pkg ] && chmod -R +rw ${GOPATH}/pkg/* || true
+	@[ -d ${GOPATH}/pkg ] && chmod -R +rw ${GOPATH}/pkg/* 2>/dev/null || true
 	@rm -rf ${GOPATH}/pkg/*
 	@rm -rf ${OUTDIR}/docker
 
-## clean-all: Runs `make clean` internally and remove the _output dir
+## clean-all: Runs `make clean` internally, removes the _output dir, and removes the UI node_modules directory
 clean-all: clean
 	@rm -rf ${OUTDIR}
+	@echo Cleaning UI node_modules...
+	@rm -rf ${ROOTDIR}/frontend/node_modules
 
 ## go-check: Check if the go version installed is supported by Kiali
 go-check:
@@ -24,6 +26,10 @@ build: go-check
 	@echo Building...
 	${GO_BUILD_ENVVARS} ${GO} build \
 		-o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
+
+## build-ui: Runs the yarn commands to build the frontend UI
+build-ui:
+	@cd ${ROOTDIR}/frontend && yarn install && yarn run build
 
 ## build-linux-multi-arch: Build Kiali binary with arch suffix for multi-arch
 build-linux-multi-arch:
@@ -53,20 +59,20 @@ build-system-test:
 	${GO} test -c -covermode=count -coverpkg $(shell ${GO} list ./... | grep -v test |  awk -vORS=, "{ print $$1 }" | sed "s/,$$//") \
 	  -o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
-## test: Run tests, excluding third party tests under vendor. Runs `go test` internally
+## test: Run tests, excluding third party tests under vendor and frontend. Runs `go test` internally
 test:
 	@echo Running tests, excluding third party tests under vendor
-	${GO} test $(shell ${GO} list ./... | grep -v -e /vendor/)
+	${GO} test $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/)
 
-## test-debug: Run tests in debug mode, excluding third party tests under vendor. Runs `go test -v`
+## test-debug: Run tests in debug mode, excluding third party tests under vendor and frontend. Runs `go test -v`
 test-debug:
 	@echo Running tests in debug mode, excluding third party tests under vendor
-	${GO} test -v $(shell ${GO} list ./... | grep -v -e /vendor/)
+	${GO} test -v $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/)
 
-## test-race: Run tests with race detection, excluding third party tests under vendor. Runs `go test -race`
+## test-race: Run tests with race detection, excluding third party tests under vendor and frontend. Runs `go test -race`
 test-race:
 	@echo Running tests with race detection, excluding third party tests under vendor
-	${GO} test -race $(shell ${GO} list ./... | grep -v -e /vendor/)
+	${GO} test -race $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/)
 
 ## test-e2e-setup: Setup Python environment for running test suite
 test-e2e-setup:

@@ -391,10 +391,8 @@ if [ "${USE_DEV_IMAGES}" == "true" ]; then
 > FROM quay.io/operator-framework/ansible-operator:v1.13.0
 EOF
 
-  infomsg "Building dev image..."
-
-  yarn && yarn build
-  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" clean build test
+  infomsg "Building dev image (backend and frontend)..."
+  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" clean build test build-ui
 
   infomsg "Pushing the images into the cluster..."
   make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="${KIND_NAME}" cluster-push

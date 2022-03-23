@@ -367,11 +367,8 @@ if [ "${USE_DEV_IMAGES}" == "true" ]; then
   GOPATH="${GOPATH:-/tmp}"
   infomsg "Dev images are to be tested. Will prepare them now using GOPATH=${GOPATH}"
 
-  infomsg "Building server..."
-  make -e OC="${OC}" -e DORP="${DORP}" -e GOPATH="${GOPATH}" clean build test
-
-  infomsg "Building UI..."
-  yarn && yarn run build
+  infomsg "Building backend server and frontend UI..."
+  make -e OC="${OC}" -e DORP="${DORP}" -e GOPATH="${GOPATH}" clean build test build-ui
 
   infomsg "Logging into the image registry..."
   eval $(make -e OC="${OC}" -e DORP="${DORP}" cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')

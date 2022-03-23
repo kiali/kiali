@@ -1,6 +1,15 @@
 #!/bin/bash
 
-FILES=`find . -path './vendor' -prune -o -type f -iname '*.go' -print`
+if ! which goimports &> /dev/null; then
+  echo "You do not have goimports - installing it now."
+  if ! which go &> /dev/null; then
+    echo "You do not have 'go' in your PATH - please install it. Aborting."
+    exit 1
+  fi
+  go install golang.org/x/tools/cmd/goimports@latest
+fi
+
+FILES=`find . -path './vendor' -prune -o -path './frontend' -prune -o -type f -iname '*.go' -print`
 
 for gofile in $FILES; do
   awk -i inplace '
