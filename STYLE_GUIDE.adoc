@@ -1,9 +1,9 @@
+= Code Style Guide
 :toc: macro
 :toc-title:
 
 toc::[]
 
-<<<<<<< HEAD
 == Backend - Go
 
 The backend is written in link:https://golang.org/[Go]. If you are not familiar with it, you can take link:https://tour.golang.org/welcome/1[a Tour of Go].
@@ -42,116 +42,3 @@ import (
 == Frontend - TypeScript
 
 Check the link:https://github.com/kiali/kiali-ui/blob/master/STYLE_GUIDE.adoc[dedicated guide] in _kiali-ui_.
-=======
-= Default conventions
-
-By default, we try to follow community conventions. link:https://github.com/basarat/typescript-book/blob/master/docs/styleguide/styleguide.md[Basarat's Style Guide] is used as a reference, with a few exceptions that are listed below:
-
-== File names
-
-Most files are named after the main type / class / interface it's exporting. For instance, `ServiceList.ts` is named after the `ServiceList` interface that it's exporting. Which means that, unlike in Basarat's guide, we often use `PascalCase`.
-
-Files with more general purpose, or the ones that don't export types or such, are `camelCase` (ex: `routes.ts`).
-
-== Variables, functions, constants
-
-We mostly follow Basarat's guide, so `camelCase`. Exceptions are:
-
-- Redux actions, which are technically constants, are `PascalCase` (ex: `GraphActions`).
-- We sometimes make a difference between constants of global scopes versus constants of local scopes. You may find the former written in `UPPER_SNAKE_CASE` (ex: `const TIMER_REQUEST_PER_SECOND_MIN = 0;`), whereas Basarat's guide makes no distinction between different kinds of constants, all of them being `camelCase`.
-
-== Enum
-
-Enum names follow Basarat's guide, but not the values: they are `UPPER_SNAKE_CASE`. Example:
-
-[source,typescript]
-----
-enum DisplayMode {
-  LARGE,
-  SMALL
-}
-----
-
-= Handlers
-
-Use consistent naming for events and event handlers: name the handler methods after their triggering event.
-
-Event handlers should:
-
-* begin with handle
-* end with the name of the event they handle (eg, Click, Change)
-* be present-tense
-
-Event names:
-
-* in props should start with on
-* should not clash with builtin/native event names, eg. use onSelect instead of onFocus or onClick
-
-= Use arrow functions (fat arrow)
-
-[source,typescript]
-----
-createItem = () => {
-    return (
-      <ul>
-        {props.items.map((item, index) => (
-          <Item
-            key={item.key}
-            onClick={() => doSomethingWith(item.name, index)}
-          />
-        ))}
-      </ul>
-    );
-}
-----
-
-= Redux
-
-== Type-safe usage
-
-For additional type safety in our Redux Actions/Reducers, we use the library:
-https://github.com/piotrwitek/typesafe-actions
-Please refer to this site for instructions on how to use typescript with Redux.
-
-== URL Consistency
-
-Every application page should strive to have it's state in Redux so that
-we have a reproducible application state contained in Redux.
-To this end, we also want pages to be bookmarkable via URL. The URL and its
-parameters become the API for the page. And, the Redux application state should
-be able to be mutated via the URL parameters. In order to support this, here are some
-of the rules needed:
-
-* On component construction let URL param values override any existing redux state values.
-* On component construction set (via replace) any unset URL params to reflect the redux state value. This gives us a full bookmark at all times.
-* After construction update URL (via replace) as necessary to reflect redux state changes. This is typically done in _componentDidUpdate_. This maintains the full bookmark.
-
-== Redux props usage
-
-The declaration of the properties of a component connected to Redux should clearly indicate whether each property comes from Redux or are strictly from the component.
-This convention should help developers easily see which properties comes from the Redux state management without the need to be either versed with the whole Redux catalog or the component itself.
-
-The convention is consist in:
-
-* Declaring a type `ReduxProps` which only contains the Redux properties, sorted alphabetically.
-* Declaring a type `<ClassName>Props` which only contains the properties from the component, sorted alphabetically.
-* Intersecting type `ReduxProps` into type `<ClassName>Props`.
-* Using `<ClassName>Props` type for the component declaration.
-
-See an example:
-
-[source, typescript]
-----
-type ReduxProps = {
- // just the Redux props, alphabetical
-};
-
-type <ClassName>Props = ReduxProps & {
- // non-Redux props, alphabetical
-};
-
-class <ClassName>Component extends React.Component<Props> {
-...
-}
-----
->>>>>>> kiali_ui/master
