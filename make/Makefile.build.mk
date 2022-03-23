@@ -11,11 +11,15 @@ clean:
 	@rm -rf ${GOPATH}/pkg/*
 	@rm -rf ${OUTDIR}/docker
 
-## clean-all: Runs `make clean` internally, removes the _output dir, and removes the UI node_modules directory
-clean-all: clean
-	@rm -rf ${OUTDIR}
-	@echo Cleaning UI node_modules...
+## clean-ui: Removes the UI build/ and node_modules/ directories.
+clean-ui:
+	@echo Cleaning UI ...
 	@rm -rf ${ROOTDIR}/frontend/node_modules
+	@rm -rf ${ROOTDIR}/frontend/build
+
+## clean-all: Runs `make clean` internally, removes the _output dir, and cleans the UI
+clean-all: clean clean-ui
+	@rm -rf ${OUTDIR}
 
 ## go-check: Check if the go version installed is supported by Kiali
 go-check:
