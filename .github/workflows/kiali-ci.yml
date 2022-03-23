@@ -1,23 +1,41 @@
-name: Kiali Go CI
+name: Kiali CI
 
 on:
+  # Run on master and release branches
   push:
-    branches: [master]
+    branches: [master, "^v\\d+\\.\\d+$"]
   pull_request:
-    branches: [master]
+    branches: [master, "^v\\d+\\.\\d+$"]
+
+env:
+  # This workflow can run on either a PR or release. GITHUB_BASE_REF is only
+  # set when this workflow is run against a PR. When run against a PR, we want
+  # to use the branch we are running against: GITHUB_BASE_REF. When run
+  # as a release, we want to use the current branch ref: GITHUB_REF_NAME.
+  TARGET_BRANCH: ${{ github.base_ref || github.ref_name }}
 
 jobs:
-  build:
-    name: Build
+  build_backend:
+    name: Build and unit test backend
     runs-on: ubuntu-20.04
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.17.7
 
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+      - name: Cache Go deps
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
       - name: Swagger Install
         run: make swagger-install
@@ -32,7 +50,101 @@ jobs:
         run: make swagger-ci
 
       - name: Build
-        run: make clean build
+        run: make clean-all build
 
-      - name: Test
+      - name: Test backend
         run: make test-race
+
+      - name: Upload go binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: kiali
+          path: ~/go/bin/kiali
+
+  build_frontend:
+    name: Build and unit test frontend
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Build
+        run: make clean-all build-ui
+
+      - name: Test frontend
+        run: |
+          cd frontend
+          yarn pretty-quick --check --verbose --branch ${{ env.TARGET_BRANCH }}
+          yarn test
+
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: frontend/build/
+
+  integration_tests_frontend:
+    name: Cypress integration tests
+    needs: [build_backend, build_frontend]
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Download go binary
+        uses: actions/download-artifact@v3
+        with:
+          name: kiali
+          path: ~/go/bin/
+
+      - name: Ensure kiali binary is executable
+        run: chmod +x ~/go/bin/kiali
+
+      - name: Download frontend build
+        uses: actions/download-artifact@v3
+        with:
+          name: build
+          path: frontend/build
+
+      - name: Setup kind
+        run: hack/setup-kind-in-ci.sh
+
+      - name: Set kiali URL
+        run: |
+          KIALI_URL="http://$(kubectl get svc kiali -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'):20001/kiali"
+          echo "::set-output name=kiali_url::$KIALI_URL"
+        id: set-kiali-url
+
+      - name: Run cypress integration tests
+        uses: cypress-io/github-action@v2
+        with:
+          working-directory: frontend
+          command: yarn run cypress:bdd:run --config baseUrl=${{ steps.set-kiali-url.outputs.kiali_url }}
+
+      - name: Upload cypress screenshots when tests fail
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: frontend/cypress/screenshots
+
+      - name: Upload cypress videos when tests fail
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: cypress-videos
+          path: frontend/cypress/videos

@@ -33,7 +33,7 @@ build: go-check
 
 ## build-ui: Runs the yarn commands to build the frontend UI
 build-ui:
-	@cd ${ROOTDIR}/frontend && yarn install && yarn run build
+	@cd ${ROOTDIR}/frontend && yarn install --frozen-lockfile && yarn run build
 
 ## build-ui-test: Runs the yarn commands to build the dev frontend UI and runs the UI tests
 build-ui-test: build-ui
@@ -147,4 +147,4 @@ lint-install:
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	golangci-lint run -c ./.github/workflows/config/.golangci.yml --skip-files "doc\.go" --tests --timeout 5m
+	golangci-lint run -c ./.github/workflows/config/.golangci.yml --skip-files "doc\.go" --skip-dirs "frontend" --tests --timeout 5m
