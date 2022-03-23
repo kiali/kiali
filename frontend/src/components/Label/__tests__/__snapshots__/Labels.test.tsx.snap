@@ -1,0 +1,59 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`#Labels render correctly with data should render badges with More labels link 1`] = `
+<div
+  className="faowcuh"
+>
+  <div
+    key="label_0"
+  >
+    <Label
+      key="label_0"
+      name="app"
+      value="bookinfo"
+    />
+  </div>
+  <div
+    key="label_1"
+  >
+    <Label
+      key="label_1"
+      name="version"
+      value="v1"
+    />
+  </div>
+  <Component
+    className="firjkjj"
+    key="label_more"
+    onClick={[Function]}
+    variant="link"
+  >
+    More labels...
+  </Component>
+</div>
+`;
+
+exports[`#Labels render correctly with data should render badges without More labels link 1`] = `
+<div
+  className="faowcuh"
+>
+  <div
+    key="label_0"
+  >
+    <Label
+      key="label_0"
+      name="app"
+      value="bookinfo"
+    />
+  </div>
+  <div
+    key="label_1"
+  >
+    <Label
+      key="label_1"
+      name="version"
+      value="v1"
+    />
+  </div>
+</div>
+`;

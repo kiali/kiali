@@ -1,0 +1,16 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "viewportWidth": 1920,
+  "viewportHeight": 1080,
+  "integrationFolder": "cypress/integration",
+  "testFiles": "**/*.feature",
+  "defaultCommandTimeout": 40000,
+  "animationDistanceThreshold": 20,
+  "execTimeout": 150000,
+  "pageLoadTimeout": 90000,
+  "requestTimeout": 15000,
+  "responseTimeout": 15000,
+  "supportFile": "cypress/support/index.ts",
+  "pluginsFile": "cypress/plugins/bdd.ts",
+  "fixturesFolder": "fixtures"
+}
