@@ -6,6 +6,15 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
+type TerminateSessionError struct {
+	Message    string
+	HttpStatus int
+}
+
+func (e TerminateSessionError) Error() string {
+	return e.Message
+}
+
 // AuthController is the interface that all Kiali authentication strategies should implement.
 // An authentication controller is initialized during Kiali startup.
 type AuthController interface {
@@ -24,7 +33,7 @@ type AuthController interface {
 
 	// TerminateSession performs the needed procedures to terminate an existing session. If there is no
 	// active session, nothing is performed. If there is some invalid session, it is cleared.
-	TerminateSession(r *http.Request, w http.ResponseWriter)
+	TerminateSession(r *http.Request, w http.ResponseWriter) error
 }
 
 var authController AuthController

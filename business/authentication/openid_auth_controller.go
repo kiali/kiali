@@ -293,8 +293,9 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 }
 
 // TerminateSession unconditionally terminates any existing session without any validation.
-func (c OpenIdAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) {
+func (c OpenIdAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) error {
 	c.SessionStore.TerminateSession(r, w)
+	return nil
 }
 
 // authenticateWithAuthorizationCodeFlow is the entry point to handle OpenId authentication using the authorization

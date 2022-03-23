@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -116,70 +115,6 @@ func getTokenStringFromHeader(r *http.Request) *api.AuthInfo {
 	return authInfo
 }
 
-func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool {
-	err := r.ParseForm()
-
-	if err != nil {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, fmt.Errorf("error parsing form info: %+v", err))
-		return false
-	}
-
-	token := r.Form.Get("access_token")
-	expiresIn := r.Form.Get("expires_in")
-	if token == "" || expiresIn == "" {
-		RespondWithError(w, http.StatusInternalServerError, "Token is empty or invalid.")
-		return false
-	}
-
-	expiresInNumber, err := strconv.Atoi(expiresIn)
-	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Token is empty or invalid.", err.Error())
-		return false
-	}
-
-	expiresOn := time.Now().Add(time.Second * time.Duration(expiresInNumber))
-
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Error retrieving the OAuth package (getting business layer).", err.Error())
-		return false
-	}
-
-	user, err := business.OpenshiftOAuth.GetUserInfo(token)
-	if err != nil {
-		deleteTokenCookies(w, r)
-		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired.", err.Error())
-		return false
-	}
-
-	tokenClaims := config.IanaClaims{
-		SessionId: token,
-		StandardClaims: jwt.StandardClaims{
-			Subject:   user.Metadata.Name,
-			ExpiresAt: expiresOn.Unix(),
-			Issuer:    config.AuthStrategyOpenshiftIssuer,
-		},
-	}
-	tokenString, err := config.GetSignedTokenString(tokenClaims)
-	if err != nil {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, err)
-		return false
-	}
-
-	tokenCookie := http.Cookie{
-		Name:     config.TokenCookieName,
-		Value:    tokenString,
-		Expires:  expiresOn,
-		HttpOnly: true,
-		Path:     config.Get().Server.WebRoot,
-		SameSite: http.SameSiteStrictMode,
-	}
-	http.SetCookie(w, &tokenCookie)
-
-	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: expiresOn.Format(time.RFC1123Z), Username: user.Metadata.Name})
-	return true
-}
-
 func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	authInfo := getTokenStringFromHeader(r)
 
@@ -252,62 +187,6 @@ func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 }
 
-func performOpenshiftLogout(r *http.Request) (int, error) {
-	tokenString := getTokenStringFromRequest(r)
-	if tokenString == "" {
-		// No token on logout, so we assume we're already logged out
-		return http.StatusUnauthorized, errors.New("Already logged out")
-	}
-	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
-		log.Warningf("Token is invalid: %v", err)
-		return http.StatusInternalServerError, err
-	} else {
-		business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
-		if err != nil {
-			log.Warningf("Could not get the business layer: %v", err)
-			return http.StatusInternalServerError, err
-		}
-
-		err = business.OpenshiftOAuth.Logout(claims.SessionId)
-		if err != nil {
-			log.Warningf("Could not log out of OpenShift: %v", err)
-			return http.StatusInternalServerError, err
-		}
-
-		return http.StatusNoContent, nil
-	}
-}
-
-func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string) {
-	tokenString := getTokenStringFromRequest(r)
-	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
-		log.Warningf("Token is invalid! : %v", err)
-	} else {
-		// Session ID claim must be present
-		if len(claims.SessionId) == 0 {
-			log.Warning("Token is invalid: sid claim is required")
-			return http.StatusUnauthorized, ""
-		}
-
-		business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
-		if err != nil {
-			log.Warningf("Could not get the business layer!: %v", err)
-			return http.StatusInternalServerError, ""
-		}
-
-		_, err = business.OpenshiftOAuth.GetUserInfo(claims.SessionId)
-		if err == nil {
-			// Internal header used to propagate the subject of the request for audit purposes
-			r.Header.Add("Kiali-User", claims.Subject)
-			return http.StatusOK, claims.SessionId
-		}
-
-		log.Warningf("Token error: %v", err)
-	}
-
-	return http.StatusUnauthorized, ""
-}
-
 func NewAuthenticationHandler() (AuthenticationHandler, error) {
 	// Read token from the filesystem
 	saToken, err := kubernetes.GetKialiToken()
@@ -326,10 +205,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		var token string
 
 		switch conf.Auth.Strategy {
-		case config.AuthStrategyOpenshift:
-			statusCode, token = checkOpenshiftSession(w, r)
-			authInfo = &api.AuthInfo{Token: token}
-		case config.AuthStrategyToken, config.AuthStrategyOpenId:
+		case config.AuthStrategyToken, config.AuthStrategyOpenId, config.AuthStrategyOpenshift:
 			session, validateErr := authentication.GetAuthController().ValidateSession(r, w)
 			if validateErr != nil {
 				statusCode = http.StatusInternalServerError
@@ -382,9 +258,7 @@ func (aHandler AuthenticationHandler) HandleUnauthenticated(next http.Handler) h
 func Authenticate(w http.ResponseWriter, r *http.Request) {
 	conf := config.Get()
 	switch conf.Auth.Strategy {
-	case config.AuthStrategyOpenshift:
-		performOpenshiftAuthentication(w, r)
-	case config.AuthStrategyToken, config.AuthStrategyOpenId:
+	case config.AuthStrategyToken, config.AuthStrategyOpenId, config.AuthStrategyOpenshift:
 		response, err := authentication.GetAuthController().Authenticate(r, w)
 		if err != nil {
 			if e, ok := err.(*authentication.AuthenticationFailureError); ok {
@@ -466,23 +340,20 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 func Logout(w http.ResponseWriter, r *http.Request) {
 	conf := config.Get()
 
-	if conf.Auth.Strategy != config.AuthStrategyToken && conf.Auth.Strategy != config.AuthStrategyOpenId {
+	if conf.Auth.Strategy == config.AuthStrategyAnonymous || conf.Auth.Strategy == config.AuthStrategyHeader {
 		deleteTokenCookies(w, r)
-
-		// We need to perform an extra step to invalidate the user token when using OpenShift OAuth
-		if conf.Auth.Strategy == config.AuthStrategyOpenshift {
-			code, err := performOpenshiftLogout(r)
-			if err != nil {
-				RespondWithError(w, code, err.Error())
+		RespondWithCode(w, http.StatusNoContent)
+	} else {
+		err := authentication.GetAuthController().TerminateSession(r, w)
+		if err != nil {
+			if e, ok := err.(*authentication.TerminateSessionError); ok {
+				RespondWithError(w, e.HttpStatus, e.Error())
 			} else {
-				RespondWithCode(w, code)
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
 			}
 		} else {
 			RespondWithCode(w, http.StatusNoContent)
 		}
-	} else {
-		authentication.GetAuthController().TerminateSession(r, w)
-		RespondWithCode(w, http.StatusNoContent)
 	}
 }
 
