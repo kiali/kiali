@@ -59,20 +59,20 @@ build-system-test:
 	${GO} test -c -covermode=count -coverpkg $(shell ${GO} list ./... | grep -v test |  awk -vORS=, "{ print $$1 }" | sed "s/,$$//") \
 	  -o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
-## test: Run tests, excluding third party tests under vendor. Runs `go test` internally
+## test: Run tests, excluding third party tests under vendor and frontend. Runs `go test` internally
 test:
 	@echo Running tests, excluding third party tests under vendor
-	${GO} test $(shell ${GO} list ./... | grep -v -e /vendor/)
+	${GO} test $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/)
 
-## test-debug: Run tests in debug mode, excluding third party tests under vendor. Runs `go test -v`
+## test-debug: Run tests in debug mode, excluding third party tests under vendor and frontend. Runs `go test -v`
 test-debug:
 	@echo Running tests in debug mode, excluding third party tests under vendor
-	${GO} test -v $(shell ${GO} list ./... | grep -v -e /vendor/)
+	${GO} test -v $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/)
 
-## test-race: Run tests with race detection, excluding third party tests under vendor. Runs `go test -race`
+## test-race: Run tests with race detection, excluding third party tests under vendor and frontend. Runs `go test -race`
 test-race:
 	@echo Running tests with race detection, excluding third party tests under vendor
-	${GO} test -race $(shell ${GO} list ./... | grep -v -e /vendor/)
+	${GO} test -race $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/)
 
 ## test-e2e-setup: Setup Python environment for running test suite
 test-e2e-setup:
