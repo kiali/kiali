@@ -130,25 +130,27 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     );
     tabsArray.push(trafficTab);
 
-    const logTab = (
-      <Tab title="Logs" eventKey={2} key={'Logs'}>
-        {hasPods ? (
-          <WorkloadPodLogs
-            namespace={this.props.match.params.namespace}
-            workload={this.props.match.params.workload}
-            pods={this.state.workload!.pods}
-          />
-        ) : (
-          <EmptyState variant={EmptyStateVariant.full}>
-            <Title headingLevel="h5" size="lg">
-              No logs for Workload {this.props.match.params.workload}
-            </Title>
-            <EmptyStateBody>There are no logs to display because the workload has no pods.</EmptyStateBody>
-          </EmptyState>
-        )}
-      </Tab>
-    );
-    tabsArray.push(logTab);
+    if (!serverConfig.kialiFeatureFlags.disabledFeatures || !serverConfig.kialiFeatureFlags.disabledFeatures.includes('log-view')) {
+      const logTab = (
+        <Tab title="Logs" eventKey={2} key={'Logs'}>
+          {hasPods ? (
+            <WorkloadPodLogs
+              namespace={this.props.match.params.namespace}
+              workload={this.props.match.params.workload}
+              pods={this.state.workload!.pods}
+            />
+          ) : (
+            <EmptyState variant={EmptyStateVariant.full}>
+              <Title headingLevel="h5" size="lg">
+                No logs for Workload {this.props.match.params.workload}
+              </Title>
+              <EmptyStateBody>There are no logs to display because the workload has no pods.</EmptyStateBody>
+            </EmptyState>
+          )}
+        </Tab>
+      );
+      tabsArray.push(logTab);
+    }
 
     const inTab = (
       <Tab title="Inbound Metrics" eventKey={3} key={'Inbound Metrics'}>

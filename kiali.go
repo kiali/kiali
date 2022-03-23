@@ -178,6 +178,11 @@ func validateConfig() error {
 		log.Infof("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", cfg.KialiFeatureFlags.Validations.Ignore)
 	}
 
+	// log a info message if the user is disabling some features
+	if len(cfg.KialiFeatureFlags.DisabledFeatures) > 0 {
+		log.Infof("Some features are disabled: [%v]", strings.Join(cfg.KialiFeatureFlags.DisabledFeatures, ","))
+	}
+
 	return nil
 }
 

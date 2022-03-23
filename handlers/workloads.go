@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 )
 
@@ -205,6 +206,10 @@ func PodDetails(w http.ResponseWriter, r *http.Request) {
 
 // PodLogs is the API handler to fetch logs for a single pod container
 func PodLogs(w http.ResponseWriter, r *http.Request) {
+	if config.IsFeatureDisabled(config.FeatureLogView) {
+		RespondWithError(w, http.StatusForbidden, "Pod Logs access is disabled")
+		return
+	}
 	vars := mux.Vars(r)
 	queryParams := r.URL.Query()
 
