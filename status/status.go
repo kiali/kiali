@@ -53,6 +53,9 @@ type StatusInfo struct {
 // info is a global var that contains information about Kiali status and what external services are available
 var info StatusInfo
 
+// global lock to prevent panic when multiple goroutines to write map
+var rw sync.RWMutex
+
 // Status response model
 //
 // This is used for returning a response of Kiali Status
@@ -85,11 +88,10 @@ func init() {
 
 // Put adds or replaces status info for the provided name. Any previous setting is returned.
 func Put(name, value string) (previous string, hasPrevious bool) {
-	var rw sync.RWMutex
 	rw.Lock()
+	defer rw.Unlock()
 	previous, hasPrevious = info.Status[name]
 	info.Status[name] = value
-	rw.Unlock()
 	return previous, hasPrevious
 }
 
