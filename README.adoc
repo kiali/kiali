@@ -75,8 +75,7 @@ cd $KIALI_SOURCES/kiali
 make build test
 
 # Build the front-end and run the tests
-cd $KIALI_SOURCES/kiali/frontend
-yarn && yarn build && yarn test
+make build-ui-test
 ----
 
 [NOTE]
