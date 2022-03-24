@@ -3,14 +3,15 @@ package authentication
 import (
 	"errors"
 	"fmt"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/log"
-	"k8s.io/client-go/tools/clientcmd/api"
 	"net/http"
 	"strconv"
 	"time"
 
+	"k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 type openshiftSessionPayload struct {
