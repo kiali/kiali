@@ -6,11 +6,18 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
+// TerminateSessionError is a helper type implementing the error interface.
+// Its main goal is to pass the right HTTP status code that should be sent
+// to the client if a session Logout operation fails.
 type TerminateSessionError struct {
-	Message    string
+	// A description of the error.
+	Message string
+
+	// The HTTP Status code that should be sent to the client.
 	HttpStatus int
 }
 
+// Error returns the string representation of an instance of TerminateSessionError.
 func (e TerminateSessionError) Error() string {
 	return e.Message
 }
