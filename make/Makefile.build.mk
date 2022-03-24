@@ -36,8 +36,8 @@ build-ui:
 	@cd ${ROOTDIR}/frontend && yarn install && yarn run build
 
 ## build-ui-test: Runs the yarn commands to build the dev frontend UI and runs the UI tests
-build-ui-test:
-	@cd ${ROOTDIR}/frontend && yarn && yarn build && yarn test
+build-ui-test: build-ui
+	@cd ${ROOTDIR}/frontend && yarn run test
 
 ## build-linux-multi-arch: Build Kiali binary with arch suffix for multi-arch
 build-linux-multi-arch:
