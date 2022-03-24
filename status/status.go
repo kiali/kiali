@@ -1,6 +1,8 @@
 // status is a simple package for offering up various status information from Kiali.
 package status
 
+import "sync"
+
 const (
 	name             = "Kiali"
 	ContainerVersion = name + " container version"
@@ -83,8 +85,14 @@ func init() {
 
 // Put adds or replaces status info for the provided name. Any previous setting is returned.
 func Put(name, value string) (previous string, hasPrevious bool) {
+	var rw *sync.RWMutex
+	rw.RLock()
 	previous, hasPrevious = info.Status[name]
+	rw.RUnlock()
+
+	rw.Lock()
 	info.Status[name] = value
+	rw.Unlock()
 	return previous, hasPrevious
 }
 
