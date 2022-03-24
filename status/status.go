@@ -86,11 +86,8 @@ func init() {
 // Put adds or replaces status info for the provided name. Any previous setting is returned.
 func Put(name, value string) (previous string, hasPrevious bool) {
 	var rw *sync.RWMutex
-	rw.RLock()
-	previous, hasPrevious = info.Status[name]
-	rw.RUnlock()
-
 	rw.Lock()
+	previous, hasPrevious = info.Status[name]
 	info.Status[name] = value
 	rw.Unlock()
 	return previous, hasPrevious
