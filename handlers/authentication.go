@@ -314,7 +314,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 			httputil.GuessKialiURL(r))
 	}
 
-	if conf.Auth.Strategy != config.AuthStrategyToken && conf.Auth.Strategy != config.AuthStrategyOpenId {
+	if conf.Auth.Strategy == config.AuthStrategyAnonymous || conf.Auth.Strategy == config.AuthStrategyHeader {
 		token := getTokenStringFromRequest(r)
 		claims, _ := config.GetTokenClaimsIfValid(token)
 

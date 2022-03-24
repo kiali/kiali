@@ -27,6 +27,20 @@ type OpenshiftAuthController struct {
 	SessionStore SessionPersistor
 }
 
+// NewOpenshiftAuthController initializes a new controller for handling OpenShift authentication, with the
+// given persistor and the given businessInstantiator. The businessInstantiator can be nil and
+// the initialized contoller will use the business.Get function.
+func NewOpenshiftAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *OpenshiftAuthController {
+	if businessInstantiator == nil {
+		businessInstantiator = business.Get
+	}
+
+	return &OpenshiftAuthController{
+		businessInstantiator: businessInstantiator,
+		SessionStore:         persistor,
+	}
+}
+
 func (o OpenshiftAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	err := r.ParseForm()
 
