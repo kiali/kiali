@@ -35,7 +35,7 @@ build: go-check
 build-ui:
 	@cd ${ROOTDIR}/frontend && yarn install && yarn run build
 
-## build-ui-test: Runs the yarn commands to build the dev frontend UI
+## build-ui-test: Runs the yarn commands to build the dev frontend UI and runs the UI tests
 build-ui-test:
 	@cd ${ROOTDIR}/frontend && yarn && yarn build && yarn test
 
