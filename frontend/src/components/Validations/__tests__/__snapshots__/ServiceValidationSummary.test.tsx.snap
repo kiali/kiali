@@ -1,0 +1,304 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ServiceValidationSummary renders error icon when all components are valid 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Validations list"
+  boundary="window"
+  className=""
+  content={
+    <React.Fragment>
+      <Text
+        component="p"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Service validation result
+      </Text>
+      <div
+        className="fe0pf1n"
+      >
+        <div>
+          1 error found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <Validation
+    severity="error"
+  />
+</Tooltip>
+`;
+
+exports[`ServiceValidationSummary renders error icon when all components are valid 2`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Validations list"
+  boundary="window"
+  className=""
+  content={
+    <React.Fragment>
+      <Text
+        component="p"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Service validation result
+      </Text>
+      <div
+        className="fe0pf1n"
+      >
+        <div>
+          1 error found
+        </div>
+        <div>
+          2 warnings found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <Validation
+    severity="error"
+  />
+</Tooltip>
+`;
+
+exports[`ServiceValidationSummary renders success icon when all components are valid 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Validations list"
+  boundary="window"
+  className=""
+  content={
+    <React.Fragment>
+      <Text
+        component="p"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Service validation result
+      </Text>
+      <div
+        className="fe0pf1n"
+      >
+        <div>
+          No issues found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <Validation
+    severity="correct"
+  />
+</Tooltip>
+`;
+
+exports[`ServiceValidationSummary renders warning icon when all components are valid 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Validations list"
+  boundary="window"
+  className=""
+  content={
+    <React.Fragment>
+      <Text
+        component="p"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Service validation result
+      </Text>
+      <div
+        className="fe0pf1n"
+      >
+        <div>
+          1 warning found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <Validation
+    severity="warning"
+  />
+</Tooltip>
+`;
+
+exports[`ServiceValidationSummary renders warning icon when all components are valid 2`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Validations list"
+  boundary="window"
+  className=""
+  content={
+    <React.Fragment>
+      <Text
+        component="p"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Service validation result
+      </Text>
+      <div
+        className="fe0pf1n"
+      >
+        <div>
+          2 warnings found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <Validation
+    severity="warning"
+  />
+</Tooltip>
+`;
