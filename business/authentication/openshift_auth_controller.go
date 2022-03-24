@@ -14,11 +14,19 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
+// openshiftSessionPayload holds the data that will be persisted in the SessionStore
+// in order to be able to maintain the session of the user across requests.
 type openshiftSessionPayload struct {
+	// Token is the access_token that was provided by the OpenShift OAuth server.
+	// It can be used against the cluster API.
 	Token string `json:"token,omitempty"`
 }
 
-type OpenshiftAuthController struct {
+// openshiftAuthController contains the backing logic to implement
+// Kiali's "openshift" authentication strategy. This authentication
+// strategy is basically an implementation of OAuth's implicit flow
+// with the specifics of OpenShift.
+type openshiftAuthController struct {
 	// businessInstantiator is a function that returns an already initialized
 	// business layer. Normally, it should be set to the business.Get function.
 	// For tests, it can be set to something else that returns a compatible API.
@@ -31,18 +39,22 @@ type OpenshiftAuthController struct {
 // NewOpenshiftAuthController initializes a new controller for handling OpenShift authentication, with the
 // given persistor and the given businessInstantiator. The businessInstantiator can be nil and
 // the initialized contoller will use the business.Get function.
-func NewOpenshiftAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *OpenshiftAuthController {
+func NewOpenshiftAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *openshiftAuthController {
 	if businessInstantiator == nil {
 		businessInstantiator = business.Get
 	}
 
-	return &OpenshiftAuthController{
+	return &openshiftAuthController{
 		businessInstantiator: businessInstantiator,
 		SessionStore:         persistor,
 	}
 }
 
-func (o OpenshiftAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+// Authenticate handles an HTTP request that contains the access_token, expires_in URL parameters. The access_token
+// should be the token that was obtained from the OpenShift OAuth server and expires_in is the expiration date-time
+// of the token. The token is validated by obtaining the information user tied to it. Although RBAC is always assumed
+// when using OpenShift, privileges are not checked here.
+func (o openshiftAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	err := r.ParseForm()
 
 	if err != nil {
@@ -88,7 +100,10 @@ func (o OpenshiftAuthController) Authenticate(r *http.Request, w http.ResponseWr
 	}, nil
 }
 
-func (o OpenshiftAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+// ValidateSession restores a session previously created by the Authenticate function. The user token (access_token)
+// is revalidated by re-fetching user info from the cluster, to ensure that the token hasn't been revoked.
+// If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
+func (o openshiftAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	sPayload := openshiftSessionPayload{}
 	sData, err := o.SessionStore.ReadSession(r, w, &sPayload)
 	if err != nil {
@@ -126,7 +141,12 @@ func (o OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respons
 	return nil, nil
 }
 
-func (o OpenshiftAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) error {
+// TerminateSession session created by the Authenticate function.
+// To properly clean the session, the OpenShift access_token is revoked/deleted by making a call
+// to the relevant OpenShift API. If this process fails, the session is not cleared and an error
+// is returned.
+// The cleanup is done assuming the access_token was issued to be used only in Kiali.
+func (o openshiftAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) error {
 	sPayload := openshiftSessionPayload{}
 	sData, err := o.SessionStore.ReadSession(r, w, &sPayload)
 	if err != nil {
