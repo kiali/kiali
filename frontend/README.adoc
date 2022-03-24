@@ -12,8 +12,8 @@ A UI for the Kiali Istio Observability Project
 [source,shell]
 ----
 # Get the kiali-ui sources
-git clone https://github.com/kiali/kiali-ui.git
-cd kiali-ui
+git clone https://github.com/kiali/kiali.git
+cd kiali/frontend
 
 # Install Yarn
 npm install -g yarn
@@ -121,7 +121,7 @@ Only static assets which are `import` 'ed into your application will be included
 
 === Style Code Guide
 
-See the link:./STYLE_GUIDE.adoc[STYLE CODE GUIDE file].
+See the link:https://github.com/kiali/kiali/blob/master/STYLE_GUIDE.adoc#frontend-typescript[STYLE CODE GUIDE file].
 
 === Testing
 To run the tests, the standard command `yarn test` is valid,
@@ -166,4 +166,4 @@ yarn run analyze
 Which will then launch a browser with your graphical source map displayed.
 
 == License and Copyright
-See the link:./LICENSE[LICENSE file].
+See the link:https://github.com/kiali/kiali/blob/master/LICENSE[LICENSE file].
