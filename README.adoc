@@ -48,7 +48,7 @@ Please, complement the content of this readme document with the link:https://git
 Make sure you have the following tools:
 
 * The link:http://golang.org/doc/install[Go Programming Language]
-** Currently, Kiali releases are built using Go 1.16. Although Kiali may build correctly using other versions of Go, it's suggested to use version 1.16.2 for development to ensure replicatable builds. Makefiles will require this minimum version of Go.
+** Currently, Kiali releases are built using Go 1.17. Although Kiali may build correctly using other versions of Go, it's suggested to use version 1.17.7 for development to ensure replicatable builds. Makefiles will require this minimum version of Go.
 * link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git]
 * link:https://docs.docker.com/installation/[Docker] or link:https://podman.io[Podman]
 ** If you are using `podman` declare the environment variable `DORP=podman`.
