@@ -95,6 +95,19 @@ func Put(name, value string) (previous string, hasPrevious bool) {
 	return previous, hasPrevious
 }
 
+// GetStatus get status with name, it is read safe.
+func GetStatus(name string) (previous string, hasPrevious bool) {
+	rw.RLock()
+	defer rw.RUnlock()
+	previous, hasPrevious = info.Status[name]
+	return previous, hasPrevious
+}
+
+// GetStatus returns current status
+func GetStatuses() map[string]string {
+	return info.Status
+}
+
 // AddWarningMessages add warning messages to status
 func AddWarningMessages(warningMessages string) {
 	info.WarningMessages = append(info.WarningMessages, warningMessages)
@@ -121,11 +134,6 @@ func Get() (status StatusInfo) {
 	}
 
 	return info
-}
-
-// GetStatus returns current status
-func GetStatus() map[string]string {
-	return info.Status
 }
 
 // IsMaistra returns true if we are running in a Maistra environment

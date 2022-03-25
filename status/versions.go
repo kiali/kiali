@@ -254,8 +254,7 @@ func istioVersion() (*ExternalServiceInfo, error) {
 
 	istioInfo := parseIstioRawVersion(rawVersion)
 	meshName, meshVersion := istioInfo.Name, istioInfo.Version
-	status := GetStatus()
-	kialiVersion := status[CoreVersion]
+	kialiVersion, _ := GetStatus(CoreVersion)
 
 	compatibleWarnings := fmt.Sprintf("Kiali [%v] may not be compatible with [%v %v], and is not recommended. See kiali.io for version compatibility",
 		kialiVersion, meshName, meshVersion)
