@@ -92,6 +92,16 @@ test-e2e:
 	@echo Running E2E tests
 	cd tests/e2e && source .kiali-e2e/bin/activate && pytest -s tests/
 
+## test-integration-setup: Setup go library for converting test result into junit xml
+test-integration-setup:
+	@echo Setting up Integration tests
+	go install github.com/jstemmer/go-junit-report@latest
+
+## test-integration: Run Integration test suite
+test-integration:
+	@echo Running Integration tests
+	cd tests/integration && ${GO} test -v 2>&1 | go-junit-report > junit-rest-report.xml
+
 #
 # Swagger Documentation
 #
