@@ -328,7 +328,7 @@ spec:
 
 === Running the UI outside the cluster
 
-When developing the https://github.com/kiali/kiali-ui[Kiali UI] you will find it useful to run it outside of the cluster to make it easier to update the UI code and see the changes without having to re-deploy. The preferred approach for this is to use the _proxy_ feature of React. The process is described https://github.com/kiali/kiali-ui#developing[here].
+When developing the http://github.com/kiali/kiali/frontend[Kiali UI] you will find it useful to run it outside of the cluster to make it easier to update the UI code and see the changes without having to re-deploy. The preferred approach for this is to use the _proxy_ feature of React. The process is described https://github.com/kiali/kiali/frontend#developing[here].
 
 === Disabling SSL
 
