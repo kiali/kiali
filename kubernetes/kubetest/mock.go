@@ -1,7 +1,7 @@
 package kubetest
 
 import (
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go/v4"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/mock"
 	istio_fake "istio.io/client-go/pkg/clientset/versioned/fake"

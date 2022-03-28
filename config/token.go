@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go/v4"
 
 	"github.com/kiali/kiali/util"
 )
@@ -61,9 +61,11 @@ func GenerateToken(username string) (TokenGenerated, error) {
 	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(Get().LoginToken.ExpirationSeconds))
 	claim := IanaClaims{
 		StandardClaims: jwt.StandardClaims{
-			Subject:   username,
-			ExpiresAt: timeExpire.Unix(),
-			Issuer:    AuthStrategyTokenIssuer,
+			Subject: username,
+			ExpiresAt: &jwt.Time{
+				Time: timeExpire,
+			},
+			Issuer: AuthStrategyTokenIssuer,
 		},
 	}
 
@@ -105,7 +107,7 @@ func GetTokenClaimsIfValid(tokenString string) (*IanaClaims, error) {
 		}
 
 		// A token with no expiration claim is invalid for Kiali
-		if claims.ExpiresAt == 0 {
+		if claims.ExpiresAt.Unix() == 0 {
 			return nil, errors.New("token is invalid because expiration claim is missing")
 		}
 

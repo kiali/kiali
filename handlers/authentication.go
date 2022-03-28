@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go/v4"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -155,9 +155,11 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 	tokenClaims := config.IanaClaims{
 		SessionId: token,
 		StandardClaims: jwt.StandardClaims{
-			Subject:   user.Metadata.Name,
-			ExpiresAt: expiresOn.Unix(),
-			Issuer:    config.AuthStrategyOpenshiftIssuer,
+			Subject: user.Metadata.Name,
+			ExpiresAt: &jwt.Time{
+				Time: expiresOn,
+			},
+			Issuer: config.AuthStrategyOpenshiftIssuer,
 		},
 	}
 	tokenString, err := config.GetSignedTokenString(tokenClaims)
@@ -226,9 +228,11 @@ func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	tokenClaims := config.IanaClaims{
 		SessionId: string(uuid.NewUUID()),
 		StandardClaims: jwt.StandardClaims{
-			Subject:   tokenSubject,
-			ExpiresAt: timeExpire.Unix(),
-			Issuer:    config.AuthStrategyHeaderIssuer,
+			Subject: tokenSubject,
+			ExpiresAt: &jwt.Time{
+				Time: timeExpire,
+			},
+			Issuer: config.AuthStrategyHeaderIssuer,
 		},
 	}
 	tokenString, err := config.GetSignedTokenString(tokenClaims)
@@ -446,7 +450,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 
 		if claims != nil {
 			response.SessionInfo = sessionInfo{
-				ExpiresOn: time.Unix(claims.ExpiresAt, 0).Format(time.RFC1123Z),
+				ExpiresOn: time.Unix(claims.ExpiresAt.Unix(), 0).Format(time.RFC1123Z),
 				Username:  claims.Subject,
 			}
 		}
