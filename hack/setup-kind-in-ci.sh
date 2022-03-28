@@ -117,11 +117,11 @@ data:
 LBCONFIGMAP
 
 if [ -n "${ISTIO_VERSION}" ]; then
-  DOWNLOAD_ISTIO_VERSION_ARG=" --istio-version ${ISTIO_VERSION}"
+  DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
 fi
 
 infomsg "Downloading istio"
-hack/istio/download-istio.sh"${DOWNLOAD_ISTIO_VERSION_ARG}"
+hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
 infomsg "Installing istio"
 hack/istio/install-istio-via-istioctl.sh --client-exe-path "$(which kubectl)"
