@@ -6,6 +6,7 @@ import {
   DropdownPosition,
   DropdownToggle,
   Modal,
+  ModalVariant,
   Text,
   TextVariants,
   Tooltip,
@@ -90,7 +91,7 @@ class IstioActionDropdown extends React.Component<Props, State> {
         />
         <Modal
           title="Confirm Delete"
-          isSmall={true}
+          variant={ModalVariant.small}
           isOpen={this.state.showConfirmModal}
           onClose={this.hideConfirmModal}
           actions={[

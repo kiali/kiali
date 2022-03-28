@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
-import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, Title } from '@patternfly/react-core';
+import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, Title, TitleSizes } from '@patternfly/react-core';
 import * as API from '../../services/Api';
 import { Workload, WorkloadId } from '../../types/Workload';
 import WorkloadInfo from './WorkloadInfo';
@@ -130,7 +130,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     );
     tabsArray.push(trafficTab);
 
-    if (!serverConfig.kialiFeatureFlags.disabledFeatures || !serverConfig.kialiFeatureFlags.disabledFeatures.includes('logs-tab')) {
+    if (!serverConfig.kialiFeatureFlags.disabledFeatures?.includes('logs-tab')) {
       const logTab = (
         <Tab title="Logs" eventKey={2} key={'Logs'}>
           {hasPods ? (

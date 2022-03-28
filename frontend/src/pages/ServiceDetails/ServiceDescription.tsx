@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Card, CardBody, CardHeader, Title, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ServiceDetailsInfo, WorkloadOverview } from '../../types/ServiceInfo';
 import DetailDescription from '../../components/Details/DetailDescription';
 import { AppWorkload } from '../../types/App';
@@ -152,7 +152,7 @@ class ServiceDescription extends React.Component<ServiceInfoDescriptionProps, St
     return (
       <Card id={'ServiceDescriptionCard'}>
         <CardHeader>
-          <Title headingLevel="h5" size="lg">
+          <Title headingLevel="h5" size={TitleSizes.lg}>
             <div key="service-icon" className={iconStyle}>
               <PFBadge badge={serviceBadge} position={TooltipPosition.top} />
             </div>

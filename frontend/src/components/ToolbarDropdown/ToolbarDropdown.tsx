@@ -34,7 +34,7 @@ type ToolbarDropdownProps = {
 type ToolbarDropdownState = {
   currentValue?: number | string;
   currentName?: string;
-  isExpanded: boolean;
+  isOpen: boolean;
 };
 
 export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, ToolbarDropdownState> {
@@ -43,7 +43,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
     this.state = {
       currentValue: props.value || props.initialValue,
       currentName: props.label || props.initialLabel,
-      isExpanded: false
+      isOpen: false
     };
   }
 
@@ -53,16 +53,16 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
       const nameOrKey = this.props.useName ? this.props.options[selection] : selection;
       this.props.handleSelect(nameOrKey);
     }
-    this.setState({ isExpanded: false });
+    this.setState({ isOpen: false });
   };
 
-  onToggle = (isExpanded: boolean) => {
-    this.setState({ isExpanded });
-    this.props.onToggle && this.props.onToggle(isExpanded);
+  onToggle = (isOpen: boolean) => {
+    this.setState({ isOpen: isOpen });
+    this.props.onToggle && this.props.onToggle(isOpen);
   };
 
   render() {
-    const { isExpanded, currentName, currentValue } = this.state;
+    const { isOpen, currentName, currentValue } = this.state;
     const dropdownButton = (
       <Select
         onSelect={this.onKeyChanged}
@@ -71,8 +71,8 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
         placeholderText={this.props.label || currentName}
         id={this.props.id}
         onToggle={this.onToggle}
-        isExpanded={isExpanded}
-        ariaLabelledBy={this.props.id}
+        isOpen={isOpen}
+        aria-labelledby={this.props.id}
         isDisabled={this.props.disabled}
         className={this.props.classNameSelect ? `${this.props.classNameSelect} ${widthAuto}` : widthAuto}
       >

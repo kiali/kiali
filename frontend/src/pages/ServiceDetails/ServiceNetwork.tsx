@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Card, CardBody, CardHeader, Title, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { style } from 'typestyle';
 import { Gateway, ObjectCheck, ObjectValidation, VirtualService } from '../../types/IstioObjects';
@@ -88,7 +88,7 @@ class ServiceNetwork extends React.Component<Props> {
     return (
       <Card isCompact={true} id={'ServiceNetworkCard'}>
         <CardHeader>
-          <Title headingLevel="h3" size="2xl">
+          <Title headingLevel="h3" size={TitleSizes['2xl']}>
             Network
           </Title>
         </CardHeader>

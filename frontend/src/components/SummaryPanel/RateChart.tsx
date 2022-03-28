@@ -74,7 +74,9 @@ export class RateChart extends React.Component<Props, State> {
         events={events}
       >
         <ChartStack
-          colorScale={this.props.series.filter((_, idx) => !this.state.hiddenSeries.has(idx)).map(d => d.color)}
+          colorScale={this.props.series
+            .filter((_, idx) => !this.state.hiddenSeries.has(idx))
+            .map(d => d.color || 'black')}
           horizontal={true}
         >
           {this.props.series.map((datum, idx) => {

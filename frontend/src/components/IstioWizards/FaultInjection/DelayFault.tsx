@@ -2,6 +2,7 @@ import * as React from 'react';
 import { FormGroup, Switch, TextInput } from '@patternfly/react-core';
 import { Delay } from '../../../types/IstioObjects';
 import { HTTP_DELAY_TOOLTIP, wizardTooltip } from '../WizardHelp';
+import { isValid } from 'utils/Common';
 
 export type DelayFaultProps = {
   delayed: boolean;
@@ -57,13 +58,13 @@ class DelayFault extends React.Component<DelayFaultProps> {
             fieldId="fixed-delay"
             helperText={fixedDelayedMsg}
             helperTextInvalid={fixedDelayedMsg}
-            isValid={this.props.isValid}
+            validated={isValid(this.props.isValid)}
           >
             <TextInput
               value={this.props.delay.fixedDelay}
               id="fixed-delay"
               name="fixed-delay"
-              isValid={this.props.isValid}
+              validated={isValid(this.props.isValid)}
               onChange={value =>
                 this.props.onDelay(this.props.delayed, {
                   percentage: this.props.delay.percentage,

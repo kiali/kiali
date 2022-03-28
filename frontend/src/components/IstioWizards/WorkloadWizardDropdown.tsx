@@ -200,7 +200,7 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         position={DropdownPosition.right}
         onSelect={this.onActionsSelect}
         toggle={
-          <DropdownToggle onToggle={this.onActionsToggle} iconComponent={CaretDownIcon}>
+          <DropdownToggle onToggle={this.onActionsToggle} icon={CaretDownIcon}>
             Actions
           </DropdownToggle>
         }

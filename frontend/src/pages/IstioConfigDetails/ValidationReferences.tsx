@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Stack, StackItem, Title, TitleLevel, TitleSize } from '@patternfly/react-core';
+import { Stack, StackItem, Title, TitleSizes} from '@patternfly/react-core';
 import { ReferenceIstioObjectLink } from '../../components/Link/IstioObjectLink';
 import { ObjectReference } from '../../types/IstioObjects';
 
@@ -11,7 +11,7 @@ class ValidationReferences extends React.Component<Props> {
   render() {
     return (
       <>
-        <Title headingLevel={TitleLevel.h3} size={TitleSize.xl}>
+        <Title headingLevel="h3" size={TitleSizes.xl}>
           Validation references
         </Title>
         <Stack>

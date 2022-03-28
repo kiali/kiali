@@ -2,7 +2,6 @@ import * as React from 'react';
 import {
   Chip,
   ChipGroup,
-  ChipGroupToolbarItem,
   FormSelect,
   FormSelectOption,
   Select,
@@ -13,9 +12,9 @@ import {
   Toolbar,
   ToolbarGroup,
   ToolbarItem,
-  ToolbarSection,
   SelectOptionObject,
-  Button
+  Button,
+  ToolbarContent
 } from '@patternfly/react-core';
 import {
   ActiveFilter,
@@ -51,7 +50,7 @@ export interface StatefulFiltersState {
   currentFilterType: FilterType;
   activeFilters: ActiveFiltersInfo;
   currentValue: string;
-  isExpanded: boolean;
+  isOpen: boolean;
 }
 
 export class FilterSelected {
@@ -101,7 +100,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       currentFilterType: this.props.initialFilters[0],
       filterTypes: this.props.initialFilters,
       activeFilters: FilterSelected.init(this.props.initialFilters),
-      isExpanded: false,
+      isOpen: false,
       currentValue: ''
     };
   }
@@ -211,7 +210,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
   filterValueAheadSelected = (_event: any, valueId: string | SelectOptionObject) => {
     this.filterValueSelected(valueId);
-    this.setState({ isExpanded: false });
+    this.setState({ isOpen: false });
   };
 
   filterValueSelected = (valueId: string | SelectOptionObject) => {
@@ -269,7 +268,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           onSelect={this.filterValueAheadSelected}
           onToggle={this.onToggle}
           variant={SelectVariant.typeahead}
-          isExpanded={this.state.isExpanded}
+          isOpen={this.state.isOpen}
           aria-label="filter_select_value"
           placeholderText={currentFilterType.placeholder}
           width={'auto'}
@@ -347,9 +346,9 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     );
   };
 
-  onToggle = isExpanded => {
+  onToggle = isOpen => {
     this.setState({
-      isExpanded: isExpanded
+      isOpen: isOpen
     });
   };
 
@@ -358,7 +357,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     return (
       <>
         <Toolbar className="pf-l-toolbar pf-u-justify-content-space-between pf-u-mx-xl pf-u-my-md">
-          <ToolbarSection aria-label="ToolbarSection">
+          <ToolbarContent aria-label="ToolbarContent">
             {this.props.childrenFirst && this.renderChildren()}
             <ToolbarGroup style={{ marginRight: '0px' }}>
               <ToolbarItem className={classNames(this.props.children ? filterWithChildrenStyle : '', 'pf-u-mr-xl')}>
@@ -398,32 +397,30 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                 </ToolbarItem>
               </ToolbarGroup>
             )}
-          </ToolbarSection>
+          </ToolbarContent>
         </Toolbar>
         {activeFilters && activeFilters.filters.length > 0 && (
           <div className={filterValuesStyle}>
             <Toolbar className="pf-l-toolbar pf-u-justify-content-space-between pf-u-mx-xl pf-u-my-md">
-              <ToolbarSection aria-label="FiltersSection">
+              <ToolbarContent aria-label="FiltersSection">
                 <>{'Active Filters:'}</>
                 <div style={{ marginLeft: '5px', display: 'inline-flex', height: '80%' }}>
-                  <ChipGroup defaultIsOpen={true} withToolbar={true}>
-                    {Object.entries(groupBy(activeFilters.filters, 'id')).map(([category, items]) => {
-                      // At least one item is present after groupBy, and all items inside category share the same title
-                      const title = items[0].title;
-                      return (
-                        <ChipGroupToolbarItem key={category} categoryName={title}>
-                          {items.map(item => (
-                            <Chip
-                              key={'filter_' + category + '_' + item.value}
-                              onClick={() => this.removeFilter(item.id, item.value)}
-                            >
-                              {item.value}
-                            </Chip>
-                          ))}
-                        </ChipGroupToolbarItem>
-                      );
-                    })}
-                  </ChipGroup>
+                  {Object.entries(groupBy(activeFilters.filters, 'id')).map(([category, items]) => {
+                    // At least one item is present after groupBy, and all items inside category share the same title
+                    const title = items[0].title;
+                    return (
+                      <ChipGroup key={category} categoryName={title}>
+                        {items.map(item => (
+                          <Chip
+                            key={'filter_' + category + '_' + item.value}
+                            onClick={() => this.removeFilter(item.id, item.value)}
+                          >
+                            {item.value}
+                          </Chip>
+                        ))}
+                      </ChipGroup>
+                    );
+                  })}
                 </div>
                 <Button
                   variant="link"
@@ -435,7 +432,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                 >
                   Clear All Filters
                 </Button>
-              </ToolbarSection>
+              </ToolbarContent>
             </Toolbar>
           </div>
         )}

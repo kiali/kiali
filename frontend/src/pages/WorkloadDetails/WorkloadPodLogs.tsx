@@ -43,6 +43,7 @@ import { AxiosResponse } from 'axios';
 import moment from 'moment';
 import { formatDuration } from 'utils/tracing/TracingHelper';
 import { infoStyle } from 'styles/DropdownStyles';
+import { isValid } from 'utils/Common';
 
 const appContainerColors = [PFColors.White, PFColors.LightGreen400, PFColors.Purple100, PFColors.LightBlue400];
 const proxyContainerColor = PFColors.Gold400;
@@ -324,7 +325,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                               id="log_show"
                               name="log_show"
                               style={{ width: '8em' }}
-                              isValid={!this.state.showError}
+                              validated={isValid(!this.state.showError)}
                               autoComplete="on"
                               type="text"
                               onKeyPress={this.checkSubmitShow}
@@ -344,7 +345,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                               id="log_hide"
                               name="log_hide"
                               style={{ width: '8em' }}
-                              isValid={!this.state.hideError}
+                              validated={isValid(!this.state.hideError)}
                               autoComplete="on"
                               type="text"
                               onKeyPress={this.checkSubmitHide}

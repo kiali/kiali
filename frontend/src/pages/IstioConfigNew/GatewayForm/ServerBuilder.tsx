@@ -7,6 +7,7 @@ import { PFColors } from '../../../components/Pf/PfColors';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isGatewayHostValid } from '../../../utils/IstioConfigUtils';
 import { Server } from '../../../types/IstioObjects';
+import { isValid } from 'utils/Common';
 
 type Props = {
   onAddServer: (server: Server) => void;
@@ -202,7 +203,7 @@ class ServerBuilder extends React.Component<Props, State> {
               aria-describedby="add port number"
               name="addPortNumber"
               onChange={this.onAddPortNumber}
-              isValid={this.state.newPortNumber.length > 0 && !isNaN(Number(this.state.newPortNumber))}
+              validated={isValid(this.state.newPortNumber.length > 0 && !isNaN(Number(this.state.newPortNumber)))}
             />
           </>,
           <>
@@ -213,7 +214,7 @@ class ServerBuilder extends React.Component<Props, State> {
               aria-describedby="add port name"
               name="addPortName"
               onChange={this.onAddPortName}
-              isValid={this.state.newPortName.length > 0}
+              validated={isValid(this.state.newPortName.length > 0)}
             />
           </>,
           <>
@@ -243,7 +244,7 @@ class ServerBuilder extends React.Component<Props, State> {
           fieldId="gateway-selector"
           helperText="One or more hosts exposed by this Gateway."
           helperTextInvalid="Invalid hosts for this Gateway. Enter one or more hosts separated by comma."
-          isValid={this.state.isHostsValid}
+          validated={isValid(this.state.isHostsValid)}
         >
           <TextInput
             value={this.state.newHosts.join(',')}
@@ -253,7 +254,7 @@ class ServerBuilder extends React.Component<Props, State> {
             aria-describedby="hosts"
             name="hosts"
             onChange={this.onAddHosts}
-            isValid={this.state.isHostsValid}
+            validated={isValid(this.state.isHostsValid)}
           />
         </FormGroup>
         <FormGroup label="Port" isRequired={true} fieldId="server-port">
@@ -277,7 +278,7 @@ class ServerBuilder extends React.Component<Props, State> {
               label="Server Certificate"
               isRequired={true}
               fieldId="server-certificate"
-              isValid={this.state.newTlsServerCertificate.length > 0}
+              validated={isValid(this.state.newTlsServerCertificate.length > 0)}
               helperTextInvalid={'The path to the file holding the server-side TLS certificate to use.'}
             >
               <TextInput
@@ -288,14 +289,14 @@ class ServerBuilder extends React.Component<Props, State> {
                 aria-describedby="server-certificate"
                 name="server-certificate"
                 onChange={this.onAddTlsServerCertificate}
-                isValid={this.state.newTlsServerCertificate.length > 0}
+                validated={isValid(this.state.newTlsServerCertificate.length > 0)}
               />
             </FormGroup>
             <FormGroup
               label="Private Key"
               isRequired={true}
               fieldId="private-key"
-              isValid={this.state.newTlsPrivateKey.length > 0}
+              validated={isValid(this.state.newTlsPrivateKey.length > 0)}
               helperTextInvalid={'The path to the file holding the server’s private key.'}
             >
               <TextInput
@@ -306,7 +307,7 @@ class ServerBuilder extends React.Component<Props, State> {
                 aria-describedby="private-key"
                 name="private-key"
                 onChange={this.onAddTlsPrivateKey}
-                isValid={this.state.newTlsPrivateKey.length > 0}
+                validated={isValid(this.state.newTlsPrivateKey.length > 0)}
               />
             </FormGroup>
           </>
@@ -316,7 +317,7 @@ class ServerBuilder extends React.Component<Props, State> {
             label="CA Certificate"
             isRequired={true}
             fieldId="ca-certificate"
-            isValid={this.state.newTlsCaCertificate.length > 0}
+            validated={isValid(this.state.newTlsCaCertificate.length > 0)}
             helperTextInvalid={
               'The path to a file containing certificate authority certificates to use in verifying a presented client side certificate.'
             }
@@ -329,7 +330,7 @@ class ServerBuilder extends React.Component<Props, State> {
               aria-describedby="ca-certificate"
               name="ca-certificate"
               onChange={this.onAddTlsCaCertificate}
-              isValid={this.state.newTlsCaCertificate.length > 0}
+              validated={isValid(this.state.newTlsCaCertificate.length > 0)}
             />
           </FormGroup>
         )}

@@ -21,6 +21,7 @@ import { AutoComplete } from 'utils/AutoComplete';
 import { DEGRADED, FAILURE, HEALTHY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
 import history, { HistoryManager, URLParam } from '../../../app/History';
+import { isValid } from 'utils/Common';
 
 type ReduxProps = {
   compressOnHide: boolean;
@@ -276,7 +277,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
               style={{ ...inputWidth }}
               type="text"
               autoComplete="on"
-              isValid={!this.state.findError}
+              validated={isValid(!this.state.findError)}
               onChange={this.updateFind}
               defaultValue={this.state.findInputValue}
               onKeyDownCapture={this.checkSpecialKeyFind}
@@ -302,7 +303,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
               }}
               style={{ ...inputWidth }}
               autoComplete="on"
-              isValid={!this.state.hideError}
+              validated={isValid(!this.state.hideError)}
               type="text"
               onChange={this.updateHide}
               defaultValue={this.state.hideInputValue}

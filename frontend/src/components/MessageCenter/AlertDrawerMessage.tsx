@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { Expandable, Card, CardBody } from '@patternfly/react-core';
+import { ExpandableSection, Card, CardBody } from '@patternfly/react-core';
 import { MessageType, NotificationMessage } from '../../types/MessageCenter';
 import moment from 'moment';
 import { MessageCenterActions } from 'actions/MessageCenterActions';
@@ -52,13 +52,13 @@ class AlertDrawerMessage extends React.PureComponent<AlertDrawerMessageProps> {
           {getIcon(this.props.message.type)}{' '}
           {this.props.message.seen ? this.props.message.content : <b>{this.props.message.content}</b>}
           {this.props.message.detail && (
-            <Expandable
+            <ExpandableSection
               toggleText={this.props.message.showDetail ? 'Hide Detail' : 'Show Detail'}
               onToggle={() => this.props.toggleMessageDetail(this.props.message)}
               isExpanded={this.props.message.showDetail}
             >
               <pre style={{ whiteSpace: 'pre-wrap' }}>{this.props.message.detail}</pre>
-            </Expandable>
+            </ExpandableSection>
           )}
           {this.props.message.count > 1 && (
             <div>

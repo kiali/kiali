@@ -2,7 +2,7 @@
 // IMPORTANT: Please put non-variable/mixin external dependency imports in vendor.scss!
 // Patternfly variables must be imported before Bootstrap
 @import '../../node_modules/@patternfly/patternfly/sass-utilities/_all';
-@import '../../node_modules/@patternfly/patternfly/_variables';
+// @import '../../node_modules/@patternfly/patternfly/_variables';
 
 // Disable PatternFly 4 reset.
 $pf-global--enable-reset: false;

@@ -3,7 +3,7 @@ import { Table, TableHeader, TableGridBreakpoint } from '@patternfly/react-table
 import history, { HistoryManager, URLParam } from '../../app/History';
 import { config, RenderResource, Resource } from './Config';
 import VirtualItem from './VirtualItem';
-import { EmptyState, EmptyStateBody, EmptyStateVariant, Title } from '@patternfly/react-core';
+import { EmptyState, EmptyStateBody, EmptyStateVariant, Title, TitleSizes } from '@patternfly/react-core';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
@@ -155,7 +155,7 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
                 <td colSpan={tableProps.cells.length}>
                   {this.props.activeNamespaces.length > 0 ? (
                     <EmptyState variant={EmptyStateVariant.full}>
-                      <Title headingLevel="h5" size="lg">
+                      <Title headingLevel="h5" size={TitleSizes.lg}>
                         No {typeDisplay} found
                       </Title>
                       <EmptyStateBody>
@@ -167,7 +167,7 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
                     </EmptyState>
                   ) : (
                     <EmptyState variant={EmptyStateVariant.full}>
-                      <Title headingLevel="h5" size="lg">
+                      <Title headingLevel="h5" size={TitleSizes.lg}>
                         No namespace is selected
                       </Title>
                       <EmptyStateBody>

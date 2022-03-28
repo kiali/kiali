@@ -1,5 +1,5 @@
 import React from 'react';
-import { Title } from '@patternfly/react-core';
+import { Title, TitleSizes } from '@patternfly/react-core';
 import NamespaceDropdownContainer from '../NamespaceDropdown';
 import { style } from 'typestyle';
 
@@ -47,7 +47,7 @@ export default class DefaultSecondaryMasthead extends React.Component<Props> {
       }
       return {
         title: (
-          <Title headingLevel="h1" size="3xl" style={{ margin: '15px 0 11px' }}>
+          <Title headingLevel="h1" size={TitleSizes['3xl']} style={{ margin: '15px 0 11px' }}>
             {title}
           </Title>
         ),

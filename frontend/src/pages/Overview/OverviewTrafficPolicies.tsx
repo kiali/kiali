@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Modal } from '@patternfly/react-core';
+import { Button, Modal, ModalVariant } from '@patternfly/react-core';
 import NamespaceInfo from './NamespaceInfo';
 import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
 import { MessageType } from 'types/MessageCenter';
@@ -296,7 +296,7 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
           />
         )}
         <Modal
-          isSmall={true}
+          variant={ModalVariant.small}
           title={title}
           isOpen={this.state.confirmationModal}
           onClose={this.onHideConfirmModal}
