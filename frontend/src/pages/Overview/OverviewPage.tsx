@@ -3,14 +3,15 @@ import {
   Card,
   CardActions,
   CardBody,
-  CardHead,
   CardHeader,
+  CardHeaderMain,
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
   Grid,
   GridItem,
   Title,
+  TitleSizes,
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
@@ -88,11 +89,6 @@ const emptyStateStyle = style({
   marginRight: 5,
   marginBottom: 10,
   marginTop: 10
-});
-
-const cardHeaderStyle = style({
-  width: '75%',
-  textAlign: 'left'
 });
 
 const cardNamespaceNameNormalStyle = style({
@@ -747,11 +743,14 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                   const isLongNs = ns.name.length > NS_LONG;
                   return (
                     <GridItem sm={sm} md={md} key={'CardItem_' + ns.name} style={{ margin: '0px 5px 0 5px' }}>
-                      <Card isCompact={true} className={cardGridStyle} data-test={ns.name + '-' + OverviewDisplayMode[this.state.displayMode]}>
-                        <CardHead>
-                          <CardActions>{namespaceActions[i]}</CardActions>
-                          <CardHeader className={cardHeaderStyle}>
-                            <Title headingLevel="h5" size="lg">
+                      <Card
+                        isCompact={true}
+                        className={cardGridStyle}
+                        data-test={ns.name + '-' + OverviewDisplayMode[this.state.displayMode]}
+                      >
+                        <CardHeader>
+                          <CardHeaderMain>
+                            <Title headingLevel="h5" size={TitleSizes.lg}>
                               <span
                                 className={isLongNs ? cardNamespaceNameLongStyle : cardNamespaceNameNormalStyle}
                                 title={ns.name}
@@ -759,8 +758,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 {ns.name}
                               </span>
                             </Title>
-                          </CardHeader>
-                        </CardHead>
+                          </CardHeaderMain>
+                          <CardActions>{namespaceActions[i]}</CardActions>
+                        </CardHeader>
                         <CardBody>
                           {this.renderLabels(ns)}
                           <div style={{ textAlign: 'left' }}>
@@ -784,7 +784,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         ) : (
           <div style={{ backgroundColor: '#f5f5f5' }}>
             <EmptyState className={emptyStateStyle} variant={EmptyStateVariant.full}>
-              <Title headingLevel="h5" size="lg" style={{ marginTop: '50px' }}>
+              <Title headingLevel="h5" size={TitleSizes.lg} style={{ marginTop: '50px' }}>
                 No unfiltered namespaces
               </Title>
               <EmptyStateBody>
@@ -843,14 +843,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   renderStatuses(ns: NamespaceInfo): JSX.Element {
     if (ns.status) {
       if (this.state.displayMode === OverviewDisplayMode.COMPACT) {
-        return (
-          <OverviewCardContentCompact
-            key={ns.name}
-            name={ns.name}
-            status={ns.status}
-            type={this.state.type}
-          />
-        );
+        return <OverviewCardContentCompact key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />;
       }
       return (
         <OverviewCardContentExpanded

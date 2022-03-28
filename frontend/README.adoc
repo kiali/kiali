@@ -143,6 +143,9 @@ Note: for OS/X users testing requires watchman to be installed
 brew install watchman
 ----
 
+== Testing Libraries for Vulnerabilities
+We use github Dependabot for vulnerability testing. Dependabot runs regularly on the `kiali/kiali` repository.
+
 == Production Builds
 Use `yarn build` which will bundle the build artifacts using webpack into the `build` directory.
 

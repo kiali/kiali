@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Title, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { IRow, sortable, SortByDirection, Table, TableBody, TableHeader, cellWidth } from '@patternfly/react-table';
 import { Link } from 'react-router-dom';
@@ -42,15 +42,15 @@ const columns = [
   },
   {
     title: 'Rate',
-    transforms: [sortable, cellWidth(12)]
+    transforms: [sortable, cellWidth(10)]
   },
   {
     title: 'Percent Success',
-    transforms: [sortable, cellWidth(12)]
+    transforms: [sortable, cellWidth(10)]
   },
   {
     title: 'Protocol',
-    transforms: [sortable, cellWidth(12)]
+    transforms: [sortable, cellWidth(10)]
   },
   {
     title: 'Actions'
@@ -100,7 +100,7 @@ class TrafficListComponent extends FilterComponent.Component<
     return (
       <>
         <div className={containerPadding}>
-          <Title headingLevel="h5" size="lg">
+          <Title headingLevel="h5" size={TitleSizes.lg}>
             {hasInbound ? '' : 'No '} Inbound Traffic
           </Title>
           {hasInbound && (
@@ -111,7 +111,7 @@ class TrafficListComponent extends FilterComponent.Component<
           )}
         </div>
         <div className={containerPadding}>
-          <Title headingLevel="h5" size="lg">
+          <Title headingLevel="h5" size={TitleSizes.lg}>
             {hasOutbound ? '' : 'No '} Outbound Traffic
           </Title>
           {hasOutbound && (

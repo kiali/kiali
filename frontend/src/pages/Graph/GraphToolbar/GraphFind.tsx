@@ -21,6 +21,7 @@ import { AutoComplete } from 'utils/AutoComplete';
 import { DEGRADED, FAILURE, HEALTHY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
 import history, { HistoryManager, URLParam } from '../../../app/History';
+import { isValid } from 'utils/Common';
 
 type ReduxProps = {
   compressOnHide: boolean;
@@ -276,7 +277,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
               style={{ ...inputWidth }}
               type="text"
               autoComplete="on"
-              isValid={!this.state.findError}
+              validated={isValid(this.state.findInputValue ? !this.state.findError : undefined)}
               onChange={this.updateFind}
               defaultValue={this.state.findInputValue}
               onKeyDownCapture={this.checkSpecialKeyFind}
@@ -286,7 +287,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
             {this.props.findValue && (
               <Tooltip key="ot_clear_find" position="top" content="Clear Find...">
                 <Button
-                  style={{ minWidth: '20px', width: '20px', paddingLeft: '5px', paddingRight: '5px', bottom: '1px' }}
+                  style={{ minWidth: '20px', width: '20px', paddingLeft: '5px', paddingRight: '5px' }}
                   variant={ButtonVariant.control}
                   onClick={() => this.setFind('')}
                 >
@@ -302,7 +303,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
               }}
               style={{ ...inputWidth }}
               autoComplete="on"
-              isValid={!this.state.hideError}
+              validated={isValid(this.state.hideInputValue ? !this.state.hideError : undefined)}
               type="text"
               onChange={this.updateHide}
               defaultValue={this.state.hideInputValue}
@@ -313,7 +314,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
             {this.props.hideValue && (
               <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
                 <Button
-                  style={{ minWidth: '20px', width: '20px', paddingLeft: '5px', paddingRight: '5px', bottom: '1px' }}
+                  style={{ minWidth: '20px', width: '20px', paddingLeft: '5px', paddingRight: '5px' }}
                   variant={ButtonVariant.control}
                   onClick={() => this.setHide('')}
                 >

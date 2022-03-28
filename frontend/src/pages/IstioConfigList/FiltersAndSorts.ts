@@ -1,6 +1,6 @@
 import { SortField } from '../../types/SortFilters';
 import { IstioConfigItem } from '../../types/IstioConfigList';
-import { FILTER_ACTION_APPEND, FilterType, FilterTypes } from '../../types/Filters';
+import { FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../types/Filters';
 
 export const sortFields: SortField<IstioConfigItem>[] = [
   {
@@ -67,7 +67,7 @@ export const istioNameFilter: FilterType = {
   id: 'istioname',
   title: 'Istio Name',
   placeholder: 'Filter by Istio Name',
-  filterType: FilterTypes.text,
+  filterType: AllFilterTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
 };
@@ -76,7 +76,7 @@ export const istioTypeFilter: FilterType = {
   id: 'istiotype',
   title: 'Istio Type',
   placeholder: 'Filter by Istio Type',
-  filterType: FilterTypes.typeAhead,
+  filterType: AllFilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {
@@ -130,7 +130,7 @@ export const configValidationFilter: FilterType = {
   id: 'configvalidation',
   title: 'Config',
   placeholder: 'Filter by Config Validation',
-  filterType: FilterTypes.select,
+  filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {

@@ -247,9 +247,9 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     return (
       <>
         <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-          <Grid gutter={'md'} className={fullHeightStyle}>
+          <Grid hasGutter={true} className={fullHeightStyle}>
             <GridItem span={4}>
-              <Stack gutter="md">
+              <Stack hasGutter={true}>
                 <StackItem>
                   <WorkloadDescription
                     workload={workload}

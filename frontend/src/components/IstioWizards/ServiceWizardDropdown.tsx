@@ -8,6 +8,7 @@ import {
   DropdownSeparator,
   DropdownToggle,
   Modal,
+  ModalVariant,
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
@@ -364,7 +365,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
         position={DropdownPosition.right}
         onSelect={this.onActionsSelect}
         toggle={
-          <DropdownToggle onToggle={this.onActionsToggle} iconComponent={CaretDownIcon} data-test="wizard-actions">
+          <DropdownToggle onToggle={this.onActionsToggle} icon={CaretDownIcon} data-test="wizard-actions">
             Actions
           </DropdownToggle>
         }
@@ -395,7 +396,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
           onClose={this.onClose}
         />
         <Modal
-          isSmall={true}
+          variant={ModalVariant.small}
           title="Confirm Delete Traffic Routing ?"
           isOpen={this.state.showConfirmDelete}
           onClose={this.hideConfirmDelete}

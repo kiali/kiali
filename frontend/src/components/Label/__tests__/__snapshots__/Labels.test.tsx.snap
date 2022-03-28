@@ -24,7 +24,7 @@ exports[`#Labels render correctly with data should render badges with More label
       value="v1"
     />
   </div>
-  <Component
+  <Button
     className="firjkjj"
     data-test="label_more"
     key="label_more"
@@ -32,7 +32,7 @@ exports[`#Labels render correctly with data should render badges with More label
     variant="link"
   >
     More labels...
-  </Component>
+  </Button>
 </div>
 `;
 

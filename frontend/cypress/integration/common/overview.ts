@@ -73,7 +73,7 @@ When(`user selects Health for {string}`, (type) => {
         .click()
         .get('#loading_kiali_spinner')
         .should('not.exist');
-    cy.get('button[id^="' + innerId + '"]')
+    cy.get(`li[id="${innerId}"]`).children('button')
         .click()
         .get('#loading_kiali_spinner')
         .should('not.exist');
@@ -97,7 +97,7 @@ When(`user selects {string} time range`, (interval) => {
         .click()
         .get('#loading_kiali_spinner')
         .should('not.exist');
-    cy.get('button[id^="' + innerId + '"]')
+    cy.get(`li[id="${innerId}"]`).children('button')
         .click()
         .get('#loading_kiali_spinner')
         .should('not.exist');

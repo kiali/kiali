@@ -1,7 +1,7 @@
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
 import { ICell, ISortBy, sortable } from '@patternfly/react-table';
 import { ListenerSummary } from '../../../types/IstioObjects';
-import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, FilterTypes } from '../../../types/Filters';
+import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
 import Namespace from '../../../types/Namespace';
 import { defaultFilter, routeLink } from '../../../helpers/EnvoyHelpers';
@@ -38,7 +38,7 @@ export class ListenerTable implements SummaryTable {
         id: 'address',
         title: 'Address',
         placeholder: 'Address',
-        filterType: FilterTypes.text,
+        filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
@@ -46,7 +46,7 @@ export class ListenerTable implements SummaryTable {
         id: 'port',
         title: 'Port',
         placeholder: 'Port',
-        filterType: FilterTypes.text,
+        filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
@@ -54,7 +54,7 @@ export class ListenerTable implements SummaryTable {
         id: 'match',
         title: 'Match',
         placeholder: 'Match',
-        filterType: FilterTypes.text,
+        filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
@@ -62,7 +62,7 @@ export class ListenerTable implements SummaryTable {
         id: 'destination',
         title: 'Destination',
         placeholder: 'Destination',
-        filterType: FilterTypes.text,
+        filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       }

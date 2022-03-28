@@ -18,7 +18,8 @@ import {
   DropdownItem,
   KebabToggle,
   DropdownGroup,
-  DropdownSeparator
+  DropdownSeparator,
+  Checkbox
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { addError, addSuccess } from 'utils/AlertUtils';
@@ -43,6 +44,7 @@ import { AxiosResponse } from 'axios';
 import moment from 'moment';
 import { formatDuration } from 'utils/tracing/TracingHelper';
 import { infoStyle } from 'styles/DropdownStyles';
+import { isValid } from 'utils/Common';
 
 const appContainerColors = [PFColors.White, PFColors.LightGreen400, PFColors.Purple100, PFColors.LightBlue400];
 const proxyContainerColor = PFColors.Gold400;
@@ -130,34 +132,13 @@ const alInfoIcon = style({
   width: '10px'
 });
 
-const displayFlex = style({
-  display: 'flex'
-});
-
 const infoIcons = style({
   marginLeft: '0.5em',
   width: '24px'
 });
 
-const toolbar = style({
-  margin: '0 0 10px 0'
-});
-
-const toolbarSpace = style({
-  marginLeft: '1em'
-});
-
-const toolbarRight = style({
-  marginLeft: 'auto'
-});
-
 const toolbarTail = style({
   marginTop: '2px'
-});
-
-const logsToolbar = style({
-  height: '40px',
-  margin: '0 10px 0 0'
 });
 
 const logsDiv = style({
@@ -290,10 +271,6 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     this.promises.cancelAll();
   }
 
-  renderItem = object => {
-    return <ToolbarItem className={displayFlex}>{object}</ToolbarItem>;
-  };
-
   render() {
     return (
       <>
@@ -304,10 +281,10 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                 <Card style={{ height: '100%' }}>
                   <CardBody>
                     {this.state.showToolbar && (
-                      <Toolbar className={toolbar}>
-                        <ToolbarGroup>
+                      <Toolbar style={{ padding: 0, width: '100%' }}>
+                        <ToolbarGroup style={{ margin: 0 }}>
                           <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
-                          <ToolbarItem className={displayFlex}>
+                          <ToolbarItem>
                             <ToolbarDropdown
                               id={'wpl_pods'}
                               tooltip="Display logs for the selected pod"
@@ -317,14 +294,12 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                               options={this.podOptions!}
                             />
                           </ToolbarItem>
-                        </ToolbarGroup>
-                        <ToolbarGroup>
                           <ToolbarItem>
                             <TextInput
                               id="log_show"
                               name="log_show"
-                              style={{ width: '8em' }}
-                              isValid={!this.state.showError}
+                              style={{ width: '10em' }}
+                              validated={isValid(this.state.showLogValue ? !this.state.showError : undefined)}
                               autoComplete="on"
                               type="text"
                               onKeyPress={this.checkSubmitShow}
@@ -343,8 +318,8 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                             <TextInput
                               id="log_hide"
                               name="log_hide"
-                              style={{ width: '8em' }}
-                              isValid={!this.state.hideError}
+                              style={{ width: '10em' }}
+                              validated={isValid(this.state.hideLogValue ? !this.state.hideError : undefined)}
                               autoComplete="on"
                               type="text"
                               onKeyPress={this.checkSubmitHide}
@@ -362,8 +337,6 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                             )}
                             {this.state.showError && <div style={{ color: 'red' }}>{this.state.showError}</div>}
                             {this.state.hideError && <div style={{ color: 'red' }}>{this.state.hideError}</div>}
-                          </ToolbarItem>
-                          <ToolbarItem>
                             <Tooltip
                               key="show_hide_log_help"
                               position="top"
@@ -372,36 +345,25 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                               <KialiIcon.Info className={infoIcons} />
                             </Tooltip>
                           </ToolbarItem>
-                        </ToolbarGroup>
-                        <ToolbarGroup>
-                          <ToolbarItem className={displayFlex}>
-                            <div className="pf-c-check">
-                              <input
-                                key={`spans-show-chart`}
-                                id={`spans-show-`}
-                                className="pf-c-check__input"
-                                style={{ marginBottom: '3px' }}
-                                type="checkbox"
-                                checked={this.state.showSpans}
-                                onChange={event => this.toggleSpans(event.target.checked)}
-                              />
-                              <label
-                                className="pf-c-check__label"
-                                htmlFor={`spans-show-`}
-                                style={{
-                                  backgroundColor: PFColors.Black1000,
-                                  color: spanColor,
-                                  paddingLeft: '5px',
-                                  paddingRight: '5px'
-                                }}
-                              >
-                                spans
-                              </label>
-                            </div>
+                          <ToolbarItem>
+                            <Checkbox
+                              id="log-spans"
+                              isChecked={this.state.showSpans}
+                              label={
+                                <span
+                                  style={{
+                                    paddingBottom: '5px',
+                                    backgroundColor: PFColors.Black1000,
+                                    color: spanColor
+                                  }}
+                                >
+                                  spans
+                                </span>
+                              }
+                              onChange={checked => this.toggleSpans(checked)}
+                            />
                           </ToolbarItem>
-                        </ToolbarGroup>
-                        <ToolbarGroup className={toolbarRight}>
-                          <ToolbarItem className={displayFlex}>
+                          <ToolbarItem style={{ marginLeft: 'auto' }}>
                             <ToolbarDropdown
                               id={'wpl_tailLines'}
                               handleSelect={key => this.setTailLines(Number(key))}
@@ -446,30 +408,23 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           />
           {this.state.containerOptions!.map((c, i) => {
             return (
-              <div key={`c-d-${i}`} className="pf-c-check">
-                <input
-                  key={`c-i-${i}`}
-                  id={`container-${i}`}
-                  className="pf-c-check__input"
-                  style={{ marginBottom: '3px' }}
-                  type="checkbox"
-                  checked={c.isSelected}
-                  onChange={() => this.toggleSelected(c)}
-                />
-                <label
-                  key={`c-l-${i}`}
-                  htmlFor={`container-${i}`}
-                  className="pf-c-check__label"
-                  style={{
-                    backgroundColor: PFColors.Black1000,
-                    color: c.color,
-                    paddingLeft: '5px',
-                    paddingRight: '5px'
-                  }}
-                >
-                  {c.displayName}
-                </label>
-              </div>
+              <Checkbox
+                id={`container-${c.displayName}`}
+                key={`c-d-${i}`}
+                isChecked={c.isSelected}
+                label={
+                  <span
+                    style={{
+                      paddingBottom: '5px',
+                      backgroundColor: PFColors.Black1000,
+                      color: c.color
+                    }}
+                  >
+                    {c.displayName}
+                  </span>
+                }
+                onChange={() => this.toggleSelected(c)}
+              />
             );
           })}
         </FormGroup>
@@ -537,12 +492,10 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
     return (
       <div key="logsDiv" id="logsDiv" className={logsDiv}>
-        <Toolbar className={logsToolbar}>
+        <Toolbar style={{ padding: '5px 0' }}>
           <ToolbarGroup>
             <ToolbarItem>{this.getContainerLegend()}</ToolbarItem>
-          </ToolbarGroup>
-          <ToolbarGroup className={toolbarRight}>
-            <ToolbarItem>
+            <ToolbarItem style={{ marginLeft: 'auto' }}>
               <Tooltip key="copy_logs" position="top" content="Copy logs to clipboard">
                 <CopyToClipboard text={this.entriesToString(this.state.entries)}>
                   <Button variant={ButtonVariant.link} isInline>
@@ -551,7 +504,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                 </CopyToClipboard>
               </Tooltip>
             </ToolbarItem>
-            <ToolbarItem className={toolbarSpace}>
+            <ToolbarItem>
               <Tooltip key="fullscreen_logs" position="top" content="Expand logs full screen">
                 <Button
                   variant={ButtonVariant.link}

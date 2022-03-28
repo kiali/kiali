@@ -5,6 +5,7 @@ import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
 import ServerBuilder from './GatewayForm/ServerBuilder';
 import ServerList from './GatewayForm/ServerList';
 import { Server } from '../../types/IstioObjects';
+import { isValid } from 'utils/Common';
 
 export const GATEWAY = 'Gateway';
 export const GATEWAYS = 'gateways';
@@ -165,7 +166,7 @@ class GatewayForm extends React.Component<Props, GatewayState> {
             label="Labels"
             helperText="One or more labels to select a workload where the Gateway is applied."
             helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
-            isValid={this.state.workloadSelectorValid}
+            validated={isValid(this.state.workloadSelectorValid)}
           >
             <TextInput
               id="gwHosts"
@@ -173,7 +174,7 @@ class GatewayForm extends React.Component<Props, GatewayState> {
               isDisabled={!this.state.addWorkloadSelector}
               value={this.state.workloadSelectorLabels}
               onChange={this.addWorkloadLabels}
-              isValid={this.state.workloadSelectorValid}
+              validated={isValid(this.state.workloadSelectorValid)}
             />
           </FormGroup>
         )}

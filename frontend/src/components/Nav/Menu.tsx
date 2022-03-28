@@ -94,7 +94,7 @@ class Menu extends React.Component<MenuProps, MenuState> {
       </Nav>
     );
 
-    return <PageSidebar isNavOpen={isNavOpen} nav={PageNav} theme={'dark'} />;
+    return <PageSidebar style={{ maxWidth: '210px' }} isNavOpen={isNavOpen} nav={PageNav} theme={'dark'} />;
   }
 }
 

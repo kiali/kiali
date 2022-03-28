@@ -7,6 +7,7 @@ import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/rea
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 import { PFColors } from '../../components/Pf/PfColors';
+import { isValid } from 'utils/Common';
 
 export const SERVICE_ENTRY = 'ServiceEntry';
 export const SERVICE_ENTRIES = 'serviceentries';
@@ -245,7 +246,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
                 aria-describedby="add port number"
                 name="addPortNumber"
                 onChange={this.onAddPortNumber}
-                isValid={this.state.addNewPortNumber.length > 0 && !isNaN(Number(this.state.addNewPortNumber))}
+                validated={isValid(this.state.addNewPortNumber.length > 0 && !isNaN(Number(this.state.addNewPortNumber)))}
               />
             </>,
             <>
@@ -255,7 +256,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
                 aria-describedby="add port name"
                 name="addPortName"
                 onChange={this.onAddPortName}
-                isValid={this.state.addNewPortName.length > 0}
+                validated={isValid(this.state.addNewPortName.length > 0)}
               />
             </>,
             <>
@@ -277,9 +278,9 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
                 aria-describedby="add target port"
                 name="addTargetPort"
                 onChange={this.onAddTargetPort}
-                isValid={
+                validated={isValid(
                   this.state.addNewTargetPort.length === 0 ||
-                  (this.state.addNewTargetPort.length > 0 && !isNaN(Number(this.state.addNewTargetPort)))
+                  (this.state.addNewTargetPort.length > 0 && !isNaN(Number(this.state.addNewTargetPort))))
                 }
               />
             </>,
@@ -306,7 +307,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
           fieldId="hosts"
           helperText="The hosts associated with the ServiceEntry."
           helperTextInvalid="Invalid hosts for this ServiceEntry. Enter one or more hosts separated by comma."
-          isValid={this.state.validHosts}
+          validated={isValid(this.state.validHosts)}
         >
           <TextInput
             value={this.state.serviceEntry.hosts?.join(',')}
@@ -316,7 +317,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
             aria-describedby="hosts"
             name="hosts"
             onChange={this.onAddHosts}
-            isValid={this.state.validHosts}
+            validated={isValid(this.state.validHosts)}
           />
         </FormGroup>
         <FormGroup label="Location" isRequired={true} fieldId="location">

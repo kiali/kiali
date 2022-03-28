@@ -297,7 +297,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   private renderOptionsBar() {
     return (
       <div ref={this.toolbarRef}>
-        <Toolbar style={{ paddingBottom: 15 }}>
+        <Toolbar style={{ padding: 0 }}>
           <ToolbarGroup>
             <ToolbarItem>
               <MetricsSettingsDropdown
@@ -308,8 +308,6 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                 hasHistograms={true}
               />
             </ToolbarItem>
-          </ToolbarGroup>
-          <ToolbarGroup>
             <ToolbarItem className={displayFlex}>
               <MetricsReporter
                 onChanged={this.onReporterChanged}
@@ -317,8 +315,6 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                 reporter={this.options.reporter}
               />
             </ToolbarItem>
-          </ToolbarGroup>
-          <ToolbarGroup>
             <ToolbarItem className={displayFlex}>
               <div style={maximizeButtonStyle} className="pf-c-check">
                 <label

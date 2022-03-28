@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ChartScatter } from '@patternfly/react-charts';
-import { Title, EmptyState, EmptyStateVariant, EmptyStateBody } from '@patternfly/react-core';
+import { Title, EmptyState, EmptyStateVariant, EmptyStateBody, TitleSizes } from '@patternfly/react-core';
 
 import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
 import { PFColors } from '../Pf/PfColors';
@@ -58,7 +58,7 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
     return (
       <div className={emptyStyle}>
         <EmptyState variant={EmptyStateVariant.small}>
-          <Title headingLevel="h5" size="lg">
+          <Title headingLevel="h5" size={TitleSizes.lg}>
             {title}
           </Title>
           <EmptyStateBody>{msg}</EmptyStateBody>

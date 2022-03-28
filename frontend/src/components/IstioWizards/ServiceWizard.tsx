@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Expandable, Modal, Tab, Tabs } from '@patternfly/react-core';
+import { Button, ExpandableSection, Modal, ModalVariant, Tab, Tabs } from '@patternfly/react-core';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { Response } from '../../services/Api';
@@ -541,7 +541,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
     return (
       <>
         <Modal
-          isSmall={true}
+          variant={ModalVariant.small}
           title={titleAction}
           isOpen={this.state.confirmationModal}
           onClose={() => this.onClose(false)}
@@ -642,7 +642,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             this.props.type === WIZARD_TRAFFIC_SHIFTING ||
             this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING ||
             this.props.type === WIZARD_REQUEST_TIMEOUTS) && (
-            <Expandable
+            <ExpandableSection
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}
               toggleText={(this.state.showAdvanced ? 'Hide' : 'Show') + ' Advanced Options'}
@@ -709,7 +709,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
                   </Tab>
                 )}
               </Tabs>
-            </Expandable>
+            </ExpandableSection>
           )}
         </Modal>
       </>

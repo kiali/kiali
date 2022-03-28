@@ -2,10 +2,7 @@
 
 exports[`HealthIndicator proxy status section renders the degraded workloads 1`] = `
 <Tooltip
-  appendTo={[Function]}
-  aria="describedby"
   aria-label="Health indicator"
-  boundary="window"
   className="health_indicator"
   content={
     <div>
@@ -97,30 +94,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
       />
     </div>
   }
-  distance={15}
-  enableFlip={true}
-  entryDelay={500}
-  exitDelay={500}
-  flipBehavior={
-    Array [
-      "top",
-      "right",
-      "bottom",
-      "left",
-      "top",
-      "right",
-      "bottom",
-    ]
-  }
-  id=""
-  isAppLauncher={false}
-  isContentLeftAligned={false}
-  isVisible={false}
-  maxWidth="18.75rem"
   position="auto"
-  tippyProps={Object {}}
-  trigger="mouseenter focus"
-  zIndex={9999}
 >
   <span>
     <ExclamationTriangleIcon
@@ -128,7 +102,6 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
       color="var(--pf-global--warning-color--100)"
       noVerticalAlign={false}
       size="sm"
-      title={null}
     />
   </span>
 </Tooltip>
@@ -136,10 +109,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
 
 exports[`HealthIndicator renders healthy 1`] = `
 <Tooltip
-  appendTo={[Function]}
-  aria="describedby"
   aria-label="Health indicator"
-  boundary="window"
   className="health_indicator"
   content={
     <div>
@@ -241,30 +211,7 @@ exports[`HealthIndicator renders healthy 1`] = `
       />
     </div>
   }
-  distance={15}
-  enableFlip={true}
-  entryDelay={500}
-  exitDelay={500}
-  flipBehavior={
-    Array [
-      "top",
-      "right",
-      "bottom",
-      "left",
-      "top",
-      "right",
-      "bottom",
-    ]
-  }
-  id=""
-  isAppLauncher={false}
-  isContentLeftAligned={false}
-  isVisible={false}
-  maxWidth="18.75rem"
   position="auto"
-  tippyProps={Object {}}
-  trigger="mouseenter focus"
-  zIndex={9999}
 >
   <span>
     <CheckCircleIcon
@@ -272,7 +219,6 @@ exports[`HealthIndicator renders healthy 1`] = `
       color="#3e8635"
       noVerticalAlign={false}
       size="sm"
-      title={null}
     />
   </span>
 </Tooltip>

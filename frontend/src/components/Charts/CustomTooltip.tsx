@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { ChartTooltip, ChartTooltipProps } from '@patternfly/react-charts';
-import { Flyout, Point, VictoryLabel } from 'victory';
+import { ChartTooltip, ChartTooltipProps, ChartLabel, ChartPoint, ChartCursorFlyout } from '@patternfly/react-charts';
 import { VCDataPoint } from 'types/VictoryChartInfo';
 
 const dy = 15;
@@ -26,7 +25,7 @@ const CustomLabel = (props: any & { head?: string; text: string[]; textWidth: nu
           .map((pt, idx) => {
             const symbol = pt.symbol || 'square';
             return (
-              <Point
+              <ChartPoint
                 key={'item-' + idx}
                 style={{ fill: pt.color, type: symbol }}
                 x={x}
@@ -36,7 +35,7 @@ const CustomLabel = (props: any & { head?: string; text: string[]; textWidth: nu
               />
             );
           })}
-      <VictoryLabel {...props} text={textsWithHead} />
+      <ChartLabel {...props} text={textsWithHead} />
     </>
   );
 };
@@ -91,11 +90,12 @@ type State = {
 export class CustomTooltip extends React.Component<Props, State> {
   static getDerivedStateFromProps(props: Props): State {
     const head = props.showTime ? getHeader(props.activePoints) : undefined;
-    let height = props.text.length * dy + 2 * yMargin;
+    const texts: string[] =
+      props.text && Array.isArray(props.text) ? (props.text as string[]) : !props.text ? [] : [props.text as string];
+    let height = texts.length * dy + 2 * yMargin;
     if (head) {
       height += headSize;
     }
-    const texts = Array.isArray(props.text) ? props.text : [props.text];
     const textWidth = Math.max(...texts.map(t => canvasContext.measureText(t).width));
     const width = 50 + (head ? Math.max(textWidth, canvasContext.measureText(head).width) : textWidth);
     return {
@@ -119,7 +119,7 @@ export class CustomTooltip extends React.Component<Props, State> {
         text={this.state.texts}
         flyoutWidth={this.state.width}
         flyoutHeight={this.state.height}
-        flyoutComponent={<Flyout style={{ stroke: 'none', fillOpacity: 0.6 }} />}
+        flyoutComponent={<ChartCursorFlyout style={{ stroke: 'none', fillOpacity: 0.6 }} />}
         labelComponent={<CustomLabel head={this.state.head} textWidth={this.state.textWidth} />}
         constrainToVisibleArea={true}
       />

@@ -10,7 +10,15 @@ import { serverConfig } from '../../config';
 import { ComputedServerConfig } from '../../config/ServerConfig';
 import { AuthConfig } from '../../types/Auth';
 import { KialiAppState } from '../../store/Store';
-import { Alert, AlertActionCloseButton, AlertVariant, Button, ButtonVariant, Modal } from '@patternfly/react-core';
+import {
+  Alert,
+  AlertActionCloseButton,
+  AlertVariant,
+  Button,
+  ButtonVariant,
+  Modal,
+  ModalVariant
+} from '@patternfly/react-core';
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -137,7 +145,7 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
 
     return (
       <Modal
-        isSmall={true}
+        variant={ModalVariant.small}
         isOpen={this.state.show}
         onClose={this.close}
         title="Debug information"
@@ -154,7 +162,7 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
             title="Debug information has been copied to your clipboard."
             variant={AlertVariant.success}
             isInline={true}
-            action={<AlertActionCloseButton onClose={this.hideAlert} />}
+            actionClose={<AlertActionCloseButton onClose={this.hideAlert} />}
           />
         )}
         {this.state.copyStatus === CopyStatus.OLD_COPY && (
@@ -163,7 +171,7 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
             title="Debug information was copied to your clipboard, but is outdated now. It could be caused by new data received by auto refresh timers."
             variant={AlertVariant.warning}
             isInline={true}
-            action={<AlertActionCloseButton onClose={this.hideAlert} />}
+            actionClose={<AlertActionCloseButton onClose={this.hideAlert} />}
           />
         )}
         <span>Health Config</span>

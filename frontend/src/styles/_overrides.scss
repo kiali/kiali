@@ -1,13 +1,18 @@
 // External dependency variables or mixins that are required/extended by our custom styles (tilde tells Webpack not to use relative path)
 // IMPORTANT: Please put non-variable/mixin external dependency imports in vendor.scss!
 // Patternfly variables must be imported before Bootstrap
-@import '../../node_modules/@patternfly/patternfly/sass-utilities/_all';
-@import '../../node_modules/@patternfly/patternfly/_variables';
+
+// @import '../../node_modules/@patternfly/patternfly/sass-utilities/_all';
+
+// @import '../../node_modules/@patternfly/patternfly/_variables';
 
 // Disable PatternFly 4 reset.
-$pf-global--enable-reset: false;
+// $pf-global--enable-reset: false;
 
+/*
 $color-grey-background-border: #ccc;
+*/
+
 // PatternFly 4 overrides
 
 // Remove the padding by default
@@ -16,136 +21,160 @@ $color-grey-background-border: #ccc;
 }
 
 // Remove background Image and color by default in header, login and about modal
+/*
 .pf-c-page__header {
   background-image: none;
   background-color: unset;
 }
+*/
 
+/*
 .pf-c-about-modal-box__hero {
   background-image: none !important;
   background-color: transparent;
 }
+*/
 
+/*
 .pf-c-login,
 .login-pf {
   background-image: none;
   background-color: #030303;
 }
+*/
 
 // Menu thin and remove margin in top
+/*
 .pf-c-page__sidebar {
   --pf-c-page__sidebar-body--PaddingTop: 0;
   --pf-c-page__sidebar--md--Width: 210px; // TODO: Remove. Test enlarged message center when removing.
   min-height: 100vh;
 }
+*/
 
 /**
  Fix height in filter selector
  */
-.filter-pf-select-dropdown {
+/*
+ .filter-pf-select-dropdown {
   height: 29px;
 }
+*/
 
 /**
   Fix underline decoration in links
 */
-
+/*
 a:hover,
 a:focus {
   text-decoration: none;
 }
+*/
 
 /*
  Remove height form-control
  */
-.form-control {
+/*
+ .form-control {
   height: unset;
 }
+*/
 
 /*
-
 Fix modal-title size
  */
+ /*
 .modal-title {
   font-size: 18px;
 }
+*/
 
 /*
-
 keep test aligned vertically
  */
-.table > tbody > tr > td {
+/*
+ .table > tbody > tr > td {
   vertical-align: middle;
 }
+*/
+
 
 /*
-
 Unset line-height stylefor connected text in suspend trafic wizard
-
  */
+ /*
 .list-group-item-text {
   line-height: unset;
   width: 100%;
 }
+*/
 
 /*
-
 Set width 100% parent in matching routing wizard
  */
-.match-routing-wizard .list-group-item-text {
+/*
+ .match-routing-wizard .list-group-item-text {
   width: 100%;
 }
+*/
 
+/*
 button {
   font-family: var(--pf-global--FontFamily--sans-serif);
 }
+*/
 
+/*
 input {
   font-family: var(--pf-global--FontFamily--sans-serif);
 }
+*/
 
 /*
-
 Fix font size in graph help
+*/
 
- */
-
+/*
 .modal-content {
   font-size: 12px;
 }
+*/
 
 /*
-
 Fix icon in buttons of pagination pages
-
  */
-
+/*
 .pagination > li > a > .i {
   margin-top: 5px;
 }
+*/
 
 /*
-
 Top line in tabs
-
  */
+ /*
 .nav-tabs {
   border-top: 1px solid #ededed;
 }
+*/
 
 /*
 Inline Alerts: background transparent
  */
+/*
 .pf-c-alert.pf-m-inline {
   --pf-c-alert__icon--BackgroundColor: var(--pf-c-alert--m-inline__icon--BackgroundColor);
 }
+*/
 
 /*
  Fix problem stack in Firefox in service details
  */
+/*
 .stack_service_details {
   height: 20%;
 }
+*/
 
 /*
 Kiosk mode
@@ -164,7 +193,7 @@ html.kiosk {
   Datepicker overrides for graph replay and other uses
   - note: global .tooltip setting but I think it should be OK
 */
-// use PF fonts and fond-size
+// use PF fonts and font-size
 .react-datepicker {
   font-family: var(--pf-global--FontFamily--sans-serif);
   font-size: var(--pf-global--FontSize);

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Form, FormGroup, TextInput } from '@patternfly/react-core';
 import { GatewaySelectorState } from './GatewaySelector';
+import { isValid } from 'utils/Common';
 type Props = {
   vsHosts: string[];
   gateway?: GatewaySelectorState;
@@ -36,7 +37,7 @@ class VirtualServiceHosts extends React.Component<Props> {
         <FormGroup
           label="VirtualService Hosts"
           fieldId="advanced-vshosts"
-          isValid={this.isVirtualServiceHostsValid(this.props.vsHosts)}
+          validated={isValid(this.isVirtualServiceHostsValid(this.props.vsHosts))}
           helperText="The destination hosts to which traffic is being sent. Enter one or multiple hosts separated by comma."
           helperTextInvalid={"VirtualService Host '*' wildcard not allowed on mesh gateway."}
         >

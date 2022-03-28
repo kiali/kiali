@@ -74,7 +74,7 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     const graphContainerStyle = style({ width: '100%', height: height });
     return (
       <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-        <Grid gutter={'md'} className={fullHeightStyle}>
+        <Grid hasGutter={true} className={fullHeightStyle}>
           <GridItem span={4}>
             <AppDescription app={this.props.app} health={this.props.health} />
           </GridItem>

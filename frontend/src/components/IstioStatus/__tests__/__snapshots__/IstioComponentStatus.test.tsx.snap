@@ -2,7 +2,7 @@
 
 exports[`IstioComponentStatus renders error icon when core component is not found 1`] = `
 <Split
-  gutter="md"
+  hasGutter={true}
   key="cell-status-icon-isito-ingress"
 >
   <SplitItem>
@@ -16,7 +16,6 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
           "marginTop": 5,
         }
       }
-      title={null}
     />
   </SplitItem>
   <SplitItem
@@ -32,7 +31,7 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
 
 exports[`IstioComponentStatus renders error icon when core component is not running 1`] = `
 <Split
-  gutter="md"
+  hasGutter={true}
   key="cell-status-icon-isito-ingress"
 >
   <SplitItem>
@@ -46,7 +45,6 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
           "marginTop": 5,
         }
       }
-      title={null}
     />
   </SplitItem>
   <SplitItem
@@ -62,7 +60,7 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
 
 exports[`IstioComponentStatus renders minus icon when addon component is not ready 1`] = `
 <Split
-  gutter="md"
+  hasGutter={true}
   key="cell-status-icon-addon"
 >
   <SplitItem>
@@ -76,7 +74,6 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
           "marginTop": 5,
         }
       }
-      title={null}
     />
   </SplitItem>
   <SplitItem
@@ -92,7 +89,7 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
 
 exports[`IstioComponentStatus renders minus icon when core component is not ready 1`] = `
 <Split
-  gutter="md"
+  hasGutter={true}
   key="cell-status-icon-core"
 >
   <SplitItem>
@@ -106,7 +103,6 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
           "marginTop": 5,
         }
       }
-      title={null}
     />
   </SplitItem>
   <SplitItem
@@ -122,7 +118,7 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
 
 exports[`IstioComponentStatus renders success icon when core component is running 1`] = `
 <Split
-  gutter="md"
+  hasGutter={true}
   key="cell-status-icon-isito-ingress"
 >
   <SplitItem>
@@ -136,7 +132,6 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
           "marginTop": 5,
         }
       }
-      title={null}
     />
   </SplitItem>
   <SplitItem
@@ -150,7 +145,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
 
 exports[`IstioComponentStatus renders success icon when core component is running 2`] = `
 <Split
-  gutter="md"
+  hasGutter={true}
   key="cell-status-icon-prometheus"
 >
   <SplitItem>
@@ -164,7 +159,6 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
           "marginTop": 5,
         }
       }
-      title={null}
     />
   </SplitItem>
   <SplitItem
@@ -178,7 +172,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
 
 exports[`IstioComponentStatus renders warning icon when core component is not found 1`] = `
 <Split
-  gutter="md"
+  hasGutter={true}
   key="cell-status-icon-prometheus"
 >
   <SplitItem>
@@ -192,7 +186,6 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
           "marginTop": 5,
         }
       }
-      title={null}
     />
   </SplitItem>
   <SplitItem
@@ -208,7 +201,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
 
 exports[`IstioComponentStatus renders warning icon when core component is not running 1`] = `
 <Split
-  gutter="md"
+  hasGutter={true}
   key="cell-status-icon-prometheus"
 >
   <SplitItem>
@@ -222,7 +215,6 @@ exports[`IstioComponentStatus renders warning icon when core component is not ru
           "marginTop": 5,
         }
       }
-      title={null}
     />
   </SplitItem>
   <SplitItem

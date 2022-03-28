@@ -16,7 +16,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     # Disable version updates for npm dependencies
     # We expect that any security alert will be listed in the security area but no automatic PR generation
     open-pull-requests-limit: 0

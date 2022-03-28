@@ -1,6 +1,13 @@
 import * as React from 'react';
-import { Button, ButtonVariant, Toolbar, ToolbarGroup, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import {
+  Button,
+  ButtonVariant,
+  Toolbar,
+  ToolbarGroup,
+  ToolbarItem,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
@@ -60,15 +67,6 @@ type GraphToolbarProps = ReduxProps & {
   onToggleHelp: () => void;
   onRefresh?: () => void;
 };
-
-const toolbarStyle = style({
-  marginBottom: '20px',
-  marginTop: '20px'
-});
-
-const rightToolbarStyle = style({
-  marginLeft: 'auto'
-});
 
 export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
   static contextTypes = {
@@ -188,36 +186,43 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
           onGraphTypeChange={this.props.setGraphType}
           onHandleRefresh={this.handleRefresh}
         />
-        <Toolbar className={toolbarStyle}>
-          <div style={{ display: 'flex' }}>
+        <Toolbar style={{ width: '100%' }}>
+          <ToolbarGroup aria-label="graph settings" style={{ margin: 0 }}>
             {this.props.node && (
-              <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content={'Back to full graph'}>
-                <Button variant={ButtonVariant.link} onClick={this.handleNamespaceReturn}>
-                  <KialiIcon.Back className={defaultIconStyle} />
-                </Button>
-              </Tooltip>
+              <ToolbarItem style={{ margin: 0 }}>
+                <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content={'Back to full graph'}>
+                  <Button variant={ButtonVariant.link} onClick={this.handleNamespaceReturn}>
+                    <KialiIcon.Back className={defaultIconStyle} />
+                  </Button>
+                </Tooltip>
+              </ToolbarItem>
             )}
-            <TourStopContainer info={GraphTourStops.Display}>
-              <GraphSettingsContainer graphType={this.props.graphType} disabled={this.props.disabled} />
-            </TourStopContainer>
-          </div>
-          <GraphFindContainer cy={this.props.cy} elementsChanged={this.props.elementsChanged} />
 
-          <TourStopContainer info={GraphTourStops.Shortcuts}>
-            <ToolbarGroup className={rightToolbarStyle} aria-label="graph_refresh_toolbar">
+            <ToolbarItem style={{ margin: 0 }}>
+              <TourStopContainer info={GraphTourStops.Display}>
+                <GraphSettingsContainer graphType={this.props.graphType} disabled={this.props.disabled} />
+              </TourStopContainer>
+            </ToolbarItem>
+
+            <ToolbarItem>
+              <GraphFindContainer cy={this.props.cy} elementsChanged={this.props.elementsChanged} />
+            </ToolbarItem>
+
+            <ToolbarItem style={{ marginLeft: 'auto' }}>
               <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Shortcuts and tips...">
-                <Button
-                  className={rightToolbarStyle}
-                  variant="link"
-                  style={{ paddingLeft: '6px', paddingRight: '0px' }}
-                  onClick={this.props.onToggleHelp}
-                >
-                  <KialiIcon.Help className={defaultIconStyle} />
-                </Button>
+                <TourStopContainer info={GraphTourStops.Shortcuts}>
+                  <Button
+                    variant="link"
+                    style={{ paddingLeft: '6px', paddingRight: '0px' }}
+                    onClick={this.props.onToggleHelp}
+                  >
+                    <KialiIcon.Help className={defaultIconStyle} />
+                  </Button>
+                </TourStopContainer>
               </Tooltip>
               <GraphResetContainer />
-            </ToolbarGroup>
-          </TourStopContainer>
+            </ToolbarItem>
+          </ToolbarGroup>
         </Toolbar>
         {this.props.replayActive && <ReplayContainer id="time-range-replay" />}
       </>

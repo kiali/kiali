@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { PopoverPosition } from '@patternfly/react-core';
 import { TourStopInfo, TourInfo } from 'components/Tour/TourStop';
 import GraphShortcuts from './GraphToolbar/GraphShortcuts';
@@ -9,7 +8,7 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     description:
       'Right-click a node or an edge to see the contextual menu with links to details, traffic and inbound/outbound metrics for the node or edge.',
     position: PopoverPosition.left,
-    offset: '0, 250'
+    distance: 250
   },
   Display: {
     name: 'Display',
@@ -27,7 +26,7 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     description:
       "Click on a node or edge to see its summary and emphasize its end-to-end paths. Double-click a node to see a graph focused on that node.\nDouble-click an 'external namespace' node to navigate directly to the namespace in the node's text label. Shift-Drag to quickly zoom in.",
     position: PopoverPosition.left,
-    offset: '0, 250'
+    distance: 250
   },
   GraphTraffic: {
     name: 'Graph Traffic',
@@ -59,7 +58,7 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
   },
   Shortcuts: {
     name: 'Shortcuts',
-    htmlDescription: <GraphShortcuts />,
+    htmlDescription: GraphShortcuts,
     position: PopoverPosition.left
   },
   SidePanel: {

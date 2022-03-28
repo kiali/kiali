@@ -4,7 +4,7 @@ import { createIcon } from './Helper';
 import { InfoAltIcon } from '@patternfly/react-icons';
 import './Health.css';
 import { PFColors } from '../Pf/PfColors';
-import { Title } from '@patternfly/react-core';
+import { Title, TitleSizes } from '@patternfly/react-core';
 import { style } from 'typestyle';
 
 interface Props {
@@ -32,7 +32,7 @@ export const renderTrafficStatus = (health: H.Health) => {
     if (showTraffic) {
       return (
         <div>
-          <Title headingLevel="h5" size="lg" className={titleStyle}>
+          <Title headingLevel="h5" size={TitleSizes.lg} className={titleStyle}>
             Traffic
           </Title>
           {item.text}

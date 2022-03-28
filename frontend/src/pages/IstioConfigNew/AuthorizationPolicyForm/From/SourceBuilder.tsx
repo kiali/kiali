@@ -6,6 +6,7 @@ import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isValidIp } from '../../../../utils/IstioConfigUtils';
 import { style } from 'typestyle';
 import { PFColors } from '../../../../components/Pf/PfColors';
+import { isValid } from 'utils/Common';
 
 type Props = {
   onAddFrom: (source: { [key: string]: string[] }) => void;
@@ -183,7 +184,7 @@ class SourceBuilder extends React.Component<Props, State> {
                 aria-describedby="add new source values"
                 name="addNewValues"
                 onChange={this.onAddNewValues}
-                isValid={isValidSource}
+                validated={isValid(isValidSource)}
               />
               {!isValidSource && (
                 <div key="hostsHelperText" className={noSourceStyle}>

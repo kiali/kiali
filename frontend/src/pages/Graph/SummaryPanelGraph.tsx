@@ -182,8 +182,8 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       this.graphTraffic || this.getGraphTraffic();
 
     return (
-      <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
-        <div className="panel-heading" style={summaryHeader}>
+      <div id="summary-panel-graph" className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
+        <div id="summary-panel-graph-heading" className="panel-heading" style={summaryHeader}>
           {getTitle('Current Graph')}
           {this.renderNamespacesSummary()}
           <br />
@@ -364,8 +364,8 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
   private renderNamespace = (ns: string) => {
     return (
-      <React.Fragment key={ns}>
-        <span>
+      <React.Fragment>
+        <span id={`ns-${ns}`} key={ns}>
           <PFBadge badge={PFBadges.Namespace} style={{ marginBottom: '2px' }} />
           {ns} {this.renderValidations(ns)}
         </span>

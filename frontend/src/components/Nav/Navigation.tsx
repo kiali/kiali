@@ -97,7 +97,7 @@ export class Navigation extends React.Component<PropsType, NavigationState> {
     const Header = (
       <PageHeader
         logo={<Brand src={kialiLogo} alt="Kiali Logo" />}
-        toolbar={<Masthead />}
+        headerTools={<Masthead />}
         showNavToggle={true}
         onNavToggle={isMobileView ? this.onNavToggleMobile : this.onNavToggleDesktop}
         isNavOpen={isMobileView ? isNavOpenMobile : isNavOpenDesktop || !this.props.navCollapsed}

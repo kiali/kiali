@@ -3,7 +3,7 @@ import { DecoratedGraphNodeData, GraphNodeData, GraphType, NodeType } from '../.
 import { mount } from 'enzyme';
 import { SummaryPanelNode, SummaryPanelNodeProps } from '../SummaryPanelNode';
 import { MemoryRouter } from 'react-router-dom';
-import { Expandable } from '@patternfly/react-core';
+import { ExpandableSection } from '@patternfly/react-core';
 
 let defaultProps: SummaryPanelNodeProps;
 let nodeData: GraphNodeData;
@@ -68,7 +68,7 @@ describe('SummaryPanelNode', () => {
         <SummaryPanelNode {...defaultProps} />
       </MemoryRouter>
     );
-    const expandable = wrapper.find(Expandable);
+    const expandable = wrapper.find(ExpandableSection);
     expect(expandable.exists()).toBeTruthy();
     expect(
       expandable
@@ -98,7 +98,10 @@ describe('SummaryPanelNode', () => {
         <SummaryPanelNode {...props} />
       </MemoryRouter>
     );
-    const rankText = wrapper.find('span').findWhere(span => span.render().html().includes('Rank: N/A'));
+    const rankText = wrapper.find('span').findWhere(span => {
+      const html = span.render().html();
+      return html !== null && html.includes('Rank: N/A');
+    });
     expect(rankText.exists()).toBeTruthy();
     expect(rankText.length).toEqual(1);
   });
@@ -111,7 +114,10 @@ describe('SummaryPanelNode', () => {
         <SummaryPanelNode {...props} />
       </MemoryRouter>
     );
-    const rankText = wrapper.find('span').findWhere(span => span.render().html().includes('Rank: 2 / 3'));
+    const rankText = wrapper.find('span').findWhere(span => {
+      const html = span.render().html();
+      return html !== null && html.includes('Rank: 2 / 3');
+    });
     expect(rankText.exists()).toBeTruthy();
     expect(rankText.length).toEqual(1);
   });

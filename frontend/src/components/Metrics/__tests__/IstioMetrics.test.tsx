@@ -3,19 +3,12 @@ import { shallow } from 'enzyme';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route } from 'react-router';
 import { shallowToJson } from 'enzyme-to-json';
-
 import IstioMetrics from '../IstioMetrics';
 import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { MetricsObjectTypes } from '../../../types/Metrics';
 import MounterMocker from 'services/__mocks__/MounterMocker';
 import { ChartModel, DashboardModel } from 'types/Dashboards';
-
-jest.spyOn(API, 'getGrafanaInfo').mockImplementation(() => {
-  return new Promise(r => {
-    r({ data: { externalLinks: [] } });
-  });
-});
 
 const createMetricChart = (name: string): ChartModel => {
   return {
@@ -84,6 +77,15 @@ const createHistogramChart = (name: string): ChartModel => {
 };
 
 describe('Metrics for a service', () => {
+  beforeEach(() => {
+    const spy = jest.spyOn(API, 'getGrafanaInfo');
+    spy.mockResolvedValue({ externalLinks: [] });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders initial layout', () => {
     const wrapper = shallow(
       <Provider store={store}>

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { FormGroup, Switch, TextInput } from '@patternfly/react-core';
 import { HTTP_TIMEOUT_TOOLTIP, wizardTooltip } from '../WizardHelp';
+import { isValid } from 'utils/Common';
 
 export type RouteTimeoutProps = {
   isTimeout: boolean;
@@ -31,7 +32,7 @@ class RouteTimeout extends React.Component<RouteTimeoutProps> {
             fieldId="timeout-value"
             helperText={timeoutMsg}
             helperTextInvalid={timeoutMsg}
-            isValid={this.props.isValid}
+            validated={isValid(this.props.isValid)}
           >
             <TextInput
               value={this.props.timeout}

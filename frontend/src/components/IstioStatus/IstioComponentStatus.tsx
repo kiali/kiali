@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
-import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
+import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { PFColors } from '../Pf/PfColors';
 import {
   CheckCircleIcon,
@@ -16,7 +16,7 @@ type Props = {
 
 export type ComponentIcon = {
   color: string;
-  icon: IconType;
+  icon: React.ComponentClass<SVGIconProps>;
 };
 
 const ErrorCoreComponent: ComponentIcon = {
@@ -68,7 +68,7 @@ class IstioComponentStatus extends React.Component<Props> {
     const comp = this.props.componentStatus;
 
     return [
-      <Split key={'cell-status-icon-' + comp.name} gutter={'md'}>
+      <Split key={'cell-status-icon-' + comp.name} hasGutter={true}>
         <SplitItem>{this.renderIcon(this.props.componentStatus.status, this.props.componentStatus.is_core)}</SplitItem>
         <SplitItem isFilled={true}>{comp.name}</SplitItem>
         <SplitItem>{statusMsg[comp.status]}</SplitItem>

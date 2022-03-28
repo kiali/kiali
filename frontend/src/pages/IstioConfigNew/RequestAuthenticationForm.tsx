@@ -4,6 +4,7 @@ import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/compo
 import { JWTRule } from '../../types/IstioObjects';
 import JwtRuleBuilder from './RequestAuthorizationForm/JwtRuleBuilder';
 import JwtRuleList from './RequestAuthorizationForm/JwtRuleList';
+import { isValid } from 'utils/Common';
 
 type Props = {
   requestAuthentication: RequestAuthenticationState;
@@ -160,7 +161,7 @@ class RequestAuthenticationForm extends React.Component<Props, RequestAuthentica
             label="Labels"
             helperText="One or more labels to select a workload where the RequestAuthentication is applied."
             helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
-            isValid={this.state.workloadSelectorValid}
+            validated={isValid(this.state.workloadSelectorValid)}
           >
             <TextInput
               id="gwHosts"
@@ -168,7 +169,7 @@ class RequestAuthenticationForm extends React.Component<Props, RequestAuthentica
               isDisabled={!this.state.addWorkloadSelector}
               value={this.state.workloadSelector}
               onChange={this.addWorkloadLabels}
-              isValid={this.state.workloadSelectorValid}
+              validated={isValid(this.state.workloadSelectorValid)}
             />
           </FormGroup>
         )}

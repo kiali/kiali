@@ -56,6 +56,7 @@ import ServiceEntryForm, {
   ServiceEntryState
 } from './ServiceEntryForm';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
+import { isValid } from 'utils/Common';
 
 export interface IstioConfigNewPageId {
   objectType: string;
@@ -366,7 +367,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
               isRequired={true}
               fieldId="name"
               helperTextInvalid={'A valid ' + this.props.match.params.objectType + ' name is required'}
-              isValid={isNameValid}
+              validated={isValid(isNameValid)}
             >
               <TextInput
                 value={this.state.name}
@@ -376,7 +377,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
                 aria-describedby="name"
                 name="name"
                 onChange={this.onNameChange}
-                isValid={isNameValid}
+                validated={isValid(isNameValid)}
               />
             </FormGroup>
             {this.props.match.params.objectType === AUTHORIZACION_POLICY && (

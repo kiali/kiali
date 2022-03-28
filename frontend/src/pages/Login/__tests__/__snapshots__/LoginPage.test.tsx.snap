@@ -36,7 +36,7 @@ exports[`#LoginPage render correctly should render LoginPage 1`] = `
       isRequired={true}
       label="Token"
     >
-      <ForwardRef
+      <TextInput
         id="token"
         isRequired={true}
         onChange={[Function]}
@@ -44,7 +44,7 @@ exports[`#LoginPage render correctly should render LoginPage 1`] = `
       />
     </FormGroup>
     <ActionGroup>
-      <Component
+      <Button
         isDisabled={false}
         onClick={[Function]}
         style={
@@ -56,7 +56,7 @@ exports[`#LoginPage render correctly should render LoginPage 1`] = `
         variant="primary"
       >
         Log In
-      </Component>
+      </Button>
     </ActionGroup>
   </Form>
 </LoginPage>

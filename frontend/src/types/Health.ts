@@ -5,7 +5,7 @@ import {
   MinusCircleIcon,
   UnknownIcon
 } from '@patternfly/react-icons';
-import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
+import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { getName } from '../utils/RateIntervals';
 import { PFColors } from 'components/Pf/PfColors';
 import { calculateErrorRate } from './ErrorRate';
@@ -82,7 +82,7 @@ export interface Status {
   name: string;
   color: string;
   priority: number;
-  icon: IconType;
+  icon: React.ComponentClass<SVGIconProps>;
   class: string;
 }
 

@@ -3,12 +3,11 @@ import {
   Card,
   CardActions,
   CardBody,
-  CardHead,
   CardHeader,
+  CardTitle,
   Dropdown,
   DropdownItem,
-  KebabToggle,
-  Title
+  KebabToggle
 } from '@patternfly/react-core';
 import history from '../../app/History';
 import GraphDataSource from '../../services/GraphDataSource';
@@ -75,7 +74,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
 
     return (
       <Card style={{ height: '100%' }} id={'MiniGraphCard'}>
-        <CardHead>
+        <CardHeader>
           <CardActions>
             <Dropdown
               toggle={<KebabToggle onToggle={this.onGraphActionsToggle} />}
@@ -85,12 +84,8 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
               position={'right'}
             />
           </CardActions>
-          <CardHeader>
-            <Title style={{ float: 'left' }} headingLevel="h5" size="lg">
-              {intervalTitle}
-            </Title>
-          </CardHeader>
-        </CardHead>
+          <CardTitle style={{ float: 'left' }}>{intervalTitle}</CardTitle>
+        </CardHeader>
         <CardBody>
           <div style={{ height: '100%' }}>
             <CytoscapeGraph

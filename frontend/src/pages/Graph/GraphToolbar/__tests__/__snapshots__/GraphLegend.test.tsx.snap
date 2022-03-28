@@ -19,37 +19,9 @@ exports[`GraphLegend test should render correctly 1`] = `
       className="f1blspom"
     >
       <Tooltip
-        appendTo={[Function]}
-        aria="describedby"
-        boundary="window"
-        className=""
         content="Close Legend"
-        distance={15}
-        enableFlip={true}
-        entryDelay={500}
-        exitDelay={500}
-        flipBehavior={
-          Array [
-            "top",
-            "right",
-            "bottom",
-            "left",
-            "top",
-            "right",
-            "bottom",
-          ]
-        }
-        id=""
-        isAppLauncher={false}
-        isContentLeftAligned={false}
-        isVisible={false}
-        maxWidth="18.75rem"
-        position="top"
-        tippyProps={Object {}}
-        trigger="mouseenter focus"
-        zIndex={9999}
       >
-        <Component
+        <Button
           id="legend_close"
           onClick={[MockFunction]}
           variant="plain"
@@ -58,9 +30,8 @@ exports[`GraphLegend test should render correctly 1`] = `
             color="currentColor"
             noVerticalAlign={false}
             size="sm"
-            title={null}
           />
-        </Component>
+        </Button>
       </Tooltip>
     </span>
   </div>

@@ -7,6 +7,7 @@ import { isValidRequestHeaderName } from '../../../../helpers/ValidationHelpers'
 import { style } from 'typestyle';
 import { PFColors } from '../../../../components/Pf/PfColors';
 import { isValidIp } from '../../../../utils/IstioConfigUtils';
+import { isValid } from 'utils/Common';
 
 export type Condition = {
   key: string;
@@ -160,7 +161,7 @@ class ConditionBuilder extends React.Component<Props, State> {
               aria-describedby="add new condition key"
               name="addNewConditionKey"
               onChange={this.onAddNewConditionKey}
-              isValid={validKey}
+              validated={isValid(validKey)}
             />
             {!validKey && (
               <div key="hostsHelperText" className={noValidKeyStyle}>
