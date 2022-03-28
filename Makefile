@@ -165,6 +165,7 @@ include make/Makefile.cluster.mk
 include make/Makefile.helm.mk
 include make/Makefile.operator.mk
 include make/Makefile.molecule.mk
+include make/Makefile.ui.mk
 
 .PHONY: help
 help: Makefile
@@ -186,6 +187,9 @@ help: Makefile
 	@echo
 	@echo "Molecule test targets"
 	@sed -n 's/^##//p' make/Makefile.molecule.mk | column -t -s ':' |  sed -e 's/^/ /'
+	@echo
+	@echo "UI targets"
+	@sed -n 's/^##//p' make/Makefile.ui.mk | column -t -s ':' |  sed -e 's/^/ /'
 	@echo
 	@echo "Misc targets"
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
