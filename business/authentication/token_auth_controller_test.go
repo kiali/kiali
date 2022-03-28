@@ -151,7 +151,7 @@ func TestTokenAuthControllerValidatesSessionCorrectly(t *testing.T) {
 	})
 
 	rr = httptest.NewRecorder()
-	sData, err := controller.ValidateSession(request, rr)
+	sData, _, err := controller.ValidateSession(request, rr)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, sData)
@@ -169,7 +169,7 @@ func TestTokenAuthControllerValidatesSessionWithoutActiveSession(t *testing.T) {
 	})
 
 	rr := httptest.NewRecorder()
-	sData, err := controller.ValidateSession(request, rr)
+	sData, _, err := controller.ValidateSession(request, rr)
 
 	assert.Nil(t, err)
 	assert.Nil(t, sData)
@@ -195,7 +195,7 @@ func TestTokenAuthControllerValidatesSessionForUserWithMissingPrivileges(t *test
 	})
 
 	rr = httptest.NewRecorder()
-	sData, err := controller.ValidateSession(request, rr)
+	sData, _, err := controller.ValidateSession(request, rr)
 
 	assert.Nil(t, err)
 	assert.Nil(t, sData)

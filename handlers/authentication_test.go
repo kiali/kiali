@@ -6,11 +6,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"testing"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -168,7 +166,7 @@ func TestStrategyHeaderOidcAuthentication(t *testing.T) {
 	// session is present. This prevents the user form manually clean browser cookies.
 	currentToken, _ := config.GenerateToken("dummy")
 	oldCookie := http.Cookie{
-		Name:  config.TokenCookieName,
+		Name:  authentication.AESSessionCookieName,
 		Value: currentToken.Token,
 	}
 	request.AddCookie(&oldCookie)
@@ -180,22 +178,12 @@ func TestStrategyHeaderOidcAuthentication(t *testing.T) {
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Len(t, response.Cookies(), 1)
 
+	// Simply check that some cookie is set and has the right expiration. Testing cookie content is left to the session_persistor_test.go
 	cookie := response.Cookies()[0]
-	assert.Equal(t, config.TokenCookieName, cookie.Name)
+	assert.Equal(t, authentication.AESSessionCookieName, cookie.Name)
 	assert.True(t, cookie.HttpOnly)
 
 	assert.Equal(t, clockTime.Add(time.Second*time.Duration(cfg.LoginToken.ExpirationSeconds)), cookie.Expires)
-
-	fromCookie, _, err := new(jwt.Parser).ParseUnverified(cookie.Value, &config.IanaClaims{})
-	if err != nil {
-		assert.FailNow(t, err.Error())
-	}
-
-	claimFromCookie := fromCookie.Claims.(*config.IanaClaims)
-
-	assert.Equal(t, "mmosley", claimFromCookie.Subject)
-	assert.Equal(t, config.AuthStrategyHeaderIssuer, claimFromCookie.Issuer)
-	assert.True(t, IsValidUUID(claimFromCookie.SessionId))
 }
 
 // TestStrategyHeaderAuthentication checks that a user with no active
@@ -228,7 +216,7 @@ func TestStrategyHeaderAuthentication(t *testing.T) {
 	// session is present. This prevents the user form manually clean browser cookies.
 	currentToken, _ := config.GenerateToken("dummy")
 	oldCookie := http.Cookie{
-		Name:  config.TokenCookieName,
+		Name:  authentication.AESSessionCookieName,
 		Value: currentToken.Token,
 	}
 	request.AddCookie(&oldCookie)
@@ -240,22 +228,12 @@ func TestStrategyHeaderAuthentication(t *testing.T) {
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Len(t, response.Cookies(), 1)
 
+	// Simply check that some cookie is set and has the right expiration. Testing cookie content is left to the session_persistor_test.go
 	cookie := response.Cookies()[0]
-	assert.Equal(t, config.TokenCookieName, cookie.Name)
+	assert.Equal(t, authentication.AESSessionCookieName, cookie.Name)
 	assert.True(t, cookie.HttpOnly)
 
 	assert.Equal(t, clockTime.Add(time.Second*time.Duration(cfg.LoginToken.ExpirationSeconds)), cookie.Expires)
-
-	fromCookie, _, err := new(jwt.Parser).ParseUnverified(cookie.Value, &config.IanaClaims{})
-	if err != nil {
-		assert.FailNow(t, err.Error())
-	}
-
-	claimFromCookie := fromCookie.Claims.(*config.IanaClaims)
-
-	assert.Equal(t, "not_an_oidc_token", claimFromCookie.Subject)
-	assert.Equal(t, config.AuthStrategyHeaderIssuer, claimFromCookie.Issuer)
-	assert.True(t, IsValidUUID(claimFromCookie.SessionId))
 }
 
 // TestStrategyHeaderOidcWithImpersonationAuthentication checks that a user with no active
@@ -289,7 +267,7 @@ func TestStrategyHeaderOidcWithImpersonationAuthentication(t *testing.T) {
 	// session is present. This prevents the user form manually clean browser cookies.
 	currentToken, _ := config.GenerateToken("dummy")
 	oldCookie := http.Cookie{
-		Name:  config.TokenCookieName,
+		Name:  authentication.AESSessionCookieName,
 		Value: currentToken.Token,
 	}
 	request.AddCookie(&oldCookie)
@@ -301,22 +279,12 @@ func TestStrategyHeaderOidcWithImpersonationAuthentication(t *testing.T) {
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Len(t, response.Cookies(), 1)
 
+	// Simply check that some cookie is set and has the right expiration. Testing cookie content is left to the session_persistor_test.go
 	cookie := response.Cookies()[0]
-	assert.Equal(t, config.TokenCookieName, cookie.Name)
+	assert.Equal(t, authentication.AESSessionCookieName, cookie.Name)
 	assert.True(t, cookie.HttpOnly)
 
 	assert.Equal(t, clockTime.Add(time.Second*time.Duration(cfg.LoginToken.ExpirationSeconds)), cookie.Expires)
-
-	fromCookie, _, err := new(jwt.Parser).ParseUnverified(cookie.Value, &config.IanaClaims{})
-	if err != nil {
-		assert.FailNow(t, err.Error())
-	}
-
-	claimFromCookie := fromCookie.Claims.(*config.IanaClaims)
-
-	assert.Equal(t, "mmosley", claimFromCookie.Subject)
-	assert.Equal(t, config.AuthStrategyHeaderIssuer, claimFromCookie.Issuer)
-	assert.True(t, IsValidUUID(claimFromCookie.SessionId))
 }
 
 func mockK8s(reject bool) {
@@ -338,9 +306,4 @@ func mockK8s(reject bool) {
 			},
 		}, nil)
 	}
-}
-
-func IsValidUUID(uuid string) bool {
-	r := regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$")
-	return r.MatchString(uuid)
 }

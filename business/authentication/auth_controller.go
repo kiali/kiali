@@ -1,6 +1,7 @@
 package authentication
 
 import (
+	"k8s.io/client-go/tools/clientcmd/api"
 	"net/http"
 
 	"github.com/kiali/kiali/config"
@@ -35,8 +36,8 @@ type AuthController interface {
 
 	// ValidateSession restores a session previously created by the Authenticate function. The validity of
 	// the restored should be verified as much as possible by the implementing controllers.
-	// If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
-	ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error)
+	// If the session is still valid, a populated UserSessionData and api.AuthInfo is returned. Otherwise, nil is returned.
+	ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, *api.AuthInfo, error)
 
 	// TerminateSession performs the needed procedures to terminate an existing session. If there is no
 	// active session, nothing is performed. If there is some invalid session, it is cleared.
@@ -63,5 +64,7 @@ func InitializeAuthenticationController(strategy string) {
 		authController = NewOpenIdAuthController(persistor, nil)
 	} else if strategy == config.AuthStrategyOpenshift {
 		authController = NewOpenshiftAuthController(persistor, nil)
+	} else if strategy == config.AuthStrategyHeader {
+		authController = NewHeaderAuthController(persistor, nil)
 	}
 }
