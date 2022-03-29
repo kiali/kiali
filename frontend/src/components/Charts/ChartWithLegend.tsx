@@ -197,7 +197,7 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
         <Chart
           width={this.state.width}
           padding={padding}
-          events={events}
+          events={events as any[]}
           height={chartHeight}
           containerComponent={newBrushVoronoiContainer(
             labelComponent,

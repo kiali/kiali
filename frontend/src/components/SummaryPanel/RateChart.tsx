@@ -71,7 +71,7 @@ export class RateChart extends React.Component<Props, State> {
         padding={padding}
         domainPadding={{ x: singleBar ? [15, 15] : [30, 25] }}
         domain={{ y: [0, 100] }}
-        events={events}
+        events={events as any[]}
       >
         <ChartStack
           colorScale={this.props.series

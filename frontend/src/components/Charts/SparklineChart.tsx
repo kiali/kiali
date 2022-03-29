@@ -71,7 +71,15 @@ export class SparklineChart extends React.Component<Props, State> {
   private renderChart() {
     const legendHeight = 30;
     let height = this.props.height || 300;
-    const padding = { top: 0, bottom: 0, left: 0, right: 0, ...this.props.padding };
+    let padding = { top: 0, bottom: 0, left: 0, right: 0 };
+    if (this.props.padding) {
+      const p = this.props.padding as number;
+      if (Number.isFinite(p)) {
+        padding = { top: p, bottom: p, left: p, right: p };
+      } else {
+        padding = { ...padding, ...(this.props.padding as object) };
+      }
+    }
     const events: VCEvent[] = [];
     if (this.props.showLegend) {
       padding.bottom += legendHeight;
@@ -117,7 +125,7 @@ export class SparklineChart extends React.Component<Props, State> {
         height={height}
         width={this.state.width}
         padding={padding}
-        events={events}
+        events={events as any[]}
         containerComponent={container}
         // Hack: 1 pxl on Y domain padding to prevent harsh clipping (https://github.com/kiali/kiali/issues/2069)
         domainPadding={{ y: 1 }}
