@@ -14,6 +14,12 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
+// headerAuthController contains the backing logic to implement
+// Kiali's "header" authentication strategy. It assumes that authentication
+// is fully done by an external system and Kiali does not participate. Kiali
+// receives already valid credentials through HTTP headers on each request.
+// Because of this, only minimal validation of the received credentials is
+// performed.
 type headerAuthController struct {
 	// businessInstantiator is a function that returns an already initialized
 	// business layer. Normally, it should be set to the business.Get function.
@@ -24,13 +30,19 @@ type headerAuthController struct {
 	SessionStore SessionPersistor
 }
 
+// headerSessionPayload is a helper type used as session data storage. An instance
+// of this type is used with the SessionPersistor for session creation and persistence.
 type headerSessionPayload struct {
+	// The resolved username associated with the received credentials.
 	Subject string `json:"subject,omitempty"`
 
 	// Token is the (TODO)
 	Token string `json:"token,omitempty"`
 }
 
+// NewHeaderAuthController initializes a new controller for allowing already authenticated requests, with the
+// given persistor and the given businessInstantiator. The businessInstantiator can be nil and
+// the initialized controller will use the business.Get function.
 func NewHeaderAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *headerAuthController {
 	if businessInstantiator == nil {
 		businessInstantiator = business.Get
@@ -42,6 +54,12 @@ func NewHeaderAuthController(persistor SessionPersistor, businessInstantiator fu
 	}
 }
 
+// Authenticate handles an HTTP request that contains credentials passed in HTTP headers.
+// It is assumed that some external system is fully controlling authentication. Thus, it is
+// assumed that the received credentials should be valid. Nevertheless, a minimal verification
+// is done by trying to fetch the account/user name from the cluster. If account/user name information
+// cannot be fetched, authentication is rejected.
+// An if authentication failed for any reason (even for unexpected errors).
 func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	authInfo := c.getTokenStringFromHeader(r)
 
@@ -100,6 +118,10 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 	}, nil
 }
 
+// ValidateSession restores a session previously created by the Authenticate function. A minimal re-validation
+// is done: the Bearer token received in the HTTP Authorization header must be the same as the one provided
+// during initial Authentication.
+// If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
 func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, *api.AuthInfo, error) {
 	log.Tracef("Using header for authentication, Url: [%s]", r.URL.String())
 
@@ -131,6 +153,12 @@ func (c headerAuthController) TerminateSession(r *http.Request, w http.ResponseW
 	c.SessionStore.TerminateSession(r, w)
 }
 
+// getTokenStringFromHeader builds a Kubernetes api.AuthInfo object that contains user credentials
+// and any other credential attributes received through HTTP headers. Minimally, the standard HTTP
+// Authorization header is required to be present in the request containing a Bearer token that
+// can be used to make requests to the cluster API. Additionally, Kubernetes Impersonation
+// headers are allowed. Since all these headers are going to be used against the cluster API, here
+// we read passively the data and let the cluster do its own validations on the credentials.
 func (c headerAuthController) getTokenStringFromHeader(r *http.Request) *api.AuthInfo {
 	tokenString := "" // Default to no token.
 
