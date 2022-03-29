@@ -76,7 +76,9 @@ func main() {
 		log.Infof("No configuration file specified. Will rely on environment for configuration.")
 		config.Set(config.NewConfig())
 	}
-	log.Tracef("Kiali Configuration:\n%s", config.Get())
+
+	cfg := config.Get()
+	log.Tracef("Kiali Configuration:\n%s", cfg)
 
 	if err := validateConfig(); err != nil {
 		log.Fatal(err)
@@ -95,7 +97,7 @@ func main() {
 	// The complete compatible version matrix is recorded in version-compatibility-matrix.yaml
 	status.CheckVersionCompatibility()
 
-	authentication.InitializeAuthenticationController(config.Get().Auth.Strategy)
+	authentication.InitializeAuthenticationController(cfg.Auth.Strategy)
 
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
