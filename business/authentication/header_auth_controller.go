@@ -36,7 +36,8 @@ type headerSessionPayload struct {
 	// The resolved username associated with the received credentials.
 	Subject string `json:"subject,omitempty"`
 
-	// Token is the (TODO)
+	// Token is the Bearer token that the upstream client sent on the HTTP Authorization
+	// header at the initial authentication.
 	Token string `json:"token,omitempty"`
 }
 
