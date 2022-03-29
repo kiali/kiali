@@ -151,7 +151,7 @@ func (o openshiftAuthController) TerminateSession(r *http.Request, w http.Respon
 	sData, err := o.SessionStore.ReadSession(r, w, &sPayload)
 	if err != nil {
 		return TerminateSessionError{
-			Message:    fmt.Sprintf("Apparently, there is no active openshift session: %v", err),
+			Message:    fmt.Sprintf("There is no active openshift session: %v", err),
 			HttpStatus: http.StatusUnauthorized,
 		}
 	}
