@@ -1,8 +1,9 @@
 package authentication
 
 import (
-	"k8s.io/client-go/tools/clientcmd/api"
 	"net/http"
+
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
 )
