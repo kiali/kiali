@@ -1,4 +1,4 @@
-import { FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterTypes, FilterValue, RunnableFilter } from 'types/Filters';
+import { FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, AllFilterTypes, FilterValue, RunnableFilter } from 'types/Filters';
 import { RichSpanData } from 'types/JaegerInfo';
 
 const byWorkload = (workloads: FilterValue[]): RunnableFilter<RichSpanData> => {
@@ -6,7 +6,7 @@ const byWorkload = (workloads: FilterValue[]): RunnableFilter<RichSpanData> => {
     id: 'workload',
     title: 'Workload',
     placeholder: 'Filter by Workload',
-    filterType: FilterTypes.typeAhead,
+    filterType: AllFilterTypes.typeAhead,
     action: FILTER_ACTION_APPEND,
     filterValues: workloads,
     run: (item, filters) => filters.filters.some(f => f.value === item.workload)
@@ -18,7 +18,7 @@ const byApp = (apps: FilterValue[]): RunnableFilter<RichSpanData> => {
     id: 'app',
     title: 'App',
     placeholder: 'Filter by App',
-    filterType: FilterTypes.typeAhead,
+    filterType: AllFilterTypes.typeAhead,
     action: FILTER_ACTION_APPEND,
     filterValues: apps,
     run: (item, filters) => filters.filters.some(f => f.value === item.app)
@@ -30,7 +30,7 @@ const byComponent = (components: FilterValue[]): RunnableFilter<RichSpanData> =>
     id: 'type',
     title: 'Component',
     placeholder: 'Filter by Span Component',
-    filterType: FilterTypes.typeAhead,
+    filterType: AllFilterTypes.typeAhead,
     action: FILTER_ACTION_APPEND,
     filterValues: components,
     run: (item, filters) => filters.filters.some(f => f.value === item.component)
@@ -42,7 +42,7 @@ const byOperation = (ops: FilterValue[]): RunnableFilter<RichSpanData> => {
     id: 'operation',
     title: 'Operation',
     placeholder: 'Filter by Operation Name',
-    filterType: FilterTypes.typeAhead,
+    filterType: AllFilterTypes.typeAhead,
     action: FILTER_ACTION_APPEND,
     filterValues: ops,
     run: (item, filters) => filters.filters.some(f => f.value === item.operationName)
@@ -53,7 +53,7 @@ const byError: RunnableFilter<RichSpanData> = {
   id: 'error',
   title: 'Error',
   placeholder: 'Filter by Error',
-  filterType: FilterTypes.select,
+  filterType: AllFilterTypes.select,
   action: FILTER_ACTION_UPDATE,
   filterValues: [
     { id: 'yes', title: 'With errors' },

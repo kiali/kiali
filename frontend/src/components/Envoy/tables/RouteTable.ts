@@ -1,7 +1,7 @@
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
 import { ICell, ISortBy, sortable } from '@patternfly/react-table';
 import { RouteSummary } from '../../../types/IstioObjects';
-import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, FilterTypes } from '../../../types/Filters';
+import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
 import Namespace from '../../../types/Namespace';
 import { defaultFilter, istioConfigLink, serviceLink } from '../../../helpers/EnvoyHelpers';
@@ -27,7 +27,7 @@ export class RouteTable implements SummaryTable {
         id: 'name',
         title: 'Name',
         placeholder: 'Name',
-        filterType: FilterTypes.text,
+        filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
@@ -35,7 +35,7 @@ export class RouteTable implements SummaryTable {
         id: 'domains',
         title: 'Domains',
         placeholder: 'Domains',
-        filterType: FilterTypes.text,
+        filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       }

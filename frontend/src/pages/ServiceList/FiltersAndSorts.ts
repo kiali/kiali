@@ -1,4 +1,4 @@
-import { ActiveFiltersInfo, FilterType, FILTER_ACTION_APPEND, FilterTypes } from '../../types/Filters';
+import { ActiveFiltersInfo, FilterType, FILTER_ACTION_APPEND, AllFilterTypes } from '../../types/Filters';
 import { hasHealth } from '../../types/Health';
 import { ServiceListItem } from '../../types/ServiceList';
 import { SortField } from '../../types/SortFilters';
@@ -145,7 +145,7 @@ const serviceTypeFilter: FilterType = {
   id: 'serviceregistry',
   title: 'Service Type',
   placeholder: 'Filter by Service Type',
-  filterType: FilterTypes.typeAhead,
+  filterType: AllFilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {

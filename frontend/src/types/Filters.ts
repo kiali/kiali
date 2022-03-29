@@ -13,7 +13,7 @@ enum NonInputTypes {
   nsLabel = 'nsLabel'
 }
 
-export const FilterTypes = {
+export const AllFilterTypes = {
   ...TextInputTypes,
   ...NonInputTypes
 };

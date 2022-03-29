@@ -22,7 +22,7 @@ import {
   DEFAULT_LABEL_OPERATION,
   FILTER_ACTION_UPDATE,
   FilterType,
-  FilterTypes,
+  AllFilterTypes,
   LabelOperation
 } from '../../types/Filters';
 import * as FilterHelper from '../FilterList/FilterHelper';
@@ -261,7 +261,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     if (!currentFilterType) {
       return null;
     }
-    if (currentFilterType.filterType === FilterTypes.typeAhead) {
+    if (currentFilterType.filterType === AllFilterTypes.typeAhead) {
       return (
         <Select
           value={'default'}
@@ -278,7 +278,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           ))}
         </Select>
       );
-    } else if (currentFilterType.filterType === FilterTypes.select) {
+    } else if (currentFilterType.filterType === AllFilterTypes.select) {
       return (
         <FormSelect
           value={'default'}
@@ -293,8 +293,8 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
         </FormSelect>
       );
     } else if (
-      currentFilterType.filterType === FilterTypes.label ||
-      currentFilterType.filterType === FilterTypes.nsLabel
+      currentFilterType.filterType === AllFilterTypes.label ||
+      currentFilterType.filterType === AllFilterTypes.nsLabel
     ) {
       return (
         <LabelFilters
@@ -376,7 +376,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
             </ToolbarGroup>
             {!this.props.childrenFirst && this.renderChildren()}
             {(this.state.activeFilters.filters.filter(f => f.id === labelFilter.id).length > 0 ||
-              this.state.currentFilterType.filterType === FilterTypes.label) && (
+              this.state.currentFilterType.filterType === AllFilterTypes.label) && (
               <ToolbarGroup>
                 <ToolbarItem className={classNames('pf-u-mr-md')}>
                   <span className={classNames(paddingStyle)}>Label Operation</span>
