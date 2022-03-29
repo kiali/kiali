@@ -65,7 +65,7 @@ const (
 type FeatureName string
 
 const (
-	FeatureLogView FeatureName = "log-view"
+	FeatureLogView FeatureName = "logs-tab"
 )
 
 // Global configuration for the application.

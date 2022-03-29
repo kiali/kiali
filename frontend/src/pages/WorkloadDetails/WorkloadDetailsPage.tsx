@@ -130,7 +130,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     );
     tabsArray.push(trafficTab);
 
-    if (!serverConfig.kialiFeatureFlags.disabledFeatures || !serverConfig.kialiFeatureFlags.disabledFeatures.includes('log-view')) {
+    if (!serverConfig.kialiFeatureFlags.disabledFeatures || !serverConfig.kialiFeatureFlags.disabledFeatures.includes('logs-tab')) {
       const logTab = (
         <Tab title="Logs" eventKey={2} key={'Logs'}>
           {hasPods ? (
