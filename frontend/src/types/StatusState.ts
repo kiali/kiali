@@ -1,4 +1,5 @@
 export enum StatusKey {
+  DISABLED_FEATURES = 'Disabled features',
   KIALI_CORE_COMMIT_HASH = 'Kiali core commit hash',
   KIALI_CORE_VERSION = 'Kiali core version',
   KIALI_CONSOLE_VERSION = 'Kiali console version',
