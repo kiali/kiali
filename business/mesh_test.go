@@ -53,6 +53,10 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 									Name:  "CLUSTER_ID",
 									Value: "KialiCluster",
 								},
+								{
+									Name:  "PILOT_SCOPE_GATEWAY_TO_NAMESPACE",
+									Value: "true",
+								},
 							},
 						},
 					},
@@ -109,6 +113,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	check.Len(a, 1, "GetClusters didn't resolve the Kiali cluster")
 	check.Equal("KialiCluster", a[0].Name, "Unexpected cluster name")
 	check.True(a[0].IsKialiHome, "Kiali cluster not properly marked as such")
+	check.True(a[0].IsGatewayToNamespace, "Kiali GatewayToNamespace not properly marked as such")
 	check.Equal("http://127.0.0.2:9443", a[0].ApiEndpoint)
 	check.Len(a[0].SecretName, 0)
 	check.Equal("kialiNetwork", a[0].Network)
@@ -312,6 +317,10 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 									Name:  "CLUSTER_ID",
 									Value: "KialiCluster",
 								},
+								{
+									Name:  "PILOT_SCOPE_GATEWAY_TO_NAMESPACE",
+									Value: "false",
+								},
 							},
 						},
 					},
@@ -341,6 +350,7 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	check.Nil(err, "ResolveKialiControlPlaneCluster failed: %s", err)
 	check.NotNil(result)
 	check.Equal("KialiCluster", result.Name) // Sanity check. Rest of values are tested in TestGetClustersResolvesTheKialiCluster
+	check.False(result.IsGatewayToNamespace, "Kiali GatewayToNamespace not properly marked as such")
 
 	// Create a new MeshService with an empty mock. If cached value is properly used, the
 	// empty mock should never be called and we still should get a value.

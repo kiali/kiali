@@ -26,6 +26,7 @@ func TestValidInternalSelector(t *testing.T) {
 			"test": data.CreateWorkloadList("istio-system",
 				data.CreateWorkloadListItem("istio-ingressgateway", map[string]string{"istio": "ingressgateway"})),
 		},
+		IsGatewayToNamespace: false,
 	}.Check()
 
 	assert.True(valid)
@@ -37,6 +38,7 @@ func TestValidInternalSelector(t *testing.T) {
 			"test": data.CreateWorkloadList("istio-system",
 				data.CreateWorkloadListItem("istio-egressgateway", map[string]string{"istio": "egressgateway"})),
 		},
+		IsGatewayToNamespace: false,
 	}.Check()
 
 	assert.True(valid)
@@ -57,6 +59,74 @@ func TestValidNamespaceSelector(t *testing.T) {
 			"test": data.CreateWorkloadList("test",
 				data.CreateWorkloadListItem("testproxy", map[string]string{"app": "proxy"})),
 		},
+		IsGatewayToNamespace: false,
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
+func TestLocalNamespaceSelector(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	// gateway and workload in same namespace, IsGatewayToNamespace: true, valid
+	gw := data.CreateEmptyGateway("gwone", "test", map[string]string{"app": "proxy"})
+
+	vals, valid := SelectorChecker{
+		Gateway: *gw,
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test": data.CreateWorkloadList("test",
+				data.CreateWorkloadListItem("testproxy", map[string]string{"app": "proxy"})),
+		},
+		IsGatewayToNamespace: true,
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(vals)
+
+	// gateway and workload in same namespace, IsGatewayToNamespace: false, valid
+	gw = data.CreateEmptyGateway("gwone", "test", map[string]string{"app": "proxy"})
+
+	vals, valid = SelectorChecker{
+		Gateway: *gw,
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test": data.CreateWorkloadList("test",
+				data.CreateWorkloadListItem("testproxy", map[string]string{"app": "proxy"})),
+		},
+		IsGatewayToNamespace: false,
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(vals)
+
+	// gateway and workload in different namespace, IsGatewayToNamespace: true, invalid
+	gw = data.CreateEmptyGateway("gwone", "other", map[string]string{"app": "proxy"})
+
+	vals, valid = SelectorChecker{
+		Gateway: *gw,
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test": data.CreateWorkloadList("test",
+				data.CreateWorkloadListItem("testproxy", map[string]string{"app": "proxy"})),
+		},
+		IsGatewayToNamespace: true,
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(vals)
+
+	// gateway and workload in different namespace, IsGatewayToNamespace: false, valid
+	gw = data.CreateEmptyGateway("gwone", "other", map[string]string{"app": "proxy"})
+
+	vals, valid = SelectorChecker{
+		Gateway: *gw,
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test": data.CreateWorkloadList("test",
+				data.CreateWorkloadListItem("testproxy", map[string]string{"app": "proxy"})),
+		},
+		IsGatewayToNamespace: false,
 	}.Check()
 
 	assert.True(valid)
@@ -77,6 +147,7 @@ func TestValidIstioNamespaceSelector(t *testing.T) {
 			"testproxy": data.CreateWorkloadList(conf.IstioNamespace,
 				data.CreateWorkloadListItem("testproxy", map[string]string{"app": "proxy"})),
 		},
+		IsGatewayToNamespace: false,
 	}.Check()
 
 	assert.True(valid)
@@ -92,6 +163,7 @@ func TestValidIstioNamespaceSelector(t *testing.T) {
 				Workloads: []models.WorkloadListItem{},
 			},
 		},
+		IsGatewayToNamespace: false,
 	}.Check()
 
 	assert.False(valid)
@@ -111,6 +183,7 @@ func TestMissingSelectorTarget(t *testing.T) {
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
 			"test": data.CreateWorkloadList("test"),
 		},
+		IsGatewayToNamespace: false,
 	}.Check()
 
 	assert.False(valid)

@@ -45,6 +45,9 @@ type Cluster struct {
 	// IsKialiHome specifies if this cluster is hosting this Kiali instance (and the observed Mesh Control Plane)
 	IsKialiHome bool `json:"isKialiHome"`
 
+	// IsGatewayToNamespace specifies the PILOT_SCOPE_GATEWAY_TO_NAMESPACE environment variable in Control PLane
+	IsGatewayToNamespace bool `json:"isGatewayToNamespace"`
+
 	// KialiInstances is the list of Kialis discovered in the cluster.
 	KialiInstances []KialiInstance `json:"kialiInstances"`
 
@@ -228,6 +231,14 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 		}
 	}
 
+	gatewayToNamespace := false
+	for _, v := range istioDeployment.Spec.Template.Spec.Containers[0].Env {
+		if v.Name == "PILOT_SCOPE_GATEWAY_TO_NAMESPACE" {
+			gatewayToNamespace = v.Value == "true"
+			break
+		}
+	}
+
 	if len(myClusterName) == 0 {
 		// We didn't find it. This may mean that Istio is not setup with multi-cluster enabled.
 		kialiControlPlaneClusterCached = true
@@ -266,12 +277,13 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 
 	kialiControlPlaneClusterCached = true
 	kialiControlPlaneCluster = &Cluster{
-		ApiEndpoint:    restConfig.Host,
-		IsKialiHome:    true,
-		KialiInstances: kialiInstances,
-		Name:           myClusterName,
-		Network:        kialiNetwork,
-		SecretName:     "",
+		ApiEndpoint:          restConfig.Host,
+		IsKialiHome:          true,
+		IsGatewayToNamespace: gatewayToNamespace,
+		KialiInstances:       kialiInstances,
+		Name:                 myClusterName,
+		Network:              kialiNetwork,
+		SecretName:           "",
 	}
 
 	return kialiControlPlaneCluster, nil
