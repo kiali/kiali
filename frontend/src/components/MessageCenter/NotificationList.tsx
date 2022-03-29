@@ -21,6 +21,9 @@ export default class NotificationList extends React.PureComponent<NotificationLi
             case MessageType.WARNING:
               variant = AlertVariant.warning;
               break;
+            case MessageType.INFO:
+              variant = AlertVariant.info;
+              break;
             default:
               variant = AlertVariant.danger;
           }
