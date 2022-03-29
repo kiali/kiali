@@ -103,7 +103,7 @@
     "react-tagsinput": "3.19.x",
     "react-transition-group": "2.3.x",
     "react-virtualized": "9.x",
-    "redux": "4.0.1",
+    "redux": "4.0.3",
     "redux-persist": "5.10.0",
     "redux-persist-transform-filter": "0.0.18",
     "redux-thunk": "2.4.1",
@@ -154,6 +154,8 @@
     "typescript": "3.8.3"
   },
   "resolutions": {
+    "postcss": "^8.4.12",
+    "postcss-normalize": "10.0.1"
   },
   "engines": {
     "node": ">=12.22.0 && <16",
