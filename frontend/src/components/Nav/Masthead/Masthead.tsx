@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { style } from 'typestyle';
-import { Label, Toolbar as ToolbarNext, ToolbarGroup, ToolbarItem, Tooltip } from '@patternfly/react-core';
+import { Label, Toolbar, ToolbarGroup, ToolbarItem, Tooltip } from '@patternfly/react-core';
 import { ClusterIcon } from '@patternfly/react-icons';
 
 import { serverConfig } from '../../../config';
@@ -20,11 +20,11 @@ const leftGroup = style({
 class Masthead extends React.Component {
   render() {
     return (
-      <ToolbarNext>
+      <Toolbar>
         <ToolbarGroup className={leftGroup}>
           <PfSpinner />
         </ToolbarGroup>
-        <ToolbarGroup>
+        <ToolbarGroup alignment={{ default: 'alignRight' }}>
           {!!serverConfig.clusterInfo?.name && (
             <ToolbarItem>
               <div style={{ paddingRight: '1em' }}>
@@ -56,7 +56,7 @@ class Masthead extends React.Component {
             <UserDropdown />
           </ToolbarItem>
         </ToolbarGroup>
-      </ToolbarNext>
+      </Toolbar>
     );
   }
 }

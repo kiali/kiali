@@ -79,6 +79,7 @@
     "lodash": "4.17.21",
     "m-react-splitters": "1.2.0",
     "moment": "2.24.0",
+    "postcss-normalize": "10.0.1",
     "react": "^17.0.1",
     "react-ace": "9.1.3",
     "react-copy-to-clipboard": "5.x",
@@ -154,8 +155,7 @@
     "typescript": "3.8.3"
   },
   "resolutions": {
-    "postcss": "^8.4.12",
-    "postcss-normalize": "10.0.1"
+    "postcss": "^8.4.12"
   },
   "engines": {
     "node": ">=12.22.0 && <16",
