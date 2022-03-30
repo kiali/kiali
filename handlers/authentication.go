@@ -192,7 +192,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 			httputil.GuessKialiURL(r))
 	}
 
-	if conf.Auth.Strategy == config.AuthStrategyAnonymous || conf.Auth.Strategy == config.AuthStrategyHeader {
+	if conf.Auth.Strategy == config.AuthStrategyAnonymous {
 		token := getTokenStringFromRequest(r)
 		claims, _ := config.GetTokenClaimsIfValid(token)
 
