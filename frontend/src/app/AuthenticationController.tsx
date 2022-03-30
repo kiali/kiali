@@ -344,7 +344,7 @@ export class AuthenticationController extends React.Component<
     });
 
     if (status.status[StatusKey.DISABLED_FEATURES]) {
-      this.props.addMessage("The following features are disabled: " + status.status[StatusKey.DISABLED_FEATURES], '', 'default', MessageType.INFO)
+      this.props.addMessage("The following features are disabled: " + status.status[StatusKey.DISABLED_FEATURES], '', 'default', MessageType.INFO, false)
     }
   };
 }
