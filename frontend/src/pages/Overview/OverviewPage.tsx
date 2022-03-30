@@ -91,11 +91,6 @@ const emptyStateStyle = style({
   marginTop: 10
 });
 
-const cardHeaderStyle = style({
-  width: '75%',
-  textAlign: 'left'
-});
-
 const cardNamespaceNameNormalStyle = style({
   display: 'inline-block',
   verticalAlign: 'middle'
@@ -745,10 +740,14 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                   const isLongNs = ns.name.length > NS_LONG;
                   return (
                     <GridItem sm={sm} md={md} key={'CardItem_' + ns.name} style={{ margin: '0px 5px 0 5px' }}>
-                      <Card isCompact={true} className={cardGridStyle} data-namespace={ns.name} data-display-mode={OverviewDisplayMode[this.state.displayMode]}>
-                        <CardHeaderMain>
-                          <CardActions>{namespaceActions[i]}</CardActions>
-                          <CardHeader className={cardHeaderStyle}>
+                      <Card
+                        isCompact={true}
+                        className={cardGridStyle}
+                        data-namespace={ns.name}
+                        data-display-mode={OverviewDisplayMode[this.state.displayMode]}
+                      >
+                        <CardHeader>
+                          <CardHeaderMain>
                             <Title headingLevel="h5" size={TitleSizes.lg}>
                               <span
                                 className={isLongNs ? cardNamespaceNameLongStyle : cardNamespaceNameNormalStyle}
@@ -757,8 +756,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 {ns.name}
                               </span>
                             </Title>
-                          </CardHeader>
-                        </CardHeaderMain>
+                          </CardHeaderMain>
+                          <CardActions>{namespaceActions[i]}</CardActions>
+                        </CardHeader>
                         <CardBody>
                           {this.renderLabels(ns)}
                           <div style={{ textAlign: 'left' }}>
@@ -841,14 +841,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   renderStatuses(ns: NamespaceInfo): JSX.Element {
     if (ns.status) {
       if (this.state.displayMode === OverviewDisplayMode.COMPACT) {
-        return (
-          <OverviewCardContentCompact
-            key={ns.name}
-            name={ns.name}
-            status={ns.status}
-            type={this.state.type}
-          />
-        );
+        return <OverviewCardContentCompact key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />;
       }
       return (
         <OverviewCardContentExpanded
