@@ -174,8 +174,9 @@ export class OverviewToolbar extends React.Component<Props, State> {
               value={this.state.sortField.id}
               label={sortTypes[this.state.overviewType]}
               options={sortTypes}
+              data-sort-field={this.state.sortField.id}
             />
-            <Button variant="plain" onClick={this.updateSortDirection} style={{ ...ThinStyle }}>
+            <Button variant="plain" onClick={this.updateSortDirection} style={{ ...ThinStyle }} data-sort-asc={this.state.isSortAscending}>
               {this.state.isSortAscending ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
             </Button>
           </>
@@ -209,6 +210,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
             variant="plain"
             isActive={this.props.displayMode === OverviewDisplayMode.EXPAND}
             style={{ padding: '0 4px 0 16px' }}
+            data-display-mode={OverviewDisplayMode[OverviewDisplayMode.EXPAND]}
           >
             <ThLargeIcon />
           </Button>
@@ -219,6 +221,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
             variant="plain"
             isActive={this.props.displayMode === OverviewDisplayMode.COMPACT}
             style={{ padding: '0 4px 0 4px' }}
+            data-display-mode={OverviewDisplayMode[OverviewDisplayMode.COMPACT]}
           >
             <ThIcon />
           </Button>
@@ -229,6 +232,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
             variant="plain"
             isActive={this.props.displayMode === OverviewDisplayMode.LIST}
             style={{ padding: '0 4px 0 4px' }}
+            data-display-mode={OverviewDisplayMode[OverviewDisplayMode.LIST]}
           >
             <ListIcon />
           </Button>
