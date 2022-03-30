@@ -377,7 +377,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                     // deleteChipGroup={this.onDeleteGroup}
                     categoryName={ft.id}
                   >
-                    {i == 0 && (
+                    {i === 0 && (
                       <FormSelect
                         value={currentFilterType.id}
                         aria-label={'filter_select_type'}
