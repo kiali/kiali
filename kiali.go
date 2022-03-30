@@ -183,6 +183,11 @@ func validateConfig() error {
 	// log a info message if the user is disabling some features
 	if len(cfg.KialiFeatureFlags.DisabledFeatures) > 0 {
 		log.Infof("Some features are disabled: [%v]", strings.Join(cfg.KialiFeatureFlags.DisabledFeatures, ","))
+		for _, fn := range cfg.KialiFeatureFlags.DisabledFeatures {
+			if err := config.FeatureName(fn).IsValid(); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

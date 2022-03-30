@@ -68,6 +68,14 @@ const (
 	FeatureLogView FeatureName = "logs-tab"
 )
 
+func (fn FeatureName) IsValid() error {
+	switch fn {
+	case FeatureLogView:
+		return nil
+	}
+	return fmt.Errorf("Invalid feature name: %v", fn)
+}
+
 // Global configuration for the application.
 var configuration Config
 var rwMutex sync.RWMutex
