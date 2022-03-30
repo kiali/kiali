@@ -1,0 +1,191 @@
+package authentication
+
+import (
+	"errors"
+	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
+	"k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
+)
+
+// openshiftSessionPayload holds the data that will be persisted in the SessionStore
+// in order to be able to maintain the session of the user across requests.
+type openshiftSessionPayload struct {
+	// Token is the access_token that was provided by the OpenShift OAuth server.
+	// It can be used against the cluster API.
+	Token string `json:"token,omitempty"`
+}
+
+// openshiftAuthController contains the backing logic to implement
+// Kiali's "openshift" authentication strategy. This authentication
+// strategy is basically an implementation of OAuth's implicit flow
+// with the specifics of OpenShift.
+type openshiftAuthController struct {
+	// businessInstantiator is a function that returns an already initialized
+	// business layer. Normally, it should be set to the business.Get function.
+	// For tests, it can be set to something else that returns a compatible API.
+	businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)
+
+	// SessionStore persists the session between HTTP requests.
+	SessionStore SessionPersistor
+}
+
+// NewOpenshiftAuthController initializes a new controller for handling OpenShift authentication, with the
+// given persistor and the given businessInstantiator. The businessInstantiator can be nil and
+// the initialized contoller will use the business.Get function.
+func NewOpenshiftAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *openshiftAuthController {
+	if businessInstantiator == nil {
+		businessInstantiator = business.Get
+	}
+
+	return &openshiftAuthController{
+		businessInstantiator: businessInstantiator,
+		SessionStore:         persistor,
+	}
+}
+
+// Authenticate handles an HTTP request that contains the access_token, expires_in URL parameters. The access_token
+// should be the token that was obtained from the OpenShift OAuth server and expires_in is the expiration date-time
+// of the token. The token is validated by obtaining the information user tied to it. Although RBAC is always assumed
+// when using OpenShift, privileges are not checked here.
+func (o openshiftAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+	err := r.ParseForm()
+
+	if err != nil {
+		return nil, fmt.Errorf("error parsing form info: %w", err)
+	}
+
+	token := r.Form.Get("access_token")
+	expiresIn := r.Form.Get("expires_in")
+	if token == "" || expiresIn == "" {
+		return nil, errors.New("token is empty or invalid")
+	}
+
+	expiresInNumber, err := strconv.Atoi(expiresIn)
+	if err != nil {
+		return nil, fmt.Errorf("token is empty or invalid: %w", err)
+	}
+
+	expiresOn := time.Now().Add(time.Second * time.Duration(expiresInNumber))
+	bs, err := o.businessInstantiator(&api.AuthInfo{Token: ""})
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving the OAuth package (getting business layer): %w", err)
+	}
+
+	user, err := bs.OpenshiftOAuth.GetUserInfo(token)
+	if err != nil {
+		o.SessionStore.TerminateSession(r, w)
+		return nil, &AuthenticationFailureError{
+			Reason:     "Token is not valid or is expired.",
+			Detail:     err,
+			HttpStatus: http.StatusUnauthorized,
+		}
+	}
+
+	err = o.SessionStore.CreateSession(r, w, config.AuthStrategyOpenshift, expiresOn, openshiftSessionPayload{Token: token})
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserSessionData{
+		ExpiresOn: expiresOn,
+		Username:  user.Metadata.Name,
+		Token:     token,
+	}, nil
+}
+
+// ValidateSession restores a session previously created by the Authenticate function. The user token (access_token)
+// is revalidated by re-fetching user info from the cluster, to ensure that the token hasn't been revoked.
+// If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
+func (o openshiftAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+	sPayload := openshiftSessionPayload{}
+	sData, err := o.SessionStore.ReadSession(r, w, &sPayload)
+	if err != nil {
+		log.Warningf("Could not read the openshift session: %v", err)
+		return nil, nil
+	}
+	if sData == nil {
+		return nil, nil
+	}
+
+	// The Openshift token must be present
+	if len(sPayload.Token) == 0 {
+		log.Warning("Session is invalid: the Openshift token is absent")
+		return nil, nil
+	}
+
+	bs, err := o.businessInstantiator(&api.AuthInfo{Token: sPayload.Token})
+	if err != nil {
+		log.Warningf("Could not get the business layer!: %v", err)
+		return nil, fmt.Errorf("could not get the business layer: %w", err)
+	}
+
+	user, err := bs.OpenshiftOAuth.GetUserInfo(sPayload.Token)
+	if err == nil {
+		// Internal header used to propagate the subject of the request for audit purposes
+		r.Header.Add("Kiali-User", user.Metadata.Name)
+		return &UserSessionData{
+			ExpiresOn: sData.ExpiresOn,
+			Username:  user.Metadata.Name,
+			Token:     sPayload.Token,
+		}, nil
+	}
+
+	log.Warningf("Token error: %v", err)
+	return nil, nil
+}
+
+// TerminateSession session created by the Authenticate function.
+// To properly clean the session, the OpenShift access_token is revoked/deleted by making a call
+// to the relevant OpenShift API. If this process fails, the session is not cleared and an error
+// is returned.
+// The cleanup is done assuming the access_token was issued to be used only in Kiali.
+func (o openshiftAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) error {
+	sPayload := openshiftSessionPayload{}
+	sData, err := o.SessionStore.ReadSession(r, w, &sPayload)
+	if err != nil {
+		return TerminateSessionError{
+			Message:    fmt.Sprintf("There is no active openshift session: %v", err),
+			HttpStatus: http.StatusUnauthorized,
+		}
+	}
+	if sData == nil {
+		return TerminateSessionError{
+			Message:    "logout problem: no session exists.",
+			HttpStatus: http.StatusInternalServerError,
+		}
+	}
+
+	// The Openshift token must be present
+	if len(sPayload.Token) == 0 {
+		return TerminateSessionError{
+			Message:    "Cannot logout: the Openshift token is absent from the session",
+			HttpStatus: http.StatusInternalServerError,
+		}
+	}
+
+	bs, err := o.businessInstantiator(&api.AuthInfo{Token: sPayload.Token})
+	if err != nil {
+		return TerminateSessionError{
+			Message:    fmt.Sprintf("Could not get the business layer: %v", err),
+			HttpStatus: http.StatusInternalServerError,
+		}
+	}
+
+	err = bs.OpenshiftOAuth.Logout(sPayload.Token)
+	if err != nil {
+		return TerminateSessionError{
+			Message:    fmt.Sprintf("Could not log out of OpenShift: %v", err),
+			HttpStatus: http.StatusInternalServerError,
+		}
+	}
+
+	o.SessionStore.TerminateSession(r, w)
+	return nil
+}

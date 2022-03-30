@@ -191,8 +191,9 @@ func (c tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWri
 }
 
 // TerminateSession unconditionally terminates any existing session without any validation.
-func (c tokenAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) {
+func (c tokenAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) error {
 	c.SessionStore.TerminateSession(r, w)
+	return nil
 }
 
 // extractSubjectFromK8sToken returns the string stored in the "sub" claim of a JWT.

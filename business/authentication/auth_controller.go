@@ -6,6 +6,22 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
+// TerminateSessionError is a helper type implementing the error interface.
+// Its main goal is to pass the right HTTP status code that should be sent
+// to the client if a session Logout operation fails.
+type TerminateSessionError struct {
+	// A description of the error.
+	Message string
+
+	// The HTTP Status code that should be sent to the client.
+	HttpStatus int
+}
+
+// Error returns the string representation of an instance of TerminateSessionError.
+func (e TerminateSessionError) Error() string {
+	return e.Message
+}
+
 // AuthController is the interface that all Kiali authentication strategies should implement.
 // An authentication controller is initialized during Kiali startup.
 type AuthController interface {
@@ -24,7 +40,7 @@ type AuthController interface {
 
 	// TerminateSession performs the needed procedures to terminate an existing session. If there is no
 	// active session, nothing is performed. If there is some invalid session, it is cleared.
-	TerminateSession(r *http.Request, w http.ResponseWriter)
+	TerminateSession(r *http.Request, w http.ResponseWriter) error
 }
 
 var authController AuthController
@@ -45,5 +61,7 @@ func InitializeAuthenticationController(strategy string) {
 		authController = NewTokenAuthController(persistor, nil)
 	} else if strategy == config.AuthStrategyOpenId {
 		authController = NewOpenIdAuthController(persistor, nil)
+	} else if strategy == config.AuthStrategyOpenshift {
+		authController = NewOpenshiftAuthController(persistor, nil)
 	}
 }
