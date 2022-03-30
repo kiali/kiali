@@ -103,27 +103,27 @@ func (o openshiftAuthController) Authenticate(r *http.Request, w http.ResponseWr
 // ValidateSession restores a session previously created by the Authenticate function. The user token (access_token)
 // is revalidated by re-fetching user info from the cluster, to ensure that the token hasn't been revoked.
 // If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
-func (o openshiftAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+func (o openshiftAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, *api.AuthInfo, error) {
 	sPayload := openshiftSessionPayload{}
 	sData, err := o.SessionStore.ReadSession(r, w, &sPayload)
 	if err != nil {
 		log.Warningf("Could not read the openshift session: %v", err)
-		return nil, nil
+		return nil, nil, nil
 	}
 	if sData == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	// The Openshift token must be present
 	if len(sPayload.Token) == 0 {
 		log.Warning("Session is invalid: the Openshift token is absent")
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	bs, err := o.businessInstantiator(&api.AuthInfo{Token: sPayload.Token})
 	if err != nil {
 		log.Warningf("Could not get the business layer!: %v", err)
-		return nil, fmt.Errorf("could not get the business layer: %w", err)
+		return nil, nil, fmt.Errorf("could not get the business layer: %w", err)
 	}
 
 	user, err := bs.OpenshiftOAuth.GetUserInfo(sPayload.Token)
@@ -134,11 +134,11 @@ func (o openshiftAuthController) ValidateSession(r *http.Request, w http.Respons
 			ExpiresOn: sData.ExpiresOn,
 			Username:  user.Metadata.Name,
 			Token:     sPayload.Token,
-		}, nil
+		}, &api.AuthInfo{Token: sPayload.Token}, nil
 	}
 
 	log.Warningf("Token error: %v", err)
-	return nil, nil
+	return nil, nil, nil
 }
 
 // TerminateSession session created by the Authenticate function.

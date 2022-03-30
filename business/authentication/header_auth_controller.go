@@ -150,8 +150,9 @@ func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 }
 
 // TerminateSession unconditionally terminates any existing session without any validation.
-func (c headerAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) {
+func (c headerAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) error {
 	c.SessionStore.TerminateSession(r, w)
+	return nil
 }
 
 // getTokenStringFromHeader builds a Kubernetes api.AuthInfo object that contains user credentials
