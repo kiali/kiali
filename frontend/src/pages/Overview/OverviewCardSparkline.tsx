@@ -42,7 +42,7 @@ class OverviewCardSparkline extends React.Component<Props, {}> {
 
       return (
         <>
-          {'Inbound traffic, ' + getName(this.props.duration).toLowerCase()}
+          <span data-sparkline-duration={getName(this.props.duration).toLowerCase()}>{'Inbound traffic, ' + getName(this.props.duration).toLowerCase()}</span>
           <SparklineChart
             name={'traffic'}
             height={60}

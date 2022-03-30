@@ -134,6 +134,9 @@ jobs:
       - name: Setup kind
         run: hack/setup-kind-in-ci.sh
 
+      - name: Setup Error Rates demo
+        run: hack/istio/install-error-rates-demo.sh -c "kubectl"
+
       - name: Set kiali URL
         run: |
           KIALI_URL="http://$(kubectl get svc kiali -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'):20001/kiali"

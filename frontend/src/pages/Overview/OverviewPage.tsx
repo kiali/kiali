@@ -744,7 +744,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                   const isLongNs = ns.name.length > NS_LONG;
                   return (
                     <GridItem sm={sm} md={md} key={'CardItem_' + ns.name} style={{ margin: '0px 5px 0 5px' }}>
-                      <Card isCompact={true} className={cardGridStyle}>
+                      <Card isCompact={true} className={cardGridStyle} data-namespace={ns.name} data-display-mode={OverviewDisplayMode[this.state.displayMode]}>
                         <CardHead>
                           <CardActions>{namespaceActions[i]}</CardActions>
                           <CardHeader className={cardHeaderStyle}>
@@ -840,7 +840,14 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   renderStatuses(ns: NamespaceInfo): JSX.Element {
     if (ns.status) {
       if (this.state.displayMode === OverviewDisplayMode.COMPACT) {
-        return <OverviewCardContentCompact key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />;
+        return (
+          <OverviewCardContentCompact
+            key={ns.name}
+            name={ns.name}
+            status={ns.status}
+            type={this.state.type}
+          />
+        );
       }
       return (
         <OverviewCardContentExpanded
