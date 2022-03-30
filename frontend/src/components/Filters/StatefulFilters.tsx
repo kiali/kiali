@@ -1,7 +1,5 @@
 import * as React from 'react';
 import {
-  Chip,
-  ChipGroup,
   FormSelect,
   FormSelectOption,
   Select,
@@ -13,8 +11,9 @@ import {
   ToolbarGroup,
   ToolbarItem,
   SelectOptionObject,
-  Button,
-  ToolbarContent
+  ToolbarContent,
+  ToolbarFilter,
+  ToolbarToggleGroup
 } from '@patternfly/react-core';
 import {
   ActiveFilter,
@@ -29,13 +28,14 @@ import * as FilterHelper from '../FilterList/FilterHelper';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { style } from 'typestyle';
 import { LabelFilters } from './LabelFilter';
-import { arrayEquals, groupBy } from 'utils/Common';
+import { arrayEquals } from 'utils/Common';
 import { labelFilter } from './CommonFilters';
+import FilterIcon from '@patternfly/react-icons/dist/esm/icons/filter-icon';
 
 var classNames = require('classnames');
 
-const filterValuesStyle = style({
-  paddingTop: '10px'
+const filterSelectStyle = style({
+  padding: 0
 });
 
 export interface StatefulFiltersProps {
@@ -45,10 +45,10 @@ export interface StatefulFiltersProps {
   childrenFirst?: boolean;
 }
 
-export interface StatefulFiltersState {
+interface StatefulFiltersState {
+  activeFilters: ActiveFiltersInfo;
   filterTypes: FilterType[];
   currentFilterType: FilterType;
-  activeFilters: ActiveFiltersInfo;
   currentValue: string;
   isOpen: boolean;
 }
@@ -87,7 +87,7 @@ export class FilterSelected {
   };
 }
 
-const filterWithChildrenStyle = style({ paddingRight: '10px', display: 'inherit' });
+// const filterWithChildrenStyle = style({ paddingRight: '10px', display: 'inherit' });
 const dividerStyle = style({ borderRight: '1px solid #d1d1d1;', padding: '10px', display: 'inherit' });
 const paddingStyle = style({ padding: '10px' });
 
@@ -244,7 +244,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     return this.state.activeFilters.filters.some(active => value === active.value && type.id === active.id);
   };
 
-  removeFilter = (id: string, value: string) => {
+  removeFilter = (id: string | any, value: string | any) => {
     const updated = this.state.activeFilters.filters.filter(x => x.id !== id || x.value !== value);
     if (updated.length !== this.state.activeFilters.filters.length) {
       this.updateActiveFilters({ filters: updated, op: this.state.activeFilters.op });
@@ -354,28 +354,46 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
   render() {
     const { currentFilterType, activeFilters } = this.state;
+    const filterOptions = this.state.filterTypes.map(option => (
+      <FormSelectOption key={option.id} value={option.id} label={option.title} />
+    ));
+
     return (
-      <>
-        <Toolbar className="pf-l-toolbar pf-u-justify-content-space-between pf-u-mx-xl pf-u-my-md">
-          <ToolbarContent aria-label="ToolbarContent">
-            {this.props.childrenFirst && this.renderChildren()}
-            <ToolbarGroup style={{ marginRight: '0px' }}>
-              <ToolbarItem className={classNames(this.props.children ? filterWithChildrenStyle : '', 'pf-u-mr-xl')}>
-                <FormSelect
-                  value={currentFilterType.id}
-                  aria-label={'filter_select_type'}
-                  onChange={this.selectFilterType}
-                  style={{ width: 'auto', backgroundColor: '#ededed', borderColor: '#bbb' }}
-                >
-                  {this.state.filterTypes.map(option => (
-                    <FormSelectOption key={option.id} value={option.id} label={option.title} />
-                  ))}
-                </FormSelect>
-                {this.renderInput()}
-              </ToolbarItem>
+      <Toolbar
+        id="filter-selection"
+        className={`pf-m-toggle-group-container ${filterSelectStyle}`}
+        collapseListedFiltersBreakpoint="xl"
+        clearAllFilters={this.clearFilters}
+      >
+        {this.props.childrenFirst && this.renderChildren()}
+        <ToolbarContent>
+          <ToolbarToggleGroup toggleIcon={<FilterIcon />} breakpoint="md">
+            <ToolbarGroup variant="filter-group">
+              {this.state.filterTypes.map((ft, i) => {
+                return (
+                  <ToolbarFilter
+                    chips={activeFilters.filters.filter(af => af.id === ft.id).map(af => af.value)}
+                    deleteChip={this.removeFilter}
+                    // deleteChipGroup={this.onDeleteGroup}
+                    categoryName={ft.id}
+                  >
+                    {i == 0 && (
+                      <FormSelect
+                        value={currentFilterType.id}
+                        aria-label={'filter_select_type'}
+                        onChange={this.selectFilterType}
+                        style={{ width: 'auto', backgroundColor: '#ededed', borderColor: '#bbb' }}
+                      >
+                        {filterOptions}
+                      </FormSelect>
+                    )}
+                    {i === 0 && this.renderInput()}
+                  </ToolbarFilter>
+                );
+              })}
             </ToolbarGroup>
             {!this.props.childrenFirst && this.renderChildren()}
-            {(this.state.activeFilters.filters.filter(f => f.id === labelFilter.id).length > 0 ||
+            {(this.state.activeFilters.filters.some(f => f.id === labelFilter.id) ||
               this.state.currentFilterType.filterType === AllFilterTypes.label) && (
               <ToolbarGroup>
                 <ToolbarItem className={classNames('pf-u-mr-md')}>
@@ -397,46 +415,9 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                 </ToolbarItem>
               </ToolbarGroup>
             )}
-          </ToolbarContent>
-        </Toolbar>
-        {activeFilters && activeFilters.filters.length > 0 && (
-          <div className={filterValuesStyle}>
-            <Toolbar className="pf-l-toolbar pf-u-justify-content-space-between pf-u-mx-xl pf-u-my-md">
-              <ToolbarContent aria-label="FiltersSection">
-                <>{'Active Filters:'}</>
-                <div style={{ marginLeft: '5px', display: 'inline-flex', height: '80%' }}>
-                  {Object.entries(groupBy(activeFilters.filters, 'id')).map(([category, items]) => {
-                    // At least one item is present after groupBy, and all items inside category share the same title
-                    const title = items[0].title;
-                    return (
-                      <ChipGroup key={category} categoryName={title}>
-                        {items.map(item => (
-                          <Chip
-                            key={'filter_' + category + '_' + item.value}
-                            onClick={() => this.removeFilter(item.id, item.value)}
-                          >
-                            {item.value}
-                          </Chip>
-                        ))}
-                      </ChipGroup>
-                    );
-                  })}
-                </div>
-                <Button
-                  variant="link"
-                  onClick={e => {
-                    e.preventDefault();
-                    this.clearFilters();
-                  }}
-                  style={{ marginLeft: '5px' }}
-                >
-                  Clear All Filters
-                </Button>
-              </ToolbarContent>
-            </Toolbar>
-          </div>
-        )}
-      </>
+          </ToolbarToggleGroup>
+        </ToolbarContent>
+      </Toolbar>
     );
   }
 }
