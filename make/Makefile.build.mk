@@ -100,7 +100,7 @@ test-integration-setup:
 ## test-integration: Run Integration test suite
 test-integration:
 	@echo Running Integration tests
-	cd tests/integration && ${GO} test -v 2>&1 | go-junit-report > junit-rest-report.xml
+	cd tests/integration/tests && ${GO} test -v 2>&1 | go-junit-report > ../junit-rest-report.xml
 
 #
 # Swagger Documentation
