@@ -239,7 +239,7 @@ func CheckVersionCompatibility() {
 // add warnings when mesh version is incompatible with kiali
 func istioVersion() (*ExternalServiceInfo, error) {
 	istioConfig := config.Get().ExternalServices.Istio
-	body, code, err := httputil.HttpGet(istioConfig.UrlServiceVersion, nil, 10*time.Second, nil)
+	body, code, err := httputil.HttpGet(istioConfig.UrlServiceVersion, nil, 10*time.Second, nil, nil)
 
 	configWarnings := "failed to get mesh version, please check if url_service_version is configured correctly."
 
@@ -430,7 +430,7 @@ func prometheusVersion() (*ExternalServiceInfo, error) {
 		auth.Token = token
 	}
 
-	body, _, err := httputil.HttpGet(cfg.URL+"/version", &auth, 10*time.Second, nil)
+	body, _, err := httputil.HttpGet(cfg.URL+"/version", &auth, 10*time.Second, nil, nil)
 	if err == nil {
 		err = json.Unmarshal(body, &prometheusV)
 		if err == nil {
