@@ -47,15 +47,6 @@ func TestStrategyTokenAuthentication(t *testing.T) {
 	request := httptest.NewRequest("POST", "http://kiali/api/authenticate", nil)
 	request.PostForm = form
 
-	// Add a stale token to the request. Authentication should succeed even if a stale
-	// session is present. This prevents the user form manually clean browser cookies.
-	currentToken, _ := config.GenerateToken("dummy")
-	oldCookie := http.Cookie{
-		Name:  config.TokenCookieName,
-		Value: currentToken.Token,
-	}
-	request.AddCookie(&oldCookie)
-
 	responseRecorder := httptest.NewRecorder()
 	Authenticate(responseRecorder, request)
 	response := responseRecorder.Result()
@@ -162,15 +153,6 @@ func TestStrategyHeaderOidcAuthentication(t *testing.T) {
 	request.Header.Set("Authorization", "Bearer "+oidcToken)
 	request.PostForm = form
 
-	// Add a stale token to the request. Authentication should succeed even if a stale
-	// session is present. This prevents the user form manually clean browser cookies.
-	currentToken, _ := config.GenerateToken("dummy")
-	oldCookie := http.Cookie{
-		Name:  authentication.AESSessionCookieName,
-		Value: currentToken.Token,
-	}
-	request.AddCookie(&oldCookie)
-
 	responseRecorder := httptest.NewRecorder()
 	Authenticate(responseRecorder, request)
 	response := responseRecorder.Result()
@@ -211,15 +193,6 @@ func TestStrategyHeaderAuthentication(t *testing.T) {
 	request := httptest.NewRequest("POST", "http://kiali/api/authenticate", nil)
 	request.Header.Set("Authorization", "Bearer "+oidcToken)
 	request.PostForm = form
-
-	// Add a stale token to the request. Authentication should succeed even if a stale
-	// session is present. This prevents the user form manually clean browser cookies.
-	currentToken, _ := config.GenerateToken("dummy")
-	oldCookie := http.Cookie{
-		Name:  authentication.AESSessionCookieName,
-		Value: currentToken.Token,
-	}
-	request.AddCookie(&oldCookie)
 
 	responseRecorder := httptest.NewRecorder()
 	Authenticate(responseRecorder, request)
@@ -262,15 +235,6 @@ func TestStrategyHeaderOidcWithImpersonationAuthentication(t *testing.T) {
 	request.Header.Set("Authorization", "Bearer "+oidcToken)
 	request.Header.Set("Impersonate-User", "mmosley")
 	request.PostForm = form
-
-	// Add a stale token to the request. Authentication should succeed even if a stale
-	// session is present. This prevents the user form manually clean browser cookies.
-	currentToken, _ := config.GenerateToken("dummy")
-	oldCookie := http.Cookie{
-		Name:  authentication.AESSessionCookieName,
-		Value: currentToken.Token,
-	}
-	request.AddCookie(&oldCookie)
 
 	responseRecorder := httptest.NewRecorder()
 	Authenticate(responseRecorder, request)

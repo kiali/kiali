@@ -3,11 +3,8 @@ package config
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/dgrijalva/jwt-go"
-
-	"github.com/kiali/kiali/util"
 )
 
 // Structured version of Claims Section, as referenced at
@@ -16,23 +13,6 @@ import (
 type IanaClaims struct {
 	SessionId string `json:"sid,omitempty"`
 	jwt.StandardClaims
-}
-
-type TokenGenerated struct {
-	Username  string    `json:"username"`
-	Token     string    `json:"token"`
-	ExpiresOn time.Time `json:"expiresOn"`
-}
-
-func GetSignedTokenString(claims jwt.Claims) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString([]byte(GetSigningKey()))
-
-	if err != nil {
-		return "", err
-	}
-
-	return ss, nil
 }
 
 func GetSigningKey() string {
@@ -54,25 +34,6 @@ func ValidateSigningKey(signingKey string, authStrategy string) error {
 	}
 
 	return nil
-}
-
-// GenerateToken generates a signed token with an expiration of <ExpirationSeconds> seconds
-func GenerateToken(username string) (TokenGenerated, error) {
-	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(Get().LoginToken.ExpirationSeconds))
-	claim := IanaClaims{
-		StandardClaims: jwt.StandardClaims{
-			Subject:   username,
-			ExpiresAt: timeExpire.Unix(),
-			Issuer:    AuthStrategyTokenIssuer,
-		},
-	}
-
-	ss, err := GetSignedTokenString(claim)
-	if err != nil {
-		return TokenGenerated{}, err
-	}
-
-	return TokenGenerated{Token: ss, ExpiresOn: timeExpire, Username: username}, nil
 }
 
 func GetTokenClaimsIfValid(tokenString string) (*IanaClaims, error) {
