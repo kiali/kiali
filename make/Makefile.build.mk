@@ -70,7 +70,7 @@ build-system-test:
 ## test: Run tests, excluding third party tests under vendor and frontend. Runs `go test` internally
 test:
 	@echo Running tests, excluding third party tests under vendor
-	${GO} test $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/)
+	${GO} test $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration)
 
 ## test-debug: Run tests in debug mode, excluding third party tests under vendor and frontend. Runs `go test -v`
 test-debug:
