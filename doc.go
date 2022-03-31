@@ -5,7 +5,6 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph/config/cytoscape"
-	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
@@ -566,13 +565,6 @@ type serviceUnavailableError struct {
 type swaggStatusInfoResp struct {
 	// in:body
 	Body status.StatusInfo
-}
-
-// HTTP status code 200 and tokenGenerated model in data
-// swagger:response tokenResponse
-type swaggTokenGeneratedResp struct {
-	// in:body
-	Body handlers.TokenResponse
 }
 
 // HTTP status code 200 and cytoscapejs Config in data

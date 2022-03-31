@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -33,47 +32,6 @@ type AuthInfo struct {
 type sessionInfo struct {
 	Username  string `json:"username,omitempty"`
 	ExpiresOn string `json:"expiresOn,omitempty"`
-}
-
-// TokenResponse tokenResponse
-//
-// This is used for returning the token
-//
-// swagger:model TokenResponse
-type TokenResponse struct {
-	// The username for the token
-	// A string with the user's username
-	//
-	// example: admin
-	// required: true
-	Username string `json:"username"`
-	// The authentication token
-	// A string with the authentication token for the user
-	//
-	// example: zI1NiIsIsR5cCI6IkpXVCJ9.ezJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI5NTIzNjU0fQ.PPZvRGnR6VA4v7FmgSfQcGQr-VD
-	// required: true
-	Token string `json:"token"`
-	// The expired time for the token
-	// A string with the Datetime when the token will be expired
-	//
-	// example: Thu, 07 Mar 2019 17:50:26 +0000
-	// required: true
-	ExpiresOn string `json:"expiresOn"`
-}
-
-func getTokenStringFromRequest(r *http.Request) string {
-	tokenString := "" // Default to no token.
-
-	// Token can be provided by a browser in a Cookie or
-	// in an authorization HTTP header.
-	// The token in the cookie has priority.
-	if authCookie, err := r.Cookie(config.TokenCookieName); err != http.ErrNoCookie {
-		tokenString = authCookie.Value
-	} else if headerValue := r.Header.Get("Authorization"); strings.Contains(headerValue, "Bearer") {
-		tokenString = strings.TrimPrefix(headerValue, "Bearer ")
-	}
-
-	return tokenString
 }
 
 func NewAuthenticationHandler() (AuthenticationHandler, error) {
@@ -192,17 +150,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 			httputil.GuessKialiURL(r))
 	}
 
-	if conf.Auth.Strategy == config.AuthStrategyAnonymous {
-		token := getTokenStringFromRequest(r)
-		claims, _ := config.GetTokenClaimsIfValid(token)
-
-		if claims != nil {
-			response.SessionInfo = sessionInfo{
-				ExpiresOn: time.Unix(claims.ExpiresAt, 0).Format(time.RFC1123Z),
-				Username:  claims.Subject,
-			}
-		}
-	} else {
+	if conf.Auth.Strategy != config.AuthStrategyAnonymous {
 		session, _ := authentication.GetAuthController().ValidateSession(r, w)
 		if session != nil {
 			response.SessionInfo = sessionInfo{
