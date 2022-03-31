@@ -72,6 +72,7 @@ export const serverRateConfig = {
     certificatesInformationIndicators: {
       enabled: true
     },
+    disabledFeatures: [],
     istioInjectionAction: true,
     istioUpgradeAction: false,
     uiDefaults: {

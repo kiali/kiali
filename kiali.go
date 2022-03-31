@@ -76,7 +76,9 @@ func main() {
 		log.Infof("No configuration file specified. Will rely on environment for configuration.")
 		config.Set(config.NewConfig())
 	}
-	log.Tracef("Kiali Configuration:\n%s", config.Get())
+
+	cfg := config.Get()
+	log.Tracef("Kiali Configuration:\n%s", cfg)
 
 	if err := validateConfig(); err != nil {
 		log.Fatal(err)
@@ -95,7 +97,7 @@ func main() {
 	// The complete compatible version matrix is recorded in version-compatibility-matrix.yaml
 	status.CheckVersionCompatibility()
 
-	authentication.InitializeAuthenticationController(config.Get().Auth.Strategy)
+	authentication.InitializeAuthenticationController(cfg.Auth.Strategy)
 
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
@@ -176,6 +178,16 @@ func validateConfig() error {
 	// log a warning if the user is ignoring some validations
 	if len(cfg.KialiFeatureFlags.Validations.Ignore) > 0 {
 		log.Infof("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", cfg.KialiFeatureFlags.Validations.Ignore)
+	}
+
+	// log a info message if the user is disabling some features
+	if len(cfg.KialiFeatureFlags.DisabledFeatures) > 0 {
+		log.Infof("Some features are disabled: [%v]", strings.Join(cfg.KialiFeatureFlags.DisabledFeatures, ","))
+		for _, fn := range cfg.KialiFeatureFlags.DisabledFeatures {
+			if err := config.FeatureName(fn).IsValid(); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

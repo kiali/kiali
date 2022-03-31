@@ -1,7 +1,12 @@
 // status is a simple package for offering up various status information from Kiali.
 package status
 
-import "sync"
+import (
+	"strings"
+	"sync"
+
+	"github.com/kiali/kiali/config"
+)
 
 const (
 	name             = "Kiali"
@@ -14,6 +19,7 @@ const (
 	State            = name + " state"
 	ClusterMTLS      = "Istio mTLS"
 	StateRunning     = "running"
+	DisabledFeatures = "Disabled features"
 )
 
 // IstioEnvironment describes the Istio implementation environment
@@ -117,6 +123,12 @@ func AddWarningMessages(warningMessages string) {
 func Get() (status StatusInfo) {
 	info.ExternalServices = []ExternalServiceInfo{}
 	info.WarningMessages = []string{}
+
+	cfg := config.Get()
+	if len(cfg.KialiFeatureFlags.DisabledFeatures) > 0 {
+		Put(DisabledFeatures, strings.Join(cfg.KialiFeatureFlags.DisabledFeatures, ","))
+	}
+
 	getVersions()
 
 	// we only need to get the IstioEnvironment one time - its content is static and will never change

@@ -29,7 +29,7 @@ import { config } from 'config';
 import { store } from 'store/ConfigStore';
 import { toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
 import { GraphToolbarActions } from 'actions/GraphToolbarActions';
-import { StatusState } from 'types/StatusState';
+import { StatusState, StatusKey } from 'types/StatusState';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 
 interface AuthenticationControllerReduxProps {
@@ -342,6 +342,10 @@ export class AuthenticationController extends React.Component<
     status.warningMessages.forEach(wMsg => {
       this.props.addMessage(wMsg, '', 'systemErrors', MessageType.WARNING);
     });
+
+    if (status.status[StatusKey.DISABLED_FEATURES]) {
+      this.props.addMessage("The following features are disabled: " + status.status[StatusKey.DISABLED_FEATURES], '', 'default', MessageType.INFO, false)
+    }
   };
 }
 
