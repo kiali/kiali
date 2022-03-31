@@ -29,10 +29,8 @@ func HttpGet(url string, auth *config.Auth, timeout time.Duration, customHeaders
 		return nil, 0, err
 	}
 
-	if cookies != nil {
-		for _, c := range cookies {
-			req.AddCookie(c)
-		}
+	for _, c := range cookies {
+		req.AddCookie(c)
 	}
 
 	transport, err := CreateTransport(auth, &http.Transport{}, timeout, customHeaders)
