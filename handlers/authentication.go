@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -74,10 +73,13 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 				log.Errorf("No authInfo: %v", http.StatusBadRequest)
 			}
-			context := context.WithValue(r.Context(), "authInfo", authInfo)
-			next.ServeHTTP(w, r.WithContext(context))
+			ctx := context.WithValue(r.Context(), "authInfo", authInfo)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		case http.StatusUnauthorized:
-			deleteTokenCookies(w, r)
+			err := authentication.GetAuthController().TerminateSession(r, w)
+			if err != nil {
+				log.Error("Failed to clean a stale session: %s", err.Error())
+			}
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		default:
 			http.Error(w, http.StatusText(statusCode), statusCode)
@@ -88,8 +90,8 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 
 func (aHandler AuthenticationHandler) HandleUnauthenticated(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: ""})
-		next.ServeHTTP(w, r.WithContext(context))
+		ctx := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: ""})
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -167,7 +169,6 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	conf := config.Get()
 
 	if conf.Auth.Strategy == config.AuthStrategyAnonymous {
-		deleteTokenCookies(w, r)
 		RespondWithCode(w, http.StatusNoContent)
 	} else {
 		err := authentication.GetAuthController().TerminateSession(r, w)
@@ -179,46 +180,6 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			RespondWithCode(w, http.StatusNoContent)
-		}
-	}
-}
-
-func deleteTokenCookies(w http.ResponseWriter, r *http.Request) {
-	conf := config.Get()
-	var cookiesToDrop []string
-
-	numChunksCookie, chunksCookieErr := r.Cookie(config.TokenCookieName + "-chunks")
-	if chunksCookieErr == nil {
-		numChunks, convErr := strconv.Atoi(numChunksCookie.Value)
-		if convErr == nil && numChunks > 1 && numChunks <= 180 {
-			cookiesToDrop = make([]string, 0, numChunks+2)
-			for i := 1; i < numChunks; i++ {
-				cookiesToDrop = append(cookiesToDrop, fmt.Sprintf("%s-aes-%d", config.TokenCookieName, i))
-			}
-		} else {
-			cookiesToDrop = make([]string, 0, 3)
-		}
-	} else {
-		cookiesToDrop = make([]string, 0, 3)
-	}
-
-	cookiesToDrop = append(cookiesToDrop, config.TokenCookieName)
-	cookiesToDrop = append(cookiesToDrop, config.TokenCookieName+"-aes")
-	cookiesToDrop = append(cookiesToDrop, config.TokenCookieName+"-chunks")
-
-	for _, cookieName := range cookiesToDrop {
-		_, err := r.Cookie(cookieName)
-		if err != http.ErrNoCookie {
-			tokenCookie := http.Cookie{
-				Name:     cookieName,
-				Value:    "",
-				Expires:  time.Unix(0, 0),
-				HttpOnly: true,
-				MaxAge:   -1,
-				Path:     conf.Server.WebRoot,
-				SameSite: http.SameSiteStrictMode,
-			}
-			http.SetCookie(w, &tokenCookie)
 		}
 	}
 }
