@@ -45,7 +45,7 @@ func TestCreateSessionNoChunks(t *testing.T) {
 
 	cookie := response.Cookies()[0]
 	assert.True(t, cookie.HttpOnly)
-	assert.Equal(t, config.TokenCookieName+"-aes", cookie.Name)
+	assert.Equal(t, AESSessionCookieName, cookie.Name)
 	assert.Equal(t, "/kiali-app", cookie.Path)
 	assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)
 	assert.Equal(t, expiresTime, cookie.Expires)
@@ -84,7 +84,7 @@ func TestCreateSessionWithChunks(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Len(t, response.Cookies(), 3)
-	assert.Equal(t, config.TokenCookieName+"-aes", response.Cookies()[0].Name)
+	assert.Equal(t, AESSessionCookieName, response.Cookies()[0].Name)
 	assert.Equal(t, config.TokenCookieName+"-aes-1", response.Cookies()[1].Name)
 	assert.Equal(t, config.TokenCookieName+"-chunks", response.Cookies()[2].Name)
 	assert.Equal(t, "2", response.Cookies()[2].Value)
@@ -415,7 +415,7 @@ func TestTerminateSessionClearsAesSession(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
 	cookie := http.Cookie{
-		Name:    config.TokenCookieName + "-aes",
+		Name:    AESSessionCookieName,
 		Value:   "",
 		Expires: time.Date(2021, 12, 1, 1, 0, 0, 0, time.UTC),
 	}
@@ -428,7 +428,7 @@ func TestTerminateSessionClearsAesSession(t *testing.T) {
 
 	response := rr.Result()
 	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, config.TokenCookieName+"-aes", response.Cookies()[0].Name)
+	assert.Equal(t, AESSessionCookieName, response.Cookies()[0].Name)
 	assert.Empty(t, response.Cookies()[0].Value)
 	assert.True(t, response.Cookies()[0].Expires.Before(util.Clock.Now()))
 	assert.Equal(t, "/kiali-app", response.Cookies()[0].Path)
@@ -448,7 +448,7 @@ func TestTerminateSessionClearsAesSessionWithOneChunk(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
 	cookie := http.Cookie{
-		Name:    config.TokenCookieName + "-aes",
+		Name:    AESSessionCookieName,
 		Value:   "",
 		Expires: expireTime,
 	}
@@ -467,7 +467,7 @@ func TestTerminateSessionClearsAesSessionWithOneChunk(t *testing.T) {
 
 	response := rr.Result()
 	assert.Len(t, response.Cookies(), 2)
-	assert.Equal(t, config.TokenCookieName+"-aes", response.Cookies()[0].Name)
+	assert.Equal(t, AESSessionCookieName, response.Cookies()[0].Name)
 	assert.Equal(t, config.TokenCookieName+"-chunks", response.Cookies()[1].Name)
 
 	for i := 0; i < 2; i++ {
@@ -491,7 +491,7 @@ func TestTerminateSessionClearsAesSessionWithTwoChunks(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
 	cookie := http.Cookie{
-		Name:    config.TokenCookieName + "-aes",
+		Name:    AESSessionCookieName,
 		Value:   "",
 		Expires: expireTime,
 	}
@@ -517,7 +517,7 @@ func TestTerminateSessionClearsAesSessionWithTwoChunks(t *testing.T) {
 	response := rr.Result()
 	assert.Len(t, response.Cookies(), 3)
 	assert.Equal(t, config.TokenCookieName+"-aes-1", response.Cookies()[0].Name)
-	assert.Equal(t, config.TokenCookieName+"-aes", response.Cookies()[1].Name)
+	assert.Equal(t, AESSessionCookieName, response.Cookies()[1].Name)
 	assert.Equal(t, config.TokenCookieName+"-chunks", response.Cookies()[2].Name)
 
 	for i := 0; i < 3; i++ {

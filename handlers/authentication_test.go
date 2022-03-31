@@ -55,7 +55,7 @@ func TestStrategyTokenAuthentication(t *testing.T) {
 	assert.Len(t, response.Cookies(), 1)
 
 	cookie := response.Cookies()[0]
-	assert.Equal(t, config.TokenCookieName+"-aes", cookie.Name)
+	assert.Equal(t, authentication.AESSessionCookieName, cookie.Name)
 	assert.True(t, cookie.HttpOnly)
 	assert.NotEmpty(t, cookie.Value)
 	assert.Equal(t, clockTime.Add(time.Second*time.Duration(cfg.LoginToken.ExpirationSeconds)), cookie.Expires)

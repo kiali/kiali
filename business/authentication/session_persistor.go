@@ -170,7 +170,7 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 	// This CookieSessionPersistor only deals with sessions using cookies holding encrypted data.
 	// Thus, presence for a cookie with the "-aes" suffix is checked and it's assumed no active session
 	// if such cookie is not found in the request.
-	authCookie, err := r.Cookie(config.TokenCookieName + "-aes")
+	authCookie, err := r.Cookie(AESSessionCookieName)
 	if err != nil {
 		if err == http.ErrNoCookie {
 			log.Tracef("The AES cookie is missing.")
