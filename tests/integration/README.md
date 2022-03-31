@@ -25,17 +25,14 @@
 # Clone this repository
 $ git clone https://github.com/kiali/kiali.git
 
-# Install requirements
+# Install requirements (included in run all tests)
 $ make test-integration-setup
 
 # Login to Openshift Cluster 
 $ oc login https://<openshift>:<port> --username=<username> --password=<password> --insecure-skip-tls-verify=true
 
-# Read the Token from Openshift Cluster, to be used in next step or running tests
-$ oc whoami -t
-
-# run all tests
-$ make test-integration URL="https://<kiali-hostname>" TOKEN="<token>"
+# run all tests authenticating as the user that was logged in
+$ make test-integration URL="https://<kiali-hostname>" TOKEN="$(oc whoami -t)"
 
 # test results are stored in "tests/integration/junit-rest-report.xml" file
 ```

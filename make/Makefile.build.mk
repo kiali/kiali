@@ -98,7 +98,7 @@ test-integration-setup:
 	go install github.com/jstemmer/go-junit-report@latest
 
 ## test-integration: Run Integration test suite
-test-integration:
+test-integration: test-integration-setup
 	@echo Running Integration tests
 	cd tests/integration/tests && ${GO} test -v 2>&1 | go-junit-report > ../junit-rest-report.xml
 
