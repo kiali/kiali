@@ -32,7 +32,7 @@ func init() {
 }
 
 func KialiStatus() (bool, int, error) {
-	_, code, err := httputil.HttpGet(kialiURL+"/api/istio/status", GetAuth(), 10*time.Second, nil, kialiCookies)
+	_, code, _, err := httputil.HttpGet(kialiURL+"/api/istio/status", GetAuth(), 10*time.Second, nil, kialiCookies)
 	if err == nil {
 		return true, code, nil
 	} else {
