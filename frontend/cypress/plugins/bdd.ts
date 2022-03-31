@@ -5,7 +5,7 @@ const axios = require('axios');
 
 
 module.exports = (on, config) => {
-
+  config.env.cookie = false
   const options = {
     ...browserify.defaultOptions,
     typescript: path.join(path.resolve('..'), 'kiali-ui/node_modules/typescript'),
