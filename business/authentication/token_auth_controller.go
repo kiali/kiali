@@ -58,13 +58,12 @@ type UserSessionData struct {
 	// required: true
 	Username string `json:"username"`
 
-	// The authentication token
-	// A string with the authentication token for the user
+	// The authentication information of the user to access the cluster API
+	// It is usually only a bearer token that can be used to connect to the cluster API.
+	// However, it is possible to add more options, like impersonation attributes.
 	//
-	// example: zI1NiIsIsR5cCI6IkpXVCJ9.ezJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI5NTIzNjU0fQ.PPZvRGnR6VA4v7FmgSfQcGQr-VD
 	// required: true
-	// TODO: remove
-	Token string `json:"-"`
+	AuthInfo *api.AuthInfo `json:"-"`
 }
 
 // AuthenticationFailureError is a helper Error to assist callers of the TokenAuthController.Authenticate
@@ -153,29 +152,33 @@ func (c tokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter
 		return nil, err
 	}
 
-	return &UserSessionData{ExpiresOn: timeExpire, Username: extractSubjectFromK8sToken(token), Token: token}, nil
+	return &UserSessionData{
+		ExpiresOn: timeExpire,
+		Username:  extractSubjectFromK8sToken(token),
+		AuthInfo:  &api.AuthInfo{Token: token},
+	}, nil
 }
 
 // ValidateSession restores a session previously created by the Authenticate function. A minimal re-validation
 // is done: only token validity is re-checked by making a request to the Kubernetes API, like in the Authenticate
 // function. However, privileges are not re-checked.
 // If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
-func (c tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, *api.AuthInfo, error) {
+func (c tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	// Restore a previously started session.
 	sPayload := sessionPayload{}
 	sData, err := c.SessionStore.ReadSession(r, w, &sPayload)
 	if err != nil {
 		log.Warningf("Could not read the session: %v", err)
-		return nil, nil, err
+		return nil, err
 	}
 	if sData == nil {
-		return nil, nil, nil
+		return nil, nil
 	}
 
 	// Check token validity.
 	bs, err := c.businessInstantiator(&api.AuthInfo{Token: sPayload.Token})
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not get the business layer: %w", err)
+		return nil, fmt.Errorf("could not get the business layer: %w", err)
 	}
 
 	_, err = bs.Namespace.GetNamespaces(r.Context())
@@ -183,14 +186,16 @@ func (c tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWri
 		// The Kubernetes API rejected the token.
 		// Return no data (which means no active session).
 		log.Warningf("Token error!!: %v", err)
-		return nil, nil, nil
+		return nil, nil
 	}
 
 	// If we are here, the session looks valid. Return the session details.
 	r.Header.Add("Kiali-User", extractSubjectFromK8sToken(sPayload.Token)) // Internal header used to propagate the subject of the request for audit purposes
-	return &UserSessionData{ExpiresOn: sData.ExpiresOn, Username: extractSubjectFromK8sToken(sPayload.Token), Token: sPayload.Token},
-		&api.AuthInfo{Token: sPayload.Token},
-		nil
+	return &UserSessionData{
+		ExpiresOn: sData.ExpiresOn,
+		Username:  extractSubjectFromK8sToken(sPayload.Token),
+		AuthInfo:  &api.AuthInfo{Token: sPayload.Token},
+	}, nil
 }
 
 // TerminateSession unconditionally terminates any existing session without any validation.

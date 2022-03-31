@@ -33,7 +33,7 @@ func TestTokenAuthControllerAuthenticatesCorrectly(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, sData)
 	assert.Equal(t, "k8s_user", sData.Username)
-	assert.Equal(t, testToken, sData.Token)
+	assert.Equal(t, testToken, sData.AuthInfo.Token)
 	assert.Equal(t, expectedExpiration, sData.ExpiresOn)
 
 	// Simply check that some cookie is set and has the right expiration. Testing cookie content is left to the session_persistor_test.go
@@ -151,11 +151,11 @@ func TestTokenAuthControllerValidatesSessionCorrectly(t *testing.T) {
 	})
 
 	rr = httptest.NewRecorder()
-	sData, _, err := controller.ValidateSession(request, rr)
+	sData, err := controller.ValidateSession(request, rr)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, sData)
-	assert.Equal(t, testToken, sData.Token)
+	assert.Equal(t, testToken, sData.AuthInfo.Token)
 	assert.Equal(t, "k8s_user", sData.Username)
 	assert.Equal(t, time.Date(2021, 12, 1, 0, 0, 1, 0, time.UTC), sData.ExpiresOn)
 }
@@ -169,7 +169,7 @@ func TestTokenAuthControllerValidatesSessionWithoutActiveSession(t *testing.T) {
 	})
 
 	rr := httptest.NewRecorder()
-	sData, _, err := controller.ValidateSession(request, rr)
+	sData, err := controller.ValidateSession(request, rr)
 
 	assert.Nil(t, err)
 	assert.Nil(t, sData)
@@ -195,7 +195,7 @@ func TestTokenAuthControllerValidatesSessionForUserWithMissingPrivileges(t *test
 	})
 
 	rr = httptest.NewRecorder()
-	sData, _, err := controller.ValidateSession(request, rr)
+	sData, err := controller.ValidateSession(request, rr)
 
 	assert.Nil(t, err)
 	assert.Nil(t, sData)

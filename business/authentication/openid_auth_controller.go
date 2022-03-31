@@ -167,7 +167,7 @@ func (c OpenIdAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 	return &UserSessionData{
 		ExpiresOn: flow.ExpiresOn,
 		Username:  sPayload.Subject,
-		Token:     sPayload.Token,
+		AuthInfo:  &api.AuthInfo{Token: sPayload.Token},
 	}, nil
 }
 
@@ -211,22 +211,22 @@ func (c OpenIdAuthController) PostRoutes(router *mux.Router) {
 // the id_token is performed if Kiali is not configured to use the access_token. Also, if RBAC is enabled,
 // a privilege check is performed to verify that the user still has privileges to use Kiali.
 // If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
-func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, *api.AuthInfo, error) {
+func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	// Restore a previously started session.
 	sPayload := oidcSessionPayload{}
 	sData, err := c.SessionStore.ReadSession(r, w, &sPayload)
 	if err != nil {
 		log.Warningf("Could not read the session: %v", err)
-		return nil, nil, nil
+		return nil, nil
 	}
 	if sData == nil {
-		return nil, nil, nil
+		return nil, nil
 	}
 
 	// The OpenId token must be present in the session
 	if len(sPayload.Token) == 0 {
 		log.Warning("Session is invalid: the OIDC token is absent")
-		return nil, nil, nil
+		return nil, nil
 	}
 
 	conf := config.Get()
@@ -240,19 +240,19 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		parsedOidcToken, err := jwt.ParseSigned(sPayload.Token)
 		if err != nil {
 			log.Warningf("Cannot parse sid claim of the OIDC token!: %v", err)
-			return nil, nil, fmt.Errorf("cannot parse sid claim of the OIDC token: %w", err)
+			return nil, fmt.Errorf("cannot parse sid claim of the OIDC token: %w", err)
 		}
 
 		var claims map[string]interface{} // generic map to store parsed token
 		err = parsedOidcToken.UnsafeClaimsWithoutVerification(&claims)
 		if err != nil {
 			log.Warningf("Cannot parse the payload of the id_token: %v", err)
-			return nil, nil, fmt.Errorf("cannot parse the payload of the id_token: %w", err)
+			return nil, fmt.Errorf("cannot parse the payload of the id_token: %w", err)
 		}
 
 		if userClaim, ok := claims[config.Get().Auth.OpenId.UsernameClaim]; ok && sPayload.Subject != userClaim {
 			log.Warning("Kiali token rejected because of subject claim mismatch")
-			return nil, nil, nil
+			return nil, nil
 		}
 	}
 
@@ -262,13 +262,13 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		bs, err := business.Get(&api.AuthInfo{Token: sPayload.Token})
 		if err != nil {
 			log.Warningf("Could not get the business layer!!: %v", err)
-			return nil, nil, fmt.Errorf("could not get the business layer: %w", err)
+			return nil, fmt.Errorf("could not get the business layer: %w", err)
 		}
 
 		_, err = bs.Namespace.GetNamespaces(r.Context())
 		if err != nil {
 			log.Warningf("Token error!: %v", err)
-			return nil, nil, nil
+			return nil, nil
 		}
 
 		token = sPayload.Token
@@ -278,7 +278,7 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		// same privileges.
 		token, err = kubernetes.GetKialiToken()
 		if err != nil {
-			return nil, nil, fmt.Errorf("error reading the Kiali ServiceAccount token: %w", err)
+			return nil, fmt.Errorf("error reading the Kiali ServiceAccount token: %w", err)
 		}
 	}
 
@@ -288,8 +288,8 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 	return &UserSessionData{
 		ExpiresOn: sData.ExpiresOn,
 		Username:  sPayload.Subject,
-		Token:     token,
-	}, &api.AuthInfo{Token: token}, nil
+		AuthInfo:  &api.AuthInfo{Token: token},
+	}, nil
 }
 
 // TerminateSession unconditionally terminates any existing session without any validation.

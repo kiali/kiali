@@ -115,7 +115,7 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 	return &UserSessionData{
 		ExpiresOn: timeExpire,
 		Username:  tokenSubject,
-		Token:     authInfo.Token,
+		AuthInfo:  authInfo,
 	}, nil
 }
 
@@ -123,30 +123,30 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 // is done: the Bearer token received in the HTTP Authorization header must be the same as the one provided
 // during initial Authentication.
 // If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
-func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, *api.AuthInfo, error) {
+func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	log.Tracef("Using header for authentication, Url: [%s]", r.URL.String())
 
 	sPayload := headerSessionPayload{}
 	sData, err := c.SessionStore.ReadSession(r, w, sPayload)
 	if err != nil {
 		log.Warningf("Could not read the session: %v", err)
-		return nil, nil, err
+		return nil, err
 	}
 	if sData == nil {
-		return nil, nil, nil
+		return nil, nil
 	}
 
 	authInfo := c.getTokenStringFromHeader(r)
 	if authInfo.Token != sPayload.Token {
 		log.Warningf("Rejecting user session because token in HTTP headers is not the same as the one in the session.")
-		return nil, nil, nil
+		return nil, nil
 	}
 
 	return &UserSessionData{
 		ExpiresOn: sData.ExpiresOn,
 		Username:  sPayload.Subject,
-		Token:     sPayload.Token,
-	}, authInfo, nil
+		AuthInfo:  authInfo,
+	}, nil
 }
 
 // TerminateSession unconditionally terminates any existing session without any validation.

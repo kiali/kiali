@@ -95,11 +95,11 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 
 		switch conf.Auth.Strategy {
 		case config.AuthStrategyToken, config.AuthStrategyOpenId, config.AuthStrategyOpenshift, config.AuthStrategyHeader:
-			session, aInfo, validateErr := authentication.GetAuthController().ValidateSession(r, w)
+			session, validateErr := authentication.GetAuthController().ValidateSession(r, w)
 			if validateErr != nil {
 				statusCode = http.StatusInternalServerError
 			} else if session != nil {
-				authInfo = aInfo
+				authInfo = session.AuthInfo
 				statusCode = http.StatusOK
 			} else {
 				statusCode = http.StatusUnauthorized
@@ -203,7 +203,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
-		session, _, _ := authentication.GetAuthController().ValidateSession(r, w)
+		session, _ := authentication.GetAuthController().ValidateSession(r, w)
 		if session != nil {
 			response.SessionInfo = sessionInfo{
 				ExpiresOn: session.ExpiresOn.Format(time.RFC1123Z),
