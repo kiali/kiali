@@ -101,6 +101,7 @@ test-integration-setup:
 test-integration: test-integration-setup
 	@echo Running Integration tests
 	cd tests/integration/tests && ${GO} test -v 2>&1 | go-junit-report > ../junit-rest-report.xml
+	@echo Test results can be found here: $$(ls -1 ${ROOTDIR}/tests/integration/junit-rest-report.xml)
 
 #
 # Swagger Documentation
