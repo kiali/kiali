@@ -11,6 +11,7 @@
 
 * System dependencies that will need to be available
     *  `oc`
+    *  `go`
     *  `make`
     *  `npm`
     *  `yarn`
