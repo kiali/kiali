@@ -138,7 +138,7 @@ jobs:
         uses: cypress-io/github-action@v2
         with:
           working-directory: frontend
-          command: yarn run cypress:bdd:run --config baseUrl=${{ steps.set-kiali-url.outputs.kiali_url }}
+          command: yarn run cypress:run --config baseUrl=${{ steps.set-kiali-url.outputs.kiali_url }}
 
       - name: Upload cypress screenshots when tests fail
         uses: actions/upload-artifact@v3
