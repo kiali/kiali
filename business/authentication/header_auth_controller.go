@@ -60,7 +60,7 @@ func NewHeaderAuthController(persistor SessionPersistor, businessInstantiator fu
 // assumed that the received credentials should be valid. Nevertheless, a minimal verification
 // is done by trying to fetch the account/user name from the cluster. If account/user name information
 // cannot be fetched, authentication is rejected.
-// An if authentication failed for any reason (even for unexpected errors).
+// An error is returned if the authentication failed.
 func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	authInfo := c.getTokenStringFromHeader(r)
 
@@ -119,10 +119,8 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 	}, nil
 }
 
-// ValidateSession restores a session previously created by the Authenticate function. A minimal re-validation
-// is done: the Bearer token received in the HTTP Authorization header must be the same as the one provided
-// during initial Authentication.
-// If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
+// ValidateSession checks if credentials are available in HTTP headers. If they are present, a populated
+// UserSessionData is returned. Otherwise, nil is returned.
 func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	log.Tracef("Using header for authentication, Url: [%s]", r.URL.String())
 
@@ -132,19 +130,30 @@ func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		log.Warningf("Could not read the session: %v", err)
 		return nil, err
 	}
-	if sData == nil {
+
+	authInfo := c.getTokenStringFromHeader(r)
+	if authInfo == nil || authInfo.Token == "" {
+		// No token in HTTP headers, means no session.
 		return nil, nil
 	}
 
-	authInfo := c.getTokenStringFromHeader(r)
-	if authInfo.Token != sPayload.Token {
-		log.Warningf("Rejecting user session because token in HTTP headers is not the same as the one in the session.")
-		return nil, nil
+	// A token in HTTP headers means there is a valid session, even if our cookies have
+	// expired. So, if we have cookies, we can recover the subject. Else, send empty subject.
+	// Expiration time is probably irrelevant for this auth strategy, but to keep the so-so same behavior
+	// before the auth refactor, we set expiration time to "now" if we don't have cookies.
+	var expiration time.Time
+	var subject string
+	if sData == nil {
+		expiration = util.Clock.Now()
+		subject = ""
+	} else {
+		expiration = sData.ExpiresOn
+		subject = sPayload.Subject
 	}
 
 	return &UserSessionData{
-		ExpiresOn: sData.ExpiresOn,
-		Username:  sPayload.Subject,
+		ExpiresOn: expiration,
+		Username:  subject,
 		AuthInfo:  authInfo,
 	}, nil
 }
