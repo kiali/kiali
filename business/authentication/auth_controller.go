@@ -47,7 +47,7 @@ type AuthController interface {
 	TerminateSession(r *http.Request, w http.ResponseWriter) error
 }
 
-// UserSessionData tokenResponse
+// UserSessionData userSessionData
 //
 // This is used for returning the token
 //

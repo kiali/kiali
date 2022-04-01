@@ -869,20 +869,20 @@ Endpoint to authenticate the user
 #### All responses
 | Code | Status | Description | Has headers | Schema |
 |------|--------|-------------|:-----------:|--------|
-| [200](#authenticate-200) | OK | HTTP status code 200 and tokenGenerated model in data |  | [schema](#authenticate-200-schema) |
+| [200](#authenticate-200) | OK | HTTP status code 200 and userGenerated model in data |  | [schema](#authenticate-200-schema) |
 | [500](#authenticate-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#authenticate-500-schema) |
 
 #### Responses
 
 
-##### <span id="authenticate-200"></span> 200 - HTTP status code 200 and tokenGenerated model in data
+##### <span id="authenticate-200"></span> 200 - HTTP status code 200 and userGenerated model in data
 Status: OK
 
 ###### <span id="authenticate-200-schema"></span> Schema
    
   
 
-[TokenResponse](#token-response)
+[UserSessionData](#user-session-data)
 
 ##### <span id="authenticate-500"></span> 500 - A Internal is the error message that means something has gone wrong
 Status: Internal Server Error
@@ -3911,20 +3911,20 @@ Endpoint to check if a token from Openshift is working correctly
 #### All responses
 | Code | Status | Description | Has headers | Schema |
 |------|--------|-------------|:-----------:|--------|
-| [200](#openshift-check-token-200) | OK | HTTP status code 200 and tokenGenerated model in data |  | [schema](#openshift-check-token-200-schema) |
+| [200](#openshift-check-token-200) | OK | HTTP status code 200 and userGenerated model in data |  | [schema](#openshift-check-token-200-schema) |
 | [500](#openshift-check-token-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#openshift-check-token-500-schema) |
 
 #### Responses
 
 
-##### <span id="openshift-check-token-200"></span> 200 - HTTP status code 200 and tokenGenerated model in data
+##### <span id="openshift-check-token-200"></span> 200 - HTTP status code 200 and userGenerated model in data
 Status: OK
 
 ###### <span id="openshift-check-token-200-schema"></span> Schema
    
   
 
-[TokenResponse](#token-response)
+[UserSessionData](#user-session-data)
 
 ##### <span id="openshift-check-token-500"></span> 500 - A Internal is the error message that means something has gone wrong
 Status: Internal Server Error
@@ -9448,29 +9448,6 @@ inclusive. |  |
 
 
 
-### <span id="token-response"></span> TokenResponse
-
-
-> This is used for returning the token
-  
-
-
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| ExpiresOn | string| `string` | ✓ | | The expired time for the token
-A string with the Datetime when the token will be expired | `Thu, 07 Mar 2019 17:50:26 +0000` |
-| Token | string| `string` | ✓ | | The authentication token
-A string with the authentication token for the user | `zI1NiIsIsR5cCI6IkpXVCJ9.ezJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI5NTIzNjU0fQ.PPZvRGnR6VA4v7FmgSfQcGQr-VD` |
-| Username | string| `string` | ✓ | | The username for the token
-A string with the user's username | `admin` |
-
-
-
 ### <span id="trace"></span> Trace
 
 
@@ -9518,6 +9495,27 @@ intent and helps make sure that UIDs and names do not get conflated.
 | UID | string| string | | UID is a type that holds unique ID values, including UUIDs.  Because we
 don't ONLY use UUIDs, this is an alias to string.  Being a type captures
 intent and helps make sure that UIDs and names do not get conflated. |  |
+
+
+
+### <span id="user-session-data"></span> UserSessionData
+
+
+> This is used for returning the token
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| ExpiresOn | date-time (formatted string)| `strfmt.DateTime` | ✓ | | The expired time for the token
+A string with the Datetime when the token will be expired | `Thu, 07 Mar 2019 17:50:26 +0000` |
+| Username | string| `string` | ✓ | | The username for the token
+A string with the user's username | `admin` |
 
 
 

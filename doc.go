@@ -4,6 +4,7 @@ import (
 	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/models"
@@ -565,6 +566,13 @@ type serviceUnavailableError struct {
 type swaggStatusInfoResp struct {
 	// in:body
 	Body status.StatusInfo
+}
+
+// HTTP status code 200 and userGenerated model in data
+// swagger:response userSessionData
+type swaggTokenGeneratedResp struct {
+	// in:body
+	Body authentication.UserSessionData
 }
 
 // HTTP status code 200 and cytoscapejs Config in data

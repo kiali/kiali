@@ -119,7 +119,7 @@
         "operationId": "authenticate",
         "responses": {
           "200": {
-            "$ref": "#/responses/tokenResponse"
+            "$ref": "#/responses/userSessionData"
           },
           "500": {
             "$ref": "#/responses/internalError"
@@ -141,7 +141,7 @@
         "operationId": "openshiftCheckToken",
         "responses": {
           "200": {
-            "$ref": "#/responses/tokenResponse"
+            "$ref": "#/responses/userSessionData"
           },
           "500": {
             "$ref": "#/responses/internalError"
@@ -7430,37 +7430,6 @@
       },
       "x-go-package": "github.com/gogo/protobuf/types"
     },
-    "TokenResponse": {
-      "description": "This is used for returning the token",
-      "type": "object",
-      "title": "TokenResponse tokenResponse",
-      "required": [
-        "username",
-        "token",
-        "expiresOn"
-      ],
-      "properties": {
-        "expiresOn": {
-          "description": "The expired time for the token\nA string with the Datetime when the token will be expired",
-          "type": "string",
-          "x-go-name": "ExpiresOn",
-          "example": "Thu, 07 Mar 2019 17:50:26 +0000"
-        },
-        "token": {
-          "description": "The authentication token\nA string with the authentication token for the user",
-          "type": "string",
-          "x-go-name": "Token",
-          "example": "zI1NiIsIsR5cCI6IkpXVCJ9.ezJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI5NTIzNjU0fQ.PPZvRGnR6VA4v7FmgSfQcGQr-VD"
-        },
-        "username": {
-          "description": "The username for the token\nA string with the user's username",
-          "type": "string",
-          "x-go-name": "Username",
-          "example": "admin"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/handlers"
-    },
     "Trace": {
       "description": "Trace is a list of spans",
       "type": "object",
@@ -7501,6 +7470,31 @@
       "description": "UID is a type that holds unique ID values, including UUIDs.  Because we\ndon't ONLY use UUIDs, this is an alias to string.  Being a type captures\nintent and helps make sure that UIDs and names do not get conflated.",
       "type": "string",
       "x-go-package": "k8s.io/apimachinery/pkg/types"
+    },
+    "UserSessionData": {
+      "description": "This is used for returning the token",
+      "type": "object",
+      "title": "UserSessionData userSessionData",
+      "required": [
+        "expiresOn",
+        "username"
+      ],
+      "properties": {
+        "expiresOn": {
+          "description": "The expired time for the token\nA string with the Datetime when the token will be expired",
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "ExpiresOn",
+          "example": "Thu, 07 Mar 2019 17:50:26 +0000"
+        },
+        "username": {
+          "description": "The username for the token\nA string with the user's username",
+          "type": "string",
+          "x-go-name": "Username",
+          "example": "admin"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/business/authentication"
     },
     "VSInfo": {
       "type": "object",
@@ -8670,12 +8664,6 @@
         "$ref": "#/definitions/StatusInfo"
       }
     },
-    "tokenResponse": {
-      "description": "HTTP status code 200 and tokenGenerated model in data",
-      "schema": {
-        "$ref": "#/definitions/TokenResponse"
-      }
-    },
     "traceDetailsResponse": {
       "description": "Listing all the information related to a Trace",
       "schema": {
@@ -8683,6 +8671,12 @@
         "items": {
           "$ref": "#/definitions/Trace"
         }
+      }
+    },
+    "userSessionData": {
+      "description": "HTTP status code 200 and userGenerated model in data",
+      "schema": {
+        "$ref": "#/definitions/UserSessionData"
       }
     },
     "workloadDetails": {
