@@ -45,19 +45,19 @@ DORP="${DORP:-docker}"
 # https://kiali.io/docs/installation/installation-guide/prerequisites/
 # https://istio.io/latest/docs/releases/supported-releases/
 if [ "${TARGET_BRANCH}" == "v1.48" ]; then
-  ISTIO_VERSION="1.13"
+  ISTIO_VERSION="1.13.0"
 elif [ "${TARGET_BRANCH}" == "v1.36" ]; then
-  ISTIO_VERSION="1.10"
+  ISTIO_VERSION="1.10.0"
 elif [ "${TARGET_BRANCH}" == "v1.24" ]; then
-  ISTIO_VERSION="1.7"
+  ISTIO_VERSION="1.7.0"
 fi
 
 KIND_NODE_IMAGE=""
-if [ "${ISTIO_VERSION}" == "1.7" ]; then
+if [ "${ISTIO_VERSION}" == "1.7.0" ]; then
   KIND_NODE_IMAGE="kindest/node:v1.18.20@sha256:e3dca5e16116d11363e31639640042a9b1bd2c90f85717a7fc66be34089a8169"
-elif [ "${ISTIO_VERSION}" == "1.10" ]; then
+elif [ "${ISTIO_VERSION}" == "1.10.0" ]; then
   KIND_NODE_IMAGE="kindest/node:v1.21.10@sha256:84709f09756ba4f863769bdcabe5edafc2ada72d3c8c44d6515fc581b66b029c"
-elif [ "${ISTIO_VERSION}" == "1.13" ]; then
+elif [ "${ISTIO_VERSION}" == "1.13.0" ]; then
   KIND_NODE_IMAGE="kindest/node:v1.23.4@sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9"
 fi
 
