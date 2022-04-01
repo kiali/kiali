@@ -595,6 +595,30 @@ func TestMeshVersionCompatible(t *testing.T) {
 			meshVersion: "1.1",
 			supported:   false,
 		},
+		{
+			name:        "OpenShift Service Mesh",
+			version:     "1.48",
+			meshVersion: "2.2",
+			supported:   true,
+		},
+		{
+			name:        "OpenShift Service Mesh",
+			version:     "1.36",
+			meshVersion: "2.2",
+			supported:   true,
+		},
+		{
+			name:        "OpenShift Service Mesh",
+			version:     "1.24",
+			meshVersion: "2.2",
+			supported:   true,
+		},
+		{
+			name:        "OpenShift Service Mesh",
+			version:     "1.12",
+			meshVersion: "2.2",
+			supported:   false, // 2.2 no longer supports 1.12
+		},
 	}
 
 	for _, versionToTest := range versionsToTest {
