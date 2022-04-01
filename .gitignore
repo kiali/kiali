@@ -1,3 +1,7 @@
+############################################
+#                BACKEND                   #
+############################################
+
 # Binaries for programs and plugins
 *.exe
 *.dll
@@ -48,3 +52,51 @@ operator
 
 # Do not commit helm-charts code to this repo
 helm-charts
+
+
+############################################
+#                FRONTEND                  #
+############################################
+
+# See https://help.github.com/ignore-files/ for more about ignoring files.
+
+# dependencies
+frontend/node_modules
+
+# IDE
+frontend/.idea
+frontend/.vscode
+
+# testing
+frontend/coverage
+
+# production
+frontend/build
+
+# misc
+frontend/.DS_Store
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+frontend/package-lock.json
+
+# compiled patternfly assets
+frontend/src/**/*.css
+frontend/src/**/*.css.map
+!frontend/src/index.css
+!frontend/src/css/.gitkeep
+frontend/src/img/*
+!frontend/src/img/.gitkeep
+frontend/src/fonts/*
+!frontend/src/fonts/.gitkeep
+frontend/src/sass/*
+!frontend/src/sass/index.sass
+
+# Commit Slider css
+!frontend/src/components/IstioWizards/Slider/styles/default.css

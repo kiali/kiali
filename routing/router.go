@@ -155,7 +155,7 @@ func serveEnvJsFile(w http.ResponseWriter) {
 		body += fmt.Sprintf("window.HISTORY_MODE='%s';", conf.Server.WebHistoryMode)
 	}
 
-	if webRoot := strings.TrimSuffix(config.Get().Server.WebRoot, "/"); len(webRoot) > 0 {
+	if webRoot := strings.TrimSuffix(conf.Server.WebRoot, "/"); len(webRoot) > 0 {
 		body += fmt.Sprintf("window.WEB_ROOT='%s';", webRoot)
 	}
 

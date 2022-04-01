@@ -10,14 +10,14 @@ TARGET_ARCHS ?= amd64 arm64 s390x ppc64le
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= v1.48.0
+VERSION ?= v1.49.0-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # The path where the UI project has been git cloned. The UI should
 # have been built before trying to create a kiali server container
 # image. The UI project is configured to place its build
 # output in the $UI_SRC_ROOT/build/ subdirectory.
-CONSOLE_LOCAL_DIR ?= ${ROOTDIR}/../kiali-ui
+CONSOLE_LOCAL_DIR ?= ${ROOTDIR}/frontend
 
 # Version label is used in the OpenShift/K8S resources to identify
 # their specific instances. Kiali resources will have labels of
