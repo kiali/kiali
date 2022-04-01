@@ -33,7 +33,7 @@ build: go-check
 
 ## build-ui: Runs the yarn commands to build the frontend UI
 build-ui:
-	@cd ${ROOTDIR}/frontend && yarn install && yarn run build
+	@cd ${ROOTDIR}/frontend && yarn install --frozen-lockfile && yarn run build
 
 ## build-ui-test: Runs the yarn commands to build the dev frontend UI and runs the UI tests
 build-ui-test: build-ui
@@ -70,17 +70,17 @@ build-system-test:
 ## test: Run tests, excluding third party tests under vendor and frontend. Runs `go test` internally
 test:
 	@echo Running tests, excluding third party tests under vendor
-	${GO} test $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/)
+	${GO} test $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration/)
 
 ## test-debug: Run tests in debug mode, excluding third party tests under vendor and frontend. Runs `go test -v`
 test-debug:
 	@echo Running tests in debug mode, excluding third party tests under vendor
-	${GO} test -v $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/)
+	${GO} test -v $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration/)
 
 ## test-race: Run tests with race detection, excluding third party tests under vendor and frontend. Runs `go test -race`
 test-race:
 	@echo Running tests with race detection, excluding third party tests under vendor
-	${GO} test -race $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/)
+	${GO} test -race $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration/)
 
 ## test-e2e-setup: Setup Python environment for running test suite
 test-e2e-setup:
@@ -91,6 +91,17 @@ test-e2e-setup:
 test-e2e:
 	@echo Running E2E tests
 	cd tests/e2e && source .kiali-e2e/bin/activate && pytest -s tests/
+
+## test-integration-setup: Setup go library for converting test result into junit xml
+test-integration-setup:
+	@echo Setting up Integration tests
+	go install github.com/jstemmer/go-junit-report@latest
+
+## test-integration: Run Integration test suite
+test-integration: test-integration-setup
+	@echo Running Integration tests
+	cd tests/integration/tests && ${GO} test -v 2>&1 | go-junit-report > ../junit-rest-report.xml
+	@echo Test results can be found here: $$(ls -1 ${ROOTDIR}/tests/integration/junit-rest-report.xml)
 
 #
 # Swagger Documentation
@@ -147,4 +158,4 @@ lint-install:
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	golangci-lint run -c ./.github/workflows/config/.golangci.yml --skip-files "doc\.go" --tests --timeout 5m
+	golangci-lint run -c ./.github/workflows/config/.golangci.yml --skip-files "doc\.go" --skip-dirs "frontend" --tests --timeout 5m

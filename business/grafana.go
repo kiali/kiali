@@ -202,5 +202,6 @@ func findDashboard(url, searchPattern string, auth *config.Auth) ([]byte, int, e
 	if len(urlParts) > 1 {
 		query = query + "&" + urlParts[1]
 	}
-	return httputil.HttpGet(query, auth, time.Second*10, nil)
+	resp, code, _, err := httputil.HttpGet(query, auth, time.Second*10, nil, nil)
+	return resp, code, err
 }

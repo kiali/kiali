@@ -42,6 +42,7 @@
     "cypress": "cypress open",
     "cypress:run": "cypress run",
     "cypress:bdd": "cypress open --config-file cypress-bdd.json",
+    "cypress:bdd:run": "cypress run --config-file cypress-bdd.json",
     "lint": "eslint --ext js,ts,tsx src",
     "lint:precommit": "if git diff --name-only HEAD | grep -E '\\.tsx?$'; then npm run lint; else true; fi",
     "lintfix": "eslint --ext js,ts,tsx --fix src",
