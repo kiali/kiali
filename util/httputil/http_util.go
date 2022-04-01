@@ -23,49 +23,53 @@ func HttpMethods() []string {
 		http.MethodDelete, http.MethodConnect, http.MethodOptions, http.MethodTrace}
 }
 
-func HttpGet(url string, auth *config.Auth, timeout time.Duration, customHeaders map[string]string) ([]byte, int, error) {
+func HttpGet(url string, auth *config.Auth, timeout time.Duration, customHeaders map[string]string, cookies []*http.Cookie) ([]byte, int, []*http.Cookie, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
+	}
+
+	for _, c := range cookies {
+		req.AddCookie(c)
 	}
 
 	transport, err := CreateTransport(auth, &http.Transport{}, timeout, customHeaders)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 
 	client := http.Client{Transport: transport, Timeout: timeout}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	return body, resp.StatusCode, err
+	return body, resp.StatusCode, resp.Cookies(), err
 }
 
 // HttpPost sends an HTTP Post request to the given URL and returns the response body.
-func HttpPost(url string, auth *config.Auth, body io.Reader, timeout time.Duration, customHeaders map[string]string) ([]byte, int, error) {
+func HttpPost(url string, auth *config.Auth, body io.Reader, timeout time.Duration, customHeaders map[string]string) ([]byte, int, []*http.Cookie, error) {
 	req, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 
 	transport, err := CreateTransport(auth, &http.Transport{}, timeout, customHeaders)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 
 	client := http.Client{Transport: transport, Timeout: timeout}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 	defer resp.Body.Close()
 	respBody, err := ioutil.ReadAll(resp.Body)
-	return respBody, resp.StatusCode, err
+	return respBody, resp.StatusCode, resp.Cookies(), err
 }
 
 type authRoundTripper struct {
