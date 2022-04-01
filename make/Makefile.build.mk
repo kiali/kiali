@@ -29,7 +29,7 @@ go-check:
 build: go-check
 	@echo Building...
 	${GO_BUILD_ENVVARS} ${GO} build \
-		-o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
+		-o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}" ${GO_BUILD_FLAGS}
 
 ## build-ui: Runs the yarn commands to build the frontend UI
 build-ui:
@@ -44,7 +44,7 @@ build-linux-multi-arch:
 	@for arch in ${TARGET_ARCHS}; do \
 		echo "Building for architecture [$${arch}]"; \
 		${GO_BUILD_ENVVARS} GOOS=linux GOARCH=$${arch} ${GO} build \
-			-o ${GOPATH}/bin/kiali-$${arch} -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"; \
+			-o ${GOPATH}/bin/kiali-$${arch} -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}" ${GO_BUILD_FLAGS}; \
 	done
 
 ## install: Install missing dependencies. Runs `go install` internally
