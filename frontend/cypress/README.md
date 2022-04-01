@@ -48,7 +48,7 @@ cypress/
 
 1) Create a .feature file (i.e. `testcase.feature`) in cypress/integration/featureFiles folder *(you don’t need to create one if it is already part of the ticket/user story - this is deliverable for each feature/user story)*
     * One feature file should contain only one **specific** feature or concrete example of tested **feature / story**
-    * Try to reuse already existing steps, like: `Given user is at administrator perspective` or `And I see {string} in the title` from other .feature files. Framework doesn't mind interchangin keywords, like `Then I see {string} in the title`
+    * Try to reuse already existing steps, like: `Given user is at administrator perspective` or `And I see {string} in the title` from other .feature files. The BDD framework doesn't mind interchanging keywords, like `Then I see {string} in the title`
     * If you are covering more complex flow (smoke, happy path, critical path) composed of multiple feature files, you need to decorate them with the `@` symbol (`@smoke`, `@happypath`, `@etc`)
 1) Execute cypress - with feature file you just created
     * If you have undefined execution steps in the feature file, cypress will let you know. 
