@@ -127,7 +127,7 @@ func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 	log.Tracef("Using header for authentication, Url: [%s]", r.URL.String())
 
 	sPayload := headerSessionPayload{}
-	sData, err := c.SessionStore.ReadSession(r, w, sPayload)
+	sData, err := c.SessionStore.ReadSession(r, w, &sPayload)
 	if err != nil {
 		log.Warningf("Could not read the session: %v", err)
 		return nil, err
