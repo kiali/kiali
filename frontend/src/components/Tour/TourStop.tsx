@@ -12,12 +12,12 @@ import { style } from 'typestyle';
 import { PFColors } from 'components/Pf/PfColors';
 
 export interface TourStopInfo {
-  name: string; // displayed in the tour stop header.
   description?: string; // displayed as the tour stop body
-  htmlDescription?: JSX.Element;
-  position?: PopoverPosition;
-  offset?: string; // tippy prop: 'xOffset, yOffset'
+  distance?: number; // distance from target, default=25
   isValid?: boolean; // internal use, leave unset
+  htmlDescription?: React.ReactNode;
+  name: string; // displayed in the tour stop header.
+  position?: PopoverPosition;
 }
 
 export interface TourInfo {
@@ -158,8 +158,7 @@ class TourStop extends React.PureComponent<TourStopProps> {
 
   render() {
     const info = this.activeInfo();
-    const offset = info && info.offset ? info.offset : '0, 0';
-    const tippyProps: Partial<any> = { offset: offset };
+    const offset = info && info.distance ? info.distance : 25;
     const children = this.props.children;
 
     return (
@@ -175,24 +174,24 @@ class TourStop extends React.PureComponent<TourStopProps> {
               onResize={this.onResize}
             />
             <Popover
-              isVisible={true}
-              shouldClose={this.shouldClose}
-              onHidden={this.onHidden}
-              position={info.position}
-              tippyProps={tippyProps}
-              headerContent={
-                <div>
-                  <span className={stopNumberStyle}>{this.props.activeStop! + 1}</span>
-                  <span>{info.name}</span>
-                </div>
-              }
               bodyContent={info.description ? info.description : info.htmlDescription}
+              distance={offset}
               footerContent={
                 <div>
                   {this.backButton()}
                   {this.nextButton()}
                 </div>
               }
+              headerContent={
+                <div>
+                  <span className={stopNumberStyle}>{this.props.activeStop! + 1}</span>
+                  <span>{info.name}</span>
+                </div>
+              }
+              isVisible={true}
+              onHidden={this.onHidden}
+              position={info.position}
+              shouldClose={this.shouldClose}
             >
               <>{children}</>
             </Popover>
