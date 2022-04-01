@@ -57,7 +57,7 @@ cypress/
     * The rule of the thumb is you create `.ts` file with same name as a `.feature` file like:
     * cypress/integration/featureFiles/**testcase.feature** -> cypress/integration/common/**testcase.ts**
 1) Failed tests could mean that:
-    * reusing of step definitions is not suitable or gets broken by different testcase or your modifications
+    * Reuse of step definitions is not suitable or gets broken by different testcase or your modifications
     * we want to refactor broken code and if its heavily used, move it into a custom command file (cypress/support/commands.ts) - i.e. `cy.login()`, `cy.kilali_apply_config()` lives there
 1) Test case execution should be all green, you are ready to commit your test case. You might want verify whole regression run locally - so you did not introduce any braking changes in your PR 
 
