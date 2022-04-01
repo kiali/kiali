@@ -141,7 +141,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
             />
           ) : (
             <EmptyState variant={EmptyStateVariant.full}>
-              <Title headingLevel="h5" size="lg">
+              <Title headingLevel="h5" size={TitleSizes.lg}>
                 No logs for Workload {this.props.match.params.workload}
               </Title>
               <EmptyStateBody>There are no logs to display because the workload has no pods.</EmptyStateBody>
