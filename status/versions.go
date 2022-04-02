@@ -141,7 +141,7 @@ func checkOSSMVersion(ossmVersion string, kialiVersion string) bool {
 	for _, version := range matrix {
 		if version.MeshName == istioProductNameOSSM {
 			for _, versions := range version.VersionRange {
-				if ossmVersion == strings.TrimSpace(versions.MeshVersion) && kialiVersion == strings.TrimSpace(versions.KialiMinimumVersion) {
+				if ossmVersion == strings.TrimSpace(versions.MeshVersion) && kialiVersion == strings.TrimSpace(versions.KialiFixedVersion) {
 					ok = true
 					break
 				}
@@ -165,7 +165,7 @@ func checkMaistraVersion(maistraVersion string, kialiVersion string) bool {
 	for _, version := range matrix {
 		if version.MeshName == istioProductNameMaistra {
 			for _, versions := range version.VersionRange {
-				if maistraVersion == strings.TrimSpace(versions.MeshVersion) && kialiVersion == strings.TrimSpace(versions.KialiMinimumVersion) {
+				if maistraVersion == strings.TrimSpace(versions.MeshVersion) && kialiVersion == strings.TrimSpace(versions.KialiFixedVersion) {
 					ok = true
 					break
 				}
@@ -191,7 +191,8 @@ func checkIstioVersion(istioVersion string, kialiVersion string) bool {
 				if strings.Contains(istioVersion, versions.MeshVersion) {
 					minimumVersion := strings.TrimSpace(versions.KialiMinimumVersion)
 					maximumVersion := strings.TrimSpace(versions.KialiMaximumVersion)
-					ok = checkRange(minimumVersion, maximumVersion, kialiVersion)
+					fixedVersion := strings.TrimSpace(versions.KialiFixedVersion)
+					ok = checkRange(minimumVersion, maximumVersion, fixedVersion, kialiVersion)
 					break
 				}
 			}
@@ -201,11 +202,11 @@ func checkIstioVersion(istioVersion string, kialiVersion string) bool {
 }
 
 // checkRange check if version is in target range
-func checkRange(low string, high string, version string) bool {
+func checkRange(low string, high string, fixed string, version string) bool {
 	ok := true
 	ok1 := true
-	if low == high {
-		equal := "== " + low
+	if fixed != "" {
+		equal := "== " + fixed
 		ok = validateVersion(equal, version)
 		return ok
 	}

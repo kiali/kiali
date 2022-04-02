@@ -448,8 +448,9 @@ type CompatibilityMatrix []struct {
 	MeshName     string `yaml:"meshName"`
 	VersionRange []struct {
 		MeshVersion         string `yaml:"meshVersion"`
-		KialiMinimumVersion string `yaml:"kialiMinimumVersion"`
-		KialiMaximumVersion string `yaml:"kialiMaximumVersion"`
+		KialiMinimumVersion string `yaml:"kialiMinimumVersion,omitempty"`
+		KialiMaximumVersion string `yaml:"kialiMaximumVersion,omitempty"`
+		KialiFixedVersion   string `yaml:"kialiFixedVersion,omitempty"`
 	} `yaml:"versionRange"`
 }
 
