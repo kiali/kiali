@@ -141,9 +141,13 @@ func checkOSSMVersion(ossmVersion string, kialiVersion string) bool {
 	for _, version := range matrix {
 		if version.MeshName == istioProductNameOSSM {
 			for _, versions := range version.VersionRange {
-				if ossmVersion == strings.TrimSpace(versions.MeshVersion) && kialiVersion == strings.TrimSpace(versions.KialiFixedVersion) {
-					ok = true
-					break
+				if ossmVersion == strings.TrimSpace(versions.MeshVersion) {
+					for _, fixedVersion := range versions.KialiFixedVersion {
+						if kialiVersion == fixedVersion {
+							ok = true
+							break
+						}
+					}
 				}
 			}
 		}
@@ -165,9 +169,13 @@ func checkMaistraVersion(maistraVersion string, kialiVersion string) bool {
 	for _, version := range matrix {
 		if version.MeshName == istioProductNameMaistra {
 			for _, versions := range version.VersionRange {
-				if maistraVersion == strings.TrimSpace(versions.MeshVersion) && kialiVersion == strings.TrimSpace(versions.KialiFixedVersion) {
-					ok = true
-					break
+				if maistraVersion == strings.TrimSpace(versions.MeshVersion) {
+					for _, fixedVersion := range versions.KialiFixedVersion {
+						if kialiVersion == fixedVersion {
+							ok = true
+							break
+						}
+					}
 				}
 			}
 		}
@@ -191,9 +199,20 @@ func checkIstioVersion(istioVersion string, kialiVersion string) bool {
 				if strings.Contains(istioVersion, versions.MeshVersion) {
 					minimumVersion := strings.TrimSpace(versions.KialiMinimumVersion)
 					maximumVersion := strings.TrimSpace(versions.KialiMaximumVersion)
-					fixedVersion := strings.TrimSpace(versions.KialiFixedVersion)
-					ok = checkRange(minimumVersion, maximumVersion, fixedVersion, kialiVersion)
-					break
+					if fixedVersions := versions.KialiFixedVersion; len(fixedVersions) != 0 {
+						for _, fixedVersion := range fixedVersions {
+							ok = checkRange(minimumVersion, maximumVersion, fixedVersion, kialiVersion)
+							if ok == true {
+								break
+							}
+						}
+					} else {
+						ok = checkRange(minimumVersion, maximumVersion, "", kialiVersion)
+						if ok == true {
+							break
+						}
+					}
+
 				}
 			}
 		}

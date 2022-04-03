@@ -447,10 +447,10 @@ var compatibilityMatrixFile embed.FS
 type CompatibilityMatrix []struct {
 	MeshName     string `yaml:"meshName"`
 	VersionRange []struct {
-		MeshVersion         string `yaml:"meshVersion"`
-		KialiMinimumVersion string `yaml:"kialiMinimumVersion,omitempty"`
-		KialiMaximumVersion string `yaml:"kialiMaximumVersion,omitempty"`
-		KialiFixedVersion   string `yaml:"kialiFixedVersion,omitempty"`
+		MeshVersion         string   `yaml:"meshVersion"`
+		KialiMinimumVersion string   `yaml:"kialiMinimumVersion,omitempty"`
+		KialiMaximumVersion string   `yaml:"kialiMaximumVersion,omitempty"`
+		KialiFixedVersion   []string `yaml:"kialiFixedVersion,omitempty"`
 	} `yaml:"versionRange"`
 }
 
