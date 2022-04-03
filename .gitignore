@@ -46,6 +46,7 @@ hack/*.local.sh
 tests/e2e/.pytest_cache
 tests/e2e/**/__pycache__
 tests/e2e/.kiali-e2e/
+tests/integration/junit-rest-report.xml
 
 # Do not commit operator code to this repo
 operator
@@ -100,3 +101,7 @@ frontend/src/sass/*
 
 # Commit Slider css
 !frontend/src/components/IstioWizards/Slider/styles/default.css
+
+# Cypress
+frontend/cypress/videos
+frontend/cypress/screenshots
