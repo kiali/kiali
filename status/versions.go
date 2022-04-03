@@ -201,14 +201,12 @@ func checkIstioVersion(istioVersion string, kialiVersion string) bool {
 					maximumVersion := strings.TrimSpace(versions.KialiMaximumVersion)
 					if fixedVersions := versions.KialiFixedVersion; len(fixedVersions) != 0 {
 						for _, fixedVersion := range fixedVersions {
-							ok = checkRange(minimumVersion, maximumVersion, fixedVersion, kialiVersion)
-							if ok == true {
+							if ok = checkRange(minimumVersion, maximumVersion, fixedVersion, kialiVersion); ok {
 								break
 							}
 						}
 					} else {
-						ok = checkRange(minimumVersion, maximumVersion, "", kialiVersion)
-						if ok == true {
+						if ok = checkRange(minimumVersion, maximumVersion, "", kialiVersion); ok {
 							break
 						}
 					}
