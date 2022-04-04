@@ -225,7 +225,12 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 	// the process in CreateSession function). Reverse the encoding and, then, decrypt the data.
 	cipherSessionData, err := base64.StdEncoding.DecodeString(base64SessionData)
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode session data: %w", err)
+		// Older cookie specs don't allow "=", so it may get trimmed out.  If the std encoding
+		// doesn't work, try raw encoding (with no padding).  If it still fails, error out
+		cipherSessionData, err = base64.RawStdEncoding.DecodeString(base64SessionData)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decode session data: %w", err)
+		}
 	}
 
 	block, err := aes.NewCipher([]byte(config.GetSigningKey()))
