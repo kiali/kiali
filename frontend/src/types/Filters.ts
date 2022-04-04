@@ -18,14 +18,12 @@ export const AllFilterTypes = {
   ...NonInputTypes
 };
 
-type FilterTypes = NonInputTypes | TextInputTypes;
-
 // FilterType maps a Patternfly property. Modify with care.
 export interface FilterType {
   id: string;
   title: string;
   placeholder: string;
-  filterType: FilterTypes;
+  filterType: NonInputTypes | TextInputTypes;
   action: string;
   filterValues: FilterValue[];
   loader?: () => Promise<FilterValue[]>;
