@@ -65,7 +65,7 @@ GO_BUILD_ENVVARS = \
 	CGO_ENABLED=$(CGO_ENABLED)
 
 # Extra build flags passed to the go compiler.
-GO_BUILD_FLAGS = 
+GO_BUILD_FLAGS ?= 
 
 # Determine which Dockerfile is used to build the server container
 KIALI_DOCKER_FILE ?= Dockerfile-ubi8-minimal
