@@ -129,13 +129,23 @@ func CheckMeshVersion(meshName string, meshVersion string, kialiVersion string) 
 }
 
 // checkOSSMVersion check OpenShift Service Mesh if its version is compatible with kiali. There is a 1-to-1 relationship between compatible versions.
-// So there is no range checking. The kiali minimum version is checked (kiali maximum version is ignored).
+// So there is no range checking. The kiali fixed version is checked (kiali minimum/maximum version is ignored).
 func checkOSSMVersion(ossmVersion string, kialiVersion string) bool {
 	ok := false
 	matrix, err := config.NewCompatibilityMatrix()
 
 	if err != nil {
 		return ok
+	}
+
+	// for OSSM, the compatibility matrix only provides X.Y version details - so only check the X.Y portion of the version strings.
+	v := strings.Split(ossmVersion, ".")
+	if len(v) > 1 {
+		ossmVersion = fmt.Sprintf("%v.%v", v[0], v[1])
+	}
+	v = strings.Split(kialiVersion, ".")
+	if len(v) > 1 {
+		kialiVersion = fmt.Sprintf("%v.%v", v[0], v[1])
 	}
 
 	for _, version := range matrix {
@@ -157,13 +167,23 @@ func checkOSSMVersion(ossmVersion string, kialiVersion string) bool {
 }
 
 // checkMaistraVersion check Maistra if its version is compatible with kiali. There is a 1-to-1 relationship between compatible versions.
-// So there is no range checking. The kiali minimum version is checked (kiali maximum version is ignored).
+// So there is no range checking. The kiali fixed version is checked (kiali minimum/maximum version is ignored).
 func checkMaistraVersion(maistraVersion string, kialiVersion string) bool {
 	ok := false
 	matrix, err := config.NewCompatibilityMatrix()
 
 	if err != nil {
 		return ok
+	}
+
+	// for Maistra, the compatibility matrix only provides X.Y version details - so only check the X.Y portion of the version strings.
+	v := strings.Split(maistraVersion, ".")
+	if len(v) > 1 {
+		maistraVersion = fmt.Sprintf("%v.%v", v[0], v[1])
+	}
+	v = strings.Split(kialiVersion, ".")
+	if len(v) > 1 {
+		kialiVersion = fmt.Sprintf("%v.%v", v[0], v[1])
 	}
 
 	for _, version := range matrix {
