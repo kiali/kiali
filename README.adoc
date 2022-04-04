@@ -65,7 +65,6 @@ cd kiali_sources
 export KIALI_SOURCES=$(pwd)
 
 git clone https://github.com/kiali/kiali.git
-git clone https://github.com/kiali/kiali-ui.git
 git clone https://github.com/kiali/kiali-operator.git
 git clone https://github.com/kiali/helm-charts.git
 
@@ -76,7 +75,7 @@ cd $KIALI_SOURCES/kiali
 make build test
 
 # Build the front-end and run the tests
-cd $KIALI_SOURCES/kiali-ui
+cd $KIALI_SOURCES/kiali/frontend
 yarn && yarn build && yarn test
 ----
 
@@ -85,7 +84,6 @@ The rest of this README assumes the directory tree created by the previous comma
 
  -- kiali_sources
     |- kiali
-    |- kiali-ui
     |- kiali-operator
     \- helm-charts
 
@@ -182,7 +180,7 @@ This is to facilitate development. To quickly build a new Kiali container image 
 
 [source,shell]
 ----
-cd $KIALI_SOURCES/kiali-ui
+cd $KIALI_SOURCES/kiali/frontend
 yarn && yarn build
 
 cd $KIALI_SOURCES/kiali
@@ -330,7 +328,7 @@ spec:
 
 === Running the UI outside the cluster
 
-When developing the http://github.com/kiali/kiali-ui[Kiali UI] you will find it useful to run it outside of the cluster to make it easier to update the UI code and see the changes without having to re-deploy. The preferred approach for this is to use the _proxy_ feature of React. The process is described https://github.com/kiali/kiali-ui#developing[here].
+When developing the http://github.com/kiali/kiali/frontend[Kiali UI] you will find it useful to run it outside of the cluster to make it easier to update the UI code and see the changes without having to re-deploy. The preferred approach for this is to use the _proxy_ feature of React. The process is described https://github.com/kiali/kiali/frontend#developing[here].
 
 === Disabling SSL
 
