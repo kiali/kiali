@@ -135,6 +135,10 @@ func checkOSSMVersion(ossmVersion string, kialiVersion string) bool {
 		return ok
 	}
 
+	// Maistra and Kiali versions should not have "v" prefixes. The compatibility matrix does not have "v" so strip them if they exist.
+	ossmVersion = trimV(ossmVersion)
+	kialiVersion = trimV(kialiVersion)
+
 	// for OSSM, the compatibility matrix only provides X.Y version details - so only check the X.Y portion of the version strings.
 	v := strings.Split(ossmVersion, ".")
 	if len(v) > 1 {
@@ -467,4 +471,16 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 
 func isMaistraExternalService(esi *ExternalServiceInfo) bool {
 	return esi.Name == istioProductNameOSSM || esi.Name == istioProductNameMaistra || esi.Name == istioProductNameMaistraProject
+}
+
+// trimV will trim the (optional) "v" character found at the beginning of the given version string.
+func trimV(v string) string {
+	if len(v) > 0 {
+		if v[0] == 'v' {
+			return v[1:]
+		} else {
+			return v
+		}
+	}
+	return v
 }
