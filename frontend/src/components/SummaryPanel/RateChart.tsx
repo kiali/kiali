@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { Chart, ChartBar, ChartStack, ChartAxis, ChartTooltip } from '@patternfly/react-charts';
-import { VictoryLegend } from 'victory';
+import { Chart, ChartBar, ChartStack, ChartAxis, ChartTooltip, ChartLegend } from '@patternfly/react-charts';
 
 import { PFColors } from '../../components/Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
@@ -109,7 +108,7 @@ export class RateChart extends React.Component<Props, State> {
           crossAxis={false}
           tickValues={[0, 25, 50, 75, 100]}
         />
-        <VictoryLegend
+        <ChartLegend
           style={{ labels: { fontSize: Number(fontSizePx) } }}
           name={this.props.baseName + '-legend'}
           data={this.props.series.map((s, idx) => {

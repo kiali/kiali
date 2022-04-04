@@ -6,9 +6,9 @@ import {
   ChartAxis,
   ChartScatter,
   ChartArea,
-  ChartLabel
+  ChartLabel,
+  ChartLegend
 } from '@patternfly/react-charts';
-import { VictoryLegend } from 'victory';
 
 import { VCLines, VCDataPoint, RichDataPoint } from 'types/VictoryChartInfo';
 import { CustomTooltip } from './CustomTooltip';
@@ -177,7 +177,7 @@ export class SparklineChart extends React.Component<Props, State> {
           );
         })}
         {this.props.showLegend && (
-          <VictoryLegend
+          <ChartLegend
             name={this.props.name + '-legend'}
             data={this.props.series.map((s, idx) => {
               if (this.state.hiddenSeries.has(idx)) {

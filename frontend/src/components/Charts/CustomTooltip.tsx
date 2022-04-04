@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { ChartTooltip, ChartTooltipProps } from '@patternfly/react-charts';
-import { Flyout, Point, VictoryLabel } from 'victory';
+import { ChartTooltip, ChartTooltipProps, ChartLabel, ChartPoint, ChartCursorFlyout } from '@patternfly/react-charts';
 import { VCDataPoint } from 'types/VictoryChartInfo';
 
 const dy = 15;
@@ -26,7 +25,7 @@ const CustomLabel = (props: any & { head?: string; text: string[]; textWidth: nu
           .map((pt, idx) => {
             const symbol = pt.symbol || 'square';
             return (
-              <Point
+              <ChartPoint
                 key={'item-' + idx}
                 style={{ fill: pt.color, type: symbol }}
                 x={x}
@@ -36,7 +35,7 @@ const CustomLabel = (props: any & { head?: string; text: string[]; textWidth: nu
               />
             );
           })}
-      <VictoryLabel {...props} text={textsWithHead} />
+      <ChartLabel {...props} text={textsWithHead} />
     </>
   );
 };
@@ -120,7 +119,7 @@ export class CustomTooltip extends React.Component<Props, State> {
         text={this.state.texts}
         flyoutWidth={this.state.width}
         flyoutHeight={this.state.height}
-        flyoutComponent={<Flyout style={{ stroke: 'none', fillOpacity: 0.6 }} />}
+        flyoutComponent={<ChartCursorFlyout style={{ stroke: 'none', fillOpacity: 0.6 }} />}
         labelComponent={<CustomLabel head={this.state.head} textWidth={this.state.textWidth} />}
         constrainToVisibleArea={true}
       />
