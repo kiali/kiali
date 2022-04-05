@@ -258,6 +258,20 @@ cd $KIALI_SOURCES/kiali/hack
 ./run-kiali.sh
 ----
 
+=== Running Cypress tests
+
+[source,shell]
+----
+# If you are doing frontend development, start the frontend development server, where `<kiali-url>` is the URL to the base Kiali UI location such as `http://localhost:20001/kiali`:
+make -e YARN_START_URL=http://<kiali-url> yarn-start
+
+# Start the cypress tests. The tests will run against the frontend development server by default.
+# Otherwise you can pass a custom url with env vars:
+#
+# make -e CYPRESS_BASE_URL=http://<kiali-url> cypress
+make cypress
+----
+
 ==== Debugging With VisualStudio Code
 
 If you are using VisualStudio Code, you can install the following `launcher.json` that is then used to launch the Kiali Server in the debugger. Run the `hack/run-kiali.sh` script first to ensure the proper services are up (such as the Prometheus port-forward proxy).
