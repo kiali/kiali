@@ -144,21 +144,12 @@ jobs:
         uses: cypress-io/github-action@v2
         with:
           working-directory: frontend
-          command: yarn run cypress:run --config baseUrl=${{ steps.set-kiali-url.outputs.kiali_url }}
-
-      - name: Upload cypress screenshots when tests fail
-        uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: cypress-screenshots
-          path: frontend/cypress/screenshots
-
-      - name: Upload cypress videos when tests fail
-        uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: cypress-videos
-          path: frontend/cypress/videos
+          command: yarn run cypress:run
+        env:
+          CYPRESS_BASE_URL: ${{ steps.set-kiali-url.outputs.kiali_url }}
+          CYPRESS_NUM_TESTS_KEPT_IN_MEMORY: 0
+          CYPRESS_VIDEO: false
+          CYPRESS_SCREENSHOT_ON_RUN_FAILURE: false
 
   integration_tests_backend:
     name: Backend API integration tests
@@ -199,11 +190,10 @@ jobs:
 
       - name: Run backend integration tests
         run: go test -v
-        id: integration_tests
+        id: integration-tests
         env:
           URL: ${{ steps.set-kiali-url.outputs.kiali_url }}
         working-directory: tests/integration/tests
 
       - name: Get kiali pod logs when tests fail
-        if: ${{ steps.integration_tests.outcome == 'failure' }}
-        run: kubectl logs deployments/kiali -n istio-system
+        if: ${{ steps.integration-tests.outcome == 'failure' }}
