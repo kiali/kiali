@@ -22,14 +22,14 @@ exports[`#Labels render correctly with data should render badges with More label
       value="v1"
     />
   </div>
-  <Component
+  <Button
     className="firjkjj"
     key="label_more"
     onClick={[Function]}
     variant="link"
   >
     More labels...
-  </Component>
+  </Button>
 </div>
 `;
 

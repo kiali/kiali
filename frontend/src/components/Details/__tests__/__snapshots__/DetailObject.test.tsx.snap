@@ -3,9 +3,7 @@
 exports[`DetailObject test doesn't print any alert message 1`] = `
 <div>
   <div>
-    <strong>
-      nodejs
-    </strong>
+    <strong />
     <ul
       className="details"
     >
@@ -118,9 +116,7 @@ exports[`DetailObject test doesn't print any alert message 1`] = `
 exports[`DetailObject test doesn't print excluded fields 1`] = `
 <div>
   <div>
-    <strong>
-      nodejs
-    </strong>
+    <strong />
     <ul
       className="details"
     >
@@ -193,9 +189,7 @@ exports[`DetailObject test doesn't print excluded fields 1`] = `
 exports[`DetailObject test prints a nested list with all attributes in the detail 1`] = `
 <div>
   <div>
-    <strong>
-      nodejs
-    </strong>
+    <strong />
     <ul
       className="details"
     >
@@ -308,9 +302,7 @@ exports[`DetailObject test prints a nested list with all attributes in the detai
 exports[`DetailObject test prints an alert message 1`] = `
 <div>
   <div>
-    <strong>
-      nodejs
-    </strong>
+    <strong />
     <Validation
       message="Not all checks passed"
       messageColor={true}
