@@ -150,6 +150,12 @@ kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
+    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_BETA} create -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+NAD
   fi
   cat <<SCC | $CLIENT_EXE apply -f -
 apiVersion: security.openshift.io/v1
