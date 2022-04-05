@@ -51,6 +51,7 @@ export const PFBadges = Object.freeze({
 export const kialiBadge = style({
   backgroundColor: PFColors.Badge,
   borderRadius: '30em',
+  fontFamily: 'var(--pf-global--FontFamily--sans-serif)',
   marginRight: '10px'
 });
 
