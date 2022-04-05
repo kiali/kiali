@@ -121,7 +121,7 @@ node('kiali-build && fedora') {
   def backendDir = 'src/github.com/kiali/kiali'
   def backendMakefile = 'deploy/jenkins-ci/Makefile'
 
-  def uiDir = 'src/github.com/kiali/kiali-ui'
+  def uiDir = 'src/github.com/kiali/kiali/frontend'
   def uiMakefile = 'Makefile.jenkins'
 
   def buildServer = params.SKIP_KIALI_SERVER_RELEASE != "y"
@@ -155,22 +155,6 @@ node('kiali-build && fedora') {
 
         sh "cd ${backendDir}; git config user.email 'kiali-dev@googlegroups.com'"
         sh "cd ${backendDir}; git config user.name 'kiali-bot'"
-
-        checkout([
-          $class: 'GitSCM',
-          branches: [[name: params.RELEASING_BRANCHES]],
-          doGenerateSubmoduleConfigurations: false,
-          extensions: [
-            [$class: 'RelativeTargetDirectory', relativeTargetDir: uiDir]
-          ],
-          submoduleCfg: [],
-          userRemoteConfigs: [[
-            credentialsId: 'kiali-bot-gh-ssh',
-            url: "git@github.com:${params.UI_REPO}.git"]]
-        ])
-
-        sh "cd ${uiDir}; git config user.email 'kiali-dev@googlegroups.com'"
-        sh "cd ${uiDir}; git config user.name 'kiali-bot'"
       }
     }
 
@@ -212,7 +196,7 @@ node('kiali-build && fedora') {
           }
         }, ui: {
           stage('Build UI') {
-            sh "make -f ${uiMakefile} -C ${uiDir} ui-fix-version ui-build"
+            sh "make -f ${uiMakefile} -C ${uiDir} ui-build"
           }
           stage('Test UI') {
             sh "make -f ${uiMakefile} -C ${uiDir} ui-test"
@@ -231,14 +215,6 @@ node('kiali-build && fedora') {
           withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
             sshagent(['kiali-bot-gh-ssh']) {
               sh "make -f ${backendMakefile} -C ${backendDir} backend-push-version-tag backend-prepare-next-version"
-            }
-          }
-        }
-
-        stage('Create release cut in front-end repo') {
-          withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
-            sshagent(['kiali-bot-gh-ssh']) {
-              sh "make -f ${uiMakefile} -C ${uiDir} ui-push-version-tag ui-prepare-next-version"
             }
           }
         }
