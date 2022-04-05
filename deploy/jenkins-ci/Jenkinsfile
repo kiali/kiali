@@ -121,7 +121,7 @@ node('kiali-build && fedora') {
   def backendDir = 'src/github.com/kiali/kiali'
   def backendMakefile = 'deploy/jenkins-ci/Makefile'
 
-  def uiDir = 'src/github.com/kiali/frontend'
+  def uiDir = 'src/github.com/kiali/kiali/frontend'
   def uiMakefile = 'Makefile.jenkins'
 
   def buildServer = params.SKIP_KIALI_SERVER_RELEASE != "y"
