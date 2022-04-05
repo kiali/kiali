@@ -14,3 +14,7 @@ yarn-start:
 	fi
 	@echo "'yarn start' will use this proxy setting: $$(grep proxy ${ROOTDIR}/frontend/package.json)"
 	@cd ${ROOTDIR}/frontend && yarn start
+
+## cypress: Runs the cypress frontend integration tests locally.
+cypress:
+	@cd ${ROOTDIR}/frontend && yarn cypress
