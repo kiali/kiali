@@ -242,7 +242,20 @@ func ParseRegistryEndpoints(endpoints map[string][]byte) ([]*RegistryEndpoint, e
 }
 
 func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, error) {
-	registry := RegistryConfiguration{}
+	registry := RegistryConfiguration{
+		DestinationRules: []networking_v1alpha3.DestinationRule{},
+		EnvoyFilters:     []networking_v1alpha3.EnvoyFilter{},
+		Gateways:         []networking_v1alpha3.Gateway{},
+		VirtualServices:  []networking_v1alpha3.VirtualService{},
+		ServiceEntries:   []networking_v1alpha3.ServiceEntry{},
+		Sidecars:         []networking_v1alpha3.Sidecar{},
+		WorkloadEntries:  []networking_v1alpha3.WorkloadEntry{},
+		WorkloadGroups:   []networking_v1alpha3.WorkloadGroup{},
+
+		AuthorizationPolicies:  []security_v1beta1.AuthorizationPolicy{},
+		PeerAuthentications:    []security_v1beta1.PeerAuthentication{},
+		RequestAuthentications: []security_v1beta1.RequestAuthentication{},
+	}
 	isRegistryLoaded := false
 	for istiod, bRegistry := range config {
 		// skip reading registry configs multiple times in a case of multiple istiod pods
