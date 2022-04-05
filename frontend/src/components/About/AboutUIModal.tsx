@@ -33,10 +33,6 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
   };
 
   render() {
-    const uiVersion =
-      process.env.REACT_APP_GIT_HASH === '' || process.env.REACT_APP_GIT_HASH === 'unknown'
-        ? process.env.REACT_APP_VERSION
-        : `${process.env.REACT_APP_VERSION} (${process.env.REACT_APP_GIT_HASH})`;
     const coreVersion =
       this.props.status[StatusKey.KIALI_CORE_COMMIT_HASH] === '' ||
       this.props.status[StatusKey.KIALI_CORE_COMMIT_HASH] === 'unknown'
@@ -54,14 +50,8 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
       >
         <TextContent>
           <TextList component="dl">
-            <TextListItem key={'kiali-ui-name'} component="dt">
-              Kiali UI
-            </TextListItem>
-            <TextListItem key={'kiali-ui-version'} component="dd">
-              {uiVersion!}
-            </TextListItem>
             <TextListItem key={'kiali-name'} component="dt">
-              Kiali Server
+              Kiali
             </TextListItem>
             <TextListItem key={'kiali-version'} component="dd">
               {coreVersion!}
