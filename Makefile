@@ -58,10 +58,14 @@ GOPATH ?= ${HOME}/go
 # Environment variables set when running the Go compiler.
 GOOS ?= $(shell ${GO} env GOOS)
 GOARCH ?= $(shell ${GO} env GOARCH)
+CGO_ENABLED ?= 0
 GO_BUILD_ENVVARS = \
 	GOOS=$(GOOS) \
 	GOARCH=$(GOARCH) \
-	CGO_ENABLED=0 \
+	CGO_ENABLED=$(CGO_ENABLED)
+
+# Extra build flags passed to the go compiler.
+GO_BUILD_FLAGS ?= 
 
 # Determine which Dockerfile is used to build the server container
 KIALI_DOCKER_FILE ?= Dockerfile-ubi8-minimal
