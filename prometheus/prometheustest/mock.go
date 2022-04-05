@@ -27,6 +27,11 @@ func (o *PromAPIMock) AlertManagers(ctx context.Context) (prom_v1.AlertManagersR
 	return args.Get(0).(prom_v1.AlertManagersResult), nil
 }
 
+func (o *PromAPIMock) Buildinfo(ctx context.Context) (prom_v1.BuildinfoResult, error) {
+	args := o.Called(ctx)
+	return args.Get(0).(prom_v1.BuildinfoResult), nil
+}
+
 func (o *PromAPIMock) CleanTombstones(ctx context.Context) error {
 	o.Called(ctx)
 	return nil
@@ -47,12 +52,12 @@ func (o *PromAPIMock) Flags(ctx context.Context) (prom_v1.FlagsResult, error) {
 	return args.Get(0).(prom_v1.FlagsResult), nil
 }
 
-func (o *PromAPIMock) LabelNames(ctx context.Context, startTime time.Time, endTime time.Time) ([]string, prom_v1.Warnings, error) {
-	return nil, nil, nil
+func (o *PromAPIMock) LabelNames(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]string, prom_v1.Warnings, error) {
+	args := o.Called(ctx, matches, startTime, endTime)
+	return args.Get(0).([]string), args.Get(1).(prom_v1.Warnings), nil
 }
-
-func (o *PromAPIMock) LabelValues(ctx context.Context, label string, startTime time.Time, endTime time.Time) (model.LabelValues, prom_v1.Warnings, error) {
-	args := o.Called(ctx, label)
+func (o *PromAPIMock) LabelValues(ctx context.Context, label string, matches []string, startTime time.Time, endTime time.Time) (model.LabelValues, prom_v1.Warnings, error) {
+	args := o.Called(ctx, label, matches, startTime, endTime)
 	return args.Get(0).(model.LabelValues), nil, nil
 }
 
@@ -63,6 +68,11 @@ func (o *PromAPIMock) Metadata(ctx context.Context, metric string, limit string)
 func (o *PromAPIMock) Query(ctx context.Context, query string, ts time.Time) (model.Value, prom_v1.Warnings, error) {
 	args := o.Called(ctx, query, ts)
 	return args.Get(0).(model.Value), nil, nil
+}
+
+func (o *PromAPIMock) QueryExemplars(ctx context.Context, query string, startTime time.Time, endTime time.Time) ([]prom_v1.ExemplarQueryResult, error) {
+	args := o.Called(ctx, query, startTime, endTime)
+	return args.Get(0).([]prom_v1.ExemplarQueryResult), nil
 }
 
 func (o *PromAPIMock) QueryRange(ctx context.Context, query string, r prom_v1.Range) (model.Value, prom_v1.Warnings, error) {
