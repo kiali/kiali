@@ -2,7 +2,7 @@
 # Please, see documentation in RELEASING.adoc
 
 RELEASE_TYPE ?= 'minor'
-CONSOLE_LOCAL_DIR ?= ../kiali-ui
+CONSOLE_LOCAL_DIR ?= ./frontend
 
 BACKEND_VERSION ?= $(shell sed -rn 's/^VERSION \?= v(.*)/\1/p' Makefile)
 
