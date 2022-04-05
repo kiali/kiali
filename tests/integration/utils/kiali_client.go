@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"github.com/kiali/kiali/models"
 	"net/http"
 	"net/url"
 	"os"
@@ -25,6 +26,8 @@ type AuthStrategy struct {
 }
 
 var client = *NewKialiClient()
+
+var BOOKINFO = "bookinfo"
 
 func NewKialiClient() (c *KialiClient) {
 	c = &KialiClient{
@@ -107,4 +110,94 @@ func (c *KialiClient) GetCookies() (bool, []*http.Cookie) {
 		return true, cookies
 	}
 	return false, nil
+}
+
+func ApplicationsList(namespace string) (*models.AppList, error) {
+	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/apps", client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		appList := new(models.AppList)
+		err = json.Unmarshal(body, &appList)
+		if err == nil {
+			return appList, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+}
+
+func ApplicationDetails(name, namespace string) (*models.App, error) {
+	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/apps/"+name+"?health=true", client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		app := new(models.App)
+		err = json.Unmarshal(body, &app)
+		if err == nil {
+			return app, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+}
+
+func ServicesList(namespace string) (*models.ServiceListJson, error) {
+	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/services", client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		serviceList := new(models.ServiceListJson)
+		err = json.Unmarshal(body, &serviceList)
+		if err == nil {
+			return serviceList, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+}
+
+func ServiceDetails(name, namespace string) (*models.ServiceDetailsJson, error) {
+	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/services/"+name+"?validate=true&health=true", client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		service := new(models.ServiceDetailsJson)
+		err = json.Unmarshal(body, &service)
+		if err == nil {
+			return service, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+}
+
+func WorkloadsList(namespace string) (*models.WorkloadListJson, error) {
+	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/workloads", client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		wlList := new(models.WorkloadListJson)
+		err = json.Unmarshal(body, &wlList)
+		if err == nil {
+			return wlList, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+}
+
+func WorkloadDetails(name, namespace string) (*models.WorkloadJson, error) {
+	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/workloads/"+name+"?validate=true&health=true", client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		wl := new(models.WorkloadJson)
+		err = json.Unmarshal(body, &wl)
+		if err == nil {
+			return wl, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
 }

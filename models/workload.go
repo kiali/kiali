@@ -28,6 +28,12 @@ type WorkloadList struct {
 	Validations IstioValidations `json:"validations"`
 }
 
+type WorkloadListJson struct {
+	WorkloadList
+	// TODO merge with WorkloadList and have IstioValidations instead
+	Validations ObjectValidations `json:"validations"`
+}
+
 // WorkloadListItem has the necessary information to display the console workload list
 type WorkloadListItem struct {
 	// Name of the workload
@@ -139,6 +145,12 @@ type Workload struct {
 
 	// Health
 	Health WorkloadHealth `json:"health"`
+}
+
+type WorkloadJson struct {
+	Workload
+	// TODO merge with Workload and have IstioValidations instead
+	Validations ObjectValidations `json:"validations"`
 }
 
 type Workloads []*Workload

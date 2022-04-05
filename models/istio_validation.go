@@ -36,6 +36,9 @@ type IstioValidationSummary struct {
 // IstioValidations represents a set of IstioValidation grouped by IstioValidationKey.
 type IstioValidations map[IstioValidationKey]*IstioValidation
 
+// ObjectValidations represents a set of IstioValidation grouped by Object type and name.
+type ObjectValidations map[string]map[string]*IstioValidation
+
 // IstioValidation represents a list of checks associated to an Istio object.
 // swagger:model
 type IstioValidation struct {
