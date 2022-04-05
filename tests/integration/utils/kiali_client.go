@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/json"
-	"github.com/kiali/kiali/models"
 	"net/http"
 	"net/url"
 	"os"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/httputil"
 )
 
