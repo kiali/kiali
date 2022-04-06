@@ -2,7 +2,6 @@
 :toc: macro
 :toc-title:
 
-image:https://travis-ci.org/kiali/kiali.svg["Build Status", link="https://travis-ci.org/kiali/kiali"]
 image:https://img.shields.io/badge/license-Apache2-blue.svg["Apache 2.0 license", link="LICENSE"]
 
 == Introduction
