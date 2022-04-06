@@ -7,197 +7,24 @@ on:
   pull_request:
     branches: [master, "^v\\d+\\.\\d+$"]
 
-  # Makes this workflow reusable
-  workflow_call:
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-env:
-  # This workflow can run on either a PR or release. GITHUB_BASE_REF is only
-  # set when this workflow is run against a PR. When run against a PR, we want
-  # to use the branch we are running against: GITHUB_BASE_REF. When run
-  # as a release, we want to use the current branch ref: GITHUB_REF_NAME.
-  TARGET_BRANCH: ${{ github.base_ref || github.ref_name }}
-
 jobs:
   build_backend:
-    name: Build and unit test backend
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.17.7
-
-      - name: Cache Go deps
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: Swagger Install
-        run: make swagger-install
-
-      - name: Lint Install
-        run: make lint-install
-
-      - name: Verify code linting
-        run: make lint
-
-      - name: Verify swagger file
-        run: make swagger-ci
-
-      - name: Build
-        run: make -e GO_BUILD_FLAGS=${{ env.GO_BUILD_FLAGS }} -e CGO_ENABLED=${{ env.CGO_ENABLED }} clean-all build
-        env:
-          # Build with -race flag if this is a PR, otherwise it is a release and
-          # we don't want to build with race detection because of the perf penalty.
-          GO_BUILD_FLAGS: ${{ github.base_ref && '-race' }}
-          # The -race flag requires CGO_ENABLED
-          CGO_ENABLED: ${{ github.base_ref && '1' }}
-
-      - name: Test backend
-        run: make test-race
-
-      - name: Upload go binary
-        uses: actions/upload-artifact@v3
-        with:
-          name: kiali
-          path: ~/go/bin/kiali
-
+    uses: ./.github/workflows/build-backend.yml
   build_frontend:
-    name: Build and unit test frontend
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Setup node
-        uses: actions/setup-node@v2
-        with:
-          node-version: "14"
-          cache: yarn
-          cache-dependency-path: frontend/yarn.lock
-
-      - name: Build
-        run: make clean-all build-ui
-
-      - name: Test frontend
-        run: |
-          cd frontend
-          yarn pretty-quick --check --verbose --branch ${{ env.TARGET_BRANCH }}
-          yarn test
-
-      - name: Upload frontend build
-        uses: actions/upload-artifact@v3
-        with:
-          name: build
-          path: frontend/build/
-
-  integration_tests_frontend:
-    name: Cypress integration tests
-    needs: [build_backend, build_frontend]
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2
-
-      - name: Setup node
-        uses: actions/setup-node@v2
-        with:
-          node-version: "14"
-          cache: yarn
-          cache-dependency-path: frontend/yarn.lock
-
-      - name: Download go binary
-        uses: actions/download-artifact@v3
-        with:
-          name: kiali
-          path: ~/go/bin/
-
-      - name: Ensure kiali binary is executable
-        run: chmod +x ~/go/bin/kiali
-
-      - name: Download frontend build
-        uses: actions/download-artifact@v3
-        with:
-          name: build
-          path: frontend/build
-
-      - name: Setup kind
-        run: hack/setup-kind-in-ci.sh
-
-      - name: Setup Error Rates demo
-        run: hack/istio/install-error-rates-demo.sh -c "kubectl"
-
-      - name: Set kiali URL
-        run: |
-          KIALI_URL="http://$(kubectl get svc kiali -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'):20001/kiali"
-          echo "::set-output name=kiali_url::$KIALI_URL"
-        id: set-kiali-url
-
-      - name: Run cypress integration tests
-        uses: cypress-io/github-action@v2
-        with:
-          working-directory: frontend
-          command: yarn run cypress:run
-        env:
-          CYPRESS_BASE_URL: ${{ steps.set-kiali-url.outputs.kiali_url }}
-          CYPRESS_NUM_TESTS_KEPT_IN_MEMORY: 0
-          CYPRESS_VIDEO: false
-          CYPRESS_SCREENSHOT_ON_RUN_FAILURE: false
-
+    uses: ./.github/workflows/build-frontend.yml
+    with:
+      # This workflow can run on either a PR or release. GITHUB_BASE_REF is only
+      # set when this workflow is run against a PR. When run against a PR, we want
+      # to use the branch we are running against: GITHUB_BASE_REF. When run
+      # as a release, we want to use the current branch ref: GITHUB_REF_NAME.
+      target_branch: ${{ github.base_ref || github.ref_name }}
   integration_tests_backend:
-    name: Backend API integration tests
+    uses: ./.github/workflows/integration-tests-backend.yml
     needs: [build_backend, build_frontend]
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2
-
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.17.7
-
-      - name: Download go binary
-        uses: actions/download-artifact@v3
-        with:
-          name: kiali
-          path: ~/go/bin/
-
-      - name: Ensure kiali binary is executable
-        run: chmod +x ~/go/bin/kiali
-
-      - name: Download frontend build
-        uses: actions/download-artifact@v3
-        with:
-          name: build
-          path: frontend/build
-
-      - name: Setup kind
-        run: hack/setup-kind-in-ci.sh
-
-      - name: Set kiali URL
-        run: |
-          KIALI_URL="http://$(kubectl get svc kiali -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'):20001/kiali"
-          echo "::set-output name=kiali_url::$KIALI_URL"
-        id: set-kiali-url
-
-      - name: Run backend integration tests
-        run: go test -v
-        id: integration-tests
-        env:
-          URL: ${{ steps.set-kiali-url.outputs.kiali_url }}
-        working-directory: tests/integration/tests
-
-      - name: Get kiali pod logs when tests fail
-        if: ${{ steps.integration-tests.outcome == 'failure' }}
-        run: kubectl logs deployments/kiali -n istio-system
+    with:      
+      target_branch: ${{ github.base_ref || github.ref_name }}
+  integration_tests_frontend:
+    uses: ./.github/workflows/integration-tests-frontend.yml
+    needs: [build_backend, build_frontend]
+    with:      
+      target_branch: ${{ github.base_ref || github.ref_name }}
