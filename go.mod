@@ -26,7 +26,7 @@ require (
 	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154
 	google.golang.org/grpc v1.35.0
 	google.golang.org/protobuf v1.26.0
-	gopkg.in/square/go-jose.v2 v2.5.1
+	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v2 v2.4.0
 	istio.io/api v0.0.0-20210809175348-eff556fb5d8a
 	istio.io/client-go v1.11.2
