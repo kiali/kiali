@@ -197,3 +197,4 @@ jobs:
 
       - name: Get kiali pod logs when tests fail
         if: ${{ steps.integration-tests.outcome == 'failure' }}
+        run: kubectl logs deployments/kiali -n istio-system
