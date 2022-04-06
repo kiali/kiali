@@ -86,7 +86,7 @@
     "react-dom": "16.13.1",
     "react-flexview": "4.0.3",
     "react-redux": "7.2.0",
-    "react-resize-detector": "3.4.0",
+    "react-resize-detector": "7.0.0",
     "react-router-dom": "5.0.1",
     "redux": "4.0.4",
     "redux-persist": "5.10.0",
