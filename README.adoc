@@ -2,29 +2,15 @@
 :toc: macro
 :toc-title:
 
-image:https://travis-ci.org/kiali/kiali.svg["Build Status", link="https://travis-ci.org/kiali/kiali"]
 image:https://img.shields.io/badge/license-Apache2-blue.svg["Apache 2.0 license", link="LICENSE"]
 
 == Introduction
 
-Kiali provides answers to the questions: _What microservices are part of my Istio service mesh and how are they connected?_
-
-image::https://kiali.io/images/documentation/features/topology-graph.png[Kiali Graph, width=880]
+link:https://kiali.io/[kiali] is a management console for Istio service mesh. Kiali can be quickly installed as an Istio add-on, or trusted as a part of your production environment.
 
 === Table of contents
 
 toc::[]
-
-=== Description
-
-A Microservice Architecture breaks up the monolith into many smaller pieces that are composed together. Patterns to secure the communication between services like fault tolerance (via timeout, retry, circuit breaking, etc.) have come up as well as distributed tracing to be able to see where calls are going.
-
-A service mesh can now provide these services on a platform level and frees the application writers from those tasks. Routing decisions are done at the mesh level.
-
-Kiali works with Istio to visualise the service mesh topology, and features like circuit breakers or request rates.
-
-Kiali also includes an integration with Jaeger Tracing to augment the topology views with distributed transaction monitoring, and to also provide charts and stats about distributed traces.
-
 
 === Contributing
 
