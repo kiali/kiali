@@ -46,12 +46,16 @@ Cypress.Commands.add('login', (provider: string, username: string, password: str
 				cy.intercept('api/authenticate').as('authorized') //request setting kiali cookie
 				cy.log(
 					`provider: ${provider}, 
-						username: ${username},
-						atuhorization: ${auth_strategy}`)
+					username: ${username},
+					auth_strategy: ${auth_strategy}`)
 				cy.visit('/');
 
 				if (auth_strategy === 'openshift') {
-					cy.get('.pf-c-form').contains(provider, { matchCase: false }).click()
+					cy.get('.pf-c-form').contains(auth_strategy, { matchCase: false }).click()
+				}
+
+				if (auth_strategy === 'openshift') {
+					cy.get('.pf-c-button').contains(provider, { matchCase: false }).click()
 				}
 
 				if (auth_strategy === 'openshift') {
