@@ -4,13 +4,11 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
       interval: daily
-
   - package-ecosystem: "npm"
-    directory: "/"
+    directory: "/frontend"
     schedule:
       interval: daily
