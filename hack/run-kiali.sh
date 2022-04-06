@@ -470,11 +470,6 @@ if [ -z "${UI_CONSOLE_DIR:-}" ]; then
   fi
 fi
 
-# Kiali will log the version of the UI based on version.txt - create a dummy one to avoid a warning message at startup
-if [ ! -f "${UI_CONSOLE_DIR}/version.txt" ]; then
-  echo "Local-Build" > "${UI_CONSOLE_DIR}/version.txt"
-fi
-
 infomsg "===== SETTINGS ====="
 echo "API_PROXY_HOST=$API_PROXY_HOST"
 echo "API_PROXY_PORT=$API_PROXY_PORT"
