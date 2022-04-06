@@ -19,6 +19,10 @@ func TestServicesList(t *testing.T) {
 		assert.NotEmpty(service.Name)
 		assert.True(service.IstioSidecar)
 		assert.True(service.AppLabel)
+		assert.NotNil(service.Health)
+		assert.NotNil(service.Health.Requests)
+		assert.NotNil(service.Health.Requests.Outbound)
+		assert.NotNil(service.Health.Requests.Inbound)
 	}
 	assert.NotNil(serviceList.Validations)
 	assert.Equal(utils.BOOKINFO, serviceList.Namespace.Name)

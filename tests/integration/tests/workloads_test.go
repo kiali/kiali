@@ -29,7 +29,7 @@ func TestWorkloadsList(t *testing.T) {
 }
 
 func TestWorkloadDetails(t *testing.T) {
-	name := "productpage-v1"
+	name := "details-v1"
 	assert := assert.New(t)
 	wl, err := utils.WorkloadDetails(name, utils.BOOKINFO)
 
@@ -48,5 +48,11 @@ func TestWorkloadDetails(t *testing.T) {
 	}
 	assert.NotEmpty(wl.Runtimes)
 	assert.NotEmpty(wl.Validations)
-	assert.NotEmpty(wl.Health)
+	assert.NotEmpty(wl.Workload.Health)
+	assert.NotNil(wl.Workload.Health)
+	assert.NotNil(wl.Workload.Health.WorkloadStatus)
+	assert.Contains(wl.Workload.Health.WorkloadStatus.Name, name)
+	assert.NotNil(wl.Workload.Health.Requests)
+	assert.NotNil(wl.Workload.Health.Requests.Outbound)
+	assert.NotNil(wl.Workload.Health.Requests.Inbound)
 }
