@@ -9,8 +9,10 @@ on:
 
 jobs:
   build_backend:
+    name: Build and unit test backend
     uses: ./.github/workflows/build-backend.yml
   build_frontend:
+    name: Build and unit test frontend
     uses: ./.github/workflows/build-frontend.yml
     with:
       # This workflow can run on either a PR or release. GITHUB_BASE_REF is only
@@ -19,11 +21,13 @@ jobs:
       # as a release, we want to use the current branch ref: GITHUB_REF_NAME.
       target_branch: ${{ github.base_ref || github.ref_name }}
   integration_tests_backend:
+    name: Backend API integration tests
     uses: ./.github/workflows/integration-tests-backend.yml
     needs: [build_backend, build_frontend]
     with:      
       target_branch: ${{ github.base_ref || github.ref_name }}
   integration_tests_frontend:
+    name: Cypress integration tests
     uses: ./.github/workflows/integration-tests-frontend.yml
     needs: [build_backend, build_frontend]
     with:      
