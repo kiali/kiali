@@ -3,9 +3,9 @@ name: Integration Tests Backend
 on:
   workflow_call:
     inputs:
-          target_branch:
-            required: true
-            type: string
+      target_branch:
+        required: true
+        type: string
 
 env:
   TARGET_BRANCH: ${{ inputs.target_branch }}

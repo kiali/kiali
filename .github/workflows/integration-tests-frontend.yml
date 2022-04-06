@@ -62,3 +62,4 @@ jobs:
           CYPRESS_NUM_TESTS_KEPT_IN_MEMORY: 0
           CYPRESS_VIDEO: false
           CYPRESS_SCREENSHOT_ON_RUN_FAILURE: false
+          
