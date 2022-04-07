@@ -18,14 +18,7 @@ jobs:
       # as a release, we want to use the current branch ref: GITHUB_REF_NAME.
       target-branch: ${{ github.base_ref || github.ref_name }}    
     steps:
-      - run: echo "${{ github.base_ref || github.ref_name }}"
-  echo:
-    name: Echo
-    runs-on: ubuntu-latest
-    needs: [initialize]
-    steps:
-      - run: echo "${{needs.initialize.outputs.target-branch}}"
-
+      - run: echo "target-branch -> ${{ github.base_ref || github.ref_name }}"
   build_backend:
     name: Build backend
     uses: ./.github/workflows/build-backend.yml
