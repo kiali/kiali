@@ -4,6 +4,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
@@ -14,8 +15,11 @@ updates:
 
   - package-ecosystem: "npm"
     directory: "/frontend"
+    # temporary - run scans against the pf update branch, as opposed to master
+    target-branch: "kiali#4836"
     schedule:
-      interval: "weekly"
+      # temporary: should go back to "weekly"
+      interval: "daily"
     # Disable version updates for npm dependencies
     # We expect that any security alert will be listed in the security area but no automatic PR generation
     open-pull-requests-limit: 0
