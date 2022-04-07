@@ -64,7 +64,7 @@ BACKEND_FORK_URI ?= $(shell git config --get remote.origin.url)
 BUILD_TAG ?= prepare-next-version
 BUMP_BRANCH_ID ?= $(BUILD_TAG)
 
-QUAY_NAME ?= quay.io/kiali/kiali
+QUAY_NAME ?= quay.io/leandroberetta/kiali
 
 ifeq ($(RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE),y)
   IS_SNAPSHOT ?= y

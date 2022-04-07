@@ -1,0 +1,63 @@
+name: Kiali Release
+
+on:
+  push
+
+jobs:
+  release-backend:
+    name: Release backend
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.7
+
+      - name: Cache Go deps
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      
+      - name: Install required software        
+        run: sudo apt-get install -y node-semver
+
+      - name: Determine release type
+        id: release_type
+        run: echo "::set-output name=release_type::$(./.github/workflows/util/release_type.sh)"
+
+      - name: Build backend
+        env:
+          RELEASE_TYPE: ${{ steps.release_type.outputs.release_type}}        
+        run: echo ${{ env.RELEASE_TYPE }} && make -f ./deploy/jenkins-ci/Makefile backend-build-release
+
+      - name: Test backend
+        run: make -f ./deploy/jenkins-ci/Makefile backend-test
+
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Build UI
+        env:
+          RELEASE_TYPE: ${{ steps.release_type.outputs.release_type}}        
+        run: make -f ./Makefile.jenkins -C ./frontend ui-build
+
+      - name: Push Kiali image
+        env: 
+          QUAY_USER: ${{ secrets.QUAY_USER }}
+          QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+        run: make -f ./deploy/jenkins-ci/Makefile backend-push-docker
+      
+      - name: Version (Test)
+        run: sed -rn 's/^VERSION \\?= v(.*)/v\\1/p' Makefile

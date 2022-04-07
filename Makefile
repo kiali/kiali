@@ -33,7 +33,7 @@ GO_VERSION_KIALI = 1.17.7
 SWAGGER_VERSION ?= 0.27.0
 
 # Identifies the Kiali container image that will be built.
-IMAGE_ORG ?= kiali
+IMAGE_ORG ?= leandroberetta
 CONTAINER_NAME ?= ${IMAGE_ORG}/kiali
 CONTAINER_VERSION ?= dev
 
