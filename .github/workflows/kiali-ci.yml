@@ -8,27 +8,43 @@ on:
     branches: [master, "^v\\d+\\.\\d+$"]
 
 jobs:
-  build_backend:
-    name: Build and unit test backend
-    uses: ./.github/workflows/build-backend.yml
-  build_frontend:
-    name: Build and unit test frontend
-    uses: ./.github/workflows/build-frontend.yml
-    with:
+  initialize:
+    name: Initialize
+    runs-on: ubuntu-latest
+    outputs:
       # This workflow can run on either a PR or release. GITHUB_BASE_REF is only
       # set when this workflow is run against a PR. When run against a PR, we want
       # to use the branch we are running against: GITHUB_BASE_REF. When run
       # as a release, we want to use the current branch ref: GITHUB_REF_NAME.
-      target_branch: ${{ github.base_ref || github.ref_name }}
+      target-branch: ${{ github.base_ref || github.ref_name }}    
+    steps:
+      - run: echo "${{ github.base_ref || github.ref_name }}"
+  echo:
+    name: Echo
+    runs-on: ubuntu-latest
+    needs: [initialize]
+    steps:
+      - run: echo "${{needs.initialize.outputs.target-branch}}"
+
+  build_backend:
+    name: Build backend
+    uses: ./.github/workflows/build-backend.yml
+    needs: [initialize]
+  build_frontend:
+    name: Build frontend
+    uses: ./.github/workflows/build-frontend.yml
+    needs: [initialize]
+    with:      
+      target_branch: ${{needs.initialize.outputs.target-branch}} 
   integration_tests_backend:
-    name: Backend API integration tests
+    name: Run backend integration tests
     uses: ./.github/workflows/integration-tests-backend.yml
-    needs: [build_backend, build_frontend]
+    needs: [initialize, build_backend, build_frontend]
     with:      
-      target_branch: ${{ github.base_ref || github.ref_name }}
+      target_branch: ${{needs.initialize.outputs.target-branch}} 
   integration_tests_frontend:
-    name: Cypress integration tests
+    name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend.yml
-    needs: [build_backend, build_frontend]
+    needs: [initialize, build_backend, build_frontend]
     with:      
-      target_branch: ${{ github.base_ref || github.ref_name }}
+      target_branch: ${{needs.initialize.outputs.target-branch}} 
