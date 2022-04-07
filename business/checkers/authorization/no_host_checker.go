@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	api_security_v1beta "istio.io/api/security/v1beta1"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -16,7 +16,7 @@ type NoHostChecker struct {
 	Namespace           string
 	Namespaces          models.Namespaces
 	ServiceEntries      map[string][]string
-	VirtualServices     []networking_v1alpha3.VirtualService
+	VirtualServices     []networking_v1beta1.VirtualService
 	RegistryServices    []*kubernetes.RegistryService
 }
 

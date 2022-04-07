@@ -140,7 +140,8 @@ export type WorkloadWizardState = {
 export const KIALI_WIZARD_LABEL = 'kiali_wizard';
 export const KIALI_RELATED_LABEL = 'kiali_wizard_related';
 
-export const ISTIO_NETWORKING_VERSION = 'networking.istio.io/v1alpha3';
+// Wizard don't operate with EnvoyFilters so they can use the v1beta1 version
+export const ISTIO_NETWORKING_VERSION = 'networking.istio.io/v1beta1';
 export const ISTIO_SECURITY_VERSION = 'security.istio.io/v1beta1';
 
 export const fqdnServiceName = (serviceName: string, namespace: string): string => {

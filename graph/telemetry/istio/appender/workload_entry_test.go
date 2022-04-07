@@ -6,7 +6,7 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/business"
@@ -39,14 +39,14 @@ func setupBusinessLayerWithKube(k8s *kubetest.K8SClientMock, istioObjects ...run
 }
 
 func setupWorkloadEntries() *business.Layer {
-	workloadV1 := &networking_v1alpha3.WorkloadEntry{}
+	workloadV1 := &networking_v1beta1.WorkloadEntry{}
 	workloadV1.Name = "workloadA"
 	workloadV1.Namespace = appNamespace
 	workloadV1.Spec.Labels = map[string]string{
 		"app":     appName,
 		"version": "v1",
 	}
-	workloadV2 := &networking_v1alpha3.WorkloadEntry{}
+	workloadV2 := &networking_v1beta1.WorkloadEntry{}
 	workloadV2.Name = "workloadB"
 	workloadV2.Namespace = appNamespace
 	workloadV2.Spec.Labels = map[string]string{
@@ -155,7 +155,7 @@ func TestWorkloadEntry(t *testing.T) {
 func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 	assert := require.New(t)
 
-	workloadV1 := &networking_v1alpha3.WorkloadEntry{}
+	workloadV1 := &networking_v1beta1.WorkloadEntry{}
 	workloadV1.Name = "workloadA"
 	workloadV1.Namespace = appNamespace
 	workloadV1.Spec.Labels = map[string]string{
@@ -163,7 +163,7 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 		"version": "v1",
 	}
 
-	workloadV2 := &networking_v1alpha3.WorkloadEntry{}
+	workloadV2 := &networking_v1beta1.WorkloadEntry{}
 	workloadV2.Name = "workloadB"
 	workloadV2.Namespace = appNamespace
 	workloadV2.Spec.Labels = map[string]string{
@@ -226,7 +226,7 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 	assert := require.New(t)
 
-	workloadV1A := &networking_v1alpha3.WorkloadEntry{}
+	workloadV1A := &networking_v1beta1.WorkloadEntry{}
 	workloadV1A.Name = "workloadV1A"
 	workloadV1A.Namespace = appNamespace
 	workloadV1A.Spec.Labels = map[string]string{
@@ -234,7 +234,7 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 		"version": "v1",
 	}
 
-	workloadV1B := &networking_v1alpha3.WorkloadEntry{}
+	workloadV1B := &networking_v1beta1.WorkloadEntry{}
 	workloadV1B.Name = "workloadV1B"
 	workloadV1B.Namespace = appNamespace
 	workloadV1B.Spec.Labels = map[string]string{
@@ -242,7 +242,7 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 		"version": "v1",
 	}
 
-	workloadV2 := &networking_v1alpha3.WorkloadEntry{}
+	workloadV2 := &networking_v1beta1.WorkloadEntry{}
 	workloadV2.Name = "workloadV2"
 	workloadV2.Namespace = appNamespace
 	workloadV2.Spec.Labels = map[string]string{

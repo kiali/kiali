@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -185,14 +185,14 @@ func emptyIstioConfigList() *models.IstioConfigList {
 func fakeIstioConfigList() *models.IstioConfigList {
 	result := models.IstioConfigList{}
 
-	result.VirtualServices = []networking_v1alpha3.VirtualService{
+	result.VirtualServices = []networking_v1beta1.VirtualService{
 		*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("product", "v1", -1),
 			data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("product", "v1", -1),
 				data.CreateEmptyVirtualService("product-vs", "test", []string{"product"}),
 			),
 		)}
 
-	result.DestinationRules = []networking_v1alpha3.DestinationRule{
+	result.DestinationRules = []networking_v1beta1.DestinationRule{
 		*data.CreateEmptyDestinationRule("test", "customer-dr", "customer"),
 	}
 	return &result

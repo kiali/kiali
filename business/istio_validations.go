@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 
@@ -392,8 +392,8 @@ func (in *IstioValidationsService) filterAuthPolicies(namespace string, rbacDeta
 	}
 }
 
-func (in *IstioValidationsService) filterVSExportToNamespaces(namespace string, vs []networking_v1alpha3.VirtualService) []networking_v1alpha3.VirtualService {
-	var result []networking_v1alpha3.VirtualService
+func (in *IstioValidationsService) filterVSExportToNamespaces(namespace string, vs []networking_v1beta1.VirtualService) []networking_v1beta1.VirtualService {
+	var result []networking_v1beta1.VirtualService
 	for _, v := range vs {
 		if len(v.Spec.ExportTo) > 0 {
 			for _, exportToNs := range v.Spec.ExportTo {
@@ -410,8 +410,8 @@ func (in *IstioValidationsService) filterVSExportToNamespaces(namespace string, 
 	return result
 }
 
-func (in *IstioValidationsService) filterDRExportToNamespaces(namespace string, dr []networking_v1alpha3.DestinationRule) []networking_v1alpha3.DestinationRule {
-	var result []networking_v1alpha3.DestinationRule
+func (in *IstioValidationsService) filterDRExportToNamespaces(namespace string, dr []networking_v1beta1.DestinationRule) []networking_v1beta1.DestinationRule {
+	var result []networking_v1beta1.DestinationRule
 	for _, d := range dr {
 		if len(d.Spec.ExportTo) > 0 {
 			for _, exportToNs := range d.Spec.ExportTo {
@@ -428,8 +428,8 @@ func (in *IstioValidationsService) filterDRExportToNamespaces(namespace string, 
 	return result
 }
 
-func (in *IstioValidationsService) filterSEExportToNamespaces(namespace string, se []networking_v1alpha3.ServiceEntry) []networking_v1alpha3.ServiceEntry {
-	var result []networking_v1alpha3.ServiceEntry
+func (in *IstioValidationsService) filterSEExportToNamespaces(namespace string, se []networking_v1beta1.ServiceEntry) []networking_v1beta1.ServiceEntry {
+	var result []networking_v1beta1.ServiceEntry
 	for _, s := range se {
 		if len(s.Spec.ExportTo) > 0 {
 			for _, exportToNs := range s.Spec.ExportTo {

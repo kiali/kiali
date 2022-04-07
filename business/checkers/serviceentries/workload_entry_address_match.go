@@ -3,14 +3,14 @@ package serviceentries
 import (
 	"fmt"
 
-	"istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/models"
 )
 
 type HasMatchingWorkloadEntryAddress struct {
-	ServiceEntry    v1alpha3.ServiceEntry
+	ServiceEntry    networking_v1beta1.ServiceEntry
 	WorkloadEntries map[string][]string
 }
 
@@ -59,7 +59,7 @@ func (in HasMatchingWorkloadEntryAddress) Check() ([]*models.IstioCheck, bool) {
 	return validations, true
 }
 
-func GroupWorkloadEntriesByLabels(workloads []v1alpha3.WorkloadEntry) map[string][]string {
+func GroupWorkloadEntriesByLabels(workloads []networking_v1beta1.WorkloadEntry) map[string][]string {
 	workloadEntriesMap := map[string][]string{}
 	for _, we := range workloads {
 		selector := labels.Set(we.Spec.Labels).String()

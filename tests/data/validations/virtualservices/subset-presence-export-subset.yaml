@@ -23,7 +23,7 @@ metadata:
     istio-injection: "enabled"
 spec: {}
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: testrule
@@ -37,7 +37,7 @@ spec:
   exportTo:
     - '.'
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: testrule
@@ -51,7 +51,7 @@ spec:
   exportTo:
     - bookinfo
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: testrule

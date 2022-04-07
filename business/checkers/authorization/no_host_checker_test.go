@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -108,7 +108,7 @@ func TestServiceEntryPresent(t *testing.T) {
 		AuthorizationPolicy: *authPolicyWithHost([]string{"wikipedia.org"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{serviceEntry}),
 	}.Check()
 
 	// Well configured object
@@ -125,7 +125,7 @@ func TestExportedInternalServiceEntryPresent(t *testing.T) {
 		AuthorizationPolicy: *authPolicyWithHost([]string{"details.bookinfo2.svc.cluster.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*serviceEntry}),
 	}.Check()
 
 	// Well configured object
@@ -142,7 +142,7 @@ func TestExportedExternalServiceEntryPresent(t *testing.T) {
 		AuthorizationPolicy: *authPolicyWithHost([]string{"www.myhost.com"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*serviceEntry}),
 	}.Check()
 
 	// Well configured object
@@ -159,7 +159,7 @@ func TestExportedExternalServiceEntryFail(t *testing.T) {
 		AuthorizationPolicy: *authPolicyWithHost([]string{"www.wrong.com"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*serviceEntry}),
 	}.Check()
 
 	// www.wrong.com host is not present
@@ -180,7 +180,7 @@ func TestWildcardExportedInternalServiceEntryPresent(t *testing.T) {
 		AuthorizationPolicy: *authPolicyWithHost([]string{"details.bookinfo2.svc.cluster.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*serviceEntry}),
 	}.Check()
 
 	// Well configured object
@@ -197,7 +197,7 @@ func TestWildcardExportedInternalServiceEntryFail(t *testing.T) {
 		AuthorizationPolicy: *authPolicyWithHost([]string{"details.bookinfo3.svc.cluster.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*serviceEntry}),
 	}.Check()
 
 	// details.bookinfo3.svc.cluster.local host is not present
@@ -218,7 +218,7 @@ func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
 		AuthorizationPolicy: *authPolicyWithHost([]string{"details.bookinfo2.svc.cluster.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*serviceEntry}),
 	}.Check()
 
 	// details.bookinfo2.svc.cluster.local host is not present
@@ -238,7 +238,7 @@ func TestServiceEntryNotPresent(t *testing.T) {
 		AuthorizationPolicy: *authPolicyWithHost([]string{"wrong.org"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{serviceEntry}),
 	}.Check()
 
 	// Wrong.org host is not present
@@ -258,7 +258,7 @@ func TestExportedInternalServiceEntryNotPresent(t *testing.T) {
 		AuthorizationPolicy: *authPolicyWithHost([]string{"wrong.bookinfo2.svc.cluster.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*serviceEntry}),
 	}.Check()
 
 	// Wrong.org host is not present
@@ -279,7 +279,7 @@ func TestVirtualServicePresent(t *testing.T) {
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		ServiceEntries:      map[string][]string{},
-		VirtualServices:     []networking_v1alpha3.VirtualService{virtualService},
+		VirtualServices:     []networking_v1beta1.VirtualService{virtualService},
 	}.Check()
 
 	assert.True(valid)
@@ -295,7 +295,7 @@ func TestVirtualServiceNotPresent(t *testing.T) {
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		ServiceEntries:      map[string][]string{},
-		VirtualServices:     []networking_v1alpha3.VirtualService{virtualService},
+		VirtualServices:     []networking_v1beta1.VirtualService{virtualService},
 	}.Check()
 
 	// Wrong.org host is not present
@@ -316,7 +316,7 @@ func TestWildcardServiceEntryHost(t *testing.T) {
 		AuthorizationPolicy: *authPolicyWithHost([]string{"maps.google.com"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{serviceEntry}),
 	}.Check()
 
 	// Well configured object
@@ -328,7 +328,7 @@ func TestWildcardServiceEntryHost(t *testing.T) {
 		AuthorizationPolicy: *authPolicyWithHost([]string{"maps.apple.com"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
-		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{serviceEntry}),
+		ServiceEntries:      kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{serviceEntry}),
 	}.Check()
 
 	// apple.com host is not present

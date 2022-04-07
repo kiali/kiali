@@ -1,5 +1,5 @@
 kind: VirtualService
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 metadata:
   name: reviews1
   namespace: bookinfo
@@ -39,7 +39,7 @@ spec:
             host: reviews3.bookinfo3.svc.cluster.local
 ---
 kind: VirtualService
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 metadata:
   name: reviews2
   namespace: bookinfo
@@ -80,7 +80,7 @@ spec:
             host: reviews3.bookinfo3.svc.cluster.local
 ---
 kind: VirtualService
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 metadata:
   name: reviews3
   namespace: bookinfo
@@ -125,7 +125,7 @@ spec:
 ---
 ---
 kind: VirtualService
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 metadata:
   name: reviews4
   namespace: bookinfo

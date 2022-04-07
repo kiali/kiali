@@ -1,7 +1,7 @@
 package common
 
 import (
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -69,7 +69,7 @@ func RequestAuthenticationMultiMatchChecker(subjectType string, ra []security_v1
 	}
 }
 
-func SidecarSelectorMultiMatchChecker(subjectType string, sc []networking_v1alpha3.Sidecar, workloadList models.WorkloadList) GenericMultiMatchChecker {
+func SidecarSelectorMultiMatchChecker(subjectType string, sc []networking_v1beta1.Sidecar, workloadList models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(sc))
 	i := 0

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -275,7 +275,7 @@ func TestValidServiceEntryHost(t *testing.T) {
 	vals, valid = NoHostChecker{
 		Namespace:         "wikipedia",
 		VirtualService:    *virtualService,
-		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{serviceEntry}),
+		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{serviceEntry}),
 		RegistryServices:  registryService1,
 	}.Check()
 
@@ -309,7 +309,7 @@ func TestValidWildcardServiceEntryHost(t *testing.T) {
 	vals, valid = NoHostChecker{
 		Namespace:         "google",
 		VirtualService:    *virtualService,
-		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*serviceEntry}),
+		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*serviceEntry}),
 		RegistryServices:  registryService1,
 	}.Check()
 

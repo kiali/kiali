@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/kiali/kiali/business/checkers/gateways"
 	"github.com/kiali/kiali/models"
@@ -10,7 +10,7 @@ import (
 const GatewayCheckerType = "gateway"
 
 type GatewayChecker struct {
-	Gateways              []networking_v1alpha3.Gateway
+	Gateways              []networking_v1beta1.Gateway
 	Namespace             string
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	IsGatewayToNamespace  bool
@@ -32,7 +32,7 @@ func (g GatewayChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func (g GatewayChecker) runSingleChecks(gw networking_v1alpha3.Gateway) models.IstioValidations {
+func (g GatewayChecker) runSingleChecks(gw networking_v1beta1.Gateway) models.IstioValidations {
 	key, validations := EmptyValidValidation(gw.Name, gw.Namespace, GatewayCheckerType)
 
 	enabledCheckers := []Checker{

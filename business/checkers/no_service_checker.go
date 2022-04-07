@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/kiali/kiali/business/checkers/destinationrules"
 	"github.com/kiali/kiali/business/checkers/virtualservices"
@@ -41,7 +41,7 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func runVirtualServiceCheck(virtualService networking_v1alpha3.VirtualService, namespace string, serviceHosts map[string][]string, clusterNamespaces models.Namespaces, registryStatus []*kubernetes.RegistryService) models.IstioValidations {
+func runVirtualServiceCheck(virtualService networking_v1beta1.VirtualService, namespace string, serviceHosts map[string][]string, clusterNamespaces models.Namespaces, registryStatus []*kubernetes.RegistryService) models.IstioValidations {
 	key, validations := EmptyValidValidation(virtualService.Name, virtualService.Namespace, VirtualCheckerType)
 
 	result, valid := virtualservices.NoHostChecker{
@@ -58,7 +58,7 @@ func runVirtualServiceCheck(virtualService networking_v1alpha3.VirtualService, n
 	return models.IstioValidations{key: validations}
 }
 
-func runGatewayCheck(virtualService networking_v1alpha3.VirtualService, gatewayNames map[string]struct{}) models.IstioValidations {
+func runGatewayCheck(virtualService networking_v1beta1.VirtualService, gatewayNames map[string]struct{}) models.IstioValidations {
 	key, validations := EmptyValidValidation(virtualService.Name, virtualService.Namespace, VirtualCheckerType)
 
 	result, valid := virtualservices.NoGatewayChecker{
@@ -72,8 +72,8 @@ func runGatewayCheck(virtualService networking_v1alpha3.VirtualService, gatewayN
 	return models.IstioValidations{key: validations}
 }
 
-func runDestinationRuleCheck(destinationRule networking_v1alpha3.DestinationRule, namespace string, workloads map[string]models.WorkloadList,
-	serviceHosts map[string][]string, clusterNamespaces models.Namespaces, registryStatus []*kubernetes.RegistryService, virtualServices []networking_v1alpha3.VirtualService) models.IstioValidations {
+func runDestinationRuleCheck(destinationRule networking_v1beta1.DestinationRule, namespace string, workloads map[string]models.WorkloadList,
+	serviceHosts map[string][]string, clusterNamespaces models.Namespaces, registryStatus []*kubernetes.RegistryService, virtualServices []networking_v1beta1.VirtualService) models.IstioValidations {
 	key, validations := EmptyValidValidation(destinationRule.Name, destinationRule.Namespace, DestinationRuleCheckerType)
 
 	result, valid := destinationrules.NoDestinationChecker{

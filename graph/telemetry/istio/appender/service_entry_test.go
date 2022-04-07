@@ -7,8 +7,8 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/business"
@@ -33,7 +33,7 @@ func setupBusinessLayer(istioObjects ...runtime.Object) *business.Layer {
 }
 
 func setupServiceEntries(exportTo []string) *business.Layer {
-	externalSE := &networking_v1alpha3.ServiceEntry{}
+	externalSE := &networking_v1beta1.ServiceEntry{}
 	externalSE.Name = "externalSE"
 	externalSE.Namespace = "testNamespace"
 	externalSE.Spec.ExportTo = exportTo
@@ -41,16 +41,16 @@ func setupServiceEntries(exportTo []string) *business.Layer {
 		"host1.external.com",
 		"host2.external.com",
 	}
-	externalSE.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_EXTERNAL
+	externalSE.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_EXTERNAL
 
-	internalSE := &networking_v1alpha3.ServiceEntry{}
+	internalSE := &networking_v1beta1.ServiceEntry{}
 	internalSE.Name = "internalSE"
 	internalSE.Namespace = "testNamespace"
 	internalSE.Spec.Hosts = []string{
 		"internalHost1",
 		"internalHost2.namespace.svc.cluster.local",
 	}
-	internalSE.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_INTERNAL
+	internalSE.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_INTERNAL
 
 	return setupBusinessLayer(externalSE, internalSE)
 }
@@ -675,13 +675,13 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	// Mock the k8s client with a "global" ServiceEntry
 	k8s := kubetest.NewK8SClientMock()
 
-	remoteSE := &networking_v1alpha3.ServiceEntry{}
+	remoteSE := &networking_v1beta1.ServiceEntry{}
 	remoteSE.Name = "externalSE"
 	remoteSE.Namespace = "namespace"
 	remoteSE.Spec.Hosts = []string{
 		"svc1.namespace.global",
 	}
-	remoteSE.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_INTERNAL
+	remoteSE.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_INTERNAL
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	config.Set(config.NewConfig())
@@ -744,16 +744,16 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	k8s := kubetest.NewK8SClientMock()
 
-	SE1 := &networking_v1alpha3.ServiceEntry{}
+	SE1 := &networking_v1beta1.ServiceEntry{}
 	SE1.Name = "SE1"
 	SE1.Namespace = "fooNamespace"
 	SE1.Spec.ExportTo = []string{"*"}
 	SE1.Spec.Hosts = []string{
 		"host1.external.com",
 	}
-	SE1.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_EXTERNAL
+	SE1.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_EXTERNAL
 
-	SE2 := &networking_v1alpha3.ServiceEntry{}
+	SE2 := &networking_v1beta1.ServiceEntry{}
 	SE2.Name = "SE2"
 	SE2.Namespace = "testNamespace"
 	SE2.Spec.ExportTo = []string{"."}
@@ -761,7 +761,7 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 		"host1.external.com",
 		"host2.external.com",
 	}
-	SE2.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_EXTERNAL
+	SE2.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_EXTERNAL
 
 	k8s.MockIstio(SE1, SE2)
 
@@ -868,16 +868,16 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	k8s := kubetest.NewK8SClientMock()
 
-	SE1 := &networking_v1alpha3.ServiceEntry{}
+	SE1 := &networking_v1beta1.ServiceEntry{}
 	SE1.Name = "SE1"
 	SE1.Namespace = "otherNamespace"
 	SE1.Spec.ExportTo = []string{"*"}
 	SE1.Spec.Hosts = []string{
 		"host1.external.com",
 	}
-	SE1.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_EXTERNAL
+	SE1.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_EXTERNAL
 
-	SE2 := &networking_v1alpha3.ServiceEntry{}
+	SE2 := &networking_v1beta1.ServiceEntry{}
 	SE2.Name = "SE2"
 	SE2.Namespace = "testNamespace"
 	SE2.Spec.ExportTo = []string{"."}
@@ -885,7 +885,7 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 		"host1.external.com",
 		"host2.external.com",
 	}
-	SE2.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_EXTERNAL
+	SE2.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_EXTERNAL
 
 	k8s.MockIstio(SE1, SE2)
 
@@ -1002,19 +1002,19 @@ func TestServiceEntryMultipleEdges(t *testing.T) {
 		app           = "reviews"
 	)
 
-	internalSE := &networking_v1alpha3.ServiceEntry{}
+	internalSE := &networking_v1beta1.ServiceEntry{}
 	internalSE.Name = seServiceName
 	internalSE.Namespace = namespace
 	internalSE.Spec.Hosts = []string{
 		"reviews",
 		"reviews.testNamespace.svc.cluster.local",
 	}
-	internalSE.Spec.WorkloadSelector = &api_networking_v1alpha3.WorkloadSelector{
+	internalSE.Spec.WorkloadSelector = &api_networking_v1beta1.WorkloadSelector{
 		Labels: map[string]string{
 			"app": "reviews",
 		},
 	}
-	internalSE.Spec.Location = api_networking_v1alpha3.ServiceEntry_MESH_INTERNAL
+	internalSE.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_INTERNAL
 
 	businessLayer := setupBusinessLayer(internalSE)
 

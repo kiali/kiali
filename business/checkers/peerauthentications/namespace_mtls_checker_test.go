@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/config"
@@ -27,7 +27,7 @@ func TestPeerAuthnmTLSEnabled(t *testing.T) {
 
 	policy := data.CreateEmptyPeerAuthentication("default", "bar", data.CreateMTLS("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []networking_v1alpha3.DestinationRule{
+		DestinationRules: []networking_v1beta1.DestinationRule{
 			*data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),
 		},
 	}
@@ -54,7 +54,7 @@ func TestPeerAuthnmTLSEnabled(t *testing.T) {
 func TestPolicyEnabledDRmTLSEnabled(t *testing.T) {
 	peerAuthn := data.CreateEmptyPeerAuthentication("default", "bar", data.CreateMTLS("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []networking_v1alpha3.DestinationRule{
+		DestinationRules: []networking_v1beta1.DestinationRule{
 			*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local")),
 		},
@@ -71,7 +71,7 @@ func TestPolicyEnabledDRmTLSMeshWideEnabled(t *testing.T) {
 	peerAuthn := data.CreateEmptyPeerAuthentication("default", "bar", data.CreateMTLS("STRICT"))
 
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []networking_v1alpha3.DestinationRule{
+		DestinationRules: []networking_v1beta1.DestinationRule{
 			*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bar", "default", "*.local")),
 		},
@@ -87,7 +87,7 @@ func TestPolicyEnabledDRmTLSMeshWideEnabled(t *testing.T) {
 func TestPolicyPermissive(t *testing.T) {
 	peerAuthn := data.CreateEmptyPeerAuthentication("default", "bar", data.CreateMTLS("PERMISSIVE"))
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []networking_v1alpha3.DestinationRule{
+		DestinationRules: []networking_v1beta1.DestinationRule{
 			*data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),
 		},
 	}

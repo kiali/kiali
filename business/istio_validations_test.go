@@ -8,7 +8,7 @@ import (
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -67,7 +67,7 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	var currentIstioObjects []networking_v1alpha3.VirtualService
+	var currentIstioObjects []networking_v1beta1.VirtualService
 	vs1to3 := loadVirtualService("vs_bookinfo1_to_2_3.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, vs1to3)
 	vs1tothis := loadVirtualService("vs_bookinfo1_to_this.yaml", t)
@@ -82,7 +82,7 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, vs3toall)
 	v := mockEmptyValidationService()
 	filteredVSs := v.filterVSExportToNamespaces("bookinfo", currentIstioObjects)
-	var expectedVS []networking_v1alpha3.VirtualService
+	var expectedVS []networking_v1beta1.VirtualService
 	expectedVS = append(expectedVS, vs1tothis)
 	expectedVS = append(expectedVS, vs2to1)
 	expectedVS = append(expectedVS, vs3toall)
@@ -226,12 +226,12 @@ func fakeEmptyIstioConfigList() *models.IstioConfigList {
 func fakeIstioConfigList() *models.IstioConfigList {
 	istioConfigList := models.IstioConfigList{}
 
-	istioConfigList.VirtualServices = []networking_v1alpha3.VirtualService{
+	istioConfigList.VirtualServices = []networking_v1beta1.VirtualService{
 		*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("product", "v1", -1),
 			data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("product2", "v1", -1),
 				data.CreateEmptyVirtualService("product-vs", "test", []string{"product"})))}
 
-	istioConfigList.DestinationRules = []networking_v1alpha3.DestinationRule{
+	istioConfigList.DestinationRules = []networking_v1beta1.DestinationRule{
 		*data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule("test", "product-dr", "product")),
 		*data.CreateEmptyDestinationRule("test", "customer-dr", "customer"),
 	}
@@ -313,15 +313,15 @@ func fakePods() *core_v1.PodList {
 	}
 }
 
-func getGateway(name, namespace string) []networking_v1alpha3.Gateway {
-	return []networking_v1alpha3.Gateway{
+func getGateway(name, namespace string) []networking_v1beta1.Gateway {
+	return []networking_v1beta1.Gateway{
 		*data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
 			data.CreateEmptyGateway(name, namespace, map[string]string{
 				"app": "real",
 			}))}
 }
 
-func loadVirtualService(file string, t *testing.T) networking_v1alpha3.VirtualService {
+func loadVirtualService(file string, t *testing.T) networking_v1beta1.VirtualService {
 	loader := yamlFixtureLoaderFor(file)
 	err := loader.Load()
 	if err != nil {

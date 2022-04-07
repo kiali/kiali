@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/business"
@@ -213,7 +213,7 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 	}
 }
 
-func decorateMatchingGateways(gwCrd networking_v1alpha3.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
+func decorateMatchingGateways(gwCrd networking_v1beta1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
 	gwSelector := labels.Set(gwCrd.Spec.Selector).AsSelector()
 	for gw, nodes := range gatewayNodeMapping {
 		if gwSelector.Matches(labels.Set(gw.Labels)) {
@@ -308,8 +308,8 @@ func (a IstioAppender) getIstioComponentWorkloads(component string, globalInfo *
 	return componentWorkloads
 }
 
-func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) []networking_v1alpha3.Gateway {
-	retVal := []networking_v1alpha3.Gateway{}
+func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) []networking_v1beta1.Gateway {
+	retVal := []networking_v1beta1.Gateway{}
 	for namespace := range a.AccessibleNamespaces {
 		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
 			IncludeGateways: true,

@@ -4188,7 +4188,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "AuthorizationPolicy": {
-      "description": "For example, the following authorization policy allows nothing and effectively denies all requests to workloads\nin namespace foo.\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: allow-nothing\nnamespace: foo\nspec:\n{}\n```\n\nThe following authorization policy allows all requests to workloads in namespace foo.\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: allow-all\nnamespace: foo\nspec:\nrules:\n{}\n```\n\n\u003c!-- crd generation tags\n+cue-gen:AuthorizationPolicy:groupName:security.istio.io\n+cue-gen:AuthorizationPolicy:version:v1beta1\n+cue-gen:AuthorizationPolicy:storageVersion\n+cue-gen:AuthorizationPolicy:annotations:helm.sh/resource-policy=keep\n+cue-gen:AuthorizationPolicy:labels:app=istio-pilot,chart=istio,istio=security,heritage=Tiller,release=istio\n+cue-gen:AuthorizationPolicy:subresource:status\n+cue-gen:AuthorizationPolicy:scope:Namespaced\n+cue-gen:AuthorizationPolicy:resource:categories=istio-io,security-istio-io,plural=authorizationpolicies\n+cue-gen:AuthorizationPolicy:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=security.istio.io/v1beta1\n+genclient\n+k8s:deepcopy-gen=true\n\u003e",
+      "description": "\u003c!-- crd generation tags\n+cue-gen:AuthorizationPolicy:groupName:security.istio.io\n+cue-gen:AuthorizationPolicy:version:v1beta1\n+cue-gen:AuthorizationPolicy:storageVersion\n+cue-gen:AuthorizationPolicy:annotations:helm.sh/resource-policy=keep\n+cue-gen:AuthorizationPolicy:labels:app=istio-pilot,chart=istio,istio=security,heritage=Tiller,release=istio\n+cue-gen:AuthorizationPolicy:subresource:status\n+cue-gen:AuthorizationPolicy:scope:Namespaced\n+cue-gen:AuthorizationPolicy:resource:categories=istio-io,security-istio-io,plural=authorizationpolicies\n+cue-gen:AuthorizationPolicy:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=security.istio.io/v1beta1\n+genclient\n+k8s:deepcopy-gen=true\n\u003e",
       "type": "object",
       "title": "AuthorizationPolicy enables access control on workloads.",
       "properties": {
@@ -4568,7 +4568,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "DestinationRule": {
-      "description": "\u003c!-- crd generation tags\n+cue-gen:DestinationRule:groupName:networking.istio.io\n+cue-gen:DestinationRule:version:v1alpha3\n+cue-gen:DestinationRule:storageVersion\n+cue-gen:DestinationRule:annotations:helm.sh/resource-policy=keep\n+cue-gen:DestinationRule:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:DestinationRule:subresource:status\n+cue-gen:DestinationRule:scope:Namespaced\n+cue-gen:DestinationRule:resource:categories=istio-io,networking-istio-io,shortNames=dr\n+cue-gen:DestinationRule:printerColumn:name=Host,type=string,JSONPath=.spec.host,description=\"The name of a service from the service registry\"\n+cue-gen:DestinationRule:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:DestinationRule:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-start\n\u003e",
+      "description": "\u003c!-- crd generation tags\n+cue-gen:DestinationRule:groupName:networking.istio.io\n+cue-gen:DestinationRule:version:v1beta1\n+cue-gen:DestinationRule:annotations:helm.sh/resource-policy=keep\n+cue-gen:DestinationRule:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:DestinationRule:subresource:status\n+cue-gen:DestinationRule:scope:Namespaced\n+cue-gen:DestinationRule:resource:categories=istio-io,networking-istio-io,shortNames=dr\n+cue-gen:DestinationRule:printerColumn:name=Host,type=string,JSONPath=.spec.host,description=\"The name of a service from the service registry\"\n+cue-gen:DestinationRule:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:DestinationRule:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1beta1\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-from:networking/v1alpha3/destination_rule.proto\n\u003e",
       "type": "object",
       "title": "DestinationRule defines policies that apply to traffic intended for a service\nafter routing has occurred.",
       "properties": {
@@ -4680,7 +4680,7 @@
           "$ref": "#/definitions/UID"
         }
       },
-      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1beta1"
     },
     "EdgeData": {
       "type": "object",
@@ -4962,7 +4962,7 @@
       "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
     "Gateway": {
-      "description": "\u003c!-- crd generation tags\n+cue-gen:Gateway:groupName:networking.istio.io\n+cue-gen:Gateway:version:v1alpha3\n+cue-gen:Gateway:storageVersion\n+cue-gen:Gateway:annotations:helm.sh/resource-policy=keep\n+cue-gen:Gateway:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:Gateway:subresource:status\n+cue-gen:Gateway:scope:Namespaced\n+cue-gen:Gateway:resource:categories=istio-io,networking-istio-io,shortNames=gw\n+cue-gen:Gateway:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-start\n\u003e",
+      "description": "\u003c!-- crd generation tags\n+cue-gen:Gateway:groupName:networking.istio.io\n+cue-gen:Gateway:version:v1beta1\n+cue-gen:Gateway:annotations:helm.sh/resource-policy=keep\n+cue-gen:Gateway:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:Gateway:subresource:status\n+cue-gen:Gateway:scope:Namespaced\n+cue-gen:Gateway:resource:categories=istio-io,networking-istio-io,shortNames=gw\n+cue-gen:Gateway:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1beta1\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-from:networking/v1alpha3/gateway.proto\n\u003e",
       "type": "object",
       "title": "Gateway describes a load balancer operating at the edge of the mesh\nreceiving incoming or outgoing HTTP/TCP connections.",
       "properties": {
@@ -5074,7 +5074,7 @@
           "$ref": "#/definitions/UID"
         }
       },
-      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1beta1"
     },
     "GrafanaInfo": {
       "description": "GrafanaInfo provides information to access Grafana dashboards",
@@ -6480,7 +6480,7 @@
       "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
     "RequestAuthentication": {
-      "description": "Require JWT for all request for workloads that have label `app:httpbin`\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: RequestAuthentication\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\njwtRules:\nissuer: \"issuer-foo\"\njwksUri: https://example.com/.well-known/jwks.json\n\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\nrules:\nfrom:\nsource:\nrequestPrincipals: [\"*\"]\n```\n\nThe next example shows how to set a different JWT requirement for a different `host`. The `RequestAuthentication`\ndeclares it can accept JWTs issued by either `issuer-foo` or `issuer-bar` (the public key set is implicitly\nset from the OpenID Connect spec).\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: RequestAuthentication\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\njwtRules:\nissuer: \"issuer-foo\"\nissuer: \"issuer-bar\"\n\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\nrules:\nfrom:\nsource:\nrequestPrincipals: [\"issuer-foo/*\"]\nto:\noperation:\nhosts: [\"example.com\"]\nfrom:\nsource:\nrequestPrincipals: [\"issuer-bar/*\"]\nto:\noperation:\nhosts: [\"another-host.com\"]\n```\n\nYou can fine tune the authorization policy to set different requirement per path. For example,\nto require JWT on all paths, except /healthz, the same `RequestAuthentication` can be used, but the\nauthorization policy could be:\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\nrules:\nfrom:\nsource:\nrequestPrincipals: [\"*\"]\nto:\noperation:\npaths: [\"/healthz\"]\n```\n\n\u003c!-- crd generation tags\n+cue-gen:RequestAuthentication:groupName:security.istio.io\n+cue-gen:RequestAuthentication:version:v1beta1\n+cue-gen:RequestAuthentication:storageVersion\n+cue-gen:RequestAuthentication:annotations:helm.sh/resource-policy=keep\n+cue-gen:RequestAuthentication:labels:app=istio-pilot,chart=istio,istio=security,heritage=Tiller,release=istio\n+cue-gen:RequestAuthentication:subresource:status\n+cue-gen:RequestAuthentication:scope:Namespaced\n+cue-gen:RequestAuthentication:resource:categories=istio-io,security-istio-io,shortNames=ra\n+cue-gen:RequestAuthentication:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=security.istio.io/v1beta1\n+genclient\n+k8s:deepcopy-gen=true\n\u003e",
+      "description": "Require JWT for all request for workloads that have label `app:httpbin`\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: RequestAuthentication\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\njwtRules:\nissuer: \"issuer-foo\"\njwksUri: https://example.com/.well-known/jwks.json\n\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\nrules:\nfrom:\nsource:\nrequestPrincipals: [\"*\"]\n```\n\nA policy in the root namespace (\"istio-system\" by default) applies to workloads in all namespaces\nin a mesh. The following policy makes all workloads only accept requests that contain a\nvalid JWT token.\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: RequestAuthentication\nmetadata:\nname: req-authn-for-all\nnamespace: istio-system\nspec:\njwtRules:\nissuer: \"issuer-foo\"\njwksUri: https://example.com/.well-known/jwks.json\n\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: require-jwt-for-all\nnamespace: istio-system\nspec:\nrules:\nfrom:\nsource:\nrequestPrincipals: [\"*\"]\n```\n\nThe next example shows how to set a different JWT requirement for a different `host`. The `RequestAuthentication`\ndeclares it can accept JWTs issued by either `issuer-foo` or `issuer-bar` (the public key set is implicitly\nset from the OpenID Connect spec).\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: RequestAuthentication\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\njwtRules:\nissuer: \"issuer-foo\"\nissuer: \"issuer-bar\"\n\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\nrules:\nfrom:\nsource:\nrequestPrincipals: [\"issuer-foo/*\"]\nto:\noperation:\nhosts: [\"example.com\"]\nfrom:\nsource:\nrequestPrincipals: [\"issuer-bar/*\"]\nto:\noperation:\nhosts: [\"another-host.com\"]\n```\n\nYou can fine tune the authorization policy to set different requirement per path. For example,\nto require JWT on all paths, except /healthz, the same `RequestAuthentication` can be used, but the\nauthorization policy could be:\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: httpbin\nnamespace: foo\nspec:\nselector:\nmatchLabels:\napp: httpbin\nrules:\nfrom:\nsource:\nrequestPrincipals: [\"*\"]\nto:\noperation:\npaths: [\"/healthz\"]\n```\n\n[Experimental] Routing based on derived [metadata](https://istio.io/latest/docs/reference/config/security/conditions/)\nis now supported. A prefix '@' is used to denote a match against internal metadata instead of the headers in the request.\nCurrently this feature is only supported for the following metadata:\n\n`request.auth.claims.{claim-name}[.{sub-claim}]*` which are extracted from validated JWT tokens. The claim name\ncurrently does not support the `.` character. Examples: `request.auth.claims.sub` and `request.auth.claims.name.givenName`.\n\nThe use of matches against JWT claim metadata is only supported in Gateways. The following example shows:\n\nRequestAuthentication to decode and validate a JWT. This also makes the `@request.auth.claims` available for use in the VirtualService.\nAuthorizationPolicy to check for valid principals in the request. This makes the JWT required for the request.\nVirtualService to route the request based on the \"sub\" claim.\n\n```yaml\napiVersion: security.istio.io/v1beta1\nkind: RequestAuthentication\nmetadata:\nname: jwt-on-ingress\nnamespace: istio-system\nspec:\nselector:\nmatchLabels:\napp: istio-ingressgateway\njwtRules:\nissuer: \"example.com\"\njwksUri: https://example.com/.well-known/jwks.json\n\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\nname: require-jwt\nnamespace: istio-system\nspec:\nselector:\nmatchLabels:\napp: istio-ingressgateway\nrules:\nfrom:\nsource:\nrequestPrincipals: [\"*\"]\n\napiVersion: networking.istio.io/v1alpha3\nkind: VirtualService\nmetadata:\nname: route-jwt\nspec:\nhosts:\nfoo.prod.svc.cluster.local\ngateways:\nistio-ingressgateway\nhttp:\nname: \"v2\"\nmatch:\nheaders:\n\"@request.auth.claims.sub\":\nexact: \"dev\"\nroute:\ndestination:\nhost: foo.prod.svc.cluster.local\nsubset: v2\nname: \"default\"\nroute:\ndestination:\nhost: foo.prod.svc.cluster.local\nsubset: v1\n```\n\n\u003c!-- crd generation tags\n+cue-gen:RequestAuthentication:groupName:security.istio.io\n+cue-gen:RequestAuthentication:version:v1beta1\n+cue-gen:RequestAuthentication:storageVersion\n+cue-gen:RequestAuthentication:annotations:helm.sh/resource-policy=keep\n+cue-gen:RequestAuthentication:labels:app=istio-pilot,chart=istio,istio=security,heritage=Tiller,release=istio\n+cue-gen:RequestAuthentication:subresource:status\n+cue-gen:RequestAuthentication:scope:Namespaced\n+cue-gen:RequestAuthentication:resource:categories=istio-io,security-istio-io,shortNames=ra\n+cue-gen:RequestAuthentication:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=security.istio.io/v1beta1\n+genclient\n+k8s:deepcopy-gen=true\n\u003e",
       "type": "object",
       "title": "RequestAuthentication defines what request authentication methods are supported by a workload.\nIt will reject a request if the request contains invalid authentication information, based on the\nconfigured authentication rules. A request that does not contain any authentication credentials\nwill be accepted but will not have any authenticated identity. To restrict access to authenticated\nrequests only, this should be accompanied by an authorization rule.\nExamples:",
       "properties": {
@@ -6881,7 +6881,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "ServiceEntry": {
-      "description": "\u003c!-- crd generation tags\n+cue-gen:ServiceEntry:groupName:networking.istio.io\n+cue-gen:ServiceEntry:version:v1alpha3\n+cue-gen:ServiceEntry:storageVersion\n+cue-gen:ServiceEntry:annotations:helm.sh/resource-policy=keep\n+cue-gen:ServiceEntry:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:ServiceEntry:subresource:status\n+cue-gen:ServiceEntry:scope:Namespaced\n+cue-gen:ServiceEntry:resource:categories=istio-io,networking-istio-io,shortNames=se,plural=serviceentries\n+cue-gen:ServiceEntry:printerColumn:name=Hosts,type=string,JSONPath=.spec.hosts,description=\"The hosts associated with the ServiceEntry\"\n+cue-gen:ServiceEntry:printerColumn:name=Location,type=string,JSONPath=.spec.location,description=\"Whether the service is external to the\nmesh or part of the mesh (MESH_EXTERNAL or MESH_INTERNAL)\"\n+cue-gen:ServiceEntry:printerColumn:name=Resolution,type=string,JSONPath=.spec.resolution,description=\"Service discovery mode for the hosts\n(NONE, STATIC, or DNS)\"\n+cue-gen:ServiceEntry:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:ServiceEntry:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-start\n\u003e",
+      "description": "\u003c!-- crd generation tags\n+cue-gen:ServiceEntry:groupName:networking.istio.io\n+cue-gen:ServiceEntry:version:v1beta1\n+cue-gen:ServiceEntry:annotations:helm.sh/resource-policy=keep\n+cue-gen:ServiceEntry:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:ServiceEntry:subresource:status\n+cue-gen:ServiceEntry:scope:Namespaced\n+cue-gen:ServiceEntry:resource:categories=istio-io,networking-istio-io,shortNames=se,plural=serviceentries\n+cue-gen:ServiceEntry:printerColumn:name=Hosts,type=string,JSONPath=.spec.hosts,description=\"The hosts associated with the ServiceEntry\"\n+cue-gen:ServiceEntry:printerColumn:name=Location,type=string,JSONPath=.spec.location,description=\"Whether the service is external to the\nmesh or part of the mesh (MESH_EXTERNAL or MESH_INTERNAL)\"\n+cue-gen:ServiceEntry:printerColumn:name=Resolution,type=string,JSONPath=.spec.resolution,description=\"Service discovery mode for the hosts\n(NONE, STATIC, or DNS)\"\n+cue-gen:ServiceEntry:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:ServiceEntry:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1beta1\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-from:networking/v1alpha3/service_entry.proto\n\u003e",
       "type": "object",
       "title": "ServiceEntry enables adding additional entries into Istio's internal\nservice registry.",
       "properties": {
@@ -6993,7 +6993,7 @@
           "$ref": "#/definitions/UID"
         }
       },
-      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1beta1"
     },
     "ServiceHealth": {
       "description": "ServiceHealth contains aggregated health from various sources, for a given service",
@@ -7144,7 +7144,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Sidecar": {
-      "description": "\u003c!-- crd generation tags\n+cue-gen:Sidecar:groupName:networking.istio.io\n+cue-gen:Sidecar:version:v1alpha3\n+cue-gen:Sidecar:storageVersion\n+cue-gen:Sidecar:annotations:helm.sh/resource-policy=keep\n+cue-gen:Sidecar:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:Sidecar:subresource:status\n+cue-gen:Sidecar:scope:Namespaced\n+cue-gen:Sidecar:resource:categories=istio-io,networking-istio-io\n+cue-gen:Sidecar:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-start\n\u003e",
+      "description": "\u003c!-- crd generation tags\n+cue-gen:Sidecar:groupName:networking.istio.io\n+cue-gen:Sidecar:version:v1beta1\n+cue-gen:Sidecar:annotations:helm.sh/resource-policy=keep\n+cue-gen:Sidecar:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:Sidecar:subresource:status\n+cue-gen:Sidecar:scope:Namespaced\n+cue-gen:Sidecar:resource:categories=istio-io,networking-istio-io\n+cue-gen:Sidecar:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1beta1\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-from:networking/v1alpha3/sidecar.proto\n\u003e",
       "type": "object",
       "title": "`Sidecar` describes the configuration of the sidecar proxy that mediates\ninbound and outbound communication of the workload instance to which it is\nattached.",
       "properties": {
@@ -7256,7 +7256,7 @@
           "$ref": "#/definitions/UID"
         }
       },
-      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1beta1"
     },
     "Span": {
       "description": "Span is a span denoting a piece of work in some infrastructure\nWhen converting to UI model, ParentSpanID and Process should be dereferenced into\nReferences and ProcessID, respectively.\nWhen converting to ES model, ProcessID and Warnings should be omitted. Even if\nincluded, ES with dynamic settings off will automatically ignore unneeded fields.",
@@ -7517,7 +7517,7 @@
       "x-go-package": "github.com/kiali/kiali/jaeger/model/json"
     },
     "VirtualService": {
-      "description": "\u003c!-- crd generation tags\n+cue-gen:VirtualService:groupName:networking.istio.io\n+cue-gen:VirtualService:version:v1alpha3\n+cue-gen:VirtualService:storageVersion\n+cue-gen:VirtualService:annotations:helm.sh/resource-policy=keep\n+cue-gen:VirtualService:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:VirtualService:subresource:status\n+cue-gen:VirtualService:scope:Namespaced\n+cue-gen:VirtualService:resource:categories=istio-io,networking-istio-io,shortNames=vs\n+cue-gen:VirtualService:printerColumn:name=Gateways,type=string,JSONPath=.spec.gateways,description=\"The names of gateways and sidecars\nthat should apply these routes\"\n+cue-gen:VirtualService:printerColumn:name=Hosts,type=string,JSONPath=.spec.hosts,description=\"The destination hosts to which traffic is being sent\"\n+cue-gen:VirtualService:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:VirtualService:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-start\n\u003e",
+      "description": "\u003c!-- crd generation tags\n+cue-gen:VirtualService:groupName:networking.istio.io\n+cue-gen:VirtualService:version:v1beta1\n+cue-gen:VirtualService:annotations:helm.sh/resource-policy=keep\n+cue-gen:VirtualService:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:VirtualService:subresource:status\n+cue-gen:VirtualService:scope:Namespaced\n+cue-gen:VirtualService:resource:categories=istio-io,networking-istio-io,shortNames=vs\n+cue-gen:VirtualService:printerColumn:name=Gateways,type=string,JSONPath=.spec.gateways,description=\"The names of gateways and sidecars\nthat should apply these routes\"\n+cue-gen:VirtualService:printerColumn:name=Hosts,type=string,JSONPath=.spec.hosts,description=\"The destination hosts to which traffic is being sent\"\n+cue-gen:VirtualService:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:VirtualService:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1beta1\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-from:networking/v1alpha3/virtual_service.proto\n\u003e",
       "type": "object",
       "title": "Configuration affecting traffic routing.",
       "properties": {
@@ -7629,7 +7629,7 @@
           "$ref": "#/definitions/UID"
         }
       },
-      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1beta1"
     },
     "WEInfo": {
       "description": "WEInfo provides static information about a workload entry\nassociated with a workload node.",
@@ -7818,7 +7818,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "WorkloadEntry": {
-      "description": "\u003c!-- crd generation tags\n+cue-gen:WorkloadEntry:groupName:networking.istio.io\n+cue-gen:WorkloadEntry:version:v1alpha3\n+cue-gen:WorkloadEntry:storageVersion\n+cue-gen:WorkloadEntry:annotations:helm.sh/resource-policy=keep\n+cue-gen:WorkloadEntry:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:WorkloadEntry:subresource:status\n+cue-gen:WorkloadEntry:scope:Namespaced\n+cue-gen:WorkloadEntry:resource:categories=istio-io,networking-istio-io,shortNames=we,plural=workloadentries\n+cue-gen:WorkloadEntry:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:WorkloadEntry:printerColumn:name=Address,type=string,JSONPath=.spec.address,description=\"Address associated with the network endpoint.\"\n+cue-gen:WorkloadEntry:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-start\n\u003e",
+      "description": "\u003c!-- crd generation tags\n+cue-gen:WorkloadEntry:groupName:networking.istio.io\n+cue-gen:WorkloadEntry:version:v1beta1\n+cue-gen:WorkloadEntry:annotations:helm.sh/resource-policy=keep\n+cue-gen:WorkloadEntry:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:WorkloadEntry:subresource:status\n+cue-gen:WorkloadEntry:scope:Namespaced\n+cue-gen:WorkloadEntry:resource:categories=istio-io,networking-istio-io,shortNames=we,plural=workloadentries\n+cue-gen:WorkloadEntry:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:WorkloadEntry:printerColumn:name=Address,type=string,JSONPath=.spec.address,description=\"Address associated with the network endpoint.\"\n+cue-gen:WorkloadEntry:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1beta1\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-from:networking/v1alpha3/workload_entry.proto\n\u003e",
       "type": "object",
       "title": "WorkloadEntry enables specifying the properties of a single non-Kubernetes workload such a VM or a bare metal services that can be referred to by service entries.",
       "properties": {
@@ -7930,10 +7930,10 @@
           "$ref": "#/definitions/UID"
         }
       },
-      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1beta1"
     },
     "WorkloadGroup": {
-      "description": "\u003c!-- crd generation tags\n+cue-gen:WorkloadGroup:groupName:networking.istio.io\n+cue-gen:WorkloadGroup:version:v1alpha3\n+cue-gen:WorkloadGroup:storageVersion\n+cue-gen:WorkloadGroup:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:WorkloadGroup:subresource:status\n+cue-gen:WorkloadGroup:scope:Namespaced\n+cue-gen:WorkloadGroup:resource:categories=istio-io,networking-istio-io,shortNames=wg,plural=workloadgroups\n+cue-gen:WorkloadGroup:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:WorkloadGroup:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1alpha3\n+genclient\n+k8s:deepcopy-gen=true\n\u003e",
+      "description": "\u003c!-- crd generation tags\n+cue-gen:WorkloadGroup:groupName:networking.istio.io\n+cue-gen:WorkloadGroup:version:v1beta1\n+cue-gen:WorkloadGroup:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio\n+cue-gen:WorkloadGroup:subresource:status\n+cue-gen:WorkloadGroup:scope:Namespaced\n+cue-gen:WorkloadGroup:resource:categories=istio-io,networking-istio-io,shortNames=wg,plural=workloadgroups\n+cue-gen:WorkloadGroup:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description=\"CreationTimestamp is a timestamp\nrepresenting the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.\nClients may not set this value. It is represented in RFC3339 form and is in UTC.\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata\"\n+cue-gen:WorkloadGroup:preserveUnknownFields:false\n\u003e\n\n\u003c!-- go code generation tags\n+kubetype-gen\n+kubetype-gen:groupVersion=networking.istio.io/v1beta1\n+genclient\n+k8s:deepcopy-gen=true\n\u003e\n\u003c!-- istio code generation tags\n+istio.io/sync-from:networking/v1alpha3/workload_group.proto\n\u003e",
       "type": "object",
       "title": "`WorkloadGroup` enables specifying the properties of a single workload for bootstrap and\nprovides a template for `WorkloadEntry`, similar to how `Deployment` specifies properties\nof workloads via `Pod` templates. A `WorkloadGroup` can have more than one `WorkloadEntry`.\n`WorkloadGroup` has no relationship to resources which control service registry like `ServiceEntry`\nand as such doesn't configure host name for these workloads.",
       "properties": {
@@ -8045,7 +8045,7 @@
           "$ref": "#/definitions/UID"
         }
       },
-      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1alpha3"
+      "x-go-package": "istio.io/client-go/pkg/apis/networking/v1beta1"
     },
     "WorkloadHealth": {
       "description": "WorkloadHealth contains aggregated health from various sources, for a given workload",
@@ -8356,12 +8356,6 @@
         "$ref": "#/definitions/App"
       }
     },
-    "appHealthResponse": {
-      "description": "appHealthResponse contains aggregated health from various sources, for a given app",
-      "schema": {
-        "$ref": "#/definitions/AppHealth"
-      }
-    },
     "appListResponse": {
       "description": "Listing all apps in the namespace",
       "schema": {
@@ -8617,12 +8611,6 @@
         "$ref": "#/definitions/ServiceDetails"
       }
     },
-    "serviceHealthResponse": {
-      "description": "serviceHealthResponse contains aggregated health from various sources, for a given service",
-      "schema": {
-        "$ref": "#/definitions/ServiceHealth"
-      }
-    },
     "serviceListResponse": {
       "description": "Listing all services in the namespace",
       "schema": {
@@ -8683,12 +8671,6 @@
       "description": "Listing all the information related to a workload",
       "schema": {
         "$ref": "#/definitions/Workload"
-      }
-    },
-    "workloadHealthResponse": {
-      "description": "workloadHealthResponse contains aggregated health from various sources, for a given workload",
-      "schema": {
-        "$ref": "#/definitions/WorkloadHealth"
       }
     },
     "workloadListResponse": {

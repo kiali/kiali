@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/cache"
@@ -67,8 +68,8 @@ func (sh RegistryRefreshHandler) parseResourceVersion(oldObj, newObj interface{}
 			newResourceVersion = newConv.ResourceVersion
 		}
 	case kubernetes.DestinationRuleType:
-		oldConv, ok1 := oldObj.(*networking_v1alpha3.DestinationRule)
-		newConv, ok2 := newObj.(*networking_v1alpha3.DestinationRule)
+		oldConv, ok1 := oldObj.(*networking_v1beta1.DestinationRule)
+		newConv, ok2 := newObj.(*networking_v1beta1.DestinationRule)
 		if ok1 && ok2 {
 			oldResourceVersion = oldConv.ResourceVersion
 			newResourceVersion = newConv.ResourceVersion
@@ -81,43 +82,43 @@ func (sh RegistryRefreshHandler) parseResourceVersion(oldObj, newObj interface{}
 			newResourceVersion = newConv.ResourceVersion
 		}
 	case kubernetes.GatewayType:
-		oldConv, ok1 := oldObj.(*networking_v1alpha3.Gateway)
-		newConv, ok2 := newObj.(*networking_v1alpha3.Gateway)
+		oldConv, ok1 := oldObj.(*networking_v1beta1.Gateway)
+		newConv, ok2 := newObj.(*networking_v1beta1.Gateway)
 		if ok1 && ok2 {
 			oldResourceVersion = oldConv.ResourceVersion
 			newResourceVersion = newConv.ResourceVersion
 		}
 	case kubernetes.ServiceEntryType:
-		oldConv, ok1 := oldObj.(*networking_v1alpha3.ServiceEntry)
-		newConv, ok2 := newObj.(*networking_v1alpha3.ServiceEntry)
+		oldConv, ok1 := oldObj.(*networking_v1beta1.ServiceEntry)
+		newConv, ok2 := newObj.(*networking_v1beta1.ServiceEntry)
 		if ok1 && ok2 {
 			oldResourceVersion = oldConv.ResourceVersion
 			newResourceVersion = newConv.ResourceVersion
 		}
 	case kubernetes.Sidecars:
-		oldConv, ok1 := oldObj.(*networking_v1alpha3.Sidecar)
-		newConv, ok2 := newObj.(*networking_v1alpha3.Sidecar)
+		oldConv, ok1 := oldObj.(*networking_v1beta1.Sidecar)
+		newConv, ok2 := newObj.(*networking_v1beta1.Sidecar)
 		if ok1 && ok2 {
 			oldResourceVersion = oldConv.ResourceVersion
 			newResourceVersion = newConv.ResourceVersion
 		}
 	case kubernetes.VirtualServiceType:
-		oldConv, ok1 := oldObj.(*networking_v1alpha3.VirtualService)
-		newConv, ok2 := newObj.(*networking_v1alpha3.VirtualService)
+		oldConv, ok1 := oldObj.(*networking_v1beta1.VirtualService)
+		newConv, ok2 := newObj.(*networking_v1beta1.VirtualService)
 		if ok1 && ok2 {
 			oldResourceVersion = oldConv.ResourceVersion
 			newResourceVersion = newConv.ResourceVersion
 		}
 	case kubernetes.WorkloadEntryType:
-		oldConv, ok1 := oldObj.(*networking_v1alpha3.WorkloadEntry)
-		newConv, ok2 := newObj.(*networking_v1alpha3.WorkloadEntry)
+		oldConv, ok1 := oldObj.(*networking_v1beta1.WorkloadEntry)
+		newConv, ok2 := newObj.(*networking_v1beta1.WorkloadEntry)
 		if ok1 && ok2 {
 			oldResourceVersion = oldConv.ResourceVersion
 			newResourceVersion = newConv.ResourceVersion
 		}
 	case kubernetes.WorkloadGroupType:
-		oldConv, ok1 := oldObj.(*networking_v1alpha3.WorkloadGroup)
-		newConv, ok2 := newObj.(*networking_v1alpha3.WorkloadGroup)
+		oldConv, ok1 := oldObj.(*networking_v1beta1.WorkloadGroup)
+		newConv, ok2 := newObj.(*networking_v1beta1.WorkloadGroup)
 		if ok1 && ok2 {
 			oldResourceVersion = oldConv.ResourceVersion
 			newResourceVersion = newConv.ResourceVersion

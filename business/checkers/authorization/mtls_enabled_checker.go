@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	api_security_v1beta "istio.io/api/security/v1beta1"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -20,7 +20,7 @@ type MtlsEnabledChecker struct {
 	Namespace             string
 	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
 	MtlsDetails           kubernetes.MTLSDetails
-	ServiceEntries        []networking_v1alpha3.ServiceEntry
+	ServiceEntries        []networking_v1beta1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
 }
 

@@ -3,7 +3,7 @@ package business
 import (
 	"context"
 
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 
@@ -103,7 +103,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace str
 }
 
 // TODO refactor business/istio_validations.go
-func (in *TLSService) GetAllDestinationRules(ctx context.Context, namespaces []string) ([]networking_v1alpha3.DestinationRule, error) {
+func (in *TLSService) GetAllDestinationRules(ctx context.Context, namespaces []string) ([]networking_v1beta1.DestinationRule, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetAllDestinationRules",
 		observability.Attribute("package", "business"),
@@ -121,7 +121,7 @@ func (in *TLSService) GetAllDestinationRules(ctx context.Context, namespaces []s
 		return nil, err
 	}
 
-	allDestinationRules := make([]networking_v1alpha3.DestinationRule, 0)
+	allDestinationRules := make([]networking_v1beta1.DestinationRule, 0)
 	for _, dr := range istioConfigList.DestinationRules {
 		found := false
 		for _, ns := range namespaces {

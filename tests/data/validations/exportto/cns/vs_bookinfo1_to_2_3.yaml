@@ -1,5 +1,5 @@
 kind: VirtualService
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 metadata:
   name: vs_bookinfo1_to_2_3
   namespace: bookinfo

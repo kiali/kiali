@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -73,50 +73,50 @@ func TestFilterPodsForEndpoints(t *testing.T) {
 func TestFilterGateways(t *testing.T) {
 	assert := assert.New(t)
 
-	vs1 := networking_v1alpha3.VirtualService{}
+	vs1 := networking_v1beta1.VirtualService{}
 	vs1.Name = "reviews"
 	vs1.Namespace = "bookinfo"
 	vs1.ClusterName = "svc.cluster.local"
 	vs1.Spec.Hosts = []string{"reviews"}
 	vs1.Spec.Gateways = []string{"bookinfo/gateway1", "bookinfo2/gateway2", "wronggateway", "bookinfo2/wronggateway2"}
 
-	vs2 := networking_v1alpha3.VirtualService{}
+	vs2 := networking_v1beta1.VirtualService{}
 	vs2.Name = "ratings"
 	vs2.Namespace = "bookinfo"
 	vs2.ClusterName = "svc.cluster.local"
 	vs2.Spec.Hosts = []string{"ratings"}
 	vs2.Spec.Gateways = []string{"gateway4", "gateway2"}
 
-	vs3 := networking_v1alpha3.VirtualService{}
+	vs3 := networking_v1beta1.VirtualService{}
 	vs3.Name = "details"
 	vs3.Namespace = "bookinfo"
 	vs3.ClusterName = "svc.cluster.local"
 	vs3.Spec.Hosts = []string{"details"}
 	vs3.Spec.Gateways = []string{"gateway1", "bookinfo3/gateway3", "wronggateway2"}
 
-	virtualServices := []networking_v1alpha3.VirtualService{vs1, vs2, vs3}
+	virtualServices := []networking_v1beta1.VirtualService{vs1, vs2, vs3}
 
-	gw1 := networking_v1alpha3.Gateway{}
+	gw1 := networking_v1beta1.Gateway{}
 	gw1.Name = "gateway1"
 	gw1.Namespace = "bookinfo"
 
-	gw2 := networking_v1alpha3.Gateway{}
+	gw2 := networking_v1beta1.Gateway{}
 	gw2.Name = "gateway2"
 	gw2.Namespace = "bookinfo2"
 
-	gw3 := networking_v1alpha3.Gateway{}
+	gw3 := networking_v1beta1.Gateway{}
 	gw3.Name = "gateway3"
 	gw3.Namespace = "bookinfo3"
 
-	gw4 := networking_v1alpha3.Gateway{}
+	gw4 := networking_v1beta1.Gateway{}
 	gw4.Name = "gateway4"
 	gw4.Namespace = "bookinfo"
 
-	gw5 := networking_v1alpha3.Gateway{}
+	gw5 := networking_v1beta1.Gateway{}
 	gw5.Name = "gateway5"
 	gw5.Namespace = "bookinfo2"
 
-	gateways := []networking_v1alpha3.Gateway{gw1, gw2, gw3, gw4, gw5}
+	gateways := []networking_v1beta1.Gateway{gw1, gw2, gw3, gw4, gw5}
 
 	filtered := FilterGatewaysByVirtualServices(gateways, virtualServices)
 	assert.Len(filtered, 4)

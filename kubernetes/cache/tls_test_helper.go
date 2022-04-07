@@ -3,7 +3,7 @@ package cache
 import (
 	"time"
 
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"k8s.io/client-go/tools/cache"
 
@@ -22,7 +22,7 @@ func (f *fakeInformer) GetStore() cache.Store {
 
 // Fake KialiCache used for TLS Scenarios
 // It populates the Namespaces, Informers and Registry information needed
-func FakeTlsKialiCache(token string, namespaces []string, pa []security_v1beta1.PeerAuthentication, dr []networking_v1alpha3.DestinationRule) KialiCache {
+func FakeTlsKialiCache(token string, namespaces []string, pa []security_v1beta1.PeerAuthentication, dr []networking_v1beta1.DestinationRule) KialiCache {
 	kialiCacheImpl := kialiCacheImpl{
 		tokenNamespaces: make(map[string]namespaceCache),
 		// ~ long duration for unit testing
@@ -38,7 +38,7 @@ func FakeTlsKialiCache(token string, namespaces []string, pa []security_v1beta1.
 	// Populate all DestinationRules using the Registry
 	registryStatus := kubernetes.RegistryStatus{
 		Configuration: &kubernetes.RegistryConfiguration{
-			DestinationRules:    []networking_v1alpha3.DestinationRule{},
+			DestinationRules:    []networking_v1beta1.DestinationRule{},
 			PeerAuthentications: []security_v1beta1.PeerAuthentication{},
 		},
 	}

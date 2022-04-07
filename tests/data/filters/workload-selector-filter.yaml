@@ -1,4 +1,4 @@
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
   name: my-gateway
@@ -107,7 +107,7 @@ spec:
                 address: "internal.org.net"
                 port_value: 8888
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: Sidecar
 metadata:
   name: my-sidecar

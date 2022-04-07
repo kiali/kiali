@@ -40,7 +40,7 @@ spec:
   mtls:
     mode: PERMISSIVE
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: mtls-strict-namespace
@@ -51,7 +51,7 @@ spec:
     tls:
       mode: MUTUAL
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: ratings-mtls
@@ -62,7 +62,7 @@ spec:
     tls:
       mode: ISTIO_MUTUAL
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: details-mtls

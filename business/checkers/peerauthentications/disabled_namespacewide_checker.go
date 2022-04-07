@@ -1,7 +1,7 @@
 package peerauthentications
 
 import (
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -10,7 +10,7 @@ import (
 
 type DisabledNamespaceWideChecker struct {
 	PeerAuthn        security_v1beta.PeerAuthentication
-	DestinationRules []networking_v1alpha3.DestinationRule
+	DestinationRules []networking_v1beta1.DestinationRule
 }
 
 func (c DisabledNamespaceWideChecker) Check() ([]*models.IstioCheck, bool) {

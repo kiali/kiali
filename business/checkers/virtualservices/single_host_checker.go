@@ -1,7 +1,7 @@
 package virtualservices
 
 import (
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -10,11 +10,11 @@ import (
 type SingleHostChecker struct {
 	Namespace       string
 	Namespaces      models.Namespaces
-	VirtualServices []networking_v1alpha3.VirtualService
+	VirtualServices []networking_v1beta1.VirtualService
 }
 
 func (s SingleHostChecker) Check() models.IstioValidations {
-	hostCounter := make(map[string]map[string]map[string]map[string][]*networking_v1alpha3.VirtualService)
+	hostCounter := make(map[string]map[string]map[string]map[string][]*networking_v1beta1.VirtualService)
 	validations := models.IstioValidations{}
 
 	for _, vs := range s.VirtualServices {
@@ -43,7 +43,7 @@ func (s SingleHostChecker) Check() models.IstioValidations {
 						if isNamespaceWildcard && otherServiceHosts {
 							// Reference the * or in case of * the other hosts inside namespace
 							// or other stars
-							refs := make([]*networking_v1alpha3.VirtualService, 0, len(namespaceCounter))
+							refs := make([]*networking_v1beta1.VirtualService, 0, len(namespaceCounter))
 							// here in case of a, b and *, references should be a -> *, b -> *, * -> q,b
 							// * should be referenced to a,b
 							if containsVirtualService(*virtualService, namespaceCounter["*"]) {
@@ -65,7 +65,7 @@ func (s SingleHostChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func containsVirtualService(vs networking_v1alpha3.VirtualService, vss []*networking_v1alpha3.VirtualService) bool {
+func containsVirtualService(vs networking_v1beta1.VirtualService, vss []*networking_v1beta1.VirtualService) bool {
 	for _, item := range vss {
 		if vs.Name == item.Name && vs.Namespace == item.Namespace {
 			return true
@@ -74,7 +74,7 @@ func containsVirtualService(vs networking_v1alpha3.VirtualService, vss []*networ
 	return false
 }
 
-func multipleVirtualServiceCheck(virtualService networking_v1alpha3.VirtualService, validations models.IstioValidations, references []*networking_v1alpha3.VirtualService) {
+func multipleVirtualServiceCheck(virtualService networking_v1beta1.VirtualService, validations models.IstioValidations, references []*networking_v1beta1.VirtualService) {
 	virtualServiceName := virtualService.Name
 	key := models.IstioValidationKey{Name: virtualServiceName, Namespace: virtualService.Namespace, ObjectType: "virtualservice"}
 	checks := models.Build("virtualservices.singlehost", "spec/hosts")
@@ -99,8 +99,8 @@ func multipleVirtualServiceCheck(virtualService networking_v1alpha3.VirtualServi
 	validations.MergeValidations(models.IstioValidations{key: rrValidation})
 }
 
-func storeHost(hostCounter map[string]map[string]map[string]map[string][]*networking_v1alpha3.VirtualService, vs networking_v1alpha3.VirtualService, host kubernetes.Host) {
-	vsList := []*networking_v1alpha3.VirtualService{&vs}
+func storeHost(hostCounter map[string]map[string]map[string]map[string][]*networking_v1beta1.VirtualService, vs networking_v1beta1.VirtualService, host kubernetes.Host) {
+	vsList := []*networking_v1beta1.VirtualService{&vs}
 
 	gwList := vs.Spec.Gateways
 	if len(gwList) == 0 {
@@ -113,7 +113,7 @@ func storeHost(hostCounter map[string]map[string]map[string]map[string][]*networ
 
 	for _, gw := range gwList {
 		if hostCounter[gw] == nil {
-			hostCounter[gw] = map[string]map[string]map[string][]*networking_v1alpha3.VirtualService{
+			hostCounter[gw] = map[string]map[string]map[string][]*networking_v1beta1.VirtualService{
 				cluster: {
 					namespace: {
 						service: vsList,
@@ -121,13 +121,13 @@ func storeHost(hostCounter map[string]map[string]map[string]map[string][]*networ
 				},
 			}
 		} else if hostCounter[gw][cluster] == nil {
-			hostCounter[gw][cluster] = map[string]map[string][]*networking_v1alpha3.VirtualService{
+			hostCounter[gw][cluster] = map[string]map[string][]*networking_v1beta1.VirtualService{
 				namespace: {
 					service: vsList,
 				},
 			}
 		} else if hostCounter[gw][cluster][namespace] == nil {
-			hostCounter[gw][cluster][namespace] = map[string][]*networking_v1alpha3.VirtualService{
+			hostCounter[gw][cluster][namespace] = map[string][]*networking_v1beta1.VirtualService{
 				service: vsList,
 			}
 		} else if _, ok := hostCounter[gw][cluster][namespace][service]; !ok {
@@ -138,7 +138,7 @@ func storeHost(hostCounter map[string]map[string]map[string]map[string][]*networ
 	}
 }
 
-func (s SingleHostChecker) getHosts(virtualService networking_v1alpha3.VirtualService) []kubernetes.Host {
+func (s SingleHostChecker) getHosts(virtualService networking_v1beta1.VirtualService) []kubernetes.Host {
 	namespace, clusterName := virtualService.Namespace, virtualService.ClusterName
 
 	if len(virtualService.Spec.Hosts) == 0 {

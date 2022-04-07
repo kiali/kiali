@@ -3,14 +3,14 @@ package gateways
 import (
 	"fmt"
 
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type PortChecker struct {
-	Gateway networking_v1alpha3.Gateway
+	Gateway networking_v1beta1.Gateway
 }
 
 func (p PortChecker) Check() ([]*models.IstioCheck, bool) {

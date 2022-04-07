@@ -1,7 +1,7 @@
 package gateways
 
 import (
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/models"
@@ -9,7 +9,7 @@ import (
 
 type SelectorChecker struct {
 	WorkloadsPerNamespace map[string]models.WorkloadList
-	Gateway               networking_v1alpha3.Gateway
+	Gateway               networking_v1beta1.Gateway
 	IsGatewayToNamespace  bool
 }
 

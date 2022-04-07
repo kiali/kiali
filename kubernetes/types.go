@@ -4,6 +4,7 @@ import (
 	"time"
 
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -64,11 +65,17 @@ const (
 )
 
 var (
-	NetworkingGroupVersion = schema.GroupVersion{
+	NetworkingGroupVersionV1Alpha3 = schema.GroupVersion{
 		Group:   "networking.istio.io",
 		Version: "v1alpha3",
 	}
-	ApiNetworkingVersion = NetworkingGroupVersion.Group + "/" + NetworkingGroupVersion.Version
+	ApiNetworkingVersionV1Alpha3 = NetworkingGroupVersionV1Alpha3.Group + "/" + NetworkingGroupVersionV1Alpha3.Version
+
+	NetworkingGroupVersionV1Beta1 = schema.GroupVersion{
+		Group:   "networking.istio.io",
+		Version: "v1beta1",
+	}
+	ApiNetworkingVersionV1Beta1 = NetworkingGroupVersionV1Beta1.Group + "/" + NetworkingGroupVersionV1Beta1.Version
 
 	SecurityGroupVersion = schema.GroupVersion{
 		Group:   "security.istio.io",
@@ -94,22 +101,17 @@ var (
 	}
 
 	ResourceTypesToAPI = map[string]string{
-		DestinationRules:       NetworkingGroupVersion.Group,
-		EnvoyFilters:           NetworkingGroupVersion.Group,
-		Gateways:               NetworkingGroupVersion.Group,
-		ServiceEntries:         NetworkingGroupVersion.Group,
-		Sidecars:               NetworkingGroupVersion.Group,
-		VirtualServices:        NetworkingGroupVersion.Group,
-		WorkloadEntries:        NetworkingGroupVersion.Group,
-		WorkloadGroups:         NetworkingGroupVersion.Group,
+		DestinationRules:       NetworkingGroupVersionV1Beta1.Group,
+		EnvoyFilters:           NetworkingGroupVersionV1Alpha3.Group,
+		Gateways:               NetworkingGroupVersionV1Beta1.Group,
+		ServiceEntries:         NetworkingGroupVersionV1Beta1.Group,
+		Sidecars:               NetworkingGroupVersionV1Beta1.Group,
+		VirtualServices:        NetworkingGroupVersionV1Beta1.Group,
+		WorkloadEntries:        NetworkingGroupVersionV1Beta1.Group,
+		WorkloadGroups:         NetworkingGroupVersionV1Beta1.Group,
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,
 		RequestAuthentications: SecurityGroupVersion.Group,
-	}
-
-	ApiToVersion = map[string]string{
-		NetworkingGroupVersion.Group: ApiNetworkingVersion,
-		SecurityGroupVersion.Group:   ApiSecurityVersion,
 	}
 )
 
@@ -120,10 +122,10 @@ type IstioMeshConfig struct {
 
 // MTLSDetails is a wrapper to group all Istio objects related to non-local mTLS configurations
 type MTLSDetails struct {
-	DestinationRules        []networking_v1alpha3.DestinationRule `json:"destinationrules"`
-	MeshPeerAuthentications []security_v1beta.PeerAuthentication  `json:"meshpeerauthentications"`
-	PeerAuthentications     []security_v1beta.PeerAuthentication  `json:"peerauthentications"`
-	EnabledAutoMtls         bool                                  `json:"enabledautomtls"`
+	DestinationRules        []networking_v1beta1.DestinationRule `json:"destinationrules"`
+	MeshPeerAuthentications []security_v1beta.PeerAuthentication `json:"meshpeerauthentications"`
+	PeerAuthentications     []security_v1beta.PeerAuthentication `json:"peerauthentications"`
+	EnabledAutoMtls         bool                                 `json:"enabledautomtls"`
 }
 
 // RBACDetails is a wrapper for objects related to Istio RBAC (Role Based Access Control)
@@ -155,14 +157,14 @@ type SyncStatus struct {
 // Resources not used (i.e. EnvoyFilters) are not added, those will require update them in the future
 type RegistryConfiguration struct {
 	// Networking
-	DestinationRules []networking_v1alpha3.DestinationRule
+	DestinationRules []networking_v1beta1.DestinationRule
 	EnvoyFilters     []networking_v1alpha3.EnvoyFilter
-	Gateways         []networking_v1alpha3.Gateway
-	ServiceEntries   []networking_v1alpha3.ServiceEntry
-	Sidecars         []networking_v1alpha3.Sidecar
-	VirtualServices  []networking_v1alpha3.VirtualService
-	WorkloadEntries  []networking_v1alpha3.WorkloadEntry
-	WorkloadGroups   []networking_v1alpha3.WorkloadGroup
+	Gateways         []networking_v1beta1.Gateway
+	ServiceEntries   []networking_v1beta1.ServiceEntry
+	Sidecars         []networking_v1beta1.Sidecar
+	VirtualServices  []networking_v1beta1.VirtualService
+	WorkloadEntries  []networking_v1beta1.WorkloadEntry
+	WorkloadGroups   []networking_v1beta1.WorkloadGroup
 	// Security
 	AuthorizationPolicies  []security_v1beta.AuthorizationPolicy
 	PeerAuthentications    []security_v1beta.PeerAuthentication

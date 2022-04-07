@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -84,7 +84,7 @@ func TestVSWithRepeatingHostsNoSubsets(t *testing.T) {
 	assert.Regexp(`spec\/http\[0\]\/route\[[1,3]\]\/host`, vals[3].Path)
 }
 
-func fakeValidVirtualService() *networking_v1alpha3.VirtualService {
+func fakeValidVirtualService() *networking_v1beta1.VirtualService {
 	validVirtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 55),
 		data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v2", 45),
 			data.CreateEmptyVirtualService("reviews-well", "test", []string{"reviews"}),
@@ -94,7 +94,7 @@ func fakeValidVirtualService() *networking_v1alpha3.VirtualService {
 	return validVirtualService
 }
 
-func fakeOneRouteUnder100() *networking_v1alpha3.VirtualService {
+func fakeOneRouteUnder100() *networking_v1beta1.VirtualService {
 	virtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 45),
 		data.CreateEmptyVirtualService("reviews-multiple", "test", []string{"reviews"}),
 	)
@@ -102,7 +102,7 @@ func fakeOneRouteUnder100() *networking_v1alpha3.VirtualService {
 	return virtualService
 }
 
-func fakeRepeatedSubset() *networking_v1alpha3.VirtualService {
+func fakeRepeatedSubset() *networking_v1beta1.VirtualService {
 	validVirtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 55),
 		data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 45),
 			data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v2", 55),
@@ -116,7 +116,7 @@ func fakeRepeatedSubset() *networking_v1alpha3.VirtualService {
 	return validVirtualService
 }
 
-func fakeRepeatedHosts() *networking_v1alpha3.VirtualService {
+func fakeRepeatedHosts() *networking_v1beta1.VirtualService {
 	validVirtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews.test.svc.cluster.local", "", 55),
 		data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews.test.svc.cluster.local", "", 45),
 			data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews.test.svc.cluster.local", "", 55),
