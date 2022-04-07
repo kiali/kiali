@@ -1,0 +1,59 @@
+name: Integration Tests Backend
+
+on:
+  workflow_call:
+    inputs:
+      target_branch:
+        required: true
+        type: string
+
+env:
+  TARGET_BRANCH: ${{ inputs.target_branch }}
+
+jobs:
+  integration_tests_backend:
+    name: Backend API integration tests
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.7
+
+      - name: Download go binary
+        uses: actions/download-artifact@v3
+        with:
+          name: kiali
+          path: ~/go/bin/
+
+      - name: Ensure kiali binary is executable
+        run: chmod +x ~/go/bin/kiali
+
+      - name: Download frontend build
+        uses: actions/download-artifact@v3
+        with:
+          name: build
+          path: frontend/build
+
+      - name: Setup kind
+        run: hack/setup-kind-in-ci.sh
+
+      - name: Set kiali URL
+        run: |
+          KIALI_URL="http://$(kubectl get svc -l app.kubernetes.io/name=kiali -n istio-system -o=jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}'):20001/kiali"
+          echo "::set-output name=kiali_url::$KIALI_URL"
+        id: set-kiali-url
+
+      - name: Run backend integration tests
+        run: go test -v
+        id: integration-tests
+        env:
+          URL: ${{ steps.set-kiali-url.outputs.kiali_url }}
+        working-directory: tests/integration/tests
+
+      - name: Get kiali pod logs when tests fail
+        if: ${{ steps.integration-tests.outcome == 'failure' }}
+        run: kubectl logs -l app.kubernetes.io/name=kiali -n istio-system
