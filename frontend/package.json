@@ -138,6 +138,7 @@
   },
   "resolutions": {
     "minimist": "^1.2.6",
+    "nth-check": "^2.0.1",
     "postcss": "^8.4.12"
   },
   "engines": {
