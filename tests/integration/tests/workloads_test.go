@@ -3,6 +3,7 @@ package tests
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -36,6 +37,7 @@ func TestWorkloadDetails(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(wl)
 	assert.Equal(name, wl.Name)
+	assert.Equal("Deployment", wl.Type)
 	assert.NotEmpty(wl.Pods)
 	for _, pod := range wl.Pods {
 		assert.NotEmpty(pod.Status)
@@ -55,4 +57,37 @@ func TestWorkloadDetails(t *testing.T) {
 	assert.NotNil(wl.Workload.Health.Requests)
 	assert.NotNil(wl.Workload.Health.Requests.Outbound)
 	assert.NotNil(wl.Workload.Health.Requests.Inbound)
+}
+
+func TestDiscoverWorkload(t *testing.T) {
+	assert := assert.New(t)
+	extraWorkloads := map[string]string{
+		"details-v2": "Pod",
+		"reviews-v4": "ReplicaSet",
+	}
+
+	defer utils.OCDelete(utils.WORKLOADS_FILE, utils.BOOKINFO)
+	assert.True(utils.OCApply(utils.WORKLOADS_FILE, utils.BOOKINFO))
+	found := false
+	for i := 0; i < 60; i++ {
+		wlList, err := utils.WorkloadsList(utils.BOOKINFO)
+
+		assert.Nil(err)
+		assert.NotNil(wlList)
+		foundWorkloads := 0
+		for _, wl := range wlList.Workloads {
+			for k, v := range extraWorkloads {
+				if k == wl.Name && v == wl.Type {
+					foundWorkloads++
+				}
+			}
+		}
+		if len(extraWorkloads) == foundWorkloads {
+			found = true
+			break
+		} else {
+			time.Sleep(time.Second)
+		}
+	}
+	assert.True(found)
 }

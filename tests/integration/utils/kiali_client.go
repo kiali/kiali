@@ -5,12 +5,14 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tools/cmd"
 	"github.com/kiali/kiali/util/httputil"
 )
 
@@ -28,6 +30,8 @@ type AuthStrategy struct {
 var client = *NewKialiClient()
 
 var BOOKINFO = "bookinfo"
+var ASSETS = "tests/integration/assets"
+var WORKLOADS_FILE = path.Join(cmd.KialiProjectRoot, ASSETS+"/bookinfo-workloads.yaml")
 
 func NewKialiClient() (c *KialiClient) {
 	c = &KialiClient{
