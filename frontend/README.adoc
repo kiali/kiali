@@ -144,14 +144,7 @@ brew install watchman
 ----
 
 == Testing Libraries for Vulnerabilities
-We use https://snyk.io/[Snyk] for JS vulnerability testing. Snyke will run automatically on every commit pushed to `kiali-ui`.
-
-If you wish to run Snyk manually to test before you push, then the following command can be used:
-[source,shell]
-----
-yarn run snyk
-----
-
+We use github Dependabot for vulnerability testing. Dependabot runs regularly on the `kiali/kiali` repository.
 
 == Production Builds
 Use `yarn build` which will bundle the build artifacts using webpack into the `build` directory.
