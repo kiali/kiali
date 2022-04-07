@@ -45,12 +45,68 @@ jobs:
       with:
         ref: ${{ github.event.inputs.release_branch }}
 
+    - name: Prepare scripts
+      run: |
+        cat <<-EOF > bump.py
+        import sys
+        release_type = sys.argv[1]
+        version = sys.argv[2]
+        parts = version.split('.')
+        major = int(parts[0][1:])
+        minor = int(parts[1])
+        patch = int(parts[2])
+        if release_type == 'major':
+            major = major + 1
+            minor = 0
+            patch = 0
+        elif release_type == 'minor':
+            minor = minor + 1 
+            patch = 0
+        elif release_type == 'patch':
+            patch = patch + 1
+        print('.'.join(['v' + str(major), str(minor), str(patch)]))
+        EOF
+        
+        cat <<'EOF' > release_type.sh
+        BASE_DATE=${BASE_DATE:-$(date -d '2021-12-03' '+%s')} # Use last day of Sprint #66 as the base date for calcs
+        NOW_DATE=${NOW_DATE:-$(date -d 'now' '+%s')}
+        # Transitional calculations
+        DATE_DIFF=$(( $NOW_DATE - $BASE_DATE ))
+        DAYS_ELAPSED=$(( $DATE_DIFF / (24*60*60) ))
+        WEEKS_ELAPSED=$(( $DAYS_ELAPSED / 7))
+        # This value will be used to determine the type of the release
+        WEEKS_MOD3=$(( $WEEKS_ELAPSED % 3 ))
+        # Between Dec 23th 2021 and Jan 14th 2022, use Mod6 (six-week sprint)
+        if [ $NOW_DATE -ge $(date -d '2021-12-23' '+%s') ] && [ $NOW_DATE -lt $(date -d '2022-01-14' '+%s') ];
+        then
+        WEEKS_MOD3=$(( $WEEKS_ELAPSED % 6 ))
+        fi
+        case $WEEKS_MOD3 in
+        0)
+            RELEASE_TYPE='minor' ;;
+        1)
+            RELEASE_TYPE='snapshot.0' ;;
+        2)
+            RELEASE_TYPE='snapshot.1' ;;
+        3)
+            RELEASE_TYPE='snapshot.2' ;;
+        4)
+            RELEASE_TYPE='snapshot.3' ;;
+        5)
+            RELEASE_TYPE='snapshot.4' ;;
+        esac
+        # Print the determined type
+        echo $RELEASE_TYPE
+        EOF      
+
+        chmod +x release_type.sh
+
     - name: Determine release type
       id: release_type
       run: |
         if [[ ${{ github.event.inputs.release_type }} == "auto" ]];
         then
-          echo "::set-output name=release_type::$(./.github/workflows/util/release_type.sh)"
+          echo "::set-output name=release_type::$(sh release_type.sh)"
         else
           echo "::set-output name=release_type::${{ github.event.inputs.release_type }}"
         fi
@@ -67,7 +123,7 @@ jobs:
 
         if [[ $RELEASE_TYPE == "patch" ]]
         then
-          RELEASE_VERSION=$(./.github/workflows/util/bump.py $RELEASE_TYPE $RELEASE_VERSION)
+          RELEASE_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
         elif [[ $RELEASE_TYPE == *"snapshot"* ]]
         then
           RELEASE_VERSION="$RELEASE_VERSION-$RELEASE_TYPE"
@@ -90,10 +146,10 @@ jobs:
       run: |          
         if [[ $RELEASE_TYPE == "patch" ]]
         then
-            NEXT_VERSION=$(./.github/workflows/util/bump.py $RELEASE_TYPE $RELEASE_VERSION)
+            NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
         elif [[ $RELEASE_TYPE == "minor" ]]
         then 
-            NEXT_VERSION=$(./.github/workflows/util/bump.py $RELEASE_TYPE $RELEASE_VERSION)          
+            NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)          
         fi
 
         echo "::set-output name=next_version::$NEXT_VERSION"
@@ -121,6 +177,9 @@ jobs:
 
         echo "::set-output name=quay_tag::$QUAY_TAG"
     
+    - name: Cleanup
+      run: rm bump.py release_type.sh
+
     - name: Log information
       run: |
         echo "Release type: ${{ steps.release_type.outputs.release_type }}"
@@ -137,6 +196,8 @@ jobs:
     name: Build backend
     uses: ./.github/workflows/build-backend.yml
     needs: [initialize]
+    with:
+      build_branch: ${{ github.event.inputs.release_branch }}
 
   build_frontend:
     name: Build frontend
@@ -144,26 +205,28 @@ jobs:
     needs: [initialize]
     with:
       target_branch: ${{needs.initialize.outputs.target_branch}}
+      build_branch: ${{ github.event.inputs.release_branch }}
 
-  # integration_tests_backend:
-  #   name: Run backend integration tests
-  #   uses: ./.github/workflows/integration-tests-backend.yml
-  #   needs: [initialize, build_backend, build_frontend]
-  #   with:
-  #     target_branch: ${{needs.initialize.outputs.target_branch}}
+  integration_tests_backend:
+    name: Run backend integration tests
+    uses: ./.github/workflows/integration-tests-backend.yml
+    needs: [initialize, build_backend, build_frontend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ github.event.inputs.release_branch }}
 
-  # integration_tests_frontend:
-  #   name: Run frontend integration tests
-  #   uses: ./.github/workflows/integration-tests-frontend.yml
-  #   needs: [initialize, build_backend, build_frontend]
-  #   with:
-  #     target_branch: ${{needs.initialize.outputs.target_branch}}
+  integration_tests_frontend:
+    name: Run frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend.yml
+    needs: [initialize, build_backend, build_frontend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ github.event.inputs.release_branch }}
 
   release:
     name: Release
     runs-on: ubuntu-20.04
-    #needs: [initialize, build_backend, build_frontend, integration_tests_backend, integration_tests_frontend]
-    needs: [initialize, build_backend, build_frontend]
+    needs: [initialize, build_backend, build_frontend, integration_tests_backend, integration_tests_frontend]
     env:
       RELEASE_TYPE: ${{ needs.initialize.outputs.release_type }}
       RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
