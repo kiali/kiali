@@ -30,7 +30,7 @@ import { style } from 'typestyle';
 import { LabelFilters } from './LabelFilter';
 import { arrayEquals } from 'utils/Common';
 import { labelFilter } from './CommonFilters';
-import FilterIcon from '@patternfly/react-icons/dist/esm/icons/filter-icon';
+import { KialiIcon } from 'config/KialiIcon';
 
 var classNames = require('classnames');
 
@@ -367,7 +367,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       >
         {this.props.childrenFirst && this.renderChildren()}
         <ToolbarContent>
-          <ToolbarToggleGroup toggleIcon={<FilterIcon />} breakpoint="md">
+          <ToolbarToggleGroup toggleIcon={<KialiIcon.Filter />} breakpoint="md">
             <ToolbarGroup variant="filter-group">
               {this.state.filterTypes.map((ft, i) => {
                 return (

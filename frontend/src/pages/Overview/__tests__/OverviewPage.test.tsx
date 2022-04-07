@@ -2,7 +2,6 @@ import * as React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { shallowToJson } from 'enzyme-to-json';
-
 import { mount, shallow, ReactWrapper } from 'enzyme';
 import { OverviewPage } from '../OverviewPage';
 import OverviewPageContainer from '../OverviewPage';
@@ -49,13 +48,6 @@ const mockNamespaceHealth = (obj: NamespaceAppHealth): Promise<void> => {
   return mockAPIToPromise('getNamespaceAppHealth', obj, false);
 };
 
-// Ignore other calls
-mockAPIToPromise('getNamespaceMetrics', null, false);
-mockAPIToPromise('getNamespaceTls', null, false);
-mockAPIToPromise('getNamespaceValidations', null, false);
-mockAPIToPromise('getIstioConfig', null, false);
-mockAPIToPromise('getIstioPermissions', {}, false);
-
 let mounted: ReactWrapper<any, any> | null;
 
 const mountPage = () => {
@@ -91,8 +83,18 @@ const concat = (f1: ActiveFiltersInfo, f2: ActiveFiltersInfo): ActiveFiltersInfo
 describe('Overview page', () => {
   beforeEach(() => {
     mounted = null;
+
+    // Ignore other calls
+    mockAPIToPromise('getNamespaceMetrics', null, false);
+    mockAPIToPromise('getNamespaceTls', null, false);
+    mockAPIToPromise('getNamespaceValidations', null, false);
+    mockAPIToPromise('getIstioConfig', null, false);
+    mockAPIToPromise('getIstioPermissions', {}, false);
   });
+
   afterEach(() => {
+    jest.clearAllMocks();
+
     if (mounted) {
       mounted.unmount();
     }

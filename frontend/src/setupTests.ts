@@ -1,7 +1,7 @@
 import * as Enzyme from 'enzyme';
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 require('jest-localstorage-mock');
 require('jest-canvas-mock');
-const Adapter = require('enzyme-adapter-react-16');
 
 var JSDOM = require('jsdom').JSDOM;
 
