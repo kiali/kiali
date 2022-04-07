@@ -73,7 +73,6 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 	}
 
 	kialiToken, err := kubernetes.GetKialiToken()
-
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +88,6 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 
 	// Get the subject for the token to validate it as a valid token
 	subjectFromToken, err := bs.TokenReview.GetTokenSubject(authInfo)
-
 	if err != nil {
 		return nil, err
 	}
