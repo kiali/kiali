@@ -137,6 +137,7 @@
     "typescript": "3.8.3"
   },
   "resolutions": {
+    "minimist": "^1.2.6",
     "postcss": "^8.4.12"
   },
   "engines": {
