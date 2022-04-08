@@ -18,7 +18,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"regexp"
@@ -84,10 +83,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	consoleVersion := determineConsoleVersion()
-	log.Infof("Kiali: Console version: %v", consoleVersion)
-
-	status.Put(status.ConsoleVersion, consoleVersion)
 	status.Put(status.CoreVersion, version)
 	status.Put(status.CoreCommitHash, commitHash)
 	status.Put(status.ContainerVersion, determineContainerVersion(version))
@@ -201,21 +196,6 @@ func validateFlags() {
 			}
 		}
 	}
-}
-
-// determineConsoleVersion will return the version of the UI console the server will serve to clients.
-// Note this method requires the configuration to be loaded and available via config.Get()
-func determineConsoleVersion() string {
-	consoleVersion := "unknown"
-	filename := config.Get().Server.StaticContentRootDirectory + "/version.txt"
-	fileContent, err := ioutil.ReadFile(filename)
-	if err == nil {
-		consoleVersion = string(fileContent)
-		consoleVersion = strings.TrimSpace(consoleVersion) // also seems to kill off EOF
-	} else {
-		log.Errorf("Failed to determine console version from file [%v]. error=%v", filename, err)
-	}
-	return consoleVersion
 }
 
 // determineContainerVersion will return the version of the image container.

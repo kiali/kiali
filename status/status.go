@@ -11,11 +11,10 @@ import (
 const (
 	name             = "Kiali"
 	ContainerVersion = name + " container version"
-	ConsoleVersion   = name + " console version"
-	CoreVersion      = name + " core version"
+	CoreVersion      = name + " version"
 	MeshName         = "Mesh name"
 	MeshVersion      = "Mesh version"
-	CoreCommitHash   = name + " core commit hash"
+	CoreCommitHash   = name + " commit hash"
 	State            = name + " state"
 	ClusterMTLS      = "Istio mTLS"
 	StateRunning     = "running"

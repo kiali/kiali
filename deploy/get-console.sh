@@ -30,10 +30,3 @@ fi
 echo "Copying local console files from $CONSOLE_DIR"
 rm -rf $DIR/_output/docker/console && mkdir $DIR/_output/docker/console
 cp -r $CONSOLE_DIR/build/* $DIR/_output/docker/console
-
-# If there is a version.txt file, use it (required for continuous delivery)
-if [ ! -f "$DIR/_output/docker/console/version.txt" ]; then
-  echo "$(sed -n 's/.*"version":.*"\(.*\)".*/\1/p' $CONSOLE_DIR/package.json)-local-$(cd $CONSOLE_DIR; git rev-parse HEAD)" > $DIR/_output/docker/console/version.txt
-fi
-
-echo "Console version being packaged: $(cat $DIR/_output/docker/console/version.txt)"
