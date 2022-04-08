@@ -1,7 +1,9 @@
 package tests
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -51,4 +53,104 @@ func TestServiceDetails(t *testing.T) {
 	assert.NotNil(service.Health.Requests.Inbound)
 
 	assert.True(service.IstioSidecar)
+}
+
+func TestServiceDiscoverVS(t *testing.T) {
+	assert := assert.New(t)
+	serviceName := "reviews"
+	vsName := "reviews"
+	service, err := utils.ServiceDetails(serviceName, utils.BOOKINFO)
+	assert.Nil(err)
+	assert.NotNil(service)
+	preVsCount := len(service.VirtualServices)
+	defer utils.OCDelete(utils.VS, utils.BOOKINFO)
+	assert.True(utils.OCApply(utils.VS, utils.BOOKINFO))
+
+	found := false
+	for i := 0; i < 60; i++ {
+		service, err = utils.ServiceDetails(serviceName, utils.BOOKINFO)
+		assert.Nil(err)
+		assert.NotNil(service)
+		if len(service.VirtualServices) > preVsCount {
+			found = true
+			break
+		} else {
+			time.Sleep(time.Second)
+		}
+	}
+	assert.True(found)
+
+	found = false
+	for _, vs := range service.VirtualServices {
+		if vs.Name == vsName {
+			found = true
+
+			http := vs.Spec.Http
+			assert.NotEmpty(http)
+			routes := http[0].Route
+			assert.Len(routes, 2)
+
+			assert.Equal(routes[0].Weight, int32(80))
+			destination := routes[0].Destination
+			assert.NotNil(destination)
+			assert.Equal(destination.Host, "reviews")
+			assert.Equal(destination.Subset, "v1")
+
+			assert.Equal(routes[1].Weight, int32(20))
+			destination = routes[1].Destination
+			assert.NotNil(destination)
+			assert.Equal(destination.Host, "reviews")
+			assert.Equal(destination.Subset, "v2")
+
+			break
+		}
+	}
+	assert.True(found)
+}
+
+func TestServiceDiscoverDR(t *testing.T) {
+	assert := assert.New(t)
+	serviceName := "reviews"
+	drName := "reviews"
+	service, err := utils.ServiceDetails(serviceName, utils.BOOKINFO)
+	assert.Nil(err)
+	assert.NotNil(service)
+	preDrCount := len(service.DestinationRules)
+	defer utils.OCDelete(utils.DR, utils.BOOKINFO)
+	assert.True(utils.OCApply(utils.DR, utils.BOOKINFO))
+
+	found := false
+	for i := 0; i < 60; i++ {
+		service, err = utils.ServiceDetails(serviceName, utils.BOOKINFO)
+		assert.Nil(err)
+		assert.NotNil(service)
+		if len(service.DestinationRules) > preDrCount {
+			found = true
+			break
+		} else {
+			time.Sleep(time.Second)
+		}
+	}
+	assert.True(found)
+
+	found = false
+	for _, dr := range service.DestinationRules {
+		if dr.Name == drName {
+			found = true
+
+			assert.NotNil(dr.Spec.TrafficPolicy)
+			assert.Len(dr.Spec.Subsets, 3)
+
+			for i, subset := range dr.Spec.Subsets {
+				assert.Equal(subset.Name, fmt.Sprintf("v%d", i+1))
+
+				labels := subset.Labels
+				assert.NotNil(labels)
+				assert.Equal(labels["version"], fmt.Sprintf("v%d", i+1))
+			}
+
+			break
+		}
+	}
+	assert.True(found)
 }

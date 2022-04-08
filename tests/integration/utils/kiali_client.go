@@ -31,7 +31,9 @@ var client = *NewKialiClient()
 
 var BOOKINFO = "bookinfo"
 var ASSETS = "tests/integration/assets"
-var WORKLOADS_FILE = path.Join(cmd.KialiProjectRoot, ASSETS+"/bookinfo-workloads.yaml")
+var VS = path.Join(cmd.KialiProjectRoot, ASSETS+"/bookinfo-reviews-80-20.yaml")
+var DR = path.Join(cmd.KialiProjectRoot, ASSETS+"/bookinfo-destination-rule-reviews.yaml")
+var WORKLOADS = path.Join(cmd.KialiProjectRoot, ASSETS+"/bookinfo-workloads.yaml")
 
 func NewKialiClient() (c *KialiClient) {
 	c = &KialiClient{

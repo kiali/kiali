@@ -66,8 +66,8 @@ func TestDiscoverWorkload(t *testing.T) {
 		"reviews-v4": "ReplicaSet",
 	}
 
-	defer utils.OCDelete(utils.WORKLOADS_FILE, utils.BOOKINFO)
-	assert.True(utils.OCApply(utils.WORKLOADS_FILE, utils.BOOKINFO))
+	defer utils.OCDelete(utils.WORKLOADS, utils.BOOKINFO)
+	assert.True(utils.OCApply(utils.WORKLOADS, utils.BOOKINFO))
 	found := false
 	for i := 0; i < 60; i++ {
 		wlList, err := utils.WorkloadsList(utils.BOOKINFO)

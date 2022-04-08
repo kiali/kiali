@@ -15,7 +15,7 @@ func OCApply(yamlFile, namespace string) bool {
 		log.Errorf(err.Error())
 		return false
 	}
-
+	log.Debugf(string(stdout))
 	return strings.Contains(string(stdout), "created") || strings.Contains(string(stdout), "configure")
 }
 
@@ -27,6 +27,6 @@ func OCDelete(yamlFile, namespace string) bool {
 		log.Errorf(err.Error())
 		return false
 	}
-
+	log.Debugf(string(stdout))
 	return strings.Contains(string(stdout), "deleted")
 }
