@@ -436,7 +436,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
   private getContainerLegend = () => {
     return (
-      <Form>
+      <Form data-cy={"workload-logs-pod-containers"}>
         <FormGroup fieldId="container-log-selection" isInline>
           <PFBadge
             badge={{ badge: PFBadges.Container.badge, tt: 'Containers' }}
