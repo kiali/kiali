@@ -19,6 +19,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
     onToggle={[Function]}
     placeholderText="1m"
     selections={60}
+    toggleId="graph_filter_interval_duration-toggle"
   >
     <SelectOption
       className=""
@@ -169,6 +170,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
     onToggle={[Function]}
     placeholderText="Every 15s"
     selections={15000}
+    toggleId="metrics_filter_poll_interval-toggle"
   >
     <SelectOption
       className=""
@@ -318,6 +320,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
     onSelect={[Function]}
     onToggle={[Function]}
     selections="cola"
+    toggleId="graph_filter_layouts-toggle"
   >
     <SelectOption
       className=""
@@ -396,6 +399,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     onToggle={[Function]}
     placeholderText="1m"
     selections={60}
+    toggleId="graph_filter_interval_duration-toggle"
   >
     <SelectOption
       className=""
@@ -546,6 +550,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     onToggle={[Function]}
     placeholderText="Every 15s"
     selections={15000}
+    toggleId="metrics_filter_poll_interval-toggle"
   >
     <SelectOption
       className=""
@@ -695,6 +700,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     onSelect={[Function]}
     onToggle={[Function]}
     selections="cola"
+    toggleId="graph_filter_layouts-toggle"
   >
     <SelectOption
       className=""
