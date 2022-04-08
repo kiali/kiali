@@ -32,61 +32,10 @@ type tokenAuthController struct {
 	SessionStore SessionPersistor
 }
 
-type sessionPayload struct {
+type tokenSessionPayload struct {
 	// Token is the string that the user entered in the Kiali login screen. It should be
 	// a token that can be used against the Kubernetes API
 	Token string `json:"token,omitempty"`
-}
-
-// UserSessionData tokenResponse
-//
-// This is used for returning the token
-//
-// swagger:model UserSessionData
-type UserSessionData struct {
-	// The expired time for the token
-	// A string with the Datetime when the token will be expired
-	//
-	// example: Thu, 07 Mar 2019 17:50:26 +0000
-	// required: true
-	ExpiresOn time.Time `json:"expiresOn"`
-
-	// The username for the token
-	// A string with the user's username
-	//
-	// example: admin
-	// required: true
-	Username string `json:"username"`
-
-	// The authentication token
-	// A string with the authentication token for the user
-	//
-	// example: zI1NiIsIsR5cCI6IkpXVCJ9.ezJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI5NTIzNjU0fQ.PPZvRGnR6VA4v7FmgSfQcGQr-VD
-	// required: true
-	Token string `json:"-"`
-}
-
-// AuthenticationFailureError is a helper Error to assist callers of the TokenAuthController.Authenticate
-// function in distinguishing between authentication failures and
-// unexpected errors.
-type AuthenticationFailureError struct {
-	// Wraps the error causing the authentication failure
-	Detail error
-
-	// The status code that should have the HTTP response for this error.
-	HttpStatus int
-
-	// A description of the authentication failure
-	Reason string
-}
-
-// Error returns the string representation of an AuthenticationFailureError
-func (e *AuthenticationFailureError) Error() string {
-	if e.Detail != nil {
-		return fmt.Sprintf("%s: %v", e.Reason, e.Detail)
-	}
-
-	return e.Reason
 }
 
 // NewTokenAuthController initializes a new controller for handling token authentication, with the
@@ -147,12 +96,16 @@ func (c tokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter
 	// Token was valid against the Kubernetes API, and it has privileges to read some namespace.
 	// Accept the token. Create the user session.
 	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
-	err = c.SessionStore.CreateSession(r, w, "token", timeExpire, sessionPayload{Token: token})
+	err = c.SessionStore.CreateSession(r, w, config.AuthStrategyToken, timeExpire, tokenSessionPayload{Token: token})
 	if err != nil {
 		return nil, err
 	}
 
-	return &UserSessionData{ExpiresOn: timeExpire, Username: extractSubjectFromK8sToken(token), Token: token}, nil
+	return &UserSessionData{
+		ExpiresOn: timeExpire,
+		Username:  extractSubjectFromK8sToken(token),
+		AuthInfo:  &api.AuthInfo{Token: token},
+	}, nil
 }
 
 // ValidateSession restores a session previously created by the Authenticate function. A minimal re-validation
@@ -161,7 +114,7 @@ func (c tokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter
 // If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
 func (c tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	// Restore a previously started session.
-	sPayload := sessionPayload{}
+	sPayload := tokenSessionPayload{}
 	sData, err := c.SessionStore.ReadSession(r, w, &sPayload)
 	if err != nil {
 		log.Warningf("Could not read the session: %v", err)
@@ -187,7 +140,11 @@ func (c tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWri
 
 	// If we are here, the session looks valid. Return the session details.
 	r.Header.Add("Kiali-User", extractSubjectFromK8sToken(sPayload.Token)) // Internal header used to propagate the subject of the request for audit purposes
-	return &UserSessionData{ExpiresOn: sData.ExpiresOn, Username: extractSubjectFromK8sToken(sPayload.Token), Token: sPayload.Token}, nil
+	return &UserSessionData{
+		ExpiresOn: sData.ExpiresOn,
+		Username:  extractSubjectFromK8sToken(sPayload.Token),
+		AuthInfo:  &api.AuthInfo{Token: sPayload.Token},
+	}, nil
 }
 
 // TerminateSession unconditionally terminates any existing session without any validation.

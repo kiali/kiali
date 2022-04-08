@@ -33,7 +33,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/log"
 )

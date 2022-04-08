@@ -1,7 +1,11 @@
 package authentication
 
 import (
+	"fmt"
 	"net/http"
+	"time"
+
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
 )
@@ -43,6 +47,57 @@ type AuthController interface {
 	TerminateSession(r *http.Request, w http.ResponseWriter) error
 }
 
+// UserSessionData userSessionData
+//
+// This is used for returning the token
+//
+// swagger:model UserSessionData
+type UserSessionData struct {
+	// The expired time for the token
+	// A string with the Datetime when the token will be expired
+	//
+	// example: Thu, 07 Mar 2019 17:50:26 +0000
+	// required: true
+	ExpiresOn time.Time `json:"expiresOn"`
+
+	// The username for the token
+	// A string with the user's username
+	//
+	// example: admin
+	// required: true
+	Username string `json:"username"`
+
+	// The authentication information of the user to access the cluster API
+	// It is usually only a bearer token that can be used to connect to the cluster API.
+	// However, it is possible to add more options, like impersonation attributes.
+	//
+	// required: true
+	AuthInfo *api.AuthInfo `json:"-"`
+}
+
+// AuthenticationFailureError is a helper Error to assist callers of the TokenAuthController.Authenticate
+// function in distinguishing between authentication failures and
+// unexpected errors.
+type AuthenticationFailureError struct {
+	// Wraps the error causing the authentication failure
+	Detail error
+
+	// The status code that should have the HTTP response for this error.
+	HttpStatus int
+
+	// A description of the authentication failure
+	Reason string
+}
+
+// Error returns the string representation of an AuthenticationFailureError
+func (e *AuthenticationFailureError) Error() string {
+	if e.Detail != nil {
+		return fmt.Sprintf("%s: %v", e.Reason, e.Detail)
+	}
+
+	return e.Reason
+}
+
 var authController AuthController
 
 // GetAuthController gets the authentication controller that is currently configured and handling
@@ -63,5 +118,7 @@ func InitializeAuthenticationController(strategy string) {
 		authController = NewOpenIdAuthController(persistor, nil)
 	} else if strategy == config.AuthStrategyOpenshift {
 		authController = NewOpenshiftAuthController(persistor, nil)
+	} else if strategy == config.AuthStrategyHeader {
+		authController = NewHeaderAuthController(persistor, nil)
 	}
 }

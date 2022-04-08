@@ -167,7 +167,7 @@ func (c OpenIdAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 	return &UserSessionData{
 		ExpiresOn: flow.ExpiresOn,
 		Username:  sPayload.Subject,
-		Token:     sPayload.Token,
+		AuthInfo:  &api.AuthInfo{Token: sPayload.Token},
 	}, nil
 }
 
@@ -288,7 +288,7 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 	return &UserSessionData{
 		ExpiresOn: sData.ExpiresOn,
 		Username:  sPayload.Subject,
-		Token:     token,
+		AuthInfo:  &api.AuthInfo{Token: token},
 	}, nil
 }
 
