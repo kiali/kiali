@@ -14,7 +14,7 @@ const spacingRight = style({
 
 type ToolbarDropdownProps = {
   disabled?: boolean;
-  id?: string;
+  id: string;
   initialLabel?: string;
   initialValue?: number | string;
   label?: string;
@@ -70,6 +70,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
         selections={this.props.value || currentValue}
         placeholderText={this.props.label || currentName}
         id={this.props.id}
+        toggleId={this.props.id + '-toggle'}
         onToggle={this.onToggle}
         isExpanded={isExpanded}
         ariaLabelledBy={this.props.id}

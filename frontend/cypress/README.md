@@ -59,7 +59,7 @@ cypress/
 1) Failed tests could mean that:
     * Reuse of step definitions is not suitable or gets broken by different testcase or your modifications
     * We want to refactor broken code and if its heavily used, move it into a custom command file (cypress/support/commands.ts) - i.e. `cy.login()`, `cy.kiali_apply_config()` lives there
-1) Test case execution should be all green, you are ready to commit your test case. You might want verify whole regression run locally - so you did not introduce any braking changes in your PR 
+1) Test case execution should be all green, you are ready to commit your test case. You might want verify whole regression run locally - so you did not introduce any braking changes in your PR
 
 
 ## Testing Strategies
@@ -69,3 +69,13 @@ cypress/
 ### Graph
 
 The kiali graph is primarily a canvas element which makes it more difficult to test through query selectors with cypress. To get around this limitation, a simple way of testing visual elements is to do snapshot testing aka [visual testing](https://docs.cypress.io/guides/tooling/visual-testing). This boils down to comparing an existing image of the page to a new image. If any differences exist, the test will fail. There are other ways of testing canvas elements in Cypress but they seem to involve interacting with cypress through a custom api rather than visually which is not ideal.
+
+## Troubleshooting
+
+### Tests are slow and crashing frequently
+
+Try setting the `numTestsKeptInMemory` setting to a lower value.
+
+```
+make -e CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0 cypress
+```

@@ -246,6 +246,16 @@ cd $KIALI_SOURCES/kiali/hack
 
 === Running Cypress tests
 
+Integration testing is done with cypress. More information can be found link:./frontend/cypress/README.md[here].
+
+Requirements:
+- Istio
+- Kiali
+- bookinfo demo app
+- error rates demo app
+
+You can use link:./hack/istio/install-testing-demos.sh[this script] to install all the neccessary demo apps for testing. The script supports both openshift and non-openshift deployments.
+
 [source,shell]
 ----
 # If you are doing frontend development, start the frontend development server, where `<kiali-url>` is the URL to the base Kiali UI location such as `http://localhost:20001/kiali`:
