@@ -41,8 +41,7 @@ When(`user filters {string} namespace`, (ns) => {
 
 When(`user filters {string} health`, (health) => {
     cy.get('select[aria-label="filter_select_type"]')
-        .select('Health');
-    cy.get('select[aria-label="filter_select_type"]')
+        .select('Health')
         .should('have.value', 'health');
     cy.get('select[aria-label="filter_select_value"]')
         .select(health);
@@ -62,8 +61,8 @@ When(`user selects Health for {string}`, (type) => {
             break;
     }
     cy.get('button[aria-labelledby^="overview-type"]')
-        .click();
-    cy.get('button[id^="' + innerId + '"]')
+        .click()
+        .get('button[id^="' + innerId + '"]')
         .click();
 });
 
@@ -80,8 +79,8 @@ When(`user selects {string} time range`, (interval) => {
             break;
     }
     cy.get('button[aria-labelledby^="time_range_duration"]')
-        .click();
-    cy.get('button[id^="' + innerId + '"]')
+        .click()
+        .get('button[id^="' + innerId + '"]')
         .click();
 });
 
