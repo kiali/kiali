@@ -76,7 +76,7 @@ func NewRoutes() (r *Routes) {
 		//
 		// responses:
 		//      500: internalError
-		//      200: tokenResponse
+		//      200: userSessionData
 		{
 			"Authenticate",
 			"GET",
@@ -95,7 +95,7 @@ func NewRoutes() (r *Routes) {
 		//
 		// responses:
 		//      500: internalError
-		//      200: tokenResponse
+		//      200: userSessionData
 		{
 			"OpenshiftCheckToken",
 			"POST",

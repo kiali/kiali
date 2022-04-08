@@ -170,7 +170,7 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 	// This CookieSessionPersistor only deals with sessions using cookies holding encrypted data.
 	// Thus, presence for a cookie with the "-aes" suffix is checked and it's assumed no active session
 	// if such cookie is not found in the request.
-	authCookie, err := r.Cookie(config.TokenCookieName + "-aes")
+	authCookie, err := r.Cookie(AESSessionCookieName)
 	if err != nil {
 		if err == http.ErrNoCookie {
 			log.Tracef("The AES cookie is missing.")
@@ -225,7 +225,12 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 	// the process in CreateSession function). Reverse the encoding and, then, decrypt the data.
 	cipherSessionData, err := base64.StdEncoding.DecodeString(base64SessionData)
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode session data: %w", err)
+		// Older cookie specs don't allow "=", so it may get trimmed out.  If the std encoding
+		// doesn't work, try raw encoding (with no padding).  If it still fails, error out
+		cipherSessionData, err = base64.RawStdEncoding.DecodeString(base64SessionData)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decode session data: %w", err)
+		}
 	}
 
 	block, err := aes.NewCipher([]byte(config.GetSigningKey()))

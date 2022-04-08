@@ -77,7 +77,7 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithImplicitFlow(t *testing.T
 	assert.Nil(t, err)
 	assert.NotNil(t, sData)
 	assert.Equal(t, "jdoe@domain.com", sData.Username)
-	assert.Equal(t, openIdTestToken, sData.Token)
+	assert.Equal(t, openIdTestToken, sData.AuthInfo.Token)
 	assert.True(t, expectedExpiration.Equal(sData.ExpiresOn))
 
 	// Simply check that some cookie is set and has the right expiration. Testing cookie content is left to the session_persistor_test.go
@@ -89,7 +89,7 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithImplicitFlow(t *testing.T
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 
 	// Session cookie
-	assert.Equal(t, config.TokenCookieName+"-aes", response.Cookies()[1].Name)
+	assert.Equal(t, AESSessionCookieName, response.Cookies()[1].Name)
 	assert.Equal(t, expectedExpiration, response.Cookies()[1].Expires)
 }
 
@@ -631,7 +631,7 @@ func TestOpenIdImplicitFlowAllowsLoginWithAllowedDomainInHdClaim(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, sData)
 	assert.Equal(t, "jdoe@domain.com", sData.Username)
-	assert.Equal(t, oidcToken, sData.Token)
+	assert.Equal(t, oidcToken, sData.AuthInfo.Token)
 	assert.True(t, expectedExpiration.Equal(sData.ExpiresOn))
 
 	// Simply check that some cookie is set and has the right expiration. Testing cookie content is left to the session_persistor_test.go
@@ -643,7 +643,7 @@ func TestOpenIdImplicitFlowAllowsLoginWithAllowedDomainInHdClaim(t *testing.T) {
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 
 	// Session cookie
-	assert.Equal(t, config.TokenCookieName+"-aes", response.Cookies()[1].Name)
+	assert.Equal(t, AESSessionCookieName, response.Cookies()[1].Name)
 	assert.Equal(t, expectedExpiration, response.Cookies()[1].Expires)
 }
 
@@ -693,7 +693,7 @@ func TestOpenIdImplicitFlowAllowsLoginWithAllowedDomainInEmailClaim(t *testing.T
 	assert.Nil(t, err)
 	assert.NotNil(t, sData)
 	assert.Equal(t, "jdoe@domain.com", sData.Username)
-	assert.Equal(t, oidcToken, sData.Token)
+	assert.Equal(t, oidcToken, sData.AuthInfo.Token)
 	assert.True(t, expectedExpiration.Equal(sData.ExpiresOn))
 
 	// Simply check that some cookie is set and has the right expiration. Testing cookie content is left to the session_persistor_test.go
@@ -705,7 +705,7 @@ func TestOpenIdImplicitFlowAllowsLoginWithAllowedDomainInEmailClaim(t *testing.T
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 
 	// Session cookie
-	assert.Equal(t, config.TokenCookieName+"-aes", response.Cookies()[1].Name)
+	assert.Equal(t, AESSessionCookieName, response.Cookies()[1].Name)
 	assert.Equal(t, expectedExpiration, response.Cookies()[1].Expires)
 }
 
@@ -887,7 +887,7 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 
 	// Session cookie
-	assert.Equal(t, config.TokenCookieName+"-aes", response.Cookies()[1].Name)
+	assert.Equal(t, AESSessionCookieName, response.Cookies()[1].Name)
 	assert.Equal(t, expectedExpiration, response.Cookies()[1].Expires)
 	assert.Equal(t, http.StatusFound, response.StatusCode)
 

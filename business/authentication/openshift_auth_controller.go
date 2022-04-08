@@ -96,7 +96,7 @@ func (o openshiftAuthController) Authenticate(r *http.Request, w http.ResponseWr
 	return &UserSessionData{
 		ExpiresOn: expiresOn,
 		Username:  user.Metadata.Name,
-		Token:     token,
+		AuthInfo:  &api.AuthInfo{Token: token},
 	}, nil
 }
 
@@ -133,7 +133,7 @@ func (o openshiftAuthController) ValidateSession(r *http.Request, w http.Respons
 		return &UserSessionData{
 			ExpiresOn: sData.ExpiresOn,
 			Username:  user.Metadata.Name,
-			Token:     sPayload.Token,
+			AuthInfo:  &api.AuthInfo{Token: sPayload.Token},
 		}, nil
 	}
 

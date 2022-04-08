@@ -1,9 +1,9 @@
 package kubetest
 
 import (
-	"github.com/dgrijalva/jwt-go"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/mock"
+	"gopkg.in/square/go-jose.v2/jwt"
 	istio_fake "istio.io/client-go/pkg/clientset/versioned/fake"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -113,12 +113,22 @@ func (o *K8SClientMock) GetAuthInfo() *api.AuthInfo {
 // GetTokenSubject returns the subject of the authInfo using
 // the TokenReview api
 func (o *K8SClientMock) GetTokenSubject(authInfo *api.AuthInfo) (string, error) {
-	parsedClusterToken, _, err := new(jwt.Parser).ParseUnverified(authInfo.Token, &jwt.StandardClaims{})
+	parsedToken, err := jwt.ParseSigned(authInfo.Token)
 	if err != nil {
 		return authInfo.Token, nil
 	}
 
-	return parsedClusterToken.Claims.(*jwt.StandardClaims).Subject, nil
+	var claims map[string]interface{} // generic map to store parsed token
+	err = parsedToken.UnsafeClaimsWithoutVerification(&claims)
+	if err != nil {
+		return authInfo.Token, nil
+	}
+
+	if sub, ok := claims["sub"]; ok {
+		return sub.(string), nil
+	}
+
+	return authInfo.Token, nil
 }
 
 func (o *K8SClientMock) MockService(namespace, name string) {
