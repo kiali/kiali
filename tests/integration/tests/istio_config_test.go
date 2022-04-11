@@ -1,11 +1,11 @@
 package tests
 
 import (
-	"github.com/kiali/kiali/kubernetes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/tests/integration/utils"
 )
 
