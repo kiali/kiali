@@ -43,8 +43,8 @@ func TestServiceDetails(t *testing.T) {
 	assert.NotEmpty(service.Service.Ports)
 	assert.NotEmpty(service.Service.Ports)
 	assert.NotNil(service.Endpoints)
-	assert.NotEmpty(service.VirtualServices)
-	assert.NotEmpty(service.DestinationRules)
+	assert.NotNil(service.VirtualServices)
+	assert.NotNil(service.DestinationRules)
 	assert.NotNil(service.Validations)
 
 	assert.NotNil(service.Health)
@@ -79,7 +79,7 @@ func TestServiceDiscoverVS(t *testing.T) {
 		}
 	}
 	assert.True(found)
-
+	assert.NotEmpty(service.VirtualServices)
 	found = false
 	for _, vs := range service.VirtualServices {
 		if vs.Name == vsName {
@@ -132,7 +132,7 @@ func TestServiceDiscoverDR(t *testing.T) {
 		}
 	}
 	assert.True(found)
-
+	assert.NotEmpty(service.DestinationRules)
 	found = false
 	for _, dr := range service.DestinationRules {
 		if dr.Name == drName {

@@ -47,7 +47,7 @@ func TestApplicationDetails(t *testing.T) {
 	for _, serviceName := range app.ServiceNames {
 		assert.Equal(name, serviceName)
 	}
-	assert.NotEmpty(app.Runtimes)
+	assert.NotNil(app.Runtimes)
 	assert.NotNil(app.Health)
 	assert.NotNil(app.Health.Requests)
 	assert.NotNil(app.Health.Requests.Inbound)
