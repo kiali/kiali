@@ -31,6 +31,12 @@ type IstioConfigList struct {
 	IstioValidations       IstioValidations                        `json:"validations"`
 }
 
+type IstioConfigListJson struct {
+	IstioConfigList
+	// TODO merge with IstioConfigList and have IstioValidations instead
+	IstioValidations ObjectValidations `json:"validations"`
+}
+
 type IstioConfigDetails struct {
 	Namespace  Namespace `json:"namespace"`
 	ObjectType string    `json:"objectType"`

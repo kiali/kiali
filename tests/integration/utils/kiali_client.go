@@ -207,3 +207,48 @@ func WorkloadDetails(name, namespace string) (*models.WorkloadJson, error) {
 		return nil, err
 	}
 }
+
+func IstioConfigsList(namespace string) (*models.IstioConfigListJson, error) {
+	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/istio?validate=true", client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		configList := new(models.IstioConfigListJson)
+		err = json.Unmarshal(body, &configList)
+		if err == nil {
+			return configList, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+}
+
+func IstioConfigDetails(namespace, name, configType string) (*models.IstioConfigDetails, error) {
+	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/istio/"+configType+"/"+name+"?validate=true", client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		config := new(models.IstioConfigDetails)
+		err = json.Unmarshal(body, &config)
+		if err == nil {
+			return config, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+}
+
+func IstioConfigPermissions(namespace string) (*models.IstioConfigPermissions, error) {
+	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/istio/permissions?namespaces="+namespace, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		perms := new(models.IstioConfigPermissions)
+		err = json.Unmarshal(body, &perms)
+		if err == nil {
+			return perms, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+}
