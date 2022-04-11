@@ -38,7 +38,7 @@ func TestWorkloadDetails(t *testing.T) {
 	assert.NotNil(wl)
 	assert.Equal(name, wl.Name)
 	assert.Equal("Deployment", wl.Type)
-	assert.NotEmpty(wl.Pods)
+	assert.NotNil(wl.Pods)
 	for _, pod := range wl.Pods {
 		assert.NotEmpty(pod.Status)
 		assert.NotEmpty(pod.Name)
@@ -79,6 +79,19 @@ func TestDiscoverWorkload(t *testing.T) {
 			for k, v := range extraWorkloads {
 				if k == wl.Name && v == wl.Type {
 					foundWorkloads++
+					wld, errd := utils.WorkloadDetails(wl.Name, utils.BOOKINFO)
+
+					assert.Nil(errd)
+					assert.NotNil(wld)
+					assert.Equal(wld.Name, wl.Name)
+					if wld.Type == "Pod" {
+						assert.NotEmpty(wld.Pods)
+						for _, pod := range wld.Pods {
+							assert.NotEmpty(pod.Status)
+							assert.NotEmpty(pod.Name)
+
+						}
+					}
 				}
 			}
 		}
