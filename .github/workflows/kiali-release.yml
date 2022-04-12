@@ -60,15 +60,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Download go binary
-        uses: actions/download-artifact@v3
-        with:
-          name: kiali
-          path: ~/go/bin/
-
-      - name: Ensure kiali binary is executable
-        run: chmod +x ~/go/bin/kiali
-
       - name: Download frontend build
         uses: actions/download-artifact@v3
         with:
