@@ -31,13 +31,13 @@ jobs:
     uses: ./.github/workflows/build-frontend.yml
     needs: [initialize]
     with:
-      target_branch: ${{needs.initialize.outputs.target-branch}}
+      target_branch: ${{needs.initialize.outputs.target_branch}}
   release-backend:
     name: Release backend
     runs-on: ubuntu-20.04
     needs: [initialize, build_backend, build_frontend]
     env:
-      RELEASE_TYPE: ${{ needs.initialize.release_type.outputs.release_type}}        
+      RELEASE_TYPE: ${{ needs.initialize.outputs.release_type}}        
     steps:    
       - name: Checkout code
         uses: actions/checkout@v2
