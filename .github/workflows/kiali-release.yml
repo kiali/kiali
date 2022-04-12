@@ -7,6 +7,9 @@ jobs:
   initialize:
     name: Initialize
     runs-on: ubuntu-latest
+    outputs:
+      target_branch: ${{ steps.target_branch.outputs.target_branch }}
+      release_type: ${{ steps.release_type.outputs.release_type }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -36,6 +39,8 @@ jobs:
     env:
       RELEASE_TYPE: ${{ needs.initialize.release_type.outputs.release_type}}        
     steps:    
+      - name: Checkout code
+        uses: actions/checkout@v2
       - name: Install required software        
         run: sudo apt-get install -y node-semver
       
