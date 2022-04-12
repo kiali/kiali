@@ -6,7 +6,7 @@ OBJECT_TYPE_SINGLE = 'virtualservice'
 bookinfo_namespace = conftest.get_bookinfo_namespace()
 
 def test_istio_config_list(kiali_client):
-
+    
     json = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}).json()
 
     assert json != None
@@ -15,7 +15,7 @@ def test_istio_config_list(kiali_client):
     assert bookinfo_namespace in json.get('namespace').get('name')
 
 def test_istio_namespace_validations_endpoint(kiali_client):
-
+    
     istio_validations = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}, params={'validate': 'true'}).json()
 
     assert istio_validations != None
@@ -40,7 +40,7 @@ def test_istio_object_istio_validations(kiali_client):
     assert OBJECT_TYPE_SINGLE in istio_validations.get('validation').get('objectType')
 
 def test_istio_config_authorization_policies(kiali_client):
-
+    
     istio_policies = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}, params={'objects': 'authorizationpolicies'}).json()
 
     assert istio_policies != None
@@ -59,14 +59,14 @@ def test_istio_permissions_namespaces(kiali_client):
     assert gateway != None
 
 def test_istio_config_envoyfilters(kiali_client):
-
+    
     istio_config_envoyfilters = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}, params={'objects': 'envoyfilters', 'validate': 'true'}).json()
     assert istio_config_envoyfilters != None
     assert "envoyFilters" in istio_config_envoyfilters
     assert istio_config_envoyfilters.get('envoyFilters') != None
 
 def test_istio_config_gateways(kiali_client):
-
+    
     istio_config_gateways = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}, params={'objects': 'gateways', 'validate': 'true'}).json()
 
     assert istio_config_gateways != None
@@ -74,7 +74,7 @@ def test_istio_config_gateways(kiali_client):
     assert istio_config_gateways.get('gateways') != None
 
 def test_istio_config_authorizationpolicies(kiali_client):
-
+    
     istio_config_authorizationpolicies = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}, params={'objects': 'authorizationpolicies', 'validate': 'true'}).json()
 
     assert istio_config_authorizationpolicies != None
@@ -82,7 +82,7 @@ def test_istio_config_authorizationpolicies(kiali_client):
     assert istio_config_authorizationpolicies.get('authorizationPolicies') != None
 
 def test_istio_config_destinationrules(kiali_client):
-
+    
     istio_config_destinationrules = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}, params={'objects': 'destinationrules', 'validate': 'true'}).json()
 
     assert istio_config_destinationrules != None
@@ -93,7 +93,7 @@ def test_istio_config_destinationrules(kiali_client):
         assert destinationRule.get('kind') == 'DestinationRule'
 
 def test_istio_config_peerauthentications(kiali_client):
-
+    
     istio_config_peerauthentications = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}, params={'objects': 'peerauthentications', 'validate': 'true'}).json()
 
     assert istio_config_peerauthentications != None
@@ -101,7 +101,7 @@ def test_istio_config_peerauthentications(kiali_client):
     assert istio_config_peerauthentications.get('peerAuthentications') != None
 
 def test_istio_config_requestauthentication(kiali_client):
-
+    
     istio_config_requestauthentication = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}, params={'objects': 'requestauthentication', 'validate': 'true'}).json()
 
     assert istio_config_requestauthentication != None
@@ -109,7 +109,7 @@ def test_istio_config_requestauthentication(kiali_client):
     assert istio_config_requestauthentication.get('requestAuthentications') != None
 
 def test_istio_config_serviceentry(kiali_client):
-
+    
     istio_config_serviceentry = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}, params={'objects': 'serviceentry', 'validate': 'true'}).json()
 
     assert istio_config_serviceentry != None
@@ -117,7 +117,7 @@ def test_istio_config_serviceentry(kiali_client):
     assert istio_config_serviceentry.get('serviceEntries') != None
 
 def test_istio_config_sidecar(kiali_client):
-
+    
     istio_config_sidecar = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}, params={'objects': 'sidecar', 'validate': 'true'}).json()
 
     assert istio_config_sidecar != None
@@ -125,7 +125,7 @@ def test_istio_config_sidecar(kiali_client):
     assert istio_config_sidecar.get('sidecars') != None
 
 def test_istio_config_virtualservice(kiali_client):
-
+    
     istio_config_virtualservice = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}, params={'objects': 'virtualservice', 'validate': 'true'}).json()
 
     assert istio_config_virtualservice != None
