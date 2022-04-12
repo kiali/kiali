@@ -39,7 +39,7 @@ jobs:
         run: echo ${{ env.RELEASE_TYPE }} && make -f ./deploy/jenkins-ci/Makefile backend-build-release
 
       - name: Test backend
-        run: make -f ./deploy/jenkins-ci/Makefile backend-test
+        run: make -f .github/workflows/util/Makefile backend-test
 
       - name: Setup node
         uses: actions/setup-node@v2
@@ -51,7 +51,7 @@ jobs:
       - name: Build UI
         env:
           RELEASE_TYPE: ${{ steps.release_type.outputs.release_type}}        
-        run: make -f ./Makefile.jenkins -C ./frontend ui-build
+        run: make -f .github/workflows/util/Makefile -C ./frontend ui-build
 
       - name: Push Kiali image
         env: 
