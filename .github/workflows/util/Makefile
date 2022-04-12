@@ -217,17 +217,3 @@ backend-prepare-next-version: backend-prepare-next-patch-version backend-prepare
 
 release: backend-build-release backend-test backend-push-docker \
   backend-push-version-tag backend-prepare-next-version
-
-ui-build:
-	rm -fr build/*
-	# If NPM_CONFIG_REGISTRY is set, change yarn.lock to use that mirror.
-	if [ -n "$$NPM_CONFIG_REGISTRY" ]; then \
-	  sed -i -e "s#https://registry.yarnpkg.com/#$$NPM_CONFIG_REGISTRY/#g" yarn.lock; \
-	  sed -i -e "s#https://registry.npmjs.org/#$$NPM_CONFIG_REGISTRY/#g" yarn.lock; \
-	fi
-	CI=true yarn --frozen-lockfile --non-interactive
-	CI=true yarn build:dev
-	echo '$(UI_VERSION)' > build/version.txt
-
-ui-test:
-	CI=true yarn test --maxWorkers=4
