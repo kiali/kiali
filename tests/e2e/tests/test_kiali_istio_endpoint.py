@@ -135,7 +135,7 @@ def test_istio_config_virtualservice(kiali_client):
     assert istio_virtualservice != None
 
 def test_istio_config_workloadentry(kiali_client):
-
+    
     istio_config_workloadentry = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}, params={'objects': 'workloadentry', 'validate': 'true'}).json()
 
     assert istio_config_workloadentry != None
