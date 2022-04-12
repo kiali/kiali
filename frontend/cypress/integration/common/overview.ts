@@ -61,8 +61,8 @@ When(`user selects Health for {string}`, (type) => {
             break;
     }
     cy.get('button[aria-labelledby^="overview-type"]')
-        .click()
-        .get('button[id^="' + innerId + '"]')
+        .click();
+    cy.get('button[id^="' + innerId + '"]')
         .click();
 });
 
@@ -79,8 +79,8 @@ When(`user selects {string} time range`, (interval) => {
             break;
     }
     cy.get('button[aria-labelledby^="time_range_duration"]')
-        .click()
-        .get('button[id^="' + innerId + '"]')
+        .click();
+    cy.get('button[id^="' + innerId + '"]')
         .click();
 });
 
