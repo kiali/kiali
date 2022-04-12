@@ -60,6 +60,7 @@ class IstioActionsNamespaceDropdown extends React.Component<Props, State> {
     ];
     return (
       <Dropdown
+        data-test="actions-dropdown"
         id="actions"
         toggle={<DropdownToggle onToggle={this.onToggle}>Actions</DropdownToggle>}
         onSelect={this.onSelect}
