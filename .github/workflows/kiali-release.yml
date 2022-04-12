@@ -32,8 +32,8 @@ jobs:
     needs: [initialize]
     with:
       target_branch: ${{needs.initialize.outputs.target_branch}}
-  release-backend:
-    name: Release backend
+  release_kiali:
+    name: Release Kiali
     runs-on: ubuntu-20.04
     needs: [initialize, build_backend, build_frontend]
     env:
@@ -41,9 +41,19 @@ jobs:
     steps:    
       - name: Checkout code
         uses: actions/checkout@v2
+      
       - name: Install required software        
         run: sudo apt-get install -y node-semver
       
+      - name: Download go binary
+        uses: actions/download-artifact@v3
+        with:
+          name: kiali
+          path: ~/go/bin/
+
+      - name: Ensure kiali binary is executable
+        run: chmod +x ~/go/bin/kiali
+
       - name: Download frontend build
         uses: actions/download-artifact@v3
         with:
