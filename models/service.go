@@ -54,12 +54,6 @@ type ServiceList struct {
 	Validations IstioValidations  `json:"validations"`
 }
 
-type ServiceListJson struct {
-	ServiceList
-	// TODO merge with ServiceList and have IstioValidations instead
-	Validations ObjectValidations `json:"validations"`
-}
-
 type ServiceDefinitionList struct {
 	Namespace          Namespace        `json:"namespace"`
 	ServiceDefinitions []ServiceDetails `json:"serviceDefinitions"`
@@ -77,12 +71,6 @@ type ServiceDetails struct {
 	Health           ServiceHealth                         `json:"health"`
 	Validations      IstioValidations                      `json:"validations"`
 	NamespaceMTLS    MTLSStatus                            `json:"namespaceMTLS"`
-}
-
-type ServiceDetailsJson struct {
-	ServiceDetails
-	// TODO merge with ServiceDetails and have IstioValidations instead
-	Validations ObjectValidations `json:"validations"`
 }
 
 type Services []*Service

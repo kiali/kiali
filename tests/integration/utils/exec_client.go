@@ -7,7 +7,7 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-func OCApply(yamlFile, namespace string) bool {
+func ApplyFile(yamlFile, namespace string) bool {
 	cmd := exec.Command("oc", "apply", "-n="+namespace, "-f="+yamlFile)
 	stdout, err := cmd.Output()
 
@@ -19,7 +19,7 @@ func OCApply(yamlFile, namespace string) bool {
 	return strings.Contains(string(stdout), "created") || strings.Contains(string(stdout), "configure")
 }
 
-func OCDelete(yamlFile, namespace string) bool {
+func DeleteFile(yamlFile, namespace string) bool {
 	cmd := exec.Command("oc", "delete", "-n="+namespace, "-f="+yamlFile)
 	stdout, err := cmd.Output()
 

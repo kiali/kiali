@@ -1,13 +1,17 @@
 package tests
 
 import (
+	"path"
 	"strings"
 	"testing"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/wait"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/tests/integration/utils"
+	"github.com/kiali/kiali/tools/cmd"
 )
 
 func TestWorkloadsList(t *testing.T) {
@@ -61,17 +65,16 @@ func TestWorkloadDetails(t *testing.T) {
 
 func TestDiscoverWorkload(t *testing.T) {
 	assert := assert.New(t)
+	workloadsPath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-workloads.yaml")
 	extraWorkloads := map[string]string{
 		"details-v2": "Pod",
 		"reviews-v4": "ReplicaSet",
 	}
 
-	defer utils.OCDelete(utils.WORKLOADS, utils.BOOKINFO)
-	assert.True(utils.OCApply(utils.WORKLOADS, utils.BOOKINFO))
-	found := false
-	for i := 0; i < 60; i++ {
+	defer utils.DeleteFile(workloadsPath, utils.BOOKINFO)
+	assert.True(utils.ApplyFile(workloadsPath, utils.BOOKINFO))
+	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		wlList, err := utils.WorkloadsList(utils.BOOKINFO)
-
 		assert.Nil(err)
 		assert.NotNil(wlList)
 		foundWorkloads := 0
@@ -83,11 +86,9 @@ func TestDiscoverWorkload(t *testing.T) {
 			}
 		}
 		if len(extraWorkloads) == foundWorkloads {
-			found = true
-			break
-		} else {
-			time.Sleep(time.Second)
+			return true, nil
 		}
-	}
-	assert.True(found)
+		return false, nil
+	})
+	assert.Nil(pollErr)
 }

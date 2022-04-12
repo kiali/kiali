@@ -2,12 +2,16 @@ package tests
 
 import (
 	"fmt"
+	"path"
 	"testing"
 	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/tests/integration/utils"
+	"github.com/kiali/kiali/tools/cmd"
 )
 
 func TestServicesList(t *testing.T) {
@@ -59,28 +63,26 @@ func TestServiceDiscoverVS(t *testing.T) {
 	assert := assert.New(t)
 	serviceName := "reviews"
 	vsName := "reviews"
+	vsPath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-reviews-80-20.yaml")
 	service, err := utils.ServiceDetails(serviceName, utils.BOOKINFO)
 	assert.Nil(err)
 	assert.NotNil(service)
 	preVsCount := len(service.VirtualServices)
-	defer utils.OCDelete(utils.VS, utils.BOOKINFO)
-	assert.True(utils.OCApply(utils.VS, utils.BOOKINFO))
+	defer utils.DeleteFile(vsPath, utils.BOOKINFO)
+	assert.True(utils.ApplyFile(vsPath, utils.BOOKINFO))
 
-	found := false
-	for i := 0; i < 60; i++ {
+	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		service, err = utils.ServiceDetails(serviceName, utils.BOOKINFO)
 		assert.Nil(err)
 		assert.NotNil(service)
 		if len(service.VirtualServices) > preVsCount {
-			found = true
-			break
-		} else {
-			time.Sleep(time.Second)
+			return true, nil
 		}
-	}
-	assert.True(found)
+		return false, nil
+	})
+	assert.Nil(pollErr)
 	assert.NotEmpty(service.VirtualServices)
-	found = false
+	found := false
 	for _, vs := range service.VirtualServices {
 		if vs.Name == vsName {
 			found = true
@@ -112,28 +114,26 @@ func TestServiceDiscoverDR(t *testing.T) {
 	assert := assert.New(t)
 	serviceName := "reviews"
 	drName := "reviews"
+	drPath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-destination-rule-reviews.yaml")
 	service, err := utils.ServiceDetails(serviceName, utils.BOOKINFO)
 	assert.Nil(err)
 	assert.NotNil(service)
 	preDrCount := len(service.DestinationRules)
-	defer utils.OCDelete(utils.DR, utils.BOOKINFO)
-	assert.True(utils.OCApply(utils.DR, utils.BOOKINFO))
+	defer utils.DeleteFile(drPath, utils.BOOKINFO)
+	assert.True(utils.ApplyFile(drPath, utils.BOOKINFO))
 
-	found := false
-	for i := 0; i < 60; i++ {
+	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		service, err = utils.ServiceDetails(serviceName, utils.BOOKINFO)
 		assert.Nil(err)
 		assert.NotNil(service)
 		if len(service.DestinationRules) > preDrCount {
-			found = true
-			break
-		} else {
-			time.Sleep(time.Second)
+			return true, nil
 		}
-	}
-	assert.True(found)
+		return false, nil
+	})
+	assert.Nil(pollErr)
 	assert.NotEmpty(service.DestinationRules)
-	found = false
+	found := false
 	for _, dr := range service.DestinationRules {
 		if dr.Name == drName {
 			found = true

@@ -5,14 +5,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"strings"
 	"time"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/tools/cmd"
 	"github.com/kiali/kiali/util/httputil"
 )
 
@@ -27,13 +25,43 @@ type AuthStrategy struct {
 	Strategy string `json:"strategy"`
 }
 
+// ObjectValidations represents a set of IstioValidation grouped by Object type and name.
+type ObjectValidations map[string]map[string]*models.IstioValidation
+
+type ServiceListJson struct {
+	models.ServiceList
+	// TODO merge with ServiceList and have IstioValidations instead
+	Validations ObjectValidations `json:"validations"`
+}
+
+type ServiceDetailsJson struct {
+	models.ServiceDetails
+	// TODO merge with ServiceDetails and have IstioValidations instead
+	Validations ObjectValidations `json:"validations"`
+}
+
+type WorkloadListJson struct {
+	models.WorkloadList
+	// TODO merge with WorkloadList and have IstioValidations instead
+	Validations ObjectValidations `json:"validations"`
+}
+
+type WorkloadJson struct {
+	models.Workload
+	// TODO merge with Workload and have IstioValidations instead
+	Validations ObjectValidations `json:"validations"`
+}
+
+type IstioConfigListJson struct {
+	models.IstioConfigList
+	// TODO merge with IstioConfigList and have IstioValidations instead
+	IstioValidations ObjectValidations `json:"validations"`
+}
+
 var client = *NewKialiClient()
 
-var BOOKINFO = "bookinfo"
-var ASSETS = "tests/integration/assets"
-var VS = path.Join(cmd.KialiProjectRoot, ASSETS+"/bookinfo-reviews-80-20.yaml")
-var DR = path.Join(cmd.KialiProjectRoot, ASSETS+"/bookinfo-destination-rule-reviews.yaml")
-var WORKLOADS = path.Join(cmd.KialiProjectRoot, ASSETS+"/bookinfo-workloads.yaml")
+const BOOKINFO = "bookinfo"
+const ASSETS = "tests/integration/assets"
 
 func NewKialiClient() (c *KialiClient) {
 	c = &KialiClient{
@@ -148,10 +176,10 @@ func ApplicationDetails(name, namespace string) (*models.App, error) {
 	}
 }
 
-func ServicesList(namespace string) (*models.ServiceListJson, error) {
+func ServicesList(namespace string) (*ServiceListJson, error) {
 	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/services", client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		serviceList := new(models.ServiceListJson)
+		serviceList := new(ServiceListJson)
 		err = json.Unmarshal(body, &serviceList)
 		if err == nil {
 			return serviceList, nil
@@ -163,10 +191,10 @@ func ServicesList(namespace string) (*models.ServiceListJson, error) {
 	}
 }
 
-func ServiceDetails(name, namespace string) (*models.ServiceDetailsJson, error) {
+func ServiceDetails(name, namespace string) (*ServiceDetailsJson, error) {
 	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/services/"+name+"?validate=true&health=true", client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		service := new(models.ServiceDetailsJson)
+		service := new(ServiceDetailsJson)
 		err = json.Unmarshal(body, &service)
 		if err == nil {
 			return service, nil
@@ -178,10 +206,10 @@ func ServiceDetails(name, namespace string) (*models.ServiceDetailsJson, error) 
 	}
 }
 
-func WorkloadsList(namespace string) (*models.WorkloadListJson, error) {
+func WorkloadsList(namespace string) (*WorkloadListJson, error) {
 	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/workloads", client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		wlList := new(models.WorkloadListJson)
+		wlList := new(WorkloadListJson)
 		err = json.Unmarshal(body, &wlList)
 		if err == nil {
 			return wlList, nil
@@ -193,10 +221,10 @@ func WorkloadsList(namespace string) (*models.WorkloadListJson, error) {
 	}
 }
 
-func WorkloadDetails(name, namespace string) (*models.WorkloadJson, error) {
+func WorkloadDetails(name, namespace string) (*WorkloadJson, error) {
 	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/workloads/"+name+"?validate=true&health=true", client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		wl := new(models.WorkloadJson)
+		wl := new(WorkloadJson)
 		err = json.Unmarshal(body, &wl)
 		if err == nil {
 			return wl, nil
@@ -208,10 +236,10 @@ func WorkloadDetails(name, namespace string) (*models.WorkloadJson, error) {
 	}
 }
 
-func IstioConfigsList(namespace string) (*models.IstioConfigListJson, error) {
+func IstioConfigsList(namespace string) (*IstioConfigListJson, error) {
 	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/istio?validate=true", client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		configList := new(models.IstioConfigListJson)
+		configList := new(IstioConfigListJson)
 		err = json.Unmarshal(body, &configList)
 		if err == nil {
 			return configList, nil
