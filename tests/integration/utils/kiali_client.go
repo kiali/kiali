@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -310,5 +311,21 @@ func IstioConfigPermissions(namespace string) (*models.IstioConfigPermissions, e
 		}
 	} else {
 		return nil, err
+	}
+}
+
+func ObjectGraph(objectType, graphType, name, namespace string) (*cytoscape.Config, int, error) {
+	url := fmt.Sprintf("%s/api/namespaces/%s/%s/%s/graph?duration=60s&graphType=%s", client.kialiURL, namespace, objectType, name, graphType)
+	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		graph := new(cytoscape.Config)
+		err = json.Unmarshal(body, &graph)
+		if err == nil {
+			return graph, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
 	}
 }
