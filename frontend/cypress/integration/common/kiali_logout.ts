@@ -56,10 +56,15 @@ And('user clicks on admin', () => {
     }
 })
 
-Then('user logout successfully', () => {
+And('user logout successfully', () => {
+    cy.intercept('api/logout').as('logout')
     if (auth_strategy === 'openshift') {
-        cy.get('.pf-c-dropdown__menu-item').click()
+        cy.get('.pf-c-dropdown__menu-item').click() 
     }
+})
+
+Then('user verify the logout', () => {
+    cy.wait('@logout').its('response.statusCode').should('eq', 204)
 })
 
 

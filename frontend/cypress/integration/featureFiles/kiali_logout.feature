@@ -10,4 +10,5 @@ Feature: Kiali logout
     And user fill in username and password
     And user see console in URL
     And user clicks on admin
-    Then user logout successfully
+    And user logout successfully
+    Then user verify the logout
