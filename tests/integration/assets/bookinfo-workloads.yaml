@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: reviews-v4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reviews
+      version: v4
+  template:
+    metadata:
+      labels:
+        app: reviews
+        version: v4
+    spec:
+      containers:
+      - name: reviews
+        image: istio/examples-bookinfo-reviews-v1:1.8.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9080
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: reviews-v5
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: reviews
+        version: v5
+    spec:
+      containers:
+      - name: reviews
+        image: istio/examples-bookinfo-reviews-v2:1.8.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9080
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: reviews-v6
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reviews
+      version: v6
+  template:
+    metadata:
+      labels:
+        app: reviews
+        version: v6
+    spec:
+      containers:
+      - name: reviews
+        image: istio/examples-bookinfo-reviews-v3:1.8.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9080
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: details-v2
+  labels:
+    app: details
+    version: v2
+spec:
+  containers:
+  - name: details
+    image: istio/examples-bookinfo-details-v1:1.8.0
+    imagePullPolicy: IfNotPresent
+    ports:
+    - containerPort: 9080
