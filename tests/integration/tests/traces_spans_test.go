@@ -58,12 +58,14 @@ func assertTraces(traces *jaeger.JaegerResponse, statusCode int, err error, asse
 	} else if statusCode == 200 {
 		assert.Nil(err)
 		assert.NotNil(traces)
-		assert.NotEmpty(traces.Data)
-		assert.NotNil(traces.Data[0].TraceID)
-		assert.NotEmpty(traces.Data[0].Spans)
-		for _, span := range traces.Data[0].Spans {
-			assert.NotNil(span.TraceID)
-			assert.Equal(span.TraceID, traces.Data[0].TraceID)
+		assert.NotNil(traces.Data)
+		if len(traces.Data) > 0 {
+			assert.NotNil(traces.Data[0].TraceID)
+			assert.NotEmpty(traces.Data[0].Spans)
+			for _, span := range traces.Data[0].Spans {
+				assert.NotNil(span.TraceID)
+				assert.Equal(span.TraceID, traces.Data[0].TraceID)
+			}
 		}
 	} else {
 		assert.True(false)
@@ -76,11 +78,13 @@ func assertSpans(spans []jaeger.JaegerSpan, statusCode int, err error, assert *a
 		assert.True(true)
 	} else if statusCode == 200 {
 		assert.Nil(err)
-		assert.NotEmpty(spans)
-		assert.NotNil(spans[0].TraceID)
-		assert.NotEmpty(spans[0].References)
-		assert.NotNil(spans[0].References[0].TraceID)
-		assert.Equal(spans[0].TraceID, spans[0].References[0].TraceID)
+		assert.NotNil(spans)
+		if len(spans) > 0 {
+			assert.NotNil(spans[0].TraceID)
+			assert.NotEmpty(spans[0].References)
+			assert.NotNil(spans[0].References[0].TraceID)
+			assert.Equal(spans[0].TraceID, spans[0].References[0].TraceID)
+		}
 	} else {
 		assert.True(false)
 	}
