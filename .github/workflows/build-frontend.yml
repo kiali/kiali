@@ -32,7 +32,7 @@ jobs:
           yarn test
 
       - name: Create version file
-        run: jq -r '.version' package.json > frontend/build/version.txt
+        run: jq -r '.version' frontend/package.json > frontend/build/version.txt
 
       - name: Upload frontend build
         uses: actions/upload-artifact@v3
