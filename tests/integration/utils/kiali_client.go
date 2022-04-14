@@ -314,6 +314,22 @@ func IstioConfigPermissions(namespace string) (*models.IstioConfigPermissions, e
 	}
 }
 
+func Graph(graphType, namespace string) (*cytoscape.Config, int, error) {
+	url := fmt.Sprintf("%s/api/namespaces/graph?duration=60s&graphType=%s&namespaces=%s", client.kialiURL, graphType, namespace)
+	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		graph := new(cytoscape.Config)
+		err = json.Unmarshal(body, &graph)
+		if err == nil {
+			return graph, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
+	}
+}
+
 func ObjectGraph(objectType, graphType, name, namespace string) (*cytoscape.Config, int, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/%s/%s/graph?duration=60s&graphType=%s", client.kialiURL, namespace, objectType, name, graphType)
 	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)

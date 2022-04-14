@@ -14,7 +14,7 @@ func TestAppGraph(t *testing.T) {
 	name := "details"
 	graphType := "app"
 	graph, statusCode, err := utils.ObjectGraph("applications", graphType, name, utils.BOOKINFO)
-	assertGraphConfig(graph, graphType, statusCode, err, assert)
+	assertGraphConfig(graph, graphType, utils.BOOKINFO, statusCode, err, assert)
 }
 
 func TestVersionedAppGraph(t *testing.T) {
@@ -22,7 +22,7 @@ func TestVersionedAppGraph(t *testing.T) {
 	name := "details"
 	graphType := "versionedApp"
 	graph, statusCode, err := utils.ObjectGraph("applications", graphType, name, utils.BOOKINFO)
-	assertGraphConfig(graph, graphType, statusCode, err, assert)
+	assertGraphConfig(graph, graphType, utils.BOOKINFO, statusCode, err, assert)
 }
 
 func TestAppGraphEmpty(t *testing.T) {
@@ -38,7 +38,7 @@ func TestServiceGraph(t *testing.T) {
 	name := "details"
 	graphType := "versionedApp"
 	graph, statusCode, err := utils.ObjectGraph("services", graphType, name, utils.BOOKINFO)
-	assertGraphConfig(graph, graphType, statusCode, err, assert)
+	assertGraphConfig(graph, graphType, utils.BOOKINFO, statusCode, err, assert)
 }
 
 func TestServiceGraphEmpty(t *testing.T) {
@@ -54,7 +54,7 @@ func TestWorkloadGraph(t *testing.T) {
 	name := "reviews-v2"
 	graphType := "workload"
 	graph, statusCode, err := utils.ObjectGraph("workloads", graphType, name, utils.BOOKINFO)
-	assertGraphConfig(graph, graphType, statusCode, err, assert)
+	assertGraphConfig(graph, graphType, utils.BOOKINFO, statusCode, err, assert)
 }
 
 func TestWorkloadGraphEmpty(t *testing.T) {
@@ -65,13 +65,16 @@ func TestWorkloadGraphEmpty(t *testing.T) {
 	assertEmptyGraphConfig(graph, graphType, statusCode, err, assert)
 }
 
-func assertGraphConfig(config *cytoscape.Config, graphType string, statusCode int, err error, assert *assert.Assertions) {
+func assertGraphConfig(config *cytoscape.Config, graphType, namespace string, statusCode int, err error, assert *assert.Assertions) {
 	assert.Equal(statusCode, 200)
 	assert.Nil(err)
 	assert.Equal(config.GraphType, graphType)
 	assert.NotNil(config.Elements)
-	assert.NotEmpty(config.Elements.Nodes)
-	assert.NotEmpty(config.Elements.Edges)
+	graph, _, _ := utils.Graph(graphType, namespace)
+	if len(graph.Elements.Nodes) > 0 && len(graph.Elements.Edges) > 0 {
+		assert.NotEmpty(config.Elements.Nodes)
+		assert.NotEmpty(config.Elements.Edges)
+	}
 }
 
 func assertEmptyGraphConfig(config *cytoscape.Config, graphType string, statusCode int, err error, assert *assert.Assertions) {
