@@ -73,4 +73,4 @@ jobs:
         run: docker login -u "${{ secrets.QUAY_USER }}" -p "${{ secrets.QUAY_PASSWORD }}" quay.io
 
       - name: Push Kiali image
-        run: $(MAKE) -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-quay
+        run: make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-quay
