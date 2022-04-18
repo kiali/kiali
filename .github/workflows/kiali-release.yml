@@ -66,6 +66,10 @@ jobs:
           name: build
           path: frontend/build       
 
+      - name: Set version tag
+        id: version_info
+        run: echo "::set-output name=version_tag::$(shell sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)"
+    
       - name: Build backend for multi-arch
         run: make -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch
 
@@ -73,4 +77,6 @@ jobs:
         run: docker login -u "${{ secrets.QUAY_USER }}" -p "${{ secrets.QUAY_PASSWORD }}" quay.io
 
       - name: Push Kiali image
+        env:
+          CONTAINER_VERSION: ${{ steps.version_info.outputs.version_tag }}
         run: make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-quay
