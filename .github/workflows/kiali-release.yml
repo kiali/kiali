@@ -68,7 +68,7 @@ jobs:
 
       - name: Set version tag
         id: version_info
-        run: echo "::set-output name=version_tag::$(shell sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)"
+        run: echo "::set-output name=version_tag::$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)"
     
       - name: Build backend for multi-arch
         run: make -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch
