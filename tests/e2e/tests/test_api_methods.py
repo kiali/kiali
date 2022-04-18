@@ -277,20 +277,14 @@ def test_mesh_tls(kiali_client):
     common_utils.get_response(kiali_client, method_name='meshTls')
 
 def test_namespace_validations(kiali_client):
-    if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
-        pytest.skip()
 
     common_utils.get_response(kiali_client, method_name='namespaceValidations', path={'namespace': 'bookinfo'})
 
 def test_namespace_spans_list(kiali_client):
-    if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
-        pytest.skip()
 
     common_utils.get_response(kiali_client, method_name='appSpans', path={'namespace': 'bookinfo', 'app': 'details'}, params={'startMicros': calendar.timegm(gmt())})
 
 def test_namespace_traces_list(kiali_client):
-    if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
-        pytest.skip()
 
     common_utils.get_response(kiali_client, method_name='appTraces', path={'namespace': 'bookinfo', 'app': 'details'}, params={'startMicros': calendar.timegm(gmt()) })
                                                                   
