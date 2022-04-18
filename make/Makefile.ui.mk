@@ -3,14 +3,16 @@
 #
 
 ## yarn-start: Run the UI in a local process that is separate from the backend. Set YARN_START_URL to update package.json.
+## If the YARN_START_URL env var is passed, the 'proxy' field will either be created or replaced with the YARN_START_URL.
+## If the YARN_START_URL is empty but the 'proxy' field is set, the existing value will be used. Otherwise this cmd fails. 
 yarn-start:
-	@if ! (cat ${ROOTDIR}/frontend/package.json | grep -q "\"proxy\":"); then \
-	  if [ -z "${YARN_START_URL}" ]; then \
-	    echo "${ROOTDIR}/frontend/package.json does not have a 'proxy' setting and you did not set YARN_START_URL. Aborting."; \
-	    exit 1; \
-	  else \
-	    sed -i "2 i \ \ \"proxy\": \"${YARN_START_URL}\"," ${ROOTDIR}/frontend/package.json; \
-	  fi; \
+	@if [ -n "${YARN_START_URL}" ]; then \
+		sed -i -e "2 i \ \ \"proxy\": \"${YARN_START_URL}\"," -e "/\"proxy\":/d" ${ROOTDIR}/frontend/package.json; \
+	else \
+		if ! (cat ${ROOTDIR}/frontend/package.json | grep -q "\"proxy\":"); then \
+			echo "${ROOTDIR}/frontend/package.json does not have a 'proxy' setting and you did not set YARN_START_URL. Aborting."; \
+			exit 1; \
+		fi; \
 	fi
 	@echo "'yarn start' will use this proxy setting: $$(grep proxy ${ROOTDIR}/frontend/package.json)"
 	@cd ${ROOTDIR}/frontend && yarn start
