@@ -30,7 +30,7 @@ jobs:
           cd frontend
           yarn pretty-quick --check --verbose --branch ${{ inputs.target_branch }}
           yarn test
-          
+
       - name: Upload frontend build
         uses: actions/upload-artifact@v3
         with:
