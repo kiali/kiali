@@ -66,8 +66,11 @@ jobs:
           name: build
           path: frontend/build       
 
+      - name: Build backend for multi-arch
+        run: make -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch
+
+      - name: Login to Quay
+        run: docker login -u "${{ secrets.QUAY_USER }}" -p "${{ secrets.QUAY_PASSWORD }}" quay.io
+
       - name: Push Kiali image
-        env: 
-          QUAY_USER: ${{ secrets.QUAY_USER }}
-          QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
-        run: make -f ./deploy/jenkins-ci/Makefile backend-push-docker      
+        run: $(MAKE) -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-quay

@@ -30,10 +30,7 @@ jobs:
           cd frontend
           yarn pretty-quick --check --verbose --branch ${{ inputs.target_branch }}
           yarn test
-
-      - name: Create version file
-        run: jq -r '.version' frontend/package.json > frontend/build/version.txt
-
+          
       - name: Upload frontend build
         uses: actions/upload-artifact@v3
         with:
