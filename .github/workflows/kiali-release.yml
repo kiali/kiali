@@ -78,7 +78,7 @@ jobs:
           name: build
           path: frontend/build       
 
-      - name: Build backend for release       
+      - name: Build backend for release (Multi-arch)      
         run: make -f ./github/workflows/util/Makefile backend-build-release
 
       - name: Push Kiali to Quay
