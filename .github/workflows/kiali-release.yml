@@ -87,6 +87,9 @@ jobs:
           QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
         run: make -f ./.github/workflows/util/Makefile backend-push-docker     
 
+      - name: Configure Git
+        run: git config user.email 'lea.beretta@gmail.com' && git config user.name 'leandroberetta'
+
       - name: Create release cut
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
