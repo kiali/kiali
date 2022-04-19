@@ -52,8 +52,8 @@ else
   BACKEND_VERSION_BRANCH ?= $(shell semver bump release $(BACKEND_VERSION) | sed 's/\.[[:digit:]]\+$$//')
 endif
 
-BACKEND_GITHUB_URI ?= git@github.com:kiali/kiali.git
-BACKEND_PULL_URI ?= https://api.github.com/repos/kiali/kiali/pulls
+BACKEND_GITHUB_URI ?= git@github.com:leandroberetta/kiali.git
+BACKEND_PULL_URI ?= https://api.github.com/repos/leandroberetta/kiali/pulls
 BACKEND_RELEASE_URI = $(subst pulls,releases,$(BACKEND_PULL_URI))
 BACKEND_MAIN_BRANCH ?= master
 

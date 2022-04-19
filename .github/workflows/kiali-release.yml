@@ -86,3 +86,8 @@ jobs:
           QUAY_USER: ${{ secrets.QUAY_USER }}
           QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
         run: make -f ./.github/workflows/util/Makefile backend-push-docker     
+
+      - name: Create release cut
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: make -f ./.github/workflows/util/Makefile backend-push-version-tag backend-prepare-next-version
