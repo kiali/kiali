@@ -235,7 +235,7 @@ func assertGraphInvalid(params map[string]string, assert *assert.Assertions) {
 func assertGraph(params map[string]string, assert *assert.Assertions) {
 	params["namespaces"] = utils.BOOKINFO
 	graph, statusCode, err := utils.Graph(params)
-	assert.Equal(statusCode, 200)
+	assert.Equal(200, statusCode)
 	assert.Nil(err)
 
 	for key, value := range params {

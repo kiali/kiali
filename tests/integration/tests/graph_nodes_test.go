@@ -66,7 +66,7 @@ func TestWorkloadGraphEmpty(t *testing.T) {
 }
 
 func assertGraphConfig(config *cytoscape.Config, graphType, namespace string, statusCode int, err error, assert *assert.Assertions) {
-	assert.Equal(statusCode, 200)
+	assert.Equal(200, statusCode)
 	assert.Nil(err)
 	assert.Equal(config.GraphType, graphType)
 	assert.NotNil(config.Elements)
@@ -79,7 +79,7 @@ func assertGraphConfig(config *cytoscape.Config, graphType, namespace string, st
 }
 
 func assertEmptyGraphConfig(config *cytoscape.Config, graphType string, statusCode int, err error, assert *assert.Assertions) {
-	assert.Equal(statusCode, 200)
+	assert.Equal(200, statusCode)
 	assert.Nil(err)
 	assert.Equal(config.GraphType, graphType)
 	assert.NotNil(config.Elements)
