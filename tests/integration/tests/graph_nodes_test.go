@@ -71,6 +71,7 @@ func assertGraphConfig(config *cytoscape.Config, graphType, namespace string, st
 	assert.Equal(config.GraphType, graphType)
 	assert.NotNil(config.Elements)
 	graph, _, _ := utils.Graph(map[string]string{"graphType": graphType, "namespaces": namespace})
+	// TODO better way to check if there are any graph nodes at all to be able to verify requested ones
 	if len(graph.Elements.Nodes) > 0 && len(graph.Elements.Edges) > 0 {
 		assert.NotEmpty(config.Elements.Nodes)
 		assert.NotEmpty(config.Elements.Edges)

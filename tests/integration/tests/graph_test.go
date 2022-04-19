@@ -246,9 +246,12 @@ func assertGraph(params map[string]string, assert *assert.Assertions) {
 			assert.Equal(value, graph.GraphType)
 		}
 	}
-
-	assert.NotEmpty(graph.Elements.Nodes)
-	assert.NotEmpty(graph.Elements.Edges)
+	graphAll, _, _ := utils.Graph(map[string]string{"graphType": params["graphType"], "namespaces": utils.BOOKINFO})
+	// TODO better way to check if there are any graph nodes at all to be able to verify requested ones
+	if len(graphAll.Elements.Nodes) > 0 && len(graphAll.Elements.Edges) > 0 {
+		assert.NotEmpty(graph.Elements.Nodes)
+		assert.NotEmpty(graph.Elements.Edges)
+	}
 }
 
 func assertBoxBy(params map[string]string, assert *assert.Assertions) {
