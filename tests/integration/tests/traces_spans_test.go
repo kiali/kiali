@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -52,10 +53,7 @@ func TestWorkloadSpans(t *testing.T) {
 }
 
 func assertTraces(traces *jaeger.JaegerResponse, statusCode int, err error, assert *assert.Assertions) {
-	if statusCode == 404 || statusCode == 500 {
-		// skip the tests as Jaeger is not configured
-		assert.True(true)
-	} else if statusCode == 200 {
+	if statusCode == 200 {
 		assert.Nil(err)
 		assert.NotNil(traces)
 		assert.NotNil(traces.Data)
@@ -68,15 +66,12 @@ func assertTraces(traces *jaeger.JaegerResponse, statusCode int, err error, asse
 			}
 		}
 	} else {
-		assert.True(false)
+		assert.Fail(fmt.Sprintf("Status code should be '200' but was: %d and error: %s", statusCode, err.Error()))
 	}
 }
 
 func assertSpans(spans []jaeger.JaegerSpan, statusCode int, err error, assert *assert.Assertions) {
-	if statusCode == 500 {
-		// skip the tests as Jaeger is not configured
-		assert.True(true)
-	} else if statusCode == 200 {
+	if statusCode == 200 {
 		assert.Nil(err)
 		assert.NotNil(spans)
 		if len(spans) > 0 {
@@ -86,6 +81,6 @@ func assertSpans(spans []jaeger.JaegerSpan, statusCode int, err error, assert *a
 			assert.Equal(spans[0].TraceID, spans[0].References[0].TraceID)
 		}
 	} else {
-		assert.True(false)
+		assert.Fail(fmt.Sprintf("Status code should be '200' but was: %d and error: %s", statusCode, err.Error()))
 	}
 }
