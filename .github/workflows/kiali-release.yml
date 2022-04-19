@@ -21,10 +21,7 @@ jobs:
         run: echo "::set-output name=target_branch::${{ github.base_ref || github.ref_name }}"        
       - name: Determine release type
         id: release_type
-        run: echo "::set-output name=release_type::$(./.github/workflows/util/release_type.sh)"
-      - name: Determine backend version
-        id: backend_version
-        run: echo "::set-output name=backend_version::$(sed -rn 's/^VERSION \?= v(.*)/\1/p' Makefile)"
+        run: echo "::set-output name=release_type::$(./.github/workflows/util/release_type.sh)"      
   build_backend:
     name: Build backend
     uses: ./.github/workflows/build-backend.yml
@@ -35,6 +32,18 @@ jobs:
     needs: [initialize]
     with:
       target_branch: ${{needs.initialize.outputs.target_branch}}
+  integration_tests_backend:
+    name: Run backend integration tests
+    uses: ./.github/workflows/integration-tests-backend.yml
+    needs: [initialize, build_backend, build_frontend]
+    with:
+      target_branch: ${{needs.initialize.outputs.target-branch}}
+  integration_tests_frontend:
+    name: Run frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend.yml
+    needs: [initialize, build_backend, build_frontend]
+    with:
+      target_branch: ${{needs.initialize.outputs.target-branch}}
   release_kiali:
     name: Release Kiali
     runs-on: ubuntu-20.04
@@ -69,23 +78,11 @@ jobs:
           name: build
           path: frontend/build       
 
-      - name: Set version tag
-        id: version_info
-        run: echo "::set-output name=version_tag::$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)"
-    
-      - name: Build backend for multi-arch
-        run: make -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch
+      - name: Build backend for release       
+        run: make -f ./github/workflows/util/Makefile backend-build-release
 
-      - name: Login to Quay
-        run: docker login -u "${{ secrets.QUAY_USER }}" -p "${{ secrets.QUAY_PASSWORD }}" quay.io
-
-      - name: Push Kiali image
+      - name: Push Kiali to Quay
         env:
-          CONTAINER_VERSION: ${{ steps.version_info.outputs.version_tag }}
-        run: make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-quay
-      
-      - name: Push tag
-        env:
-          BACKEND_VERSION: ${{ needs.initialize.outputs.backend_version }}
-          VERSION_TAG: ${{ steps.version_info.outputs.version_tag }}
-        run: git add Makefile && git commit -m "Release $(BACKEND_VERSION)" && git push git@github.com:leandroberetta/kiali.git $(git rev-parse HEAD):refs/tags/$(VERSION_TAG)
+          QUAY_USER: ${{ secrets.QUAY_USER }}
+          QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+        run: make -f ./github/workflows/util/Makefile backend-push-docker     
