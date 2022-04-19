@@ -219,9 +219,6 @@ def test_service_validations_endpoint(kiali_client):
 
 def test_service_spans(kiali_client):
 
-    if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
-        pytest.skip()
-
     bookinfo_namespace = conftest.get_bookinfo_namespace()
     services = get_service_list(kiali_client, bookinfo_namespace)
     assert services != None
@@ -238,9 +235,6 @@ def test_service_spans(kiali_client):
 
 def test_service_traces_detail(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
-
-    if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
-        pytest.skip()
 
     services = get_service_list(kiali_client, bookinfo_namespace)
     assert services != None
