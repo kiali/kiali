@@ -10,6 +10,7 @@ jobs:
     outputs:
       target_branch: ${{ steps.target_branch.outputs.target_branch }}
       release_type: ${{ steps.release_type.outputs.release_type }}
+      backend_version: ${{ steps.backend_version.outputs.backend_version}}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -21,7 +22,9 @@ jobs:
       - name: Determine release type
         id: release_type
         run: echo "::set-output name=release_type::$(./.github/workflows/util/release_type.sh)"
-
+      - name: Determine backend version
+        id: backend_version
+        run: echo "::set-output name=backend_version::$(sed -rn 's/^VERSION \?= v(.*)/\1/p' Makefile)"
   build_backend:
     name: Build backend
     uses: ./.github/workflows/build-backend.yml
@@ -80,3 +83,9 @@ jobs:
         env:
           CONTAINER_VERSION: ${{ steps.version_info.outputs.version_tag }}
         run: make -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-quay
+      
+      - name: Push tag
+        env:
+          BACKEND_VERSION: ${{ needs.initialize.outputs.backend_version }}
+          VERSION_TAG: ${{ steps.version_info.outputs.version_tag }}
+        run: git add Makefile && git commit -m "Release $(BACKEND_VERSION)" && git push git@github.com:leandroberetta/kiali.git $$(git rev-parse HEAD):refs/tags/$(VERSION_TAG)
