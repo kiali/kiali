@@ -88,4 +88,4 @@ jobs:
         env:
           BACKEND_VERSION: ${{ needs.initialize.outputs.backend_version }}
           VERSION_TAG: ${{ steps.version_info.outputs.version_tag }}
-        run: git add Makefile && git commit -m "Release $(BACKEND_VERSION)" && git push git@github.com:leandroberetta/kiali.git $$(git rev-parse HEAD):refs/tags/$(VERSION_TAG)
+        run: git add Makefile && git commit -m "Release $(BACKEND_VERSION)" && git push git@github.com:leandroberetta/kiali.git $(git rev-parse HEAD):refs/tags/$(VERSION_TAG)
