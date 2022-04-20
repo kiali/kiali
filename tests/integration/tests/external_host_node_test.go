@@ -9,11 +9,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils"
 	"github.com/kiali/kiali/tools/cmd"
 )
 
-func _TestExternalHostNode(t *testing.T) {
+func TestExternalHostNode(t *testing.T) {
 	params := map[string]string{"graphType": "versionedApp", "duration": "60s", "injectServiceNodes": "true"}
 	name := "external-service-foo-se"
 
@@ -37,7 +38,9 @@ func NodeMatch(params map[string]string, nodeName string, assert *assert.Asserti
 	graph, statusCode, err := utils.Graph(params)
 	assert.Equal(200, statusCode)
 	assert.Nil(err)
+	log.Debug(len(graph.Elements.Nodes))
 	for _, node := range graph.Elements.Nodes {
+		log.Debug(node.Data)
 		name := node.Data.Service
 		if name == nodeName {
 			return true
