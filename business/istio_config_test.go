@@ -8,8 +8,8 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -193,19 +193,19 @@ func TestGetIstioConfigDetails(t *testing.T) {
 	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), "test", "virtualservices", "reviews")
 	assert.Equal("reviews", istioConfigDetails.VirtualService.Name)
 	assert.Equal("VirtualService", istioConfigDetails.VirtualService.Kind)
-	assert.Equal("networking.istio.io/v1alpha3", istioConfigDetails.VirtualService.APIVersion)
+	assert.Equal("networking.istio.io/v1beta1", istioConfigDetails.VirtualService.APIVersion)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), "test", "destinationrules", "reviews-dr")
 	assert.Equal("reviews-dr", istioConfigDetails.DestinationRule.Name)
 	assert.Equal("DestinationRule", istioConfigDetails.DestinationRule.Kind)
-	assert.Equal("networking.istio.io/v1alpha3", istioConfigDetails.DestinationRule.APIVersion)
+	assert.Equal("networking.istio.io/v1beta1", istioConfigDetails.DestinationRule.APIVersion)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), "test", "serviceentries", "googleapis")
 	assert.Equal("googleapis", istioConfigDetails.ServiceEntry.Name)
 	assert.Equal("ServiceEntry", istioConfigDetails.ServiceEntry.Kind)
-	assert.Equal("networking.istio.io/v1alpha3", istioConfigDetails.ServiceEntry.APIVersion)
+	assert.Equal("networking.istio.io/v1beta1", istioConfigDetails.ServiceEntry.APIVersion)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), "test", "rules-bad", "stdio")
@@ -234,13 +234,13 @@ func mockGetIstioConfigList() IstioConfigService {
 	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 }
 
-func fakeGetGateways() []networking_v1alpha3.Gateway {
+func fakeGetGateways() []networking_v1beta1.Gateway {
 	gw1 := data.CreateEmptyGateway("gw-1", "test", map[string]string{
 		"app": "my-gateway1-controller",
 	})
-	gw1.Spec.Servers = []*api_networking_v1alpha3.Server{
+	gw1.Spec.Servers = []*api_networking_v1beta1.Server{
 		{
-			Port: &api_networking_v1alpha3.Port{
+			Port: &api_networking_v1beta1.Port{
 				Number:   80,
 				Name:     "http",
 				Protocol: "HTTP",
@@ -249,7 +249,7 @@ func fakeGetGateways() []networking_v1alpha3.Gateway {
 				"uk.bookinfo.com",
 				"eu.bookinfo.com",
 			},
-			Tls: &api_networking_v1alpha3.ServerTLSSettings{
+			Tls: &api_networking_v1beta1.ServerTLSSettings{
 				HttpsRedirect: true,
 			},
 		},
@@ -258,9 +258,9 @@ func fakeGetGateways() []networking_v1alpha3.Gateway {
 	gw2 := data.CreateEmptyGateway("gw-2", "test", map[string]string{
 		"app": "my-gateway2-controller",
 	})
-	gw2.Spec.Servers = []*api_networking_v1alpha3.Server{
+	gw2.Spec.Servers = []*api_networking_v1beta1.Server{
 		{
-			Port: &api_networking_v1alpha3.Port{
+			Port: &api_networking_v1beta1.Port{
 				Number:   80,
 				Name:     "http",
 				Protocol: "HTTP",
@@ -269,16 +269,16 @@ func fakeGetGateways() []networking_v1alpha3.Gateway {
 				"uk.bookinfo.com",
 				"eu.bookinfo.com",
 			},
-			Tls: &api_networking_v1alpha3.ServerTLSSettings{
+			Tls: &api_networking_v1beta1.ServerTLSSettings{
 				HttpsRedirect: true,
 			},
 		},
 	}
 
-	return []networking_v1alpha3.Gateway{*gw1, *gw2}
+	return []networking_v1beta1.Gateway{*gw1, *gw2}
 }
 
-func fakeGetVirtualServices() []networking_v1alpha3.VirtualService {
+func fakeGetVirtualServices() []networking_v1beta1.VirtualService {
 	virtualService1 := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v2", 50),
 		data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v3", 50),
 			data.CreateEmptyVirtualService("reviews", "test", []string{"reviews"}),
@@ -291,21 +291,21 @@ func fakeGetVirtualServices() []networking_v1alpha3.VirtualService {
 		),
 	)
 
-	return []networking_v1alpha3.VirtualService{*virtualService1, *virtualService2}
+	return []networking_v1beta1.VirtualService{*virtualService1, *virtualService2}
 }
 
-func fakeGetDestinationRules() []networking_v1alpha3.DestinationRule {
+func fakeGetDestinationRules() []networking_v1beta1.DestinationRule {
 	destinationRule1 := data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"),
 		data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"),
 			data.CreateEmptyDestinationRule("test", "reviews-dr", "reviews")))
 
-	destinationRule1.Spec.TrafficPolicy = &api_networking_v1alpha3.TrafficPolicy{
-		ConnectionPool: &api_networking_v1alpha3.ConnectionPoolSettings{
-			Http: &api_networking_v1alpha3.ConnectionPoolSettings_HTTPSettings{
+	destinationRule1.Spec.TrafficPolicy = &api_networking_v1beta1.TrafficPolicy{
+		ConnectionPool: &api_networking_v1beta1.ConnectionPoolSettings{
+			Http: &api_networking_v1beta1.ConnectionPoolSettings_HTTPSettings{
 				MaxRequestsPerConnection: 100,
 			},
 		},
-		OutlierDetection: &api_networking_v1alpha3.OutlierDetection{
+		OutlierDetection: &api_networking_v1beta1.OutlierDetection{
 			Consecutive_5XxErrors: &types.UInt32Value{
 				Value: 50,
 			},
@@ -316,37 +316,37 @@ func fakeGetDestinationRules() []networking_v1alpha3.DestinationRule {
 		data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"),
 			data.CreateEmptyDestinationRule("test", "details-dr", "details")))
 
-	destinationRule2.Spec.TrafficPolicy = &api_networking_v1alpha3.TrafficPolicy{
-		ConnectionPool: &api_networking_v1alpha3.ConnectionPoolSettings{
-			Http: &api_networking_v1alpha3.ConnectionPoolSettings_HTTPSettings{
+	destinationRule2.Spec.TrafficPolicy = &api_networking_v1beta1.TrafficPolicy{
+		ConnectionPool: &api_networking_v1beta1.ConnectionPoolSettings{
+			Http: &api_networking_v1beta1.ConnectionPoolSettings_HTTPSettings{
 				MaxRequestsPerConnection: 100,
 			},
 		},
-		OutlierDetection: &api_networking_v1alpha3.OutlierDetection{
+		OutlierDetection: &api_networking_v1beta1.OutlierDetection{
 			Consecutive_5XxErrors: &types.UInt32Value{
 				Value: 50,
 			},
 		},
 	}
 
-	return []networking_v1alpha3.DestinationRule{*destinationRule1, *destinationRule2}
+	return []networking_v1beta1.DestinationRule{*destinationRule1, *destinationRule2}
 }
 
-func fakeGetServiceEntries() []networking_v1alpha3.ServiceEntry {
-	serviceEntry := networking_v1alpha3.ServiceEntry{}
+func fakeGetServiceEntries() []networking_v1beta1.ServiceEntry {
+	serviceEntry := networking_v1beta1.ServiceEntry{}
 	serviceEntry.Name = "googleapis"
 	serviceEntry.Namespace = "test"
 	serviceEntry.Spec.Hosts = []string{
 		"*.googleapis.com",
 	}
-	serviceEntry.Spec.Ports = []*api_networking_v1alpha3.Port{
+	serviceEntry.Spec.Ports = []*api_networking_v1beta1.Port{
 		{
 			Number:   443,
 			Name:     "https",
 			Protocol: "HTTP",
 		},
 	}
-	return []networking_v1alpha3.ServiceEntry{serviceEntry}
+	return []networking_v1beta1.ServiceEntry{serviceEntry}
 }
 
 func fakeGetSelfSubjectAccessReview() []*auth_v1.SelfSubjectAccessReview {
@@ -426,13 +426,13 @@ func TestHasCircuitBreaker(t *testing.T) {
 	config.Set(conf)
 
 	dRule1 := data.CreateEmptyDestinationRule("test", "reviews", "reviews")
-	dRule1.Spec.TrafficPolicy = &api_networking_v1alpha3.TrafficPolicy{
-		ConnectionPool: &api_networking_v1alpha3.ConnectionPoolSettings{
-			Http: &api_networking_v1alpha3.ConnectionPoolSettings_HTTPSettings{
+	dRule1.Spec.TrafficPolicy = &api_networking_v1beta1.TrafficPolicy{
+		ConnectionPool: &api_networking_v1beta1.ConnectionPoolSettings{
+			Http: &api_networking_v1beta1.ConnectionPoolSettings_HTTPSettings{
 				MaxRequestsPerConnection: 100,
 			},
 		},
-		OutlierDetection: &api_networking_v1alpha3.OutlierDetection{
+		OutlierDetection: &api_networking_v1beta1.OutlierDetection{
 			Consecutive_5XxErrors: &types.UInt32Value{
 				Value: 50,
 			},
@@ -452,13 +452,13 @@ func TestHasCircuitBreaker(t *testing.T) {
 	dRule2 := data.CreateEmptyDestinationRule("test", "reviews", "reviews")
 	dRule2 = data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), dRule2)
 	dRule2 = data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"), dRule2)
-	dRule2.Spec.Subsets[1].TrafficPolicy = &api_networking_v1alpha3.TrafficPolicy{
-		ConnectionPool: &api_networking_v1alpha3.ConnectionPoolSettings{
-			Http: &api_networking_v1alpha3.ConnectionPoolSettings_HTTPSettings{
+	dRule2.Spec.Subsets[1].TrafficPolicy = &api_networking_v1beta1.TrafficPolicy{
+		ConnectionPool: &api_networking_v1beta1.ConnectionPoolSettings{
+			Http: &api_networking_v1beta1.ConnectionPoolSettings_HTTPSettings{
 				MaxRequestsPerConnection: 100,
 			},
 		},
-		OutlierDetection: &api_networking_v1alpha3.OutlierDetection{
+		OutlierDetection: &api_networking_v1beta1.OutlierDetection{
 			Consecutive_5XxErrors: &types.UInt32Value{
 				Value: 50,
 			},

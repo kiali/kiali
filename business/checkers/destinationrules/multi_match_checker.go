@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -13,7 +13,7 @@ import (
 const DestinationRulesCheckerType = "destinationrule"
 
 type MultiMatchChecker struct {
-	DestinationRules []networking_v1alpha3.DestinationRule
+	DestinationRules []networking_v1beta1.DestinationRule
 	ServiceEntries   map[string][]string
 	Namespaces       models.Namespaces
 }
@@ -78,11 +78,11 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func isNonLocalmTLSForServiceEnabled(dr networking_v1alpha3.DestinationRule, service string) bool {
+func isNonLocalmTLSForServiceEnabled(dr networking_v1beta1.DestinationRule, service string) bool {
 	return strings.HasPrefix(service, "*") && ismTLSEnabled(dr)
 }
 
-func ismTLSEnabled(dr networking_v1alpha3.DestinationRule) bool {
+func ismTLSEnabled(dr networking_v1beta1.DestinationRule) bool {
 	if dr.Spec.TrafficPolicy != nil && dr.Spec.TrafficPolicy.Tls != nil {
 		mode := dr.Spec.TrafficPolicy.Tls.Mode.String()
 		return mode == "ISTIO_MUTUAL"
@@ -90,7 +90,7 @@ func ismTLSEnabled(dr networking_v1alpha3.DestinationRule) bool {
 	return false
 }
 
-func extractSubsets(dr networking_v1alpha3.DestinationRule, destinationRulesName string, destinationRulesNamespace string) []subset {
+func extractSubsets(dr networking_v1beta1.DestinationRule, destinationRulesName string, destinationRulesNamespace string) []subset {
 	if len(dr.Spec.Subsets) > 0 {
 		foundSubsets := []subset{}
 		for _, ss := range dr.Spec.Subsets {

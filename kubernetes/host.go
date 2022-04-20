@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -163,7 +163,7 @@ func HasMatchingServiceEntries(service string, serviceEntries map[string][]strin
 	return false
 }
 
-func HasMatchingVirtualServices(host Host, virtualServices []networking_v1alpha3.VirtualService) bool {
+func HasMatchingVirtualServices(host Host, virtualServices []networking_v1beta1.VirtualService) bool {
 	for _, vs := range virtualServices {
 		for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
 			vHost := vs.Spec.Hosts[hostIdx]

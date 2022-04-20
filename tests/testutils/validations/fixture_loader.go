@@ -9,6 +9,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 
@@ -61,7 +62,7 @@ func (l *YamlFixtureLoader) Load() error {
 					}
 					switch kind {
 					case "DestinationRule":
-						dr := networking_v1alpha3.DestinationRule{}
+						dr := networking_v1beta1.DestinationRule{}
 						err = json.Unmarshal(bValue, &dr)
 						l.istioConfigList.DestinationRules = append(l.istioConfigList.DestinationRules, dr)
 					case "EnvoyFilter":
@@ -69,27 +70,27 @@ func (l *YamlFixtureLoader) Load() error {
 						err = json.Unmarshal(bValue, &ef)
 						l.istioConfigList.EnvoyFilters = append(l.istioConfigList.EnvoyFilters, ef)
 					case "Gateway":
-						gw := networking_v1alpha3.Gateway{}
+						gw := networking_v1beta1.Gateway{}
 						err = json.Unmarshal(bValue, &gw)
 						l.istioConfigList.Gateways = append(l.istioConfigList.Gateways, gw)
 					case "ServiceEntry":
-						se := networking_v1alpha3.ServiceEntry{}
+						se := networking_v1beta1.ServiceEntry{}
 						err = json.Unmarshal(bValue, &se)
 						l.istioConfigList.ServiceEntries = append(l.istioConfigList.ServiceEntries, se)
 					case "Sidecar":
-						sc := networking_v1alpha3.Sidecar{}
+						sc := networking_v1beta1.Sidecar{}
 						err = json.Unmarshal(bValue, &sc)
 						l.istioConfigList.Sidecars = append(l.istioConfigList.Sidecars, sc)
 					case "VirtualService":
-						vs := networking_v1alpha3.VirtualService{}
+						vs := networking_v1beta1.VirtualService{}
 						err = json.Unmarshal(bValue, &vs)
 						l.istioConfigList.VirtualServices = append(l.istioConfigList.VirtualServices, vs)
 					case "WorkloadEntry":
-						we := networking_v1alpha3.WorkloadEntry{}
+						we := networking_v1beta1.WorkloadEntry{}
 						err = json.Unmarshal(bValue, &we)
 						l.istioConfigList.WorkloadEntries = append(l.istioConfigList.WorkloadEntries, we)
 					case "WorkloadGroup":
-						wg := networking_v1alpha3.WorkloadGroup{}
+						wg := networking_v1beta1.WorkloadGroup{}
 						err = json.Unmarshal(bValue, &wg)
 						l.istioConfigList.WorkloadGroups = append(l.istioConfigList.WorkloadGroups, wg)
 					case "AuthorizationPolicy":
@@ -138,7 +139,7 @@ func (l YamlFixtureLoader) FindAuthorizationPolicy(name, namespace string) *secu
 	return nil
 }
 
-func (l YamlFixtureLoader) FindDestinationRule(name, namespace string) *networking_v1alpha3.DestinationRule {
+func (l YamlFixtureLoader) FindDestinationRule(name, namespace string) *networking_v1beta1.DestinationRule {
 	for _, d := range l.istioConfigList.DestinationRules {
 		if d.Name == name && d.Namespace == namespace {
 			d.ClusterName = "svc.cluster.local"
@@ -148,7 +149,7 @@ func (l YamlFixtureLoader) FindDestinationRule(name, namespace string) *networki
 	return nil
 }
 
-func (l YamlFixtureLoader) FindVirtualService(name, namespace string) *networking_v1alpha3.VirtualService {
+func (l YamlFixtureLoader) FindVirtualService(name, namespace string) *networking_v1beta1.VirtualService {
 	for _, v := range l.istioConfigList.VirtualServices {
 		if v.Name == name && v.Namespace == namespace {
 			v.ClusterName = "svc.cluster.local"
@@ -158,8 +159,8 @@ func (l YamlFixtureLoader) FindVirtualService(name, namespace string) *networkin
 	return nil
 }
 
-func (l YamlFixtureLoader) FindVirtualServiceIn(namespace string) []networking_v1alpha3.VirtualService {
-	vs := []networking_v1alpha3.VirtualService{}
+func (l YamlFixtureLoader) FindVirtualServiceIn(namespace string) []networking_v1beta1.VirtualService {
+	vs := []networking_v1beta1.VirtualService{}
 	for _, v := range l.istioConfigList.VirtualServices {
 		if v.Namespace == namespace {
 			vs = append(vs, v)
@@ -168,7 +169,7 @@ func (l YamlFixtureLoader) FindVirtualServiceIn(namespace string) []networking_v
 	return vs
 }
 
-func (l YamlFixtureLoader) FindServiceEntry(name, namespace string) *networking_v1alpha3.ServiceEntry {
+func (l YamlFixtureLoader) FindServiceEntry(name, namespace string) *networking_v1beta1.ServiceEntry {
 	for _, v := range l.istioConfigList.ServiceEntries {
 		if v.Name == name && v.Namespace == namespace {
 			return &v
@@ -177,7 +178,7 @@ func (l YamlFixtureLoader) FindServiceEntry(name, namespace string) *networking_
 	return nil
 }
 
-func (l YamlFixtureLoader) FindWorkloadEntry(name, namespace string) *networking_v1alpha3.WorkloadEntry {
+func (l YamlFixtureLoader) FindWorkloadEntry(name, namespace string) *networking_v1beta1.WorkloadEntry {
 	for _, v := range l.istioConfigList.WorkloadEntries {
 		if v.Name == name && v.Namespace == namespace {
 			return &v
@@ -186,7 +187,7 @@ func (l YamlFixtureLoader) FindWorkloadEntry(name, namespace string) *networking
 	return nil
 }
 
-func (l YamlFixtureLoader) FindSidecar(name, namespace string) *networking_v1alpha3.Sidecar {
+func (l YamlFixtureLoader) FindSidecar(name, namespace string) *networking_v1beta1.Sidecar {
 	for _, v := range l.istioConfigList.Sidecars {
 		if v.Name == name && v.Namespace == namespace {
 			return &v
@@ -224,8 +225,8 @@ func (l YamlFixtureLoader) FindPeerAuthenticationNotIn(namespace string) []secur
 	return pa
 }
 
-func (l YamlFixtureLoader) FindDestinationRuleIn(namespace string) []networking_v1alpha3.DestinationRule {
-	dr := []networking_v1alpha3.DestinationRule{}
+func (l YamlFixtureLoader) FindDestinationRuleIn(namespace string) []networking_v1beta1.DestinationRule {
+	dr := []networking_v1beta1.DestinationRule{}
 	for _, d := range l.istioConfigList.DestinationRules {
 		if d.Namespace == namespace {
 			dr = append(dr, d)
@@ -234,8 +235,8 @@ func (l YamlFixtureLoader) FindDestinationRuleIn(namespace string) []networking_
 	return dr
 }
 
-func (l YamlFixtureLoader) FindDestinationRuleNotIn(namespace string) []networking_v1alpha3.DestinationRule {
-	dr := []networking_v1alpha3.DestinationRule{}
+func (l YamlFixtureLoader) FindDestinationRuleNotIn(namespace string) []networking_v1beta1.DestinationRule {
+	dr := []networking_v1beta1.DestinationRule{}
 	for _, d := range l.istioConfigList.DestinationRules {
 		if d.Namespace != namespace {
 			dr = append(dr, d)

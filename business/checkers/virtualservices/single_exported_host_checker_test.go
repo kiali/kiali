@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
@@ -13,10 +13,10 @@ import (
 )
 
 func TestOneVirtualServicePerHostExported(t *testing.T) {
-	vss := []networking_v1alpha3.VirtualService{
+	vss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "reviews"),
 	}
-	evss := []networking_v1alpha3.VirtualService{
+	evss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "ratings"),
 	}
 	vals := SingleHostChecker{
@@ -28,10 +28,10 @@ func TestOneVirtualServicePerHostExported(t *testing.T) {
 	emptyValidationTestNS(t, vals, "virtual-2", "bookinfo2")
 
 	// First virtual service has a gateway
-	vss = []networking_v1alpha3.VirtualService{
+	vss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceWithGatewayNS("bookinfo", "virtual-1", "reviews", "bookinfo-gateway"),
 	}
-	evss = []networking_v1alpha3.VirtualService{
+	evss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "ratings"),
 	}
 	vals = SingleHostChecker{
@@ -43,10 +43,10 @@ func TestOneVirtualServicePerHostExported(t *testing.T) {
 	emptyValidationTestNS(t, vals, "virtual-2", "bookinfo2")
 
 	// Second virtual service has a gateway
-	vss = []networking_v1alpha3.VirtualService{
+	vss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "reviews"),
 	}
-	evss = []networking_v1alpha3.VirtualService{
+	evss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceWithGatewayNS("bookinfo2", "virtual-2", "ratings", "bookinfo-gateway"),
 	}
 	vals = SingleHostChecker{
@@ -58,10 +58,10 @@ func TestOneVirtualServicePerHostExported(t *testing.T) {
 	emptyValidationTestNS(t, vals, "virtual-2", "bookinfo2")
 
 	// Both virtual services have a gateway
-	vss = []networking_v1alpha3.VirtualService{
+	vss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceWithGatewayNS("bookinfo", "virtual-1", "reviews", "bookinfo-gateway"),
 	}
-	evss = []networking_v1alpha3.VirtualService{
+	evss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceWithGatewayNS("bookinfo2", "virtual-2", "ratings", "bookinfo-gateway"),
 	}
 	vals = SingleHostChecker{
@@ -74,10 +74,10 @@ func TestOneVirtualServicePerHostExported(t *testing.T) {
 }
 
 func TestOneVirtualServicePerFQDNHostExported(t *testing.T) {
-	vss := []networking_v1alpha3.VirtualService{
+	vss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "ratings.bookinfo.svc.cluster.local"),
 	}
-	evss := []networking_v1alpha3.VirtualService{
+	evss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "ratings.bookinfo2.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
@@ -90,10 +90,10 @@ func TestOneVirtualServicePerFQDNHostExported(t *testing.T) {
 }
 
 func TestOneVirtualServicePerFQDNWildcardHostExported(t *testing.T) {
-	vss := []networking_v1alpha3.VirtualService{
+	vss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "*.bookinfo.svc.cluster.local"),
 	}
-	evss := []networking_v1alpha3.VirtualService{
+	evss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "*.eshop.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
@@ -109,10 +109,10 @@ func TestRepeatingSimpleHostExported(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vss := []networking_v1alpha3.VirtualService{
+	vss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "reviews.bookinfo.svc.cluster.local"),
 	}
-	evss := []networking_v1alpha3.VirtualService{
+	evss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local"),
 		*buildVirtualServiceNS("bookinfo3", "virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
@@ -141,10 +141,10 @@ func TestRepeatingSimpleHostExported(t *testing.T) {
 }
 
 func TestRepeatingSimpleHostWithGatewayExported(t *testing.T) {
-	vss := []networking_v1alpha3.VirtualService{
+	vss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceWithGatewayNS("bookinfo", "virtual-1", "reviews.bookinfo.svc.cluster.local", "bookinfo"),
 	}
-	evss := []networking_v1alpha3.VirtualService{
+	evss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
@@ -155,10 +155,10 @@ func TestRepeatingSimpleHostWithGatewayExported(t *testing.T) {
 	noObjectValidationTestNS(t, vals, "virtual-1", "bookinfo")
 	noObjectValidationTestNS(t, vals, "virtual-2", "bookinfo2")
 
-	vss = []networking_v1alpha3.VirtualService{
+	vss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "reviews.bookinfo.svc.cluster.local"),
 	}
-	evss = []networking_v1alpha3.VirtualService{
+	evss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceWithGatewayNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local", "bookinfo2"),
 	}
 	vals = SingleHostChecker{
@@ -169,10 +169,10 @@ func TestRepeatingSimpleHostWithGatewayExported(t *testing.T) {
 	noObjectValidationTestNS(t, vals, "virtual-1", "bookinfo")
 	noObjectValidationTestNS(t, vals, "virtual-2", "bookinfo2")
 
-	vss = []networking_v1alpha3.VirtualService{
+	vss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceWithGatewayNS("bookinfo", "virtual-1", "reviews.bookinfo.svc.cluster.local", "bookinfo"),
 	}
-	evss = []networking_v1alpha3.VirtualService{
+	evss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceWithGatewayNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local", "bookinfo"),
 	}
 	vals = SingleHostChecker{
@@ -190,10 +190,10 @@ func TestRepeatingSimpleHostWithGatewayExported(t *testing.T) {
 }
 
 func TestRepeatingSVCNSHostExported(t *testing.T) {
-	vss := []networking_v1alpha3.VirtualService{
+	vss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "reviews.bookinfo.svc.cluster.local"),
 	}
-	evss := []networking_v1alpha3.VirtualService{
+	evss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
@@ -208,10 +208,10 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
 	presentValidationTestNS(t, vals, "virtual-2", "bookinfo2")
 
-	vss = []networking_v1alpha3.VirtualService{
+	vss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "reviews.bookinfo.svc.cluster.local"),
 	}
-	evss = []networking_v1alpha3.VirtualService{
+	evss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals = SingleHostChecker{
@@ -226,11 +226,11 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
 	presentValidationTestNS(t, vals, "virtual-2", "bookinfo2")
 
-	vss = []networking_v1alpha3.VirtualService{
+	vss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "reviews.bookinfo.svc.cluster.local"),
 		*buildVirtualServiceWithGatewayNS("bookinfo", "virtual-3", "reviews.bookinfo.svc.cluster.local", "bookinfo-gateway-auto"),
 	}
-	evss = []networking_v1alpha3.VirtualService{
+	evss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals = SingleHostChecker{
@@ -245,10 +245,10 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
 	presentValidationTestNS(t, vals, "virtual-2", "bookinfo2")
 
-	vss = []networking_v1alpha3.VirtualService{
+	vss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "*.bookinfo.svc.cluster.local"),
 	}
-	evss = []networking_v1alpha3.VirtualService{
+	evss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals = SingleHostChecker{
@@ -263,10 +263,10 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 	presentValidationTestNS(t, vals, "virtual-1", "bookinfo")
 	presentValidationTestNS(t, vals, "virtual-2", "bookinfo2")
 
-	vss = []networking_v1alpha3.VirtualService{
+	vss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "reviews.bookinfo.svc.cluster.local"),
 	}
-	evss = []networking_v1alpha3.VirtualService{
+	evss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "details.bookinfo.svc.cluster.local"),
 	}
 	vals = SingleHostChecker{
@@ -283,10 +283,10 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 	emptyValidationTestNS(t, vals, "virtual-1", "bookinfo")
 	emptyValidationTestNS(t, vals, "virtual-2", "bookinfo2")
 
-	vss = []networking_v1alpha3.VirtualService{
+	vss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "reviews.bookinfo.svc.cluster.local"),
 	}
-	evss = []networking_v1alpha3.VirtualService{
+	evss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "details.bookinfo.svc.cluster.local"),
 	}
 	vals = SingleHostChecker{
@@ -305,10 +305,10 @@ func TestRepeatingSVCNSHostExported(t *testing.T) {
 }
 
 func TestRepeatingFQDNHostExported(t *testing.T) {
-	vss := []networking_v1alpha3.VirtualService{
+	vss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "reviews.bookinfo.svc.cluster.local"),
 	}
-	evss := []networking_v1alpha3.VirtualService{
+	evss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local"),
 		*buildVirtualServiceNS("bookinfo3", "virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
@@ -337,10 +337,10 @@ func TestRepeatingFQDNHostExported(t *testing.T) {
 }
 
 func TestRepeatingFQDNWildcardHostExported(t *testing.T) {
-	vss := []networking_v1alpha3.VirtualService{
+	vss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "*.bookinfo.svc.cluster.local"),
 	}
-	evss := []networking_v1alpha3.VirtualService{
+	evss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "*.bookinfo.svc.cluster.local"),
 		*buildVirtualServiceNS("bookinfo3", "virtual-3", "*.bookinfo.svc.cluster.local"),
 	}
@@ -369,10 +369,10 @@ func TestRepeatingFQDNWildcardHostExported(t *testing.T) {
 }
 
 func TestIncludedIntoWildCardExported(t *testing.T) {
-	vss := []networking_v1alpha3.VirtualService{
+	vss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "*.bookinfo.svc.cluster.local"),
 	}
-	evss := []networking_v1alpha3.VirtualService{
+	evss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local"),
 		*buildVirtualServiceNS("bookinfo3", "virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
@@ -400,10 +400,10 @@ func TestIncludedIntoWildCardExported(t *testing.T) {
 	}
 
 	// Same test, with different order of appearance
-	vss = []networking_v1alpha3.VirtualService{
+	vss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "reviews.bookinfo.svc.cluster.local"),
 	}
-	evss = []networking_v1alpha3.VirtualService{
+	evss = []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "*.bookinfo.svc.cluster.local"),
 		*buildVirtualServiceNS("bookinfo3", "virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
@@ -432,10 +432,10 @@ func TestIncludedIntoWildCardExported(t *testing.T) {
 }
 
 func TestShortHostNameIncludedIntoWildCardExported(t *testing.T) {
-	vss := []networking_v1alpha3.VirtualService{
+	vss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "*.bookinfo.svc.cluster.local"),
 	}
-	evss := []networking_v1alpha3.VirtualService{
+	evss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local"),
 		*buildVirtualServiceNS("bookinfo3", "virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
@@ -464,10 +464,10 @@ func TestShortHostNameIncludedIntoWildCardExported(t *testing.T) {
 }
 
 func TestWildcardisMarkedInvalidExported(t *testing.T) {
-	vss := []networking_v1alpha3.VirtualService{
+	vss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "*"),
 	}
-	evss := []networking_v1alpha3.VirtualService{
+	evss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo2", "virtual-2", "reviews.bookinfo.svc.cluster.local"),
 		*buildVirtualServiceNS("bookinfo3", "virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
@@ -496,10 +496,10 @@ func TestWildcardisMarkedInvalidExported(t *testing.T) {
 }
 
 func TestMultipleHostsFailingExported(t *testing.T) {
-	vss := []networking_v1alpha3.VirtualService{
+	vss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "reviews.bookinfo.svc.cluster.local"),
 	}
-	evss := []networking_v1alpha3.VirtualService{
+	evss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceMultipleHostsNS("bookinfo2", "virtual-2", []string{"reviews.bookinfo.svc.cluster.local",
 			"mongo.backup.svc.cluster.local", "mongo.staging.svc.cluster.local"}),
 	}
@@ -522,10 +522,10 @@ func TestMultipleHostsFailingExported(t *testing.T) {
 }
 
 func TestMultipleHostsPassingExported(t *testing.T) {
-	vss := []networking_v1alpha3.VirtualService{
+	vss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceNS("bookinfo", "virtual-1", "reviews"),
 	}
-	evss := []networking_v1alpha3.VirtualService{
+	evss := []networking_v1beta1.VirtualService{
 		*buildVirtualServiceMultipleHostsNS("bookinfo2", "virtual-2", []string{"ratings",
 			"mongo.backup.svc.cluster.local", "mongo.staging.svc.cluster.local"}),
 	}
@@ -538,16 +538,16 @@ func TestMultipleHostsPassingExported(t *testing.T) {
 	emptyValidationTestNS(t, vals, "virtual-2", "bookinfo2")
 }
 
-func buildVirtualServiceNS(namespace, name, host string) *networking_v1alpha3.VirtualService {
+func buildVirtualServiceNS(namespace, name, host string) *networking_v1beta1.VirtualService {
 	return buildVirtualServiceMultipleHostsNS(namespace, name, []string{host})
 }
 
-func buildVirtualServiceWithGatewayNS(namespace, name, host, gateway string) *networking_v1alpha3.VirtualService {
+func buildVirtualServiceWithGatewayNS(namespace, name, host, gateway string) *networking_v1beta1.VirtualService {
 	return data.AddGatewaysToVirtualService([]string{gateway}, data.CreateEmptyVirtualService(name,
 		namespace, []string{host}))
 }
 
-func buildVirtualServiceMultipleHostsNS(namespace, name string, hosts []string) *networking_v1alpha3.VirtualService {
+func buildVirtualServiceMultipleHostsNS(namespace, name string, hosts []string) *networking_v1beta1.VirtualService {
 	return data.CreateEmptyVirtualService(name, namespace, hosts)
 }
 

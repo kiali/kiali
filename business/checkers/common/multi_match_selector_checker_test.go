@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -16,7 +16,7 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 
 	validations := SidecarSelectorMultiMatchChecker(
 		"sidecar",
-		[]networking_v1alpha3.Sidecar{
+		[]networking_v1beta1.Sidecar{
 			*data.AddSelectorToSidecar(map[string]string{
 				"app": "reviews",
 			}, data.CreateSidecar("sidecar1", "bookinfo")),
@@ -33,7 +33,7 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 func TestTwoSidecarsWithoutSelector(t *testing.T) {
 	validations := SidecarSelectorMultiMatchChecker(
 		"sidecar",
-		[]networking_v1alpha3.Sidecar{
+		[]networking_v1beta1.Sidecar{
 			*data.CreateSidecar("sidecar1", "bookinfo"),
 			*data.CreateSidecar("sidecar2", "bookinfo"),
 		},
@@ -45,7 +45,7 @@ func TestTwoSidecarsWithoutSelector(t *testing.T) {
 }
 
 func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
-	sidecars := []networking_v1alpha3.Sidecar{
+	sidecars := []networking_v1beta1.Sidecar{
 		*data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
 			"version": "v1",
@@ -73,7 +73,7 @@ func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
 }
 
 func TestSidecarsCrossNamespaces(t *testing.T) {
-	sidecars := []networking_v1alpha3.Sidecar{
+	sidecars := []networking_v1beta1.Sidecar{
 		*data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
 			"version": "v1",
@@ -104,7 +104,7 @@ func TestSidecarsCrossNamespaces(t *testing.T) {
 func TestSidecarsDifferentNamespaces(t *testing.T) {
 	assert := assert.New(t)
 
-	sidecars := []networking_v1alpha3.Sidecar{
+	sidecars := []networking_v1beta1.Sidecar{
 		*data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
 			"version": "v1",

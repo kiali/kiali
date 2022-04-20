@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	api_networking_v1alpha3 "istio.io/api/networking/v1alpha3"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -196,7 +196,7 @@ func TestNoMatchingSubset(t *testing.T) {
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 		DestinationRule:  *data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
-		VirtualServices: []networking_v1alpha3.VirtualService{*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 55),
+		VirtualServices: []networking_v1beta1.VirtualService{*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 55),
 			data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v2", 45),
 				data.CreateEmptyVirtualService("reviews", "test-namespace", []string{"reviews"}),
 			),
@@ -216,13 +216,13 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 
 	assert := assert.New(t)
 
-	s1 := &api_networking_v1alpha3.Subset{
+	s1 := &api_networking_v1beta1.Subset{
 		Name: "reviewsv2",
 		Labels: map[string]string{
 			"version": "v2",
 		},
 	}
-	s2 := &api_networking_v1alpha3.Subset{
+	s2 := &api_networking_v1beta1.Subset{
 		Name: "reviewsv1",
 		Labels: map[string]string{
 			"version": "v1",
@@ -241,7 +241,7 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 		DestinationRule:  *dr,
-		VirtualServices: []networking_v1alpha3.VirtualService{*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "reviewsv1", 55),
+		VirtualServices: []networking_v1beta1.VirtualService{*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "reviewsv1", 55),
 			data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "reviewsv2", 100),
 				data.CreateEmptyVirtualService("reviews", "test-namespace", []string{"reviews"}),
 			),
@@ -276,7 +276,7 @@ func TestSubsetNotReferenced(t *testing.T) {
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 		DestinationRule:  *dr,
-		VirtualServices:  []networking_v1alpha3.VirtualService{},
+		VirtualServices:  []networking_v1beta1.VirtualService{},
 	}.Check()
 
 	assert.True(valid)
@@ -309,7 +309,7 @@ func TestSubsetReferenced(t *testing.T) {
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 		DestinationRule:  *dr,
-		VirtualServices:  []networking_v1alpha3.VirtualService{*vs},
+		VirtualServices:  []networking_v1beta1.VirtualService{*vs},
 	}.Check()
 
 	assert.False(valid)
@@ -346,7 +346,7 @@ func TestSubsetPresentMatchingNotReferenced(t *testing.T) {
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "bookinfo"),
 		DestinationRule:  *dr,
-		VirtualServices:  []networking_v1alpha3.VirtualService{*vs},
+		VirtualServices:  []networking_v1beta1.VirtualService{*vs},
 	}.Check()
 
 	assert.True(valid)
@@ -376,7 +376,7 @@ func TestWronglyReferenced(t *testing.T) {
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 		DestinationRule:  *dr,
-		VirtualServices:  []networking_v1alpha3.VirtualService{*vs},
+		VirtualServices:  []networking_v1beta1.VirtualService{*vs},
 	}.Check()
 
 	assert.True(valid)
@@ -427,7 +427,7 @@ func TestSNIProxyExample(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "test",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*se}),
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
 		DestinationRule: *dr,
 	}.Check()
 
@@ -447,7 +447,7 @@ func TestWildcardServiceEntry(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "test",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*se}),
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
 		DestinationRule: *dr,
 	}.Check()
 
@@ -466,7 +466,7 @@ func TestExportedInternalServiceEntry(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*se}),
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
 		DestinationRule: *dr,
 	}.Check()
 
@@ -485,7 +485,7 @@ func TestWildcardExportedInternalServiceEntry(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*se}),
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
 		DestinationRule: *dr,
 	}.Check()
 
@@ -504,7 +504,7 @@ func TestExportedInternalServiceEntryFail(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*se}),
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
 		DestinationRule: *dr,
 	}.Check()
 
@@ -526,7 +526,7 @@ func TestWildcardExportedInternalServiceEntryFail(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*se}),
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
 		DestinationRule: *dr,
 	}.Check()
 
@@ -548,7 +548,7 @@ func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*se}),
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
 		DestinationRule: *dr,
 	}.Check()
 
@@ -562,7 +562,7 @@ func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
 
 	vals, valid = NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*se}),
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
 		DestinationRule: *dr,
 	}.Check()
 
@@ -584,7 +584,7 @@ func TestExportedExternalServiceEntry(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*se}),
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
 		DestinationRule: *dr,
 	}.Check()
 
@@ -603,7 +603,7 @@ func TestExportedExternalServiceEntryFail(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1alpha3.ServiceEntry{*se}),
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
 		DestinationRule: *dr,
 	}.Check()
 

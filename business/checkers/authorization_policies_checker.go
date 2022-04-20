@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/business/checkers/authorization"
@@ -16,10 +16,10 @@ type AuthorizationPolicyChecker struct {
 	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
 	Namespace             string
 	Namespaces            models.Namespaces
-	ServiceEntries        []networking_v1alpha3.ServiceEntry
+	ServiceEntries        []networking_v1beta1.ServiceEntry
 	WorkloadList          models.WorkloadList
 	MtlsDetails           kubernetes.MTLSDetails
-	VirtualServices       []networking_v1alpha3.VirtualService
+	VirtualServices       []networking_v1beta1.VirtualService
 	RegistryServices      []*kubernetes.RegistryService
 }
 

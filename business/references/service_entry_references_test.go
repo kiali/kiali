@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/config"
@@ -12,7 +12,7 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForServiceEntry(ap *security_v1beta.AuthorizationPolicy, dr *networking_v1alpha3.DestinationRule, se *networking_v1alpha3.ServiceEntry, sc *networking_v1alpha3.Sidecar) models.IstioReferences {
+func prepareTestForServiceEntry(ap *security_v1beta.AuthorizationPolicy, dr *networking_v1beta1.DestinationRule, se *networking_v1beta1.ServiceEntry, sc *networking_v1beta1.Sidecar) models.IstioReferences {
 	drReferences := ServiceEntryReferences{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
@@ -21,9 +21,9 @@ func prepareTestForServiceEntry(ap *security_v1beta.AuthorizationPolicy, dr *net
 			{Name: "bookinfo3"},
 		},
 		AuthorizationPolicies: []security_v1beta.AuthorizationPolicy{*ap},
-		ServiceEntries:        []networking_v1alpha3.ServiceEntry{*se},
-		Sidecars:              []networking_v1alpha3.Sidecar{*sc},
-		DestinationRules:      []networking_v1alpha3.DestinationRule{*dr},
+		ServiceEntries:        []networking_v1beta1.ServiceEntry{*se},
+		Sidecars:              []networking_v1beta1.Sidecar{*sc},
+		DestinationRules:      []networking_v1beta1.DestinationRule{*dr},
 		RegistryServices:      append(data.CreateFakeRegistryServices("foo-dev.bookinfo.svc.cluster.local", "bookinfo", "."), data.CreateFakeRegistryServices("foo-dev.istio-system.svc.cluster.local", "istio-system", "*")...),
 	}
 	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "serviceentry", Namespace: se.Namespace, Name: se.Name}]
@@ -72,7 +72,7 @@ func TestServiceEntryNoReferences(t *testing.T) {
 	assert.Empty(references.ObjectReferences)
 }
 
-func getAPDestinationRule(t *testing.T) *networking_v1alpha3.DestinationRule {
+func getAPDestinationRule(t *testing.T) *networking_v1beta1.DestinationRule {
 	loader := yamlFixtureLoader("auth-policy.yaml")
 	err := loader.Load()
 	if err != nil {

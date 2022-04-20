@@ -6125,33 +6125,7 @@ Required. |  |
 ### <span id="authorization-policy"></span> AuthorizationPolicy
 
 
-> For example, the following authorization policy allows nothing and effectively denies all requests to workloads
-in namespace foo.
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-name: allow-nothing
-namespace: foo
-spec:
-{}
-```
-
-The following authorization policy allows all requests to workloads in namespace foo.
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-name: allow-all
-namespace: foo
-spec:
-rules:
-{}
-```
-
-<!-- crd generation tags
+> <!-- crd generation tags
 +cue-gen:AuthorizationPolicy:groupName:security.istio.io
 +cue-gen:AuthorizationPolicy:version:v1beta1
 +cue-gen:AuthorizationPolicy:storageVersion
@@ -6510,8 +6484,7 @@ to be removed in 1.21 release.
 
 > <!-- crd generation tags
 +cue-gen:DestinationRule:groupName:networking.istio.io
-+cue-gen:DestinationRule:version:v1alpha3
-+cue-gen:DestinationRule:storageVersion
++cue-gen:DestinationRule:version:v1beta1
 +cue-gen:DestinationRule:annotations:helm.sh/resource-policy=keep
 +cue-gen:DestinationRule:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
 +cue-gen:DestinationRule:subresource:status
@@ -6527,12 +6500,12 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++kubetype-gen:groupVersion=networking.istio.io/v1beta1
 +genclient
 +k8s:deepcopy-gen=true
 >
 <!-- istio code generation tags
-+istio.io/sync-start
++istio.io/sync-from:networking/v1alpha3/destination_rule.proto
 >
   
 
@@ -7018,8 +6991,7 @@ The exact format is defined in sigs.k8s.io/structured-merge-diff
 
 > <!-- crd generation tags
 +cue-gen:Gateway:groupName:networking.istio.io
-+cue-gen:Gateway:version:v1alpha3
-+cue-gen:Gateway:storageVersion
++cue-gen:Gateway:version:v1beta1
 +cue-gen:Gateway:annotations:helm.sh/resource-policy=keep
 +cue-gen:Gateway:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
 +cue-gen:Gateway:subresource:status
@@ -7030,12 +7002,12 @@ The exact format is defined in sigs.k8s.io/structured-merge-diff
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++kubetype-gen:groupVersion=networking.istio.io/v1beta1
 +genclient
 +k8s:deepcopy-gen=true
 >
 <!-- istio code generation tags
-+istio.io/sync-start
++istio.io/sync-from:networking/v1alpha3/gateway.proto
 >
   
 
@@ -8363,6 +8335,33 @@ source:
 requestPrincipals: ["*"]
 ```
 
+A policy in the root namespace ("istio-system" by default) applies to workloads in all namespaces
+in a mesh. The following policy makes all workloads only accept requests that contain a
+valid JWT token.
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+name: req-authn-for-all
+namespace: istio-system
+spec:
+jwtRules:
+issuer: "issuer-foo"
+jwksUri: https://example.com/.well-known/jwks.json
+
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+name: require-jwt-for-all
+namespace: istio-system
+spec:
+rules:
+from:
+source:
+requestPrincipals: ["*"]
+```
+
 The next example shows how to set a different JWT requirement for a different `host`. The `RequestAuthentication`
 declares it can accept JWTs issued by either `issuer-foo` or `issuer-bar` (the public key set is implicitly
 set from the OpenID Connect spec).
@@ -8426,6 +8425,73 @@ requestPrincipals: ["*"]
 to:
 operation:
 paths: ["/healthz"]
+```
+
+[Experimental] Routing based on derived [metadata](https://istio.io/latest/docs/reference/config/security/conditions/)
+is now supported. A prefix '@' is used to denote a match against internal metadata instead of the headers in the request.
+Currently this feature is only supported for the following metadata:
+
+`request.auth.claims.{claim-name}[.{sub-claim}]*` which are extracted from validated JWT tokens. The claim name
+currently does not support the `.` character. Examples: `request.auth.claims.sub` and `request.auth.claims.name.givenName`.
+
+The use of matches against JWT claim metadata is only supported in Gateways. The following example shows:
+
+RequestAuthentication to decode and validate a JWT. This also makes the `@request.auth.claims` available for use in the VirtualService.
+AuthorizationPolicy to check for valid principals in the request. This makes the JWT required for the request.
+VirtualService to route the request based on the "sub" claim.
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+name: jwt-on-ingress
+namespace: istio-system
+spec:
+selector:
+matchLabels:
+app: istio-ingressgateway
+jwtRules:
+issuer: "example.com"
+jwksUri: https://example.com/.well-known/jwks.json
+
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+name: require-jwt
+namespace: istio-system
+spec:
+selector:
+matchLabels:
+app: istio-ingressgateway
+rules:
+from:
+source:
+requestPrincipals: ["*"]
+
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+name: route-jwt
+spec:
+hosts:
+foo.prod.svc.cluster.local
+gateways:
+istio-ingressgateway
+http:
+name: "v2"
+match:
+headers:
+"@request.auth.claims.sub":
+exact: "dev"
+route:
+destination:
+host: foo.prod.svc.cluster.local
+subset: v2
+name: "default"
+route:
+destination:
+host: foo.prod.svc.cluster.local
+subset: v1
 ```
 
 <!-- crd generation tags
@@ -8805,8 +8871,7 @@ True means allowed.
 
 > <!-- crd generation tags
 +cue-gen:ServiceEntry:groupName:networking.istio.io
-+cue-gen:ServiceEntry:version:v1alpha3
-+cue-gen:ServiceEntry:storageVersion
++cue-gen:ServiceEntry:version:v1beta1
 +cue-gen:ServiceEntry:annotations:helm.sh/resource-policy=keep
 +cue-gen:ServiceEntry:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
 +cue-gen:ServiceEntry:subresource:status
@@ -8826,12 +8891,12 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++kubetype-gen:groupVersion=networking.istio.io/v1beta1
 +genclient
 +k8s:deepcopy-gen=true
 >
 <!-- istio code generation tags
-+istio.io/sync-start
++istio.io/sync-from:networking/v1alpha3/service_entry.proto
 >
   
 
@@ -9079,8 +9144,7 @@ Federation:  special case when registry is provided from a federated environment
 
 > <!-- crd generation tags
 +cue-gen:Sidecar:groupName:networking.istio.io
-+cue-gen:Sidecar:version:v1alpha3
-+cue-gen:Sidecar:storageVersion
++cue-gen:Sidecar:version:v1beta1
 +cue-gen:Sidecar:annotations:helm.sh/resource-policy=keep
 +cue-gen:Sidecar:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
 +cue-gen:Sidecar:subresource:status
@@ -9091,12 +9155,12 @@ Federation:  special case when registry is provided from a federated environment
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++kubetype-gen:groupVersion=networking.istio.io/v1beta1
 +genclient
 +k8s:deepcopy-gen=true
 >
 <!-- istio code generation tags
-+istio.io/sync-start
++istio.io/sync-from:networking/v1alpha3/sidecar.proto
 >
   
 
@@ -9550,8 +9614,7 @@ A string with the user's username | `admin` |
 
 > <!-- crd generation tags
 +cue-gen:VirtualService:groupName:networking.istio.io
-+cue-gen:VirtualService:version:v1alpha3
-+cue-gen:VirtualService:storageVersion
++cue-gen:VirtualService:version:v1beta1
 +cue-gen:VirtualService:annotations:helm.sh/resource-policy=keep
 +cue-gen:VirtualService:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
 +cue-gen:VirtualService:subresource:status
@@ -9569,12 +9632,12 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++kubetype-gen:groupVersion=networking.istio.io/v1beta1
 +genclient
 +k8s:deepcopy-gen=true
 >
 <!-- istio code generation tags
-+istio.io/sync-start
++istio.io/sync-from:networking/v1alpha3/virtual_service.proto
 >
   
 
@@ -9777,8 +9840,7 @@ It's mapped as a pointer to show three values nil, true, false |  |
 
 > <!-- crd generation tags
 +cue-gen:WorkloadEntry:groupName:networking.istio.io
-+cue-gen:WorkloadEntry:version:v1alpha3
-+cue-gen:WorkloadEntry:storageVersion
++cue-gen:WorkloadEntry:version:v1beta1
 +cue-gen:WorkloadEntry:annotations:helm.sh/resource-policy=keep
 +cue-gen:WorkloadEntry:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
 +cue-gen:WorkloadEntry:subresource:status
@@ -9794,12 +9856,12 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++kubetype-gen:groupVersion=networking.istio.io/v1beta1
 +genclient
 +k8s:deepcopy-gen=true
 >
 <!-- istio code generation tags
-+istio.io/sync-start
++istio.io/sync-from:networking/v1alpha3/workload_entry.proto
 >
   
 
@@ -9939,8 +10001,7 @@ to be removed in 1.21 release.
 
 > <!-- crd generation tags
 +cue-gen:WorkloadGroup:groupName:networking.istio.io
-+cue-gen:WorkloadGroup:version:v1alpha3
-+cue-gen:WorkloadGroup:storageVersion
++cue-gen:WorkloadGroup:version:v1beta1
 +cue-gen:WorkloadGroup:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
 +cue-gen:WorkloadGroup:subresource:status
 +cue-gen:WorkloadGroup:scope:Namespaced
@@ -9954,9 +10015,12 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=networking.istio.io/v1alpha3
++kubetype-gen:groupVersion=networking.istio.io/v1beta1
 +genclient
 +k8s:deepcopy-gen=true
+>
+<!-- istio code generation tags
++istio.io/sync-from:networking/v1alpha3/workload_group.proto
 >
   
 

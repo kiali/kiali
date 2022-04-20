@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/config"
@@ -14,7 +14,7 @@ import (
 	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
-func prepareTestForVirtualService(vs *networking_v1alpha3.VirtualService, dr *networking_v1alpha3.DestinationRule, ap *security_v1beta.AuthorizationPolicy) models.IstioReferences {
+func prepareTestForVirtualService(vs *networking_v1beta1.VirtualService, dr *networking_v1beta1.DestinationRule, ap *security_v1beta.AuthorizationPolicy) models.IstioReferences {
 	virtualServiceReferences := VirtualServiceReferences{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
@@ -22,8 +22,8 @@ func prepareTestForVirtualService(vs *networking_v1alpha3.VirtualService, dr *ne
 			{Name: "bookinfo2"},
 			{Name: "bookinfo3"},
 		},
-		VirtualServices:       []networking_v1alpha3.VirtualService{*vs},
-		DestinationRules:      []networking_v1alpha3.DestinationRule{*dr},
+		VirtualServices:       []networking_v1beta1.VirtualService{*vs},
+		DestinationRules:      []networking_v1beta1.DestinationRule{*dr},
 		AuthorizationPolicies: []security_v1beta.AuthorizationPolicy{*ap, *data.CreateEmptyAuthorizationPolicy("test", "bookinfo")},
 	}
 	return *virtualServiceReferences.References()[models.IstioReferenceKey{ObjectType: "virtualservice", Namespace: vs.Namespace, Name: vs.Name}]
@@ -91,7 +91,7 @@ func yamlFixtureLoader(file string) *validations.YamlFixtureLoader {
 	return &validations.YamlFixtureLoader{Filename: path}
 }
 
-func fakeVirtualService(t *testing.T) *networking_v1alpha3.VirtualService {
+func fakeVirtualService(t *testing.T) *networking_v1beta1.VirtualService {
 	loader := yamlFixtureLoader("multiple-gateways.yaml")
 	err := loader.Load()
 	if err != nil {
@@ -101,7 +101,7 @@ func fakeVirtualService(t *testing.T) *networking_v1alpha3.VirtualService {
 	return loader.FindVirtualService("reviews-well", "bookinfo")
 }
 
-func findDestinationRule(t *testing.T) *networking_v1alpha3.DestinationRule {
+func findDestinationRule(t *testing.T) *networking_v1beta1.DestinationRule {
 	loader := yamlFixtureLoader("multiple-gateways.yaml")
 	err := loader.Load()
 	if err != nil {

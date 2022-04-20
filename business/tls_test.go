@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	api_security_v1beta1 "istio.io/api/security/v1beta1"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,7 +27,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 
 	ns := []string{"test"}
 	pa := fakeStrictMeshPeerAuthentication("default")
-	dr := []networking_v1alpha3.DestinationRule{
+	dr := []networking_v1beta1.DestinationRule{
 		*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("test", "default", "*.local"))}
 
@@ -53,7 +53,7 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 
 	ns := []string{"test"}
 	pa := fakeStrictMeshPeerAuthentication("default")
-	dr := []networking_v1alpha3.DestinationRule{}
+	dr := []networking_v1beta1.DestinationRule{}
 
 	k8s := new(kubetest.K8SClientMock)
 
@@ -76,7 +76,7 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 
 	ns := []string{"test"}
 	pa := fakeStrictMeshPeerAuthentication("default")
-	dr := []networking_v1alpha3.DestinationRule{
+	dr := []networking_v1beta1.DestinationRule{
 		*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("istio-system", "default", "sleep.foo.svc.cluster.local"))}
 
@@ -100,7 +100,7 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 
 	ns := []string{"test"}
 	pa := []security_v1beta1.PeerAuthentication{}
-	dr := []networking_v1alpha3.DestinationRule{
+	dr := []networking_v1beta1.DestinationRule{
 		*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("istio-system", "default", "sleep.foo.svc.cluster.local"))}
 
@@ -125,7 +125,7 @@ func TestMeshStatusDisabled(t *testing.T) {
 
 	ns := []string{"test"}
 	pa := fakeMeshPeerAuthenticationWithMtlsMode("default", "DISABLE")
-	dr := []networking_v1alpha3.DestinationRule{
+	dr := []networking_v1beta1.DestinationRule{
 		*data.AddTrafficPolicyToDestinationRule(data.CreateDisabledMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("istio-system", "default", "*.local"))}
 
@@ -150,7 +150,7 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 
 	ns := []string{"test"}
 	pa := []security_v1beta1.PeerAuthentication{}
-	dr := []networking_v1alpha3.DestinationRule{}
+	dr := []networking_v1beta1.DestinationRule{}
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsMaistraApi").Return(false)
@@ -167,108 +167,108 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 
 func TestNamespaceHasMTLSEnabled(t *testing.T) {
 	ps := fakeStrictPeerAuthn("default", "bookinfo")
-	drs := []networking_v1alpha3.DestinationRule{
+	drs := []networking_v1beta1.DestinationRule{
 		*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "allow-mtls", "*.bookinfo.svc.cluster.local")),
 	}
 
 	testNamespaceScenario(MTLSEnabled, drs, ps, false, t)
 	testNamespaceScenario(MTLSEnabled, drs, ps, true, t)
-	testNamespaceScenario(MTLSEnabled, []networking_v1alpha3.DestinationRule{}, ps, true, t)
+	testNamespaceScenario(MTLSEnabled, []networking_v1beta1.DestinationRule{}, ps, true, t)
 }
 
 func TestNamespaceHasPeerAuthnDisabled(t *testing.T) {
 	ps := fakePeerAuthnWithMtlsMode("default", "bookinfo", "DISABLE")
-	drs := []networking_v1alpha3.DestinationRule{
+	drs := []networking_v1beta1.DestinationRule{
 		*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "allow-mtls", "*.bookinfo.svc.cluster.local")),
 	}
 	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, false, t)
 	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, true, t)
-	testNamespaceScenario(MTLSDisabled, []networking_v1alpha3.DestinationRule{}, ps, true, t)
+	testNamespaceScenario(MTLSDisabled, []networking_v1beta1.DestinationRule{}, ps, true, t)
 }
 
 func TestNamespaceHasDestinationRuleDisabled(t *testing.T) {
 	ps := fakeStrictPeerAuthn("default", "bookinfo")
-	drs := []networking_v1alpha3.DestinationRule{
+	drs := []networking_v1beta1.DestinationRule{
 		*data.CreateEmptyDestinationRule("bookinfo", "dr-1", "*.bookinfo.svc.cluster.local"),
 	}
 
 	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, false, t)
 	testNamespaceScenario(MTLSEnabled, drs, ps, true, t)
-	testNamespaceScenario(MTLSEnabled, []networking_v1alpha3.DestinationRule{}, ps, true, t)
+	testNamespaceScenario(MTLSEnabled, []networking_v1beta1.DestinationRule{}, ps, true, t)
 }
 
 func TestNamespaceHasNoDestinationRulesNoPolicy(t *testing.T) {
-	var drs []networking_v1alpha3.DestinationRule
+	var drs []networking_v1beta1.DestinationRule
 	var ps []security_v1beta1.PeerAuthentication
 
 	testNamespaceScenario(MTLSNotEnabled, drs, ps, true, t)
 	testNamespaceScenario(MTLSNotEnabled, drs, ps, false, t)
 
 	ps = fakePeerAuthnWithSelector("default", "bookinfo", "productpage")
-	drs = []networking_v1alpha3.DestinationRule{
+	drs = []networking_v1beta1.DestinationRule{
 		*data.CreateEmptyDestinationRule("bookinfo", "dr-1", "*.bookinfo.svc.cluster.local"),
 	}
 
 	testNamespaceScenario(MTLSNotEnabled, drs, ps, false, t)
 	testNamespaceScenario(MTLSNotEnabled, drs, ps, true, t)
-	testNamespaceScenario(MTLSNotEnabled, []networking_v1alpha3.DestinationRule{}, ps, true, t)
+	testNamespaceScenario(MTLSNotEnabled, []networking_v1beta1.DestinationRule{}, ps, true, t)
 }
 
 func TestNamespaceHasPermissivePeerAuthDisableDestRule(t *testing.T) {
 	ps := fakePermissivePeerAuthn("default", "bookinfo")
-	drs := []networking_v1alpha3.DestinationRule{
+	drs := []networking_v1beta1.DestinationRule{
 		*data.AddTrafficPolicyToDestinationRule(data.CreateDisabledMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local")),
 	}
 
 	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, false, t)
 	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, true, t)
-	testNamespaceScenario(MTLSPartiallyEnabled, []networking_v1alpha3.DestinationRule{}, ps, true, t)
+	testNamespaceScenario(MTLSPartiallyEnabled, []networking_v1beta1.DestinationRule{}, ps, true, t)
 }
 
 func TestNamespaceHasPermissivePeerAuthStrictDestRule(t *testing.T) {
 	ps := fakePermissivePeerAuthn("default", "bookinfo")
-	drs := []networking_v1alpha3.DestinationRule{
+	drs := []networking_v1beta1.DestinationRule{
 		*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "strict-mtls", "*.bookinfo.svc.cluster.local")),
 	}
 
 	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, false, t)
 	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, true, t)
-	testNamespaceScenario(MTLSPartiallyEnabled, []networking_v1alpha3.DestinationRule{}, ps, true, t)
+	testNamespaceScenario(MTLSPartiallyEnabled, []networking_v1beta1.DestinationRule{}, ps, true, t)
 }
 
 func TestNamespaceHasMTLSDisabled(t *testing.T) {
 	ps := fakePeerAuthnWithMtlsMode("default", "bookinfo", "DISABLE")
-	drs := []networking_v1alpha3.DestinationRule{
+	drs := []networking_v1beta1.DestinationRule{
 		*data.AddTrafficPolicyToDestinationRule(data.CreateDisabledMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local")),
 	}
 
 	testNamespaceScenario(MTLSDisabled, drs, ps, false, t)
 	testNamespaceScenario(MTLSDisabled, drs, ps, true, t)
-	testNamespaceScenario(MTLSDisabled, []networking_v1alpha3.DestinationRule{}, ps, true, t)
+	testNamespaceScenario(MTLSDisabled, []networking_v1beta1.DestinationRule{}, ps, true, t)
 }
 
 func TestNamespaceHasPeerAuthnDisabledMtlsDestRule(t *testing.T) {
 	ps := fakePeerAuthnWithMtlsMode("default", "bookinfo", "DISABLE")
-	drs := []networking_v1alpha3.DestinationRule{
+	drs := []networking_v1beta1.DestinationRule{
 		*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local")),
 	}
 
 	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, false, t)
 	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, true, t)
-	testNamespaceScenario(MTLSDisabled, []networking_v1alpha3.DestinationRule{}, ps, true, t)
+	testNamespaceScenario(MTLSDisabled, []networking_v1beta1.DestinationRule{}, ps, true, t)
 }
 
 func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	assert := assert.New(t)
 
 	ps := fakeStrictPeerAuthn("default", "bookinfo")
-	drs := []networking_v1alpha3.DestinationRule{
+	drs := []networking_v1beta1.DestinationRule{
 		*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("foo", "allow-mtls", "*.bookinfo.svc.cluster.local")),
 	}
@@ -296,7 +296,7 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	assert.Equal(MTLSEnabled, status.Status)
 }
 
-func testNamespaceScenario(exStatus string, drs []networking_v1alpha3.DestinationRule, ps []security_v1beta1.PeerAuthentication, autoMtls bool, t *testing.T) {
+func testNamespaceScenario(exStatus string, drs []networking_v1beta1.DestinationRule, ps []security_v1beta1.PeerAuthentication, autoMtls bool, t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -362,7 +362,7 @@ func fakePeerAuthn(name, namespace string, peers *api_security_v1beta1.PeerAuthe
 	return []security_v1beta1.PeerAuthentication{*data.CreateEmptyPeerAuthentication(name, namespace, peers)}
 }
 
-func getTLSService(k8s kubernetes.ClientInterface, autoMtls bool, namespaces []string, pa []security_v1beta1.PeerAuthentication, dr []networking_v1alpha3.DestinationRule) *TLSService {
+func getTLSService(k8s kubernetes.ClientInterface, autoMtls bool, namespaces []string, pa []security_v1beta1.PeerAuthentication, dr []networking_v1beta1.DestinationRule) *TLSService {
 	kialiCache = cache.FakeTlsKialiCache("token", namespaces, pa, dr)
 	return &TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil), enabledAutoMtls: &autoMtls}
 }

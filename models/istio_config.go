@@ -2,6 +2,7 @@ package models
 
 import (
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 )
 
@@ -16,14 +17,14 @@ type IstioConfigList struct {
 	// required: true
 	Namespace Namespace `json:"namespace"`
 
-	DestinationRules []networking_v1alpha3.DestinationRule `json:"destinationRules"`
-	EnvoyFilters     []networking_v1alpha3.EnvoyFilter     `json:"envoyFilters"`
-	Gateways         []networking_v1alpha3.Gateway         `json:"gateways"`
-	ServiceEntries   []networking_v1alpha3.ServiceEntry    `json:"serviceEntries"`
-	Sidecars         []networking_v1alpha3.Sidecar         `json:"sidecars"`
-	VirtualServices  []networking_v1alpha3.VirtualService  `json:"virtualServices"`
-	WorkloadEntries  []networking_v1alpha3.WorkloadEntry   `json:"workloadEntries"`
-	WorkloadGroups   []networking_v1alpha3.WorkloadGroup   `json:"workloadGroups"`
+	DestinationRules []networking_v1beta1.DestinationRule `json:"destinationRules"`
+	EnvoyFilters     []networking_v1alpha3.EnvoyFilter    `json:"envoyFilters"`
+	Gateways         []networking_v1beta1.Gateway         `json:"gateways"`
+	ServiceEntries   []networking_v1beta1.ServiceEntry    `json:"serviceEntries"`
+	Sidecars         []networking_v1beta1.Sidecar         `json:"sidecars"`
+	VirtualServices  []networking_v1beta1.VirtualService  `json:"virtualServices"`
+	WorkloadEntries  []networking_v1beta1.WorkloadEntry   `json:"workloadEntries"`
+	WorkloadGroups   []networking_v1beta1.WorkloadGroup   `json:"workloadGroups"`
 
 	AuthorizationPolicies  []security_v1beta.AuthorizationPolicy   `json:"authorizationPolicies"`
 	PeerAuthentications    []security_v1beta.PeerAuthentication    `json:"peerAuthentications"`
@@ -36,16 +37,16 @@ type IstioConfigDetails struct {
 	ObjectType string    `json:"objectType"`
 
 	AuthorizationPolicy   *security_v1beta.AuthorizationPolicy   `json:"authorizationPolicy"`
-	DestinationRule       *networking_v1alpha3.DestinationRule   `json:"destinationRule"`
+	DestinationRule       *networking_v1beta1.DestinationRule    `json:"destinationRule"`
 	EnvoyFilter           *networking_v1alpha3.EnvoyFilter       `json:"envoyFilter"`
-	Gateway               *networking_v1alpha3.Gateway           `json:"gateway"`
+	Gateway               *networking_v1beta1.Gateway            `json:"gateway"`
 	PeerAuthentication    *security_v1beta.PeerAuthentication    `json:"peerAuthentication"`
 	RequestAuthentication *security_v1beta.RequestAuthentication `json:"requestAuthentication"`
-	ServiceEntry          *networking_v1alpha3.ServiceEntry      `json:"serviceEntry"`
-	Sidecar               *networking_v1alpha3.Sidecar           `json:"sidecar"`
-	VirtualService        *networking_v1alpha3.VirtualService    `json:"virtualService"`
-	WorkloadEntry         *networking_v1alpha3.WorkloadEntry     `json:"workloadEntry"`
-	WorkloadGroup         *networking_v1alpha3.WorkloadGroup     `json:"workloadGroup"`
+	ServiceEntry          *networking_v1beta1.ServiceEntry       `json:"serviceEntry"`
+	Sidecar               *networking_v1beta1.Sidecar            `json:"sidecar"`
+	VirtualService        *networking_v1beta1.VirtualService     `json:"virtualService"`
+	WorkloadEntry         *networking_v1beta1.WorkloadEntry      `json:"workloadEntry"`
+	WorkloadGroup         *networking_v1beta1.WorkloadGroup      `json:"workloadGroup"`
 
 	Permissions           ResourcePermissions `json:"permissions"`
 	IstioValidation       *IstioValidation    `json:"validation"`

@@ -1,7 +1,7 @@
 [
   {
     "kind": "DestinationRule",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "mysqldb",
       "namespace": "travel-agency",
@@ -37,7 +37,7 @@
   },
   {
     "kind": "DestinationRule",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "travels",
       "namespace": "travel-agency",
@@ -1792,7 +1792,7 @@
   },
   {
     "kind": "Gateway",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "bookinfo-gateway",
       "namespace": "default",
@@ -1822,7 +1822,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "flights-v1",
       "namespace": "travel-agency",
@@ -1852,7 +1852,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "mysqldb-v1",
       "namespace": "travel-agency",
@@ -1880,7 +1880,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "mysqldb-v2",
       "namespace": "travel-agency",
@@ -1908,7 +1908,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "travels-v2",
       "namespace": "travel-agency",
@@ -1940,7 +1940,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "travels-v3",
       "namespace": "travel-agency",
@@ -1972,7 +1972,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "cars-v1",
       "namespace": "travel-agency",
@@ -2002,7 +2002,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "discounts-v1",
       "namespace": "travel-agency",
@@ -2030,7 +2030,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "mysqldb-v3",
       "namespace": "travel-agency",
@@ -2058,7 +2058,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "travels-v1",
       "namespace": "travel-agency",
@@ -2090,7 +2090,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "hotels-v1",
       "namespace": "travel-agency",
@@ -2120,7 +2120,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "insurances-v1",
       "namespace": "travel-agency",
@@ -2150,7 +2150,7 @@
   },
   {
     "kind": "VirtualService",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "bookinfo",
       "namespace": "default",
@@ -2212,7 +2212,7 @@
   },
   {
     "kind": "VirtualService",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "mysqldb",
       "namespace": "travel-agency",
@@ -2257,7 +2257,7 @@
   },
   {
     "kind": "VirtualService",
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1beta1",
     "metadata": {
       "name": "travels",
       "namespace": "travel-agency",

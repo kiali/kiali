@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -121,7 +121,7 @@ func TestMTLSDRDisabledWithMeshPolicyDisabled(t *testing.T) {
 	testNoValidationsFound(t, *destinationRule, mTlsDetails)
 }
 
-func testReturnsAValidation(t *testing.T, destinationRule networking_v1alpha3.DestinationRule, mTLSDetails kubernetes.MTLSDetails) {
+func testReturnsAValidation(t *testing.T, destinationRule networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
 	vals, valid := MeshWideMTLSChecker{
@@ -140,7 +140,7 @@ func testReturnsAValidation(t *testing.T, destinationRule networking_v1alpha3.De
 	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.mtls.meshpolicymissing", validation))
 }
 
-func testNoValidationsFound(t *testing.T, destinationRule networking_v1alpha3.DestinationRule, mTLSDetails kubernetes.MTLSDetails) {
+func testNoValidationsFound(t *testing.T, destinationRule networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
 	validations, valid := MeshWideMTLSChecker{

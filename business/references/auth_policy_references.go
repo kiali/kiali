@@ -1,7 +1,7 @@
 package references
 
 import (
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -15,8 +15,8 @@ type AuthorizationPolicyReferences struct {
 	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
 	Namespace             string
 	Namespaces            models.Namespaces
-	ServiceEntries        []networking_v1alpha3.ServiceEntry
-	VirtualServices       []networking_v1alpha3.VirtualService
+	ServiceEntries        []networking_v1beta1.ServiceEntry
+	VirtualServices       []networking_v1beta1.VirtualService
 	RegistryServices      []*kubernetes.RegistryService
 	WorkloadsPerNamespace map[string]models.WorkloadList
 }

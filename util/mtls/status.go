@@ -1,7 +1,7 @@
 package mtls
 
 import (
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -18,7 +18,7 @@ const (
 type MtlsStatus struct {
 	Namespace           string
 	PeerAuthentications []security_v1beta.PeerAuthentication
-	DestinationRules    []networking_v1alpha3.DestinationRule
+	DestinationRules    []networking_v1beta1.DestinationRule
 	MatchingLabels      labels.Labels
 	AutoMtlsEnabled     bool
 	AllowPermissive     bool

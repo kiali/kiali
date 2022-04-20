@@ -3,7 +3,7 @@ package references
 import (
 	"strings"
 
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -12,10 +12,10 @@ import (
 )
 
 type SidecarReferences struct {
-	Sidecars              []networking_v1alpha3.Sidecar
+	Sidecars              []networking_v1beta1.Sidecar
 	Namespace             string
 	Namespaces            models.Namespaces
-	ServiceEntries        []networking_v1alpha3.ServiceEntry
+	ServiceEntries        []networking_v1beta1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
 	WorkloadsPerNamespace map[string]models.WorkloadList
 }
@@ -98,7 +98,7 @@ func (n SidecarReferences) getConfigReferences(host kubernetes.Host, hostNs stri
 	return result
 }
 
-func (n SidecarReferences) getWorkloadReferences(sc networking_v1alpha3.Sidecar) []models.WorkloadReference {
+func (n SidecarReferences) getWorkloadReferences(sc networking_v1beta1.Sidecar) []models.WorkloadReference {
 	result := make([]models.WorkloadReference, 0)
 	if sc.Spec.WorkloadSelector != nil {
 		selector := labels.SelectorFromSet(sc.Spec.WorkloadSelector.Labels)

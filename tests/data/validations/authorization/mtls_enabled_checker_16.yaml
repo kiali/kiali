@@ -15,7 +15,7 @@ spec:
         - operation:
             methods: ["GET"]
 ---
-apiVersion: "networking.istio.io/v1alpha3"
+apiVersion: "networking.istio.io/v1beta1"
 kind: "DestinationRule"
 metadata:
   name: "disable-mtls"
@@ -35,7 +35,7 @@ spec:
   mtls:
     mode: "PERMISSIVE"
 ---
-apiVersion: "networking.istio.io/v1alpha3"
+apiVersion: "networking.istio.io/v1beta1"
 kind: "DestinationRule"
 metadata:
   name: "default"

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/config"
@@ -170,7 +170,7 @@ func TestMtlsStrictNsDisable(t *testing.T) {
 		PeerAuthentications: []security_v1beta1.PeerAuthentication{
 			*data.CreateEmptyPeerAuthentication("disable-bookinfo", "bookinfo", data.CreateMTLS("DISABLE")),
 		},
-		DestinationRules: []networking_v1alpha3.DestinationRule{
+		DestinationRules: []networking_v1beta1.DestinationRule{
 			*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(), data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local")),
 		},
 	}
@@ -179,7 +179,7 @@ func TestMtlsStrictNsDisable(t *testing.T) {
 	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, true)
 }
 
-func testNoDisabledMtlsValidationsFound(t *testing.T, destinationRule networking_v1alpha3.DestinationRule, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
+func testNoDisabledMtlsValidationsFound(t *testing.T, destinationRule networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
@@ -196,7 +196,7 @@ func testNoDisabledMtlsValidationsFound(t *testing.T, destinationRule networking
 	assert.True(valid)
 }
 
-func testDisabledMtlsValidationsFound(t *testing.T, validationId string, destinationRule networking_v1alpha3.DestinationRule, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
+func testDisabledMtlsValidationsFound(t *testing.T, validationId string, destinationRule networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
 	conf := config.NewConfig()
 	config.Set(conf)
 

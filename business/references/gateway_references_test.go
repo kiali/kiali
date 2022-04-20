@@ -4,16 +4,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForGateway(gw *networking_v1alpha3.Gateway, vss []networking_v1alpha3.VirtualService) models.IstioReferences {
+func prepareTestForGateway(gw *networking_v1beta1.Gateway, vss []networking_v1beta1.VirtualService) models.IstioReferences {
 	gwReferences := GatewayReferences{
-		Gateways:        []networking_v1alpha3.Gateway{*gw},
+		Gateways:        []networking_v1beta1.Gateway{*gw},
 		VirtualServices: vss,
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
 			"test": data.CreateWorkloadList("istio-system",
@@ -59,7 +59,7 @@ func TestGatewayNoWorkloadReferences(t *testing.T) {
 	assert.Empty(references.WorkloadReferences)
 }
 
-func fakeGateway(t *testing.T) *networking_v1alpha3.Gateway {
+func fakeGateway(t *testing.T) *networking_v1beta1.Gateway {
 	gwObject := data.CreateEmptyGateway("gateway", "istio-system", map[string]string{
 		"istio": "ingressgateway",
 	})
@@ -67,7 +67,7 @@ func fakeGateway(t *testing.T) *networking_v1alpha3.Gateway {
 	return gwObject
 }
 
-func fakeVirtualServices(t *testing.T) []networking_v1alpha3.VirtualService {
+func fakeVirtualServices(t *testing.T) []networking_v1beta1.VirtualService {
 	loader := yamlFixtureLoader("multiple-vs-gateways.yaml")
 	err := loader.Load()
 	if err != nil {

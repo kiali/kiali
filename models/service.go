@@ -1,7 +1,7 @@
 package models
 
 import (
-	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -60,17 +60,17 @@ type ServiceDefinitionList struct {
 }
 
 type ServiceDetails struct {
-	Service          Service                               `json:"service"`
-	IstioSidecar     bool                                  `json:"istioSidecar"`
-	Endpoints        Endpoints                             `json:"endpoints"`
-	VirtualServices  []networking_v1alpha3.VirtualService  `json:"virtualServices"`
-	DestinationRules []networking_v1alpha3.DestinationRule `json:"destinationRules"`
-	ServiceEntries   []networking_v1alpha3.ServiceEntry    `json:"serviceEntries"`
-	IstioPermissions ResourcePermissions                   `json:"istioPermissions"`
-	Workloads        WorkloadOverviews                     `json:"workloads"`
-	Health           ServiceHealth                         `json:"health"`
-	Validations      IstioValidations                      `json:"validations"`
-	NamespaceMTLS    MTLSStatus                            `json:"namespaceMTLS"`
+	Service          Service                              `json:"service"`
+	IstioSidecar     bool                                 `json:"istioSidecar"`
+	Endpoints        Endpoints                            `json:"endpoints"`
+	VirtualServices  []networking_v1beta1.VirtualService  `json:"virtualServices"`
+	DestinationRules []networking_v1beta1.DestinationRule `json:"destinationRules"`
+	ServiceEntries   []networking_v1beta1.ServiceEntry    `json:"serviceEntries"`
+	IstioPermissions ResourcePermissions                  `json:"istioPermissions"`
+	Workloads        WorkloadOverviews                    `json:"workloads"`
+	Health           ServiceHealth                        `json:"health"`
+	Validations      IstioValidations                     `json:"validations"`
+	NamespaceMTLS    MTLSStatus                           `json:"namespaceMTLS"`
 }
 
 type Services []*Service
