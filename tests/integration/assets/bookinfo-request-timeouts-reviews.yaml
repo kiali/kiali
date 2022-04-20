@@ -1,5 +1,5 @@
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: virtual-service-reviews
@@ -24,7 +24,7 @@ spec:
           weight: 34
       timeout: 2s
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: destination-rule-reviews

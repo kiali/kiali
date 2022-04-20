@@ -1,5 +1,4 @@
----
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: ratings-delay-abort-vs
@@ -20,7 +19,7 @@ spec:
         host: ratings
         subset: ratings-delay-abort-dr-subset-v1
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: ratings-delay-abort-dr
