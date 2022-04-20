@@ -13,7 +13,7 @@ import (
 	"github.com/kiali/kiali/tools/cmd"
 )
 
-func TestExternalHostNode(t *testing.T) {
+func _TestExternalHostNode(t *testing.T) {
 	params := map[string]string{"graphType": "versionedApp", "duration": "60s", "injectServiceNodes": "true"}
 	name := "external-service-foo-se"
 
@@ -27,7 +27,7 @@ func assertExternalNode(params map[string]string, yaml, name string, assert *ass
 	defer utils.DeleteFile(filePath, utils.BOOKINFO)
 	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
 
-	pollErr := wait.Poll(time.Second, 10*time.Minute, func() (bool, error) {
+	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		return NodeMatch(params, name, assert), nil
 	})
 	assert.Nil(pollErr, "Name %s should exist in node services names", name)
