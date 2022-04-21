@@ -3,6 +3,9 @@ package tests
 import (
 	"fmt"
 	"testing"
+	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/stretchr/testify/assert"
 
@@ -234,27 +237,22 @@ func assertGraphInvalid(params map[string]string, assert *assert.Assertions) {
 
 func assertGraph(params map[string]string, assert *assert.Assertions) {
 	params["namespaces"] = utils.BOOKINFO
-	graph, statusCode, err := utils.Graph(params)
-	assert.Equal(200, statusCode)
-	assert.Nil(err)
+	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+		graph, statusCode, err := utils.Graph(params)
+		assert.Equal(200, statusCode)
+		assert.Nil(err)
 
-	for key, value := range params {
-		switch key {
-		case "duration":
-			assert.Contains(value, fmt.Sprintf("%d", graph.Duration))
-		case "graphType":
-			assert.Equal(value, graph.GraphType)
+		for key, value := range params {
+			switch key {
+			case "duration":
+				assert.Contains(value, fmt.Sprintf("%d", graph.Duration))
+			case "graphType":
+				assert.Equal(value, graph.GraphType)
+			}
 		}
-	}
-	assert.NotNil(graph.Elements.Nodes)
-	assert.NotNil(graph.Elements.Edges)
-	// TODO better way to check if there are any graph nodes at all to be able to verify requested ones
-	for _, node := range graph.Elements.Nodes {
-		assert.NotNil(node.Data.NodeType)
-	}
-	for _, edge := range graph.Elements.Edges {
-		assert.NotNil(edge.Data.Traffic)
-	}
+		return len(graph.Elements.Nodes) > 0 && len(graph.Elements.Edges) > 0, nil
+	})
+	assert.Nil(pollErr, "Graph elements should contains Nodes and Edges")
 }
 
 func assertBoxBy(params map[string]string, assert *assert.Assertions) {

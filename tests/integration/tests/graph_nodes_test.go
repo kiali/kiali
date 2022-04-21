@@ -2,6 +2,9 @@ package tests
 
 import (
 	"testing"
+	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/stretchr/testify/assert"
 
@@ -45,7 +48,7 @@ func TestServiceGraphEmpty(t *testing.T) {
 
 func TestWorkloadGraph(t *testing.T) {
 	assert := assert.New(t)
-	name := "reviews-v2"
+	name := "details-v1"
 	graphType := "workload"
 	assertGraphConfig("workloads", graphType, utils.BOOKINFO, name, assert)
 }
@@ -58,17 +61,15 @@ func TestWorkloadGraphEmpty(t *testing.T) {
 }
 
 func assertGraphConfig(objectType, graphType, namespace, name string, assert *assert.Assertions) {
-	graph, _, _ := utils.Graph(map[string]string{"graphType": graphType, "namespaces": namespace})
-	// TODO better way to check if there are any graph nodes at all to be able to verify requested ones
-	if len(graph.Elements.Nodes) > 0 && len(graph.Elements.Edges) > 0 {
+	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		config, statusCode, err := utils.ObjectGraph(objectType, graphType, name, namespace)
 		assert.Equal(200, statusCode)
 		assert.Nil(err)
 		assert.Equal(config.GraphType, graphType)
 		assert.NotNil(config.Elements)
-		assert.NotEmpty(config.Elements.Nodes)
-		assert.NotEmpty(config.Elements.Edges)
-	}
+		return len(config.Elements.Nodes) > 0 && len(config.Elements.Edges) > 0, nil
+	})
+	assert.Nil(pollErr, "Graph elements should contains Nodes and Edges")
 }
 
 func assertEmptyGraphConfig(objectType, graphType, namespace, name string, assert *assert.Assertions) {
