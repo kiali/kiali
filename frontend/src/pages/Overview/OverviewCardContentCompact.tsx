@@ -33,7 +33,7 @@ class OverviewCardContentCompact extends React.Component<Props> {
       <>
         <div style={{ textAlign: 'left' }}>
           <span>
-            <div style={{ display: 'inline-block', width: '125px' }} data-overview-type={this.props.type}>{text}</div>
+            <div style={{ display: 'inline-block', width: '125px' }} data-test={'overview-type-' + this.props.type}>{text}</div>
             <div style={{ display: 'inline-block' }}>
               {status.inNotReady.length > 0 && (
                 <OverviewStatus
