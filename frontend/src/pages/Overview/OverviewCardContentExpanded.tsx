@@ -56,7 +56,7 @@ class OverviewCardContentExpanded extends React.Component<Props> {
     } else {
       text = nbItems + switchType(this.props.type, ' Applications', ' Services', ' Workloads');
     }
-    const mainLink = <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }} data-overview-type={this.props.type}>{text}</div>;
+    const mainLink = <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }} data-test={'overview-type-' + this.props.type}>{text}</div>;
     if (nbItems === status.notAvailable.length) {
       return (
         <div style={{ textAlign: 'left' }}>

@@ -210,7 +210,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
             variant="plain"
             isActive={this.props.displayMode === OverviewDisplayMode.EXPAND}
             style={{ padding: '0 4px 0 16px' }}
-            data-display-mode={OverviewDisplayMode[OverviewDisplayMode.EXPAND]}
+            data-test={'overview-type-' + OverviewDisplayMode[OverviewDisplayMode.EXPAND]}
           >
             <ThLargeIcon />
           </Button>
@@ -221,7 +221,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
             variant="plain"
             isActive={this.props.displayMode === OverviewDisplayMode.COMPACT}
             style={{ padding: '0 4px 0 4px' }}
-            data-display-mode={OverviewDisplayMode[OverviewDisplayMode.COMPACT]}
+            data-test={'overview-type-' + OverviewDisplayMode[OverviewDisplayMode.COMPACT]}
           >
             <ThIcon />
           </Button>
@@ -232,7 +232,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
             variant="plain"
             isActive={this.props.displayMode === OverviewDisplayMode.LIST}
             style={{ padding: '0 4px 0 4px' }}
-            data-display-mode={OverviewDisplayMode[OverviewDisplayMode.LIST]}
+            data-test={'overview-type-' + OverviewDisplayMode[OverviewDisplayMode.LIST]}
           >
             <ListIcon />
           </Button>

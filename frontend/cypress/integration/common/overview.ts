@@ -23,11 +23,16 @@ Before(() => {
 
 Given('user opens the overview page', () => {
     // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-    cy.visit(url + '/overview?refresh=0&duration=60');
+    cy.visit(url + '/overview?refresh=0');
 });
 
 When('user clicks in the {string} view', (view) => {
-    cy.get('button[data-display-mode="' + view + '"]').click();
+    cy.get('button[data-test="overview-type-' + view + '"]')
+        .click()
+        // Using the #loading_kiali_spinner selector we can control when the UI is still loading some data
+        // That may prevent that the test progress in cases where we need more control.
+        .get('#loading_kiali_spinner')
+        .should('not.exist');
 });
 
 When(`user filters {string} namespace`, (ns) => {
@@ -36,7 +41,9 @@ When(`user filters {string} namespace`, (ns) => {
         .should('have.value', 'namespace_search');
     cy.get('input[aria-label="filter_input_value"]')
         .type(ns)
-        .type('{enter}');
+        .type('{enter}')
+        .get('#loading_kiali_spinner')
+        .should('not.exist');
 });
 
 When(`user filters {string} health`, (health) => {
@@ -44,7 +51,9 @@ When(`user filters {string} health`, (health) => {
         .select('Health')
         .should('have.value', 'health');
     cy.get('select[aria-label="filter_select_value"]')
-        .select(health);
+        .select(health)
+        .get('#loading_kiali_spinner')
+        .should('not.exist');
 });
 
 When(`user selects Health for {string}`, (type) => {
@@ -61,14 +70,20 @@ When(`user selects Health for {string}`, (type) => {
             break;
     }
     cy.get('button[aria-labelledby^="overview-type"]')
-        .click();
+        .click()
+        .get('#loading_kiali_spinner')
+        .should('not.exist');
     cy.get('button[id^="' + innerId + '"]')
-        .click();
+        .click()
+        .get('#loading_kiali_spinner')
+        .should('not.exist');
 });
 
 When(`user sorts by name desc`, () => {
     cy.get('button[data-sort-asc="true"]')
-        .click();
+        .click()
+        .get('#loading_kiali_spinner')
+        .should('not.exist');
 });
 
 When(`user selects {string} time range`, (interval) => {
@@ -79,24 +94,28 @@ When(`user selects {string} time range`, (interval) => {
             break;
     }
     cy.get('button[aria-labelledby^="time_range_duration"]')
-        .click();
+        .click()
+        .get('#loading_kiali_spinner')
+        .should('not.exist');
     cy.get('button[id^="' + innerId + '"]')
-        .click();
+        .click()
+        .get('#loading_kiali_spinner')
+        .should('not.exist');
 });
 
 Then(`user sees the {string} namespace`, (ns) => {
-    cy.get('article[data-namespace="' + ns + '"]');
+    cy.get('article[data-test^="' + ns + '"]');
 });
 
 Then(`user doesn't see the {string} namespace`, (ns) => {
-    cy.get('article[data-namespace="' + ns + '"]').should('not.exist');
+    cy.get('article[data-test^="' + ns + '"]').should('not.exist');
 });
 
 Then(`user sees a {string} {string} namespace`, (view, ns) => {
     if (view === "LIST") {
         cy.get('td[role="gridcell"]').contains(ns);
     } else {
-        cy.get('article[data-namespace="' + ns + '"][data-display-mode="' + view + '"]');
+        cy.get('article[data-test="' + ns + '-' + view +'"]');
     }
 });
 
@@ -113,7 +132,7 @@ Then(`user sees the {string} namespace with {string}`, (ns, type) => {
             innerType = 'service';
             break;
     }
-    cy.get('article[data-namespace="' + ns + '"]').find('[data-overview-type="' + innerType + '"]');
+    cy.get('article[data-test^="' + ns + '"]').find('[data-test="overview-type-' + innerType + '"]');
 });
 
 Then(`user sees the {string} namespace list`, (nslist) => {
@@ -121,10 +140,10 @@ Then(`user sees the {string} namespace list`, (nslist) => {
     cy.get('article')
         .should('have.length', nss.length)
         .each(($a, i) => {
-            expect($a.attr("data-namespace")).be.eq(nss[i]);
+            expect($a.attr("data-test")).includes(nss[i]);
         });
 });
 
 Then(`user sees the {string} namespace with Inbound traffic {string}`, (ns, duration) => {
-    cy.get('article[data-namespace="' + ns + '"]').find('span[data-sparkline-duration="' + duration + '"]');
+    cy.get('article[data-test^="' + ns + '"]').find('span[data-test="sparkline-duration-' + duration + '"]');
 });
