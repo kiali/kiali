@@ -44,6 +44,9 @@ Cypress.Commands.add('login', (provider: string, username: string, password: str
 		} else {
 			if (haveCookie === false) {
 				cy.intercept('api/authenticate').as('authorized') //request setting kiali cookie
+				// Cypress.Cookies.debug(true) // now Cypress will log when it alters cookies
+				// cy.getCookies()
+
 				cy.log(
 					`provider: ${provider}, 
 					username: ${username},
@@ -63,9 +66,10 @@ Cypress.Commands.add('login', (provider: string, username: string, password: str
 					cy.get('#inputPassword').type(password);
 					cy.get('button[type="submit"]').click()
 					cy.wait('@authorized').its('response.statusCode').should('eq', 200)
-					cy.getCookie('kiali-token', { timeout: 5000 }).should('exist').then((c) => {
+					cy.getCookie('kiali-token-aes', { timeout: 15000 }).should('exist').then((c) => {
 						haveCookie = true
 					})
+
 				}
 			} else {
 				cy.log('got an auth cookie, skipping login')
