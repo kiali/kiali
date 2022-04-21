@@ -23,7 +23,7 @@ Before(() => {
 
 Given('user opens the overview page', () => {
     // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-    cy.visit(url + '/overview?refresh=0');
+    cy.visit(url + '/overview?refresh=0&duration=60');
 });
 
 When('user clicks in the {string} view', (view) => {
