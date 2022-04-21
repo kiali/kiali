@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -9,6 +10,8 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/graph/config/cytoscape"
+	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/httputil"
@@ -206,6 +209,36 @@ func ServiceDetails(name, namespace string) (*ServiceDetailsJson, error) {
 	}
 }
 
+func Traces(objectType, name, namespace string) (*jaeger.JaegerResponse, int, error) {
+	body, code, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/traces?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, time.Now().UTC().Add(-time.Minute*time.Duration(10)).UnixMicro()), client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		traces := new(jaeger.JaegerResponse)
+		err = json.Unmarshal(body, &traces)
+		if err == nil {
+			return traces, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
+	}
+}
+
+func Spans(objectType, name, namespace string) ([]jaeger.JaegerSpan, int, error) {
+	body, code, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/spans?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, time.Now().UTC().Add(-time.Minute*time.Duration(10)).UnixMicro()), client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		spans := []jaeger.JaegerSpan{}
+		err = json.Unmarshal(body, &spans)
+		if err == nil {
+			return spans, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
+	}
+}
+
 func WorkloadsList(namespace string) (*WorkloadListJson, error) {
 	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/workloads", client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
@@ -279,4 +312,44 @@ func IstioConfigPermissions(namespace string) (*models.IstioConfigPermissions, e
 	} else {
 		return nil, err
 	}
+}
+
+func Graph(params map[string]string) (*cytoscape.Config, int, error) {
+	url := fmt.Sprintf("%s/api/namespaces/graph?%s", client.kialiURL, ParamsAsString(params))
+	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		graph := new(cytoscape.Config)
+		err = json.Unmarshal(body, &graph)
+		if err == nil {
+			return graph, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
+	}
+}
+
+func ObjectGraph(objectType, graphType, name, namespace string) (*cytoscape.Config, int, error) {
+	url := fmt.Sprintf("%s/api/namespaces/%s/%s/%s/graph?duration=60s&graphType=%s", client.kialiURL, namespace, objectType, name, graphType)
+	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		graph := new(cytoscape.Config)
+		err = json.Unmarshal(body, &graph)
+		if err == nil {
+			return graph, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
+	}
+}
+
+func ParamsAsString(params map[string]string) string {
+	result := ""
+	for k, v := range params {
+		result += k + "=" + v + "&"
+	}
+	return result
 }

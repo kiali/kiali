@@ -1,0 +1,13 @@
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: circuitbreaker-reviews-all-cb
+spec:
+  host: reviews
+  trafficPolicy:
+    outlierDetection:
+      consecutiveErrors: 1
+      interval: 1s
+      baseEjectionTime: 10s
+      maxEjectionPercent: 100

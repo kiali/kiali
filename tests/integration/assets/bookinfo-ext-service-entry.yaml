@@ -1,0 +1,76 @@
+##########
+# This creates a simulated external service for the ratings bookinfo service such that
+# when the reviews service requests ratings from the ratings service, that request will
+# go out to an "external service outside of the mesh" to obtain the ratings.
+#
+# The ServiceEntry defines this external service.
+#
+# The VirtualService will route traffic to either the internal ratings-v1 service OR
+# this new external ratings-v1 service (or both depending on how you set the weights).
+#
+# To create this simulated external ratings-v1 service, you must run a ratings service
+# youself by executing this command:
+#
+#   $ docker run -t -i --network=host istio/examples-bookinfo-ratings-v1
+#
+# At this point, you have a ratings service running outside of your local cluster bound
+# to your host's IP on port 9080.
+#
+# IMPORTANT! Before creating the Istio objects in the next step, you MUST edit this file,
+# particularly the ServiceEntry's spec.endpoints.address. Change this IP to your own
+# machine's host IP. Otherwise, when the bookinfo's reviews service tries to connect to
+# this external service it will fail to connect.
+#
+# At this point you can use kubectl or oc to create these objects. For example:
+#
+#   $ oc apply -n bookinfo -f bookinfo-ext-service-entry.yaml
+#
+# After you create these Istio objects, look in Kiali's bookinfo graph between the
+# reviews and ratings services to see this new traffic going to the external service.
+##########
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: external-service-foo-se
+spec:
+  hosts:
+  - foo.bookinfo.ext # this is an arbitrary string; only used in VS
+  location: MESH_EXTERNAL
+  ports:
+  - number: 9080
+    name: http-ext
+    protocol: HTTP
+  resolution: STATIC
+  endpoints:
+  - address: 192.168.1.19 # IMPORTANT! Change this IP address to your own host IP address
+    ports:
+      http-ext: 9080
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: external-service-foo-vs
+spec:
+  hosts:
+    - ratings
+  http:
+  - route:
+    - destination:
+        host: ratings
+        subset: external-service-foo-dr-subset-v1
+      weight: 0
+    - destination:
+        host: foo.bookinfo.ext
+      weight: 100
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: external-service-foo-dr
+spec:
+  host: ratings
+  subsets:
+  - name: external-service-foo-dr-subset-v1
+    labels:
+      version: v1
