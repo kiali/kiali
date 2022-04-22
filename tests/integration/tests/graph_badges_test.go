@@ -150,7 +150,7 @@ func TestFultInjectionService(t *testing.T) {
 func assertGraphBadges(params map[string]string, yaml, badge string, assert *assert.Assertions) {
 	params["namespaces"] = utils.BOOKINFO
 	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/"+yaml)
-	preBadgeCount := BadgeCount(params, badge, assert)
+	preBadgeCount := BadgeCount(params, badge)
 	defer utils.DeleteFile(filePath, utils.BOOKINFO)
 	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
 
