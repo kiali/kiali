@@ -61,6 +61,30 @@ type IstioConfigListJson struct {
 	IstioValidations ObjectValidations `json:"validations"`
 }
 
+type MetricJson struct {
+	Labels     map[string]string `json:"labels"`
+	Datapoints []interface{}     `json:"datapoints"`
+	Stat       string            `json:"stat,omitempty"`
+	Name       string            `json:"name"`
+}
+
+// MetricsJson contains all simple metrics and histograms data for standard timeseries queries
+type MetricsJson struct {
+	GrpcReceived          []MetricJson `json:"grpc_received,omitempty"`
+	GrpcSent              []MetricJson `json:"grpc_sent,omitempty"`
+	RequestCount          []MetricJson `json:"request_count,omitempty"`
+	RequestErrorCount     []MetricJson `json:"request_error_count,omitempty"`
+	RequestDurationMillis []MetricJson `json:"request_duration_millis,omitempty"`
+	RequestThroughput     []MetricJson `json:"request_throughput,omitempty"`
+	ResponseThroughput    []MetricJson `json:"response_throughput,omitempty"`
+	RequestSize           []MetricJson `json:"request_size,omitempty"`
+	ResponseSize          []MetricJson `json:"response_size,omitempty"`
+	TcpReceived           []MetricJson `json:"tcp_received,omitempty"`
+	TcpSent               []MetricJson `json:"tcp_sent,omitempty"`
+	TcpOpened             []MetricJson `json:"tcp_opened,omitempty"`
+	TcpClosed             []MetricJson `json:"tcp_closed,omitempty"`
+}
+
 var client = *NewKialiClient()
 
 const BOOKINFO = "bookinfo"
@@ -346,11 +370,11 @@ func ObjectGraph(objectType, graphType, name, namespace string) (*cytoscape.Conf
 	}
 }
 
-func NamespaceMetrics(namespace string, params map[string]string) (*models.MetricsMap, error) {
+func NamespaceMetrics(namespace string, params map[string]string) (*MetricsJson, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/metrics?%s", client.kialiURL, namespace, ParamsAsString(params))
 	body, _, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		metrics := new(models.MetricsMap)
+		metrics := new(MetricsJson)
 		err = json.Unmarshal(body, &metrics)
 		if err == nil {
 			return metrics, nil
@@ -362,11 +386,11 @@ func NamespaceMetrics(namespace string, params map[string]string) (*models.Metri
 	}
 }
 
-func ServiceMetrics(namespace, service string, params map[string]string) (*models.MetricsMap, error) {
+func ServiceMetrics(namespace, service string, params map[string]string) (*MetricsJson, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/services/%s/metrics?%s", client.kialiURL, namespace, service, ParamsAsString(params))
 	body, _, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		metrics := new(models.MetricsMap)
+		metrics := new(MetricsJson)
 		err = json.Unmarshal(body, &metrics)
 		if err == nil {
 			return metrics, nil

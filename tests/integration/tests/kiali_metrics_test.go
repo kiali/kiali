@@ -15,6 +15,10 @@ func TestNamespaceMetrics(t *testing.T) {
 
 	assert.Nil(err)
 	assert.NotEmpty(metrics)
+	assert.NotEmpty(metrics.TcpSent)
+	assert.NotEmpty(metrics.TcpSent[0].Datapoints)
+	assert.NotEmpty(metrics.TcpReceived)
+	assert.NotEmpty(metrics.TcpReceived[0].Datapoints)
 }
 
 func TestServiceMetrics(t *testing.T) {
@@ -25,4 +29,10 @@ func TestServiceMetrics(t *testing.T) {
 
 	assert.Nil(err)
 	assert.NotEmpty(metrics)
+	assert.NotEmpty(metrics.RequestCount)
+	assert.NotEmpty(metrics.RequestCount[0].Datapoints)
+	assert.NotEmpty(metrics.RequestDurationMillis)
+	assert.NotEmpty(metrics.RequestDurationMillis[0].Datapoints)
+	assert.NotEmpty(metrics.RequestErrorCount)
+	assert.NotEmpty(metrics.RequestErrorCount[0].Datapoints)
 }
