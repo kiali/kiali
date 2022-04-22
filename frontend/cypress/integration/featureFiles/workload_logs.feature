@@ -9,7 +9,7 @@ Feature: Workload logs tab
     Given user is at administrator perspective
 
   Scenario: The logs tab should show the logs of a pod
-    Given I am on the "productpage-v1" workload detail page
+    Given I am on the "productpage-v1" workload detail page of the "bookinfo" namespace
     When I go to the Logs tab of the workload detail page
     Then I should see the "istio-proxy" container listed
     And I should see the "productpage" container listed
