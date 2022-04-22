@@ -155,7 +155,7 @@ func assertGraphBadges(params map[string]string, yaml, badge string, assert *ass
 	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		badgeCount := BadgeCount(params, badge, assert)
+		badgeCount := BadgeCount(params, badge)
 		if badgeCount > preBadgeCount {
 			return true, nil
 		}
@@ -164,11 +164,12 @@ func assertGraphBadges(params map[string]string, yaml, badge string, assert *ass
 	assert.Nil(pollErr, "Badge %s should exist", badge)
 }
 
-func BadgeCount(params map[string]string, badge string, assert *assert.Assertions) int {
+func BadgeCount(params map[string]string, badge string) int {
 	count := 0
-	graph, statusCode, err := utils.Graph(params)
-	assert.Equal(200, statusCode)
-	assert.Nil(err)
+	graph, statusCode, _ := utils.Graph(params)
+	if statusCode != 200 {
+		return 0
+	}
 	for _, node := range graph.Elements.Nodes {
 		switch badge {
 		case "hasCB":

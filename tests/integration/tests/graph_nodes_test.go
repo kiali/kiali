@@ -63,8 +63,9 @@ func TestWorkloadGraphEmpty(t *testing.T) {
 func assertGraphConfig(objectType, graphType, namespace, name string, assert *assert.Assertions) {
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		config, statusCode, err := utils.ObjectGraph(objectType, graphType, name, namespace)
-		assert.Equal(200, statusCode)
-		assert.Nil(err)
+		if statusCode != 200 {
+			return false, err
+		}
 		assert.Equal(config.GraphType, graphType)
 		assert.NotNil(config.Elements)
 		return len(config.Elements.Nodes) > 0 && len(config.Elements.Edges) > 0, nil

@@ -239,8 +239,9 @@ func assertGraph(params map[string]string, assert *assert.Assertions) {
 	params["namespaces"] = utils.BOOKINFO
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		graph, statusCode, err := utils.Graph(params)
-		assert.Equal(200, statusCode)
-		assert.Nil(err)
+		if statusCode != 200 {
+			return false, err
+		}
 
 		for key, value := range params {
 			switch key {
