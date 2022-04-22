@@ -346,6 +346,38 @@ func ObjectGraph(objectType, graphType, name, namespace string) (*cytoscape.Conf
 	}
 }
 
+func NamespaceMetrics(namespace string, params map[string]string) (*models.MetricsMap, error) {
+	url := fmt.Sprintf("%s/api/namespaces/%s/metrics?%s", client.kialiURL, namespace, ParamsAsString(params))
+	body, _, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		metrics := new(models.MetricsMap)
+		err = json.Unmarshal(body, &metrics)
+		if err == nil {
+			return metrics, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+}
+
+func ServiceMetrics(namespace, service string, params map[string]string) (*models.MetricsMap, error) {
+	url := fmt.Sprintf("%s/api/namespaces/%s/services/%s/metrics?%s", client.kialiURL, namespace, service, ParamsAsString(params))
+	body, _, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		metrics := new(models.MetricsMap)
+		err = json.Unmarshal(body, &metrics)
+		if err == nil {
+			return metrics, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+}
+
 func ParamsAsString(params map[string]string) string {
 	result := ""
 	for k, v := range params {
