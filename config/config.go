@@ -586,7 +586,7 @@ func NewConfig() (c *Config) {
 				IstiodDeploymentName:              "istiod",
 				IstiodPodMonitoringPort:           15014,
 				RootNamespace:                     "istio-system",
-				UrlServiceVersion:                 "http://istiod:15014/version",
+				UrlServiceVersion:                 "http://istiod.istio-system:15014/version",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
