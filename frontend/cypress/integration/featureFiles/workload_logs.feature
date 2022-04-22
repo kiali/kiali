@@ -16,3 +16,28 @@ Feature: Workload logs tab
     And the "istio-proxy" container should be checked
     And the "productpage" container should be checked
     And I should see some "productpage-v1" pod selected in the pod selector
+
+  Scenario: The log pane of the logs tab should only show the lines with the requested text
+    Given I am on the logs tab of the "productpage-v1" workload detail page of the "bookinfo" namespace
+    When I type "DEBUG" on the Show text field
+    Then the log pane should only show log lines containing "DEBUG"
+
+  Scenario: The log pane of the logs tab should hide the lines with the requested text
+    Given I am on the logs tab of the "productpage-v1" workload detail page of the "bookinfo" namespace
+    When I type "DEBUG" on the Hide text field
+    Then the log pane should only show log lines not containing "DEBUG"
+
+  Scenario: The log pane of the logs tab should limit the number of log lines that are fetched
+    Given I am on the logs tab of the "productpage-v1" workload detail page of the "bookinfo" namespace
+    When I choose to show 10 lines of logs
+    Then the log pane should show only 10 lines of logs of each selected container
+
+  Scenario: The log pane of the logs tab should only show logs for the selected container
+    Given I am on the logs tab of the "productpage-v1" workload detail page of the "bookinfo" namespace
+    When I select only the "productpage" container
+    Then the log pane should only show logs for the "productpage" container
+
+  Scenario: The log pane of the logs tab should show spans
+    Given I am on the logs tab of the "productpage-v1" workload detail page of the "bookinfo" namespace
+    When I enable visualization of spans
+    Then the log pane should show spans

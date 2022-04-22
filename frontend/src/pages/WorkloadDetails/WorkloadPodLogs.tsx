@@ -387,6 +387,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                               />
                               <label
                                 className="pf-c-check__label"
+                                htmlFor={`spans-show-`}
                                 style={{
                                   backgroundColor: PFColors.Black1000,
                                   color: spanColor,
