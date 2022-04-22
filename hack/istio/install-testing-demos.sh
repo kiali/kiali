@@ -47,12 +47,12 @@ echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 # Only the args passed to the scripts differ from each other.
 if [[ "${IS_OPENSHIFT}" = "true" ]]; then
   echo "Deploying bookinfo demo..."
-  "${SCRIPT_DIR}/install-bookinfo-demo.sh" -tg
+  "${SCRIPT_DIR}/install-bookinfo-demo.sh"
   echo "Deploying error rates demo..."
   "${SCRIPT_DIR}/install-error-rates-demo.sh"
 else 
   echo "Deploying bookinfo demo..."
-  "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -tg
+  "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl
   echo "Deploying error rates demo..."
   "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl
 fi
