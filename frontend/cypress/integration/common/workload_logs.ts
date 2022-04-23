@@ -1,26 +1,11 @@
 import { Given, Then, When } from "cypress-cucumber-preprocessor/steps";
 
-function goToWorkloadDetailPage(namespace: string, workload: string) {
-    // Go to workloads list
-    cy.get("#Workloads").click();
-
-    // Select "bookinfo" namespace
-    cy.get("#namespace-selector").click();
-    cy.get("#bulk-select-id").uncheck();
-    cy.get(`#namespace-list-item\\[${namespace}\\] input`).check();
-    cy.get("#namespace-selector").click();
-
-    // Open workload detail page
-    cy.get(`[data-test=VirtualItem_Nsbookinfo_${workload}] a`).click();
-}
-
 Given("I am on the {string} workload detail page of the {string} namespace", (workload, namespace) => {
-    goToWorkloadDetailPage(namespace, workload);
+    cy.visit(`/console/namespaces/${namespace}/workloads/${workload}`);
 });
 
 Given("I am on the logs tab of the {string} workload detail page of the {string} namespace", (workload, namespace) => {
-    goToWorkloadDetailPage(namespace, workload);
-    cy.get("[data-test=workload-details-logs-tab]").click();
+    cy.visit(`/console/namespaces/${namespace}/workloads/${workload}?tab=logs`);
 });
 
 When("I go to the Logs tab of the workload detail page", () => {
