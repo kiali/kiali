@@ -6,7 +6,7 @@ Feature: Workload logs tab
 
   Background:
     Given I open Kiali URL
-    Given user is at administrator perspective
+    And user is at administrator perspective
 
   Scenario: The logs tab should show the logs of a pod
     Given I am on the "productpage-v1" workload detail page of the "bookinfo" namespace
