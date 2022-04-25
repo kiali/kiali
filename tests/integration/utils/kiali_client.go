@@ -90,7 +90,7 @@ var client = *NewKialiClient()
 
 const BOOKINFO = "bookinfo"
 const ASSETS = "tests/integration/assets"
-const TIMEOUT = 10*time.Second
+const TIMEOUT = 10 * time.Second
 
 func NewKialiClient() (c *KialiClient) {
 	c = &KialiClient{
