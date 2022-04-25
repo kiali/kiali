@@ -297,6 +297,11 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
     INGRESS_ROUTE=$(${CLIENT_EXE} get route istio-ingressgateway -o jsonpath='{.spec.host}{"\n"}' -n ${ISTIO_NAMESPACE})
     echo "Traffic Generator will use the OpenShift ingress route of: ${INGRESS_ROUTE}"
   else
+    # Important note for minikube users
+    # Ingress and Egress configuration depend on the platform
+    # Check your "minikube tunnel" and/or Istio mesh config i.e. meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY
+    # if you experiment some weird behaviour compared with the CI results
+
     # for now, we only support minikube k8s environments and maybe a good guess otherwise (e.g. for kind clusters)
     if minikube -p ${MINIKUBE_PROFILE} status > /dev/null 2>&1 ; then
       INGRESS_HOST=$(minikube -p ${MINIKUBE_PROFILE} ip)
