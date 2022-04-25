@@ -71,13 +71,14 @@ export function getColWithRowText(rowSearchText: string, colName: string) {
   return cy.get(`th[data-label="${colName}"]`).then($th => {
     // Get the col number
     const colNum = $th.attr('data-key');
+    expect(colNum).to.not.be.empty;
 
-    expect(colName).to.not.be.empty;
+    cy.log(`Looking in column named: ${colName} at index: ${colNum}`)
 
     return cy
       .get('tbody')
       .contains('tr', rowSearchText)
       .find('td')
-      .then($col => $col[colNum]);
+      .then($cols => $cols[colNum]);
   });
 }
