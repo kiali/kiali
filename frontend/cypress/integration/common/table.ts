@@ -13,6 +13,9 @@ And(
   'the {string} column on the {string} row has a link matching {string}',
   (column: string, rowText: string, link: string) => {
     getColWithRowText(rowText, column).within(() => {
+      // TODO: Remove 2 of these. Testing statements.
+      cy.get('a');
+      cy.get(`a[href="${link}"]`);
       cy.get(`a[href="${link}"]`).should('be.visible');
     });
   }
@@ -73,7 +76,7 @@ export function getColWithRowText(rowSearchText: string, colName: string) {
     const colNum = $th.attr('data-key');
     expect(colNum).to.not.be.empty;
 
-    cy.log(`Looking in column named: ${colName} at index: ${colNum}`)
+    cy.log(`Looking in column named: ${colName} at index: ${colNum}`);
 
     return cy
       .get('tbody')
