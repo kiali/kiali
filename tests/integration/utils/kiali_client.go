@@ -434,11 +434,11 @@ func PodLogs(name, namespace string, params map[string]string) (*business.PodLog
 }
 
 func TimeSince() int64 {
-	return time.Now().UTC().Add(-time.Minute*time.Duration(10)).UnixMicro()
+	return time.Now().UTC().Add(-time.Minute * time.Duration(10)).UnixMicro()
 }
 
 func TimeSinceSeconds() int64 {
-	return time.Now().UTC().Add(-time.Minute*time.Duration(10)).Unix()
+	return time.Now().UTC().Add(-time.Minute * time.Duration(10)).Unix()
 }
 
 func ParamsAsString(params map[string]string) string {
