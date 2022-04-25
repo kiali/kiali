@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils"
 	"github.com/kiali/kiali/tools/cmd"
 )
@@ -150,12 +151,12 @@ func TestFultInjectionService(t *testing.T) {
 func assertGraphBadges(params map[string]string, yaml, badge string, assert *assert.Assertions) {
 	params["namespaces"] = utils.BOOKINFO
 	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/"+yaml)
-	preBadgeCount := BadgeCount(params, badge, assert)
+	preBadgeCount := BadgeCount(params, badge)
 	defer utils.DeleteFile(filePath, utils.BOOKINFO)
 	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		badgeCount := BadgeCount(params, badge, assert)
+		badgeCount := BadgeCount(params, badge)
 		if badgeCount > preBadgeCount {
 			return true, nil
 		}
@@ -164,11 +165,13 @@ func assertGraphBadges(params map[string]string, yaml, badge string, assert *ass
 	assert.Nil(pollErr, "Badge %s should exist", badge)
 }
 
-func BadgeCount(params map[string]string, badge string, assert *assert.Assertions) int {
+func BadgeCount(params map[string]string, badge string) int {
 	count := 0
 	graph, statusCode, err := utils.Graph(params)
-	assert.Equal(200, statusCode)
-	assert.Nil(err)
+	if statusCode != 200 {
+		log.Debugf("Graph response status code %d and error %s", statusCode, err)
+		return 0
+	}
 	for _, node := range graph.Elements.Nodes {
 		switch badge {
 		case "hasCB":

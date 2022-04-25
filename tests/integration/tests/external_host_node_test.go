@@ -28,20 +28,21 @@ func assertExternalNode(params map[string]string, yaml, name string, assert *ass
 	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		return NodeMatch(params, name, assert), nil
+		return NodeMatch(params, name)
 	})
 	assert.Nil(pollErr, "Name %s should exist in node services names", name)
 }
 
-func NodeMatch(params map[string]string, nodeName string, assert *assert.Assertions) bool {
+func NodeMatch(params map[string]string, nodeName string) (bool, error) {
 	graph, statusCode, err := utils.Graph(params)
-	assert.Equal(200, statusCode)
-	assert.Nil(err)
+	if statusCode != 200 {
+		return false, err
+	}
 	for _, node := range graph.Elements.Nodes {
 		name := node.Data.Service
 		if name == nodeName {
-			return true
+			return true, err
 		}
 	}
-	return false
+	return false, err
 }
