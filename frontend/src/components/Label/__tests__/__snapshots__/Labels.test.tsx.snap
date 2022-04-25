@@ -5,6 +5,7 @@ exports[`#Labels render correctly with data should render badges with More label
   className="faowcuh"
 >
   <div
+    data-test="app-label-container"
     key="label_0"
   >
     <Label
@@ -14,6 +15,7 @@ exports[`#Labels render correctly with data should render badges with More label
     />
   </div>
   <div
+    data-test="version-label-container"
     key="label_1"
   >
     <Label
@@ -24,6 +26,7 @@ exports[`#Labels render correctly with data should render badges with More label
   </div>
   <Component
     className="firjkjj"
+    data-test="label_more"
     key="label_more"
     onClick={[Function]}
     variant="link"
@@ -38,6 +41,7 @@ exports[`#Labels render correctly with data should render badges without More la
   className="faowcuh"
 >
   <div
+    data-test="app-label-container"
     key="label_0"
   >
     <Label
@@ -47,6 +51,7 @@ exports[`#Labels render correctly with data should render badges without More la
     />
   </div>
   <div
+    data-test="version-label-container"
     key="label_1"
   >
     <Label

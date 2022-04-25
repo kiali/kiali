@@ -94,7 +94,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
         {item.istioReferences &&
           item.istioReferences.length > 0 &&
           item.istioReferences.map(ir => (
-            <li>
+            <li key={ir.namespace ? `${ir.name}_${ir.namespace}` : ir.name}>
               <PFBadge badge={PFBadges[ir.objectType]} position={TooltipPosition.top} />
               <IstioObjectLink name={ir.name} namespace={ir.namespace || ''} type={ir.objectType.toLowerCase()}>
                 {ir.name}

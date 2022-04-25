@@ -173,4 +173,3 @@ users:
 - "system:serviceaccount:${NAMESPACE_BETA}:default"
 SCC
 fi
-

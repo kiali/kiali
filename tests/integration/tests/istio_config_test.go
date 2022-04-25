@@ -78,7 +78,7 @@ func TestIstioConfigList(t *testing.T) {
 func TestIstioConfigDetails(t *testing.T) {
 	name := "bookinfo"
 	assert := assert.New(t)
-	config, err := utils.IstioConfigDetails(utils.BOOKINFO, name, kubernetes.VirtualServices)
+	config, _, err := utils.IstioConfigDetails(utils.BOOKINFO, name, kubernetes.VirtualServices)
 
 	assert.Nil(err)
 	assert.NotNil(config)
@@ -96,10 +96,20 @@ func TestIstioConfigDetails(t *testing.T) {
 	}
 }
 
+func TestIstioConfigInvalidName(t *testing.T) {
+	name := "invalid"
+	assert := assert.New(t)
+	config, code, _ := utils.IstioConfigDetails(utils.BOOKINFO, name, kubernetes.VirtualServices)
+	assert.NotEqual(200, code)
+	assert.Empty(config)
+}
+
 func TestIstioConfigPermissions(t *testing.T) {
 	assert := assert.New(t)
 	perms, err := utils.IstioConfigPermissions(utils.BOOKINFO)
 
 	assert.Nil(err)
 	assert.NotEmpty(perms)
+	assert.NotEmpty((*perms)[utils.BOOKINFO])
+	assert.NotEmpty((*(*perms)[utils.BOOKINFO])["authorizationpolicies"])
 }

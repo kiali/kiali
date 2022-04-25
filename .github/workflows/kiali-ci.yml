@@ -4,8 +4,16 @@ on:
   # Run on master and release branches
   push:
     branches: [master, "^v\\d+\\.\\d+$"]
+    paths-ignore:
+      - 'design/**'
+      - '**/*.md'
+      - '**/*.adoc'
   pull_request:
     branches: [master, "^v\\d+\\.\\d+$"]
+    paths-ignore:
+      - 'design/**'
+      - '**/*.md'
+      - '**/*.adoc'
 
 jobs:
   initialize:
@@ -17,30 +25,49 @@ jobs:
       # to use the branch we are running against: GITHUB_BASE_REF. When run
       # as a release, we want to use the current branch ref: GITHUB_REF_NAME.
       target-branch: ${{ github.base_ref || github.ref_name }}
+      build-branch: ${{ steps.branch-master.outputs.branch-master || steps.branch-pr.outputs.branch-pr }}
     steps:
       # The initialize job gathers variables for later use in jobs.
       # We are using this technique rather environment variables because at the moment, they won't work with reusable jobs.
       # A positive side effect of this is that we can print all variables at start for debugging and troubleshooting.
       - run: echo "target-branch -> ${{ github.base_ref || github.ref_name }}"
+      # For the building branch, if we are running agains a PR, we need to indicate in the branch that is coming from a PR
+      - run: |
+          echo "::set-output name=branch-version::${{ github.ref_name }}"
+          echo "build-branch -> ${{ github.ref_name }}"
+        id: branch-master
+        if: ${{ !github.base_ref }}
+      - run: |
+          echo "::set-output name=branch-pr::refs/pull/${{ github.ref_name }}"
+          echo "build-branch -> ${{ github.base_ref }}"
+        id: branch-pr
+        if: ${{ github.base_ref }}
   build_backend:
     name: Build backend
     uses: ./.github/workflows/build-backend.yml
     needs: [initialize]
+    with:
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
   build_frontend:
     name: Build frontend
     uses: ./.github/workflows/build-frontend.yml
     needs: [initialize]
     with:
-      target_branch: ${{needs.initialize.outputs.target-branch}}
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
   integration_tests_backend:
     name: Run backend integration tests
     uses: ./.github/workflows/integration-tests-backend.yml
     needs: [initialize, build_backend, build_frontend]
     with:
-      target_branch: ${{needs.initialize.outputs.target-branch}}
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
   integration_tests_frontend:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend.yml
     needs: [initialize, build_backend, build_frontend]
     with:
-      target_branch: ${{needs.initialize.outputs.target-branch}}
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}

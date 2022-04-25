@@ -1,8 +1,11 @@
 name: Build Backend
 
 on:
-  workflow_call
-
+  workflow_call:
+    inputs:
+      build_branch:
+        required: true
+        type: string
 jobs:
   build_backend:
     name: Build and unit test backend
@@ -10,6 +13,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.build_branch }}
 
       - name: Set up Go
         uses: actions/setup-go@v3

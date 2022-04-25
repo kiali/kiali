@@ -1,16 +1,8 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": [
-      "es2019",
-      "dom"
-    ],
-    "types": [
-      "cypress"
-    ]
+    "lib": ["es2019", "dom"],
+    "types": ["cypress"]
   },
-  "include": [
-    "**/*.ts",
-    "plugins/bdd.ts"
-  ]
+  "include": ["**/*.ts"]
 }

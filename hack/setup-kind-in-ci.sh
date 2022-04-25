@@ -40,6 +40,9 @@ set -e
 # set up some of our defaults
 DORP="${DORP:-docker}"
 
+# Defaults the branch to master unless it is already set
+TARGET_BRANCH="${TARGET_BRANCH:-master}"
+
 # If a specific version of Istio hasn't been provided, try and guess the right one
 # based on the Kiali branch being tested (TARGET_BRANCH) and the compatibility matrices:
 # https://kiali.io/docs/installation/installation-guide/prerequisites/
