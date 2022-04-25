@@ -236,7 +236,7 @@ func ServiceDetails(name, namespace string) (*ServiceDetailsJson, error) {
 }
 
 func Traces(objectType, name, namespace string) (*jaeger.JaegerResponse, int, error) {
-	body, code, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/traces?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, time.Now().UTC().Add(-time.Minute*time.Duration(10)).UnixMicro()), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/traces?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince()), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		traces := new(jaeger.JaegerResponse)
 		err = json.Unmarshal(body, &traces)
@@ -251,7 +251,7 @@ func Traces(objectType, name, namespace string) (*jaeger.JaegerResponse, int, er
 }
 
 func Spans(objectType, name, namespace string) ([]jaeger.JaegerSpan, int, error) {
-	body, code, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/spans?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, time.Now().UTC().Add(-time.Minute*time.Duration(10)).UnixMicro()), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/spans?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince()), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		spans := []jaeger.JaegerSpan{}
 		err = json.Unmarshal(body, &spans)
@@ -404,8 +404,21 @@ func ServiceMetrics(namespace, service string, params map[string]string) (*Metri
 	}
 }
 
-func PodLogs(name, namespace string) (*business.PodLog, error) {
-	url := fmt.Sprintf("%s/api/namespaces/%s/pods/%s/logs?container=details&sinceTime=%d&tailLines=100&isProxy=false", client.kialiURL, namespace, name, time.Now().UTC().Add(-time.Minute*time.Duration(10)).UnixMicro()))
+func FirstPodName(name, namespace string) (string, error) {
+	workload, err := WorkloadDetails(name, namespace)
+	if err == nil {
+		if len(workload.Pods) > 0 {
+			return workload.Pods[0].Name, nil
+		} else {
+			return "", nil
+		}
+	} else {
+		return "", err
+	}
+}
+
+func PodLogs(name, namespace string, params map[string]string) (*business.PodLog, error) {
+	url := fmt.Sprintf("%s/api/namespaces/%s/pods/%s/logs?sinceTime=%d&%s", client.kialiURL, namespace, name, TimeSinceSeconds(), ParamsAsString(params))
 	body, _, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		logs := new(business.PodLog)
@@ -418,6 +431,14 @@ func PodLogs(name, namespace string) (*business.PodLog, error) {
 	} else {
 		return nil, err
 	}
+}
+
+func TimeSince() int64 {
+	return time.Now().UTC().Add(-time.Minute*time.Duration(10)).UnixMicro()
+}
+
+func TimeSinceSeconds() int64 {
+	return time.Now().UTC().Add(-time.Minute*time.Duration(10)).Unix()
 }
 
 func ParamsAsString(params map[string]string) string {
