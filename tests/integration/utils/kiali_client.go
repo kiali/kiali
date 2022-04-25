@@ -3,13 +3,13 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kiali/kiali/business"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/jaeger"
