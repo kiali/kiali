@@ -5,8 +5,7 @@ Feature: Workload logs tab
   is possible to view logs from all containers in a single view.
 
   Background:
-    Given I open Kiali URL
-    And user is at administrator perspective
+    Given user is at administrator perspective
 
   Scenario: The logs tab should show the logs of a pod
     Given I am on the "productpage-v1" workload detail page of the "bookinfo" namespace
