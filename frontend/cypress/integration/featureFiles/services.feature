@@ -14,13 +14,13 @@ Feature: Kiali Services page
       | Health | Name | Namespace | Labels | Configuration | Details |
     And the "productpage" row is visible
     And the health column on the productpage row has a health icon
-    And the "Name" column on the "productpage" row has a link matching "/console/namespaces/bookinfo/services/productpage"
+    And the "Name" column on the "productpage" row has a link ending in "/namespaces/bookinfo/services/productpage"
     And the "Namespace" column on the "productpage" row has the text "bookinfo"
     And the "Labels" column on the "productpage" row has the text "app: productpage"
     And the "Labels" column on the "productpage" row has the text "service: productpage"
-    And the "Configuration" column on the "productpage" row has a link matching "/console/namespaces/bookinfo/services/productpage"
-    And the "Details" column on the "productpage" row has a link matching "/console/namespaces/bookinfo/istio/virtualservices/bookinfo"
-    And the "Details" column on the "productpage" row has a link matching "/console/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
+    And the "Configuration" column on the "productpage" row has a link ending in "/namespaces/bookinfo/services/productpage"
+    And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/virtualservices/bookinfo"
+    And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
 
   @services-page
   Scenario: Filter services table by Service Name 

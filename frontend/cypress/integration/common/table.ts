@@ -10,13 +10,11 @@ Then(`user sees a table with headings`, (tableHeadings: TableDefinition) => {
 });
 
 And(
-  'the {string} column on the {string} row has a link matching {string}',
+  'the {string} column on the {string} row has a link ending in {string}',
   (column: string, rowText: string, link: string) => {
     getColWithRowText(rowText, column).within(() => {
-      // TODO: Remove 2 of these. Testing statements.
-      cy.get('a');
-      cy.get(`a[href="${link}"]`);
-      cy.get(`a[href="${link}"]`).should('be.visible');
+      // $= is endswith since console link can change depending on the deployment.
+      cy.get(`a[href$="${link}"]`).should('be.visible');
     });
   }
 );
