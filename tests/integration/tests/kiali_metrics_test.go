@@ -18,9 +18,7 @@ func TestNamespaceMetrics(t *testing.T) {
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		metrics, err := utils.NamespaceMetrics(utils.BOOKINFO, METRICS_PARAMS)
-		assert.Nil(err)
-		assert.NotEmpty(metrics)
-		return CheckMetrics(metrics.ResponseSize, metrics.RequestSize), nil
+		return CheckMetrics(metrics.ResponseSize, metrics.RequestSize), err
 	})
 	assert.Nil(pollErr, "Metrics should be returned")
 }
@@ -31,9 +29,7 @@ func TestServiceMetrics(t *testing.T) {
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		metrics, err := utils.ObjectMetrics(utils.BOOKINFO, name, "services", METRICS_PARAMS)
-		assert.Nil(err)
-		assert.NotEmpty(metrics)
-		return CheckMetrics(metrics.RequestCount, metrics.RequestDurationMillis, metrics.RequestErrorCount), nil
+		return CheckMetrics(metrics.RequestCount, metrics.RequestDurationMillis, metrics.RequestErrorCount), err
 	})
 	assert.Nil(pollErr, "Metrics should be returned")
 }
@@ -44,9 +40,7 @@ func TestAppMetrics(t *testing.T) {
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		metrics, err := utils.ObjectMetrics(utils.BOOKINFO, name, "apps", METRICS_PARAMS)
-		assert.Nil(err)
-		assert.NotEmpty(metrics)
-		return CheckMetrics(metrics.RequestDurationMillis), nil
+		return CheckMetrics(metrics.RequestDurationMillis), err
 	})
 	assert.Nil(pollErr, "Metrics should be returned")
 }
@@ -57,9 +51,7 @@ func TestWorkloadMetrics(t *testing.T) {
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		metrics, err := utils.ObjectMetrics(utils.BOOKINFO, name, "workloads", METRICS_PARAMS)
-		assert.Nil(err)
-		assert.NotEmpty(metrics)
-		return CheckMetrics(metrics.RequestSize, metrics.ResponseSize), nil
+		return CheckMetrics(metrics.RequestSize, metrics.ResponseSize), err
 	})
 	assert.Nil(pollErr, "Metrics should be returned")
 }
