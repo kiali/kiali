@@ -13,10 +13,10 @@ Feature: Kiali Istio Config page
     Then user sees a table with headings
       | Name | Namespace | Type | Configuration | 
     And the "bookinfo-gateway" row is visible
-    And the "Name" column on the "bookinfo-gateway" row has a link ending in "/console/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
+    And the "Name" column on the "bookinfo-gateway" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
     And the "Namespace" column on the "bookinfo-gateway" row has the text "bookinfo"
     And the "Type" column on the "bookinfo-gateway" row has the text "Gateway"
-    And the "Configuration" column on the "bookinfo-gateway" row has a link ending in "/console/namespaces/bookinfo/istio/gateways/bookinfo-gateway?list=yaml"
+    And the "Configuration" column on the "bookinfo-gateway" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway?list=yaml"
 
   @istio-page
   Scenario: Filter istio config table by Istio Name
@@ -43,34 +43,34 @@ Feature: Kiali Istio Config page
   Scenario: Navigate to the create AuthorizationPolicy page through the actions dropdown
     When the user clicks the actions button
     And the user clicks the create "AuthorizationPolicy" action
-    Then the user navigates to the "/console/istio/new/AuthorizationPolicy?namespaces=bookinfo" page
+    Then the user navigates to the "/istio/new/AuthorizationPolicy?namespaces=bookinfo" page
 
   @istio-page
   Scenario: Navigate to the create Gateway page through the actions dropdown
     When the user clicks the actions button
     And the user clicks the create "Gateway" action
-    Then the user navigates to the "/console/istio/new/Gateway?namespaces=bookinfo" page
+    Then the user navigates to the "/istio/new/Gateway?namespaces=bookinfo" page
 
   @istio-page
   Scenario: Navigate to the create PeerAuthentication page through the actions dropdown
     When the user clicks the actions button
     And the user clicks the create "PeerAuthentication" action
-    Then the user navigates to the "/console/istio/new/PeerAuthentication?namespaces=bookinfo" page
+    Then the user navigates to the "/istio/new/PeerAuthentication?namespaces=bookinfo" page
 
   @istio-page
   Scenario: Navigate to the create RequestAuthentication page through the actions dropdown
     When the user clicks the actions button
     And the user clicks the create "RequestAuthentication" action
-    Then the user navigates to the "/console/istio/new/RequestAuthentication?namespaces=bookinfo" page
+    Then the user navigates to the "/istio/new/RequestAuthentication?namespaces=bookinfo" page
 
   @istio-page
   Scenario: Navigate to the create ServiceEntry page through the actions dropdown
     When the user clicks the actions button
     And the user clicks the create "ServiceEntry" action
-    Then the user navigates to the "/console/istio/new/ServiceEntry?namespaces=bookinfo" page
+    Then the user navigates to the "/istio/new/ServiceEntry?namespaces=bookinfo" page
 
   @istio-page
   Scenario: Navigate to the create Sidecar page through the actions dropdown
     When the user clicks the actions button
     And the user clicks the create "Sidecar" action
-    Then the user navigates to the "/console/istio/new/Sidecar?namespaces=bookinfo" page
+    Then the user navigates to the "/istio/new/Sidecar?namespaces=bookinfo" page
