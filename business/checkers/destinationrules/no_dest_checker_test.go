@@ -80,6 +80,27 @@ func TestValidMeshWideHost(t *testing.T) {
 	assert.Empty(vals)
 }
 
+func TestValidShortSvcHost(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	vals, valid := NoDestinationChecker{
+		Namespace: "test-namespace",
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test-namespace": data.CreateWorkloadList("test-namespace",
+				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+				data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2"))),
+		},
+		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
+		DestinationRule:  *data.CreateTestDestinationRule("test-namespace", "name", "reviews.test-namespace.svc"),
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
 func TestValidServiceNamespace(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -172,6 +193,36 @@ func TestNoValidHost(t *testing.T) {
 		},
 		RegistryServices: []*kubernetes.RegistryService{&kubernetes.RegistryService{}},
 		DestinationRule:  *data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", vals[0]))
+	assert.Equal("spec/host", vals[0].Path)
+}
+
+func TestNoValidShortSvcHost(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	// Valid cases:
+	// reviews.test-namespace
+	// reviews.test-namespace.svc
+	// reviews.test-namespace.svc.cluster.local
+	// Not valid:
+	// reviews.test-namespace.svc.cluster
+	vals, valid := NoDestinationChecker{
+		Namespace: "test-namespace",
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test-namespace": data.CreateWorkloadList("test-namespace",
+				data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
+				data.CreateWorkloadListItem("otherv1", appVersionLabel("other", "v1"))),
+		},
+		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
+		DestinationRule:  *data.CreateTestDestinationRule("test-namespace", "name", "reviews.test-namespace.svc.cluster"),
 	}.Check()
 
 	assert.False(valid)
