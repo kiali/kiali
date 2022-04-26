@@ -175,6 +175,22 @@ func (c *KialiClient) GetCookies() (bool, []*http.Cookie) {
 	return false, nil
 }
 
+func NamespaceHealth(namespace string, params map[string]string) (*cytoscape.Config, int, error) {
+	url := fmt.Sprintf("%s/api/namespaces/%s/health?%s", client.kialiURL, namespace, ParamsAsString(params))
+	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		graph := new(cytoscape.HealthConfig)
+		err = json.Unmarshal(body, &graph)
+		if err == nil {
+			return graph, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
+	}
+}
+
 func ApplicationsList(namespace string) (*models.AppList, error) {
 	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/apps", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
