@@ -387,6 +387,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                               />
                               <label
                                 className="pf-c-check__label"
+                                htmlFor={`spans-show-`}
                                 style={{
                                   backgroundColor: PFColors.Black1000,
                                   color: spanColor,
@@ -436,7 +437,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
   private getContainerLegend = () => {
     return (
-      <Form>
+      <Form data-test={"workload-logs-pod-containers"}>
         <FormGroup fieldId="container-log-selection" isInline>
           <PFBadge
             badge={{ badge: PFBadges.Container.badge, tt: 'Containers' }}

@@ -132,7 +132,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
     if (!serverConfig.kialiFeatureFlags.disabledFeatures || !serverConfig.kialiFeatureFlags.disabledFeatures.includes('logs-tab')) {
       const logTab = (
-        <Tab title="Logs" eventKey={2} key={'Logs'}>
+        <Tab title="Logs" eventKey={2} key={'Logs'} data-test={"workload-details-logs-tab"}>
           {hasPods ? (
             <WorkloadPodLogs
               namespace={this.props.match.params.namespace}

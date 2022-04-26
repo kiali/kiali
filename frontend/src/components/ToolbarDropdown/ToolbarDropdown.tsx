@@ -70,6 +70,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
         selections={this.props.value || currentValue}
         placeholderText={this.props.label || currentName}
         id={this.props.id}
+        data-test={this.props.id}
         toggleId={this.props.id + '-toggle'}
         onToggle={this.onToggle}
         isExpanded={isExpanded}
