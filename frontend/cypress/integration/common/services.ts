@@ -5,8 +5,8 @@ And('the {string} row is visible', (row: string) => {
   cy.get('table').contains('td', row);
 });
 
-And('the health column on the productpage row has a health icon', () => {
-  getColWithRowText('productpage', 'Health').find(
+And('the health column on the {string} row has a health icon', (row: string) => {
+  getColWithRowText(row, 'Health').find(
     'svg[class=icon-healthy], svg[class=icon-unhealthy], svg[class=icon-degraded], svg[class=icon-na]'
   );
 });

@@ -13,7 +13,7 @@ Feature: Kiali Services page
     Then user sees a table with headings
       | Health | Name | Namespace | Labels | Configuration | Details |
     And the "productpage" row is visible
-    And the health column on the productpage row has a health icon
+    And the health column on the "productpage" row has a health icon
     And the "Name" column on the "productpage" row has a link ending in "/namespaces/bookinfo/services/productpage"
     And the "Namespace" column on the "productpage" row has the text "bookinfo"
     And the "Labels" column on the "productpage" row has the text "app: productpage"
