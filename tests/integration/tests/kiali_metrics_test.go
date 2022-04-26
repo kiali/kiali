@@ -40,13 +40,13 @@ func TestServiceMetrics(t *testing.T) {
 
 func TestAppMetrics(t *testing.T) {
 	assert := assert.New(t)
-	name := "ratings"
+	name := "productpage"
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		metrics, err := utils.ObjectMetrics(utils.BOOKINFO, name, "apps", METRICS_PARAMS)
 		assert.Nil(err)
 		assert.NotEmpty(metrics)
-		return CheckMetrics(metrics.TcpSent, metrics.TcpReceived), nil
+		return CheckMetrics(metrics.RequestDurationMillis), nil
 	})
 	assert.Nil(pollErr, "Metrics should be returned")
 }
