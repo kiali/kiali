@@ -60,8 +60,8 @@ jobs:
         env:
           CYPRESS_BASE_URL: ${{ steps.set-kiali-url.outputs.kiali_url }}
           CYPRESS_NUM_TESTS_KEPT_IN_MEMORY: 0
+          # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
           CYPRESS_VIDEO: false
-          CYPRESS_SCREENSHOT_ON_RUN_FAILURE: false
 
       - name: Get debug info when integration tests fail
         if: failure()
@@ -69,3 +69,10 @@ jobs:
           kubectl logs -l app.kubernetes.io/name=kiali -n istio-system
           kubectl describe nodes
           kubectl get pods -l app.kubernetes.io/name=kiali -n istio-system -o yaml
+
+      - name: Upload cypress screenshots when tests fail
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: frontend/cypress/screenshots

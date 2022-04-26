@@ -50,16 +50,17 @@ cypress/
     * One feature file should contain only one **specific** feature or concrete example of tested **feature / story**
     * Try to reuse already existing steps, like: `Given user is at administrator perspective` or `And I see {string} in the title` from other .feature files. The BDD framework doesn't mind interchanging keywords, like `Then I see {string} in the title`
     * If you are covering more complex flow (smoke, happy path, critical path) composed of multiple feature files, you need to decorate them with the `@` symbol (`@smoke`, `@happypath`, `@etc`)
-1) Execute cypress - with feature file you just created
+2) Execute cypress - with feature file you just created
     * If you have undefined execution steps in the feature file, cypress will let you know. 
     * You only need to implement step definitions you are missing *(see 1a)* in cypress/integration/common folder 
-1) Write new step definitions. 
+3) Write new step definitions. 
     * The rule of the thumb is you create `.ts` file with same name as a `.feature` file like:
     * cypress/integration/featureFiles/**testcase.feature** -> cypress/integration/common/**testcase.ts**
-1) Failed tests could mean that:
+    * Generic step definitions that can be used in multiple feature files should be grouped by **functionality** e.g. generic "table" definitions should go in the `table.ts` file but definitions specific to a single page should go in the page file.
+4) Failed tests could mean that:
     * Reuse of step definitions is not suitable or gets broken by different testcase or your modifications
     * We want to refactor broken code and if its heavily used, move it into a custom command file (cypress/support/commands.ts) - i.e. `cy.login()`, `cy.kiali_apply_config()` lives there
-1) Test case execution should be all green, you are ready to commit your test case. You might want verify whole regression run locally - so you did not introduce any braking changes in your PR
+5) Test case execution should be all green, you are ready to commit your test case. You might want verify whole regression run locally - so you did not introduce any braking changes in your PR
 
 
 ## Testing Strategies
@@ -79,3 +80,7 @@ Try setting the `numTestsKeptInMemory` setting to a lower value.
 ```
 make -e CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0 cypress
 ```
+
+### Tests are flaking 
+
+Try waiting for kiali to finish loading all the in-flight data before proceeding on to the next action or command. [Waiting for the loading spinner](https://github.com/kiali/kiali/blob/1766f20035e67a072dd68167869e0ce2009b9bc6/frontend/cypress/integration/common/overview.ts#L45-L46) to disappear is a good enough measure for this.

@@ -24,57 +24,65 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
-let haveCookie = Cypress.env('cookie')
+declare namespace Cypress {
+  interface Chainable<Subject> {
+    /**
+     * Custom command to select DOM element by the 'data-test' attribute.
+     * @example cy.getBySel('greeting')
+     */
+    getBySel(selector: string, ...args: any): Chainable<Subject>;
 
-declare global {
-	namespace Cypress {
-		interface Chainable<Subject> {
-			login(providerName?: string, username?: string, password?: string, auth_strategy?: string): Chainable<Element>;
-			logout(): Chainable<Element>;
-		}
-	}
+    login(providerName?: string, username?: string, password?: string, auth_strategy?: string): Chainable<Subject>;
+
+    logout(): Chainable<Subject>;
+  }
 }
 
+let haveCookie = Cypress.env('cookie');
+
 Cypress.Commands.add('login', (provider: string, username: string, password: string, auth_strategy: string) => {
-	cy.log("auth cookie is:", haveCookie)
+  cy.log('auth cookie is:', haveCookie);
 
-	cy.window().then((win: any) => {
-		if (auth_strategy != 'openshift') {
-			cy.log('Skipping login, Kiali is running with auth disabled');
-		} else {
-			if (haveCookie === false) {
-				cy.intercept('api/authenticate').as('authorized') //request setting kiali cookie
-				// Cypress.Cookies.debug(true) // now Cypress will log when it alters cookies
-				// cy.getCookies()
+  cy.window().then((win: any) => {
+    if (auth_strategy != 'openshift') {
+      cy.log('Skipping login, Kiali is running with auth disabled');
+    } else {
+      if (haveCookie === false) {
+        cy.intercept('api/authenticate').as('authorized'); //request setting kiali cookie
+        // Cypress.Cookies.debug(true) // now Cypress will log when it alters cookies
+        // cy.getCookies()
 
-				cy.log(
-					`provider: ${provider}, 
+        cy.log(
+          `provider: ${provider}, 
 					username: ${username},
-					auth_strategy: ${auth_strategy}`)
-				cy.visit('/');
+					auth_strategy: ${auth_strategy}`
+        );
+        cy.visit('/');
 
-				if (auth_strategy === 'openshift') {
-					cy.get('.pf-c-form').contains(auth_strategy, { matchCase: false }).click()
-				}
+        if (auth_strategy === 'openshift') {
+          cy.get('.pf-c-form').contains(auth_strategy, { matchCase: false }).click();
+        }
 
-				if (auth_strategy === 'openshift') {
-					cy.get('.pf-c-button').contains(provider, { matchCase: false }).click()
-				}
+        if (auth_strategy === 'openshift') {
+          cy.get('.pf-c-button').contains(provider, { matchCase: false }).click();
+        }
 
-				if (auth_strategy === 'openshift') {
-					cy.get('#inputUsername').type(username);
-					cy.get('#inputPassword').type(password);
-					cy.get('button[type="submit"]').click()
-					cy.wait('@authorized').its('response.statusCode').should('eq', 200)
-					cy.getCookie('kiali-token-aes', { timeout: 15000 }).should('exist').then((c) => {
-						haveCookie = true
-					})
-
-				}
-			} else {
-				cy.log('got an auth cookie, skipping login')
-			}
-		}
-	});
+        if (auth_strategy === 'openshift') {
+          cy.get('#inputUsername').type(username);
+          cy.get('#inputPassword').type(password);
+          cy.get('button[type="submit"]').click();
+          cy.wait('@authorized').its('response.statusCode').should('eq', 200);
+          cy.getCookie('kiali-token-aes', { timeout: 15000 })
+            .should('exist')
+            .then(() => {
+              haveCookie = true;
+            });
+        }
+      } else {
+        cy.log('got an auth cookie, skipping login');
+      }
+    }
+  });
 });
 
+Cypress.Commands.add('getBySel', (selector: string, ...args) => cy.get(`[data-test="${selector}"]`, ...args));
