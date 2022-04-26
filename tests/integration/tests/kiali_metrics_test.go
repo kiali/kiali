@@ -13,13 +13,13 @@ import (
 
 func TestNamespaceMetrics(t *testing.T) {
 	assert := assert.New(t)
-	params := map[string]string{"filters": "tcp_sent,tcp_received"}
+	params := map[string]string{"filters": "response_size,request_size"}
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		metrics, err := utils.NamespaceMetrics(utils.BOOKINFO, params)
 		assert.Nil(err)
 		assert.NotEmpty(metrics)
-		return CheckMetrics(metrics.TcpSent, metrics.TcpReceived), nil
+		return CheckMetrics(metrics.ResponseSize, metrics.RequestSize), nil
 	})
 	assert.Nil(pollErr, "Metrics should be returned")
 }
