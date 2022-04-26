@@ -11,12 +11,13 @@ import (
 	"github.com/kiali/kiali/tests/integration/utils"
 )
 
+var METRICS_PARAMS = map[string]string{"direction": "outbound", "reporter": "destination"}
+
 func TestNamespaceMetrics(t *testing.T) {
 	assert := assert.New(t)
-	params := map[string]string{"filters": "response_size,request_size"}
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		metrics, err := utils.NamespaceMetrics(utils.BOOKINFO, params)
+		metrics, err := utils.NamespaceMetrics(utils.BOOKINFO, METRICS_PARAMS)
 		assert.Nil(err)
 		assert.NotEmpty(metrics)
 		return CheckMetrics(metrics.ResponseSize, metrics.RequestSize), nil
@@ -27,13 +28,38 @@ func TestNamespaceMetrics(t *testing.T) {
 func TestServiceMetrics(t *testing.T) {
 	assert := assert.New(t)
 	name := "ratings"
-	params := map[string]string{"filters": "request_count,request_duration_millis,request_error_count"}
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		metrics, err := utils.ServiceMetrics(utils.BOOKINFO, name, params)
+		metrics, err := utils.ObjectMetrics(utils.BOOKINFO, name, "services", METRICS_PARAMS)
 		assert.Nil(err)
 		assert.NotEmpty(metrics)
 		return CheckMetrics(metrics.RequestCount, metrics.RequestDurationMillis, metrics.RequestErrorCount), nil
+	})
+	assert.Nil(pollErr, "Metrics should be returned")
+}
+
+func TestAppMetrics(t *testing.T) {
+	assert := assert.New(t)
+	name := "ratings"
+
+	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+		metrics, err := utils.ObjectMetrics(utils.BOOKINFO, name, "apps", METRICS_PARAMS)
+		assert.Nil(err)
+		assert.NotEmpty(metrics)
+		return CheckMetrics(metrics.TcpSent, metrics.TcpReceived), nil
+	})
+	assert.Nil(pollErr, "Metrics should be returned")
+}
+
+func TestWorkloadMetrics(t *testing.T) {
+	assert := assert.New(t)
+	name := "productpage-v1"
+
+	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+		metrics, err := utils.ObjectMetrics(utils.BOOKINFO, name, "workloads", METRICS_PARAMS)
+		assert.Nil(err)
+		assert.NotEmpty(metrics)
+		return CheckMetrics(metrics.RequestSize, metrics.ResponseSize), nil
 	})
 	assert.Nil(pollErr, "Metrics should be returned")
 }

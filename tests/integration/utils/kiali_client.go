@@ -388,8 +388,8 @@ func NamespaceMetrics(namespace string, params map[string]string) (*MetricsJson,
 	}
 }
 
-func ServiceMetrics(namespace, service string, params map[string]string) (*MetricsJson, error) {
-	url := fmt.Sprintf("%s/api/namespaces/%s/services/%s/metrics?%s", client.kialiURL, namespace, service, ParamsAsString(params))
+func ObjectMetrics(namespace, service, objectType string, params map[string]string) (*MetricsJson, error) {
+	url := fmt.Sprintf("%s/api/namespaces/%s/%s/%s/metrics?%s", client.kialiURL, namespace, objectType, service, ParamsAsString(params))
 	body, _, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		metrics := new(MetricsJson)
