@@ -549,7 +549,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             <Button key="cancel" variant="secondary" onClick={() => this.onClose(false)}>
               Cancel
             </Button>,
-            <Button key="confirm" variant={'primary'} onClick={this.onCreateUpdate}>
+            <Button key="confirm" variant={'primary'} onClick={this.onCreateUpdate} data-test={'confirm-' + (this.props.update ? 'update' : 'create')}>
               {this.props.update ? 'Update' : 'Create'}
             </Button>
           ]}
@@ -579,7 +579,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             <Button key="cancel" variant="secondary" onClick={() => this.onClose(false)}>
               Cancel
             </Button>,
-            <Button isDisabled={!this.isValid(this.state)} key="confirm" variant="primary" onClick={this.onPreview}>
+            <Button isDisabled={!this.isValid(this.state)} key="confirm" variant="primary" onClick={this.onPreview} data-test="preview">
               Preview
             </Button>
           ]}

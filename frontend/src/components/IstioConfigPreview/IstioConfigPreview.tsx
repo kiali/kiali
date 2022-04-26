@@ -186,6 +186,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
                   variant={this.props.opTarget === 'delete' ? 'danger' : 'primary'}
                   isDisabled={this.props.disableAction}
                   onClick={this.onConfirm}
+                  data-test={this.props.opTarget}
                 >
                   {this.props.opTarget && this.props.opTarget[0].toUpperCase() + this.props.opTarget.substr(1)}
                 </Button>

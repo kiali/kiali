@@ -307,6 +307,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
             component="button"
             isDisabled={!enabledItem}
             onClick={() => this.onAction(eventKey)}
+            data-test={eventKey}
           >
             {WIZARD_TITLES[eventKey]}
           </DropdownItem>
@@ -321,6 +322,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
             component="button"
             onClick={() => this.onAction(eventKey)}
             isDisabled={!this.canDelete() || !this.hasTrafficRouting() || this.state.isDeleting}
+            data-test={eventKey}
           >
             Delete Traffic Routing
           </DropdownItem>
@@ -362,7 +364,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
         position={DropdownPosition.right}
         onSelect={this.onActionsSelect}
         toggle={
-          <DropdownToggle onToggle={this.onActionsToggle} iconComponent={CaretDownIcon}>
+          <DropdownToggle onToggle={this.onActionsToggle} iconComponent={CaretDownIcon} data-test="wizard-actions">
             Actions
           </DropdownToggle>
         }
@@ -401,7 +403,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
             <Button key="cancel" variant="secondary" onClick={this.hideConfirmDelete}>
               Cancel
             </Button>,
-            <Button key="confirm" variant="danger" onClick={this.onDelete}>
+            <Button key="confirm" variant="danger" onClick={this.onDelete} data-test={'confirm-delete'}>
               Delete
             </Button>
           ]}

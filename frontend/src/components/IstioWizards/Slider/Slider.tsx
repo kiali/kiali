@@ -211,6 +211,7 @@ class Slider extends React.Component<Props, State> {
                 value={this.state.value}
                 onChange={this.onInputChange}
                 isDisabled={this.props.locked}
+                data-test={'input-' + this.props.id}
               />
               <Button
                 className={rightButtonStyle}
