@@ -80,6 +80,16 @@ func GetHost(hostName, namespace, cluster string, clusterNamespaces []string) Ho
 		}
 	}
 
+	// Case where it's a short name with the format <service>.<namespace>.svc
+	if len(hParts) == 3 && hParts[2] == "svc" {
+		return Host{
+			Service:       hParts[0],
+			Namespace:     hParts[1],
+			Cluster:       cluster,
+			CompleteInput: true,
+		}
+	}
+
 	return ParseHost(hostName, namespace, cluster)
 }
 
