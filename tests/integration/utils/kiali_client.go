@@ -175,11 +175,46 @@ func (c *KialiClient) GetCookies() (bool, []*http.Cookie) {
 	return false, nil
 }
 
-func NamespaceHealth(namespace string, params map[string]string) (*models.RequestHealth, int, error) {
+func NamespaceWorkloadHealth(namespace string, params map[string]string) (*models.NamespaceWorkloadHealth, int, error) {
+	params["type"] = "workload"
 	url := fmt.Sprintf("%s/api/namespaces/%s/health?%s", client.kialiURL, namespace, ParamsAsString(params))
 	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		health := new(models.RequestHealth)
+		health := new(models.NamespaceWorkloadHealth)
+		err = json.Unmarshal(body, &health)
+		if err == nil {
+			return health, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
+	}
+}
+
+func NamespaceAppHealth(namespace string, params map[string]string) (*models.NamespaceAppHealth, int, error) {
+	params["type"] = "app"
+	url := fmt.Sprintf("%s/api/namespaces/%s/health?%s", client.kialiURL, namespace, ParamsAsString(params))
+	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		health := new(models.NamespaceAppHealth)
+		err = json.Unmarshal(body, &health)
+		if err == nil {
+			return health, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
+	}
+}
+
+func NamespaceServiceHealth(namespace string, params map[string]string) (*models.NamespaceServiceHealth, int, error) {
+	params["type"] = "service"
+	url := fmt.Sprintf("%s/api/namespaces/%s/health?%s", client.kialiURL, namespace, ParamsAsString(params))
+	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	if err == nil {
+		health := new(models.NamespaceServiceHealth)
 		err = json.Unmarshal(body, &health)
 		if err == nil {
 			return health, code, nil

@@ -9,12 +9,65 @@ import (
 )
 
 func TestNamespaceHealthWorkload(t *testing.T) {
-	//name := "ratings-v1"
+	name := "ratings-v1"
 	assert := assert.New(t)
-	params := map[string]string{"type": "workload", "rateInterval":"60s"}
+	params := map[string]string{"rateInterval": "60s"}
 
-	health, _, err := utils.NamespaceHealth(utils.BOOKINFO, params)
+	health, code, err := utils.NamespaceWorkloadHealth(utils.BOOKINFO, params)
 
 	assert.Nil(err)
+	assert.Equal(200, code)
 	assert.NotNil(health)
+	assert.NotNil((*health)[name])
+	assert.NotNil((*health)[name].WorkloadStatus)
+	assert.NotNil((*health)[name].Requests)
+}
+
+func TestInvalidNamespaceHealth(t *testing.T) {
+	assert := assert.New(t)
+	params := map[string]string{"rateInterval": "60s"}
+
+	_, code, err := utils.NamespaceWorkloadHealth("invalid", params)
+
+	assert.NotNil(err)
+	assert.Equal(403, code)
+}
+
+func TestNamespaceHealthApp(t *testing.T) {
+	name := "details"
+	assert := assert.New(t)
+	params := map[string]string{"rateInterval": "60s"}
+
+	health, code, err := utils.NamespaceAppHealth(utils.BOOKINFO, params)
+
+	assert.Nil(err)
+	assert.Equal(200, code)
+	assert.NotNil(health)
+	assert.NotNil((*health)[name])
+	assert.NotEmpty((*health)[name].WorkloadStatuses)
+	assert.NotNil((*health)[name].Requests)
+}
+
+func TestNamespaceHealthInvalidRate(t *testing.T) {
+	assert := assert.New(t)
+	params := map[string]string{"rateInterval": "invalid"}
+
+	_, code, err := utils.NamespaceAppHealth(utils.BOOKINFO, params)
+
+	assert.NotNil(err)
+	assert.Equal(500, code)
+}
+
+func TestNamespaceHealthService(t *testing.T) {
+	name := "details"
+	assert := assert.New(t)
+	params := map[string]string{"rateInterval": "60s"}
+
+	health, code, err := utils.NamespaceServiceHealth(utils.BOOKINFO, params)
+
+	assert.Nil(err)
+	assert.Equal(200, code)
+	assert.NotNil(health)
+	assert.NotNil((*health)[name])
+	assert.NotNil((*health)[name].Requests)
 }
