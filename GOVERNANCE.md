@@ -69,6 +69,7 @@ Current list of testers (alphabetically ordered):
 * [mattmahoneyrh](https://github.com/mattmahoneyrh)
 * [pbajjuri20](https://github.com/pbajjuri20)
 * [prachiyadav](https://github.com/prachiyadav)
+* [ScriptingShrimp](https://github.com/ScriptingShrimp)
 * [skondkar](https://github.com/skondkar)
 
 ### Becoming a Tester
