@@ -37,7 +37,7 @@ func TestServicesList(t *testing.T) {
 func TestServiceDetails(t *testing.T) {
 	name := "productpage"
 	assert := assert.New(t)
-	service, err := utils.ServiceDetails(name, utils.BOOKINFO)
+	service, _, err := utils.ServiceDetails(name, utils.BOOKINFO)
 
 	assert.Nil(err)
 	assert.NotNil(service)
@@ -59,12 +59,20 @@ func TestServiceDetails(t *testing.T) {
 	assert.True(service.IstioSidecar)
 }
 
+func TestServiceDetailsInvalidName(t *testing.T) {
+	name := "invalid"
+	assert := assert.New(t)
+	app, code, _ := utils.ServiceDetails(name, utils.BOOKINFO)
+	assert.NotEqual(200, code)
+	assert.Empty(app)
+}
+
 func TestServiceDiscoverVS(t *testing.T) {
 	assert := assert.New(t)
 	serviceName := "reviews"
 	vsName := "reviews"
 	vsPath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-reviews-80-20.yaml")
-	service, err := utils.ServiceDetails(serviceName, utils.BOOKINFO)
+	service, _, err := utils.ServiceDetails(serviceName, utils.BOOKINFO)
 	assert.Nil(err)
 	assert.NotNil(service)
 	preVsCount := len(service.VirtualServices)
@@ -72,7 +80,7 @@ func TestServiceDiscoverVS(t *testing.T) {
 	assert.True(utils.ApplyFile(vsPath, utils.BOOKINFO))
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		service, err = utils.ServiceDetails(serviceName, utils.BOOKINFO)
+		service, _, err = utils.ServiceDetails(serviceName, utils.BOOKINFO)
 		assert.Nil(err)
 		assert.NotNil(service)
 		if len(service.VirtualServices) > preVsCount {
@@ -115,7 +123,7 @@ func TestServiceDiscoverDR(t *testing.T) {
 	serviceName := "reviews"
 	drName := "reviews"
 	drPath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-destination-rule-reviews.yaml")
-	service, err := utils.ServiceDetails(serviceName, utils.BOOKINFO)
+	service, _, err := utils.ServiceDetails(serviceName, utils.BOOKINFO)
 	assert.Nil(err)
 	assert.NotNil(service)
 	preDrCount := len(service.DestinationRules)
@@ -123,7 +131,7 @@ func TestServiceDiscoverDR(t *testing.T) {
 	assert.True(utils.ApplyFile(drPath, utils.BOOKINFO))
 
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		service, err = utils.ServiceDetails(serviceName, utils.BOOKINFO)
+		service, _, err = utils.ServiceDetails(serviceName, utils.BOOKINFO)
 		assert.Nil(err)
 		assert.NotNil(service)
 		if len(service.DestinationRules) > preDrCount {

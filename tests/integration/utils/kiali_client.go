@@ -241,18 +241,18 @@ func ApplicationsList(namespace string) (*models.AppList, error) {
 	}
 }
 
-func ApplicationDetails(name, namespace string) (*models.App, error) {
-	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/apps/"+name+"?health=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+func ApplicationDetails(name, namespace string) (*models.App, int, error) {
+	body, code, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/apps/"+name+"?health=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		app := new(models.App)
 		err = json.Unmarshal(body, &app)
 		if err == nil {
-			return app, nil
+			return app, code, nil
 		} else {
-			return nil, err
+			return nil, code, err
 		}
 	} else {
-		return nil, err
+		return nil, code, err
 	}
 }
 
@@ -271,18 +271,18 @@ func ServicesList(namespace string) (*ServiceListJson, error) {
 	}
 }
 
-func ServiceDetails(name, namespace string) (*ServiceDetailsJson, error) {
-	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/services/"+name+"?validate=true&health=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+func ServiceDetails(name, namespace string) (*ServiceDetailsJson, int, error) {
+	body, code, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/services/"+name+"?validate=true&health=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		service := new(ServiceDetailsJson)
 		err = json.Unmarshal(body, &service)
 		if err == nil {
-			return service, nil
+			return service, code, nil
 		} else {
-			return nil, err
+			return nil, code, err
 		}
 	} else {
-		return nil, err
+		return nil, code, err
 	}
 }
 
@@ -331,18 +331,18 @@ func WorkloadsList(namespace string) (*WorkloadListJson, error) {
 	}
 }
 
-func WorkloadDetails(name, namespace string) (*WorkloadJson, error) {
-	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/workloads/"+name+"?validate=true&health=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+func WorkloadDetails(name, namespace string) (*WorkloadJson, int, error) {
+	body, code, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/workloads/"+name+"?validate=true&health=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		wl := new(WorkloadJson)
 		err = json.Unmarshal(body, &wl)
 		if err == nil {
-			return wl, nil
+			return wl, code, nil
 		} else {
-			return nil, err
+			return nil, code, err
 		}
 	} else {
-		return nil, err
+		return nil, code, err
 	}
 }
 
@@ -361,18 +361,18 @@ func IstioConfigsList(namespace string) (*IstioConfigListJson, error) {
 	}
 }
 
-func IstioConfigDetails(namespace, name, configType string) (*models.IstioConfigDetails, error) {
-	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/istio/"+configType+"/"+name+"?validate=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+func IstioConfigDetails(namespace, name, configType string) (*models.IstioConfigDetails, int, error) {
+	body, code, _, err := httputil.HttpGet(client.kialiURL+"/api/namespaces/"+namespace+"/istio/"+configType+"/"+name+"?validate=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		config := new(models.IstioConfigDetails)
 		err = json.Unmarshal(body, &config)
 		if err == nil {
-			return config, nil
+			return config, code, nil
 		} else {
-			return nil, err
+			return nil, code, err
 		}
 	} else {
-		return nil, err
+		return nil, code, err
 	}
 }
 
@@ -456,7 +456,7 @@ func ObjectMetrics(namespace, service, objectType string, params map[string]stri
 }
 
 func FirstPodName(name, namespace string) (string, error) {
-	workload, err := WorkloadDetails(name, namespace)
+	workload, _, err := WorkloadDetails(name, namespace)
 	if err == nil {
 		if len(workload.Pods) > 0 {
 			return workload.Pods[0].Name, nil

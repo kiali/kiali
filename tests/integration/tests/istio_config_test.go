@@ -78,7 +78,7 @@ func TestIstioConfigList(t *testing.T) {
 func TestIstioConfigDetails(t *testing.T) {
 	name := "bookinfo"
 	assert := assert.New(t)
-	config, err := utils.IstioConfigDetails(utils.BOOKINFO, name, kubernetes.VirtualServices)
+	config, _, err := utils.IstioConfigDetails(utils.BOOKINFO, name, kubernetes.VirtualServices)
 
 	assert.Nil(err)
 	assert.NotNil(config)
@@ -94,6 +94,14 @@ func TestIstioConfigDetails(t *testing.T) {
 	if !config.IstioValidation.Valid {
 		assert.NotEmpty(config.IstioValidation.References)
 	}
+}
+
+func TestIstioConfigInvalidName(t *testing.T) {
+	name := "invalid"
+	assert := assert.New(t)
+	config, code, _ := utils.IstioConfigDetails(utils.BOOKINFO, name, kubernetes.VirtualServices)
+	assert.NotEqual(200, code)
+	assert.Empty(config)
 }
 
 func TestIstioConfigPermissions(t *testing.T) {
