@@ -16,11 +16,6 @@ on:
         - snapshot.2
         - snapshot.3
         - edge
-      repository:
-        description: Repository (in owner/repo format)
-        required: true
-        default: kiali/kiali
-        type: string
       release_branch:
         description: Branch to release
         required: true
@@ -46,7 +41,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
       with:
-        repository: ${{ github.event.inputs.repository }}
         ref: ${{ github.event.inputs.release_branch }}
 
     - name: Determine release type
@@ -161,7 +155,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
       with:
-        repository: ${{ github.event.inputs.repository }}
         ref: ${{ github.event.inputs.release_branch }}
 
     - name: Set version to release
