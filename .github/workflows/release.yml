@@ -38,6 +38,7 @@ jobs:
       release_version: ${{ steps.release_version.outputs.release_version }}
       branch_version: ${{ steps.branch_version.outputs.branch_version }}
       next_version: ${{ steps.next_version.outputs.next_version }}
+      quay_tag: ${{ steps.quay_tag.outputs.quay_tag }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -104,6 +105,21 @@ jobs:
       if: ${{ steps.release_type.outputs.release_type != 'edge' && !contains(steps.release_type.outputs.release_type, 'snapshot') }}
       run: echo "::set-output name=branch_version::$(echo $RELEASE_VERSION | sed 's/\.[0-9]*\+$//')"
 
+    - name: Determine Quay tag
+      env:
+        RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+        RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
+        BRANCH_VERSION: ${{ steps.branch_version.outputs.branch_version }}
+      id: quay_tag
+      run: |
+        QUAY_TAG=${{ github.event.inputs.quay_repository }}:$RELEASE_VERSION
+        
+        if [[ $RELEASE_TYPE == "minor" ]] || [ $RELEASE_TYPE == "patch" ]]
+        then
+          QUAY_TAG=$QUAY_TAG ${{ github.event.inputs.quay_repository }}:$BRANCH_VERSION
+        fi
+
+        echo "::set-output name=quay_tag::$QUAY_TAG"
     - name: Log information
       run: |
         echo "Release type: ${{ steps.release_type.outputs.release_type }}"
@@ -113,6 +129,8 @@ jobs:
         echo "Next version: ${{ steps.next_version.outputs.next_version }}"
 
         echo "Branch version: ${{ steps.branch_version.outputs.branch_version }}"
+
+        echo "Quay tag": ${{ steps.quay_tag.outputs.quay_tag }}
 
   build_backend:
     name: Build backend
@@ -151,7 +169,7 @@ jobs:
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
       NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
       RELEASE_BRANCH: ${{ github.event.inputs.release_branch }}
-      QUAY_TAG: ${{ github.event.inputs.quay_repository }}:${{ needs.initialize.outputs.release_version }} ${{ github.event.inputs.quay_repository }}:${{ needs.initialize.outputs.branch_version }}      
+      QUAY_TAG: ${{ needs.initialize.outputs.quay_tag }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
