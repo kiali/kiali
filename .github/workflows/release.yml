@@ -89,7 +89,7 @@ jobs:
       run: |          
         if [[ $RELEASE_TYPE == "patch" ]]
         then
-            NEXT_VERSION=$(./.github/workflows/util/bump $RELEASE_TYPE $RELEASE_VERSION)
+            NEXT_VERSION=$(./.github/workflows/util/bump.py $RELEASE_TYPE $RELEASE_VERSION)
         elif [[ $RELEASE_TYPE == "minor" ]]
         then 
             NEXT_VERSION=$(./.github/workflows/util/bump.py $RELEASE_TYPE $RELEASE_VERSION)          
