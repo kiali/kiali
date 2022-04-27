@@ -112,14 +112,15 @@ jobs:
         BRANCH_VERSION: ${{ steps.branch_version.outputs.branch_version }}
       id: quay_tag
       run: |
-        QUAY_TAG=${{ github.event.inputs.quay_repository }}:$RELEASE_VERSION
+        QUAY_TAG="${{ github.event.inputs.quay_repository }}:$RELEASE_VERSION"
         
         if [[ $RELEASE_TYPE == "minor" ]] || [ $RELEASE_TYPE == "patch" ]]
         then
-          QUAY_TAG=$QUAY_TAG ${{ github.event.inputs.quay_repository }}:$BRANCH_VERSION
+          QUAY_TAG="$QUAY_TAG ${{ github.event.inputs.quay_repository }}:$BRANCH_VERSION"
         fi
 
         echo "::set-output name=quay_tag::$QUAY_TAG"
+    
     - name: Log information
       run: |
         echo "Release type: ${{ steps.release_type.outputs.release_type }}"
