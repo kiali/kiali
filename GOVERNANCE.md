@@ -22,6 +22,7 @@ Current list of maintainers (alphabetically ordered):
 * [leandroberetta](https://github.com/leandroberetta)
 * [nrfox](https://github.com/nrfox)
 * [xeviknal](https://github.com/xeviknal)
+* [xunzhuo](https://github.com/xunzhuo)
 
 ### Becoming a Maintainer
 
