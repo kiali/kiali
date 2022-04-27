@@ -12,7 +12,9 @@ on:
         - auto
         - minor
         - snapshot.0
-        - snpashot.1
+        - snapshot.1
+        - snapshot.2
+        - snapshot.3
         - edge
       repository:
         description: Repository (in owner/repo format)
