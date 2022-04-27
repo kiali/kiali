@@ -150,7 +150,7 @@ jobs:
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
       NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
       RELEASE_BRANCH: ${{ github.event.inputs.release_branch }}
-      QUAY_TAG: ${{ github.event.inputs.quay_repository }}:${{ needs.initialize.outputs.release_version }}      
+      QUAY_TAG: ${{ github.event.inputs.quay_repository }}:${{ needs.initialize.outputs.release_version }} ${{ github.event.inputs.quay_repository }}:${{ needs.initialize.outputs.branch_version }}      
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
