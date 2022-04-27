@@ -102,4 +102,6 @@ func TestIstioConfigPermissions(t *testing.T) {
 
 	assert.Nil(err)
 	assert.NotEmpty(perms)
+	assert.NotEmpty((*perms)[utils.BOOKINFO])
+	assert.NotEmpty((*(*perms)[utils.BOOKINFO])["authorizationpolicies"])
 }
