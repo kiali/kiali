@@ -156,9 +156,7 @@ jobs:
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
       NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
       RELEASE_BRANCH: ${{ github.event.inputs.release_branch }}
-      QUAY_TAG: ${{ github.event.inputs.quay_repository }}:${{ needs.initialize.outputs.release_version }}
-      GH_PULL_URI: https://api.github.com/repos/${{ github.event.inputs.repository }}/pulls
-      GH_RELEASE_URI: https://api.github.com/repos/${{ github.event.inputs.repository }}/releases
+      QUAY_TAG: ${{ github.event.inputs.quay_repository }}:${{ needs.initialize.outputs.release_version }}      
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
