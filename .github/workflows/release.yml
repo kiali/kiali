@@ -10,12 +10,13 @@ on:
         type: choice
         options:
         - auto
+        - edge
         - minor
+        - patch
         - snapshot.0
         - snapshot.1
         - snapshot.2
         - snapshot.3
-        - edge
       release_branch:
         description: Branch to release
         required: true
