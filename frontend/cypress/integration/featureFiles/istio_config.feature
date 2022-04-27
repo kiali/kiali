@@ -1,76 +1,58 @@
 Feature: Kiali Istio Config page
 
-  User opens the Istio Config page and sees the Istio Config objects for Bookinfo
+  On the Istio Config page, an admin should see all the Istio Config objects.
+  The admin should be able to filter for the Istio Config objects they are looking for
+  and create new Istio objects.
 
   Background:
     Given user is at administrator perspective
-    And user opens the "istio" page
-    And user selects the "bookinfo" namespace in the NamespaceSelector
-    And Kiali is done loading
+    And user is at the "istio" page
+    And user is looking within the "bookinfo" namespace
 
   @istio-page
-  Scenario: See a table with correct info
-    Then user sees a table with headings
-      | Name | Namespace | Type | Configuration | 
-    And the "bookinfo-gateway" row is visible
-    And the "Name" column on the "bookinfo-gateway" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
-    And the "Namespace" column on the "bookinfo-gateway" row has the text "bookinfo"
-    And the "Type" column on the "bookinfo-gateway" row has the text "Gateway"
-    And the "Configuration" column on the "bookinfo-gateway" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway?list=yaml"
-
-  @istio-page
-  Scenario: Filter istio config table by Istio Name
-    When user selects filter "Istio Name"
-    And user filters for name "bookinfo-gateway"
-    Then user sees "bookinfo-gateway" in the table
-    And table length should be 1
+  Scenario: See all Istio Config objects in the bookinfo namespace.
+    Then user sees all the Istio Config objects in the bookinfo namespace
+    And user sees Name information for Istio objects
+    And user sees Namespace information for Istio objects
+    And user sees Type information for Istio objects
+    And user sees Configuration information for Istio objects
   
   @istio-page
-  Scenario: Filter istio config table by Istio Type
-    When user selects filter "Istio Type"
-    And user filters for istio type "Gateway"
-    Then user sees "Gateway" in the table
-    And table length should be 1
-  
-  @istio-page
-  Scenario: Filter istio config table by Config
-    When user selects filter "Config"
-    And user filters for config "Valid"
-    Then user sees "bookinfo-gateway" in the table
-    And table length should be 2
+  Scenario: Filter Istio Config objects by Istio Name
+    Given the user filters by "Istio Name" for "bookinfo-gateway"
+    Then user only sees "bookinfo-gateway"
 
   @istio-page
-  Scenario: Navigate to the create AuthorizationPolicy page through the actions dropdown
-    When the user clicks the actions button
-    And the user clicks the create "AuthorizationPolicy" action
-    Then the user navigates to the "/istio/new/AuthorizationPolicy?namespaces=bookinfo" page
+  Scenario: Filter Istio Config objects by Istio Type
+    Given the user filters by "Istio Type" for "Gateway"
+    Then user only sees "bookinfo-gateway"
 
   @istio-page
-  Scenario: Navigate to the create Gateway page through the actions dropdown
-    When the user clicks the actions button
-    And the user clicks the create "Gateway" action
-    Then the user navigates to the "/istio/new/Gateway?namespaces=bookinfo" page
+  Scenario: Filter Istio Config objects by Valid configuration
+    Given the user filters by "Config" for "Valid"
+    Then user sees "bookinfo-gateway"
+    And user sees "bookinfo"
 
   @istio-page
-  Scenario: Navigate to the create PeerAuthentication page through the actions dropdown
-    When the user clicks the actions button
-    And the user clicks the create "PeerAuthentication" action
-    Then the user navigates to the "/istio/new/PeerAuthentication?namespaces=bookinfo" page
+  Scenario: Ability to create an AuthorizationPolicy object
+    Then the user can create a "AuthorizationPolicy" Istio object
 
   @istio-page
-  Scenario: Navigate to the create RequestAuthentication page through the actions dropdown
-    When the user clicks the actions button
-    And the user clicks the create "RequestAuthentication" action
-    Then the user navigates to the "/istio/new/RequestAuthentication?namespaces=bookinfo" page
+  Scenario: Ability to create a Gateway object
+    Then the user can create a "Gateway" Istio object
 
   @istio-page
-  Scenario: Navigate to the create ServiceEntry page through the actions dropdown
-    When the user clicks the actions button
-    And the user clicks the create "ServiceEntry" action
-    Then the user navigates to the "/istio/new/ServiceEntry?namespaces=bookinfo" page
+  Scenario: Ability to create a PeerAuthentication object
+    Then the user can create a "PeerAuthentication" Istio object
 
   @istio-page
-  Scenario: Navigate to the create Sidecar page through the actions dropdown
-    When the user clicks the actions button
-    And the user clicks the create "Sidecar" action
-    Then the user navigates to the "/istio/new/Sidecar?namespaces=bookinfo" page
+  Scenario: Ability to create a RequestAuthentication object
+    Then the user can create a "RequestAuthentication" Istio object
+
+  @istio-page
+  Scenario: Ability to create a ServiceEntry object
+    Then the user can create a "ServiceEntry" Istio object
+
+  @istio-page
+  Scenario: Ability to create a Sidecar object
+    Then the user can create a "Sidecar" Istio object
