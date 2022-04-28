@@ -30,7 +30,7 @@ func TestApplicationsList(t *testing.T) {
 func TestApplicationDetails(t *testing.T) {
 	name := "productpage"
 	assert := assert.New(t)
-	app, err := utils.ApplicationDetails(name, utils.BOOKINFO)
+	app, _, err := utils.ApplicationDetails(name, utils.BOOKINFO)
 
 	assert.Nil(err)
 	assert.NotNil(app)
@@ -56,4 +56,12 @@ func TestApplicationDetails(t *testing.T) {
 	for _, wlStatus := range app.Health.WorkloadStatuses {
 		assert.Contains(wlStatus.Name, name)
 	}
+}
+
+func TestAppDetailsInvalidName(t *testing.T) {
+	name := "invalid"
+	assert := assert.New(t)
+	app, code, _ := utils.ApplicationDetails(name, utils.BOOKINFO)
+	assert.NotEqual(200, code)
+	assert.Empty(app)
 }

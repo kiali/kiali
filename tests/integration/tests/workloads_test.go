@@ -36,7 +36,7 @@ func TestWorkloadsList(t *testing.T) {
 func TestWorkloadDetails(t *testing.T) {
 	name := "details-v1"
 	assert := assert.New(t)
-	wl, err := utils.WorkloadDetails(name, utils.BOOKINFO)
+	wl, _, err := utils.WorkloadDetails(name, utils.BOOKINFO)
 
 	assert.Nil(err)
 	assert.NotNil(wl)
@@ -61,6 +61,14 @@ func TestWorkloadDetails(t *testing.T) {
 	assert.NotNil(wl.Workload.Health.Requests)
 	assert.NotNil(wl.Workload.Health.Requests.Outbound)
 	assert.NotNil(wl.Workload.Health.Requests.Inbound)
+}
+
+func TestWorkloadDetailsInvalidName(t *testing.T) {
+	name := "invalid"
+	assert := assert.New(t)
+	app, code, _ := utils.WorkloadDetails(name, utils.BOOKINFO)
+	assert.NotEqual(200, code)
+	assert.Empty(app)
 }
 
 func TestDiscoverWorkload(t *testing.T) {

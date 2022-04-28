@@ -31,6 +31,23 @@ func TestAppTraces(t *testing.T) {
 	assertTraces(traces, statusCode, err, assert)
 }
 
+func TestWrongTracesType(t *testing.T) {
+	assert := assert.New(t)
+	name := "details"
+	traces, statusCode, err := utils.Traces("wrong", name, utils.BOOKINFO)
+	assert.NotEqual(200, statusCode)
+	assert.NotNil(err)
+	assert.Empty(traces)
+}
+
+func TestWrongNamespaceTraces(t *testing.T) {
+	assert := assert.New(t)
+	name := "details"
+	traces, _, _ := utils.Traces("apps", name, "wrong")
+	assert.Empty(traces.Data)
+	assert.Empty(traces.Errors)
+}
+
 func TestServiceSpans(t *testing.T) {
 	assert := assert.New(t)
 	name := "details"
@@ -50,6 +67,22 @@ func TestWorkloadSpans(t *testing.T) {
 	name := "details-v1"
 	spans, statusCode, err := utils.Spans("workloads", name, utils.BOOKINFO)
 	assertSpans(spans, statusCode, err, assert)
+}
+
+func TestWrongTypeSpans(t *testing.T) {
+	assert := assert.New(t)
+	name := "details-v1"
+	spans, statusCode, err := utils.Spans("wrong", name, utils.BOOKINFO)
+	assert.NotEqual(200, statusCode)
+	assert.NotNil(err)
+	assert.Empty(spans)
+}
+
+func TestWrongNamespaceSpans(t *testing.T) {
+	assert := assert.New(t)
+	name := "details-v1"
+	spans, _, _ := utils.Spans("apps", name, "wrong")
+	assert.Empty(spans)
 }
 
 func assertTraces(traces *jaeger.JaegerResponse, statusCode int, err error, assert *assert.Assertions) {
