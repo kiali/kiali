@@ -6,6 +6,9 @@ on:
       target_branch:
         required: true
         type: string
+      build_branch:
+        required: true
+        type: string
 
 env:
   TARGET_BRANCH: ${{ inputs.target_branch }}
@@ -17,6 +20,8 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.build_branch }}
 
       - name: Setup node
         uses: actions/setup-node@v3
