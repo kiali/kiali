@@ -33,7 +33,7 @@ jobs:
     name: Initialize
     runs-on: ubuntu-20.04
     outputs:
-      target_branch: ${{ github.base_ref || github.ref_name }}
+      target_branch: ${{ github.ref_name }}
       release_type: ${{ steps.release_type.outputs.release_type }}
       release_version: ${{ steps.release_version.outputs.release_version }}
       branch_version: ${{ steps.branch_version.outputs.branch_version }}
