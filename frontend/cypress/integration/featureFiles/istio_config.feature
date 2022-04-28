@@ -7,7 +7,7 @@ Feature: Kiali Istio Config page
   Background:
     Given user is at administrator perspective
     And user is at the "istio" page
-    And user is looking within the "bookinfo" namespace
+    And user selects the "bookinfo" namespace
 
   @istio-page
   Scenario: See all Istio Config objects in the bookinfo namespace.

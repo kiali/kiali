@@ -5,7 +5,7 @@ Feature: Kiali Services page
   Background:
     Given user is at administrator perspective
     And user is at the "services" page
-    And user is looking within the "bookinfo" namespace
+    And user selects the "bookinfo" namespace
 
   @services-page
   Scenario: See a table with correct info

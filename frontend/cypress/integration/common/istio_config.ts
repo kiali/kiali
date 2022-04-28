@@ -31,8 +31,7 @@ And('user sees Name information for Istio objects', () => {
   const object = 'bookinfo-gateway';
   // There should be a table with a heading for each piece of information.
   getColWithRowText(object, 'Name').within(() => {
-    // $= is endswith since console link can change depending on the deployment.
-    cy.get(`a[href$="/namespaces/bookinfo/istio/gateways/${object}"]`).should('be.visible');
+    cy.get(`a[href*="/namespaces/bookinfo/istio/gateways/${object}"]`).should('be.visible');
   });
 });
 
@@ -52,8 +51,7 @@ And('user sees Configuration information for Istio objects', () => {
   const object = 'bookinfo-gateway';
   // There should be a table with a heading for each piece of information.
   getColWithRowText(object, 'Configuration').within(() => {
-    // $= is endswith since console link can change depending on the deployment.
-    cy.get(`a[href$="/namespaces/bookinfo/istio/gateways/${object}?list=yaml"]`).should('be.visible');
+    cy.get(`a[href*="/namespaces/bookinfo/istio/gateways/${object}"]`).should('be.visible');
   });
 });
 
@@ -86,6 +84,6 @@ Then('the user can create a {string} Istio object', (object: string) => {
   cy.getBySel('actions-dropdown').within(() => {
     cy.contains(object).click();
   });
-  const page = `/istio/new/${object}?namespaces=bookinfo`;
+  const page = `/istio/new/${object}`;
   cy.url().should('include', page);
 });
