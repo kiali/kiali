@@ -4,9 +4,8 @@ Feature: Kiali Services page
 
   Background:
     Given user is at administrator perspective
-    And user opens the "services" page
-    And user selects the "bookinfo" namespace in the NamespaceSelector
-    And Kiali is done loading
+    And user is at the "services" page
+    And user is looking within the "bookinfo" namespace
 
   @services-page
   Scenario: See a table with correct info
