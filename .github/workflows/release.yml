@@ -212,7 +212,7 @@ jobs:
     uses: ./.github/workflows/integration-tests-backend.yml
     needs: [initialize, build_backend, build_frontend]
     with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      target_branch: ${{ needs.initialize.outputs.target_branch }}
       build_branch: ${{ github.event.inputs.release_branch }}
 
   integration_tests_frontend:
@@ -220,7 +220,7 @@ jobs:
     uses: ./.github/workflows/integration-tests-frontend.yml
     needs: [initialize, build_backend, build_frontend]
     with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      target_branch: ${{ needs.initialize.outputs.target_branch }}
       build_branch: ${{ github.event.inputs.release_branch }}
 
   release:
