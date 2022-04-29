@@ -556,6 +556,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           isSeparator: true
         });
         const enableAction = {
+          "data-test": `enable-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
           isSeparator: false,
           title: 'Enable Auto Injection',
@@ -563,6 +564,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             this.setState({ showTrafficPoliciesModal: true, nsTarget: ns, opTarget: 'enable', kind: 'injection' })
         };
         const disableAction = {
+          "data-test": `disable-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
           isSeparator: false,
           title: 'Disable Auto Injection',
@@ -570,6 +572,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             this.setState({ showTrafficPoliciesModal: true, nsTarget: ns, opTarget: 'disable', kind: 'injection' })
         };
         const removeAction = {
+          "data-test": `remove-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
           isSeparator: false,
           title: 'Remove Auto Injection',

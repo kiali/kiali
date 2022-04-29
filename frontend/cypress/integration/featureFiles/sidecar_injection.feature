@@ -6,6 +6,9 @@ Feature: Controlling sidecar injection
     and deployment levels. Annotations are used to override the default policy and
     Kiali should reflect these annotations.
 
+    Background:
+        Given user is at administrator perspective
+
     Scenario: Override the default policy for automatic sidecar injection by enabling it in a namespace
         Given a namespace without override configuration for automatic sidecar injection
         When I override the default automatic sidecar injection policy in the namespace to enabled
@@ -13,14 +16,14 @@ Feature: Controlling sidecar injection
 
     Scenario: Switch the override configuration for automatic sidecar injection in a namespace to disabled
         Given a namespace which has override configuration for automatic sidecar injection
-        And the override configuration for sidecar injection is enabled
-        When I change the override configuration for automatic sidecar injection policy in the namespace to disabled
+        And the override configuration for sidecar injection is "enabled"
+        When I change the override configuration for automatic sidecar injection policy in the namespace to "disable" it
         Then I should see the override annotation for sidecar injection in the namespace as "disabled"
 
     Scenario: Switch the override configuration for automatic sidecar injection in a namespace to enabled
         Given a namespace which has override configuration for automatic sidecar injection
-        And the override configuration for sidecar injection is disabled
-        When I change the override configuration for automatic sidecar injection policy in the namespace to enabled
+        And the override configuration for sidecar injection is "disabled"
+        When I change the override configuration for automatic sidecar injection policy in the namespace to "enable" it
         Then I should see the override annotation for sidecar injection in the namespace as "enabled"
 
     Scenario: Switch to using the default policy for automatic sidecar injection in a namespace
