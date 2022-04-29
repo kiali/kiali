@@ -139,7 +139,7 @@ jobs:
 
     - name: Determine next version
       env:
-        RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+        RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
         RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
       id: next_version
       if: ${{ steps.release_type.outputs.release_type == 'patch' || steps.release_type.outputs.release_type == 'minor' }}
@@ -163,7 +163,7 @@ jobs:
 
     - name: Determine Quay tag
       env:
-        RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+        RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
         RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
         BRANCH_VERSION: ${{ steps.branch_version.outputs.branch_version }}
       id: quay_tag
