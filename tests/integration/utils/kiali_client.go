@@ -12,6 +12,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph/config/cytoscape"
+	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -173,6 +174,36 @@ func (c *KialiClient) GetCookies() (bool, []*http.Cookie) {
 		return true, cookies
 	}
 	return false, nil
+}
+
+func KialiConfig() (*handlers.PublicConfig, int, error) {
+	body, code, _, err := httputil.HttpGet(client.kialiURL+"/api/config", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	if err == nil {
+		response := new(handlers.PublicConfig)
+		err = json.Unmarshal(body, &response)
+		if err == nil {
+			return response, code, nil
+		} else {
+			return response, code, err
+		}
+	} else {
+		return nil, code, err
+	}
+}
+
+func Namespaces() (*models.Namespaces, int, error) {
+	body, code, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/namespaces", client.kialiURL), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	if err == nil {
+		response := new(models.Namespaces)
+		err = json.Unmarshal(body, &response)
+		if err == nil {
+			return response, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
+	}
 }
 
 func NamespaceWorkloadHealth(namespace string, params map[string]string) (*models.NamespaceWorkloadHealth, int, error) {
@@ -391,6 +422,21 @@ func IstioConfigPermissions(namespace string) (*models.IstioConfigPermissions, e
 	}
 }
 
+func IstioPermissions() (*models.IstioConfigPermissions, int, error) {
+	body, code, _, err := httputil.HttpGet(client.kialiURL+"/api/istio/permissions", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	if err == nil {
+		perms := new(models.IstioConfigPermissions)
+		err = json.Unmarshal(body, &perms)
+		if err == nil {
+			return perms, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
+	}
+}
+
 func Graph(params map[string]string) (*cytoscape.Config, int, error) {
 	url := fmt.Sprintf("%s/api/namespaces/graph?%s", client.kialiURL, ParamsAsString(params))
 	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
@@ -409,6 +455,22 @@ func Graph(params map[string]string) (*cytoscape.Config, int, error) {
 
 func ObjectGraph(objectType, graphType, name, namespace string) (*cytoscape.Config, int, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/%s/%s/graph?duration=60s&graphType=%s", client.kialiURL, namespace, objectType, name, graphType)
+	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	if err == nil {
+		graph := new(cytoscape.Config)
+		err = json.Unmarshal(body, &graph)
+		if err == nil {
+			return graph, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
+	}
+}
+
+func AppVersionGraph(graphType, name, version, namespace string) (*cytoscape.Config, int, error) {
+	url := fmt.Sprintf("%s/api/namespaces/%s/applications/%s/versions/%s/graph?duration=60s&graphType=%s", client.kialiURL, namespace, name, version, graphType)
 	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		graph := new(cytoscape.Config)
@@ -452,6 +514,83 @@ func ObjectMetrics(namespace, service, objectType string, params map[string]stri
 		}
 	} else {
 		return nil, err
+	}
+}
+
+func ObjectDashboard(namespace, name, objectType string) (*models.MonitoringDashboard, error) {
+	url := fmt.Sprintf("%s/api/namespaces/%s/%s/%s/dashboard", client.kialiURL, namespace, objectType, name)
+	body, _, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	if err == nil {
+		response := new(models.MonitoringDashboard)
+		// tests are checking only common response for different object types, ignore the error
+		_ = json.Unmarshal(body, &response)
+		return response, nil
+	} else {
+		return nil, err
+	}
+}
+
+func MeshTls() (*models.MTLSStatus, int, error) {
+	url := fmt.Sprintf("%s/api/mesh/tls", client.kialiURL)
+	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	if err == nil {
+		status := new(models.MTLSStatus)
+		err = json.Unmarshal(body, &status)
+		if err == nil {
+			return status, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
+	}
+}
+
+func NamespaceTls(namespace string) (*models.MTLSStatus, int, error) {
+	url := fmt.Sprintf("%s/api/namespaces/%s/tls", client.kialiURL, namespace)
+	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	if err == nil {
+		status := new(models.MTLSStatus)
+		err = json.Unmarshal(body, &status)
+		if err == nil {
+			return status, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
+	}
+}
+
+func Jaeger() (*models.JaegerInfo, int, error) {
+	url := fmt.Sprintf("%s/api/jaeger", client.kialiURL)
+	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	if err == nil {
+		status := new(models.JaegerInfo)
+		err = json.Unmarshal(body, &status)
+		if err == nil {
+			return status, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
+	}
+}
+
+func Grafana() (*models.GrafanaInfo, int, error) {
+	url := fmt.Sprintf("%s/api/grafana", client.kialiURL)
+	body, code, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	if err == nil {
+		status := new(models.GrafanaInfo)
+		err = json.Unmarshal(body, &status)
+		if err == nil {
+			return status, code, nil
+		} else {
+			return nil, code, err
+		}
+	} else {
+		return nil, code, err
 	}
 }
 
