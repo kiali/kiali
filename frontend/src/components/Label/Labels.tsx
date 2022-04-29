@@ -7,6 +7,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 const SHOW_MORE_TRESHOLD = 2;
 
 interface Props {
+  "data-test"?: string;
   labels?: { [key: string]: string };
   tooltipMessage?: string;
   expanded?: boolean;
@@ -63,7 +64,7 @@ class Labels extends React.Component<Props, State> {
   renderMoreLabelsLink() {
     if (this.hasManyLabels() && !this.state.expanded) {
       return (
-        <Button key="label_more" variant="link" className={linkStyle} onClick={this.expandLabels}>
+        <Button data-test="label_more" key="label_more" variant="link" className={linkStyle} onClick={this.expandLabels}>
           More labels...
         </Button>
       );
@@ -75,7 +76,7 @@ class Labels extends React.Component<Props, State> {
   renderLabels() {
     return this.labelKeys().map((key, i) => {
       return this.showItem(i) ? (
-        <div key={'label_' + i}>
+        <div key={'label_' + i} data-test={key + '-label-container'}>
           <Label key={'label_' + i} name={key} value={this.props.labels ? this.props.labels[key] : ''} />
         </div>
       ) : undefined;
@@ -97,7 +98,7 @@ class Labels extends React.Component<Props, State> {
       </Tooltip>
     ) : undefined;
     return (
-      <div className={labelsContainerStyle}>
+      <div className={labelsContainerStyle} data-test={this.props["data-test"]}>
         {this.hasLabels() ? [this.renderLabels(), this.renderMoreLabelsLink()] : this.renderEmptyLabels()}
         {tooltip}
       </div>

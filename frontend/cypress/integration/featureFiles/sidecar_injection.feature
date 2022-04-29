@@ -34,25 +34,25 @@ Feature: Controlling sidecar injection
     Scenario: Override the default policy for automatic sidecar injection by enabling it in a workload
         Given a workload without a sidecar
         And the workload does not have override configuration for automatic sidecar injection
-        When I override the default policy for automatic sidecar injection in the workload to enabled
+        When I override the default policy for automatic sidecar injection in the workload to "enable" it
         Then the workload should get a sidecar
 
     Scenario: Override the default policy for automatic sidecar injection by disabling it in a workload
         Given a workload with a sidecar
         And the workload does not have override configuration for automatic sidecar injection
-        When I override the default policy for automatic sidecar injection in the workload to disabled
+        When I override the default policy for automatic sidecar injection in the workload to "disable" it
         Then the sidecar of the workload should vanish
 
     Scenario: Switch the override configuration for automatic sidecar injection in a workload to disabled
         Given a workload with a sidecar
         And the workload has override configuration for automatic sidecar injection
-        When I change the override configuration for automatic sidecar injection in the workload to disabled
+        When I change the override configuration for automatic sidecar injection in the workload to "disable" it
         Then the sidecar of the workload should vanish
 
     Scenario: Switch the override configuration for automatic sidecar injection in a workload to enabled
         Given a workload without a sidecar
         And the workload has override configuration for automatic sidecar injection
-        When I change the override configuration for automatic sidecar injection in the workload to enabled
+        When I change the override configuration for automatic sidecar injection in the workload to "enable" it
         Then the workload should get a sidecar
 
     Scenario: Remove override configuration for automatic sidecar injection in a workload
