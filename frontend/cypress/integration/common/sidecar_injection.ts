@@ -4,7 +4,7 @@ Given('a namespace without override configuration for automatic sidecar injectio
     this.targetNamespace = "default";
 
     // Make sure that the target namespace does not have override configuration
-    cy.request('PATCH', 'api/namespaces/' + this.targetNamespace, {
+    cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
         metadata: {
             labels: {
                 "istio-injection": null,
@@ -19,7 +19,7 @@ Given('a namespace which has override configuration for automatic sidecar inject
     this.istioInjection = "enabled";
 
     // Make sure that the target namespace has some override configuration
-    cy.request('PATCH', 'api/namespaces/' + this.targetNamespace, {
+    cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
         metadata: {
             labels: {
                 "istio-injection": this.istioInjection,
@@ -31,7 +31,7 @@ Given('a namespace which has override configuration for automatic sidecar inject
 
 Given('the override configuration for sidecar injection is {string}', function (enabledOrDisabled) {
     if (this.istioInjection !== enabledOrDisabled) {
-        cy.request('PATCH', 'api/namespaces/' + this.targetNamespace, {
+        cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
             metadata: {
                 labels: {
                     "istio-injection": enabledOrDisabled,
@@ -54,7 +54,7 @@ Given('a workload without a sidecar', function () {
     this.workloadHasAutoInjectionOverride = false;
 
     // Make sure that injection in the namespace is turned off
-    cy.request('PATCH', 'api/namespaces/' + this.targetNamespace, {
+    cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
         metadata: {
             labels: {
                 "istio-injection": null,
@@ -64,7 +64,7 @@ Given('a workload without a sidecar', function () {
     });
 
     // Make sure that the workload does not have override configuration
-    cy.request('PATCH', `api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
+    cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
         spec: {
             template: {
                 metadata: {
@@ -91,7 +91,7 @@ Given('a workload with a sidecar', function () {
     this.workloadHasAutoInjectionOverride = false;
 
     // Make sure that injection in the namespace is turned off
-    cy.request('PATCH', 'api/namespaces/' + this.targetNamespace, {
+    cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
         metadata: {
             labels: {
                 "istio-injection": "enabled",
@@ -101,7 +101,7 @@ Given('a workload with a sidecar', function () {
     });
 
     // Make sure that the workload does not have override configuration
-    cy.request('PATCH', `api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
+    cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
         spec: {
             template: {
                 metadata: {
@@ -123,7 +123,7 @@ Given('the workload does not have override configuration for automatic sidecar i
             // To achieve the desired state of having a sidecar without override config,
             // enable injection at namespace level
             this.namespaceAutoInjectionEnabled = true;
-            cy.request('PATCH', 'api/namespaces/' + this.targetNamespace, {
+            cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
                 metadata: {
                     labels: {
                         "istio-injection": "enabled",
@@ -135,7 +135,7 @@ Given('the workload does not have override configuration for automatic sidecar i
             // To achieve the desired state of no sidecar without override config,
             // disable injection at namespace level.
             this.namespaceAutoInjectionEnabled = false;
-            cy.request('PATCH', 'api/namespaces/' + this.targetNamespace, {
+            cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
                 metadata: {
                     labels: {
                         "istio-injection": "disabled",
@@ -147,7 +147,7 @@ Given('the workload does not have override configuration for automatic sidecar i
 
         // Now, we can remove the override config at deployment level
         this.workloadHasAutoInjectionOverride = false;
-        cy.request('PATCH', `api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
+        cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
             spec: {
                 template: {
                     metadata: {
@@ -168,7 +168,7 @@ Given('the workload has override configuration for automatic sidecar injection',
     if (!this.workloadHasAutoInjectionOverride) {
         // Add override configuration, matching sidecar state
         this.workloadHasAutoInjectionOverride = true;
-        cy.request('PATCH', `api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
+        cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
             spec: {
                 template: {
                     metadata: {
@@ -188,7 +188,7 @@ Given('a workload with override configuration for automatic sidecar injection', 
 
     // At the moment, it does not matter if the sidecar is being injected or not. The goal is to have
     // the override annotation on it.
-    cy.request('PATCH', `api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
+    cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
         spec: {
             template: {
                 metadata: {
@@ -202,38 +202,38 @@ Given('a workload with override configuration for automatic sidecar injection', 
 });
 
 When('I override the default automatic sidecar injection policy in the namespace to enabled', function () {
-    cy.visit('overview');
+    cy.visit('/console/overview');
     cy.get('[data-test=overview-type-LIST]').click();
     cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button`).click();
     cy.get(`[data-test=enable-${this.targetNamespace}-namespace-sidecar-injection]`).click();
-    cy.intercept(`api/namespaces`).as('namespacesReload');
+    cy.intercept(`/api/namespaces`).as('namespacesReload');
     cy.get('[data-test=confirm-traffic-policies]').click();
     cy.wait('@namespacesReload')
 });
 
 When('I change the override configuration for automatic sidecar injection policy in the namespace to {string} it', function (enabledOrDisabled) {
-    cy.visit('overview');
+    cy.visit('/console/overview');
     cy.get('[data-test=overview-type-LIST]').click();
     cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button`).click();
     cy.get(`[data-test=${enabledOrDisabled}-${this.targetNamespace}-namespace-sidecar-injection]`).click();
-    cy.intercept(`api/namespaces`).as('namespacesReload');
+    cy.intercept(`/api/namespaces`).as('namespacesReload');
     cy.get('[data-test=confirm-traffic-policies]').click();
     cy.wait('@namespacesReload')
 });
 
 When('I remove override configuration for sidecar injection in the namespace', function () {
-    cy.visit('overview');
+    cy.visit('/console/overview');
     cy.get('[data-test=overview-type-LIST]').click();
     cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button`).click();
     cy.get(`[data-test=remove-${this.targetNamespace}-namespace-sidecar-injection]`).click();
-    cy.intercept(`api/namespaces`).as('namespacesReload');
+    cy.intercept(`/api/namespaces`).as('namespacesReload');
     cy.get('[data-test=confirm-traffic-policies]').click();
     cy.wait('@namespacesReload')
 });
 
 function switchWorkloadSidecarInjection(enableOrDisable) {
-    cy.visit(`namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}`);
-    cy.intercept(`api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}**`).as('workloadReload');
+    cy.visit(`/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}`);
+    cy.intercept(`/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}**`).as('workloadReload');
     cy.get('[data-test="workload-actions-dropdown"] button').click();
     cy.get(`button[data-test=${enableOrDisable}_auto_injection]`).click();
     cy.wait('@workloadReload');
