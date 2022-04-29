@@ -4,8 +4,16 @@ on:
   # Run on master and release branches
   push:
     branches: [master, "^v\\d+\\.\\d+$"]
+    paths-ignore:
+      - 'design/**'
+      - '**/*.md'
+      - '**/*.adoc'
   pull_request:
     branches: [master, "^v\\d+\\.\\d+$"]
+    paths-ignore:
+      - 'design/**'
+      - '**/*.md'
+      - '**/*.adoc'
 
 jobs:
   initialize:
