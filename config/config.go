@@ -308,6 +308,9 @@ type AuthConfig struct {
 // OpenShiftConfig contains specific configuration for authentication when on OpenShift
 type OpenShiftConfig struct {
 	ClientIdPrefix string `yaml:"client_id_prefix,omitempty"`
+	ServerPrefix   string `yaml:"server_prefix,omitempty"`
+	UseSystemCA    bool   `yaml:"use_system_ca,omitempty"`
+	RedirectURL    string `yaml:"redirect_url,omitempty"`
 }
 
 // OpenIdConfig contains specific configuration for authentication using an OpenID provider
@@ -526,6 +529,7 @@ func NewConfig() (c *Config) {
 			},
 			OpenShift: OpenShiftConfig{
 				ClientIdPrefix: "kiali",
+				ServerPrefix:   "https://kubernetes.default.svc/",
 			},
 		},
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
