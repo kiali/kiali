@@ -8,6 +8,16 @@ import (
 	"github.com/kiali/kiali/tests/integration/utils"
 )
 
+func TestNamespaces(t *testing.T) {
+	assert := assert.New(t)
+	namespaces, code, err := utils.Namespaces()
+
+	assert.Nil(err)
+	assert.Equal(200, code)
+	assert.NotEmpty(namespaces)
+	assert.Contains(namespaces.GetNames(), utils.BOOKINFO)
+}
+
 func TestNamespaceHealthWorkload(t *testing.T) {
 	name := "ratings-v1"
 	assert := assert.New(t)

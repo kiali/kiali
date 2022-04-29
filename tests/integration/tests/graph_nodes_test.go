@@ -18,11 +18,27 @@ func TestAppGraph(t *testing.T) {
 	assertGraphConfig("applications", graphType, utils.BOOKINFO, name, assert)
 }
 
-func TestVersionedAppGraph(t *testing.T) {
+func TestAppVersionGraph(t *testing.T) {
 	assert := assert.New(t)
 	name := "details"
-	graphType := "versionedApp"
+	graphType := "app"
 	assertGraphConfig("applications", graphType, utils.BOOKINFO, name, assert)
+}
+
+func TestVersionedAppGraph(t *testing.T) {
+	assert := assert.New(t)
+	name := "ratings"
+	graphType := "versionedApp"
+	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+		config, statusCode, err := utils.AppVersionGraph(graphType, name, "v1", utils.BOOKINFO)
+		if statusCode != 200 {
+			return false, err
+		}
+		assert.Equal(config.GraphType, graphType)
+		assert.NotNil(config.Elements)
+		return len(config.Elements.Nodes) > 0 && len(config.Elements.Edges) > 0, nil
+	})
+	assert.Nil(pollErr, "Graph elements should contains Nodes and Edges")
 }
 
 func TestAppGraphEmpty(t *testing.T) {
