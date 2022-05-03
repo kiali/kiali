@@ -19,17 +19,17 @@ Feature: Kiali Istio Config page
   
   @istio-page
   Scenario: Filter Istio Config objects by Istio Name
-    Given the user filters by "Istio Name" for "bookinfo-gateway"
+    When the user filters by "Istio Name" for "bookinfo-gateway"
     Then user only sees "bookinfo-gateway"
 
   @istio-page
   Scenario: Filter Istio Config objects by Istio Type
-    Given the user filters by "Istio Type" for "Gateway"
+    When the user filters by "Istio Type" for "Gateway"
     Then user only sees "bookinfo-gateway"
 
   @istio-page
   Scenario: Filter Istio Config objects by Valid configuration
-    Given the user filters by "Config" for "Valid"
+    When the user filters by "Config" for "Valid"
     Then user sees "bookinfo-gateway"
     And user sees "bookinfo"
 
