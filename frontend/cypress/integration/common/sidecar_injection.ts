@@ -1,5 +1,10 @@
 import { Given, Then, When } from "cypress-cucumber-preprocessor/steps";
 
+// Most of these "Given" implementations are directly using the Kiali API
+// in order to reach a well known state in the environment before performing
+// the relevant UI testing. It should be noted that the Kiali API is private
+// and backwards compatibility is never guaranteed.
+
 Given('a namespace without override configuration for automatic sidecar injection', function () {
     this.targetNamespace = "default";
 
