@@ -274,10 +274,6 @@ Then('I should see no override annotation for sidecar injection in the workload'
             cy.wrap($card).get('label_more').click();
         }
 
-        cy.wrap($card)
-          .get('span.label-pair')
-          .each($span => {
-              expect($span).to.not.contain('sidecar.istio.io/inject');
-          });
+        cy.wrap($card).get('[data-test="sidecar.istio.io/inject-label-container"').should('not.exist');
     });
 });
