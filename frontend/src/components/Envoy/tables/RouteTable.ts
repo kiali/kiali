@@ -24,16 +24,14 @@ export class RouteTable implements SummaryTable {
   availableFilters = (): FilterType[] => {
     return [
       {
-        id: 'name',
-        title: 'Name',
+        category: 'Name',
         placeholder: 'Name',
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        id: 'domains',
-        title: 'Domains',
+        category: 'Domains',
         placeholder: 'Domains',
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,

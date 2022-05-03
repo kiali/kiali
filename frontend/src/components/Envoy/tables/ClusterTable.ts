@@ -24,32 +24,28 @@ export class ClusterTable implements SummaryTable {
   availableFilters = (): FilterType[] => {
     return [
       {
-        id: 'fqdn',
-        title: 'FQDN',
+        category: 'FQDN',
         placeholder: 'FQDN',
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        id: 'port',
-        title: 'Port',
+        category: 'Port',
         placeholder: 'Port',
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        id: 'subset',
-        title: 'Subset',
+        category: 'Subset',
         placeholder: 'Subset',
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        id: 'direction',
-        title: 'Direction',
+        category: 'Direction',
         placeholder: 'Direction',
         filterType: AllFilterTypes.select,
         action: FILTER_ACTION_APPEND,

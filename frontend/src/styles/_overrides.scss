@@ -15,6 +15,14 @@ $color-grey-background-border: #ccc;
 
 // PatternFly 4 overrides
 
+.pf-c-chip-group__label {
+  --pf-c-chip-group__label--MaxWidth: 50em;
+}
+
+.pf-c-chip__text {
+  --pf-c-chip__text--MaxWidth: 50em;
+}
+
 // Remove the padding by default
 .pf-c-page__main-section {
   padding: 0px;
@@ -83,7 +91,7 @@ a:focus {
 /*
 Fix modal-title size
  */
- /*
+/*
 .modal-title {
   font-size: 18px;
 }
@@ -98,11 +106,10 @@ keep test aligned vertically
 }
 */
 
-
 /*
 Unset line-height stylefor connected text in suspend trafic wizard
  */
- /*
+/*
 .list-group-item-text {
   line-height: unset;
   width: 100%;
@@ -152,7 +159,7 @@ Fix icon in buttons of pagination pages
 /*
 Top line in tabs
  */
- /*
+/*
 .nav-tabs {
   border-top: 1px solid #ededed;
 }

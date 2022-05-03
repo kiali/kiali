@@ -64,8 +64,7 @@ const genActiveFilters = (filter: FilterType, values: string[]): ActiveFiltersIn
   return {
     filters: values.map(v => {
       return {
-        id: filter.id,
-        title: filter.filterType,
+        category: filter.category,
         value: v
       };
     }),

@@ -22,8 +22,7 @@ class OverviewStatus extends React.Component<Props, {}> {
   setFilters = () => {
     const filters: ActiveFilter[] = [
       {
-        id: healthFilter.id,
-        title: healthFilter.title,
+        category: healthFilter.category,
         value: this.props.status.name
       }
     ];

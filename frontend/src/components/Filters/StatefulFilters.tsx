@@ -116,8 +116,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
         return ft.loader().then(values => {
           ft.filterValues = values;
           return {
-            id: ft.id,
-            title: ft.title,
+            category: ft.category,
             placeholder: ft.placeholder,
             filterType: ft.filterType,
             action: ft.action,
@@ -145,7 +144,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       this.props.initialFilters !== prev.initialFilters &&
       !arrayEquals(this.props.initialFilters, prev.initialFilters, (t1, t2) => {
         return (
-          t1.id === t2.id &&
+          t1.category === t2.category &&
           arrayEquals(t1.filterValues, t2.filterValues, (v1, v2) => {
             return v1.id === v2.id && v1.title === v2.title;
           })
@@ -153,7 +152,8 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       })
     ) {
       const current =
-        this.props.initialFilters.find(f => f.id === this.state.currentFilterType.id) || this.props.initialFilters[0];
+        this.props.initialFilters.find(f => f.category === this.state.currentFilterType.category) ||
+        this.props.initialFilters[0];
       const active = FilterHelper.setFiltersToURL(this.props.initialFilters, this.state.activeFilters);
       this.setState({
         currentFilterType: current,
@@ -180,13 +180,12 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   filterAdded = (field: FilterType, value: string) => {
     const activeFilters = this.state.activeFilters;
     const activeFilter: ActiveFilter = {
-      id: field.id,
-      title: field.title,
+      category: field.category,
       value: value
     };
 
     // For filters that need to be updated in place instead of added, we check if it is already defined in activeFilters
-    const current = activeFilters.filters.filter(filter => filter.id === field.id);
+    const current = activeFilters.filters.filter(filter => filter.category === field.category);
     if (field.action === FILTER_ACTION_UPDATE && current.length > 0) {
       current.forEach(filter => (filter.value = value));
     } else {
@@ -198,7 +197,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
   selectFilterType = (value: string) => {
     const { currentFilterType } = this.state;
-    const filterType = this.state.filterTypes.filter(filter => filter.id === value)[0];
+    const filterType = this.state.filterTypes.filter(filter => filter.category === value)[0];
 
     if (currentFilterType !== filterType) {
       this.setState({
@@ -241,11 +240,11 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   };
 
   isActive = (type: FilterType, value: string): boolean => {
-    return this.state.activeFilters.filters.some(active => value === active.value && type.id === active.id);
+    return this.state.activeFilters.filters.some(active => value === active.value && type.category === active.category);
   };
 
-  removeFilter = (id: string | any, value: string | any) => {
-    const updated = this.state.activeFilters.filters.filter(x => x.id !== id || x.value !== value);
+  removeFilter = (category: string | any, value: string | any) => {
+    const updated = this.state.activeFilters.filters.filter(x => x.category !== category || x.value !== value);
     if (updated.length !== this.state.activeFilters.filters.length) {
       this.updateActiveFilters({ filters: updated, op: this.state.activeFilters.op });
     }
@@ -355,7 +354,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   render() {
     const { currentFilterType, activeFilters } = this.state;
     const filterOptions = this.state.filterTypes.map(option => (
-      <FormSelectOption key={option.id} value={option.id} label={option.title} />
+      <FormSelectOption key={option.category} value={option.category} label={option.category} />
     ));
 
     return (
@@ -372,14 +371,14 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
               {this.state.filterTypes.map((ft, i) => {
                 return (
                   <ToolbarFilter
-                    chips={activeFilters.filters.filter(af => af.id === ft.id).map(af => af.value)}
+                    key={`toolbar_filter-${ft.category}`}
+                    chips={activeFilters.filters.filter(af => af.category === ft.category).map(af => af.value)}
                     deleteChip={this.removeFilter}
-                    // deleteChipGroup={this.onDeleteGroup}
-                    categoryName={ft.id}
+                    categoryName={ft.category}
                   >
                     {i === 0 && (
                       <FormSelect
-                        value={currentFilterType.id}
+                        value={currentFilterType.category}
                         aria-label={'filter_select_type'}
                         onChange={this.selectFilterType}
                         style={{ width: 'auto', backgroundColor: '#ededed', borderColor: '#bbb' }}
@@ -393,7 +392,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
               })}
             </ToolbarGroup>
             {!this.props.childrenFirst && this.renderChildren()}
-            {(this.state.activeFilters.filters.some(f => f.id === labelFilter.id) ||
+            {(this.state.activeFilters.filters.some(f => f.category === labelFilter.category) ||
               this.state.currentFilterType.filterType === AllFilterTypes.label) && (
               <ToolbarGroup>
                 <ToolbarItem className={classNames('pf-u-mr-md')}>

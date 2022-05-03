@@ -3,8 +3,7 @@ import { RichSpanData } from 'types/JaegerInfo';
 
 const byWorkload = (workloads: FilterValue[]): RunnableFilter<RichSpanData> => {
   return {
-    id: 'workload',
-    title: 'Workload',
+    category: 'Workload',
     placeholder: 'Filter by Workload',
     filterType: AllFilterTypes.typeAhead,
     action: FILTER_ACTION_APPEND,
@@ -15,8 +14,7 @@ const byWorkload = (workloads: FilterValue[]): RunnableFilter<RichSpanData> => {
 
 const byApp = (apps: FilterValue[]): RunnableFilter<RichSpanData> => {
   return {
-    id: 'app',
-    title: 'App',
+    category: 'App',
     placeholder: 'Filter by App',
     filterType: AllFilterTypes.typeAhead,
     action: FILTER_ACTION_APPEND,
@@ -27,8 +25,7 @@ const byApp = (apps: FilterValue[]): RunnableFilter<RichSpanData> => {
 
 const byComponent = (components: FilterValue[]): RunnableFilter<RichSpanData> => {
   return {
-    id: 'type',
-    title: 'Component',
+    category: 'Component',
     placeholder: 'Filter by Span Component',
     filterType: AllFilterTypes.typeAhead,
     action: FILTER_ACTION_APPEND,
@@ -39,8 +36,7 @@ const byComponent = (components: FilterValue[]): RunnableFilter<RichSpanData> =>
 
 const byOperation = (ops: FilterValue[]): RunnableFilter<RichSpanData> => {
   return {
-    id: 'operation',
-    title: 'Operation',
+    category: 'Operation',
     placeholder: 'Filter by Operation Name',
     filterType: AllFilterTypes.typeAhead,
     action: FILTER_ACTION_APPEND,
@@ -50,8 +46,7 @@ const byOperation = (ops: FilterValue[]): RunnableFilter<RichSpanData> => {
 };
 
 const byError: RunnableFilter<RichSpanData> = {
-  id: 'error',
-  title: 'Error',
+  category: 'Error',
   placeholder: 'Filter by Error',
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_UPDATE,

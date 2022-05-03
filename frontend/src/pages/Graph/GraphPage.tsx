@@ -173,7 +173,7 @@ const cytoscapeToolbarWrapperDivStyle = style({
   borderStyle: 'hidden'
 });
 
-const graphTimeRangeDivStyle = style({
+const graphTimeRange = style({
   position: 'absolute',
   top: '10px',
   left: '10px',
@@ -441,10 +441,9 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
               )}
               {isReady && (
                 <Chip
-                  className={`${graphTimeRangeDivStyle} ${
+                  className={`${graphTimeRange} ${
                     this.props.replayActive ? replayBackground : whiteBackground
                   }`}
-                  isOverflowChip={true}
                   isReadOnly={true}
                 >
                   {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}

@@ -5,8 +5,7 @@ import { MTLSStatuses } from '../../types/TLSStatus';
 import { TextInputTypes } from '@patternfly/react-core';
 
 export const nameFilter: RunnableFilter<NamespaceInfo> = {
-  id: 'namespace_search',
-  title: 'Namespace',
+  category: 'Namespace',
   placeholder: 'Filter by Namespace',
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
@@ -29,9 +28,8 @@ const statusMap = new Map<string, string>([
 ]);
 
 export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
-  id: 'mtls',
-  title: 'mTLS status',
-  placeholder: 'Filter by mTLS status',
+  category: 'mTLS',
+  placeholder: 'Filter by mTLS',
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: mtlsValues,
@@ -41,8 +39,7 @@ export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
 };
 
 export const labelFilter: RunnableFilter<NamespaceInfo> = {
-  id: 'nsLabel',
-  title: 'Namespace Label',
+  category: 'Namespace Label',
   placeholder: 'Filter by Namespace Label',
   filterType: AllFilterTypes.nsLabel,
   action: FILTER_ACTION_APPEND,
@@ -107,8 +104,7 @@ const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo) => {
 };
 
 export const healthFilter: RunnableFilter<NamespaceInfo> = {
-  id: 'health',
-  title: 'Health',
+  category: 'Health',
   placeholder: 'Filter by Application Health',
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,

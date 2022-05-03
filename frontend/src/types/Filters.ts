@@ -20,8 +20,7 @@ export const AllFilterTypes = {
 
 // FilterType maps a Patternfly property. Modify with care.
 export interface FilterType {
-  id: string;
-  title: string;
+  category: string; // unique filter category name, should be suitable for display or URL query parameter
   placeholder: string;
   filterType: NonInputTypes | TextInputTypes;
   action: string;
@@ -37,8 +36,7 @@ export const FILTER_ACTION_APPEND = 'append';
 export const FILTER_ACTION_UPDATE = 'update';
 
 export interface ActiveFilter {
-  id: string;
-  title: string;
+  category: string;
   value: string;
 }
 

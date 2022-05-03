@@ -133,8 +133,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
 ];
 
 const serviceNameFilter: FilterType = {
-  id: 'servicename',
-  title: 'Service Name',
+  category: 'Service Name',
   placeholder: 'Filter by Service Name',
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
@@ -142,8 +141,7 @@ const serviceNameFilter: FilterType = {
 };
 
 const serviceTypeFilter: FilterType = {
-  id: 'serviceregistry',
-  title: 'Service Type',
+  category: 'Service Type',
   placeholder: 'Filter by Service Type',
   filterType: AllFilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,

@@ -35,32 +35,28 @@ export class ListenerTable implements SummaryTable {
   availableFilters = (): FilterType[] => {
     return [
       {
-        id: 'address',
-        title: 'Address',
+        category: 'Address',
         placeholder: 'Address',
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        id: 'port',
-        title: 'Port',
+        category: 'Port',
         placeholder: 'Port',
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        id: 'match',
-        title: 'Match',
+        category: 'Match',
         placeholder: 'Match',
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        id: 'destination',
-        title: 'Destination',
+        category: 'Destination',
         placeholder: 'Destination',
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,

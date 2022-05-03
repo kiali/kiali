@@ -64,8 +64,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
 ];
 
 export const istioNameFilter: FilterType = {
-  id: 'istioname',
-  title: 'Istio Name',
+  category: 'Istio Name',
   placeholder: 'Filter by Istio Name',
   filterType: AllFilterTypes.text,
   action: FILTER_ACTION_APPEND,
@@ -73,8 +72,7 @@ export const istioNameFilter: FilterType = {
 };
 
 export const istioTypeFilter: FilterType = {
-  id: 'istiotype',
-  title: 'Istio Type',
+  category: 'Istio Type',
   placeholder: 'Filter by Istio Type',
   filterType: AllFilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,
@@ -127,8 +125,7 @@ export const istioTypeFilter: FilterType = {
 };
 
 export const configValidationFilter: FilterType = {
-  id: 'configvalidation',
-  title: 'Config',
+  category: 'Config',
   placeholder: 'Filter by Config Validation',
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,

@@ -4,16 +4,13 @@ import { DEFAULT_LABEL_OPERATION, FilterType } from '../../../types/Filters';
 
 const managedFilterTypes = [
   {
-    id: 'a',
-    title: 'A'
+    category: 'A'
   },
   {
-    id: 'c',
-    title: 'C'
+    category: 'C'
   },
   {
-    id: 'd',
-    title: 'D'
+    category: 'D'
   }
 ] as FilterType[];
 
@@ -24,18 +21,15 @@ describe('List page', () => {
     expect(filters).toEqual({
       filters: [
         {
-          id: 'a',
-          title: 'A',
+          category: 'A',
           value: '1'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '3'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '4'
         }
       ],
@@ -48,18 +42,15 @@ describe('List page', () => {
     const cleanFilters = FilterHelper.setFiltersToURL(managedFilterTypes, {
       filters: [
         {
-          id: 'a',
-          title: 'A',
+          category: 'A',
           value: '1'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '3'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '4'
         }
       ],
@@ -74,18 +65,15 @@ describe('List page', () => {
     const cleanFilters = FilterHelper.setFiltersToURL(managedFilterTypes, {
       filters: [
         {
-          id: 'a',
-          title: 'A',
+          category: 'A',
           value: '1'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '3'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '4'
         }
       ],
@@ -102,18 +90,15 @@ describe('List page', () => {
     const match = FilterHelper.filtersMatchURL(managedFilterTypes, {
       filters: [
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '3'
         },
         {
-          id: 'a',
-          title: 'A',
+          category: 'A',
           value: '1'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '4'
         }
       ],
@@ -128,18 +113,15 @@ describe('List page', () => {
     let match = FilterHelper.filtersMatchURL(managedFilterTypes, {
       filters: [
         {
-          id: 'a',
-          title: 'A',
+          category: 'A',
           value: '1'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '3'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '5'
         }
       ],
@@ -151,13 +133,11 @@ describe('List page', () => {
     match = FilterHelper.filtersMatchURL(managedFilterTypes, {
       filters: [
         {
-          id: 'a',
-          title: 'A',
+          category: 'A',
           value: '1'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '3'
         }
       ],
@@ -169,23 +149,19 @@ describe('List page', () => {
     match = FilterHelper.filtersMatchURL(managedFilterTypes, {
       filters: [
         {
-          id: 'a',
-          title: 'A',
+          category: 'A',
           value: '1'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '3'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '4'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '5'
         }
       ],
@@ -197,8 +173,7 @@ describe('List page', () => {
     match = FilterHelper.filtersMatchURL(managedFilterTypes, {
       filters: [
         {
-          id: 'a',
-          title: 'A',
+          category: 'A',
           value: '1'
         }
       ],
@@ -210,23 +185,19 @@ describe('List page', () => {
     match = FilterHelper.filtersMatchURL(managedFilterTypes, {
       filters: [
         {
-          id: 'a',
-          title: 'A',
+          category: 'A',
           value: '1'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '3'
         },
         {
-          id: 'c',
-          title: 'C',
+          category: 'C',
           value: '4'
         },
         {
-          id: 'd',
-          title: 'D',
+          category: 'D',
           value: '5'
         }
       ],

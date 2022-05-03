@@ -210,7 +210,7 @@ export const namespace: Renderer<TResource> = (item: TResource) => {
 
 const labelActivate = (filters: ActiveFilter[], key: string, value: string, id: string) => {
   return filters.some(filter => {
-    if (filter.id === id) {
+    if (filter.category === id) {
       if (filter.value.includes(':')) {
         const [k, v] = filter.value.split(':');
         if (k === key) {
@@ -220,7 +220,7 @@ const labelActivate = (filters: ActiveFilter[], key: string, value: string, id: 
       }
       return key === filter.value;
     } else {
-      if (filter.id === appLabelFilter.id) {
+      if (filter.category === appLabelFilter.category) {
         return filter.value === 'Present' && key === 'app';
       }
       return filter.value === 'Present' && key === 'version';
@@ -248,7 +248,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
       {item.labels &&
         Object.entries(item.labels).map(([key, value]) => {
           const label = `${key}:${value}`;
-          const labelAct = labelActivate(filters.filters, key, value, labelFilt.id);
+          const labelAct = labelActivate(filters.filters, key, value, labelFilt.category);
           const isExactlyLabelFilter = FilterHelper.getFiltersFromURL([labelFilt]).filters.some(f =>
             f.value.includes(label)
           );
@@ -264,7 +264,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
               onClick={() =>
                 statefulFilter
                   ? labelAct
-                    ? isExactlyLabelFilter && statefulFilter.current!.removeFilter(labelFilt.id, label)
+                    ? isExactlyLabelFilter && statefulFilter.current!.removeFilter(labelFilt.category, label)
                     : statefulFilter.current!.filterAdded(labelFilt, label)
                   : {}
               }
