@@ -311,6 +311,7 @@ type OpenShiftConfig struct {
 	ServerPrefix   string `yaml:"server_prefix,omitempty"`
 	UseSystemCA    bool   `yaml:"use_system_ca,omitempty"`
 	RedirectURL    string `yaml:"redirect_url,omitempty"`
+	CustomCA       string `yaml:"custom_ca,omitempty"`
 }
 
 // OpenIdConfig contains specific configuration for authentication using an OpenID provider

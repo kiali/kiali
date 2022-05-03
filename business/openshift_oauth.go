@@ -106,7 +106,7 @@ func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error)
 func getOAuthAuthorizationServer(config config.OpenShiftConfig) (*OAuthAuthorizationServer, error) {
 	var server *OAuthAuthorizationServer
 
-	response, err := request("GET", config.ServerPrefix, ".well-known/oauth-authorization-server", nil, config.UseSystemCA)
+	response, err := request("GET", config.ServerPrefix, ".well-known/oauth-authorization-server", nil, config.UseSystemCA, config.CustomCA)
 
 	if err != nil {
 		log.Error(err)
@@ -129,7 +129,7 @@ func (in *OpenshiftOAuthService) GetUserInfo(token string) (*OAuthUser, error) {
 	var user *OAuthUser
 	config := config.Get().Auth.OpenShift
 
-	response, err := request("GET", config.ServerPrefix, "apis/user.openshift.io/v1/users/~", &token, config.UseSystemCA)
+	response, err := request("GET", config.ServerPrefix, "apis/user.openshift.io/v1/users/~", &token, config.UseSystemCA, config.CustomCA)
 
 	if err != nil {
 		log.Error(err)
@@ -178,7 +178,7 @@ func getKialiRoutePath(config config.OpenShiftConfig) (*string, error) {
 		return nil, fmt.Errorf("could not get openshift config client: %v", err)
 	}
 
-	response, err := request("GET", config.ServerPrefix, fmt.Sprintf("apis/route.openshift.io/v1/namespaces/%v/routes/%s", namespace, config.ClientIdPrefix), &conf.BearerToken, config.UseSystemCA)
+	response, err := request("GET", config.ServerPrefix, fmt.Sprintf("apis/route.openshift.io/v1/namespaces/%v/routes/%s", namespace, config.ClientIdPrefix), &conf.BearerToken, config.UseSystemCA, config.CustomCA)
 	if err != nil {
 		log.Error(err)
 		return nil, fmt.Errorf("could not connect to Openshift: %v", err)
@@ -227,13 +227,13 @@ func (in *OpenshiftOAuthService) Logout(token string) error {
 	log.Debugf("Logging out by deleting OAuth access token [%v] which was converted from access token [%v]", oauthTokenName, token)
 
 	// Delete the access token from the API server using OpenShift 4.6+ access token name
-	_, err = request("DELETE", config.ServerPrefix, fmt.Sprintf("apis/oauth.openshift.io/v1/oauthaccesstokens/%v", oauthTokenName), &conf.BearerToken, config.UseSystemCA)
+	_, err = request("DELETE", config.ServerPrefix, fmt.Sprintf("apis/oauth.openshift.io/v1/oauthaccesstokens/%v", oauthTokenName), &conf.BearerToken, config.UseSystemCA, config.CustomCA)
 
 	if err != nil {
 		// Try to delete the access token from the API server using the pre-4.6 access token name.
 		// If this also fails, we'll send back the err from the first attempt.
 		// If this succeeds, set err to nil to indicate a successful logout.
-		_, err2 := request("DELETE", config.ServerPrefix, fmt.Sprintf("apis/oauth.openshift.io/v1/oauthaccesstokens/%v", token), &conf.BearerToken, config.UseSystemCA)
+		_, err2 := request("DELETE", config.ServerPrefix, fmt.Sprintf("apis/oauth.openshift.io/v1/oauthaccesstokens/%v", token), &conf.BearerToken, config.UseSystemCA, config.CustomCA)
 		if err2 == nil {
 			err = nil
 		}
@@ -246,14 +246,26 @@ func (in *OpenshiftOAuthService) Logout(token string) error {
 	return nil
 }
 
-func request(method string, serverPrefix string, url string, auth *string, useSystemCA bool) ([]byte, error) {
-	return requestWithTimeout(method, serverPrefix, url, auth, time.Duration(defaultRequestTimeout), useSystemCA)
+func request(method string, serverPrefix string, url string, auth *string, useSystemCA bool, customCA string) ([]byte, error) {
+	return requestWithTimeout(method, serverPrefix, url, auth, time.Duration(defaultRequestTimeout), useSystemCA, customCA)
 }
 
-func requestWithTimeout(method string, serverPrefix string, url string, auth *string, timeout time.Duration, useSystemCA bool) ([]byte, error) {
+func requestWithTimeout(method string, serverPrefix string, url string, auth *string, timeout time.Duration, useSystemCA bool, customCA string) ([]byte, error) {
 	var tlsConfig tls.Config
 
-	if !useSystemCA {
+	if customCA != "" {
+		log.Debugf("using custom CA for Openshift OAuth [%v]", customCA)
+		certPool := x509.NewCertPool()
+		decodedCustomCA, err := base64.URLEncoding.DecodeString(customCA)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding custom CA certificates: %s", err)
+		}
+		if !certPool.AppendCertsFromPEM(decodedCustomCA) {
+			return nil, fmt.Errorf("failed to add custom CA certificates: %s", err)
+		}
+		tlsConfig = tls.Config{RootCAs: certPool}
+	} else if !useSystemCA {
+		log.Debugf("Using serviceaccount CA for Openshift OAuth")
 		certPool := x509.NewCertPool()
 		cert, err := ioutil.ReadFile("/run/secrets/kubernetes.io/serviceaccount/ca.crt")
 		if err != nil {
@@ -261,6 +273,8 @@ func requestWithTimeout(method string, serverPrefix string, url string, auth *st
 		}
 		certPool.AppendCertsFromPEM(cert)
 		tlsConfig = tls.Config{RootCAs: certPool}
+	} else {
+		log.Debugf("Using system CA for Openshift OAuth")
 	}
 
 	client := &http.Client{
