@@ -7,7 +7,6 @@ import { KialiIcon } from '../../config/KialiIcon';
 const SHOW_MORE_TRESHOLD = 2;
 
 interface Props {
-  "data-test"?: string;
   labels?: { [key: string]: string };
   tooltipMessage?: string;
   expanded?: boolean;
@@ -98,7 +97,7 @@ class Labels extends React.Component<Props, State> {
       </Tooltip>
     ) : undefined;
     return (
-      <div className={labelsContainerStyle} data-test={this.props["data-test"]}>
+      <div className={labelsContainerStyle}>
         {this.hasLabels() ? [this.renderLabels(), this.renderMoreLabelsLink()] : this.renderEmptyLabels()}
         {tooltip}
       </div>

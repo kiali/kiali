@@ -169,7 +169,6 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
         <CardBody>
           {workload.labels && (
             <Labels
-              data-test="workload-labels"
               labels={workload.labels}
               tooltipMessage={isTemplateLabels ? 'Labels defined on the Workload template' : undefined}
             />
