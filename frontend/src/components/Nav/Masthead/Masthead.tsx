@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { style } from 'typestyle';
 import { Label, Toolbar, ToolbarGroup, ToolbarItem, Tooltip } from '@patternfly/react-core';
 import { ClusterIcon } from '@patternfly/react-icons';
 
@@ -11,17 +10,11 @@ import UserDropdown from './UserDropdown';
 import HelpDropdown from './HelpDropdown';
 import MessageCenterTriggerContainer from '../../../components/MessageCenter/MessageCenterTrigger';
 
-const leftGroup = style({
-  position: 'absolute',
-  left: 210,
-  top: 28
-});
-
 class Masthead extends React.Component {
   render() {
     return (
       <Toolbar>
-        <ToolbarGroup className={leftGroup}>
+        <ToolbarGroup>
           <PfSpinner />
         </ToolbarGroup>
         <ToolbarGroup alignment={{ default: 'alignRight' }}>
