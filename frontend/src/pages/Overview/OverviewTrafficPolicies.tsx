@@ -305,6 +305,7 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
               Cancel
             </Button>,
             <Button
+              data-test="confirm-traffic-policies"
               key="confirm"
               isDisabled={this.state.disableOp}
               variant={colorAction as colorButton}

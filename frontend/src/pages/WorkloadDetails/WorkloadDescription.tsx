@@ -141,6 +141,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
             </span>
             {this.props.workload && !this.props.workload.istioSidecar && (
               <MissingSidecar
+                data-test={`missing-sidecar-badge-for-${workload.name}-workload-in-${this.props.namespace}-namespace`}
                 namespace={this.props.namespace}
                 tooltip={true}
                 style={{ marginLeft: '10px' }}

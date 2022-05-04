@@ -97,6 +97,7 @@ export class OverviewNamespaceActions extends React.Component<Props, State> {
           <DropdownItem
             key={'action_' + i}
             isDisabled={action.isDisabled}
+            data-test={action['data-test']}
             onClick={() => (action.action ? action.action(this.props.namespace) : undefined)}
           >
             {action.title} {!!action.isExternal ? <ExternalLinkAltIcon /> : undefined}
