@@ -22,7 +22,7 @@ jobs:
     name: Initialize
     runs-on: ubuntu-20.04
     outputs:
-      target_branch: ${{ github.ref_name }}  
+      target_branch: ${{ github.ref_name }}
       quay_tag: ${{ steps.quay_tag.outputs.quay_tag }}
     steps:
     - name: Checkout code
@@ -71,7 +71,7 @@ jobs:
     if: ${{ (github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule' }}
     runs-on: ubuntu-20.04
     needs: [initialize, build_backend, build_frontend]
-    env:  
+    env:
       QUAY_TAG: ${{ needs.initialize.outputs.quay_tag }}
     steps:
     - name: Checkout code

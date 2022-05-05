@@ -3,7 +3,7 @@ name: Release
 on:
   schedule:
     # Every Friday at 16:00
-    - cron: '00 16 * * FRI'    
+    - cron: '00 16 * * FRI'
   workflow_dispatch:
     inputs:
       release_type:
@@ -11,7 +11,7 @@ on:
         required: true
         default: "auto"
         type: choice
-        options:        
+        options:
         - minor
         - patch
       release_branch:
@@ -30,7 +30,7 @@ jobs:
     name: Initialize
     runs-on: ubuntu-20.04
     outputs:
-      target_branch: ${{ github.ref_name }}  
+      target_branch: ${{ github.ref_name }}
       release_type: ${{ steps.release_type.outputs.release_type }}
       release_version: ${{ steps.release_version.outputs.release_version }}
       branch_version: ${{ steps.branch_version.outputs.branch_version }}
@@ -81,7 +81,7 @@ jobs:
         EOF
 
     - name: Determine release type
-      id: release_type        
+      id: release_type
       run: |
         if [ -z ${{ github.event.inputs.release_type }} ];
         then
@@ -94,7 +94,7 @@ jobs:
           fi
         else
           echo "::set-output name=release_type::${{ github.event.inputs.release_type }}"
-        fi        
+        fi
 
     - name: Determine release version
       if: ${{ steps.release_type.outputs.release_type != 'skip' }}
@@ -117,19 +117,19 @@ jobs:
 
         echo "::set-output name=release_version::$RELEASE_VERSION"
 
-    - name: Determine next version      
+    - name: Determine next version
       env:
         RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
         RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
       id: next_version
       if: ${{ steps.release_type.outputs.release_type != 'skip' && (steps.release_type.outputs.release_type == 'patch' || steps.release_type.outputs.release_type == 'minor') }}
-      run: |          
+      run: |
         if [[ $RELEASE_TYPE == "patch" ]]
         then
             NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
         elif [[ $RELEASE_TYPE == "minor" ]]
         then 
-            NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)          
+            NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
         fi
 
         echo "::set-output name=next_version::$NEXT_VERSION"
@@ -138,7 +138,7 @@ jobs:
       if: ${{ steps.release_type.outputs.release_type != 'skip' }}
       env:
         RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
-      id: branch_version      
+      id: branch_version
       run: echo "::set-output name=branch_version::$(echo $RELEASE_VERSION | sed 's/\.[0-9]*\+$//')"
 
     - name: Determine Quay tag
@@ -146,7 +146,7 @@ jobs:
       env:
         RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
         RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
-        BRANCH_VERSION: ${{ steps.branch_version.outputs.branch_version }}        
+        BRANCH_VERSION: ${{ steps.branch_version.outputs.branch_version }}
       id: quay_tag
       run: |
         if [ -z ${{ github.event.inputs.quay_repository }} ];
@@ -286,7 +286,7 @@ jobs:
     - name: Create release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |   
+      run: |
         gh release create $RELEASE_VERSION -t "Kiali $RELEASE_VERSION"
 
     - name: Create or update version branch
