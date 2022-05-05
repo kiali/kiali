@@ -137,7 +137,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		metadata, err := business.OpenshiftOAuth.Metadata()
+		metadata, err := business.OpenshiftOAuth.Metadata(r)
 		if err != nil {
 			RespondWithDetailedError(w, http.StatusInternalServerError, "Error trying to get OAuth metadata", err.Error())
 			return
