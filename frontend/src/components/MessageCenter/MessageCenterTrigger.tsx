@@ -50,7 +50,11 @@ export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
     const bell = style({
       position: 'relative',
       right: '5px',
-      top: '2px'
+      top: '3px'
+    });
+    const count = style({
+      position: 'relative',
+      top: '3px'
     });
 
     return (
@@ -62,7 +66,7 @@ export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
       >
         <KialiIcon.Bell className={bell} />
         {this.props.newMessagesCount > 0 && (
-          <Badge className={'pf-badge-bordered' + (this.props.badgeDanger ? ' badge-danger' : '')}>
+          <Badge className={`${count} ${this.props.badgeDanger ? ' badge-danger' : ''}`}>
             {this.props.newMessagesCount > 0 ? this.props.newMessagesCount : ' '}
           </Badge>
         )}
