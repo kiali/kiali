@@ -147,15 +147,18 @@ make -C helm-charts build-helm-charts
 infomsg "Installing kiali server via Helm"
 # The grafana and tracing urls need to be set for backend e2e tests
 # but they don't need to be accessible outside the cluster.
+# Need a single dashboard set for grafana.
 helm install \
   --namespace istio-system \
   --set auth.strategy="anonymous" \
+  --set deployment.logger.log_level="trace" \
   --set deployment.service_type="LoadBalancer" \
   --set deployment.image_name=kiali/kiali \
   --set deployment.image_version=dev \
   --set deployment.image_pull_policy="Never" \
-  --set deployment.external_services.grafana.url="http://grafana.istio-system:3000" \
-  --set deployment.external_services.tracing.url="http://tracing.istio-system:16685/jaeger" \
+  --set external_services.grafana.url="http://grafana.istio-system:3000" \
+  --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard" \
+  --set external_services.tracing.url="http://tracing.istio-system:16685/jaeger" \
   kiali-server \
   helm-charts/_output/charts/kiali-server-*-SNAPSHOT.tgz
 
