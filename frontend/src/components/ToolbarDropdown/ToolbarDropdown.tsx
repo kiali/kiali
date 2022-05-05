@@ -1,15 +1,16 @@
 import * as React from 'react';
-import { Select, SelectOption, Text, TextVariants, Tooltip } from '@patternfly/react-core';
+import { Select, SelectOption, Tooltip } from '@patternfly/react-core';
 import { style } from 'typestyle';
 
 const widthAuto = style({
   width: 'auto'
 });
 
-const spacingRight = style({
+const dropdownTitle = style({
+  fontSize: 'var(--pf-global--FontSize--md)',  // valueOf --pf-c-select__toggle--FontSize
+  // @ts-ignore
+  fontWeight: 'var(--pf-global--FontSize--normal)', // valueOf --pf-c-select__toggle--FontWeigt
   marginRight: '10px',
-  marginTop: '10px',
-  display: 'inline'
 });
 
 type ToolbarDropdownProps = {
@@ -95,11 +96,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
     );
     return (
       <>
-        {this.props.nameDropdown && (
-          <Text component={TextVariants.h5} className={spacingRight}>
-            {this.props.nameDropdown}
-          </Text>
-        )}
+        {this.props.nameDropdown && <span className={dropdownTitle}>{this.props.nameDropdown}</span>}
         {this.props.tooltip ? (
           <Tooltip
             key={'ot-' + this.props.id}
