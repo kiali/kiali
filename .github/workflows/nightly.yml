@@ -35,7 +35,7 @@ jobs:
       run: |
         if [ -z ${{ github.event.inputs.quay_repository }} ];
         then
-          QUAY_REPO="quay.io/leandroberetta/kiali"
+          QUAY_REPO="quay.io/kiali/kiali"
         else
           QUAY_REPO="${{ github.event.inputs.quay_repository }}"
         fi
