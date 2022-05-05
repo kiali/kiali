@@ -79,7 +79,7 @@ class Validation extends React.Component<Props> {
   }
 
   iconStyle() {
-    const iconStyle = this.props.iconStyle || {};
+    const iconStyle = this.props.iconStyle ? { ...this.props.iconStyle } : {};
     const defaultStyle: CSSProperties = {
       verticalAlign: '-0.125em'
     };

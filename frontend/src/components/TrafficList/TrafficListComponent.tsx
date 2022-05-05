@@ -232,7 +232,7 @@ class TrafficListComponent extends FilterComponent.Component<
               </Tooltip>
             </>,
             <>
-              <PFBadge badge={item.badge} position={TooltipPosition.top} key={`tt_badge_${i}`} />
+              <PFBadge badge={item.badge} position={TooltipPosition.top} keyValue={`tt_badge_${i}`} />
               {!!links.detail ? (
                 <Link key={`link_d_${item.badge}_${name}`} to={links.detail} className={'virtualitem_definition_link'}>
                   {name}

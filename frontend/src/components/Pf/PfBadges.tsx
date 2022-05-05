@@ -58,22 +58,23 @@ export const kialiBadge = style({
 type PFBadgeProps = {
   badge: PFBadgeType;
   className?: string; // default=kialiBadge
-  id?: string;
   isRead?: boolean;
-  key?: string;
+  keyValue?: string;
   position?: TooltipPosition; // default=auto
   style?: CSSProperties;
 };
 
 export class PFBadge extends React.PureComponent<PFBadgeProps> {
   render() {
-    const key = `pfbadge-${this.props.badge.badge}`;
+    const key = this.props.keyValue || `pfbadge-${this.props.badge.badge}`;
+    const ttKey = `tt-${key}`;
+
     const badge = (
       <Badge
         className={this.props.className || kialiBadge}
-        id={this.props.id || key}
+        id={key}
         isRead={this.props.isRead || false}
-        key={this.props.key || key}
+        key={key}
         style={this.props.style}
       >
         {this.props.badge.badge}
@@ -85,8 +86,8 @@ export class PFBadge extends React.PureComponent<PFBadgeProps> {
     ) : (
       <Tooltip
         content={<>{this.props.badge.tt}</>}
-        id={`tt-${this.props.id || key}`}
-        key={`tt-${this.props.key || key}`}
+        id={ttKey}
+        key={ttKey}
         position={this.props.position || TooltipPosition.auto}
       >
         {badge}
