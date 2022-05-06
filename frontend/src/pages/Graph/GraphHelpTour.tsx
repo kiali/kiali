@@ -13,7 +13,8 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
   Display: {
     name: 'Display',
     description:
-      'Set edge labeling, node badging, and various display options. Response-time edge labeling, security badging, and traffic animation may affect performance. Response-times reflect the 95th percentile.'
+      'Set edge labeling, node badging, and various display options. Response-time edge labeling, security badging, and traffic animation may affect performance. Response-times reflect the 95th percentile.',
+    position: PopoverPosition.rightStart,
   },
   Find: {
     name: 'Find and Hide',
@@ -49,17 +50,17 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
   Legend: {
     name: 'Legend',
     description: 'Display the legend to learn about what the different shapes, colors and backgrounds mean.',
-    position: PopoverPosition.auto
+    position: PopoverPosition.rightEnd
   },
   Namespaces: {
     name: 'Namespaces',
     description: 'Select the namespaces you want to see in the graph.',
-    position: PopoverPosition.bottom
+    position: PopoverPosition.bottomStart
   },
   Shortcuts: {
     name: 'Shortcuts',
     htmlDescription: GraphShortcuts,
-    position: PopoverPosition.left
+    position: PopoverPosition.leftStart
   },
   SidePanel: {
     name: 'Side Panel',
@@ -70,7 +71,7 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     name: 'Time Range & Replay',
     description:
       'Select how often to refresh the graph and how much historical metric data is used to build the graph, per refresh. For example "Last 5m" means use the most recent 5 minutes of request metric data.  To replay a historical time window click the replay icon.  This replaces the current time range controls with the replay toolbar.',
-    position: PopoverPosition.left
+    position: PopoverPosition.bottomEnd
   }
 };
 

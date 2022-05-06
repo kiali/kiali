@@ -1,8 +1,5 @@
-// TODO:  I know this looks bad but for JSX bodycontent we need the fix or
-//        workaround for https://github.com/patternfly/patternfly-react/issues/7162
-
 import React from 'react';
-// import { Chip } from '@patternfly/react-core';
+import { Chip } from '@patternfly/react-core';
 
 interface Shortcut {
   shortcut: string;
@@ -10,36 +7,25 @@ interface Shortcut {
 }
 
 const shortcuts: Shortcut[] = [
-  { shortcut: 'Mouse Wheel', description: 'Zoom' },
-  { shortcut: 'Click + Drag', description: 'Pan' },
+  { shortcut: 'Mouse wheel', description: 'Zoom' },
+  { shortcut: 'Click + Drag', description: 'Panning' },
   { shortcut: 'Shift + Drag', description: 'Select zoom area' },
-  { shortcut: 'Right click', description: 'Context menu for node' },
-  { shortcut: 'Single click', description: 'Side-panel details for node or edge' },
-  { shortcut: 'Double click', description: 'Drill into a node detail graph' }
+  { shortcut: 'Right click', description: 'Contextual menu on nodes' },
+  { shortcut: 'Single click', description: 'Details in side panel on nodes and edges' },
+  { shortcut: 'Double click', description: 'Drill into a node details graph' }
 ];
 
-/*
-const makeShortcut = (shortcut: Shortcut) => {
+const makeShortcut = (shortcut: Shortcut): JSX.Element => {
   return (
-    <span>
-        <div>{shortcut.shortcut}</div>
-        <div>{shortcut.description}</div>
-    </span>
+    <div style={{ display: 'flex', marginBottom: '10px' }}>
+      <div style={{ flex: '40%' }}>
+        <Chip isReadOnly>{shortcut.shortcut}</Chip>
+      </div>
+      <div style={{ flex: '60%' }}>{shortcut.description}</div>
+    </div>
   );
 };
-*/
 
-const GraphShortcuts = (): React.ReactNode => {
-  const rows = shortcuts.map(s => (
-    <tr style={{ borderTop: '1px solid #ddd' }}>
-      <td>{s.shortcut}</td>
-      <td>{s.description}</td>
-    </tr>
-  ));
-  return <table>{rows}</table>;
-};
-
-/*
 const GraphShortcuts = (): JSX.Element => (
   <>
     {shortcuts.map(
@@ -49,6 +35,5 @@ const GraphShortcuts = (): JSX.Element => (
     )}
   </>
 );
-*/
 
 export default GraphShortcuts;
