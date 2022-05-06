@@ -1,22 +1,19 @@
 name: Release
 
 on:
+  schedule:
+    # Every Friday at 19:00 (UTC)
+    - cron: '00 19 * * FRI'
   workflow_dispatch:
     inputs:
       release_type:
-        description: "Release type"
+        description: Release type
         required: true
         default: "auto"
         type: choice
         options:
-        - auto
-        - edge
         - minor
         - patch
-        - snapshot.0
-        - snapshot.1
-        - snapshot.2
-        - snapshot.3
       release_branch:
         description: Branch to release
         required: true
@@ -43,7 +40,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
       with:
-        ref: ${{ github.event.inputs.release_branch }}
+        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
 
     - name: Prepare scripts
       run: |
@@ -66,52 +63,41 @@ jobs:
             patch = patch + 1
         print('.'.join(['v' + str(major), str(minor), str(patch)]))
         EOF
-        
-        cat <<'EOF' > release_type.sh
-        BASE_DATE=${BASE_DATE:-$(date -d '2021-12-03' '+%s')} # Use last day of Sprint #66 as the base date for calcs
-        NOW_DATE=${NOW_DATE:-$(date -d 'now' '+%s')}
-        # Transitional calculations
-        DATE_DIFF=$(( $NOW_DATE - $BASE_DATE ))
-        DAYS_ELAPSED=$(( $DATE_DIFF / (24*60*60) ))
-        WEEKS_ELAPSED=$(( $DAYS_ELAPSED / 7))
-        # This value will be used to determine the type of the release
-        WEEKS_MOD3=$(( $WEEKS_ELAPSED % 3 ))
-        # Between Dec 23th 2021 and Jan 14th 2022, use Mod6 (six-week sprint)
-        if [ $NOW_DATE -ge $(date -d '2021-12-23' '+%s') ] && [ $NOW_DATE -lt $(date -d '2022-01-14' '+%s') ];
-        then
-        WEEKS_MOD3=$(( $WEEKS_ELAPSED % 6 ))
-        fi
-        case $WEEKS_MOD3 in
-        0)
-            RELEASE_TYPE='minor' ;;
-        1)
-            RELEASE_TYPE='snapshot.0' ;;
-        2)
-            RELEASE_TYPE='snapshot.1' ;;
-        3)
-            RELEASE_TYPE='snapshot.2' ;;
-        4)
-            RELEASE_TYPE='snapshot.3' ;;
-        5)
-            RELEASE_TYPE='snapshot.4' ;;
-        esac
-        # Print the determined type
-        echo $RELEASE_TYPE
-        EOF      
 
-        chmod +x release_type.sh
+        cat <<-EOF > minor.py
+        import datetime
+
+        base = int(datetime.datetime.strptime("24/04/2022", "%d/%m/%Y").timestamp())
+        now = int(datetime.datetime.strptime("19/05/2022", "%d/%m/%Y").timestamp())
+        #now = int(datetime.datetime.now().timestamp())
+
+        diff = now - base
+
+        days_elapsed = int(diff / (24*60*60))
+        weeks_elapsed = int(days_elapsed / 7)
+        weeks_mod3 = int(weeks_elapsed % 3)
+
+        print(weeks_mod3)
+        EOF
 
     - name: Determine release type
       id: release_type
       run: |
-        if [[ ${{ github.event.inputs.release_type }} == "auto" ]];
+        if [ -z ${{ github.event.inputs.release_type }} ];
         then
-          echo "::set-output name=release_type::$(sh release_type.sh)"
+          DO_RELEASE=$(python minor.py)
+          if [[ $DO_RELEASE == "0" ]]
+          then
+            echo "::set-output name=release_type::minor"
+          else
+            echo "::set-output name=release_type::skip"
+          fi
         else
           echo "::set-output name=release_type::${{ github.event.inputs.release_type }}"
         fi
 
     - name: Determine release version
+      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
       env:
         RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
       id: release_version
@@ -124,15 +110,9 @@ jobs:
         if [[ $RELEASE_TYPE == "patch" ]]
         then
           RELEASE_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
-        elif [[ $RELEASE_TYPE == *"snapshot"* ]]
-        then
-          RELEASE_VERSION="$RELEASE_VERSION-$RELEASE_TYPE"
         elif [[ $RELEASE_TYPE == "minor" ]]
         then
           RELEASE_VERSION=$RELEASE_VERSION
-        elif [[ $RELEASE_TYPE == "edge" ]]
-        then
-          RELEASE_VERSION=latest
         fi
 
         echo "::set-output name=release_version::$RELEASE_VERSION"
@@ -142,50 +122,58 @@ jobs:
         RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
         RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
       id: next_version
-      if: ${{ steps.release_type.outputs.release_type == 'patch' || steps.release_type.outputs.release_type == 'minor' }}
-      run: |          
+      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
+      run: |
         if [[ $RELEASE_TYPE == "patch" ]]
         then
             NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
         elif [[ $RELEASE_TYPE == "minor" ]]
         then 
-            NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)          
+            NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
         fi
 
         echo "::set-output name=next_version::$NEXT_VERSION"
 
     - name: Determine branch version
+      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
       env:
         RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
       id: branch_version
-      if: ${{ steps.release_type.outputs.release_type != 'edge' && !contains(steps.release_type.outputs.release_type, 'snapshot') }}
       run: echo "::set-output name=branch_version::$(echo $RELEASE_VERSION | sed 's/\.[0-9]*\+$//')"
 
     - name: Determine Quay tag
+      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
       env:
         RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
         RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
         BRANCH_VERSION: ${{ steps.branch_version.outputs.branch_version }}
       id: quay_tag
       run: |
-        QUAY_TAG="${{ github.event.inputs.quay_repository }}:$RELEASE_VERSION"
+        if [ -z ${{ github.event.inputs.quay_repository }} ];
+        then
+          QUAY_REPO="quay.io/kiali/kiali"
+        else
+          QUAY_REPO="${{ github.event.inputs.quay_repository }}"
+        fi
+        
+        QUAY_TAG="$QUAY_REPO:$RELEASE_VERSION"
         
         if [[ $RELEASE_TYPE == "minor" ]] || [ $RELEASE_TYPE == "patch" ]]
         then
-          QUAY_TAG="$QUAY_TAG ${{ github.event.inputs.quay_repository }}:$BRANCH_VERSION"
+          QUAY_TAG="$QUAY_TAG $QUAY_REPO:$BRANCH_VERSION"
         fi
 
         echo "::set-output name=quay_tag::$QUAY_TAG"
     
     - name: Cleanup
-      run: rm bump.py release_type.sh
+      run: rm bump.py minor.py
 
     - name: Log information
       run: |
         echo "Release type: ${{ steps.release_type.outputs.release_type }}"
 
         echo "Release version: ${{ steps.release_version.outputs.release_version }}"
-                  
+
         echo "Next version: ${{ steps.next_version.outputs.next_version }}"
 
         echo "Branch version: ${{ steps.branch_version.outputs.branch_version }}"
@@ -194,54 +182,65 @@ jobs:
 
   build_backend:
     name: Build backend
+    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
     uses: ./.github/workflows/build-backend.yml
     needs: [initialize]
     with:
-      build_branch: ${{ github.event.inputs.release_branch }}
+      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
 
   build_frontend:
     name: Build frontend
+    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
     uses: ./.github/workflows/build-frontend.yml
     needs: [initialize]
     with:
       target_branch: ${{needs.initialize.outputs.target_branch}}
-      build_branch: ${{ github.event.inputs.release_branch }}
+      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
 
   integration_tests_backend:
     name: Run backend integration tests
+    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
     uses: ./.github/workflows/integration-tests-backend.yml
     needs: [initialize, build_backend, build_frontend]
     with:
       target_branch: ${{ needs.initialize.outputs.target_branch }}
-      build_branch: ${{ github.event.inputs.release_branch }}
+      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
 
   integration_tests_frontend:
     name: Run frontend integration tests
+    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
     uses: ./.github/workflows/integration-tests-frontend.yml
     needs: [initialize, build_backend, build_frontend]
     with:
       target_branch: ${{ needs.initialize.outputs.target_branch }}
-      build_branch: ${{ github.event.inputs.release_branch }}
+      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
 
   release:
     name: Release
+    if: ${{ needs.initialize.outputs.release_type != 'skip' && ((github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule') }}
     runs-on: ubuntu-20.04
     needs: [initialize, build_backend, build_frontend, integration_tests_backend, integration_tests_frontend]
-    env:
-      RELEASE_TYPE: ${{ needs.initialize.outputs.release_type }}
+    env:  
       RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
       NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
-      RELEASE_BRANCH: ${{ github.event.inputs.release_branch }}
+      RELEASE_BRANCH: ${{ github.event.inputs.release_branch || github.ref_name }} 
       QUAY_TAG: ${{ needs.initialize.outputs.quay_tag }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
       with:
-        ref: ${{ github.event.inputs.release_branch }}
+        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
 
     - name: Set version to release
-      run: sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
+      run: |
+        # Backend version
+        sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
+
+        # UI version
+        jq -r '.version |= "$(RELEASE_VERSION)"' frontend/package.json > frontend/package.json.tmp
+        mv frontend/package.json.tmp frontend/package.json
+
 
     - name: Set up Go
       uses: actions/setup-go@v2
@@ -277,7 +276,6 @@ jobs:
         git config user.name 'kiali-bot'
 
     - name: Create tag
-      if: ${{ needs.initialize.outputs.release_type != 'edge' }}
       run: |
         git add Makefile
 
@@ -289,12 +287,9 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        if [[ $RELEASE_TYPE == *"snapshot"* ]]; then export PRERELEASE="-p"; fi
-
-        gh release create $RELEASE_VERSION $PRERELEASE -t "Kiali $RELEASE_VERSION"
+        gh release create $RELEASE_VERSION -t "Kiali $RELEASE_VERSION"
 
     - name: Create or update version branch
-      if: ${{ needs.initialize.outputs.release_type != 'edge' && !contains(needs.initialize.outputs.release_type, 'snapshot') }}
       run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
 
     - name: Create a PR to prepare for next version
@@ -305,7 +300,10 @@ jobs:
       run: |
         sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $NEXT_VERSION-SNAPSHOT/" Makefile
 
-        git add Makefile
+        jq -r ".version |= \"$NEXT_VERSION\"" frontend/package.json > frontend/package.json.tmp
+        mv frontend/package.json.tmp frontend/package.json
+
+        git add Makefile frontend/package.json
 
         git commit -m "Prepare for next version"
 
