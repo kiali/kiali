@@ -15,7 +15,7 @@ import {
   PageSidebar,
   PageToggleButton
 } from '@patternfly/react-core';
-import BarsIcon from '@patternfly/react-icons/dist/esm/icons/bars-icon';
+import { BarsIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 import MessageCenterContainer from '../../components/MessageCenter/MessageCenter';
 import { kialiLogo, serverConfig } from '../../config';
@@ -107,7 +107,7 @@ export class Navigation extends React.Component<PropsType, NavigationState> {
     const isNavOpen = isMobileView ? isNavOpenMobile : isNavOpenDesktop || !this.props.navCollapsed;
 
     const masthead = (
-      <Masthead style={{ height: '76px' }}>
+      <Masthead role="kiali_header" style={{ height: '76px' }}>
         <MastheadToggle>
           <PageToggleButton
             variant="plain"

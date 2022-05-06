@@ -3,8 +3,8 @@ import { shallow } from 'enzyme';
 import { Navigation } from '../Navigation';
 import { createMemoryHistory, createLocation } from 'history';
 
-describe('PageHeader Navigation', () => {
-  it('be sure PageHeader has a role', () => {
+describe('Masthead Navigation', () => {
+  it('be sure Masthead has a role', () => {
     const history = createMemoryHistory();
     const url = 'http://localhost:3000/console/overview';
     history.push('/overview');
@@ -18,6 +18,6 @@ describe('PageHeader Navigation', () => {
         jaegerUrl={''}
       />
     ).dive();
-    expect(wrapper.find('PageHeader').props().role).toEqual('kiali_header');
+    expect(wrapper.find('Masthead').props().role).toEqual('kiali_header');
   });
 });

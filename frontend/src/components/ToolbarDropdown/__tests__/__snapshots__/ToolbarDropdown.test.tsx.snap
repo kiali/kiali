@@ -2,12 +2,11 @@
 
 exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
 <Fragment>
-  <Text
-    className="f1ldye9z"
-    component="h5"
+  <span
+    className="fzb2262"
   >
     graph_filter_interval_duration
-  </Text>
+  </span>
   <Select
     aria-describedby=""
     aria-invalid={false}
@@ -232,12 +231,11 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
 
 exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
 <Fragment>
-  <Text
-    className="f1ldye9z"
-    component="h5"
+  <span
+    className="fzb2262"
   >
     metrics_filter_poll_interval
-  </Text>
+  </span>
   <Select
     aria-describedby=""
     aria-invalid={false}
@@ -462,12 +460,11 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
 
 exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
 <Fragment>
-  <Text
-    className="f1ldye9z"
-    component="h5"
+  <span
+    className="fzb2262"
   >
     graph_filter_layouts
-  </Text>
+  </span>
   <Select
     aria-describedby=""
     aria-invalid={false}
@@ -596,12 +593,11 @@ exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
 
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 1`] = `
 <Fragment>
-  <Text
-    className="f1ldye9z"
-    component="h5"
+  <span
+    className="fzb2262"
   >
     graph_filter_interval_duration
-  </Text>
+  </span>
   <Select
     aria-describedby=""
     aria-invalid={false}
@@ -826,12 +822,11 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
 
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 2`] = `
 <Fragment>
-  <Text
-    className="f1ldye9z"
-    component="h5"
+  <span
+    className="fzb2262"
   >
     metrics_filter_poll_interval
-  </Text>
+  </span>
   <Select
     aria-describedby=""
     aria-invalid={false}
@@ -1056,12 +1051,11 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
 
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 3`] = `
 <Fragment>
-  <Text
-    className="f1ldye9z"
-    component="h5"
+  <span
+    className="fzb2262"
   >
     graph_filter_layouts
-  </Text>
+  </span>
   <Select
     aria-describedby=""
     aria-invalid={false}
