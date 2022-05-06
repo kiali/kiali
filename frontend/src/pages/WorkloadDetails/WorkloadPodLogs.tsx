@@ -155,6 +155,15 @@ const logsDisplay = style({
   width: '100%'
 });
 
+// For some reason checkbox as a ToolbarItem needs to be tweaked
+const toolbarInputStyle = style({
+  $nest: {
+    '& > input': {
+      marginTop: '2px'
+    }
+  }
+});
+
 const logsBackground = (enabled: boolean) => ({ backgroundColor: enabled ? PFColors.Black1000 : 'gray' });
 const logsHeight = (showToolbar: boolean, fullscreen: boolean) => {
   const toolbarHeight = showToolbar ? '0px' : '49px';
@@ -347,12 +356,12 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                           </ToolbarItem>
                           <ToolbarItem>
                             <Checkbox
+                              className={toolbarInputStyle}
                               id="log-spans"
                               isChecked={this.state.showSpans}
                               label={
                                 <span
                                   style={{
-                                    paddingBottom: '5px',
                                     backgroundColor: PFColors.Black1000,
                                     color: spanColor
                                   }}
@@ -399,7 +408,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
   private getContainerLegend = () => {
     return (
-      <Form data-test={"workload-logs-pod-containers"}>
+      <Form data-test={'workload-logs-pod-containers'}>
         <FormGroup fieldId="container-log-selection" isInline>
           <PFBadge
             badge={{ badge: PFBadges.Container.badge, tt: 'Containers' }}
@@ -409,13 +418,13 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           {this.state.containerOptions!.map((c, i) => {
             return (
               <Checkbox
+                className={toolbarInputStyle}
                 id={`container-${c.displayName}`}
                 key={`c-d-${i}`}
                 isChecked={c.isSelected}
                 label={
                   <span
                     style={{
-                      paddingBottom: '5px',
                       backgroundColor: PFColors.Black1000,
                       color: c.color
                     }}

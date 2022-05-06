@@ -653,6 +653,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
                   id={edgeLabelOption.id}
                   isChecked={edgeLabelOption.isChecked}
                   isDisabled={this.props.disabled || edgeLabelOption.isDisabled}
+                  key={edgeLabelOption.id}
                   label={edgeLabelOption.labelText}
                   name="edgeLabelOptions"
                   onChange={this.toggleEdgeLabelMode}
