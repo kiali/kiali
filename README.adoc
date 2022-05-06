@@ -264,9 +264,11 @@ make -e YARN_START_URL=http://<kiali-url> yarn-start
 # Start the cypress tests. The tests will run against the frontend development server by default.
 # Otherwise you can pass a custom url with env vars:
 #
-# make -e CYPRESS_BASE_URL=http://<kiali-url> cypress
-make cypress
+# make -e CYPRESS_BASE_URL=http://<kiali-url> cypress-gui
+make cypress-gui
 ----
+
+Note that `make cypress-gui` runs the Cypress GUI that allows you to pick which individual tests to run. To run the entire test suite in headless mode, use the make target `cypress-run` instead.
 
 ==== Debugging With VisualStudio Code
 
