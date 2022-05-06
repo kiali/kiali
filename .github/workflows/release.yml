@@ -2,8 +2,8 @@ name: Release
 
 on:
   schedule:
-    # Every Friday at 16:00
-    - cron: '00 16 * * FRI'
+    # Every Friday at 19:00 (UTC)
+    - cron: '00 19 * * FRI'
   workflow_dispatch:
     inputs:
       release_type:
@@ -122,7 +122,7 @@ jobs:
         RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
         RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
       id: next_version
-      if: ${{ steps.release_type.outputs.release_type != 'skip' && (steps.release_type.outputs.release_type == 'patch' || steps.release_type.outputs.release_type == 'minor') }}
+      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
       run: |
         if [[ $RELEASE_TYPE == "patch" ]]
         then

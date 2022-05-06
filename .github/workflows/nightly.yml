@@ -2,8 +2,8 @@ name: Nightly Build
 
 on:
   schedule:
-  # Every night at 01:00
-  - cron: '0 1 * * *'
+  # Every night at 04:00 (UTC)
+  - cron: '0 4 * * *'
   workflow_dispatch:
     inputs:
       release_branch:
