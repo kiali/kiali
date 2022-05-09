@@ -79,6 +79,7 @@ Cypress.Commands.add('login', (provider: string, username: string, password: str
             });
           // Wait for the redirect to the overview page after a successful login.
           // Otherwise the redirect can mess with page loading on subsequent tests.
+          cy.contains('loading', {matchCase: false}).should('not.exist')
           cy.url().should('include', '/overview');
         }
       } else {
