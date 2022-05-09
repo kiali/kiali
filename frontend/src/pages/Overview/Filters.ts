@@ -46,8 +46,8 @@ export const labelFilter: RunnableFilter<NamespaceInfo> = {
   filterValues: [],
   run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {
     return filters.filters.some(f => {
-      if (f.value.includes(':')) {
-        const [k, v] = f.value.split(':');
+      if (f.value.includes('=')) {
+        const [k, v] = f.value.split('=');
         return v.split(',').some(val => !!ns.labels && k in ns.labels && ns.labels[k].startsWith(val));
       } else {
         return !!ns.labels && Object.keys(ns.labels).some(label => label.startsWith(f.value));

@@ -20,9 +20,7 @@ exports[`DetailObject test doesn't print any alert message 1`] = `
             <li
               key="key_sssssssss_k0"
             >
-              <div
-                className="label-collection"
-              >
+              <div>
                 <span>
                   <span>
                     [host]
@@ -35,9 +33,7 @@ exports[`DetailObject test doesn't print any alert message 1`] = `
             <li
               key="key_sssssssss_k1"
             >
-              <div
-                className="label-collection"
-              >
+              <div>
                 <span>
                   <span>
                     [subset]
@@ -60,9 +56,7 @@ exports[`DetailObject test doesn't print any alert message 1`] = `
                   <li
                     key="key_sssssssss_k0"
                   >
-                    <div
-                      className="label-collection"
-                    >
+                    <div>
                       <span>
                         <span>
                           [number]
@@ -75,9 +69,7 @@ exports[`DetailObject test doesn't print any alert message 1`] = `
                   <li
                     key="key_sssssssss_k1"
                   >
-                    <div
-                      className="label-collection"
-                    >
+                    <div>
                       <span>
                         <span>
                           [name]
@@ -96,9 +88,7 @@ exports[`DetailObject test doesn't print any alert message 1`] = `
       <li
         key="key_sssssssss_k1"
       >
-        <div
-          className="label-collection"
-        >
+        <div>
           <span>
             <span>
               [weight]
@@ -133,9 +123,7 @@ exports[`DetailObject test doesn't print excluded fields 1`] = `
             <li
               key="key_sssssssss_k0"
             >
-              <div
-                className="label-collection"
-              >
+              <div>
                 <span>
                   <span>
                     [host]
@@ -148,9 +136,7 @@ exports[`DetailObject test doesn't print excluded fields 1`] = `
             <li
               key="key_sssssssss_k1"
             >
-              <div
-                className="label-collection"
-              >
+              <div>
                 <span>
                   <span>
                     [subset]
@@ -169,9 +155,7 @@ exports[`DetailObject test doesn't print excluded fields 1`] = `
       <li
         key="key_sssssssss_k1"
       >
-        <div
-          className="label-collection"
-        >
+        <div>
           <span>
             <span>
               [weight]
@@ -206,9 +190,7 @@ exports[`DetailObject test prints a nested list with all attributes in the detai
             <li
               key="key_sssssssss_k0"
             >
-              <div
-                className="label-collection"
-              >
+              <div>
                 <span>
                   <span>
                     [host]
@@ -221,9 +203,7 @@ exports[`DetailObject test prints a nested list with all attributes in the detai
             <li
               key="key_sssssssss_k1"
             >
-              <div
-                className="label-collection"
-              >
+              <div>
                 <span>
                   <span>
                     [subset]
@@ -246,9 +226,7 @@ exports[`DetailObject test prints a nested list with all attributes in the detai
                   <li
                     key="key_sssssssss_k0"
                   >
-                    <div
-                      className="label-collection"
-                    >
+                    <div>
                       <span>
                         <span>
                           [number]
@@ -261,9 +239,7 @@ exports[`DetailObject test prints a nested list with all attributes in the detai
                   <li
                     key="key_sssssssss_k1"
                   >
-                    <div
-                      className="label-collection"
-                    >
+                    <div>
                       <span>
                         <span>
                           [name]
@@ -282,9 +258,7 @@ exports[`DetailObject test prints a nested list with all attributes in the detai
       <li
         key="key_sssssssss_k1"
       >
-        <div
-          className="label-collection"
-        >
+        <div>
           <span>
             <span>
               [weight]
@@ -324,9 +298,7 @@ exports[`DetailObject test prints an alert message 1`] = `
             <li
               key="key_sssssssss_k0"
             >
-              <div
-                className="label-collection"
-              >
+              <div>
                 <span>
                   <span>
                     [host]
@@ -339,9 +311,7 @@ exports[`DetailObject test prints an alert message 1`] = `
             <li
               key="key_sssssssss_k1"
             >
-              <div
-                className="label-collection"
-              >
+              <div>
                 <span>
                   <span>
                     [subset]
@@ -364,9 +334,7 @@ exports[`DetailObject test prints an alert message 1`] = `
                   <li
                     key="key_sssssssss_k0"
                   >
-                    <div
-                      className="label-collection"
-                    >
+                    <div>
                       <span>
                         <span>
                           [number]
@@ -379,9 +347,7 @@ exports[`DetailObject test prints an alert message 1`] = `
                   <li
                     key="key_sssssssss_k1"
                   >
-                    <div
-                      className="label-collection"
-                    >
+                    <div>
                       <span>
                         <span>
                           [name]
@@ -400,9 +366,7 @@ exports[`DetailObject test prints an alert message 1`] = `
       <li
         key="key_sssssssss_k1"
       >
-        <div
-          className="label-collection"
-        >
+        <div>
           <span>
             <span>
               [weight]

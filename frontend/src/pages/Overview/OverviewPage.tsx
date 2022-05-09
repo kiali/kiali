@@ -831,7 +831,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             <ul>
               {Object.entries(ns.labels || []).map(([key, value]) => (
                 <li key={key}>
-                  {key}: {value}
+                  {key}={value}
                 </li>
               ))}
             </ul>

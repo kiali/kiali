@@ -25,8 +25,7 @@ class MastheadItems extends React.Component {
                     position="bottom"
                     content={<div>Kiali home cluster: {serverConfig.clusterInfo.name}</div>}
                   >
-                    <Label>
-                      <ClusterIcon />
+                    <Label color="blue" icon={<ClusterIcon />}>
                       {serverConfig.clusterInfo.name}
                     </Label>
                   </Tooltip>

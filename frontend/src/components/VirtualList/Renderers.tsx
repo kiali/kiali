@@ -269,7 +269,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
                   : {}
               }
             >
-              {key}: {value}
+              {key}={value}
             </Badge>
           );
 
