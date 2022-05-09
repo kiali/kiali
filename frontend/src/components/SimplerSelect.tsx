@@ -1,21 +1,21 @@
 import * as React from 'react';
 import { Select, SelectOptionObject, SelectProps } from '@patternfly/react-core';
 
-type Props = Omit<Omit<Omit<SelectProps, 'isExpanded'>, 'onSelect'>, 'onToggle'> & {
+type Props = Omit<Omit<Omit<SelectProps, 'isOpen'>, 'onSelect'>, 'onToggle'> & {
   onSelect?: (selection: string | SelectOptionObject) => void;
-  onToggle?: (isExpanded: boolean) => void;
+  onToggle?: (isOpen: boolean) => void;
 };
 
 const SimplerSelect = (props: Props) => {
-  const [isExpanded, setExpanded] = React.useState(false);
+  const [isOpen, setExpanded] = React.useState(false);
   return (
     <Select
       {...props}
-      onToggle={isExpanded => {
+      onToggle={isOpen => {
         if (props.onToggle) {
-          props.onToggle(isExpanded);
+          props.onToggle(isOpen);
         }
-        setExpanded(isExpanded);
+        setExpanded(isOpen);
       }}
       onSelect={(_, selection, isPlaceholder) => {
         setExpanded(false);
@@ -23,7 +23,7 @@ const SimplerSelect = (props: Props) => {
           props.onSelect(selection);
         }
       }}
-      isExpanded={isExpanded}
+      isOpen={isOpen}
     >
       {props.children}
     </Select>

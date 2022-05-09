@@ -1,7 +1,7 @@
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
 import { ICell, ISortBy, sortable } from '@patternfly/react-table';
 import { ListenerSummary } from '../../../types/IstioObjects';
-import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, FilterTypes } from '../../../types/Filters';
+import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
 import Namespace from '../../../types/Namespace';
 import { defaultFilter, routeLink } from '../../../helpers/EnvoyHelpers';
@@ -35,34 +35,30 @@ export class ListenerTable implements SummaryTable {
   availableFilters = (): FilterType[] => {
     return [
       {
-        id: 'address',
-        title: 'Address',
+        category: 'Address',
         placeholder: 'Address',
-        filterType: FilterTypes.text,
+        filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        id: 'port',
-        title: 'Port',
+        category: 'Port',
         placeholder: 'Port',
-        filterType: FilterTypes.text,
+        filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        id: 'match',
-        title: 'Match',
+        category: 'Match',
         placeholder: 'Match',
-        filterType: FilterTypes.text,
+        filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        id: 'destination',
-        title: 'Destination',
+        category: 'Destination',
         placeholder: 'Destination',
-        filterType: FilterTypes.text,
+        filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       }

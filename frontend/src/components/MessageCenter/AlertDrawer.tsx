@@ -1,9 +1,9 @@
 import * as React from 'react';
 import {
   Card,
-  CardHead,
   CardActions,
   CardHeader,
+  CardTitle,
   Button,
   CardBody,
   Accordion,
@@ -90,7 +90,7 @@ export class AlertDrawer extends React.PureComponent<AlertDrawerProps> {
     return (
       !this.props.isHidden && (
         <Card className={drawer} hidden={this.props.isHidden}>
-          <CardHead className={AlertDrawer.head}>
+          <CardHeader className={AlertDrawer.head}>
             <CardActions>
               {this.props.isExpanded ? (
                 <Button id="alert_drawer_collapse" variant="plain" onClick={this.props.expandDrawer}>
@@ -105,8 +105,8 @@ export class AlertDrawer extends React.PureComponent<AlertDrawerProps> {
                 <CloseIcon />
               </Button>
             </CardActions>
-            <CardHeader>{this.props.title}</CardHeader>
-          </CardHead>
+            <CardTitle>{this.props.title}</CardTitle>
+          </CardHeader>
           <CardBody className={AlertDrawer.body}>
             {this.props.groups.length === 0 ? (
               noNotificationsMessage

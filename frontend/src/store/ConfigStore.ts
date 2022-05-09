@@ -1,4 +1,4 @@
-import { createStore, applyMiddleware, compose } from 'redux';
+import { createStore, applyMiddleware, compose, Store } from 'redux';
 import { KialiAppState } from './Store';
 import { persistStore, persistReducer } from 'redux-persist';
 import { persistFilter } from 'redux-persist-transform-filter';
@@ -22,6 +22,7 @@ import { INITIAL_TOUR_STATE } from '../reducers/TourState';
 import { INITIAL_ISTIO_STATUS_STATE } from '../reducers/IstioStatusState';
 import { INITIAL_METRICS_STATS_STATE } from '../reducers/MetricsStatsState';
 import { INITIAL_ISTIO_CERTS_INFO_STATE } from 'reducers/IstioCertsInfoState';
+import { KialiAppAction } from 'actions/KialiAppAction';
 
 declare const window;
 
@@ -66,7 +67,7 @@ const persistConfig = {
 const composeEnhancers =
   (process.env.NODE_ENV === 'development' && window && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) || compose;
 
-const configureStore = (initialState: KialiAppState) => {
+const configureStore = (initialState: KialiAppState): Store<KialiAppState, KialiAppAction> => {
   // configure middlewares
   const middlewares = [thunk];
   // compose enhancers

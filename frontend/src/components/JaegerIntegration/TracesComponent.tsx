@@ -227,7 +227,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
         <RenderComponentScroll>
           <Card>
             <CardBody>
-              <Toolbar>
+              <Toolbar style={{ padding: 0 }}>
                 <ToolbarGroup>
                   <ToolbarItem>
                     <TracesDisplayOptions

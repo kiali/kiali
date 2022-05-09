@@ -1,6 +1,15 @@
 import * as React from 'react';
-import { Chart, ChartGroup, ChartScatter, ChartProps, ChartTooltipProps } from '@patternfly/react-charts';
-import { VictoryAxis, VictoryBoxPlot, VictoryLabel, VictoryLegend, VictoryPortal, VictoryTheme } from 'victory';
+import {
+  ChartAxis,
+  Chart,
+  ChartGroup,
+  ChartScatter,
+  ChartProps,
+  ChartTooltipProps,
+  ChartLabel,
+  ChartLegend
+} from '@patternfly/react-charts';
+import { VictoryBoxPlot, VictoryPortal } from 'victory';
 import { format as d3Format } from 'd3-format';
 import { getFormatter, getUnit } from 'utils/Formatter';
 import { VCLines, LegendItem, LineInfo, RichDataPoint, RawOrBucket, VCDataPoint } from 'types/VictoryChartInfo';
@@ -197,7 +206,7 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
         <Chart
           width={this.state.width}
           padding={padding}
-          events={events}
+          events={events as any[]}
           height={chartHeight}
           containerComponent={newBrushVoronoiContainer(
             labelComponent,
@@ -212,61 +221,56 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
           {
             // Use width to change style of the x series supporting narrow scenarios
             this.props.xAxis === 'series' ? (
-              <VictoryAxis
+              <ChartAxis
                 domain={[0, filteredData.length + 1]}
                 style={AxisStyle}
                 tickValues={filteredData.map(s => s.legendItem.name)}
-                theme={VictoryTheme.material}
                 tickFormat={() => ''}
               />
             ) : this.state.width <= MIN_WIDTH ? (
-              <VictoryAxis
+              <ChartAxis
                 tickCount={scaleInfo.count}
                 style={AxisStyle}
-                theme={VictoryTheme.material}
                 domain={this.props.timeWindow}
                 tickFormat={t => {
                   return `:${t.getMinutes()}`;
                 }}
               />
             ) : (
-              <VictoryAxis
+              <ChartAxis
                 tickCount={scaleInfo.count}
                 style={AxisStyle}
-                theme={VictoryTheme.material}
                 domain={this.props.timeWindow}
               />
             )
           }
-          <VictoryAxis
+          <ChartAxis
             tickLabelComponent={
               <VictoryPortal>
-                <VictoryLabel />
+                <ChartLabel />
               </VictoryPortal>
             }
             dependentAxis={true}
             tickCount={chartHeight <= MIN_HEIGHT_YAXIS ? 1 : undefined}
             tickFormat={getFormatter(d3Format, this.props.unit)}
             label={getUnit(d3Format, this.props.unit, mainMax)}
-            axisLabelComponent={<VictoryLabel y={-10} x={-15} angle={0} renderInPortal={true} />}
-            theme={VictoryTheme.material}
+            axisLabelComponent={<ChartLabel y={-10} x={-15} angle={0} renderInPortal={true} />}
             style={AxisStyle}
           />
           {useSecondAxis && this.props.overlay && (
-            <VictoryAxis
+            <ChartAxis
               dependentAxis={true}
               offsetX={this.state.width - overlayRightPadding}
               style={AxisStyle}
               tickCount={chartHeight <= MIN_HEIGHT_YAXIS ? 1 : undefined}
               tickFormat={t => getFormatter(d3Format, this.props.overlay?.info.lineInfo.unit || '')(t / overlayFactor)}
-              tickLabelComponent={<VictoryLabel dx={15} textAnchor={'start'} />}
-              theme={VictoryTheme.material}
+              tickLabelComponent={<ChartLabel dx={15} textAnchor={'start'} />}
               label={getUnit(
                 d3Format,
                 this.props.overlay?.info.lineInfo.unit || '',
                 Math.max(...this.props.overlay.vcLine.datapoints.map(d => d.y))
               )}
-              axisLabelComponent={<VictoryLabel y={-10} x={this.state.width} angle={0} renderInPortal={true} />}
+              axisLabelComponent={<ChartLabel y={-10} x={this.state.width} angle={0} renderInPortal={true} />}
             />
           )}
           {this.props.xAxis === 'series'
@@ -279,7 +283,6 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
                 name={overlayName}
                 data={normalizedOverlay}
                 style={{
-                  data: this.props.overlay!.info.dataStyle,
                   min: { stroke: this.props.overlay!.info.lineInfo.color, strokeWidth: 2 },
                   max: { stroke: this.props.overlay!.info.lineInfo.color, strokeWidth: 2 },
                   q1: { fill: this.props.overlay!.info.lineInfo.color },
@@ -296,7 +299,7 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
               />
             ))}
           {chartHeight > MIN_HEIGHT_YAXIS ? (
-            <VictoryLegend
+            <ChartLegend
               name={'serie-legend'}
               data={filteredLegendData}
               x={0}

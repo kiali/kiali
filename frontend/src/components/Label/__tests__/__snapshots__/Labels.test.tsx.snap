@@ -24,15 +24,15 @@ exports[`#Labels render correctly with data should render badges with More label
       value="v1"
     />
   </div>
-  <Component
-    className="firjkjj"
+  <Button
+    className="f1tvybfg"
     data-test="label_more"
     key="label_more"
     onClick={[Function]}
     variant="link"
   >
     More labels...
-  </Component>
+  </Button>
 </div>
 `;
 

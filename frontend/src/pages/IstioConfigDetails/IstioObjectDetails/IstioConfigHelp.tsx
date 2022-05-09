@@ -1,4 +1,4 @@
-import { Stack, StackItem, Title, TitleLevel, TitleSize } from '@patternfly/react-core';
+import { Stack, StackItem, Title, TitleSizes } from '@patternfly/react-core';
 import * as React from 'react';
 import { HelpMessage } from 'types/IstioObjects';
 
@@ -16,7 +16,7 @@ class IstioConfigHelp extends React.Component<IstioConfigHelpProps> {
     return (
       <Stack>
         <StackItem>
-          <Title headingLevel={TitleLevel.h4} size={TitleSize.lg} style={{ paddingBottom: '10px' }}>
+          <Title headingLevel="h4" size={TitleSizes.lg} style={{ paddingBottom: '10px' }}>
             Help
           </Title>
         </StackItem>
@@ -24,7 +24,7 @@ class IstioConfigHelp extends React.Component<IstioConfigHelpProps> {
         {helpMessage && (
           <>
             <StackItem>
-              <Title headingLevel={TitleLevel.h5} size={TitleSize.md}>
+              <Title headingLevel="h5" size={TitleSizes.md}>
                 {helpMessage.objectField}
               </Title>
             </StackItem>

@@ -1,4 +1,4 @@
-import { Stack, StackItem, Title, TitleLevel, TitleSize } from '@patternfly/react-core';
+import { Stack, StackItem, Title, TitleSizes } from '@patternfly/react-core';
 import { ReferenceIstioObjectLink } from 'components/Link/IstioObjectLink';
 import ServiceLink from 'components/Link/ServiceLink';
 import WorkloadLink from 'components/Link/WorkloadLink';
@@ -38,7 +38,7 @@ class IstioConfigReferences extends React.Component<IstioConfigReferencesProps> 
     return (
       <Stack>
         <StackItem>
-          <Title headingLevel={TitleLevel.h5} size={TitleSize.lg} style={{ paddingBottom: '10px' }}>
+          <Title headingLevel="h5" size={TitleSizes.lg} style={{ paddingBottom: '10px' }}>
             References
           </Title>
         </StackItem>

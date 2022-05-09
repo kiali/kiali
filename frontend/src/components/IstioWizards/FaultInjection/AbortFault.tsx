@@ -2,6 +2,7 @@ import * as React from 'react';
 import { FormGroup, Switch, TextInput } from '@patternfly/react-core';
 import { Abort } from '../../../types/IstioObjects';
 import { HTTP_ABORT_TOOLTIP, wizardTooltip } from '../WizardHelp';
+import { isValid } from 'utils/Common';
 
 type Props = {
   aborted: boolean;
@@ -56,13 +57,13 @@ class AbortFault extends React.Component<Props> {
             fieldId="abort-status-code"
             helperText={httpStatusMsg}
             helperTextInvalid={httpStatusMsg}
-            isValid={this.props.isValid}
+            validated={isValid(this.props.isValid)}
           >
             <TextInput
               value={this.props.abort.httpStatus}
               id="abort-status-code"
               name="abort-status-code"
-              isValid={this.props.isValid}
+              validated={isValid(this.props.isValid)}
               onChange={value => {
                 let newValue = Number(value || 0);
                 newValue = Number.isNaN(newValue) ? 0 : newValue;

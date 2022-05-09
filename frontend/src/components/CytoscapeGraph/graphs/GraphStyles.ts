@@ -158,12 +158,12 @@ const labelBox = style({
 });
 
 export class GraphStyles {
-  static runtimeColorsSet: boolean;
+  private static runtimeColorsSet: boolean;
 
   // Our node color choices are defined by UX here:
   // - https://github.com/kiali/kiali/issues/2435#issuecomment-404640317
   // - https://github.com/kiali/kiali/issues/3675#issuecomment-807403919
-  static setRuntimeColors = () => {
+  private static setRuntimeColors = () => {
     if (GraphStyles.runtimeColorsSet) {
       return;
     }
@@ -194,12 +194,12 @@ export class GraphStyles {
     return { wheelSensitivity: 0.1, autounselectify: false, autoungrabify: true };
   }
 
-  static getNodeLabel(ele: Cy.NodeSingular) {
-    const getCyGlobalData = (ele: Cy.NodeSingular): CytoscapeGlobalScratchData => {
-      return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
-    };
+  private static getCyGlobalData = (ele: Cy.NodeSingular | Cy.EdgeSingular): CytoscapeGlobalScratchData => {
+    return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
+  };
 
-    const cyGlobal = getCyGlobalData(ele);
+  static getNodeLabel(ele: Cy.NodeSingular) {
+    const cyGlobal = GraphStyles.getCyGlobalData(ele);
     const settings = serverConfig.kialiFeatureFlags.uiDefaults.graph.settings;
     const zoom = ele.cy().zoom();
     const noBadge = !cyGlobal.forceLabels && zoom < settings.minFontBadge / settings.fontLabel;
@@ -485,12 +485,180 @@ export class GraphStyles {
     ];
   }
 
+  static getEdgeLabel = (ele: Cy.EdgeSingular, isVerbose?: boolean): string => {
+    const settings = serverConfig.kialiFeatureFlags.uiDefaults.graph.settings;
+    const zoom = ele.cy().zoom();
+    const cyGlobal = GraphStyles.getCyGlobalData(ele);
+    const noLabel = !cyGlobal.forceLabels && zoom < settings.minFontLabel / settings.fontLabel;
+
+    if (noLabel) {
+      return '';
+    }
+
+    const edgeLabels = cyGlobal.edgeLabels;
+    const edgeData = decoratedEdgeData(ele);
+    const includeUnits = isVerbose || numLabels(edgeLabels) > 1;
+    let labels = [] as string[];
+
+    if (edgeLabels.includes(EdgeLabelMode.TRAFFIC_RATE)) {
+      let rate = 0;
+      let pErr = 0;
+      if (edgeData.http > 0) {
+        rate = edgeData.http;
+        pErr = edgeData.httpPercentErr > 0 ? edgeData.httpPercentErr : 0;
+      } else if (edgeData.grpc > 0) {
+        rate = edgeData.grpc;
+        pErr = edgeData.grpcPercentErr > 0 ? edgeData.grpcPercentErr : 0;
+      } else if (edgeData.tcp > 0) {
+        rate = edgeData.tcp;
+      }
+
+      if (rate > 0) {
+        if (pErr > 0) {
+          labels.push(`${GraphStyles.toFixedRequestRate(rate, includeUnits)}\n${GraphStyles.toFixedErrRate(pErr)}`);
+        } else {
+          switch (edgeData.protocol) {
+            case Protocol.GRPC:
+              if (cyGlobal.trafficRates.includes(TrafficRate.GRPC_REQUEST)) {
+                labels.push(GraphStyles.toFixedRequestRate(rate, includeUnits));
+              } else {
+                labels.push(GraphStyles.toFixedRequestRate(rate, includeUnits, 'mps'));
+              }
+              break;
+            case Protocol.TCP:
+              labels.push(GraphStyles.toFixedByteRate(rate, includeUnits));
+              break;
+            default:
+              labels.push(GraphStyles.toFixedRequestRate(rate, includeUnits));
+              break;
+          }
+        }
+      }
+    }
+
+    if (edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP)) {
+      let responseTime = edgeData.responseTime;
+
+      if (responseTime > 0) {
+        labels.push(GraphStyles.toFixedDuration(responseTime));
+      }
+    }
+
+    if (edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP)) {
+      let rate = edgeData.throughput;
+
+      if (rate > 0) {
+        labels.push(GraphStyles.toFixedByteRate(rate, includeUnits));
+      }
+    }
+
+    if (edgeLabels.includes(EdgeLabelMode.TRAFFIC_DISTRIBUTION)) {
+      let pReq;
+      if (edgeData.httpPercentReq > 0) {
+        pReq = edgeData.httpPercentReq;
+      } else if (edgeData.grpcPercentReq > 0) {
+        pReq = edgeData.grpcPercentReq;
+      }
+      if (pReq > 0 && pReq < 100) {
+        labels.push(GraphStyles.toFixedPercent(pReq));
+      }
+    }
+
+    let label = labels.join('\n');
+
+    if (isVerbose) {
+      const protocol = edgeData.protocol;
+      label = protocol ? `${protocol}\n${label}` : label;
+    }
+
+    const mtlsPercentage = edgeData.isMTLS;
+    let lockIcon = false;
+    if (cyGlobal.showSecurity && edgeData.hasTraffic) {
+      if (mtlsPercentage && mtlsPercentage > 0) {
+        lockIcon = true;
+        label = `${EdgeIconMTLS}\n${label}`;
+      }
+    }
+
+    if (edgeData.hasTraffic && edgeData.responses) {
+      const dest = decoratedNodeData(ele.target());
+      if (dest.hasCB) {
+        const responses = edgeData.responses;
+        for (let code of _.keys(responses)) {
+          // TODO: Not 100% sure we want "UH" code here ("no healthy upstream hosts") but based on timing I have
+          // seen this code returned and not "UO". "UO" is returned only when the circuit breaker is caught open.
+          // But if open CB is responsible for removing possible destinations the "UH" code seems preferred.
+          if (responses[code]['UO'] || responses[code]['UH']) {
+            label = lockIcon ? `${NodeIconCB} ${label}` : `${NodeIconCB}\n${label}`;
+            break;
+          }
+        }
+      }
+    }
+
+    return label;
+  };
+
+  private static trimFixed = (fixed: string): string => {
+    if (!fixed.includes('.')) {
+      return fixed;
+    }
+    while (fixed.endsWith('0')) {
+      fixed = fixed.slice(0, -1);
+    }
+    return fixed.endsWith('.') ? (fixed = fixed.slice(0, -1)) : fixed;
+  };
+
+  private static toFixedRequestRate = (num: number, includeUnits: boolean, units?: string): string => {
+    num = GraphStyles.safeNum(num);
+    const rate = GraphStyles.trimFixed(num.toFixed(2));
+    return includeUnits ? `${rate} ${units || 'rps'}` : rate;
+  };
+
+  private static toFixedErrRate = (num: number): string => {
+    num = GraphStyles.safeNum(num);
+    return `${GraphStyles.trimFixed(num.toFixed(num < 1 ? 1 : 0))}% err`;
+  };
+
+  private static toFixedByteRate = (num: number, includeUnits: boolean): string => {
+    num = GraphStyles.safeNum(num);
+    if (num < 1024.0) {
+      const rate = num < 1.0 ? GraphStyles.trimFixed(num.toFixed(2)) : num.toFixed(0);
+      return includeUnits ? `${rate} bps` : rate;
+    }
+    const rate = GraphStyles.trimFixed((num / 1024.0).toFixed(2));
+    return includeUnits ? `${rate} kps` : rate;
+  };
+
+  private static toFixedPercent = (num: number): string => {
+    num = GraphStyles.safeNum(num);
+    return `${GraphStyles.trimFixed(num.toFixed(1))}%`;
+  };
+
+  private static toFixedDuration = (num: number): string => {
+    num = GraphStyles.safeNum(num);
+    if (num < 1000) {
+      return `${num.toFixed(0)}ms`;
+    }
+    return `${GraphStyles.trimFixed((num / 1000.0).toFixed(2))}s`;
+  };
+
+  // This is due to us never having figured out why a tiny fraction of what-we-expect-to-be-numbers
+  // are in fact strings.  We don't know if our conversion in GraphData.ts has a flaw, or whether
+  // something else happens post-conversion.
+  private static safeNum = (num: any): number => {
+    if (Number.isFinite(num)) {
+      return num;
+    }
+    if (typeof num === 'string' || num instanceof String) {
+      console.log(`Expected number but received string: |${num}|`);
+    }
+    // this will return NaN if the string is 'NaN' or any other non-number
+    return Number(num);
+  };
+
   static styles(): Cy.Stylesheet[] {
     GraphStyles.setRuntimeColors();
-
-    const getCyGlobalData = (ele: Cy.NodeSingular | Cy.EdgeSingular): CytoscapeGlobalScratchData => {
-      return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
-    };
 
     const getEdgeColor = (ele: Cy.EdgeSingular): string => {
       const edgeData = decoratedEdgeData(ele);
@@ -510,178 +678,6 @@ export class GraphStyles {
         default:
           return EdgeColor;
       }
-    };
-
-    const getEdgeLabel = (ele: Cy.EdgeSingular, isVerbose?: boolean): string => {
-      const settings = serverConfig.kialiFeatureFlags.uiDefaults.graph.settings;
-      const zoom = ele.cy().zoom();
-      const noLabel = zoom < settings.minFontLabel / settings.fontLabel;
-
-      if (noLabel) {
-        return '';
-      }
-
-      const cyGlobal = getCyGlobalData(ele);
-      const edgeLabels = cyGlobal.edgeLabels;
-      const edgeData = decoratedEdgeData(ele);
-      const includeUnits = isVerbose || numLabels(edgeLabels) > 1;
-      let labels = [] as string[];
-
-      if (edgeLabels.includes(EdgeLabelMode.TRAFFIC_RATE)) {
-        let rate = 0;
-        let pErr = 0;
-        if (edgeData.http > 0) {
-          rate = edgeData.http;
-          pErr = edgeData.httpPercentErr > 0 ? edgeData.httpPercentErr : 0;
-        } else if (edgeData.grpc > 0) {
-          rate = edgeData.grpc;
-          pErr = edgeData.grpcPercentErr > 0 ? edgeData.grpcPercentErr : 0;
-        } else if (edgeData.tcp > 0) {
-          rate = edgeData.tcp;
-        }
-
-        if (rate > 0) {
-          if (pErr > 0) {
-            labels.push(`${toFixedRequestRate(rate, includeUnits)}\n${toFixedErrRate(pErr)}`);
-          } else {
-            switch (edgeData.protocol) {
-              case Protocol.GRPC:
-                if (cyGlobal.trafficRates.includes(TrafficRate.GRPC_REQUEST)) {
-                  labels.push(toFixedRequestRate(rate, includeUnits));
-                } else {
-                  labels.push(toFixedRequestRate(rate, includeUnits, 'mps'));
-                }
-                break;
-              case Protocol.TCP:
-                labels.push(toFixedByteRate(rate, includeUnits));
-                break;
-              default:
-                labels.push(toFixedRequestRate(rate, includeUnits));
-                break;
-            }
-          }
-        }
-      }
-
-      if (edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP)) {
-        let responseTime = edgeData.responseTime;
-
-        if (responseTime > 0) {
-          labels.push(toFixedDuration(responseTime));
-        }
-      }
-
-      if (edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP)) {
-        let rate = edgeData.throughput;
-
-        if (rate > 0) {
-          labels.push(toFixedByteRate(rate, includeUnits));
-        }
-      }
-
-      if (edgeLabels.includes(EdgeLabelMode.TRAFFIC_DISTRIBUTION)) {
-        let pReq;
-        if (edgeData.httpPercentReq > 0) {
-          pReq = edgeData.httpPercentReq;
-        } else if (edgeData.grpcPercentReq > 0) {
-          pReq = edgeData.grpcPercentReq;
-        }
-        if (pReq > 0 && pReq < 100) {
-          labels.push(toFixedPercent(pReq));
-        }
-      }
-
-      let label = labels.join('\n');
-
-      if (isVerbose) {
-        const protocol = edgeData.protocol;
-        label = protocol ? `${protocol}\n${label}` : label;
-      }
-
-      const mtlsPercentage = edgeData.isMTLS;
-      let lockIcon = false;
-      if (cyGlobal.showSecurity && edgeData.hasTraffic) {
-        if (mtlsPercentage && mtlsPercentage > 0) {
-          lockIcon = true;
-          label = `${EdgeIconMTLS}\n${label}`;
-        }
-      }
-
-      if (edgeData.hasTraffic && edgeData.responses) {
-        const dest = decoratedNodeData(ele.target());
-        if (dest.hasCB) {
-          const responses = edgeData.responses;
-          for (let code of _.keys(responses)) {
-            // TODO: Not 100% sure we want "UH" code here ("no healthy upstream hosts") but based on timing I have
-            // seen this code returned and not "UO". "UO" is returned only when the circuit breaker is caught open.
-            // But if open CB is responsible for removing possible destinations the "UH" code seems preferred.
-            if (responses[code]['UO'] || responses[code]['UH']) {
-              label = lockIcon ? `${NodeIconCB} ${label}` : `${NodeIconCB}\n${label}`;
-              break;
-            }
-          }
-        }
-      }
-
-      return label;
-    };
-
-    const trimFixed = (fixed: string): string => {
-      if (!fixed.includes('.')) {
-        return fixed;
-      }
-      while (fixed.endsWith('0')) {
-        fixed = fixed.slice(0, -1);
-      }
-      return fixed.endsWith('.') ? (fixed = fixed.slice(0, -1)) : fixed;
-    };
-
-    const toFixedRequestRate = (num: number, includeUnits: boolean, units?: string): string => {
-      num = safeNum(num);
-      const rate = trimFixed(num.toFixed(2));
-      return includeUnits ? `${rate} ${units || 'rps'}` : rate;
-    };
-
-    const toFixedErrRate = (num: number): string => {
-      num = safeNum(num);
-      return `${trimFixed(num.toFixed(num < 1 ? 1 : 0))}% err`;
-    };
-
-    const toFixedByteRate = (num: number, includeUnits: boolean): string => {
-      num = safeNum(num);
-      if (num < 1024.0) {
-        const rate = num < 1.0 ? trimFixed(num.toFixed(2)) : num.toFixed(0);
-        return includeUnits ? `${rate} bps` : rate;
-      }
-      const rate = trimFixed((num / 1024.0).toFixed(2));
-      return includeUnits ? `${rate} kps` : rate;
-    };
-
-    const toFixedPercent = (num: number): string => {
-      num = safeNum(num);
-      return `${trimFixed(num.toFixed(1))}%`;
-    };
-
-    const toFixedDuration = (num: number): string => {
-      num = safeNum(num);
-      if (num < 1000) {
-        return `${num.toFixed(0)}ms`;
-      }
-      return `${trimFixed((num / 1000.0).toFixed(2))}s`;
-    };
-
-    // This is due to us never having figured out why a tiny fraction of what-we-expect-to-be-numbers
-    // are in fact strings.  We don't know if our conversion in GraphData.ts has a flaw, or whether
-    // something else happens post-conversion.
-    const safeNum = (num: any): number => {
-      if (Number.isFinite(num)) {
-        return num;
-      }
-      if (typeof num === 'string' || num instanceof String) {
-        console.log(`Expected number but received string: |${num}|`);
-      }
-      // this will return NaN if the string is 'NaN' or any other non-number
-      return Number(num);
     };
 
     const getNodeBackgroundImage = (ele: Cy.NodeSingular): string => {
@@ -887,7 +883,7 @@ export class GraphStyles {
             serverConfig.kialiFeatureFlags.uiDefaults.graph.settings.fontLabel * FontSizeRatioEdgeText
           }px`,
           label: (ele: Cy.EdgeSingular) => {
-            return getEdgeLabel(ele);
+            return GraphStyles.getEdgeLabel(ele);
           },
           'line-color': (ele: Cy.EdgeSingular) => {
             return getEdgeColor(ele);
@@ -908,7 +904,7 @@ export class GraphStyles {
         selector: 'edge:selected',
         css: {
           width: EdgeWidthSelected,
-          label: (ele: Cy.EdgeSingular) => getEdgeLabel(ele, true)
+          label: (ele: Cy.EdgeSingular) => GraphStyles.getEdgeLabel(ele, true)
         }
       },
       {
@@ -928,7 +924,7 @@ export class GraphStyles {
         selector: `edge.${HoveredClass}`,
         style: {
           label: (ele: Cy.EdgeSingular) => {
-            return getEdgeLabel(ele);
+            return GraphStyles.getEdgeLabel(ele);
           }
         }
       },

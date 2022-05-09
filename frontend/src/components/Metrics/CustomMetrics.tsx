@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
-import { Toolbar, ToolbarGroup, ToolbarItem, Card, CardBody } from '@patternfly/react-core';
+import { Toolbar, ToolbarGroup, ToolbarItem, Card, CardBody, Checkbox } from '@patternfly/react-core';
 import { style } from 'typestyle';
-
 import { serverConfig } from '../../config/ServerConfig';
 import history, { URLParam } from '../../app/History';
 import * as API from '../../services/Api';
@@ -57,12 +56,17 @@ type Props = CustomMetricsProps & {
   setTimeRange: (range: TimeRange) => void;
 };
 
-const displayFlex = style({
-  display: 'flex'
-});
-
 const fullHeightStyle = style({
   height: '100%'
+});
+
+// For some reason checkbox as a ToolbarItem needs to be tweaked
+const toolbarInputStyle = style({
+  $nest: {
+    '& > input': {
+      marginTop: '2px'
+    }
+  }
 });
 
 class CustomMetrics extends React.Component<Props, MetricsState> {
@@ -250,8 +254,8 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     return (
       <div ref={this.toolbarRef}>
         <Toolbar style={{ paddingBottom: 15 }}>
-          {(hasHistograms || hasLabels) && (
-            <ToolbarGroup>
+          <ToolbarGroup>
+            {(hasHistograms || hasLabels) && (
               <ToolbarItem>
                 <MetricsSettingsDropdown
                   onChanged={this.onMetricsSettingsChanged}
@@ -261,35 +265,19 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
                   hasHistograms={hasHistograms}
                 />
               </ToolbarItem>
-            </ToolbarGroup>
-          )}
-          <ToolbarGroup>
-            <ToolbarItem className={displayFlex}>
+            )}
+            <ToolbarItem>
               <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
             </ToolbarItem>
-          </ToolbarGroup>
-          <ToolbarGroup>
-            <ToolbarItem className={displayFlex}>
-              <div className="pf-c-check">
-                <input
-                  key={`spans-show-chart`}
-                  id={`spans-show-`}
-                  className="pf-c-check__input"
-                  style={{ marginBottom: '3px' }}
-                  type="checkbox"
-                  checked={this.state.showSpans}
-                  onChange={event => this.onSpans(event.target.checked)}
-                />
-                <label
-                  className="pf-c-check__label"
-                  style={{
-                    paddingLeft: '5px',
-                    paddingRight: '5px'
-                  }}
-                >
-                  Spans
-                </label>
-              </div>
+            <ToolbarItem>
+              <Checkbox
+                className={toolbarInputStyle}
+                id={`spans-show-`}
+                isChecked={this.state.showSpans}
+                key={`spans-show-chart`}
+                label="Spans"
+                onChange={checked => this.onSpans(checked)}
+              />
             </ToolbarItem>
           </ToolbarGroup>
           <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>

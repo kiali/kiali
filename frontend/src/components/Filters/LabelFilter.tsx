@@ -44,11 +44,11 @@ export class LabelFilters extends React.Component<LabelFiltersProps, { sortOpera
               <br />
               <ul style={{ listStyleType: 'circle', marginLeft: '20px' }}>
                 <li>Filter by label presence: label</li>
-                <li>Filter by label and value: label:value</li>
+                <li>Filter by label and value: label=value</li>
                 <li>
                   Filter by more than one label and one or more values:
                   <br />
-                  label:value label2:value2,value2-2
+                  label=value label2=value2,value2-2
                   <br />
                   (separate with ' ')
                 </li>

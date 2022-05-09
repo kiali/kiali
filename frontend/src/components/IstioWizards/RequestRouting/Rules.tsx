@@ -8,6 +8,7 @@ import {
   EmptyStateBody,
   EmptyStateVariant,
   Title,
+  TitleSizes,
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
@@ -204,7 +205,7 @@ class Rules extends React.Component<Props> {
                 {
                   title: (
                     <EmptyState variant={EmptyStateVariant.full}>
-                      <Title headingLevel="h5" size="lg">
+                      <Title headingLevel="h5" size={TitleSizes.lg}>
                         No Route Rules defined
                       </Title>
                       <EmptyStateBody className={noRulesStyle}>

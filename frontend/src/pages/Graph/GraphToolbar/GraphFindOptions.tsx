@@ -17,8 +17,7 @@ const dropdown = style({
   minWidth: '20px',
   width: '20px',
   paddingLeft: '5px',
-  paddingRight: 0,
-  bottom: '1px'
+  paddingRight: 0
 });
 
 export class GraphFindOptions extends React.PureComponent<GraphFindOptionsProps, GraphFindOptionsState> {
@@ -40,7 +39,7 @@ export class GraphFindOptions extends React.PureComponent<GraphFindOptionsProps,
         key={`graph-${this.props.kind}-presets`}
         id="graph-findhide-presets"
         toggle={
-          <DropdownToggle className={dropdown} iconComponent={null} onToggle={this.onToggle}>
+          <DropdownToggle className={dropdown} toggleIndicator={null} onToggle={this.onToggle}>
             <KialiIcon.AngleDown />
           </DropdownToggle>
         }

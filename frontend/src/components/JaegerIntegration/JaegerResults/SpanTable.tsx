@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { EmptyState, EmptyStateBody, EmptyStateVariant, Title } from '@patternfly/react-core';
+import { EmptyState, EmptyStateBody, EmptyStateVariant, Title, TitleSizes } from '@patternfly/react-core';
 import {
   Table,
   TableHeader,
@@ -76,26 +76,26 @@ class SpanTable extends React.Component<Props, State> {
     return [
       {
         title: 'Timeline',
-        transforms: [sortable, cellWidth('5%')],
+        transforms: [sortable, cellWidth(20)],
         compare: (a, b) => a.startTime - b.startTime
       },
       {
         title: 'App / Workload',
-        transforms: [sortable, cellWidth('20%')],
+        transforms: [sortable, cellWidth(40)],
         compare: (a, b) => compareNullable(a.workload, b.workload, (a2, b2) => a2.localeCompare(b2))
       },
       {
         title: 'Summary',
-        transforms: [cellWidth('50%')]
+        transforms: [cellWidth(100)]
       },
       {
         title: 'Statistics',
-        transforms: [sortable, cellWidth('20%')],
+        transforms: [sortable, cellWidth(40)],
         compare: (a, b) => a.duration - b.duration
       },
       {
         title: '', // Links
-        transforms: [cellWidth('5%')]
+        transforms: [cellWidth(10)]
       }
     ];
   };
@@ -144,7 +144,7 @@ class SpanTable extends React.Component<Props, State> {
             <tr>
               <td colSpan={cells.length}>
                 <EmptyState variant={EmptyStateVariant.full}>
-                  <Title headingLevel="h5" size="lg">
+                  <Title headingLevel="h5" size={TitleSizes.lg}>
                     No spans found
                   </Title>
                   <EmptyStateBody>No spans match the current filters</EmptyStateBody>

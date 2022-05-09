@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { Chart, ChartBar, ChartStack, ChartAxis, ChartTooltip } from '@patternfly/react-charts';
-import { VictoryLegend } from 'victory';
+import { Chart, ChartBar, ChartStack, ChartAxis, ChartTooltip, ChartLegend } from '@patternfly/react-charts';
 
 import { PFColors } from '../../components/Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
@@ -71,10 +70,12 @@ export class RateChart extends React.Component<Props, State> {
         padding={padding}
         domainPadding={{ x: singleBar ? [15, 15] : [30, 25] }}
         domain={{ y: [0, 100] }}
-        events={events}
+        events={events as any[]}
       >
         <ChartStack
-          colorScale={this.props.series.filter((_, idx) => !this.state.hiddenSeries.has(idx)).map(d => d.color)}
+          colorScale={this.props.series
+            .filter((_, idx) => !this.state.hiddenSeries.has(idx))
+            .map(d => d.color || 'black')}
           horizontal={true}
         >
           {this.props.series.map((datum, idx) => {
@@ -107,7 +108,7 @@ export class RateChart extends React.Component<Props, State> {
           crossAxis={false}
           tickValues={[0, 25, 50, 75, 100]}
         />
-        <VictoryLegend
+        <ChartLegend
           style={{ labels: { fontSize: Number(fontSizePx) } }}
           name={this.props.baseName + '-legend'}
           data={this.props.series.map((s, idx) => {

@@ -20,7 +20,6 @@ const mutIcons = {
       ascii: '\uE932',
       color: 'red'
     },
-    disabledMtls: { className: 'pf-icon pf-icon-unlocked', type: 'fa', name: 'unlock', ascii: '\uE065 ' },
     faultInjection: { className: 'fa fa-ban', type: 'fa', name: 'ban', ascii: '\uf05e ' },
     gateway: { className: 'pf-icon pf-icon-globe-route', type: 'pf', name: 'globe-route' },
     mirroring: { className: 'pf-icon pf-icon-migration', type: 'pf', name: 'migration' },
@@ -29,7 +28,7 @@ const mutIcons = {
       className: 'pf-icon pf-icon-security',
       type: 'pf',
       name: 'security',
-      ascii: '\ue915 ',
+      ascii: '\ue946 ',
       color: 'red'
     },
     missingSidecar: {
@@ -40,7 +39,7 @@ const mutIcons = {
       ascii: '\ue915 ',
       color: 'red'
     },
-    mtls: { className: 'pf-icon pf-icon-locked', type: 'pf', name: 'locked', ascii: '\uE02a ' },
+    mtls: { className: 'pf-icon pf-icon-locked', type: 'pf', name: 'locked', ascii: '\uE923 ' },
     requestRouting: { className: 'fa fa-code-branch', type: 'fa', name: 'code-fork', ascii: '\uf126 ' },
     requestTimeout: { className: 'fa fa-clock', type: 'fa', name: 'clock', ascii: '\uf017 ' },
     root: { className: 'fa fa-arrow-alt-circle-right', type: 'fa', name: 'arrow-alt-circle-right', ascii: '\uf35a ' },

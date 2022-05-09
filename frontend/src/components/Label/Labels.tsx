@@ -17,15 +17,13 @@ interface State {
 }
 
 const linkStyle = style({
-  float: 'left',
-  paddingLeft: '0px',
-  marginLeft: '2px',
-  fontSize: '0.8rem'
+  padding: '0 4px 0 4px',
+  fontSize: '0.8rem',
+  bottom: '2px'
 });
 
 const infoStyle = style({
-  margin: '0px 4px 2px 10px',
-  verticalAlign: '-9px !important'
+  margin: '0 4px 2px 5px'
 });
 
 const labelsContainerStyle = style({
@@ -63,7 +61,13 @@ class Labels extends React.Component<Props, State> {
   renderMoreLabelsLink() {
     if (this.hasManyLabels() && !this.state.expanded) {
       return (
-        <Button data-test="label_more" key="label_more" variant="link" className={linkStyle} onClick={this.expandLabels}>
+        <Button
+          data-test="label_more"
+          key="label_more"
+          variant="link"
+          className={linkStyle}
+          onClick={this.expandLabels}
+        >
           More labels...
         </Button>
       );

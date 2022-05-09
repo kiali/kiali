@@ -2,11 +2,7 @@
 
 exports[`ServiceValidationSummary renders error icon when all components are valid 1`] = `
 <Tooltip
-  appendTo={[Function]}
-  aria="describedby"
   aria-label="Validations list"
-  boundary="window"
-  className=""
   content={
     <React.Fragment>
       <Text
@@ -29,30 +25,8 @@ exports[`ServiceValidationSummary renders error icon when all components are val
       </div>
     </React.Fragment>
   }
-  distance={15}
   enableFlip={true}
-  entryDelay={500}
-  exitDelay={500}
-  flipBehavior={
-    Array [
-      "top",
-      "right",
-      "bottom",
-      "left",
-      "top",
-      "right",
-      "bottom",
-    ]
-  }
-  id=""
-  isAppLauncher={false}
-  isContentLeftAligned={false}
-  isVisible={false}
-  maxWidth="18.75rem"
   position="auto"
-  tippyProps={Object {}}
-  trigger="mouseenter focus"
-  zIndex={9999}
 >
   <Validation
     severity="error"
@@ -62,11 +36,7 @@ exports[`ServiceValidationSummary renders error icon when all components are val
 
 exports[`ServiceValidationSummary renders error icon when all components are valid 2`] = `
 <Tooltip
-  appendTo={[Function]}
-  aria="describedby"
   aria-label="Validations list"
-  boundary="window"
-  className=""
   content={
     <React.Fragment>
       <Text
@@ -92,30 +62,8 @@ exports[`ServiceValidationSummary renders error icon when all components are val
       </div>
     </React.Fragment>
   }
-  distance={15}
   enableFlip={true}
-  entryDelay={500}
-  exitDelay={500}
-  flipBehavior={
-    Array [
-      "top",
-      "right",
-      "bottom",
-      "left",
-      "top",
-      "right",
-      "bottom",
-    ]
-  }
-  id=""
-  isAppLauncher={false}
-  isContentLeftAligned={false}
-  isVisible={false}
-  maxWidth="18.75rem"
   position="auto"
-  tippyProps={Object {}}
-  trigger="mouseenter focus"
-  zIndex={9999}
 >
   <Validation
     severity="error"
@@ -125,11 +73,7 @@ exports[`ServiceValidationSummary renders error icon when all components are val
 
 exports[`ServiceValidationSummary renders success icon when all components are valid 1`] = `
 <Tooltip
-  appendTo={[Function]}
-  aria="describedby"
   aria-label="Validations list"
-  boundary="window"
-  className=""
   content={
     <React.Fragment>
       <Text
@@ -152,30 +96,8 @@ exports[`ServiceValidationSummary renders success icon when all components are v
       </div>
     </React.Fragment>
   }
-  distance={15}
   enableFlip={true}
-  entryDelay={500}
-  exitDelay={500}
-  flipBehavior={
-    Array [
-      "top",
-      "right",
-      "bottom",
-      "left",
-      "top",
-      "right",
-      "bottom",
-    ]
-  }
-  id=""
-  isAppLauncher={false}
-  isContentLeftAligned={false}
-  isVisible={false}
-  maxWidth="18.75rem"
   position="auto"
-  tippyProps={Object {}}
-  trigger="mouseenter focus"
-  zIndex={9999}
 >
   <Validation
     severity="correct"
@@ -185,11 +107,7 @@ exports[`ServiceValidationSummary renders success icon when all components are v
 
 exports[`ServiceValidationSummary renders warning icon when all components are valid 1`] = `
 <Tooltip
-  appendTo={[Function]}
-  aria="describedby"
   aria-label="Validations list"
-  boundary="window"
-  className=""
   content={
     <React.Fragment>
       <Text
@@ -212,30 +130,8 @@ exports[`ServiceValidationSummary renders warning icon when all components are v
       </div>
     </React.Fragment>
   }
-  distance={15}
   enableFlip={true}
-  entryDelay={500}
-  exitDelay={500}
-  flipBehavior={
-    Array [
-      "top",
-      "right",
-      "bottom",
-      "left",
-      "top",
-      "right",
-      "bottom",
-    ]
-  }
-  id=""
-  isAppLauncher={false}
-  isContentLeftAligned={false}
-  isVisible={false}
-  maxWidth="18.75rem"
   position="auto"
-  tippyProps={Object {}}
-  trigger="mouseenter focus"
-  zIndex={9999}
 >
   <Validation
     severity="warning"
@@ -245,11 +141,7 @@ exports[`ServiceValidationSummary renders warning icon when all components are v
 
 exports[`ServiceValidationSummary renders warning icon when all components are valid 2`] = `
 <Tooltip
-  appendTo={[Function]}
-  aria="describedby"
   aria-label="Validations list"
-  boundary="window"
-  className=""
   content={
     <React.Fragment>
       <Text
@@ -272,30 +164,8 @@ exports[`ServiceValidationSummary renders warning icon when all components are v
       </div>
     </React.Fragment>
   }
-  distance={15}
   enableFlip={true}
-  entryDelay={500}
-  exitDelay={500}
-  flipBehavior={
-    Array [
-      "top",
-      "right",
-      "bottom",
-      "left",
-      "top",
-      "right",
-      "bottom",
-    ]
-  }
-  id=""
-  isAppLauncher={false}
-  isContentLeftAligned={false}
-  isVisible={false}
-  maxWidth="18.75rem"
   position="auto"
-  tippyProps={Object {}}
-  trigger="mouseenter focus"
-  zIndex={9999}
 >
   <Validation
     severity="warning"

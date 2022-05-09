@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { RouteComponentProps, withRouter } from 'react-router';
-import { Card, CardBody, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
+import { Card, CardBody, Checkbox, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import * as API from 'services/Api';
 import { KialiAppState } from 'store/Store';
@@ -28,7 +28,6 @@ import { Dashboard } from 'components/Charts/Dashboard';
 import { timeRangeSelector } from 'store/Selectors';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { maximizeButtonStyle } from '../Charts/KChart';
 
 type MetricsState = {
   dashboard?: DashboardModel;
@@ -59,12 +58,17 @@ type Props = IstioMetricsProps & {
   setTimeRange: (range: TimeRange) => void;
 };
 
-const displayFlex = style({
-  display: 'flex'
-});
-
 const fullHeightStyle = style({
   height: '100%'
+});
+
+// For some reason checkbox as a ToolbarItem needs to be tweaked
+const toolbarInputStyle = style({
+  $nest: {
+    '& > input': {
+      marginTop: '2px'
+    }
+  }
 });
 
 class IstioMetrics extends React.Component<Props, MetricsState> {
@@ -297,7 +301,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   private renderOptionsBar() {
     return (
       <div ref={this.toolbarRef}>
-        <Toolbar style={{ paddingBottom: 15 }}>
+        <Toolbar style={{ padding: 0 }}>
           <ToolbarGroup>
             <ToolbarItem>
               <MetricsSettingsDropdown
@@ -308,58 +312,32 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                 hasHistograms={true}
               />
             </ToolbarItem>
-          </ToolbarGroup>
-          <ToolbarGroup>
-            <ToolbarItem className={displayFlex}>
+            <ToolbarItem>
               <MetricsReporter
                 onChanged={this.onReporterChanged}
                 direction={this.props.direction}
                 reporter={this.options.reporter}
               />
             </ToolbarItem>
-          </ToolbarGroup>
-          <ToolbarGroup>
-            <ToolbarItem className={displayFlex}>
-              <div style={maximizeButtonStyle} className="pf-c-check">
-                <label
-                  className="pf-c-check__label"
-                  style={{
-                    paddingLeft: '5px',
-                    paddingRight: '5px'
-                  }}
-                >
-                  <input
-                    key={`spans-show-chart`}
-                    id={`spans-show-`}
-                    className="pf-c-check__input"
-                    type="checkbox"
-                    checked={this.state.showSpans}
-                    onChange={event => this.onSpans(event.target.checked)}
-                  />
-                  &nbsp; Spans
-                </label>
-              </div>
+            <ToolbarItem>
+              <Checkbox
+                className={toolbarInputStyle}
+                id={`spans-show-`}
+                isChecked={this.state.showSpans}
+                key={`spans-show-chart`}
+                label="Spans"
+                onChange={checked => this.onSpans(checked)}
+              />
             </ToolbarItem>
-            <ToolbarItem className={displayFlex}>
-              <div style={maximizeButtonStyle} className="pf-c-check">
-                <label
-                  className="pf-c-check__label"
-                  style={{
-                    paddingLeft: '5px',
-                    paddingRight: '5px'
-                  }}
-                >
-                  <input
-                    key={`trendlines-show-chart`}
-                    id={`trendlines-show-`}
-                    className="pf-c-check__input"
-                    type="checkbox"
-                    checked={this.state.showTrendlines}
-                    onChange={event => this.onTrendlines(event.target.checked)}
-                  />
-                  &nbsp; Trendlines
-                </label>
-              </div>
+            <ToolbarItem>
+              <Checkbox
+                className={toolbarInputStyle}
+                id={`trendlines-show-`}
+                isChecked={this.state.showTrendlines}
+                key={`trendlines-show-chart`}
+                label="Trendlines"
+                onChange={checked => this.onTrendlines(checked)}
+              />
             </ToolbarItem>
           </ToolbarGroup>
           <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>

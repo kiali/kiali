@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { IstioLevelToSeverity, ValidationMessage, ValidationTypes } from '../../../types/IstioObjects';
-import { Flex, FlexItem, Stack, StackItem, Title, TitleLevel, TitleSize } from '@patternfly/react-core';
+import { Flex, FlexItem, Stack, StackItem, Title, TitleSizes } from '@patternfly/react-core';
 import Validation from '../../../components/Validations/Validation';
 
 interface Props {
@@ -13,7 +13,7 @@ class IstioStatusMessageList extends React.Component<Props> {
       <>
         <Stack>
           <StackItem>
-            <Title headingLevel={TitleLevel.h4} size={TitleSize.lg} style={{ paddingBottom: '10px' }}>
+            <Title headingLevel="h4" size={TitleSizes.lg} style={{ paddingBottom: '10px' }}>
               Configuration Analysis
             </Title>
           </StackItem>

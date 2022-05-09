@@ -83,6 +83,13 @@ type CytoscapeGraphProps = {
   updateSummary?: (event: CytoscapeEvent) => void;
 };
 
+// This is a Cypress test hook. Cypress-react-selector can access the react node state, and so
+// by offering `cy`, we can validate graph impact of test automation actions.  Note that state updates
+// do not cause component updates (see shouldComponentUpdate)
+type CytoscapeGraphState = {
+  cy: Cy.Core | null;
+};
+
 export interface GraphEdgeTapEvent {
   namespace: string;
   type: string;
@@ -110,7 +117,7 @@ export interface GraphNodeTapEvent {
 export interface GraphNodeDoubleTapEvent extends GraphNodeTapEvent {}
 
 // exporting this class for testing
-export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps> {
+export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps, CytoscapeGraphState> {
   static contextTypes = {
     router: () => null
   };
@@ -134,6 +141,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
   private readonly contextMenuRef: React.RefObject<CytoscapeContextMenuWrapper>;
   private cy?: Cy.Core;
   private customViewport: boolean;
+  private cytoscapeGraphRef: any;
   private cytoscapeReactWrapperRef: any;
   private focusSelector?: string;
   private graphHighlighter?: GraphHighlighter;
@@ -149,10 +157,14 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     super(props);
     this.contextMenuRef = React.createRef<CytoscapeContextMenuWrapper>();
     this.customViewport = false;
+    this.cytoscapeGraphRef = React.createRef<CytoscapeGraph>();
     this.cytoscapeReactWrapperRef = React.createRef();
     this.focusSelector = props.focusSelector;
     this.needsInitialLayout = false;
     this.nodeChanged = false;
+    this.state = {
+      cy: null
+    };
     this.zoom = 1; // 1 is the default cy zoom
     this.zoomIgnore = true; // ignore zoom events prior to the first rendering
     const settings = serverConfig.kialiFeatureFlags.uiDefaults.graph.settings;
@@ -272,7 +284,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
 
   render() {
     return (
-      <div id="cytoscape-container" className={this.props.containerClassName}>
+      <div id="cytoscape-graph" className={this.props.containerClassName} ref={this.cytoscapeGraphRef}>
         <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={false} onResize={this.onResize} />
         <EmptyGraphLayout
           action={this.props.onEmptyGraphAction}
@@ -335,8 +347,12 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
   }
 
   private setCytoscapeReactWrapperRef(cyRef: any) {
-    this.cytoscapeReactWrapperRef.current = cyRef;
-    this.cyInitialization(this.getCy()!);
+    if (this.cytoscapeReactWrapperRef.current !== cyRef) {
+      this.cytoscapeReactWrapperRef.current = cyRef;
+      const cy = this.getCy();
+      this.cyInitialization(cy!);
+      this.setState({ cy: cy });
+    }
   }
 
   private onResize = () => {
@@ -779,8 +795,8 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     cy.scratch(CytoscapeGlobalScratchNamespace, globalScratchData);
 
     let elements = this.props.graphData.elements;
+    let scoringCriteria: ScoringCriteria[] = [];
     if (this.props.showRank) {
-      let scoringCriteria: ScoringCriteria[] = [];
       for (const ranking of this.props.rankBy) {
         if (ranking === RankMode.RANK_BY_INBOUND_EDGES) {
           scoringCriteria.push(ScoringCriteria.InboundEdges);
@@ -795,6 +811,8 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       if (this.props.setRankResult) {
         this.props.setRankResult({ upperBound });
       }
+    } else {
+      scoreNodes(this.props.graphData.elements, ...scoringCriteria);
     }
 
     // don't preserve any user pan/zoom when completely changing the layout

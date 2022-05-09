@@ -5,12 +5,11 @@ import {
   Card,
   CardActions,
   CardBody,
-  CardHead,
   CardHeader,
+  CardTitle,
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
-  Title,
   TooltipPosition
 } from '@patternfly/react-core';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
@@ -105,14 +104,10 @@ class IstioConfigCard extends React.Component<Props> {
   render() {
     return (
       <Card isCompact={true} id={'IstioConfigCard'}>
-        <CardHead>
+        <CardHeader>
           <CardActions />
-          <CardHeader>
-            <Title style={{ float: 'left' }} headingLevel="h5" size="lg">
-              Istio Config
-            </Title>
-          </CardHeader>
-        </CardHead>
+          <CardTitle style={{ float: 'left' }}>Istio Config</CardTitle>
+        </CardHeader>
         <CardBody>
           <Table
             variant={TableVariant.compact}

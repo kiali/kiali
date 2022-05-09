@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { AboutModal, TextContent, TextList, TextListItem, Title, Button } from '@patternfly/react-core';
+import { AboutModal, TextContent, TextList, TextListItem, Title, Button, TitleSizes } from '@patternfly/react-core';
 import { ExternalServiceInfo, Status, StatusKey } from '../../types/StatusState';
 import { config, kialiLogo } from '../../config';
 import { style } from 'typestyle';
@@ -63,7 +63,7 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
               {containerVersion!}
             </TextListItem>
           </TextList>
-          <Title size="xl" style={{ padding: '20px 0px 20px' }}>
+          <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '20px 0px 20px' }}>
             Components
           </Title>
           <TextList component="dl">

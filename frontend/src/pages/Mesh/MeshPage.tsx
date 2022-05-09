@@ -5,6 +5,7 @@ import {
   EmptyStateBody,
   EmptyStateVariant,
   Title,
+  TitleSizes,
   Tooltip
 } from '@patternfly/react-core';
 import { StarIcon } from '@patternfly/react-icons';
@@ -56,9 +57,8 @@ const MeshPage: React.FunctionComponent = () => {
         return (
           <Tooltip content={`Go to this Kiali instance: ${instance.url}`}>
             <p key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}>
-              <img alt='kiali-icon' src='kiali_icon_lightbkg_16px.png' />
-              {' '}
-              <a href={instance.url} target='_blank' rel='noopener noreferrer'>
+              <img alt="kiali-icon" src="kiali_icon_lightbkg_16px.png" />{' '}
+              <a href={instance.url} target="_blank" rel="noopener noreferrer">
                 {instance.namespace} {' / '} {instance.serviceName}
               </a>
             </p>
@@ -67,8 +67,7 @@ const MeshPage: React.FunctionComponent = () => {
       } else {
         return (
           <p key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}>
-            <img alt='kiali-icon' src='kiali_icon_lightbkg_16px.png' />
-            {' '}
+            <img alt="kiali-icon" src="kiali_icon_lightbkg_16px.png" />{' '}
             {`${instance.namespace} / ${instance.serviceName}`}
           </p>
         );
@@ -140,7 +139,7 @@ const MeshPage: React.FunctionComponent = () => {
           </Table>
           {clusterRows.length === 0 ? (
             <EmptyState variant={EmptyStateVariant.full}>
-              <Title headingLevel="h2" size="lg">
+              <Title headingLevel="h2" size={TitleSizes.lg}>
                 No Clusters
               </Title>
               <EmptyStateBody>No clusters were discovered in your mesh.</EmptyStateBody>

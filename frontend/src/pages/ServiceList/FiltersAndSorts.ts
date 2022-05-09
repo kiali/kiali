@@ -1,4 +1,4 @@
-import { ActiveFiltersInfo, FilterType, FILTER_ACTION_APPEND, FilterTypes } from '../../types/Filters';
+import { ActiveFiltersInfo, FilterType, FILTER_ACTION_APPEND, AllFilterTypes } from '../../types/Filters';
 import { hasHealth } from '../../types/Health';
 import { ServiceListItem } from '../../types/ServiceList';
 import { SortField } from '../../types/SortFilters';
@@ -133,8 +133,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
 ];
 
 const serviceNameFilter: FilterType = {
-  id: 'servicename',
-  title: 'Service Name',
+  category: 'Service Name',
   placeholder: 'Filter by Service Name',
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
@@ -142,10 +141,9 @@ const serviceNameFilter: FilterType = {
 };
 
 const serviceTypeFilter: FilterType = {
-  id: 'serviceregistry',
-  title: 'Service Type',
+  category: 'Service Type',
   placeholder: 'Filter by Service Type',
-  filterType: FilterTypes.typeAhead,
+  filterType: AllFilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {

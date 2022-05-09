@@ -2,36 +2,10 @@
 
 exports[`when Icon is LOCK_FULL MTLSIcon renders properly 1`] = `
 <Tooltip
-  appendTo={[Function]}
-  aria="describedby"
   aria-label="mTLS status"
-  boundary="window"
-  className=""
   content="Overlay Test"
-  distance={15}
   enableFlip={true}
-  entryDelay={500}
-  exitDelay={500}
-  flipBehavior={
-    Array [
-      "top",
-      "right",
-      "bottom",
-      "left",
-      "top",
-      "right",
-      "bottom",
-    ]
-  }
-  id=""
-  isAppLauncher={false}
-  isContentLeftAligned={false}
-  isVisible={false}
-  maxWidth="18.75rem"
   position="right"
-  tippyProps={Object {}}
-  trigger="mouseenter focus"
-  zIndex={9999}
 >
   <img
     alt="right"

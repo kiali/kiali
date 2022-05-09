@@ -47,7 +47,7 @@ const tlsStatus: ResourceType<NamespaceInfo> = {
   name: 'TLS',
   param: 'tls',
   column: 'TLS',
-  transforms: [sortable, cellWidth(5)],
+  transforms: [sortable, cellWidth(10)],
   renderer: Renderers.tls
 };
 
@@ -55,7 +55,7 @@ const istioConfiguration: ResourceType<NamespaceInfo> = {
   name: 'IstioConfiguration',
   param: 'ic',
   column: 'Config',
-  transforms: [sortable, cellWidth(5)],
+  transforms: [sortable, cellWidth(10)],
   renderer: Renderers.istioConfig
 };
 

@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { PopoverPosition } from '@patternfly/react-core';
 import { TourStopInfo, TourInfo } from 'components/Tour/TourStop';
 import GraphShortcuts from './GraphToolbar/GraphShortcuts';
@@ -9,12 +8,13 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     description:
       'Right-click a node or an edge to see the contextual menu with links to details, traffic and inbound/outbound metrics for the node or edge.',
     position: PopoverPosition.left,
-    offset: '0, 250'
+    distance: 250
   },
   Display: {
     name: 'Display',
     description:
-      'Set edge labeling, node badging, and various display options. Response-time edge labeling, security badging, and traffic animation may affect performance. Response-times reflect the 95th percentile.'
+      'Set edge labeling, node badging, and various display options. Response-time edge labeling, security badging, and traffic animation may affect performance. Response-times reflect the 95th percentile.',
+    position: PopoverPosition.rightStart,
   },
   Find: {
     name: 'Find and Hide',
@@ -27,7 +27,7 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     description:
       "Click on a node or edge to see its summary and emphasize its end-to-end paths. Double-click a node to see a graph focused on that node.\nDouble-click an 'external namespace' node to navigate directly to the namespace in the node's text label. Shift-Drag to quickly zoom in.",
     position: PopoverPosition.left,
-    offset: '0, 250'
+    distance: 250
   },
   GraphTraffic: {
     name: 'Graph Traffic',
@@ -50,17 +50,17 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
   Legend: {
     name: 'Legend',
     description: 'Display the legend to learn about what the different shapes, colors and backgrounds mean.',
-    position: PopoverPosition.auto
+    position: PopoverPosition.rightEnd
   },
   Namespaces: {
     name: 'Namespaces',
     description: 'Select the namespaces you want to see in the graph.',
-    position: PopoverPosition.bottom
+    position: PopoverPosition.bottomStart
   },
   Shortcuts: {
     name: 'Shortcuts',
-    htmlDescription: <GraphShortcuts />,
-    position: PopoverPosition.left
+    htmlDescription: GraphShortcuts,
+    position: PopoverPosition.leftStart
   },
   SidePanel: {
     name: 'Side Panel',
@@ -71,7 +71,7 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     name: 'Time Range & Replay',
     description:
       'Select how often to refresh the graph and how much historical metric data is used to build the graph, per refresh. For example "Last 5m" means use the most recent 5 minutes of request metric data.  To replay a historical time window click the replay icon.  This replaces the current time range controls with the replay toolbar.',
-    position: PopoverPosition.left
+    position: PopoverPosition.bottomEnd
   }
 };
 

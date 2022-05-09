@@ -2,7 +2,11 @@
   "compilerOptions": {
     "target": "es5",
     "lib": ["es2019", "dom"],
-    "types": ["cypress"]
+    "types": [
+      "cypress",
+      "cypress-react-selector",
+      "node"
+    ]
   },
   "include": ["**/*.ts"]
 }

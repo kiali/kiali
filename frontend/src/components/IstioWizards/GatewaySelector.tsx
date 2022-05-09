@@ -10,6 +10,7 @@ import {
   TextInput
 } from '@patternfly/react-core';
 import { GATEWAY_TOOLTIP, wizardTooltip } from './WizardHelp';
+import { isValid } from 'utils/Common';
 
 type Props = {
   serviceName: string;
@@ -172,7 +173,7 @@ class GatewaySelector extends React.Component<Props, GatewaySelectorState> {
           <>
             <FormGroup
               fieldId="includeMesh"
-              isValid={this.isMeshGatewayValid()}
+              validated={isValid(this.isMeshGatewayValid())}
               helperTextInvalid={"VirtualService Host '*' wildcard not allowed on mesh gateway."}
             >
               <Checkbox
@@ -239,7 +240,7 @@ class GatewaySelector extends React.Component<Props, GatewaySelectorState> {
                   label="Gateway Hosts"
                   helperText="One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma."
                   helperTextInvalid="Gateway hosts should be specified using FQDN format or '*' wildcard."
-                  isValid={this.state.gwHostsValid}
+                  validated={isValid(this.state.gwHostsValid)}
                 >
                   <TextInput
                     id="gwHosts"
@@ -247,7 +248,7 @@ class GatewaySelector extends React.Component<Props, GatewaySelectorState> {
                     isDisabled={!this.state.addGateway || !this.state.newGateway}
                     value={this.state.gwHosts}
                     onChange={value => this.onFormChange(GatewayForm.GW_HOSTS, value)}
-                    isValid={this.state.gwHostsValid}
+                    validated={isValid(this.state.gwHostsValid)}
                   />
                 </FormGroup>
               </>

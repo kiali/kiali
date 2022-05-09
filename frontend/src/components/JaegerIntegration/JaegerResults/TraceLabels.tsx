@@ -26,11 +26,11 @@ export const TraceLabels = (p: Props) => {
   const filteredErrors = p.filteredSpans ? countErrors(p.filteredSpans) : undefined;
   return (
     <>
-      <Label style={{ margin: 10 }}>
+      <Label style={{ margin: 10 }} color="blue">
         {p.filteredSpans && `${p.filteredSpans.length} / `}
         {pluralize(p.spans.length, 'Span')}
       </Label>
-      <Label style={{ margin: 10 }}>
+      <Label style={{ margin: 10 }} color="blue">
         {p.filteredSpans && `${countServices(p.filteredSpans)} / `}
         {pluralize(countServices(p.spans), 'App')} involved
       </Label>

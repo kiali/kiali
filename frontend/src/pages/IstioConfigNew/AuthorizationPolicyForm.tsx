@@ -2,6 +2,7 @@ import * as React from 'react';
 import { FormGroup, FormSelect, FormSelectOption, Switch, TextInputBase as TextInput } from '@patternfly/react-core';
 import RuleBuilder, { Rule } from './AuthorizationPolicyForm/RuleBuilder';
 import RuleList from './AuthorizationPolicyForm/RuleList';
+import { isValid } from 'utils/Common';
 
 type Props = {
   authorizationPolicy: AuthorizationPolicyState;
@@ -192,7 +193,7 @@ class AuthorizationPolicyForm extends React.Component<Props, AuthorizationPolicy
             label="Labels"
             helperText="One or more labels to select a workload where the AuthorizationPolicy is applied."
             helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
-            isValid={this.state.workloadSelectorValid}
+            validated={isValid(this.state.workloadSelectorValid)}
           >
             <TextInput
               id="gwHosts"
@@ -200,7 +201,7 @@ class AuthorizationPolicyForm extends React.Component<Props, AuthorizationPolicy
               isDisabled={!this.state.addWorkloadSelector}
               value={this.state.workloadSelector}
               onChange={this.addWorkloadLabels}
-              isValid={this.state.workloadSelectorValid}
+              validated={isValid(this.state.workloadSelectorValid)}
             />
           </FormGroup>
         )}

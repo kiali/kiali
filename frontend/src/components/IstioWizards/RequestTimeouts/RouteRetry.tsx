@@ -2,6 +2,7 @@ import * as React from 'react';
 import { FormGroup, Switch, TextInput } from '@patternfly/react-core';
 import { HTTPRetry } from '../../../types/IstioObjects';
 import { HTTP_RETRY_TOOLTIP, wizardTooltip } from '../WizardHelp';
+import { isValid } from 'utils/Common';
 
 export type RouteRetryProps = {
   isRetry: boolean;
@@ -50,13 +51,13 @@ class RouteRetry extends React.Component<RouteRetryProps> {
               fieldId="pre-try-timeout"
               helperText={tryTimeoutMsg}
               helperTextInvalid={tryTimeoutMsg}
-              isValid={this.props.isValidRetry}
+              validated={isValid(this.props.isValidRetry)}
             >
               <TextInput
                 value={this.props.retries.perTryTimeout}
                 id="pre-try-timeout"
                 name="pre-try-timeout"
-                isValid={this.props.isValidRetry}
+                validated={isValid(this.props.isValidRetry)}
                 onChange={value =>
                   this.props.onRetry(this.props.isRetry, {
                     attempts: this.props.retries.attempts,
