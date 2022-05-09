@@ -83,3 +83,49 @@ export function getColWithRowText(rowSearchText: string, colName: string) {
       .then($cols => $cols[colNum]);
   });
 }
+
+Then('user sees the {string} table with {int} rows', (tableName: string, numRows: number) => {
+  let tableId = '';
+  switch (tableName) {
+    case 'Istio Config':
+      tableId = 'list_istio_config';
+      break;
+  }
+  cy.get('table[aria-label="' + tableId + '"]')
+      .within(() => {
+        cy.get('tbody')
+            .within(() => {
+              cy.get('tr').should('have.length', numRows);
+            });
+      });
+});
+
+// Note that we can't count the rows on this case, as empty tables add a row with the message
+Then('user sees the {string} table with empty message', (tableName: string) => {
+  let tableId = '';
+  switch (tableName) {
+    case 'Istio Config':
+      tableId = 'list_istio_config';
+      break;
+  }
+  cy.get('table[aria-label="' + tableId + '"]')
+      .within(() => {
+        cy.get('[data-test="istio-config-empty"]');
+      });
+});
+
+When('user clicks in the {string} table {string} badge {string} name row link', (tableName, badge, name) => {
+  let tableId = '';
+  switch (tableName) {
+    case 'Istio Config':
+      tableId = 'list_istio_config';
+      break;
+  }
+  cy.get('table[aria-label="' + tableId + '"]')
+      .within(() => {
+        cy.contains('span', badge)
+            .siblings()
+            .first()
+            .click();
+      });
+});

@@ -52,6 +52,7 @@ exports[`IstioConfigCard shows empty state when no items 1`] = `
                 >
                   <EmptyStateBody
                     className="fvhz1n5"
+                    data-test="istio-config-empty"
                   >
                     No Istio Config found for 
                     reviews

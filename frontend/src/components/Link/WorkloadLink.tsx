@@ -29,7 +29,7 @@ export class WorkloadLink extends React.Component<Props> {
     return (
       <>
         <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-        <Link to={getWorkloadLink(name, namespace, query)}>
+        <Link to={getWorkloadLink(name, namespace, query)} data-test={'workload-' + namespace + '-' + name}>
           {namespace}/{name}
         </Link>
       </>
