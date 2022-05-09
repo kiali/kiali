@@ -41,7 +41,7 @@ class OverviewStatus extends React.Component<Props, {}> {
         <strong>{this.props.status.name}</strong>
         {items.map((app, idx) => {
           return (
-            <div key={this.props.id + '-' + idx}>
+            <div data-test={this.props.id + '-' + app} key={this.props.id + '-' + idx}>
               <span style={{ marginRight: '10px' }}>{createIcon(this.props.status, 'sm')}</span> {app}
             </div>
           );

@@ -72,7 +72,7 @@ class OverviewCardContentExpanded extends React.Component<Props> {
         <div style={{ textAlign: 'left' }}>
           <span>
             {mainLink}
-            <div style={{ display: 'inline-block' }}>
+            <div style={{ display: 'inline-block' }} data-test="overview-app-health">
               {status.inNotReady.length > 0 && (
                 <OverviewStatus
                   id={name + '-not-ready'}
