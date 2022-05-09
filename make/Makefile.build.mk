@@ -82,16 +82,6 @@ test-race:
 	@echo Running tests with race detection, excluding third party tests under vendor
 	${GO} test -race $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration/)
 
-## test-e2e-setup: Setup Python environment for running test suite
-test-e2e-setup:
-	@echo Setting up E2E tests
-	cd tests/e2e && ./setup.sh
-
-## test-e2e: Run E2E test suite
-test-e2e:
-	@echo Running E2E tests
-	cd tests/e2e && source .kiali-e2e/bin/activate && pytest -s tests/
-
 ## test-integration-setup: Setup go library for converting test result into junit xml
 test-integration-setup:
 	@echo Setting up Integration tests
