@@ -538,6 +538,11 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           ? 'Update ' + WIZARD_TITLES[this.props.type]
           : 'Create ' + WIZARD_TITLES[this.props.type]
         : '';
+    const titleModal = this.props.type.length > 0
+      ? this.props.update
+        ? 'Update ' + WIZARD_TITLES[this.props.type]
+        : 'Create ' + WIZARD_TITLES[this.props.type]
+      : '';
     return (
       <>
         <Modal
@@ -561,13 +566,8 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         </Modal>
         <Modal
           width={'75%'}
-          title={
-            this.props.type.length > 0
-              ? this.props.update
-                ? 'Update ' + WIZARD_TITLES[this.props.type]
-                : 'Create ' + WIZARD_TITLES[this.props.type]
-              : ''
-          }
+          title={titleModal}
+          aria-label={titleModal}
           isOpen={this.state.showWizard}
           onClose={() => this.onClose(false)}
           onKeyPress={e => {
