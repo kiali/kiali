@@ -63,3 +63,21 @@ func CreateAuthorizationPolicyWithMetaAndSelector(name, namespace string, select
 	}
 	return &ap
 }
+
+func CreateAuthorizationPolicyWithPrincipals(name, namespace string, principalsList []string) *security_v1beta1.AuthorizationPolicy {
+	ap := security_v1beta1.AuthorizationPolicy{}
+	ap.Name = name
+	ap.Namespace = namespace
+	ap.Spec.Rules = []*api_security_v1beta1.Rule{
+		{
+			From: []*api_security_v1beta1.Rule_From{
+				{
+					Source: &api_security_v1beta1.Source{
+						Principals: principalsList,
+					},
+				},
+			},
+		},
+	}
+	return &ap
+}

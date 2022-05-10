@@ -561,6 +561,16 @@ func GatewayNames(gateways []networking_v1beta1.Gateway) map[string]struct{} {
 	return names
 }
 
+// ServiceAccountNames returns a list of names of the ServiceAccounts retrieved from Segistry Services.
+func ServiceAccountNames(registryServices []*RegistryService) []string {
+	names := make([]string, 0)
+
+	for _, rs := range registryServices {
+		names = append(names, rs.ServiceAccounts...)
+	}
+	return names
+}
+
 func PeerAuthnHasStrictMTLS(peerAuthn security_v1beta1.PeerAuthentication) bool {
 	_, mode := PeerAuthnHasMTLSEnabled(peerAuthn)
 	return mode == "STRICT"

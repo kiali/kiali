@@ -56,6 +56,7 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy security_v1beta.Authori
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
 		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, Namespace: a.Namespace, Namespaces: a.Namespaces,
 			ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices, RegistryServices: a.RegistryServices},
+		authorization.PrincipalsChecker{AuthorizationPolicy: authPolicy, ServiceAccounts: kubernetes.ServiceAccountNames(a.RegistryServices)},
 	}
 
 	for _, checker := range enabledCheckers {

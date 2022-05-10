@@ -117,6 +117,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Namespace not found for this rule",
 		Severity: WarningSeverity,
 	},
+	"authorizationpolicy.source.principalnotfound": {
+		Code:     "KIA0106",
+		Message:  "Service Account not found for this principal",
+		Severity: ErrorSeverity,
+	},
 	"authorizationpolicy.to.wrongmethod": {
 		Code:     "KIA0102",
 		Message:  "Only HTTP methods and fully-qualified gRPC names are allowed",
