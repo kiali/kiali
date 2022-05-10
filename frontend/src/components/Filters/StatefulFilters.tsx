@@ -34,7 +34,7 @@ import { KialiIcon } from 'config/KialiIcon';
 
 var classNames = require('classnames');
 
-const filterSelectStyle = style({
+const noPaddingStyle = style({
   padding: 0
 });
 
@@ -87,7 +87,6 @@ export class FilterSelected {
   };
 }
 
-// const filterWithChildrenStyle = style({ paddingRight: '10px', display: 'inherit' });
 const dividerStyle = style({ borderRight: '1px solid #d1d1d1;', padding: '10px', display: 'inherit' });
 const paddingStyle = style({ padding: '10px' });
 
@@ -360,12 +359,12 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     return (
       <Toolbar
         id="filter-selection"
-        className={`pf-m-toggle-group-container ${filterSelectStyle}`}
+        className={`pf-m-toggle-group-container ${noPaddingStyle}`}
         collapseListedFiltersBreakpoint="xl"
         clearAllFilters={this.clearFilters}
       >
         {this.props.childrenFirst && this.renderChildren()}
-        <ToolbarContent>
+        <ToolbarContent className={noPaddingStyle}>
           <ToolbarToggleGroup toggleIcon={<KialiIcon.Filter />} breakpoint="md">
             <ToolbarGroup variant="filter-group">
               {this.state.filterTypes.map((ft, i) => {

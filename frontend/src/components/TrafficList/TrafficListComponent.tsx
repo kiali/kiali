@@ -34,7 +34,7 @@ type TrafficListComponentState = FilterComponent.State<TrafficListItem>;
 const columns = [
   {
     title: 'Status',
-    transforms: [sortable, cellWidth(10)]
+    transforms: [sortable, cellWidth(15)]
   },
   {
     title: 'Name',
@@ -46,11 +46,11 @@ const columns = [
   },
   {
     title: 'Percent Success',
-    transforms: [sortable, cellWidth(10)]
+    transforms: [sortable, cellWidth(20)]
   },
   {
     title: 'Protocol',
-    transforms: [sortable, cellWidth(10)]
+    transforms: [sortable, cellWidth(15)]
   },
   {
     title: 'Actions'
