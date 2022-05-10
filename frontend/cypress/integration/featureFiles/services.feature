@@ -15,8 +15,8 @@ Feature: Kiali Services page
     And the health column on the "productpage" row has a health icon
     And the "Name" column on the "productpage" row has a link ending in "/namespaces/bookinfo/services/productpage"
     And the "Namespace" column on the "productpage" row has the text "bookinfo"
-    And the "Labels" column on the "productpage" row has the text "app: productpage"
-    And the "Labels" column on the "productpage" row has the text "service: productpage"
+    And the "Labels" column on the "productpage" row has the text "app=productpage"
+    And the "Labels" column on the "productpage" row has the text "service=productpage"
     And the "Configuration" column on the "productpage" row has a link ending in "/namespaces/bookinfo/services/productpage"
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/virtualservices/bookinfo"
     And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
@@ -57,6 +57,6 @@ Feature: Kiali Services page
   @services-page
   Scenario: Filter services table by label
     When user selects filter "Label"
-    And user filters for label "app:productpage"
+    And user filters for label "app=productpage"
     Then user sees "productpage" in the table
     And table length should be 1

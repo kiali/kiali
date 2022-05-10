@@ -186,12 +186,12 @@ const serviceList: ServiceListItem[] = [
 
 describe('LabelFilter', () => {
   it('check Label Filter with AppList and OR Operation', () => {
-    const result = filterByLabel(appList, ['app', 'service:details']);
+    const result = filterByLabel(appList, ['app', 'service=details']);
     expect(result).toEqual(appList);
   });
 
   it('check Label Filter with AppList and AND Operation', () => {
-    const result = filterByLabel(appList, ['app', 'service:details'], 'and');
+    const result = filterByLabel(appList, ['app', 'service=details'], 'and');
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
@@ -205,7 +205,7 @@ describe('LabelFilter', () => {
   });
 
   it('check Label Filter with AppList and AND Operation with multiple values', () => {
-    const result = filterByLabel(appList, ['app', 'version:v2'], 'and');
+    const result = filterByLabel(appList, ['app', 'version=v2'], 'and');
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
@@ -219,12 +219,12 @@ describe('LabelFilter', () => {
   });
 
   it('check Label Filter with WorkloadList and OR Operation', () => {
-    const result = filterByLabel(workloadList, ['app', 'version:v1']);
+    const result = filterByLabel(workloadList, ['app', 'version=v1']);
     expect(result).toEqual(workloadList);
   });
 
   it('check Label Filter with WorkloadList and AND Operation', () => {
-    const result = filterByLabel(workloadList, ['app:reviews', 'version'], 'and');
+    const result = filterByLabel(workloadList, ['app=reviews', 'version'], 'and');
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
@@ -266,12 +266,12 @@ describe('LabelFilter', () => {
   });
 
   it('check Label Filter with ServiceList and OR Operation', () => {
-    const result = filterByLabel(serviceList, ['app', 'service:details']);
+    const result = filterByLabel(serviceList, ['app', 'service=details']);
     expect(result).toEqual(serviceList);
   });
 
   it('check Label Filter with ServiceList and AND Operation', () => {
-    const result = filterByLabel(serviceList, ['app', 'service:de'], 'and');
+    const result = filterByLabel(serviceList, ['app', 'service=de'], 'and');
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
