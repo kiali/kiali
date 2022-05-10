@@ -256,7 +256,7 @@ When('I remove override configuration for sidecar injection in the workload', fu
 });
 
 Then('I should see the override annotation for sidecar injection in the namespace as {string}', function (enabled) {
-    cy.get(`[data-test=VirtualItem_${this.targetNamespace}]`).contains(`istio-injection: ${enabled}`).should('exist');
+    cy.get(`[data-test=VirtualItem_${this.targetNamespace}]`).contains(`istio-injection=${enabled}`).should('exist');
 });
 
 Then('I should see no override annotation for sidecar injection in the namespace', function () {
