@@ -39,9 +39,9 @@ Feature: Kiali Overview page
   @overview-page
   Scenario: Filter by health
     When user filters "Failure" health
-    Then user sees the "alpha" namespace
+    Then user sees the "alpha" namespace card
     And user sees the "beta" namespace card
-    And user doesn't see the "default" namespace ca
+    And user doesn't see the "default" namespace card
 
   @overview-page
   Scenario: Sort by name
