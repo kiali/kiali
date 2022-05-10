@@ -1,9 +1,9 @@
 name: Release
 
 on:
-  schedule:
-    # Every Friday at 19:00 (UTC)
-    - cron: '00 19 * * FRI'
+  # schedule:
+  #   # Every Friday at 19:00 (UTC)
+  #   - cron: '00 19 * * FRI'
   workflow_dispatch:
     inputs:
       release_type:
@@ -143,7 +143,6 @@ jobs:
     - name: Determine Quay tag
       if: ${{ steps.release_type.outputs.release_type != 'skip' }}
       env:
-        RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
         RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
         BRANCH_VERSION: ${{ steps.branch_version.outputs.branch_version }}
       id: quay_tag
@@ -155,13 +154,8 @@ jobs:
           QUAY_REPO="${{ github.event.inputs.quay_repository }}"
         fi
         
-        QUAY_TAG="$QUAY_REPO:$RELEASE_VERSION"
+        QUAY_TAG="$QUAY_REPO:$RELEASE_VERSION $QUAY_REPO:$BRANCH_VERSION"
         
-        if [[ $RELEASE_TYPE == "minor" ]] || [ $RELEASE_TYPE == "patch" ]]
-        then
-          QUAY_TAG="$QUAY_TAG $QUAY_REPO:$BRANCH_VERSION"
-        fi
-
         echo "::set-output name=quay_tag::$QUAY_TAG"
     
     - name: Cleanup
