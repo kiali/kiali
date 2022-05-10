@@ -8,12 +8,12 @@ Feature: Kiali Overview page
 
   @overview-page
   Scenario: See "alpha" and "beta" namespaces
-    Then user sees the "alpha" namespace
-    And user sees the "beta" namespace
+    Then user sees the "alpha" namespace card
+    And user sees the "beta" namespace card
 
   @overview-page
   Scenario: Doesn't see a "bad" namespace
-    Then user doesn't see the "bad" namespace
+    Then user doesn't see the "bad" namespace card
 
   @overview-page
   Scenario: Select the COMPACT view
@@ -33,15 +33,15 @@ Feature: Kiali Overview page
   @overview-page
   Scenario: Filter by namespace
     When user filters "alpha" namespace
-    Then user sees the "alpha" namespace
-    And user doesn't see the "beta" namespace
+    Then user sees the "alpha" namespace card
+    And user doesn't see the "beta" namespace card
 
   @overview-page
   Scenario: Filter by health
     When user filters "Failure" health
-    Then user sees the "alpha" namespace
-    And user sees the "beta" namespace
-    And user doesn't see the "default" namespace
+    Then user sees the "alpha" namespace card
+    And user sees the "beta" namespace card
+    And user doesn't see the "default" namespace card
 
   @overview-page
   Scenario: Sort by name

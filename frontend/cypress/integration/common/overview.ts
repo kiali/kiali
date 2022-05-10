@@ -38,7 +38,7 @@ When('user clicks in the {string} view', (view) => {
 When(`user filters {string} namespace`, (ns) => {
     cy.get('select[aria-label="filter_select_type"]')
         .select('Namespace')
-        .should('have.value', 'namespace_search');
+        .should('have.value', 'Namespace');
     cy.get('input[aria-label="filter_input_value"]')
         .type(ns)
         .type('{enter}')
@@ -49,7 +49,7 @@ When(`user filters {string} namespace`, (ns) => {
 When(`user filters {string} health`, (health) => {
     cy.get('select[aria-label="filter_select_type"]')
         .select('Health')
-        .should('have.value', 'health');
+        .should('have.value', 'Health');
     cy.get('select[aria-label="filter_select_value"]')
         .select(health)
         .get('#loading_kiali_spinner')
@@ -103,11 +103,11 @@ When(`user selects {string} time range`, (interval) => {
         .should('not.exist');
 });
 
-Then(`user sees the {string} namespace`, (ns) => {
+Then(`user sees the {string} namespace card`, (ns) => {
     cy.get('article[data-test^="' + ns + '"]');
 });
 
-Then(`user doesn't see the {string} namespace`, (ns) => {
+Then(`user doesn't see the {string} namespace card`, (ns) => {
     cy.get('article[data-test^="' + ns + '"]').should('not.exist');
 });
 
