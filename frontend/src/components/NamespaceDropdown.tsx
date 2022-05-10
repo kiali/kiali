@@ -225,7 +225,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceDropdownProp
           toggle={
             <DropdownToggle
               data-test="namespace-dropdown"
-              id={'namespace-selector'}
+              id="namespace-selector"
               onToggle={this.onToggle}
               isDisabled={this.props.disabled}
             >
