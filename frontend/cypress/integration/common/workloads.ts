@@ -7,7 +7,7 @@ And('user filters for workload type {string}', (workloadType: string) => {
     });
   });
 
-Then('user sees {string} in the table', (workload: string) => {
+Then('user sees {string} in workloads table', (workload: string) => {
   cy.get('tbody').within(() => {
     if (workload === 'no workloads') {
       cy.contains('No workloads found');
@@ -18,3 +18,10 @@ Then('user sees {string} in the table', (workload: string) => {
     }
   });
 });
+
+And('user should only see healthy workloads in workloads table', () => {
+    cy.get('tbody').within(() => {
+      cy.get('svg[class=icon-healthy]').should('be.visible');
+      cy.get('svg[class=icon-unhealthy], svg[class=icon-degraded], svg[class=icon-na]').should('not.exist');
+    });
+  });

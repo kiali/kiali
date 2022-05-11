@@ -1,6 +1,6 @@
 Feature: Kiali Workloads page
   
-  User opens the Workloads page and sees the bookinfo namespaces
+  User opens the Workloads page and sees the bookinfo workloads.
 
   Background:
     Given user is at administrator perspective
@@ -31,10 +31,30 @@ Feature: Kiali Workloads page
   Scenario: Filter workloads table by Workloads Type
     When user selects filter "Workload Type"
     And user filters for workload type "StatefulSet"
-    Then user sees "no workloads" in the table    
+    Then user sees "no workloads" in workloads table    
 
   @workloads-page
   Scenario: Filter workloads table by sidecar
     When user selects filter "Istio Sidecar"
     And user filters for sidecar "Present"
-    Then user sees "workloads" in the table
+    Then user sees "workloads" in workloads table
+
+ @workloads-page
+  Scenario: Filter workloads table by Istio Type
+    When user selects filter "Istio Type"
+    And user filters for istio type "VirtualService"    
+    Then user sees "no workloads" in workloads table
+  
+  @workloads-page
+  Scenario: Filter workloads table by health
+    When user selects filter "Health"
+    And user filters for health "Healthy"
+    Then user sees "workloads" in workloads table
+    And user should only see healthy workloads in workloads table
+
+  @workloads-page
+  Scenario: Filter workloads table by label
+    When user selects filter "Label"
+    And user filters for label "app=details-v1"
+    Then user sees "details-v1" in the table
+    And table length should be 1
