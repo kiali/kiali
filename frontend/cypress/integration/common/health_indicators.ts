@@ -55,8 +55,8 @@ Then('the {string} application indicator should list the application', function 
 
     cy.get(`[data-test=${this.targetNamespace}-EXPAND] [data-test=overview-app-health] svg[class=icon-${healthStatus}]`)
         .trigger('mouseenter');
-    cy.get(`[aria-label='Overview status'][class=health_indicator] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}] svg[class=icon-${healthStatus}]`)
+    cy.get(`[aria-label='Overview status'][class*=health_indicator] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}] svg[class=icon-${healthStatus}]`)
         .should('exist');
-    cy.get(`[aria-label='Overview status'][class=health_indicator] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`)
+    cy.get(`[aria-label='Overview status'][class*=health_indicator] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`)
         .should('contain.text', this.targetApp);
 });
