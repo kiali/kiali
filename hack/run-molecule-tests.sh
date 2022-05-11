@@ -322,13 +322,13 @@ output_junit_xml_results() {
 
   if [ ! -f "${JUNIT_XML_FILE}" ] && touch "${JUNIT_XML_FILE}"; then
     cat <<EOM >> "${JUNIT_XML_FILE}"
-<testsuites  id="kiali molecule tests" name="kiali molecule tests" tests="${junit_total_tests}" failures="${junit_total_failures}" time="${junit_total_time}">
-  <testsuite id="kiali molecule tests" name="kiali molecule tests" tests="${junit_total_tests}" failures="${junit_total_failures}" time="${junit_total_time}">
+<testsuites  id="0" name="kiali molecule tests" tests="${junit_total_tests}" failures="${junit_total_failures}" time="${junit_total_time}">
+  <testsuite id="0" name="kiali molecule tests" tests="${junit_total_tests}" failures="${junit_total_failures}" time="${junit_total_time}">
 EOM
 
     for i in ${!junit_name[@]};
     do
-      echo -n "    <testcase id=\"${junit_name[$i]}\" name=\"${junit_name[$i]}\" time=\"${junit_duration[$i]}\">" >> "${JUNIT_XML_FILE}"
+      echo -n "    <testcase id=\"${junit_name[$i]}\" name=\"${junit_name[$i]}\" classname=\"${junit_name[$i]}\" time=\"${junit_duration[$i]}\">" >> "${JUNIT_XML_FILE}"
       if [ "${junit_failure[$i]}" != "0" ]; then
         printf "\n      <failure type=\"error\" message=\"For details, see ${TEST_LOGS_DIR}/${junit_name[$i]}.log\"/>\n    " >> "${JUNIT_XML_FILE}"
       fi
