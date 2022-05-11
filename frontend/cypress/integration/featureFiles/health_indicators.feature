@@ -1,5 +1,8 @@
 Feature: Health indicators
-  (TODO: Description)
+  Kiali is capable of calculating the health of services in the mesh/cluster
+  using several data sources like workload availability and errors in traffic.
+  Kiali offers health status at different levels of granularity: from namespace
+  level, to the individual pod.
 
   Background:
     Given user is at administrator perspective
