@@ -102,3 +102,26 @@ frontend/src/sass/*
 # Cypress
 frontend/cypress/videos
 frontend/cypress/screenshots
+
+# Plugins
+plugins/openshift/node_modules
+
+plugins/openshift/.idea
+plugins/openshift/.vscode
+
+# testing
+plugins/openshift/coverage
+
+# production
+plugins/openshift/dist
+
+# misc
+plugins/openshift/.DS_Store
+plugins/openshift/.env.local
+plugins/openshift/.env.development.local
+plugins/openshift/.env.test.local
+plugins/openshift/.env.production.local
+
+plugins/openshift/npm-debug.log*
+plugins/openshift/yarn-debug.log*
+plugins/openshift/yarn-error.log*

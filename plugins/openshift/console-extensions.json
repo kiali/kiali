@@ -1,0 +1,152 @@
+[
+  {
+    "type": "console.navigation/section",
+    "properties": {
+      "id": "servicemesh",
+      "perspective": "admin",
+      "name": "Service Mesh"
+    }
+  },
+  {
+    "type": "console.page/route",
+    "properties": {
+      "exact": true,
+      "path": "/servicemeshoverview",
+      "component": { "$codeRef": "OverviewPage" }
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "servicemeshoverview",
+      "name": "Overview",
+      "href": "/servicemeshoverview",
+      "perspective": "admin",
+      "section": "servicemesh"
+    }
+  },
+  {
+    "type": "console.page/route",
+    "properties": {
+      "exact": true,
+      "path": "/servicemeshgraph",
+      "component": { "$codeRef": "GraphPage" }
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "servicemeshgraph",
+      "name": "Graph",
+      "href": "/servicemeshgraph",
+      "perspective": "admin",
+      "section": "servicemesh",
+    }
+  },
+  {
+    "type": "console.page/route",
+    "properties": {
+      "exact": true,
+      "path": "/istioconfig",
+      "component": { "$codeRef": "IstioConfigList" }
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "istioconfig",
+      "name": "Istio Config",
+      "href": "/istioconfig",
+      "perspective": "admin",
+      "section": "servicemesh"
+    }
+  },
+  {
+    "type": "console.page/resource/tab",
+    "properties": {
+      "model": {
+        "version": "v1",
+        "group": "project.openshift.io",
+        "kind": "Project"
+      },
+      "component": { "$codeRef": "MeshTab" },
+      "name": "Service Mesh",
+      "href": "servicemesh"
+    }
+  },
+  {
+    "type": "console.page/resource/tab",
+    "properties": {
+      "model": {
+        "version": "v1",
+        "group": "",
+        "kind": "Pod"
+      },
+      "component": { "$codeRef": "MeshTab" },
+      "name": "Service Mesh",
+      "href": "servicemesh"
+    }
+  },
+  {
+    "type": "console.page/resource/tab",
+    "properties": {
+      "model": {
+        "group": "apps",
+        "kind": "Deployment"
+      },
+      "component": { "$codeRef": "MeshTab" },
+      "name": "Service Mesh",
+      "href": "servicemesh"
+    }
+  },
+  {
+    "type": "console.page/resource/tab",
+    "properties": {
+      "model": {
+        "group": "apps.openshift.io",
+        "kind": "DeploymentConfig"
+      },
+      "component": { "$codeRef": "MeshTab" },
+      "name": "Service Mesh",
+      "href": "servicemesh"
+    }
+  },
+  {
+    "type": "console.page/resource/tab",
+    "properties": {
+      "model": {
+        "group": "apps",
+        "kind": "StatefulSet"
+      },
+      "component": { "$codeRef": "MeshTab" },
+      "name": "Service Mesh",
+      "href": "servicemesh"
+    }
+  },
+  {
+    "type": "console.page/resource/tab",
+    "properties": {
+      "model": {
+        "version": "v1",
+        "group": "",
+        "kind": "Service"
+      },
+      "component": { "$codeRef": "MeshTab" },
+      "name": "Service Mesh",
+      "href": "servicemesh"
+    }
+  },
+  {
+    "type": "console.page/resource/tab",
+    "properties": {
+      "model": {
+        "version": "v1beta",
+        "group": "networking.istio.io",
+        "kind": "VirtualService"
+      },
+      "component": { "$codeRef": "MeshTab" },
+      "name": "Service Mesh",
+      "href": "servicemesh"
+    }
+  }
+]

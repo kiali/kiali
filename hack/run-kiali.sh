@@ -80,8 +80,10 @@ DEFAULT_KIALI_EXE="${GOPATH:-.}/bin/kiali"
 DEFAULT_KUBE_CONTEXT="kiali-developer"
 DEFAULT_LOCAL_REMOTE_PORTS_GRAFANA="3000:3000"
 DEFAULT_LOCAL_REMOTE_PORTS_PROMETHEUS="9091:9090"
-DEFAULT_LOCAL_REMOTE_PORTS_TRACING="16686:16686"
+DEFAULT_LOCAL_REMOTE_PORTS_TRACING="16686:80"
 DEFAULT_LOG_LEVEL="info"
+DEFAULT_PLUGIN_OPENSHIFT_ENABLED="false"
+DEFAULT_PLUGIN_OPENSHIFT_DIR=""
 DEFAULT_REBOOTABLE="true"
 DEFAULT_TMP_ROOT_DIR="/tmp"
 
@@ -90,26 +92,29 @@ DEFAULT_TMP_ROOT_DIR="/tmp"
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
-    -aph|--api-proxy-host)       API_PROXY_HOST="$2";                shift;shift ;;
-    -app|--api-proxy-port)       API_PROXY_PORT="$2";                shift;shift ;;
-    -c|--config)                 KIALI_CONFIG_TEMPLATE_FILE="$2";    shift;shift ;;
-    -ce|--client-exe)            CLIENT_EXE="$2";                    shift;shift ;;
-    -es|--enable-server)         ENABLE_SERVER="$2";                 shift;shift ;;
-    -gu|--grafana-url)           GRAFANA_URL="$2";                   shift;shift ;;
-    -in|--istio-namespace)       ISTIO_NAMESPACE="$2";               shift;shift ;;
-    -kah|--kubernetes-api-host)  KUBERNETES_API_HOST="$2";           shift;shift ;;
-    -kap|--kubernetes-api-port)  KUBERNETES_API_PORT="$2";           shift;shift ;;
-    -kc|--kube-context)          KUBE_CONTEXT="$2";                  shift;shift ;;
-    -ke|--kiali-exe)             KIALI_EXE="$2";                     shift;shift ;;
-    -ll|--log-level)             LOG_LEVEL="$2";                     shift;shift ;;
-    -pg|--ports-grafana)         LOCAL_REMOTE_PORTS_GRAFANA="$2";    shift;shift ;;
-    -pp|--ports-prometheus)      LOCAL_REMOTE_PORTS_PROMETHEUS="$2"; shift;shift ;;
-    -pt|--ports-tracing)         LOCAL_REMOTE_PORTS_TRACING="$2";    shift;shift ;;
-    -pu|--prometheus-url)        PROMETHEUS_URL="$2";                shift;shift ;;
-    -r|--rebootable)             REBOOTABLE="$2";                    shift;shift ;;
-    -trd|--tmp-root-dir)         TMP_ROOT_DIR="$2";                  shift;shift ;;
-    -tu|--tracing-url)           TRACING_URL="$2";                   shift;shift ;;
-    -ucd|--ui-console-dir)       UI_CONSOLE_DIR="$2";                shift;shift ;;
+    -aph|--api-proxy-host)          API_PROXY_HOST="$2";                shift;shift ;;
+    -app|--api-proxy-port)          API_PROXY_PORT="$2";                shift;shift ;;
+    -c|--config)                    KIALI_CONFIG_TEMPLATE_FILE="$2";    shift;shift ;;
+    -ce|--client-exe)               CLIENT_EXE="$2";                    shift;shift ;;
+    -es|--enable-server)            ENABLE_SERVER="$2";                 shift;shift ;;
+    -gu|--grafana-url)              GRAFANA_URL="$2";                   shift;shift ;;
+    -iu|--istiod-url)               ISTIOD_URL="$2";                    shift;shift ;;
+    -in|--istio-namespace)          ISTIO_NAMESPACE="$2";               shift;shift ;;
+    -kah|--kubernetes-api-host)     KUBERNETES_API_HOST="$2";           shift;shift ;;
+    -kap|--kubernetes-api-port)     KUBERNETES_API_PORT="$2";           shift;shift ;;
+    -kc|--kube-context)             KUBE_CONTEXT="$2";                  shift;shift ;;
+    -ke|--kiali-exe)                KIALI_EXE="$2";                     shift;shift ;;
+    -ll|--log-level)                LOG_LEVEL="$2";                     shift;shift ;;
+    -pg|--ports-grafana)            LOCAL_REMOTE_PORTS_GRAFANA="$2";    shift;shift ;;
+    -pp|--ports-prometheus)         LOCAL_REMOTE_PORTS_PROMETHEUS="$2"; shift;shift ;;
+    -pt|--ports-tracing)            LOCAL_REMOTE_PORTS_TRACING="$2";    shift;shift ;;
+    -pu|--prometheus-url)           PROMETHEUS_URL="$2";                shift;shift ;;
+    -r|--rebootable)                REBOOTABLE="$2";                    shift;shift ;;
+    -trd|--tmp-root-dir)            TMP_ROOT_DIR="$2";                  shift;shift ;;
+    -tu|--tracing-url)              TRACING_URL="$2";                   shift;shift ;;
+    -ucd|--ui-console-dir)          UI_CONSOLE_DIR="$2";                shift;shift ;;
+    -pe|--plugin-openshift-enabled) PLUGIN_OPENSHIFT_ENABLED="true";    shift;shift ;;
+    -pd|--plugin-openshift-dir)     PLUGIN_OPENSHIFT_DIR="$2";          shift;shift ;;
     -h|--help )
       cat <<HELPMSG
 $0 [option...]
@@ -219,6 +224,16 @@ Valid options:
       generate the distributable package. So, make sure that you build the UI before
       using this script and then set this option to the generated build directory.
       Default: <a local build that is auto-discovered>
+  -pe|--plugin-openshift-enabled
+      If present, it enabled the Kiali OpenShift plugin in the server.
+  -pd|--plugin-openshift-dir
+      A directory on the local machine containing the OpenShift plugin code.
+      If not specified, an attempt to find it on the local machine will be made. A search up the
+      directory tree is made, looking for any directory called "plugins/openshift" that has a "build" directory under it.
+      The "dist" directory of the UI is generated after you run "yarn build" to
+      generate the distributable package. So, make sure that you build the UI before
+      using this script and then set this option to the generated build directory.
+      Default: <a local build that is auto-discovered>
 HELPMSG
       exit 1
       ;;
@@ -249,6 +264,9 @@ TMP_ROOT_DIR="${TMP_ROOT_DIR:-${DEFAULT_TMP_ROOT_DIR}}"
 KUBERNETES_SERVICE_HOST="${API_PROXY_HOST}"
 KUBERNETES_SERVICE_PORT="${API_PROXY_PORT}"
 
+PLUGIN_OPENSHIFT_ENABLED="${PLUGIN_OPENSHIFT_ENABLED:-${DEFAULT_PLUGIN_OPENSHIFT_ENABLED}}"
+PLUGIN_OPENSHIFT_DIR="${PLUGIN_OPENSHIFT_DIR:-${DEFAULT_PLUGIN_OPENSHIFT_DIR}}"
+
 # This is a directory where we write temp files needed to run Kiali locally
 
 TMP_DIR="${TMP_ROOT_DIR}/run-kiali"
@@ -278,6 +296,14 @@ if ${CLIENT_EXE} api-versions | grep --quiet "route.openshift.io"; then
 else
   IS_OPENSHIFT="false"
   infomsg "You are connecting to a (non-OpenShift) Kubernetes cluster"
+fi
+
+# Port forward data for Istiod, used for the Istiod URL
+
+PORT_FORWARD_SERVICE_ISTIOD="service/istiod"
+LOCAL_REMOTE_PORTS_ISTIOD="15014:15014"
+if [ -z "${ISTIOD_URL:-}" ]; then
+  ISTIOD_URL="http://127.0.0.1:15014/version"
 fi
 
 # If the user didn't tell us what the Prometheus URL is, try to auto-discover it
@@ -393,7 +419,8 @@ if [ -z "${TRACING_URL:-}" ]; then
           trac_local_port="$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)"
           LOCAL_REMOTE_PORTS_TRACING="${trac_local_port}:${trac_remote_port}"
         fi
-        TRACING_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)"
+        # Assuming that this Jaeger installation comes from the Upstream addons that need the /jaeger suffix
+        TRACING_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)/jaeger"
       fi
     else
       infomsg "Auto-discovered OpenShift route that exposes Tracing"
@@ -470,6 +497,23 @@ if [ -z "${UI_CONSOLE_DIR:-}" ]; then
   fi
 fi
 
+if [ "${PLUGIN_OPENSHIFT_ENABLED}" == "true" ]; then
+  if [ -z "${PLUGIN_OPENSHIFT_DIR:-}" ]; then
+    infomsg "Attempting to find the Plugin OpenShift Console directory..."
+
+    # See if the user has the typical dev environment. Go up the dir tree to find a 'plugins/openshift' directory with a 'dist' directory under it.
+    cur_path="${SCRIPT_DIR}"
+    cur_path="$(readlink -f "${cur_path}"/../plugins/openshift)"
+    PLUGIN_OPENSHIFT_DIR="${cur_path}/dist"
+    if [ -z "${PLUGIN_OPENSHIFT_DIR:-}" ]; then
+      errormsg "Could not find a local directory containing the OpenShift Plugin Console."
+      errormsg "You need to specify the UI Console directory via --plugin-openshift-dir."
+      errormsg "Aborting."
+      exit 1
+    fi
+  fi
+fi
+
 infomsg "===== SETTINGS ====="
 echo "API_PROXY_HOST=$API_PROXY_HOST"
 echo "API_PROXY_PORT=$API_PROXY_PORT"
@@ -493,6 +537,8 @@ echo "REBOOTABLE=$REBOOTABLE"
 echo "TMP_ROOT_DIR=$TMP_ROOT_DIR"
 echo "TRACING_URL=$TRACING_URL"
 echo "UI_CONSOLE_DIR=$UI_CONSOLE_DIR"
+echo "PLUGIN_OPENSHIFT_ENABLED=$PLUGIN_OPENSHIFT_ENABLED"
+echo "PLUGIN_OPENSHIFT_DIR=$PLUGIN_OPENSHIFT_DIR"
 
 # Validate the settings
 
@@ -512,10 +558,13 @@ if ! echo "${LOG_LEVEL}" | grep -qiE "^(trace|debug|info|warn|error|fatal)$"; th
 KIALI_CONFIG_FILE="${TMP_DIR}/run-kiali-config.yaml"
 cat ${KIALI_CONFIG_TEMPLATE_FILE} | \
   ISTIO_NAMESPACE=${ISTIO_NAMESPACE} \
+  ISTIOD_URL=${ISTIOD_URL} \
   PROMETHEUS_URL=${PROMETHEUS_URL} \
   GRAFANA_URL=${GRAFANA_URL} \
   TRACING_URL=${TRACING_URL} \
   UI_CONSOLE_DIR=${UI_CONSOLE_DIR}   \
+  PLUGIN_OPENSHIFT_ENABLED=${PLUGIN_OPENSHIFT_ENABLED} \
+  PLUGIN_OPENSHIFT_DIR=${PLUGIN_OPENSHIFT_DIR} \
   envsubst > ${KIALI_CONFIG_FILE}
 
 # Kiali wants the UI Console in a directory called "console" under its cwd
@@ -634,6 +683,14 @@ kill_port_forward_component() {
   fi
 }
 
+start_port_forward_istiod() {
+  start_port_forward_component 'Istiod' 'PORT_FORWARD_JOB_ISTIOD' "${PORT_FORWARD_SERVICE_ISTIOD}" "${LOCAL_REMOTE_PORTS_ISTIOD}" "${ISTIOD_URL}" '--istiod-url'
+}
+
+kill_port_forward_istiod() {
+  kill_port_forward_component 'Istiod' 'PORT_FORWARD_JOB_ISTIOD'
+}
+
 start_port_forward_prometheus() {
   start_port_forward_component 'Prometheus' 'PORT_FORWARD_JOB_PROMETHEUS' "${PORT_FORWARD_DEPLOYMENT_PROMETHEUS}" "${LOCAL_REMOTE_PORTS_PROMETHEUS}"  "${PROMETHEUS_URL}" '--prometheus-url'
 }
@@ -722,6 +779,7 @@ ask_to_restart_or_exit() {
 cleanup_and_exit() {
   kill_server
   kill_proxy
+  kill_port_forward_istiod
   kill_port_forward_prometheus
   kill_port_forward_grafana
   kill_port_forward_tracing
@@ -749,6 +807,7 @@ else
   infomsg "The server is not rebootable. You can kill this script via either [kill $$] or [kill -USR1 $$]"
 fi
 
+start_port_forward_istiod
 start_port_forward_prometheus
 start_port_forward_grafana
 start_port_forward_tracing

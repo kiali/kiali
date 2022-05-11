@@ -25,6 +25,9 @@ external_services:
   custom_dashboards:
     enabled: false
 
+  istio:
+    url_service_version: "${ISTIOD_URL}"
+
   grafana:
     enabled: true
     in_cluster_url: "${GRAFANA_URL}"
@@ -35,6 +38,8 @@ external_services:
 
   tracing:
     enabled: true
+    # Used HTTP to have only one port-forward to the HTTP service (instead of two: grpc + http)
+    use_grpc: false
     in_cluster_url: "${TRACING_URL}"
     url: "${TRACING_URL}"
 
@@ -43,6 +48,13 @@ kubernetes_config:
 
 login_token:
    signing_key: "notsecure"
+
+kiali_plugins:
+  openshift:
+    address: ''
+    enabled: ${PLUGIN_OPENSHIFT_ENABLED}
+    port: 9001
+    static_content_root_directory: "${PLUGIN_OPENSHIFT_DIR}"
 
 server:
   static_content_root_directory: "${UI_CONSOLE_DIR}"

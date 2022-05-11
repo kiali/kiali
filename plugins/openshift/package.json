@@ -1,0 +1,67 @@
+{
+  "name": "servicemesh-plugin",
+  "version": "0.0.1",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kiali/kiali.git"
+  },
+
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "yarn clean && NODE_ENV=production yarn ts-node node_modules/.bin/webpack",
+    "build-dev": "yarn clean && yarn ts-node node_modules/.bin/webpack",
+    "start": "yarn ts-node node_modules/.bin/webpack serve",
+    "start-console": "./start-console.sh",
+    "i18n": "i18next \"src/**/*.{js,jsx,ts,tsx}\" [-oc] -c i18next-parser.config.js",
+    "ts-node": "ts-node -O '{\"module\":\"commonjs\"}'",
+    "lint": "eslint ./src --fix"
+  },
+  "devDependencies": {
+    "@openshift-console/dynamic-plugin-sdk": "0.0.3",
+    "@openshift-console/dynamic-plugin-sdk-webpack": "0.0.6",
+    "@patternfly/react-core": "4.162.2",
+    "@types/node": "^16.11.6",
+    "@types/react": "^17.0.34",
+    "@types/react-helmet": "^6.1.4",
+    "@types/react-router-dom": "^5.3.2",
+    "@types/webpack-dev-server": "^4.5.0",
+    "@typescript-eslint/eslint-plugin": "^5.3.0",
+    "@typescript-eslint/parser": "^5.3.0",
+    "comment-json": "^4.1.1",
+    "css-loader": "^6.5.1",
+    "eslint": "^8.1.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-react": "^7.26.1",
+    "prettier": "^2.4.1",
+    "react": "17.0.1",
+    "react-dom": "^17.0.1",
+    "react-helmet": "^6.1.0",
+    "react-i18next": "^11.8.11",
+    "react-router": "5.2.0",
+    "react-router-dom": "5.2.0",
+    "style-loader": "^3.3.1",
+    "ts-loader": "^9.2.6",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.4.4",
+    "webpack": "^5.53.0",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^4.5.0"
+  },
+  "consolePlugin": {
+    "name": "servicemesh",
+    "version": "0.0.1",
+    "displayName": "OpenShift Service Mesh Plugin",
+    "description": "OpenShift integration with Istio",
+    "exposedModules": {
+      "OverviewPage": "./components/OverviewPage",
+      "GraphPage": "./components/GraphPage",
+      "IstioConfigList": "./components/IstioConfigList",
+      "MeshTab": "./components/MeshTab"
+    },
+    "dependencies": {
+      "@console/pluginAPI": "*"
+    }
+  }
+}

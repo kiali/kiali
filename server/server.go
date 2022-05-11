@@ -107,6 +107,9 @@ func (s *Server) Start() {
 		StartMetricsServer()
 	}
 
+	// Start the Plugins Server
+	StartPluginsServer()
+
 	// Start the business to initialize cache dependencies
 	business.Start()
 }
@@ -114,6 +117,7 @@ func (s *Server) Start() {
 // Stop the HTTP server
 func (s *Server) Stop() {
 	StopMetricsServer()
+	StopPluginsServer()
 	business.Stop()
 	log.Infof("Server endpoint will stop at [%v]", s.httpServer.Addr)
 	s.httpServer.Close()

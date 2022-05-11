@@ -418,6 +418,17 @@ type KialiFeatureFlags struct {
 	Validations                       Validations                       `yaml:"validations,omitempty" json:"validations,omitempty"`
 }
 
+type KialiPlugins struct {
+	OpenShift OpenShiftConsolePlugin `yaml:"openshift,omitempty" json:"openshift"`
+}
+
+type OpenShiftConsolePlugin struct {
+	Address                    string `yaml:"address,omitempty" json:"address"`
+	Enabled                    bool   `yaml:"enabled,omitempty" json:"enabled"`
+	Port                       int    `yaml:"port,omitempty" json:"port"`
+	StaticContentRootDirectory string `yaml:"static_content_root_directory,omitempty"`
+}
+
 // Tolerance config
 type Tolerance struct {
 	Code      string  `yaml:"code,omitempty" json:"code"`
@@ -489,6 +500,7 @@ type Config struct {
 	IstioLabels              IstioLabels                         `yaml:"istio_labels,omitempty"`
 	IstioNamespace           string                              `yaml:"istio_namespace,omitempty"` // default component namespace
 	KialiFeatureFlags        KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
+	KialiPlugins             KialiPlugins                        `yaml:"kiali_plugins,omitempty"`
 	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
 	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
 	Server                   Server                              `yaml:",omitempty"`
@@ -691,6 +703,14 @@ func NewConfig() (c *Config) {
 			},
 			Validations: Validations{
 				Ignore: make([]string, 0),
+			},
+		},
+		KialiPlugins: KialiPlugins{
+			OpenShift: OpenShiftConsolePlugin{
+				Address:                    "",
+				Enabled:                    false,
+				Port:                       9091,
+				StaticContentRootDirectory: "/opt/kiali/plugins/openshift",
 			},
 		},
 		KubernetesConfig: KubernetesConfig{
