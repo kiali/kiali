@@ -47,6 +47,10 @@ build-linux-multi-arch:
 			-o ${GOPATH}/bin/kiali-$${arch} -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}" ${GO_BUILD_FLAGS}; \
 	done
 
+## build-plugins-openshift: Build Kiali Plugin for OpenShift
+build-plugin-openshift:
+	@cd ${ROOTDIR}/plugins/openshift && yarn run build
+
 ## install: Install missing dependencies. Runs `go install` internally
 install:
 	@echo Installing...
