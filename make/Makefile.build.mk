@@ -82,16 +82,6 @@ test-race:
 	@echo Running tests with race detection, excluding third party tests under vendor
 	${GO} test -race $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration/)
 
-## test-e2e-setup: Setup Python environment for running test suite
-test-e2e-setup:
-	@echo Setting up E2E tests
-	cd tests/e2e && ./setup.sh
-
-## test-e2e: Run E2E test suite
-test-e2e:
-	@echo Running E2E tests
-	cd tests/e2e && source .kiali-e2e/bin/activate && pytest -s tests/
-
 ## test-integration-setup: Setup go library for converting test result into junit xml
 test-integration-setup:
 	@echo Setting up Integration tests
@@ -102,50 +92,6 @@ test-integration: test-integration-setup
 	@echo Running Integration tests
 	cd tests/integration/tests && ${GO} test -v 2>&1 | go-junit-report > ../junit-rest-report.xml
 	@echo Test results can be found here: $$(ls -1 ${ROOTDIR}/tests/integration/junit-rest-report.xml)
-
-#
-# Swagger Documentation
-#
-
-## swagger-install: Install swagger from github
-swagger-install:
-	@echo "Installing swagger binary to ${GOPATH}/bin..."
-ifeq ($(GOARCH), ppc64le)
-	curl https://github.com/go-swagger/go-swagger/archive/v${SWAGGER_VERSION}.tar.gz --create-dirs -Lo /tmp/v${SWAGGER_VERSION}.tar.gz && tar -xzf /tmp/v${SWAGGER_VERSION}.tar.gz -C /tmp/ && src_dir='pwd' && cd /tmp/go-swagger-${SWAGGER_VERSION} && ${GO} install ./cmd/swagger && cd ${src_dir}
-else
-	curl https://github.com/go-swagger/go-swagger/releases/download/v${SWAGGER_VERSION}/swagger_$(GOOS)_${GOARCH} --create-dirs -Lo ${GOPATH}/bin/swagger && chmod +x ${GOPATH}/bin/swagger
-endif
-
-## swagger-validate: Validate that swagger.json is correctly. Runs `swagger validate` internally
-swagger-validate:
-	@swagger validate ./swagger.json
-
-## swagger-gen: Generate that swagger.json from Code. Runs `swagger generate` internally
-swagger-gen:
-	@swagger generate spec -o ./swagger.json
-	@swagger generate markdown --quiet --spec ./swagger.json --output ./kiali_api.md
-
-## swagger-serve: Serve the swagger.json in a website in local. Runs `swagger serve` internally
-swagger-serve: swagger-validate
-	@swagger serve ./swagger.json --no-open
-
-## swagger-ci: Check that swagger.json is the correct one
-swagger-ci: swagger-validate
-	@swagger generate spec -o ./swagger_copy.json
-	@cmp -s swagger.json swagger_copy.json; \
-	RETVAL=$$?; \
-	if [ $$RETVAL -ne 0 ]; then \
-	  echo "swagger.json is not correct, remember to run make swagger-gen to update swagger.json"; exit 1; \
-	fi
-
-	@swagger generate markdown --quiet --spec ./swagger.json --output ./kiali_api_copy.md
-	@cmp -s kiali_api.md kiali_api_copy.md; \
-	RETVAL=$$?; \
-	if [ $$RETVAL -ne 0 ]; then \
-	  echo "kiali_api.md is not correct, remember to run make swagger-gen to update kiali_api.md"; exit 1; \
-	fi
-
-	rm swagger_copy.json kiali_api_copy.md
 
 #
 # Lint targets

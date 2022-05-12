@@ -43,9 +43,6 @@ _output
 hack/*.local.sh
 
 # E2E testing files
-tests/e2e/.pytest_cache
-tests/e2e/**/__pycache__
-tests/e2e/.kiali-e2e/
 tests/integration/junit-rest-report.xml
 
 # Do not commit operator code to this repo

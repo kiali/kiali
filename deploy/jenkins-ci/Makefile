@@ -111,10 +111,6 @@ endif # If Jenkins
 .PHONY: backend-prepare-next-patch-version backend-prepare-master-next-version
 .PHONY: all release
 
-# Swagger not yet ready
-# backend-swagger:
-#	$(MAKE) make swagger-install"
-
 all:
 	$(error You must explicitly specify a target)
 
