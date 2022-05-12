@@ -82,8 +82,9 @@ Given('a workload without a sidecar', function () {
     });
 
     // Restart the workload to ensure changes are applied.
-    cy.exec(`kubectl scale -n ${this.targetNamespace} --replicas=0 deployment/${this.targetWorkload}`);
     cy.exec(`kubectl scale -n ${this.targetNamespace} --replicas=1 deployment/${this.targetWorkload}`);
+    cy.exec(`kubectl rollout restart deployment ${this.targetWorkload} -n ${this.targetNamespace}`);
+    cy.exec(`kubectl rollout status deployment ${this.targetWorkload} -n ${this.targetNamespace}`);
 });
 
 Given('a workload with a sidecar', function () {
@@ -120,8 +121,9 @@ Given('a workload with a sidecar', function () {
     });
 
     // Restart the workload to ensure changes are applied.
-    cy.exec(`kubectl scale -n ${this.targetNamespace} --replicas=0 deployment/${this.targetWorkload}`);
     cy.exec(`kubectl scale -n ${this.targetNamespace} --replicas=1 deployment/${this.targetWorkload}`);
+    cy.exec(`kubectl rollout restart deployment ${this.targetWorkload} -n ${this.targetNamespace}`);
+    cy.exec(`kubectl rollout status deployment ${this.targetWorkload} -n ${this.targetNamespace}`);
 });
 
 Given('the workload does not have override configuration for automatic sidecar injection', function () {
@@ -167,8 +169,9 @@ Given('the workload does not have override configuration for automatic sidecar i
         });
 
         // Restart the workload to ensure changes are applied.
-        cy.exec(`kubectl scale -n ${this.targetNamespace} --replicas=0 deployment/${this.targetWorkload}`);
         cy.exec(`kubectl scale -n ${this.targetNamespace} --replicas=1 deployment/${this.targetWorkload}`);
+        cy.exec(`kubectl rollout restart deployment ${this.targetWorkload} -n ${this.targetNamespace}`);
+        cy.exec(`kubectl rollout status deployment ${this.targetWorkload} -n ${this.targetNamespace}`);
     }
 });
 
