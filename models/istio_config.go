@@ -67,6 +67,7 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "spec.selector.matchLabels", Message: "One or more labels that indicate a specific set of pods/VMs on which a policy should be applied."},
 		{ObjectField: "spec.rules", Message: "Optional. A list of rules to match the request. A match occurs when at least one rule matches the request."},
 		{ObjectField: "spec.rules.from", Message: "Optional. from specifies the source of a request. If not set, any source is allowed."},
+		{ObjectField: "spec.rules.from.source.principals", Message: "Optional. A list of peer identities derived from the peer certificate. If not set, any principal is allowed."},
 		{ObjectField: "spec.rules.to", Message: "Optional. to specifies the operation of a request. If not set, any operation is allowed."},
 		{ObjectField: "spec.rules.when", Message: "Optional. when specifies a list of additional conditions of a request. If not set, any condition is allowed."},
 		{ObjectField: "spec.action", Message: "Optional. The action to take if the request is matched with the rules. Default is ALLOW if not specified."},

@@ -125,7 +125,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioC
 		checkers.GatewayChecker{Gateways: istioConfigList.Gateways, Namespace: namespace, WorkloadsPerNamespace: workloadsPerNamespace, IsGatewayToNamespace: in.isGatewayToNamespace()},
 		checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails, WorkloadList: workloadsPerNamespace[namespace]},
 		checkers.ServiceEntryChecker{ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries},
-		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, WorkloadList: workloadsPerNamespace[namespace], MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices},
+		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices},
 		checkers.SidecarChecker{Sidecars: istioConfigList.Sidecars, Namespaces: namespaces, WorkloadList: workloadsPerNamespace[namespace], ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices},
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadList: workloadsPerNamespace[namespace]},
 		checkers.WorkloadChecker{Namespace: namespace, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, WorkloadList: workloadsPerNamespace[namespace]},
@@ -203,7 +203,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	case kubernetes.AuthorizationPolicies:
 		authPoliciesChecker := checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies,
 			Namespace: namespace, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries,
-			WorkloadList: workloadsPerNamespace[namespace], MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices}
+			WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices}
 		objectCheckers = []ObjectChecker{authPoliciesChecker}
 		referenceChecker = references.AuthorizationPolicyReferences{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.PeerAuthentications:
