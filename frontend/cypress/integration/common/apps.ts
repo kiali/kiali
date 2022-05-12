@@ -26,9 +26,9 @@ And('user sees Namespace information for Apps', () => {
 });
 
 And('user sees Labels information for Apps', () => {
-  getColWithRowText(APP, 'Labels').contains('app: details');
-  getColWithRowText(APP, 'Labels').contains('service: details');
-  getColWithRowText(APP, 'Labels').contains('version: v1');
+  getColWithRowText(APP, 'Labels').contains('app=details');
+  getColWithRowText(APP, 'Labels').contains('service=details');
+  getColWithRowText(APP, 'Labels').contains('version=v1');
 });
 
 And('user sees Details information for Apps', () => {
