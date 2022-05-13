@@ -224,7 +224,7 @@ class TraceDetails extends React.Component<Props, State> {
                   {renderTraceHeatMap(this.props.statsMatrix, heatmapIntervals, false)}
                   {!this.props.isStatsMatrixComplete && (
                     <>
-                      <WarningTriangleIcon /> Incomplete data, check Spans Details
+                      <WarningTriangleIcon /> Incomplete data, check Span Details
                     </>
                   )}
                 </>
