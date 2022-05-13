@@ -87,6 +87,11 @@ When('user {string} {string} option', (action, option: string) => {
   }
 });
 
+When('user resets to factory default', () => {
+  cy.get('button#graph-factory-reset').click()
+  cy.get('#loading_kiali_spinner').should('not.exist');
+});
+
 ///////////////////
 
 Then(`user sees no namespace selected`, () => {
@@ -131,27 +136,25 @@ Then('the graph reflects default settings', () => {
     .then(state => {
       // no nonDefault edge label info
       let numEdges = state.cy.edges(`[?responseTime],[?throughput]`).length;
-      assert.isTrue(numEdges === 0);
+      assert.equal(numEdges, 0);
 
       // no idle edges, mtls
       numEdges = state.cy.edges(`[^hasTraffic],[isMTLS > 0]`).length;
-      assert.isTrue(numEdges === 0);
+      assert.equal(numEdges, 0);
 
       // boxes
       let numNodes = state.cy.nodes(`[isBox = "app"]`).length;
-      assert.isTrue(numNodes > 0);
+      assert.isAbove(numNodes, 0);
       numNodes = state.cy.nodes(`[isBox = "namespace"]`).length;
-      assert.isTrue(numNodes > 0);
+      assert.isAbove(numNodes, 0);
 
       // service nodes
       numNodes = state.cy.nodes(`[nodeType = "service"]`).length;
-      assert.isTrue(numNodes > 0);
+      assert.isAbove(numNodes, 0);
 
       // a variety of not-found tests
-      numNodes = state.cy.nodes(
-        `[isBox = "cluster"],[?isIdle],[?rank],[nodeType = "operation"]`
-      ).length;
-      assert.isTrue(numNodes === 0);
+      numNodes = state.cy.nodes(`[isBox = "cluster"],[?isIdle],[?rank],[nodeType = "operation"]`).length;
+      assert.equal(numNodes, 0);
     });
 });
 
@@ -176,7 +179,7 @@ Then('user sees {string} edge labels', el => {
     .getCurrentState()
     .then(state => {
       const numEdges = state.cy.edges(`[${rate}" > 0]`).length;
-      assert.isTrue(numEdges > 0);
+      assert.isAbove(numEdges, 0);
     });
 });
 
@@ -193,7 +196,7 @@ Then('user does not see {string} boxing', (boxByType: string) => {
     .getCurrentState()
     .then(state => {
       const numBoxes = state.cy.nodes(`[isBox = "${boxByType.toLowerCase()}"]`).length;
-      assert.isTrue(numBoxes === 0);
+      assert.equal(numBoxes, 0);
     });
 });
 
@@ -207,9 +210,9 @@ Then('idle edges {string} in the graph', action => {
     .then(state => {
       const numEdges = state.cy.edges(`[^hasTraffic]`).length;
       if (action === 'appear') {
-        assert.isTrue(numEdges > 0);
+        assert.isAbove(numEdges, 0);
       } else {
-        assert.isTrue(numEdges === 0);
+        assert.equal(numEdges, 0);
       }
     });
 });
@@ -224,9 +227,9 @@ Then('idle nodes {string} in the graph', action => {
     .then(state => {
       const numNodes = state.cy.nodes(`[?isIdle]`).length;
       if (action === 'appear') {
-        assert.isTrue(numNodes > 0);
+        assert.isAbove(numNodes, 0);
       } else {
-        assert.isTrue(numNodes === 0);
+        assert.equal(numNodes, 0);
       }
     });
 });
@@ -241,9 +244,9 @@ Then('ranks {string} in the graph', action => {
     .then(state => {
       const numNodes = state.cy.nodes(`[rank > 0]`).length;
       if (action === 'appear') {
-        assert.isTrue(numNodes > 0);
+        assert.isAbove(numNodes, 0);
       } else {
-        assert.isTrue(numNodes === 0);
+        assert.equal(numNodes, 0);
       }
     });
 });
@@ -257,7 +260,7 @@ Then('user does not see service nodes', () => {
     .getCurrentState()
     .then(state => {
       const numBoxes = state.cy.nodes(`[nodeType = "service"][^isOutside]`).length;
-      assert.isTrue(numBoxes === 0);
+      assert.equal(numBoxes, 0);
     });
 });
 
@@ -271,9 +274,9 @@ Then('security {string} in the graph', action => {
     .then(state => {
       const numEdges = state.cy.edges(`[isMTLS > 0]`).length;
       if (action === 'appears') {
-        assert.isTrue(numEdges > 0);
+        assert.isAbove(numEdges, 0);
       } else {
-        assert.isTrue(numEdges === 0);
+        assert.equal(numEdges, 0);
       }
     });
 });
