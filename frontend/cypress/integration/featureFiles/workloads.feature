@@ -10,7 +10,7 @@ Feature: Kiali Workloads page
   @workloads-page
   Scenario: See a table with correct info
     Then user sees a table with headings
-      | Health | Name | Namespace | Type | Labels | Details
+      | Health | Name | Namespace | Type | Labels | Details |
     And the "details-v1" row is visible
     And the health column on the "details-v1" row has a health icon
     And the "Name" column on the "details-v1" row has a link ending in "/namespaces/bookinfo/workloads/details-v1"
@@ -55,6 +55,6 @@ Feature: Kiali Workloads page
   @workloads-page
   Scenario: Filter workloads table by label
     When user selects filter "Label"
-    And user filters for label "app=details-v1"
+    And user filters for label "app=details"
     Then user sees "details-v1" in the table
     And table length should be 1
