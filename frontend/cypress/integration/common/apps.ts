@@ -11,7 +11,7 @@ And('user sees Health information for Apps', () => {
 });
 
 Then('user sees all the Apps in the bookinfo namespace', () => {
-  ensureObjectsInTable('details', 'kiali-traffic-generator', 'productpage', 'ratings', 'reviews', 'mongodb');
+  ensureObjectsInTable('details', 'kiali-traffic-generator', 'productpage', 'ratings', 'reviews');
 });
 
 And('user sees Name information for Apps', () => {
