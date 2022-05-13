@@ -26,6 +26,13 @@ And(
   }
 );
 
+And(
+  'the {string} column on the {string} row is empty',
+  (column: string, rowText: string, text: string) => {
+    getColWithRowText(rowText, column).children().should('be.empty');
+  }
+);
+
 Then('user sees {string} in the table', (service: string) => {
   cy.get('tbody').within(() => {
     if (service === 'nothing') {
