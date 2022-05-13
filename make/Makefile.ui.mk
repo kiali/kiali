@@ -19,7 +19,7 @@ yarn-start:
 
 ## cypress-run: Runs all the cypress frontend integration tests locally without the GUI (i.e. headless).
 cypress-run:
-	@cd ${ROOTDIR}/frontend && yarn cypress:run --headless --env CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
+	@cd ${ROOTDIR}/frontend && yarn cypress:run --headless --env CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0 --env CYPRESS_VIDEO=false
 
 ## cypress-gui: Opens the cypress GUI letting you pick which frontend integration tests to run locally.
 cypress-gui:

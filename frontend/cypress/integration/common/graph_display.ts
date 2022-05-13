@@ -124,8 +124,9 @@ Then('the display menu has default settings', () => {
 });
 
 Then('the graph reflects default settings', () => {
-  cy.waitForReact(1000, '#root');
+  cy.waitForReact();
   cy.getReact('CytoscapeGraph')
+    .should('have.length', '1')
     .getCurrentState()
     .then(state => {
       // no nonDefault edge label info
@@ -148,7 +149,7 @@ Then('the graph reflects default settings', () => {
 
       // a variety of not-found tests
       numNodes = state.cy.nodes(
-        `[isBox = "cluster"],[?isIdle],[?rank],[?hasMissingSC],[?hasVS],[nodeType = "operation"]`
+        `[isBox = "cluster"],[?isIdle],[?rank],[nodeType = "operation"]`
       ).length;
       assert.isTrue(numNodes === 0);
     });
@@ -169,8 +170,9 @@ Then('user sees {string} edge labels', el => {
       rate = el;
   }
 
-  cy.waitForReact(1000, '#root');
+  cy.waitForReact();
   cy.getReact('CytoscapeGraph')
+    .should('have.length', '1')
     .getCurrentState()
     .then(state => {
       const numEdges = state.cy.edges(`[${rate}" > 0]`).length;
@@ -185,8 +187,9 @@ Then('user sees {string} edge label option is closed', edgeLabel => {
 Then('user does not see {string} boxing', (boxByType: string) => {
   validateInput(`boxBy${boxByType}`, 'does not appear');
 
-  cy.waitForReact(1000, '#root');
+  cy.waitForReact();
   cy.getReact('CytoscapeGraph')
+    .should('have.length', '1')
     .getCurrentState()
     .then(state => {
       const numBoxes = state.cy.nodes(`[isBox = "${boxByType.toLowerCase()}"]`).length;
@@ -197,8 +200,9 @@ Then('user does not see {string} boxing', (boxByType: string) => {
 Then('idle edges {string} in the graph', action => {
   validateInput('filterIdleEdges', action);
 
-  cy.waitForReact(1000, '#root');
+  cy.waitForReact();
   cy.getReact('CytoscapeGraph')
+    .should('have.length', '1')
     .getCurrentState()
     .then(state => {
       const numEdges = state.cy.edges(`[^hasTraffic]`).length;
@@ -213,8 +217,9 @@ Then('idle edges {string} in the graph', action => {
 Then('idle nodes {string} in the graph', action => {
   validateInput('filterIdleNodes', action);
 
-  cy.waitForReact(1000, '#root');
+  cy.waitForReact();
   cy.getReact('CytoscapeGraph')
+    .should('have.length', '1')
     .getCurrentState()
     .then(state => {
       const numNodes = state.cy.nodes(`[?isIdle]`).length;
@@ -229,8 +234,9 @@ Then('idle nodes {string} in the graph', action => {
 Then('ranks {string} in the graph', action => {
   validateInput('rank', action);
 
-  cy.waitForReact(1000, '#root');
+  cy.waitForReact();
   cy.getReact('CytoscapeGraph')
+    .should('have.length', '1')
     .getCurrentState()
     .then(state => {
       const numNodes = state.cy.nodes(`[rank > 0]`).length;
@@ -245,8 +251,9 @@ Then('ranks {string} in the graph', action => {
 Then('user does not see service nodes', () => {
   validateInput('filterServiceNodes', 'do not appear');
 
-  cy.waitForReact(1000, '#root');
+  cy.waitForReact();
   cy.getReact('CytoscapeGraph')
+    .should('have.length', '1')
     .getCurrentState()
     .then(state => {
       const numBoxes = state.cy.nodes(`[nodeType = "service"][^isOutside]`).length;
@@ -257,8 +264,9 @@ Then('user does not see service nodes', () => {
 Then('security {string} in the graph', action => {
   validateInput('filterSecurity', action);
 
-  cy.waitForReact(1000, '#root');
+  cy.waitForReact();
   cy.getReact('CytoscapeGraph')
+    .should('have.length', '1')
     .getCurrentState()
     .then(state => {
       const numEdges = state.cy.edges(`[isMTLS > 0]`).length;
