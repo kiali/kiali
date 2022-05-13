@@ -78,28 +78,28 @@ Feature: Kiali Overview page
     Then user sees the "alpha" namespace with Inbound traffic "10m"
 
   @overview-page
-  Scenario: The healthy status a logical mesh application is reported in the overview of a namespace
+  Scenario: The healthy status of a logical mesh application is reported in the overview of a namespace
     Given a healthy application in the cluster
     When I fetch the overview of the cluster
     Then there should be a "healthy" application indicator in the namespace
     And the "healthy" application indicator should list the application
 
   @overview-page
-  Scenario: The idle status a logical mesh application is reported in the overview of a namespace
+  Scenario: The idle status of a logical mesh application is reported in the overview of a namespace
     Given an idle application in the cluster
     When I fetch the overview of the cluster
     Then there should be a "idle" application indicator in the namespace
     And the "idle" application indicator should list the application
 
   @overview-page
-  Scenario: The failing status a logical mesh application is reported in the overview of a namespace
+  Scenario: The failing status of a logical mesh application is reported in the overview of a namespace
     Given a failing application in the mesh
     When I fetch the overview of the cluster
     Then there should be a "failure" application indicator in the namespace
     And the "failure" application indicator should list the application
 
   @overview-page
-  Scenario: The degraded status a logical mesh application is reported in the overview of a namespace
+  Scenario: The degraded status of a logical mesh application is reported in the overview of a namespace
     Given a degraded application in the mesh
     When I fetch the overview of the cluster
     Then there should be a "degraded" application indicator in the namespace
