@@ -26,6 +26,28 @@ Given('user opens the overview page', () => {
     cy.visit(url + '/overview?refresh=0');
 });
 
+Given('a healthy application in the cluster', function () {
+    this.targetNamespace = 'bookinfo';
+    this.targetApp = 'productpage';
+});
+
+Given('an idle application in the cluster', function () {
+    this.targetNamespace = 'default';
+    this.targetApp = 'sleep';
+
+    cy.exec('kubectl scale -n default --replicas=0 deployment/sleep');
+});
+
+Given('a failing application in the mesh', function () {
+    this.targetNamespace = 'alpha';
+    this.targetApp = 'v-server';
+});
+
+Given('a degraded application in the mesh', function () {
+    this.targetNamespace = 'alpha';
+    this.targetApp = 'b-client';
+});
+
 When('user clicks in the {string} view', (view) => {
     cy.get('button[data-test="overview-type-' + view + '"]')
         .click()
@@ -103,6 +125,10 @@ When(`user selects {string} time range`, (interval) => {
         .should('not.exist');
 });
 
+When('I fetch the overview of the cluster', function () {
+    cy.visit('/console/overview?refresh=0');
+});
+
 Then(`user sees the {string} namespace card`, (ns) => {
     cy.get('article[data-test^="' + ns + '"]');
 });
@@ -146,4 +172,23 @@ Then(`user sees the {string} namespace list`, (nslist) => {
 
 Then(`user sees the {string} namespace with Inbound traffic {string}`, (ns, duration) => {
     cy.get('article[data-test^="' + ns + '"]').find('span[data-test="sparkline-duration-' + duration + '"]');
+});
+
+Then('there should be a {string} application indicator in the namespace', function (healthStatus: string) {
+    cy.get(`[data-test=${this.targetNamespace}-EXPAND] [data-test=overview-app-health] svg[class=icon-${healthStatus}]`)
+        .should('exist');
+});
+
+Then('the {string} application indicator should list the application', function (healthStatus: string) {
+    let healthIndicatorStatusKey = healthStatus;
+    if (healthStatus === 'idle') {
+        healthIndicatorStatusKey = 'not-ready';
+    }
+
+    cy.get(`[data-test=${this.targetNamespace}-EXPAND] [data-test=overview-app-health] svg[class=icon-${healthStatus}]`)
+        .trigger('mouseenter');
+    cy.get(`[aria-label='Overview status'][class*=health_indicator] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}] svg[class=icon-${healthStatus}]`)
+        .should('exist');
+    cy.get(`[aria-label='Overview status'][class*=health_indicator] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`)
+        .should('contain.text', this.targetApp);
 });
