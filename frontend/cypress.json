@@ -13,10 +13,6 @@
   "supportFile": "cypress/support/index.ts",
   "pluginsFile": "cypress/plugins/bdd.ts",
   "fixturesFolder": "cypress/fixtures",
-  "reporter": "cypress-multi-reporters",
-  "reporterOptions": {
-    "configFile": "reporter-config.json"
-  },
   "env": {
     "cypress-react-selector": {
       "root": "#root"
