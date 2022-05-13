@@ -54,6 +54,18 @@ And('the user filters by {string} for {string}', (filter: string, filterValue: s
   } else if (filter === 'Config') {
     cy.get('select[aria-label="filter_select_type"]').select(filter);
     cy.get('select[aria-label="filter_select_value"]').select(filterValue);
+  } else if (filter === 'App Name') {
+    cy.get('select[aria-label="filter_select_type"]').select(filter);
+    cy.get('input[aria-label="filter_input_value"]').type(`${filterValue}{enter}`);
+  } else if (filter === 'Istio Sidecar') {
+    cy.get('select[aria-label="filter_select_type"]').select(filter);
+    cy.get('select[aria-label="filter_select_value"]').select(filterValue);
+  } else if (filter === 'Health') {
+    cy.get('select[aria-label="filter_select_type"]').select(filter);
+    cy.get('select[aria-label="filter_select_value"]').select(filterValue);
+  } else if (filter === 'Label') {
+    cy.get('select[aria-label="filter_select_type"]').select(filter);
+    cy.get('input[aria-label="filter_input_label_key"]').type(`${filterValue}{enter}`);
   }
 });
 

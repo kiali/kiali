@@ -136,3 +136,13 @@ When('user clicks in the {string} table {string} badge {string} name row link', 
             .click();
       });
 });
+
+// ensureObjectsInTable name can represent apps, istio config, objects, services etc.
+export function ensureObjectsInTable(...names: string[]) {
+  cy.get('tbody').within(() => {
+    cy.get('tr').should('have.length', names.length);
+    names.forEach(name => {
+      cy.get('tr').contains(name);
+    });
+  });
+}

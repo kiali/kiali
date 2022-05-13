@@ -59,7 +59,7 @@ const InitializingScreen: React.FC<initializingScreenProps> = (props: initializi
   }
 
   return (
-    <div className={centerVerticalHorizontalStyle}>
+    <div data-test="loading-screen" className={centerVerticalHorizontalStyle}>
       <img alt="Kiali Logo" src={kialiTitle} width="200" />
       {props.errorMsg ? (
         <div ref={errorDiv} className={defaultErrorStyle}>
