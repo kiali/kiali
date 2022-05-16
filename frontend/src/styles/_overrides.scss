@@ -226,3 +226,7 @@ html.kiosk {
 .tooltip {
   z-index: 10 !important;
 }
+// draw panels should have less z-index than dropdowns
+.pf-c-drawer__panel {
+  z-index: 199 !important;
+}
