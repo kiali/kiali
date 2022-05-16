@@ -88,6 +88,15 @@ export function getColWithRowText(rowSearchText: string, colName: string) {
   });
 }
 
+// getCellsForCol returns every cell matching the table header name or
+// the table header index. Example:
+//
+// | Name | Type | Health |
+// | app1 | wkld | Good   |
+// | app2 | svc  | Good   |
+//
+// getCellsForCol('Name') or getCellsForCol(0) would both return
+// the cells 'app1' and 'app2'.
 export function getCellsForCol(column: string | Number) {
   if (typeof column === 'number') {
     return cy.get(`td[data-key="${column}"]`);
