@@ -60,3 +60,34 @@ Feature: Kiali Services page
     And user filters for label "app=productpage"
     Then user sees "productpage" in the table
     And table length should be 1
+
+  @services-page
+  Scenario: The healthy status of a service is reported in the list of services
+    Given a service in the cluster with a healthy amount of traffic
+    When I fetch the list of services
+    And user selects the "bookinfo" namespace
+    Then the service should be listed as "healthy"
+
+  @services-page
+  Scenario: The idle status of a service is reported in the list of services
+    Given a service in the cluster with no traffic
+    When I fetch the list of services
+    And user selects the "default" namespace
+    Then the service should be listed as "na"
+    And the health status of the service should be "No health information"
+
+  @services-page
+  Scenario: The failing status of a service is reported in the list of services
+    Given a service in the mesh with a failing amount of traffic
+    When I fetch the list of services
+    And user selects the "alpha" namespace
+    Then the service should be listed as "failure"
+    And the health status of the service should be "Failure"
+
+  @services-page
+  Scenario: The degraded status of a service is reported in the list of services
+    Given a service in the mesh with a degraded amount of traffic
+    When I fetch the list of services
+    And user selects the "alpha" namespace
+    Then the service should be listed as "degraded"
+    And the health status of the service should be "Degraded"
