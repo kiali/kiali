@@ -1,5 +1,5 @@
 import { And, Then, When } from 'cypress-cucumber-preprocessor/steps';
-import { getColWithRowText, ensureObjectsInTable } from './table';
+import { getColWithRowText, ensureObjectsInTable, checkHealthIndicatorInTable, checkHealthStatusInTable } from './table';
 
 // Choosing a random bookinfo app to test with.
 const APP = 'details';
@@ -58,13 +58,9 @@ Then('user only sees healthy apps', () => {
 });
 
 Then('the application should be listed as {string}', function (healthStatus: string) {
-  cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_${this.targetApp}] svg[class=icon-${healthStatus}]`)
-      .should('exist');
+  checkHealthIndicatorInTable(this.targetNamespace, this.targetApp, healthStatus);
 });
 
 Then('the health status of the application should be {string}', function (healthStatus: string) {
-  cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_${this.targetApp}] td:first-child span`)
-      .trigger('mouseenter');
-  cy.get(`[aria-label='Health indicator'] strong`)
-      .should('contain.text', healthStatus);
+  checkHealthStatusInTable(this.targetNamespace, this.targetApp, healthStatus);
 });

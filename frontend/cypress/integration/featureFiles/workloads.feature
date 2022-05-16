@@ -58,3 +58,34 @@ Feature: Kiali Workloads page
     And user filters for label "app=details"
     Then user sees "details-v1" in the table
     And table length should be 1
+
+  @workloads-page
+  Scenario: The healthy status of a workload is reported in the list of workloads
+    Given a healthy workload in the cluster
+    When I fetch the list of workloads
+    And user selects the "bookinfo" namespace
+    Then the workload should be listed as "healthy"
+
+  @workloads-page
+  Scenario: The idle status of a workload is reported in the list of workloads
+    Given an idle workload in the cluster
+    When I fetch the list of workloads
+    And user selects the "default" namespace
+    Then the workload should be listed as "idle"
+    And the health status of the workload should be "Not Ready"
+
+  @workloads-page
+  Scenario: The failing status of a workload is reported in the list of workloads
+    Given a failing workload in the mesh
+    When I fetch the list of workloads
+    And user selects the "alpha" namespace
+    Then the workload should be listed as "failure"
+    And the health status of the workload should be "Failure"
+
+  @workloads-page
+  Scenario: The degraded status of a workload is reported in the list of workloads
+    Given a degraded workload in the mesh
+    When I fetch the list of workloads
+    And user selects the "alpha" namespace
+    Then the workload should be listed as "degraded"
+    And the health status of the workload should be "Degraded"
