@@ -229,10 +229,10 @@ Valid options:
   -pd|--plugin-openshift-dir
       A directory on the local machine containing the OpenShift plugin code.
       If not specified, an attempt to find it on the local machine will be made. A search up the
-      directory tree is made, looking for any directory called "plugins/openshift" that has a "build" directory under it.
-      The "dist" directory of the UI is generated after you run "yarn build" to
-      generate the distributable package. So, make sure that you build the UI before
-      using this script and then set this option to the generated build directory.
+      directory tree is made, looking for any directory called "plugins/openshift" that has a "dist" directory under it.
+      The "dist" directory of the plugin is generated after you run "yarn build" to
+      generate the distributable package. So, make sure that you build the plugin before
+      using this script and then set this option to the generated "dist" directory.
       Default: <a local build that is auto-discovered>
 HELPMSG
       exit 1

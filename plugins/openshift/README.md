@@ -43,6 +43,8 @@ In another window, run:
 cd $KIALI_HOME
 
 hack/run-openshift-console.sh 
+
+# After this command, you would have a local Kiali serving a plugin to the OpenShift Console under the http://localhost:9000 
 ```
 
 # Local development
