@@ -1,8 +1,12 @@
-import { And, Then } from 'cypress-cucumber-preprocessor/steps';
+import { And, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import { getColWithRowText, ensureObjectsInTable } from './table';
 
 // Choosing a random bookinfo app to test with.
 const APP = 'details';
+
+When('I fetch the list of applications', function () {
+  cy.visit('/console/applications?refresh=0');
+});
 
 And('user sees Health information for Apps', () => {
   getColWithRowText(APP, 'Health').find(
@@ -51,4 +55,16 @@ Then('user only sees healthy apps', () => {
   cy.get('tbody').within(() => {
     cy.get('tr').find('svg[class=icon-healthy]');
   });
+});
+
+Then('the application should be listed as {string}', function (healthStatus: string) {
+  cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_${this.targetApp}] svg[class=icon-${healthStatus}]`)
+      .should('exist');
+});
+
+Then('the health status of the application should be {string}', function (healthStatus: string) {
+  cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_${this.targetApp}] td:first-child span`)
+      .trigger('mouseenter');
+  cy.get(`[aria-label='Health indicator'] strong`)
+      .should('contain.text', healthStatus);
 });

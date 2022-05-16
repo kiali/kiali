@@ -1,6 +1,13 @@
 Feature: Kiali Overview page
 
-  User opens the Overview page and see the demo "error-rates" namespaces
+  User opens the Overview page and see the demo "error-rates" namespaces.
+
+  Health indicators in overview page
+    Kiali is capable of calculating the health of services in the mesh/cluster
+    using several data sources like workload availability and errors in traffic.
+    Kiali offers health status at different levels of granularity: from namespace
+    level, to the individual pod. In the overview page, health indicators have
+    namespace level and app level granularity.
 
   Background:
     Given user is at administrator perspective
@@ -70,3 +77,30 @@ Feature: Kiali Overview page
     When user selects "Last 10m" time range
     Then user sees the "alpha" namespace with Inbound traffic "10m"
 
+  @overview-page
+  Scenario: The healthy status of a logical mesh application is reported in the overview of a namespace
+    Given a healthy application in the cluster
+    When I fetch the overview of the cluster
+    Then there should be a "healthy" application indicator in the namespace
+    And the "healthy" application indicator should list the application
+
+  @overview-page
+  Scenario: The idle status of a logical mesh application is reported in the overview of a namespace
+    Given an idle application in the cluster
+    When I fetch the overview of the cluster
+    Then there should be a "idle" application indicator in the namespace
+    And the "idle" application indicator should list the application
+
+  @overview-page
+  Scenario: The failing status of a logical mesh application is reported in the overview of a namespace
+    Given a failing application in the mesh
+    When I fetch the overview of the cluster
+    Then there should be a "failure" application indicator in the namespace
+    And the "failure" application indicator should list the application
+
+  @overview-page
+  Scenario: The degraded status of a logical mesh application is reported in the overview of a namespace
+    Given a degraded application in the mesh
+    When I fetch the overview of the cluster
+    Then there should be a "degraded" application indicator in the namespace
+    And the "degraded" application indicator should list the application
