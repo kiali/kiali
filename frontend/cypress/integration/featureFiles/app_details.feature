@@ -3,7 +3,8 @@ Feature: Kiali App Details page
   On the App Details page, an admin should see details about an application as well as
   a minigraph for traffic going to and originating from the application. In addition,
   there should be tabs for viewing application specific traffic, inbound/outbound metrics,
-  and traces. 
+  and traces. The traces tab should show trace details about the selected trace. The spans tab
+  should show span details about the selected trace.
 
   Background:
     And user is at the details page for the "app" "bookinfo/details"
@@ -29,5 +30,12 @@ Feature: Kiali App Details page
     Then user sees outbound metrics information
 
   @app-details-page
-  Scenario: See Traces
+  Scenario: See tracing info after selecting a trace
     Then user sees trace information
+    And user sees trace details after selecting a trace
+
+  @app-details-page
+  Scenario: See span info after selecting a span
+    Then user sees trace information
+    And user sees span details after selecting a trace
+    And user can filter spans by app

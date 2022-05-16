@@ -266,6 +266,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
             >
               <Tabs
                 id="trace-details"
+                data-test="trace-details-tabs"
                 activeKey={this.state.activeTab}
                 onSelect={(_, idx: any) => this.setState({ activeTab: idx })}
               >

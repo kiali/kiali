@@ -44,6 +44,7 @@ export const JaegerTraceTitle = (props: Props) => {
         </span>
         <Dropdown
           toggle={<KebabToggle onToggle={() => setToggled(!toggled)} />}
+          data-test="trace-details-kebab"
           dropdownItems={links}
           isPlain={true}
           isOpen={toggled}

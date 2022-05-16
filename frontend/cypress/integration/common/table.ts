@@ -88,6 +88,13 @@ export function getColWithRowText(rowSearchText: string, colName: string) {
   });
 }
 
+export function getCellsForCol(column: string | Number) {
+  if (typeof column === 'number') {
+    return cy.get(`td[data-key="${column}"]`);
+  }
+  return cy.get(`td[data-label="${column}"]`);
+}
+
 Then('user sees the {string} table with {int} rows', (tableName: string, numRows: number) => {
   let tableId = '';
   switch (tableName) {
