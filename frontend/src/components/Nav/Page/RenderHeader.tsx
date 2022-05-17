@@ -22,7 +22,8 @@ const actionsToolbarStyle = style({
   float: 'right',
   backgroundColor: '#fff',
   padding: '0px 20px 22px 5px',
-  marginTop: '-18px'
+  marginTop: '-19px',
+  borderBottom: '1px solid #d2d2d2'
 });
 
 interface RenderHeaderProps {
