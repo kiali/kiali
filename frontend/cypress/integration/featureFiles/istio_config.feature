@@ -56,3 +56,24 @@ Feature: Kiali Istio Config page
   @istio-page
   Scenario: Ability to create a Sidecar object
     Then the user can create a "Sidecar" Istio object
+
+  Scenario: KIA0101 validation
+    Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
+    And the AuthorizationPolicy has a from-source rule for "bar" namespace
+    When the user fetches the list of Istio resources
+    And user selects the "bookinfo" namespace
+    Then the AuthorizationPolicy should have a "warning"
+
+  Scenario: KIA0102 validation
+    Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
+    And the AuthorizationPolicy has a to-operation rule with "non-fully-qualified-grpc" method
+    When the user fetches the list of Istio resources
+    And user selects the "bookinfo" namespace
+    Then the AuthorizationPolicy should have a "warning"
+
+  Scenario: KIA0104 validation
+    Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
+    And the AuthorizationPolicy has a to-operation rule with "missing.hostname" host
+    When the user fetches the list of Istio resources
+    And user selects the "bookinfo" namespace
+    Then the AuthorizationPolicy should have a "error"

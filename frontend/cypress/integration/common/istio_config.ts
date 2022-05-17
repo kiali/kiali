@@ -1,5 +1,39 @@
-import { And, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { And, Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import { getColWithRowText } from './table';
+
+function minimalAuthorizationPolicy(name: string, namespace: string): string {
+  return `{
+    "apiVersion": "security.istio.io/v1beta1",
+    "kind": "AuthorizationPolicy",
+    "metadata": {
+        "name": "${name}",
+        "namespace": "${namespace}"
+    }
+}`;
+}
+
+Given('a {string} AuthorizationPolicy in the {string} namespace', function (name: string, namespace: string) {
+  cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace}`, { failOnNonZeroExit: false });
+  cy.exec(`echo '${minimalAuthorizationPolicy(name, namespace)}' | kubectl apply -f -`);
+  this.targetNamespace = namespace;
+  this.targetAuthorizationPolicy = name;
+});
+
+Given('the AuthorizationPolicy has a from-source rule for {string} namespace', function (namespace: string) {
+  cy.exec(`kubectl patch AuthorizationPolicy ${this.targetAuthorizationPolicy} -n ${this.targetNamespace} --type=merge -p '{"spec":{"rules":[{"from":[{"source": {"namespaces":["${namespace}"]}}]}]}}'`)
+});
+
+Given('the AuthorizationPolicy has a to-operation rule with {string} method', function (method: string) {
+  cy.exec(`kubectl patch AuthorizationPolicy ${this.targetAuthorizationPolicy} -n ${this.targetNamespace} --type=merge -p '{"spec":{"rules":[{"to":[{"operation": {"methods":["${method}"]}}]}]}}'`)
+});
+
+Given('the AuthorizationPolicy has a to-operation rule with {string} host', function (host: string) {
+  cy.exec(`kubectl patch AuthorizationPolicy ${this.targetAuthorizationPolicy} -n ${this.targetNamespace} --type=merge -p '{"spec":{"rules":[{"to":[{"operation": {"hosts":["${host}"]}}]}]}}'`)
+});
+
+When('the user fetches the list of Istio resources', function () {
+  cy.visit('/console/istio?refresh=0');
+});
 
 And('user filters for config {string}', (configName: string) => {
   cy.get('select[aria-label="filter_select_value"]').select(configName);
@@ -87,4 +121,10 @@ Then('the user can create a {string} Istio object', (object: string) => {
   });
   const page = `/istio/new/${object}`;
   cy.url().should('include', page);
+});
+
+Then('the AuthorizationPolicy should have a {string}', function(healthStatus: string) {
+  cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_${this.targetAuthorizationPolicy}] svg`)
+      .invoke('attr', 'style')
+      .should('have.string', `${healthStatus}-color`);
 });
