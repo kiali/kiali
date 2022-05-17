@@ -34,10 +34,8 @@ Then('user sees inbound metrics information', () => {
   cy.wait('@fetchMetrics');
   cy.waitForReact(1000, '#root');
   cy.getReact('IstioMetrics', { props: { 'data-test': 'inbound-metrics-component' } })
-    // Theres be multiple components of the same name providing state through redux/hooks.
-    // This gets us the one we we want but this tests will fail if the context providers
-    // change names or are removed.
-    .nthNode(2)
+    // HOCs can match the component name. This filters the HOCs for just the bare component.
+    .then((metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetrics')[0])
     .getCurrentState()
     .then(state => {
       cy.wrap(state.dashboard).should('not.be.empty');
@@ -50,7 +48,8 @@ Then('user sees outbound metrics information', () => {
   cy.wait('@fetchMetrics');
   cy.waitForReact(1000, '#root');
   cy.getReact('IstioMetrics', { props: { 'data-test': 'outbound-metrics-component' } })
-    .nthNode(2)
+    // HOCs can match the component name. This filters the HOCs for just the bare component.
+    .then((metricsComponents: any) => metricsComponents.filter(component => component.name === 'IstioMetrics')[0])
     .getCurrentState()
     .then(state => {
       cy.wrap(state.dashboard).should('not.be.empty');
