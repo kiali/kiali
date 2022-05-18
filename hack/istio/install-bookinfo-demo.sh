@@ -200,6 +200,15 @@ if [ "${DELETE_BOOKINFO}" == "true" ]; then
   else
     $CLIENT_EXE delete namespace ${NAMESPACE}
   fi
+  # It takes some time to delete the namespace, let's wait for that
+  echo -n "Waiting for ${NAMESPACE} to be deleted..."
+  while $CLIENT_EXE get namespace ${NAMESPACE} &> /dev/null
+  do
+    echo -n '.'
+    sleep 10
+  done
+  echo ""
+
   echo "====== BOOKINFO UNINSTALLED ====="
   exit 0
 fi
