@@ -79,18 +79,25 @@ func (in *OpenshiftOAuthService) Metadata(r *http.Request) (metadata *OAuthMetad
 
 	metadata = &OAuthMetadata{}
 
-	namespace, err := getKialiNamespace()
-	if err != nil {
-		return nil, err
+	var clientId string
+
+	if config.ClientId == "" {
+		namespace, err := getKialiNamespace()
+		if err != nil {
+			return nil, err
+		}
+		clientId = config.ClientIdPrefix + "-" + namespace
+	} else {
+		clientId = config.ClientId
 	}
 
 	if version.Major == "1" && (strings.HasPrefix(version.Minor, "11") || strings.HasPrefix(version.Minor, "10")) {
-		metadata.AuthorizationEndpoint = fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=%s", server.AuthorizationEndpoint, config.ClientIdPrefix+"-"+namespace, url.QueryEscape(redirectURL), "token")
+		metadata.AuthorizationEndpoint = fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=%s", server.AuthorizationEndpoint, clientId, url.QueryEscape(redirectURL), "token")
 	} else {
 		// The logout endpoint on the OpenShift OAuth Server
 		metadata.LogoutEndpoint = fmt.Sprintf("%s/logout", server.Issuer)
 		// The redirect path when logging out of the OpenShift OAuth Server. Note: this has to be a relative link to the OAuth server
-		metadata.LogoutRedirect = fmt.Sprintf("/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=%s", config.ClientIdPrefix+"-"+namespace, url.QueryEscape(redirectURL), "token")
+		metadata.LogoutRedirect = fmt.Sprintf("/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=%s", clientId, url.QueryEscape(redirectURL), "token")
 		// The fully qualified endpoint to use logging into the OpenShift OAuth server.
 		metadata.AuthorizationEndpoint = fmt.Sprintf("%s%s", server.Issuer, metadata.LogoutRedirect)
 	}
