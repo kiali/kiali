@@ -197,18 +197,11 @@ if [ "${DELETE_BOOKINFO}" == "true" ]; then
     fi
     $CLIENT_EXE delete scc bookinfo-scc
     $CLIENT_EXE delete project ${NAMESPACE}
+    # oc delete project does not wait for a namespace to be removed, we need to also call 'oc delete namespace'
+    $CLIENT_EXE delete namespace ${NAMESPACE}
   else
     $CLIENT_EXE delete namespace ${NAMESPACE}
   fi
-  # It takes some time to delete the namespace, let's wait for that
-  echo -n "Waiting for ${NAMESPACE} to be deleted..."
-  while $CLIENT_EXE get namespace ${NAMESPACE} &> /dev/null
-  do
-    echo -n '.'
-    sleep 10
-  done
-  echo ""
-
   echo "====== BOOKINFO UNINSTALLED ====="
   exit 0
 fi
