@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { IstioLevelToSeverity, ValidationMessage, ValidationTypes } from '../../../types/IstioObjects';
-import { Flex, FlexItem, Stack, StackItem, Title, TitleSizes } from '@patternfly/react-core';
+import {IstioLevelToSeverity, ObjectCheck, ValidationMessage, ValidationTypes} from '../../../types/IstioObjects';
+import { Flex, FlexItem, Stack, StackItem, Title, TitleSizes, Tooltip } from '@patternfly/react-core';
 import Validation from '../../../components/Validations/Validation';
 
 interface Props {
   messages: ValidationMessage[];
+  checks?: ObjectCheck[];
 }
 
 class IstioStatusMessageList extends React.Component<Props> {
@@ -35,6 +36,24 @@ class IstioStatusMessageList extends React.Component<Props> {
               </StackItem>
             );
           })}
+          <Stack>
+            {(this.props.checks || []).map((check, index) => {
+              return (
+                <StackItem id={'valid_msg-' + index} className={'validation-message'}>
+                  <Tooltip content={check.message}>
+                    <Flex>
+                      <FlexItem>
+                        <Validation severity={check.severity} />
+                      </FlexItem>
+                      <FlexItem>
+                        {check.code}
+                      </FlexItem>
+                    </Flex>
+                  </Tooltip>
+                </StackItem>
+              );
+            })}
+          </Stack>
         </Stack>
       </>
     );
