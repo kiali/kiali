@@ -24,7 +24,7 @@ The pipelines are scheduled to run on every Friday detecting if a released is ne
 
 ## Generating a release locally (without automation)
 
-Although is not recommended, in case of any issue with GitHub Actions, following the steps that the releases pipelines are executing should be enough to generate a release.
+Although it is not recommended, in case of any issue with GitHub Actions, following the steps that the releases pipelines are executing should be enough to generate a release.
 
 As prerequisites, the user would require:
 
@@ -112,11 +112,11 @@ jobs:
 
 By design, the release pipelines can be triggered manually and also are scheduled to trigger on every Friday.
 
-When triggering manually, some parameters will be required, these are the inputs to the pipeline and every pipeline declare defaults values.
+When triggering manually, some parameters will be required, these are the inputs to the pipeline and every pipeline declares default values.
 
 When the pipeline is triggered automatically, it will detect if it needs to publish the release or not.
 
-Note: In the past, we run the release pipeline every Friday using a cron, then the snapshots or the minor release were created. With this pipelines is the same, we need to run the job every Friday (cron does not support running for example every 3 weeks), but as we removed snapshots, there is not much to do on the first two weeks of our sprint, only to skip the release. On the third week of the sprint, he cron will fire on the Friday, and it will create a minor release.
+Note: In the past, we ran the release pipeline every Friday using a cron job, then the snapshots or the minor release were created. It is the same with these new pipelines - we need to run the job every Friday (the GitHub Actions cron does not support running, for example, every 3 weeks). But we have now removed the building/releasing of weekly snapshots. Because weekly snapshots are no longer released, there is not much to do the first two weeks of our sprint (the pipeline will simply skip doing any release those first two weeks). On the third week of the sprint, the cron will fire on Friday, and at that time it will create a minor release.
 
 Each pipeline can have several jobs, and it will depend on the application, but there are common jobs that will be present on all the release pipelines:
 
@@ -133,7 +133,7 @@ This job also logs the variables to facilitate the troubleshooting of a pipeline
 
 #### Release
 
-This jobs is used to generate all the required actions and assets to generate the release.
+This job is used to generate all the required actions and assets to generate the release.
 
 This job will use some secrets to:
 
