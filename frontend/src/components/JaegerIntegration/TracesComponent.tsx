@@ -278,7 +278,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                     otherTraces={this.state.traces}
                   />
                 </Tab>
-                <Tab eventKey={spansDetailsTab} title="Spans Details">
+                <Tab eventKey={spansDetailsTab} title="Span Details">
                   <SpanDetails
                     namespace={this.props.namespace}
                     target={this.props.target}
