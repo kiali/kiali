@@ -26,12 +26,9 @@ And(
   }
 );
 
-And(
-  'the {string} column on the {string} row is empty',
-  (column: string, rowText: string, text: string) => {
-    getColWithRowText(rowText, column).children().should('be.empty');
-  }
-);
+And('the {string} column on the {string} row is empty', (column: string, rowText: string, text: string) => {
+  getColWithRowText(rowText, column).children().should('be.empty');
+});
 
 Then('user sees {string} in the table', (service: string) => {
   cy.get('tbody').within(() => {
@@ -98,13 +95,11 @@ Then('user sees the {string} table with {int} rows', (tableName: string, numRows
       tableId = 'list_istio_config';
       break;
   }
-  cy.get('table[aria-label="' + tableId + '"]')
-      .within(() => {
-        cy.get('tbody')
-            .within(() => {
-              cy.get('tr').should('have.length', numRows);
-            });
-      });
+  cy.get('table[aria-label="' + tableId + '"]').within(() => {
+    cy.get('tbody').within(() => {
+      cy.get('tr').should('have.length', numRows);
+    });
+  });
 });
 
 // Note that we can't count the rows on this case, as empty tables add a row with the message
@@ -115,10 +110,9 @@ Then('user sees the {string} table with empty message', (tableName: string) => {
       tableId = 'list_istio_config';
       break;
   }
-  cy.get('table[aria-label="' + tableId + '"]')
-      .within(() => {
-        cy.get('[data-test="istio-config-empty"]');
-      });
+  cy.get('table[aria-label="' + tableId + '"]').within(() => {
+    cy.get('[data-test="istio-config-empty"]');
+  });
 });
 
 When('user clicks in the {string} table {string} badge {string} name row link', (tableName, badge, name) => {
@@ -128,19 +122,15 @@ When('user clicks in the {string} table {string} badge {string} name row link', 
       tableId = 'list_istio_config';
       break;
   }
-  cy.get('table[aria-label="' + tableId + '"]')
-      .within(() => {
-        cy.contains('span', badge)
-            .siblings()
-            .first()
-            .click();
-      });
+  cy.get('table[aria-label="' + tableId + '"]').within(() => {
+    cy.contains('span', badge).siblings().first().click();
+  });
 });
 
 // ensureObjectsInTable name can represent apps, istio config, objects, services etc.
 export function ensureObjectsInTable(...names: string[]) {
   cy.get('tbody').within(() => {
-    cy.get('tr').should('have.length', names.length);
+    cy.get('tr').should('have.length.at.least', names.length);
     names.forEach(name => {
       cy.get('tr').contains(name);
     });
