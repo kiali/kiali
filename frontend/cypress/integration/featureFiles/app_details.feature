@@ -7,6 +7,7 @@ Feature: Kiali App Details page
   should show span details about the selected trace.
 
   Background:
+    Given user is at administrator perspective
     And user is at the details page for the "app" "bookinfo/details"
   
   @app-details-page
