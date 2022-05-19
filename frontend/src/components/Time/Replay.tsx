@@ -286,7 +286,7 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
           <span className={controlStyle}>
             {this.state.status === 'playing' ? (
               <Tooltip key="replay-pause" position="top" content="Pause" entryDelay={1000}>
-                <Button className={controlButtonStyle} variant={ButtonVariant.link} onClick={this.pause}>
+                <Button data-test="graph-replay-pause-button" className={controlButtonStyle} variant={ButtonVariant.link} onClick={this.pause}>
                   <KialiIcon.PauseCircle className={controlIconStyle} />
                 </Button>
               </Tooltip>
@@ -297,7 +297,7 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
                 content={this.state.status === 'done' ? 'Play again' : 'Play'}
                 entryDelay={1000}
               >
-                <Button className={controlButtonStyle} variant={ButtonVariant.link} onClick={this.play}>
+                <Button data-test="graph-replay-play-button" className={controlButtonStyle} variant={ButtonVariant.link} onClick={this.play}>
                   <KialiIcon.PlayCircle className={controlIconStyle} />
                 </Button>
               </Tooltip>
@@ -433,6 +433,7 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
     return (
       <>
         <Button
+          data-test={`speed-${replaySpeed.text}`}
           key={`speed-${replaySpeed.text}`}
           className={speedStyle}
           variant={ButtonVariant.plain}
