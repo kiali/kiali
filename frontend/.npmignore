@@ -6,5 +6,4 @@ tsconfig.json
 tsconfig.test.json
 tslint.json
 .idea
-.storybook
 node_modules
