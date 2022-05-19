@@ -79,9 +79,6 @@ When('user selects {string} graph type', graphType => {
     .click();
   cy.get('#loading_kiali_spinner').should('not.exist');
 });
-
-///////////////////
-
 Then('user {string} graph tour', action => {
   if (action === 'sees') {
     cy.get('div[role="dialog"]').find('span').contains('Shortcuts').should('exist');
