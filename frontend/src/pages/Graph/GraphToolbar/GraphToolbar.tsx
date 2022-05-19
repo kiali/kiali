@@ -212,6 +212,7 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
               <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Shortcuts and tips...">
                 <TourStopContainer info={GraphTourStops.Shortcuts}>
                   <Button
+                    id="graph-tour"
                     variant="link"
                     style={{ paddingLeft: '6px', paddingRight: '0px' }}
                     onClick={this.props.onToggleHelp}

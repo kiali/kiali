@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Select, SelectOption, Tooltip } from '@patternfly/react-core';
+import { Select, SelectOption, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
 
 const widthAuto = style({
@@ -22,7 +22,7 @@ type ToolbarDropdownProps = {
   nameDropdown?: string;
   options: object;
   tooltip?: string;
-  tooltipBottom?: boolean;
+  tooltipPosition?: TooltipPosition;
   value?: number | string;
   useName?: boolean;
   classNameSelect?: string;
@@ -101,7 +101,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
           <Tooltip
             key={'ot-' + this.props.id}
             entryDelay={1000}
-            position={this.props.tooltipBottom ? 'bottom' : 'top'}
+            position={this.props.tooltipPosition ? this.props.tooltipPosition : TooltipPosition.auto}
             content={<>{this.props.tooltip}</>}
           >
             {dropdownButton}

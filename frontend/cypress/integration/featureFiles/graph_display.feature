@@ -181,3 +181,10 @@ Scenario: User enables animation
 Scenario: User disables animation
   When user "disables" "traffic animation" option
   Then "traffic animation" option "does not appear" in the graph
+
+@graph-page-display
+Scenario: User resets to factory default
+  When user resets to factory default
+  And user opens display menu
+  Then the display menu opens
+  And the display menu has default settings

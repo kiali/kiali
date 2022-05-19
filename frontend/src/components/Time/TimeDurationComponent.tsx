@@ -47,7 +47,7 @@ export class TimeDurationComponent extends React.PureComponent<TimeControlsProps
           prefix={prefix}
           suffix={suffix}
           tooltip={durationTooltip}
-          tooltipBottom={true}
+          tooltipPosition={TooltipPosition.left}
         />
         {!(this.props.supportsReplay && this.props.replayActive) && (
           <RefreshContainer
