@@ -121,6 +121,16 @@ And('user creates the configuration', () => {
         .should('not.exist');
 });
 
+And('user updates the configuration', () => {
+    cy.get('button[data-test="update"]')
+        .click();
+
+    cy.get('button[data-test="confirm-update"]')
+        .click()
+        .get('#loading_kiali_spinner')
+        .should('not.exist');
+});
+
 And('user confirms delete the configuration', () => {
     cy.get('button[data-test="confirm-delete"]')
         .click()
@@ -158,4 +168,23 @@ And('user sees the {string} regex in the editor', (regexContent) => {
     cy.get('.ace_content')
         .invoke('text')
         .should('match', re);
+});
+
+And('user clicks on Show Advanced Options', () => {
+    cy.get('.pf-c-expandable-section__toggle-text')
+        .click();
+});
+
+And('user clicks on Add Gateway', () => {
+    cy.get('input[id="advanced-gwSwitch"]').next()
+        .click();
+});
+
+And('user selects Create Gateway', () => {
+    cy.get('input[id="createGateway"]')
+        .click();
+});
+
+And('user sees warning icon in ACE editor', () => {
+    cy.get('.ace_warning')
 });
