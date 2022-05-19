@@ -54,8 +54,7 @@
     "start:prod": "sh -ac '. ./.env.downstream; npm run start:kiali'",
     "test": "npm run build-css && tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__",
     "analyze": "source-map-explorer build/static/js/main.*",
-    "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\"",
-    "storybook": "start-storybook -p 6006 -s public"
+    "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\""
   },
   "dependencies": {
     "@patternfly/patternfly": "4.179.1",
@@ -104,12 +103,6 @@
     "visibilityjs": "2.0.2"
   },
   "devDependencies": {
-    "@storybook/addon-actions": "^6.2.9",
-    "@storybook/addon-essentials": "^6.2.9",
-    "@storybook/addon-links": "^6.2.9",
-    "@storybook/node-logger": "^6.2.9",
-    "@storybook/preset-create-react-app": "^3.1.7",
-    "@storybook/react": "^6.2.9",
     "@types/cypress-cucumber-preprocessor": "^4.0.1",
     "@types/cytoscape": "3.14.0",
     "@types/enzyme": "3.10.5",
