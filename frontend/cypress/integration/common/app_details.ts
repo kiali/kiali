@@ -92,7 +92,7 @@ And('user sees span details after selecting a trace', () => {
   // Blue dot on scatterplot is a trace so find one and click on it.
   const tracingDotQuery = '[style*="fill: var(--pf-global--palette--blue-200)"][style*="stroke: transparent"]';
   cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
-  cy.getBySel('trace-details-tabs').should('be.visible').contains('Spans Details').click();
+  cy.getBySel('trace-details-tabs').should('be.visible').contains('Span Details').click();
 });
 
 And('user can filter spans by app', () => {
