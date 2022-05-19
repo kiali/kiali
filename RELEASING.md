@@ -1,6 +1,6 @@
 # Releasing Kiali
 
-Kiali release a minor version every 3 weeks and eventually if required, patch releases (z-stream) are also released.
+Kiali releases a minor version every 3 weeks and eventually, if required, patch releases (z-stream) are also released.
 
 The artifacts that are released are the following:
 
