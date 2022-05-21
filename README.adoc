@@ -425,11 +425,12 @@ The "Central IstioD" setup is currently named "Primary-remote" multi-cluster set
 [WARNING]
 When this support was incorporated into Kiali, the "Central IstioD" setup of Istio was in an early development phase. These instructions are probably now broken.
 
-There are certain use cases where Kiali needs to be deployed in one cluster (Control Plane) and observe a different cluster (Data Plane). link:https://user-images.githubusercontent.com/6889074/87819080-ad099980-c839-11ea-834b-56eec038ce4d.png[Diagram].
+There are certain use cases where Kiali needs to be deployed in one cluster (Control Plane) and observe a different cluster (Data Plane). 
+image:https://user-images.githubusercontent.com/6889074/87819080-ad099980-c839-11ea-834b-56eec038ce4d.png[Diagram]
 
 Follow these steps:
 
-1: You should have the link:https://github.com/istio/istio/wiki/Central-Istiod-single-cluster-steps[remote central istiod with a single cluster] setup running
+1: You should have the link:https://istio.io/latest/docs/setup/install/external-controlplane[Istio with an External Control Plane] setup running
 
 2: Create the link:https://github.com/istio/istio/blob/master/samples/addons/kiali.yaml[Kiali ClusterRole, ClusterRoleBinding, and ServiceAccount] in the Data Plane cluster
 
@@ -457,11 +458,6 @@ spec:
           secretName: istio-remote-secret-kiali
 ----
 
-5: Kiali now needs the Istio metrics from the sidecars. You need to run Prometheus in the Control Plane and have it scrape the metrics from an link:https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/#MeshConfig:[envoyMetricsService]. These metrics are *required*:
-
-  - istio_requests_total
-  - istio_request_duration_milliseconds
-  - istio_response_bytes
-  - istio_request_bytes
+5: Kiali now needs the Istio metrics from the sidecars. You need to run Prometheus in the Control Plane and have it scrape the metrics from an link:https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/#ProxyConfig[envoyMetricsService]. These link:https://kiali.io/docs/faq/general/#which-istio-metrics-and-attributes-are-required-by-kiali[metrics] are *required*.
 
 6: Kiali in the Control Plane should now be fully functional with the Data Plane
