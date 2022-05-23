@@ -45,15 +45,15 @@
     "cypress:run:junit": "cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json",
     "cypress:delete:reports": "rm cypress/results/* || true",
     "cypress:combine:reports": "jrm cypress/results/combined-report.xml \"cypress/results/*.xml\"",
-    "lint": "eslint --ext js,ts,tsx src",
+    "lint": "eslint --ext js,ts,tsx src && eslint --ext js,ts,tsc cypress",
     "lint:precommit": "if git diff --name-only HEAD | grep -E '\\.tsx?$'; then npm run lint; else true; fi",
-    "lintfix": "eslint --ext js,ts,tsx --fix src",
+    "lintfix": "eslint --ext js,ts,tsx --fix src,cypress",
     "start": "if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run start:prod; else npm run start:dev; fi",
     "start:dev": "sh -ac '. ./.env.upstream; npm run start:kiali'",
     "start:kiali": "npm run build-css && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts start",
     "start:prod": "sh -ac '. ./.env.downstream; npm run start:kiali'",
     "test": "npm run build-css && tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__",
-    "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\""
+    "prettier": "prettier --write \"{{src,cypress}/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\""
   },
   "dependencies": {
     "@patternfly/patternfly": "4.179.1",
@@ -149,7 +149,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn run pretty-quick --staged --pattern \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\" && npm run lint:precommit"
+      "pre-commit": "yarn run pretty-quick --staged --pattern \"{{src,cypress}/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\" && npm run lint:precommit"
     }
   },
   "browserslist": [
