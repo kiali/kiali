@@ -1,4 +1,4 @@
-import { And, Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { And, Given, Then } from 'cypress-cucumber-preprocessor/steps';
 import { checkHealthIndicatorInTable, checkHealthStatusInTable } from "./table";
 
 Given('a healthy workload in the cluster', function () {
@@ -29,10 +29,6 @@ And('user filters for workload type {string}', (workloadType: string) => {
       cy.get(`button[label="${workloadType}"]`).click();
     });
   });
-
-When('I fetch the list of workloads', function () {
-    cy.visit('/console/workloads?refresh=0');
-});
 
 Then('user sees {string} in workloads table', (workload: string) => {
   cy.get('tbody').within(() => {

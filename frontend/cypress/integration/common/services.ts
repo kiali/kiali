@@ -31,10 +31,6 @@ And('the health column on the {string} row has a health icon', (row: string) => 
   );
 });
 
-When('I fetch the list of services', function () {
-  cy.visit('/console/services?refresh=0');
-});
-
 And('user filters for service type {string}', (serviceType: string) => {
   cy.get('select[aria-label="filter_select_type"]').parent().within(() => {
     cy.get('button').click();
