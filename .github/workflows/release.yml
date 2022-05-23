@@ -231,7 +231,7 @@ jobs:
         sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
 
         # UI version
-        jq -r '.version |= "$(RELEASE_VERSION)"' frontend/package.json > frontend/package.json.tmp
+        jq -r '.version |= "${RELEASE_VERSION:1}"' frontend/package.json > frontend/package.json.tmp
         mv frontend/package.json.tmp frontend/package.json
 
 
@@ -293,7 +293,7 @@ jobs:
       run: |
         sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $NEXT_VERSION-SNAPSHOT/" Makefile
 
-        jq -r ".version |= \"$NEXT_VERSION\"" frontend/package.json > frontend/package.json.tmp
+        jq -r ".version |= \"${NEXT_VERSION:1}\"" frontend/package.json > frontend/package.json.tmp
         mv frontend/package.json.tmp frontend/package.json
 
         git add Makefile frontend/package.json
