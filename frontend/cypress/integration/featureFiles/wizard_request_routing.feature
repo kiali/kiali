@@ -51,7 +51,7 @@ Feature: Service Details Wizard: Request Routing
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "Request Routing" actions
     And user sees the "Update Request Routing" wizard
-    And user clicks on Show Advanced Options
+    And user clicks on "Show" Advanced Options
     And user clicks in the "Gateways" tab
     And user clicks on Add Gateway
     And user selects Create Gateway

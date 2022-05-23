@@ -170,8 +170,8 @@ And('user sees the {string} regex in the editor', (regexContent) => {
         .should('match', re);
 });
 
-And('user clicks on Show Advanced Options', () => {
-    cy.get('.pf-c-expandable-section__toggle-text')
+And('user clicks on {string} Advanced Options', (action) => {
+    cy.get('div[id="' + action.toLowerCase() + '_advanced_options"]').prev()
         .click();
 });
 
