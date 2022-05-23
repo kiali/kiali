@@ -76,7 +76,7 @@ export function getColWithRowText(rowSearchText: string, colName: string) {
   return cy.get(`th[data-label="${colName}"]`).then($th => {
     // Get the col number
     const colNum = $th.attr('data-key');
-    expect(colNum).to.not.be.empty;
+    expect(colNum).to.not.be.empty; // eslint-disable-line @typescript-eslint/no-unused-expressions
 
     cy.log(`Looking in column named: ${colName} at index: ${colNum}`);
 

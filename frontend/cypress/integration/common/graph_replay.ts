@@ -1,7 +1,5 @@
 import { Before, Then, When } from 'cypress-cucumber-preprocessor/steps';
 
-const url = '/console';
-
 Before(() => {
   // Copied from overview.ts.  This prevents cypress from stopping on errors unrelated to the tests.
   // There can be random failures due timeouts/loadtime/framework that throw browser errors.  This

@@ -1,4 +1,4 @@
-import { Given, When, And, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, And, Then } from 'cypress-cucumber-preprocessor/steps';
 
 const USERNAME = Cypress.env('USERNAME') || 'jenkins';
 const PASSWD = Cypress.env('PASSWD');
@@ -9,7 +9,7 @@ Given('user opens base url', () => {
   cy.visit('/');
   cy.log(auth_strategy);
   cy.window().then((win: any) => {
-    if (auth_strategy != 'openshift') {
+    if (auth_strategy !== 'openshift') {
       cy.log('Skipping login, Kiali is running with auth disabled');
     }
     // Make sure we clear the cookie in case a previous test failed to logout.
@@ -19,7 +19,6 @@ Given('user opens base url', () => {
 
 And('user clicks Log In With OpenShift', () => {
   if (auth_strategy === 'openshift') {
-    const idp = KUBEADMIN_IDP;
     cy.log(`Logging in as ${USERNAME}`);
     cy.get('button[type="submit"]').should('be.visible');
     cy.get('button[type="submit"]').click();

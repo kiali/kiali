@@ -44,7 +44,7 @@ Cypress.Commands.add('login', (provider: string, username: string, password: str
   cy.log('auth cookie is:', haveCookie);
 
   cy.window().then((win: any) => {
-    if (auth_strategy != 'openshift') {
+    if (auth_strategy !== 'openshift') {
       cy.log('Skipping login, Kiali is running with auth disabled');
     } else {
       if (haveCookie === false) {

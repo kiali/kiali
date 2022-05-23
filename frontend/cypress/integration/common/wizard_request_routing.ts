@@ -1,4 +1,4 @@
-import { And, Before, Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { And, Before, Given, When } from 'cypress-cucumber-preprocessor/steps';
 
 const url = '/console';
 

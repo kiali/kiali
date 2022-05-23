@@ -1,4 +1,4 @@
-import { Before, Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { Before, Then, When } from 'cypress-cucumber-preprocessor/steps';
 
 const url = '/console';
 
@@ -41,7 +41,6 @@ When('user {string} {string} edge labels', (action, edgeLabel) => {
 });
 
 When('user {string} {string} option', (action, option: string) => {
-  let id: string;
   switch (option.toLowerCase()) {
     case 'cluster boxes':
       option = 'boxByCluster';
@@ -282,7 +281,6 @@ Then('security {string} in the graph', action => {
 });
 
 Then('{string} option {string} in the graph', (option, action) => {
-  let id: string;
   switch (option.toLowerCase()) {
     case 'missing sidecars':
       option = 'filterSidecars';

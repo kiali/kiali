@@ -1,4 +1,4 @@
-import { And, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { And, Then } from 'cypress-cucumber-preprocessor/steps';
 import { getColWithRowText } from './table';
 
 And('user filters for config {string}', (configName: string) => {
