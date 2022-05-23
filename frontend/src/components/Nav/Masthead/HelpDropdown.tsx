@@ -121,6 +121,7 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
           <IstioCertsInfoConnected ref={this.certsInformation} />
         )}
         <Dropdown
+          data-test="about-help-button"
           isPlain={true}
           position="right"
           onSelect={this.onDropdownSelect}
