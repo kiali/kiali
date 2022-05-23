@@ -441,9 +441,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
               )}
               {isReady && (
                 <Chip
-                  className={`${graphTimeRange} ${
-                    this.props.replayActive ? replayBackground : whiteBackground
-                  }`}
+                  className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : whiteBackground}`}
                   isReadOnly={true}
                 >
                   {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}

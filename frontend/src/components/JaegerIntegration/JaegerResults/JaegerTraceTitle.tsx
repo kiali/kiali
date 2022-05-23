@@ -1,12 +1,5 @@
 import * as React from 'react';
-import {
-  CardActions,
-  CardHeader,
-  CardTitle,
-  Dropdown,
-  DropdownItem,
-  KebabToggle,
-} from '@patternfly/react-core';
+import { CardActions, CardHeader, CardTitle, Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { FormattedTraceInfo, fullIDStyle } from './FormattedTraceInfo';
 import history from 'app/History';

@@ -36,7 +36,12 @@ export class TimeDurationComponent extends React.PureComponent<TimeControlsProps
       <span>
         {this.props.supportsReplay && !this.props.replayActive && (
           <Tooltip key={'time_range_replay'} position={TooltipPosition.left} content="Replay...">
-            <Button data-test="graph-replay-button" variant="link" style={{ padding: '1px 6px 0 0' }} onClick={this.onToggleReplay}>
+            <Button
+              data-test="graph-replay-button"
+              variant="link"
+              style={{ padding: '1px 6px 0 0' }}
+              onClick={this.onToggleReplay}
+            >
               <KialiIcon.History className={defaultIconStyle} />
             </Button>
           </Tooltip>
@@ -59,7 +64,12 @@ export class TimeDurationComponent extends React.PureComponent<TimeControlsProps
           />
         )}
         {this.props.supportsReplay && this.props.replayActive && (
-          <Button data-test="graph-replay-close-button" variant="link" style={{ margin: '1px 0 0 5px' }} onClick={this.onToggleReplay}>
+          <Button
+            data-test="graph-replay-close-button"
+            variant="link"
+            style={{ margin: '1px 0 0 5px' }}
+            onClick={this.onToggleReplay}
+          >
             <span>
               <KialiIcon.Close className={defaultIconStyle} />
               {`  Close Replay`}

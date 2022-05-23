@@ -40,7 +40,9 @@ class IstioConfigCard extends React.Component<Props> {
           {
             title: (
               <EmptyState variant={EmptyStateVariant.small} className={emtpytStyle}>
-                <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">No Istio Config found for {this.props.name}</EmptyStateBody>
+                <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">
+                  No Istio Config found for {this.props.name}
+                </EmptyStateBody>
               </EmptyState>
             ),
             props: { colSpan: 2 }

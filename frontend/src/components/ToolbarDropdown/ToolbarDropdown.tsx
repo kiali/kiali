@@ -7,10 +7,10 @@ const widthAuto = style({
 });
 
 const dropdownTitle = style({
-  fontSize: 'var(--pf-global--FontSize--md)',  // valueOf --pf-c-select__toggle--FontSize
+  fontSize: 'var(--pf-global--FontSize--md)', // valueOf --pf-c-select__toggle--FontSize
   // @ts-ignore
   fontWeight: 'var(--pf-global--FontSize--normal)', // valueOf --pf-c-select__toggle--FontWeigt
-  marginRight: '10px',
+  marginRight: '10px'
 });
 
 type ToolbarDropdownProps = {

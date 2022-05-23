@@ -88,7 +88,7 @@ When('user {string} {string} option', (action, option: string) => {
 });
 
 When('user resets to factory default', () => {
-  cy.get('button#graph-factory-reset').click()
+  cy.get('button#graph-factory-reset').click();
   cy.get('#loading_kiali_spinner').should('not.exist');
 });
 

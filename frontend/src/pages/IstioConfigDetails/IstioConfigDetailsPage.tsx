@@ -1,11 +1,6 @@
 import * as React from 'react';
 import { Prompt, RouteComponentProps } from 'react-router-dom';
-import {
-  aceOptions,
-  IstioConfigDetails,
-  IstioConfigId,
-  safeDumpOptions
-} from '../../types/IstioConfigDetails';
+import { aceOptions, IstioConfigDetails, IstioConfigId, safeDumpOptions } from '../../types/IstioConfigDetails';
 import * as AlertUtils from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
@@ -50,7 +45,7 @@ import {
 import { dicIstioType } from '../../types/IstioConfigList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
 import { AxiosError } from 'axios';
-import RefreshContainer from "../../components/Refresh/Refresh";
+import RefreshContainer from '../../components/Refresh/Refresh';
 import IstioConfigOverview from './IstioObjectDetails/IstioConfigOverview';
 import { Annotation } from 'react-ace/types';
 
@@ -559,7 +554,9 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       <>
         <RenderHeader
           location={this.props.location}
-          rightToolbar={<RefreshContainer id="config_details_refresh" hideLabel={true} handleRefresh={this.onRefresh} />}
+          rightToolbar={
+            <RefreshContainer id="config_details_refresh" hideLabel={true} handleRefresh={this.onRefresh} />
+          }
           actionsToolbar={this.renderActions()}
         />
         <ParameterizedTabs

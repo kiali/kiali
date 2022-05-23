@@ -7,7 +7,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { style } from 'typestyle';
 
 type MissingSidecarProps = {
-  "data-test"?: string;
+  'data-test'?: string;
   text: string;
   textTooltip: string;
   tooltip: boolean;
@@ -36,7 +36,7 @@ class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
     const { text, textTooltip, icon, namespace, color, tooltip, style, ...otherProps } = this.props;
 
     const iconComponent = (
-      <span style={style} {...otherProps} data-test={this.props["data-test"]}>
+      <span style={style} {...otherProps} data-test={this.props['data-test']}>
         {React.createElement(icon, { style: { color: color, verticalAlign: '-2px' } })}
         {!tooltip && (
           <span style={{ marginLeft: '8px' }}>

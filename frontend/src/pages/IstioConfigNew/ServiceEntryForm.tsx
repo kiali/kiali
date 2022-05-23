@@ -246,7 +246,9 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
                 aria-describedby="add port number"
                 name="addPortNumber"
                 onChange={this.onAddPortNumber}
-                validated={isValid(this.state.addNewPortNumber.length > 0 && !isNaN(Number(this.state.addNewPortNumber)))}
+                validated={isValid(
+                  this.state.addNewPortNumber.length > 0 && !isNaN(Number(this.state.addNewPortNumber))
+                )}
               />
             </>,
             <>
@@ -280,8 +282,8 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
                 onChange={this.onAddTargetPort}
                 validated={isValid(
                   this.state.addNewTargetPort.length === 0 ||
-                  (this.state.addNewTargetPort.length > 0 && !isNaN(Number(this.state.addNewTargetPort))))
-                }
+                    (this.state.addNewTargetPort.length > 0 && !isNaN(Number(this.state.addNewTargetPort)))
+                )}
               />
             </>,
             <>

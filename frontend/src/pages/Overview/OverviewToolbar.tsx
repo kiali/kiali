@@ -176,7 +176,12 @@ export class OverviewToolbar extends React.Component<Props, State> {
               options={sortTypes}
               data-sort-field={this.state.sortField.id}
             />
-            <Button variant="plain" onClick={this.updateSortDirection} style={{ ...ThinStyle }} data-sort-asc={this.state.isSortAscending}>
+            <Button
+              variant="plain"
+              onClick={this.updateSortDirection}
+              style={{ ...ThinStyle }}
+              data-sort-asc={this.state.isSortAscending}
+            >
               {this.state.isSortAscending ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
             </Button>
           </>

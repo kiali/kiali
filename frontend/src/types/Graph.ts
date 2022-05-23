@@ -331,8 +331,8 @@ export interface GraphWorkloadStatus {
   name: string;
   desiredReplicas: number;
   currentReplicas: number;
-  availableReplicas: number
-  syncedProxies: number
+  availableReplicas: number;
+  syncedProxies: number;
 }
 
 export interface GraphNodeAppHealth {

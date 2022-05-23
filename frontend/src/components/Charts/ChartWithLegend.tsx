@@ -237,11 +237,7 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
                 }}
               />
             ) : (
-              <ChartAxis
-                tickCount={scaleInfo.count}
-                style={AxisStyle}
-                domain={this.props.timeWindow}
-              />
+              <ChartAxis tickCount={scaleInfo.count} style={AxisStyle} domain={this.props.timeWindow} />
             )
           }
           <ChartAxis

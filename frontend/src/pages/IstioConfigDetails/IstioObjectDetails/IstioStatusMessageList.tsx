@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {IstioLevelToSeverity, ObjectCheck, ValidationMessage, ValidationTypes} from '../../../types/IstioObjects';
+import { IstioLevelToSeverity, ObjectCheck, ValidationMessage, ValidationTypes } from '../../../types/IstioObjects';
 import { Flex, FlexItem, Stack, StackItem, Title, TitleSizes, Tooltip } from '@patternfly/react-core';
 import Validation from '../../../components/Validations/Validation';
 
@@ -45,9 +45,7 @@ class IstioStatusMessageList extends React.Component<Props> {
                       <FlexItem>
                         <Validation severity={check.severity} />
                       </FlexItem>
-                      <FlexItem>
-                        {check.code}
-                      </FlexItem>
+                      <FlexItem>{check.code}</FlexItem>
                     </Flex>
                   </Tooltip>
                 </StackItem>

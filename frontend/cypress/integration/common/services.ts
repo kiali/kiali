@@ -12,10 +12,12 @@ And('the health column on the {string} row has a health icon', (row: string) => 
 });
 
 And('user filters for service type {string}', (serviceType: string) => {
-  cy.get('select[aria-label="filter_select_type"]').parent().within(() => {
-    cy.get('button').click();
-    cy.get('button[label="External"]').click();
-  });
+  cy.get('select[aria-label="filter_select_type"]')
+    .parent()
+    .within(() => {
+      cy.get('button').click();
+      cy.get('button[label="External"]').click();
+    });
 });
 
 And('user filters for sidecar {string}', (sidecarState: string) => {

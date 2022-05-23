@@ -14,7 +14,7 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     name: 'Display',
     description:
       'Set edge labeling, node badging, and various display options. Response-time edge labeling, security badging, and traffic animation may affect performance. Response-times reflect the 95th percentile.',
-    position: PopoverPosition.rightStart,
+    position: PopoverPosition.rightStart
   },
   Find: {
     name: 'Find and Hide',

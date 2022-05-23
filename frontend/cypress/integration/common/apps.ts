@@ -58,13 +58,14 @@ Then('user only sees healthy apps', () => {
 });
 
 Then('the application should be listed as {string}', function (healthStatus: string) {
-  cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_${this.targetApp}] svg[class=icon-${healthStatus}]`)
-      .should('exist');
+  cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_${this.targetApp}] svg[class=icon-${healthStatus}]`).should(
+    'exist'
+  );
 });
 
 Then('the health status of the application should be {string}', function (healthStatus: string) {
-  cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_${this.targetApp}] td:first-child span`)
-      .trigger('mouseenter');
-  cy.get(`[aria-label='Health indicator'] strong`)
-      .should('contain.text', healthStatus);
+  cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_${this.targetApp}] td:first-child span`).trigger(
+    'mouseenter'
+  );
+  cy.get(`[aria-label='Health indicator'] strong`).should('contain.text', healthStatus);
 });
