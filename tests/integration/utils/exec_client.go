@@ -11,7 +11,7 @@ import (
 var ocCommand = NewExecCommand()
 
 func NewExecCommand() string {
-	command := os.Getenv("OC_COMMAND")
+	command := os.Getenv("CLIENT_EXE")
 	if command != "" {
 		return command
 	} else {
