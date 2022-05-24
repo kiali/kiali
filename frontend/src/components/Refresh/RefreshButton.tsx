@@ -34,6 +34,7 @@ class RefreshButton extends React.Component<Props> {
       <Tooltip position="bottom" content={<>Refresh</>}>
         <Button
           id={this.getElementId()}
+          data-test="refresh-button"
           onClick={this.handleRefresh}
           isDisabled={this.getDisabled()}
           aria-label="Action"

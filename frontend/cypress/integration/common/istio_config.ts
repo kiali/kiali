@@ -1,5 +1,6 @@
 import { And, Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import { getColWithRowText } from './table';
+import { ensureKialiFinishedLoading } from "./transition";
 
 function minimalAuthorizationPolicy(name: string, namespace: string): string {
   return `{
@@ -12,6 +13,46 @@ function minimalAuthorizationPolicy(name: string, namespace: string): string {
 }`;
 }
 
+function minimalDestinationRule(name: string, namespace: string, host: string): string {
+  return `{
+    "apiVersion": "networking.istio.io/v1alpha3",
+    "kind": "DestinationRule",
+    "metadata": {
+        "name": "${name}",
+        "namespace": "${namespace}"
+    },
+    "spec": {
+      "host": "${host}"
+    }
+}`;
+}
+
+function minimalVirtualService(name: string, namespace: string, routeName: string, routeHost: string, subset: string): string {
+  return `{
+    "apiVersion": "networking.istio.io/v1alpha3",
+    "kind": "VirtualService",
+    "metadata": {
+      "name": "${name}",
+      "namespace": "${namespace}"
+    },
+    "spec": {
+      "http": [
+        {
+          "name": "${routeName}",
+          "route": [
+            {
+              "destination": {
+                "host": "${routeHost}",
+                "subset": "${subset}"
+              }
+            }
+         ]
+        }
+      ]
+    }
+}`;
+}
+
 Given('a {string} AuthorizationPolicy in the {string} namespace', function (name: string, namespace: string) {
   cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace}`, { failOnNonZeroExit: false });
   cy.exec(`echo '${minimalAuthorizationPolicy(name, namespace)}' | kubectl apply -f -`);
@@ -20,19 +61,50 @@ Given('a {string} AuthorizationPolicy in the {string} namespace', function (name
 });
 
 Given('the AuthorizationPolicy has a from-source rule for {string} namespace', function (namespace: string) {
-  cy.exec(`kubectl patch AuthorizationPolicy ${this.targetAuthorizationPolicy} -n ${this.targetNamespace} --type=merge -p '{"spec":{"rules":[{"from":[{"source": {"namespaces":["${namespace}"]}}]}]}}'`)
+  cy.exec(`kubectl patch AuthorizationPolicy ${this.targetAuthorizationPolicy} -n ${this.targetNamespace} --type=merge -p '{"spec":{"rules":[{"from":[{"source": {"namespaces":["${namespace}"]}}]}]}}'`);
+});
+
+Given('the AuthorizationPolicy has a from-source rule for {string} principal', function (principal: string) {
+  cy.exec(`kubectl patch AuthorizationPolicy ${this.targetAuthorizationPolicy} -n ${this.targetNamespace} --type=merge -p '{"spec":{"rules":[{"from":[{"source": {"principals":["${principal}"]}}]}]}}'`);
 });
 
 Given('the AuthorizationPolicy has a to-operation rule with {string} method', function (method: string) {
-  cy.exec(`kubectl patch AuthorizationPolicy ${this.targetAuthorizationPolicy} -n ${this.targetNamespace} --type=merge -p '{"spec":{"rules":[{"to":[{"operation": {"methods":["${method}"]}}]}]}}'`)
+  cy.exec(`kubectl patch AuthorizationPolicy ${this.targetAuthorizationPolicy} -n ${this.targetNamespace} --type=merge -p '{"spec":{"rules":[{"to":[{"operation": {"methods":["${method}"]}}]}]}}'`);
 });
 
 Given('the AuthorizationPolicy has a to-operation rule with {string} host', function (host: string) {
-  cy.exec(`kubectl patch AuthorizationPolicy ${this.targetAuthorizationPolicy} -n ${this.targetNamespace} --type=merge -p '{"spec":{"rules":[{"to":[{"operation": {"hosts":["${host}"]}}]}]}}'`)
+  cy.exec(`kubectl patch AuthorizationPolicy ${this.targetAuthorizationPolicy} -n ${this.targetNamespace} --type=merge -p '{"spec":{"rules":[{"to":[{"operation": {"hosts":["${host}"]}}]}]}}'`);
 });
 
-When('the user fetches the list of Istio resources', function () {
-  cy.visit('/console/istio?refresh=0');
+Given('a {string} DestinationRule in the {string} namespace for {string} host', function (name: string, namespace: string, host: string) {
+  cy.exec(`kubectl delete DestinationRule ${name} -n ${namespace}`, { failOnNonZeroExit: false });
+  cy.exec(`echo '${minimalDestinationRule(name, namespace, host)}' | kubectl apply -f -`);
+  this.targetNamespace = namespace;
+  this.targetDestinationRule = name;
+});
+
+Given('the DestinationRule has a {string} subset for {string} labels', function (subset: string, labels: string) {
+  let labelsJson = labels.split(',').map((lbl: string) => {
+    let keyValue = lbl.split('=');
+    let key = keyValue[0];
+    let value = keyValue[1];
+
+    return `"${key}": "${value}"`;
+  }).join(',');
+
+  cy.exec(`kubectl patch DestinationRule ${this.targetDestinationRule} -n ${this.targetNamespace} --type=merge -p '{"spec":{"subsets":[ {"name":"${subset}", "labels": {${labelsJson}} }]}}'`);
+})
+
+Given('there is a {string} VirtualService in the {string} namespace with a {string} http-route to host {string} and subset {string}', function (vsName: string, namespace: string, routeName: string, routeHost: string, subset: string) {
+  cy.exec(`kubectl delete VirtualService ${vsName} -n ${namespace}`, { failOnNonZeroExit: false });
+  cy.exec(`echo '${minimalVirtualService(vsName, namespace, routeName, routeHost, subset)}' | kubectl apply -f -`);
+  this.targetNamespace = namespace;
+  this.targetVirtualService = vsName;
+});
+
+When('the user refreshes the list page', function () {
+  cy.get('[data-test="refresh-button"]').click();
+  ensureKialiFinishedLoading();
 });
 
 And('user filters for config {string}', (configName: string) => {
@@ -124,7 +196,13 @@ Then('the user can create a {string} Istio object', (object: string) => {
 });
 
 Then('the AuthorizationPolicy should have a {string}', function(healthStatus: string) {
-  cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_${this.targetAuthorizationPolicy}] svg`)
+  cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_authorizationpolicy_${this.targetAuthorizationPolicy}] svg`)
+      .invoke('attr', 'style')
+      .should('have.string', `${healthStatus}-color`);
+});
+
+Then('the {string} DestinationRule should have a {string}', function(drName: string, healthStatus: string) {
+  cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_destinationrule_${drName}] svg`)
       .invoke('attr', 'style')
       .should('have.string', `${healthStatus}-color`);
 });

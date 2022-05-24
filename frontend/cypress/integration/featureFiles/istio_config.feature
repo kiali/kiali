@@ -60,20 +60,50 @@ Feature: Kiali Istio Config page
   Scenario: KIA0101 validation
     Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
     And the AuthorizationPolicy has a from-source rule for "bar" namespace
-    When the user fetches the list of Istio resources
+    When the user refreshes the list page
     And user selects the "bookinfo" namespace
     Then the AuthorizationPolicy should have a "warning"
 
   Scenario: KIA0102 validation
     Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
     And the AuthorizationPolicy has a to-operation rule with "non-fully-qualified-grpc" method
-    When the user fetches the list of Istio resources
+    When the user refreshes the list page
     And user selects the "bookinfo" namespace
     Then the AuthorizationPolicy should have a "warning"
 
   Scenario: KIA0104 validation
     Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
     And the AuthorizationPolicy has a to-operation rule with "missing.hostname" host
-    When the user fetches the list of Istio resources
+    When the user refreshes the list page
     And user selects the "bookinfo" namespace
-    Then the AuthorizationPolicy should have a "error"
+    Then the AuthorizationPolicy should have a "danger"
+
+  Scenario: KIA0106 validation
+    Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
+    And the AuthorizationPolicy has a from-source rule for "cluster.local/ns/bookinfo/sa/sleep" principal
+    When the user refreshes the list page
+    And user selects the "bookinfo" namespace
+    Then the AuthorizationPolicy should have a "danger"
+
+  Scenario: KIA0201 validation
+    Given a "foo" DestinationRule in the "default" namespace for "sleep" host
+    And the DestinationRule has a "mysubset" subset for "version=v1" labels
+    And a "bar" DestinationRule in the "default" namespace for "sleep" host
+    And the DestinationRule has a "mysubset" subset for "version=v1" labels
+    When the user refreshes the list page
+    And user selects the "default" namespace
+    Then the "foo" DestinationRule should have a "warning"
+    And the "bar" DestinationRule should have a "warning"
+
+  Scenario: KIA0202 validation
+    Given a "foo" DestinationRule in the "default" namespace for "nonexistent" host
+    When the user refreshes the list page
+    And user selects the "default" namespace
+    Then the "foo" DestinationRule should have a "danger"
+
+  Scenario: KIA0203 validation
+    Given a "foo" DestinationRule in the "default" namespace for "sleep" host
+    And the DestinationRule has a "v1" subset for "version=v1" labels
+    And there is a "foo-route" VirtualService in the "default" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
+    When user selects the "default" namespace
+    Then the "foo" DestinationRule should have a "danger"

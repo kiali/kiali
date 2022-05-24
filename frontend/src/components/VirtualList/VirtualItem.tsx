@@ -56,7 +56,10 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
 
   render() {
     const { style, className, item } = this.props;
-    const key = 'VirtualItem_' + ('namespace' in item ? 'Ns' + item.namespace + '_' + item.name : item.name);
+    let key = 'VirtualItem_' + ('namespace' in item ? 'Ns' + item.namespace + '_' + item.name : item.name);
+    if ('type' in item) {
+      key = 'VirtualItem_Ns' + item.namespace + '_' + item.type + '_' + item.name;
+    }
     return (
       <tr style={style} className={className} role="row" key={key} data-test={key}>
         {this.renderDetails(item, this.state.health)}
