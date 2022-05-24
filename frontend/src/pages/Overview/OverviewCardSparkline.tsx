@@ -9,11 +9,13 @@ import { toVCLine } from 'utils/VictoryChartsUtils';
 
 import 'components/Charts/Charts.css';
 import { RichDataPoint, VCLine } from 'types/VictoryChartInfo';
+import {DirectionType} from "./OverviewToolbar";
 
 type Props = {
   metrics?: Metric[];
   errorMetrics?: Metric[];
   duration: DurationInSeconds;
+  direction: DirectionType;
 };
 
 function showMetrics(metrics: Metric[] | undefined): boolean {
@@ -42,7 +44,7 @@ class OverviewCardSparkline extends React.Component<Props, {}> {
 
       return (
         <>
-          <span data-test={'sparkline-duration-' + getName(this.props.duration).toLowerCase()}>{'Inbound traffic, ' + getName(this.props.duration).toLowerCase()}</span>
+          <span data-test={'sparkline-duration-' + getName(this.props.duration).toLowerCase()}>{this.props.direction + ' traffic, ' + getName(this.props.duration).toLowerCase()}</span>
           <SparklineChart
             name={'traffic'}
             height={60}
@@ -55,7 +57,7 @@ class OverviewCardSparkline extends React.Component<Props, {}> {
         </>
       );
     }
-    return <div style={{ paddingTop: '40px' }}>No inbound traffic</div>;
+    return <div style={{ paddingTop: '40px' }}>No {this.props.direction.toLowerCase()} traffic</div>;
   }
 }
 

@@ -154,6 +154,7 @@ export const status: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
           duration={FilterHelper.currentDuration()}
           status={ns.status}
           type={OverviewToolbar.currentOverviewType()}
+          direction={OverviewToolbar.currentDirectionType()}
           metrics={ns.metrics}
           errorMetrics={ns.errorMetrics}
         />
