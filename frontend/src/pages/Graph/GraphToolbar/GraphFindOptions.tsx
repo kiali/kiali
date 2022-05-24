@@ -37,9 +37,14 @@ export class GraphFindOptions extends React.PureComponent<GraphFindOptionsProps,
     return (
       <Dropdown
         key={`graph-${this.props.kind}-presets`}
-        id="graph-findhide-presets"
+        id={`graph-${this.props.kind}-presets`}
         toggle={
-          <DropdownToggle className={dropdown} toggleIndicator={null} onToggle={this.onToggle}>
+          <DropdownToggle
+            data-test={`${this.props.kind}-options-dropdown`}
+            className={dropdown}
+            toggleIndicator={null}
+            onToggle={this.onToggle}
+          >
             <KialiIcon.AngleDown />
           </DropdownToggle>
         }

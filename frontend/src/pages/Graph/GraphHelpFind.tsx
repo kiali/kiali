@@ -59,6 +59,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
           onResize={this.onResize}
         />
         <Popover
+          data-test="graph-find-hide-help"
           className={popoverStyle}
           position={PopoverPosition.auto}
           isVisible={true}
