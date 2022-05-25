@@ -62,6 +62,8 @@ jobs:
         with:
           working-directory: frontend
           command: yarn run cypress:run
+          # All deps should already be installed.
+          install: false
         env:
           CYPRESS_BASE_URL: ${{ steps.set-kiali-url.outputs.kiali_url }}
           CYPRESS_NUM_TESTS_KEPT_IN_MEMORY: 0
