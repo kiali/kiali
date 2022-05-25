@@ -120,7 +120,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
           {getTitle(nodeType)}
           <div>
             <span>
-              <PFBadge badge={PFBadges.Namespace} style={{ marginBottom: '2px' }} />
+              <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
               {nodeData.namespace}
               {actions && (
                 <Dropdown

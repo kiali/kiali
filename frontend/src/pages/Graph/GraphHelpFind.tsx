@@ -11,7 +11,7 @@ export interface GraphHelpFindProps {
 }
 
 const tabFont: React.CSSProperties = {
-  fontSize: '14px'
+  fontSize: 'var(--kiali-global--font-size)'
 };
 
 const contentWidth = '540px';

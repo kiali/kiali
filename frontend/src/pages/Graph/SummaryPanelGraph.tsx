@@ -388,7 +388,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     return (
       <React.Fragment key={`rf-${ns}`}>
         <span id={`ns-${ns}`}>
-          <PFBadge badge={PFBadges.Namespace} style={{ marginBottom: '2px' }} />
+          <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
           {ns} {this.renderValidations(ns)}
         </span>
         <br />

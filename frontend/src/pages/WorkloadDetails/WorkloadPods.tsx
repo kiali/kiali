@@ -137,7 +137,7 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
               title: (
                 <span>
                   <div key="service-icon" className={iconStyle}>
-                    <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
+                    <PFBadge badge={PFBadges.Pod} size="sm" position={TooltipPosition.top} />
                   </div>
                   {pod.name}
                   <Tooltip

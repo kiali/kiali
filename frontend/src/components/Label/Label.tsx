@@ -5,12 +5,15 @@ import { style } from 'typestyle';
 
 interface Props {
   name: string;
+  onClick?: () => void;
+  style?: React.CSSProperties;
   value: string;
 }
 
 const labelStyle = style({
   display: 'block',
   float: 'left',
+  fontSize: 'var(--kiali-global--font-size)',
   margin: '0 2px 2px 0',
   maxWidth: '100%'
 });
@@ -24,7 +27,7 @@ const Label = (props: Props) => {
   }
 
   return (
-    <PfLabel className={labelStyle} isCompact={true}>
+    <PfLabel className={labelStyle} style={props.style} isCompact={true} onClick={props.onClick}>
       {label}
     </PfLabel>
   );
