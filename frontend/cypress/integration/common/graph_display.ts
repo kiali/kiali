@@ -1,4 +1,5 @@
 import { Before, Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { ensureKialiFinishedLoading } from './transition';
 
 const url = '/console';
 
@@ -20,7 +21,12 @@ Before(() => {
 
 When('user graphs {string} namespaces', namespaces => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
+  cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
   cy.visit(url + `/graph/namespaces?refresh=0&namespaces=${namespaces}`);
+  if (namespaces !== '') {
+    cy.wait('@graphNamespaces');
+  }
+  ensureKialiFinishedLoading();
 });
 
 When('user opens display menu', () => {
@@ -88,7 +94,7 @@ When('user {string} {string} option', (action, option: string) => {
 });
 
 When('user resets to factory default', () => {
-  cy.get('button#graph-factory-reset').click()
+  cy.get('button#graph-factory-reset').click();
   cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
