@@ -28,7 +28,9 @@ jobs:
         with:
           node-version: "14"
           cache: yarn
-          cache-dependency-path: frontend/yarn.lock
+          cache-dependency-path: |
+            frontend/yarn.lock
+            ~/.cache/Cypress
 
       - name: Download go binary
         uses: actions/download-artifact@v3
