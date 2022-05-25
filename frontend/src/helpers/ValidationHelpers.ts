@@ -8,3 +8,8 @@ const regExpRequestHeaders = /^request\.headers\[.*\]$/;
 export const isValidRequestHeaderName = (name: string) => {
   return name === '' ? false : name.search(regExpRequestHeaders) === 0;
 };
+
+const regExpRequestAuthClaims = /^request\.auth\.claims(\[[^[\]]+\])*$/;
+export const isValidRequestAuthClaimName = (name: string) => {
+  return name === '' ? false : name.search(regExpRequestAuthClaims) === 0;
+};
