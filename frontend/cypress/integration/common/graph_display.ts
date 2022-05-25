@@ -21,7 +21,7 @@ Before(() => {
 
 When('user graphs {string} namespaces', namespaces => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-  cy.intercept('/api/namespaces/graph*').as('graphNamespaces');
+  cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
   cy.visit(url + `/graph/namespaces?refresh=0&namespaces=${namespaces}`);
   if (namespaces !== '') {
     cy.wait('@graphNamespaces');
