@@ -53,6 +53,21 @@ function minimalVirtualService(name: string, namespace: string, routeName: strin
 }`;
 }
 
+function minimalPeerAuthentication(name: string, namespace: string) {
+    return `{
+    "apiVersion": "security.istio.io/v1beta1",
+    "kind": "PeerAuthentication",
+    "metadata": {
+        "name": "${name}",
+        "namespace": "${namespace}"
+    }
+}`;
+}
+
+Given('there are no {string} resources in the cluster', function (crdName: string) {
+  cy.exec(`kubectl delete ${crdName} --all --all-namespaces`);
+});
+
 Given('a {string} AuthorizationPolicy in the {string} namespace', function (name: string, namespace: string) {
   cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace}`, { failOnNonZeroExit: false });
   cy.exec(`echo '${minimalAuthorizationPolicy(name, namespace)}' | kubectl apply -f -`);
@@ -84,13 +99,17 @@ Given('a {string} DestinationRule in the {string} namespace for {string} host', 
 });
 
 Given('the DestinationRule has a {string} subset for {string} labels', function (subset: string, labels: string) {
-  let labelsJson = labels.split(',').map((lbl: string) => {
-    let keyValue = lbl.split('=');
-    let key = keyValue[0];
-    let value = keyValue[1];
+  let labelsJson = "";
 
-    return `"${key}": "${value}"`;
-  }).join(',');
+  if (labels.length !== 0 ) {
+    labelsJson = labels.split(',').map((lbl: string) => {
+      let keyValue = lbl.split('=');
+      let key = keyValue[0];
+      let value = keyValue[1];
+
+      return `"${key}": "${value}"`;
+    }).join(',');
+  }
 
   cy.exec(`kubectl patch DestinationRule ${this.targetDestinationRule} -n ${this.targetNamespace} --type=merge -p '{"spec":{"subsets":[ {"name":"${subset}", "labels": {${labelsJson}} }]}}'`);
 })
@@ -100,6 +119,25 @@ Given('there is a {string} VirtualService in the {string} namespace with a {stri
   cy.exec(`echo '${minimalVirtualService(vsName, namespace, routeName, routeHost, subset)}' | kubectl apply -f -`);
   this.targetNamespace = namespace;
   this.targetVirtualService = vsName;
+});
+
+Given('the DestinationRule enables mTLS', function () {
+  cy.exec(`kubectl patch DestinationRule ${this.targetDestinationRule} -n ${this.targetNamespace} --type=merge -p '{"spec":{"trafficPolicy":{"tls": {"mode": "ISTIO_MUTUAL"}} }}'`);
+});
+
+Given('the DestinationRule disables mTLS', function () {
+  cy.exec(`kubectl patch DestinationRule ${this.targetDestinationRule} -n ${this.targetNamespace} --type=merge -p '{"spec":{"trafficPolicy":{"tls": {"mode": "DISABLE"}} }}'`);
+});
+
+Given('there is a {string} PeerAuthentication in the {string} namespace', function (name: string, namespace: string) {
+  cy.exec(`kubectl delete PeerAuthentication ${name} -n ${namespace}`, { failOnNonZeroExit: false });
+  cy.exec(`echo '${minimalPeerAuthentication(name, namespace)}' | kubectl apply -f -`);
+  this.targetNamespace = namespace;
+  this.targetPeerAuthentication = name;
+});
+
+Given('the PeerAuthentication has {string} mtls mode', function (mtlsMode: string) {
+  cy.exec(`kubectl patch PeerAuthentication ${this.targetPeerAuthentication} -n ${this.targetNamespace} --type=merge -p '{"spec":{"mtls":{"mode": "${mtlsMode}"}}}'`);
 });
 
 When('the user refreshes the list page', function () {
@@ -201,8 +239,8 @@ Then('the AuthorizationPolicy should have a {string}', function(healthStatus: st
       .should('have.string', `${healthStatus}-color`);
 });
 
-Then('the {string} DestinationRule should have a {string}', function(drName: string, healthStatus: string) {
-  cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_destinationrule_${drName}] svg`)
+Then('the {string} DestinationRule of the {string} namespace should have a {string}', function(drName: string, namespace:string, healthStatus: string) {
+  cy.get(`[data-test=VirtualItem_Ns${namespace}_destinationrule_${drName}] svg`)
       .invoke('attr', 'style')
       .should('have.string', `${healthStatus}-color`);
 });

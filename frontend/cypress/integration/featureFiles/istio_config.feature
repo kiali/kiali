@@ -8,6 +8,8 @@ Feature: Kiali Istio Config page
     Given user is at administrator perspective
     And user is at the "istio" page
     And user selects the "bookinfo" namespace
+    And there are no "PeerAuthentication" resources in the cluster
+    And there are no "DestinationRule" resources in the cluster
 
   @istio-page
   Scenario: See all Istio Config objects in the bookinfo namespace.
@@ -16,7 +18,7 @@ Feature: Kiali Istio Config page
     And user sees Namespace information for Istio objects
     And user sees Type information for Istio objects
     And user sees Configuration information for Istio objects
-  
+
   @istio-page
   Scenario: Filter Istio Config objects by Istio Name
     When the user filters by "Istio Name" for "bookinfo-gateway"
@@ -92,18 +94,50 @@ Feature: Kiali Istio Config page
     And the DestinationRule has a "mysubset" subset for "version=v1" labels
     When the user refreshes the list page
     And user selects the "default" namespace
-    Then the "foo" DestinationRule should have a "warning"
-    And the "bar" DestinationRule should have a "warning"
+    Then the "foo" DestinationRule of the "default" namespace should have a "warning"
+    And the "bar" DestinationRule of the "default" namespace should have a "warning"
 
   Scenario: KIA0202 validation
     Given a "foo" DestinationRule in the "default" namespace for "nonexistent" host
     When the user refreshes the list page
     And user selects the "default" namespace
-    Then the "foo" DestinationRule should have a "danger"
+    Then the "foo" DestinationRule of the "default" namespace should have a "danger"
 
   Scenario: KIA0203 validation
     Given a "foo" DestinationRule in the "default" namespace for "sleep" host
     And the DestinationRule has a "v1" subset for "version=v1" labels
     And there is a "foo-route" VirtualService in the "default" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
     When user selects the "default" namespace
-    Then the "foo" DestinationRule should have a "danger"
+    Then the "foo" DestinationRule of the "default" namespace should have a "danger"
+
+#  # TODO: Apparently, Kiali does not trigger this validation. Also KIA0205 and KIA0206 are not triggered.
+#  Scenario: KIA0204 validation
+#    Given a "default" DestinationRule in the "istio-system" namespace for "*.local" host
+#    And the DestinationRule enables mTLS
+#    And a "sleep" DestinationRule in the "default" namespace for "sleep" host
+#    And the DestinationRule has a "mysubset" subset for "app=sleep" labels
+#    When user selects the "default" namespace
+#    Then the "default" DestinationRule should have a "warning"
+#    And the "sleep" DestinationRule should have a "warning"
+
+  Scenario: KIA0207 validation
+    Given a "disable-mtls" DestinationRule in the "default" namespace for "*.default.svc.cluster.local" host
+    And the DestinationRule disables mTLS
+    And there is a "default" PeerAuthentication in the "default" namespace
+    And the PeerAuthentication has "STRICT" mtls mode
+    When user selects the "default" namespace
+    Then the "disable-mtls" DestinationRule of the "default" namespace should have a "danger"
+
+  Scenario: KIA0208 validation
+    Given a "disable-mtls" DestinationRule in the "default" namespace for "*.default.svc.cluster.local" host
+    And the DestinationRule disables mTLS
+    And there is a "default" PeerAuthentication in the "istio-system" namespace
+    And the PeerAuthentication has "STRICT" mtls mode
+    When user selects the "default" namespace
+    Then the "disable-mtls" DestinationRule of the "default" namespace should have a "danger"
+
+  Scenario: KIA0209 validation
+    Given a "foo" DestinationRule in the "default" namespace for "*.default.svc.cluster.local" host
+    And the DestinationRule has a "v1" subset for "" labels
+    When user selects the "default" namespace
+    Then the "foo" DestinationRule of the "default" namespace should have a "warning"
