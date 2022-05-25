@@ -386,7 +386,6 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           nsInfo.errorMetrics = rs.data.request_error_count;
           return nsInfo;
         });
-        return nsInfo;
       })
     ).catch(err => this.handleAxiosError('Could not fetch metrics', err));
   }
