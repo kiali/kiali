@@ -20,8 +20,8 @@ func TestPortMappingMatch(t *testing.T) {
 	assert := assert.New(t)
 
 	pmc := PortMappingChecker{
-		Service:     getService(9080, "http", nil, "test-namespace"),
-		Deployments: getDeployment(9080),
+		Service:     getService(80, "http", nil, "test-namespace"),
+		Deployments: getDeployment(80),
 		Pods:        getPods(true),
 	}
 
@@ -36,8 +36,8 @@ func TestTargetPortMappingMatch(t *testing.T) {
 
 	assert := assert.New(t)
 
-	service := getService(9080, "http", nil, "test-namespace")
-	service.Spec.Ports[0].TargetPort = intstr.FromInt(8080)
+	service := getService(80, "http", nil, "test-namespace")
+	service.Spec.Ports[0].TargetPort = intstr.FromInt(80)
 
 	/*
 		// If this is a string, it will be looked up as a named port in the
@@ -50,7 +50,7 @@ func TestTargetPortMappingMatch(t *testing.T) {
 
 	pmc := PortMappingChecker{
 		Service:     service,
-		Deployments: getDeployment(8080),
+		Deployments: getDeployment(80),
 		Pods:        getPods(true),
 	}
 
@@ -74,7 +74,7 @@ func TestPortMappingMismatch(t *testing.T) {
 	assert := assert.New(t)
 
 	pmc := PortMappingChecker{
-		Service:     getService(9080, "http", nil, "test-namespace"),
+		Service:     getService(80, "http", nil, "test-namespace"),
 		Deployments: getDeployment(8080),
 		Pods:        getPods(true),
 	}
@@ -94,7 +94,7 @@ func TestPortMappingNoMismatchIstio(t *testing.T) {
 	assert := assert.New(t)
 
 	pmc := PortMappingChecker{
-		Service:     getService(9080, "http", nil, "istio-system"),
+		Service:     getService(80, "http", nil, "istio-system"),
 		Deployments: getDeployment(8080),
 		Pods:        getPods(true),
 	}
