@@ -301,9 +301,6 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
           isOpen={this.state.confirmationModal}
           onClose={this.onHideConfirmModal}
           actions={[
-            <Button key="cancel" variant="secondary" onClick={this.onHideConfirmModal}>
-              Cancel
-            </Button>,
             <Button
               data-test="confirm-traffic-policies"
               key="confirm"
@@ -312,6 +309,9 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
               onClick={this.onConfirm}
             >
               {modalAction}
+            </Button>,
+            <Button key="cancel" variant="link" isInline onClick={this.onHideConfirmModal}>
+              Cancel
             </Button>
           ]}
         >

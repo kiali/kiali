@@ -401,11 +401,11 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
           isOpen={this.state.showConfirmDelete}
           onClose={this.hideConfirmDelete}
           actions={[
-            <Button key="cancel" variant="secondary" onClick={this.hideConfirmDelete}>
-              Cancel
-            </Button>,
             <Button key="confirm" variant="danger" onClick={this.onDelete} data-test={'confirm-delete'}>
               Delete
+            </Button>,
+            <Button key="cancel" variant="link" isInline onClick={this.hideConfirmDelete}>
+              Cancel
             </Button>
           ]}
         >

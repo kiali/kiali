@@ -178,9 +178,6 @@ export class IstioConfigPreview extends React.Component<Props, State> {
           this.props.actions
             ? this.props.actions
             : [
-                <Button key="cancel" variant="secondary" onClick={this.props.onClose}>
-                  Cancel
-                </Button>,
                 <Button
                   key={this.props.opTarget}
                   variant={this.props.opTarget === 'delete' ? 'danger' : 'primary'}
@@ -189,6 +186,9 @@ export class IstioConfigPreview extends React.Component<Props, State> {
                   data-test={this.props.opTarget}
                 >
                   {this.props.opTarget && this.props.opTarget[0].toUpperCase() + this.props.opTarget.substr(1)}
+                </Button>,
+                <Button key="cancel" variant="link" isInline onClick={this.props.onClose}>
+                  Cancel
                 </Button>
               ]
         }

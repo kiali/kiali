@@ -411,7 +411,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
               <Button variant="primary" isDisabled={!isFormValid} onClick={() => this.showPreview()}>
                 Preview
               </Button>
-              <Button variant="secondary" onClick={() => this.backToList()}>
+              <Button variant="link" isInline onClick={() => this.backToList()}>
                 Cancel
               </Button>
               {!isNamespacesValid && (

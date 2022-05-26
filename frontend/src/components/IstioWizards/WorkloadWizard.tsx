@@ -48,9 +48,6 @@ class WorkloadWizard extends React.Component<WorkloadWizardProps, WorkloadWizard
           isOpen={this.state.showWizard}
           onClose={() => this.onClose(false)}
           actions={[
-            <Button key="cancel" variant="secondary" onClick={() => this.onClose(false)}>
-              Cancel
-            </Button>,
             <Button
               isDisabled={!this.isValid(this.state)}
               key="confirm"
@@ -58,6 +55,9 @@ class WorkloadWizard extends React.Component<WorkloadWizardProps, WorkloadWizard
               onClick={this.onCreateUpdate}
             >
               {'Create'}
+            </Button>,
+            <Button key="cancel" variant="link" isInline onClick={() => this.onClose(false)}>
+              Cancel
             </Button>
           ]}
         >
