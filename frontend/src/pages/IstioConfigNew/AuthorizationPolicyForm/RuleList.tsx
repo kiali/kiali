@@ -103,10 +103,10 @@ class RuleList extends React.Component<Props> {
                         <b>key</b>: [{whenItem.key}]
                       </span>
                       <span style={{ marginLeft: 5 }}>
-                        <b>values:</b> [{whenItem.values}]
+                        <b>values:</b> [{whenItem.values ? whenItem.values.join(',') : ''}]
                       </span>
                       <span style={{ marginLeft: 5 }}>
-                        <b>notValues:</b> [{whenItem.notValues}]
+                        <b>notValues:</b> [{whenItem.notValues ? whenItem.notValues.join(',') : ''}]
                       </span>
                     </div>
                   );
