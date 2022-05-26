@@ -270,10 +270,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="1.39.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="2.3.0"
 
 # The default version of the crc bundle - this is typically the version included with the CRC download
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.9.15"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.10.12"
 
 # The default virtual CPUs assigned to the CRC VM
 DEFAULT_CRC_CPUS="5"
@@ -283,6 +283,9 @@ DEFAULT_CRC_MEMORY="16"
 
 # The default virtual disk size (in GB) assigned to the CRC VM
 DEFAULT_CRC_VIRTUAL_DISK_SIZE="31"
+
+# If true the OpenShift bundle will be downloaded when needed.
+DEFAULT_DOWNLOAD_BUNDLE="false"
 
 # process command line args to override environment
 _CMD=""
@@ -361,6 +364,10 @@ while [[ $# -gt 0 ]]; do
       CRC_VIRTUAL_DISK_SIZE="$2"
       shift;shift
       ;;
+    -db|--download-bundle)
+      DOWNLOAD_BUNDLE="$2"
+      shift;shift
+      ;;
     -p|--pull-secret-file)
       PULL_SECRET_FILE="$2"
       shift;shift
@@ -403,6 +410,11 @@ Valid options:
   -cvdisk|--crc-virtual-disk-size <disk size>
       The size of the virtual disk (in GB) to assign to the VM.
       Default: ${DEFAULT_CRC_VIRTUAL_DISK_SIZE}
+      Used only for the 'start' command.
+  -db|--download-bundle (true|false)
+      If true, the OpenShift bundle image will be downloaded by this script if needed.
+      You usually do not need to set this to true - crc itself will download the bundle if it is needed.
+      Default: ${DEFAULT_DOWNLOAD_BUNDLE}
       Used only for the 'start' command.
   -h|--help : this message
   -p|--pull-secret-file <filename>
@@ -469,6 +481,7 @@ CRC_KUBEADMIN_PASSWORD_FILE="${CRC_ROOT_DIR}/machines/crc/kubeadmin-password"
 CRC_KUBECONFIG="${CRC_ROOT_DIR}/machines/crc/kubeconfig"
 CRC_MACHINE_IMAGE="${CRC_ROOT_DIR}/machines/crc/crc"
 CRC_OC_BIN="${CRC_ROOT_DIR}/bin/oc/oc"
+DOWNLOAD_BUNDLE="${DOWNLOAD_BUNDLE:-${DEFAULT_DOWNLOAD_BUNDLE}}"
 
 # VM configuration
 CRC_CPUS=${CRC_CPUS:-${DEFAULT_CRC_CPUS}}
@@ -481,6 +494,12 @@ CRC_VIRTUAL_DISK_SIZE=${CRC_VIRTUAL_DISK_SIZE:-${DEFAULT_CRC_VIRTUAL_DISK_SIZE}}
 #--------------------------------------------------------------
 
 # Determine where to get the binaries and their full paths and how to execute them.
+
+# To see versions of crc and openshift, go to either:
+# * http://cdk-builds.usersys.redhat.com/builds/crc/releases
+# * https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc
+# Pick a version, and drill down into release-info.json - it will tell you what OpenShift it has inside, for example.
+
 #CRC_DOWNLOAD_LOCATION="https://mirror.openshift.com/pub/openshift-v4/clients/crc/${CRC_DOWNLOAD_VERSION}/crc-${CRC_DOWNLOAD_PLATFORM}-${CRC_DOWNLOAD_ARCH}.tar.xz"
 CRC_DOWNLOAD_LOCATION="https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc/${CRC_DOWNLOAD_VERSION}/crc-${CRC_DOWNLOAD_PLATFORM}-${CRC_DOWNLOAD_ARCH}.tar.xz"
 CRC_DOWNLOAD_LOCATION_ALT="http://cdk-builds.usersys.redhat.com/builds/crc/releases/${CRC_DOWNLOAD_VERSION}/crc-${CRC_DOWNLOAD_PLATFORM}-${CRC_DOWNLOAD_ARCH}.tar.xz"
@@ -491,8 +510,8 @@ if [ "${_VERBOSE}" == "true" ]; then
   CRC_COMMAND="${CRC_COMMAND} --log-level debug"
 fi
 
-CRC_LIBVIRT_DOWNLOAD_LOCATION="http://cdk-builds.usersys.redhat.com/builds/crc/bundles/${CRC_LIBVIRT_DOWNLOAD_VERSION}/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.crcbundle"
-CRC_LIBVIRT_PATH="${OPENSHIFT_BIN_PATH}/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.crcbundle"
+CRC_LIBVIRT_DOWNLOAD_LOCATION="https://mirror.openshift.com/pub/openshift-v4/clients/crc/bundles/openshift/${CRC_LIBVIRT_DOWNLOAD_VERSION}/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}_${CRC_DOWNLOAD_ARCH}.crcbundle"
+CRC_LIBVIRT_PATH="${OPENSHIFT_BIN_PATH}/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}_${CRC_DOWNLOAD_ARCH}.crcbundle"
 
 CRC_OC="${CRC_OC_BIN} --kubeconfig ${CRC_KUBECONFIG}"
 
@@ -530,7 +549,7 @@ fi
 
 # Download the crc tool if we do not have it yet
 if [ -f "${CRC_EXE_PATH}" ]; then
-  _existingVersion=$(${CRC_EXE_PATH} version 2>/dev/null | head -n 1 | sed ${SEDOPTIONS} "s/^CodeReady Containers version: \([A-Za-z0-9.]*\)[A-Za-z0-9.-]*+[a-z0-9]*$/\1/")
+  _existingVersion=$(${CRC_EXE_PATH} version 2>/dev/null | head -n 1 | sed ${SEDOPTIONS} "s/^C.*: \([A-Za-z0-9.]*\)[A-Za-z0-9.-]*+[a-z0-9]*$/\1/")
   _crc_major_minor_patch_version="$(echo -n ${CRC_DOWNLOAD_VERSION} | sed -E 's/([0-9]+.[0-9]+.[0-9]+).*/\1/')"
   if [ "${_existingVersion}" != "${CRC_DOWNLOAD_VERSION}" -a "${_existingVersion}" != "${_crc_major_minor_patch_version}" ]; then
     infomsg "===== WARNING ====="
@@ -569,25 +588,30 @@ debug "crc command that will be used: ${CRC_COMMAND}"
 debug "$(${CRC_COMMAND} version)"
 
 # Download the crc libvirt image if we do not have it yet
-CRC_BUNDLE_FILE="${CRC_LIBVIRT_PATH}"
-if [ -f "${CRC_LIBVIRT_PATH}" ]; then
-  debug "crc libvirt bundle that will be used: ${CRC_LIBVIRT_PATH}"
-elif [ "$(stat -c '%s' ${CRC_EXE_PATH})" -gt "1000000000" ]; then
-  debug "crc appears to have the bundle already included. It will be used: $(stat -c '%n (%s bytes)' ${CRC_EXE_PATH})"
-  CRC_BUNDLE_FILE=""
-else
-  infomsg "Downloading crc libvirt bundle to ${CRC_LIBVIRT_PATH}"
+if [ "${DOWNLOAD_BUNDLE}" == "true" ]; then
+  CRC_BUNDLE_FILE="${CRC_LIBVIRT_PATH}"
+  if [ -f "${CRC_LIBVIRT_PATH}" ]; then
+    debug "crc libvirt bundle that will be used: ${CRC_LIBVIRT_PATH}"
+  elif [ "$(stat -c '%s' ${CRC_EXE_PATH})" -gt "1000000000" ]; then
+    debug "crc appears to have the bundle already included. It will be used: $(stat -c '%n (%s bytes)' ${CRC_EXE_PATH})"
+    CRC_BUNDLE_FILE=""
+  else
+    infomsg "Downloading crc libvirt bundle to ${CRC_LIBVIRT_PATH}"
 
-  get_downloader
-  eval ${DOWNLOADER} "${CRC_LIBVIRT_PATH}" ${CRC_LIBVIRT_DOWNLOAD_LOCATION}
-  if [ "$?" != "0" ]; then
-    infomsg "===== WARNING ====="
-    infomsg "Could not download the crc libvirt bundle."
-    infomsg "Make sure this is valid: ${CRC_LIBVIRT_DOWNLOAD_LOCATION}"
-    infomsg "===== WARNING ====="
-    rm "${CRC_LIBVIRT_PATH}"
-    exit 1
+    get_downloader
+    eval ${DOWNLOADER} "${CRC_LIBVIRT_PATH}" ${CRC_LIBVIRT_DOWNLOAD_LOCATION}
+    if [ "$?" != "0" ]; then
+      infomsg "===== WARNING ====="
+      infomsg "Could not download the crc libvirt bundle."
+      infomsg "Make sure this is valid: ${CRC_LIBVIRT_DOWNLOAD_LOCATION}"
+      infomsg "===== WARNING ====="
+      rm "${CRC_LIBVIRT_PATH}"
+      exit 1
+    fi
   fi
+else
+  CRC_BUNDLE_FILE=""
+  infomsg "Was asked to not download the crc libvirt bundle"
 fi
 
 cd ${OPENSHIFT_BIN_PATH}
