@@ -67,6 +67,23 @@ func TestServiceDetailsInvalidName(t *testing.T) {
 	assert.Empty(app)
 }
 
+func TestServiceDetailsInvalidProtocol(t *testing.T) {
+	name := "ratings-java"
+	assert := assert.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-service-ports.yaml")
+	defer utils.DeleteFile(filePath, utils.BOOKINFO)
+	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
+
+	service, _, err := utils.ServiceDetails(name, utils.BOOKINFO)
+
+	assert.Nil(err)
+	assert.NotNil(service)
+	assert.NotEmpty(service.Validations["service"])
+	validation := service.Validations["service"][name+"."+utils.BOOKINFO]
+	assert.Len(validation.Checks, 1)
+	assert.Equal("Port number must match the protocol", validation.Checks[0].Message)
+}
+
 func TestServiceDiscoverVS(t *testing.T) {
 	assert := assert.New(t)
 	serviceName := "reviews"

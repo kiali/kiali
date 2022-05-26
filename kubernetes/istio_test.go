@@ -88,6 +88,45 @@ func TestInvalidPortNameMatcher(t *testing.T) {
 	assert.False(t, MatchPortNameWithValidProtocols("name"))
 }
 
+func TestValidPortProtocolMatcher(t *testing.T) {
+	assert.True(t, MatchPortNumberWithValidProtocols("grpc", 443))
+	assert.True(t, MatchPortNumberWithValidProtocols("gRPC-port", 443))
+	assert.True(t, MatchPortNumberWithValidProtocols("HTTP", 80))
+	assert.True(t, MatchPortNumberWithValidProtocols("http-port", 80))
+	assert.True(t, MatchPortNumberWithValidProtocols("http2", 80))
+	assert.True(t, MatchPortNumberWithValidProtocols("HTTP2-port", 80))
+	assert.True(t, MatchPortNumberWithValidProtocols("https", 443))
+	assert.True(t, MatchPortNumberWithValidProtocols("HTTPS-port", 443))
+	assert.True(t, MatchPortNumberWithValidProtocols("mongo", 27017))
+	assert.True(t, MatchPortNumberWithValidProtocols("MONGO-port", 27017))
+	assert.True(t, MatchPortNumberWithValidProtocols("mongo", 27018))
+	assert.True(t, MatchPortNumberWithValidProtocols("mongo-port", 27019))
+	assert.True(t, MatchPortNumberWithValidProtocols("redis", 6379))
+	assert.True(t, MatchPortNumberWithValidProtocols("tcp", 20))
+	assert.True(t, MatchPortNumberWithValidProtocols("TCP-port", 20))
+	assert.True(t, MatchPortNumberWithValidProtocols("tls", 443))
+	assert.True(t, MatchPortNumberWithValidProtocols("udp", 152))
+	assert.True(t, MatchPortNumberWithValidProtocols("mysql", 3306))
+	assert.True(t, MatchPortNumberWithValidProtocols("mysql-port", 33060))
+	assert.True(t, MatchPortNumberWithValidProtocols("mysql", 33061))
+	assert.True(t, MatchPortNumberWithValidProtocols("unknown-port", 111))
+}
+
+func TestInvalidPortProtocolMatcher(t *testing.T) {
+	assert.False(t, MatchPortNumberWithValidProtocols("grpc", 80))
+	assert.False(t, MatchPortNumberWithValidProtocols("gRPC-port", 80))
+	assert.False(t, MatchPortNumberWithValidProtocols("HTTP-port", 9090))
+	assert.False(t, MatchPortNumberWithValidProtocols("http", 9090))
+	assert.False(t, MatchPortNumberWithValidProtocols("http2", 9090))
+	assert.False(t, MatchPortNumberWithValidProtocols("HTTP2-port", 9090))
+	assert.False(t, MatchPortNumberWithValidProtocols("https", 80))
+	assert.False(t, MatchPortNumberWithValidProtocols("HTTPS-port", 80))
+	assert.False(t, MatchPortNumberWithValidProtocols("mongo", 111))
+	assert.False(t, MatchPortNumberWithValidProtocols("MONGO-port", 111))
+	assert.False(t, MatchPortNumberWithValidProtocols("redis", 222))
+	assert.False(t, MatchPortNumberWithValidProtocols("mysql", 3333))
+}
+
 func TestValidPortAppProtocolMatcher(t *testing.T) {
 	s1 := "http"
 	s2 := "mysql"

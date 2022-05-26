@@ -35,9 +35,15 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 					validation := models.Build("port.appprotocol.mismatch", fmt.Sprintf("spec/ports[%d]", portIndex))
 					validations = append(validations, &validation)
 				}
-			} else if !kubernetes.MatchPortNameWithValidProtocols(sp.Name) {
-				validation := models.Build("port.name.mismatch", fmt.Sprintf("spec/ports[%d]", portIndex))
-				validations = append(validations, &validation)
+			} else {
+				if !kubernetes.MatchPortNameWithValidProtocols(sp.Name) {
+					validation := models.Build("port.name.mismatch", fmt.Sprintf("spec/ports[%d]", portIndex))
+					validations = append(validations, &validation)
+				}
+				if !kubernetes.MatchPortNumberWithValidProtocols(sp.Name, sp.Port) {
+					validation := models.Build("port.number.mismatch", fmt.Sprintf("spec/ports[%d]", portIndex))
+					validations = append(validations, &validation)
+				}
 			}
 		}
 	}

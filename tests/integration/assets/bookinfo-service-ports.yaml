@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ratings-java
+  namespace: bookinfo
+  labels:
+    app: ratings-java
+    service: ratings-java
+spec:
+  ports:
+    - port: 80
+      name: https-wrongport
+  selector:
+    app: ratings-java
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ratings-java
+  namespace: bookinfo
+  labels:
+    app: ratings-java
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ratings-java
+      version: v1
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      labels:
+        app: ratings-java
+        version: v1
+    spec:
+      containers:
+        - name: ratings-java
+          image: pilhuhn/ratings-java:f
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80

@@ -242,6 +242,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Port name must follow <protocol>[-suffix] form",
 		Severity: ErrorSeverity,
 	},
+	"port.number.mismatch": {
+		Code:     "KIA0603",
+		Message:  "Port number must match the protocol",
+		Severity: WarningSeverity,
+	},
 	"service.deployment.port.mismatch": {
 		Code:     "KIA0701",
 		Message:  "Deployment exposing same port as Service not found",

@@ -30,7 +30,9 @@ const (
 
 var (
 	portNameMatcher = regexp.MustCompile(`^[\-].*`)
-	portProtocols   = [...]string{"grpc", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
+	portProtocols   = map[string][]int32{"grpc": {443}, "http": {80}, "http2": {443, 80}, "https": {443},
+		"mongo": {27017, 27018, 27019}, "redis": {6379}, "tcp": {}, "tls": {}, "udp": {},
+		"mysql": {3306, 33060, 33061}}
 )
 
 type IstioClientInterface interface {
@@ -526,7 +528,7 @@ func MatchPortNameRule(portName, protocol string) bool {
 }
 
 func MatchPortNameWithValidProtocols(portName string) bool {
-	for _, protocol := range portProtocols {
+	for protocol := range portProtocols {
 		if strings.HasPrefix(portName, protocol) &&
 			(strings.ToLower(portName) == protocol || portNameMatcher.MatchString(portName[len(protocol):])) {
 			return true
@@ -535,11 +537,29 @@ func MatchPortNameWithValidProtocols(portName string) bool {
 	return false
 }
 
+func MatchPortNumberWithValidProtocols(portName string, portNumber int32) bool {
+	if i := strings.Index(portName, "-"); i > -1 {
+		portName = portName[0:i]
+	}
+	portName = strings.ToLower(portName)
+	// If ports are not defined, then return true
+	if ports, ok := portProtocols[portName]; ok && len(ports) > 0 {
+		for _, port := range ports {
+			// match provided port with predefined ports per protocol
+			if port == portNumber {
+				return true
+			}
+		}
+		return false
+	}
+	return true
+}
+
 func MatchPortAppProtocolWithValidProtocols(appProtocol *string) bool {
 	if appProtocol == nil || *appProtocol == "" {
 		return false
 	}
-	for _, protocol := range portProtocols {
+	for protocol := range portProtocols {
 		if strings.ToLower(*appProtocol) == protocol {
 			return true
 		}
