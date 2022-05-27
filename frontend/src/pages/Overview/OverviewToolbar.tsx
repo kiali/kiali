@@ -236,15 +236,17 @@ export class OverviewToolbar extends React.Component<Props, State> {
           label={overviewTypes[this.state.overviewType]}
           options={overviewTypes}
         />
-        <ToolbarDropdown
-          id="direction-type"
-          disabled={false}
-          handleSelect={this.updateDirectionType}
-          nameDropdown="Traffic"
-          value={this.state.directionType}
-          label={directionTypes[this.state.directionType]}
-          options={directionTypes}
-        />
+        {this.props.displayMode !== OverviewDisplayMode.COMPACT && (
+          <ToolbarDropdown
+            id="direction-type"
+            disabled={false}
+            handleSelect={this.updateDirectionType}
+            nameDropdown="Traffic"
+            value={this.state.directionType}
+            label={directionTypes[this.state.directionType]}
+            options={directionTypes}
+          />
+        )}
         <Tooltip content={<>Expand view</>} position={TooltipPosition.top}>
           <Button
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
