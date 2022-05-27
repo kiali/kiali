@@ -47,10 +47,10 @@ class OverviewCardSparkline extends React.Component<Props, {}> {
           <span data-test={'sparkline-' + this.props.direction.toLowerCase() + '-duration-' + getName(this.props.duration).toLowerCase()}>{this.props.direction + ' traffic, ' + getName(this.props.duration).toLowerCase()}</span>
           <SparklineChart
             name={'traffic'}
-            height={60}
+            height={65}
             showLegend={false}
             showYAxis={true}
-            padding={{ top: 5, left: 30 }}
+            padding={{ top: 10, left: 30 }}
             tooltipFormat={dp => `${(dp.x as Date).toLocaleTimeString()}\n${dp.y} ${dp.name}`}
             series={series}
           />

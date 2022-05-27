@@ -27,7 +27,8 @@ class OverviewCardContentExpanded extends React.Component<Props> {
         <div
           style={{
             width: '100%',
-            height: 90,
+            height: 100,
+            paddingTop: 10,
             verticalAlign: 'top'
           }}
         >

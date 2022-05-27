@@ -125,9 +125,9 @@ When(`user selects {string} time range`, (interval) => {
         .should('not.exist');
 });
 
-When(`user selects {string} traffic duration`, (duration) => {
+When(`user selects {string} traffic direction`, (direction) => {
     let innerId = '';
-    switch (duration) {
+    switch (direction) {
         case 'Outbound':
             innerId = 'outbound';
             break;

@@ -240,7 +240,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
           id="direction-type"
           disabled={false}
           handleSelect={this.updateDirectionType}
-          nameDropdown="Traffic direction"
+          nameDropdown="Traffic"
           value={this.state.directionType}
           label={directionTypes[this.state.directionType]}
           options={directionTypes}

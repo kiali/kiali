@@ -80,7 +80,7 @@ Feature: Kiali Overview page
   @overview-page
   Scenario: Last 10 minutes Outbound traffic
     When user selects "Last 10m" time range
-    And user selects "Outbound" traffic duration
+    And user selects "Outbound" traffic direction
     Then user sees the "alpha" namespace with "outbound" traffic "10m"
 
   @overview-page
