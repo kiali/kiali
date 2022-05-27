@@ -2,6 +2,22 @@ import { And, Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import { getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from "./transition";
 
+function labelsStringToJson(labelsString: string) {
+  let labelsJson = "";
+
+  if (labelsString.length !== 0 ) {
+    labelsJson = labelsString.split(',').map((lbl: string) => {
+      let keyValue = lbl.split('=');
+      let key = keyValue[0];
+      let value = keyValue[1];
+
+      return `"${key}": "${value}"`;
+    }).join(',');
+  }
+
+  return `{${labelsJson}}`;
+}
+
 function minimalAuthorizationPolicy(name: string, namespace: string): string {
   return `{
     "apiVersion": "security.istio.io/v1beta1",
@@ -27,7 +43,7 @@ function minimalDestinationRule(name: string, namespace: string, host: string): 
 }`;
 }
 
-function minimalVirtualService(name: string, namespace: string, routeName: string, routeHost: string, subset: string): string {
+function minimalVirtualService(name: string, namespace: string, routeName: string, routeHost: string): string {
   return `{
     "apiVersion": "networking.istio.io/v1alpha3",
     "kind": "VirtualService",
@@ -42,8 +58,7 @@ function minimalVirtualService(name: string, namespace: string, routeName: strin
           "route": [
             {
               "destination": {
-                "host": "${routeHost}",
-                "subset": "${subset}"
+                "host": "${routeHost}"
               }
             }
          ]
@@ -64,8 +79,52 @@ function minimalPeerAuthentication(name: string, namespace: string) {
 }`;
 }
 
+function minimalGateway(name: string, namespace: string, hosts: string, port: number, labelsString: string) {
+  return `{
+      "apiVersion": "networking.istio.io/v1alpha3",
+      "kind": "Gateway",
+      "metadata": {
+        "name": "${name}",
+        "namespace": "${namespace}"
+      },
+      "spec": {
+        "selector": ${labelsStringToJson(labelsString)},
+        "servers": [
+          {
+            "port": {
+              "number": ${port},
+              "protocol": "HTTP",
+              "name": "HTTP"
+            },
+            "hosts": [${hosts.split(',').map(h => (`"${h}"`)).join(',')}]
+          }
+        ]
+      }
+}`;
+}
+
+function minimalSidecar(name: string, namespace: string, hosts: string) {
+  return `{
+      "apiVersion": "networking.istio.io/v1alpha3",
+      "kind": "Sidecar",
+      "metadata": {
+        "name": "${name}",
+        "namespace": "${namespace}"
+      },
+      "spec": {
+        "egress": [
+          { "hosts": [${hosts.split(',').map(h => (`"${h}"`)).join(',')}] }
+        ]
+      }
+}`;
+}
+
 Given('there are no {string} resources in the cluster', function (crdName: string) {
   cy.exec(`kubectl delete ${crdName} --all --all-namespaces`);
+});
+
+Given('there are no {string} resources in the {string} namespace', function (crdName: string, namespace: string) {
+  cy.exec(`kubectl delete ${crdName} --all -n ${namespace}`);
 });
 
 Given('a {string} AuthorizationPolicy in the {string} namespace', function (name: string, namespace: string) {
@@ -99,24 +158,20 @@ Given('a {string} DestinationRule in the {string} namespace for {string} host', 
 });
 
 Given('the DestinationRule has a {string} subset for {string} labels', function (subset: string, labels: string) {
-  let labelsJson = "";
-
-  if (labels.length !== 0 ) {
-    labelsJson = labels.split(',').map((lbl: string) => {
-      let keyValue = lbl.split('=');
-      let key = keyValue[0];
-      let value = keyValue[1];
-
-      return `"${key}": "${value}"`;
-    }).join(',');
-  }
-
-  cy.exec(`kubectl patch DestinationRule ${this.targetDestinationRule} -n ${this.targetNamespace} --type=merge -p '{"spec":{"subsets":[ {"name":"${subset}", "labels": {${labelsJson}} }]}}'`);
-})
+  cy.exec(`kubectl patch DestinationRule ${this.targetDestinationRule} -n ${this.targetNamespace} --type=merge -p '{"spec":{"subsets":[ {"name":"${subset}", "labels": ${labelsStringToJson(labels)} }]}}'`);
+});
 
 Given('there is a {string} VirtualService in the {string} namespace with a {string} http-route to host {string} and subset {string}', function (vsName: string, namespace: string, routeName: string, routeHost: string, subset: string) {
   cy.exec(`kubectl delete VirtualService ${vsName} -n ${namespace}`, { failOnNonZeroExit: false });
-  cy.exec(`echo '${minimalVirtualService(vsName, namespace, routeName, routeHost, subset)}' | kubectl apply -f -`);
+  cy.exec(`echo '${minimalVirtualService(vsName, namespace, routeName, routeHost)}' | kubectl apply -f -`);
+  cy.exec(`kubectl patch VirtualService ${vsName} -n ${namespace} --type=json -p '[{"op": "add", "path": "/spec/http/0/route/0/destination/subset", "value": "${subset}"}]'`);
+  this.targetNamespace = namespace;
+  this.targetVirtualService = vsName;
+});
+
+Given('there is a {string} VirtualService in the {string} namespace with a {string} http-route to host {string}', function (vsName: string, namespace: string, routeName: string, routeHost: string) {
+  cy.exec(`kubectl delete VirtualService ${vsName} -n ${namespace}`, { failOnNonZeroExit: false });
+  cy.exec(`echo '${minimalVirtualService(vsName, namespace, routeName, routeHost)}' | kubectl apply -f -`);
   this.targetNamespace = namespace;
   this.targetVirtualService = vsName;
 });
@@ -138,6 +193,40 @@ Given('there is a {string} PeerAuthentication in the {string} namespace', functi
 
 Given('the PeerAuthentication has {string} mtls mode', function (mtlsMode: string) {
   cy.exec(`kubectl patch PeerAuthentication ${this.targetPeerAuthentication} -n ${this.targetNamespace} --type=merge -p '{"spec":{"mtls":{"mode": "${mtlsMode}"}}}'`);
+});
+
+Given('there is a {string} Gateway on {string} namespace for {string} hosts on HTTP port {int} with {string} labels selector', function(name: string, namespace: string, hosts: string, port: number, labels: string) {
+  cy.exec(`kubectl delete Gateway ${name} -n ${namespace}`, { failOnNonZeroExit: false });
+  cy.exec(`echo '${minimalGateway(name, namespace, hosts, port, labels)}' | kubectl apply -f -`);
+  this.targetNamespace = namespace;
+  this.targetGateway = name;
+});
+
+Given('there is a {string} Sidecar resource in the {string} namespace that captures egress traffic for hosts {string}', function (name: string, namespace: string, hosts: string) {
+  cy.exec(`kubectl delete Sidecar ${name} -n ${namespace}`, { failOnNonZeroExit: false });
+  cy.exec(`echo '${minimalSidecar(name, namespace, hosts)}' | kubectl apply -f -`);
+  this.targetNamespace = namespace;
+  this.targetSidecar = name;
+});
+
+Given('the Sidecar is applied to workloads with {string} labels', function (labelsString: string) {
+  cy.exec(`kubectl patch Sidecar ${this.targetSidecar} -n ${this.targetNamespace} --type=merge -p '{"spec":{"workloadSelector":{"labels": ${labelsStringToJson(labelsString)}}}}'`);
+});
+
+Given('the VirtualService applies to {string} hosts', function (hosts: string) {
+  cy.exec(`kubectl patch VirtualService ${this.targetVirtualService} -n ${this.targetNamespace} --type=merge -p '{"spec":{"hosts": [${hosts.split(',').map(h => `"${h}"`).join(',')}]}}'`);
+});
+
+Given('the VirtualService references {string} gateways', function (gateway: string) {
+  cy.exec(`kubectl patch VirtualService ${this.targetVirtualService} -n ${this.targetNamespace} --type=json -p '[{"op": "add", "path": "/spec/gateways", "value": ["${gateway}"]}]'`);
+});
+
+Given('the route of the VirtualService has weight {int}', function (weight: number) {
+  cy.exec(`kubectl patch VirtualService ${this.targetVirtualService} -n ${this.targetNamespace} --type=json -p '[{"op": "add", "path": "/spec/http/0/route/0/weight", "value": ${weight}}]'`);
+});
+
+Given('the http-route of the VirtualService also has a destination to host {string} and subset {string} with weight {int}', function (host: string, subset: string, weight: number) {
+  cy.exec(`kubectl patch VirtualService ${this.targetVirtualService} -n ${this.targetNamespace} --type=json -p '[{"op": "add", "path": "/spec/http/0/route/-", "value": {"weight": ${weight}, "destination":{"host": "${host}", "subset": "${subset}"}} }]'`);
 });
 
 When('the user refreshes the list page', function () {
@@ -239,8 +328,8 @@ Then('the AuthorizationPolicy should have a {string}', function(healthStatus: st
       .should('have.string', `${healthStatus}-color`);
 });
 
-Then('the {string} DestinationRule of the {string} namespace should have a {string}', function(drName: string, namespace:string, healthStatus: string) {
-  cy.get(`[data-test=VirtualItem_Ns${namespace}_destinationrule_${drName}] svg`)
+Then('the {string} {string} of the {string} namespace should have a {string}', function(crdInstanceName: string, crdName: string, namespace:string, healthStatus: string) {
+  cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}] svg`)
       .invoke('attr', 'style')
       .should('have.string', `${healthStatus}-color`);
 });

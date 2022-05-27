@@ -10,6 +10,7 @@ Feature: Kiali Istio Config page
     And user selects the "bookinfo" namespace
     And there are no "PeerAuthentication" resources in the cluster
     And there are no "DestinationRule" resources in the cluster
+    And there are no "Gateways" resources in the "default" namespace
 
   @istio-page
   Scenario: See all Istio Config objects in the bookinfo namespace.
@@ -94,21 +95,21 @@ Feature: Kiali Istio Config page
     And the DestinationRule has a "mysubset" subset for "version=v1" labels
     When the user refreshes the list page
     And user selects the "default" namespace
-    Then the "foo" DestinationRule of the "default" namespace should have a "warning"
-    And the "bar" DestinationRule of the "default" namespace should have a "warning"
+    Then the "foo" "DestinationRule" of the "default" namespace should have a "warning"
+    And the "bar" "DestinationRule" of the "default" namespace should have a "warning"
 
   Scenario: KIA0202 validation
     Given a "foo" DestinationRule in the "default" namespace for "nonexistent" host
     When the user refreshes the list page
     And user selects the "default" namespace
-    Then the "foo" DestinationRule of the "default" namespace should have a "danger"
+    Then the "foo" "DestinationRule" of the "default" namespace should have a "danger"
 
   Scenario: KIA0203 validation
     Given a "foo" DestinationRule in the "default" namespace for "sleep" host
     And the DestinationRule has a "v1" subset for "version=v1" labels
     And there is a "foo-route" VirtualService in the "default" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
     When user selects the "default" namespace
-    Then the "foo" DestinationRule of the "default" namespace should have a "danger"
+    Then the "foo" "DestinationRule" of the "default" namespace should have a "danger"
 
 #  # TODO: Apparently, Kiali does not trigger this validation. Also KIA0205 and KIA0206 are not triggered.
 #  Scenario: KIA0204 validation
@@ -126,7 +127,7 @@ Feature: Kiali Istio Config page
     And there is a "default" PeerAuthentication in the "default" namespace
     And the PeerAuthentication has "STRICT" mtls mode
     When user selects the "default" namespace
-    Then the "disable-mtls" DestinationRule of the "default" namespace should have a "danger"
+    Then the "disable-mtls" "DestinationRule" of the "default" namespace should have a "danger"
 
   Scenario: KIA0208 validation
     Given a "disable-mtls" DestinationRule in the "default" namespace for "*.default.svc.cluster.local" host
@@ -134,10 +135,128 @@ Feature: Kiali Istio Config page
     And there is a "default" PeerAuthentication in the "istio-system" namespace
     And the PeerAuthentication has "STRICT" mtls mode
     When user selects the "default" namespace
-    Then the "disable-mtls" DestinationRule of the "default" namespace should have a "danger"
+    Then the "disable-mtls" "DestinationRule" of the "default" namespace should have a "danger"
 
   Scenario: KIA0209 validation
     Given a "foo" DestinationRule in the "default" namespace for "*.default.svc.cluster.local" host
     And the DestinationRule has a "v1" subset for "" labels
     When user selects the "default" namespace
-    Then the "foo" DestinationRule of the "default" namespace should have a "warning"
+    Then the "foo" "DestinationRule" of the "default" namespace should have a "warning"
+
+  Scenario: KIA0301 validation
+    Given there is a "foo" Gateway on "bookinfo" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
+    And there is a "foo" Gateway on "default" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
+    When user selects the "default" namespace
+    Then the "foo" "Gateway" of the "bookinfo" namespace should have a "warning"
+    And the "foo" "Gateway" of the "default" namespace should have a "warning"
+
+  Scenario: KIA0302 validation
+    Given there is a "foo" Gateway on "default" namespace for "foo.local" hosts on HTTP port 80 with "app=foo" labels selector
+    When user selects the "default" namespace
+    Then the "foo" "Gateway" of the "default" namespace should have a "warning"
+
+#    # TODO: Ídem
+#  Scenario: KIA0401 validation
+#    Given there is a "default" PeerAuthentication in the "istio-system" namespace
+#    And the PeerAuthentication has "STRICT" mtls mode
+#    When user selects the "istio-system" namespace
+#    Then the "default" "PeerAuthentication" of the "istio-system" namespace should have a "danger"
+#
+#  # TODO: Ídem
+#  Scenario: KIA0501 validation
+#    Given there is a "default" PeerAuthentication in the "default" namespace
+#    And the PeerAuthentication has "STRICT" mtls mode
+#    When user selects the "default" namespace
+#    Then the "default" "PeerAuthentication" of the "default" namespace should have a "danger"
+
+  Scenario: KIA0505 validation
+    Given a "enable-mtls" DestinationRule in the "default" namespace for "*.default.svc.cluster.local" host
+    And the DestinationRule enables mTLS
+    And there is a "default" PeerAuthentication in the "default" namespace
+    And the PeerAuthentication has "DISABLE" mtls mode
+    When user selects the "default" namespace
+    Then the "default" "PeerAuthentication" of the "default" namespace should have a "danger"
+
+  Scenario: KIA0506 validation
+    Given a "enable-mtls" DestinationRule in the "default" namespace for "*.local" host
+    And the DestinationRule enables mTLS
+    And there is a "default" PeerAuthentication in the "istio-system" namespace
+    And the PeerAuthentication has "DISABLE" mtls mode
+    When user selects the "istio-system" namespace
+    Then the "default" "PeerAuthentication" of the "istio-system" namespace should have a "danger"
+
+  # TODO: KIA06xx and KIA07xx does not appear in Istio Config list page. They appear in Svc/workload lists.
+  # TODO: KIA0801 is only applicable for Maistra
+
+  # TODO: KIA090x no longer apply to current Istio (ServiceRole does not exist anymore)
+
+  # TODO: KIA1003 no longer applies. Istio rejects a resource without a valid hosts format.
+#  Scenario: KIA1003 validation
+#    Given there is a "foo" Sidecar resource in the "default" namespace that captures egress traffic for hosts "noslashsymbolpresent"
+#    And the Sidecar is applied to workloads with "app=foo" labels
+#    When user selects the "default" namespace
+#    Then the "foo" "Sidecar" of the "default" namespace should have a "danger"
+
+  Scenario: KIA1004 validation
+    Given there is a "foo" Sidecar resource in the "default" namespace that captures egress traffic for hosts "default/foo.default.svc.cluster.local"
+    And the Sidecar is applied to workloads with "app=sleep" labels
+    When user selects the "default" namespace
+    Then the "foo" "Sidecar" of the "default" namespace should have a "warning"
+
+  Scenario: KIA1006 validation
+    Given there is a "default" Sidecar resource in the "istio-system" namespace that captures egress traffic for hosts "default/sleep.default.svc.cluster.local"
+    And the Sidecar is applied to workloads with "app=grafana" labels
+    When user selects the "istio-system" namespace
+    Then the "default" "Sidecar" of the "istio-system" namespace should have a "warning"
+
+  Scenario: KIA1101 validation
+    Given there is a "foo" VirtualService in the "default" namespace with a "foo-route" http-route to host "foo"
+    When user selects the "default" namespace
+    Then the "foo" "VirtualService" of the "default" namespace should have a "danger"
+
+  Scenario: KIA1102 validation
+    Given there is a "foo" VirtualService in the "default" namespace with a "foo-route" http-route to host "sleep"
+    And the VirtualService applies to "sleep" hosts
+    And the VirtualService references "foo" gateways
+    When user selects the "default" namespace
+    Then the "foo" "VirtualService" of the "default" namespace should have a "danger"
+
+  # TODO: KIA1103 can no longer happen, because Istio rejects it.
+
+  Scenario: KIA1104 validation
+    Given there is a "foo" VirtualService in the "default" namespace with a "foo-route" http-route to host "sleep"
+    And the route of the VirtualService has weight 10
+    When user selects the "default" namespace
+    Then the "foo" "VirtualService" of the "default" namespace should have a "warning"
+
+  Scenario: KIA1105 validation
+    Given there is a "foo" VirtualService in the "default" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
+    And the route of the VirtualService has weight 50
+    And the http-route of the VirtualService also has a destination to host "sleep" and subset "v1" with weight 50
+    And a "foo" DestinationRule in the "default" namespace for "sleep" host
+    And the DestinationRule has a "v1" subset for "version=v1" labels
+    When user selects the "default" namespace
+    Then the "foo" "VirtualService" of the "default" namespace should have a "warning"
+
+  Scenario: KIA1106 validation
+    Given there is a "foo" VirtualService in the "default" namespace with a "foo-route" http-route to host "sleep"
+    And the VirtualService applies to "sleep" hosts
+    Given there is a "bar" VirtualService in the "default" namespace with a "bar-route" http-route to host "sleep"
+    And the VirtualService applies to "sleep" hosts
+    When user selects the "default" namespace
+    Then the "foo" "VirtualService" of the "default" namespace should have a "warning"
+    And the "bar" "VirtualService" of the "default" namespace should have a "warning"
+
+  Scenario: KIA1107 validation
+    Given there is a "foo" VirtualService in the "default" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
+    When user selects the "default" namespace
+    Then the "foo" "VirtualService" of the "default" namespace should have a "warning"
+
+  # TODO: Validation is not triggering
+#  Scenario: KIA1108 validation
+#    Given there is a "foo" VirtualService in the "bookinfo" namespace with a "foo-route" http-route to host "reviews"
+#    And the VirtualService applies to "reviews" hosts
+#    And the VirtualService references "bookinfo-gateway.bookinfo.svc.cluster.local" gateways
+#    When the user refreshes the list page
+#    Then the "foo" "VirtualService" of the "bookinfo" namespace should have a "warning"
+
