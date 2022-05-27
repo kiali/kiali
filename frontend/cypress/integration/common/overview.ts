@@ -125,6 +125,26 @@ When(`user selects {string} time range`, (interval) => {
         .should('not.exist');
 });
 
+When(`user selects {string} traffic direction`, (direction) => {
+    let innerId = '';
+    switch (direction) {
+        case 'Outbound':
+            innerId = 'outbound';
+            break;
+        case 'Inbound':
+            innerId = 'inbound';
+            break;
+    }
+    cy.get('button[aria-labelledby^="direction-type"]')
+        .click()
+        .get('#loading_kiali_spinner')
+        .should('not.exist');
+    cy.get(`li[id="${innerId}"]`).children('button')
+        .click()
+        .get('#loading_kiali_spinner')
+        .should('not.exist');
+});
+
 When('I fetch the overview of the cluster', function () {
     cy.visit('/console/overview?refresh=0');
 });
@@ -170,8 +190,8 @@ Then(`user sees the {string} namespace list`, (nslist) => {
         });
 });
 
-Then(`user sees the {string} namespace with Inbound traffic {string}`, (ns, duration) => {
-    cy.get('article[data-test^="' + ns + '"]').find('span[data-test="sparkline-duration-' + duration + '"]');
+Then(`user sees the {string} namespace with {string} traffic {string}`, (ns, direction, duration) => {
+    cy.get('article[data-test^="' + ns + '"]').find('span[data-test="sparkline-' + direction + '-duration-' + duration + '"]');
 });
 
 Then('there should be a {string} application indicator in the namespace', function (healthStatus: string) {

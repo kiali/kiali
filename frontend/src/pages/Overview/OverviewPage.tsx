@@ -33,7 +33,7 @@ import {
 } from '../../types/Health';
 import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import OverviewToolbarContainer, { OverviewDisplayMode, OverviewToolbar, OverviewType } from './OverviewToolbar';
+import OverviewToolbarContainer, { OverviewDisplayMode, OverviewToolbar, OverviewType, DirectionType } from './OverviewToolbar';
 import NamespaceInfo, { NamespaceStatus } from './NamespaceInfo';
 import NamespaceMTLSStatusContainer from '../../components/MTls/NamespaceMTLSStatus';
 import { RenderComponentScroll } from '../../components/Nav/Page';
@@ -121,6 +121,7 @@ enum Show {
 type State = {
   namespaces: NamespaceInfo[];
   type: OverviewType;
+  direction: DirectionType;
   displayMode: OverviewDisplayMode;
   showTrafficPoliciesModal: boolean;
   kind: string;
@@ -150,6 +151,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     this.state = {
       namespaces: [],
       type: OverviewToolbar.currentOverviewType(),
+      direction: OverviewToolbar.currentDirectionType(),
       displayMode: display ? Number(display) : OverviewDisplayMode.EXPAND,
       showTrafficPoliciesModal: false,
       kind: '',
@@ -218,6 +220,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         const isAscending = FilterHelper.isCurrentSortAscending();
         const sortField = FilterHelper.currentSortField(Sorts.sortFields);
         const type = OverviewToolbar.currentOverviewType();
+        const direction = OverviewToolbar.currentDirectionType();
         const displayMode = this.getStartDisplayMode(allNamespaces.length > 16);
 
         // Set state before actually fetching health
@@ -225,6 +228,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           prevState => {
             return {
               type: type,
+              direction: direction,
               namespaces: Sorts.sortFunc(allNamespaces, sortField, isAscending),
               displayMode: displayMode,
               showTrafficPoliciesModal: prevState.showTrafficPoliciesModal,
@@ -238,7 +242,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             this.fetchTLS(isAscending, sortField);
             this.fetchValidations(isAscending, sortField);
             if (displayMode !== OverviewDisplayMode.COMPACT) {
-              this.fetchMetrics();
+              this.fetchMetrics(direction);
             }
           }
         );
@@ -350,12 +354,12 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       .catch(err => this.handleAxiosError('Could not fetch health', err));
   }
 
-  fetchMetrics() {
+  fetchMetrics(direction: DirectionType) {
     const duration = FilterHelper.currentDuration();
     // debounce async for back-pressure, ten by ten
     _.chunk(this.state.namespaces, 10).forEach(chunk => {
       this.promises
-        .registerChained('metricschunks', undefined, () => this.fetchMetricsChunk(chunk, duration))
+        .registerChained('metricschunks', undefined, () => this.fetchMetricsChunk(chunk, duration, direction))
         .then(() => {
           this.setState(prevState => {
             return { namespaces: prevState.namespaces.slice() };
@@ -364,19 +368,20 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     });
   }
 
-  fetchMetricsChunk(chunk: NamespaceInfo[], duration: number) {
+  fetchMetricsChunk(chunk: NamespaceInfo[], duration: number, direction: DirectionType) {
     const rateParams = computePrometheusRateParams(duration, 10);
-    const optionsIn: IstioMetricsOptions = {
+    const options: IstioMetricsOptions = {
       filters: ['request_count', 'request_error_count'],
       duration: duration,
       step: rateParams.step,
       rateInterval: rateParams.rateInterval,
-      direction: 'inbound',
-      reporter: 'destination'
+      direction: direction,
+      reporter: direction === 'inbound' ? 'destination' : 'source',
     };
+
     return Promise.all(
       chunk.map(nsInfo => {
-        return API.getNamespaceMetrics(nsInfo.name, optionsIn).then(rs => {
+        return API.getNamespaceMetrics(nsInfo.name, options).then(rs => {
           nsInfo.metrics = rs.data.request_count;
           nsInfo.errorMetrics = rs.data.request_error_count;
           return nsInfo;
@@ -467,7 +472,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     HistoryManager.setParam(URLParam.DISPLAY_MODE, String(mode));
     if (mode === OverviewDisplayMode.EXPAND) {
       // Load metrics
-      this.fetchMetrics();
+      this.fetchMetrics(this.state.direction);
     }
   };
 
@@ -860,6 +865,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           duration={FilterHelper.currentDuration()}
           status={ns.status}
           type={this.state.type}
+          direction={this.state.direction}
           metrics={ns.metrics}
           errorMetrics={ns.errorMetrics}
         />

@@ -53,6 +53,7 @@ export enum URLParam {
   JAEGER_SPAN_ID = 'spanId',
   NAMESPACES = 'namespaces',
   OVERVIEW_TYPE = 'otype',
+  DIRECTION_TYPE = 'drtype',
   QUANTILES = 'quantiles',
   RANGE_DURATION = 'rangeDuration',
   REFRESH_INTERVAL = 'refresh',

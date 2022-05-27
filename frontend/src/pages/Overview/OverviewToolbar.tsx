@@ -49,6 +49,11 @@ const overviewTypes = {
   service: 'Services'
 };
 
+const directionTypes = {
+  inbound: 'Inbound',
+  outbound: 'Outbound'
+};
+
 // TODO Use Object.fromEntries when available
 const sortTypes = (function () {
   let o = {};
@@ -87,11 +92,18 @@ const actionsToolbarStyle = style({
   paddingTop: '17px'
 });
 
+const typeSelectStyle = style({
+  paddingRight: '6px'
+});
+
 export type OverviewType = keyof typeof overviewTypes;
+
+export type DirectionType = keyof typeof directionTypes;
 
 type State = {
   isSortAscending: boolean;
   overviewType: OverviewType;
+  directionType: DirectionType;
   sortField: SortField<NamespaceInfo>;
 };
 
@@ -101,12 +113,18 @@ export class OverviewToolbar extends React.Component<Props, State> {
     return (otype as OverviewType) || 'app';
   }
 
+  static currentDirectionType(): DirectionType {
+    const drtype = HistoryManager.getParam(URLParam.DIRECTION_TYPE);
+    return (drtype as DirectionType) || 'inbound';
+  }
+
   constructor(props: Props) {
     super(props);
 
     this.state = {
       isSortAscending: FilterHelper.isCurrentSortAscending(),
       overviewType: OverviewToolbar.currentOverviewType(),
+      directionType: OverviewToolbar.currentDirectionType(),
       sortField: FilterHelper.currentSortField(Sorts.sortFields)
     };
   }
@@ -149,6 +167,19 @@ export class OverviewToolbar extends React.Component<Props, State> {
       this.props.onRefresh();
     } else {
       throw new Error('Overview type is not valid.');
+    }
+  };
+
+  updateDirectionType = (dtype: String) => {
+    const isDirectionType = (val: String): val is DirectionType =>
+      val === 'inbound' || val === 'outbound';
+
+    if (isDirectionType(dtype)) {
+      HistoryManager.setParam(URLParam.DIRECTION_TYPE, dtype);
+      this.setState({ directionType: dtype });
+      this.props.onRefresh();
+    } else {
+      throw new Error('Direction type is not valid.');
     }
   };
 
@@ -198,11 +229,21 @@ export class OverviewToolbar extends React.Component<Props, State> {
         <ToolbarDropdown
           id="overview-type"
           disabled={false}
+          classNameSelect={typeSelectStyle}
           handleSelect={this.updateOverviewType}
           nameDropdown="Health for"
           value={this.state.overviewType}
           label={overviewTypes[this.state.overviewType]}
           options={overviewTypes}
+        />
+        <ToolbarDropdown
+          id="direction-type"
+          disabled={false}
+          handleSelect={this.updateDirectionType}
+          nameDropdown="Traffic"
+          value={this.state.directionType}
+          label={directionTypes[this.state.directionType]}
+          options={directionTypes}
         />
         <Tooltip content={<>Expand view</>} position={TooltipPosition.top}>
           <Button

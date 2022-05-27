@@ -75,7 +75,13 @@ Feature: Kiali Overview page
   @overview-page
   Scenario: Last 10 minutes
     When user selects "Last 10m" time range
-    Then user sees the "alpha" namespace with Inbound traffic "10m"
+    Then user sees the "alpha" namespace with "inbound" traffic "10m"
+
+  @overview-page
+  Scenario: Last 10 minutes Outbound traffic
+    When user selects "Last 10m" time range
+    And user selects "Outbound" traffic direction
+    Then user sees the "alpha" namespace with "outbound" traffic "10m"
 
   @overview-page
   Scenario: The healthy status of a logical mesh application is reported in the overview of a namespace
