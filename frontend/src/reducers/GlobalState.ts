@@ -7,7 +7,8 @@ import { getType } from 'typesafe-actions';
 export const INITIAL_GLOBAL_STATE: GlobalState = {
   loadingCounter: 0,
   isPageVisible: true,
-  lastRefreshAt: 0
+  isStandalone: true,
+  lastRefreshAt: 0,
 };
 
 // This Reducer allows changes to the 'globalState' portion of Redux Store
@@ -23,6 +24,10 @@ const globalState = (state: GlobalState = INITIAL_GLOBAL_STATE, action: KialiApp
       return updateState(state, { isPageVisible: true });
     case getType(GlobalActions.setLastRefreshAt):
       return updateState(state, { lastRefreshAt: action.payload });
+    case getType(GlobalActions.setStandaloneMode):
+      return updateState(state, { isStandalone: true });
+    case getType(GlobalActions.setEmbeddedMode):
+      return updateState(state, { isStandalone: false });
     default:
       return state;
   }

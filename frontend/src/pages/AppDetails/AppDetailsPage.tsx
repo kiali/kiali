@@ -32,6 +32,7 @@ type AppDetailsState = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
+  isStandalone: boolean;
   jaegerInfo?: JaegerInfo;
   lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
@@ -225,7 +226,9 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     }
     return (
       <>
-        <RenderHeader location={this.props.location} rightToolbar={<TimeControl customDuration={useCustomTime} />} />
+        {this.props.isStandalone && (
+          <RenderHeader location={this.props.location} rightToolbar={<TimeControl customDuration={useCustomTime} />} />
+        )}
         {this.state.app && (
           <ParameterizedTabs
             id="basic-tabs"
@@ -249,6 +252,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
+  isStandalone: state.globalState.isStandalone,
   jaegerInfo: state.jaegerState.info,
   lastRefreshAt: state.globalState.lastRefreshAt
 });

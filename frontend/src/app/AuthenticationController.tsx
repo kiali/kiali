@@ -31,6 +31,7 @@ import { toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
 import { GraphToolbarActions } from 'actions/GraphToolbarActions';
 import { StatusState, StatusKey } from 'types/StatusState';
 import { PromisesRegistry } from '../utils/CancelablePromises';
+import {GlobalActions} from "../actions/GlobalActions";
 
 interface AuthenticationControllerReduxProps {
   addMessage: (content: string, detail: string, groupId?: string, msgType?: MessageType, showNotif?: boolean) => void;
@@ -332,7 +333,13 @@ export class AuthenticationController extends React.Component<
 
   private setDocLayout = () => {
     if (document.documentElement) {
-      document.documentElement.className = isKioskMode() ? 'kiosk' : '';
+      const isKiosk = isKioskMode();
+      document.documentElement.className = isKiosk ? 'kiosk' : '';
+      if (isKiosk) {
+        store.dispatch(GlobalActions.setEmbeddedMode());
+      } else {
+        store.dispatch(GlobalActions.setStandaloneMode());
+      }
     }
   };
 

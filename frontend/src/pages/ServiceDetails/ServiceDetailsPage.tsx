@@ -32,6 +32,7 @@ type ServiceDetailsState = {
 
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
   duration: DurationInSeconds;
+  isStandalone: boolean;
   jaegerInfo?: JaegerInfo;
   lastRefreshAt: TimeInMilliseconds;
 }
@@ -198,11 +199,13 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
     return (
       <>
-        <RenderHeader
-          location={this.props.location}
-          rightToolbar={<TimeControl customDuration={useCustomTime} />}
-          actionsToolbar={actionsToolbar}
-        />
+        {this.props.isStandalone && (
+          <RenderHeader
+            location={this.props.location}
+            rightToolbar={<TimeControl customDuration={useCustomTime} />}
+            actionsToolbar={actionsToolbar}
+          />
+        )}
         <ParameterizedTabs
           id="basic-tabs"
           onSelect={tabValue => {
@@ -223,6 +226,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
+  isStandalone: state.globalState.isStandalone,
   jaegerInfo: state.jaegerState.info,
   lastRefreshAt: state.globalState.lastRefreshAt
 });

@@ -33,6 +33,7 @@ type WorkloadDetailsState = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
+  isStandalone: boolean;
   jaegerInfo?: JaegerInfo;
   lastRefreshAt: TimeInMilliseconds;
   statusState: StatusState;
@@ -289,11 +290,13 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       ) : undefined;
     return (
       <>
-        <RenderHeader
-          location={this.props.location}
-          rightToolbar={<TimeControl customDuration={useCustomTime} />}
-          actionsToolbar={actionsToolbar}
-        />
+        {this.props.isStandalone && (
+          <RenderHeader
+            location={this.props.location}
+            rightToolbar={<TimeControl customDuration={useCustomTime} />}
+            actionsToolbar={actionsToolbar}
+          />
+        )}
         {this.state.workload && (
           <ParameterizedTabs
             id="basic-tabs"
@@ -317,9 +320,10 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
+  isStandalone: state.globalState.isStandalone,
   jaegerInfo: state.jaegerState.info,
   lastRefreshAt: state.globalState.lastRefreshAt,
-  statusState: state.statusState
+  statusState: state.statusState,
 });
 
 const WorkloadDetailsContainer = connect(mapStateToProps)(WorkloadDetails);

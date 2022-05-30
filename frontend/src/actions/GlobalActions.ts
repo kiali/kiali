@@ -9,7 +9,10 @@ export const GlobalActions = {
   decrementLoadingCounter: createAction(ActionKeys.DECREMENT_LOADING_COUNTER),
   setPageVisibilityHidden: createAction(ActionKeys.SET_PAGE_VISIBILITY_HIDDEN),
   setPageVisibilityVisible: createAction(ActionKeys.SET_PAGE_VISIBILITY_VISIBLE),
-  setLastRefreshAt: createStandardAction(ActionKeys.SET_LAST_REFRESH)<TimeInMilliseconds>()
+  setLastRefreshAt: createStandardAction(ActionKeys.SET_LAST_REFRESH)<TimeInMilliseconds>(),
+  setStandaloneMode: createAction(ActionKeys.SET_STANDALONE_MODE),
+  setEmbeddedMode: createAction(ActionKeys.SET_EMBEDDED_MODE),
+
 };
 
 export type GlobalAction = ActionType<typeof GlobalActions>;

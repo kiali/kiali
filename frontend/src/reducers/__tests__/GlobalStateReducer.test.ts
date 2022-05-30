@@ -22,6 +22,7 @@ describe('GlobalState reducer', () => {
     expect(globalState(undefined, GlobalActions.unknown())).toEqual({
       loadingCounter: 0,
       isPageVisible: true,
+      isStandalone: true,
       lastRefreshAt: 0
     });
   });
@@ -32,6 +33,7 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 0,
           isPageVisible: true,
+          isStandalone: true,
           lastRefreshAt: currentDate
         },
         GlobalActions.incrementLoadingCounter()
@@ -39,6 +41,7 @@ describe('GlobalState reducer', () => {
     ).toEqual({
       loadingCounter: 1,
       isPageVisible: true,
+      isStandalone: true,
       lastRefreshAt: currentDate
     });
   });
@@ -49,6 +52,7 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 1,
           isPageVisible: true,
+          isStandalone: true,
           lastRefreshAt: currentDate
         },
         GlobalActions.decrementLoadingCounter()
@@ -56,6 +60,7 @@ describe('GlobalState reducer', () => {
     ).toEqual({
       loadingCounter: 0,
       isPageVisible: true,
+      isStandalone: true,
       lastRefreshAt: currentDate
     });
   });
@@ -66,6 +71,7 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 1,
           isPageVisible: true,
+          isStandalone: true,
           lastRefreshAt: currentDate
         },
         GlobalActions.incrementLoadingCounter()
@@ -73,6 +79,7 @@ describe('GlobalState reducer', () => {
     ).toEqual({
       loadingCounter: 2,
       isPageVisible: true,
+      isStandalone: true,
       lastRefreshAt: currentDate
     });
   });
@@ -83,6 +90,7 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 2,
           isPageVisible: true,
+          isStandalone: true,
           lastRefreshAt: currentDate
         },
         GlobalActions.decrementLoadingCounter()
@@ -90,6 +98,7 @@ describe('GlobalState reducer', () => {
     ).toEqual({
       loadingCounter: 1,
       isPageVisible: true,
+      isStandalone: true,
       lastRefreshAt: currentDate
     });
   });
@@ -99,6 +108,7 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 0,
           isPageVisible: false,
+          isStandalone: true,
           lastRefreshAt: currentDate
         },
         GlobalActions.setPageVisibilityVisible()
@@ -106,6 +116,7 @@ describe('GlobalState reducer', () => {
     ).toEqual({
       loadingCounter: 0,
       isPageVisible: true,
+      isStandalone: true,
       lastRefreshAt: currentDate
     });
   });
@@ -115,6 +126,7 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 0,
           isPageVisible: true,
+          isStandalone: true,
           lastRefreshAt: currentDate
         },
         GlobalActions.setPageVisibilityHidden()
@@ -122,6 +134,25 @@ describe('GlobalState reducer', () => {
     ).toEqual({
       loadingCounter: 0,
       isPageVisible: false,
+      isStandalone: true,
+      lastRefreshAt: currentDate
+    });
+  });
+  it('should turn off standalone mode status', () => {
+    expect(
+      globalState(
+        {
+          loadingCounter: 0,
+          isPageVisible: true,
+          isStandalone: true,
+          lastRefreshAt: currentDate
+        },
+        GlobalActions.setEmbeddedMode()
+      )
+    ).toEqual({
+      loadingCounter: 0,
+      isPageVisible: true,
+      isStandalone: false,
       lastRefreshAt: currentDate
     });
   });
