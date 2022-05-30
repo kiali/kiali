@@ -1,9 +1,9 @@
 name: Release
 
 on:
-  # schedule:
-  #   # Every Friday at 19:00 (UTC)
-  #   - cron: '00 19 * * FRI'
+  schedule:
+  # Every Monday at 19:00 (UTC)
+  - cron: '00 19 * * MON'
   workflow_dispatch:
     inputs:
       release_type:
