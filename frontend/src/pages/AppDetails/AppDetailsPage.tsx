@@ -146,6 +146,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const inTab = (
       <Tab title="Inbound Metrics" eventKey={2} key={'Inbound Metrics'}>
         <IstioMetricsContainer
+          data-test="inbound-metrics-component"
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.app}
           objectType={MetricsObjectTypes.APP}
@@ -157,6 +158,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const outTab = (
       <Tab title="Outbound Metrics" eventKey={3} key={'Outbound Metrics'}>
         <IstioMetricsContainer
+          data-test="outbound-metrics-component"
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.app}
           objectType={MetricsObjectTypes.APP}

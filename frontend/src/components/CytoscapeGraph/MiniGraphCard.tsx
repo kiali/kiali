@@ -73,7 +73,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
       rangeEnd > 0 ? toRangeString(rangeStart, rangeEnd, { second: '2-digit' }, { second: '2-digit' }) : 'Loading';
 
     return (
-      <Card style={{ height: '100%' }} id={'MiniGraphCard'}>
+      <Card style={{ height: '100%' }} id={'MiniGraphCard'} data-test="mini-graph">
         <CardHeader>
           <CardActions>
             <Dropdown
