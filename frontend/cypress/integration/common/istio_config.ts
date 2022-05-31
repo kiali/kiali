@@ -1,4 +1,4 @@
-import { And, Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { After, And, Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import { getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from "./transition";
 
@@ -118,14 +118,6 @@ function minimalSidecar(name: string, namespace: string, hosts: string) {
       }
 }`;
 }
-
-Given('there are no {string} resources in the cluster', function (crdName: string) {
-  cy.exec(`kubectl delete ${crdName} --all --all-namespaces`);
-});
-
-Given('there are no {string} resources in the {string} namespace', function (crdName: string, namespace: string) {
-  cy.exec(`kubectl delete ${crdName} --all -n ${namespace}`);
-});
 
 Given('a {string} AuthorizationPolicy in the {string} namespace', function (name: string, namespace: string) {
   cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace}`, { failOnNonZeroExit: false });
@@ -332,4 +324,11 @@ Then('the {string} {string} of the {string} namespace should have a {string}', f
   cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}] svg`)
       .invoke('attr', 'style')
       .should('have.string', `${healthStatus}-color`);
+});
+
+After({ tags: "@istio-page and @crd-validation" }, function () {
+  cy.exec('kubectl delete PeerAuthentications,DestinationRules,AuthorizationPolicies,Sidecars --all --all-namespaces', { failOnNonZeroExit: false });
+  cy.exec('kubectl delete Gateways,VirtualServices foo foo-route bar -n bookinfo', { failOnNonZeroExit: false });
+  cy.exec('kubectl delete Gateways,VirtualServices foo foo-route bar -n default', { failOnNonZeroExit: false });
+  cy.exec('kubectl delete Gateways,VirtualServices foo foo-route bar -n istio-system', { failOnNonZeroExit: false });
 });

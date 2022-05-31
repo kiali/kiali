@@ -9,9 +9,6 @@ Feature: Kiali Istio Config page
     Given user is at administrator perspective
     And user is at the "istio" page
     And user selects the "bookinfo" namespace
-    And there are no "PeerAuthentication" resources in the cluster
-    And there are no "DestinationRule" resources in the cluster
-    And there are no "Gateways" resources in the "default" namespace
 
   Scenario: See all Istio Config objects in the bookinfo namespace.
     Then user sees all the Istio Config objects in the bookinfo namespace
@@ -286,4 +283,3 @@ Feature: Kiali Istio Config page
 #    And the VirtualService references "bookinfo-gateway.bookinfo.svc.cluster.local" gateways
 #    When the user refreshes the list page
 #    Then the "foo" "VirtualService" of the "bookinfo" namespace should have a "warning"
-
