@@ -58,9 +58,9 @@ When('user filters for label {string}', (label: string) => {
 });
 
 Then('the service should be listed as {string}', function (healthStatus: string) {
-  checkHealthIndicatorInTable(this.targetNamespace, this.targetService, healthStatus);
+  checkHealthIndicatorInTable(this.targetNamespace, null, this.targetService, healthStatus);
 });
 
 Then('the health status of the service should be {string}', function (healthStatus: string) {
-  checkHealthStatusInTable(this.targetNamespace, this.targetService, healthStatus);
+  checkHealthStatusInTable(this.targetNamespace, null, this.targetService, healthStatus);
 });

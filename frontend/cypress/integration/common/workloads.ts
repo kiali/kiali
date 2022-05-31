@@ -50,9 +50,9 @@ And('user should only see healthy workloads in workloads table', () => {
   });
 
 Then('the workload should be listed as {string}', function (healthStatus: string) {
-    checkHealthIndicatorInTable(this.targetNamespace, this.targetWorkload, healthStatus);
+    checkHealthIndicatorInTable(this.targetNamespace, 'Deployment', this.targetWorkload, healthStatus);
 });
 
 Then('the health status of the workload should be {string}', function (healthStatus: string) {
-    checkHealthStatusInTable(this.targetNamespace, this.targetWorkload, healthStatus);
+    checkHealthStatusInTable(this.targetNamespace, 'Deployment', this.targetWorkload, healthStatus);
 });

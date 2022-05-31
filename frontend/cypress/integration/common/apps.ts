@@ -58,9 +58,9 @@ Then('user only sees healthy apps', () => {
 });
 
 Then('the application should be listed as {string}', function (healthStatus: string) {
-  checkHealthIndicatorInTable(this.targetNamespace, this.targetApp, healthStatus);
+  checkHealthIndicatorInTable(this.targetNamespace, null, this.targetApp, healthStatus);
 });
 
 Then('the health status of the application should be {string}', function (healthStatus: string) {
-  checkHealthStatusInTable(this.targetNamespace, this.targetApp, healthStatus);
+  checkHealthStatusInTable(this.targetNamespace, null, this.targetApp, healthStatus);
 });
