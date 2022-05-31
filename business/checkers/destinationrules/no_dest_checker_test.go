@@ -478,7 +478,7 @@ func TestSNIProxyExample(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "test",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
+		ServiceEntries:  []networking_v1beta1.ServiceEntry{*se},
 		DestinationRule: *dr,
 	}.Check()
 
@@ -498,7 +498,7 @@ func TestWildcardServiceEntry(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "test",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
+		ServiceEntries:  []networking_v1beta1.ServiceEntry{*se},
 		DestinationRule: *dr,
 	}.Check()
 
@@ -517,7 +517,7 @@ func TestExportedInternalServiceEntry(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
+		ServiceEntries:  []networking_v1beta1.ServiceEntry{*se},
 		DestinationRule: *dr,
 	}.Check()
 
@@ -536,7 +536,7 @@ func TestWildcardExportedInternalServiceEntry(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
+		ServiceEntries:  []networking_v1beta1.ServiceEntry{*se},
 		DestinationRule: *dr,
 	}.Check()
 
@@ -555,7 +555,7 @@ func TestExportedInternalServiceEntryFail(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
+		ServiceEntries:  []networking_v1beta1.ServiceEntry{*se},
 		DestinationRule: *dr,
 	}.Check()
 
@@ -577,7 +577,7 @@ func TestWildcardExportedInternalServiceEntryFail(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
+		ServiceEntries:  []networking_v1beta1.ServiceEntry{*se},
 		DestinationRule: *dr,
 	}.Check()
 
@@ -599,7 +599,7 @@ func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
+		ServiceEntries:  []networking_v1beta1.ServiceEntry{*se},
 		DestinationRule: *dr,
 	}.Check()
 
@@ -613,7 +613,7 @@ func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
 
 	vals, valid = NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
+		ServiceEntries:  []networking_v1beta1.ServiceEntry{*se},
 		DestinationRule: *dr,
 	}.Check()
 
@@ -635,7 +635,7 @@ func TestExportedExternalServiceEntry(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
+		ServiceEntries:  []networking_v1beta1.ServiceEntry{*se},
 		DestinationRule: *dr,
 	}.Check()
 
@@ -654,7 +654,7 @@ func TestExportedExternalServiceEntryFail(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Namespace:       "bookinfo",
-		ServiceEntries:  kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*se}),
+		ServiceEntries:  []networking_v1beta1.ServiceEntry{*se},
 		DestinationRule: *dr,
 	}.Check()
 
@@ -740,6 +740,45 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	assert.False(valid)
 	assert.NotEmpty(vals)
+}
+
+func TestServiceEntryLabelsMatchSubsets(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	dr := data.CreateDestinationRuleWithLabel("bookinfo", "details", "details.bookinfo.svc.cluster.local", "cluster", "global")
+	se := data.AddEndpointToServiceEntry("details.bookinfo.svc.cluster.local", "cluster", "global", data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo", []string{"details.bookinfo.svc.cluster.local"}))
+
+	vals, valid := NoDestinationChecker{
+		Namespace:       "bookinfo",
+		ServiceEntries:  []networking_v1beta1.ServiceEntry{*se},
+		DestinationRule: *dr,
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
+func TestServiceEntryLabelsNoMatchingSubsets(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	dr := data.CreateDestinationRuleWithLabel("bookinfo", "details", "details.bookinfo.svc.cluster.local", "cluster", "global")
+	se := data.AddEndpointToServiceEntry("details.bookinfo.svc.cluster.local", "cluster", "wrong", data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo", []string{"details.bookinfo.svc.cluster.local"}))
+
+	vals, _ := NoDestinationChecker{
+		Namespace:       "bookinfo",
+		ServiceEntries:  []networking_v1beta1.ServiceEntry{*se},
+		DestinationRule: *dr,
+	}.Check()
+
+	assert.NotEmpty(vals)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", vals[0]))
+	assert.Equal("spec/subsets[0]", vals[0].Path)
 }
 
 func yamlFixtureLoaderFor1(file string) *validations.YamlFixtureLoader {

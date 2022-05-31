@@ -16,7 +16,7 @@ type NoDestinationChecker struct {
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	DestinationRule       networking_v1beta1.DestinationRule
 	VirtualServices       []networking_v1beta1.VirtualService
-	ServiceEntries        map[string][]string
+	ServiceEntries        []networking_v1beta1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
 }
 
@@ -77,21 +77,29 @@ func (n NoDestinationChecker) hasMatchingWorkload(host kubernetes.Host, subsetLa
 		}
 	}
 
-	// Check workloads
-	if len(selectors) == 0 {
-		return false
-	}
-
-	selector := labels.SelectorFromSet(labels.Set(selectors))
-
 	subsetLabelSet := labels.Set(subsetLabels)
 	subsetSelector := labels.SelectorFromSet(subsetLabelSet)
 
-	for _, wl := range n.WorkloadsPerNamespace[localNs].Workloads {
-		wlLabelSet := labels.Set(wl.Labels)
-		if selector.Matches(wlLabelSet) {
-			if subsetSelector.Matches(wlLabelSet) {
-				return true
+	// Check workloads
+	if len(selectors) != 0 {
+		selector := labels.SelectorFromSet(labels.Set(selectors))
+
+		for _, wl := range n.WorkloadsPerNamespace[localNs].Workloads {
+			wlLabelSet := labels.Set(wl.Labels)
+			if selector.Matches(wlLabelSet) {
+				if subsetSelector.Matches(wlLabelSet) {
+					return true
+				}
+			}
+		}
+	} else {
+		// Check Service Entries
+		for _, se := range n.ServiceEntries {
+			for _, ep := range se.Spec.Endpoints {
+				epLabelSet := labels.Set(ep.Labels)
+				if subsetSelector.Matches(epLabelSet) {
+					return true
+				}
 			}
 		}
 	}
@@ -115,7 +123,7 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 	}
 
 	// Check ServiceEntries
-	if kubernetes.HasMatchingServiceEntries(host.String(), n.ServiceEntries) {
+	if kubernetes.HasMatchingServiceEntries(host.String(), kubernetes.ServiceEntryHostnames(n.ServiceEntries)) {
 		return true
 	}
 
