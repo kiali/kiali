@@ -109,16 +109,6 @@ Feature: Kiali Istio Config page
     When user selects the "default" namespace
     Then the "foo" "DestinationRule" of the "default" namespace should have a "danger"
 
-#  # TODO: Apparently, Kiali does not trigger this validation. Also KIA0205 and KIA0206 are not triggered.
-#  Scenario: KIA0204 validation
-#    Given a "default" DestinationRule in the "istio-system" namespace for "*.local" host
-#    And the DestinationRule enables mTLS
-#    And a "sleep" DestinationRule in the "default" namespace for "sleep" host
-#    And the DestinationRule has a "mysubset" subset for "app=sleep" labels
-#    When user selects the "default" namespace
-#    Then the "default" DestinationRule should have a "warning"
-#    And the "sleep" DestinationRule should have a "warning"
-
   @crd-validation
   Scenario: KIA0207 validation
     Given a "disable-mtls" DestinationRule in the "default" namespace for "*.default.svc.cluster.local" host
@@ -158,20 +148,6 @@ Feature: Kiali Istio Config page
     When user selects the "default" namespace
     Then the "foo" "Gateway" of the "default" namespace should have a "warning"
 
-#    # TODO: Ídem
-#  Scenario: KIA0401 validation
-#    Given there is a "default" PeerAuthentication in the "istio-system" namespace
-#    And the PeerAuthentication has "STRICT" mtls mode
-#    When user selects the "istio-system" namespace
-#    Then the "default" "PeerAuthentication" of the "istio-system" namespace should have a "danger"
-#
-#  # TODO: Ídem
-#  Scenario: KIA0501 validation
-#    Given there is a "default" PeerAuthentication in the "default" namespace
-#    And the PeerAuthentication has "STRICT" mtls mode
-#    When user selects the "default" namespace
-#    Then the "default" "PeerAuthentication" of the "default" namespace should have a "danger"
-
   @crd-validation
   Scenario: KIA0505 validation
     Given a "enable-mtls" DestinationRule in the "default" namespace for "*.default.svc.cluster.local" host
@@ -189,18 +165,6 @@ Feature: Kiali Istio Config page
     And the PeerAuthentication has "DISABLE" mtls mode
     When user selects the "istio-system" namespace
     Then the "default" "PeerAuthentication" of the "istio-system" namespace should have a "danger"
-
-  # TODO: KIA06xx and KIA07xx does not appear in Istio Config list page. They appear in Svc/workload lists.
-  # TODO: KIA0801 is only applicable for Maistra
-
-  # TODO: KIA090x no longer apply to current Istio (ServiceRole does not exist anymore)
-
-  # TODO: KIA1003 no longer applies. Istio rejects a resource without a valid hosts format.
-#  Scenario: KIA1003 validation
-#    Given there is a "foo" Sidecar resource in the "default" namespace that captures egress traffic for hosts "noslashsymbolpresent"
-#    And the Sidecar is applied to workloads with "app=foo" labels
-#    When user selects the "default" namespace
-#    Then the "foo" "Sidecar" of the "default" namespace should have a "danger"
 
   @crd-validation
   Scenario: KIA1004 validation
@@ -229,8 +193,6 @@ Feature: Kiali Istio Config page
     And the VirtualService references "foo" gateways
     When user selects the "default" namespace
     Then the "foo" "VirtualService" of the "default" namespace should have a "danger"
-
-  # TODO: KIA1103 can no longer happen, because Istio rejects it.
 
   @crd-validation
   Scenario: KIA1104 validation
@@ -265,7 +227,59 @@ Feature: Kiali Istio Config page
     When user selects the "default" namespace
     Then the "foo" "VirtualService" of the "default" namespace should have a "warning"
 
-  # TODO: Validation is not triggering
+# TODO: KIA06xx and KIA07xx does not appear in Istio Config list page. They appear in Svc/workload lists.
+#   Thus, these validations do not belong to this feature file.
+
+# TODO: KIA0801 is only applicable for Maistra. We don't have an environment to run tests for this one.
+
+# TODO: KIA090x no longer apply to current Istio (ServiceRole does not exist anymore)
+#   Even more, the checkers are no longer in the codebase. The docs should be updated.
+
+# TODO: Both KIA1003 and KIA1103 are stale validations. Istio rejects a resource with such configs (i.e. it
+#   is not accepted into the cluster).
+#   Below is a scenario that was prepared to test this checker, but it is "red" because when trying
+#   to create an offending resource, the `kubectl apply` command terminates with error because of the offending configs.
+#
+#  @crd-validation
+#  Scenario: KIA1003 validation
+#    Given there is a "foo" Sidecar resource in the "default" namespace that captures egress traffic for hosts "noslashsymbolpresent"
+#    And the Sidecar is applied to workloads with "app=foo" labels
+#    When user selects the "default" namespace
+#    Then the "foo" "Sidecar" of the "default" namespace should have a "danger"
+
+# TODO: Apparently, Kiali does not trigger:
+#   KIA0204, KIA0205, KIA0206, KIA0401, KIA0501
+#   It is possible that under the current mTLS defaults these
+#   validations may became obsolete and may never happen anymore.
+#   Below, there are some Scenarios that were prepared to teset some of these chekers,
+#   but they are "red", because of the non-triggering validation.
+#   Also, KIA1108 is not triggering for some unknown reason.
+#
+#  @crd-validation
+#  Scenario: KIA0204 validation
+#    Given a "default" DestinationRule in the "istio-system" namespace for "*.local" host
+#    And the DestinationRule enables mTLS
+#    And a "sleep" DestinationRule in the "default" namespace for "sleep" host
+#    And the DestinationRule has a "mysubset" subset for "app=sleep" labels
+#    When user selects the "default" namespace
+#    Then the "default" DestinationRule should have a "warning"
+#    And the "sleep" DestinationRule should have a "warning"
+#
+#  @crd-validation
+#  Scenario: KIA0401 validation
+#    Given there is a "default" PeerAuthentication in the "istio-system" namespace
+#    And the PeerAuthentication has "STRICT" mtls mode
+#    When user selects the "istio-system" namespace
+#    Then the "default" "PeerAuthentication" of the "istio-system" namespace should have a "danger"
+#
+#  @crd-validation
+#  Scenario: KIA0501 validation
+#    Given there is a "default" PeerAuthentication in the "default" namespace
+#    And the PeerAuthentication has "STRICT" mtls mode
+#    When user selects the "default" namespace
+#    Then the "default" "PeerAuthentication" of the "default" namespace should have a "danger"
+#
+#  @crd-validation
 #  Scenario: KIA1108 validation
 #    Given there is a "foo" VirtualService in the "bookinfo" namespace with a "foo-route" http-route to host "reviews"
 #    And the VirtualService applies to "reviews" hosts
