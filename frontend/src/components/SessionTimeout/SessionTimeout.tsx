@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Modal, Button } from '@patternfly/react-core';
+import { Modal, Button, ButtonVariant } from '@patternfly/react-core';
 import { WarningTriangleIcon } from '@patternfly/react-icons';
 import { AuthStrategy } from '../../types/Auth';
 import { LoginSession } from '../../store/Store';
@@ -18,11 +18,11 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
   render() {
     const defaultAction = this.props.onDismiss;
     const buttons = [
-      <Button key="confirm" variant="link" onClick={this.props.onLogout}>
-        Log Out
-      </Button>,
-      <Button autoFocus={true} variant="primary" onClick={this.props.onDismiss}>
+      <Button autoFocus={true} variant={ButtonVariant.primary} onClick={this.props.onDismiss}>
         OK
+      </Button>,
+      <Button key="confirm" variant={ButtonVariant.secondary} onClick={this.props.onLogout}>
+        Log Out
       </Button>
     ];
     return (

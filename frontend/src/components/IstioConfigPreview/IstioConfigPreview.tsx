@@ -187,7 +187,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
                 >
                   {this.props.opTarget && this.props.opTarget[0].toUpperCase() + this.props.opTarget.substr(1)}
                 </Button>,
-                <Button key="cancel" variant="link" isInline onClick={this.props.onClose}>
+                <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.props.onClose}>
                   Cancel
                 </Button>
               ]

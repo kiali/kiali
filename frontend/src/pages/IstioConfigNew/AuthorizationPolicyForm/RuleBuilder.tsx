@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, FormGroup, Switch } from '@patternfly/react-core';
+import { Button, ButtonVariant, FormGroup, Switch } from '@patternfly/react-core';
 import SourceBuilder from './From/SourceBuilder';
 import SourceList from './From/SourceList';
 import OperationBuilder from './To/OperationBuilder';
@@ -204,7 +204,7 @@ class RuleBuilder extends React.Component<Props, State> {
         )}
         <FormGroup fieldId="addRule">
           <Button
-            variant="link"
+            variant={ButtonVariant.link}
             icon={<PlusCircleIcon />}
             onClick={this.onAddRule}
             isDisabled={!this.canAddRule()}

@@ -13,7 +13,8 @@ import {
   MastheadContent,
   PageSection,
   PageSidebar,
-  PageToggleButton
+  PageToggleButton,
+  ButtonVariant
 } from '@patternfly/react-core';
 import { BarsIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
@@ -110,7 +111,7 @@ export class Navigation extends React.Component<PropsType, NavigationState> {
       <Masthead role="kiali_header" style={{ height: '76px' }}>
         <MastheadToggle>
           <PageToggleButton
-            variant="plain"
+            variant={ButtonVariant.plain}
             aria-label="Kiali navigation"
             isNavOpen={isNavOpen}
             onNavToggle={isMobileView ? this.onNavToggleMobile : this.onNavToggleDesktop}
@@ -136,7 +137,7 @@ export class Navigation extends React.Component<PropsType, NavigationState> {
     return (
       <Page header={masthead} sidebar={Sidebar} onPageResize={this.onPageResize}>
         <MessageCenterContainer drawerTitle="Message Center" />
-        <PageSection className={flexBoxColumnStyle} variant={'light'}>
+        <PageSection className={flexBoxColumnStyle} variant="light">
           <RenderPage isGraph={this.isGraph()} />
         </PageSection>
       </Page>

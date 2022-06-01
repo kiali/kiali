@@ -4,6 +4,7 @@ import { ThunkDispatch } from 'redux-thunk';
 import {
   ActionGroup,
   Button,
+  ButtonVariant,
   Form,
   FormGroup,
   FormHelperText,
@@ -214,7 +215,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
               onClick={this.handleSubmit}
               isDisabled={isLoginButtonDisabled}
               style={{ width: '100%' }}
-              variant="primary"
+              variant={ButtonVariant.primary}
             >
               Log In
             </Button>
@@ -231,7 +232,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
             {messages}
           </FormHelperText>
           <ActionGroup>
-            <Button type="submit" onClick={this.handleSubmit} style={{ width: '100%' }} variant="primary">
+            <Button type="submit" onClick={this.handleSubmit} style={{ width: '100%' }} variant={ButtonVariant.primary}>
               {loginLabel}
             </Button>
           </ActionGroup>

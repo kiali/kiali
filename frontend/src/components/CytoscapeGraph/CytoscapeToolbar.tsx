@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as Cy from 'cytoscape';
-import { Button, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import {
   LongArrowAltRightIcon,
   ExpandArrowsAltIcon,
@@ -113,7 +113,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
               isActive={this.state.allowGrab}
               onClick={() => this.toggleDrag()}
               style={buttonStyle}
-              variant="plain"
+              variant={ButtonVariant.plain}
             >
               <PficonDragdropIcon className={this.state.allowGrab ? activeButtonStyle : undefined} />
             </Button>
@@ -126,7 +126,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
               aria-label="Zoom to Fit"
               onClick={() => this.fit()}
               style={buttonStyle}
-              variant="plain"
+              variant={ButtonVariant.plain}
             >
               <ExpandArrowsAltIcon />
             </Button>
@@ -142,7 +142,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
                 this.handleEdgeModeClick(EdgeMode.UNHEALTHY);
               }}
               style={buttonStyle}
-              variant="plain"
+              variant={ButtonVariant.plain}
             >
               <LongArrowAltRightIcon
                 className={this.props.edgeMode === EdgeMode.UNHEALTHY ? activeButtonStyle : undefined}
@@ -160,7 +160,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
                 this.handleEdgeModeClick(EdgeMode.NONE);
               }}
               style={buttonStyle}
-              variant="plain"
+              variant={ButtonVariant.plain}
             >
               <LongArrowAltRightIcon
                 className={this.props.edgeMode === EdgeMode.NONE ? activeButtonStyle : undefined}
@@ -180,7 +180,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
                 this.setLayout(KialiDagreGraph.getLayout());
               }}
               style={buttonStyle}
-              variant="plain"
+              variant={ButtonVariant.plain}
             >
               <TopologyIcon
                 className={this.props.layout.name === KialiDagreGraph.getLayout().name ? activeButtonStyle : undefined}
@@ -201,7 +201,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
                   this.setLayout(KialiGridGraph.getLayout());
                 }}
                 style={buttonStyle}
-                variant="plain"
+                variant={ButtonVariant.plain}
               >
                 <TopologyIcon
                   className={this.props.layout.name === KialiGridGraph.getLayout().name ? activeButtonStyle : undefined}
@@ -222,7 +222,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
                 this.setLayout(KialiConcentricGraph.getLayout());
               }}
               style={buttonStyle}
-              variant="plain"
+              variant={ButtonVariant.plain}
             >
               <TopologyIcon
                 className={
@@ -244,7 +244,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
                 this.setLayout(KialiBreadthFirstGraph.getLayout());
               }}
               style={buttonStyle}
-              variant="plain"
+              variant={ButtonVariant.plain}
             >
               <TopologyIcon
                 className={
@@ -270,7 +270,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
                   this.setNamespaceLayout(KialiDagreGraph.getLayout());
                 }}
                 style={buttonStyle}
-                variant="plain"
+                variant={ButtonVariant.plain}
               >
                 <TenantIcon
                   className={
@@ -297,7 +297,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
                   this.setNamespaceLayout(KialiBreadthFirstGraph.getLayout());
                 }}
                 style={buttonStyle}
-                variant="plain"
+                variant={ButtonVariant.plain}
               >
                 <TenantIcon
                   className={
@@ -320,7 +320,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
                 isActive={this.props.showLegend}
                 onClick={this.props.toggleLegend}
                 style={buttonStyle}
-                variant="plain"
+                variant={ButtonVariant.plain}
               >
                 <MapIcon className={this.props.showLegend ? activeButtonStyle : undefined} size="sm" />
               </Button>

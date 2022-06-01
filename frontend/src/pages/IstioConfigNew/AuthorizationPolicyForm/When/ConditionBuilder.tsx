@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
-import { Button, TextInputBase as TextInput } from '@patternfly/react-core';
+import { Button, ButtonVariant, TextInputBase as TextInput } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isValidRequestHeaderName, isValidRequestAuthClaimName } from '../../../../helpers/ValidationHelpers';
 import { style } from 'typestyle';
@@ -58,11 +58,7 @@ const conditionFixedKeys = [
   'connection.sni'
 ];
 
-const conditionIpAddressKeys = [
-  'source.ip',
-  'remote.ip',
-  'destination.ip'
-]
+const conditionIpAddressKeys = ['source.ip', 'remote.ip', 'destination.ip'];
 
 class ConditionBuilder extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -231,7 +227,7 @@ class ConditionBuilder extends React.Component<Props, State> {
           <TableBody />
         </Table>
         <Button
-          variant="link"
+          variant={ButtonVariant.link}
           icon={<PlusCircleIcon />}
           isDisabled={!validCondition}
           onClick={this.onAddConditionToList}

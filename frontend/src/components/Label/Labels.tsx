@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Label from './Label';
-import { Button, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { KialiIcon } from '../../config/KialiIcon';
 
@@ -64,7 +64,7 @@ class Labels extends React.Component<Props, State> {
         <Button
           data-test="label_more"
           key="label_more"
-          variant="link"
+          variant={ButtonVariant.link}
           className={linkStyle}
           onClick={this.expandLabels}
         >

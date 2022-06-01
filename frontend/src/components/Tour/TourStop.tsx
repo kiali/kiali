@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Popover, PopoverPosition } from '@patternfly/react-core';
+import { Button, ButtonVariant, Popover, PopoverPosition } from '@patternfly/react-core';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -91,7 +91,7 @@ class TourStop extends React.PureComponent<TourStopProps> {
   private backButton = () => {
     const stop = this.getStop('back');
     return (
-      <Button isDisabled={stop === undefined} variant="secondary" onClick={() => this.setStop(stop!)}>
+      <Button isDisabled={stop === undefined} variant={ButtonVariant.secondary} onClick={() => this.setStop(stop!)}>
         <KialiIcon.AngleLeft /> Back
       </Button>
     );
@@ -105,14 +105,14 @@ class TourStop extends React.PureComponent<TourStopProps> {
 
     if (stop === undefined) {
       return (
-        <Button className={right} variant="primary" onClick={this.props.endTour}>
+        <Button className={right} variant={ButtonVariant.primary} onClick={this.props.endTour}>
           Done
         </Button>
       );
     }
 
     return (
-      <Button className={right} variant="primary" onClick={() => this.setStop(stop!)}>
+      <Button className={right} variant={ButtonVariant.primary} onClick={() => this.setStop(stop!)}>
         Next <KialiIcon.AngleRight />
       </Button>
     );

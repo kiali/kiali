@@ -52,7 +52,7 @@ class IstioActionButtons extends React.Component<Props, State> {
             </Button>
           </span>
           <span style={{ paddingRight: '5px' }}>
-            <Button variant={ButtonVariant.link} isInline onClick={this.props.onCancel}>
+            <Button variant={ButtonVariant.secondary} onClick={this.props.onCancel}>
               {this.props.readOnly ? 'Close' : 'Cancel'}
             </Button>
           </span>

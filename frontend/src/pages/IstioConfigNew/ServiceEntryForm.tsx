@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Port, ServiceEntrySpec } from '../../types/IstioObjects';
-import { Button, FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
+import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
@@ -246,7 +246,9 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
                 aria-describedby="add port number"
                 name="addPortNumber"
                 onChange={this.onAddPortNumber}
-                validated={isValid(this.state.addNewPortNumber.length > 0 && !isNaN(Number(this.state.addNewPortNumber)))}
+                validated={isValid(
+                  this.state.addNewPortNumber.length > 0 && !isNaN(Number(this.state.addNewPortNumber))
+                )}
               />
             </>,
             <>
@@ -280,14 +282,14 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
                 onChange={this.onAddTargetPort}
                 validated={isValid(
                   this.state.addNewTargetPort.length === 0 ||
-                  (this.state.addNewTargetPort.length > 0 && !isNaN(Number(this.state.addNewTargetPort))))
-                }
+                    (this.state.addNewTargetPort.length > 0 && !isNaN(Number(this.state.addNewTargetPort)))
+                )}
               />
             </>,
             <>
               <Button
                 id="addServerBtn"
-                variant="link"
+                variant={ButtonVariant.link}
                 icon={<PlusCircleIcon />}
                 isDisabled={!this.isValidPort()}
                 onClick={this.onAddNewPort}

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
+import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { style } from 'typestyle';
@@ -336,7 +336,7 @@ class ServerBuilder extends React.Component<Props, State> {
         )}
         <FormGroup fieldId="addRule">
           <Button
-            variant="link"
+            variant={ButtonVariant.link}
             icon={<PlusCircleIcon />}
             onClick={this.onAddServer}
             isDisabled={!this.canAddServer()}

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { WIZARD_TITLES, WorkloadWizardProps, WorkloadWizardState } from './WizardActions';
-import { Button, Modal } from '@patternfly/react-core';
+import { Button, ButtonVariant, Modal } from '@patternfly/react-core';
 
 // NOTE: This class is not used but I will keep it in the repo as skeleton as we'll add again WorkloadWizards for other
 class WorkloadWizard extends React.Component<WorkloadWizardProps, WorkloadWizardState> {
@@ -51,12 +51,12 @@ class WorkloadWizard extends React.Component<WorkloadWizardProps, WorkloadWizard
             <Button
               isDisabled={!this.isValid(this.state)}
               key="confirm"
-              variant="primary"
+              variant={ButtonVariant.primary}
               onClick={this.onCreateUpdate}
             >
               {'Create'}
             </Button>,
-            <Button key="cancel" variant="link" isInline onClick={() => this.onClose(false)}>
+            <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
               Cancel
             </Button>
           ]}

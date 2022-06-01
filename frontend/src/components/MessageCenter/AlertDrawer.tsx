@@ -9,7 +9,8 @@ import {
   Accordion,
   AccordionToggle,
   AccordionItem,
-  AccordionContent
+  AccordionContent,
+  ButtonVariant
 } from '@patternfly/react-core';
 import { CloseIcon, InfoIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
@@ -93,15 +94,15 @@ export class AlertDrawer extends React.PureComponent<AlertDrawerProps> {
           <CardHeader className={AlertDrawer.head}>
             <CardActions>
               {this.props.isExpanded ? (
-                <Button id="alert_drawer_collapse" variant="plain" onClick={this.props.expandDrawer}>
+                <Button id="alert_drawer_collapse" variant={ButtonVariant.plain} onClick={this.props.expandDrawer}>
                   <KialiIcon.AngleDoubleRight />
                 </Button>
               ) : (
-                <Button id="alert_drawer_expand" variant="plain" onClick={this.props.expandDrawer}>
+                <Button id="alert_drawer_expand" variant={ButtonVariant.plain} onClick={this.props.expandDrawer}>
                   <KialiIcon.AngleDoubleLeft />
                 </Button>
               )}
-              <Button id="alert_drawer_close" variant="plain" onClick={this.props.hideDrawer}>
+              <Button id="alert_drawer_close" variant={ButtonVariant.plain} onClick={this.props.hideDrawer}>
                 <CloseIcon />
               </Button>
             </CardActions>

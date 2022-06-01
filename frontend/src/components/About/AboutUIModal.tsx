@@ -110,7 +110,7 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
     if (config.about && config.about.website) {
       return (
         // @ts-ignore
-        <Button component="a" href={config.about.website.url} variant="link" target="_blank">
+        <Button component="a" href={config.about.website.url} variant={ButtonVariant.link} target="_blank">
           <KialiIcon.Website className={iconStyle} />
           {config.about.website.linkText}
         </Button>
@@ -124,7 +124,7 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
     if (config.about && config.about.project) {
       return (
         // @ts-ignore
-        <Button component="a" href={config.about.project.url} variant="link" target="_blank">
+        <Button component="a" href={config.about.project.url} variant={ButtonVariant.link} target="_blank">
           <KialiIcon.Repository className={iconStyle} />
           {config.about.project.linkText}
         </Button>

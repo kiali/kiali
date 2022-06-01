@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ListIcon, ThIcon, ThLargeIcon } from '@patternfly/react-icons';
 import { SortAlphaDownIcon, SortAlphaUpIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
@@ -176,7 +176,12 @@ export class OverviewToolbar extends React.Component<Props, State> {
               options={sortTypes}
               data-sort-field={this.state.sortField.id}
             />
-            <Button variant="plain" onClick={this.updateSortDirection} style={{ ...ThinStyle }} data-sort-asc={this.state.isSortAscending}>
+            <Button
+              variant={ButtonVariant.plain}
+              onClick={this.updateSortDirection}
+              style={{ ...ThinStyle }}
+              data-sort-asc={this.state.isSortAscending}
+            >
               {this.state.isSortAscending ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
             </Button>
           </>
@@ -207,7 +212,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
         <Tooltip content={<>Expand view</>} position={TooltipPosition.top}>
           <Button
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
-            variant="plain"
+            variant={ButtonVariant.plain}
             isActive={this.props.displayMode === OverviewDisplayMode.EXPAND}
             style={{ padding: '0 4px 0 16px' }}
             data-test={'overview-type-' + OverviewDisplayMode[OverviewDisplayMode.EXPAND]}
@@ -218,7 +223,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
         <Tooltip content={<>Compact view</>} position={TooltipPosition.top}>
           <Button
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
-            variant="plain"
+            variant={ButtonVariant.plain}
             isActive={this.props.displayMode === OverviewDisplayMode.COMPACT}
             style={{ padding: '0 4px 0 4px' }}
             data-test={'overview-type-' + OverviewDisplayMode[OverviewDisplayMode.COMPACT]}
@@ -229,7 +234,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
         <Tooltip content={<>List view</>} position={TooltipPosition.top}>
           <Button
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.LIST)}
-            variant="plain"
+            variant={ButtonVariant.plain}
             isActive={this.props.displayMode === OverviewDisplayMode.LIST}
             style={{ padding: '0 4px 0 4px' }}
             data-test={'overview-type-' + OverviewDisplayMode[OverviewDisplayMode.LIST]}

@@ -4,7 +4,7 @@ import Slider from './Slider/Slider';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { style } from 'typestyle';
 import { PFColors } from '../Pf/PfColors';
-import { Badge, Button, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Badge, Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { EqualizerIcon } from '@patternfly/react-icons';
 import { getDefaultWeights } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -323,7 +323,7 @@ class TrafficShifting extends React.Component<Props, State> {
         )}
         {this.props.workloads.length > 1 && (
           <div className={evenlyButtonStyle}>
-            <Button variant="link" icon={<EqualizerIcon />} onClick={() => this.resetState()}>
+            <Button variant={ButtonVariant.link} icon={<EqualizerIcon />} onClick={() => this.resetState()}>
               Evenly distribute traffic
             </Button>{' '}
           </div>

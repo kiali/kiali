@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Tooltip } from '@patternfly/react-core';
+import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import { CopyIcon } from '@patternfly/react-icons';
 import { KeyValuePair } from '../../../types/JaegerInfo';
 import { PFColors } from '../../Pf/PfColors';
@@ -48,7 +48,7 @@ export class SpanTags extends React.Component<SpanDetailProps> {
               <td style={{ color: isNaN(tag.value) ? PFColors.Green500 : PFColors.Blue500 }}>{this.printValue(tag)}</td>
               <td>
                 <Tooltip content={<>Copy {`{key": "${tag.key}", "type": "string", "value": "${tag.value}"}`}</>}>
-                  <Button variant="plain" aria-label="Action" onClick={() => this.copiedText(tag)}>
+                  <Button variant={ButtonVariant.plain} aria-label="Action" onClick={() => this.copiedText(tag)}>
                     <CopyIcon />
                   </Button>
                 </Tooltip>

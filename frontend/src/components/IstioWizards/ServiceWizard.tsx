@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, ExpandableSection, Modal, ModalVariant, Tab, Tabs } from '@patternfly/react-core';
+import { Button, ButtonVariant, ExpandableSection, Modal, ModalVariant, Tab, Tabs } from '@patternfly/react-core';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { Response } from '../../services/Api';
@@ -554,13 +554,13 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           actions={[
             <Button
               key="confirm"
-              variant={'primary'}
+              variant={ButtonVariant.primary}
               onClick={this.onCreateUpdate}
               data-test={'confirm-' + (this.props.update ? 'update' : 'create')}
             >
               {this.props.update ? 'Update' : 'Create'}
             </Button>,
-            <Button key="cancel" variant="link" isInline onClick={() => this.onClose(false)}>
+            <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
               Cancel
             </Button>
           ]}
@@ -585,13 +585,13 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             <Button
               isDisabled={!this.isValid(this.state)}
               key="confirm"
-              variant="primary"
+              variant={ButtonVariant.primary}
               onClick={this.onPreview}
               data-test="preview"
             >
               Preview
             </Button>,
-            <Button key="cancel" variant="link" isInline onClick={() => this.onClose(false)}>
+            <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
               Cancel
             </Button>
           ]}
