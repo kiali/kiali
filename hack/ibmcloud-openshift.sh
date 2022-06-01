@@ -20,10 +20,15 @@ infomsg() {
   echo -e "\U0001F4C4 ${1}"
 }
 
-# FUNCTION: is_cluster_deployed - returns 'true' if the cluster is in the state of "deployed"
+# FUNCTION: is_cluster_deployed - returns 'true' if the cluster is in the state of "deployed and ingress is healthy"
 is_cluster_deployed() {
   local state="$(ibmcloud oc cluster get --cluster ${CLUSTER_NAME} --output json | jq -r '.lifecycle.masterState')"
-  [ "${state}" == "deployed" ] && echo "true" || echo "false"
+  local ingress_state="$(ibmcloud ks ingress status --cluster ${CLUSTER_NAME} --output json | jq -r '.status')"
+  if [ "${state}" == "deployed" ] && [ "${ingress_state}" == "healthy" ]; then
+    echo "true"
+  else
+    echo "false"
+  fi
 }
 
 # FUNCTION: create - Creates the main resources if they do not yet exist
@@ -65,6 +70,7 @@ create() {
   fi
 
   # CLUSTER
+  infomsg "COS ID: ${cos_id}"
   if ! ibmcloud oc cluster create vpc-gen2 --name ${CLUSTER_NAME} --zone ${ZONE_NAME} --version ${OPENSHIFT_VERSION} --flavor ${WORKER_FLAVOR} --workers ${WORKER_NODES} --vpc-id ${vpc_id} --subnet-id ${sn_id} --cos-instance ${cos_id} ; then
     errormsg "Failed to create OpenShift [${OPENSHIFT_VERSION}] cluster [${CLUSTER_NAME}] in zone [${ZONE_NAME}]."
   else
@@ -113,6 +119,7 @@ status() {
   infomsg "Subnet:"               && ibmcloud is subnet ${SUBNET_NAME}
   infomsg "Cloud Object Storage:" && ibmcloud resource service-instance ${CLOUD_OBJECT_STORAGE_NAME}
   infomsg "Cluster:"              && ibmcloud oc cluster get --cluster ${CLUSTER_NAME}
+  infomsg "Ingress:"              && ibmcloud ks ingress status --cluster ${CLUSTER_NAME}
   [ "$(is_cluster_deployed)" == "true" ] && infomsg "Cluster is deployed" || infomsg "Cluster is NOT deployed!"
 }
 

@@ -7,11 +7,48 @@
 # Works on both openshift and non-openshift environments.
 ##############################################################################
 
-set -e
+set -eu
+
+install_sleep_app() {
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    ${CLIENT_EXE} get project "sleep" || ${CLIENT_EXE} new-project "sleep"
+  else
+    ${CLIENT_EXE} get ns sleep || ${CLIENT_EXE} create ns sleep
+  fi
+  
+  ${CLIENT_EXE} label namespace "sleep" istio-injection=enabled --overwrite=true
+
+  ${CLIENT_EXE} apply -n sleep -f ${SCRIPT_DIR}/../../_output/istio-*/samples/sleep/sleep.yaml
+
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+      cat <<NAD | $CLIENT_EXE -n sleep apply -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+NAD
+    cat <<SCC | $CLIENT_EXE apply -f -
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: sleep-scc
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+users:
+- "system:serviceaccount:sleep:default"
+- "system:serviceaccount:sleep:sleep"
+SCC
+  fi
+}
 
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 
 : ${CLIENT_EXE:=oc}
+: ${DELETE_DEMOS:=false}
 
 while [ $# -gt 0 ]; do
   key="$1"
@@ -75,8 +112,8 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
     "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl
   fi
 
-  echo "Installing the 'sleep' app in the 'default' namespace..."
-  ${CLIENT_EXE} apply -n default -f ${SCRIPT_DIR}/../../_output/istio-*/samples/sleep/sleep.yaml
+  echo "Installing the 'sleep' app in the 'sleep' namespace..."
+  install_sleep_app
 
   # Some front-end tests have conflicts with the wildcard host in the bookinfo-gateway. Patch it with the host resolved for the traffic generator.
   ISTIO_INGRESS_HOST=$(${CLIENT_EXE} get cm -n bookinfo traffic-generator-config -o jsonpath='{.data.route}' | sed 's|.*//\([^\:]*\).*/.*|\1|')
@@ -92,7 +129,11 @@ else
   set +e
 
   echo "Deleting the 'sleep' app in the 'default' namespace..."
-  ${CLIENT_EXE} delete -n default -f ${SCRIPT_DIR}/../../_output/istio-*/samples/sleep/sleep.yaml
+  ${CLIENT_EXE} delete -n sleep -f ${SCRIPT_DIR}/../../_output/istio-*/samples/sleep/sleep.yaml
+  ${CLIENT_EXE} delete ns sleep --ignore-not-found=true
+  if [ "${IS_OPENSHFIT}" == "true" ]; then
+    ${CLIENT_EXE} delete project sleep
+  fi
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     echo "Deleting bookinfo demo ..."
