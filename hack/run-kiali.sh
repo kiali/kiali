@@ -96,6 +96,7 @@ while [[ $# -gt 0 ]]; do
     -ce|--client-exe)            CLIENT_EXE="$2";                    shift;shift ;;
     -es|--enable-server)         ENABLE_SERVER="$2";                 shift;shift ;;
     -gu|--grafana-url)           GRAFANA_URL="$2";                   shift;shift ;;
+    -iu|--istiod-url)            ISTIOD_URL="$2";                    shift;shift ;;
     -in|--istio-namespace)       ISTIO_NAMESPACE="$2";               shift;shift ;;
     -kah|--kubernetes-api-host)  KUBERNETES_API_HOST="$2";           shift;shift ;;
     -kap|--kubernetes-api-port)  KUBERNETES_API_PORT="$2";           shift;shift ;;
@@ -279,6 +280,14 @@ else
   IS_OPENSHIFT="false"
   infomsg "You are connecting to a (non-OpenShift) Kubernetes cluster"
 fi
+
+# Port forward data for Istiod, used for the Istiod URL
+PORT_FORWARD_SERVICE_ISTIOD="service/istiod"
+LOCAL_REMOTE_PORTS_ISTIOD="15014:15014"
+if [ -z "${ISTIOD_URL:-}" ]; then
+  ISTIOD_URL="http://127.0.0.1:15014/version"
+fi
+
 
 # If the user didn't tell us what the Prometheus URL is, try to auto-discover it
 
@@ -512,6 +521,7 @@ if ! echo "${LOG_LEVEL}" | grep -qiE "^(trace|debug|info|warn|error|fatal)$"; th
 KIALI_CONFIG_FILE="${TMP_DIR}/run-kiali-config.yaml"
 cat ${KIALI_CONFIG_TEMPLATE_FILE} | \
   ISTIO_NAMESPACE=${ISTIO_NAMESPACE} \
+  ISTIOD_URL=${ISTIOD_URL} \
   PROMETHEUS_URL=${PROMETHEUS_URL} \
   GRAFANA_URL=${GRAFANA_URL} \
   TRACING_URL=${TRACING_URL} \
@@ -634,6 +644,14 @@ kill_port_forward_component() {
   fi
 }
 
+start_port_forward_istiod() {
+  start_port_forward_component 'Istiod' 'PORT_FORWARD_JOB_ISTIOD' "${PORT_FORWARD_SERVICE_ISTIOD}" "${LOCAL_REMOTE_PORTS_ISTIOD}" "${ISTIOD_URL}" '--istiod-url'
+}
+
+kill_port_forward_istiod() {
+  kill_port_forward_component 'Istiod' 'PORT_FORWARD_JOB_ISTIOD'
+}
+
 start_port_forward_prometheus() {
   start_port_forward_component 'Prometheus' 'PORT_FORWARD_JOB_PROMETHEUS' "${PORT_FORWARD_DEPLOYMENT_PROMETHEUS}" "${LOCAL_REMOTE_PORTS_PROMETHEUS}"  "${PROMETHEUS_URL}" '--prometheus-url'
 }
@@ -722,6 +740,7 @@ ask_to_restart_or_exit() {
 cleanup_and_exit() {
   kill_server
   kill_proxy
+  kill_port_forward_istiod
   kill_port_forward_prometheus
   kill_port_forward_grafana
   kill_port_forward_tracing
@@ -749,6 +768,7 @@ else
   infomsg "The server is not rebootable. You can kill this script via either [kill $$] or [kill -USR1 $$]"
 fi
 
+start_port_forward_istiod
 start_port_forward_prometheus
 start_port_forward_grafana
 start_port_forward_tracing
