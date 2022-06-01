@@ -1,18 +1,18 @@
 import axios from 'axios';
 import * as React from 'react';
-import { PersistGate } from 'redux-persist/lib/integration/react';
-import { Provider } from 'react-redux';
-import { Router, withRouter } from 'react-router-dom';
+import {PersistGate} from 'redux-persist/lib/integration/react';
+import {Provider} from 'react-redux';
+import {Router, withRouter} from 'react-router-dom';
 import * as Visibility from 'visibilityjs';
-import { GlobalActions } from '../actions/GlobalActions';
+import {GlobalActions} from '../actions/GlobalActions';
 import NavigationContainer from '../components/Nav/Navigation';
-import { store, persistor } from '../store/ConfigStore';
+import {persistor, store} from '../store/ConfigStore';
 import AuthenticationControllerContainer from './AuthenticationController';
 import history from './History';
 import InitializingScreen from './InitializingScreen';
 import StartupInitializer from './StartupInitializer';
 import LoginPageContainer from '../pages/Login/LoginPage';
-import { LoginActions } from '../actions/LoginActions';
+import {LoginActions} from '../actions/LoginActions';
 import 'tippy.js/dist/tippy.css';
 import 'tippy.js/dist/themes/light-border.css';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -43,11 +43,22 @@ const decrementLoadingCounter = () => {
   }
 };
 
+const openshift_token: string | null = (function () {
+  const urlParams = new URLSearchParams(document.location.search);
+  return urlParams.get('oauth_token');
+}());
+
 // intercept all Axios requests and dispatch the INCREMENT_LOADING_COUNTER Action
 axios.interceptors.request.use(
   request => {
     // dispatch an action to turn spinner on
     store.dispatch(GlobalActions.incrementLoadingCounter());
+
+    // Set OpenShift token, if available.
+    if (openshift_token) {
+      request.headers.Authorization = `Bearer ${openshift_token}`;
+    }
+
     return request;
   },
   error => {
