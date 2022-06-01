@@ -28,6 +28,11 @@ $color-grey-background-border: #ccc;
   padding: 0px;
 }
 
+// toolbar alignment issues #5125
+.pf-c-dropdown, .pf-c-button {
+  bottom: 0.5px;
+}
+
 // Remove background Image and color by default in header, login and about modal
 /*
 .pf-c-page__header {
