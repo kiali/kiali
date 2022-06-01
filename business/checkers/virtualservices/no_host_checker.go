@@ -83,11 +83,6 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 		}
 	}
 
-	if len(n.VirtualService.Spec.Http) == 0 && len(n.VirtualService.Spec.Tcp) == 0 && len(n.VirtualService.Spec.Tls) == 0 {
-		validation := models.Build("virtualservices.nohost.invalidprotocol", "")
-		validations = append(validations, &validation)
-		valid = false
-	}
 	return validations, valid
 }
 

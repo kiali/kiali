@@ -95,20 +95,6 @@ func TestNoValidHost(t *testing.T) {
 	assert.Equal(models.ErrorSeverity, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", vals[0]))
 	assert.Equal("spec/tcp[0]/route[0]/destination/host", vals[0].Path)
-
-	virtualService.Spec.Tcp = nil
-
-	vals, valid = NoHostChecker{
-		Namespace:        "test-namespace",
-		RegistryServices: append(registryService1, registryService2...),
-		VirtualService:   *virtualService,
-	}.Check()
-
-	assert.False(valid)
-	assert.NotEmpty(vals)
-	assert.Equal(models.ErrorSeverity, vals[0].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.invalidprotocol", vals[0]))
-	assert.Equal("", vals[0].Path)
 }
 
 func TestNoValidExportedHost(t *testing.T) {
@@ -154,20 +140,6 @@ func TestNoValidExportedHost(t *testing.T) {
 	assert.Equal(models.ErrorSeverity, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", vals[0]))
 	assert.Equal("spec/tcp[0]/route[0]/destination/host", vals[0].Path)
-
-	virtualService.Spec.Tcp = nil
-
-	vals, valid = NoHostChecker{
-		Namespace:        "bookinfo",
-		VirtualService:   *virtualService,
-		RegistryServices: append(data.CreateFakeRegistryServices("ratings.bookinfo2.svc.cluster.local", "bookinfo2", "bookinfo2"), append(registryService1, registryService2...)...),
-	}.Check()
-
-	assert.False(valid)
-	assert.NotEmpty(vals)
-	assert.Equal(models.ErrorSeverity, vals[0].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.invalidprotocol", vals[0]))
-	assert.Equal("", vals[0].Path)
 }
 
 func TestInvalidServiceNamespaceFormatHost(t *testing.T) {

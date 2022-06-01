@@ -61,10 +61,7 @@ func (elc EgressHostChecker) validateHost(host string, egrIdx, hostIdx int) ([]*
 	checks := make([]*models.IstioCheck, 0)
 	sns := elc.Sidecar.Namespace
 
-	hostNs, dnsName, valid := getHostComponents(host)
-	if !valid {
-		return append(checks, buildCheck("sidecar.egress.invalidhostformat", egrIdx, hostIdx)), false
-	}
+	hostNs, dnsName := getHostComponents(host)
 
 	// Don't show any validation for common scenarios like */*, ~/* and ./*
 	if (hostNs == "*" || hostNs == "~" || hostNs == ".") && dnsName == "*" {
@@ -97,14 +94,9 @@ func (elc EgressHostChecker) HasMatchingService(host kubernetes.Host, itemNamesp
 	return kubernetes.HasMatchingRegistryService(itemNamespace, host.String(), elc.RegistryServices)
 }
 
-func getHostComponents(host string) (string, string, bool) {
+func getHostComponents(host string) (string, string) {
 	hParts := strings.Split(host, "/")
-
-	if len(hParts) != 2 {
-		return "", "", false
-	}
-
-	return hParts[0], hParts[1], true
+	return hParts[0], hParts[1]
 }
 
 func buildCheck(code string, egrIdx, hostIdx int) *models.IstioCheck {
