@@ -308,6 +308,7 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
                   template={envoyMetricsDashboardRef.template}
                   embedded={true}
                   height={this.state.tabHeight - 40 - 24 + 13}
+                  data-test="envoy-metrics-component"
                 />
               ) : (
                 <SummaryWriterComp
