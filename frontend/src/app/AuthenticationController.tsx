@@ -11,7 +11,7 @@ import { MessageCenterActions } from '../actions/MessageCenterActions';
 import { MessageType } from '../types/MessageCenter';
 import { KialiDispatch } from '../types/Redux';
 import InitializingScreen from './InitializingScreen';
-import { isKioskMode } from '../utils/SearchParamUtils';
+import {getKioskMode, isKioskMode} from '../utils/SearchParamUtils';
 import * as AlertUtils from '../utils/AlertUtils';
 import { setServerConfig, serverConfig, humanDurations } from '../config/ServerConfig';
 import { TLSStatus } from '../types/TLSStatus';
@@ -335,13 +335,9 @@ export class AuthenticationController extends React.Component<
     if (document.documentElement) {
       const isKiosk = isKioskMode();
       document.documentElement.className = isKiosk ? 'kiosk' : '';
-      if (isKiosk) {
-        store.dispatch(GlobalActions.setEmbeddedMode());
-      } else {
-        store.dispatch(GlobalActions.setStandaloneMode());
-      }
+      store.dispatch(GlobalActions.setKiosk(getKioskMode()));
     }
-  };
+  };R
 
   private processServerStatus = (status: StatusState) => {
     this.props.statusRefresh(status);

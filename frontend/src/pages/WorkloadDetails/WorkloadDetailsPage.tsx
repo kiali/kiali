@@ -9,7 +9,6 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
-import { RenderHeader } from '../../components/Nav/Page';
 import { serverConfig } from '../../config/ServerConfig';
 import WorkloadPodLogs from './WorkloadPodLogs';
 import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
@@ -24,6 +23,7 @@ import TimeControl from '../../components/Time/TimeControl';
 import EnvoyDetailsContainer from 'components/Envoy/EnvoyDetails';
 import { StatusState } from '../../types/StatusState';
 import { WorkloadHealth } from 'types/Health';
+import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
 
 type WorkloadDetailsState = {
   workload?: Workload;
@@ -33,7 +33,6 @@ type WorkloadDetailsState = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  isStandalone: boolean;
   jaegerInfo?: JaegerInfo;
   lastRefreshAt: TimeInMilliseconds;
   statusState: StatusState;
@@ -290,13 +289,11 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       ) : undefined;
     return (
       <>
-        {this.props.isStandalone && (
-          <RenderHeader
-            location={this.props.location}
-            rightToolbar={<TimeControl customDuration={useCustomTime} />}
-            actionsToolbar={actionsToolbar}
-          />
-        )}
+        <RenderHeaderContainer
+          location={this.props.location}
+          rightToolbar={<TimeControl customDuration={useCustomTime} />}
+          actionsToolbar={actionsToolbar}
+        />
         {this.state.workload && (
           <ParameterizedTabs
             id="basic-tabs"
@@ -320,7 +317,6 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  isStandalone: state.globalState.isStandalone,
   jaegerInfo: state.jaegerState.info,
   lastRefreshAt: state.globalState.lastRefreshAt,
   statusState: state.statusState,

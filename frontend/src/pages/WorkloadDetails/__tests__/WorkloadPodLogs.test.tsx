@@ -5,7 +5,7 @@ import { WorkloadPodLogs } from '../WorkloadPodLogs';
 import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core';
 
 const defaultProps = () => ({
-  isStandalone: true,
+  isKiosk: false,
   lastRefreshAt: 200,
   timeRange: {},
   namespace: 'namespace',

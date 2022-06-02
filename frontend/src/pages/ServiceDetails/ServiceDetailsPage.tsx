@@ -5,7 +5,6 @@ import { Tab } from '@patternfly/react-core';
 
 import ServiceId from '../../types/ServiceId';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
-import { RenderHeader } from '../../components/Nav/Page';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { KialiAppState } from '../../store/Store';
 import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
@@ -21,6 +20,7 @@ import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { Gateway, PeerAuthentication, Validations } from '../../types/IstioObjects';
 import ServiceWizardDropdown from '../../components/IstioWizards/ServiceWizardDropdown';
 import TimeControl from '../../components/Time/TimeControl';
+import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
 
 type ServiceDetailsState = {
   currentTab: string;
@@ -32,7 +32,6 @@ type ServiceDetailsState = {
 
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
   duration: DurationInSeconds;
-  isStandalone: boolean;
   jaegerInfo?: JaegerInfo;
   lastRefreshAt: TimeInMilliseconds;
 }
@@ -199,13 +198,11 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
     return (
       <>
-        {this.props.isStandalone && (
-          <RenderHeader
-            location={this.props.location}
-            rightToolbar={<TimeControl customDuration={useCustomTime} />}
-            actionsToolbar={actionsToolbar}
-          />
-        )}
+        <RenderHeaderContainer
+          location={this.props.location}
+          rightToolbar={<TimeControl customDuration={useCustomTime} />}
+          actionsToolbar={actionsToolbar}
+        />
         <ParameterizedTabs
           id="basic-tabs"
           onSelect={tabValue => {
@@ -226,7 +223,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  isStandalone: state.globalState.isStandalone,
   jaegerInfo: state.jaegerState.info,
   lastRefreshAt: state.globalState.lastRefreshAt
 });

@@ -11,7 +11,6 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
-import { RenderHeader } from '../../components/Nav/Page';
 import { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
@@ -21,6 +20,7 @@ import TracesComponent from '../../components/JaegerIntegration/TracesComponent'
 import TrafficDetails from 'components/TrafficList/TrafficDetails';
 import TimeControl from '../../components/Time/TimeControl';
 import { AppHealth } from 'types/Health';
+import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
 
 type AppDetailsState = {
   app?: App;
@@ -32,7 +32,6 @@ type AppDetailsState = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  isStandalone: boolean;
   jaegerInfo?: JaegerInfo;
   lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
@@ -226,9 +225,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     }
     return (
       <>
-        {this.props.isStandalone && (
-          <RenderHeader location={this.props.location} rightToolbar={<TimeControl customDuration={useCustomTime} />} />
-        )}
+        <RenderHeaderContainer location={this.props.location} rightToolbar={<TimeControl customDuration={useCustomTime} />} />
         {this.state.app && (
           <ParameterizedTabs
             id="basic-tabs"
@@ -252,7 +249,6 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  isStandalone: state.globalState.isStandalone,
   jaegerInfo: state.jaegerState.info,
   lastRefreshAt: state.globalState.lastRefreshAt
 });
