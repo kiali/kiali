@@ -282,24 +282,6 @@ func TestEgressHostCrossNamespaceServiceNotFound(t *testing.T) {
 	}
 }
 
-func TestEgressInvalidHostFormat(t *testing.T) {
-	assert := assert.New(t)
-
-	vals, valid := EgressHostChecker{
-		Sidecar: *sidecarWithHosts([]string{
-			"no-dash-used",
-		}),
-	}.Check()
-
-	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
-	assert.False(valid)
-
-	assert.Equal(models.ErrorSeverity, vals[0].Severity)
-	assert.Equal("spec/egress[0]/hosts[0]", vals[0].Path)
-	assert.NoError(validations.ConfirmIstioCheckMessage("sidecar.egress.invalidhostformat", vals[0]))
-}
-
 func TestEgressServiceNotFound(t *testing.T) {
 	assert := assert.New(t)
 

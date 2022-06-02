@@ -267,11 +267,6 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "ServiceRole does not exists in this namespace",
 		Severity: ErrorSeverity,
 	},
-	"sidecar.egress.invalidhostformat": {
-		Code:     "KIA1003",
-		Message:  "Invalid host format. 'namespace/dnsName' format expected",
-		Severity: ErrorSeverity,
-	},
 	"sidecar.egress.servicenotfound": {
 		Code:     "KIA1004",
 		Message:  "This host has no matching entry in the service registry",
@@ -295,11 +290,6 @@ var checkDescriptors = map[string]IstioCheck{
 	"virtualservices.nogateway": {
 		Code:     "KIA1102",
 		Message:  "VirtualService is pointing to a non-existent gateway",
-		Severity: ErrorSeverity,
-	},
-	"virtualservices.nohost.invalidprotocol": {
-		Code:     "KIA1103",
-		Message:  "VirtualService doesn't define any valid route protocol",
 		Severity: ErrorSeverity,
 	},
 	"virtualservices.route.singleweight": {
