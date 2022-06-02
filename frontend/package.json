@@ -42,6 +42,7 @@
     "precypress:run:junit": "npm run cypress:delete:reports",
     "cypress": "cypress open",
     "cypress:run": "cypress run",
+    "cypress:ci": "cypress run -e TAGS=\"not @crd-validation\" && cypress run -e TAGS=\"@crd-validation\"",
     "cypress:run:junit": "cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json",
     "cypress:delete:reports": "rm cypress/results/* || true",
     "cypress:combine:reports": "jrm cypress/results/combined-report.xml \"cypress/results/*.xml\"",
