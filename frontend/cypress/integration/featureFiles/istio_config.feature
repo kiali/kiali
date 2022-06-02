@@ -229,21 +229,6 @@ Feature: Kiali Istio Config page
 
 # TODO: KIA0801 is only applicable for Maistra. We don't have an environment to run tests for this one.
 
-# TODO: KIA090x no longer apply to current Istio (ServiceRole does not exist anymore)
-#   Even more, the checkers are no longer in the codebase. The docs should be updated.
-
-# TODO: Both KIA1003 and KIA1103 are stale validations. Istio rejects a resource with such configs (i.e. it
-#   is not accepted into the cluster).
-#   Below is a scenario that was prepared to test this checker, but it is "red" because when trying
-#   to create an offending resource, the `kubectl apply` command terminates with error because of the offending configs.
-#
-#  @crd-validation
-#  Scenario: KIA1003 validation
-#    Given there is a "foo" Sidecar resource in the "default" namespace that captures egress traffic for hosts "noslashsymbolpresent"
-#    And the Sidecar is applied to workloads with "app=foo" labels
-#    When user selects the "default" namespace
-#    Then the "foo" "Sidecar" of the "default" namespace should have a "danger"
-
 # TODO: Apparently, Kiali does not trigger:
 #   KIA0204, KIA0205, KIA0206, KIA0401, KIA0501
 #   It is possible that under the current mTLS defaults these
