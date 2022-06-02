@@ -1,5 +1,14 @@
 import * as React from 'react';
-import { AboutModal, TextContent, TextList, TextListItem, Title, Button, TitleSizes } from '@patternfly/react-core';
+import {
+  AboutModal,
+  TextContent,
+  TextList,
+  TextListItem,
+  Title,
+  Button,
+  TitleSizes,
+  ButtonVariant
+} from '@patternfly/react-core';
 import { ExternalServiceInfo, Status, StatusKey } from '../../types/StatusState';
 import { config, kialiLogo } from '../../config';
 import { style } from 'typestyle';
