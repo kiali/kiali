@@ -73,6 +73,15 @@ const thinGroupStyle = style({
   paddingRight: '10px'
 });
 
+// styles for clear button
+const buttonClearStyle = style({
+  minWidth: '20px',
+  width: '20px',
+  paddingLeft: '5px',
+  paddingRight: '5px',
+  bottom:  '0.5px'
+});
+
 const operands: string[] = [
   '%grpcerr',
   '%grpctraffic',
@@ -287,7 +296,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
             {this.props.findValue && (
               <Tooltip key="ot_clear_find" position="top" content="Clear Find...">
                 <Button
-                  style={{ minWidth: '20px', width: '20px', paddingLeft: '5px', paddingRight: '5px', bottom:  '0.5px' }}
+                  className={buttonClearStyle}
                   variant={ButtonVariant.control}
                   onClick={() => this.setFind('')}
                 >
@@ -314,7 +323,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
             {this.props.hideValue && (
               <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
                 <Button
-                  style={{ minWidth: '20px', width: '20px', paddingLeft: '5px', paddingRight: '5px', bottom:  '0.5px' }}
+                  className={buttonClearStyle}
                   variant={ButtonVariant.control}
                   onClick={() => this.setHide('')}
                 >
