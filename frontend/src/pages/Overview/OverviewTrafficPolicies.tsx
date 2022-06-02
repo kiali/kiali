@@ -37,8 +37,6 @@ type State = {
   loaded: boolean;
 };
 
-type colorButton = 'primary' | 'secondary' | 'tertiary' | 'danger' | 'link' | 'plain' | 'control';
-
 export default class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoliciesProps, State> {
   private promises = new PromisesRegistry();
   constructor(props: OverviewTrafficPoliciesProps) {
