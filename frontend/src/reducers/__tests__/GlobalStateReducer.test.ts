@@ -22,6 +22,8 @@ describe('GlobalState reducer', () => {
     expect(globalState(undefined, GlobalActions.unknown())).toEqual({
       loadingCounter: 0,
       isPageVisible: true,
+      isKiosk: false,
+      kiosk: '',
       lastRefreshAt: 0
     });
   });
@@ -32,6 +34,8 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 0,
           isPageVisible: true,
+          isKiosk: false,
+          kiosk: '',
           lastRefreshAt: currentDate
         },
         GlobalActions.incrementLoadingCounter()
@@ -39,6 +43,8 @@ describe('GlobalState reducer', () => {
     ).toEqual({
       loadingCounter: 1,
       isPageVisible: true,
+      isKiosk: false,
+      kiosk: '',
       lastRefreshAt: currentDate
     });
   });
@@ -49,6 +55,8 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 1,
           isPageVisible: true,
+          isKiosk: false,
+          kiosk: '',
           lastRefreshAt: currentDate
         },
         GlobalActions.decrementLoadingCounter()
@@ -56,6 +64,8 @@ describe('GlobalState reducer', () => {
     ).toEqual({
       loadingCounter: 0,
       isPageVisible: true,
+      isKiosk: false,
+      kiosk: '',
       lastRefreshAt: currentDate
     });
   });
@@ -66,6 +76,8 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 1,
           isPageVisible: true,
+          isKiosk: false,
+          kiosk: '',
           lastRefreshAt: currentDate
         },
         GlobalActions.incrementLoadingCounter()
@@ -73,6 +85,8 @@ describe('GlobalState reducer', () => {
     ).toEqual({
       loadingCounter: 2,
       isPageVisible: true,
+      isKiosk: false,
+      kiosk: '',
       lastRefreshAt: currentDate
     });
   });
@@ -83,6 +97,8 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 2,
           isPageVisible: true,
+          isKiosk: false,
+          kiosk: '',
           lastRefreshAt: currentDate
         },
         GlobalActions.decrementLoadingCounter()
@@ -90,6 +106,8 @@ describe('GlobalState reducer', () => {
     ).toEqual({
       loadingCounter: 1,
       isPageVisible: true,
+      isKiosk: false,
+      kiosk: '',
       lastRefreshAt: currentDate
     });
   });
@@ -99,6 +117,8 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 0,
           isPageVisible: false,
+          isKiosk: false,
+          kiosk: '',
           lastRefreshAt: currentDate
         },
         GlobalActions.setPageVisibilityVisible()
@@ -106,6 +126,8 @@ describe('GlobalState reducer', () => {
     ).toEqual({
       loadingCounter: 0,
       isPageVisible: true,
+      isKiosk: false,
+      kiosk: '',
       lastRefreshAt: currentDate
     });
   });
@@ -115,6 +137,8 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 0,
           isPageVisible: true,
+          isKiosk: false,
+          kiosk: '',
           lastRefreshAt: currentDate
         },
         GlobalActions.setPageVisibilityHidden()
@@ -122,6 +146,28 @@ describe('GlobalState reducer', () => {
     ).toEqual({
       loadingCounter: 0,
       isPageVisible: false,
+      isKiosk: false,
+      kiosk: '',
+      lastRefreshAt: currentDate
+    });
+  });
+  it('should turn on kiosk status', () => {
+    expect(
+      globalState(
+        {
+          loadingCounter: 0,
+          isPageVisible: true,
+          isKiosk: false,
+          kiosk: '',
+          lastRefreshAt: currentDate
+        },
+        GlobalActions.setKiosk('test')
+      )
+    ).toEqual({
+      loadingCounter: 0,
+      isPageVisible: true,
+      isKiosk: true,
+      kiosk: 'test',
       lastRefreshAt: currentDate
     });
   });

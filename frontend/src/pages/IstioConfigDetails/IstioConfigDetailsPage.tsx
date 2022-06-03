@@ -28,7 +28,7 @@ import {
   parseYamlValidations
 } from '../../types/AceValidations';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
-import { RenderComponentScroll, RenderHeader } from '../../components/Nav/Page';
+import { RenderComponentScroll } from '../../components/Nav/Page';
 import './IstioConfigDetailsPage.css';
 import { default as IstioActionButtonsContainer } from '../../components/IstioActions/IstioActionsButtons';
 import history from '../../app/History';
@@ -53,6 +53,7 @@ import { AxiosError } from 'axios';
 import RefreshContainer from "../../components/Refresh/Refresh";
 import IstioConfigOverview from './IstioObjectDetails/IstioConfigOverview';
 import { Annotation } from 'react-ace/types';
+import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -557,7 +558,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   render() {
     return (
       <>
-        <RenderHeader
+        <RenderHeaderContainer
           location={this.props.location}
           rightToolbar={<RefreshContainer id="config_details_refresh" hideLabel={true} handleRefresh={this.onRefresh} />}
           actionsToolbar={this.renderActions()}

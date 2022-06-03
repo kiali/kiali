@@ -1,7 +1,12 @@
 import React from 'react';
+import {store} from "../../../store/ConfigStore";
 
 // TOP_PADDING constant is used to adjust the height of the main div to allow scrolling in the inner container layer.
 export const TOP_PADDING = 76 + 118;
+
+// EMBEDDED_PADDING constant is a magic number used to adjust the height of the main div to allow scrolling in the inner container layer.
+// 42px is the height of the first tab menu used in iframe scenarios, this will likelely be adjusted in the future
+export const EMBEDDED_PADDING = 42;
 
 interface Props {
   className?: any;
@@ -28,9 +33,11 @@ export class RenderComponentScroll extends React.Component<Props, State> {
   }
 
   updateWindowDimensions = () => {
+    const isStandalone = !store.getState().globalState.isKiosk;
+    const topPadding = isStandalone ? TOP_PADDING : EMBEDDED_PADDING;
     this.setState(
       {
-        height: window.innerHeight - TOP_PADDING
+        height: window.innerHeight - topPadding
       },
       () => {
         if (this.props.onResize) {

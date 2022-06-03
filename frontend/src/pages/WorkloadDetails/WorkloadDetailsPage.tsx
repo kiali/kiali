@@ -9,7 +9,6 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
-import { RenderHeader } from '../../components/Nav/Page';
 import { serverConfig } from '../../config/ServerConfig';
 import WorkloadPodLogs from './WorkloadPodLogs';
 import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
@@ -24,6 +23,7 @@ import TimeControl from '../../components/Time/TimeControl';
 import EnvoyDetailsContainer from 'components/Envoy/EnvoyDetails';
 import { StatusState } from '../../types/StatusState';
 import { WorkloadHealth } from 'types/Health';
+import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
 
 type WorkloadDetailsState = {
   workload?: Workload;
@@ -289,7 +289,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       ) : undefined;
     return (
       <>
-        <RenderHeader
+        <RenderHeaderContainer
           location={this.props.location}
           rightToolbar={<TimeControl customDuration={useCustomTime} />}
           actionsToolbar={actionsToolbar}
@@ -319,7 +319,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   jaegerInfo: state.jaegerState.info,
   lastRefreshAt: state.globalState.lastRefreshAt,
-  statusState: state.statusState
+  statusState: state.statusState,
 });
 
 const WorkloadDetailsContainer = connect(mapStateToProps)(WorkloadDetails);

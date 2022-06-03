@@ -5,7 +5,6 @@ import { Tab } from '@patternfly/react-core';
 
 import ServiceId from '../../types/ServiceId';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
-import { RenderHeader } from '../../components/Nav/Page';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { KialiAppState } from '../../store/Store';
 import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
@@ -21,6 +20,7 @@ import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { Gateway, PeerAuthentication, Validations } from '../../types/IstioObjects';
 import ServiceWizardDropdown from '../../components/IstioWizards/ServiceWizardDropdown';
 import TimeControl from '../../components/Time/TimeControl';
+import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
 
 type ServiceDetailsState = {
   currentTab: string;
@@ -198,7 +198,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
     return (
       <>
-        <RenderHeader
+        <RenderHeaderContainer
           location={this.props.location}
           rightToolbar={<TimeControl customDuration={useCustomTime} />}
           actionsToolbar={actionsToolbar}

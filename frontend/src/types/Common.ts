@@ -6,6 +6,8 @@ export type UserName = string;
 export type Password = string;
 export type RawDate = string;
 
+export type KioskMode = string;
+
 export enum HTTP_VERBS {
   DELETE = 'DELETE',
   GET = 'get',

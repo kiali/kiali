@@ -51,6 +51,7 @@ const proxyContainerColor = PFColors.Gold400;
 const spanColor = PFColors.Cyan300;
 
 type ReduxProps = {
+  isKiosk: boolean;
   lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
 };
@@ -165,12 +166,12 @@ const toolbarInputStyle = style({
 });
 
 const logsBackground = (enabled: boolean) => ({ backgroundColor: enabled ? PFColors.Black1000 : 'gray' });
-const logsHeight = (showToolbar: boolean, fullscreen: boolean) => {
+const logsHeight = (showToolbar: boolean, fullscreen: boolean, isKiosk: boolean) => {
   const toolbarHeight = showToolbar ? '0px' : '49px';
   return {
     height: fullscreen
       ? `calc(100vh - 130px + ${toolbarHeight})`
-      : `calc(var(--kiali-details-pages-tab-content-height) - 155px + ${toolbarHeight})`
+      : `calc(var(--kiali-details-pages-tab-content-height) - ${!isKiosk ? '155px' : '0px'} + ${toolbarHeight})`
   };
 };
 
@@ -547,7 +548,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           // (to max) and when we try to assign scrollTop to scrollHeight (above),it stays at 0
           // and we fail to set the scroll correctly. So, don't change this!
           style={{
-            ...logsHeight(this.state.showToolbar, this.state.fullscreen),
+            ...logsHeight(this.state.showToolbar, this.state.fullscreen, this.props.isKiosk),
             ...logsBackground(this.hasEntries(this.state.entries))
           }}
           ref={this.logsRef}
@@ -1003,6 +1004,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
+    isKiosk: state.globalState.isKiosk,
     timeRange: timeRangeSelector(state),
     lastRefreshAt: state.globalState.lastRefreshAt
   };
