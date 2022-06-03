@@ -1,4 +1,5 @@
 import { Given, Then, When } from "cypress-cucumber-preprocessor/steps";
+import { ensureKialiFinishedLoading } from "./transition";
 
 // Most of these "Given" implementations are directly using the Kiali API
 // in order to reach a well known state in the environment before performing
@@ -218,9 +219,8 @@ When('I override the default automatic sidecar injection policy in the namespace
     cy.get('[data-test=overview-type-LIST]').click();
     cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button`).click();
     cy.get(`[data-test=enable-${this.targetNamespace}-namespace-sidecar-injection]`).click();
-    cy.intercept(Cypress.config('baseUrl') + '/api/namespaces').as('namespacesReload');
     cy.get('[data-test=confirm-traffic-policies]').click();
-    cy.wait('@namespacesReload')
+    ensureKialiFinishedLoading();
 });
 
 When('I change the override configuration for automatic sidecar injection policy in the namespace to {string} it', function (enabledOrDisabled) {
@@ -229,9 +229,8 @@ When('I change the override configuration for automatic sidecar injection policy
     cy.get('[data-test=overview-type-LIST]').click();
     cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button`).click();
     cy.get(`[data-test=${enabledOrDisabled}-${this.targetNamespace}-namespace-sidecar-injection]`).click();
-    cy.intercept(Cypress.config('baseUrl') + '/api/namespaces').as('namespacesReload');
     cy.get('[data-test=confirm-traffic-policies]').click();
-    cy.wait('@namespacesReload')
+    ensureKialiFinishedLoading();
 });
 
 When('I remove override configuration for sidecar injection in the namespace', function () {
@@ -240,17 +239,15 @@ When('I remove override configuration for sidecar injection in the namespace', f
     cy.get('[data-test=overview-type-LIST]').click();
     cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button`).click();
     cy.get(`[data-test=remove-${this.targetNamespace}-namespace-sidecar-injection]`).click();
-    cy.intercept(Cypress.config('baseUrl') + '/api/namespaces').as('namespacesReload');
     cy.get('[data-test=confirm-traffic-policies]').click();
-    cy.wait('@namespacesReload')
+    ensureKialiFinishedLoading();
 });
 
 function switchWorkloadSidecarInjection(enableOrDisable) {
     cy.visit(`/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}`);
-    cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}**`).as('workloadReload');
     cy.get('[data-test="workload-actions-dropdown"] button').click();
     cy.get(`button[data-test=${enableOrDisable}_auto_injection]`).click();
-    cy.wait('@workloadReload');
+    ensureKialiFinishedLoading();
 }
 
 When('I override the default policy for automatic sidecar injection in the workload to {string} it', switchWorkloadSidecarInjection);
