@@ -75,7 +75,7 @@ DEFAULT_API_PROXY_PORT="8001"
 DEFAULT_CLIENT_EXE="kubectl"
 DEFAULT_ENABLE_SERVER="true"
 DEFAULT_ISTIO_NAMESPACE="istio-system"
-DEFAULT_ISTIO_URL="http://127.0.0.1:15014/version"
+DEFAULT_ISTIOD_URL="http://127.0.0.1:15014/version"
 DEFAULT_KIALI_CONFIG_TEMPLATE_FILE="${SCRIPT_DIR}/run-kiali-config-template.yaml"
 DEFAULT_KIALI_EXE="${GOPATH:-.}/bin/kiali"
 DEFAULT_KUBE_CONTEXT="kiali-developer"
@@ -155,7 +155,7 @@ Valid options:
       Default: ${DEFAULT_ISTIO_NAMESPACE}
   -iu|--istiod-url
       The URL of the istiod endpoint.
-      Default: ${DEFAULT_ISTIO_URL}
+      Default: ${DEFAULT_ISTIOD_URL}
   -kah|--kubernetes-api-host
       The hostname of the Kubernetes API Endpoint.
       Default: <will be auto-discovered>
@@ -288,9 +288,7 @@ fi
 # Port forward data for Istiod, used for the Istiod URL
 PORT_FORWARD_SERVICE_ISTIOD="service/istiod"
 LOCAL_REMOTE_PORTS_ISTIOD="15014:15014"
-if [ -z "${ISTIOD_URL:-}" ]; then
-  ISTIOD_URL= "${DEFAULT_ISTIO_URL}"
-fi
+ISTIOD_URL="${ISTIOD_URL:-${DEFAULT_ISTIOD_URL}}"
 
 
 # If the user didn't tell us what the Prometheus URL is, try to auto-discover it
@@ -490,6 +488,7 @@ echo "CLIENT_EXE=$CLIENT_EXE"
 echo "ENABLE_SERVER=$ENABLE_SERVER"
 echo "GRAFANA_URL=$GRAFANA_URL"
 echo "ISTIO_NAMESPACE=$ISTIO_NAMESPACE"
+echo "ISTIOD_URL=$ISTIOD_URL"
 echo "KIALI_CONFIG_TEMPLATE_FILE=$KIALI_CONFIG_TEMPLATE_FILE"
 echo "KIALI_EXE=$KIALI_EXE"
 echo "KUBE_CONTEXT=$KUBE_CONTEXT"
