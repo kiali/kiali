@@ -153,13 +153,15 @@ export function ensureObjectsInTable(...names: string[]) {
   });
 }
 
-export function checkHealthIndicatorInTable(targetNamespace: string, targetRowItemName: string, healthStatus: string) {
-  cy.get(`[data-test=VirtualItem_Ns${targetNamespace}_${targetRowItemName}] svg[class=icon-${healthStatus}]`)
+export function checkHealthIndicatorInTable(targetNamespace: string, targetType: string | null, targetRowItemName: string, healthStatus: string) {
+  const selector = targetType ? `${targetNamespace}_${targetType}_${targetRowItemName}` : `${targetNamespace}_${targetRowItemName}`;
+  cy.get(`[data-test=VirtualItem_Ns${selector}] svg[class=icon-${healthStatus}]`)
       .should('exist');
 }
 
-export function checkHealthStatusInTable(targetNamespace: string, targetRowItemName: string, healthStatus: string) {
-  cy.get(`[data-test=VirtualItem_Ns${targetNamespace}_${targetRowItemName}] td:first-child span`)
+export function checkHealthStatusInTable(targetNamespace: string, targetType: string | null, targetRowItemName: string, healthStatus: string) {
+  const selector = targetType ? `${targetNamespace}_${targetType}_${targetRowItemName}` : `${targetNamespace}_${targetRowItemName}`;
+  cy.get(`[data-test=VirtualItem_Ns${selector}] td:first-child span`)
       .trigger('mouseenter');
   cy.get(`[aria-label='Health indicator'] strong`)
       .should('contain.text', healthStatus);
