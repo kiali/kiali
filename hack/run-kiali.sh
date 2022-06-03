@@ -75,6 +75,7 @@ DEFAULT_API_PROXY_PORT="8001"
 DEFAULT_CLIENT_EXE="kubectl"
 DEFAULT_ENABLE_SERVER="true"
 DEFAULT_ISTIO_NAMESPACE="istio-system"
+DEFAULT_ISTIO_URL="http://127.0.0.1:15014/version"
 DEFAULT_KIALI_CONFIG_TEMPLATE_FILE="${SCRIPT_DIR}/run-kiali-config-template.yaml"
 DEFAULT_KIALI_EXE="${GOPATH:-.}/bin/kiali"
 DEFAULT_KUBE_CONTEXT="kiali-developer"
@@ -96,8 +97,8 @@ while [[ $# -gt 0 ]]; do
     -ce|--client-exe)            CLIENT_EXE="$2";                    shift;shift ;;
     -es|--enable-server)         ENABLE_SERVER="$2";                 shift;shift ;;
     -gu|--grafana-url)           GRAFANA_URL="$2";                   shift;shift ;;
-    -iu|--istiod-url)            ISTIOD_URL="$2";                    shift;shift ;;
     -in|--istio-namespace)       ISTIO_NAMESPACE="$2";               shift;shift ;;
+    -iu|--istiod-url)            ISTIOD_URL="$2";                    shift;shift ;;
     -kah|--kubernetes-api-host)  KUBERNETES_API_HOST="$2";           shift;shift ;;
     -kap|--kubernetes-api-port)  KUBERNETES_API_PORT="$2";           shift;shift ;;
     -kc|--kube-context)          KUBE_CONTEXT="$2";                  shift;shift ;;
@@ -152,6 +153,9 @@ Valid options:
   -in|--istio-namespace
       The name of the control plane namespace - this is where Istio components are installed.
       Default: ${DEFAULT_ISTIO_NAMESPACE}
+  -iu|--istiod-url
+      The URL of the istiod endpoint.
+      Default: ${DEFAULT_ISTIO_URL}
   -kah|--kubernetes-api-host
       The hostname of the Kubernetes API Endpoint.
       Default: <will be auto-discovered>
@@ -285,7 +289,7 @@ fi
 PORT_FORWARD_SERVICE_ISTIOD="service/istiod"
 LOCAL_REMOTE_PORTS_ISTIOD="15014:15014"
 if [ -z "${ISTIOD_URL:-}" ]; then
-  ISTIOD_URL="http://127.0.0.1:15014/version"
+  ISTIOD_URL= "${DEFAULT_ISTIO_URL}"
 fi
 
 
