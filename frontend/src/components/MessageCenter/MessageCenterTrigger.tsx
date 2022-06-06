@@ -50,11 +50,12 @@ export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
     const bell = style({
       position: 'relative',
       right: '5px',
-      top: '3px'
+      top: '2px'
     });
     const count = style({
       position: 'relative',
-      top: '3px'
+      top: '2px',
+      verticalAlign: "0.125em"
     });
 
     return (
