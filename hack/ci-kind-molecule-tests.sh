@@ -178,7 +178,7 @@ set -e
 # set up some of our defaults
 CLIENT_EXE=${CLIENT_EXE:-/usr/bin/kubectl}
 SRC="${SRC:-/tmp/KIALI-GIT}"
-DORP="${DORP:-docker}"
+DORP="${DORP:-podman}"
 GIT_CLONE_PROTOCOL="${GIT_CLONE_PROTOCOL:-git}"
 OLM_ENABLED="${OLM_ENABLED:-false}"
 
