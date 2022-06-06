@@ -15,7 +15,6 @@ import (
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
-	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -626,7 +625,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 	var depcon []osapps_v1.DeploymentConfig
 	var fulset []apps_v1.StatefulSet
 	var jbs []batch_v1.Job
-	var conjbs []batch_v1beta1.CronJob
+	var conjbs []batch_v1.CronJob
 	var daeset []apps_v1.DaemonSet
 
 	ws := models.Workloads{}
@@ -1193,7 +1192,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 	var depcon *osapps_v1.DeploymentConfig
 	var fulset *apps_v1.StatefulSet
 	var jbs []batch_v1.Job
-	var conjbs []batch_v1beta1.CronJob
+	var conjbs []batch_v1.CronJob
 	var ds *apps_v1.DaemonSet
 
 	wl := &models.Workload{

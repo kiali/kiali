@@ -17,7 +17,6 @@ import (
 	v1 "k8s.io/api/authentication/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
-	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,7 +37,7 @@ type K8SClientInterface interface {
 	ForwardGetRequest(namespace, podName string, localPort, destinationPort int, path string) ([]byte, error)
 	GetClusterServicesByLabels(labelsSelector string) ([]core_v1.Service, error)
 	GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
-	GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
+	GetCronJobs(namespace string) ([]batch_v1.CronJob, error)
 	GetDaemonSet(namespace string, name string) (*apps_v1.DaemonSet, error)
 	GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error)
 	GetDeployment(namespace string, name string) (*apps_v1.Deployment, error)
@@ -453,11 +452,11 @@ func (in *K8SClient) GetPodLogs(namespace, name string, opts *core_v1.PodLogOpti
 	return &PodLogs{Logs: buf.String()}, nil
 }
 
-func (in *K8SClient) GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error) {
-	if cjList, err := in.k8s.BatchV1beta1().CronJobs(namespace).List(in.ctx, emptyListOptions); err == nil {
+func (in *K8SClient) GetCronJobs(namespace string) ([]batch_v1.CronJob, error) {
+	if cjList, err := in.k8s.BatchV1().CronJobs(namespace).List(in.ctx, emptyListOptions); err == nil {
 		return cjList.Items, nil
 	} else {
-		return []batch_v1beta1.CronJob{}, err
+		return []batch_v1.CronJob{}, err
 	}
 }
 
@@ -548,7 +547,7 @@ func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workl
 	case JobType:
 		_, err = in.k8s.BatchV1().Jobs(namespace).Patch(in.ctx, workloadName, types.MergePatchType, bytePatch, emptyPatchOptions)
 	case CronJobType:
-		_, err = in.k8s.BatchV1beta1().CronJobs(namespace).Patch(in.ctx, workloadName, types.MergePatchType, bytePatch, emptyPatchOptions)
+		_, err = in.k8s.BatchV1().CronJobs(namespace).Patch(in.ctx, workloadName, types.MergePatchType, bytePatch, emptyPatchOptions)
 	case PodType:
 		_, err = in.k8s.CoreV1().Pods(namespace).Patch(in.ctx, workloadName, types.MergePatchType, bytePatch, emptyPatchOptions)
 	case DaemonSetType:

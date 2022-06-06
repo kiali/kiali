@@ -6,7 +6,6 @@ import (
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
-	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -307,7 +306,7 @@ func (workload *Workload) ParseJob(job *batch_v1.Job) {
 	workload.AvailableReplicas = job.Status.Active + job.Status.Succeeded
 }
 
-func (workload *Workload) ParseCronJob(cnjb *batch_v1beta1.CronJob) {
+func (workload *Workload) ParseCronJob(cnjb *batch_v1.CronJob) {
 	workload.Type = "CronJob"
 	workload.parseObjectMeta(&cnjb.ObjectMeta, &cnjb.ObjectMeta)
 
