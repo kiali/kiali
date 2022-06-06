@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { JWTHeader, JWTRule } from '../../../types/IstioObjects';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
-import { Button, FormSelect, FormSelectOption } from '@patternfly/react-core';
+import { Button, ButtonVariant, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { style } from 'typestyle';
@@ -277,7 +277,7 @@ class JwtRuleBuilder extends React.Component<Props, State> {
             <>
               {this.state.jwtRuleFields.length > 0 && (
                 <Button
-                  variant="link"
+                  variant={ButtonVariant.link}
                   icon={<PlusCircleIcon />}
                   onClick={this.onUpdateJwtRule}
                   isDisabled={!isJwtFieldValid}
@@ -305,7 +305,7 @@ class JwtRuleBuilder extends React.Component<Props, State> {
           <TableBody />
         </Table>
         <Button
-          variant="link"
+          variant={ButtonVariant.link}
           icon={<PlusCircleIcon />}
           isDisabled={!this.isJwtRuleValid()}
           onClick={this.onAddJwtRuleToList}

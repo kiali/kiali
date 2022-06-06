@@ -198,7 +198,7 @@ class Slider extends React.Component<Props, State> {
             <>
               <Button
                 className={leftButtonStyle}
-                variant="link"
+                variant={ButtonVariant.link}
                 isDisabled={this.props.locked}
                 onClick={() => this.onMinus()}
               >
@@ -215,7 +215,7 @@ class Slider extends React.Component<Props, State> {
               />
               <Button
                 className={rightButtonStyle}
-                variant="link"
+                variant={ButtonVariant.link}
                 isDisabled={this.props.locked}
                 onClick={() => this.onPlus()}
               >

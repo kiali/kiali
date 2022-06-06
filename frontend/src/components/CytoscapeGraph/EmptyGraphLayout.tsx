@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   Button,
+  ButtonVariant,
   EmptyState,
   EmptyStateBody,
   EmptyStateIcon,
@@ -134,7 +135,10 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
               <> You can enable 'Idle Nodes' to display service mesh nodes that have yet to see any request traffic.</>
             )}
           </EmptyStateBody>
-          <Button onClick={this.props.showIdleNodes ? this.props.action : this.props.toggleIdleNodes} variant="primary">
+          <Button
+            onClick={this.props.showIdleNodes ? this.props.action : this.props.toggleIdleNodes}
+            variant={ButtonVariant.primary}
+          >
             {(this.props.showIdleNodes && <>Refresh</>) || <>Display idle nodes</>}
           </Button>
         </EmptyState>

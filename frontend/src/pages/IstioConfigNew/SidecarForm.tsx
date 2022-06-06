@@ -3,7 +3,7 @@ import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/rea
 import { style } from 'typestyle';
 import { PFColors } from '../../components/Pf/PfColors';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
-import { Button, FormGroup, Switch, TextInputBase as TextInput } from '@patternfly/react-core';
+import { Button, ButtonVariant, FormGroup, Switch, TextInputBase as TextInput } from '@patternfly/react-core';
 import { isSidecarHostValid } from '../../utils/IstioConfigUtils';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isValid } from 'utils/Common';
@@ -197,7 +197,7 @@ class SidecarForm extends React.Component<Props, SidecarState> {
             </>,
             <>
               <Button
-                variant="link"
+                variant={ButtonVariant.link}
                 icon={<PlusCircleIcon />}
                 isDisabled={!this.state.validEgressHost}
                 onClick={this.onAddEgressHost}

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   Button,
+  ButtonVariant,
   Dropdown,
   DropdownItem,
   DropdownPosition,
@@ -95,11 +96,11 @@ class IstioActionDropdown extends React.Component<Props, State> {
           isOpen={this.state.showConfirmModal}
           onClose={this.hideConfirmModal}
           actions={[
-            <Button key="cancel" variant="secondary" onClick={this.hideConfirmModal}>
-              Cancel
-            </Button>,
-            <Button key="confirm" variant="danger" onClick={this.onDelete}>
+            <Button key="confirm" variant={ButtonVariant.danger} onClick={this.onDelete}>
               Delete
+            </Button>,
+            <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.hideConfirmModal}>
+              Cancel
             </Button>
           ]}
         >

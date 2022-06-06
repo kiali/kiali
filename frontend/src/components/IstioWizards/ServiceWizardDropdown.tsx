@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   Button,
+  ButtonVariant,
   Dropdown,
   DropdownGroup,
   DropdownItem,
@@ -401,11 +402,11 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
           isOpen={this.state.showConfirmDelete}
           onClose={this.hideConfirmDelete}
           actions={[
-            <Button key="cancel" variant="secondary" onClick={this.hideConfirmDelete}>
-              Cancel
-            </Button>,
-            <Button key="confirm" variant="danger" onClick={this.onDelete} data-test={'confirm-delete'}>
+            <Button key="confirm" variant={ButtonVariant.danger} onClick={this.onDelete} data-test={'confirm-delete'}>
               Delete
+            </Button>,
+            <Button key="cancel" variant={ButtonVariant.secondary} isInline onClick={this.hideConfirmDelete}>
+              Cancel
             </Button>
           ]}
         >

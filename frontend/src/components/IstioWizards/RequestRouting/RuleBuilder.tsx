@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Tabs, Tab } from '@patternfly/react-core';
+import { Button, Tabs, Tab, ButtonVariant } from '@patternfly/react-core';
 import MatchBuilder from './MatchBuilder';
 import Matches from './Matches';
 import { style } from 'typestyle';
@@ -123,7 +123,12 @@ class RuleBuilder extends React.Component<Props, State> {
         <div className={addRuleStyle}>
           <span>
             {this.props.validationMsg.length > 0 && <div className={validationStyle}>{this.props.validationMsg}</div>}
-            <Button variant="secondary" isDisabled={!this.props.isValid} onClick={this.props.onAddRule} data-test="add-route">
+            <Button
+              variant={ButtonVariant.secondary}
+              isDisabled={!this.props.isValid}
+              onClick={this.props.onAddRule}
+              data-test="add-route"
+            >
               Add Route Rule
             </Button>
           </span>
