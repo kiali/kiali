@@ -59,18 +59,18 @@ export class ClusterTable implements SummaryTable {
 
   filterMethods = (): { [filter_id: string]: (ClusterSummary, ActiveFilter) => boolean } => {
     return {
-      fqdn: (entry: ClusterSummary, filter: ActiveFilter): boolean => {
+      "FQDN": (entry: ClusterSummary, filter: ActiveFilter): boolean => {
         return [entry.service_fqdn.service, entry.service_fqdn.namespace, entry.service_fqdn.cluster]
           .join('.')
           .includes(filter.value);
       },
-      port: (entry: ClusterSummary, filter: ActiveFilter): boolean => {
+      "Port": (entry: ClusterSummary, filter: ActiveFilter): boolean => {
         return entry.port.toString().includes(filter.value);
       },
-      subset: (entry: ClusterSummary, filter: ActiveFilter): boolean => {
+      "Subset": (entry: ClusterSummary, filter: ActiveFilter): boolean => {
         return entry.subset.toString().includes(filter.value);
       },
-      direction: (entry: ClusterSummary, filter: ActiveFilter): boolean => {
+      "Direction": (entry: ClusterSummary, filter: ActiveFilter): boolean => {
         return entry.direction.toString().includes(filter.value);
       }
     };
