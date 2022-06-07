@@ -3,6 +3,9 @@ package tests
 import (
 	"path"
 	"testing"
+	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/stretchr/testify/assert"
 
@@ -19,7 +22,7 @@ func TestAuthPolicyPrincipalsError(t *testing.T) {
 	defer utils.DeleteFile(filePath, utils.BOOKINFO)
 	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
 
-	config, _, err := utils.IstioConfigDetails(utils.BOOKINFO, name, kubernetes.AuthorizationPolicies)
+	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.AuthorizationPolicies, assert)
 
 	assert.Nil(err)
 	assert.NotNil(config)
@@ -48,7 +51,7 @@ func TestServiceEntryLabels(t *testing.T) {
 
 	// the DR with matching labels with SE
 	name := "dest-rule-labels"
-	config, _, err := utils.IstioConfigDetails(utils.BOOKINFO, name, kubernetes.DestinationRules)
+	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.DestinationRules, assert)
 	assert.Nil(err)
 	assert.NotNil(config)
 	assert.True(config.IstioValidation.Valid)
@@ -63,11 +66,27 @@ func TestServiceEntryLabelsNotMatch(t *testing.T) {
 
 	// the DR with error, labels not match with SE
 	name := "dest-rule-labels-wrong"
-	config, _, err := utils.IstioConfigDetails(utils.BOOKINFO, name, kubernetes.DestinationRules)
+	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.DestinationRules, assert)
 	assert.Nil(err)
 	assert.NotNil(config)
 	assert.False(config.IstioValidation.Valid)
 	assert.NotEmpty(config.IstioValidation.Checks)
 	assert.Len(config.IstioValidation.Checks, 1)
 	assert.Equal("This subset's labels are not found in any matching host", config.IstioValidation.Checks[0].Message)
+}
+
+func getConfigDetails(namespace, name, configType string, assert *assert.Assertions) (*models.IstioConfigDetails, error) {
+	config, _, err := utils.IstioConfigDetails(namespace, name, configType)
+	if err == nil && config != nil && config.IstioValidation != nil {
+		return config, nil
+	}
+	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+		config, _, err := utils.IstioConfigDetails(namespace, name, configType)
+		if err == nil && config != nil && config.IstioValidation != nil {
+			return true, nil
+		}
+		return false, nil
+	})
+	assert.Nil(pollErr)
+	return config, nil
 }
