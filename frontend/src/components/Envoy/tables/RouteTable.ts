@@ -42,10 +42,10 @@ export class RouteTable implements SummaryTable {
 
   filterMethods = (): { [filter_id: string]: (ClusterSummary, ActiveFilter) => boolean } => {
     return {
-      name: (entry: RouteSummary, filter: ActiveFilter): boolean => {
+      "Name": (entry: RouteSummary, filter: ActiveFilter): boolean => {
         return entry.name.toString().includes(filter.value);
       },
-      domains: (entry: RouteSummary, filter: ActiveFilter): boolean => {
+      "Domains": (entry: RouteSummary, filter: ActiveFilter): boolean => {
         return [entry.domains.service, entry.domains.namespace, entry.domains.cluster].join('.').includes(filter.value);
       }
     };

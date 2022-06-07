@@ -67,16 +67,16 @@ export class ListenerTable implements SummaryTable {
 
   filterMethods = (): { [filter_id: string]: (summary, activeFilter) => boolean } => {
     return {
-      address: (entry: ListenerSummary, filter: ActiveFilter): boolean => {
+      "Address": (entry: ListenerSummary, filter: ActiveFilter): boolean => {
         return entry.address.includes(filter.value);
       },
-      port: (entry: ListenerSummary, filter: ActiveFilter): boolean => {
+      "Port": (entry: ListenerSummary, filter: ActiveFilter): boolean => {
         return entry.port.toString().includes(filter.value);
       },
-      match: (entry: ListenerSummary, filter: ActiveFilter): boolean => {
+      "Match": (entry: ListenerSummary, filter: ActiveFilter): boolean => {
         return entry.match.includes(filter.value);
       },
-      destination: (entry: ListenerSummary, filter: ActiveFilter): boolean => {
+      "Destination": (entry: ListenerSummary, filter: ActiveFilter): boolean => {
         return entry.destination.includes(filter.value);
       }
     };
