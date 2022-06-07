@@ -82,9 +82,7 @@ func getConfigDetails(namespace, name, configType string, assert *assert.Asserti
 	}
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
 		config, _, err := utils.IstioConfigDetails(namespace, name, configType)
-		assert.Nil(err)
-		assert.NotNil(config)
-		if config.IstioValidation != nil {
+		if err == nil && config != nil && config.IstioValidation != nil {
 			return true, nil
 		}
 		return false, nil
