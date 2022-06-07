@@ -17,6 +17,11 @@ type PropsType = {
   toggleSystemErrorsCenter: () => void;
 };
 
+const systemErrorCountStyle = style ({
+  marginRight: "0.3em",
+  paddingTop: "0.1em"
+});
+
 export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
   render() {
     return (
@@ -39,7 +44,7 @@ export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
         onClick={this.props.toggleSystemErrorsCenter}
         variant={ButtonVariant.plain}
       >
-        <KialiIcon.Warning />
+        <KialiIcon.Warning className={systemErrorCountStyle} />
         {this.props.systemErrorsCount}
         {this.props.systemErrorsCount === 1 ? ' Open Issue' : ' Open Issues'}
       </Button>
