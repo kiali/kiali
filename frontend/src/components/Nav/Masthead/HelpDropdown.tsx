@@ -79,7 +79,7 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
         toggleIndicator={null}
         onToggle={this.onDropdownToggle}
         aria-label="Help"
-        style={{ marginTop: 3 }}
+        style={{ marginTop: 3, verticalAlign: "-0.1em" }}
       >
         <QuestionCircleIcon />
       </DropdownToggle>
