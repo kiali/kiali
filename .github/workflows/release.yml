@@ -2,8 +2,8 @@ name: Release
 
 on:
   schedule:
-  # Every Monday at 19:00 (UTC)
-  - cron: '00 19 * * MON'
+  # Every Monday at 07:00 (UTC)
+  - cron: '00 7 * * MON'
   workflow_dispatch:
     inputs:
       release_type:
