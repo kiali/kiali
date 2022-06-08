@@ -360,7 +360,7 @@ EOF
   # ${CLIENT_EXE} create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
   ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
 
-  subnet=$(${DORP} network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
+  subnet=$(sudo ${DORP} network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
   subnet_trimmed=$(echo ${subnet} | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')
   first_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 1)"
   last_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 2)"
