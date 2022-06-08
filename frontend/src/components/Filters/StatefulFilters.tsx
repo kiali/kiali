@@ -12,8 +12,7 @@ import {
   ToolbarItem,
   SelectOptionObject,
   ToolbarContent,
-  ToolbarFilter,
-  ToolbarToggleGroup
+  ToolbarFilter
 } from '@patternfly/react-core';
 import {
   ActiveFilter,
@@ -30,13 +29,17 @@ import { style } from 'typestyle';
 import { LabelFilters } from './LabelFilter';
 import { arrayEquals } from 'utils/Common';
 import { labelFilter } from './CommonFilters';
-import { KialiIcon } from 'config/KialiIcon';
 
 var classNames = require('classnames');
 
-const noPadding = style({
+const toolbarStyle = style({
   padding: 0,
-  rowGap: 'var(--pf-global--spacer--md)'
+  rowGap: 'var(--pf-global--spacer--md)',
+  $nest: {
+    '& > .pf-c-toolbar__content': {
+      paddingLeft: 0
+    }
+  }
 });
 
 const bottomPadding = style({
@@ -366,62 +369,55 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
     return (
       <>
-        <Toolbar
-          id="filter-selection"
-          className={`pf-m-toggle-group-container ${noPadding}`}
-          collapseListedFiltersBreakpoint="xl"
-          clearAllFilters={this.clearFilters}
-        >
+        <Toolbar id="filter-selection" className={toolbarStyle} clearAllFilters={this.clearFilters}>
           {this.props.childrenFirst && this.renderChildren()}
-          <ToolbarContent className={noPadding}>
-            <ToolbarToggleGroup toggleIcon={<KialiIcon.Filter />} breakpoint="md">
-              <ToolbarGroup variant="filter-group">
-                {this.state.filterTypes.map((ft, i) => {
-                  return (
-                    <ToolbarFilter
-                      key={`toolbar_filter-${ft.category}`}
-                      chips={activeFilters.filters.filter(af => af.category === ft.category).map(af => af.value)}
-                      deleteChip={this.removeFilter}
-                      categoryName={ft.category}
-                    >
-                      {i === 0 && (
-                        <FormSelect
-                          value={currentFilterType.category}
-                          aria-label="filter_select_type"
-                          onChange={this.selectFilterType}
-                          style={{ width: 'auto', backgroundColor: '#ededed', borderColor: '#bbb' }}
-                        >
-                          {filterOptions}
-                        </FormSelect>
-                      )}
-                      {i === 0 && this.renderInput()}
-                    </ToolbarFilter>
-                  );
-                })}
+          <ToolbarContent>
+            <ToolbarGroup variant="filter-group">
+              {this.state.filterTypes.map((ft, i) => {
+                return (
+                  <ToolbarFilter
+                    key={`toolbar_filter-${ft.category}`}
+                    chips={activeFilters.filters.filter(af => af.category === ft.category).map(af => af.value)}
+                    deleteChip={this.removeFilter}
+                    categoryName={ft.category}
+                  >
+                    {i === 0 && (
+                      <FormSelect
+                        value={currentFilterType.category}
+                        aria-label="filter_select_type"
+                        onChange={this.selectFilterType}
+                        style={{ width: 'auto', backgroundColor: '#ededed', borderColor: '#bbb' }}
+                      >
+                        {filterOptions}
+                      </FormSelect>
+                    )}
+                    {i === 0 && this.renderInput()}
+                  </ToolbarFilter>
+                );
+              })}
+            </ToolbarGroup>
+            {!this.props.childrenFirst && this.renderChildren()}
+            {hasActiveFilters && (
+              <ToolbarGroup>
+                <ToolbarItem className={classNames('pf-u-mr-md')}>
+                  <span className={classNames(paddingStyle)}>Label Operation</span>
+                  <FormSelect
+                    value={activeFilters.op}
+                    onChange={value =>
+                      this.updateActiveFilters({
+                        filters: this.state.activeFilters.filters,
+                        op: value as LabelOperation
+                      })
+                    }
+                    aria-label="filter_select_value"
+                    style={{ width: 'auto' }}
+                  >
+                    <FormSelectOption key="filter_or" value="or" label="or" />
+                    <FormSelectOption key="filter_and" value="and" label="and" />
+                  </FormSelect>
+                </ToolbarItem>
               </ToolbarGroup>
-              {!this.props.childrenFirst && this.renderChildren()}
-              {hasActiveFilters && (
-                <ToolbarGroup>
-                  <ToolbarItem className={classNames('pf-u-mr-md')}>
-                    <span className={classNames(paddingStyle)}>Label Operation</span>
-                    <FormSelect
-                      value={activeFilters.op}
-                      onChange={value =>
-                        this.updateActiveFilters({
-                          filters: this.state.activeFilters.filters,
-                          op: value as LabelOperation
-                        })
-                      }
-                      aria-label="filter_select_value"
-                      style={{ width: 'auto' }}
-                    >
-                      <FormSelectOption key="filter_or" value="or" label="or" />
-                      <FormSelectOption key="filter_and" value="and" label="and" />
-                    </FormSelect>
-                  </ToolbarItem>
-                </ToolbarGroup>
-              )}
-            </ToolbarToggleGroup>
+            )}
           </ToolbarContent>
         </Toolbar>
         <div className={bottomPadding} />
