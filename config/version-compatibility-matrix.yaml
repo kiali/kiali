@@ -6,7 +6,7 @@
       kialiMaximumVersion: ""
     - meshVersion: "1.13"
       kialiMinimumVersion: "1.45.1"
-      kialiMaximumVersion: ""
+      kialiMaximumVersion: "1.49"
     - meshVersion: "1.12"
       kialiMinimumVersion: "1.42.0"
       kialiMaximumVersion: "1.44.0"
