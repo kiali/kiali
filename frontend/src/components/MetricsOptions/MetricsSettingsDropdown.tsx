@@ -195,7 +195,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
       >
         {/* TODO: Remove the class="pf-c-dropdown__menu-item" attribute which is fixing a sizing issue in PF.
          * https://github.com/patternfly/patternfly-react/issues/3156 */}
-        <div style={{ paddingLeft: '10px', backgroundColor: PFColors.White }} className={"pf-c-dropdown__menu-item"}>
+        <div style={{ paddingLeft: '10px', backgroundColor: PFColors.White }} className="pf-c-dropdown__menu-item">
           {hasLabels && this.renderBulkSelector()}
           {hasLabels && this.renderLabelOptions()}
           {hasHistograms && this.renderHistogramOptions()}
