@@ -12,7 +12,6 @@ import {
   retrieveMetricsSettings
 } from 'components/Metrics/Helper';
 import {
-  menuStyle,
   titleStyle
 } from 'styles/DropdownStyles';
 import { PFColors } from '../Pf/PfColors';
@@ -35,7 +34,7 @@ const checkboxSelectAllStyle = style({ marginLeft: 10 });
 const checkboxStyle = style({ marginLeft: 10, fontWeight: 400 });
 const secondLevelStyle = style({ marginLeft: 18 });
 const spacerStyle = style({ height: '1em' });
-const titlePaddingStyle = style({ paddingLeft: 0 });
+const titlePaddingStyle = style({ paddingLeft: 0, fontSize: "small" });
 
 export class MetricsSettingsDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -196,7 +195,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
       >
         {/* TODO: Remove the class="pf-c-dropdown__menu-item" attribute which is fixing a sizing issue in PF.
          * https://github.com/patternfly/patternfly-react/issues/3156 */}
-        <div style={{ paddingLeft: '10px', backgroundColor: PFColors.White }} className={`pf-c-dropdown__menu-item ${menuStyle}`}>
+        <div style={{ paddingLeft: '10px', backgroundColor: PFColors.White }} className={"pf-c-dropdown__menu-item"}>
           {hasLabels && this.renderBulkSelector()}
           {hasLabels && this.renderLabelOptions()}
           {hasHistograms && this.renderHistogramOptions()}
