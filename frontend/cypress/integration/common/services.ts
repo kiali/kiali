@@ -1,5 +1,6 @@
 import { And, Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import { checkHealthIndicatorInTable, checkHealthStatusInTable, getColWithRowText } from './table';
+import { ensureKialiFinishedLoading } from './transition';
 
 Given('a service in the cluster with a healthy amount of traffic', function () {
   this.targetNamespace = 'bookinfo';
@@ -32,10 +33,12 @@ And('the health column on the {string} row has a health icon', (row: string) => 
 });
 
 And('user filters for service type {string}', (serviceType: string) => {
-  cy.get('select[aria-label="filter_select_type"]').parent().within(() => {
-    cy.get('button').click();
-    cy.get('button[label="External"]').click();
-  });
+  cy.get('select[aria-label="filter_select_type"]')
+    .parent()
+    .within(() => {
+      cy.get('button').click();
+      cy.get('button[label="External"]').click();
+    });
 });
 
 And('user filters for sidecar {string}', (sidecarState: string) => {
@@ -63,4 +66,11 @@ Then('the service should be listed as {string}', function (healthStatus: string)
 
 Then('the health status of the service should be {string}', function (healthStatus: string) {
   checkHealthStatusInTable(this.targetNamespace, null, this.targetService, healthStatus);
+});
+
+And('user clicks {string} label', (label: string) => {
+  cy.get('tbody').within(() => {
+    cy.get('span').contains(label).click();
+  });
+  ensureKialiFinishedLoading();
 });
