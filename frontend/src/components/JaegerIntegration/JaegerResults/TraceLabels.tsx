@@ -36,9 +36,9 @@ export const TraceLabels = (p: Props) => {
       </Label>
       {!p.oneline && <br />}
       {errors === 0 ? (
-        <Label style={{ margin: 10, backgroundColor: PFColors.Success }}>0 Spans with error</Label>
+        <Label className="whiteColorLabelContent" style={{ margin: 10, backgroundColor: PFColors.Success }}>0 Spans with error</Label>
       ) : (
-        <Label style={{ margin: 10, backgroundColor: filteredErrors === 0 ? PFColors.Warning : PFColors.Danger }}>
+        <Label className="whiteColorLabelContent" style={{ margin: 10, backgroundColor: filteredErrors === 0 ? PFColors.Warning : PFColors.Danger }}>
           {p.filteredSpans && `${filteredErrors} / `}
           {pluralize(errors, 'Span')} with error
         </Label>
