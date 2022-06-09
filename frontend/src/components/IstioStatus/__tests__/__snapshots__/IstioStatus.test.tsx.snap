@@ -30,8 +30,8 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
     size="sm"
     style={
       Object {
-        "marginRight": 8,
-        "verticalAlign": "-0.3em",
+        "marginRight": -8,
+        "verticalAlign": "-0.2em",
       }
     }
   />
@@ -68,8 +68,8 @@ exports[`When both core and addon component have problems any component is in no
     size="sm"
     style={
       Object {
-        "marginRight": 8,
-        "verticalAlign": "-0.3em",
+        "marginRight": -8,
+        "verticalAlign": "-0.2em",
       }
     }
   />
@@ -106,8 +106,8 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
     size="sm"
     style={
       Object {
-        "marginRight": 8,
-        "verticalAlign": "-0.3em",
+        "marginRight": -8,
+        "verticalAlign": "-0.2em",
       }
     }
   />
@@ -144,8 +144,8 @@ exports[`When there are not-ready components mixed with other not healthy compon
     size="sm"
     style={
       Object {
-        "marginRight": 8,
-        "verticalAlign": "-0.3em",
+        "marginRight": -8,
+        "verticalAlign": "-0.2em",
       }
     }
   />
@@ -192,8 +192,8 @@ exports[`When there are not-ready components mixed with other not healthy compon
     size="sm"
     style={
       Object {
-        "marginRight": 8,
-        "verticalAlign": "-0.3em",
+        "marginRight": -8,
+        "verticalAlign": "-0.2em",
       }
     }
   />
@@ -230,8 +230,8 @@ exports[`When there are not-ready components mixed with other not healthy compon
     size="sm"
     style={
       Object {
-        "marginRight": 8,
-        "verticalAlign": "-0.3em",
+        "marginRight": -8,
+        "verticalAlign": "-0.2em",
       }
     }
   />
@@ -263,8 +263,8 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
     size="sm"
     style={
       Object {
-        "marginRight": 8,
-        "verticalAlign": "-0.3em",
+        "marginRight": -8,
+        "verticalAlign": "-0.2em",
       }
     }
   />
@@ -296,8 +296,8 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
     size="sm"
     style={
       Object {
-        "marginRight": 8,
-        "verticalAlign": "-0.3em",
+        "marginRight": -8,
+        "verticalAlign": "-0.2em",
       }
     }
   />
