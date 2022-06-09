@@ -2,6 +2,7 @@ package kubetest
 
 import (
 	"context"
+	"io"
 
 	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
@@ -9,7 +10,6 @@ import (
 	batch_apps_v1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/util/httputil"
 )
 
@@ -88,11 +88,6 @@ func (o *K8SClientMock) GetPod(namespace, name string) (*core_v1.Pod, error) {
 	return args.Get(0).(*core_v1.Pod), args.Error(1)
 }
 
-func (o *K8SClientMock) GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*kubernetes.PodLogs, error) {
-	args := o.Called(namespace, name, opts)
-	return args.Get(0).(*kubernetes.PodLogs), args.Error(1)
-}
-
 func (o *K8SClientMock) GetPodPortForwarder(namespace, name, portMap string) (*httputil.PortForwarder, error) {
 	args := o.Called(namespace, name, portMap)
 	return args.Get(0).(*httputil.PortForwarder), args.Error(1)
@@ -146,6 +141,11 @@ func (o *K8SClientMock) GetStatefulSet(namespace string, name string) (*apps_v1.
 func (o *K8SClientMock) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error) {
 	args := o.Called(namespace)
 	return args.Get(0).([]apps_v1.StatefulSet), args.Error(1)
+}
+
+func (o *K8SClientMock) StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
+	args := o.Called(namespace, name, opts)
+	return args.Get(0).(io.ReadCloser), args.Error(1)
 }
 
 func (o *K8SClientMock) UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error) {

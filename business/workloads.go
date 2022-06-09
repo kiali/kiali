@@ -658,19 +658,6 @@ func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOpt
 	firstEntry := true
 	line, readErr := bufferedReader.ReadString('\n')
 	for ; readErr == nil || (readErr == io.EOF && len(line) > 0); line, readErr = bufferedReader.ReadString('\n') {
-		if firstEntry == true {
-			firstEntry = false
-		} else {
-			_, writeErr = w.Write([]byte{','})
-			if writeErr != nil {
-				// Remember that since the HTTP Response body is already being sent,
-				// it is not possible to change the response code. So, log the error
-				// and terminate early the response.
-				log.Errorf("Error when writing log entries separator: %s", writeErr.Error())
-				return nil
-			}
-		}
-
 		entry := LogEntry{
 			Message:       "",
 			Timestamp:     "",
@@ -770,6 +757,19 @@ func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOpt
 			// and terminate early the response.
 			log.Errorf("Error when marshalling JSON while streaming pod logs: %s", err.Error())
 			return nil
+		}
+
+		if firstEntry == true {
+			firstEntry = false
+		} else {
+			_, writeErr = w.Write([]byte{','})
+			if writeErr != nil {
+				// Remember that since the HTTP Response body is already being sent,
+				// it is not possible to change the response code. So, log the error
+				// and terminate early the response.
+				log.Errorf("Error when writing log entries separator: %s", writeErr.Error())
+				return nil
+			}
 		}
 
 		_, writeErr = w.Write(response)

@@ -2,7 +2,11 @@ package business
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -29,6 +33,19 @@ import (
 func setupWorkloadService(k8s *kubetest.K8SClientMock) WorkloadService {
 	prom := new(prometheustest.PromClientMock)
 	return WorkloadService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
+}
+
+func callStreamPodLogs(svc WorkloadService, namespace, podName string, opts *LogOptions) PodLog {
+	w := httptest.NewRecorder()
+	svc.StreamPodLogs(namespace, podName, opts, w)
+
+	response := w.Result()
+	body, _ := io.ReadAll(response.Body)
+
+	var podLogs PodLog
+	json.Unmarshal(body, &podLogs)
+
+	return podLogs
 }
 
 func TestGetWorkloadListFromDeployments(t *testing.T) {
@@ -548,12 +565,12 @@ func TestGetPodLogs(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
+	fplswd := FakePodLogsSyncedWithDeployments()
+	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
 
 	svc := setupWorkloadService(k8s)
-
-	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}})
 
 	assert.Equal(len(podLogs.Entries), 4)
 
@@ -585,7 +602,8 @@ func TestGetPodLogsTailLines(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
+	fplswd := FakePodLogsSyncedWithDeployments()
+	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
 
 	svc := setupWorkloadService(k8s)
@@ -606,24 +624,36 @@ func TestGetPodLogsDuration(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
+	fplswd := FakePodLogsSyncedWithDeployments()
+	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
-
 	svc := setupWorkloadService(k8s)
 
 	duration, _ := time.ParseDuration("59m")
-	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
 	assert.Equal(1, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 
+	// Re-setup mocks
+	k8s = new(kubetest.K8SClientMock)
+	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
+	k8s.On("IsOpenShift").Return(false)
+	svc = setupWorkloadService(k8s)
+
 	duration, _ = time.ParseDuration("1h")
-	podLogs, _ = svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	podLogs = callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
 	assert.Equal(2, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
 
+	// Re-setup mocks
+	k8s = new(kubetest.K8SClientMock)
+	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
+	k8s.On("IsOpenShift").Return(false)
+	svc = setupWorkloadService(k8s)
+
 	duration, _ = time.ParseDuration("2h")
-	podLogs, _ = svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	podLogs = callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
 	assert.Equal(3, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
@@ -637,9 +667,9 @@ func TestGetPodLogsTailLinesAndDurations(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
+	fplswd := FakePodLogsSyncedWithDeployments()
+	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
-
 	svc := setupWorkloadService(k8s)
 
 	tailLines := int64(2)
@@ -649,11 +679,23 @@ func TestGetPodLogsTailLinesAndDurations(t *testing.T) {
 	assert.Equal("WARN #2 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("#3 Log Message", podLogs.Entries[1].Message)
 
+	// Re-setup mocks
+	k8s = new(kubetest.K8SClientMock)
+	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
+	k8s.On("IsOpenShift").Return(false)
+	svc = setupWorkloadService(k8s)
+
 	tailLines = int64(1)
 	duration, _ = time.ParseDuration("2h")
 	podLogs, _ = svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, PodLogOptions: core_v1.PodLogOptions{Container: "details", TailLines: &tailLines}})
 	assert.Equal(1, len(podLogs.Entries))
 	assert.Equal("#3 Log Message", podLogs.Entries[0].Message)
+
+	// Re-setup mocks
+	k8s = new(kubetest.K8SClientMock)
+	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
+	k8s.On("IsOpenShift").Return(false)
+	svc = setupWorkloadService(k8s)
 
 	tailLines = int64(1)
 	duration, _ = time.ParseDuration("3h")
@@ -669,7 +711,8 @@ func TestGetPodLogsProxy(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsProxy(), nil)
+	fplp := FakePodLogsProxy()
+	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplp.Logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
 
 	svc := setupWorkloadService(k8s)
@@ -968,12 +1011,12 @@ func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
 2021-10-05T00:32:40.309457Z     ':path', '/details/0'
 2021-10-05T00:32:40.309457Z     ':method', 'GET'
 2021-10-05T00:32:40.309457Z     ':scheme', 'http'`
-	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(&kubernetes.PodLogs{Logs: logs}, nil)
+	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
 
 	svc := setupWorkloadService(k8s)
 
-	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{IsProxy: true, PodLogOptions: core_v1.PodLogOptions{Container: "istio-proxy"}})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{IsProxy: true, PodLogOptions: core_v1.PodLogOptions{Container: "istio-proxy"}})
 
 	assert.Equal(8, len(podLogs.Entries))
 	for _, entry := range podLogs.Entries {
