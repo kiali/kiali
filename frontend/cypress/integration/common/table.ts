@@ -48,6 +48,12 @@ And('table length should be {int}', (numRows: number) => {
   });
 });
 
+And('table length should exceed {int}', (numRows: number) => {
+  cy.get('tbody').within(() => {
+    cy.get('tr').should('have.length.greaterThan', numRows);
+  });
+});
+
 When('user selects filter {string}', (filter: string) => {
   cy.get('select[aria-label="filter_select_type"]').select(filter);
 });

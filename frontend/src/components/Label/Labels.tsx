@@ -23,7 +23,7 @@ const linkStyle = style({
 });
 
 const infoStyle = style({
-  margin: '0 4px 2px 5px'
+  margin: '4px 4px 2px 5px'
 });
 
 const labelsContainerStyle = style({
@@ -79,7 +79,7 @@ class Labels extends React.Component<Props, State> {
   renderLabels() {
     return this.labelKeys().map((key, i) => {
       return this.showItem(i) ? (
-        <div key={'label_' + i} data-test={key + '-label-container'}>
+        <div key={'label_div_' + i} data-test={key + '-label-container'}>
           <Label key={'label_' + i} name={key} value={this.props.labels ? this.props.labels[key] : ''} />
         </div>
       ) : undefined;

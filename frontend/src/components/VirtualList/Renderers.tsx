@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Badge, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import { appLabelFilter, versionLabelFilter } from '../../pages/WorkloadList/FiltersAndSorts';
-
 import MissingSidecar from '../MissingSidecar/MissingSidecar';
 import { hasMissingSidecar, IstioTypes, Renderer, Resource, SortResource, TResource } from './Config';
 import { HealthIndicator } from '../Health/HealthIndicator';
@@ -14,7 +13,6 @@ import { IstioConfigItem } from '../../types/IstioConfigList';
 import { AppListItem } from '../../types/AppList';
 import { ServiceListItem } from '../../types/ServiceList';
 import { ActiveFilter } from '../../types/Filters';
-import { PFColors } from '../Pf/PfColors';
 import { renderAPILogo } from '../Logo/Logos';
 import { Health } from '../../types/Health';
 import NamespaceInfo from '../../pages/Overview/NamespaceInfo';
@@ -32,6 +30,7 @@ import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import MissingLabel from '../MissingLabel/MissingLabel';
 import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { getReconciliationCondition } from 'utils/IstioConfigUtils';
+import Label from 'components/Label/Label';
 
 // Links
 
@@ -212,8 +211,8 @@ export const namespace: Renderer<TResource> = (item: TResource) => {
 const labelActivate = (filters: ActiveFilter[], key: string, value: string, id: string) => {
   return filters.some(filter => {
     if (filter.category === id) {
-      if (filter.value.includes(':')) {
-        const [k, v] = filter.value.split(':');
+      if (filter.value.includes('=')) {
+        const [k, v] = filter.value.split('=');
         if (k === key) {
           return v.split(',').some(val => value.split(',').some(vl => vl.trim().startsWith(val.trim())));
         }
@@ -240,6 +239,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
   path = path.substr(path.lastIndexOf('/console') + '/console'.length + 1);
   const labelFilt = path === 'overview' ? NsLabelFilter : labelFilter;
   const filters = FilterHelper.getFiltersFromURL([labelFilt, appLabelFilter, versionLabelFilter]);
+
   return (
     <td
       role="gridcell"
@@ -247,21 +247,19 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
       style={{ verticalAlign: 'middle' }}
     >
       {item.labels &&
-        Object.entries(item.labels).map(([key, value]) => {
-          const label = `${key}:${value}`;
+        Object.entries(item.labels).map(([key, value], i) => {
+          const label = `${key}=${value}`;
           const labelAct = labelActivate(filters.filters, key, value, labelFilt.category);
+          FilterHelper.getFiltersFromURL([labelFilt]).filters.forEach(f => console.log(`filter=|${f.value}|`));
           const isExactlyLabelFilter = FilterHelper.getFiltersFromURL([labelFilt]).filters.some(f =>
             f.value.includes(label)
           );
-          const badgeComponent = (
-            <Badge
-              key={`labelbadge_${key}_${value}_${item.name}`}
-              isRead={true}
-              style={{
-                backgroundColor: labelAct ? PFColors.Badge : undefined,
-                cursor: isExactlyLabelFilter || !labelAct ? 'pointer' : 'not-allowed',
-                whiteSpace: 'nowrap'
-              }}
+          const labelComponent = (
+            <Label
+              key={'label_' + i}
+              name={key}
+              value={value}
+              style={{ cursor: isExactlyLabelFilter || !labelAct ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}
               onClick={() =>
                 statefulFilter
                   ? labelAct
@@ -269,9 +267,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
                     : statefulFilter.current!.filterAdded(labelFilt, label)
                   : {}
               }
-            >
-              {key}={value}
-            </Badge>
+            />
           );
 
           return statefulFilter ? (
@@ -289,10 +285,10 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
                 )
               }
             >
-              {badgeComponent}
+              {labelComponent}
             </Tooltip>
           ) : (
-            badgeComponent
+            labelComponent
           );
         })}
     </td>

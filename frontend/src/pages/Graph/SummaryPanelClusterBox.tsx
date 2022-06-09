@@ -227,7 +227,7 @@ export default class SummaryPanelClusterBox extends React.Component<SummaryPanel
     return (
       <React.Fragment key={cluster}>
         <span>
-          <PFBadge badge={PFBadges.Cluster} style={{ marginBottom: '2px' }} />
+          <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '2px' }} />
           <KialiPageLink href="/" cluster={cluster}>
             {cluster}
           </KialiPageLink>{' '}

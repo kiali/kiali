@@ -362,7 +362,7 @@ export default class SummaryPanelNamespaceBox extends React.Component<
     return (
       <React.Fragment key={ns}>
         <span>
-          <PFBadge badge={PFBadges.Namespace} style={{ marginBottom: '2px' }} />
+          <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
           {ns}{' '}
           {!!validation && (
             <ValidationSummaryLink

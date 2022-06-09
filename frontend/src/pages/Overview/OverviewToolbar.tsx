@@ -15,7 +15,6 @@ import { durationSelector, refreshIntervalSelector } from '../../store/Selectors
 import { IntervalInMilliseconds, DurationInSeconds } from '../../types/Common';
 import { SortField } from '../../types/SortFilters';
 import NamespaceInfo from './NamespaceInfo';
-import { ThinStyle } from '../../components/Filters/FilterStyles';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { style } from 'typestyle';
@@ -171,8 +170,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
   };
 
   updateDirectionType = (dtype: String) => {
-    const isDirectionType = (val: String): val is DirectionType =>
-      val === 'inbound' || val === 'outbound';
+    const isDirectionType = (val: String): val is DirectionType => val === 'inbound' || val === 'outbound';
 
     if (isDirectionType(dtype)) {
       HistoryManager.setParam(URLParam.DIRECTION_TYPE, dtype);
@@ -210,7 +208,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
             <Button
               variant={ButtonVariant.plain}
               onClick={this.updateSortDirection}
-              style={{ ...ThinStyle }}
+              style={{ paddingLeft: '10px', paddingRight: '10px' }}
               data-sort-asc={this.state.isSortAscending}
             >
               {this.state.isSortAscending ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}

@@ -8,7 +8,7 @@ export const containerStyle = style({
 
 // this emulates Select component .pf-c-select__menu
 export const menuStyle = style({
-  fontSize: '14px'
+  fontSize: 'var(--kiali-global--font-size)',
 });
 
 // this emulates Select component .pf-c-select__menu but w/o cursor manipulation

@@ -6,7 +6,7 @@ exports[`#Labels render correctly with data should render badges with More label
 >
   <div
     data-test="app-label-container"
-    key="label_0"
+    key="label_div_0"
   >
     <Label
       key="label_0"
@@ -16,7 +16,7 @@ exports[`#Labels render correctly with data should render badges with More label
   </div>
   <div
     data-test="version-label-container"
-    key="label_1"
+    key="label_div_1"
   >
     <Label
       key="label_1"
@@ -42,7 +42,7 @@ exports[`#Labels render correctly with data should render badges without More la
 >
   <div
     data-test="app-label-container"
-    key="label_0"
+    key="label_div_0"
   >
     <Label
       key="label_0"
@@ -52,7 +52,7 @@ exports[`#Labels render correctly with data should render badges without More la
   </div>
   <div
     data-test="version-label-container"
-    key="label_1"
+    key="label_div_1"
   >
     <Label
       key="label_1"

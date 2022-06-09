@@ -4,7 +4,7 @@ import Slider from './Slider/Slider';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { style } from 'typestyle';
 import { PFColors } from '../Pf/PfColors';
-import { Badge, Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
 import { EqualizerIcon } from '@patternfly/react-icons';
 import { getDefaultWeights } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -270,13 +270,7 @@ class TrafficShifting extends React.Component<Props, State> {
           cells: [
             <>
               <div>
-                <Tooltip
-                  key={'mirrorred_' + workload.name}
-                  position={TooltipPosition.top}
-                  content={<>Mirrored Workload</>}
-                >
-                  <Badge className={'faultinjection_badge_definition'}>MI</Badge>
-                </Tooltip>
+                <PFBadge badge={PFBadges.MirroredWorkload} position={TooltipPosition.top} />
                 {workload.name}
               </div>
             </>,

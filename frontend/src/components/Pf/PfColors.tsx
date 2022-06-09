@@ -26,8 +26,10 @@ export enum PFColors {
   Gold400 = 'var(--pf-global--palette--gold-400)',
   Green400 = 'var(--pf-global--palette--green-400)',
   Green500 = 'var(--pf-global--palette--green-500)',
+  Green600 = 'var(--pf-global--palette--green-600)',
   LightBlue400 = 'var(--pf-global--palette--light-blue-400)',
   LightGreen400 = 'var(--pf-global--palette--light-green-400)',
+  LightGreen500 = 'var(--pf-global--palette--light-green-500)',
   Orange400 = 'var(--pf-global--palette--orange-400)',
   Purple100 = 'var(--pf-global--palette--purple-100)',
   Purple500 = 'var(--pf-global--palette--purple-500)',
@@ -39,7 +41,7 @@ export enum PFColors {
   // semantic kiali colors
   Active = 'var(--pf-global--active-color--400)',
   ActiveText = 'var(--pf-global--primary-color--200)',
-  Badge = 'var(--pf-global--palette--blue-200)', // UX-assigned badge background
+  Badge = 'var(--pf-global--palette--blue-300)',
   Replay = 'var(--pf-global--active-color--300)', // also, see dep in _Time.scss
 
   // Health/Alert colors https://www.patternfly.org/v4/design-guidelines/styles/colors

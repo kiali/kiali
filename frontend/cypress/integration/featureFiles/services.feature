@@ -28,14 +28,14 @@ Feature: Kiali Services page
     And user filters for name "productpage"
     Then user sees "productpage" in the table
     And table length should be 1
-  
+
   @services-page
   Scenario: Filter services table by Service Type
     When user selects the "bookinfo" namespace
     And user selects filter "Service Type"
     And user filters for service type "External"
     Then user sees "nothing" in the table
-  
+
   @services-page
   Scenario: Filter services table by sidecar
     When user selects the "bookinfo" namespace
@@ -50,7 +50,7 @@ Feature: Kiali Services page
     And user filters for istio type "VirtualService"
     Then user sees "productpage" in the table
     And table length should be 1
-  
+
   @services-page
   Scenario: Filter services table by health
     When user selects the "bookinfo" namespace
@@ -66,6 +66,20 @@ Feature: Kiali Services page
     And user filters for label "app=productpage"
     Then user sees "productpage" in the table
     And table length should be 1
+
+  @services-page
+  Scenario: Filter services table by label click
+    When user selects the "bookinfo" namespace
+    And user clicks "app=productpage" label
+    Then user sees "productpage" in the table
+    And table length should be 1
+
+  @services-page
+  Scenario: Filter and unfilter services table by label click
+    When user selects the "bookinfo" namespace
+    And user clicks "app=productpage" label
+    And user clicks "app=productpage" label
+    Then table length should exceed 1
 
   @services-page
   Scenario: The healthy status of a service is reported in the list of services
