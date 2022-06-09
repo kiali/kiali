@@ -110,7 +110,6 @@ export class TraceTooltip extends React.Component<HookedTooltipProps<JaegerLineI
           flyoutHeight={flyoutHeight}
           flyoutComponent={<ChartCursorFlyout style={{ stroke: 'none', fillOpacity: 0.6 }} />}
           labelComponent={<TraceLabelContainer trace={trace} />}
-          constrainToVisibleArea={true}
         />
       );
     }
