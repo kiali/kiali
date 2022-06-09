@@ -17,6 +17,7 @@ const CustomLabel = (props: any & { head?: string; text: string[]; textWidth: nu
   const textsWithHead = props.head ? [props.head, ' '].concat(props.text) : props.text;
   const headSize = props.head ? 2 * dy : 0;
   const startY = yMargin + props.y - (textsWithHead.length * dy) / 2 + headSize;
+
   return (
     <>
       {props.activePoints &&
@@ -121,7 +122,6 @@ export class CustomTooltip extends React.Component<Props, State> {
         flyoutHeight={this.state.height}
         flyoutComponent={<ChartCursorFlyout style={{ stroke: 'none', fillOpacity: 0.6 }} />}
         labelComponent={<CustomLabel head={this.state.head} textWidth={this.state.textWidth} />}
-        constrainToVisibleArea={true}
       />
     );
   }
