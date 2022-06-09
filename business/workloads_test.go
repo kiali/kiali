@@ -37,13 +37,13 @@ func setupWorkloadService(k8s *kubetest.K8SClientMock) WorkloadService {
 
 func callStreamPodLogs(svc WorkloadService, namespace, podName string, opts *LogOptions) PodLog {
 	w := httptest.NewRecorder()
-	svc.StreamPodLogs(namespace, podName, opts, w)
+	_ = svc.StreamPodLogs(namespace, podName, opts, w)
 
 	response := w.Result()
 	body, _ := io.ReadAll(response.Body)
 
 	var podLogs PodLog
-	json.Unmarshal(body, &podLogs)
+	_ = json.Unmarshal(body, &podLogs)
 
 	return podLogs
 }

@@ -2026,7 +2026,7 @@ func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOpt
 			return nil
 		}
 
-		if firstEntry == true {
+		if firstEntry {
 			firstEntry = false
 		} else {
 			_, writeErr = w.Write([]byte{','})
