@@ -90,7 +90,6 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace str
 	drs := kubernetes.FilterDestinationRulesByNamespaces(nss, istioConfigList.DestinationRules)
 
 	mtlsStatus := mtls.MtlsStatus{
-		Namespace:           namespace,
 		PeerAuthentications: pas,
 		DestinationRules:    drs,
 		AutoMtlsEnabled:     in.hasAutoMTLSEnabled(),
@@ -98,7 +97,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace str
 	}
 
 	return models.MTLSStatus{
-		Status: mtlsStatus.NamespaceMtlsStatus().OverallStatus,
+		Status: mtlsStatus.NamespaceMtlsStatus(namespace).OverallStatus,
 	}, nil
 }
 

@@ -95,11 +95,10 @@ func isWorkloadIncluded(workload string) bool {
 	return !excludedWorkloads[workload]
 }
 
-func (in *WorkloadService) getWorkloadValidations(authpolicies []security_v1beta1.AuthorizationPolicy, workloads models.WorkloadList, namespace string) models.IstioValidations {
+func (in *WorkloadService) getWorkloadValidations(authpolicies []security_v1beta1.AuthorizationPolicy, workloadsPerNamespace map[string]models.WorkloadList) models.IstioValidations {
 	validations := checkers.WorkloadChecker{
-		Namespace:             namespace,
 		AuthorizationPolicies: authpolicies,
-		WorkloadList:          workloads,
+		WorkloadsPerNamespace: workloadsPerNamespace,
 	}.Check()
 
 	return validations
@@ -188,7 +187,9 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
 	authpolicies = istioConfigList.AuthorizationPolicies
-	validations := in.getWorkloadValidations(authpolicies, *workloadList, criteria.Namespace)
+	allWorkloads := map[string]models.WorkloadList{}
+	allWorkloads[criteria.Namespace] = *workloadList
+	validations := in.getWorkloadValidations(authpolicies, allWorkloads)
 	validations.StripIgnoredChecks()
 	workloadList.Validations = validations
 	return *workloadList, nil

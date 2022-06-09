@@ -210,6 +210,10 @@ export const createIstioConfigDetail = (
   return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(namespace, objectType), {}, json);
 };
 
+export const getConfigValidations = (namespaces: string[]) => {
+  return newRequest<ValidationStatus>(HTTP_VERBS.GET, urls.configValidations(), { namespaces: namespaces.join(',') }, {});
+};
+
 export const getServices = (namespace: string, params: { [key: string]: string } = {}) => {
   return newRequest<ServiceList>(HTTP_VERBS.GET, urls.services(namespace), params, {});
 };

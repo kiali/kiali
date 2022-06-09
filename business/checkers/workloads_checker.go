@@ -10,28 +10,29 @@ import (
 const WorkloadCheckerType = "workload"
 
 type WorkloadChecker struct {
-	Namespace             string
 	AuthorizationPolicies []security_v1beta1.AuthorizationPolicy
-	WorkloadList          models.WorkloadList
+	WorkloadsPerNamespace map[string]models.WorkloadList
 }
 
 func (w WorkloadChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	for _, wl := range w.WorkloadList.Workloads {
-		validations.MergeValidations(w.runChecks(wl))
+	for _, wls := range w.WorkloadsPerNamespace {
+		for _, wl := range wls.Workloads {
+			validations.MergeValidations(w.runChecks(wl, wls.Namespace.Name))
+		}
 	}
 
 	return validations
 }
 
 // runChecks runs all the individual checks for a single workload and appends the result into validations.
-func (w WorkloadChecker) runChecks(workload models.WorkloadListItem) models.IstioValidations {
+func (w WorkloadChecker) runChecks(workload models.WorkloadListItem, namespace string) models.IstioValidations {
 	wlName := workload.Name
-	key, rrValidation := EmptyValidValidation(wlName, w.Namespace, WorkloadCheckerType)
+	key, rrValidation := EmptyValidValidation(wlName, namespace, WorkloadCheckerType)
 
 	enabledCheckers := []Checker{
-		workloads.UncoveredWorkloadChecker{Workload: workload, Namespace: w.Namespace, AuthorizationPolicies: w.AuthorizationPolicies},
+		workloads.UncoveredWorkloadChecker{Workload: workload, Namespace: namespace, AuthorizationPolicies: w.AuthorizationPolicies},
 	}
 
 	for _, checker := range enabledCheckers {

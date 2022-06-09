@@ -940,6 +940,27 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceValidationSummary,
 			true,
 		},
+		// swagger:route GET /istio/validations namespaces namespacesValidations
+		// ---
+		// Get validation summary for all objects in the given namespaces
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: namespaceValidationSummaryResponse
+		//      400: badRequestError
+		//      500: internalError
+		//
+		{
+			"ConfigValidationSummary",
+			"GET",
+			"/api/istio/validations",
+			handlers.ConfigValidationSummary,
+			true,
+		},
 		// swagger:route GET /mesh/tls tls meshTls
 		// ---
 		// Get TLS status for the whole mesh

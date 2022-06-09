@@ -9,15 +9,15 @@ import (
 )
 
 type GenericMultiMatchChecker struct {
-	SubjectType  string
-	Keys         []models.IstioValidationKey
-	Selectors    map[int]map[string]string
-	WorkloadList models.WorkloadList
-	Path         string
-	skipSelSubj  bool
+	SubjectType           string
+	Keys                  []models.IstioValidationKey
+	Selectors             map[int]map[string]string
+	WorkloadsPerNamespace map[string]models.WorkloadList
+	Path                  string
+	skipSelSubj           bool
 }
 
-func PeerAuthenticationMultiMatchChecker(subjectType string, pa []security_v1beta.PeerAuthentication, workloadList models.WorkloadList) GenericMultiMatchChecker {
+func PeerAuthenticationMultiMatchChecker(subjectType string, pa []security_v1beta.PeerAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(pa))
 	for i, p := range pa {
@@ -33,16 +33,16 @@ func PeerAuthenticationMultiMatchChecker(subjectType string, pa []security_v1bet
 		}
 	}
 	return GenericMultiMatchChecker{
-		SubjectType:  subjectType,
-		Keys:         keys,
-		Selectors:    selectors,
-		WorkloadList: workloadList,
-		Path:         "spec/selector",
-		skipSelSubj:  false,
+		SubjectType:           subjectType,
+		Keys:                  keys,
+		Selectors:             selectors,
+		WorkloadsPerNamespace: workloadsPerNamespace,
+		Path:                  "spec/selector",
+		skipSelSubj:           false,
 	}
 }
 
-func RequestAuthenticationMultiMatchChecker(subjectType string, ra []security_v1beta.RequestAuthentication, workloadList models.WorkloadList) GenericMultiMatchChecker {
+func RequestAuthenticationMultiMatchChecker(subjectType string, ra []security_v1beta.RequestAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(ra))
 	for i, r := range ra {
@@ -60,43 +60,45 @@ func RequestAuthenticationMultiMatchChecker(subjectType string, ra []security_v1
 	// For RequestAuthentication, when more than one policy matches a workload, Istio combines all rules as if they were specified as a single policy.
 	// So skip multi match validation
 	return GenericMultiMatchChecker{
-		SubjectType:  subjectType,
-		Keys:         keys,
-		Selectors:    selectors,
-		WorkloadList: workloadList,
-		Path:         "spec/selector",
-		skipSelSubj:  true,
+		SubjectType:           subjectType,
+		Keys:                  keys,
+		Selectors:             selectors,
+		WorkloadsPerNamespace: workloadsPerNamespace,
+		Path:                  "spec/selector",
+		skipSelSubj:           true,
 	}
 }
 
-func SidecarSelectorMultiMatchChecker(subjectType string, sc []networking_v1beta1.Sidecar, workloadList models.WorkloadList) GenericMultiMatchChecker {
+func SidecarSelectorMultiMatchChecker(subjectType string, sc []networking_v1beta1.Sidecar, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(sc))
 	i := 0
 	for _, s := range sc {
-		if s.Namespace != workloadList.Namespace.Name {
-			// Workloads from Sidecar's own Namespaces only are considered in Selector
-			continue
+		for _, wls := range workloadsPerNamespace {
+			if s.Namespace != wls.Namespace.Name {
+				// Workloads from Sidecar's own Namespaces only are considered in Selector
+				continue
+			}
+			key := models.IstioValidationKey{
+				ObjectType: subjectType,
+				Name:       s.Name,
+				Namespace:  s.Namespace,
+			}
+			keys = append(keys, key)
+			selectors[i] = make(map[string]string)
+			if s.Spec.WorkloadSelector != nil {
+				selectors[i] = s.Spec.WorkloadSelector.Labels
+			}
+			i++
 		}
-		key := models.IstioValidationKey{
-			ObjectType: subjectType,
-			Name:       s.Name,
-			Namespace:  s.Namespace,
-		}
-		keys = append(keys, key)
-		selectors[i] = make(map[string]string)
-		if s.Spec.WorkloadSelector != nil {
-			selectors[i] = s.Spec.WorkloadSelector.Labels
-		}
-		i++
 	}
 	return GenericMultiMatchChecker{
-		SubjectType:  subjectType,
-		Keys:         keys,
-		Selectors:    selectors,
-		WorkloadList: workloadList,
-		Path:         "spec/workloadSelector",
-		skipSelSubj:  false,
+		SubjectType:           subjectType,
+		Keys:                  keys,
+		Selectors:             selectors,
+		WorkloadsPerNamespace: workloadsPerNamespace,
+		Path:                  "spec/workloadSelector",
+		skipSelSubj:           false,
 	}
 }
 
@@ -206,13 +208,15 @@ func (m GenericMultiMatchChecker) multiMatchSubjects() ReferenceMap {
 			continue
 		}
 
-		for _, w := range m.WorkloadList.Workloads {
-			if !selector.Matches(labels.Set(w.Labels)) {
-				continue
-			}
+		for _, wls := range m.WorkloadsPerNamespace {
+			for _, w := range wls.Workloads {
+				if !selector.Matches(labels.Set(w.Labels)) {
+					continue
+				}
 
-			workloadKey := models.BuildKey(w.Type, w.Name, m.WorkloadList.Namespace.Name)
-			workloadSubjects.Add(workloadKey, subjectKey)
+				workloadKey := models.BuildKey(w.Type, w.Name, wls.Namespace.Name)
+				workloadSubjects.Add(workloadKey, subjectKey)
+			}
 		}
 	}
 

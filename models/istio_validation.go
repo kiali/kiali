@@ -33,6 +33,9 @@ type IstioValidationSummary struct {
 	Warnings int `json:"warnings"`
 }
 
+// ValidationSummaries holds a map of IstioValidationSummary per namespace
+type ValidationSummaries map[string]*IstioValidationSummary
+
 // IstioValidations represents a set of IstioValidation grouped by IstioValidationKey.
 type IstioValidations map[IstioValidationKey]*IstioValidation
 
@@ -435,14 +438,14 @@ func (iv IstioValidations) MergeReferences(validations IstioValidations) IstioVa
 	return iv
 }
 
-func (iv IstioValidations) SummarizeValidation(ns string) IstioValidationSummary {
+func (iv IstioValidations) SummarizeValidation(ns string) *IstioValidationSummary {
 	ivs := IstioValidationSummary{}
 	for k, v := range iv {
 		if k.Namespace == ns {
 			ivs.mergeSummaries(v.Checks)
 		}
 	}
-	return ivs
+	return &ivs
 }
 
 func (summary *IstioValidationSummary) mergeSummaries(cs []*IstioCheck) {
