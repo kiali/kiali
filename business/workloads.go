@@ -604,194 +604,6 @@ func (in *WorkloadService) GetPodLogs(namespace, name string, opts *LogOptions) 
 	return in.getParsedLogs(namespace, name, opts)
 }
 
-// streamParsedLogs only works correctly when opts does not have Duration set || does not have TailLines set.
-func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
-	k8sOpts := opts.PodLogOptions
-	// the k8s API does not support "endTime/beforeTime". So for bounded time ranges we need to
-	// discard the logs after sinceTime+duration
-	isBounded := opts.Duration != nil
-
-	logsReader, err := in.k8s.StreamPodLogs(namespace, name, &k8sOpts)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		e := logsReader.Close()
-		if e != nil {
-			log.Errorf("Error when closing the connection streaming logs of a pod: %s", e.Error())
-		}
-	}()
-
-	bufferedReader := bufio.NewReader(logsReader)
-
-	var startTime *time.Time
-	var endTime *time.Time
-	if k8sOpts.SinceTime != nil {
-		startTime = &k8sOpts.SinceTime.Time
-		if isBounded {
-			end := startTime.Add(*opts.Duration)
-			endTime = &end
-		}
-	}
-
-	engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
-
-	// To avoid high memory usage, the JSON will be written
-	// to the HTTP Response as it's received from the cluster API.
-	// That is, each log line is parsed, decorated with Kiali's metadata,
-	// marshalled to JSON and immediately written to the HTTP Response.
-	// This means that it is needed to push HTTP headers and start writing
-	// the response body right now and any errors at the middle of the log
-	// processing can no longer be informed to the client. So, starting
-	// these lines, the best we can do if some error happens is to simply
-	// log the error and strop/truncate the response, which will have the
-	// effect of sending an incomplete JSON document that the browser will fail
-	// to parse. Hopefully, the client/UI can catch the parsing error and
-	// properly show an error message about that there was a failure retrieving logs.
-	w.Header().Set("Content-Type", "application/json")
-	_, writeErr := w.Write([]byte("{\"entries\":[")) // This starts the JSON document
-	if writeErr != nil {
-		return writeErr
-	}
-
-	firstEntry := true
-	line, readErr := bufferedReader.ReadString('\n')
-	for ; readErr == nil || (readErr == io.EOF && len(line) > 0); line, readErr = bufferedReader.ReadString('\n') {
-		entry := LogEntry{
-			Message:       "",
-			Timestamp:     "",
-			TimestampUnix: 0,
-			Severity:      "INFO",
-		}
-		splitted := strings.SplitN(line, " ", 2)
-		if len(splitted) != 2 {
-			log.Debugf("Skipping unexpected log line [%s]", line)
-			continue
-		}
-
-		// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
-		splittedTimestamp := strings.Split(splitted[0], ".")
-		if len(splittedTimestamp) == 1 {
-			entry.Timestamp = splittedTimestamp[0]
-		} else {
-			entry.Timestamp = fmt.Sprintf("%sZ", splittedTimestamp[0])
-		}
-
-		entry.Message = strings.TrimSpace(splitted[1])
-		if entry.Message == "" {
-			log.Debugf("Skipping empty log line [%s]", line)
-			continue
-		}
-
-		// If we are past the requested time window then stop processing
-		parsedTimestamp, err := time.Parse(time.RFC3339, entry.Timestamp)
-		if err == nil {
-			if startTime == nil {
-				startTime = &parsedTimestamp
-			}
-
-			if isBounded {
-				if endTime == nil {
-					end := parsedTimestamp.Add(*opts.Duration)
-					endTime = &end
-				}
-
-				if parsedTimestamp.After(*endTime) {
-					break
-				}
-			}
-		} else {
-			log.Debugf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())
-			continue
-		}
-
-		severity := severityRegexp.FindString(line)
-		if severity != "" {
-			entry.Severity = strings.ToUpper(severity)
-		}
-
-		// If this is an istio access log, then parse it out. Prefer the access log time over the k8s time
-		// as it is the actual time as opposed to the k8s store time.
-		if opts.IsProxy {
-			al, err := engardeParser.Parse(entry.Message)
-			// engardeParser.Parse will not throw errors even if no fields
-			// were parsed out. Checking here that some fields were actually
-			// set before setting the AccessLog to an empty object. See issue #4346.
-			if err != nil || isAccessLogEmpty(al) {
-				if err != nil {
-					log.Debugf("AccessLog parse failure: %s", err.Error())
-				}
-				// try to parse out the time manually
-				tokens := strings.SplitN(entry.Message, " ", 2)
-				timestampToken := strings.Trim(tokens[0], "[]")
-				t, err := time.Parse(time.RFC3339, timestampToken)
-				if err == nil {
-					parsedTimestamp = t
-				}
-			} else {
-				entry.AccessLog = al
-				t, err := time.Parse(time.RFC3339, al.Timestamp)
-				if err == nil {
-					parsedTimestamp = t
-				}
-
-				// clear accessLog fields we don't need in the returned JSON
-				entry.AccessLog.MixerStatus = ""
-				entry.AccessLog.OriginalMessage = ""
-				entry.AccessLog.ParseError = ""
-			}
-		}
-
-		// override the timestamp with a simpler format
-		timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d",
-			parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
-			parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second())
-		entry.Timestamp = timestamp
-		entry.TimestampUnix = parsedTimestamp.Unix()
-
-		response, err := json.Marshal(entry)
-		if err != nil {
-			// Remember that since the HTTP Response body is already being sent,
-			// it is not possible to change the response code. So, log the error
-			// and terminate early the response.
-			log.Errorf("Error when marshalling JSON while streaming pod logs: %s", err.Error())
-			return nil
-		}
-
-		if firstEntry == true {
-			firstEntry = false
-		} else {
-			_, writeErr = w.Write([]byte{','})
-			if writeErr != nil {
-				// Remember that since the HTTP Response body is already being sent,
-				// it is not possible to change the response code. So, log the error
-				// and terminate early the response.
-				log.Errorf("Error when writing log entries separator: %s", writeErr.Error())
-				return nil
-			}
-		}
-
-		_, writeErr = w.Write(response)
-		if writeErr != nil {
-			log.Errorf("Error when writing a processed log entry while streaming pod logs: %s", writeErr.Error())
-			return nil
-		}
-	}
-
-	_, writeErr = w.Write([]byte("]}")) // This ends the JSON document
-	if writeErr != nil {
-		log.Errorf("Error when writing the outro of the JSON document while streaming pod logs: %s", err.Error())
-	}
-
-	return nil
-}
-
-// StreamPodLogs streams pod logs to an HTTP Response given the provided options
-func (in *WorkloadService) StreamPodLogs(namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
-	return in.streamParsedLogs(namespace, name, opts, w)
-}
-
 func isAccessLogEmpty(al *parser.AccessLog) bool {
 	if al == nil {
 		return true
@@ -2057,4 +1869,192 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, namespace, wo
 	appLabelName := config.Get().IstioLabels.AppLabelName
 	app := wkd.Labels[appLabelName]
 	return app, nil
+}
+
+// streamParsedLogs only works correctly when opts does not have Duration set || does not have TailLines set.
+func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
+	k8sOpts := opts.PodLogOptions
+	// the k8s API does not support "endTime/beforeTime". So for bounded time ranges we need to
+	// discard the logs after sinceTime+duration
+	isBounded := opts.Duration != nil
+
+	logsReader, err := in.k8s.StreamPodLogs(namespace, name, &k8sOpts)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		e := logsReader.Close()
+		if e != nil {
+			log.Errorf("Error when closing the connection streaming logs of a pod: %s", e.Error())
+		}
+	}()
+
+	bufferedReader := bufio.NewReader(logsReader)
+
+	var startTime *time.Time
+	var endTime *time.Time
+	if k8sOpts.SinceTime != nil {
+		startTime = &k8sOpts.SinceTime.Time
+		if isBounded {
+			end := startTime.Add(*opts.Duration)
+			endTime = &end
+		}
+	}
+
+	engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
+
+	// To avoid high memory usage, the JSON will be written
+	// to the HTTP Response as it's received from the cluster API.
+	// That is, each log line is parsed, decorated with Kiali's metadata,
+	// marshalled to JSON and immediately written to the HTTP Response.
+	// This means that it is needed to push HTTP headers and start writing
+	// the response body right now and any errors at the middle of the log
+	// processing can no longer be informed to the client. So, starting
+	// these lines, the best we can do if some error happens is to simply
+	// log the error and strop/truncate the response, which will have the
+	// effect of sending an incomplete JSON document that the browser will fail
+	// to parse. Hopefully, the client/UI can catch the parsing error and
+	// properly show an error message about that there was a failure retrieving logs.
+	w.Header().Set("Content-Type", "application/json")
+	_, writeErr := w.Write([]byte("{\"entries\":[")) // This starts the JSON document
+	if writeErr != nil {
+		return writeErr
+	}
+
+	firstEntry := true
+	line, readErr := bufferedReader.ReadString('\n')
+	for ; readErr == nil || (readErr == io.EOF && len(line) > 0); line, readErr = bufferedReader.ReadString('\n') {
+		entry := LogEntry{
+			Message:       "",
+			Timestamp:     "",
+			TimestampUnix: 0,
+			Severity:      "INFO",
+		}
+		splitted := strings.SplitN(line, " ", 2)
+		if len(splitted) != 2 {
+			log.Debugf("Skipping unexpected log line [%s]", line)
+			continue
+		}
+
+		// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
+		splittedTimestamp := strings.Split(splitted[0], ".")
+		if len(splittedTimestamp) == 1 {
+			entry.Timestamp = splittedTimestamp[0]
+		} else {
+			entry.Timestamp = fmt.Sprintf("%sZ", splittedTimestamp[0])
+		}
+
+		entry.Message = strings.TrimSpace(splitted[1])
+		if entry.Message == "" {
+			log.Debugf("Skipping empty log line [%s]", line)
+			continue
+		}
+
+		// If we are past the requested time window then stop processing
+		parsedTimestamp, err := time.Parse(time.RFC3339, entry.Timestamp)
+		if err == nil {
+			if startTime == nil {
+				startTime = &parsedTimestamp
+			}
+
+			if isBounded {
+				if endTime == nil {
+					end := parsedTimestamp.Add(*opts.Duration)
+					endTime = &end
+				}
+
+				if parsedTimestamp.After(*endTime) {
+					break
+				}
+			}
+		} else {
+			log.Debugf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())
+			continue
+		}
+
+		severity := severityRegexp.FindString(line)
+		if severity != "" {
+			entry.Severity = strings.ToUpper(severity)
+		}
+
+		// If this is an istio access log, then parse it out. Prefer the access log time over the k8s time
+		// as it is the actual time as opposed to the k8s store time.
+		if opts.IsProxy {
+			al, err := engardeParser.Parse(entry.Message)
+			// engardeParser.Parse will not throw errors even if no fields
+			// were parsed out. Checking here that some fields were actually
+			// set before setting the AccessLog to an empty object. See issue #4346.
+			if err != nil || isAccessLogEmpty(al) {
+				if err != nil {
+					log.Debugf("AccessLog parse failure: %s", err.Error())
+				}
+				// try to parse out the time manually
+				tokens := strings.SplitN(entry.Message, " ", 2)
+				timestampToken := strings.Trim(tokens[0], "[]")
+				t, err := time.Parse(time.RFC3339, timestampToken)
+				if err == nil {
+					parsedTimestamp = t
+				}
+			} else {
+				entry.AccessLog = al
+				t, err := time.Parse(time.RFC3339, al.Timestamp)
+				if err == nil {
+					parsedTimestamp = t
+				}
+
+				// clear accessLog fields we don't need in the returned JSON
+				entry.AccessLog.MixerStatus = ""
+				entry.AccessLog.OriginalMessage = ""
+				entry.AccessLog.ParseError = ""
+			}
+		}
+
+		// override the timestamp with a simpler format
+		timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d",
+			parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
+			parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second())
+		entry.Timestamp = timestamp
+		entry.TimestampUnix = parsedTimestamp.Unix()
+
+		response, err := json.Marshal(entry)
+		if err != nil {
+			// Remember that since the HTTP Response body is already being sent,
+			// it is not possible to change the response code. So, log the error
+			// and terminate early the response.
+			log.Errorf("Error when marshalling JSON while streaming pod logs: %s", err.Error())
+			return nil
+		}
+
+		if firstEntry == true {
+			firstEntry = false
+		} else {
+			_, writeErr = w.Write([]byte{','})
+			if writeErr != nil {
+				// Remember that since the HTTP Response body is already being sent,
+				// it is not possible to change the response code. So, log the error
+				// and terminate early the response.
+				log.Errorf("Error when writing log entries separator: %s", writeErr.Error())
+				return nil
+			}
+		}
+
+		_, writeErr = w.Write(response)
+		if writeErr != nil {
+			log.Errorf("Error when writing a processed log entry while streaming pod logs: %s", writeErr.Error())
+			return nil
+		}
+	}
+
+	_, writeErr = w.Write([]byte("]}")) // This ends the JSON document
+	if writeErr != nil {
+		log.Errorf("Error when writing the outro of the JSON document while streaming pod logs: %s", err.Error())
+	}
+
+	return nil
+}
+
+// StreamPodLogs streams pod logs to an HTTP Response given the provided options
+func (in *WorkloadService) StreamPodLogs(namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
+	return in.streamParsedLogs(namespace, name, opts, w)
 }
