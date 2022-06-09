@@ -83,7 +83,13 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 
 	// We fetch without target service as some validations will require full-namespace details
 	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, namespace, errChan, &wg)
-	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &namespaces, errChan, &wg)
+
+	if workload != "" {
+		// load only requested workload
+		go in.fetchWorkload(ctx, &workloadsPerNamespace, workload, namespace, errChan, &wg)
+	} else {
+		go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &namespaces, errChan, &wg)
+	}
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
 	if service != "" {
 		go in.fetchServices(ctx, &services, namespace, errChan, &wg)
@@ -314,6 +320,24 @@ func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue
 			} else {
 				allWorkloads[ns.Name] = workloadList
 			}
+		}
+		*rValue = allWorkloads
+	}
+}
+
+func (in *IstioValidationsService) fetchWorkload(ctx context.Context, rValue *map[string]models.WorkloadList, workload, namespace string, errChan chan error, wg *sync.WaitGroup) {
+	defer wg.Done()
+	if len(errChan) == 0 {
+		allWorkloads := map[string]models.WorkloadList{}
+		criteria := WorkloadCriteria{WorkloadName: workload, Namespace: namespace, IncludeIstioResources: true, IncludeHealth: false}
+		workloadList, err := in.businessLayer.Workload.GetWorkloadList(ctx, criteria)
+		if err != nil {
+			select {
+			case errChan <- err:
+			default:
+			}
+		} else {
+			allWorkloads[namespace] = workloadList
 		}
 		*rValue = allWorkloads
 	}
