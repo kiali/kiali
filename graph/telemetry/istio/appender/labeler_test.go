@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
-	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -47,7 +46,7 @@ func setupLabelerK8S() *business.Layer {
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 
-	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
+	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1.CronJob{}, nil)
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return((*apps_v1.Deployment)(nil), nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return([]apps_v1.Deployment{
 		{
