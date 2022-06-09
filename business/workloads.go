@@ -449,15 +449,167 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 	return opts, nil
 }
 
-func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
+// getParsedLogs only works correctly when opts has Duration *and* TailLines set.
+func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
 	k8sOpts := opts.PodLogOptions
 	// the k8s API does not support "endTime/beforeTime". So for bounded time ranges we need to
 	// 1) discard the logs after sinceTime+duration
 	// 2) manually apply tailLines to the remaining logs
-	isBounded := opts.Duration != nil
-	if isBounded {
-		k8sOpts.TailLines = nil
+	tailLines := k8sOpts.TailLines
+	k8sOpts.TailLines = nil
+
+	logsReader, err := in.k8s.StreamPodLogs(namespace, name, &k8sOpts)
+	if err != nil {
+		return nil, err
 	}
+
+	defer func() {
+		e := logsReader.Close()
+		if e != nil {
+			log.Errorf("Error when closing the connection streaming logs of a pod: %s", e.Error())
+		}
+	}()
+
+	bufferedReader := bufio.NewReader(logsReader)
+
+	// It is known in advance that "tailLines" is the maximum number of
+	// log entries that will be returned. So, it is possible to pre-allocate
+	// memory. To keep memory usage constrained, the "entries" will be used
+	// as a circular list: once it is full, we "rewind" and start overwriting
+	// elements. The elements that survive are the ones that are returned.
+	// There is the chance that not all the pre-allocated array will
+	// be used and some memory will be wasted, but for large logs this is
+	// better than letting the slice grow indefinitely and then picking only
+	// the last elements.
+	entries := make([]LogEntry, *tailLines)
+	entriesTip := int64(0)
+
+	var startTime *time.Time
+	var endTime *time.Time
+	if k8sOpts.SinceTime != nil {
+		startTime = &k8sOpts.SinceTime.Time
+		end := startTime.Add(*opts.Duration)
+		endTime = &end
+	}
+
+	engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
+
+	line, readErr := bufferedReader.ReadString('\n')
+	for ; readErr == nil || (readErr == io.EOF && len(line) > 0); line, readErr = bufferedReader.ReadString('\n') {
+		entry := LogEntry{
+			Message:       "",
+			Timestamp:     "",
+			TimestampUnix: 0,
+			Severity:      "INFO",
+		}
+
+		splitted := strings.SplitN(line, " ", 2)
+		if len(splitted) != 2 {
+			log.Debugf("Skipping unexpected log line [%s]", line)
+			continue
+		}
+
+		// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
+		splittedTimestamp := strings.Split(splitted[0], ".")
+		if len(splittedTimestamp) == 1 {
+			entry.Timestamp = splittedTimestamp[0]
+		} else {
+			entry.Timestamp = fmt.Sprintf("%sZ", splittedTimestamp[0])
+		}
+
+		entry.Message = strings.TrimSpace(splitted[1])
+		if entry.Message == "" {
+			log.Debugf("Skipping empty log line [%s]", line)
+			continue
+		}
+
+		// If we are past the requested time window then stop processing
+		parsedTimestamp, err := time.Parse(time.RFC3339, entry.Timestamp)
+		if err == nil {
+			if startTime == nil {
+				startTime = &parsedTimestamp
+			}
+
+			if endTime == nil {
+				end := parsedTimestamp.Add(*opts.Duration)
+				endTime = &end
+			}
+
+			if parsedTimestamp.After(*endTime) {
+				break
+			}
+		} else {
+			log.Errorf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())
+			continue
+		}
+
+		severity := severityRegexp.FindString(line)
+		if severity != "" {
+			entry.Severity = strings.ToUpper(severity)
+		}
+
+		// If this is an istio access log, then parse it out. Prefer the access log time over the k8s time
+		// as it is the actual time as opposed to the k8s store time.
+		if opts.IsProxy {
+			al, err := engardeParser.Parse(entry.Message)
+			// engardeParser.Parse will not throw errors even if no fields
+			// were parsed out. Checking here that some fields were actually
+			// set before setting the AccessLog to an empty object. See issue #4346.
+			if err != nil || isAccessLogEmpty(al) {
+				if err != nil {
+					log.Debugf("AccessLog parse failure: %s", err.Error())
+				}
+				// try to parse out the time manually
+				tokens := strings.SplitN(entry.Message, " ", 2)
+				timestampToken := strings.Trim(tokens[0], "[]")
+				t, err := time.Parse(time.RFC3339, timestampToken)
+				if err == nil {
+					parsedTimestamp = t
+				}
+			} else {
+				entry.AccessLog = al
+				t, err := time.Parse(time.RFC3339, al.Timestamp)
+				if err == nil {
+					parsedTimestamp = t
+				}
+
+				// clear accessLog fields we don't need in the returned JSON
+				entry.AccessLog.MixerStatus = ""
+				entry.AccessLog.OriginalMessage = ""
+				entry.AccessLog.ParseError = ""
+			}
+		}
+
+		// override the timestamp with a simpler format
+		timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d",
+			parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
+			parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second())
+		entry.Timestamp = timestamp
+		entry.TimestampUnix = parsedTimestamp.Unix()
+
+		entries[entriesTip%*tailLines] = entry
+		entriesTip++
+	}
+
+	if entriesTip <= *tailLines {
+		return &PodLog{Entries: entries[:entriesTip]}, err
+	} else {
+		indexCut := entriesTip % *tailLines
+		return &PodLog{Entries: append(entries[indexCut:], entries[:indexCut]...)}, err
+	}
+}
+
+// GetPodLogs returns pod logs given the provided options
+func (in *WorkloadService) GetPodLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
+	return in.getParsedLogs(namespace, name, opts)
+}
+
+// streamParsedLogs only works correctly when opts does not have Duration set || does not have TailLines set.
+func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
+	k8sOpts := opts.PodLogOptions
+	// the k8s API does not support "endTime/beforeTime". So for bounded time ranges we need to
+	// discard the logs after sinceTime+duration
+	isBounded := opts.Duration != nil
 
 	logsReader, err := in.k8s.StreamPodLogs(namespace, name, &k8sOpts)
 	if err != nil {
@@ -470,12 +622,17 @@ func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOpt
 			log.Errorf("Error when closing the connection streaming logs of a pod: %s", e.Error())
 		}
 	}()
+
 	bufferedReader := bufio.NewReader(logsReader)
 
 	var startTime *time.Time
 	var endTime *time.Time
 	if k8sOpts.SinceTime != nil {
 		startTime = &k8sOpts.SinceTime.Time
+		if isBounded {
+			end := startTime.Add(*opts.Duration)
+			endTime = &end
+		}
 	}
 
 	engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)

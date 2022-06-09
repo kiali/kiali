@@ -236,9 +236,19 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch pod logs
-	err = business.Workload.StreamPodLogs(namespace, pod, opts, w)
-	if err != nil {
-		handleErrorResponse(w, err)
-		return
+	if opts.Duration != nil && opts.TailLines != nil {
+		podLogs, err := business.Workload.GetPodLogs(namespace, pod, opts)
+		if err != nil {
+			handleErrorResponse(w, err)
+			return
+		}
+
+		RespondWithJSON(w, http.StatusOK, podLogs)
+	} else {
+		err = business.Workload.StreamPodLogs(namespace, pod, opts, w)
+		if err != nil {
+			handleErrorResponse(w, err)
+			return
+		}
 	}
 }
