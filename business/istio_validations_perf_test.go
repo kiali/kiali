@@ -3,7 +3,6 @@ package business
 import (
 	"context"
 	"fmt"
-	"github.com/kiali/kiali/log"
 	"os"
 	"strconv"
 	"testing"
@@ -12,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -49,7 +49,7 @@ func TestGetValidationsPerf(t *testing.T) {
 
 	now := time.Now()
 	validations, _ := vs.GetValidations(context.TODO(), "test", "", "")
-	log.Debugf("Validation Performance test took %f seconds for %d namespaces", time.Now().Sub(now).Seconds(), numNs)
+	log.Debugf("Validation Performance test took %f seconds for %d namespaces", time.Since(now).Seconds(), numNs)
 	assert.NotEmpty(validations)
 }
 
