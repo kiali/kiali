@@ -447,7 +447,6 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         return Promise.all([
           API.getNamespaceValidations(nsInfo.name),
           API.getIstioConfig(nsInfo.name, ['authorizationpolicies', 'sidecars'], false, '', ''),
-          API.getConfigValidations([nsInfo.name])
         ]).then(results => {
           return { validations: results[0].data, istioConfig: results[1].data, nsInfo: nsInfo };
         });

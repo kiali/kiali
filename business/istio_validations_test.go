@@ -30,10 +30,23 @@ func TestGetNamespaceValidations(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vs := mockCombinedValidationService(fakeEmptyIstioConfigList(),
+	vs := mockCombinedValidationService(fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
 	validations, _ := vs.GetValidations(context.TODO(), "test", "", "")
+	assert.NotEmpty(validations)
+	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
+}
+
+func TestGetAllValidations(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	vs := mockCombinedValidationService(fakeIstioConfigList(),
+		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
+
+	validations, _ := vs.GetValidations(context.TODO(), "", "", "")
 	assert.NotEmpty(validations)
 	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
 }
@@ -43,7 +56,7 @@ func TestGetIstioObjectValidations(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vs := mockCombinedValidationService(fakeEmptyIstioConfigList(),
+	vs := mockCombinedValidationService(fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
 	validations, _, _ := vs.GetIstioObjectValidations(context.TODO(), "test", "virtualservices", "product-vs")
@@ -101,7 +114,7 @@ func TestGetVSReferences(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	vs := mockCombinedValidationService(fakeEmptyIstioConfigList(), []string{}, "test", fakePods())
+	vs := mockCombinedValidationService(fakeIstioConfigList(), []string{}, "test", fakePods())
 
 	_, referencesMap, err := vs.GetIstioObjectValidations(context.TODO(), "test", kubernetes.VirtualServices, "product-vs")
 	references := referencesMap[models.IstioReferenceKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
@@ -187,13 +200,13 @@ func mockCombinedValidationService(istioConfigList *models.IstioConfigList, serv
 	k8s.MockIstio(fakeIstioObjects...)
 
 	kialiCache = cache.FakeServicesKialiCache(data.CreateFakeMultiRegistryServices(services, "test", "*"),
-		fakeIstioConfigList().Gateways,
-		fakeIstioConfigList().VirtualServices,
-		fakeIstioConfigList().DestinationRules,
-		fakeIstioConfigList().ServiceEntries,
-		fakeIstioConfigList().Sidecars,
-		fakeIstioConfigList().RequestAuthentications,
-		fakeIstioConfigList().WorkloadEntries)
+		istioConfigList.Gateways,
+		istioConfigList.VirtualServices,
+		istioConfigList.DestinationRules,
+		istioConfigList.ServiceEntries,
+		istioConfigList.Sidecars,
+		istioConfigList.RequestAuthentications,
+		istioConfigList.WorkloadEntries)
 
 	k8s.On("GetToken").Return("token")
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices(services, "test"), nil)
