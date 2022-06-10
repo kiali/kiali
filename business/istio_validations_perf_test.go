@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	"github.com/kiali/kiali/log"
 	"os"
 	"strconv"
 	"testing"
@@ -48,7 +49,7 @@ func TestGetValidationsPerf(t *testing.T) {
 
 	now := time.Now()
 	validations, _ := vs.GetValidations(context.TODO(), "test", "", "")
-	assert.WithinDuration(now, time.Now(), time.Millisecond)
+	log.Debugf("Validation Performance test took %f seconds for %d namespaces", time.Now().Sub(now).Seconds(), numNs)
 	assert.NotEmpty(validations)
 }
 
