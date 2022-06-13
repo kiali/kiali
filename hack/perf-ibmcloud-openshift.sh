@@ -21,7 +21,7 @@ infomsg() {
 }
 
 install_istio() {
-	hack/istio/download-istio.sh -iv "1.13.0"
+  hack/istio/download-istio.sh
   hack/istio/install-istio-via-istioctl.sh -iee true -cp openshift
 }
 
@@ -130,7 +130,7 @@ install_kiali() {
   local cluster_repo
   cluster_repo=$(oc get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)
   local master_url
-  master_url=$(ibmcloud oc cluster get -c kiali-perf-cluster --output json | jq -r '.masterURL')
+  master_url=$(ibmcloud oc cluster get -c ${USER}-kiali-perf-cluster --output json | jq -r '.masterURL')
     
   oc login -u apikey -p "${API_KEY}" --server "${master_url}"
   local token
