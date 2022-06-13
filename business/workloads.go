@@ -67,6 +67,7 @@ type AccessLogEntry struct {
 type LogEntry struct {
 	Message       string            `json:"message,omitempty"`
 	Severity      string            `json:"severity,omitempty"`
+	OriginalTime  time.Time         `json:"-"`
 	Timestamp     string            `json:"timestamp,omitempty"`
 	TimestampUnix int64             `json:"timestampUnix,omitempty"`
 	AccessLog     *parser.AccessLog `json:"accessLog,omitempty"`
@@ -449,6 +450,89 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 	return opts, nil
 }
 
+func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogEntry {
+	entry := LogEntry{
+		Message:       "",
+		Timestamp:     "",
+		TimestampUnix: 0,
+		Severity:      "INFO",
+	}
+
+	splitted := strings.SplitN(line, " ", 2)
+	if len(splitted) != 2 {
+		log.Debugf("Skipping unexpected log line [%s]", line)
+		return nil
+	}
+
+	// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
+	splittedTimestamp := strings.Split(splitted[0], ".")
+	if len(splittedTimestamp) == 1 {
+		entry.Timestamp = splittedTimestamp[0]
+	} else {
+		entry.Timestamp = fmt.Sprintf("%sZ", splittedTimestamp[0])
+	}
+
+	entry.Message = strings.TrimSpace(splitted[1])
+	if entry.Message == "" {
+		log.Debugf("Skipping empty log line [%s]", line)
+		return nil
+	}
+
+	// If we are past the requested time window then stop processing
+	parsedTimestamp, err := time.Parse(time.RFC3339, entry.Timestamp)
+	entry.OriginalTime = parsedTimestamp
+	if err != nil {
+		log.Debugf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())
+		return nil
+	}
+
+	severity := severityRegexp.FindString(line)
+	if severity != "" {
+		entry.Severity = strings.ToUpper(severity)
+	}
+
+	// If this is an istio access log, then parse it out. Prefer the access log time over the k8s time
+	// as it is the actual time as opposed to the k8s store time.
+	if isProxy {
+		al, err := engardeParser.Parse(entry.Message)
+		// engardeParser.Parse will not throw errors even if no fields
+		// were parsed out. Checking here that some fields were actually
+		// set before setting the AccessLog to an empty object. See issue #4346.
+		if err != nil || isAccessLogEmpty(al) {
+			if err != nil {
+				log.Debugf("AccessLog parse failure: %s", err.Error())
+			}
+			// try to parse out the time manually
+			tokens := strings.SplitN(entry.Message, " ", 2)
+			timestampToken := strings.Trim(tokens[0], "[]")
+			t, err := time.Parse(time.RFC3339, timestampToken)
+			if err == nil {
+				parsedTimestamp = t
+			}
+		} else {
+			entry.AccessLog = al
+			t, err := time.Parse(time.RFC3339, al.Timestamp)
+			if err == nil {
+				parsedTimestamp = t
+			}
+
+			// clear accessLog fields we don't need in the returned JSON
+			entry.AccessLog.MixerStatus = ""
+			entry.AccessLog.OriginalMessage = ""
+			entry.AccessLog.ParseError = ""
+		}
+	}
+
+	// override the timestamp with a simpler format
+	timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d",
+		parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
+		parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second())
+	entry.Timestamp = timestamp
+	entry.TimestampUnix = parsedTimestamp.Unix()
+
+	return &entry
+}
+
 // getParsedLogs covers the case when opts has Duration *and* TailLines set.
 func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
 	k8sOpts := opts.PodLogOptions
@@ -496,98 +580,27 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 
 	line, readErr := bufferedReader.ReadString('\n')
 	for ; readErr == nil || (readErr == io.EOF && len(line) > 0); line, readErr = bufferedReader.ReadString('\n') {
-		entry := LogEntry{
-			Message:       "",
-			Timestamp:     "",
-			TimestampUnix: 0,
-			Severity:      "INFO",
-		}
-
-		splitted := strings.SplitN(line, " ", 2)
-		if len(splitted) != 2 {
-			log.Debugf("Skipping unexpected log line [%s]", line)
-			continue
-		}
-
-		// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
-		splittedTimestamp := strings.Split(splitted[0], ".")
-		if len(splittedTimestamp) == 1 {
-			entry.Timestamp = splittedTimestamp[0]
-		} else {
-			entry.Timestamp = fmt.Sprintf("%sZ", splittedTimestamp[0])
-		}
-
-		entry.Message = strings.TrimSpace(splitted[1])
-		if entry.Message == "" {
-			log.Debugf("Skipping empty log line [%s]", line)
+		entry := parseLogLine(line, opts.IsProxy, engardeParser)
+		if entry == nil {
 			continue
 		}
 
 		// If we are past the requested time window then stop processing
-		parsedTimestamp, err := time.Parse(time.RFC3339, entry.Timestamp)
-		if err == nil {
-			if startTime == nil {
-				startTime = &parsedTimestamp
-			}
-
-			if endTime == nil {
-				end := parsedTimestamp.Add(*opts.Duration)
-				endTime = &end
-			}
-
-			if parsedTimestamp.After(*endTime) {
-				break
-			}
-		} else {
-			log.Errorf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())
-			continue
+		if startTime == nil {
+			startTime = &entry.OriginalTime
 		}
 
-		severity := severityRegexp.FindString(line)
-		if severity != "" {
-			entry.Severity = strings.ToUpper(severity)
+		if endTime == nil {
+			end := entry.OriginalTime.Add(*opts.Duration)
+			endTime = &end
 		}
 
-		// If this is an istio access log, then parse it out. Prefer the access log time over the k8s time
-		// as it is the actual time as opposed to the k8s store time.
-		if opts.IsProxy {
-			al, err := engardeParser.Parse(entry.Message)
-			// engardeParser.Parse will not throw errors even if no fields
-			// were parsed out. Checking here that some fields were actually
-			// set before setting the AccessLog to an empty object. See issue #4346.
-			if err != nil || isAccessLogEmpty(al) {
-				if err != nil {
-					log.Debugf("AccessLog parse failure: %s", err.Error())
-				}
-				// try to parse out the time manually
-				tokens := strings.SplitN(entry.Message, " ", 2)
-				timestampToken := strings.Trim(tokens[0], "[]")
-				t, err := time.Parse(time.RFC3339, timestampToken)
-				if err == nil {
-					parsedTimestamp = t
-				}
-			} else {
-				entry.AccessLog = al
-				t, err := time.Parse(time.RFC3339, al.Timestamp)
-				if err == nil {
-					parsedTimestamp = t
-				}
-
-				// clear accessLog fields we don't need in the returned JSON
-				entry.AccessLog.MixerStatus = ""
-				entry.AccessLog.OriginalMessage = ""
-				entry.AccessLog.ParseError = ""
-			}
+		if entry.OriginalTime.After(*endTime) {
+			break
 		}
 
-		// override the timestamp with a simpler format
-		timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d",
-			parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
-			parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second())
-		entry.Timestamp = timestamp
-		entry.TimestampUnix = parsedTimestamp.Unix()
-
-		entries[entriesTip%*tailLines] = entry
+		// Store the processed log line
+		entries[entriesTip%*tailLines] = *entry
 		entriesTip++
 	}
 
@@ -1925,97 +1938,28 @@ func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOpt
 	firstEntry := true
 	line, readErr := bufferedReader.ReadString('\n')
 	for ; readErr == nil || (readErr == io.EOF && len(line) > 0); line, readErr = bufferedReader.ReadString('\n') {
-		entry := LogEntry{
-			Message:       "",
-			Timestamp:     "",
-			TimestampUnix: 0,
-			Severity:      "INFO",
-		}
-		splitted := strings.SplitN(line, " ", 2)
-		if len(splitted) != 2 {
-			log.Debugf("Skipping unexpected log line [%s]", line)
-			continue
-		}
-
-		// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
-		splittedTimestamp := strings.Split(splitted[0], ".")
-		if len(splittedTimestamp) == 1 {
-			entry.Timestamp = splittedTimestamp[0]
-		} else {
-			entry.Timestamp = fmt.Sprintf("%sZ", splittedTimestamp[0])
-		}
-
-		entry.Message = strings.TrimSpace(splitted[1])
-		if entry.Message == "" {
-			log.Debugf("Skipping empty log line [%s]", line)
+		entry := parseLogLine(line, opts.IsProxy, engardeParser)
+		if entry == nil {
 			continue
 		}
 
 		// If we are past the requested time window then stop processing
-		parsedTimestamp, err := time.Parse(time.RFC3339, entry.Timestamp)
-		if err == nil {
-			if startTime == nil {
-				startTime = &parsedTimestamp
-			}
-
-			if isBounded {
-				if endTime == nil {
-					end := parsedTimestamp.Add(*opts.Duration)
-					endTime = &end
-				}
-
-				if parsedTimestamp.After(*endTime) {
-					break
-				}
-			}
-		} else {
-			log.Debugf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())
-			continue
+		if startTime == nil {
+			startTime = &entry.OriginalTime
 		}
 
-		severity := severityRegexp.FindString(line)
-		if severity != "" {
-			entry.Severity = strings.ToUpper(severity)
-		}
+		if isBounded {
+			if endTime == nil {
+				end := entry.OriginalTime.Add(*opts.Duration)
+				endTime = &end
+			}
 
-		// If this is an istio access log, then parse it out. Prefer the access log time over the k8s time
-		// as it is the actual time as opposed to the k8s store time.
-		if opts.IsProxy {
-			al, err := engardeParser.Parse(entry.Message)
-			// engardeParser.Parse will not throw errors even if no fields
-			// were parsed out. Checking here that some fields were actually
-			// set before setting the AccessLog to an empty object. See issue #4346.
-			if err != nil || isAccessLogEmpty(al) {
-				if err != nil {
-					log.Debugf("AccessLog parse failure: %s", err.Error())
-				}
-				// try to parse out the time manually
-				tokens := strings.SplitN(entry.Message, " ", 2)
-				timestampToken := strings.Trim(tokens[0], "[]")
-				t, err := time.Parse(time.RFC3339, timestampToken)
-				if err == nil {
-					parsedTimestamp = t
-				}
-			} else {
-				entry.AccessLog = al
-				t, err := time.Parse(time.RFC3339, al.Timestamp)
-				if err == nil {
-					parsedTimestamp = t
-				}
-
-				// clear accessLog fields we don't need in the returned JSON
-				entry.AccessLog.MixerStatus = ""
-				entry.AccessLog.OriginalMessage = ""
-				entry.AccessLog.ParseError = ""
+			if entry.OriginalTime.After(*endTime) {
+				break
 			}
 		}
 
-		// override the timestamp with a simpler format
-		timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d",
-			parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
-			parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second())
-		entry.Timestamp = timestamp
-		entry.TimestampUnix = parsedTimestamp.Unix()
+		// Send to client the processed log line
 
 		response, err := json.Marshal(entry)
 		if err != nil {
