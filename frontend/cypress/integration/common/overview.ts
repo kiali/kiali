@@ -32,10 +32,10 @@ Given('a healthy application in the cluster', function () {
 });
 
 Given('an idle application in the cluster', function () {
-    this.targetNamespace = 'default';
+    this.targetNamespace = 'sleep';
     this.targetApp = 'sleep';
 
-    cy.exec('kubectl scale -n default --replicas=0 deployment/sleep');
+    cy.exec('kubectl scale -n sleep --replicas=0 deployment/sleep');
 });
 
 Given('a failing application in the mesh', function () {

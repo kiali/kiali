@@ -7,10 +7,10 @@ Given('a healthy workload in the cluster', function () {
 });
 
 Given('an idle workload in the cluster', function () {
-    this.targetNamespace = 'default';
+    this.targetNamespace = 'sleep';
     this.targetWorkload = 'sleep';
 
-    cy.exec('kubectl scale -n default --replicas=0 deployment/sleep');
+    cy.exec('kubectl scale -n sleep --replicas=0 deployment/sleep');
 });
 
 Given('a failing workload in the mesh', function () {
