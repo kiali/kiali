@@ -217,15 +217,15 @@ EOF
 REGION="us-south"
 
 install_openshift() {
-  if hack/ibmcloud-openshift.sh status -np kiali-perf | grep -q 'Cluster is deployed'; then
+  if hack/ibmcloud-openshift.sh status -np ${USER}-kiali-perf | grep -q 'Cluster is deployed'; then
     infomsg "Openshift cluster is already deployed. Waiting for it to be ready to use..."
-    hack/ibmcloud-openshift.sh finish -r "${REGION}" -np kiali-perf
+    hack/ibmcloud-openshift.sh finish -r "${REGION}" -np ${USER}-kiali-perf
     infomsg "Openshift cluster is ready to use."
     return 0
   fi
 
   hack/ibmcloud-openshift.sh create \
-    --name-prefix kiali-perf \
+    --name-prefix ${USER}-kiali-perf \
     --openshift-version "${OPENSHIFT_VERSION}" \
     --region "${REGION}" \
     --worker-flavor "${NODE_FLAVOR}" \
