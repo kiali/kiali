@@ -20,11 +20,6 @@ infomsg() {
   echo -e "\U0001F4C4 ${1}"
 }
 
-install_istio() {
-  hack/istio/download-istio.sh
-  hack/istio/install-istio-via-istioctl.sh -iee true -cp openshift
-}
-
 SCRIPT_DIR=$( dirname -- "$0"; )
 
 DEFAULT_HELM_CHARTS_REPO="${SCRIPT_DIR}/../helm-charts"
@@ -121,6 +116,16 @@ OPENSHIFT_VERSION=${OPENSHIFT_VERSION}
 REGION=${REGION}
 EOM
 infomsg "==END CONFIG=="
+
+install_istio() {
+  if [ -z "${ISTIO_VERSION}" ]; then
+    hack/istio/download-istio.sh -iv ${ISTIO_VERSION}
+  else
+    # Download latest
+    hack/istio/download-istio.sh
+  fi
+  hack/istio/install-istio-via-istioctl.sh -iee true -cp openshift
+}
 
 install_kiali() {
   infomsg "Installing kiali operator and kiali"
