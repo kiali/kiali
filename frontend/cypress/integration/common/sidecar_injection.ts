@@ -266,11 +266,11 @@ Then('I should see no override annotation for sidecar injection in the namespace
 });
 
 Then('the workload should get a sidecar', function () {
-    cy.get('[data-test=missing-sidecar-badge-for-sleep-workload-in-default-namespace]').should('not.exist');
+    cy.get('[data-test=missing-sidecar-badge-for-sleep-workload-in-sleep-namespace]').should('not.exist');
 });
 
 Then('the sidecar of the workload should vanish', function () {
-    cy.get('[data-test=missing-sidecar-badge-for-sleep-workload-in-default-namespace]').should('exist');
+    cy.get('[data-test=missing-sidecar-badge-for-sleep-workload-in-sleep-namespace]').should('exist');
 });
 
 Then('I should see no override annotation for sidecar injection in the workload', function () {

@@ -74,7 +74,7 @@ Feature: Kiali Workloads page
   @workloads-page
   Scenario: The idle status of a workload is reported in the list of workloads
     Given an idle workload in the cluster
-    When user selects the "default" namespace
+    When user selects the "sleep" namespace
     Then the workload should be listed as "idle"
     And the health status of the workload should be "Not Ready"
 
