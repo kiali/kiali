@@ -449,7 +449,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 	return opts, nil
 }
 
-// getParsedLogs only works correctly when opts has Duration *and* TailLines set.
+// getParsedLogs covers the case when opts has Duration *and* TailLines set.
 func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
 	k8sOpts := opts.PodLogOptions
 	// the k8s API does not support "endTime/beforeTime". So for bounded time ranges we need to
@@ -1871,7 +1871,7 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, namespace, wo
 	return app, nil
 }
 
-// streamParsedLogs only works correctly when opts does not have Duration set || does not have TailLines set.
+// streamParsedLogs covers the case when opts does not have both Duration and TailLines set.
 func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
 	k8sOpts := opts.PodLogOptions
 	// the k8s API does not support "endTime/beforeTime". So for bounded time ranges we need to
@@ -1912,10 +1912,10 @@ func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOpt
 	// the response body right now and any errors at the middle of the log
 	// processing can no longer be informed to the client. So, starting
 	// these lines, the best we can do if some error happens is to simply
-	// log the error and strop/truncate the response, which will have the
+	// log the error and stop/truncate the response, which will have the
 	// effect of sending an incomplete JSON document that the browser will fail
 	// to parse. Hopefully, the client/UI can catch the parsing error and
-	// properly show an error message about that there was a failure retrieving logs.
+	// properly show an error message about the failure retrieving logs.
 	w.Header().Set("Content-Type", "application/json")
 	_, writeErr := w.Write([]byte("{\"entries\":[")) // This starts the JSON document
 	if writeErr != nil {
