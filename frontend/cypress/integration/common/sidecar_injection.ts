@@ -213,9 +213,12 @@ Given('a workload with override configuration for automatic sidecar injection', 
     });
 });
 
-When('I override the default automatic sidecar injection policy in the namespace to enabled', function () {
+When('I visit the overview page', function () {
     cy.visit('/console/overview?refresh=0');
     cy.contains('Inbound traffic', {matchCase: false}); // Make sure data finished loading, so avoid broken tests because of a re-render
+});
+
+When('I override the default automatic sidecar injection policy in the namespace to enabled', function () {
     cy.get('[data-test=overview-type-LIST]').click();
     cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button`).click();
     cy.get(`[data-test=enable-${this.targetNamespace}-namespace-sidecar-injection]`).click();
@@ -224,8 +227,6 @@ When('I override the default automatic sidecar injection policy in the namespace
 });
 
 When('I change the override configuration for automatic sidecar injection policy in the namespace to {string} it', function (enabledOrDisabled) {
-    cy.visit('/console/overview?refresh=0');
-    cy.contains('Inbound traffic', {matchCase: false}); // Make sure data finished loading, so avoid broken tests because of a re-render
     cy.get('[data-test=overview-type-LIST]').click();
     cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button`).click();
     cy.get(`[data-test=${enabledOrDisabled}-${this.targetNamespace}-namespace-sidecar-injection]`).click();
@@ -234,8 +235,6 @@ When('I change the override configuration for automatic sidecar injection policy
 });
 
 When('I remove override configuration for sidecar injection in the namespace', function () {
-    cy.visit('/console/overview?refresh=0');
-    cy.contains('Inbound traffic', {matchCase: false}); // Make sure data finished loading, so avoid broken tests because of a re-render
     cy.get('[data-test=overview-type-LIST]').click();
     cy.get(`[data-test=VirtualItem_${this.targetNamespace}] button`).click();
     cy.get(`[data-test=remove-${this.targetNamespace}-namespace-sidecar-injection]`).click();
