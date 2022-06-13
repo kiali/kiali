@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     # OPTIONS
-    -ak|--api-key)            API_KEY="$2";            shift;shift ;;
+    -akf|--api-key-file)      API_KEY_FILE="$2";       shift;shift ;;
     -hr|--helm-charts-repo)   HELM_CHARTS_REPO="$2";   shift;shift ;;
     -iv|--istio-version)      ISTIO_VERSION="$2";      shift;shift ;;
     -kv|--kiali-version)      KIALI_VERSION="$2";      shift;shift ;;
