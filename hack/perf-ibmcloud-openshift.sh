@@ -55,8 +55,8 @@ Usage:
 $0 [option...]
 
 Valid options:
-  -ak|--api-key
-    This is REQUIRED. The IBM Cloud api key used for creating the openshift cluster
+  -akf|--api-key-file
+    This is REQUIRED. A file containing the IBM Cloud api key used for creating the openshift cluster
     and other resources in IBM Cloud. Learn how to create an API Key here:
     https://www.ibm.com/docs/en/app-connect/containers_cd?topic=servers-creating-cloud-api-key.
 
@@ -93,6 +93,11 @@ HELPMSG
   esac
 done
 
+if [ ! -f ${API_KEY_FILE} ]; then
+  echo "The API Key file is invalid: ${API_KEY_FILE}"
+  exit 1
+fi
+
 # Set the config
 : "${HELM_CHARTS_REPO:=${DEFAULT_HELM_CHARTS_REPO}}"
 : "${ISTIO_VERSION:=${DEFAULT_ISTIO_VERSION}}"
@@ -101,11 +106,12 @@ done
 : "${NODES:=${DEFAULT_NODES}}"
 : "${OPENSHIFT_VERSION:=${DEFAULT_OPENSHIFT_VERSION}}"
 : "${REGION:=${DEFAULT_REGION}}"
+: "${API_KEY:-$(cat ${API_KEY_FILE})}"
 
 # Dump config
 infomsg "==START CONFIG=="
 cat<<EOM
-API_KEY=<omitted>
+API_KEY_FILE=${API_KEY_FILE}
 HELM_CHARTS_REPO=${HELM_CHARTS_REPO}
 ISTIO_VERSION=${ISTIO_VERSION}
 KIALI_VERSION=${KIALI_VERSION}
