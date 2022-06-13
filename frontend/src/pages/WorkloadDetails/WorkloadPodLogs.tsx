@@ -22,6 +22,7 @@ import {
   DropdownSeparator,
   Checkbox
 } from '@patternfly/react-core';
+import { AutoSizer, List } from 'react-virtualized';
 import { style } from 'typestyle';
 import { addError, addSuccess } from 'utils/AlertUtils';
 import { Pod, LogEntry, AccessLog, PodLogs } from '../../types/IstioObjects';
@@ -273,12 +274,6 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     if (prevState.useRegex !== this.state.useRegex) {
       this.doShowAndHide();
     }
-
-    // if we just loaded log entries, and we are scrolled to the top, position the user automatically
-    // to the bottom/most recent.
-    if (prevState.loadingLogs && !this.state.loadingLogs && this.logsRef.current.scrollTop === 0) {
-      this.logsRef.current.scrollTop = this.logsRef.current.scrollHeight;
-    }
   }
 
   componentWillUnmount() {
@@ -451,6 +446,100 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     this.setState({ containerOptions: [...this.state.containerOptions!] });
   };
 
+  private renderLogLine = ({index, style}: {index: number, style: Object}) => {
+    let e = this.state.entries[index];
+    if (e.span) {
+      return (
+        <div key={`s-${index}`} style={{ height: '22px', lineHeight: '22px', ...style }}>
+          {this.state.showTimestamps && (
+            <span key={`al-s-${index}`} style={{ color: spanColor, fontSize: '12px', marginRight: '5px' }}>
+                            {e.timestamp}
+                          </span>
+          )}
+          <Tooltip
+            key={`al-tt-${index}`}
+            position={TooltipPosition.auto}
+            entryDelay={1000}
+            content="Click to navigate to span detail"
+          >
+            <Button
+              key={`s-b-${index}`}
+              variant={ButtonVariant.plain}
+              style={{
+                paddingLeft: '6px',
+                width: '10px',
+                height: '10px',
+                fontFamily: 'monospace',
+                fontSize: '12px'
+              }}
+              onClick={() => {
+                this.gotoSpan(e.span!);
+              }}
+            >
+              <KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={spanColor} />
+            </Button>
+          </Tooltip>
+          <p
+            key={`al-p-${index}`}
+            style={{
+              color: spanColor,
+              fontSize: '12px',
+              verticalAlign: 'center',
+              display: 'inline-block'
+            }}
+          >
+            {this.entryToString(e)}
+          </p>
+        </div>
+      );
+    }
+    const le = e.logEntry!;
+    return !le.accessLog ? (
+      <div key={`le-d-${index}`} style={{ height: '22px', lineHeight: '22px', ...style }}>
+        <p key={`le-${index}`} style={{ color: le.color!, fontSize: '12px' }}>
+          {this.entryToString(e)}
+        </p>
+      </div>
+    ) : (
+      <div key={`al-${index}`} style={{ height: '22px', lineHeight: '22px', ...style }}>
+        {this.state.showTimestamps && (
+          <span key={`al-s-${index}`} style={{ color: le.color!, fontSize: '12px', marginRight: '5px' }}>
+                          {e.timestamp}
+                        </span>
+        )}
+        <Tooltip
+          key={`al-tt-${index}`}
+          position={TooltipPosition.auto}
+          entryDelay={1000}
+          content="Click for Envoy Access Log details"
+        >
+          <Button
+            key={`al-b-${index}`}
+            variant={ButtonVariant.plain}
+            style={{
+              paddingLeft: '6px',
+              width: '10px',
+              height: '10px',
+              fontFamily: 'monospace',
+              fontSize: '12px'
+            }}
+            onClick={() => {
+              this.addAccessLogModal(le.message, le.accessLog!);
+            }}
+          >
+            <KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={le.color!} />
+          </Button>
+        </Tooltip>
+        <p
+          key={`al-p-${index}`}
+          style={{ color: le.color!, fontSize: '12px', verticalAlign: 'center', display: 'inline-block' }}
+        >
+          {le.message}
+        </p>
+      </div>
+    );
+  };
+
   private getLogsDiv = () => {
     const hasProxyContainer = this.state.containerOptions?.some(opt => opt.isProxy);
     const logDropDowns = Object.keys(LogLevel).map(level => {
@@ -559,104 +648,21 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
             ...logsHeight(this.state.showToolbar, this.state.fullscreen, this.props.isKiosk, this.state.linesTruncatedContainers.length > 0),
             ...logsBackground(this.hasEntries(this.state.entries))
           }}
-          ref={this.logsRef}
         >
-          {this.hasEntries(this.state.entries)
-            ? this.state.entries
-                .filter(e => !e.isHidden)
-                .map((e, i) => {
-                  if (e.span) {
-                    return (
-                      <div key={`s-${i}`} style={{ height: '22px', lineHeight: '22px' }}>
-                        {this.state.showTimestamps && (
-                          <span key={`al-s-${i}`} style={{ color: spanColor, fontSize: '12px', marginRight: '5px' }}>
-                            {e.timestamp}
-                          </span>
-                        )}
-                        <Tooltip
-                          key={`al-tt-${i}`}
-                          position={TooltipPosition.auto}
-                          entryDelay={1000}
-                          content="Click to navigate to span detail"
-                        >
-                          <Button
-                            key={`s-b-${i}`}
-                            variant={ButtonVariant.plain}
-                            style={{
-                              paddingLeft: '6px',
-                              width: '10px',
-                              height: '10px',
-                              fontFamily: 'monospace',
-                              fontSize: '12px'
-                            }}
-                            onClick={() => {
-                              this.gotoSpan(e.span!);
-                            }}
-                          >
-                            <KialiIcon.Info key={`al-i-${i}`} className={alInfoIcon} color={spanColor} />
-                          </Button>
-                        </Tooltip>
-                        <p
-                          key={`al-p-${i}`}
-                          style={{
-                            color: spanColor,
-                            fontSize: '12px',
-                            verticalAlign: 'center',
-                            display: 'inline-block'
-                          }}
-                        >
-                          {this.entryToString(e)}
-                        </p>
-                      </div>
-                    );
-                  }
-                  const le = e.logEntry!;
-                  return !le.accessLog ? (
-                    <div key={`le-d-${i}`} style={{ height: '22px', lineHeight: '22px' }}>
-                      <p key={`le-${i}`} style={{ color: le.color!, fontSize: '12px' }}>
-                        {this.entryToString(e)}
-                      </p>
-                    </div>
-                  ) : (
-                    <div key={`al-${i}`} style={{ height: '22px', lineHeight: '22px' }}>
-                      {this.state.showTimestamps && (
-                        <span key={`al-s-${i}`} style={{ color: le.color!, fontSize: '12px', marginRight: '5px' }}>
-                          {e.timestamp}
-                        </span>
-                      )}
-                      <Tooltip
-                        key={`al-tt-${i}`}
-                        position={TooltipPosition.auto}
-                        entryDelay={1000}
-                        content="Click for Envoy Access Log details"
-                      >
-                        <Button
-                          key={`al-b-${i}`}
-                          variant={ButtonVariant.plain}
-                          style={{
-                            paddingLeft: '6px',
-                            width: '10px',
-                            height: '10px',
-                            fontFamily: 'monospace',
-                            fontSize: '12px'
-                          }}
-                          onClick={() => {
-                            this.addAccessLogModal(le.message, le.accessLog!);
-                          }}
-                        >
-                          <KialiIcon.Info key={`al-i-${i}`} className={alInfoIcon} color={le.color!} />
-                        </Button>
-                      </Tooltip>
-                      <p
-                        key={`al-p-${i}`}
-                        style={{ color: le.color!, fontSize: '12px', verticalAlign: 'center', display: 'inline-block' }}
-                      >
-                        {le.message}
-                      </p>
-                    </div>
-                  );
-                })
-            : NoLogsFoundMessage}
+          <AutoSizer>
+            {({height, width}) => (
+              <List
+                ref={this.logsRef}
+                rowHeight={22}
+                rowCount={this.state.entries ? this.state.entries.length : 0}
+                rowRenderer={this.renderLogLine}
+                height={height}
+                width={width}
+                scrollToIndex={this.state.entries ? this.state.entries.length-1 : 0}
+                noRowsRenderer={() => (NoLogsFoundMessage)}
+              />
+            )}
+          </AutoSizer>
         </div>
       </div>
     );
