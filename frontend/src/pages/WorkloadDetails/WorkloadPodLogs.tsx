@@ -22,6 +22,7 @@ import {
   DropdownSeparator,
   Checkbox
 } from '@patternfly/react-core';
+import memoize from 'micro-memoize';
 import { AutoSizer, List } from 'react-virtualized';
 import { style } from 'typestyle';
 import { addError, addSuccess } from 'utils/AlertUtils';
@@ -73,7 +74,6 @@ type ContainerOption = {
 };
 
 type Entry = {
-  isHidden?: boolean;
   logEntry?: LogEntry;
   span?: Span;
   timestamp: string;
@@ -270,10 +270,6 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
         this.props.timeRange
       );
     }
-
-    if (prevState.useRegex !== this.state.useRegex) {
-      this.doShowAndHide();
-    }
   }
 
   componentWillUnmount() {
@@ -447,7 +443,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
   };
 
   private renderLogLine = ({index, style}: {index: number, style: Object}) => {
-    let e = this.state.entries[index];
+    let e = this.filteredEntries(this.state.entries, this.state.showLogValue, this.state.hideLogValue, this.state.useRegex)[index];
     if (e.span) {
       return (
         <div key={`s-${index}`} style={{ height: '22px', lineHeight: '22px', ...style }}>
@@ -593,6 +589,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       </DropdownGroup>
     ];
 
+    const logEntries = this.state.entries ? this.filteredEntries(this.state.entries, this.state.showLogValue, this.state.hideLogValue, this.state.useRegex) : [];
     return (
       <div key="logsDiv" id="logsDiv" className={logsDiv}>
         <Toolbar style={{ padding: '5px 0' }}>
@@ -654,11 +651,11 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
               <List
                 ref={this.logsRef}
                 rowHeight={22}
-                rowCount={this.state.entries ? this.state.entries.length : 0}
+                rowCount={logEntries.length}
                 rowRenderer={this.renderLogLine}
                 height={height}
                 width={width}
-                scrollToIndex={this.state.entries ? this.state.entries.length-1 : 0}
+                scrollToIndex={logEntries.length - 1}
                 noRowsRenderer={() => (NoLogsFoundMessage)}
               />
             )}
@@ -744,39 +741,31 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       });
   };
 
-  private doShowAndHide = () => {
-    this.filterEntries(this.state.entries, this.state.showLogValue, this.state.hideLogValue);
-    this.setState({
-      entries: [...this.state.entries],
-      showClearShowLogButton: !!this.state.showLogValue,
-      showClearHideLogButton: !!this.state.hideLogValue
-    });
-  };
-
   private checkSubmitShow = event => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     if (keyCode === RETURN_KEY_CODE) {
       event.preventDefault();
-      this.doShowAndHide();
+      this.setState({
+        showClearShowLogButton: !!event.target.value,
+        showLogValue: event.target.value
+      });
     }
   };
 
   private updateShow = val => {
     if ('' === val) {
       this.clearShow();
-    } else {
-      this.setState({ showLogValue: val });
     }
   };
 
-  private filterEntries = (entries: Entry[], showValue: string, hideValue: string): void => {
-    entries.forEach(e => (e.isHidden = undefined));
+  private filteredEntries = memoize((entries: Entry[], showValue: string, hideValue: string, useRegex: boolean) => {
+    let filteredEntries = entries;
 
     if (!!showValue) {
-      if (this.state.useRegex) {
+      if (useRegex) {
         try {
           const regexp = RegExp(showValue);
-          entries.forEach(e => (e.isHidden = e.logEntry && !regexp.test(e.logEntry.message)));
+          filteredEntries = filteredEntries.filter(e => (e.logEntry && regexp.test(e.logEntry.message)));
           if (!!this.state.showError) {
             this.setState({ showError: undefined });
           }
@@ -784,14 +773,15 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           this.setState({ showError: `Show: ${e.message}` });
         }
       } else {
-        entries.forEach(e => (e.isHidden = e.logEntry && !e.logEntry.message.includes(showValue)));
+        filteredEntries = filteredEntries.filter(e => (e.logEntry && e.logEntry.message.includes(showValue)));
       }
     }
+
     if (!!hideValue) {
-      if (this.state.useRegex) {
+      if (useRegex) {
         try {
           const regexp = RegExp(hideValue);
-          entries.forEach(e => (e.isHidden = e.isHidden || (e.logEntry && regexp.test(e.logEntry.message))));
+          filteredEntries = filteredEntries.filter(e => (e.logEntry && !regexp.test(e.logEntry.message)));
           if (!!this.state.hideError) {
             this.setState({ hideError: undefined });
           }
@@ -799,10 +789,12 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           this.setState({ hideError: `Hide: ${e.message}` });
         }
       } else {
-        entries.forEach(e => (e.isHidden = e.isHidden || (e.logEntry && e.logEntry.message.includes(hideValue))));
+        filteredEntries = filteredEntries.filter(e => (e.logEntry && !e.logEntry.message.includes(hideValue)));
       }
     }
-  };
+
+    return filteredEntries;
+  });
 
   private clearShow = () => {
     // TODO: when TextInput refs are fixed in PF4 then use the ref and remove the direct HTMLElement usage
@@ -812,12 +804,10 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       htmlInputElement.value = '';
     }
 
-    this.filterEntries(this.state.entries, '', this.state.hideLogValue);
     this.setState({
       showError: undefined,
       showLogValue: '',
-      showClearShowLogButton: false,
-      entries: [...this.state.entries]
+      showClearShowLogButton: false
     });
   };
 
@@ -825,15 +815,16 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     const keyCode = event.keyCode ? event.keyCode : event.which;
     if (keyCode === RETURN_KEY_CODE) {
       event.preventDefault();
-      this.doShowAndHide();
+      this.setState({
+        showClearHideLogButton: !!event.target.value,
+        hideLogValue: event.target.value
+      });
     }
   };
 
   private updateHide = val => {
     if ('' === val) {
       this.clearHide();
-    } else {
-      this.setState({ hideLogValue: val });
     }
   };
 
@@ -845,12 +836,10 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       htmlInputElement.value = '';
     }
 
-    this.filterEntries(this.state.entries, this.state.showLogValue, '');
     this.setState({
       hideError: undefined,
       hideLogValue: '',
-      showClearHideLogButton: false,
-      entries: [...this.state.entries]
+      showClearHideLogButton: false
     });
   };
 
@@ -961,7 +950,6 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           }
         }
 
-        this.filterEntries(entries, this.state.showLogValue, this.state.hideLogValue);
         const sortedEntries = entries.sort((a, b) => {
           return a.timestampUnix - b.timestampUnix;
         });
