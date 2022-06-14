@@ -88,7 +88,12 @@ HELPMSG
   esac
 done
 
-if [ ! -f ${API_KEY_FILE} ]; then
+if [ -z "${API_KEY_FILE:-}" ]; then
+  echo "The API Key file is required. Please specify --api-key-file"
+  exit 1
+fi
+
+if [ ! -f "${API_KEY_FILE}" ]; then
   echo "The API Key file is invalid: ${API_KEY_FILE}"
   exit 1
 fi
@@ -118,13 +123,11 @@ EOM
 infomsg "==END CONFIG=="
 
 install_istio() {
-  if [ -z "${ISTIO_VERSION}" ]; then
-    hack/istio/download-istio.sh -iv ${ISTIO_VERSION}
-  else
-    # Download latest
-    hack/istio/download-istio.sh
+  local iv_option=""
+  if [ -n "${ISTIO_VERSION}" ]; then
+    iv_option="-iv ${ISTIO_VERSION}"
   fi
-  hack/istio/install-istio-via-istioctl.sh -iee true -cp openshift
+  hack/istio/install-istio-via-istioctl.sh -iee true -cp openshift ${iv_option}
 }
 
 install_kiali() {
