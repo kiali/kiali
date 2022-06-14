@@ -426,34 +426,37 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   fetchValidations(isAscending: boolean, sortField: SortField<NamespaceInfo>) {
-    this.promises
-      .registerChained('validation', undefined, () => this.fetchValidationResult(this.state.namespaces))
-      .then(() => {
-        this.setState(prevState => {
-          let newNamespaces = prevState.namespaces.slice();
-          if (sortField.id === 'validations') {
-            newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
-          }
-          return { namespaces: newNamespaces };
+    _.chunk(this.state.namespaces, 10).forEach(chunk => {
+      this.promises
+        .registerChained('validation', undefined, () => this.fetchValidationResult(chunk))
+        .then(() => {
+          this.setState(prevState => {
+            let newNamespaces = prevState.namespaces.slice();
+            if (sortField.id === 'validations') {
+              newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
+            }
+            return { namespaces: newNamespaces };
+          });
         });
-      });
+    });
   }
 
-  fetchValidationResult(nsInfos: NamespaceInfo[]) {
-    const namespaces: string[] = [];
-    nsInfos.forEach(ns => {
-      namespaces.push(ns.name);
+  fetchValidationResult(chunk: NamespaceInfo[]) {
+    const nss: string[] = [];
+    chunk.forEach(ns => {
+      nss.push(ns.name);
     });
 
     return Promise.all(
       [
-        API.getConfigValidations(namespaces),
-        API.getAllIstioConfigs(namespaces, false, '', '')]
+        API.getConfigValidations(nss),
+        API.getAllIstioConfigs(nss, false, '', '')
+      ]
     )
       .then(results => {
-        nsInfos.map(nsInfo => {
+        chunk.map(nsInfo => {
           nsInfo.validations = results[0].data[nsInfo.name]
-          nsInfo.istioConfig = results[1].data
+          nsInfo.istioConfig = results[1].data[nsInfo.name]
         });
       })
       .catch(err => this.handleAxiosError('Could not fetch validations status', err));
