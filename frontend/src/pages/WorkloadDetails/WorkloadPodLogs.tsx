@@ -760,12 +760,13 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
   private filteredEntries = memoize((entries: Entry[], showValue: string, hideValue: string, useRegex: boolean) => {
     let filteredEntries = entries;
+    filteredEntries.forEach((e) => { console.log('Entry:', e.logEntry && e.logEntry.message);});
 
     if (!!showValue) {
       if (useRegex) {
         try {
           const regexp = RegExp(showValue);
-          filteredEntries = filteredEntries.filter(e => (e.logEntry && regexp.test(e.logEntry.message)));
+          filteredEntries = filteredEntries.filter(e => (!e.logEntry || regexp.test(e.logEntry.message)));
           if (!!this.state.showError) {
             this.setState({ showError: undefined });
           }
@@ -773,7 +774,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           this.setState({ showError: `Show: ${e.message}` });
         }
       } else {
-        filteredEntries = filteredEntries.filter(e => (e.logEntry && e.logEntry.message.includes(showValue)));
+        filteredEntries = filteredEntries.filter(e => (!e.logEntry || e.logEntry.message.includes(showValue)));
       }
     }
 
@@ -781,7 +782,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       if (useRegex) {
         try {
           const regexp = RegExp(hideValue);
-          filteredEntries = filteredEntries.filter(e => (e.logEntry && !regexp.test(e.logEntry.message)));
+          filteredEntries = filteredEntries.filter(e => (!e.logEntry || !regexp.test(e.logEntry.message)));
           if (!!this.state.hideError) {
             this.setState({ hideError: undefined });
           }
@@ -789,7 +790,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           this.setState({ hideError: `Hide: ${e.message}` });
         }
       } else {
-        filteredEntries = filteredEntries.filter(e => (e.logEntry && !e.logEntry.message.includes(hideValue)));
+        filteredEntries = filteredEntries.filter(e => (!e.logEntry || !e.logEntry.message.includes(hideValue)));
       }
     }
 
