@@ -27,10 +27,6 @@ while [[ $# -gt 0 ]]; do
       MOLECULE_DEBUG="$2"
       shift;shift
       ;;
-    -dorp|--docker-or-podman)
-      DORP="$2"
-      shift;shift
-      ;;
     -hcr|--helm-charts-repo)
       HELM_CHARTS_REPO="$2"
       shift;shift
@@ -45,6 +41,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -kn|--kind-name)
       KIND_NAME="$2"
+      shift;shift
       ;;
     -me|--minikube-exe)
       MINIKUBE_EXE="$2"
@@ -99,7 +96,6 @@ $0 [option...] command
 -ci                      Run in continuous-integration mode. Verbose logs will be printed to stdout. (default: false).
 -ct|--cluster-type       The type of cluster being tested. Must be one of: minikube, openshift. (default: openshift)
 -d|--debug               True if you want the molecule tests to output large amounts of debug messages. (default: true)
--dorp|--docker-or-podman What should be used - "docker" or "podman"
 -hcr|--helm-charts-repo  Location of the helm charts git repo. (default: ../helm-charts)
 -jxf|--junit-xml-file    Location of the JUnit XML results file; set to "" to not output this file. (default: results.xml in the --test-logs-dir)
 -ksh|--kiali_src-home    Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
@@ -217,7 +213,6 @@ if [ "${MOLECULE_USE_DEV_IMAGES}" == "true" -a "${MOLECULE_USE_DEFAULT_SERVER_IM
 fi
 
 echo "========== SETTINGS =========="
-echo DORP="$DORP"
 echo KIALI_SRC_HOME="$KIALI_SRC_HOME"
 echo ALL_TESTS="$ALL_TESTS"
 echo SKIP_TESTS="$SKIP_TESTS"
@@ -351,21 +346,6 @@ if [ ! -z "${TEST_CLIENT_EXE}" ]; then
   export OC="${TEST_CLIENT_EXE}"
 fi
 
-# we have to explicitly tell the makefile about the DORP value
-if [ -z "${DORP}" ]; then
-  if ! which podman > /dev/null 2>&1; then
-    if which docker > /dev/null 2>&1; then
-      DORP="docker"
-    else
-      echo "You do not have 'docker' or 'podman' in PATH - aborting."
-      exit 1
-    fi
-  else
-    DORP="podman"
-  fi
-fi
-export DORP
-
 # the user may have specified a specific minikube profile to use - export this so make knows about it
 export MINIKUBE_PROFILE
 
@@ -425,7 +405,7 @@ do
 
   export MOLECULE_SCENARIO="${t}"
   if [ "$CI" != "true" ]; then
-    make molecule-test >> ${TEST_LOGS_DIR}/${t}.log 2>&1
+    make -e HELM_CHARTS_REPO=${HELM_CHARTS_REPO} molecule-test >> ${TEST_LOGS_DIR}/${t}.log 2>&1
     exitcode="$?"
   else
     make molecule-test |& tee ${TEST_LOGS_DIR}/${t}.log
