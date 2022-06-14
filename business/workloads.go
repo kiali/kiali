@@ -363,7 +363,7 @@ func (in *WorkloadService) UpdateWorkload(ctx context.Context, namespace string,
 
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh
 	if kialiCache != nil && err == nil {
-		kialiCache.RefreshNamespace(namespace)
+		kialiCache.Refresh(namespace)
 	}
 
 	// After the update we fetch the whole workload
@@ -419,7 +419,6 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 
 	if duration != "" {
 		duration, err := time.ParseDuration(duration)
-
 		if err != nil {
 			return nil, fmt.Errorf("Invalid duration [%s]: %v", duration, err)
 		}
@@ -431,7 +430,6 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 
 	if sinceTime != "" {
 		numTime, err := strconv.ParseInt(sinceTime, 10, 64)
-
 		if err != nil {
 			return nil, fmt.Errorf("Invalid sinceTime [%s]: %v", sinceTime, err)
 		}

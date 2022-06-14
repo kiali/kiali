@@ -469,7 +469,7 @@ func (in *K8SClient) GetSelfSubjectAccessReview(ctx context.Context, namespace, 
 		ctx, span = otel.Tracer(observability.TracerName()).Start(ctx, "GetSelfSubjectAccessReview",
 			trace.WithAttributes(
 				attribute.String("package", "kubernetes"),
-				attribute.String("namspace", namespace),
+				attribute.String("namespace", namespace),
 				attribute.String("api", api),
 				attribute.String("resourceType", resourceType),
 				attribute.StringSlice("verbs", verbs),

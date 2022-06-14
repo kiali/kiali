@@ -251,7 +251,7 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh
 	if kialiCache != nil && err == nil {
-		kialiCache.RefreshNamespace(namespace)
+		kialiCache.Refresh(namespace)
 		kialiCache.RefreshTokenNamespaces()
 	}
 	// Call GetNamespace to update the caching

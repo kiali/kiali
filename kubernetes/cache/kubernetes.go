@@ -1,9 +1,6 @@
 package cache
 
 import (
-	"errors"
-	"fmt"
-
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -30,279 +27,189 @@ type (
 	}
 )
 
-func (c *kialiCacheImpl) createKubernetesInformers(namespace string, informer *typeCache) {
-	sharedInformers := informers.NewSharedInformerFactoryWithOptions(c.k8sApi, c.refreshDuration, informers.WithNamespace(namespace))
-	(*informer)[kubernetes.DeploymentType] = sharedInformers.Apps().V1().Deployments().Informer()
-	(*informer)[kubernetes.StatefulSetType] = sharedInformers.Apps().V1().StatefulSets().Informer()
-	(*informer)[kubernetes.ReplicaSetType] = sharedInformers.Apps().V1().ReplicaSets().Informer()
-	(*informer)[kubernetes.DaemonSetType] = sharedInformers.Apps().V1().DaemonSets().Informer()
-	(*informer)[kubernetes.ServiceType] = sharedInformers.Core().V1().Services().Informer()
-	(*informer)[kubernetes.ServiceType].AddEventHandler(c.registryRefreshHandler)
-	(*informer)[kubernetes.PodType] = sharedInformers.Core().V1().Pods().Informer()
-	(*informer)[kubernetes.ConfigMapType] = sharedInformers.Core().V1().ConfigMaps().Informer()
-	(*informer)[kubernetes.EndpointsType] = sharedInformers.Core().V1().Endpoints().Informer()
-	(*informer)[kubernetes.EndpointsType].AddEventHandler(c.registryRefreshHandler)
+// createKubernetesInformers creates kube informers for all objects kiali watches and
+// saves them to the typeCache. If namespace is not empty, the informers are scoped
+// to the namespace. Otherwise, the informers are cluster-wide.
+func (c *kialiCacheImpl) createKubernetesInformers(namespace string) informers.SharedInformerFactory {
+	var opts []informers.SharedInformerOption
+	if namespace != "" {
+		opts = append(opts, informers.WithNamespace(namespace))
+	}
+	sharedInformers := informers.NewSharedInformerFactoryWithOptions(c.k8sApi, c.refreshDuration, opts...)
+
+	lister := &cacheLister{
+		deploymentLister:  sharedInformers.Apps().V1().Deployments().Lister(),
+		statefulSetLister: sharedInformers.Apps().V1().StatefulSets().Lister(),
+		daemonSetLister:   sharedInformers.Apps().V1().DaemonSets().Lister(),
+		serviceLister:     sharedInformers.Core().V1().Services().Lister(),
+		endpointLister:    sharedInformers.Core().V1().Endpoints().Lister(),
+		podLister:         sharedInformers.Core().V1().Pods().Lister(),
+		replicaSetLister:  sharedInformers.Apps().V1().ReplicaSets().Lister(),
+		configMapLister:   sharedInformers.Core().V1().ConfigMaps().Lister(),
+	}
+	sharedInformers.Core().V1().Services().Informer().AddEventHandler(c.registryRefreshHandler)
+	sharedInformers.Core().V1().Endpoints().Informer().AddEventHandler(c.registryRefreshHandler)
+
+	if c.clusterScoped {
+		c.clusterCacheLister = lister
+	} else {
+		c.nsCacheLister[namespace] = lister
+	}
+
+	return sharedInformers
 }
 
-func (c *kialiCacheImpl) isKubernetesSynced(namespace string) bool {
-	var isSynced bool
-	if nsCache, exist := c.nsCache[namespace]; exist {
-		isSynced = nsCache[kubernetes.DeploymentType].HasSynced() &&
-			nsCache[kubernetes.StatefulSetType].HasSynced() &&
-			nsCache[kubernetes.ReplicaSetType].HasSynced() &&
-			nsCache[kubernetes.DaemonSetType].HasSynced() &&
-			nsCache[kubernetes.ServiceType].HasSynced() &&
-			nsCache[kubernetes.PodType].HasSynced() &&
-			nsCache[kubernetes.ConfigMapType].HasSynced() &&
-			nsCache[kubernetes.EndpointsType].HasSynced()
-	} else {
-		isSynced = false
+func (c *kialiCacheImpl) getCacheLister(namespace string) *cacheLister {
+	if c.clusterScoped {
+		return c.clusterCacheLister
 	}
-	return isSynced
+	return c.nsCacheLister[namespace]
 }
 
 func (c *kialiCacheImpl) GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error) {
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.ConfigMapType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			cm, ok := obj.(*core_v1.ConfigMap)
-			if !ok {
-				return nil, errors.New("bad ConfigMap type found in cache")
-			}
-			log.Tracef("[Kiali Cache] Get [resource: ConfigMap] for [namespace: %s] [name: %s]", namespace, name)
-			return cm, nil
-		}
+	log.Tracef("[Kiali Cache] Get [resource: ConfigMap] for [namespace: %s] [name: %s]", namespace, name)
+	cfg, err := c.getCacheLister(namespace).configMapLister.ConfigMaps(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	cfg.Kind = kubernetes.ConfigMapType
+	return cfg, nil
 }
 
 func (c *kialiCacheImpl) GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error) {
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		daeset := nsCache[kubernetes.DaemonSetType].GetStore().List()
-		lenDaeSet := len(daeset)
-		if lenDaeSet > 0 {
-			_, ok := daeset[0].(*apps_v1.DaemonSet)
-			if !ok {
-				return nil, errors.New("bad DaemonSet type found in cache")
-			}
-			nsDaeSets := make([]apps_v1.DaemonSet, lenDaeSet)
-			for i, ds := range daeset {
-				nsDaeSets[i] = *(ds.(*apps_v1.DaemonSet))
-			}
-			log.Tracef("[Kiali Cache] Get [resource: DaemonSet] for [namespace: %s] = %d", namespace, lenDaeSet)
-			return nsDaeSets, nil
-		}
+	daemonSets, err := c.getCacheLister(namespace).daemonSetLister.DaemonSets(namespace).List(labels.Everything())
+	if err != nil {
+		return nil, err
 	}
-	return []apps_v1.DaemonSet{}, nil
+	log.Tracef("[Kiali Cache] Get [resource: DaemonSet] for [namespace: %s] = %d", namespace, len(daemonSets))
+
+	retSets := []apps_v1.DaemonSet{}
+	for _, ds := range daemonSets {
+		ds.Kind = kubernetes.DaemonSetType
+		retSets = append(retSets, *ds)
+	}
+	return retSets, nil
 }
 
 func (c *kialiCacheImpl) GetDaemonSet(namespace, name string) (*apps_v1.DaemonSet, error) {
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.DaemonSetType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			ds, ok := obj.(*apps_v1.DaemonSet)
-			if !ok {
-				return nil, errors.New("bad DaemonSet type found in cache")
-			}
-			log.Tracef("[Kiali Cache] Get [resource: DaemonSet] for [namespace: %s] [name: %s]", namespace, name)
-			return ds, nil
-		}
+	log.Tracef("[Kiali Cache] Get [resource: DaemonSet] for [namespace: %s] [name: %s]", namespace, name)
+	ds, err := c.getCacheLister(namespace).daemonSetLister.DaemonSets(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	ds.Kind = kubernetes.DaemonSetType
+	return c.getCacheLister(namespace).daemonSetLister.DaemonSets(namespace).Get(name)
 }
 
 func (c *kialiCacheImpl) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		deps := nsCache[kubernetes.DeploymentType].GetStore().List()
-		lenDeps := len(deps)
-		if lenDeps > 0 {
-			_, ok := deps[0].(*apps_v1.Deployment)
-			if !ok {
-				return nil, errors.New("bad Deployment type found in cache")
-			}
-			nsDeps := make([]apps_v1.Deployment, lenDeps)
-			for i, dep := range deps {
-				nsDeps[i] = *(dep.(*apps_v1.Deployment))
-			}
-			log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] = %d", namespace, lenDeps)
-			return nsDeps, nil
-		}
+	deployments, err := c.getCacheLister(namespace).deploymentLister.Deployments(namespace).List(labels.Everything())
+	if err != nil {
+		return nil, err
 	}
-	return []apps_v1.Deployment{}, nil
+	log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] = %d", namespace, len(deployments))
+
+	retDeployments := []apps_v1.Deployment{}
+	for _, deployment := range deployments {
+		deployment.Kind = kubernetes.DeploymentType
+		retDeployments = append(retDeployments, *deployment)
+	}
+	return retDeployments, nil
 }
 
 func (c *kialiCacheImpl) GetDeployment(namespace, name string) (*apps_v1.Deployment, error) {
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.DeploymentType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			dep, ok := obj.(*apps_v1.Deployment)
-			if !ok {
-				return nil, errors.New("bad Deployment type found in cache")
-			}
-			log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] [name: %s]", namespace, name)
-			return dep, nil
-		}
+	log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] [name: %s]", namespace, name)
+	deployment, err := c.getCacheLister(namespace).deploymentLister.Deployments(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	deployment.Kind = kubernetes.DeploymentType
+	return deployment, nil
 }
 
 func (c *kialiCacheImpl) GetEndpoints(namespace, name string) (*core_v1.Endpoints, error) {
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.EndpointsType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			eps, ok := obj.(*core_v1.Endpoints)
-			if !ok {
-				return nil, errors.New("bad Endpoints type found in cache")
-			}
-			log.Tracef("[Kiali Cache] Get [resource: Endpoints] for [namespace: %s] [name: %s]", namespace, name)
-			return eps, nil
-		}
+	log.Tracef("[Kiali Cache] Get [resource: Endpoints] for [namespace: %s] [name: %s]", namespace, name)
+	endpoints, err := c.getCacheLister(namespace).endpointLister.Endpoints(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	endpoints.Kind = kubernetes.EndpointsType
+	return endpoints, nil
 }
 
 func (c *kialiCacheImpl) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error) {
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		ss := nsCache[kubernetes.StatefulSetType].GetStore().List()
-		lenSs := len(ss)
-		if lenSs > 0 {
-			_, ok := ss[0].(*apps_v1.StatefulSet)
-			if !ok {
-				return nil, errors.New("bad StatefulSet type found in cache")
-			}
-			nsSs := make([]apps_v1.StatefulSet, lenSs)
-			for i, s := range ss {
-				nsSs[i] = *(s.(*apps_v1.StatefulSet))
-			}
-			log.Tracef("[Kiali Cache] Get [resource: StatefulSet] for [namespace: %s] = %d", namespace, lenSs)
-			return nsSs, nil
-		}
+	statefulSets, err := c.getCacheLister(namespace).statefulSetLister.StatefulSets(namespace).List(labels.Everything())
+	if err != nil {
+		return nil, err
 	}
-	return []apps_v1.StatefulSet{}, nil
+	log.Tracef("[Kiali Cache] Get [resource: StatefulSet] for [namespace: %s] = %d", namespace, len(statefulSets))
+
+	retSets := []apps_v1.StatefulSet{}
+	for _, ss := range statefulSets {
+		ss.Kind = kubernetes.StatefulSetType
+		retSets = append(retSets, *ss)
+	}
+	return retSets, nil
 }
 
 func (c *kialiCacheImpl) GetStatefulSet(namespace, name string) (*apps_v1.StatefulSet, error) {
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.StatefulSetType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			ss, ok := obj.(*apps_v1.StatefulSet)
-			if !ok {
-				return nil, errors.New("bad StatefulSet type found in cache")
-			}
-			log.Tracef("[Kiali Cache] Get [resource: StatefulSet] for [namespace: %s] [name: %s]", namespace, name)
-			return ss, nil
-		}
+	log.Tracef("[Kiali Cache] Get [resource: StatefulSet] for [namespace: %s] [name: %s]", namespace, name)
+	statefulSet, err := c.getCacheLister(namespace).statefulSetLister.StatefulSets(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	statefulSet.Kind = kubernetes.StatefulSetType
+	return statefulSet, nil
 }
 
 func (c *kialiCacheImpl) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		services := nsCache[kubernetes.ServiceType].GetStore().List()
-		lenServices := len(services)
-		if lenServices > 0 {
-			_, ok := services[0].(*core_v1.Service)
-			if !ok {
-				return []core_v1.Service{}, errors.New("bad Service type found in cache")
-			}
-			nsServices := make([]core_v1.Service, lenServices)
-			for i, service := range services {
-				nsServices[i] = *(service.(*core_v1.Service))
-			}
-			log.Tracef("[Kiali Cache] Get [resource: Service] for [namespace: %s] = %d", namespace, lenServices)
-			if selectorLabels == nil {
-				return nsServices, nil
-			}
-			var filteredServices []core_v1.Service
-			labelsMap := labels.Set(selectorLabels)
-			for _, svc := range nsServices {
-				svcSelector := labels.Set(svc.Spec.Selector).AsSelector()
-				if !svcSelector.Empty() && svcSelector.Matches(labelsMap) {
-					filteredServices = append(filteredServices, svc)
-				}
-			}
-			return filteredServices, nil
-		}
+	services, err := c.getCacheLister(namespace).serviceLister.Services(namespace).List(labels.Set(selectorLabels).AsSelector())
+	if err != nil {
+		return nil, err
 	}
-	return []core_v1.Service{}, nil
+	log.Tracef("[Kiali Cache] Get [resource: Service] for [namespace: %s] = %d", namespace, len(services))
+
+	retServices := []core_v1.Service{}
+	for _, service := range services {
+		service.Kind = kubernetes.ServiceType
+		retServices = append(retServices, *service)
+	}
+	return retServices, nil
 }
 
 func (c *kialiCacheImpl) GetService(namespace, name string) (*core_v1.Service, error) {
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.ServiceType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			svc, ok := obj.(*core_v1.Service)
-			if !ok {
-				return nil, errors.New("bad Service type found in cache")
-			}
-			log.Tracef("[Kiali Cache] Get [resource: Service] for [namespace: %s] [name: %s]", namespace, name)
-			return svc, nil
-		}
+	log.Tracef("[Kiali Cache] Get [resource: Service] for [namespace: %s] [name: %s]", namespace, name)
+	service, err := c.getCacheLister(namespace).serviceLister.Services(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	service.Kind = kubernetes.ServiceType
+	return service, nil
 }
 
 func (c *kialiCacheImpl) GetPods(namespace, labelSelector string) ([]core_v1.Pod, error) {
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		pods := nsCache[kubernetes.PodType].GetStore().List()
-		lenPods := len(pods)
-		if lenPods > 0 {
-			_, ok := pods[0].(*core_v1.Pod)
-			if !ok {
-				return []core_v1.Pod{}, errors.New("bad Pod type found in cache")
-			}
-			nsPods := make([]core_v1.Pod, lenPods)
-			for i, pod := range pods {
-				nsPods[i] = *(pod.(*core_v1.Pod))
-			}
-			log.Tracef("[Kiali Cache] Get [resource: Pod] for [namespace: %s] = %d", namespace, lenPods)
-			if labelSelector == "" {
-				return nsPods, nil
-			}
-			var filteredPods []core_v1.Pod
-			selector, selErr := labels.Parse(labelSelector)
-			if selErr != nil {
-				return []core_v1.Pod{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
-			}
-			for _, pod := range nsPods {
-				if selector.Matches(labels.Set(pod.Labels)) {
-					filteredPods = append(filteredPods, pod)
-				}
-			}
-			return filteredPods, nil
-		}
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
 	}
-	return []core_v1.Pod{}, nil
+
+	pods, err := c.getCacheLister(namespace).podLister.Pods(namespace).List(selector)
+	if err != nil {
+		return nil, err
+	}
+	log.Tracef("[Kiali Cache] Get [resource: Pod] for [namespace: %s] = %d", namespace, len(pods))
+
+	retPods := []core_v1.Pod{}
+	for _, pod := range pods {
+		pod.Kind = kubernetes.PodType
+		retPods = append(retPods, *pod)
+	}
+	return retPods, nil
 }
 
 // GetReplicaSets returns the cached ReplicaSets for the namespace.  For any given Owner (i.e. Deployment),
@@ -311,45 +218,42 @@ func (c *kialiCacheImpl) GetPods(namespace, labelSelector string) ([]core_v1.Pod
 // same Deployment (current and older revisions).
 // see also: ../kubernetes.go
 func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		reps := nsCache[kubernetes.ReplicaSetType].GetStore().List()
-		if len(reps) > 0 {
-			_, ok := reps[0].(*apps_v1.ReplicaSet)
-			if !ok {
-				return nil, errors.New("bad ReplicaSet type found in cache")
-			}
+	reps, err := c.getCacheLister(namespace).replicaSetLister.ReplicaSets(namespace).List(labels.Everything())
+	if err != nil {
+		return nil, err
+	}
 
-			activeRSMap := map[string]*apps_v1.ReplicaSet{}
-			for _, ref := range reps {
-				rs := ref.(*apps_v1.ReplicaSet)
-				if len(rs.OwnerReferences) > 0 {
-					for _, ownerRef := range rs.OwnerReferences {
-						if ownerRef.Controller != nil && *ownerRef.Controller {
-							if currRS, ok := activeRSMap[ownerRef.Name]; ok {
-								if currRS.CreationTimestamp.Time.Before(rs.CreationTimestamp.Time) {
-									activeRSMap[ownerRef.Name] = rs
-								}
-							} else {
+	result := []apps_v1.ReplicaSet{}
+	if len(reps) > 0 {
+		activeRSMap := map[string]*apps_v1.ReplicaSet{}
+		for _, rs := range reps {
+			if len(rs.OwnerReferences) > 0 {
+				for _, ownerRef := range rs.OwnerReferences {
+					if ownerRef.Controller != nil && *ownerRef.Controller {
+						if currRS, ok := activeRSMap[ownerRef.Name]; ok {
+							if currRS.CreationTimestamp.Time.Before(rs.CreationTimestamp.Time) {
 								activeRSMap[ownerRef.Name] = rs
 							}
+						} else {
+							activeRSMap[ownerRef.Name] = rs
 						}
 					}
-				} else {
-					// it is it's own controller
-					activeRSMap[rs.Name] = rs
 				}
+			} else {
+				// it is it's own controller
+				activeRSMap[rs.Name] = rs
 			}
-
-			lenRS := len(activeRSMap)
-			result := make([]apps_v1.ReplicaSet, lenRS)
-			i := 0
-			for _, activeRS := range activeRSMap {
-				result[i] = *(activeRS)
-				i = i + 1
-			}
-			log.Tracef("[Kiali Cache] Get [resource: ReplicaSet] for [namespace: %s] = %d", namespace, lenRS)
-			return result, nil
 		}
+
+		lenRS := len(activeRSMap)
+		result = make([]apps_v1.ReplicaSet, lenRS)
+		i := 0
+		for _, activeRS := range activeRSMap {
+			activeRS.Kind = kubernetes.ReplicaSetType
+			result[i] = *(activeRS)
+			i = i + 1
+		}
+		log.Tracef("[Kiali Cache] Get [resource: ReplicaSet] for [namespace: %s] = %d", namespace, lenRS)
 	}
-	return []apps_v1.ReplicaSet{}, nil
+	return result, nil
 }

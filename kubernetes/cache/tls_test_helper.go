@@ -5,20 +5,10 @@ import (
 
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	"k8s.io/client-go/tools/cache"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
-
-type fakeInformer struct {
-	cache.SharedIndexInformer
-	Store *cache.FakeCustomStore
-}
-
-func (f *fakeInformer) GetStore() cache.Store {
-	return f.Store
-}
 
 // Fake KialiCache used for TLS Scenarios
 // It populates the Namespaces, Informers and Registry information needed
