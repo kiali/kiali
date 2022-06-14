@@ -1,6 +1,6 @@
 Feature: Kiali Workload Details page
 
-  On the Workload Details page, the user should see details of a workload as well as
+  On the Workload Details page, the user should see the details of a workload as well as
   a minigraph for traffic going to and originating from the workload. In addition,
   there should be tabs for viewing workload specific traffic, inbound/outbound metrics, traces and Envoy information.
 
