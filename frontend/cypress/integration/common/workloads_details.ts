@@ -155,8 +155,10 @@ Then('the user sees config expected information', () => {
 });
 
 Then('the user sees the metrics tab', () => {
+  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/customdashboard/envoy*`).as('fetchEnvoyMetrics');
   openTab('Envoy');
-  openEnvoyTab('Metrics');;
+  openEnvoyTab('Metrics');
+  cy.wait('@fetchEnvoyMetrics');
   cy.waitForReact(1000, '#root');
   cy.getReact('CustomMetrics', { props: { 'data-test': 'envoy-metrics-component' } })
     .then((metricsComponents: any) => metricsComponents.filter(component => component.name === 'CustomMetrics')[0])
