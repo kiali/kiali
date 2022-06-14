@@ -24,6 +24,7 @@ ISTIOCTL=
 ISTIO_DIR=
 ISTIO_EGRESSGATEWAY_ENABLED="true"
 ISTIO_INGRESSGATEWAY_ENABLED="true"
+ISTIO_VERSION=""
 MESH_ID="mesh-default"
 MTLS="true"
 NAMESPACE="istio-system"
@@ -97,6 +98,10 @@ while [[ $# -gt 0 ]]; do
         echo "ERROR: The --istio-ingressgateway-enabled flag must be 'true' or 'false'"
         exit 1
       fi
+      shift;shift
+      ;;
+    -iv|--istio-version)
+      ISTIO_VERSION="$2"
       shift;shift
       ;;
     -ih|--image-hub)
@@ -183,6 +188,8 @@ Valid command line arguments:
        unless you know the image tag you are pulling is compatible with the charts in the istioctl installer.
        You will need this if you have a dev version of istioctl but want to pull a released version of the images.
        Default: "default"
+  -iv|--istio-version <version>:
+       The Istio version to install. This is ignored if --istio-dir is specified.
   -m|--mtls (true|false):
        Indicate if you want global MTLS auto enabled.
        Default: true
@@ -233,16 +240,28 @@ if [ "${ISTIO_DIR}" == "" ]; then
   # Go to the main output directory and try to find an Istio there.
   HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
   OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../_output}"
-  ALL_ISTIOS=$(ls -dt1 ${OUTPUT_DIR}/istio-*)
-  if [ "$?" != "0" ]; then
-    ${HACK_SCRIPT_DIR}/download-istio.sh
+  if [ "${ISTIO_VERSION}" == "" ]; then
+    ALL_ISTIOS=$(ls -dt1 ${OUTPUT_DIR}/istio-*)
     if [ "$?" != "0" ]; then
-      echo "ERROR: You do not have Istio installed and it cannot be downloaded."
-      exit 1
+      ${HACK_SCRIPT_DIR}/download-istio.sh
+      if [ "$?" != "0" ]; then
+        echo "ERROR: You do not have Istio installed and it cannot be downloaded."
+        exit 1
+      fi
+    fi
+    # install the Istio release that was last downloaded (that's the -t option to ls)
+    ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-* | head -n1)
+  else
+    ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-${ISTIO_VERSION} | head -n1)
+    if [ ! -d "${ISTIO_DIR}" ]; then
+      ${HACK_SCRIPT_DIR}/download-istio.sh --istio-version ${ISTIO_VERSION}
+      if [ "$?" != "0" ]; then
+        echo "ERROR: You do not have Istio [${ISTIO_VERSION}] installed and it cannot be downloaded."
+        exit 1
+      fi
+      ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-${ISTIO_VERSION} | head -n1)
     fi
   fi
-  # install the Istio release that was last downloaded (that's the -t option to ls)
-  ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-* | head -n1)
 fi
 
 if [ ! -d "${ISTIO_DIR}" ]; then
