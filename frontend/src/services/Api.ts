@@ -180,6 +180,25 @@ export const getIstioConfig = (
   }
 };
 
+export const getAllIstioConfigs = (
+  namespaces: string[],
+  validate: boolean,
+  labelSelector: string,
+  workloadSelector: string
+) => {
+  const params: any = namespaces && namespaces.length > 0 ? { namespaces: namespaces.join(',') } : {};
+  if (validate) {
+    params.validate = validate;
+  }
+  if (labelSelector) {
+    params.labelSelector = labelSelector;
+  }
+  if (workloadSelector) {
+    params.workloadSelector = workloadSelector;
+  }
+  return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.allIstioConfigs, params, {});
+};
+
 export const getIstioConfigDetail = (namespace: string, objectType: string, object: string, validate: boolean) => {
   return newRequest<IstioConfigDetails>(
     HTTP_VERBS.GET,

@@ -426,36 +426,34 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   fetchValidations(isAscending: boolean, sortField: SortField<NamespaceInfo>) {
-    _.chunk(this.state.namespaces, 10).forEach(chunk => {
-      this.promises
-        .registerChained('validationchunks', undefined, () => this.fetchValidationChunk(chunk))
-        .then(() => {
-          this.setState(prevState => {
-            let newNamespaces = prevState.namespaces.slice();
-            if (sortField.id === 'validations') {
-              newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
-            }
-            return { namespaces: newNamespaces };
-          });
+    this.promises
+      .registerChained('validation', undefined, () => this.fetchValidationResult(this.state.namespaces))
+      .then(() => {
+        this.setState(prevState => {
+          let newNamespaces = prevState.namespaces.slice();
+          if (sortField.id === 'validations') {
+            newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
+          }
+          return { namespaces: newNamespaces };
         });
-    });
+      });
   }
 
-  fetchValidationChunk(chunk: NamespaceInfo[]) {
+  fetchValidationResult(nsInfos: NamespaceInfo[]) {
+    const namespaces: string[] = [];
+    nsInfos.forEach(ns => {
+      namespaces.push(ns.name);
+    });
+
     return Promise.all(
-      chunk.map(nsInfo => {
-        return Promise.all([
-          API.getNamespaceValidations(nsInfo.name),
-          API.getIstioConfig(nsInfo.name, ['authorizationpolicies', 'sidecars'], false, '', ''),
-        ]).then(results => {
-          return { validations: results[0].data, istioConfig: results[1].data, nsInfo: nsInfo };
-        });
-      })
+      [
+        API.getConfigValidations(namespaces),
+        API.getAllIstioConfigs(namespaces, false, '', '')]
     )
       .then(results => {
-        results.forEach(result => {
-          result.nsInfo.validations = result.validations;
-          result.nsInfo.istioConfig = result.istioConfig;
+        nsInfos.map(nsInfo => {
+          nsInfo.validations = results[0].data[nsInfo.name]
+          nsInfo.istioConfig = results[1].data
         });
       })
       .catch(err => this.handleAxiosError('Could not fetch validations status', err));
