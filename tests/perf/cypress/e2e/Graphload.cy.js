@@ -40,19 +40,19 @@ describe('graphload', () => {
         .its("performance").then((performance) => {
             cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
             cy.wait('@graphNamespaces')
-                .then(() => {
-                    cy.get('#loading_kiali_spinner').should('not.exist')
-                    //cy.get("#cy", { timeout: 10000 }).should('be.visible')
-                        .then(() => {
-                            performance.mark("end")
-                            performance.measure("pageLoad", "start", "end");
-                            const measure = performance.getEntriesByName("pageLoad")[0];
-                            const duration = measure.duration;
-                            assert.isAtMost(duration, Cypress.config('threshold'));
 
-                            cy.writeFile('logs/performance.txt', `[PERFORMANCE] Graph load time for ${graphUrl}: \n ${duration / 1000} seconds`)
-                        })
+            //cy.get('#loading_kiali_spinner').should('not.exist')
+            cy.get("#cy", { timeout: 10000 }).should('be.visible')
+                .then(() => {
+                    performance.mark("end")
+                    performance.measure("pageLoad", "start", "end");
+                    const measure = performance.getEntriesByName("pageLoad")[0];
+                    const duration = measure.duration;
+                    assert.isAtMost(duration, Cypress.config('threshold'));
+
+                    cy.writeFile('logs/performance.txt', `[PERFORMANCE] Graph load time for ${graphUrl}: \n ${duration / 1000} seconds`)
+                })
+
         })
     })
-  })
 })

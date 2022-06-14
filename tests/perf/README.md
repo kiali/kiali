@@ -1,8 +1,11 @@
+## Install
+
+yarn add cypress --dev
 
 # baseUrl default baseurl localhost:3000
-## Can be updated in cypress.config.js or: 
+## Can be updated in cypress.config.js or:
 
-yarn cypress run --config baseUrl=http://mybaseurl 
+yarn cypress run --config baseUrl=http://mybaseurl
 
 ## Update url parameters:
 
@@ -10,7 +13,7 @@ fixtures/graphParams.json
 
 # Run tests:
 ## yarn cypress run
-## yarn cypress open 
+## yarn cypress open
 
-# Results: 
+# Results:
 logs/performance.txt
