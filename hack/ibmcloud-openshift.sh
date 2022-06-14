@@ -116,6 +116,12 @@ status() {
   [ "$(is_cluster_deployed)" == "true" ] && infomsg "Cluster is deployed" || infomsg "Cluster is NOT deployed!"
 }
 
+# FUNCTION: set_admin - Grants to the user full admin rights on the cluster.
+set_admin() {
+  infomsg "Adding you as a cluster admin user"
+  ibmcloud oc cluster config --cluster ${CLUSTER_NAME} --admin
+}
+
 # FUNCTION: finish - Waits for the cluster to be deployed and then finishes the deployment.
 finish() {
   infomsg "Waiting for the cluster to be fully deployed"
@@ -125,8 +131,7 @@ finish() {
   done
   echo "Deployed."
 
-  infomsg "Adding you as a cluster admin user"
-  ibmcloud oc cluster config --cluster ${CLUSTER_NAME} --admin
+  set_admin
 
   infomsg "The cluster is ready!"
 }
@@ -166,6 +171,7 @@ while [[ $# -gt 0 ]]; do
     status) _CMD="status"; shift ;;
     finish) _CMD="finish"; shift ;;
     apikey) _CMD="apikey"; shift ;;
+    admin)  _CMD="admin";  shift ;;
 
     # OPTIONS
 
@@ -227,6 +233,7 @@ Commands:
    apikey: Creates an apikey.txt file in the current directory that contains a new IBM API key that you can use to log into the cluster.
            For more details on this, see: https://cloud.ibm.com/docs/openshift?topic=openshift-access_cluster#access_api_key
            You can view the API keys you have created, and you can delete the keys, from here: https://cloud.ibm.com/iam/apikeys
+   admin:  Configures the current user invoking the command to be granted admin rights on the cluster.
 HELPMSG
       exit 1
       ;;
@@ -339,6 +346,8 @@ elif [ "$_CMD" = "finish" ]; then
   finish
 elif [ "$_CMD" = "apikey" ]; then
   create_apikey
+elif [ "$_CMD" = "admin" ]; then
+  set_admin
 else
   errormsg "Invalid command."
 fi
