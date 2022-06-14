@@ -22,7 +22,7 @@ infomsg() {
 
 SCRIPT_DIR=$( dirname -- "$0"; )
 
-DEFAULT_HELM_CHARTS_REPO="${SCRIPT_DIR}/../helm-charts"
+DEFAULT_HELM_CHARTS_REPO="${SCRIPT_DIR}/../../helm-charts"
 DEFAULT_ISTIO_VERSION=""
 DEFAULT_KIALI_VERSION="dev"
 DEFAULT_NODE_FLAVOR="bx2.8x32"
@@ -106,7 +106,7 @@ fi
 : "${NODES:=${DEFAULT_NODES}}"
 : "${OPENSHIFT_VERSION:=${DEFAULT_OPENSHIFT_VERSION}}"
 : "${REGION:=${DEFAULT_REGION}}"
-: "${API_KEY:-$(cat ${API_KEY_FILE})}"
+API_KEY="$(cat ${API_KEY_FILE})"
 
 # Dump config
 infomsg "==START CONFIG=="
