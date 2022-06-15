@@ -23,4 +23,9 @@ cypress-run:
 
 ## cypress-gui: Opens the cypress GUI letting you pick which frontend integration tests to run locally.
 cypress-gui:
-	@cd ${ROOTDIR}/frontend && yarn cypress
+	@cd ${ROOTDIR}/frontend && \
+	export CYPRESS_AUTH_PROVIDER="${CYPRESS_AUTH_PROVIDER}" ;\
+	export CYPRESS_PASSWD="${CYPRESS_PASSWD}" ;\
+	export CYPRESS_USERNAME="${CYPRESS_USERNAME}" ;\
+	export CYPRESS_BASE_URL="${CYPRESS_BASE_URL}" ;\
+	yarn cypress
