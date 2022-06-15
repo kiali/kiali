@@ -39,7 +39,7 @@ class OverviewStatus extends React.Component<Props, {}> {
 
   linkAction = () => {
     if (this.props.isKiosk) {
-      kioskGraphAction(this.props.namespace, this.props.status.name, this.props.duration, this.props.refreshInterval)
+      kioskGraphAction(this.props.namespace, this.props.status.name, this.props.duration, this.props.refreshInterval, this.props.targetPage)
     } else {
       this.setFilters()
     }

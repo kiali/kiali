@@ -7,7 +7,7 @@ import {HEALTHY} from "../../types/Health";
 // These actions have Kiali semantic, the parent of the Kiosk should translate them to their specific domain
 // No parent kiosk domain logic should be added here
 
-export const kioskGraphAction = (namespace: string, healthStatus: string, duration: DurationInSeconds, refreshInterval: IntervalInMilliseconds) => {
+export const kioskGraphAction = (namespace: string, healthStatus: string, duration: DurationInSeconds, refreshInterval: IntervalInMilliseconds, targetPage: string) => {
   let showInParent = '/graph/namespaces?namespaces=' + namespace;
   if (healthStatus === HEALTHY.name) {
     showInParent += '&graphFind=healthy';
@@ -15,6 +15,17 @@ export const kioskGraphAction = (namespace: string, healthStatus: string, durati
     showInParent += '&graphFind=!healthy';
   }
   showInParent += '&duration=' + duration + '&refresh=' + refreshInterval;
+  switch (targetPage) {
+    case 'applications':
+      showInParent += '&graphType=versionedApp';
+      break;
+    case 'services':
+      showInParent += '&graphType=service';
+      break;
+    case 'workloads':
+      showInParent += '&graphType=workload';
+      break;
+  }
   sendParentMessage(showInParent);
 }
 
