@@ -77,6 +77,7 @@ type LogEntry struct {
 type LogOptions struct {
 	Duration *time.Duration
 	IsProxy  bool // fetching logs for Istio Proxy (Envoy access log)
+	MaxLines *int
 	core_v1.PodLogOptions
 }
 
@@ -407,7 +408,7 @@ func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
 	return &pod, nil
 }
 
-func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy, sinceTime, tailLines string) (*LogOptions, error) {
+func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy, sinceTime, maxLines string) (*LogOptions, error) {
 	opts := &LogOptions{}
 	opts.PodLogOptions = core_v1.PodLogOptions{Timestamps: true}
 
@@ -437,13 +438,13 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 		opts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
 	}
 
-	if tailLines != "" {
-		if numLines, err := strconv.ParseInt(tailLines, 10, 64); err == nil {
+	if maxLines != "" {
+		if numLines, err := strconv.Atoi(maxLines); err == nil {
 			if numLines > 0 {
-				opts.TailLines = &numLines
+				opts.MaxLines = &numLines
 			}
 		} else {
-			return nil, fmt.Errorf("Invalid tailLines [%s]: %v", tailLines, err)
+			return nil, fmt.Errorf("Invalid max-lines [%s]: %v", maxLines, err)
 		}
 	}
 
@@ -531,90 +532,6 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	entry.TimestampUnix = parsedTimestamp.Unix()
 
 	return &entry
-}
-
-// getParsedLogs covers the case when opts has Duration *and* TailLines set.
-func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
-	k8sOpts := opts.PodLogOptions
-	// the k8s API does not support "endTime/beforeTime". So for bounded time ranges we need to
-	// 1) discard the logs after sinceTime+duration
-	// 2) manually apply tailLines to the remaining logs
-	tailLines := k8sOpts.TailLines
-	k8sOpts.TailLines = nil
-
-	logsReader, err := in.k8s.StreamPodLogs(namespace, name, &k8sOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		e := logsReader.Close()
-		if e != nil {
-			log.Errorf("Error when closing the connection streaming logs of a pod: %s", e.Error())
-		}
-	}()
-
-	bufferedReader := bufio.NewReader(logsReader)
-
-	// It is known in advance that "tailLines" is the maximum number of
-	// log entries that will be returned. So, it is possible to pre-allocate
-	// memory. To keep memory usage constrained, the "entries" will be used
-	// as a circular list: once it is full, we "rewind" and start overwriting
-	// elements. The elements that survive are the ones that are returned.
-	// There is the chance that not all the pre-allocated array will
-	// be used and some memory will be wasted, but for large logs this is
-	// better than letting the slice grow indefinitely and then picking only
-	// the last elements.
-	entries := make([]LogEntry, *tailLines)
-	entriesTip := int64(0)
-
-	var startTime *time.Time
-	var endTime *time.Time
-	if k8sOpts.SinceTime != nil {
-		startTime = &k8sOpts.SinceTime.Time
-		end := startTime.Add(*opts.Duration)
-		endTime = &end
-	}
-
-	engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
-
-	line, readErr := bufferedReader.ReadString('\n')
-	for ; readErr == nil || (readErr == io.EOF && len(line) > 0); line, readErr = bufferedReader.ReadString('\n') {
-		entry := parseLogLine(line, opts.IsProxy, engardeParser)
-		if entry == nil {
-			continue
-		}
-
-		// If we are past the requested time window then stop processing
-		if startTime == nil {
-			startTime = &entry.OriginalTime
-		}
-
-		if endTime == nil {
-			end := entry.OriginalTime.Add(*opts.Duration)
-			endTime = &end
-		}
-
-		if entry.OriginalTime.After(*endTime) {
-			break
-		}
-
-		// Store the processed log line
-		entries[entriesTip%*tailLines] = *entry
-		entriesTip++
-	}
-
-	if entriesTip <= *tailLines {
-		return &PodLog{Entries: entries[:entriesTip]}, err
-	} else {
-		indexCut := entriesTip % *tailLines
-		return &PodLog{Entries: append(entries[indexCut:], entries[:indexCut]...)}, err
-	}
-}
-
-// GetPodLogs returns pod logs given the provided options
-func (in *WorkloadService) GetPodLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
-	return in.getParsedLogs(namespace, name, opts)
 }
 
 func isAccessLogEmpty(al *parser.AccessLog) bool {
@@ -1884,7 +1801,9 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, namespace, wo
 	return app, nil
 }
 
-// streamParsedLogs covers the case when opts does not have both Duration and TailLines set.
+// streamParsedLogs fetches logs from a container in a pod, parses and decorates each log line with some metadata (of possible) and
+// sends the processed lines to the client in JSON format. Results are sent as processing is performed, so in case of any error when
+// doing processing the JSON document will be truncated.
 func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
 	k8sOpts := opts.PodLogOptions
 	// the k8s API does not support "endTime/beforeTime". So for bounded time ranges we need to
@@ -1937,7 +1856,13 @@ func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOpt
 
 	firstEntry := true
 	line, readErr := bufferedReader.ReadString('\n')
+	linesWritten := 0
 	for ; readErr == nil || (readErr == io.EOF && len(line) > 0); line, readErr = bufferedReader.ReadString('\n') {
+		// Abort if we already reached the requested max-lines limit
+		if opts.MaxLines != nil && linesWritten >= *opts.MaxLines {
+			break
+		}
+
 		entry := parseLogLine(line, opts.IsProxy, engardeParser)
 		if entry == nil {
 			continue
@@ -1988,9 +1913,17 @@ func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOpt
 			log.Errorf("Error when writing a processed log entry while streaming pod logs: %s", writeErr.Error())
 			return nil
 		}
+
+		linesWritten++
 	}
 
-	_, writeErr = w.Write([]byte("]}")) // This ends the JSON document
+	if readErr == nil && opts.MaxLines != nil && linesWritten >= *opts.MaxLines {
+		// End the JSON document, setting the max-lines surpassed flag
+		_, writeErr = w.Write([]byte("], \"maxLinesSurpassed\": true}"))
+	} else {
+		// End the JSON document
+		_, writeErr = w.Write([]byte("]}"))
+	}
 	if writeErr != nil {
 		log.Errorf("Error when writing the outro of the JSON document while streaming pod logs: %s", err.Error())
 	}
