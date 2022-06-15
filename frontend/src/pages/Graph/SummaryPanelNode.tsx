@@ -103,16 +103,18 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       this.props.jaegerState.info &&
       this.props.jaegerState.info.enabled &&
       this.props.jaegerState.info.integration;
-
-    const options = getOptions(nodeData, this.props.jaegerState.info).map(o => {
-      return (
-        <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
-          {o.text} {o.target === '_blank' && <ExternalLinkAltIcon />}
-        </DropdownItem>
-      );
-    });
-    const actions =
-      options.length > 0 ? [<DropdownGroup label="Show" className="kiali-group-menu" children={options} />] : undefined;
+    const options = getOptions(nodeData);
+    const items = [
+      <DropdownGroup key="show" label="Show" className="kiali-group-menu">
+        {options.map((o, i) => {
+          return (
+            <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o)}>
+              {o.text} {o.target === '_blank' && <ExternalLinkAltIcon />}
+            </DropdownItem>
+          );
+        })}
+      </DropdownGroup>
+    ];
 
     return (
       <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
@@ -122,14 +124,15 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
             <span>
               <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
               {nodeData.namespace}
-              {actions && (
+              {options.length > 0 && (
                 <Dropdown
+                  dropdownItems={items}
                   id="summary-node-actions"
-                  style={{ float: 'right' }}
-                  isPlain={true}
-                  dropdownItems={actions}
+                  isGrouped={true}
                   isOpen={this.state.isActionOpen}
+                  isPlain={true}
                   position={DropdownPosition.right}
+                  style={{ float: 'right' }}
                   toggle={<KebabToggle id="summary-node-kebab" onToggle={this.onToggleActions} />}
                 />
               )}
