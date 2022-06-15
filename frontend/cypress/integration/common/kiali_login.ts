@@ -26,8 +26,16 @@ And('user clicks Log In With OpenShift', () => {
 
 And('user clicks my_htpasswd_provider', () => {
     if (auth_strategy === 'openshift') {
-        cy.log('Log in using auth provider: ' + KUBEADMIN_IDP)
-        cy.get('.pf-c-button').contains(KUBEADMIN_IDP, { matchCase: false }).click();
+        cy.log('Log in using auth provider: ' + KUBEADMIN_IDP);
+        cy.get('body').then(($body) => {
+            if ($body.text().includes(KUBEADMIN_IDP)) {
+                cy.contains(KUBEADMIN_IDP)
+                    .should('be.visible')
+                    .click();
+            }
+        });
+        // another way to press the button - this is the way other tests do it:
+        //cy.get('.pf-c-button').contains(KUBEADMIN_IDP, { matchCase: false }).click();
     }
 })
 
