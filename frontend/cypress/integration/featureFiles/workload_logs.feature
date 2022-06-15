@@ -28,8 +28,8 @@ Feature: Workload logs tab
 
   Scenario: The log pane of the logs tab should limit the number of log lines that are fetched
     Given I am on the logs tab of the "productpage-v1" workload detail page of the "bookinfo" namespace
-    When I choose to show 10 lines of logs
-    Then the log pane should show only 10 lines of logs of each selected container
+    When I choose to show 100 lines of logs
+    Then the log pane should show at most 100 lines of logs of each selected container
 
   Scenario: The log pane of the logs tab should only show logs for the selected container
     Given I am on the logs tab of the "productpage-v1" workload detail page of the "bookinfo" namespace

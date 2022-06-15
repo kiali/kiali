@@ -20,9 +20,9 @@ When('I type {string} on the Hide text field', showText => {
   cy.get('#log_hide').type(showText + '{enter}');
 });
 
-When('I choose to show 10 lines of logs', () => {
-  cy.get('#wpl_tailLines-toggle').click();
-  cy.get('#10').click();
+When('I choose to show 100 lines of logs', () => {
+  cy.get('#wpl_maxLines-toggle').click();
+  cy.get('#100').click();
 });
 
 When('I select only the {string} container', containerName => {
@@ -70,7 +70,7 @@ Then('the log pane should only show log lines not containing {string}', filterTe
     });
 });
 
-Then('the log pane should show only {int} lines of logs of each selected container', numberOfLinesPerContainer => {
+Then('the log pane should show at most {int} lines of logs of each selected container', numberOfLinesPerContainer => {
   cy.get('[data-test=workload-logs-pod-containers]')
     .get('[type=checkbox]:checked')
     .its('length')
@@ -78,7 +78,7 @@ Then('the log pane should show only {int} lines of logs of each selected contain
       cy.get('#logsText')
         .get('p')
         .its('length')
-        .should('eq', numContainersEnabled * numberOfLinesPerContainer);
+        .should('be.lte', numContainersEnabled * numberOfLinesPerContainer);
     });
 });
 
