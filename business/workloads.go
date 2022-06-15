@@ -54,7 +54,8 @@ type WorkloadCriteria struct {
 
 // PodLog reports log entries
 type PodLog struct {
-	Entries []LogEntry `json:"entries,omitempty"`
+	Entries           []LogEntry `json:"entries,omitempty"`
+	MaxLinesSurpassed bool       `json:"maxLinesSurpassed,omitempty"`
 }
 
 // AccessLogEntry provides parsed info from a single proxy access log entry
