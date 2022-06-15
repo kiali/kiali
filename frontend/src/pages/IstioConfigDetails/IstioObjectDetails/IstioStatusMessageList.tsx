@@ -4,7 +4,7 @@ import { Flex, FlexItem, Stack, StackItem, Title, TitleSizes, Tooltip } from '@p
 import Validation from '../../../components/Validations/Validation';
 
 interface Props {
-  messages: ValidationMessage[];
+  messages?: ValidationMessage[];
   checks?: ObjectCheck[];
 }
 
@@ -18,7 +18,7 @@ class IstioStatusMessageList extends React.Component<Props> {
               Configuration Analysis
             </Title>
           </StackItem>
-          {this.props.messages.map((msg: ValidationMessage, i: number) => {
+          {(this.props.messages || []).map((msg: ValidationMessage, i: number) => {
             const severity: ValidationTypes = IstioLevelToSeverity[msg.level || 'UNKNOWN'];
             return (
               <StackItem id={'msg-' + i} className={'validation-message'}>
