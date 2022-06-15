@@ -22,7 +22,7 @@ import {
   Checkbox
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import { addError, addSuccess } from 'utils/AlertUtils';
+import { addError, addSuccess, addWarning } from 'utils/AlertUtils';
 import { Pod, LogEntry, AccessLog, PodLogs } from '../../types/IstioObjects';
 import { getPodLogs, getWorkloadSpans, setPodEnvoyProxyLogLevel } from '../../services/Api';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -930,6 +930,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           responses.shift();
         }
 
+        let linesSurpassedContainers: string[] = [];
         for (let i = 0; i < responses.length; i++) {
           const response = responses[i].data as PodLogs;
           const containerLogEntries = response.entries as LogEntry[];
@@ -941,12 +942,21 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
             le.color = color;
             entries.push({ timestamp: le.timestamp, timestampUnix: le.timestampUnix, logEntry: le } as Entry);
           });
+
+          if (response.maxLinesSurpassed) {
+            linesSurpassedContainers.push(new URL(responses[i].request.responseURL).searchParams.get('container')!);
+          }
         }
 
         this.filterEntries(entries, this.state.showLogValue, this.state.hideLogValue);
         const sortedEntries = entries.sort((a, b) => {
           return a.timestampUnix - b.timestampUnix;
         });
+
+        if (linesSurpassedContainers.length > 0) {
+          addWarning('Maximum lines surpassed for containers: ' + linesSurpassedContainers.join(', ') +
+            '. Not all log lines for the requested time range are shown.', true);
+        }
 
         this.setState({
           entries: sortedEntries,
