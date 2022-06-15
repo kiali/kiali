@@ -454,10 +454,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       ]
     )
       .then(results => {
-        chunk.map(nsInfo => {
+        chunk.forEach(nsInfo => {
           nsInfo.validations = results[0].data[nsInfo.name]
           nsInfo.istioConfig = results[1].data[nsInfo.name]
-          return nsInfo
         });
       })
       .catch(err => this.handleAxiosError('Could not fetch validations status', err));
