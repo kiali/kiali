@@ -34,8 +34,6 @@ And('user clicks my_htpasswd_provider', () => {
                     .click();
             }
         });
-        // another way to press the button - this is the way other tests do it:
-        //cy.get('.pf-c-button').contains(KUBEADMIN_IDP, { matchCase: false }).click();
     }
 })
 
