@@ -1,7 +1,0 @@
-{
-  "devDependencies": {
-    "cypress": "^10.1.0",
-    "cypress-terminal-report": "^4.0.1"
-  },
-  "license": "Apache-2.0"
-}
