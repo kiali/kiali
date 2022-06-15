@@ -1,6 +1,6 @@
 import { Given, When, And, Then } from "cypress-cucumber-preprocessor/steps";
 
-const USERNAME = Cypress.env('USERNAME'); // CYPRESS_USERNAME to the user
+const USERNAME = Cypress.env('USERNAME') || 'jenkins'; // CYPRESS_USERNAME to the user
 const PASSWD = Cypress.env('PASSWD'); // CYPRESS_PASSWD to the user
 const KUBEADMIN_IDP = Cypress.env('AUTH_PROVIDER'); // CYPRESS_AUTH_PROVIDER to the user
 const auth_strategy = Cypress.env('auth_strategy');
