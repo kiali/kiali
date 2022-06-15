@@ -8,7 +8,7 @@
 ##############################################################################
 
 set -eu
-
+  
 install_sleep_app() {
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     ${CLIENT_EXE} get project "sleep" || ${CLIENT_EXE} new-project "sleep"
@@ -18,7 +18,7 @@ install_sleep_app() {
   
   ${CLIENT_EXE} label namespace "sleep" istio-injection=enabled --overwrite=true
 
-  ${CLIENT_EXE} apply -n sleep -f ${SCRIPT_DIR}/../../_output/istio-*/samples/sleep/sleep.yaml
+  ${CLIENT_EXE} apply -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
       cat <<NAD | $CLIENT_EXE -n sleep apply -f -
@@ -46,6 +46,9 @@ SCC
 }
 
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+
+# install the Istio release that was last downloaded (that's the -t option to ls)
+ISTIO_DIR=$(ls -dt1 ${SCRIPT_DIR}/../../_output/istio-* | head -n1)
 
 : ${CLIENT_EXE:=oc}
 : ${DELETE_DEMOS:=false}
@@ -129,7 +132,7 @@ else
   set +e
 
   echo "Deleting the 'sleep' app in the 'default' namespace..."
-  ${CLIENT_EXE} delete -n sleep -f ${SCRIPT_DIR}/../../_output/istio-*/samples/sleep/sleep.yaml
+  ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
   ${CLIENT_EXE} delete ns sleep --ignore-not-found=true
   if [ "${IS_OPENSHFIT}" == "true" ]; then
     ${CLIENT_EXE} delete project sleep

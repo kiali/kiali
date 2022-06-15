@@ -329,6 +329,6 @@ Then('the {string} {string} of the {string} namespace should have a {string}', f
 After({ tags: "@istio-page and @crd-validation" }, function () {
   cy.exec('kubectl delete PeerAuthentications,DestinationRules,AuthorizationPolicies,Sidecars --all --all-namespaces', { failOnNonZeroExit: false });
   cy.exec('kubectl delete Gateways,VirtualServices foo foo-route bar -n bookinfo', { failOnNonZeroExit: false });
-  cy.exec('kubectl delete Gateways,VirtualServices foo foo-route bar -n default', { failOnNonZeroExit: false });
+  cy.exec('kubectl delete Gateways,VirtualServices foo foo-route bar -n sleep', { failOnNonZeroExit: false });
   cy.exec('kubectl delete Gateways,VirtualServices foo foo-route bar -n istio-system', { failOnNonZeroExit: false });
 });
