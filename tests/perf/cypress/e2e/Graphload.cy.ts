@@ -32,15 +32,14 @@ describe('graphload', () => {
     it('Measure Graph load time', {
             defaultCommandTimeout: Cypress.config('timeout')
     }, () => {
+        cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
         cy.visit(graphUrl, {
             onBeforeLoad(win) {
                 win.performance.mark("start");
             }
         })
         .its("performance").then((performance) => {
-            cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
             cy.wait('@graphNamespaces')
-
             //cy.get('#loading_kiali_spinner').should('not.exist')
             cy.get("#cy", { timeout: 10000 }).should('be.visible')
                 .then(() => {
