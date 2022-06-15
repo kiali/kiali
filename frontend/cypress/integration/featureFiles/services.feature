@@ -90,7 +90,7 @@ Feature: Kiali Services page
   @services-page
   Scenario: The idle status of a service is reported in the list of services
     Given a service in the cluster with no traffic
-    When user selects the "default" namespace
+    When user selects the "sleep" namespace
     Then the service should be listed as "na"
     And the health status of the service should be "No health information"
 

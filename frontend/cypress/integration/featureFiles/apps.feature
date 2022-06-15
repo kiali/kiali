@@ -58,7 +58,7 @@ Feature: Kiali Apps List page
   Scenario: The idle status of a logical mesh application is reported in the list of applications
     Given an idle application in the cluster
     When I fetch the list of applications
-    And user selects the "default" namespace
+    And user selects the "sleep" namespace
     Then the application should be listed as "idle"
     And the health status of the application should be "Not Ready"
 

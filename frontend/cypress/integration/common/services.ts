@@ -8,7 +8,7 @@ Given('a service in the cluster with a healthy amount of traffic', function () {
 });
 
 Given('a service in the cluster with no traffic', function () {
-  this.targetNamespace = 'default';
+  this.targetNamespace = 'sleep';
   this.targetService = 'sleep';
 });
 

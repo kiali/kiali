@@ -82,81 +82,81 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   Scenario: KIA0201 validation
-    Given a "foo" DestinationRule in the "default" namespace for "sleep" host
+    Given a "foo" DestinationRule in the "sleep" namespace for "sleep" host
     And the DestinationRule has a "mysubset" subset for "version=v1" labels
-    And a "bar" DestinationRule in the "default" namespace for "sleep" host
+    And a "bar" DestinationRule in the "sleep" namespace for "sleep" host
     And the DestinationRule has a "mysubset" subset for "version=v1" labels
     When the user refreshes the list page
-    And user selects the "default" namespace
-    Then the "foo" "DestinationRule" of the "default" namespace should have a "warning"
-    And the "bar" "DestinationRule" of the "default" namespace should have a "warning"
+    And user selects the "sleep" namespace
+    Then the "foo" "DestinationRule" of the "sleep" namespace should have a "warning"
+    And the "bar" "DestinationRule" of the "sleep" namespace should have a "warning"
 
   @crd-validation
   Scenario: KIA0202 validation
-    Given a "foo" DestinationRule in the "default" namespace for "nonexistent" host
+    Given a "foo" DestinationRule in the "sleep" namespace for "nonexistent" host
     When the user refreshes the list page
-    And user selects the "default" namespace
-    Then the "foo" "DestinationRule" of the "default" namespace should have a "danger"
+    And user selects the "sleep" namespace
+    Then the "foo" "DestinationRule" of the "sleep" namespace should have a "danger"
 
   @crd-validation
   Scenario: KIA0203 validation
-    Given a "foo" DestinationRule in the "default" namespace for "sleep" host
+    Given a "foo" DestinationRule in the "sleep" namespace for "sleep" host
     And the DestinationRule has a "v1" subset for "version=v1" labels
-    And there is a "foo-route" VirtualService in the "default" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
-    When user selects the "default" namespace
-    Then the "foo" "DestinationRule" of the "default" namespace should have a "danger"
+    And there is a "foo-route" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
+    When user selects the "sleep" namespace
+    Then the "foo" "DestinationRule" of the "sleep" namespace should have a "danger"
 
   @crd-validation
   Scenario: KIA0207 validation
-    Given a "disable-mtls" DestinationRule in the "default" namespace for "*.default.svc.cluster.local" host
+    Given a "disable-mtls" DestinationRule in the "sleep" namespace for "*.sleep.svc.cluster.local" host
     And the DestinationRule disables mTLS
-    And there is a "default" PeerAuthentication in the "default" namespace
+    And there is a "default" PeerAuthentication in the "sleep" namespace
     And the PeerAuthentication has "STRICT" mtls mode
-    When user selects the "default" namespace
-    Then the "disable-mtls" "DestinationRule" of the "default" namespace should have a "danger"
+    When user selects the "sleep" namespace
+    Then the "disable-mtls" "DestinationRule" of the "sleep" namespace should have a "danger"
 
   @crd-validation
   Scenario: KIA0208 validation
-    Given a "disable-mtls" DestinationRule in the "default" namespace for "*.default.svc.cluster.local" host
+    Given a "disable-mtls" DestinationRule in the "sleep" namespace for "*.sleep.svc.cluster.local" host
     And the DestinationRule disables mTLS
     And there is a "default" PeerAuthentication in the "istio-system" namespace
     And the PeerAuthentication has "STRICT" mtls mode
-    When user selects the "default" namespace
-    Then the "disable-mtls" "DestinationRule" of the "default" namespace should have a "danger"
+    When user selects the "sleep" namespace
+    Then the "disable-mtls" "DestinationRule" of the "sleep" namespace should have a "danger"
 
   @crd-validation
   Scenario: KIA0209 validation
-    Given a "foo" DestinationRule in the "default" namespace for "*.default.svc.cluster.local" host
+    Given a "foo" DestinationRule in the "sleep" namespace for "*.sleep.svc.cluster.local" host
     And the DestinationRule has a "v1" subset for "" labels
-    When user selects the "default" namespace
-    Then the "foo" "DestinationRule" of the "default" namespace should have a "warning"
+    When user selects the "sleep" namespace
+    Then the "foo" "DestinationRule" of the "sleep" namespace should have a "warning"
 
   @crd-validation
   Scenario: KIA0301 validation
     Given there is a "foo" Gateway on "bookinfo" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
-    And there is a "foo" Gateway on "default" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
-    When user selects the "default" namespace
+    And there is a "foo" Gateway on "sleep" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
+    When user selects the "sleep" namespace
     Then the "foo" "Gateway" of the "bookinfo" namespace should have a "warning"
-    And the "foo" "Gateway" of the "default" namespace should have a "warning"
+    And the "foo" "Gateway" of the "sleep" namespace should have a "warning"
 
   @crd-validation
   Scenario: KIA0302 validation
-    Given there is a "foo" Gateway on "default" namespace for "foo.local" hosts on HTTP port 80 with "app=foo" labels selector
-    When user selects the "default" namespace
-    Then the "foo" "Gateway" of the "default" namespace should have a "warning"
+    Given there is a "foo" Gateway on "sleep" namespace for "foo.local" hosts on HTTP port 80 with "app=foo" labels selector
+    When user selects the "sleep" namespace
+    Then the "foo" "Gateway" of the "sleep" namespace should have a "warning"
 
   @crd-validation
   Scenario: KIA0505 validation
-    Given a "enable-mtls" DestinationRule in the "default" namespace for "*.default.svc.cluster.local" host
+    Given a "enable-mtls" DestinationRule in the "sleep" namespace for "*.sleep.svc.cluster.local" host
     And the DestinationRule enables mTLS
-    And there is a "default" PeerAuthentication in the "default" namespace
+    And there is a "default" PeerAuthentication in the "sleep" namespace
     And the PeerAuthentication has "DISABLE" mtls mode
-    When user selects the "default" namespace
-    Then the "default" "PeerAuthentication" of the "default" namespace should have a "danger"
+    When user selects the "sleep" namespace
+    Then the "default" "PeerAuthentication" of the "sleep" namespace should have a "danger"
 
   @crd-validation
   Scenario: KIA0506 validation
-    Given a "enable-mtls" DestinationRule in the "default" namespace for "*.local" host
+    Given a "enable-mtls" DestinationRule in the "sleep" namespace for "*.local" host
     And the DestinationRule enables mTLS
     And there is a "default" PeerAuthentication in the "istio-system" namespace
     And the PeerAuthentication has "DISABLE" mtls mode
@@ -165,64 +165,64 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   Scenario: KIA1004 validation
-    Given there is a "foo" Sidecar resource in the "default" namespace that captures egress traffic for hosts "default/foo.default.svc.cluster.local"
+    Given there is a "foo" Sidecar resource in the "sleep" namespace that captures egress traffic for hosts "sleep/foo.sleep.svc.cluster.local"
     And the Sidecar is applied to workloads with "app=sleep" labels
-    When user selects the "default" namespace
-    Then the "foo" "Sidecar" of the "default" namespace should have a "warning"
+    When user selects the "sleep" namespace
+    Then the "foo" "Sidecar" of the "sleep" namespace should have a "warning"
 
   @crd-validation
   Scenario: KIA1006 validation
-    Given there is a "default" Sidecar resource in the "istio-system" namespace that captures egress traffic for hosts "default/sleep.default.svc.cluster.local"
+    Given there is a "default" Sidecar resource in the "istio-system" namespace that captures egress traffic for hosts "default/sleep.sleep.svc.cluster.local"
     And the Sidecar is applied to workloads with "app=grafana" labels
     When user selects the "istio-system" namespace
     Then the "default" "Sidecar" of the "istio-system" namespace should have a "warning"
 
   @crd-validation
   Scenario: KIA1101 validation
-    Given there is a "foo" VirtualService in the "default" namespace with a "foo-route" http-route to host "foo"
-    When user selects the "default" namespace
-    Then the "foo" "VirtualService" of the "default" namespace should have a "danger"
+    Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "foo"
+    When user selects the "sleep" namespace
+    Then the "foo" "VirtualService" of the "sleep" namespace should have a "danger"
 
   @crd-validation
   Scenario: KIA1102 validation
-    Given there is a "foo" VirtualService in the "default" namespace with a "foo-route" http-route to host "sleep"
+    Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep"
     And the VirtualService applies to "sleep" hosts
     And the VirtualService references "foo" gateways
-    When user selects the "default" namespace
-    Then the "foo" "VirtualService" of the "default" namespace should have a "danger"
+    When user selects the "sleep" namespace
+    Then the "foo" "VirtualService" of the "sleep" namespace should have a "danger"
 
   @crd-validation
   Scenario: KIA1104 validation
-    Given there is a "foo" VirtualService in the "default" namespace with a "foo-route" http-route to host "sleep"
+    Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep"
     And the route of the VirtualService has weight 10
-    When user selects the "default" namespace
-    Then the "foo" "VirtualService" of the "default" namespace should have a "warning"
+    When user selects the "sleep" namespace
+    Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
 
   @crd-validation
   Scenario: KIA1105 validation
-    Given there is a "foo" VirtualService in the "default" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
+    Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
     And the route of the VirtualService has weight 50
     And the http-route of the VirtualService also has a destination to host "sleep" and subset "v1" with weight 50
-    And a "foo" DestinationRule in the "default" namespace for "sleep" host
+    And a "foo" DestinationRule in the "sleep" namespace for "sleep" host
     And the DestinationRule has a "v1" subset for "version=v1" labels
-    When user selects the "default" namespace
-    Then the "foo" "VirtualService" of the "default" namespace should have a "warning"
+    When user selects the "sleep" namespace
+    Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
 
   @crd-validation
   Scenario: KIA1106 validation
-    Given there is a "foo" VirtualService in the "default" namespace with a "foo-route" http-route to host "sleep"
+    Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep"
     And the VirtualService applies to "sleep" hosts
-    Given there is a "bar" VirtualService in the "default" namespace with a "bar-route" http-route to host "sleep"
+    Given there is a "bar" VirtualService in the "sleep" namespace with a "bar-route" http-route to host "sleep"
     And the VirtualService applies to "sleep" hosts
-    When user selects the "default" namespace
-    Then the "foo" "VirtualService" of the "default" namespace should have a "warning"
-    And the "bar" "VirtualService" of the "default" namespace should have a "warning"
+    When user selects the "sleep" namespace
+    Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
+    And the "bar" "VirtualService" of the "sleep" namespace should have a "warning"
 
   @crd-validation
   Scenario: KIA1107 validation
-    Given there is a "foo" VirtualService in the "default" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
-    When user selects the "default" namespace
-    Then the "foo" "VirtualService" of the "default" namespace should have a "warning"
+    Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
+    When user selects the "sleep" namespace
+    Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
 
 # TODO: KIA06xx and KIA07xx does not appear in Istio Config list page. They appear in Svc/workload lists.
 #   Thus, these validations do not belong to this feature file.
@@ -241,11 +241,11 @@ Feature: Kiali Istio Config page
 #  Scenario: KIA0204 validation
 #    Given a "default" DestinationRule in the "istio-system" namespace for "*.local" host
 #    And the DestinationRule enables mTLS
-#    And a "sleep" DestinationRule in the "default" namespace for "sleep" host
+#    And a "default" DestinationRule in the "sleep" namespace for "default" host
 #    And the DestinationRule has a "mysubset" subset for "app=sleep" labels
-#    When user selects the "default" namespace
+#    When user selects the "sleep" namespace
 #    Then the "default" DestinationRule should have a "warning"
-#    And the "sleep" DestinationRule should have a "warning"
+#    And the "default" DestinationRule should have a "warning"
 #
 #  @crd-validation
 #  Scenario: KIA0401 validation
@@ -256,10 +256,10 @@ Feature: Kiali Istio Config page
 #
 #  @crd-validation
 #  Scenario: KIA0501 validation
-#    Given there is a "default" PeerAuthentication in the "default" namespace
+#    Given there is a "default" PeerAuthentication in the "sleep" namespace
 #    And the PeerAuthentication has "STRICT" mtls mode
-#    When user selects the "default" namespace
-#    Then the "default" "PeerAuthentication" of the "default" namespace should have a "danger"
+#    When user selects the "sleep" namespace
+#    Then the "default" "PeerAuthentication" of the "sleep" namespace should have a "danger"
 #
 #  @crd-validation
 #  Scenario: KIA1108 validation

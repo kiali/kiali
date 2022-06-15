@@ -7,7 +7,7 @@ import { ensureKialiFinishedLoading } from "./transition";
 // and backwards compatibility is never guaranteed.
 
 Given('a namespace without override configuration for automatic sidecar injection', function () {
-    this.targetNamespace = "default";
+    this.targetNamespace = "sleep";
 
     // Make sure that the target namespace does not have override configuration
     cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
@@ -21,7 +21,7 @@ Given('a namespace without override configuration for automatic sidecar injectio
 });
 
 Given('a namespace which has override configuration for automatic sidecar injection', function () {
-    this.targetNamespace = "default";
+    this.targetNamespace = "sleep";
     this.istioInjection = "enabled";
 
     // Make sure that the target namespace has some override configuration
@@ -50,7 +50,7 @@ Given('the override configuration for sidecar injection is {string}', function (
 });
 
 Given('a workload without a sidecar', function () {
-    this.targetNamespace = 'default';
+    this.targetNamespace = 'sleep';
     this.targetWorkload = 'sleep';
 
     // To achieve a workload without sidecar, we turn off injection in its namespace
@@ -89,7 +89,7 @@ Given('a workload without a sidecar', function () {
 });
 
 Given('a workload with a sidecar', function () {
-    this.targetNamespace = 'default';
+    this.targetNamespace = 'sleep';
     this.targetWorkload = 'sleep';
 
     // To achieve a workload with sidecar, we turn on injection in its namespace
@@ -195,7 +195,7 @@ Given('the workload has override configuration for automatic sidecar injection',
 });
 
 Given('a workload with override configuration for automatic sidecar injection', function () {
-    this.targetNamespace = 'default';
+    this.targetNamespace = 'sleep';
     this.targetWorkload = 'sleep';
 
     // At the moment, it does not matter if the sidecar is being injected or not. The goal is to have
@@ -266,11 +266,11 @@ Then('I should see no override annotation for sidecar injection in the namespace
 });
 
 Then('the workload should get a sidecar', function () {
-    cy.get('[data-test=missing-sidecar-badge-for-sleep-workload-in-default-namespace]').should('not.exist');
+    cy.get('[data-test=missing-sidecar-badge-for-sleep-workload-in-sleep-namespace]').should('not.exist');
 });
 
 Then('the sidecar of the workload should vanish', function () {
-    cy.get('[data-test=missing-sidecar-badge-for-sleep-workload-in-default-namespace]').should('exist');
+    cy.get('[data-test=missing-sidecar-badge-for-sleep-workload-in-sleep-namespace]').should('exist');
 });
 
 Then('I should see no override annotation for sidecar injection in the workload', function () {
