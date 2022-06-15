@@ -134,7 +134,7 @@ else
   echo "Deleting the 'sleep' app in the 'default' namespace..."
   ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
   ${CLIENT_EXE} delete ns sleep --ignore-not-found=true
-  if [ "${IS_OPENSHFIT}" == "true" ]; then
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
     ${CLIENT_EXE} delete project sleep
   fi
 
