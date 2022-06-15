@@ -1,0 +1,320 @@
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: mesh-default
+  namespace: istio-system
+spec:
+  tracing:
+  - providers:
+    - name: prometheus
+    overrides:
+    - match:
+        metric: REQUEST_COUNT
+      tagOverrides:
+        app:
+          operation: REMOVE
+        chart:
+          operation: REMOVE
+        destination_app:
+          operation: REMOVE
+        destination_version:
+          operation: REMOVE
+        heritage:
+          operation: REMOVE
+        install_operator_istio_io_owning_resource:
+          operation: REMOVE
+        istio:
+          operation: REMOVE
+        istio_io_rev:
+          operation: REMOVE
+        namespace:
+          operation: REMOVE
+        operator_istio_io_component:
+          operation: REMOVE
+        release:
+          operation: REMOVE
+        security_istio_io_tlsMode:
+          operation: REMOVE
+        service_istio_io_canonical_name:
+          operation: REMOVE
+        service_istio_io_canonical_revision:
+          operation: REMOVE
+        sidecar_istio_io_inject:
+          operation: REMOVE
+        source_app:
+          operation: REMOVE
+        source_version:
+          operation: REMOVE
+        version:
+          operation: REMOVE
+    - match:
+        metric: REQUEST_DURATION
+      tagOverrides:
+        app:
+          operation: REMOVE
+        chart:
+          operation: REMOVE
+        destination_app:
+          operation: REMOVE
+        destination_version:
+          operation: REMOVE
+        heritage:
+          operation: REMOVE
+        install_operator_istio_io_owning_resource:
+          operation: REMOVE
+        istio:
+          operation: REMOVE
+        istio_io_rev:
+          operation: REMOVE
+        namespace:
+          operation: REMOVE
+        operator_istio_io_component:
+          operation: REMOVE
+        release:
+          operation: REMOVE
+        security_istio_io_tlsMode:
+          operation: REMOVE
+        service_istio_io_canonical_name:
+          operation: REMOVE
+        service_istio_io_canonical_revision:
+          operation: REMOVE
+        sidecar_istio_io_inject:
+          operation: REMOVE
+        source_app:
+          operation: REMOVE
+        source_version:
+          operation: REMOVE
+        version:
+          operation: REMOVE
+    - match:
+        metric: REQUEST_SIZE
+      tagOverrides:
+        app:
+          operation: REMOVE
+        chart:
+          operation: REMOVE
+        destination_app:
+          operation: REMOVE
+        destination_version:
+          operation: REMOVE
+        heritage:
+          operation: REMOVE
+        install_operator_istio_io_owning_resource:
+          operation: REMOVE
+        istio:
+          operation: REMOVE
+        istio_io_rev:
+          operation: REMOVE
+        namespace:
+          operation: REMOVE
+        operator_istio_io_component:
+          operation: REMOVE
+        release:
+          operation: REMOVE
+        security_istio_io_tlsMode:
+          operation: REMOVE
+        service_istio_io_canonical_name:
+          operation: REMOVE
+        service_istio_io_canonical_revision:
+          operation: REMOVE
+        sidecar_istio_io_inject:
+          operation: REMOVE
+        source_app:
+          operation: REMOVE
+        source_version:
+          operation: REMOVE
+        version:
+          operation: REMOVE
+    - match:
+        metric: RESPONSE_SIZE
+      tagOverrides:
+        app:
+          operation: REMOVE
+        chart:
+          operation: REMOVE
+        destination_app:
+          operation: REMOVE
+        destination_version:
+          operation: REMOVE
+        heritage:
+          operation: REMOVE
+        install_operator_istio_io_owning_resource:
+          operation: REMOVE
+        istio:
+          operation: REMOVE
+        istio_io_rev:
+          operation: REMOVE
+        namespace:
+          operation: REMOVE
+        operator_istio_io_component:
+          operation: REMOVE
+        release:
+          operation: REMOVE
+        security_istio_io_tlsMode:
+          operation: REMOVE
+        service_istio_io_canonical_name:
+          operation: REMOVE
+        service_istio_io_canonical_revision:
+          operation: REMOVE
+        sidecar_istio_io_inject:
+          operation: REMOVE
+        source_app:
+          operation: REMOVE
+        source_version:
+          operation: REMOVE
+        version:
+          operation: REMOVE
+    - match:
+        metric: TCP_OPENED_CONNECTIONS
+      tagOverrides:
+        app:
+          operation: REMOVE
+        destination_app:
+          operation: REMOVE
+        destination_version:
+          operation: REMOVE
+        operator_istio_io_component:
+          operation: REMOVE
+        release:
+          operation: REMOVE
+        security_istio_io_tlsMode:
+          operation: REMOVE
+        service_istio_io_canonical_name:
+          operation: REMOVE
+        service_istio_io_canonical_revision:
+          operation: REMOVE
+        source_app:
+          operation: REMOVE
+        source_version:
+          operation: REMOVE
+        version:
+          operation: REMOVE
+    - match:
+        metric: TCP_CLOSED_CONNECTIONS
+      tagOverrides:
+        app:
+          operation: REMOVE
+        destination_app:
+          operation: REMOVE
+        destination_version:
+          operation: REMOVE
+        operator_istio_io_component:
+          operation: REMOVE
+        release:
+          operation: REMOVE
+        security_istio_io_tlsMode:
+          operation: REMOVE
+        service_istio_io_canonical_name:
+          operation: REMOVE
+        service_istio_io_canonical_revision:
+          operation: REMOVE
+        source_app:
+          operation: REMOVE
+        source_version:
+          operation: REMOVE
+        version:
+          operation: REMOVE
+
+    - match:
+        metric: TCP_SENT_BYTES
+      tagOverrides:
+        app:
+          operation: REMOVE
+        destination_app:
+          operation: REMOVE
+        destination_version:
+          operation: REMOVE
+        operator_istio_io_component:
+          operation: REMOVE
+        release:
+          operation: REMOVE
+        security_istio_io_tlsMode:
+          operation: REMOVE
+        service_istio_io_canonical_name:
+          operation: REMOVE
+        service_istio_io_canonical_revision:
+          operation: REMOVE
+        source_app:
+          operation: REMOVE
+        source_version:
+          operation: REMOVE
+        version:
+          operation: REMOVE          
+
+    - match:
+        metric: TCP_RECEIVED_BYTES
+      tagOverrides:
+        app:
+          operation: REMOVE
+        destination_app:
+          operation: REMOVE
+        destination_version:
+          operation: REMOVE
+        operator_istio_io_component:
+          operation: REMOVE
+        release:
+          operation: REMOVE
+        security_istio_io_tlsMode:
+          operation: REMOVE
+        service_istio_io_canonical_name:
+          operation: REMOVE
+        service_istio_io_canonical_revision:
+          operation: REMOVE
+        source_app:
+          operation: REMOVE
+        source_version:
+          operation: REMOVE
+        version:
+          operation: REMOVE
+
+    - match:
+        metric: GRPC_REQUEST_MESSAGES
+      tagOverrides:
+        app:
+          operation: REMOVE
+        destination_app:
+          operation: REMOVE
+        destination_version:
+          operation: REMOVE
+        operator_istio_io_component:
+          operation: REMOVE
+        release:
+          operation: REMOVE
+        security_istio_io_tlsMode:
+          operation: REMOVE
+        service_istio_io_canonical_name:
+          operation: REMOVE
+        service_istio_io_canonical_revision:
+          operation: REMOVE
+        source_app:
+          operation: REMOVE
+        source_version:
+          operation: REMOVE
+        version:
+          operation: REMOVE
+
+    - match:
+        metric: GRPC_RESPONSE_MESSAGES
+      tagOverrides:
+        app:
+          operation: REMOVE
+        destination_app:
+          operation: REMOVE
+        destination_version:
+          operation: REMOVE
+        operator_istio_io_component:
+          operation: REMOVE
+        release:
+          operation: REMOVE
+        security_istio_io_tlsMode:
+          operation: REMOVE
+        service_istio_io_canonical_name:
+          operation: REMOVE
+        service_istio_io_canonical_revision:
+          operation: REMOVE
+        source_app:
+          operation: REMOVE
+        source_version:
+          operation: REMOVE
+        version:
+          operation: REMOVE          
