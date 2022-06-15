@@ -1,6 +1,6 @@
 Feature: Kiali help about verify
 
-  User wants to verify the Kiali in help button
+  User wants to verify the Kiali help about information
   
   Background: 
     Given user is at administrator perspective
