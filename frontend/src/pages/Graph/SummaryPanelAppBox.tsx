@@ -136,18 +136,18 @@ export default class SummaryPanelAppBox extends React.Component<SummaryPanelProp
     const hasTcp = this.hasTcpTraffic(appBox);
     const hasTcpIn = hasTcp && this.hasTcpIn(appBox);
     const hasTcpOut = hasTcp && this.hasTcpOut(appBox);
-
-    const options = getOptions(nodeData).map(o => {
-      return (
-        <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
-          {o.text} {o.target === '_blank' && <ExternalLinkAltIcon />}
-        </DropdownItem>
-      );
-    });
-    const actions =
-      options.length > 0
-        ? [<DropdownGroup label="Show" className="kiali-appbox-menu" children={options} />]
-        : undefined;
+    const options = getOptions(nodeData);
+    const items = [
+      <DropdownGroup key="show" label="Show" className="kiali-appbox-menu">
+        {options.map((o, i) => {
+          return (
+            <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o)}>
+              {o.text} {o.target === '_blank' && <ExternalLinkAltIcon />}
+            </DropdownItem>
+          );
+        })}
+      </DropdownGroup>
+    ];
 
     return (
       <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
@@ -156,16 +156,16 @@ export default class SummaryPanelAppBox extends React.Component<SummaryPanelProp
           <span>
             <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
             {nodeData.namespace}
-            {actions && (
+            {options.length > 0 && (
               <Dropdown
+                dropdownItems={items}
                 id="summary-appbox-actions"
-                isPlain={true}
-                style={{ float: 'right' }}
-                dropdownItems={actions}
-                isOpen={this.state.isOpen}
-                position={DropdownPosition.right}
-                toggle={<KebabToggle id="summary-appbox-kebab" onToggle={this.onToggleActions} />}
                 isGrouped={true}
+                isOpen={this.state.isOpen}
+                isPlain={true}
+                position={DropdownPosition.right}
+                style={{ float: 'right' }}
+                toggle={<KebabToggle id="summary-appbox-kebab" onToggle={this.onToggleActions} />}
               />
             )}
             {renderBadgedLink(nodeData)}
@@ -590,11 +590,11 @@ export default class SummaryPanelAppBox extends React.Component<SummaryPanelProp
     );
   };
 
-  private renderServiceList = (appBox): any[] => {
+  private renderServiceList = (appBox): React.ReactFragment[] => {
     // likely 0 or 1 but support N in case of unanticipated labeling
     const serviceList: any[] = [];
 
-    appBox.children(`node[nodeType = "${NodeType.SERVICE}"]`).forEach(serviceNode => {
+    appBox.children(`node[nodeType = "${NodeType.SERVICE}"]`).forEach((serviceNode, i) => {
       const serviceNodeData = decoratedNodeData(serviceNode);
       serviceList.push(renderBadgedLink(serviceNodeData, NodeType.SERVICE));
       const aggregates = appBox.children(
@@ -606,14 +606,14 @@ export default class SummaryPanelAppBox extends React.Component<SummaryPanelProp
           const aggregateNodeData = decoratedNodeData(aggregateNode);
           aggregateList.push(renderBadgedLink(aggregateNodeData, NodeType.AGGREGATE));
         });
-        serviceList.push(<div>{aggregateList}</div>);
+        serviceList.push(<div key={`service-${i}`}>{aggregateList}</div>);
       }
     });
 
     return serviceList;
   };
 
-  private renderWorkloadList = (appBox): any[] => {
+  private renderWorkloadList = (appBox): React.ReactFragment[] => {
     const workloadList: any[] = [];
 
     appBox.children('node[workload]').forEach(node => {

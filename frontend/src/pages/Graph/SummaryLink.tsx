@@ -151,7 +151,7 @@ export const getLink = (nodeData: GraphNodeData, nodeType?: NodeType, linkGenera
 export const renderBadgedHost = (host: string) => {
   return (
     <div>
-      <PFBadge badge={PFBadges.Host} size="sm" />
+      <PFBadge key={`badgedHost-${host}`} badge={PFBadges.Host} size="sm" />
       {host === '*' ? '* (all hosts)' : host}
     </div>
   );
@@ -159,7 +159,7 @@ export const renderBadgedHost = (host: string) => {
 
 export const renderBadgedName = (nodeData: GraphNodeData, label?: string) => {
   return (
-    <div>
+    <div key={`badgedName-${nodeData.id}`}>
       <span style={{ marginRight: '1em', marginBottom: '3px', display: 'inline-block' }}>
         {label && (
           <span style={{ whiteSpace: 'pre' }}>
@@ -178,11 +178,11 @@ export const renderBadgedLink = (
   nodeType?: NodeType,
   label?: string,
   linkGenerator?: () => LinkInfo
-) => {
+): React.ReactFragment => {
   const link = getLink(nodeData, nodeType, linkGenerator);
 
   return (
-    <div>
+    <div key={`node-${nodeData.id}`}>
       <span style={{ marginRight: '1em', marginBottom: '3px', display: 'inline-block' }}>
         {label && (
           <span style={{ whiteSpace: 'pre' }}>
