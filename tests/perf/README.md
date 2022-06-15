@@ -1,7 +1,3 @@
-## Install
-
-yarn add cypress --dev
-
 # baseUrl default baseurl localhost:3000
 ## Can be updated in cypress.config.js or:
 
