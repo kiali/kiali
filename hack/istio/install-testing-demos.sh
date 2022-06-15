@@ -131,7 +131,7 @@ else
   # Delete everything - don't abort on error, just keep going and try to delete everything
   set +e
 
-  echo "Deleting the 'sleep' app in the 'default' namespace..."
+  echo "Deleting the 'sleep' app in the 'sleep' namespace..."
   ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
   ${CLIENT_EXE} delete ns sleep --ignore-not-found=true
   if [ "${IS_OPENSHIFT}" == "true" ]; then
