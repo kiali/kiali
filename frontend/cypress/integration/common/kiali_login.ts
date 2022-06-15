@@ -1,9 +1,9 @@
 import { Given, When, And, Then } from "cypress-cucumber-preprocessor/steps";
 
-const USERNAME = Cypress.env('USERNAME') || 'jenkins';
-const PASSWD = Cypress.env('PASSWD')
-const KUBEADMIN_IDP = 'my_htpasswd_provider';
-const auth_strategy = Cypress.env('auth_strategy')
+const USERNAME = Cypress.env('USERNAME') || 'jenkins'; // CYPRESS_USERNAME to the user
+const PASSWD = Cypress.env('PASSWD'); // CYPRESS_PASSWD to the user
+const KUBEADMIN_IDP = Cypress.env('AUTH_PROVIDER') || 'my_htpasswd_provider'; // CYPRESS_AUTH_PROVIDER to the user
+const auth_strategy = Cypress.env('auth_strategy');
 
 Given('user opens base url', () => {
     cy.visit('/');
@@ -19,8 +19,6 @@ Given('user opens base url', () => {
 
 And('user clicks Log In With OpenShift', () => {
     if (auth_strategy === 'openshift') {
-        const idp = KUBEADMIN_IDP;
-        cy.log(`Logging in as ${USERNAME}`);
         cy.get('button[type="submit"]').should('be.visible');
         cy.get('button[type="submit"]').click();
     }
@@ -28,6 +26,7 @@ And('user clicks Log In With OpenShift', () => {
 
 And('user clicks my_htpasswd_provider', () => {
     if (auth_strategy === 'openshift') {
+        cy.log('Log in using auth provider: ' + KUBEADMIN_IDP);
         cy.get('body').then(($body) => {
             if ($body.text().includes(KUBEADMIN_IDP)) {
                 cy.contains(KUBEADMIN_IDP)
@@ -40,6 +39,7 @@ And('user clicks my_htpasswd_provider', () => {
 
 And('user fill in username and password', () => {
     if (auth_strategy === 'openshift') {
+        cy.log('Log in as user: ' + USERNAME)
         cy.get('#inputUsername').type('' || USERNAME);
         cy.get('#inputPassword').type('' || PASSWD);
         cy.get('button[type="submit"]').click()
