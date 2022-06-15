@@ -475,7 +475,7 @@ export const getPodLogs = (
   namespace: string,
   name: string,
   container?: string,
-  tailLines?: number,
+  maxLines?: number,
   sinceTime?: number,
   duration?: DurationInSeconds,
   isProxy?: boolean
@@ -487,8 +487,8 @@ export const getPodLogs = (
   if (sinceTime) {
     params.sinceTime = sinceTime;
   }
-  if (tailLines && tailLines > 0) {
-    params.tailLines = tailLines;
+  if (maxLines && maxLines > 0) {
+    params.maxLines = maxLines;
   }
   if (duration && duration > 0) {
     params.duration = `${duration}s`;

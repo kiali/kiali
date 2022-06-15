@@ -89,6 +89,7 @@ interface WorkloadPodLogsState {
   loadingLogs: boolean;
   loadingLogsError?: string;
   logWindowSelections: any[];
+  maxLines: number;
   podValue?: number;
   showClearHideLogButton: boolean;
   showClearShowLogButton: boolean;
@@ -97,7 +98,6 @@ interface WorkloadPodLogsState {
   showSpans: boolean;
   showTimestamps: boolean;
   showToolbar: boolean;
-  tailLines: number;
   useRegex: boolean;
 }
 
@@ -115,16 +115,17 @@ enum LogLevel {
 const RETURN_KEY_CODE = 13;
 const NoLogsFoundMessage = 'No container logs found for the time period.';
 
-const TailLinesDefault = 100;
-const TailLinesOptions = {
+const MaxLinesDefault = 3000;
+const MaxLinesOptions = {
   '-1': 'All lines',
-  '10': '10 lines',
-  '50': '50 lines',
-  '100': '100 lines',
-  '300': '300 lines',
-  '500': '500 lines',
-  '1000': '1000 lines',
-  '5000': '5000 lines'
+  '100': 'Max: 100 lines',
+  '500': 'Max: 500 lines',
+  '1000': 'Max: 1,000 lines',
+  '3000': 'Max: 3,000 lines',
+  '5000': 'Max: 5,000 lines',
+  '10000': 'Max: 10,000 lines',
+  '20000': 'Max: 20,000 lines',
+  '50000': 'Max: 50,000 lines',
 };
 
 const alInfoIcon = style({
@@ -195,13 +196,13 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       kebabOpen: false,
       loadingLogs: false,
       logWindowSelections: [],
+      maxLines: MaxLinesDefault,
       showClearHideLogButton: false,
       showClearShowLogButton: false,
       showLogValue: '',
       showSpans: showSpans !== 'true' ? false : true,
       showTimestamps: false,
       showToolbar: true,
-      tailLines: TailLinesDefault,
       useRegex: false
     };
     if (this.props.pods.length < 1) {
@@ -240,7 +241,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
         pod.name,
         this.state.containerOptions,
         this.state.showSpans,
-        this.state.tailLines,
+        this.state.maxLines,
         this.props.timeRange
       );
     }
@@ -250,18 +251,18 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     const prevContainerOptions = prevState.containerOptions ? prevState.containerOptions : undefined;
     const newContainerOptions = this.state.containerOptions ? this.state.containerOptions : undefined;
     const updateContainerOptions = newContainerOptions && newContainerOptions !== prevContainerOptions;
-    const updateTailLines = this.state.tailLines && prevState.tailLines !== this.state.tailLines;
+    const updateMaxLines = this.state.maxLines && prevState.maxLines !== this.state.maxLines;
     const lastRefreshChanged = prevProps.lastRefreshAt !== this.props.lastRefreshAt;
     const showSpansChanged = prevState.showSpans !== this.state.showSpans;
     const timeRangeChanged = !isEqualTimeRange(this.props.timeRange, prevProps.timeRange);
-    if (updateContainerOptions || updateTailLines || lastRefreshChanged || showSpansChanged || timeRangeChanged) {
+    if (updateContainerOptions || updateMaxLines || lastRefreshChanged || showSpansChanged || timeRangeChanged) {
       const pod = this.props.pods[this.state.podValue!];
       this.fetchEntries(
         this.props.namespace,
         pod.name,
         newContainerOptions!,
         this.state.showSpans,
-        this.state.tailLines,
+        this.state.maxLines,
         this.props.timeRange
       );
     }
@@ -375,12 +376,12 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                           </ToolbarItem>
                           <ToolbarItem style={{ marginLeft: 'auto' }}>
                             <ToolbarDropdown
-                              id={'wpl_tailLines'}
-                              handleSelect={key => this.setTailLines(Number(key))}
-                              value={this.state.tailLines}
-                              label={TailLinesOptions[this.state.tailLines]}
-                              options={TailLinesOptions}
-                              tooltip={'Show up to last N log lines'}
+                              id={'wpl_maxLines'}
+                              handleSelect={key => this.setMaxLines(Number(key))}
+                              value={this.state.maxLines}
+                              label={MaxLinesOptions[this.state.maxLines]}
+                              options={MaxLinesOptions}
+                              tooltip={'Show up to N head log lines'}
                               classNameSelect={toolbarTail}
                             />
                           </ToolbarItem>
@@ -678,8 +679,8 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     this.setState({ containerOptions: containerNames, podValue: Number(podValue) });
   };
 
-  private setTailLines = (tailLines: number) => {
-    this.setState({ tailLines: tailLines });
+  private setMaxLines = (maxLines: number) => {
+    this.setState({ maxLines: maxLines });
   };
 
   private setKebabOpen = (kebabOpen: boolean) => {
@@ -883,7 +884,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     podName: string,
     containerOptions: ContainerOption[],
     showSpans: boolean,
-    tailLines: number,
+    maxLines: number,
     timeRange: TimeRange
   ) => {
     const now: TimeInMilliseconds = Date.now();
@@ -898,7 +899,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
     const selectedContainers = containerOptions.filter(c => c.isSelected);
     const promises: Promise<AxiosResponse<PodLogs | Span[]>>[] = selectedContainers.map(c => {
-      return getPodLogs(namespace, podName, c.name, tailLines, sinceTime, duration, c.isProxy);
+      return getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, c.isProxy);
     });
     if (showSpans) {
       // Convert seconds to microseconds
