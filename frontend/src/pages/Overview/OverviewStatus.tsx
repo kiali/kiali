@@ -9,12 +9,20 @@ import { FilterSelected } from '../../components/Filters/StatefulFilters';
 import { createIcon } from '../../components/Health/Helper';
 
 import '../../components/Health/Health.css';
+import {KialiAppState} from "../../store/Store";
+import {connect} from "react-redux";
+import {kioskGraphAction} from "../../components/Kiosk/KioskActions";
+import {durationSelector, refreshIntervalSelector} from "../../store/Selectors";
+import {DurationInSeconds, IntervalInMilliseconds} from "../../types/Common";
 
 type Props = {
+  duration: DurationInSeconds;
   id: string;
+  isKiosk: boolean;
   namespace: string;
   status: Status;
   items: string[];
+  refreshInterval: IntervalInMilliseconds;
   targetPage: Paths;
 };
 
@@ -28,6 +36,14 @@ class OverviewStatus extends React.Component<Props, {}> {
     ];
     FilterSelected.setSelected({ filters: filters, op: DEFAULT_LABEL_OPERATION });
   };
+
+  linkAction = () => {
+    if (this.props.isKiosk) {
+      kioskGraphAction(this.props.namespace, this.props.status.name, this.props.duration, this.props.refreshInterval)
+    } else {
+      this.setFilters()
+    }
+  }
 
   render() {
     const length = this.props.items.length;
@@ -48,6 +64,7 @@ class OverviewStatus extends React.Component<Props, {}> {
         })}
       </div>
     );
+
     return (
       <Tooltip
         aria-label={'Overview status'}
@@ -56,14 +73,21 @@ class OverviewStatus extends React.Component<Props, {}> {
         className={'health_indicator'}
       >
         <div style={{ display: 'inline-block', marginRight: '5px' }}>
-          <Link to={`/${this.props.targetPage}?namespaces=${this.props.namespace}`} onClick={() => this.setFilters()}>
+          <Link to={`/${this.props.targetPage}?namespaces=${this.props.namespace}`} onClick={() => this.linkAction()}>
             {createIcon(this.props.status)}
             {' ' + length}
-          </Link>{' '}
+          </Link>
         </div>
       </Tooltip>
     );
   }
 }
 
-export default OverviewStatus;
+const mapStateToProps = (state: KialiAppState) => ({
+  duration: durationSelector(state),
+  isKiosk: state.globalState.isKiosk,
+  refreshInterval: refreshIntervalSelector(state),
+});
+
+const OverviewStatusContainer = connect(mapStateToProps)(OverviewStatus)
+export default OverviewStatusContainer;
