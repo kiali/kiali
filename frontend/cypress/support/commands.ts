@@ -44,47 +44,49 @@ Cypress.Commands.add('login', (provider: string, username: string, password: str
   cy.log('auth cookie is:', haveCookie);
 
   cy.window().then((win: any) => {
-    if (auth_strategy != 'openshift') {
+    if (auth_strategy !== 'openshift') {
       cy.log('Skipping login, Kiali is running with auth disabled');
-    } else {
-      if (haveCookie === false) {
-        cy.intercept('api/authenticate').as('authorized'); //request setting kiali cookie
-        // Cypress.Cookies.debug(true) // now Cypress will log when it alters cookies
-        // cy.getCookies()
+      return;
+    }
 
-        cy.log(
-          `provider: ${provider}, 
+    if (haveCookie === false) {
+      cy.intercept('api/authenticate').as('authorized'); //request setting kiali cookie
+      // Cypress.Cookies.debug(true) // now Cypress will log when it alters cookies
+      // cy.getCookies()
+
+      cy.log(
+        `provider: ${provider},
 					username: ${username},
 					auth_strategy: ${auth_strategy}`
-        );
-        cy.visit('/');
+      );
+      // Disabling refresh as this can prevent navigation to another page
+      // until the overview page has fully loaded which can be greatly delayed
+      // if the refresh interval is lower and the api requests are slow.
+      cy.visit('/console/overview?duration=60&refresh=0');
 
-        if (auth_strategy === 'openshift') {
-          cy.get('.pf-c-form').contains(auth_strategy, { matchCase: false }).click();
-        }
-
-        if (auth_strategy === 'openshift') {
-          cy.get('.pf-c-button').contains(provider, { matchCase: false }).click();
-        }
-
-        if (auth_strategy === 'openshift') {
-          cy.get('#inputUsername').clear().type(username);
-          cy.get('#inputPassword').clear().type(password);
-          cy.get('button[type="submit"]').click();
-          cy.wait('@authorized').its('response.statusCode').should('eq', 200);
-          cy.getCookie('kiali-token-aes', { timeout: 15000 })
-            .should('exist')
-            .then(() => {
-              haveCookie = true;
-            });
-          // Wait for the redirect to the overview page after a successful login.
-          // Otherwise the redirect can mess with page loading on subsequent tests.
-          cy.contains('loading', {matchCase: false}).should('not.exist')
-          cy.url().should('include', '/overview');
-        }
-      } else {
-        cy.log('got an auth cookie, skipping login');
+      if (auth_strategy === 'openshift') {
+        cy.get('.pf-c-form').contains(auth_strategy, { matchCase: false }).click();
+        cy.get('.pf-c-button').contains(provider, { matchCase: false }).click();
+        cy.get('#inputUsername').clear().type(username);
+        cy.get('#inputPassword').clear().type(password);
+        cy.get('button[type="submit"]').click();
+        cy.wait('@authorized').its('response.statusCode').should('eq', 200);
+        cy.getCookie('kiali-token-aes', { timeout: 15000 })
+          .should('exist')
+          .then(() => {
+            haveCookie = true;
+          });
+        // Wait for the redirect to the overview page after a successful login.
+        // Otherwise the redirect can mess with page loading on subsequent tests.
+        cy.contains('loading', { matchCase: false }).should('not.exist');
+        cy.url().should('include', '/overview');
+        // Wait for the overview page to load some elements to be sure that things
+        // have settled. Otherwise some part of the overview page will change the
+        // url back to the overview page.
+        cy.getBySel('alpha-EXPAND');
       }
+    } else {
+      cy.log('got an auth cookie, skipping login');
     }
   });
 });
