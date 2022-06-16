@@ -155,6 +155,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     const inTab = (
       <Tab title="Inbound Metrics" eventKey={3} key={'Inbound Metrics'}>
         <IstioMetricsContainer
+          data-test="inbound-metrics-component"
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.workload}
           objectType={MetricsObjectTypes.WORKLOAD}
@@ -167,6 +168,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     const outTab = (
       <Tab title="Outbound Metrics" eventKey={4} key={'Outbound Metrics'}>
         <IstioMetricsContainer
+          data-test="outbound-metrics-component"
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.workload}
           objectType={MetricsObjectTypes.WORKLOAD}
