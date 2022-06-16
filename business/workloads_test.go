@@ -609,7 +609,7 @@ func TestGetPodLogsMaxLines(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	maxLines := 2
-	duration, _ := time.ParseDuration("6h") // still need a duration to force manual tailLines handling
+	duration, _ := time.ParseDuration("6h")
 	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines, Duration: &duration})
 
 	assert.Equal(2, len(podLogs.Entries))
