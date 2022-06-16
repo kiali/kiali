@@ -24,11 +24,15 @@ import EnvoyDetailsContainer from 'components/Envoy/EnvoyDetails';
 import { StatusState } from '../../types/StatusState';
 import { WorkloadHealth } from 'types/Health';
 import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
+import ErrorSection from "../../components/ErrorSection/ErrorSection";
+import {ErrorMsg} from "../../types/ErrorMsg";
+
 
 type WorkloadDetailsState = {
   workload?: Workload;
   health?: WorkloadHealth;
   currentTab: string;
+  error?: ErrorMsg;
 };
 
 type ReduxProps = {
@@ -99,7 +103,11 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           )
         });
       })
-      .catch(error => AlertUtils.addError('Could not fetch Workload.', error));
+      .catch(error => {
+        AlertUtils.addError('Could not fetch Workload.', error);
+        const msg : ErrorMsg = {title: 'No Workload is selected', description: this.props.match.params.workload +" is not found in the mesh"};
+        this.setState({error: msg});
+      });
   };
 
   private staticTabs() {
@@ -264,6 +272,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
   }
 
   render() {
+
     // set default to true: all dynamic tabs (unlisted below) are for runtimes dashboards, which uses custom time
     let useCustomTime = true;
     switch (this.state.currentTab) {
@@ -294,6 +303,9 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           rightToolbar={<TimeControl customDuration={useCustomTime} />}
           actionsToolbar={actionsToolbar}
         />
+        {this.state.error && (
+          <ErrorSection error={this.state.error} />
+          )}
         {this.state.workload && (
           <ParameterizedTabs
             id="basic-tabs"
