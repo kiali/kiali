@@ -21,6 +21,8 @@ import { Gateway, PeerAuthentication, Validations } from '../../types/IstioObjec
 import ServiceWizardDropdown from '../../components/IstioWizards/ServiceWizardDropdown';
 import TimeControl from '../../components/Time/TimeControl';
 import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
+import {ErrorMsg} from "../../types/ErrorMsg";
+import ErrorSection from "../../components/ErrorSection/ErrorSection";
 
 type ServiceDetailsState = {
   currentTab: string;
@@ -28,6 +30,7 @@ type ServiceDetailsState = {
   serviceDetails?: ServiceDetailsInfo;
   peerAuthentications: PeerAuthentication[];
   validations: Validations;
+  error?: ErrorMsg;
 };
 
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
@@ -100,6 +103,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       })
       .catch(error => {
         AlertUtils.addError('Could not fetch Service Details.', error);
+        const msg : ErrorMsg = {title: 'No Service is selected', description: this.props.match.params.service +" is not found in the mesh"};
+        this.setState({error: msg});
       });
 
     API.getIstioConfig(this.props.match.params.namespace, ['peerauthentications'], false, '', '')
@@ -203,20 +208,25 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           rightToolbar={<TimeControl customDuration={useCustomTime} />}
           actionsToolbar={actionsToolbar}
         />
-        <ParameterizedTabs
-          id="basic-tabs"
-          onSelect={tabValue => {
-            this.setState({ currentTab: tabValue });
-          }}
-          tabMap={tabIndex}
-          tabName={tabName}
-          defaultTab={defaultTab}
-          activeTab={this.state.currentTab}
-          mountOnEnter={true}
-          unmountOnExit={true}
-        >
-          {this.renderTabs()}
-        </ParameterizedTabs>
+        {this.state.error && (
+          <ErrorSection error={this.state.error} />
+        )}
+        {!this.state.error && (
+          <ParameterizedTabs
+            id="basic-tabs"
+            onSelect={tabValue => {
+              this.setState({ currentTab: tabValue });
+            }}
+            tabMap={tabIndex}
+            tabName={tabName}
+            defaultTab={defaultTab}
+            activeTab={this.state.currentTab}
+            mountOnEnter={true}
+            unmountOnExit={true}
+          >
+            {this.renderTabs()}
+          </ParameterizedTabs>
+          )}
       </>
     );
   }
