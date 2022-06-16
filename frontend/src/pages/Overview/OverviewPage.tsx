@@ -133,7 +133,7 @@ type State = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  isKiosk: boolean;
+  kiosk: string;
   meshStatus: string;
   navCollapse: boolean;
   refreshInterval: IntervalInMilliseconds;
@@ -516,7 +516,28 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   getNamespaceActions = (nsInfo: NamespaceInfo): OverviewNamespaceAction[] => {
     // Today actions are fixed, but soon actions may depend of the state of a namespace
     // So we keep this wrapped in a showActions function.
-    const namespaceActions: OverviewNamespaceAction[] = !this.props.isKiosk ? [
+    const namespaceActions: OverviewNamespaceAction[] = this.props.kiosk.length > 0 && this.props.kiosk !== 'true' ? [
+      {
+        isGroup: true,
+        isSeparator: false,
+        isDisabled: false,
+        title: 'Show',
+        children: [
+          {
+            isGroup: true,
+            isSeparator: false,
+            title: 'Graph',
+            action: (ns: string) => kioskOverviewAction(Show.GRAPH, ns, this.props.duration, this.props.refreshInterval)
+          },
+          {
+            isGroup: true,
+            isSeparator: false,
+            title: 'Istio Config',
+            action: (ns: string) => kioskOverviewAction(Show.ISTIO_CONFIG, ns, this.props.duration, this.props.refreshInterval)
+          }
+        ]
+      }
+    ] : [
       {
         isGroup: true,
         isSeparator: false,
@@ -552,27 +573,6 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             isSeparator: false,
             title: 'Istio Config',
             action: (ns: string) => this.show(Show.ISTIO_CONFIG, ns, this.state.type)
-          }
-        ]
-      }
-    ] : [
-      {
-        isGroup: true,
-        isSeparator: false,
-        isDisabled: false,
-        title: 'Show',
-        children: [
-          {
-            isGroup: true,
-            isSeparator: false,
-            title: 'Graph',
-            action: (ns: string) => kioskOverviewAction(Show.GRAPH, ns, this.props.duration, this.props.refreshInterval)
-          },
-          {
-            isGroup: true,
-            isSeparator: false,
-            title: 'Istio Config',
-            action: (ns: string) => kioskOverviewAction(Show.ISTIO_CONFIG, ns, this.props.duration, this.props.refreshInterval)
           }
         ]
       }
@@ -923,7 +923,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
-  isKiosk: state.globalState.isKiosk,
+  kiosk: state.globalState.kiosk,
   meshStatus: meshWideMTLSStatusSelector(state),
   navCollapse: state.userSettings.interface.navCollapse,
   refreshInterval: refreshIntervalSelector(state)

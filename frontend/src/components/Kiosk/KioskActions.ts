@@ -51,7 +51,8 @@ export const kioskOverviewAction = (showType: Show, namespace: string, duration:
 
 // Message has no format, parent should parse it for its needs
 const sendParentMessage = (msg: string): void => {
-  // Kiosk parameter will capture the parent target; this will enable iframe -> parent communication
+  // Kiosk parameter will capture the parent target when kiosk !== "true"
+  // this will enable iframe -> parent communication
   const targetOrigin = store.getState().globalState.kiosk;
   window.top.postMessage(msg, targetOrigin);
 }

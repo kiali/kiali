@@ -15,14 +15,17 @@ import {kioskGraphAction} from "../../components/Kiosk/KioskActions";
 import {durationSelector, refreshIntervalSelector} from "../../store/Selectors";
 import {DurationInSeconds, IntervalInMilliseconds} from "../../types/Common";
 
-type Props = {
+type ReduxProps = {
   duration: DurationInSeconds;
+  kiosk: string;
+  refreshInterval: IntervalInMilliseconds;
+}
+
+type Props = ReduxProps & {
   id: string;
-  isKiosk: boolean;
   namespace: string;
   status: Status;
   items: string[];
-  refreshInterval: IntervalInMilliseconds;
   targetPage: Paths;
 };
 
@@ -38,7 +41,9 @@ class OverviewStatus extends React.Component<Props, {}> {
   };
 
   linkAction = () => {
-    if (this.props.isKiosk) {
+    // Kiosk actions are used when the kiosk specifies a parent,
+    // otherwise the kiosk=true will keep the links inside Kiali
+    if (this.props.kiosk.length > 0 && this.props.kiosk !== 'true') {
       kioskGraphAction(this.props.namespace, this.props.status.name, this.props.duration, this.props.refreshInterval, this.props.targetPage)
     } else {
       this.setFilters()
@@ -85,7 +90,7 @@ class OverviewStatus extends React.Component<Props, {}> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  isKiosk: state.globalState.isKiosk,
+  kiosk: state.globalState.kiosk,
   refreshInterval: refreshIntervalSelector(state),
 });
 

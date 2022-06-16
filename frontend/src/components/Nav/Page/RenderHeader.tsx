@@ -28,8 +28,11 @@ const actionsToolbarStyle = style({
   borderBottom: '1px solid #d2d2d2'
 });
 
-interface RenderHeaderProps {
+type ReduxProps = {
   isKiosk: boolean;
+}
+
+type RenderHeaderProps = ReduxProps & {
   location?: {
     pathname: string;
     search: string;

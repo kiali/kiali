@@ -5,8 +5,11 @@ import {KialiAppState} from "../../store/Store";
 import {connect} from "react-redux";
 import {kioskIstioConfigAction} from "../Kiosk/KioskActions";
 
-interface Props {
-  isKiosk: boolean;
+type ReduxProps = {
+  kiosk: string;
+}
+
+type Props = ReduxProps & {
   namespace: string;
   errors: number;
   warnings: number;
@@ -23,7 +26,9 @@ class ValidationSummaryLink extends React.Component<Props> {
     let link: any = <div style={{ display: 'inline-block', marginLeft: '5px' }}>N/A</div>;
 
     if (this.hasIstioObjects()) {
-      link = this.props.isKiosk ? (
+      // Kiosk actions are used when the kiosk specifies a parent,
+      // otherwise the kiosk=true will keep the links inside Kiali
+      link = this.props.kiosk.length > 0 && this.props.kiosk !== 'true' ? (
           <Link to={''} onClick={() => kioskIstioConfigAction(this.props.namespace)}>
             {this.props.children}
           </Link>
@@ -43,7 +48,7 @@ class ValidationSummaryLink extends React.Component<Props> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  isKiosk: state.globalState.isKiosk,
+  kiosk: state.globalState.kiosk,
 });
 
 const ValidationSummaryLinkContainer = connect(mapStateToProps)(ValidationSummaryLink)
