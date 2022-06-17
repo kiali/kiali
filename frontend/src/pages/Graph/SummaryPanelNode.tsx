@@ -41,6 +41,7 @@ const defaultState: SummaryPanelNodeState = {
 
 type ReduxProps = {
   jaegerState: JaegerState;
+  kiosk: string;
   rankResult: RankResult;
   showRank: boolean;
 };
@@ -103,12 +104,13 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       this.props.jaegerState.info &&
       this.props.jaegerState.info.enabled &&
       this.props.jaegerState.info.integration;
+
     const options = getOptions(nodeData);
     const items = [
       <DropdownGroup key="show" label="Show" className="kiali-group-menu">
         {options.map((o, i) => {
           return (
-            <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o)}>
+            <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
               {o.text} {o.target === '_blank' && <ExternalLinkAltIcon />}
             </DropdownItem>
           );
@@ -389,6 +391,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
 
 const mapStateToProps = (state: KialiAppState) => ({
   jaegerState: state.jaegerState,
+  kiosk: state.globalState.kiosk,
   rankResult: state.graph.rankResult,
   showRank: state.graph.toolbarState.showRank
 });

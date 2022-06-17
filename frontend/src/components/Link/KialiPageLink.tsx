@@ -2,38 +2,61 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { serverConfig } from '../../config';
+import {KialiAppState} from "../../store/Store";
+import {connect} from "react-redux";
+import {kioskContextMenuAction} from "../Kiosk/KioskActions";
 
-interface KialiPageLinkProps {
+type ReduxProps = {
+    kiosk: string;
+}
+
+type KialiPageLinkProps = ReduxProps & {
+  children: React.ReactNode;
   cluster?: string;
   href: string;
 }
 
-const KialiPageLink: React.FC<KialiPageLinkProps> = props => {
-  // Without a cluster, simply render a local link
-  if (props.cluster === undefined) {
-    return <Link to={props.href}>{props.children}</Link>;
+class KialiPageLink extends React.Component<KialiPageLinkProps> {
+
+  render() {
+    // Without a cluster, simply render a local link
+    // If cluster is specified, and it's the home cluster, render a local link.
+    if (this.props.cluster === undefined || !serverConfig.clusterInfo?.name || this.props.cluster === serverConfig.clusterInfo.name) {
+      if (this.props.kiosk.length > 0 && this.props.kiosk !== 'true') {
+        return <Link
+            to={''}
+            onClick={()=> {
+              kioskContextMenuAction(this.props.href);
+            }}
+            children={this.props.children}
+          />;
+      } else {
+        return <Link to={this.props.href}>{this.props.children}</Link>;
+      }
+    }
+
+    // If it's a remote cluster, check if there is an accessible Kiali on that cluster.
+    // If there is, render an external link. Else, render plain text.
+    const clusterInfo = serverConfig.clusters[this.props.cluster];
+    const kialiInstance = clusterInfo?.kialiInstances?.find(instance => instance.url.length !== 0);
+
+    if (kialiInstance === undefined) {
+      return this.props.children as React.ReactElement<any>;
+    } else {
+      const href = kialiInstance.url.replace(/\/$/g, '') + '/console' + this.props.href;
+      return (
+        <a href={href} rel="noreferrer noopener" target="_blank">
+          {this.props.children} <ExternalLinkAltIcon/>
+        </a>
+      );
+    }
   }
 
-  // If cluster is specified, and it's the home cluster, render a local link.
-  if (!serverConfig.clusterInfo?.name || props.cluster === serverConfig.clusterInfo.name) {
-    return <Link to={props.href}>{props.children}</Link>;
-  }
+}
 
-  // If it's a remote cluster, check if there is an accessible Kiali on that cluster.
-  // If there is, render an external link. Else, render plain text.
-  const clusterInfo = serverConfig.clusters[props.cluster];
-  const kialiInstance = clusterInfo?.kialiInstances?.find(instance => instance.url.length !== 0);
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
+  kiosk: state.globalState.kiosk,
+});
 
-  if (kialiInstance === undefined) {
-    return props.children as React.ReactElement<any>;
-  } else {
-    const href = kialiInstance.url.replace(/\/$/g, '') + '/console' + props.href;
-    return (
-      <a href={href} rel="noreferrer noopener" target="_blank">
-        {props.children} <ExternalLinkAltIcon />
-      </a>
-    );
-  }
-};
-
-export default KialiPageLink;
+const KialiPageLinkContainer = connect(mapStateToProps)(KialiPageLink);
+export default KialiPageLinkContainer;

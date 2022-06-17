@@ -24,6 +24,7 @@ type SummaryPanelState = {
 type MainSummaryPanelPropType = SummaryPanelPropType & {
   isPageVisible: boolean;
   jaegerState: JaegerState;
+  kiosk: string;
 };
 
 const mainStyle = style({
@@ -139,6 +140,7 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
                 duration={this.props.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
+                kiosk={this.props.kiosk}
                 namespaces={this.props.data.summaryTarget.namespaces}
                 queryTime={this.props.queryTime}
                 rateInterval={this.props.rateInterval}
@@ -153,6 +155,7 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
                 duration={this.props.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
+                kiosk={this.props.kiosk}
                 namespaces={this.props.data.summaryTarget.namespaces}
                 queryTime={this.props.queryTime}
                 rateInterval={this.props.rateInterval}
@@ -167,6 +170,7 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
                 duration={this.props.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
+                kiosk={this.props.kiosk}
                 namespaces={this.props.data.summaryTarget.namespaces}
                 queryTime={this.props.queryTime}
                 rateInterval={this.props.rateInterval}
@@ -187,6 +191,7 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
             duration={this.props.duration}
             graphType={this.props.graphType}
             injectServiceNodes={this.props.injectServiceNodes}
+            kiosk={this.props.kiosk}
             namespaces={this.props.namespaces}
             queryTime={this.props.queryTime}
             rateInterval={this.props.rateInterval}
@@ -221,7 +226,8 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerState: state.jaegerState
+  jaegerState: state.jaegerState,
+  kiosk: state.globalState.kiosk
 });
 
 const SummaryPanelContainer = connect(mapStateToProps)(SummaryPanel);

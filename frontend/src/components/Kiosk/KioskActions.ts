@@ -29,6 +29,11 @@ export const kioskGraphAction = (namespace: string, healthStatus: string, durati
   sendParentMessage(showInParent);
 }
 
+export const kioskContextMenuAction = (href: string) => {
+  const showInParent = href;
+  sendParentMessage(showInParent);
+};
+
 export const kioskIstioConfigAction = (namespace: string) => {
   const showInParent = '/istio?namespaces=' + namespace;
   sendParentMessage(showInParent);
