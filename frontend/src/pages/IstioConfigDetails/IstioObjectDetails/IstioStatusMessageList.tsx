@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {IstioLevelToSeverity, ObjectCheck, ValidationMessage, ValidationTypes} from '../../../types/IstioObjects';
-import { Flex, FlexItem, Stack, StackItem, Title, TitleSizes, Tooltip } from '@patternfly/react-core';
+import {Flex, FlexItem, Stack, StackItem, Title, TitleSizes, Tooltip, TooltipPosition} from '@patternfly/react-core';
 import Validation from '../../../components/Validations/Validation';
 import {KialiIcon} from "../../../config/KialiIcon";
 import {style} from "typestyle";
@@ -11,8 +11,7 @@ interface Props {
 }
 
 const infoStyle = style({
-  margin: '0px 0px 2px 10px',
-  verticalAlign: '-5px !important'
+  verticalAlign: '-0.125em !important'
 });
 
 class IstioStatusMessageList extends React.Component<Props> {
@@ -54,8 +53,10 @@ class IstioStatusMessageList extends React.Component<Props> {
                     <FlexItem>
                       {check.code}
                     </FlexItem>
-                    <Tooltip content={check.message} >
+                    <Tooltip content={check.message} position={TooltipPosition.right}>
+                      <div className="iconInfo">
                       <KialiIcon.Info className={infoStyle} />
+                      </div>
                     </Tooltip>
                   </Flex>
 
