@@ -132,7 +132,7 @@ install_istio() {
 
 install_prometheus() {
   # Need to first setup the security context
-  oc apply -f - <<SCC
+  cat <<SCC | oc apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
