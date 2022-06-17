@@ -26,7 +26,24 @@ describe('graphload', () => {
     })
 
     it('Visit Main Page', () => {
-        cy.visit("/")
+        cy.visit("/", {
+            onBeforeLoad(win) {
+                win.performance.mark("start");
+            }
+        })
+        .its("performance").then((performance) => {
+
+            cy.get(".pf-l-grid").should('be.visible')
+                .then(() => {
+                    performance.mark("end")
+                    performance.measure("initPageLoad", "start", "end");
+                    const measure = performance.getEntriesByName("initPageLoad")[0];
+                    const duration = measure.duration;
+                    assert.isAtMost(duration, Cypress.config('threshold'));
+
+                    cy.writeFile('logs/performance.txt', `[PERFORMANCE] Init page load time: \n ${duration / 1000} seconds\n`)
+                })
+        })
     })
 
     it('Measure Graph load time', {
@@ -49,7 +66,7 @@ describe('graphload', () => {
                     const duration = measure.duration;
                     assert.isAtMost(duration, Cypress.config('threshold'));
 
-                    cy.writeFile('logs/performance.txt', `[PERFORMANCE] Graph load time for ${graphUrl}: \n ${duration / 1000} seconds`)
+                    cy.writeFile('logs/performance.txt', `[PERFORMANCE] Graph load time for ${graphUrl}: \n ${duration / 1000} seconds\n`, { flag: 'a+' })
                 })
 
         })
