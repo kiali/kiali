@@ -23,12 +23,15 @@ infomsg() {
 # FUNCTION: is_cluster_deployed - returns 'true' if the cluster is in the state of "deployed and ingress is healthy"
 is_cluster_deployed() {
   local state="$(ibmcloud oc cluster get --cluster ${CLUSTER_NAME} --output json | jq -r '.lifecycle.masterState')"
-  local ingress_state="$(ibmcloud ks ingress status --cluster ${CLUSTER_NAME} --output json | jq -r '.status')"
-  if [ "${state}" == "deployed" ] && [ "${ingress_state}" == "healthy" ]; then
-    echo "true"
-  else
-    echo "false"
+  if [ "${state}" == "deployed" ]; then
+    # Only try to get the ingress status after the cluster is online.
+    local ingress_state="$(ibmcloud ks ingress status --cluster ${CLUSTER_NAME} --output json | jq -r '.status')"
+    if [ "${ingress_state}" == "healthy" ]; then
+      echo "true"
+      return
+    fi
   fi
+  echo "false"
 }
 
 # FUNCTION: create - Creates the main resources if they do not yet exist
