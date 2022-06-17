@@ -186,6 +186,7 @@ func setupAppListEndpoint() (*httptest.Server, *kubetest.K8SClientMock, *prometh
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	business.SetWithBackends(mockClientFactory, prom)
+	business.SetKialiControlPlaneCluster(&business.Cluster{Name: business.DefaultClusterID})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/apps", http.HandlerFunc(

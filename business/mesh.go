@@ -178,6 +178,12 @@ var kialiControlPlaneClusterCached bool
 // kialiControlPlaneCluster holds the cached home cluster (it may be nil when mesh is not configured)
 var kialiControlPlaneCluster *Cluster
 
+// Global helper used for test mockup
+func SetKialiControlPlaneCluster(cluster *Cluster) {
+	kialiControlPlaneClusterCached = true
+	kialiControlPlaneCluster = cluster
+}
+
 // ResolveKialiControlPlaneCluster tries to resolve the metadata about the cluster where
 // Kiali is installed. This assumes that the mesh Control Plane is installed in the
 // same cluster as Kiali.
