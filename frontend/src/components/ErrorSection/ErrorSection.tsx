@@ -16,7 +16,7 @@ export default class ErrorSection extends React.Component<MessageProps> {
   render() {
     return (
       <div>
-      <EmptyState id="empty-graph-error" variant={EmptyStateVariant.large} className={errorSectionStyle}>
+      <EmptyState id="empty-page-error" variant={EmptyStateVariant.large} className={errorSectionStyle}>
         <Title headingLevel="h5" size={TitleSizes.lg}>
           {this.props.error.title}
         </Title>
