@@ -84,6 +84,8 @@ interface WorkloadPodLogsState {
   accessLogModals: Map<string, AccessLog>;
   containerOptions?: ContainerOption[];
   entries: Entry[];
+  findLogValue: string;
+  findLogLine?: number;
   fullscreen: boolean;
   hideError?: string;
   hideLogValue: string;
@@ -194,6 +196,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     const defaultState = {
       accessLogModals: new Map<string, AccessLog>(),
       entries: [],
+      findLogValue: '',
       fullscreen: false,
       hideLogValue: '',
       kebabOpen: false,
@@ -369,6 +372,19 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                             />
                           </ToolbarItem>
                           <ToolbarItem style={{ marginLeft: 'auto' }}>
+                            <TextInput
+                              id="log_find"
+                              name="log_find"
+                              style={{ width: '10em' }}
+                              validated={undefined}
+                              autoComplete="on"
+                              type="text"
+                              onKeyPress={this.checkSubmitFind}
+                              onChange={this.updateFind}
+                              defaultValue={this.state.hideLogValue}
+                              aria-label="Find text in logs"
+                              placeholder="Find"
+                            />
                             <ToolbarDropdown
                               id={'wpl_maxLines'}
                               handleSelect={key => this.setMaxLines(Number(key))}
@@ -442,6 +458,20 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     this.setState({ containerOptions: [...this.state.containerOptions!] });
   };
 
+  private renderHighlightedFindIfNeeded = (lineIndex: number, entry: string) => {
+    if (this.state.findLogLine === lineIndex && this.state.findLogValue.length > 0) {
+      let chunks: React.ReactNode[] = [];
+      entry.split(this.state.findLogValue).forEach(chunk => {
+        chunks.push(<span>{chunk}</span>);
+        chunks.push(<span style={{backgroundColor: "#040"}}>{this.state.findLogValue}</span>);
+      });
+      chunks.pop();
+      return chunks;
+    } else {
+      return entry;
+    }
+  }
+
   private renderLogLine = ({index, style}: {index: number, style: Object}) => {
     let e = this.filteredEntries(this.state.entries, this.state.showLogValue, this.state.hideLogValue, this.state.useRegex)[index];
     if (e.span) {
@@ -484,7 +514,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
               display: 'inline-block'
             }}
           >
-            {this.entryToString(e)}
+            {this.renderHighlightedFindIfNeeded(index, this.entryToString(e))}
           </p>
         </div>
       );
@@ -493,7 +523,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     return !le.accessLog ? (
       <div key={`le-d-${index}`} style={{ height: '22px', lineHeight: '22px', ...style }}>
         <p key={`le-${index}`} style={{ color: le.color!, fontSize: '12px' }}>
-          {this.entryToString(e)}
+          {this.renderHighlightedFindIfNeeded(index, this.entryToString(e))}
         </p>
       </div>
     ) : (
@@ -530,7 +560,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           key={`al-p-${index}`}
           style={{ color: le.color!, fontSize: '12px', verticalAlign: 'center', display: 'inline-block' }}
         >
-          {le.message}
+          {this.renderHighlightedFindIfNeeded(index, le.message)}
         </p>
       </div>
     );
@@ -655,7 +685,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                 rowRenderer={this.renderLogLine}
                 height={height}
                 width={width}
-                scrollToIndex={logEntries.length - 1}
+                scrollToIndex={this.state.findLogLine ?? logEntries.length - 1}
                 noRowsRenderer={() => (NoLogsFoundMessage)}
               />
             )}
@@ -760,7 +790,6 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
   private filteredEntries = memoize((entries: Entry[], showValue: string, hideValue: string, useRegex: boolean) => {
     let filteredEntries = entries;
-    filteredEntries.forEach((e) => { console.log('Entry:', e.logEntry && e.logEntry.message);});
 
     if (!!showValue) {
       if (useRegex) {
@@ -826,6 +855,38 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
   private updateHide = val => {
     if ('' === val) {
       this.clearHide();
+    }
+  };
+
+  private runFind = () => {
+    let entries = this.filteredEntries(this.state.entries, this.state.showLogValue, this.state.hideLogValue, this.state.useRegex);
+
+    for (let i = 1 + (this.state.findLogLine ?? -1); i < entries.length; i++) {
+      let entry = this.entryToString(entries[i]);
+      if (entry.includes(this.state.findLogValue)) {
+        this.setState({ findLogLine: i });
+        break;
+      }
+    }
+  }
+
+  private checkSubmitFind = event => {
+    const keyCode = event.keyCode ? event.keyCode : event.which;
+    if (keyCode === RETURN_KEY_CODE) {
+      event.preventDefault();
+      this.setState(prevState => ({
+        findLogValue: prevState.findLogValue !== event.target.value ? event.target.value : prevState.findLogValue,
+        findLogLine: prevState.findLogValue !== event.target.value ? undefined : prevState.findLogLine
+      }), this.runFind);
+    }
+  };
+
+  private updateFind = val => {
+    if ('' === val) {
+      this.setState({
+        findLogValue: '',
+        findLogLine: undefined
+      });
     }
   };
 
