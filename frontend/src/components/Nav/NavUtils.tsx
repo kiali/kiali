@@ -2,7 +2,7 @@ import { Layout, EdgeLabelMode, NodeType, NodeParamsType, GraphType, TrafficRate
 import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 import { URLParam } from '../../app/History';
-import { isKioskMode } from '../../utils/SearchParamUtils';
+import {getKioskMode, isKioskMode} from '../../utils/SearchParamUtils';
 
 export type GraphUrlParams = {
   activeNamespaces: Namespace[];
@@ -44,7 +44,8 @@ export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams): string
     queryParams += `&${URLParam.NAMESPACES}=${namespaces}`;
   }
   if (isKioskMode()) {
-    queryParams += '&kiosk=true';
+    // Kiosk value can be true or the url of the parent
+    queryParams += '&kiosk=' + getKioskMode();
   }
   return `/graph/namespaces?` + queryParams;
 };

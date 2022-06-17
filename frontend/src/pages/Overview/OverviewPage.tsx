@@ -59,9 +59,10 @@ import history, { HistoryManager, URLParam } from '../../app/History';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
 import { ValidationStatus } from '../../types/IstioObjects';
-import ValidationSummaryLink from '../../components/Link/ValidationSummaryLink';
 import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
 import { ExternalLink } from '../../types/Dashboards';
+import {kioskOverviewAction} from "../../components/Kiosk/KioskActions";
+import ValidationSummaryLinkContainer from "../../components/Link/ValidationSummaryLink";
 
 const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
@@ -110,7 +111,7 @@ const cardNamespaceNameLongStyle = style({
   whiteSpace: 'nowrap'
 });
 
-enum Show {
+export enum Show {
   GRAPH,
   APPLICATIONS,
   WORKLOADS,
@@ -132,6 +133,7 @@ type State = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
+  kiosk: string;
   meshStatus: string;
   navCollapse: boolean;
   refreshInterval: IntervalInMilliseconds;
@@ -514,7 +516,28 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   getNamespaceActions = (nsInfo: NamespaceInfo): OverviewNamespaceAction[] => {
     // Today actions are fixed, but soon actions may depend of the state of a namespace
     // So we keep this wrapped in a showActions function.
-    const namespaceActions: OverviewNamespaceAction[] = [
+    const namespaceActions: OverviewNamespaceAction[] = this.props.kiosk.length > 0 && this.props.kiosk !== 'true' ? [
+      {
+        isGroup: true,
+        isSeparator: false,
+        isDisabled: false,
+        title: 'Show',
+        children: [
+          {
+            isGroup: true,
+            isSeparator: false,
+            title: 'Graph',
+            action: (ns: string) => kioskOverviewAction(Show.GRAPH, ns, this.props.duration, this.props.refreshInterval)
+          },
+          {
+            isGroup: true,
+            isSeparator: false,
+            title: 'Istio Config',
+            action: (ns: string) => kioskOverviewAction(Show.ISTIO_CONFIG, ns, this.props.duration, this.props.refreshInterval)
+          }
+        ]
+      }
+    ] : [
       {
         isGroup: true,
         isSeparator: false,
@@ -881,7 +904,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     }
 
     return (
-      <ValidationSummaryLink
+      <ValidationSummaryLinkContainer
         namespace={ns.name}
         objectCount={validations.objectCount}
         errors={validations.errors}
@@ -893,13 +916,14 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           warnings={validations.warnings}
           objectCount={validations.objectCount}
         />
-      </ValidationSummaryLink>
+      </ValidationSummaryLinkContainer>
     );
   }
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
+  kiosk: state.globalState.kiosk,
   meshStatus: meshWideMTLSStatusSelector(state),
   navCollapse: state.userSettings.interface.navCollapse,
   refreshInterval: refreshIntervalSelector(state)

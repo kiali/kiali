@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from '../../types/Health';
-import OverviewStatus from './OverviewStatus';
 import { OverviewType, DirectionType } from './OverviewToolbar';
 import { NamespaceStatus } from './NamespaceInfo';
 import { switchType } from './OverviewHelper';
@@ -8,6 +7,7 @@ import { Paths } from '../../config';
 import { Metric } from '../../types/Metrics';
 import { DurationInSeconds } from '../../types/Common';
 import OverviewCardSparkline from './OverviewCardSparkline';
+import OverviewStatusContainer from "./OverviewStatus";
 
 type Props = {
   name: string;
@@ -77,7 +77,7 @@ class OverviewCardContentExpanded extends React.Component<Props> {
             {mainLink}
             <div style={{ display: 'inline-block' }} data-test="overview-app-health">
               {status.inNotReady.length > 0 && (
-                <OverviewStatus
+                <OverviewStatusContainer
                   id={name + '-not-ready'}
                   namespace={name}
                   status={NOT_READY}
@@ -86,7 +86,7 @@ class OverviewCardContentExpanded extends React.Component<Props> {
                 />
               )}
               {status.inError.length > 0 && (
-                <OverviewStatus
+                <OverviewStatusContainer
                   id={name + '-failure'}
                   namespace={name}
                   status={FAILURE}
@@ -95,7 +95,7 @@ class OverviewCardContentExpanded extends React.Component<Props> {
                 />
               )}
               {status.inWarning.length > 0 && (
-                <OverviewStatus
+                <OverviewStatusContainer
                   id={name + '-degraded'}
                   namespace={name}
                   status={DEGRADED}
@@ -104,7 +104,7 @@ class OverviewCardContentExpanded extends React.Component<Props> {
                 />
               )}
               {status.inSuccess.length > 0 && (
-                <OverviewStatus
+                <OverviewStatusContainer
                   id={name + '-healthy'}
                   namespace={name}
                   status={HEALTHY}
