@@ -22,6 +22,14 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>Kiali</title>
+    <!-- Preload the pficon font to ensure it is available immediately for Graph edges or ace editors -->
+    <link rel="preload" href="%PUBLIC_URL%/pficon.woff2" as="font" type="font/woff2" crossorigin />
+    <style>
+      @font-face {
+        font-family: 'pficon';
+        src: url('%PUBLIC_URL%/pficon.woff2') format('woff2');
+      }
+    </style>
   </head>
   <body class="pf-m-redhat-font">
     <noscript> You need to enable JavaScript to run this app. </noscript>
