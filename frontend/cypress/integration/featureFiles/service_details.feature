@@ -5,61 +5,42 @@ Feature: Kiali Service Details page
 
   Background:
     Given user is at administrator perspective
-    And user is at a valid "service details" page
+    And user is at the details page for the "service" "bookinfo/productpage"
 
   @service-details-page
-  Scenario: See a table with correct info
-    When user selects the "productspage" service
-    Then user sees a table with headings
-      | Overview | Traffic | Inbound Metrics | Traces |
-    And the "productpage" grid item is visible
-    And the "Network" grid item is visible
-    And the "Istio Config" grid item is visible
-    And the "Graph" grid is visible
+  Scenario: See details for productpage
+    Then user sees a list with content "Overview"
+    Then user sees a list with content "Traffic"
+    Then user sees a list with content "Inbound Metrics"
+    Then user sees a list with content "Traces"
 
   @service-details-page
-  Scenario: See "Traffic" for "productspage" service details
-    When the user clicks in the "traffic" tab
-    Then user sees Inbound Traffic in the pages
-    And user sees Outbound Traffic in the pages
+  Scenario: See details for service
+    Then user sees productpage details information for service
 
- @service-details-page
- Scenario: See "Inbound Metrics" for "productspage" service details
-    When the user clicks in the "Inbound Metrics" tab
-    Then the user sees "Request Volume" graph
-    And the user sees "Request Volume" graph
-    the user sees "Request Volume" graph
-    the user sees "Request duration" graph
-    the user sees "Request size" graph
-    the user sees "Response size" graph
-    the user sees "Request throughput" graph
-    the user sees "Response throughput" graph
-    the user sees "gRPC received" graph
-    the user sees "gRPC sent" graph
-    the user sees "TCP opened" graph
-    the user sees "TCP closed" graph
-    the user sees "TCP received" graph
-    the user sees "TCP sent" graph
+  @app-details-page
+  Scenario: See minigraph for details app.
+    Then user sees a minigraph
 
- @service-details-page
- Scenario: See "Outbound Metrics" for "productspage" service details
-    When the user clicks in the "Outbound Metrics" tab
-    Then the user sees "Request Volume" graph
-    And the user sees "Request Volume" graph
-    the user sees "Request Volume" graph
-    the user sees "Request duration" graph
-    the user sees "Request size" graph
-    the user sees "Response size" graph
-    the user sees "Request throughput" graph
-    the user sees "Response throughput" graph
-    the user sees "gRPC received" graph
-    the user sees "gRPC sent" graph
-    the user sees "TCP opened" graph
-    the user sees "TCP closed" graph
-    the user sees "TCP received" graph
-    the user sees "TCP sent" graph
+  @service-details-page
+  Scenario: See Traffic information
+    Then user sees inbound and outbound traffic information
 
-  @services-page
-  Scenario: See "Traces" for "productspage" service details
-    When the user clicks in the "Traces" tab
-    Then user sees "traces" in the table
+  @service-details-page
+  Scenario: See Inbound Metrics for productspage service details
+    Then the user sees "Request volume" graph
+    Then the user sees "Request duration" graph
+    Then the user sees "Request size" graph
+    Then the user sees "Response size" graph
+    Then the user sees "Request throughput" graph
+    Then the user sees "Response throughput" graph
+    Then the user sees "gRPC received" graph
+    Then the user sees "gRPC sent" graph
+    Then the user sees "TCP opened" graph
+    Then the user sees "TCP closed" graph
+    Then the user sees "TCP received" graph
+    Then the user sees "TCP sent" graph
+
+  @service-details-page
+  Scenario: See Graph data for productspage service details Inbound Metrics graphs
+    Then the user does not see No data message in the "Request volume" graph
