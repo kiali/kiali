@@ -2,11 +2,18 @@ import * as React from 'react';
 import {IstioLevelToSeverity, ObjectCheck, ValidationMessage, ValidationTypes} from '../../../types/IstioObjects';
 import { Flex, FlexItem, Stack, StackItem, Title, TitleSizes, Tooltip } from '@patternfly/react-core';
 import Validation from '../../../components/Validations/Validation';
+import {KialiIcon} from "../../../config/KialiIcon";
+import {style} from "typestyle";
 
 interface Props {
   messages?: ValidationMessage[];
   checks?: ObjectCheck[];
 }
+
+const infoStyle = style({
+  margin: '0px 0px 2px 10px',
+  verticalAlign: '-5px !important'
+});
 
 class IstioStatusMessageList extends React.Component<Props> {
   render() {
@@ -40,16 +47,18 @@ class IstioStatusMessageList extends React.Component<Props> {
             {(this.props.checks || []).map((check, index) => {
               return (
                 <StackItem id={'valid_msg-' + index} className={'validation-message'}>
-                  <Tooltip content={check.message}>
-                    <Flex>
-                      <FlexItem>
-                        <Validation severity={check.severity} />
-                      </FlexItem>
-                      <FlexItem>
-                        {check.code}
-                      </FlexItem>
-                    </Flex>
-                  </Tooltip>
+                  <Flex>
+                    <FlexItem>
+                      <Validation severity={check.severity} />
+                    </FlexItem>
+                    <FlexItem>
+                      {check.code}
+                    </FlexItem>
+                    <Tooltip content={check.message} >
+                      <KialiIcon.Info className={infoStyle} />
+                    </Tooltip>
+                  </Flex>
+
                 </StackItem>
               );
             })}
