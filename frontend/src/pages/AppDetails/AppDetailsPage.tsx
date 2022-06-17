@@ -21,6 +21,8 @@ import TrafficDetails from 'components/TrafficList/TrafficDetails';
 import TimeControl from '../../components/Time/TimeControl';
 import { AppHealth } from 'types/Health';
 import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
+import {ErrorMsg} from "../../types/ErrorMsg";
+import ErrorSection from "../../components/ErrorSection/ErrorSection";
 
 type AppDetailsState = {
   app?: App;
@@ -28,6 +30,7 @@ type AppDetailsState = {
   // currentTab is needed to (un)mount tab components
   // when the tab is not rendered.
   currentTab: string;
+  error?: ErrorMsg;
 };
 
 type ReduxProps = {
@@ -93,7 +96,11 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           )
         });
       })
-      .catch(error => AlertUtils.addError('Could not fetch App Details.', error));
+      .catch(error => {
+        AlertUtils.addError('Could not fetch App Details.', error)
+        const msg : ErrorMsg = {title: 'No App is selected', description: this.props.match.params.app +" is not found in the mesh"};
+        this.setState({error: msg});
+      });
   };
 
   private runtimeTabs() {
@@ -226,6 +233,9 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     return (
       <>
         <RenderHeaderContainer location={this.props.location} rightToolbar={<TimeControl customDuration={useCustomTime} />} />
+        {this.state.error && (
+          <ErrorSection error={this.state.error} />
+        )}
         {this.state.app && (
           <ParameterizedTabs
             id="basic-tabs"

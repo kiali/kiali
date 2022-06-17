@@ -54,6 +54,8 @@ import RefreshContainer from "../../components/Refresh/Refresh";
 import IstioConfigOverview from './IstioObjectDetails/IstioConfigOverview';
 import { Annotation } from 'react-ace/types';
 import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
+import {ErrorMsg} from "../../types/ErrorMsg";
+import ErrorSection from "../../components/ErrorSection/ErrorSection";
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -78,6 +80,7 @@ interface IstioConfigDetailsState {
   currentTab: string;
   isExpanded: boolean;
   selectedEditorLine?: string;
+  error?: ErrorMsg;
 }
 
 const tabName = 'list';
@@ -151,8 +154,10 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         );
       })
       .catch(error => {
+        const msg : ErrorMsg = {title: 'No Istio object is selected', description: this.props.match.params.object +" is not found in the mesh"};
         this.setState({
-          isRemoved: true
+          isRemoved: true,
+          error: msg
         });
         AlertUtils.addError(
           `Could not fetch Istio object type [${props.objectType}] name [${props.object}] in namespace [${props.namespace}].`,
@@ -561,8 +566,12 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         <RenderHeaderContainer
           location={this.props.location}
           rightToolbar={<RefreshContainer id="config_details_refresh" hideLabel={true} handleRefresh={this.onRefresh} />}
-          actionsToolbar={this.renderActions()}
+          actionsToolbar={!this.state.error ? this.renderActions() : undefined}
         />
+        {this.state.error && (
+          <ErrorSection error={this.state.error} />
+        )}
+        {!this.state.error && (
         <ParameterizedTabs
           id="basic-tabs"
           onSelect={tabValue => {
@@ -579,6 +588,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
             <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>
           </Tab>
         </ParameterizedTabs>
+          )}
         <Prompt
           message={location => {
             if (this.state.isModified) {
