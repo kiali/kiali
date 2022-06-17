@@ -127,7 +127,48 @@ install_istio() {
   if [ -n "${ISTIO_VERSION}" ]; then
     iv_option="-iv ${ISTIO_VERSION}"
   fi
-  hack/istio/install-istio-via-istioctl.sh -iee true -cp openshift ${iv_option}
+  hack/istio/install-istio-via-istioctl.sh -iee true -cp openshift ${iv_option} --addons "grafana jaeger"
+}
+
+install_prometheus() {
+  # Need to first setup the security context
+  cat <<SCC | oc apply -f -
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: prometheus-scc
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+users:
+- "system:serviceaccount:prometheus:prometheus-alertmanager"
+- "system:serviceaccount:prometheus:prometheus-kube-state-metrics"
+- "system:serviceaccount:prometheus:prometheus-node-exporter"
+- "system:serviceaccount:prometheus:prometheus-pushgateway"
+- "system:serviceaccount:prometheus:prometheus-server"
+SCC
+
+  helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+  helm repo update
+  cat <<EOM | helm upgrade prometheus prometheus-community/prometheus -i --create-namespace --namespace prometheus -f -
+server:
+  retention: 14d
+  persistentVolume:
+    enabled: true
+  statefulSet:
+    enabled: true
+
+  resources:
+    limits:
+      cpu: 750m
+      memory: 8Gi
+    requests:
+      cpu: 750m
+      memory: 8Gi
+EOM
 }
 
 install_kiali() {
@@ -178,14 +219,14 @@ install_kiali() {
     
   # Need to install operator for downstream bookinfo script to work.
   helm install \
-      --create-namespace \
-      --namespace kiali-operator \
-      --set cr.create=false \
-      --set image.tag=${KIALI_VERSION} \
-      --set image.repo="${operator_image_repo}" \
-      ${additional_set} \
-      kiali-operator \
-      ${helm_chart}
+    --create-namespace \
+    --namespace kiali-operator \
+    --set cr.create=false \
+    --set image.tag=${KIALI_VERSION} \
+    --set image.repo="${operator_image_repo}" \
+    ${additional_set} \
+    kiali-operator \
+    ${helm_chart}
     
   oc apply -f - <<EOF
 apiVersion: kiali.io/v1alpha1
@@ -213,6 +254,8 @@ spec:
         - name: "Istio Mesh Dashboard"
     tracing:
       url: "http://tracing.istio-system:16685/jaeger"
+    prometheus:
+      url: "http://prometheus-server.prometheus"
   istio_namespace: istio-system
   server:
     observability:
@@ -253,6 +296,7 @@ if ! ibmcloud account show > /dev/null;  then
 fi
 
 install_openshift
+install_prometheus
 install_istio
 install_kiali
 install_demo_apps
