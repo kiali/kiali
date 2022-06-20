@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {
+  Alert,
   Button,
   ButtonVariant,
   Card,
@@ -22,7 +23,7 @@ import {
   Checkbox
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import { addError, addSuccess, addWarning } from 'utils/AlertUtils';
+import { addError, addSuccess } from 'utils/AlertUtils';
 import { Pod, LogEntry, AccessLog, PodLogs } from '../../types/IstioObjects';
 import { getPodLogs, getWorkloadSpans, setPodEnvoyProxyLogLevel } from '../../services/Api';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -86,6 +87,7 @@ interface WorkloadPodLogsState {
   hideError?: string;
   hideLogValue: string;
   kebabOpen: boolean;
+  linesTruncatedContainers: string[];
   loadingLogs: boolean;
   loadingLogsError?: string;
   logWindowSelections: any[];
@@ -166,12 +168,13 @@ const toolbarInputStyle = style({
 });
 
 const logsBackground = (enabled: boolean) => ({ backgroundColor: enabled ? PFColors.Black1000 : 'gray' });
-const logsHeight = (showToolbar: boolean, fullscreen: boolean, isKiosk: boolean) => {
+const logsHeight = (showToolbar: boolean, fullscreen: boolean, isKiosk: boolean, showMaxLinesWarning: boolean) => {
   const toolbarHeight = showToolbar ? '0px' : '49px';
+  const maxLinesWarningHeight = showMaxLinesWarning ? '27px' : '0px'
   return {
     height: fullscreen
-      ? `calc(100vh - 130px + ${toolbarHeight})`
-      : `calc(var(--kiali-details-pages-tab-content-height) - ${!isKiosk ? '155px' : '0px'} + ${toolbarHeight})`
+      ? `calc(100vh - 130px + ${toolbarHeight} - ${maxLinesWarningHeight})`
+      : `calc(var(--kiali-details-pages-tab-content-height) - ${!isKiosk ? '155px' : '0px'} + ${toolbarHeight} - ${maxLinesWarningHeight})`
   };
 };
 
@@ -193,13 +196,14 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       fullscreen: false,
       hideLogValue: '',
       kebabOpen: false,
+      linesTruncatedContainers: [],
       loadingLogs: false,
       logWindowSelections: [],
       maxLines: MaxLinesDefault,
       showClearHideLogButton: false,
       showClearShowLogButton: false,
       showLogValue: '',
-      showSpans: showSpans !== 'true' ? false : true,
+      showSpans: showSpans === 'true',
       showTimestamps: false,
       showToolbar: true,
       useRegex: false
@@ -538,7 +542,11 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
             </ToolbarItem>
           </ToolbarGroup>
         </Toolbar>
-
+        { this.state.linesTruncatedContainers.length > 0 && (
+          <div style={{marginBottom: '5px'}}>
+            <Alert variant="danger" isInline={true} isPlain={true} title={`Max lines exceeded for containers: ${this.state.linesTruncatedContainers.join(', ')}. Increase maxLines for more lines, or decrease time period.`} />
+          </div>
+        )}
         <div
           key="logsText"
           id="logsText"
@@ -548,7 +556,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           // (to max) and when we try to assign scrollTop to scrollHeight (above),it stays at 0
           // and we fail to set the scroll correctly. So, don't change this!
           style={{
-            ...logsHeight(this.state.showToolbar, this.state.fullscreen, this.props.isKiosk),
+            ...logsHeight(this.state.showToolbar, this.state.fullscreen, this.props.isKiosk, this.state.linesTruncatedContainers.length > 0),
             ...logsBackground(this.hasEntries(this.state.entries))
           }}
           ref={this.logsRef}
@@ -952,13 +960,9 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           return a.timestampUnix - b.timestampUnix;
         });
 
-        if (linesTruncatedContainers.length > 0) {
-          addWarning('Maximum lines surpassed for containers: ' + linesTruncatedContainers.join(', ') +
-            '. Not all log lines for the requested time range are shown.', true);
-        }
-
         this.setState({
           entries: sortedEntries,
+          linesTruncatedContainers: linesTruncatedContainers,
           loadingLogs: false
         });
 
