@@ -445,7 +445,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 				opts.MaxLines = &numLines
 			}
 		} else {
-			return nil, fmt.Errorf("Invalid max-lines [%s]: %v", maxLines, err)
+			return nil, fmt.Errorf("Invalid maxLines [%s]: %v", maxLines, err)
 		}
 	}
 
