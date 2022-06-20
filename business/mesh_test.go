@@ -2,7 +2,6 @@ package business
 
 import (
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -98,9 +97,9 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	k8s.On("GetNamespace", "foo").Return(&kialiNs, nil)
 	k8s.On("GetServicesByLabels", "foo", "app.kubernetes.io/part-of=kiali").Return(kialiSvc, nil)
 
-	os.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
-	os.Setenv("KUBERNETES_SERVICE_PORT", "9443")
-	os.Setenv("ACTIVE_NAMESPACE", "foo")
+	t.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
+	t.Setenv("KUBERNETES_SERVICE_PORT", "9443")
+	t.Setenv("ACTIVE_NAMESPACE", "foo")
 
 	layer := NewWithBackends(k8s, nil, nil)
 	meshSvc := layer.Mesh
@@ -205,7 +204,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 			},
 		}
 
-		os.Setenv("ACTIVE_NAMESPACE", "foo")
+		t.Setenv("ACTIVE_NAMESPACE", "foo")
 
 		remoteClient.On("GetNamespace", conf.IstioNamespace).Return(remoteNs, nil)
 		remoteClient.On("GetClusterServicesByLabels", "app.kubernetes.io/part-of=kiali").Return(kialiSvc, nil)
@@ -304,7 +303,9 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
-	os.Setenv("ACTIVE_NAMESPACE", "foo")
+	t.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
+	t.Setenv("KUBERNETES_SERVICE_PORT", "9443")
+	t.Setenv("ACTIVE_NAMESPACE", "foo")
 
 	istioDeploymentMock := apps_v1.Deployment{
 		Spec: apps_v1.DeploymentSpec{
