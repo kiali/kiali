@@ -1,12 +1,18 @@
 import * as React from 'react';
 import {IstioLevelToSeverity, ObjectCheck, ValidationMessage, ValidationTypes} from '../../../types/IstioObjects';
-import { Flex, FlexItem, Stack, StackItem, Title, TitleSizes, Tooltip } from '@patternfly/react-core';
+import {Flex, FlexItem, Stack, StackItem, Title, TitleSizes, Tooltip, TooltipPosition} from '@patternfly/react-core';
 import Validation from '../../../components/Validations/Validation';
+import {KialiIcon} from "../../../config/KialiIcon";
+import {style} from "typestyle";
 
 interface Props {
-  messages: ValidationMessage[];
+  messages?: ValidationMessage[];
   checks?: ObjectCheck[];
 }
+
+const infoStyle = style({
+  verticalAlign: '-0.125em !important'
+});
 
 class IstioStatusMessageList extends React.Component<Props> {
   render() {
@@ -18,7 +24,7 @@ class IstioStatusMessageList extends React.Component<Props> {
               Configuration Analysis
             </Title>
           </StackItem>
-          {this.props.messages.map((msg: ValidationMessage, i: number) => {
+          {(this.props.messages || []).map((msg: ValidationMessage, i: number) => {
             const severity: ValidationTypes = IstioLevelToSeverity[msg.level || 'UNKNOWN'];
             return (
               <StackItem id={'msg-' + i} className={'validation-message'}>
@@ -40,16 +46,20 @@ class IstioStatusMessageList extends React.Component<Props> {
             {(this.props.checks || []).map((check, index) => {
               return (
                 <StackItem id={'valid_msg-' + index} className={'validation-message'}>
-                  <Tooltip content={check.message}>
-                    <Flex>
-                      <FlexItem>
-                        <Validation severity={check.severity} />
-                      </FlexItem>
-                      <FlexItem>
-                        {check.code}
-                      </FlexItem>
-                    </Flex>
-                  </Tooltip>
+                  <Flex>
+                    <FlexItem>
+                      <Validation severity={check.severity} />
+                    </FlexItem>
+                    <FlexItem>
+                      {check.code}
+                    </FlexItem>
+                    <Tooltip content={check.message} position={TooltipPosition.right}>
+                      <div className="iconInfo">
+                      <KialiIcon.Info className={infoStyle} />
+                      </div>
+                    </Tooltip>
+                  </Flex>
+
                 </StackItem>
               );
             })}

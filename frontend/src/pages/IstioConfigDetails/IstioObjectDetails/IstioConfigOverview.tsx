@@ -114,7 +114,9 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
               >
                 <KialiIcon.Info className={infoStyle} />
               </Tooltip>
-              {this.props.istioValidations && (!this.props.statusMessages || this.props.statusMessages.length === 0) && (
+              {this.props.istioValidations && (!this.props.statusMessages || this.props.statusMessages.length === 0)
+                && (!this.props.istioValidations.checks || this.props.istioValidations.checks.length === 0)
+                && (
                 <span className={healthIconStyle}>
                   <ValidationObjectSummary
                     id={'config-validation'}
@@ -133,7 +135,8 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
           </StackItem>
         )}
 
-        {this.props.statusMessages && this.props.statusMessages.length > 0 && (
+        {((this.props.statusMessages && this.props.statusMessages.length > 0 ) ||
+          (this.props.istioValidations && this.props.istioValidations.checks && this.props.istioValidations.checks.length > 0 ) ) && (
           <StackItem>
             <IstioStatusMessageList messages={this.props.statusMessages} checks={this.props.istioValidations?.checks} />
           </StackItem>
