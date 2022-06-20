@@ -13,12 +13,15 @@ Feature: Kiali Service Details page
     Then user sees a list with content "Traffic"
     Then user sees a list with content "Inbound Metrics"
     Then user sees a list with content "Traces"
+    Then user sees the actions button
 
   @service-details-page
   Scenario: See details for service
     Then user sees "productpage" details information for service
+    Then user sees Network card
+    Then user sees Istio Config
 
-  @app-details-page
+  @service-details-page
   Scenario: See minigraph for details app.
     Then user sees a minigraph
 
@@ -44,3 +47,13 @@ Feature: Kiali Service Details page
   @service-details-page
   Scenario: See Graph data for productspage service details Inbound Metrics graphs
     Then the user does not see No data message in the "Request volume" graph
+
+  @service-details-page
+  Scenario: See graph traces for productspage service details
+    Then user sees graph with traces information
+    And user sees trace details after selecting a trace
+
+  @service-details-page
+  Scenario: See span info after selecting a span
+    Then user sees graph with traces information
+    And user sees table details after selecting a trace
