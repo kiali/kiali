@@ -15,11 +15,11 @@ Then('user sees a list with content {string}', (tab: string) => {
     cy.get('.pf-c-tabs__list').contains(tab);
 });
 
-Then('user sees productpage details information for service', () => {
+Then('user sees {string} details information for service', (name: string) => {
     cy.get('#ServiceDescriptionCard').within(() => {
-        cy.get('#pfbadge-S').parent().parent().contains('productpage'); // Service
-        cy.get('#pfbadge-A').parent().parent().contains('productpage'); // App
-        cy.get('#pfbadge-W').parent().parent().contains('productpage-v1'); // Workload
+        cy.get('#pfbadge-S').parent().parent().contains(name); // Service
+        cy.get('#pfbadge-A').parent().parent().contains(name); // App
+        cy.get('#pfbadge-W').parent().parent().contains(name + '-v1'); // Workload
     });
 });
 

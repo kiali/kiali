@@ -16,7 +16,7 @@ Feature: Kiali Service Details page
 
   @service-details-page
   Scenario: See details for service
-    Then user sees productpage details information for service
+    Then user sees "productpage" details information for service
 
   @app-details-page
   Scenario: See minigraph for details app.
