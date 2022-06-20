@@ -1,0 +1,8 @@
+{
+  "name": "perf-test",
+  "version": "1.0.0",
+  "devDependencies": {
+    "cypress": "^9.2.1",
+    "typescript": "3.8.3"
+  }
+}
