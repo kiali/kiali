@@ -678,7 +678,7 @@ func TestGetPodLogsMaxLinesAndDurations(t *testing.T) {
 	assert.Equal(2, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
-	assert.True(podLogs.MaxLinesSurpassed)
+	assert.True(podLogs.LinesTruncated)
 
 	// Re-setup mocks
 	k8s = new(kubetest.K8SClientMock)
@@ -693,7 +693,7 @@ func TestGetPodLogsMaxLinesAndDurations(t *testing.T) {
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
 	assert.Equal("#3 Log Message", podLogs.Entries[2].Message)
-	assert.False(podLogs.MaxLinesSurpassed)
+	assert.False(podLogs.LinesTruncated)
 }
 
 func TestGetPodLogsProxy(t *testing.T) {

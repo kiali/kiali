@@ -54,8 +54,8 @@ type WorkloadCriteria struct {
 
 // PodLog reports log entries
 type PodLog struct {
-	Entries           []LogEntry `json:"entries,omitempty"`
-	MaxLinesSurpassed bool       `json:"maxLinesSurpassed,omitempty"`
+	Entries        []LogEntry `json:"entries,omitempty"`
+	LinesTruncated bool       `json:"linesTruncated,omitempty"`
 }
 
 // AccessLogEntry provides parsed info from a single proxy access log entry
@@ -1919,8 +1919,8 @@ func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOpt
 	}
 
 	if readErr == nil && opts.MaxLines != nil && linesWritten >= *opts.MaxLines {
-		// End the JSON document, setting the max-lines surpassed flag
-		_, writeErr = w.Write([]byte("], \"maxLinesSurpassed\": true}"))
+		// End the JSON document, setting the max-lines truncated flag
+		_, writeErr = w.Write([]byte("], \"linesTruncated\": true}"))
 	} else {
 		// End the JSON document
 		_, writeErr = w.Write([]byte("]}"))

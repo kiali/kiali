@@ -118,14 +118,13 @@ const NoLogsFoundMessage = 'No container logs found for the time period.';
 const MaxLinesDefault = 3000;
 const MaxLinesOptions = {
   '-1': 'All lines',
-  '100': 'Max: 100 lines',
-  '500': 'Max: 500 lines',
-  '1000': 'Max: 1,000 lines',
-  '3000': 'Max: 3,000 lines',
-  '5000': 'Max: 5,000 lines',
-  '10000': 'Max: 10,000 lines',
-  '20000': 'Max: 20,000 lines',
-  '50000': 'Max: 50,000 lines',
+  '100': '100 lines',
+  '500': '500 lines',
+  '1000': '1000 lines',
+  '3000': '3000 lines',
+  '5000': '5000 lines',
+  '10000': '10000 lines',
+  '25000': '25000 lines'
 };
 
 const alInfoIcon = style({
@@ -930,7 +929,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           responses.shift();
         }
 
-        let linesSurpassedContainers: string[] = [];
+        let linesTruncatedContainers: string[] = [];
         for (let i = 0; i < responses.length; i++) {
           const response = responses[i].data as PodLogs;
           const containerLogEntries = response.entries as LogEntry[];
@@ -943,8 +942,8 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
             entries.push({ timestamp: le.timestamp, timestampUnix: le.timestampUnix, logEntry: le } as Entry);
           });
 
-          if (response.maxLinesSurpassed) {
-            linesSurpassedContainers.push(new URL(responses[i].request.responseURL).searchParams.get('container')!);
+          if (response.linesTruncated) {
+            linesTruncatedContainers.push(new URL(responses[i].request.responseURL).searchParams.get('container')!);
           }
         }
 
@@ -953,8 +952,8 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           return a.timestampUnix - b.timestampUnix;
         });
 
-        if (linesSurpassedContainers.length > 0) {
-          addWarning('Maximum lines surpassed for containers: ' + linesSurpassedContainers.join(', ') +
+        if (linesTruncatedContainers.length > 0) {
+          addWarning('Maximum lines surpassed for containers: ' + linesTruncatedContainers.join(', ') +
             '. Not all log lines for the requested time range are shown.', true);
         }
 

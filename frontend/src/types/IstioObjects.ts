@@ -242,7 +242,7 @@ export type LogEntry = {
 
 export interface PodLogs {
   entries: LogEntry[];
-  maxLinesSurpassed?: boolean;
+  linesTruncated?: boolean;
 }
 
 export interface EnvoyProxyDump {
