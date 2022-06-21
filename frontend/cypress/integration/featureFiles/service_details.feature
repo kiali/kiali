@@ -17,7 +17,7 @@ Feature: Kiali Service Details page
 
   @service-details-page
   Scenario: See details for service
-    Then user sees "productpage" details information for service
+    Then user sees "productpage" details information for service "v1"
     Then user sees Network card
     Then user sees Istio Config
 

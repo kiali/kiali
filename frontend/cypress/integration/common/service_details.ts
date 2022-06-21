@@ -25,11 +25,11 @@ Then('user sees the actions button', () => {
     cy.getBySel('wizard-actions').siblings().contains("Request Routing");
 });
 
-Then('user sees {string} details information for service', (name: string) => {
+Then('user sees {string} details information for service {string}', (name: string, version: string) => {
     cy.get('#ServiceDescriptionCard').within(() => {
         cy.get('#pfbadge-S').parent().parent().contains(name); // Service
         cy.get('#pfbadge-A').parent().parent().contains(name); // App
-        cy.get('#pfbadge-W').parent().parent().contains(name + '-v1'); // Workload
+        cy.get('#pfbadge-W').parent().parent().contains(name + '-' + version); // Workload
     });
 });
 
