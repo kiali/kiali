@@ -98,6 +98,6 @@ And('user sees table details after selecting a trace', () => {
     cy.get('table').should('be.visible').contains('th', 'Timeline');
     cy.get('#pf-tab-section-1-trace-details').within(() => {
         cy.get('.pf-c-dropdown__toggle.pf-m-plain').first().click();
-        cy.get('.pf-c-dropdown__menu.pf-m-align-right').should('be.visible').contains('Inbound Metrics');
+        cy.get('ul.pf-c-dropdown__menu').should('be.visible').contains('Inbound Metrics');
     });
 });
