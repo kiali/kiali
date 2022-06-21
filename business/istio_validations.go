@@ -412,7 +412,7 @@ func (in *IstioValidationsService) filterPeerAuths(namespace string, mtlsDetails
 
 func (in *IstioValidationsService) filterAuthPolicies(namespace string, rbacDetails *kubernetes.RBACDetails, authPolicies []security_v1beta.AuthorizationPolicy) {
 	for _, ap := range authPolicies {
-		if ap.Namespace == namespace || namespace == ""  {
+		if ap.Namespace == namespace || namespace == "" {
 			rbacDetails.AuthorizationPolicies = append(rbacDetails.AuthorizationPolicies, ap)
 		}
 	}
