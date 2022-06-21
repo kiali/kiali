@@ -1,6 +1,6 @@
 # TODO: Use same dependencies as the frontend
 
-yarn install
+yarn install:dev
 
 # baseUrl default baseurl localhost:3000
 ## Can be updated in cypress.config.js or:
