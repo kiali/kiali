@@ -1,7 +1,0 @@
-{
-  "name": "perf-test",
-  "version": "1.0.0",
-  "scripts": {
-    "install:dev": "./install_kiali_ui_deps.sh"
-  }
-}

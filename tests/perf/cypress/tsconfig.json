@@ -1,11 +1,12 @@
 {
+  "baseUrl": "../../../frontend",
   "compilerOptions": {
     "target": "es5",
     "lib": ["es2019", "dom"],
-    "types": [
-      "cypress",
-      "cypress-react-selector",
-      "node"
+    "types": ["cypress", "cypress-react-selector", "node"],
+    "typeRoots": [
+      "../../../frontend/node_modules/@types",
+      "../../../frontend/node_modules/",
     ]
   },
   "include": ["**/*.ts"]

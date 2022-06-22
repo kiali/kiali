@@ -1,19 +1,32 @@
-# TODO: Use same dependencies as the frontend
+# Kiali Performance Tests
 
-yarn install:dev
+## Prerequisites:
 
-# baseUrl default baseurl localhost:3000
-## Can be updated in cypress.config.js or:
+- Install [frontend dependencies](../../frontend/README.adoc)
 
-yarn cypress run --config baseUrl=http://mybaseurl
+## Run tests:
+
+From the kiali root:
+
+cli
+```
+make -e CYPRESS_BASE_URL=http://mybaseurl perf-tests-run
+```
+
+gui
+```
+make perf-tests-gui
+```
+
+yarn from current dir
+```
+yarn --cwd <kiali-root>/frontend cypress --project <kiali-root>/tests/perf
+```
 
 ## Update url parameters:
 
 fixtures/graphParams.json
 
-# Run tests:
-## yarn cypress run
-## yarn cypress open
+## Results:
 
-# Results:
 logs/performance.txt

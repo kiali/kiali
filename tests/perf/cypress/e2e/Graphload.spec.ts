@@ -39,7 +39,7 @@ describe('graphload', () => {
                     performance.measure("initPageLoad", "start", "end");
                     const measure = performance.getEntriesByName("initPageLoad")[0];
                     const duration = measure.duration;
-                    assert.isAtMost(duration, Cypress.config('threshold'));
+                    assert.isAtMost(duration, Cypress.env('threshold'));
 
                     cy.writeFile('logs/performance.txt', `[PERFORMANCE] Init page load time: \n ${duration / 1000} seconds\n`)
                 })
@@ -47,7 +47,7 @@ describe('graphload', () => {
     })
 
     it('Measure Graph load time', {
-            defaultCommandTimeout: Cypress.config('timeout')
+            defaultCommandTimeout: Cypress.env('timeout')
     }, () => {
         cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
         cy.visit(graphUrl, {
@@ -64,7 +64,7 @@ describe('graphload', () => {
                     performance.measure("pageLoad", "start", "end");
                     const measure = performance.getEntriesByName("pageLoad")[0];
                     const duration = measure.duration;
-                    assert.isAtMost(duration, Cypress.config('threshold'));
+                    assert.isAtMost(duration, Cypress.env('threshold'));
 
                     cy.writeFile('logs/performance.txt', `[PERFORMANCE] Graph load time for ${graphUrl}: \n ${duration / 1000} seconds\n`, { flag: 'a+' })
                 })

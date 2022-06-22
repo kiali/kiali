@@ -1,10 +1,9 @@
 {
   "baseUrl": "http://localhost:3000",
-  "timeout": 10000,
-  "threshold": 100000,
+  "env": {
+    "timeout": 10000,
+    "threshold": 100000
+  },
   "integrationFolder": "cypress/e2e",
-  "testFiles": "**/*.spec.ts",
-  "compilerOptions": {
-      "baseUrl": "../../frontend/node_modules"
-  }
+  "testFiles": "**/*.spec.ts"
 }
