@@ -4,6 +4,7 @@
     "timeout": 10000,
     "threshold": 100000
   },
-  "integrationFolder": "cypress/e2e",
+  "integrationFolder": "cypress/perf",
+  "fixturesFolder": "cypress/fixtures/perf",
   "testFiles": "**/*.spec.ts"
 }

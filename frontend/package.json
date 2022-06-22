@@ -102,8 +102,6 @@
     "visibilityjs": "2.0.2"
   },
   "devDependencies": {
-    "@cypress/webpack-batteries-included-preprocessor": "^2.2.3",
-    "@cypress/webpack-preprocessor": "^5.12.0",
     "@types/cypress-cucumber-preprocessor": "^4.0.1",
     "@types/cytoscape": "3.14.0",
     "@types/enzyme": "3.10.5",
