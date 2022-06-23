@@ -27,6 +27,7 @@ import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import _ from "lodash";
 
 interface IstioConfigListPageState extends FilterComponent.State<IstioConfigItem> {}
 interface IstioConfigListPageProps extends FilterComponent.Props<IstioConfigItem> {
@@ -139,18 +140,44 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
   // Fetch the Istio configs, apply filters and map them into flattened list items
   fetchIstioConfigs(namespaces: string[], typeFilters: string[], istioNameFilters: string[]) {
-    return this.promises
-      .registerAll(
-        'configs',
-        namespaces.map(ns => API.getIstioConfig(ns, typeFilters, true, '', ''))
-      )
-      .then(responses => {
-        let istioItems: IstioConfigItem[] = [];
-        responses.forEach(response => {
-          istioItems = istioItems.concat(toIstioItems(filterByName(response.data, istioNameFilters)));
-        });
-        return istioItems;
-      });
+    // return this.promises
+    //   .registerAll(
+    //     'configs',
+    //     // THIS should be one call, not per namespace , OR the next section
+    //     namespaces.map(_ => API.getAllIstioConfigs(namespaces, typeFilters, true, '', ''))
+    //   )
+    //   .then(responses => {
+    //     let istioItems: IstioConfigItem[] = [];
+    //     responses.forEach(response => {
+    //       namespaces.forEach(ns => {
+    //         istioItems = istioItems.concat(toIstioItems(filterByName(response.data[ns], istioNameFilters)));
+    //       })
+    //     });
+    //     return istioItems;
+    //     });
+    // OR PER Chunk
+    let istioItems: IstioConfigItem[] = [];
+    _.chunk(namespaces, 10).forEach(chunk => {
+      return this.promises
+        .registerChained('configs', undefined, () => this.fetchIstioConfigChunks(chunk, typeFilters, istioNameFilters, istioItems))
+        .then(() => {
+          return istioItems;
+        })
+    })
+  }
+
+  fetchIstioConfigChunks(chunk: string[], typeFilters: string[], istioNameFilters: string[], istioItems: IstioConfigItem[]) {
+    return Promise.all(
+      [
+        API.getAllIstioConfigs(chunk, typeFilters, true, '', '')
+      ]
+    )
+      .then( results => {
+          chunk.forEach(ns => {
+            istioItems = istioItems.concat(toIstioItems(filterByName(results[0].data[ns], istioNameFilters)));
+          })
+      })
+      .catch(err => this.handleAxiosError('Could not fetch Istio configs', err));
   }
 
   render() {

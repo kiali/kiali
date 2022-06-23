@@ -168,6 +168,7 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 	for _, ns := range nss {
 		if filtered[ns] == nil {
 			filtered[ns] = new(IstioConfigList)
+			filtered[ns].Namespace = Namespace{Name: ns}
 		}
 		for _, dr := range configList.DestinationRules {
 			if dr.Namespace == ns {
