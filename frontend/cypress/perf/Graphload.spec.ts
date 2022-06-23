@@ -1,14 +1,5 @@
 describe('graphload', () => {
 
-    http://localhost:3000/console/graph/namespaces/
-        // ?traffic=grpc%2CgrpcRequest%2Chttp%2ChttpRequest%2Ctcp%2CtcpSent
-        // &graphType=versionedApp
-        // &namespaces=bookinfo%2Ccert-manager
-        // &duration=60
-        // &refresh=15000
-        // &layout=kiali-dagre
-        // &namespaceLayout=kiali-dagre
-
     var graphUrl;
 
     before(() => {
@@ -57,7 +48,7 @@ describe('graphload', () => {
         })
         .its("performance").then((performance) => {
             cy.wait('@graphNamespaces')
-            //cy.get('#loading_kiali_spinner').should('not.exist')
+
             cy.get("#cy", { timeout: 10000 }).should('be.visible')
                 .then(() => {
                     performance.mark("end")
