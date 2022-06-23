@@ -77,11 +77,11 @@ func TestServiceEntryLabelsNotMatch(t *testing.T) {
 
 func getConfigDetails(namespace, name, configType string, assert *assert.Assertions) (*models.IstioConfigDetails, error) {
 	config, _, err := utils.IstioConfigDetails(namespace, name, configType)
-	if err == nil && config != nil && config.IstioValidation != nil {
+	if err == nil && config != nil && config.IstioValidation != nil && config.IstioReferences != nil {
 		return config, nil
 	}
 	pollErr := wait.Poll(time.Second, time.Minute, func() (bool, error) {
-		config, _, err := utils.IstioConfigDetails(namespace, name, configType)
+		config, _, err = utils.IstioConfigDetails(namespace, name, configType)
 		if err == nil && config != nil && config.IstioValidation != nil && config.IstioReferences != nil {
 			return true, nil
 		}
