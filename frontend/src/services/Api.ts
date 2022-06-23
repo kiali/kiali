@@ -132,6 +132,10 @@ export const getMeshTls = () => {
   return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.meshTls(), {}, {});
 };
 
+export const getOutboundTrafficPolicyMode = () => {
+  return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.outboundTrafficPolicyMode(), {}, {});
+};
+
 export const getIstioStatus = () => {
   return newRequest<ComponentStatus[]>(HTTP_VERBS.GET, urls.istioStatus(), {}, {});
 };

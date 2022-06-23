@@ -90,6 +90,12 @@ type meshIdConfig struct {
 	} `yaml:"defaultConfig,omitempty"`
 }
 
+type meshTrafficPolicyConfig struct {
+	OutboundTrafficPolicy struct {
+		Mode string `yaml:"mode,omitempty"`
+	} `yaml:"outboundTrafficPolicy,omitempty"`
+}
+
 // NewMeshService initializes a new MeshService structure with the given k8s client and
 // newRemoteClientFunc arguments (see the MeshService struct for details). The newRemoteClientFunc
 // can be passed a nil value and a default function will be used.
@@ -571,4 +577,41 @@ func (in *MeshService) resolveNetwork(clusterName string, kubeconfig *kubernetes
 	}
 
 	return networkName
+}
+
+func (in *MeshService) OutboundTrafficPolicy() (string, error) {
+	cfg := config.Get()
+
+	var istioConfig *core_v1.ConfigMap
+	var err error
+	if IsNamespaceCached(cfg.IstioNamespace) {
+		istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+	} else {
+		istioConfig, err = in.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+	}
+	if err != nil {
+		if errors.IsNotFound(err) {
+			err = fmt.Errorf("%w in namespace \"%s\"", err, cfg.IstioNamespace)
+		}
+		return "", err
+	}
+
+	meshConfigYaml, ok := istioConfig.Data["mesh"]
+	if !ok {
+		log.Warning("Istio config not found when resolving if mesh-id is set. Falling back to mesh-id not configured.")
+		return "", nil
+	}
+
+	meshConfig := meshTrafficPolicyConfig{}
+	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
+	if err != nil {
+		return "", err
+	}
+
+	outboundTrafficPolicy := ""
+	if len(meshConfig.OutboundTrafficPolicy.Mode) > 0 {
+		outboundTrafficPolicy = meshConfig.OutboundTrafficPolicy.Mode
+	}
+
+	return outboundTrafficPolicy, nil
 }

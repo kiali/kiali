@@ -21,3 +21,14 @@ func GetClusters(w http.ResponseWriter, r *http.Request) {
 
 	RespondWithJSON(w, http.StatusOK, meshClusters)
 }
+
+func OutboundTrafficPolicyMode(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	otp, _ := business.Mesh.OutboundTrafficPolicy()
+	RespondWithJSON(w, http.StatusOK, otp)
+}
