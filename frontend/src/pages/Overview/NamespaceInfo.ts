@@ -5,6 +5,7 @@ import { IstioConfigList } from '../../types/IstioConfigList';
 
 export type NamespaceInfo = {
   name: string;
+  suffix?: string;
   status?: NamespaceStatus;
   tlsStatus?: TLSStatus;
   istioConfig?: IstioConfigList;

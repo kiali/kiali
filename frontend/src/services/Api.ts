@@ -133,7 +133,7 @@ export const getMeshTls = () => {
 };
 
 export const getOutboundTrafficPolicyMode = () => {
-  return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.outboundTrafficPolicyMode(), {}, {});
+  return newRequest<string>(HTTP_VERBS.GET, urls.outboundTrafficPolicyMode(), {}, {});
 };
 
 export const getIstioStatus = () => {
