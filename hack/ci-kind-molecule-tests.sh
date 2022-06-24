@@ -13,6 +13,10 @@ helpmsg() {
 This script will run the Kiali molecule tests within a KinD cluster.
 It tests the latest published images, but has options to allow you to test dev images
 built from specified branches, thus allowing you to test PRs and other dev builds.
+These require both podman and docker installed on your local system to run since
+the molecule tests do not support docker and support for podman in kind is
+experimental. The molecule tests will run with podman against the kind cluster
+running with docker.
 
 You can use this as a cronjob to test Kiali periodically.
 
@@ -341,6 +345,10 @@ else
   exit 1
 fi
 
+if [ "${DORP}" == "podman" ]; then
+  export KIND_EXPERIMENTAL_PROVIDER=podman
+fi
+
 if ${KIND_EXE} get kubeconfig --name ${KIND_NAME} > /dev/null 2>&1; then
   infomsg "Kind cluster named [${KIND_NAME}] already exists - it will be used as-is"
 else
@@ -360,7 +368,11 @@ EOF
   # ${CLIENT_EXE} create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
   ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
 
-  subnet=$(${DORP} network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
+  if [ "${DORP}" == "docker" ]; then
+    subnet=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
+  else
+    subnet=$(podman network inspect kind --format '{{ (index (index (index .plugins 0).ipam.ranges 1) 0).subnet }}')
+  fi
   subnet_trimmed=$(echo ${subnet} | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')
   first_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 1)"
   last_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 2)"
@@ -392,10 +404,10 @@ if [ "${USE_DEV_IMAGES}" == "true" ]; then
 EOF
 
   infomsg "Building dev image (backend and frontend)..."
-  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" clean build test build-ui
+  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="podman" clean build test build-ui
 
   infomsg "Pushing the images into the cluster..."
-  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="${KIND_NAME}" cluster-push
+  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="podman" -e CLUSTER_TYPE="kind" -e KIND_NAME="${KIND_NAME}" cluster-push
 else
   infomsg "Will test the latest published images"
 fi
@@ -475,9 +487,9 @@ make -e FORCE_MOLECULE_BUILD="true" -e DORP="${DORP}" molecule-build
 mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
 infomsg "Running the tests - logs are going here: ${LOGS_LOCAL_SUBDIR_ABS}"
 if [ "${CI}" == "true" ]; then
-  eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" -ci true
+  eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" -ci true --kind-name "${KIND_NAME}"
 else
-  eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" -ci false > "${LOGS_LOCAL_RESULTS}"
+  eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" -ci false --kind-name "${KIND_NAME}" > "${LOGS_LOCAL_RESULTS}"
 fi
 
 cd ${LOGS_LOCAL_SUBDIR_ABS}

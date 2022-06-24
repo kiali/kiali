@@ -23,12 +23,13 @@ while [[ $# -gt 0 ]]; do
       CLUSTER_TYPE="$2"
       shift;shift
       ;;
-    -d|--debug)
-      MOLECULE_DEBUG="$2"
+    -dorp|--docker-or-podman)
+      echo "Docker is no longer supported by the molecule tests. This argument will largely be ignored and podman used instead."
+      DORP="$2"
       shift;shift
       ;;
-    -dorp|--docker-or-podman)
-      DORP="$2"
+    -d|--debug)
+      MOLECULE_DEBUG="$2"
       shift;shift
       ;;
     -hcr|--helm-charts-repo)
@@ -45,6 +46,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -kn|--kind-name)
       KIND_NAME="$2"
+      shift;shift
       ;;
     -me|--minikube-exe)
       MINIKUBE_EXE="$2"
@@ -99,7 +101,7 @@ $0 [option...] command
 -ci                      Run in continuous-integration mode. Verbose logs will be printed to stdout. (default: false).
 -ct|--cluster-type       The type of cluster being tested. Must be one of: minikube, openshift. (default: openshift)
 -d|--debug               True if you want the molecule tests to output large amounts of debug messages. (default: true)
--dorp|--docker-or-podman What should be used - "docker" or "podman"
+-dorp|--docker-or-podman What should be used. NOTE: Docker is no longer supported. Molecule tests will only run with "podman". (default: podman)
 -hcr|--helm-charts-repo  Location of the helm charts git repo. (default: ../helm-charts)
 -jxf|--junit-xml-file    Location of the JUnit XML results file; set to "" to not output this file. (default: results.xml in the --test-logs-dir)
 -ksh|--kiali_src-home    Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
@@ -475,4 +477,3 @@ echo "Test logs can be found at: ${TEST_LOGS_DIR}"
 echo
 
 exit $EXIT_CODE
-
