@@ -22,9 +22,9 @@ import transformTraceData from 'utils/tracing/TraceTransform';
 import {kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
 
 type ReduxProps = {
+  kiosk: string;
   selectedTrace?: JaegerTrace;
   setTraceId: (traceId?: string) => void;
-  kiosk: string;
 };
 
 type Props = ReduxProps & {
