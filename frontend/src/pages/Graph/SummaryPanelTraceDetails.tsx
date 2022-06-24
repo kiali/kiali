@@ -29,14 +29,19 @@ import { summaryFont, summaryTitle } from './SummaryPanelCommon';
 import { NodeParamsType, GraphType } from 'types/Graph';
 import { bindActionCreators } from 'redux';
 import responseFlags from 'utils/ResponseFlags';
+import {kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
 
-type Props = {
+type ReduxProps = {
+  close: () => void;
+  kiosk: string;
+  setNode: (node?: NodeParamsType) => void;
+};
+
+type Props = ReduxProps & {
   trace: JaegerTrace;
   node: any;
   graphType: GraphType;
   jaegerURL?: string;
-  close: () => void;
-  setNode: (node?: NodeParamsType) => void;
 };
 
 type State = {
@@ -132,7 +137,15 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
         <div>
           {tracesDetailsURL ? (
             <Tooltip content={`View trace details for: ${info.name()}`}>
-              <Link to={tracesDetailsURL}>{title}</Link>
+              <Link
+                to={tracesDetailsURL}
+                onClick={() => {
+                  if (this.props.kiosk.length > 0 && this.props.kiosk !== 'true') {
+                    kioskContextMenuAction(tracesDetailsURL);
+                  }
+                }}
+              >{title}
+              </Link>
             </Tooltip>
           ) : (
             <Tooltip content={`${info.name()}`}>{title}</Tooltip>
@@ -224,7 +237,14 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
         </div>
         {spanURL && (
           <div>
-            <Link to={spanURL}>Show span</Link>
+            <Link
+              to={spanURL}
+              onClick={() => {
+                if (this.props.kiosk.length > 0 && this.props.kiosk !== 'true') {
+                  kioskContextMenuAction(spanURL);
+                }
+              }}
+            >Show span</Link>
           </div>
         )}
       </>
@@ -338,10 +358,14 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
   }
 }
 
+const mapStateToProps = (state: KialiAppState) => ({
+  kiosk: state.globalState.kiosk,
+});
+
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
   close: () => dispatch(JaegerThunkActions.setTraceId(undefined)),
   setNode: bindActionCreators(GraphActions.setNode, dispatch)
 });
 
-const SummaryPanelTraceDetailsContainer = connect(() => ({}), mapDispatchToProps)(SummaryPanelTraceDetails);
+const SummaryPanelTraceDetailsContainer = connect(mapStateToProps, mapDispatchToProps)(SummaryPanelTraceDetails);
 export default SummaryPanelTraceDetailsContainer;

@@ -19,12 +19,17 @@ import { TraceListItem } from 'components/JaegerIntegration/TraceListItem';
 import { summaryFont } from './SummaryPanelCommon';
 import { DecoratedGraphNodeData } from 'types/Graph';
 import transformTraceData from 'utils/tracing/TraceTransform';
+import {kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
 
-type Props = {
+type ReduxProps = {
+  kiosk: string;
+  selectedTrace?: JaegerTrace;
+  setTraceId: (traceId?: string) => void;
+};
+
+type Props = ReduxProps & {
   nodeData: DecoratedGraphNodeData;
   queryTime: TimeInSeconds;
-  setTraceId: (traceId?: string) => void;
-  selectedTrace?: JaegerTrace;
 };
 
 type State = {
@@ -184,7 +189,16 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
             })}
           </SimpleList>
         )}
-        <Button style={summaryFont} onClick={() => history.push(tracesDetailsURL)}>
+        <Button
+          style={summaryFont}
+          onClick={() => {
+            if (this.props.kiosk.length > 0 && this.props.kiosk !== 'true') {
+              kioskContextMenuAction(tracesDetailsURL);
+            } else {
+              history.push(tracesDetailsURL);
+            }
+          }}
+        >
           Show Traces
         </Button>
       </div>
@@ -193,6 +207,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
+  kiosk: state.globalState.kiosk,
   selectedTrace: state.jaegerState.selectedTrace
 });
 

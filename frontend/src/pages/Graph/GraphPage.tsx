@@ -73,6 +73,7 @@ import GraphTour from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 import { EdgeContextMenu } from 'components/CytoscapeGraph/ContextMenu/EdgeContextMenu';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
+import {kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -99,6 +100,7 @@ type ReduxProps = {
   graphType: GraphType;
   hideValue: string;
   isPageVisible: boolean;
+  kiosk: string;
   lastRefreshAt: TimeInMilliseconds;
   layout: Layout;
   namespaceLayout: Layout;
@@ -668,7 +670,11 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       urlNodeType = 'applications';
     }
     const detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
-    history.push(detailsPageUrl);
+    if (this.props.kiosk.length > 0 && this.props.kiosk !== 'true') {
+      kioskContextMenuAction(detailsPageUrl);
+    } else {
+      history.push(detailsPageUrl);
+    }
     return;
   };
 
@@ -738,6 +744,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   graphType: graphTypeSelector(state),
   hideValue: hideValueSelector(state),
   isPageVisible: state.globalState.isPageVisible,
+  kiosk: state.globalState.kiosk,
   lastRefreshAt: lastRefreshAtSelector(state),
   layout: state.graph.layout,
   mtlsEnabled: meshWideMTLSEnabledSelector(state),

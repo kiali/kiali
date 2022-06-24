@@ -4,6 +4,8 @@ import { GraphNodeData, NodeType } from '../../../types/Graph';
 import { PFBadge, PFBadges } from '../../../components/Pf/PfBadges';
 import { mount } from 'enzyme';
 import { MemoryRouter } from 'react-router-dom';
+import { store } from '../../../store/ConfigStore';
+import { Provider } from 'react-redux';
 
 let defaultGraphData: GraphNodeData;
 
@@ -22,7 +24,11 @@ describe('renderBadgedLink', () => {
     const expectedLink = `/namespaces/${encodeURIComponent(node.namespace)}/workloads/${encodeURIComponent(
       node.workload!
     )}`;
-    const wrapper = mount(<MemoryRouter>{renderBadgedLink(node)}</MemoryRouter>);
+    const wrapper = mount(
+      <Provider store={store}>
+        <MemoryRouter>{renderBadgedLink(node)}</MemoryRouter>
+      </Provider>
+    );
     expect(wrapper.find('a').filter(`[href="${expectedLink}"]`).exists()).toBeTruthy();
     expect(
       wrapper
@@ -39,7 +45,13 @@ describe('renderBadgedLink', () => {
     };
     const linkInfo = { link: '/custom/link/to/url', displayName: 'customDisplay', key: 'key-1-2' };
 
-    const wrapper = mount(<MemoryRouter>{renderBadgedLink(node, undefined, undefined, () => linkInfo)}</MemoryRouter>);
+    const wrapper = mount(
+      <Provider store={store}>
+        <MemoryRouter>
+          {renderBadgedLink(node, undefined, undefined, () => linkInfo)}
+        </MemoryRouter>
+      </Provider>
+    );
     const linkNode = wrapper.find('a').filter(`[href="${linkInfo.link}"]`);
     expect(linkNode.exists()).toBeTruthy();
     expect(linkNode.text()).toContain(linkInfo.displayName);

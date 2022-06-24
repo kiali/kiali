@@ -136,12 +136,13 @@ export default class SummaryPanelAppBox extends React.Component<SummaryPanelProp
     const hasTcp = this.hasTcpTraffic(appBox);
     const hasTcpIn = hasTcp && this.hasTcpIn(appBox);
     const hasTcpOut = hasTcp && this.hasTcpOut(appBox);
+
     const options = getOptions(nodeData);
     const items = [
       <DropdownGroup key="show" label="Show" className="kiali-appbox-menu">
         {options.map((o, i) => {
           return (
-            <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o)}>
+            <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
               {o.text} {o.target === '_blank' && <ExternalLinkAltIcon />}
             </DropdownItem>
           );

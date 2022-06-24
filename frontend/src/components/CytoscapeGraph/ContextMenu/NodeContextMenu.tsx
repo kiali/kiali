@@ -14,9 +14,11 @@ import { getTitle } from 'pages/Graph/SummaryPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { renderBadgedName } from 'pages/Graph/SummaryLink';
 import { PFColors } from 'components/Pf/PfColors';
+import {kioskContextMenuAction} from "../../Kiosk/KioskActions";
 
 type ReduxProps = {
   jaegerInfo?: JaegerInfo;
+  kiosk: string;
 };
 
 // Note, in the below styles we assign colors to be consistent with PF Dropdown
@@ -97,7 +99,6 @@ export class NodeContextMenu extends React.PureComponent<Props> {
       onClick: this.onClick,
       target
     };
-
     let item: any;
     if (external) {
       // Linter is not taking care that 'title' is passed as a property
@@ -108,7 +109,21 @@ export class NodeContextMenu extends React.PureComponent<Props> {
         </a>
       );
     } else {
-      item = <Link to={href} {...commonLinkProps} />;
+      // Kiosk actions are used when the kiosk specifies a parent,
+      // otherwise the kiosk=true will keep the links inside Kiali
+      if (this.props.kiosk.length > 0 && this.props.kiosk !== 'true') {
+        item =
+          <Link
+            to={''}
+            onClick={() => {
+              kioskContextMenuAction(href);
+            }}
+            className={commonLinkProps.className}
+            children={commonLinkProps.children}
+          />;
+      } else {
+        item = <Link to={href} {...commonLinkProps} />;
+      }
     }
 
     return (
@@ -184,11 +199,15 @@ export type ContextMenuOption = {
   target?: string;
 };
 
-export const clickHandler = (o: ContextMenuOption) => {
+export const clickHandler = (o: ContextMenuOption, kiosk: string) => {
   if (o.external) {
     window.open(o.url, o.target);
   } else {
-    history.push(o.url);
+    if (kiosk.length > -1 && kiosk !== "true") {
+      kioskContextMenuAction(o.url);
+    } else {
+      history.push(o.url);
+    }
   }
 };
 
@@ -254,7 +273,8 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInf
 };
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerInfo: state.jaegerState.info
+  jaegerInfo: state.jaegerState.info,
+  kiosk: state.globalState.kiosk
 });
 
 export const NodeContextMenuContainer = connect(mapStateToProps)(NodeContextMenu);

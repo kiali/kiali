@@ -3,7 +3,6 @@ import { Tab, Tooltip } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { summaryFont, summaryHeader, summaryBodyTabs, summaryPanelWidth, getTitle } from './SummaryPanelCommon';
 import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
-import KialiPageLink from 'components/Link/KialiPageLink';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from 'components/SummaryPanel/RateTable';
 import SimpleTabs from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';
@@ -15,6 +14,7 @@ import {
   getAccumulatedTrafficRateTcp
 } from 'utils/TrafficRate';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import KialiPageLinkContainer from "components/Link/KialiPageLink";
 
 type SummaryPanelClusterBoxState = {
   clusterBox: any;
@@ -228,9 +228,9 @@ export default class SummaryPanelClusterBox extends React.Component<SummaryPanel
       <React.Fragment key={cluster}>
         <span>
           <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '2px' }} />
-          <KialiPageLink href="/" cluster={cluster}>
+          <KialiPageLinkContainer href="/" cluster={cluster}>
             {cluster}
-          </KialiPageLink>{' '}
+          </KialiPageLinkContainer>{' '}
         </span>
         <br />
       </React.Fragment>
