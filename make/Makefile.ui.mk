@@ -24,3 +24,11 @@ cypress-run:
 ## cypress-gui: Opens the cypress GUI letting you pick which frontend integration tests to run locally.
 cypress-gui:
 	@cd ${ROOTDIR}/frontend && yarn cypress
+
+## perf-tests-run: Runs the frontend perf tests locally without the GUI.
+perf-tests-run:
+	@cd ${ROOTDIR}/frontend && ${ROOTDIR}/frontend/node_modules/cypress/bin/cypress run --headless --config numTestsKeptInMemory=0,video=false --config-file cypress-perf.json
+
+## perf-tests-gui: Runs the frontend perf tests locally with the GUI.
+perf-tests-gui:
+	@cd ${ROOTDIR}/frontend && yarn cypress --config-file cypress-perf.json 
