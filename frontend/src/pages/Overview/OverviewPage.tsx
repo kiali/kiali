@@ -242,6 +242,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           () => {
             this.fetchHealth(isAscending, sortField, type);
             this.fetchTLS(isAscending, sortField);
+            this.fetchOutboundTrafficPolicyMode();
             this.fetchValidations(isAscending, sortField);
             if (displayMode !== OverviewDisplayMode.COMPACT) {
               this.fetchMetrics(direction);
@@ -459,6 +460,20 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       })
       .catch(err => this.handleAxiosError('Could not fetch validations status', err));
   }
+
+  fetchOutboundTrafficPolicyMode() {
+    API.getOutboundTrafficPolicyMode()
+      .then(response => {
+        this.state.namespaces.forEach(nsInfo => {
+          if (serverConfig.istioNamespace === nsInfo.name && response.data !== '') {
+            nsInfo.suffix = ' (' + response.data + ')'
+          }
+        })
+      })
+      .catch(error => {
+        AlertUtils.addError('Error fetching Mesh OutboundTrafficPolicy.Mode.', error, 'default', MessageType.ERROR);
+      });
+  };
 
   handleAxiosError(message: string, error: AxiosError) {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
@@ -791,7 +806,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 className={isLongNs ? cardNamespaceNameLongStyle : cardNamespaceNameNormalStyle}
                                 title={ns.name}
                               >
-                                {ns.name}
+                                {ns.name}{ns.suffix ? ns.suffix : ''}
                               </span>
                             </Title>
                           </CardHeaderMain>

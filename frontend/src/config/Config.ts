@@ -143,6 +143,7 @@ const conf = {
       namespaceTls: (namespace: string) => `api/namespaces/${namespace}/tls`,
       namespaceValidations: (namespace: string) => `api/namespaces/${namespace}/validations`,
       meshTls: () => 'api/mesh/tls',
+      outboundTrafficPolicyMode: () => 'api/mesh/outbound_traffic_policy/mode',
       istioStatus: () => 'api/istio/status',
       istioCertsInfo: () => 'api/istio/certs',
       pod: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}`,

@@ -1362,6 +1362,24 @@ func NewRoutes() (r *Routes) {
 			handlers.GetClusters,
 			true,
 		},
+		// GET /api/mesh/outbound_traffic_policy/mode
+		// ---
+		// Endpoint to get the OutboundTrafficPolicy Mode configured in the service mesh.
+		//              Produces:
+		//              - application/json
+		//
+		//              Schemes: http, https
+		//
+		// responses:
+		//              500: internalError
+		//              200: clustersResponse
+		{
+			"OutboundTrafficPolicyMode",
+			"GET",
+			"/api/mesh/outbound_traffic_policy/mode",
+			handlers.OutboundTrafficPolicyMode,
+			true,
+		},
 	}
 
 	return
