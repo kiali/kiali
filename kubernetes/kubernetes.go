@@ -5,6 +5,7 @@ import (
 	"context"
 	goerrors "errors"
 	"fmt"
+	"io"
 	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
@@ -49,7 +50,6 @@ type K8SClientInterface interface {
 	GetNamespace(namespace string) (*core_v1.Namespace, error)
 	GetNamespaces(labelSelector string) ([]core_v1.Namespace, error)
 	GetPod(namespace, name string) (*core_v1.Pod, error)
-	GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLogs, error)
 	GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
 	GetPodPortForwarder(namespace, podName, portMap string) (*httputil.PortForwarder, error)
 	GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error)
@@ -63,6 +63,7 @@ type K8SClientInterface interface {
 	GetStatefulSet(namespace string, name string) (*apps_v1.StatefulSet, error)
 	GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
 	GetTokenSubject(authInfo *api.AuthInfo) (string, error)
+	StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error)
 	UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error)
 	UpdateService(namespace string, name string, jsonPatch string) error
 	UpdateWorkload(namespace string, name string, workloadType string, jsonPatch string) error
@@ -432,24 +433,11 @@ func (in *K8SClient) GetPod(namespace, name string) (*core_v1.Pod, error) {
 	}
 }
 
-// GetPod returns the pod definitions for a given pod name.
+// StreamPodLogs opens a connection to progressively fetch the logs of a pod. Callers must make sure to properly close the returned io.ReadCloser.
 // It returns an error on any problem.
-func (in *K8SClient) GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLogs, error) {
+func (in *K8SClient) StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
 	req := in.k8s.CoreV1().RESTClient().Get().Namespace(namespace).Name(name).Resource("pods").SubResource("log").VersionedParams(opts, scheme.ParameterCodec)
-
-	readCloser, err := req.Stream(in.ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	defer readCloser.Close()
-	buf := new(bytes.Buffer)
-	_, err = buf.ReadFrom(readCloser)
-	if err != nil {
-		return nil, err
-	}
-
-	return &PodLogs{Logs: buf.String()}, nil
+	return req.Stream(in.ctx)
 }
 
 func (in *K8SClient) GetCronJobs(namespace string) ([]batch_v1.CronJob, error) {

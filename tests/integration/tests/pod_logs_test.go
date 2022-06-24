@@ -17,7 +17,7 @@ func TestLogsContainerIstioProxy(t *testing.T) {
 	podName, err := utils.FirstPodName(workloadName, utils.BOOKINFO)
 	assert.Nil(err)
 	assert.NotEmpty(podName)
-	params := map[string]string{"container": "istio-proxy", "tailLines": fmt.Sprintf("%d", lines)}
+	params := map[string]string{"container": "istio-proxy", "maxLines": fmt.Sprintf("%d", lines)}
 	logs, err := utils.PodLogs(podName, utils.BOOKINFO, params)
 	assertLogs(logs, lines, err, assert)
 }
@@ -29,7 +29,7 @@ func TestLogsContainerDetails(t *testing.T) {
 	podName, err := utils.FirstPodName(workloadName, utils.BOOKINFO)
 	assert.Nil(err)
 	assert.NotEmpty(podName)
-	params := map[string]string{"container": "details", "tailLines": fmt.Sprintf("%d", lines)}
+	params := map[string]string{"container": "details", "maxLines": fmt.Sprintf("%d", lines)}
 	logs, err := utils.PodLogs(podName, utils.BOOKINFO, params)
 	assertLogs(logs, lines, err, assert)
 }
@@ -41,7 +41,7 @@ func TestLogsInvalidContainer(t *testing.T) {
 	podName, err := utils.FirstPodName(workloadName, utils.BOOKINFO)
 	assert.Nil(err)
 	assert.NotEmpty(podName)
-	params := map[string]string{"container": "invalid", "tailLines": fmt.Sprintf("%d", lines)}
+	params := map[string]string{"container": "invalid", "maxLines": fmt.Sprintf("%d", lines)}
 	logs, err := utils.PodLogs(podName, utils.BOOKINFO, params)
 	assertEmptyLogs(logs, err, assert)
 }
@@ -52,7 +52,7 @@ func TestLogsInvalidLineCount(t *testing.T) {
 	podName, err := utils.FirstPodName(workloadName, utils.BOOKINFO)
 	assert.Nil(err)
 	assert.NotEmpty(podName)
-	params := map[string]string{"container": "details", "tailLines": "*50"}
+	params := map[string]string{"container": "details", "maxLines": "*50"}
 	logs, err := utils.PodLogs(podName, utils.BOOKINFO, params)
 	assertEmptyLogs(logs, err, assert)
 }
@@ -66,7 +66,7 @@ func assertEmptyLogs(logs *business.PodLog, err error, assert *assert.Assertions
 func assertLogs(logs *business.PodLog, lines int, err error, assert *assert.Assertions) {
 	assert.Nil(err)
 	assert.NotNil(logs)
-	assert.True(len(logs.Entries) <= lines)
+	assert.LessOrEqual(len(logs.Entries), lines)
 	for _, entry := range logs.Entries {
 		assert.NotNil(entry.Message)
 		assert.NotNil(entry.Severity)

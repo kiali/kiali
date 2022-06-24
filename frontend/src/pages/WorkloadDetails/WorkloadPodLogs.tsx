@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {
+  Alert,
   Button,
   ButtonVariant,
   Card,
@@ -86,9 +87,11 @@ interface WorkloadPodLogsState {
   hideError?: string;
   hideLogValue: string;
   kebabOpen: boolean;
+  linesTruncatedContainers: string[];
   loadingLogs: boolean;
   loadingLogsError?: string;
   logWindowSelections: any[];
+  maxLines: number;
   podValue?: number;
   showClearHideLogButton: boolean;
   showClearShowLogButton: boolean;
@@ -97,7 +100,6 @@ interface WorkloadPodLogsState {
   showSpans: boolean;
   showTimestamps: boolean;
   showToolbar: boolean;
-  tailLines: number;
   useRegex: boolean;
 }
 
@@ -115,16 +117,16 @@ enum LogLevel {
 const RETURN_KEY_CODE = 13;
 const NoLogsFoundMessage = 'No container logs found for the time period.';
 
-const TailLinesDefault = 100;
-const TailLinesOptions = {
+const MaxLinesDefault = 3000;
+const MaxLinesOptions = {
   '-1': 'All lines',
-  '10': '10 lines',
-  '50': '50 lines',
   '100': '100 lines',
-  '300': '300 lines',
   '500': '500 lines',
   '1000': '1000 lines',
-  '5000': '5000 lines'
+  '3000': '3000 lines',
+  '5000': '5000 lines',
+  '10000': '10000 lines',
+  '25000': '25000 lines'
 };
 
 const alInfoIcon = style({
@@ -166,12 +168,13 @@ const toolbarInputStyle = style({
 });
 
 const logsBackground = (enabled: boolean) => ({ backgroundColor: enabled ? PFColors.Black1000 : 'gray' });
-const logsHeight = (showToolbar: boolean, fullscreen: boolean, isKiosk: boolean) => {
+const logsHeight = (showToolbar: boolean, fullscreen: boolean, isKiosk: boolean, showMaxLinesWarning: boolean) => {
   const toolbarHeight = showToolbar ? '0px' : '49px';
+  const maxLinesWarningHeight = showMaxLinesWarning ? '27px' : '0px'
   return {
     height: fullscreen
-      ? `calc(100vh - 130px + ${toolbarHeight})`
-      : `calc(var(--kiali-details-pages-tab-content-height) - ${!isKiosk ? '155px' : '0px'} + ${toolbarHeight})`
+      ? `calc(100vh - 130px + ${toolbarHeight} - ${maxLinesWarningHeight})`
+      : `calc(var(--kiali-details-pages-tab-content-height) - ${!isKiosk ? '155px' : '0px'} + ${toolbarHeight} - ${maxLinesWarningHeight})`
   };
 };
 
@@ -193,15 +196,16 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       fullscreen: false,
       hideLogValue: '',
       kebabOpen: false,
+      linesTruncatedContainers: [],
       loadingLogs: false,
       logWindowSelections: [],
+      maxLines: MaxLinesDefault,
       showClearHideLogButton: false,
       showClearShowLogButton: false,
       showLogValue: '',
-      showSpans: showSpans !== 'true' ? false : true,
+      showSpans: showSpans === 'true',
       showTimestamps: false,
       showToolbar: true,
-      tailLines: TailLinesDefault,
       useRegex: false
     };
     if (this.props.pods.length < 1) {
@@ -240,7 +244,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
         pod.name,
         this.state.containerOptions,
         this.state.showSpans,
-        this.state.tailLines,
+        this.state.maxLines,
         this.props.timeRange
       );
     }
@@ -250,18 +254,18 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     const prevContainerOptions = prevState.containerOptions ? prevState.containerOptions : undefined;
     const newContainerOptions = this.state.containerOptions ? this.state.containerOptions : undefined;
     const updateContainerOptions = newContainerOptions && newContainerOptions !== prevContainerOptions;
-    const updateTailLines = this.state.tailLines && prevState.tailLines !== this.state.tailLines;
+    const updateMaxLines = this.state.maxLines && prevState.maxLines !== this.state.maxLines;
     const lastRefreshChanged = prevProps.lastRefreshAt !== this.props.lastRefreshAt;
     const showSpansChanged = prevState.showSpans !== this.state.showSpans;
     const timeRangeChanged = !isEqualTimeRange(this.props.timeRange, prevProps.timeRange);
-    if (updateContainerOptions || updateTailLines || lastRefreshChanged || showSpansChanged || timeRangeChanged) {
+    if (updateContainerOptions || updateMaxLines || lastRefreshChanged || showSpansChanged || timeRangeChanged) {
       const pod = this.props.pods[this.state.podValue!];
       this.fetchEntries(
         this.props.namespace,
         pod.name,
         newContainerOptions!,
         this.state.showSpans,
-        this.state.tailLines,
+        this.state.maxLines,
         this.props.timeRange
       );
     }
@@ -375,12 +379,12 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                           </ToolbarItem>
                           <ToolbarItem style={{ marginLeft: 'auto' }}>
                             <ToolbarDropdown
-                              id={'wpl_tailLines'}
-                              handleSelect={key => this.setTailLines(Number(key))}
-                              value={this.state.tailLines}
-                              label={TailLinesOptions[this.state.tailLines]}
-                              options={TailLinesOptions}
-                              tooltip={'Show up to last N log lines'}
+                              id={'wpl_maxLines'}
+                              handleSelect={key => this.setMaxLines(Number(key))}
+                              value={this.state.maxLines}
+                              label={MaxLinesOptions[this.state.maxLines]}
+                              options={MaxLinesOptions}
+                              tooltip={'Truncate after N log lines'}
                               classNameSelect={toolbarTail}
                             />
                           </ToolbarItem>
@@ -538,7 +542,11 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
             </ToolbarItem>
           </ToolbarGroup>
         </Toolbar>
-
+        { this.state.linesTruncatedContainers.length > 0 && (
+          <div style={{marginBottom: '5px'}}>
+            <Alert variant="danger" isInline={true} isPlain={true} title={`Max lines exceeded for containers: ${this.state.linesTruncatedContainers.join(', ')}. Increase maxLines for more lines, or decrease time period.`} />
+          </div>
+        )}
         <div
           key="logsText"
           id="logsText"
@@ -548,7 +556,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           // (to max) and when we try to assign scrollTop to scrollHeight (above),it stays at 0
           // and we fail to set the scroll correctly. So, don't change this!
           style={{
-            ...logsHeight(this.state.showToolbar, this.state.fullscreen, this.props.isKiosk),
+            ...logsHeight(this.state.showToolbar, this.state.fullscreen, this.props.isKiosk, this.state.linesTruncatedContainers.length > 0),
             ...logsBackground(this.hasEntries(this.state.entries))
           }}
           ref={this.logsRef}
@@ -678,8 +686,8 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     this.setState({ containerOptions: containerNames, podValue: Number(podValue) });
   };
 
-  private setTailLines = (tailLines: number) => {
-    this.setState({ tailLines: tailLines });
+  private setMaxLines = (maxLines: number) => {
+    this.setState({ maxLines: maxLines });
   };
 
   private setKebabOpen = (kebabOpen: boolean) => {
@@ -883,7 +891,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     podName: string,
     containerOptions: ContainerOption[],
     showSpans: boolean,
-    tailLines: number,
+    maxLines: number,
     timeRange: TimeRange
   ) => {
     const now: TimeInMilliseconds = Date.now();
@@ -898,7 +906,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
     const selectedContainers = containerOptions.filter(c => c.isSelected);
     const promises: Promise<AxiosResponse<PodLogs | Span[]>>[] = selectedContainers.map(c => {
-      return getPodLogs(namespace, podName, c.name, tailLines, sinceTime, duration, c.isProxy);
+      return getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, c.isProxy);
     });
     if (showSpans) {
       // Convert seconds to microseconds
@@ -929,6 +937,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           responses.shift();
         }
 
+        let linesTruncatedContainers: string[] = [];
         for (let i = 0; i < responses.length; i++) {
           const response = responses[i].data as PodLogs;
           const containerLogEntries = response.entries as LogEntry[];
@@ -940,6 +949,10 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
             le.color = color;
             entries.push({ timestamp: le.timestamp, timestampUnix: le.timestampUnix, logEntry: le } as Entry);
           });
+
+          if (response.linesTruncated) {
+            linesTruncatedContainers.push(new URL(responses[i].request.responseURL).searchParams.get('container')!);
+          }
         }
 
         this.filterEntries(entries, this.state.showLogValue, this.state.hideLogValue);
@@ -949,6 +962,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
         this.setState({
           entries: sortedEntries,
+          linesTruncatedContainers: linesTruncatedContainers,
           loadingLogs: false
         });
 
