@@ -268,7 +268,7 @@ func TestBuildIstioDashboard(t *testing.T) {
 	dashboard := service.BuildIstioDashboard(fakeMetrics(), "inbound")
 
 	assert.Equal("Inbound Metrics", dashboard.Title)
-	assert.Len(dashboard.Aggregations, 7)
+	assert.Len(dashboard.Aggregations, 8)
 	assert.Equal("Local version", dashboard.Aggregations[0].DisplayName)
 	assert.Equal("destination_canonical_revision", dashboard.Aggregations[0].Label)
 	assert.Equal("Remote namespace", dashboard.Aggregations[1].DisplayName)
@@ -289,6 +289,7 @@ func TestBuildIstioDashboard(t *testing.T) {
 	assert.Equal("Response throughput", dashboard.Charts[5].Name)
 	assert.NotNil(dashboard.Charts[5].Metrics)
 	assert.Len(dashboard.Charts[5].Metrics, 0)
+	assert.Equal("Connection Security Policy", dashboard.Aggregations[7].DisplayName)
 }
 
 func fakeCounter(value float64) []models.Metric {
