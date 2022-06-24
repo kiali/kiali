@@ -337,7 +337,8 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                     key={'toolbar_statefulFilters_' + index}
                     className={classNames(
                       'pf-u-mr-md',
-                      index === (this.props.children as Array<any>).length - 1 ? paddingStyle : dividerStyle
+                      index === (this.props.children as Array<any>).length - 1 ? paddingStyle : dividerStyle,
+                      child.props.className! 
                     )}
                   >
                     {child}

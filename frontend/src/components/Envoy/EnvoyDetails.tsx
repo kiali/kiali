@@ -254,10 +254,11 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
     if (!envoyMetricsDashboardRef) {
       filteredEnvoyTabs = envoyTabs.slice(0, envoyTabs.length - 1);
     }
-    const tabs = filteredEnvoyTabs.map((value, index) => {
+    const tabs = filteredEnvoyTabs.map((value, index) =>        
+    {
       const title = value.charAt(0).toUpperCase() + value.slice(1);
       return (
-        <Tab style={{ backgroundColor: 'white' }} key={'tab_' + title} eventKey={index} title={title}>
+        <Tab style={{ backgroundColor: 'white' }} key={'tab_' + value} eventKey={index} title={title}>
           <Card className={fullHeightStyle}>
             <CardBody>
               {this.showEditor() ? (
@@ -322,8 +323,9 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
             </CardBody>
           </Card>
         </Tab>
-      );
-    });
+      )
+    }
+    );
 
     return (
       <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
