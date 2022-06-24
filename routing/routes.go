@@ -1362,9 +1362,9 @@ func NewRoutes() (r *Routes) {
 			handlers.GetClusters,
 			true,
 		},
-		// swagger:route GET /api/clusters
+		// GET /api/mesh/outbound_traffic_policy/mode
 		// ---
-		// Endpoint to get the list of the clusters that are hosting the service mesh.
+		// Endpoint to get the OutboundTrafficPolicy Mode configured in the service mesh.
 		//              Produces:
 		//              - application/json
 		//
