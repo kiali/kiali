@@ -180,13 +180,9 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
     const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
 
     let entries = istioConfigList[field];
-    if (entries && !(entries instanceof Array)) {
+    if (!(entries instanceof Array)) {
       // VirtualServices, DestinationRules
       entries = entries.items;
-    }
-
-    if (!entries) {
-      return
     }
 
     entries.forEach(entry => {

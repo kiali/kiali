@@ -450,7 +450,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     return Promise.all(
       [
         API.getConfigValidations(nss),
-        API.getAllIstioConfigs(nss, [], false, '', '')
+        API.getAllIstioConfigs(nss, false, '', '')
       ]
     )
       .then(results => {

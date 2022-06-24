@@ -182,15 +182,11 @@ export const getIstioConfig = (
 
 export const getAllIstioConfigs = (
   namespaces: string[],
-  objects: string[],
   validate: boolean,
   labelSelector: string,
   workloadSelector: string
 ) => {
   const params: any = namespaces && namespaces.length > 0 ? { namespaces: namespaces.join(',') } : {};
-  if (objects && objects.length > 0) {
-    params.objects = objects.join(',');
-  }
   if (validate) {
     params.validate = validate;
   }
