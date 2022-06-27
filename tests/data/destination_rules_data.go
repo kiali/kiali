@@ -31,6 +31,12 @@ func CreateNoLabelsDestinationRule(namespace string, name string, host string) *
 	return destinationRule
 }
 
+func CreateNoSubsetLabelsDestinationRule(namespace string, name string, host string) *networking_v1beta1.DestinationRule {
+	destinationRule := AddSubsetToDestinationRule(CreateNoLabelsSubset("v1"),
+		AddSubsetToDestinationRule(CreateNoLabelsSubset("v2"), CreateEmptyDestinationRule(namespace, name, host)))
+	return destinationRule
+}
+
 func CreateSubset(name string, versionLabel string) *api_networking_v1beta1.Subset {
 	s := api_networking_v1beta1.Subset{
 		Name: name,
