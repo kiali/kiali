@@ -404,10 +404,10 @@ if [ "${USE_DEV_IMAGES}" == "true" ]; then
 EOF
 
   infomsg "Building dev image (backend and frontend)..."
-  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="podman" clean build test build-ui
+  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" clean build test build-ui
 
   infomsg "Pushing the images into the cluster..."
-  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="podman" -e CLUSTER_TYPE="kind" -e KIND_NAME="${KIND_NAME}" cluster-push
+  make -e CLIENT_EXE="${CLIENT_EXE}" -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="${KIND_NAME}" cluster-push
 else
   infomsg "Will test the latest published images"
 fi
@@ -481,8 +481,11 @@ else
   infomsg "There is an 'istio-system' namespace - assuming Istio is installed and ready."
 fi
 
-infomsg "Building the Molecule test docker image using [${DORP}]"
-make -e FORCE_MOLECULE_BUILD="true" -e DORP="${DORP}" molecule-build
+infomsg "Building the Molecule test docker image using [podman]"
+# Need to build molecule test image with podman here because the
+# tests run with podman and the image won't be available in the
+# local registry if we build with docker.
+make -e FORCE_MOLECULE_BUILD="true" -e DORP="podman" molecule-build
 
 mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
 infomsg "Running the tests - logs are going here: ${LOGS_LOCAL_SUBDIR_ABS}"
