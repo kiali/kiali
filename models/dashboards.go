@@ -145,6 +145,10 @@ func metricsDefaults(local, remote string) []Aggregation {
 			Label:       "response_flags",
 			DisplayName: "Response flags",
 		},
+		{
+			Label:       "connection_security_policy",
+			DisplayName: "Connection Security Policy",
+		},
 	}...)
 	return aggs
 }
