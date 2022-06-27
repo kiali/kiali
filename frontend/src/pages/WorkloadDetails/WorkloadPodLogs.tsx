@@ -788,6 +788,12 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     }
   };
 
+  // filteredEntries is a memoized function which returns the set of entries that should be visible in the
+  // logs pane, given the values of show and hide filter, and given the "use regex" configuration.
+  // When the function is called for the first time with certain combination of parameters, the set of filtered
+  // entries is calculated, cached and returned. Thereafter, if the function is called with the same values, the
+  // cached set is returned; otherwise, a new set is re-calculated, re-cached and returned, and the old
+  // set is discarded.
   private filteredEntries = memoize((entries: Entry[], showValue: string, hideValue: string, useRegex: boolean) => {
     let filteredEntries = entries;
 
