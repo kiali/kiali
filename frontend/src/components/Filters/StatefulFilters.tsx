@@ -95,6 +95,7 @@ export class FilterSelected {
   };
 }
 
+const dividerStyle = style({ borderRight: '1px solid #d1d1d1;', padding: '10px', display: 'inherit' });
 const paddingStyle = style({ padding: '10px' });
 
 export class StatefulFilters extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
@@ -336,8 +337,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                     key={'toolbar_statefulFilters_' + index}
                     className={classNames(
                       'pf-u-mr-md',
-                      index === (this.props.children as Array<any>).length - 1 && paddingStyle ,
-                      child.props.className! 
+                      index === (this.props.children as Array<any>).length - 1 ? paddingStyle : dividerStyle
                     )}
                   >
                     {child}

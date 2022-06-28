@@ -156,11 +156,9 @@ export class ListenerTable implements SummaryTable {
 
   tooltip = (): React.ReactNode => {
     return (
-      <div className={style({marginLeft: 'auto'})}>
-        <Tooltip content={<div className={style({textAlign: 'left'})}>Network location that can be connected to by downstream clients (Incomming to envoy). List of endpoints:ports that envoy lets traffic</div>}>               
-            <KialiIcon.Help className={style({width: '14px', height: '14px', color: PFColors.Blue400})}/>     
-        </Tooltip>
-      </div>    
+      <Tooltip content={<div className={style({textAlign: 'left'})}>Network location that can be connected to by downstream clients (Incomming to envoy). List of endpoints:ports that envoy lets traffic</div>}>               
+          <KialiIcon.Help className={style({width: '14px', height: '14px', color: PFColors.Blue400})}/>     
+      </Tooltip>   
     );
   }
 

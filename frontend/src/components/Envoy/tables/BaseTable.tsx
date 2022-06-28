@@ -72,9 +72,11 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
                 value={this.props.pod}
                 label={this.props.pod}
                 options={this.props.pods.sort()}
-              />                
-            </> 
-            {this.props.writer.tooltip()}              
+              /> 
+              <div className={style({position: 'fixed', right: '60px'})}>                
+               {this.props.writer.tooltip()} 
+              </div>
+            </>                          
           </StatefulFilters>
           <Table
             aria-label="Sortable Table"

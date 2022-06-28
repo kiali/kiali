@@ -185,11 +185,9 @@ export class ClusterTable implements SummaryTable {
 
   tooltip = (): React.ReactNode => {
     return (
-      <div className={style({marginLeft: 'auto'})}>
-        <Tooltip content={<div className={style({textAlign: 'left'})}>Group of logically similar upstream hosts that Envoy connects to. (All the hosts that envoy manage traffic)</div>}>               
-            <KialiIcon.Help className={style({width: '14px', height: '14px', color: PFColors.Blue400})}/>     
-        </Tooltip>
-      </div>    
+      <Tooltip content={<div className={style({textAlign: 'left'})}>Group of logically similar upstream hosts that Envoy connects to. (All the hosts that envoy manage traffic)</div>}>               
+          <KialiIcon.Help className={style({width: '14px', height: '14px', color: PFColors.Blue400})}/>     
+      </Tooltip>
     );
   }
 
