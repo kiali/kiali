@@ -24,8 +24,7 @@ export interface SummaryTable {
 }
 
 const iconStyle = style({
-  display: 'inline-block',
-  verticalAlign: '2px !important'
+  display: 'inline-block'
 });
 
 export function SummaryTableRenderer<T extends SummaryTable>() {

@@ -143,7 +143,7 @@ export class ClusterTable implements SummaryTable {
 
   render_cluster_type = (): React.ReactNode => {
     return (
-        <ul>
+        <ul className={style({textAlign: 'left'})}>
           <li><b>STATIC</b>: Static is the simplest service discovery type. The configuration explicitly specifies the resolved network name (IP address/port, unix domain socket, etc.) of each upstream host.</li>
           <li><b>STRICT_DNS</b>: Envoy will continuously and asynchronously resolve the specified DNS targets</li>
           <li><b>LOGICAL_DNS</b>: Logical DNS uses a similar asynchronous resolution mechanism to strict DNS. However, instead of strictly taking the results of the DNS query and assuming that they comprise the entire upstream cluster, a logical DNS cluster only uses the first IP address returned when a new connection needs to be initiated</li>
@@ -159,7 +159,7 @@ export class ClusterTable implements SummaryTable {
       { title: 'Port', transforms: [sortable] },
       { title: 'Subset', transforms: [sortable] },
       { title: 'Direction', transforms: [sortable], header: {info: { tooltip: 
-      <ul>
+      <ul className={style({textAlign: 'left'})}>
         <li><b>inbound</b>: The inbound cluster events are the events that come into a node. These cluster events come from another node and enter other nodes.</li>
         <li><b>outbound</b>: The outbound cluster events are the events that go out of a node. These cluster events are produced and sent from a node to other nodes.</li>
       </ul>
@@ -186,7 +186,7 @@ export class ClusterTable implements SummaryTable {
   tooltip = (): React.ReactNode => {
     return (
       <div className={style({marginLeft: 'auto'})}>
-        <Tooltip content={<>Group of logically similar upstream hosts that Envoy connects to. (All the hosts that envoy manage traffic)</>}>               
+        <Tooltip content={<div className={style({textAlign: 'left'})}>Group of logically similar upstream hosts that Envoy connects to. (All the hosts that envoy manage traffic)</div>}>               
             <KialiIcon.Help className={style({width: '14px', height: '14px', color: PFColors.Blue400})}/>     
         </Tooltip>
       </div>    
