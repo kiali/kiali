@@ -10,9 +10,9 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { meshWideMTLSEnabledSelector } from '../../store/Selectors';
 import { style } from 'typestyle';
-import MiniGraphCard from '../../components/CytoscapeGraph/MiniGraphCard';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import history, { URLParam } from '../../app/History';
+import MiniGraphCardContainer from "../../components/CytoscapeGraph/MiniGraphCard";
 
 type AppInfoProps = {
   app?: App;
@@ -79,7 +79,7 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
             <AppDescription app={this.props.app} health={this.props.health} />
           </GridItem>
           <GridItem span={8}>
-            <MiniGraphCard
+            <MiniGraphCardContainer
               onEdgeTap={this.goToMetrics}
               dataSource={this.graphDataSource}
               mtlsEnabled={this.props.mtlsEnabled}

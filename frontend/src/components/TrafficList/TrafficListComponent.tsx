@@ -14,6 +14,9 @@ import { sortFields } from './FiltersAndSorts';
 import { SortField } from 'types/SortFilters';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { createTooltipIcon, KialiIcon } from 'config/KialiIcon';
+import {KialiAppState} from "../../store/Store";
+import {connect} from "react-redux";
+import {isParentKiosk, kioskContextMenuAction} from "../Kiosk/KioskActions";
 
 export interface TrafficListItem {
   direction: TrafficDirection;
@@ -26,7 +29,11 @@ export interface TrafficListItem {
   trafficPercentSuccess: string;
 }
 
-type TrafficListComponentProps = FilterComponent.Props<TrafficListItem> & {
+type ReduxProps = {
+  kiosk: string;
+}
+
+type TrafficListComponentProps = ReduxProps & FilterComponent.Props<TrafficListItem> & {
   trafficItems: TrafficItem[];
 };
 
@@ -233,6 +240,7 @@ class TrafficListComponent extends FilterComponent.Component<
 
   // Helper used to build the table content.
   rows = (direction: TrafficDirection): IRow[] => {
+    const parentKiosk = isParentKiosk(this.props.kiosk);
     return this.state.listItems
       .filter(i => i.direction === direction)
       .map((item, i) => {
@@ -251,11 +259,21 @@ class TrafficListComponent extends FilterComponent.Component<
             </>,
             <>
               <PFBadge badge={item.badge} position={TooltipPosition.top} keyValue={`tt_badge_${i}`} />
-              {!!links.detail ? (
+              {!!links.detail ? (parentKiosk ? (
+                <Link
+                  key={`link_d_${item.badge}_${name}`}
+                  to={''}
+                  onClick={() => {
+                    kioskContextMenuAction(links.detail);
+                  }}
+                  className={'virtualitem_definition_link'}>
+                  {name}
+                </Link>
+              ) :(
                 <Link key={`link_d_${item.badge}_${name}`} to={links.detail} className={'virtualitem_definition_link'}>
                   {name}
                 </Link>
-              ) : (
+              )) : (
                 name
               )}
             </>,
@@ -264,9 +282,22 @@ class TrafficListComponent extends FilterComponent.Component<
             <>{item.protocol}<LockIcon mTLS={item.mTLS}></LockIcon></>,
             <>
               {!!links.metrics && (
-                <Link key={`link_m_${item.badge}_${name}`} to={links.metrics} className={'virtualitem_definition_link'}>
-                  View metrics
-                </Link>
+                (parentKiosk ? (
+                  <Link
+                    key={`link_m_${item.badge}_${name}`}
+                    to={''}
+                    onClick={() => {
+                      kioskContextMenuAction(links.metrics);
+                    }}
+                    className={'virtualitem_definition_link'}
+                  >
+                    View metrics
+                  </Link>
+                ) : (
+                    <Link key={`link_m_${item.badge}_${name}`} to={links.metrics} className={'virtualitem_definition_link'}>
+                      View metrics
+                    </Link>
+                  ))
               )}
             </>
           ]
@@ -338,4 +369,11 @@ class TrafficListComponent extends FilterComponent.Component<
   };
 }
 
-export default TrafficListComponent;
+const mapStateToProps = (state: KialiAppState) => {
+  return {
+    kiosk: state.globalState.kiosk,
+  };
+};
+
+const TrafficListComponentContainer = connect(mapStateToProps)(TrafficListComponent)
+export default TrafficListComponentContainer;

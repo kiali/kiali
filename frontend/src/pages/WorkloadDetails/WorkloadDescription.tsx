@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Workload } from '../../types/Workload';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import DetailDescription from '../../components/Details/DetailDescription';
 import { style } from 'typestyle';
 import Labels from '../../components/Label/Labels';
 import LocalTime from '../../components/Time/LocalTime';
@@ -16,6 +15,7 @@ import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import MissingLabel from '../../components/MissingLabel/MissingLabel';
 import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
+import DetailDescriptionContainer from "../../components/Details/DetailDescription";
 
 type WorkloadDescriptionProps = {
   workload?: Workload;
@@ -173,7 +173,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
               tooltipMessage={isTemplateLabels ? 'Labels defined on the Workload template' : undefined}
             />
           )}
-          <DetailDescription
+          <DetailDescriptionContainer
             namespace={this.props.namespace}
             apps={apps}
             services={services}

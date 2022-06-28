@@ -53,6 +53,13 @@ export const kioskOverviewAction = (showType: Show, namespace: string, duration:
   sendParentMessage(showInParent);
 };
 
+export const isKiosk = (kiosk: string): boolean => {
+  return kiosk.length > 0;
+}
+
+export const isParentKiosk = (kiosk: string): boolean => {
+  return kiosk.length > 0 && kiosk !== 'true';
+}
 
 // Message has no format, parent should parse it for its needs
 const sendParentMessage = (msg: string): void => {

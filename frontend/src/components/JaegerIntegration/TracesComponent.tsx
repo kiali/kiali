@@ -20,15 +20,26 @@ import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions'
 import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
 
-interface TracesProps {
+/*
+    timeRange: timeRangeSelector(state),
+    urlJaeger: state.jaegerState.info ? state.jaegerState.info.url : '',
+    namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true,
+    selectedTrace: state.jaegerState.selectedTrace,
+    lastRefreshAt: state.globalState.lastRefreshAt
+ */
+
+type ReduxProps = {
+  lastRefreshAt: TimeInMilliseconds;
+  namespaceSelector: boolean;
+  selectedTrace?: JaegerTrace;
+  timeRange: TimeRange;
+  urlJaeger: string;
+};
+
+type TracesProps = ReduxProps & {
   namespace: string;
   target: string;
   targetKind: TargetKind;
-  urlJaeger: string;
-  namespaceSelector: boolean;
-  timeRange: TimeRange;
-  selectedTrace?: JaegerTrace;
-  lastRefreshAt: TimeInMilliseconds;
 }
 
 interface TracesState {

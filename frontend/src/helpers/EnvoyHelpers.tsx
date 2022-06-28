@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { EnvoySummary, Host } from '../types/IstioObjects';
 import { ActiveFilter, ActiveFiltersInfo } from '../types/Filters';
 import { FilterSelected } from '../components/Filters/StatefulFilters';
+import {kioskContextMenuAction} from "../components/Kiosk/KioskActions";
 
 export type FilterMethodMap = { [id: string]: (value, filter) => boolean };
 
@@ -27,7 +28,7 @@ export const routeLink = (
   route: string,
   namespace: string,
   workload: string | undefined,
-  handler: () => void
+  handler: () => void,
 ): JSX.Element | string => {
   let re = /Route: ([a-z-.:\d]*)/;
 
@@ -51,7 +52,8 @@ export const serviceLink = (
   host: Host,
   namespaces: Namespace[] | undefined,
   podNamespace: string,
-  simpleSvc: boolean = false
+  simpleSvc: boolean = false,
+  isParentKiosk: boolean,
 ): JSX.Element | string => {
   let to: string = '/namespaces/';
   let linkText: string = host.service;
@@ -76,7 +78,16 @@ export const serviceLink = (
   if (showLink) {
     return (
       <React.Fragment>
-        <Link to={to}>{linkText}</Link>
+        {isParentKiosk ? (
+          <Link
+            to={''}
+            onClick={() => {
+              kioskContextMenuAction(to);
+            }}
+          >{linkText}</Link>
+        ) : (
+          <Link to={to}>{linkText}</Link>
+        )}
       </React.Fragment>
     );
   } else {

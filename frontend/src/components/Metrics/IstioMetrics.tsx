@@ -50,13 +50,14 @@ type IstioMetricsProps = ObjectId &
     direction: Direction;
   };
 
-type Props = IstioMetricsProps & {
-  // Redux props
+type ReduxProps = {
   jaegerIntegration: boolean;
   lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
   setTimeRange: (range: TimeRange) => void;
 };
+
+type Props = ReduxProps & IstioMetricsProps;
 
 const fullHeightStyle = style({
   height: '100%'

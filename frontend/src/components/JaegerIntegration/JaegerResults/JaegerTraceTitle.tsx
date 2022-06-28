@@ -10,16 +10,34 @@ import {
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { FormattedTraceInfo, fullIDStyle } from './FormattedTraceInfo';
 import history from 'app/History';
+import {KialiAppState} from "../../../store/Store";
+import {connect} from "react-redux";
+import {isParentKiosk, kioskContextMenuAction} from "../../Kiosk/KioskActions";
 
-interface Props {
+type ReduxProps = {
+  kiosk: string;
+}
+
+type Props = ReduxProps & {
   formattedTrace: FormattedTraceInfo;
   externalURL?: string;
   graphURL: string;
   comparisonURL?: string;
 }
 
-export const JaegerTraceTitle = (props: Props) => {
-  const links = [<DropdownItem onClick={() => history.push(props.graphURL)}>View on Graph</DropdownItem>];
+const JaegerTraceTitle = (props: Props) => {
+  const links = [
+    <DropdownItem
+      onClick={() => {
+        if (isParentKiosk(props.kiosk)) {
+          kioskContextMenuAction(props.graphURL);
+        } else {
+          history.push(props.graphURL);
+        }
+      }}
+    >View on Graph
+    </DropdownItem>
+  ];
   if (props.externalURL) {
     links.push(
       <DropdownItem onClick={() => window.open(props.externalURL, '_blank')}>
@@ -59,3 +77,12 @@ export const JaegerTraceTitle = (props: Props) => {
     </CardHeader>
   );
 };
+
+const mapStateToProps = (state: KialiAppState) => {
+  return {
+    kiosk: state.globalState.kiosk,
+  }
+};
+
+const JaegerTraceTitleContainer = connect(mapStateToProps)(JaegerTraceTitle);
+export default JaegerTraceTitleContainer;

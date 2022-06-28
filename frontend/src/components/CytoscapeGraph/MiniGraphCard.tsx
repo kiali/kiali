@@ -20,10 +20,17 @@ import { style } from 'typestyle';
 import { toRangeString } from '../Time/Utils';
 import { TimeInMilliseconds } from '../../types/Common';
 import { KialiDagreGraph } from './graphs/KialiDagreGraph';
+import {KialiAppState} from "../../store/Store";
+import {connect} from "react-redux";
+import {isParentKiosk, kioskContextMenuAction} from "../Kiosk/KioskActions";
 
 const initGraphContainerStyle = style({ width: '100%', height: '100%' });
 
-type MiniGraphCardProps = {
+type ReduxProps = {
+  kiosk: string;
+}
+
+type MiniGraphCardProps = ReduxProps & {
   dataSource: GraphDataSource;
   graphContainerStyle?: string;
   mtlsEnabled: boolean;
@@ -35,7 +42,7 @@ type MiniGraphCardState = {
   graphData: DecoratedGraphElements;
 };
 
-export default class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardState> {
+class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardState> {
   private cytoscapeGraphRef: any;
 
   constructor(props) {
@@ -63,10 +70,18 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
       <DropdownItem key="viewFullGraph" onClick={this.onViewFullGraph}>
         Show full graph
       </DropdownItem>,
-      <DropdownItem key="viewNodeGraph" onClick={this.onViewNodeGraph}>
-        Show node graph
-      </DropdownItem>
     ];
+    if (isParentKiosk(this.props.kiosk)) {
+      // TODO Kiosk would have the time selectors on the graph; this condition will updated shortly
+    } else {
+      graphCardActions.push(
+        <DropdownItem key="viewNodeGraph" onClick={this.onViewNodeGraph}>
+          Show node graph
+        </DropdownItem>
+      );
+    }
+
+
     const rangeEnd: TimeInMilliseconds = this.props.dataSource.graphTimestamp * 1000;
     const rangeStart: TimeInMilliseconds = rangeEnd - this.props.dataSource.graphDuration * 1000;
     const intervalTitle =
@@ -166,7 +181,12 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
     let resource = e[eNodeType];
     let resourceType: string = eNodeType === NodeType.APP ? 'application' : eNodeType;
 
-    history.push(`/namespaces/${e.namespace}/${resourceType}s/${resource}`);
+    const href= `/namespaces/${e.namespace}/${resourceType}s/${resource}`;
+    if (isParentKiosk(this.props.kiosk)) {
+      kioskContextMenuAction(href);
+    } else {
+      history.push(href);
+    }
   };
 
   private onGraphActionsToggle = (isOpen: boolean) => {
@@ -209,7 +229,11 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
       cytoscapeGraph.build()
     )}`;
 
-    history.push(graphUrl);
+    if (isParentKiosk(this.props.kiosk)) {
+      kioskContextMenuAction(graphUrl);
+    } else {
+      history.push(graphUrl);
+    }
   };
 
   private onViewNodeGraph = () => {
@@ -247,3 +271,10 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
     history.push(makeNodeGraphUrlFromParams(urlParams));
   };
 }
+
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
+  kiosk: state.globalState.kiosk,
+});
+
+const MiniGraphCardContainer = connect(mapStateToProps)(MiniGraphCard);
+export default MiniGraphCardContainer

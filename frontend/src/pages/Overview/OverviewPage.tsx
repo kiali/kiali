@@ -61,7 +61,7 @@ import { MessageType } from '../../types/MessageCenter';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
 import { ExternalLink } from '../../types/Dashboards';
-import {kioskOverviewAction} from "../../components/Kiosk/KioskActions";
+import {isParentKiosk, kioskOverviewAction} from "../../components/Kiosk/KioskActions";
 import ValidationSummaryLinkContainer from "../../components/Link/ValidationSummaryLink";
 
 const gridStyleCompact = style({
@@ -532,7 +532,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   getNamespaceActions = (nsInfo: NamespaceInfo): OverviewNamespaceAction[] => {
     // Today actions are fixed, but soon actions may depend of the state of a namespace
     // So we keep this wrapped in a showActions function.
-    const namespaceActions: OverviewNamespaceAction[] = this.props.kiosk.length > 0 && this.props.kiosk !== 'true' ? [
+    const namespaceActions: OverviewNamespaceAction[] = isParentKiosk(this.props.kiosk) ? [
       {
         isGroup: true,
         isSeparator: false,

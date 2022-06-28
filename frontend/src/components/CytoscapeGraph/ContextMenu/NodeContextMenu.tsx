@@ -14,7 +14,7 @@ import { getTitle } from 'pages/Graph/SummaryPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { renderBadgedName } from 'pages/Graph/SummaryLink';
 import { PFColors } from 'components/Pf/PfColors';
-import {kioskContextMenuAction} from "../../Kiosk/KioskActions";
+import {isParentKiosk, kioskContextMenuAction} from "../../Kiosk/KioskActions";
 
 type ReduxProps = {
   jaegerInfo?: JaegerInfo;
@@ -111,7 +111,7 @@ export class NodeContextMenu extends React.PureComponent<Props> {
     } else {
       // Kiosk actions are used when the kiosk specifies a parent,
       // otherwise the kiosk=true will keep the links inside Kiali
-      if (this.props.kiosk.length > 0 && this.props.kiosk !== 'true') {
+      if (isParentKiosk(this.props.kiosk)) {
         item =
           <Link
             to={''}
@@ -203,7 +203,7 @@ export const clickHandler = (o: ContextMenuOption, kiosk: string) => {
   if (o.external) {
     window.open(o.url, o.target);
   } else {
-    if (kiosk.length > -1 && kiosk !== "true") {
+    if (isParentKiosk(kiosk)) {
       kioskContextMenuAction(o.url);
     } else {
       history.push(o.url);

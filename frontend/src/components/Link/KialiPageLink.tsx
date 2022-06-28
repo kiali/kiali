@@ -4,7 +4,7 @@ import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { serverConfig } from '../../config';
 import {KialiAppState} from "../../store/Store";
 import {connect} from "react-redux";
-import {kioskContextMenuAction} from "../Kiosk/KioskActions";
+import {isParentKiosk, kioskContextMenuAction} from "../Kiosk/KioskActions";
 
 type ReduxProps = {
     kiosk: string;
@@ -22,7 +22,7 @@ class KialiPageLink extends React.Component<KialiPageLinkProps> {
     // Without a cluster, simply render a local link
     // If cluster is specified, and it's the home cluster, render a local link.
     if (!this.props.cluster || !serverConfig.clusterInfo?.name || this.props.cluster === serverConfig.clusterInfo.name) {
-      if (this.props.kiosk.length > 0 && this.props.kiosk !== 'true') {
+      if (isParentKiosk(this.props.kiosk)) {
         return <Link
             to={''}
             onClick={()=> {

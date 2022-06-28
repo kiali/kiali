@@ -48,13 +48,14 @@ type CustomMetricsProps = RouteComponentProps<{}> & {
   height?: number;
 };
 
-type Props = CustomMetricsProps & {
-  // Redux props
+type ReduxProps = {
   jaegerIntegration: boolean;
   lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
   setTimeRange: (range: TimeRange) => void;
 };
+
+type Props = ReduxProps & CustomMetricsProps;
 
 const fullHeightStyle = style({
   height: '100%'

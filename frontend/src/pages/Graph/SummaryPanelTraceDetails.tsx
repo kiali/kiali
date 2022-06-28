@@ -29,7 +29,7 @@ import { summaryFont, summaryTitle } from './SummaryPanelCommon';
 import { NodeParamsType, GraphType } from 'types/Graph';
 import { bindActionCreators } from 'redux';
 import responseFlags from 'utils/ResponseFlags';
-import {kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
+import {isParentKiosk, kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
 
 type ReduxProps = {
   close: () => void;
@@ -140,7 +140,7 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
               <Link
                 to={tracesDetailsURL}
                 onClick={() => {
-                  if (this.props.kiosk.length > 0 && this.props.kiosk !== 'true') {
+                  if (isParentKiosk(this.props.kiosk)) {
                     kioskContextMenuAction(tracesDetailsURL);
                   }
                 }}
@@ -240,7 +240,7 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
             <Link
               to={spanURL}
               onClick={() => {
-                if (this.props.kiosk.length > 0 && this.props.kiosk !== 'true') {
+                if (isParentKiosk(this.props.kiosk)) {
                   kioskContextMenuAction(spanURL);
                 }
               }}

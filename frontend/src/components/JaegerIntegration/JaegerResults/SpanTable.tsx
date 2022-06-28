@@ -45,14 +45,19 @@ import responseFlags from 'utils/ResponseFlags';
 import { renderMetricsComparison } from './StatsComparison';
 import history from 'app/History';
 import { AngleDownIcon, AngleRightIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
+import {isParentKiosk, kioskContextMenuAction} from "../../Kiosk/KioskActions";
 
-interface Props {
+type ReduxProps = {
+  kiosk: string;
+  loadMetricsStats: (queries: MetricsStatsQuery[]) => void;
+  metricsStats: Map<string, MetricsStats>;
+};
+
+type Props = ReduxProps & {
   externalURL?: string;
   items: RichSpanData[];
   namespace: string;
-  loadMetricsStats: (queries: MetricsStatsQuery[]) => void;
-  metricsStats: Map<string, MetricsStats>;
-}
+};
 
 interface State {
   expandedSpans: Map<string, boolean>;
@@ -216,7 +221,7 @@ class SpanTable extends React.Component<Props, State> {
     _extraData: IExtraRowData
   ): (IAction | ISeparator)[] => {
     const item = rowData.item;
-
+    const parentKiosk = isParentKiosk(this.props.kiosk);
     const appActions: IAction[] = [
       {
         isDisabled: true,
@@ -229,11 +234,25 @@ class SpanTable extends React.Component<Props, State> {
       },
       {
         title: 'Inbound Metrics',
-        onClick: (_event, _rowId, rowData, _extra) => history.push(rowData.item.linkToApp + '?tab=in_metrics')
+        onClick: (_event, _rowId, rowData, _extra) => {
+          const href = rowData.item.linkToApp + '?tab=in_metrics';
+          if (parentKiosk) {
+            kioskContextMenuAction(href);
+          } else {
+            history.push(href);
+          }
+        }
       },
       {
         title: 'Outbound Metrics',
-        onClick: (_event, _rowId, rowData, _extra) => history.push(rowData.item.linkToApp + '?tab=out_metrics')
+        onClick: (_event, _rowId, rowData, _extra) => {
+          const href = rowData.item.linkToApp + '?tab=out_metrics';
+          if (parentKiosk) {
+            kioskContextMenuAction(href);
+          } else {
+            history.push(href);
+          }
+        }
       }
     ];
 
@@ -251,15 +270,36 @@ class SpanTable extends React.Component<Props, State> {
         },
         {
           title: 'Logs',
-          onClick: (_event, _rowId, rowData, _extra) => history.push(rowData.item.linkToWorkload + '?tab=logs')
+          onClick: (_event, _rowId, rowData, _extra) => {
+            const href = rowData.item.linkToWorkload + '?tab=logs';
+            if (parentKiosk) {
+              kioskContextMenuAction(href);
+            } else {
+              history.push(href);
+            }
+          }
         },
         {
           title: 'Inbound Metrics',
-          onClick: (_event, _rowId, rowData, _extra) => history.push(rowData.item.linkToWorkload + '?tab=in_metrics')
+          onClick: (_event, _rowId, rowData, _extra) => {
+            const href = rowData.item.linkToWorkload + '?tab=in_metrics';
+            if (parentKiosk) {
+              kioskContextMenuAction(href);
+            } else {
+              history.push(href);
+            }
+          }
         },
         {
           title: 'Outbound Metrics',
-          onClick: (_event, _rowId, rowData, _extra) => history.push(rowData.item.linkToWorkload + '?tab=out_metrics')
+          onClick: (_event, _rowId, rowData, _extra) => {
+            const href = rowData.item.linkToWorkload + '?tab=out_metrics';
+            if (parentKiosk) {
+              kioskContextMenuAction(href);
+            } else {
+              history.push(href);
+            }
+          }
         }
       ];
     }
@@ -283,7 +323,9 @@ class SpanTable extends React.Component<Props, State> {
       ];
     }
 
-    return [...appActions, ...workloadActions, ...tracingActions];
+    // Parent Kiosk won't have links to the app details
+    // as most of the kubernetes consoles don't have an unified "app" entity
+    return parentKiosk ? [...workloadActions, ...tracingActions] : [...appActions, ...workloadActions, ...tracingActions];
   };
 
   private isExpanded = (spanID: string): boolean => {
@@ -297,13 +339,33 @@ class SpanTable extends React.Component<Props, State> {
   };
 
   private OriginCell = (item: RichSpanData): React.ReactNode => {
+    const parentKiosk = isParentKiosk(this.props.kiosk);
     return (
       <div key={`${item.spanID}-origin`}>
         <strong>Application: </strong>
-        {(item.linkToApp && <Link to={item.linkToApp}>{item.app}</Link>) || item.app}
+        {(item.linkToApp && (parentKiosk ?
+          <Link
+            to={''}
+            onClick={() => {
+              if (item.linkToApp) {
+                kioskContextMenuAction(item.linkToApp);
+              }
+            }}>{item.app}</Link> :
+          <Link to={item.linkToApp}>{item.app}</Link>
+        )) || item.app}
         <br />
         <strong>Workload: </strong>
-        {(item.linkToWorkload && <Link to={item.linkToWorkload}>{item.workload}</Link>) || 'unknown'}
+        {(item.linkToWorkload && (parentKiosk ?
+          <Link
+            to={''}
+            onClick={() => {
+              if (item.linkToWorkload) {
+                kioskContextMenuAction(item.linkToWorkload);
+              }
+            }}
+          >{item.workload}</Link> :
+            <Link to={item.linkToWorkload}>{item.workload}</Link>
+        )) || 'unknown'}
         {this.isExpanded(item.spanID) && (
           <>
             <br />
@@ -348,6 +410,7 @@ class SpanTable extends React.Component<Props, State> {
   };
 
   private renderEnvoySummary = (item: RichSpanData) => {
+    const parentKiosk = isParentKiosk(this.props.kiosk);
     const info = item.info as EnvoySpanInfo;
     let rqLabel = 'Request';
     let peerLink: JSX.Element | undefined = undefined;
@@ -357,7 +420,18 @@ class SpanTable extends React.Component<Props, State> {
         peerLink = (
           <>
             {' from '}
-            <Link to={'/namespaces/' + info.peer.namespace + '/workloads/' + info.peer.name}>{info.peer.name}</Link>
+            {parentKiosk ? (
+              <Link
+                to={''}
+                onClick={() => {
+                  if (info.peer) {
+                    kioskContextMenuAction('/namespaces/' + info.peer.namespace + '/workloads/' + info.peer.name);
+                  }
+                }}
+              >{info.peer.name}</Link>
+            ) : (
+              <Link to={'/namespaces/' + info.peer.namespace + '/workloads/' + info.peer.name}>{info.peer.name}</Link>
+            )}
           </>
         );
       }
@@ -367,7 +441,18 @@ class SpanTable extends React.Component<Props, State> {
         peerLink = (
           <>
             {' to '}
-            <Link to={'/namespaces/' + info.peer.namespace + '/services/' + info.peer.name}>{info.peer.name}</Link>
+            {parentKiosk ? (
+              <Link
+                to={''}
+                onClick={() => {
+                  if (info.peer) {
+                    kioskContextMenuAction('/namespaces/' + info.peer.namespace + '/services/' + info.peer.name);
+                  }
+                }}
+              >{info.peer.name}</Link>
+            ) : (
+              <Link to={'/namespaces/' + info.peer.namespace + '/services/' + info.peer.name}>{info.peer.name}</Link>
+            )}
           </>
         );
       }
@@ -451,7 +536,8 @@ class SpanTable extends React.Component<Props, State> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  metricsStats: state.metricsStats.data
+  kiosk: state.globalState.kiosk,
+  metricsStats: state.metricsStats.data,
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({

@@ -1,5 +1,6 @@
 import React from 'react';
 import {store} from "../../../store/ConfigStore";
+import {isKiosk} from "../../Kiosk/KioskActions";
 
 // TOP_PADDING constant is used to adjust the height of the main div to allow scrolling in the inner container layer.
 export const TOP_PADDING = 76 + 118;
@@ -33,7 +34,7 @@ export class RenderComponentScroll extends React.Component<Props, State> {
   }
 
   updateWindowDimensions = () => {
-    const isStandalone = !store.getState().globalState.isKiosk;
+    const isStandalone = !isKiosk(store.getState().globalState.kiosk);
     const topPadding = isStandalone ? TOP_PADDING : EMBEDDED_PADDING;
     this.setState(
       {

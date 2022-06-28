@@ -13,12 +13,12 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
-import IstioObjectLink from '../Link/IstioObjectLink';
 import { IstioTypes } from '../VirtualList/Config';
 import { style } from 'typestyle';
 import { PFBadge } from '../Pf/PfBadges';
+import IstioObjectLinkContainer from "../Link/IstioObjectLink";
 
-interface Props {
+type Props = {
   name: string;
   items: IstioConfigItem[];
 }
@@ -28,7 +28,7 @@ const emtpytStyle = style({
   margin: '0 0 0 0'
 });
 
-class IstioConfigCard extends React.Component<Props> {
+export default class IstioConfigCard extends React.Component<Props> {
   columns(): ICell[] {
     return [{ title: 'Name' }, { title: 'Status', transforms: [cellWidth(10) as any] }];
   }
@@ -52,9 +52,9 @@ class IstioConfigCard extends React.Component<Props> {
 
   overviewLink(item: IstioConfigItem) {
     return (
-      <IstioObjectLink name={item.name} namespace={item.namespace || ''} type={item.type}>
+      <IstioObjectLinkContainer name={item.name} namespace={item.namespace || ''} type={item.type}>
         {item.name}
-      </IstioObjectLink>
+      </IstioObjectLinkContainer>
     );
   }
 
@@ -125,5 +125,3 @@ class IstioConfigCard extends React.Component<Props> {
     );
   }
 }
-
-export default IstioConfigCard;

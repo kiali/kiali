@@ -54,6 +54,7 @@ const defaultTab = 'clusters'
 export type ResourceSorts = { [resource: string]: ISortBy };
 
 type ReduxProps = {
+  kiosk: string;
   namespaces: Namespace[];
 };
 
@@ -131,13 +132,13 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
         fetch: true,
         resource: targetResource,
         activeKey: tabIndex
-      });    
+      });
       const mainTab = new URLSearchParams(history.location.search).get(workloadTabName) || workloadDefaultTab
       const urlParams = new URLSearchParams('');
       urlParams.set(tabName, targetResource);
       urlParams.set(workloadTabName, mainTab);
       history.push(history.location.pathname + '?' + urlParams.toString());
-    }  
+    }
   };
 
   fetchEnvoyProxyResourceEntries = (resource: string) => {
@@ -256,6 +257,7 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
       this.props.namespaces,
       this.props.namespace,
       this.onRouteLinkClick,
+      this.props.kiosk,
       this.props.workload.name
     );
     const SummaryWriterComp = builder[0];
@@ -268,7 +270,7 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
     if (!envoyMetricsDashboardRef) {
       filteredEnvoyTabs = envoyTabs.slice(0, envoyTabs.length - 1);
     }
-    const tabs = filteredEnvoyTabs.map((value, index) =>        
+    const tabs = filteredEnvoyTabs.map((value, index) =>
     {
       const title = value.charAt(0).toUpperCase() + value.slice(1);
       return (
@@ -363,6 +365,7 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
+  kiosk: state.globalState.kiosk,
   namespaces: namespaceItemsSelector(state)!
 });
 

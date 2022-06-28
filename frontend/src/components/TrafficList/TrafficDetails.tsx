@@ -14,13 +14,13 @@ import { RenderComponentScroll } from '../Nav/Page';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import GraphDataSource from 'services/GraphDataSource';
 import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
-import TrafficListComponent from 'components/TrafficList/TrafficListComponent';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import * as TrafficListFilters from './FiltersAndSorts';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { durationSelector } from '../../store/Selectors';
 import { HealthAnnotationType } from '../../types/HealthAnnotation';
+import TrafficListComponentContainer from "components/TrafficList/TrafficListComponent";
 
 export interface AppNode {
   id: string;
@@ -63,12 +63,15 @@ export interface TrafficItem {
   mTLS?: number;
 }
 
-type TrafficDetailsProps = {
+type ReduxProps = {
   duration: DurationInSeconds;
+  lastRefreshAt: TimeInMilliseconds;
+}
+
+type TrafficDetailsProps = ReduxProps & {
   itemName: string;
   itemType: MetricsObjectTypes;
   namespace: string;
-  lastRefreshAt: TimeInMilliseconds;
 };
 
 type TrafficDetailsState = {
@@ -116,7 +119,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
             <GridItem span={12}>
               <Card>
                 <CardBody>
-                  <TrafficListComponent
+                  <TrafficListComponentContainer
                     currentSortField={FilterHelper.currentSortField(TrafficListFilters.sortFields)}
                     isSortAscending={FilterHelper.isCurrentSortAscending()}
                     trafficItems={this.state.traffic}

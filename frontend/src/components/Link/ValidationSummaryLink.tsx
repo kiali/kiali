@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import IstioConfigListLink from './IstioConfigListLink';
 import {KialiAppState} from "../../store/Store";
 import {connect} from "react-redux";
-import {kioskIstioConfigAction} from "../Kiosk/KioskActions";
+import {isParentKiosk, kioskIstioConfigAction} from "../Kiosk/KioskActions";
 
 type ReduxProps = {
   kiosk: string;
@@ -28,7 +28,7 @@ class ValidationSummaryLink extends React.Component<Props> {
     if (this.hasIstioObjects()) {
       // Kiosk actions are used when the kiosk specifies a parent,
       // otherwise the kiosk=true will keep the links inside Kiali
-      link = this.props.kiosk.length > 0 && this.props.kiosk !== 'true' ? (
+      link = isParentKiosk(this.props.kiosk) ? (
           <Link to={''} onClick={() => kioskIstioConfigAction(this.props.namespace)}>
             {this.props.children}
           </Link>
