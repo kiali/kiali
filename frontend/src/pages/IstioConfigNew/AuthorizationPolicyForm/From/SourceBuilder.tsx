@@ -1,11 +1,18 @@
 import * as React from 'react';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
-import { Button, FormSelect, FormSelectOption, TextInputBase as TextInput } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  FormSelect,
+  FormSelectOption,
+  TextInputBase as TextInput
+} from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isValidIp } from '../../../../utils/IstioConfigUtils';
 import { style } from 'typestyle';
 import { PFColors } from '../../../../components/Pf/PfColors';
+import { isValid } from 'utils/Common';
 
 type Props = {
   onAddFrom: (source: { [key: string]: string[] }) => void;
@@ -183,7 +190,7 @@ class SourceBuilder extends React.Component<Props, State> {
                 aria-describedby="add new source values"
                 name="addNewValues"
                 onChange={this.onAddNewValues}
-                isValid={isValidSource}
+                validated={isValid(isValidSource)}
               />
               {!isValidSource && (
                 <div key="hostsHelperText" className={noSourceStyle}>
@@ -194,7 +201,7 @@ class SourceBuilder extends React.Component<Props, State> {
             <>
               {this.state.sourceFields.length > 0 && (
                 <Button
-                  variant="link"
+                  variant={ButtonVariant.link}
                   icon={<PlusCircleIcon />}
                   onClick={this.onAddSource}
                   isDisabled={!isValidSource}
@@ -222,7 +229,7 @@ class SourceBuilder extends React.Component<Props, State> {
           <TableBody />
         </Table>
         <Button
-          variant="link"
+          variant={ButtonVariant.link}
           icon={<PlusCircleIcon />}
           isDisabled={Object.keys(this.state.source).length === 0}
           onClick={this.onAddSourceFromList}

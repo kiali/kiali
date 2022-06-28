@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
-import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, Title } from '@patternfly/react-core';
+import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, Title, TitleSizes } from '@patternfly/react-core';
 import * as API from '../../services/Api';
 import { Workload, WorkloadId } from '../../types/Workload';
 import WorkloadInfo from './WorkloadInfo';
@@ -9,7 +9,6 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
-import { RenderHeader } from '../../components/Nav/Page';
 import { serverConfig } from '../../config/ServerConfig';
 import WorkloadPodLogs from './WorkloadPodLogs';
 import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
@@ -24,6 +23,7 @@ import TimeControl from '../../components/Time/TimeControl';
 import EnvoyDetailsContainer from 'components/Envoy/EnvoyDetails';
 import { StatusState } from '../../types/StatusState';
 import { WorkloadHealth } from 'types/Health';
+import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
 
 type WorkloadDetailsState = {
   workload?: Workload;
@@ -130,7 +130,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     );
     tabsArray.push(trafficTab);
 
-    if (!serverConfig.kialiFeatureFlags.disabledFeatures || !serverConfig.kialiFeatureFlags.disabledFeatures.includes('logs-tab')) {
+    if (!serverConfig.kialiFeatureFlags.disabledFeatures?.includes('logs-tab')) {
       const logTab = (
         <Tab title="Logs" eventKey={2} key={'Logs'} data-test={"workload-details-logs-tab"}>
           {hasPods ? (
@@ -141,7 +141,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
             />
           ) : (
             <EmptyState variant={EmptyStateVariant.full}>
-              <Title headingLevel="h5" size="lg">
+              <Title headingLevel="h5" size={TitleSizes.lg}>
                 No logs for Workload {this.props.match.params.workload}
               </Title>
               <EmptyStateBody>There are no logs to display because the workload has no pods.</EmptyStateBody>
@@ -289,7 +289,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       ) : undefined;
     return (
       <>
-        <RenderHeader
+        <RenderHeaderContainer
           location={this.props.location}
           rightToolbar={<TimeControl customDuration={useCustomTime} />}
           actionsToolbar={actionsToolbar}
@@ -319,7 +319,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   jaegerInfo: state.jaegerState.info,
   lastRefreshAt: state.globalState.lastRefreshAt,
-  statusState: state.statusState
+  statusState: state.statusState,
 });
 
 const WorkloadDetailsContainer = connect(mapStateToProps)(WorkloadDetails);

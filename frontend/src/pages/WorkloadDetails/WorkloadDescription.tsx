@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Workload } from '../../types/Workload';
-import { Card, CardBody, CardHeader, Title, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import DetailDescription from '../../components/Details/DetailDescription';
 import { style } from 'typestyle';
 import Labels from '../../components/Label/Labels';
@@ -123,7 +123,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
     return workload ? (
       <Card id={'WorkloadDescriptionCard'}>
         <CardHeader>
-          <Title headingLevel="h5" size="lg">
+          <Title headingLevel="h5" size={TitleSizes.lg}>
             <div key="service-icon" className={iconStyle}>
               <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
             </div>
@@ -141,6 +141,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
             </span>
             {this.props.workload && !this.props.workload.istioSidecar && (
               <MissingSidecar
+                data-test={`missing-sidecar-badge-for-${workload.name}-workload-in-${this.props.namespace}-namespace`}
                 namespace={this.props.namespace}
                 tooltip={true}
                 style={{ marginLeft: '10px' }}

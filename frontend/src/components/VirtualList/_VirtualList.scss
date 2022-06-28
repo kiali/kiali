@@ -8,6 +8,12 @@
   width: 100%;
 }
 
+.pf-c-table tr > * {
+  font-size: var(--kiali-global--font-size);
+  padding-bottom: 8px;
+  padding-top: 8px;
+}
+
 .pf-c-scrollablegrid .pf-c-table tr > * {
   height: auto;
 }
@@ -48,12 +54,6 @@
 .health-icon {
   top: 3px;
   position: relative;
-}
-
-.faultinjection_badge_definition {
-  background-color: #703fec;
-  border-radius: 30em;
-  margin-right: 10px;
 }
 
 .virtualitem_badge_validation {

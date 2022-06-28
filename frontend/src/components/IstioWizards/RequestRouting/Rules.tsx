@@ -3,12 +3,11 @@ import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/rea
 import { style } from 'typestyle';
 import { PFColors } from '../../Pf/PfColors';
 import {
-  Badge,
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
   Title,
-  Tooltip,
+  TitleSizes,
   TooltipPosition
 } from '@patternfly/react-core';
 import { WorkloadWeight } from '../TrafficShifting';
@@ -149,13 +148,7 @@ class Rules extends React.Component<Props> {
                       .map((wk, i) => {
                         return (
                           <div key={'wk_mirrored_' + order + '_' + wk.name + '_' + i}>
-                            <Tooltip
-                              key={'mirrorred_' + wk.name}
-                              position={TooltipPosition.top}
-                              content={<>Mirrored Workload</>}
-                            >
-                              <Badge className={'faultinjection_badge_definition'}>MI</Badge>
-                            </Tooltip>
+                            <PFBadge badge={PFBadges.MirroredWorkload} position={TooltipPosition.top} />
                             {wk.name} ({wk.weight}% mirrored traffic)
                           </div>
                         );
@@ -163,33 +156,25 @@ class Rules extends React.Component<Props> {
                   </div>
                   {rule.delay && (
                     <div key={'delay_' + order}>
-                      <Tooltip position={TooltipPosition.top} content={<>Fault Injection: Delay</>}>
-                        <Badge className={'faultinjection_badge_definition'}>FI</Badge>
-                      </Tooltip>
+                      <PFBadge badge={PFBadges.FaultInjectionDelay} position={TooltipPosition.top} />
                       {rule.delay.percentage?.value}% requests delayed ({rule.delay.fixedDelay})
                     </div>
                   )}
                   {rule.abort && (
                     <div key={'abort_' + order}>
-                      <Tooltip position={TooltipPosition.top} content={<>Fault Injection: Abort</>}>
-                        <Badge className={'faultinjection_badge_definition'}>FI</Badge>
-                      </Tooltip>
+                      <PFBadge badge={PFBadges.FaultInjectionAbort} position={TooltipPosition.top} />
                       {rule.abort.percentage?.value}% requests aborted (HTTP Status {rule.abort.httpStatus})
                     </div>
                   )}
                   {rule.timeout && (
                     <div key={'timeout_' + order}>
-                      <Tooltip position={TooltipPosition.top} content={<>Request Timeout</>}>
-                        <Badge className={'faultinjection_badge_definition'}>RT</Badge>
-                      </Tooltip>
+                      <PFBadge badge={PFBadges.RequestTimeout} position={TooltipPosition.top} />
                       timeout ({rule.timeout})
                     </div>
                   )}
                   {rule.retries && (
                     <div key={'retries_' + order}>
-                      <Tooltip position={TooltipPosition.top} content={<>Request Retry</>}>
-                        <Badge className={'faultinjection_badge_definition'}>RR</Badge>
-                      </Tooltip>
+                      <PFBadge badge={PFBadges.RequestRetry} position={TooltipPosition.top} />
                       {rule.retries.attempts} attempts with timeout ({rule.timeout})
                     </div>
                   )}
@@ -204,7 +189,7 @@ class Rules extends React.Component<Props> {
                 {
                   title: (
                     <EmptyState variant={EmptyStateVariant.full}>
-                      <Title headingLevel="h5" size="lg">
+                      <Title headingLevel="h5" size={TitleSizes.lg}>
                         No Route Rules defined
                       </Title>
                       <EmptyStateBody className={noRulesStyle}>

@@ -54,16 +54,14 @@ export const toVCLine = (dps: Datapoint[], name: string, color: string): VCLine<
   return buildVCLine(toVCDatapoints(dps, name), { name: name, color: color });
 };
 
-let colorsIdx = 0;
 export const toVCLines = (
   metrics: Metric[],
   unit: string,
   colors: string[],
   xAxis: XAxisType = 'time'
 ): VCLines<RichDataPoint> => {
-  return metrics.map(line => {
-    const color = colors[colorsIdx % colors.length];
-    colorsIdx++;
+  return metrics.map((line, i) => {
+    const color = colors[i % colors.length];
     const dps =
       xAxis === 'time' ? toVCDatapoints(line.datapoints, line.name) : toVCSinglePoint(line.datapoints, line.name);
     return buildVCLine(dps, { name: line.name, unit: unit, color: color });
@@ -76,7 +74,6 @@ export const getDataSupplier = (
   colors: string[]
 ): (() => VCLines<RichDataPoint>) => {
   return () => {
-    colorsIdx = 0;
     const filtered = filterAndRenameMetric(chart.metrics, labels);
     return toVCLines(filtered, chart.unit, colors, chart.xAxis || 'time');
   };

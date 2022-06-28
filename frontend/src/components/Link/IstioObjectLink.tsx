@@ -71,7 +71,7 @@ class IstioObjectLink extends React.Component<Props> {
   render() {
     const { name, namespace, type, query } = this.props;
 
-    return <Link to={GetIstioObjectUrl(name, namespace, type, query)}>{this.props.children}</Link>;
+    return <Link to={GetIstioObjectUrl(name, namespace, type, query)} data-test={type + '-' + namespace + '-' + name}>{this.props.children}</Link>;
   }
 }
 

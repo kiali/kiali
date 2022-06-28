@@ -143,17 +143,11 @@ Note: for OS/X users testing requires watchman to be installed
 brew install watchman
 ----
 
+== Testing Libraries for Vulnerabilities
+We use github Dependabot for vulnerability testing. Dependabot runs regularly on the `kiali/kiali` repository.
+
 == Production Builds
 Use `yarn build` which will bundle the build artifacts using webpack into the `build` directory.
-
-== Analyze Javascript Library Size
-To produce a graphical representation of the all the libraries in the project (showing what % of total each one is).
-[source,shell]
-----
-yarn build
-yarn run analyze
-----
-Which will then launch a browser with your graphical source map displayed.
 
 == License and Copyright
 See the link:https://github.com/kiali/kiali/blob/master/LICENSE[LICENSE file].

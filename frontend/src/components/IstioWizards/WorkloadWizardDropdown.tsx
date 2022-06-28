@@ -120,6 +120,7 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
     if (serverConfig.kialiFeatureFlags.istioInjectionAction) {
       const enableAction = (
         <DropdownItem
+          data-test={WIZARD_ENABLE_AUTO_INJECTION}
           key={WIZARD_ENABLE_AUTO_INJECTION}
           component="button"
           onClick={() => this.onAction(WIZARD_ENABLE_AUTO_INJECTION)}
@@ -139,6 +140,7 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
 
       const disableAction = (
         <DropdownItem
+          data-test={WIZARD_DISABLE_AUTO_INJECTION}
           key={WIZARD_DISABLE_AUTO_INJECTION}
           component="button"
           onClick={() => this.onAction(WIZARD_DISABLE_AUTO_INJECTION)}
@@ -158,6 +160,7 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
 
       const removeAction = (
         <DropdownItem
+          data-test={WIZARD_REMOVE_AUTO_INJECTION}
           key={WIZARD_REMOVE_AUTO_INJECTION}
           component="button"
           onClick={() => this.onAction(WIZARD_REMOVE_AUTO_INJECTION)}
@@ -197,10 +200,11 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
     const validActions = renderDropdownItems.length > 0;
     const dropdown = (
       <Dropdown
+        data-test="workload-actions-dropdown"
         position={DropdownPosition.right}
         onSelect={this.onActionsSelect}
         toggle={
-          <DropdownToggle onToggle={this.onActionsToggle} iconComponent={CaretDownIcon}>
+          <DropdownToggle onToggle={this.onActionsToggle} icon={CaretDownIcon}>
             Actions
           </DropdownToggle>
         }

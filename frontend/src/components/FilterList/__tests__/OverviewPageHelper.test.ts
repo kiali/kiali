@@ -41,8 +41,7 @@ describe('Overview Page', () => {
     FilterSelected.setSelected({
       filters: [
         {
-          id: 'health',
-          title: 'Health',
+          category: 'Health',
           value: 'Healthy'
         }
       ],
@@ -62,8 +61,7 @@ describe('Overview Page', () => {
     FilterSelected.setSelected({
       filters: [
         {
-          id: 'health',
-          title: 'Health',
+          category: 'Health',
           value: 'Degraded'
         }
       ],
@@ -85,8 +83,7 @@ describe('Overview Page', () => {
     FilterSelected.setSelected({
       filters: [
         {
-          id: 'health',
-          title: 'Health',
+          category: 'Health',
           value: 'Failure'
         }
       ],

@@ -1,8 +1,16 @@
 import { HistoryManager, URLParam } from '../app/History';
 
-export const isKioskMode = () => {
+export const getKioskMode = () => {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('kiosk') === 'true';
+  const kioskParam = urlParams.get('kiosk');
+  if (kioskParam) {
+    return kioskParam;
+  }
+  return '';
+}
+
+export const isKioskMode = () => {
+  return getKioskMode() !== '';
 };
 
 export const getFocusSelector = () => {

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { style } from 'typestyle';
 import legendData, { GraphLegendItem, GraphLegendItemRow } from './GraphLegendData';
-import { Button, Tooltip } from '@patternfly/react-core';
+import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import CloseIcon from '@patternfly/react-icons/dist/js/icons/close-icon';
 import { PFColors } from 'components/Pf/PfColors';
 import { summaryFont, summaryTitle } from './SummaryPanelCommon';
@@ -46,7 +46,7 @@ export default class GraphLegend extends React.Component<GraphLegendProps> {
           <span>Legend</span>
           <span className={closeBoxStyle}>
             <Tooltip content="Close Legend">
-              <Button id="legend_close" variant="plain" onClick={this.props.closeLegend}>
+              <Button id="legend_close" variant={ButtonVariant.plain} onClick={this.props.closeLegend}>
                 <CloseIcon />
               </Button>
             </Tooltip>

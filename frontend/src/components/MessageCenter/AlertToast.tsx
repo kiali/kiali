@@ -43,7 +43,7 @@ export default class AlertToast extends React.Component<AlertToastProps> {
         key={this.props.message.id}
         variant={this.props.variant}
         title={this.props.message.content}
-        action={this.getAction()}
+        actionClose={this.getAction()}
       />
     );
   }

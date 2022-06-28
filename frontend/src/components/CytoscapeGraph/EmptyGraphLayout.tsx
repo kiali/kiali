@@ -1,5 +1,14 @@
 import * as React from 'react';
-import { Button, EmptyState, EmptyStateBody, EmptyStateIcon, EmptyStateVariant, Title } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateIcon,
+  EmptyStateVariant,
+  Title,
+  TitleSizes
+} from '@patternfly/react-core';
 import { style } from 'typestyle';
 import * as _ from 'lodash';
 import Namespace from '../../types/Namespace';
@@ -75,9 +84,9 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
   render() {
     if (this.props.isError) {
       return (
-        <EmptyState variant={EmptyStateVariant.large} className={emptyStateStyle}>
+        <EmptyState id="empty-graph-error" variant={EmptyStateVariant.large} className={emptyStateStyle}>
           <EmptyStateIcon icon={KialiIcon.Error} />
-          <Title headingLevel="h5" size="lg">
+          <Title headingLevel="h5" size={TitleSizes.lg}>
             Error loading Graph
           </Title>
           <EmptyStateBody>{this.props.error}</EmptyStateBody>
@@ -86,8 +95,8 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
     }
     if (this.props.isLoading) {
       return (
-        <EmptyState variant={EmptyStateVariant.large} className={emptyStateStyle}>
-          <Title headingLevel="h5" size="lg">
+        <EmptyState id="empty-graph-is-loading" variant={EmptyStateVariant.large} className={emptyStateStyle}>
+          <Title headingLevel="h5" size={TitleSizes.lg}>
             Loading Graph
           </Title>
         </EmptyState>
@@ -96,8 +105,8 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
 
     if (this.props.namespaces.length === 0) {
       return (
-        <EmptyState variant={EmptyStateVariant.large} className={emptyStateStyle}>
-          <Title headingLevel="h5" size="lg">
+        <EmptyState id="empty-graph-no-namespace" variant={EmptyStateVariant.large} className={emptyStateStyle}>
+          <Title headingLevel="h5" size={TitleSizes.lg}>
             No namespace is selected
           </Title>
           <EmptyStateBody>
@@ -111,8 +120,8 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
 
     if (isGraphEmpty && !this.props.isMiniGraph) {
       return (
-        <EmptyState variant={EmptyStateVariant.large} className={emptyStateStyle}>
-          <Title headingLevel="h5" size="lg">
+        <EmptyState id="empty-graph" variant={EmptyStateVariant.large} className={emptyStateStyle}>
+          <Title headingLevel="h5" size={TitleSizes.lg}>
             Empty Graph
           </Title>
           <EmptyStateBody>
@@ -126,7 +135,10 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
               <> You can enable 'Idle Nodes' to display service mesh nodes that have yet to see any request traffic.</>
             )}
           </EmptyStateBody>
-          <Button onClick={this.props.showIdleNodes ? this.props.action : this.props.toggleIdleNodes} variant="primary">
+          <Button
+            onClick={this.props.showIdleNodes ? this.props.action : this.props.toggleIdleNodes}
+            variant={ButtonVariant.primary}
+          >
             {(this.props.showIdleNodes && <>Refresh</>) || <>Display idle nodes</>}
           </Button>
         </EmptyState>
@@ -135,8 +147,8 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
 
     if (isGraphEmpty && this.props.isMiniGraph) {
       return (
-        <EmptyState variant={EmptyStateVariant.large} className={emptyStateStyle}>
-          <Title headingLevel="h5" size="lg">
+        <EmptyState id="empty-mini-graph" variant={EmptyStateVariant.large} className={emptyStateStyle}>
+          <Title headingLevel="h5" size={TitleSizes.lg}>
             Empty Graph
           </Title>
           <EmptyStateBody>No graph traffic for the time period.</EmptyStateBody>

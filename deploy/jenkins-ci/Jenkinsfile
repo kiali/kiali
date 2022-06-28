@@ -118,6 +118,12 @@ echo $RELEASE_TYPE
 }
 
 node('kiali-build && fedora') {
+  if (params.RELEASE_TYPE == "auto") {
+    echo "Jenkins is disabled for RELEASE_TYPE = ${params.RELEASE_TYPE}"
+    currentBuild.result = 'SUCCESS'
+    return
+  }
+
   def backendDir = 'src/github.com/kiali/kiali'
   def backendMakefile = 'deploy/jenkins-ci/Makefile'
 

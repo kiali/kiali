@@ -1,6 +1,5 @@
 // Set global base font size to 14px per current OpenShift design
 // https://github.com/openshift/console/blob/ef1212655ba60571aaeec666843cd9f1ef139189/frontend/public/style/_vars.scss#L16
-// Patternfly 3 defaults to 12px, which is too small in many cases.
 $font-size-base: 14px;
 
 /**
@@ -9,13 +8,17 @@ $font-size-base: 14px;
 
 @import '../../node_modules/@patternfly/patternfly/patternfly.css';
 
-//PF4 Styles
-$pf-global--enable-reset: false;
+@import '_fonts.scss';
+@import '_overrides';
+@import '_layout';
+@import '_menu';
 
 body {
   margin: 0;
   padding: 0;
-  font-family: pficon, var(--pf-global--FontFamily--sans-serif);
+  font-family: var(
+    --pf-global--FontFamily--sans-serif
+  ); // TODO: possible change to --pf-global--FontFamily--redhat-updated--sans-serif
   font-size: 14px;
   overflow: hidden;
   height: 100%;
@@ -25,15 +28,11 @@ body {
   height: 100%;
 }
 
-@import '_fonts.scss';
-@import '_overrides';
-@import '_layout';
-@import '_menu';
-
 // Component
 @import '../components/VirtualList/_VirtualList';
 @import '../components/JaegerIntegration/JaegerResults/_SpanTable';
 @import '../components/IstioWizards/Slider/_Slider';
 @import '../components/Time/_Time';
 @import '../components/Nav/_Menu';
+@import '../components/Label/_Label';
 @import '../pages/Graph/_Graph';

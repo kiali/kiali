@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Prompt, RouteComponentProps } from 'react-router-dom';
 import {
   aceOptions,
-  compareResourceVersion,
   IstioConfigDetails,
   IstioConfigId,
   safeDumpOptions
@@ -29,7 +28,7 @@ import {
   parseYamlValidations
 } from '../../types/AceValidations';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
-import { RenderComponentScroll, RenderHeader } from '../../components/Nav/Page';
+import { RenderComponentScroll } from '../../components/Nav/Page';
 import './IstioConfigDetailsPage.css';
 import { default as IstioActionButtonsContainer } from '../../components/IstioActions/IstioActionsButtons';
 import history from '../../app/History';
@@ -51,9 +50,10 @@ import {
 import { dicIstioType } from '../../types/IstioConfigList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
 import { AxiosError } from 'axios';
-import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
+import RefreshContainer from "../../components/Refresh/Refresh";
 import IstioConfigOverview from './IstioObjectDetails/IstioConfigOverview';
 import { Annotation } from 'react-ace/types';
+import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -65,9 +65,6 @@ const rightToolbarStyle = style({
 const editorDrawer = style({
   margin: '0'
 });
-
-// TODO perhaps we may want to enable automatic refresh in all list/details pages
-const TIMER_REFRESH = 5000;
 
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
@@ -135,39 +132,6 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   fetchIstioObjectDetailsFromProps = (props: IstioConfigId) => {
     const promiseConfigDetails = this.newIstioObjectPromise(props, true);
-
-    window.clearInterval(this.timerId);
-    this.timerId = window.setInterval(() => {
-      const timerPromise = this.newIstioObjectPromise(props, false);
-      timerPromise
-        .then(resultConfigDetails => {
-          if (resultConfigDetails.data && this.state.originalIstioObjectDetails) {
-            const [changed, type, newResourceVersion] = compareResourceVersion(
-              this.state.originalIstioObjectDetails,
-              resultConfigDetails.data
-            );
-            if (changed) {
-              AlertUtils.addWarning(
-                type +
-                  ':' +
-                  props.object +
-                  ' has a newer version (' +
-                  newResourceVersion +
-                  '). Reload to see a new version.'
-              );
-            }
-          }
-        })
-        .catch(error => {
-          this.setState({
-            isRemoved: true
-          });
-          AlertUtils.addError(
-            `Could not fetch ${props.objectType}: ${props.object} in namespace: ${props.namespace}. Has it been removed?`,
-            error
-          );
-        });
-    }, TIMER_REFRESH);
 
     // Note that adapters/templates are not supported yet for validations
     promiseConfigDetails
@@ -594,9 +558,9 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   render() {
     return (
       <>
-        <RenderHeader
+        <RenderHeaderContainer
           location={this.props.location}
-          rightToolbar={<RefreshButtonContainer key={'Refresh'} handleRefresh={this.onRefresh} />}
+          rightToolbar={<RefreshContainer id="config_details_refresh" hideLabel={true} handleRefresh={this.onRefresh} />}
           actionsToolbar={this.renderActions()}
         />
         <ParameterizedTabs

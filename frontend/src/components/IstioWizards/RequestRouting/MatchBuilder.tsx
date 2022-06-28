@@ -1,5 +1,13 @@
 import * as React from 'react';
-import { Button, Dropdown, DropdownToggle, DropdownItem, InputGroup, TextInput } from '@patternfly/react-core';
+import {
+  Button,
+  Dropdown,
+  DropdownToggle,
+  DropdownItem,
+  InputGroup,
+  TextInput,
+  ButtonVariant
+} from '@patternfly/react-core';
 
 type Props = {
   category: string;
@@ -71,7 +79,11 @@ class MatchBuilder extends React.Component<Props, State> {
     return (
       <InputGroup>
         <Dropdown
-          toggle={<DropdownToggle onToggle={this.onMathOptionsToggle}>{this.props.category}</DropdownToggle>}
+          toggle={
+            <DropdownToggle onToggle={this.onMathOptionsToggle} data-test={'requestmatching-header-toggle'}>
+              {this.props.category}
+            </DropdownToggle>
+          }
           isOpen={this.state.isMatchDropdown}
           dropdownItems={matchOptions.map((mode, index) => (
             <DropdownItem
@@ -82,6 +94,7 @@ class MatchBuilder extends React.Component<Props, State> {
                 this.props.onSelectCategory(mode);
                 this.onMathOptionsToggle();
               }}
+              data-test={'requestmatching-header-' + mode}
             >
               {mode}
             </DropdownItem>
@@ -96,7 +109,11 @@ class MatchBuilder extends React.Component<Props, State> {
           />
         )}
         <Dropdown
-          toggle={<DropdownToggle onToggle={this.onOperatorToggle}>{this.props.operator}</DropdownToggle>}
+          toggle={
+            <DropdownToggle onToggle={this.onOperatorToggle} data-test={'requestmatching-match-toggle'}>
+              {this.props.operator}
+            </DropdownToggle>
+          }
           isOpen={this.state.isOperatorDropdown}
           dropdownItems={renderOpOptions.map((op, index) => (
             <DropdownItem
@@ -107,6 +124,7 @@ class MatchBuilder extends React.Component<Props, State> {
                 this.props.onSelectOperator(op);
                 this.onOperatorToggle();
               }}
+              data-test={'requestmatching-match-' + op}
             >
               {op}
             </DropdownItem>
@@ -120,7 +138,12 @@ class MatchBuilder extends React.Component<Props, State> {
             placeholder={placeholderText[this.props.category]}
           />
         )}
-        <Button variant="secondary" disabled={!this.props.isValid} onClick={this.props.onAddMatch}>
+        <Button
+          variant={ButtonVariant.secondary}
+          disabled={!this.props.isValid}
+          onClick={this.props.onAddMatch}
+          data-test="add-match"
+        >
           Add Match
         </Button>
       </InputGroup>

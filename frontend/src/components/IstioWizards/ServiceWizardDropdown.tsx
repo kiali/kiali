@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   Button,
+  ButtonVariant,
   Dropdown,
   DropdownGroup,
   DropdownItem,
@@ -8,6 +9,7 @@ import {
   DropdownSeparator,
   DropdownToggle,
   Modal,
+  ModalVariant,
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
@@ -307,6 +309,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
             component="button"
             isDisabled={!enabledItem}
             onClick={() => this.onAction(eventKey)}
+            data-test={eventKey}
           >
             {WIZARD_TITLES[eventKey]}
           </DropdownItem>
@@ -321,6 +324,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
             component="button"
             onClick={() => this.onAction(eventKey)}
             isDisabled={!this.canDelete() || !this.hasTrafficRouting() || this.state.isDeleting}
+            data-test={eventKey}
           >
             Delete Traffic Routing
           </DropdownItem>
@@ -362,7 +366,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
         position={DropdownPosition.right}
         onSelect={this.onActionsSelect}
         toggle={
-          <DropdownToggle onToggle={this.onActionsToggle} iconComponent={CaretDownIcon}>
+          <DropdownToggle onToggle={this.onActionsToggle} icon={CaretDownIcon} data-test="wizard-actions">
             Actions
           </DropdownToggle>
         }
@@ -393,16 +397,16 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
           onClose={this.onClose}
         />
         <Modal
-          isSmall={true}
+          variant={ModalVariant.small}
           title="Confirm Delete Traffic Routing ?"
           isOpen={this.state.showConfirmDelete}
           onClose={this.hideConfirmDelete}
           actions={[
-            <Button key="cancel" variant="secondary" onClick={this.hideConfirmDelete}>
-              Cancel
-            </Button>,
-            <Button key="confirm" variant="danger" onClick={this.onDelete}>
+            <Button key="confirm" variant={ButtonVariant.danger} onClick={this.onDelete} data-test={'confirm-delete'}>
               Delete
+            </Button>,
+            <Button key="cancel" variant={ButtonVariant.secondary} isInline onClick={this.hideConfirmDelete}>
+              Cancel
             </Button>
           ]}
         >

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Alert, Button } from '@patternfly/react-core';
+import { Alert, Button, ButtonVariant } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { isKioskMode } from '../utils/SearchParamUtils';
 
@@ -59,7 +59,7 @@ const InitializingScreen: React.FC<initializingScreenProps> = (props: initializi
   }
 
   return (
-    <div className={centerVerticalHorizontalStyle}>
+    <div data-test="loading-screen" className={centerVerticalHorizontalStyle}>
       <img alt="Kiali Logo" src={kialiTitle} width="200" />
       {props.errorMsg ? (
         <div ref={errorDiv} className={defaultErrorStyle}>
@@ -68,7 +68,7 @@ const InitializingScreen: React.FC<initializingScreenProps> = (props: initializi
             <>
               <p>
                 <Button
-                  variant="link"
+                  variant={ButtonVariant.link}
                   onClick={e => {
                     e.preventDefault();
                     if (errorDiv.current) {

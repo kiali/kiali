@@ -1,7 +1,7 @@
 // Action Creators allow us to create typesafe utilities for dispatching actions
 import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
 import { ActionKeys } from './ActionKeys';
-import { TimeInMilliseconds } from '../types/Common';
+import { KioskMode, TimeInMilliseconds  } from '../types/Common';
 
 export const GlobalActions = {
   unknown: createAction('KIALI_UNKNOWN'), // helper for testing
@@ -9,7 +9,8 @@ export const GlobalActions = {
   decrementLoadingCounter: createAction(ActionKeys.DECREMENT_LOADING_COUNTER),
   setPageVisibilityHidden: createAction(ActionKeys.SET_PAGE_VISIBILITY_HIDDEN),
   setPageVisibilityVisible: createAction(ActionKeys.SET_PAGE_VISIBILITY_VISIBLE),
-  setLastRefreshAt: createStandardAction(ActionKeys.SET_LAST_REFRESH)<TimeInMilliseconds>()
+  setLastRefreshAt: createStandardAction(ActionKeys.SET_LAST_REFRESH)<TimeInMilliseconds>(),
+  setKiosk: createStandardAction(ActionKeys.SET_KIOSK)<KioskMode>(),
 };
 
 export type GlobalAction = ActionType<typeof GlobalActions>;

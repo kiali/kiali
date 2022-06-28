@@ -5,12 +5,11 @@ import {
   Card,
   CardActions,
   CardBody,
-  CardHead,
   CardHeader,
+  CardTitle,
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
-  Title,
   TooltipPosition
 } from '@patternfly/react-core';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
@@ -41,7 +40,7 @@ class IstioConfigCard extends React.Component<Props> {
           {
             title: (
               <EmptyState variant={EmptyStateVariant.small} className={emtpytStyle}>
-                <EmptyStateBody className={emtpytStyle}>No Istio Config found for {this.props.name}</EmptyStateBody>
+                <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">No Istio Config found for {this.props.name}</EmptyStateBody>
               </EmptyState>
             ),
             props: { colSpan: 2 }
@@ -105,14 +104,10 @@ class IstioConfigCard extends React.Component<Props> {
   render() {
     return (
       <Card isCompact={true} id={'IstioConfigCard'}>
-        <CardHead>
+        <CardHeader>
           <CardActions />
-          <CardHeader>
-            <Title style={{ float: 'left' }} headingLevel="h5" size="lg">
-              Istio Config
-            </Title>
-          </CardHeader>
-        </CardHead>
+          <CardTitle style={{ float: 'left' }}>Istio Config</CardTitle>
+        </CardHeader>
         <CardBody>
           <Table
             variant={TableVariant.compact}

@@ -23,7 +23,7 @@ const modalStyle = style({
 
 const prefaceStyle = style({
   fontFamily: 'monospace',
-  fontSize: '14px',
+  fontSize: 'var(--kiali-global--font-size)',
   backgroundColor: PFColors.Black1000,
   color: PFColors.Gold400,
   margin: '10px 10px 15px 10px',

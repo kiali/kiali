@@ -124,9 +124,9 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     return (
       <>
         <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-          <Grid gutter={'md'} className={fullHeightStyle}>
+          <Grid hasGutter={true} className={fullHeightStyle}>
             <GridItem span={4}>
-              <Stack gutter="md">
+              <Stack hasGutter={true}>
                 <StackItem>
                   <ServiceDescription namespace={this.props.namespace} serviceDetails={this.props.serviceDetails} />
                 </StackItem>

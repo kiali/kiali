@@ -1,0 +1,305 @@
+name: Release
+
+on:
+  schedule:
+  # Every Monday at 07:00 (UTC)
+  - cron: '00 7 * * MON'
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: Release type
+        required: true
+        default: "auto"
+        type: choice
+        options:
+        - minor
+        - patch
+      release_branch:
+        description: Branch to release
+        required: true
+        default: master
+        type: string
+      quay_repository:
+        description: Quay repository
+        type: string
+        default: quay.io/kiali/kiali
+        required: true
+
+jobs:
+  initialize:
+    name: Initialize
+    runs-on: ubuntu-20.04
+    outputs:
+      target_branch: ${{ github.ref_name }}
+      release_type: ${{ steps.release_type.outputs.release_type }}
+      release_version: ${{ steps.release_version.outputs.release_version }}
+      branch_version: ${{ steps.branch_version.outputs.branch_version }}
+      next_version: ${{ steps.next_version.outputs.next_version }}
+      quay_tag: ${{ steps.quay_tag.outputs.quay_tag }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
+
+    - name: Prepare scripts
+      run: |
+        cat <<-EOF > bump.py
+        import sys
+        release_type = sys.argv[1]
+        version = sys.argv[2]
+        parts = version.split('.')
+        major = int(parts[0][1:])
+        minor = int(parts[1])
+        patch = int(parts[2])
+        if release_type == 'major':
+            major = major + 1
+            minor = 0
+            patch = 0
+        elif release_type == 'minor':
+            minor = minor + 1
+            patch = 0
+        elif release_type == 'patch':
+            patch = patch + 1
+        print('.'.join(['v' + str(major), str(minor), str(patch)]))
+        EOF
+
+        cat <<-EOF > minor.py
+        import datetime
+
+        base = int(datetime.datetime.strptime("24/04/2022", "%d/%m/%Y").timestamp())
+        now = int(datetime.datetime.now().timestamp())
+
+        diff = now - base
+
+        days_elapsed = int(diff / (24*60*60))
+        weeks_elapsed = int(days_elapsed / 7)
+        weeks_mod3 = int(weeks_elapsed % 3)
+
+        print(weeks_mod3)
+        EOF
+
+    - name: Determine release type
+      id: release_type
+      run: |
+        if [ -z ${{ github.event.inputs.release_type }} ];
+        then
+          DO_RELEASE=$(python minor.py)
+          if [[ $DO_RELEASE == "1" ]]
+          then
+            echo "::set-output name=release_type::minor"
+          else
+            echo "::set-output name=release_type::skip"
+          fi
+        else
+          echo "::set-output name=release_type::${{ github.event.inputs.release_type }}"
+        fi
+
+    - name: Determine release version
+      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
+      env:
+        RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
+      id: release_version
+      run: |
+        RAW_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
+
+        # Remove any pre release identifier (ie: "-SNAPSHOT")
+        RELEASE_VERSION=${RAW_VERSION%-*}
+
+        if [[ $RELEASE_TYPE == "patch" ]]
+        then
+          RELEASE_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
+        elif [[ $RELEASE_TYPE == "minor" ]]
+        then
+          RELEASE_VERSION=$RELEASE_VERSION
+        fi
+
+        echo "::set-output name=release_version::$RELEASE_VERSION"
+
+    - name: Determine next version
+      env:
+        RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
+        RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
+      id: next_version
+      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
+      run: |
+        if [[ $RELEASE_TYPE == "patch" ]]
+        then
+            NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
+        elif [[ $RELEASE_TYPE == "minor" ]]
+        then
+            NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
+        fi
+
+        echo "::set-output name=next_version::$NEXT_VERSION"
+
+    - name: Determine branch version
+      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
+      env:
+        RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
+      id: branch_version
+      run: echo "::set-output name=branch_version::$(echo $RELEASE_VERSION | sed 's/\.[0-9]*\+$//')"
+
+    - name: Determine Quay tag
+      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
+      env:
+        RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
+        BRANCH_VERSION: ${{ steps.branch_version.outputs.branch_version }}
+      id: quay_tag
+      run: |
+        if [ -z ${{ github.event.inputs.quay_repository }} ];
+        then
+          QUAY_REPO="quay.io/kiali/kiali"
+        else
+          QUAY_REPO="${{ github.event.inputs.quay_repository }}"
+        fi
+
+        QUAY_TAG="$QUAY_REPO:$RELEASE_VERSION $QUAY_REPO:$BRANCH_VERSION"
+
+        echo "::set-output name=quay_tag::$QUAY_TAG"
+
+    - name: Cleanup
+      run: rm bump.py minor.py
+
+    - name: Log information
+      run: |
+        echo "Release type: ${{ steps.release_type.outputs.release_type }}"
+
+        echo "Release version: ${{ steps.release_version.outputs.release_version }}"
+
+        echo "Next version: ${{ steps.next_version.outputs.next_version }}"
+
+        echo "Branch version: ${{ steps.branch_version.outputs.branch_version }}"
+
+        echo "Quay tag": ${{ steps.quay_tag.outputs.quay_tag }}
+
+  build_backend:
+    name: Build backend
+    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
+    uses: ./.github/workflows/build-backend.yml
+    needs: [initialize]
+    with:
+      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
+
+  build_frontend:
+    name: Build frontend
+    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
+    uses: ./.github/workflows/build-frontend.yml
+    needs: [initialize]
+    with:
+      target_branch: ${{needs.initialize.outputs.target_branch}}
+      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
+
+  integration_tests_backend:
+    name: Run backend integration tests
+    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
+    uses: ./.github/workflows/integration-tests-backend.yml
+    needs: [initialize, build_backend, build_frontend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target_branch }}
+      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
+
+  integration_tests_frontend:
+    name: Run frontend integration tests
+    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
+    uses: ./.github/workflows/integration-tests-frontend.yml
+    needs: [initialize, build_backend, build_frontend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target_branch }}
+      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
+
+  release:
+    name: Release
+    if: ${{ needs.initialize.outputs.release_type != 'skip' && ((github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule') }}
+    runs-on: ubuntu-20.04
+    needs: [initialize, build_backend, build_frontend, integration_tests_backend, integration_tests_frontend]
+    env:
+      RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
+      BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
+      NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
+      RELEASE_BRANCH: ${{ github.event.inputs.release_branch || github.ref_name }}
+      QUAY_TAG: ${{ needs.initialize.outputs.quay_tag }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
+
+    - name: Set version to release
+      run: |
+        # Backend version
+        sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
+
+        # UI version
+        jq -r '.version |= "${RELEASE_VERSION:1}"' frontend/package.json > frontend/package.json.tmp
+        mv frontend/package.json.tmp frontend/package.json
+
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17.10
+
+    - name: Cache Go deps
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download frontend build
+      uses: actions/download-artifact@v3
+      with:
+        name: build
+        path: frontend/build
+
+    - name: Build and push image
+      run: |
+        docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
+
+        make -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch container-multi-arch-push-kiali-quay
+
+    - name: Configure git
+      run: |
+        git config user.email 'kiali-dev@googlegroups.com'
+
+        git config user.name 'kiali-bot'
+
+    - name: Create tag
+      run: |
+        git add Makefile
+
+        git commit -m "Release $RELEASE_VERSION"
+
+        git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION
+
+    - name: Create release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release create $RELEASE_VERSION -t "Kiali $RELEASE_VERSION"
+
+    - name: Create or update version branch
+      run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
+
+    - name: Create a PR to prepare for next version
+      env:
+        BUILD_TAG: kiali-release-${{ github.run_number }}-main
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: ${{ needs.initialize.outputs.release_type == 'minor' }}
+      run: |
+        sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $NEXT_VERSION-SNAPSHOT/" Makefile
+
+        jq -r ".version |= \"${NEXT_VERSION:1}\"" frontend/package.json > frontend/package.json.tmp
+        mv frontend/package.json.tmp frontend/package.json
+
+        git add Makefile frontend/package.json
+
+        git commit -m "Prepare for next version"
+
+        git push origin $(git rev-parse HEAD):refs/heads/$BUILD_TAG
+
+        gh pr create -t "Prepare for next version" -b "Please, merge to update version numbers and prepare for release $NEXT_VERSION." -H $BUILD_TAG -B $RELEASE_BRANCH

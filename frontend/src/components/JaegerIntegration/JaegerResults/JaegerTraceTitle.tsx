@@ -1,7 +1,13 @@
 import * as React from 'react';
-import { CardHeader, Dropdown, DropdownItem, KebabToggle, Text, TextVariants } from '@patternfly/react-core';
+import {
+  CardActions,
+  CardHeader,
+  CardTitle,
+  Dropdown,
+  DropdownItem,
+  KebabToggle,
+} from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-
 import { FormattedTraceInfo, fullIDStyle } from './FormattedTraceInfo';
 import history from 'app/History';
 
@@ -29,25 +35,27 @@ export const JaegerTraceTitle = (props: Props) => {
     );
   }
   const [toggled, setToggled] = React.useState(false);
+
   return (
     <CardHeader>
-      <Text component={TextVariants.h3} style={{ margin: 0, position: 'relative' }}>
-        {props.formattedTrace.name()}
-        <span className={fullIDStyle}>{props.formattedTrace.fullID()}</span>
-        <span style={{ float: 'right', position: 'relative', top: -9 }}>
-          {props.formattedTrace.relativeDate()}
-          <span style={{ padding: '0 10px 0 10px' }}>|</span>
-          {props.formattedTrace.absTime()} ({props.formattedTrace.fromNow()})
-          <Dropdown
-            toggle={<KebabToggle onToggle={() => setToggled(!toggled)} />}
-            dropdownItems={links}
-            isPlain={true}
-            isOpen={toggled}
-            position={'right'}
-            style={{ top: 3 }}
-          />
+      <CardActions>
+        <span>
+          {`${props.formattedTrace.relativeDate()} | ${props.formattedTrace.absTime()} (${props.formattedTrace.fromNow()})`}
         </span>
-      </Text>
+        <Dropdown
+          toggle={<KebabToggle onToggle={() => setToggled(!toggled)} />}
+          data-test="trace-details-kebab"
+          dropdownItems={links}
+          isPlain={true}
+          isOpen={toggled}
+          position={'right'}
+          style={{ top: 3 }}
+        />
+      </CardActions>
+      <CardTitle>
+        <span>{`${props.formattedTrace.name()} `}</span>
+        <span className={fullIDStyle}>{props.formattedTrace.fullID()}</span>
+      </CardTitle>
     </CardHeader>
   );
 };

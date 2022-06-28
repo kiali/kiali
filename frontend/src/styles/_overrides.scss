@@ -1,150 +1,54 @@
-// External dependency variables or mixins that are required/extended by our custom styles (tilde tells Webpack not to use relative path)
-// IMPORTANT: Please put non-variable/mixin external dependency imports in vendor.scss!
-// Patternfly variables must be imported before Bootstrap
-@import '../../node_modules/@patternfly/patternfly/sass-utilities/_all';
-@import '../../node_modules/@patternfly/patternfly/_variables';
-
-// Disable PatternFly 4 reset.
-$pf-global--enable-reset: false;
-
-$color-grey-background-border: #ccc;
 // PatternFly 4 overrides
 
-// Remove the padding by default
+/*
+Define --kiali-global--font-size to match $font-size-base, defined in index.scss. It
+should be used across kiali as the default fontSize, unless the case is exceptional.
+We then override --pf-global--FontSize--md to be our kiali default. This is a widely
+used PF default font size (typically 16px), but we want it smaller in Kiali, for
+consistency and space efficiency (and to echo console).
+*/
+:root {
+  --kiali-global--font-size: 14px;
+  --kiali-global--font-size-px: 14;
+  --pf-global--FontSize--md: var(--kiali-global--font-size);
+}
+/*
+Then, in components for which we don't want the override, we must
+revert the change back to the desired font size.
+*/
+.pf-c-nav__link {
+  --pf-c-nav__link--FontSize: 16px;
+}
+.pf-c-tabs__link {
+  --pf-c-tabs__link--FontSize: 16px;
+}
+
+/*
+Remove global page padding by default
+*/
 .pf-c-page__main-section {
   padding: 0px;
 }
 
-// Remove background Image and color by default in header, login and about modal
-.pf-c-page__header {
-  background-image: none;
-  background-color: unset;
-}
-
-.pf-c-about-modal-box__hero {
-  background-image: none !important;
-  background-color: transparent;
-}
-
+/*
+Ensure dark background for login page.
+- TODO: Revisit this after updating to use standard PF login components
+*/
 .pf-c-login,
 .login-pf {
   background-image: none;
   background-color: #030303;
 }
 
-// Menu thin and remove margin in top
-.pf-c-page__sidebar {
-  --pf-c-page__sidebar-body--PaddingTop: 0;
-  --pf-c-page__sidebar--md--Width: 210px; // TODO: Remove. Test enlarged message center when removing.
-  min-height: 100vh;
-}
-
-/**
- Fix height in filter selector
- */
-.filter-pf-select-dropdown {
-  height: 29px;
-}
-
-/**
-  Fix underline decoration in links
+/*
+Ensure Chips and ChipGroups show long values
 */
-
-a:hover,
-a:focus {
-  text-decoration: none;
+.pf-c-chip-group__label {
+  --pf-c-chip-group__label--MaxWidth: 50em;
 }
 
-/*
- Remove height form-control
- */
-.form-control {
-  height: unset;
-}
-
-/*
-
-Fix modal-title size
- */
-.modal-title {
-  font-size: 18px;
-}
-
-/*
-
-keep test aligned vertically
- */
-.table > tbody > tr > td {
-  vertical-align: middle;
-}
-
-/*
-
-Unset line-height stylefor connected text in suspend trafic wizard
-
- */
-.list-group-item-text {
-  line-height: unset;
-  width: 100%;
-}
-
-/*
-
-Set width 100% parent in matching routing wizard
- */
-.match-routing-wizard .list-group-item-text {
-  width: 100%;
-}
-
-button {
-  font-family: var(--pf-global--FontFamily--sans-serif);
-}
-
-input {
-  font-family: var(--pf-global--FontFamily--sans-serif);
-}
-
-/*
-
-Fix font size in graph help
-
- */
-
-.modal-content {
-  font-size: 12px;
-}
-
-/*
-
-Fix icon in buttons of pagination pages
-
- */
-
-.pagination > li > a > .i {
-  margin-top: 5px;
-}
-
-/*
-
-Top line in tabs
-
- */
-.nav-tabs {
-  border-top: 1px solid #ededed;
-}
-
-/*
-Inline Alerts: background transparent
- */
-.pf-c-alert.pf-m-inline {
-  --pf-c-alert__icon--BackgroundColor: var(--pf-c-alert--m-inline__icon--BackgroundColor);
-}
-
-/*
- Fix problem stack in Firefox in service details
- */
-.stack_service_details {
-  height: 20%;
+.pf-c-chip__text {
+  --pf-c-chip__text--MaxWidth: 50em;
 }
 
 /*
@@ -161,10 +65,10 @@ html.kiosk {
 }
 
 /*
-  Datepicker overrides for graph replay and other uses
-  - note: global .tooltip setting but I think it should be OK
+Datepicker overrides for graph replay and other uses
+- note: global .tooltip setting but I think it should be OK
 */
-// use PF fonts and fond-size
+// use PF fonts and font-size
 .react-datepicker {
   font-family: var(--pf-global--FontFamily--sans-serif);
   font-size: var(--pf-global--FontSize);
@@ -189,4 +93,11 @@ html.kiosk {
 // Make sure tooltips are below datepicker popper but above secondary masthead
 .tooltip {
   z-index: 10 !important;
+}
+
+/*
+Drawer panels should have less z-index than dropdowns
+*/
+.pf-c-drawer__panel {
+  z-index: 199 !important;
 }

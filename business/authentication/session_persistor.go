@@ -139,6 +139,7 @@ func (p CookieSessionPersistor) CreateSession(_ *http.Request, w http.ResponseWr
 			HttpOnly: true,
 			Path:     conf.Server.WebRoot,
 			SameSite: http.SameSiteStrictMode,
+			Secure:   true,
 		}
 		http.SetCookie(w, &authCookie)
 	}
@@ -154,6 +155,7 @@ func (p CookieSessionPersistor) CreateSession(_ *http.Request, w http.ResponseWr
 			HttpOnly: true,
 			Path:     conf.Server.WebRoot,
 			SameSite: http.SameSiteStrictMode,
+			Secure:   true,
 		}
 		http.SetCookie(w, &chunksCookie)
 	}
@@ -329,6 +331,7 @@ func (p CookieSessionPersistor) TerminateSession(r *http.Request, w http.Respons
 				MaxAge:   -1,
 				Path:     conf.Server.WebRoot,
 				SameSite: http.SameSiteStrictMode,
+				Secure:   true,
 			}
 			http.SetCookie(w, &tokenCookie)
 		}

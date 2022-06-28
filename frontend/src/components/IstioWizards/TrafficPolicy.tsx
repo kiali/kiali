@@ -12,6 +12,7 @@ import {
   PeerAuthenticationMutualTLSMode
 } from '../../types/IstioObjects';
 import { LOAD_BALANCER_TOOLTIP, PEER_AUTHENTICATION_TOOLTIP, wizardTooltip } from './WizardHelp';
+import { isValid } from 'utils/Common';
 
 export const UNSET = 'UNSET';
 export const DISABLE = 'DISABLE';
@@ -440,7 +441,7 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
             <FormGroup
               label="Client Certificate"
               fieldId="clientCertificate"
-              isValid={this.state.clientCertificate.length > 0}
+              validated={isValid(this.state.clientCertificate.length > 0)}
               helperTextInvalid="Client Certificate must be non empty"
             >
               <TextInput
@@ -453,7 +454,7 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
             <FormGroup
               label="Private Key"
               fieldId="privateKey"
-              isValid={this.state.privateKey.length > 0}
+              validated={isValid(this.state.privateKey.length > 0)}
               helperTextInvalid="Private Key must be non empty"
             >
               <TextInput
@@ -579,7 +580,7 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
               <FormGroup
                 label="HTTP Header Name"
                 fieldId="httpHeaderName"
-                isValid={isValidLB}
+                validated={isValid(isValidLB)}
                 disabled={!this.state.addLoadBalancer}
                 helperTextInvalid="HTTP Header Name must be non empty"
               >
@@ -592,7 +593,7 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
                   id="httpHeaderName"
                   name="httpHeaderName"
                   onChange={value => this.onFormChange(TrafficPolicyForm.LB_HTTP_HEADER_NAME, value)}
-                  isValid={isValidLB}
+                  validated={isValid(isValidLB)}
                 />
               </FormGroup>
             )}
@@ -601,7 +602,7 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
                 <FormGroup
                   label="HTTP Cookie Name"
                   fieldId="httpCookieName"
-                  isValid={isValidLB}
+                  validated={isValid(isValidLB)}
                   disabled={!this.state.addLoadBalancer}
                 >
                   <TextInput
@@ -613,13 +614,13 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
                     id="httpCookieName"
                     name="httpCookieName"
                     onChange={value => this.onFormChange(TrafficPolicyForm.LB_HTTP_COOKIE_NAME, value)}
-                    isValid={isValidLB}
+                    validated={isValid(isValidLB)}
                   />
                 </FormGroup>
                 <FormGroup
                   label="HTTP Cookie TTL"
                   fieldId="httpCookieTtl"
-                  isValid={isValidLB}
+                  validated={isValid(isValidLB)}
                   disabled={!this.state.addLoadBalancer}
                   helperText="TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc)."
                   helperTextInvalid="HTTP Cookie Name must be non empty and TTL must be expressed in in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc)."
@@ -633,7 +634,7 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
                     id="httpCookieTtl"
                     name="httpCookieTtl"
                     onChange={value => this.onFormChange(TrafficPolicyForm.LB_HTTP_COOKIE_TTL, value)}
-                    isValid={isValidLB}
+                    validated={isValid(isValidLB)}
                   />
                 </FormGroup>
               </>

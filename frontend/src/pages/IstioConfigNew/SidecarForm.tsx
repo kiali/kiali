@@ -3,9 +3,10 @@ import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/rea
 import { style } from 'typestyle';
 import { PFColors } from '../../components/Pf/PfColors';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
-import { Button, FormGroup, Switch, TextInputBase as TextInput } from '@patternfly/react-core';
+import { Button, ButtonVariant, FormGroup, Switch, TextInputBase as TextInput } from '@patternfly/react-core';
 import { isSidecarHostValid } from '../../utils/IstioConfigUtils';
 import { PlusCircleIcon } from '@patternfly/react-icons';
+import { isValid } from 'utils/Common';
 
 const headerCells: ICell[] = [
   {
@@ -186,7 +187,7 @@ class SidecarForm extends React.Component<Props, SidecarState> {
                 aria-describedby="add egress host"
                 name="addHost"
                 onChange={this.onAddHost}
-                isValid={this.state.validEgressHost}
+                validated={isValid(this.state.validEgressHost)}
               />
               {!this.state.validEgressHost && (
                 <div key="hostsHelperText" className={noEgressHostsStyle}>
@@ -196,7 +197,7 @@ class SidecarForm extends React.Component<Props, SidecarState> {
             </>,
             <>
               <Button
-                variant="link"
+                variant={ButtonVariant.link}
                 icon={<PlusCircleIcon />}
                 isDisabled={!this.state.validEgressHost}
                 onClick={this.onAddEgressHost}
@@ -232,7 +233,7 @@ class SidecarForm extends React.Component<Props, SidecarState> {
             label="Labels"
             helperText="One or more labels to select a workload where the Sidecar is applied."
             helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
-            isValid={this.state.workloadSelectorValid}
+            validated={isValid(this.state.workloadSelectorValid)}
           >
             <TextInput
               id="gwHosts"
@@ -240,7 +241,7 @@ class SidecarForm extends React.Component<Props, SidecarState> {
               isDisabled={!this.state.addWorkloadSelector}
               value={this.state.workloadSelectorLabels}
               onChange={this.addWorkloadLabels}
-              isValid={this.state.workloadSelectorValid}
+              validated={isValid(this.state.workloadSelectorValid)}
             />
           </FormGroup>
         )}

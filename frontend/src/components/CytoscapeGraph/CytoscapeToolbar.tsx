@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as Cy from 'cytoscape';
-import { Button, Toolbar, ToolbarItem, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import {
   LongArrowAltRightIcon,
   ExpandArrowsAltIcon,
@@ -52,16 +52,17 @@ type CytoscapeToolbarState = {
   allowGrab: boolean;
 };
 
-const buttonStyle = style({
-  backgroundColor: PFColors.White,
-  marginBottom: '2px',
-  marginLeft: '4px',
-  padding: '3px 8px'
-});
 const activeButtonStyle = style({
   color: PFColors.Active
 });
-const cytoscapeToolbarStyle = style({
+
+const buttonStyle = {
+  backgroundColor: PFColors.White,
+  margin: '2px 4px',
+  padding: '2px 6px 4px 6px'
+};
+
+const cyToolbarStyle = style({
   width: '20px'
 });
 
@@ -103,125 +104,125 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
 
   render() {
     return (
-      <Toolbar className={cytoscapeToolbarStyle}>
-        <ToolbarItem>
+      <div className={cyToolbarStyle}>
+        <div>
           <Tooltip content={this.state.allowGrab ? 'Disable Drag' : 'Enable Drag'} position={TooltipPosition.right}>
             <Button
               id="toolbar_grab"
               aria-label="Toggle Drag"
-              className={buttonStyle}
-              variant="plain"
-              onClick={() => this.toggleDrag()}
               isActive={this.state.allowGrab}
+              onClick={() => this.toggleDrag()}
+              style={buttonStyle}
+              variant={ButtonVariant.plain}
             >
               <PficonDragdropIcon className={this.state.allowGrab ? activeButtonStyle : undefined} />
             </Button>
           </Tooltip>
-        </ToolbarItem>
-        <ToolbarItem>
+        </div>
+        <div>
           <Tooltip content="Zoom to Fit" position={TooltipPosition.right}>
             <Button
               id="toolbar_graph_fit"
               aria-label="Zoom to Fit"
-              className={buttonStyle}
-              variant="plain"
               onClick={() => this.fit()}
+              style={buttonStyle}
+              variant={ButtonVariant.plain}
             >
               <ExpandArrowsAltIcon />
             </Button>
           </Tooltip>
-        </ToolbarItem>
-        <ToolbarItem>
+        </div>
+        <div>
           <Tooltip content="Hide healthy edges" position={TooltipPosition.right}>
             <Button
               id="toolbar_edge_mode_unhealthy"
               aria-label="Hide Healthy Edges"
-              className={buttonStyle}
-              variant="plain"
+              isActive={this.props.edgeMode === EdgeMode.UNHEALTHY}
               onClick={() => {
                 this.handleEdgeModeClick(EdgeMode.UNHEALTHY);
               }}
-              isActive={this.props.edgeMode === EdgeMode.UNHEALTHY}
+              style={buttonStyle}
+              variant={ButtonVariant.plain}
             >
               <LongArrowAltRightIcon
                 className={this.props.edgeMode === EdgeMode.UNHEALTHY ? activeButtonStyle : undefined}
               />
             </Button>
           </Tooltip>
-        </ToolbarItem>
-        <ToolbarItem>
+        </div>
+        <div>
           <Tooltip content="Hide all edges" position={TooltipPosition.right}>
             <Button
               id="toolbar_edge_mode_none"
               aria-label="Hide All Edges"
-              className={buttonStyle}
-              variant="plain"
+              isActive={this.props.edgeMode === EdgeMode.NONE}
               onClick={() => {
                 this.handleEdgeModeClick(EdgeMode.NONE);
               }}
-              isActive={this.props.edgeMode === EdgeMode.NONE}
+              style={buttonStyle}
+              variant={ButtonVariant.plain}
             >
               <LongArrowAltRightIcon
                 className={this.props.edgeMode === EdgeMode.NONE ? activeButtonStyle : undefined}
               />
             </Button>
           </Tooltip>
-        </ToolbarItem>
+        </div>
 
-        <ToolbarItem>
+        <div>
           <Tooltip content={'Layout default ' + KialiDagreGraph.getLayout().name} position={TooltipPosition.right}>
             <Button
               id="toolbar_layout_default"
               aria-label="Graph Layout Default Style"
-              className={buttonStyle}
               isActive={this.props.layout.name === KialiDagreGraph.getLayout().name}
               isDisabled={this.props.disabled}
               onClick={() => {
                 this.setLayout(KialiDagreGraph.getLayout());
               }}
-              variant="plain"
+              style={buttonStyle}
+              variant={ButtonVariant.plain}
             >
               <TopologyIcon
                 className={this.props.layout.name === KialiDagreGraph.getLayout().name ? activeButtonStyle : undefined}
               />
             </Button>
           </Tooltip>
-        </ToolbarItem>
+        </div>
 
         <TourStopContainer info={GraphTourStops.Layout}>
-          <ToolbarItem>
+          <div>
             <Tooltip content={'Layout 1 ' + KialiGridGraph.getLayout().name} position={TooltipPosition.right}>
               <Button
                 id="toolbar_layout1"
                 aria-label="Graph Layout Style 1"
-                className={buttonStyle}
                 isActive={this.props.layout.name === KialiGridGraph.getLayout().name}
                 isDisabled={this.props.disabled}
                 onClick={() => {
                   this.setLayout(KialiGridGraph.getLayout());
                 }}
-                variant="plain"
+                style={buttonStyle}
+                variant={ButtonVariant.plain}
               >
                 <TopologyIcon
                   className={this.props.layout.name === KialiGridGraph.getLayout().name ? activeButtonStyle : undefined}
                 />
               </Button>
             </Tooltip>
-          </ToolbarItem>
+          </div>
         </TourStopContainer>
 
-        <ToolbarItem>
+        <div>
           <Tooltip content={'Layout 2 ' + KialiConcentricGraph.getLayout().name} position={TooltipPosition.right}>
             <Button
               id="toolbar_layout2"
               aria-label="Graph Layout Style 2"
-              className={buttonStyle}
               isActive={this.props.layout.name === KialiConcentricGraph.getLayout().name}
               isDisabled={this.props.disabled}
               onClick={() => {
                 this.setLayout(KialiConcentricGraph.getLayout());
               }}
-              variant="plain"
+              style={buttonStyle}
+              variant={ButtonVariant.plain}
             >
               <TopologyIcon
                 className={
@@ -230,20 +231,20 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
               />
             </Button>
           </Tooltip>
-        </ToolbarItem>
+        </div>
 
-        <ToolbarItem>
+        <div>
           <Tooltip content={'Layout 3 ' + KialiBreadthFirstGraph.getLayout().name} position={TooltipPosition.right}>
             <Button
               id="toolbar_layout3"
               aria-label="Graph Layout Style 3"
-              className={buttonStyle}
               isActive={this.props.layout.name === KialiBreadthFirstGraph.getLayout().name}
               isDisabled={this.props.disabled}
               onClick={() => {
                 this.setLayout(KialiBreadthFirstGraph.getLayout());
               }}
-              variant="plain"
+              style={buttonStyle}
+              variant={ButtonVariant.plain}
             >
               <TopologyIcon
                 className={
@@ -252,10 +253,10 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
               />
             </Button>
           </Tooltip>
-        </ToolbarItem>
+        </div>
 
         {this.props.boxByNamespace && (
-          <ToolbarItem>
+          <div>
             <Tooltip
               content={'Namespace Layout 1 ' + KialiDagreGraph.getLayout().name}
               position={TooltipPosition.right}
@@ -263,13 +264,13 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
               <Button
                 id="toolbar_namespace_layout1"
                 aria-label="Namespace Layout Style 1"
-                className={buttonStyle}
                 isActive={this.props.namespaceLayout.name === KialiDagreGraph.getLayout().name}
                 isDisabled={this.props.disabled}
                 onClick={() => {
                   this.setNamespaceLayout(KialiDagreGraph.getLayout());
                 }}
-                variant="plain"
+                style={buttonStyle}
+                variant={ButtonVariant.plain}
               >
                 <TenantIcon
                   className={
@@ -278,11 +279,11 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
                 />
               </Button>
             </Tooltip>
-          </ToolbarItem>
+          </div>
         )}
 
         {this.props.boxByNamespace && (
-          <ToolbarItem>
+          <div>
             <Tooltip
               content={'Namespace Layout 2 ' + KialiBreadthFirstGraph.getLayout().name}
               position={TooltipPosition.right}
@@ -290,13 +291,13 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
               <Button
                 id="toolbar_namespace_layout2"
                 aria-label="Namespace Layout Style 2"
-                className={buttonStyle}
                 isActive={this.props.namespaceLayout.name === KialiBreadthFirstGraph.getLayout().name}
                 isDisabled={this.props.disabled}
                 onClick={() => {
                   this.setNamespaceLayout(KialiBreadthFirstGraph.getLayout());
                 }}
-                variant="plain"
+                style={buttonStyle}
+                variant={ButtonVariant.plain}
               >
                 <TenantIcon
                   className={
@@ -307,26 +308,26 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps,
                 />
               </Button>
             </Tooltip>
-          </ToolbarItem>
+          </div>
         )}
 
         <TourStopContainer info={GraphTourStops.Legend}>
-          <ToolbarItem>
+          <div>
             <Tooltip content="Show Legend" position={TooltipPosition.right}>
               <Button
                 id="toolbar_toggle_legend"
                 aria-label="Show Legend"
-                className={buttonStyle}
-                variant="plain"
-                onClick={this.props.toggleLegend}
                 isActive={this.props.showLegend}
+                onClick={this.props.toggleLegend}
+                style={buttonStyle}
+                variant={ButtonVariant.plain}
               >
                 <MapIcon className={this.props.showLegend ? activeButtonStyle : undefined} size="sm" />
               </Button>
             </Tooltip>
-          </ToolbarItem>
+          </div>
         </TourStopContainer>
-      </Toolbar>
+      </div>
     );
   }
 

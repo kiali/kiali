@@ -8,7 +8,7 @@ export const containerStyle = style({
 
 // this emulates Select component .pf-c-select__menu
 export const menuStyle = style({
-  fontSize: '14px'
+  fontSize: 'var(--kiali-global--font-size)',
 });
 
 // this emulates Select component .pf-c-select__menu but w/o cursor manipulation
@@ -31,10 +31,10 @@ const itemStyle: NestedCSSProperties = {
   padding: '6px 16px',
   $nest: {
     '& > div > input.pf-c-radio__input': {
-      margin: 0
+      margin: '1px 0 0 0',
     },
     '& > div > input.pf-c-check__input': {
-      margin: 0
+      margin: '1px 0 0 0',
     }
   }
 };

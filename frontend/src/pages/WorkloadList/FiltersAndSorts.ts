@@ -3,7 +3,7 @@ import {
   FILTER_ACTION_APPEND,
   FILTER_ACTION_UPDATE,
   FilterType,
-  FilterTypes
+  AllFilterTypes
 } from '../../types/Filters';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
 import { SortField } from '../../types/SortFilters';
@@ -186,8 +186,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
 ];
 
 const workloadNameFilter: FilterType = {
-  id: 'workloadname',
-  title: 'Workload Name',
+  category: 'Workload Name',
   placeholder: 'Filter by Workload Name',
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
@@ -195,28 +194,25 @@ const workloadNameFilter: FilterType = {
 };
 
 export const appLabelFilter: FilterType = {
-  id: 'applabel',
-  title: 'App Label',
+  category: 'App Label',
   placeholder: 'Filter by App Label Validation',
-  filterType: FilterTypes.select,
+  filterType: AllFilterTypes.select,
   action: FILTER_ACTION_UPDATE,
   filterValues: presenceValues
 };
 
 export const versionLabelFilter: FilterType = {
-  id: 'versionlabel',
-  title: 'Version Label',
+  category: 'Version Label',
   placeholder: 'Filter by Version Label Validation',
-  filterType: FilterTypes.select,
+  filterType: AllFilterTypes.select,
   action: FILTER_ACTION_UPDATE,
   filterValues: presenceValues
 };
 
 const workloadTypeFilter: FilterType = {
-  id: 'workloadtype',
-  title: 'Workload Type',
+  category: 'Workload Type',
   placeholder: 'Filter by Workload Type',
-  filterType: FilterTypes.typeAhead,
+  filterType: AllFilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {

@@ -5,7 +5,7 @@ import { istioSidecarFilter, labelFilter } from '../CommonFilters';
 import { ActiveFilter, DEFAULT_LABEL_OPERATION } from '../../../types/Filters';
 
 const labelValue = 'app:details';
-const filterActive: ActiveFilter = { id: labelFilter.id, title: labelFilter.title, value: labelValue };
+const filterActive: ActiveFilter = { category: labelFilter.category, value: labelValue };
 
 describe('StatefulFilters', () => {
   it('add filter', () => {
@@ -29,19 +29,17 @@ describe('StatefulFilters', () => {
     expect(wrapper.state.activeFilters.filters.length).toEqual(3);
 
     // Remove one
-    wrapper.removeFilter(labelFilter.id, labelValue);
+    wrapper.removeFilter(labelFilter.category, labelValue);
     wrapper.forceUpdate();
     expect(wrapper.state.activeFilters.filters.length).toEqual(2);
     expect(wrapper.state.activeFilters).toStrictEqual({
       filters: [
         {
-          id: labelFilter.id,
-          title: labelFilter.title,
+          category: labelFilter.category,
           value: labelVersion
         },
         {
-          id: istioSidecarFilter.id,
-          title: istioSidecarFilter.title,
+          category: istioSidecarFilter.category,
           value: istioSidecarFilter.filterValues[0].id
         }
       ],

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -12,6 +13,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util"
 )
 
 // openshiftSessionPayload holds the data that will be persisted in the SessionStore
@@ -26,6 +28,14 @@ type openshiftSessionPayload struct {
 // Kiali's "openshift" authentication strategy. This authentication
 // strategy is basically an implementation of OAuth's implicit flow
 // with the specifics of OpenShift.
+//
+// Alternatively, it is possible that 3rd-parties are controlling
+// the session. For these cases, Kiali can receive an OpenShift token
+// via the "Authorization" HTTP Header or via the "oauth_token"
+// URL parameter. Token received from 3rd parties are not persisted
+// with the active Kiali's persistor, because that would collide and
+// replace an existing Kiali session. So, it is assumed that the 3rd-party
+// has its own persistence system (similarly to how 'header' auth works).
 type openshiftAuthController struct {
 	// businessInstantiator is a function that returns an already initialized
 	// business layer. Normally, it should be set to the business.Get function.
@@ -104,36 +114,54 @@ func (o openshiftAuthController) Authenticate(r *http.Request, w http.ResponseWr
 // is revalidated by re-fetching user info from the cluster, to ensure that the token hasn't been revoked.
 // If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
 func (o openshiftAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
-	sPayload := openshiftSessionPayload{}
-	sData, err := o.SessionStore.ReadSession(r, w, &sPayload)
-	if err != nil {
-		log.Warningf("Could not read the openshift session: %v", err)
-		return nil, nil
-	}
-	if sData == nil {
-		return nil, nil
+	var token string
+	var expires time.Time
+
+	// In OpenShift auth, it is possible that a session is started by a 3rd party. If that's the case, Kiali
+	// can receive the OpenShift token of the session via HTTP Headers of via a URL Query string parameter.
+	// HTTP Headers have priority over URL parameters. If a token is received via some of these means,
+	// then the received session has priority over the Kiali initiated session (stored in cookies).
+	if authHeader := r.Header.Get("Authorization"); len(authHeader) != 0 && strings.HasPrefix(authHeader, "Bearer ") {
+		token = strings.TrimPrefix(authHeader, "Bearer ")
+		expires = util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
+	} else if authToken := r.URL.Query().Get("oauth_token"); len(authToken) != 0 {
+		token = strings.TrimSpace(authToken)
+		expires = util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
+	} else {
+		sPayload := openshiftSessionPayload{}
+		sData, err := o.SessionStore.ReadSession(r, w, &sPayload)
+		if err != nil {
+			log.Warningf("Could not read the openshift session: %v", err)
+			return nil, nil
+		}
+		if sData == nil {
+			return nil, nil
+		}
+
+		// The Openshift token must be present
+		if len(sPayload.Token) == 0 {
+			log.Warning("Session is invalid: the Openshift token is absent")
+			return nil, nil
+		}
+
+		token = sPayload.Token
+		expires = sData.ExpiresOn
 	}
 
-	// The Openshift token must be present
-	if len(sPayload.Token) == 0 {
-		log.Warning("Session is invalid: the Openshift token is absent")
-		return nil, nil
-	}
-
-	bs, err := o.businessInstantiator(&api.AuthInfo{Token: sPayload.Token})
+	bs, err := o.businessInstantiator(&api.AuthInfo{Token: token})
 	if err != nil {
 		log.Warningf("Could not get the business layer!: %v", err)
 		return nil, fmt.Errorf("could not get the business layer: %w", err)
 	}
 
-	user, err := bs.OpenshiftOAuth.GetUserInfo(sPayload.Token)
+	user, err := bs.OpenshiftOAuth.GetUserInfo(token)
 	if err == nil {
 		// Internal header used to propagate the subject of the request for audit purposes
 		r.Header.Add("Kiali-User", user.Metadata.Name)
 		return &UserSessionData{
-			ExpiresOn: sData.ExpiresOn,
+			ExpiresOn: expires,
 			Username:  user.Metadata.Name,
-			AuthInfo:  &api.AuthInfo{Token: sPayload.Token},
+			AuthInfo:  &api.AuthInfo{Token: token},
 		}, nil
 	}
 

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ListIcon, ThIcon, ThLargeIcon } from '@patternfly/react-icons';
 import { SortAlphaDownIcon, SortAlphaUpIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
@@ -15,7 +15,6 @@ import { durationSelector, refreshIntervalSelector } from '../../store/Selectors
 import { IntervalInMilliseconds, DurationInSeconds } from '../../types/Common';
 import { SortField } from '../../types/SortFilters';
 import NamespaceInfo from './NamespaceInfo';
-import { ThinStyle } from '../../components/Filters/FilterStyles';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { style } from 'typestyle';
@@ -47,6 +46,11 @@ const overviewTypes = {
   app: 'Apps',
   workload: 'Workloads',
   service: 'Services'
+};
+
+const directionTypes = {
+  inbound: 'Inbound',
+  outbound: 'Outbound'
 };
 
 // TODO Use Object.fromEntries when available
@@ -87,11 +91,18 @@ const actionsToolbarStyle = style({
   paddingTop: '17px'
 });
 
+const typeSelectStyle = style({
+  paddingRight: '6px'
+});
+
 export type OverviewType = keyof typeof overviewTypes;
+
+export type DirectionType = keyof typeof directionTypes;
 
 type State = {
   isSortAscending: boolean;
   overviewType: OverviewType;
+  directionType: DirectionType;
   sortField: SortField<NamespaceInfo>;
 };
 
@@ -101,12 +112,18 @@ export class OverviewToolbar extends React.Component<Props, State> {
     return (otype as OverviewType) || 'app';
   }
 
+  static currentDirectionType(): DirectionType {
+    const drtype = HistoryManager.getParam(URLParam.DIRECTION_TYPE);
+    return (drtype as DirectionType) || 'inbound';
+  }
+
   constructor(props: Props) {
     super(props);
 
     this.state = {
       isSortAscending: FilterHelper.isCurrentSortAscending(),
       overviewType: OverviewToolbar.currentOverviewType(),
+      directionType: OverviewToolbar.currentDirectionType(),
       sortField: FilterHelper.currentSortField(Sorts.sortFields)
     };
   }
@@ -152,6 +169,18 @@ export class OverviewToolbar extends React.Component<Props, State> {
     }
   };
 
+  updateDirectionType = (dtype: String) => {
+    const isDirectionType = (val: String): val is DirectionType => val === 'inbound' || val === 'outbound';
+
+    if (isDirectionType(dtype)) {
+      HistoryManager.setParam(URLParam.DIRECTION_TYPE, dtype);
+      this.setState({ directionType: dtype });
+      this.props.onRefresh();
+    } else {
+      throw new Error('Direction type is not valid.');
+    }
+  };
+
   changeSortField = value => {
     const sortField: SortField<NamespaceInfo> = Sorts.sortFields.filter(sort => sort.id === value)[0];
     this.props.sort(sortField, this.state.isSortAscending);
@@ -176,7 +205,12 @@ export class OverviewToolbar extends React.Component<Props, State> {
               options={sortTypes}
               data-sort-field={this.state.sortField.id}
             />
-            <Button variant="plain" onClick={this.updateSortDirection} style={{ ...ThinStyle }} data-sort-asc={this.state.isSortAscending}>
+            <Button
+              variant={ButtonVariant.plain}
+              onClick={this.updateSortDirection}
+              style={{ paddingLeft: '10px', paddingRight: '10px' }}
+              data-sort-asc={this.state.isSortAscending}
+            >
               {this.state.isSortAscending ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
             </Button>
           </>
@@ -198,16 +232,28 @@ export class OverviewToolbar extends React.Component<Props, State> {
         <ToolbarDropdown
           id="overview-type"
           disabled={false}
+          classNameSelect={typeSelectStyle}
           handleSelect={this.updateOverviewType}
           nameDropdown="Health for"
           value={this.state.overviewType}
           label={overviewTypes[this.state.overviewType]}
           options={overviewTypes}
         />
+        {this.props.displayMode !== OverviewDisplayMode.COMPACT && (
+          <ToolbarDropdown
+            id="direction-type"
+            disabled={false}
+            handleSelect={this.updateDirectionType}
+            nameDropdown="Traffic"
+            value={this.state.directionType}
+            label={directionTypes[this.state.directionType]}
+            options={directionTypes}
+          />
+        )}
         <Tooltip content={<>Expand view</>} position={TooltipPosition.top}>
           <Button
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
-            variant="plain"
+            variant={ButtonVariant.plain}
             isActive={this.props.displayMode === OverviewDisplayMode.EXPAND}
             style={{ padding: '0 4px 0 16px' }}
             data-test={'overview-type-' + OverviewDisplayMode[OverviewDisplayMode.EXPAND]}
@@ -218,7 +264,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
         <Tooltip content={<>Compact view</>} position={TooltipPosition.top}>
           <Button
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
-            variant="plain"
+            variant={ButtonVariant.plain}
             isActive={this.props.displayMode === OverviewDisplayMode.COMPACT}
             style={{ padding: '0 4px 0 4px' }}
             data-test={'overview-type-' + OverviewDisplayMode[OverviewDisplayMode.COMPACT]}
@@ -229,7 +275,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
         <Tooltip content={<>List view</>} position={TooltipPosition.top}>
           <Button
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.LIST)}
-            variant="plain"
+            variant={ButtonVariant.plain}
             isActive={this.props.displayMode === OverviewDisplayMode.LIST}
             style={{ padding: '0 4px 0 4px' }}
             data-test={'overview-type-' + OverviewDisplayMode[OverviewDisplayMode.LIST]}

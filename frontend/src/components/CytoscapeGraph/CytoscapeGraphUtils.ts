@@ -10,6 +10,7 @@ import {
   Layout
 } from '../../types/Graph';
 import * as Cy from 'cytoscape';
+import { GraphStyles } from './graphs/GraphStyles';
 
 export const CyEdge = {
   destPrincipal: 'destPrincipal',
@@ -132,7 +133,7 @@ export const runLayout = (cy: Cy.Core, layout: Layout, namespaceLayout: Layout):
   return promise;
 };
 
-// This ahould be called to ensure labels are up to date on-screen.  It may be needed to ensure cytoscape
+// This should be called to ensure labels are up to date on-screen.  It may be needed to ensure cytoscape
 // displays up-to-date labels, even if the label content has not changed.
 // Note: the leaf-to-root approach here should mirror what is done in GraphStyles.ts#htmlNodeLabels()
 export const refreshLabels = (cy: Cy.Core, force: boolean) => {
@@ -143,13 +144,17 @@ export const refreshLabels = (cy: Cy.Core, force: boolean) => {
     }
   }
 
-  // update labeles from leaf to node (i.e. inside out with respect to nested boxing).  This (in theory) ensures
+  // update labels from leaf to node (i.e. inside out with respect to nested boxing).  This (in theory) ensures
   // that outer nodes will always be able to incorporate inner nodes' true bounding-box (one adjusted for the label).
   let nodes = cy.nodes('[^isBox]:visible');
   while (nodes.length > 0) {
     (cy as any).nodeHtmlLabel().updateNodeLabel(nodes);
     nodes = nodes.parents();
   }
+
+  cy.edges().each(e => {
+    e.data('label', GraphStyles.getEdgeLabel(e, e.selected()));
+  });
 
   if (force) {
     if (scratch) {

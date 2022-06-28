@@ -1,0 +1,107 @@
+name: Nightly Build
+
+on:
+  schedule:
+  # Every night at 04:00 (UTC)
+  - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      release_branch:
+        description: Branch to release
+        required: true
+        default: master
+        type: string
+      quay_repository:
+        description: Quay repository
+        type: string
+        default: quay.io/kiali/kiali
+        required: true
+
+jobs:
+  initialize:
+    name: Initialize
+    runs-on: ubuntu-20.04
+    outputs:
+      target_branch: ${{ github.ref_name }}
+      quay_tag: ${{ steps.quay_tag.outputs.quay_tag }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
+
+    - name: Determine Quay tag
+      id: quay_tag
+      run: |
+        if [ -z ${{ github.event.inputs.quay_repository }} ];
+        then
+          QUAY_REPO="quay.io/kiali/kiali"
+        else
+          QUAY_REPO="${{ github.event.inputs.quay_repository }}"
+        fi
+
+        QUAY_TAG="$QUAY_REPO:latest"
+
+        echo "::set-output name=quay_tag::$QUAY_TAG"
+
+    - name: Log information
+      run: |
+        echo "Release type: latest"
+
+        echo "Quay tag": ${{ steps.quay_tag.outputs.quay_tag }}
+
+  build_backend:
+    name: Build backend
+    uses: ./.github/workflows/build-backend.yml
+    needs: [initialize]
+    with:
+      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
+
+  build_frontend:
+    name: Build frontend
+    uses: ./.github/workflows/build-frontend.yml
+    needs: [initialize]
+    with:
+      target_branch: ${{needs.initialize.outputs.target_branch}}
+      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
+
+  push:
+    name: Push latest
+    # Avoid schedule workflows from forks to push images
+    if: ${{ (github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule' }}
+    runs-on: ubuntu-20.04
+    needs: [initialize, build_backend, build_frontend]
+    env:
+      QUAY_TAG: ${{ needs.initialize.outputs.quay_tag }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17.10
+
+    - name: Cache Go deps
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download frontend build
+      uses: actions/download-artifact@v3
+      with:
+        name: build
+        path: frontend/build
+
+    - name: Build and push image
+      run: |
+        docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
+
+        make -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch container-multi-arch-push-kiali-quay

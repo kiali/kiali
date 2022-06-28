@@ -28,7 +28,7 @@ container-build-operator: .ensure-operator-repo-exists
 ## container-build: Build Kiali and Kiali operator container images
 # On x86_64 machine, build both kiali and operator images.
 ifeq ($(GOARCH),amd64)
-container-build: container-build-kiali container-build-operator
+container-build: container-build-kiali
 # On other achitectures, only build kiali image.
 else
 container-build: container-build-kiali

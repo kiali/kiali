@@ -3,16 +3,28 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import RenderPage from './RenderPage';
 import { RouteComponentProps } from 'react-router';
-import Masthead from './Masthead/Masthead';
-import Menu from './Menu';
-import { Page, PageHeader, PageSection, Brand } from '@patternfly/react-core';
+import MastheadItems from './Masthead/Masthead';
+import {
+  Page,
+  Masthead,
+  MastheadToggle,
+  MastheadMain,
+  MastheadBrand,
+  MastheadContent,
+  PageSection,
+  PageSidebar,
+  PageToggleButton,
+  ButtonVariant
+} from '@patternfly/react-core';
+import { BarsIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
-
 import MessageCenterContainer from '../../components/MessageCenter/MessageCenter';
 import { kialiLogo, serverConfig } from '../../config';
 import { KialiAppState } from '../../store/Store';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import UserSettingsThunkActions from '../../actions/UserSettingsThunkActions';
+import Menu from './Menu';
+import { Link } from 'react-router-dom';
 
 type PropsType = RouteComponentProps & {
   navCollapsed: boolean;
@@ -93,30 +105,39 @@ export class Navigation extends React.Component<PropsType, NavigationState> {
 
   render() {
     const { isNavOpenDesktop, isNavOpenMobile, isMobileView } = this.state;
+    const isNavOpen = isMobileView ? isNavOpenMobile : isNavOpenDesktop || !this.props.navCollapsed;
 
-    const Header = (
-      <PageHeader
-        logo={<Brand src={kialiLogo} alt="Kiali Logo" />}
-        toolbar={<Masthead />}
-        showNavToggle={true}
-        onNavToggle={isMobileView ? this.onNavToggleMobile : this.onNavToggleDesktop}
-        isNavOpen={isMobileView ? isNavOpenMobile : isNavOpenDesktop || !this.props.navCollapsed}
-        role={'kiali_header'}
-      />
+    const masthead = (
+      <Masthead role="kiali_header" style={{ height: '76px' }}>
+        <MastheadToggle>
+          <PageToggleButton
+            variant={ButtonVariant.plain}
+            aria-label="Kiali navigation"
+            isNavOpen={isNavOpen}
+            onNavToggle={isMobileView ? this.onNavToggleMobile : this.onNavToggleDesktop}
+          >
+            <BarsIcon />
+          </PageToggleButton>
+        </MastheadToggle>
+        <MastheadMain>
+          <MastheadBrand component={props => <Link {...props} to="#" />}>
+            <img src={kialiLogo} alt="Kiali Logo" />
+          </MastheadBrand>
+        </MastheadMain>
+        <MastheadContent style={{ height: '76px' }}>
+          <MastheadItems />
+        </MastheadContent>
+      </Masthead>
     );
 
-    const Sidebar = (
-      <Menu
-        isNavOpen={isMobileView ? isNavOpenMobile : isNavOpenDesktop || !this.props.navCollapsed}
-        location={this.props.location}
-        jaegerUrl={this.props.jaegerUrl}
-      />
-    );
+    const menu = <Menu isNavOpen={isNavOpen} location={this.props.location} jaegerUrl={this.props.jaegerUrl} />;
+
+    const Sidebar = <PageSidebar style={{ width: '210px' }} nav={menu} isNavOpen={isNavOpen} />;
 
     return (
-      <Page header={Header} sidebar={Sidebar} onPageResize={this.onPageResize}>
+      <Page header={masthead} sidebar={Sidebar} onPageResize={this.onPageResize}>
         <MessageCenterContainer drawerTitle="Message Center" />
-        <PageSection className={flexBoxColumnStyle} variant={'light'}>
+        <PageSection className={flexBoxColumnStyle} variant="light">
           <RenderPage isGraph={this.isGraph()} />
         </PageSection>
       </Page>

@@ -29,6 +29,6 @@ jobs:
       - name: verify version
         if: ${{ steps.version_info.outputs.CORE_VERSION != steps.version_info.outputs.PACKAGE_VERSION }}         
         run: |
-          echo "Versions are not aligned"
+          echo "Versions in Makefile ( ${{ steps.version_info.outputs.CORE_VERSION }} ) and frontend/package.json ( ${{ steps.version_info.outputs.PACKAGE_VERSION }} ) are not aligned"
           exit 1
 

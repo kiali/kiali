@@ -1,16 +1,17 @@
 import * as React from 'react';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
+import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { isIstioNamespace } from 'config/ServerConfig';
 import { icons } from 'config';
 import { KialiIcon } from '../../config/KialiIcon';
 import { style } from 'typestyle';
 
 type MissingSidecarProps = {
+  "data-test"?: string;
   text: string;
   textTooltip: string;
   tooltip: boolean;
-  icon: IconType;
+  icon: React.ComponentClass<SVGIconProps>;
   color: string;
   namespace: string;
   style?: React.CSSProperties;
@@ -35,7 +36,7 @@ class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
     const { text, textTooltip, icon, namespace, color, tooltip, style, ...otherProps } = this.props;
 
     const iconComponent = (
-      <span style={style} {...otherProps}>
+      <span style={style} {...otherProps} data-test={this.props["data-test"]}>
         {React.createElement(icon, { style: { color: color, verticalAlign: '-2px' } })}
         {!tooltip && (
           <span style={{ marginLeft: '8px' }}>

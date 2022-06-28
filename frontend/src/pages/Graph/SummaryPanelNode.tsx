@@ -19,7 +19,7 @@ import {
   DropdownGroup,
   DropdownItem,
   DropdownPosition,
-  Expandable,
+  ExpandableSection,
   KebabToggle,
   Tab
 } from '@patternfly/react-core';
@@ -120,7 +120,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
           {getTitle(nodeType)}
           <div>
             <span>
-              <PFBadge badge={PFBadges.Namespace} style={{ marginBottom: '2px' }} />
+              <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
               {nodeData.namespace}
               {actions && (
                 <Dropdown
@@ -171,7 +171,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     return (
       <>
         {getBadge(nodeData, NodeType.WORKLOAD)}
-        <Expandable
+        <ExpandableSection
           toggleText={
             nodeData.hasWorkloadEntry.length === 1
               ? '1 workload entry'
@@ -180,7 +180,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
           className={workloadExpandableSectionStyle}
         >
           <div style={{ marginLeft: '3.5em' }}>{workloadEntryLinks}</div>
-        </Expandable>
+        </ExpandableSection>
       </>
     );
   };
@@ -210,13 +210,13 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     }
 
     return (
-      <Expandable toggleText={toggleText} className={expandableSectionStyle}>
+      <ExpandableSection toggleText={toggleText} className={expandableSectionStyle}>
         {hostnames.map(hostname => (
           <div key={hostname} title={hostname}>
             {hostname === '*' ? '* (all hosts)' : hostname}
           </div>
         ))}
-      </Expandable>
+      </ExpandableSection>
     );
   };
 

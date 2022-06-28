@@ -3,14 +3,15 @@ import {
   Card,
   CardActions,
   CardBody,
-  CardHead,
   CardHeader,
+  CardHeaderMain,
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
   Grid,
   GridItem,
   Title,
+  TitleSizes,
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
@@ -32,7 +33,7 @@ import {
 } from '../../types/Health';
 import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import OverviewToolbarContainer, { OverviewDisplayMode, OverviewToolbar, OverviewType } from './OverviewToolbar';
+import OverviewToolbarContainer, { OverviewDisplayMode, OverviewToolbar, OverviewType, DirectionType } from './OverviewToolbar';
 import NamespaceInfo, { NamespaceStatus } from './NamespaceInfo';
 import NamespaceMTLSStatusContainer from '../../components/MTls/NamespaceMTLSStatus';
 import { RenderComponentScroll } from '../../components/Nav/Page';
@@ -90,11 +91,6 @@ const emptyStateStyle = style({
   marginTop: 10
 });
 
-const cardHeaderStyle = style({
-  width: '75%',
-  textAlign: 'left'
-});
-
 const cardNamespaceNameNormalStyle = style({
   display: 'inline-block',
   verticalAlign: 'middle'
@@ -125,6 +121,7 @@ enum Show {
 type State = {
   namespaces: NamespaceInfo[];
   type: OverviewType;
+  direction: DirectionType;
   displayMode: OverviewDisplayMode;
   showTrafficPoliciesModal: boolean;
   kind: string;
@@ -154,6 +151,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     this.state = {
       namespaces: [],
       type: OverviewToolbar.currentOverviewType(),
+      direction: OverviewToolbar.currentDirectionType(),
       displayMode: display ? Number(display) : OverviewDisplayMode.EXPAND,
       showTrafficPoliciesModal: false,
       kind: '',
@@ -200,7 +198,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     this.promises
       .register('namespaces', API.getNamespaces())
       .then(namespacesResponse => {
-        const nameFilters = FilterSelected.getSelected().filters.filter(f => f.id === Filters.nameFilter.id);
+        const nameFilters = FilterSelected.getSelected().filters.filter(
+          f => f.category === Filters.nameFilter.category
+        );
         const allNamespaces: NamespaceInfo[] = namespacesResponse.data
           .filter(ns => {
             return nameFilters.length === 0 || nameFilters.some(f => ns.name.includes(f.value));
@@ -220,6 +220,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         const isAscending = FilterHelper.isCurrentSortAscending();
         const sortField = FilterHelper.currentSortField(Sorts.sortFields);
         const type = OverviewToolbar.currentOverviewType();
+        const direction = OverviewToolbar.currentDirectionType();
         const displayMode = this.getStartDisplayMode(allNamespaces.length > 16);
 
         // Set state before actually fetching health
@@ -227,6 +228,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           prevState => {
             return {
               type: type,
+              direction: direction,
               namespaces: Sorts.sortFunc(allNamespaces, sortField, isAscending),
               displayMode: displayMode,
               showTrafficPoliciesModal: prevState.showTrafficPoliciesModal,
@@ -240,7 +242,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             this.fetchTLS(isAscending, sortField);
             this.fetchValidations(isAscending, sortField);
             if (displayMode !== OverviewDisplayMode.COMPACT) {
-              this.fetchMetrics();
+              this.fetchMetrics(direction);
             }
           }
         );
@@ -266,6 +268,12 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             }
             return { namespaces: newNamespaces };
           });
+        })
+        .catch(error => {
+          if (error.isCanceled) {
+            return;
+          }
+          this.handleAxiosError('Could not fetch health', error);
         });
     });
   }
@@ -346,12 +354,12 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       .catch(err => this.handleAxiosError('Could not fetch health', err));
   }
 
-  fetchMetrics() {
+  fetchMetrics(direction: DirectionType) {
     const duration = FilterHelper.currentDuration();
     // debounce async for back-pressure, ten by ten
     _.chunk(this.state.namespaces, 10).forEach(chunk => {
       this.promises
-        .registerChained('metricschunks', undefined, () => this.fetchMetricsChunk(chunk, duration))
+        .registerChained('metricschunks', undefined, () => this.fetchMetricsChunk(chunk, duration, direction))
         .then(() => {
           this.setState(prevState => {
             return { namespaces: prevState.namespaces.slice() };
@@ -360,19 +368,20 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     });
   }
 
-  fetchMetricsChunk(chunk: NamespaceInfo[], duration: number) {
+  fetchMetricsChunk(chunk: NamespaceInfo[], duration: number, direction: DirectionType) {
     const rateParams = computePrometheusRateParams(duration, 10);
-    const optionsIn: IstioMetricsOptions = {
+    const options: IstioMetricsOptions = {
       filters: ['request_count', 'request_error_count'],
       duration: duration,
       step: rateParams.step,
       rateInterval: rateParams.rateInterval,
-      direction: 'inbound',
-      reporter: 'destination'
+      direction: direction,
+      reporter: direction === 'inbound' ? 'destination' : 'source',
     };
+
     return Promise.all(
       chunk.map(nsInfo => {
-        return API.getNamespaceMetrics(nsInfo.name, optionsIn).then(rs => {
+        return API.getNamespaceMetrics(nsInfo.name, options).then(rs => {
           nsInfo.metrics = rs.data.request_count;
           nsInfo.errorMetrics = rs.data.request_error_count;
           return nsInfo;
@@ -463,7 +472,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     HistoryManager.setParam(URLParam.DISPLAY_MODE, String(mode));
     if (mode === OverviewDisplayMode.EXPAND) {
       // Load metrics
-      this.fetchMetrics();
+      this.fetchMetrics(this.state.direction);
     }
   };
 
@@ -556,6 +565,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           isSeparator: true
         });
         const enableAction = {
+          "data-test": `enable-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
           isSeparator: false,
           title: 'Enable Auto Injection',
@@ -563,6 +573,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             this.setState({ showTrafficPoliciesModal: true, nsTarget: ns, opTarget: 'enable', kind: 'injection' })
         };
         const disableAction = {
+          "data-test": `disable-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
           isSeparator: false,
           title: 'Disable Auto Injection',
@@ -570,6 +581,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             this.setState({ showTrafficPoliciesModal: true, nsTarget: ns, opTarget: 'disable', kind: 'injection' })
         };
         const removeAction = {
+          "data-test": `remove-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
           isSeparator: false,
           title: 'Remove Auto Injection',
@@ -744,11 +756,14 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                   const isLongNs = ns.name.length > NS_LONG;
                   return (
                     <GridItem sm={sm} md={md} key={'CardItem_' + ns.name} style={{ margin: '0px 5px 0 5px' }}>
-                      <Card isCompact={true} className={cardGridStyle} data-test={ns.name + '-' + OverviewDisplayMode[this.state.displayMode]}>
-                        <CardHead>
-                          <CardActions>{namespaceActions[i]}</CardActions>
-                          <CardHeader className={cardHeaderStyle}>
-                            <Title headingLevel="h5" size="lg">
+                      <Card
+                        isCompact={true}
+                        className={cardGridStyle}
+                        data-test={ns.name + '-' + OverviewDisplayMode[this.state.displayMode]}
+                      >
+                        <CardHeader>
+                          <CardHeaderMain>
+                            <Title headingLevel="h5" size={TitleSizes.lg}>
                               <span
                                 className={isLongNs ? cardNamespaceNameLongStyle : cardNamespaceNameNormalStyle}
                                 title={ns.name}
@@ -756,8 +771,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 {ns.name}
                               </span>
                             </Title>
-                          </CardHeader>
-                        </CardHead>
+                          </CardHeaderMain>
+                          <CardActions>{namespaceActions[i]}</CardActions>
+                        </CardHeader>
                         <CardBody>
                           {this.renderLabels(ns)}
                           <div style={{ textAlign: 'left' }}>
@@ -781,7 +797,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         ) : (
           <div style={{ backgroundColor: '#f5f5f5' }}>
             <EmptyState className={emptyStateStyle} variant={EmptyStateVariant.full}>
-              <Title headingLevel="h5" size="lg" style={{ marginTop: '50px' }}>
+              <Title headingLevel="h5" size={TitleSizes.lg} style={{ marginTop: '50px' }}>
                 No unfiltered namespaces
               </Title>
               <EmptyStateBody>
@@ -820,7 +836,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             <ul>
               {Object.entries(ns.labels || []).map(([key, value]) => (
                 <li key={key}>
-                  {key}: {value}
+                  {key}={value}
                 </li>
               ))}
             </ul>
@@ -840,14 +856,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   renderStatuses(ns: NamespaceInfo): JSX.Element {
     if (ns.status) {
       if (this.state.displayMode === OverviewDisplayMode.COMPACT) {
-        return (
-          <OverviewCardContentCompact
-            key={ns.name}
-            name={ns.name}
-            status={ns.status}
-            type={this.state.type}
-          />
-        );
+        return <OverviewCardContentCompact key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />;
       }
       return (
         <OverviewCardContentExpanded
@@ -856,6 +865,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           duration={FilterHelper.currentDuration()}
           status={ns.status}
           type={this.state.type}
+          direction={this.state.direction}
           metrics={ns.metrics}
           errorMetrics={ns.errorMetrics}
         />

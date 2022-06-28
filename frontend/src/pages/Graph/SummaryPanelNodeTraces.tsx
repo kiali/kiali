@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { SimpleList, SimpleListItem, Button, Checkbox, Divider } from '@patternfly/react-core';
+import { SimpleList, SimpleListItem, Button, Checkbox, Divider, ButtonVariant } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 
@@ -162,7 +162,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
             isDisabled={this.state.useGraphRefresh}
             onClick={() => this.loadTraces()}
             aria-label="Refresh"
-            variant="secondary"
+            variant={ButtonVariant.secondary}
             className={refreshButtonStyle}
           >
             <SyncAltIcon />

@@ -11,7 +11,6 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
-import { RenderHeader } from '../../components/Nav/Page';
 import { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
@@ -21,6 +20,7 @@ import TracesComponent from '../../components/JaegerIntegration/TracesComponent'
 import TrafficDetails from 'components/TrafficList/TrafficDetails';
 import TimeControl from '../../components/Time/TimeControl';
 import { AppHealth } from 'types/Health';
+import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
 
 type AppDetailsState = {
   app?: App;
@@ -146,6 +146,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const inTab = (
       <Tab title="Inbound Metrics" eventKey={2} key={'Inbound Metrics'}>
         <IstioMetricsContainer
+          data-test="inbound-metrics-component"
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.app}
           objectType={MetricsObjectTypes.APP}
@@ -157,6 +158,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const outTab = (
       <Tab title="Outbound Metrics" eventKey={3} key={'Outbound Metrics'}>
         <IstioMetricsContainer
+          data-test="outbound-metrics-component"
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.app}
           objectType={MetricsObjectTypes.APP}
@@ -223,7 +225,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     }
     return (
       <>
-        <RenderHeader location={this.props.location} rightToolbar={<TimeControl customDuration={useCustomTime} />} />
+        <RenderHeaderContainer location={this.props.location} rightToolbar={<TimeControl customDuration={useCustomTime} />} />
         {this.state.app && (
           <ParameterizedTabs
             id="basic-tabs"

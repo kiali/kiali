@@ -1,14 +1,26 @@
 package utils
 
 import (
+	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/kiali/kiali/log"
 )
 
+var ocCommand = NewExecCommand()
+
+func NewExecCommand() string {
+	command := os.Getenv("CLIENT_EXE")
+	if command != "" {
+		return command
+	} else {
+		return "oc"
+	}
+}
+
 func ApplyFile(yamlFile, namespace string) bool {
-	cmd := exec.Command("oc", "apply", "-n="+namespace, "-f="+yamlFile)
+	cmd := exec.Command(ocCommand, "apply", "-n="+namespace, "-f="+yamlFile)
 	stdout, err := cmd.Output()
 
 	if err != nil {
@@ -20,7 +32,7 @@ func ApplyFile(yamlFile, namespace string) bool {
 }
 
 func DeleteFile(yamlFile, namespace string) bool {
-	cmd := exec.Command("oc", "delete", "-n="+namespace, "-f="+yamlFile)
+	cmd := exec.Command(ocCommand, "delete", "-n="+namespace, "-f="+yamlFile)
 	stdout, err := cmd.Output()
 
 	if err != nil {

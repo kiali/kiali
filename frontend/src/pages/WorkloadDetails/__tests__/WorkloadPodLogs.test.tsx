@@ -1,22 +1,11 @@
 import * as React from 'react';
 import { mount, shallow } from 'enzyme';
 import screenfull, { Screenfull } from 'screenfull';
-import { setPodEnvoyProxyLogLevel } from '../../../services/Api';
 import { WorkloadPodLogs } from '../WorkloadPodLogs';
 import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core';
 
-jest.mock('screenfull');
-jest.mock('../../../services/Api', () => {
-  const originalModule = (jest as any).requireActual('../../../services/Api');
-
-  return {
-    __esModule: true,
-    ...originalModule,
-    setPodEnvoyProxyLogLevel: jest.fn(() => Promise.resolve(undefined))
-  };
-});
-
 const defaultProps = () => ({
+  isKiosk: false,
   lastRefreshAt: 200,
   timeRange: {},
   namespace: 'namespace',
@@ -38,6 +27,8 @@ const defaultProps = () => ({
 
 describe('WorkloadPodLogs', () => {
   beforeEach(() => {
+    jest.mock('screenfull');
+
     (screenfull as Screenfull).onchange = jest.fn();
   });
 
@@ -85,12 +76,15 @@ describe('WorkloadPodLogs', () => {
   });
 
   it('calls set log level when action selected', () => {
+    const api = require('../../../services/Api');
+    const spy = jest.spyOn(api, 'setPodEnvoyProxyLogLevel');
+
     const wrapper = mount(<WorkloadPodLogs {...defaultProps()} />);
     wrapper.setState({ kebabOpen: true });
     wrapper
       .find(DropdownItem)
       .findWhere(n => n.key() === 'setLogLevelDebug')
       .simulate('click');
-    expect(setPodEnvoyProxyLogLevel as jest.Mock).toHaveBeenCalled();
+    expect(spy).toHaveBeenCalled();
   });
 });

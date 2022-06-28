@@ -11,6 +11,7 @@ import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { connect } from 'react-redux';
 import { HistoryManager, URLParam } from '../../app/History';
 import history from '../../app/History';
+import { TooltipPosition } from '@patternfly/react-core';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -21,7 +22,7 @@ type DurationDropdownProps = ReduxProps & {
   id: string;
   disabled?: boolean;
   tooltip?: string;
-  tooltipBottom?: boolean;
+  tooltipPosition?: TooltipPosition;
   nameDropdown?: string;
   suffix?: string;
   prefix?: string;
@@ -40,7 +41,7 @@ export class DurationDropdown extends React.Component<DurationDropdownProps> {
         label={durations[this.props.duration]}
         options={durations}
         tooltip={this.props.tooltip}
-        tooltipBottom={this.props.tooltipBottom}
+        tooltipPosition={this.props.tooltipPosition}
         nameDropdown={this.props.nameDropdown}
       />
     );

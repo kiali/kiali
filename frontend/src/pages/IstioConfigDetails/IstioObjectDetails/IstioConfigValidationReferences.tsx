@@ -1,4 +1,4 @@
-import { Stack, StackItem, Title, TitleLevel, TitleSize } from '@patternfly/react-core';
+import { Stack, StackItem, Title, TitleSizes } from '@patternfly/react-core';
 import { ReferenceIstioObjectLink } from 'components/Link/IstioObjectLink';
 import * as React from 'react';
 import { ObjectReference } from 'types/IstioObjects';
@@ -12,7 +12,7 @@ class IstioConfigValidationReferences extends React.Component<IstioConfigReferen
     return (
       <Stack>
         <StackItem>
-          <Title headingLevel={TitleLevel.h5} size={TitleSize.lg} style={{ paddingBottom: '10px' }}>
+          <Title headingLevel="h5" size={TitleSizes.lg} style={{ paddingBottom: '10px' }}>
             Validation References
           </Title>
         </StackItem>

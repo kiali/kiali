@@ -30,6 +30,9 @@ external_services:
     in_cluster_url: "${GRAFANA_URL}"
     url: "${GRAFANA_URL}"
 
+  istio:
+    url_service_version: "${ISTIOD_URL}"
+
   prometheus:
     url: "${PROMETHEUS_URL}"
 

@@ -154,7 +154,7 @@ export default class SummaryPanelAppBox extends React.Component<SummaryPanelProp
         <div className="panel-heading" style={summaryHeader}>
           {getTitle('Application')}
           <span>
-            <PFBadge badge={PFBadges.Namespace} style={{ marginBottom: '2px' }} />
+            <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
             {nodeData.namespace}
             {actions && (
               <Dropdown

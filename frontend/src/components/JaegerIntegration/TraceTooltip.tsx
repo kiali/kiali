@@ -2,8 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { pluralize } from '@patternfly/react-core';
-import { ChartLabelProps } from '@patternfly/react-charts';
-import { Flyout } from 'victory';
+import { ChartCursorFlyout, ChartLabelProps } from '@patternfly/react-charts';
 import { style } from 'typestyle';
 
 import { KialiAppState } from 'store/Store';
@@ -109,9 +108,8 @@ export class TraceTooltip extends React.Component<HookedTooltipProps<JaegerLineI
           {...this.props}
           flyoutWidth={flyoutWidth}
           flyoutHeight={flyoutHeight}
-          flyoutComponent={<Flyout style={{ stroke: 'none', fillOpacity: 0.6 }} />}
+          flyoutComponent={<ChartCursorFlyout style={{ stroke: 'none', fillOpacity: 0.6 }} />}
           labelComponent={<TraceLabelContainer trace={trace} />}
-          constrainToVisibleArea={true}
         />
       );
     }

@@ -11,6 +11,7 @@ import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import RefreshButtonContainer from './RefreshButton';
 import { GlobalActions } from '../../actions/GlobalActions';
 import { HistoryManager, URLParam } from 'app/History';
+import { TooltipPosition } from '@patternfly/react-core';
 
 type ReduxProps = {
   refreshInterval: IntervalInMilliseconds;
@@ -89,7 +90,7 @@ class Refresh extends React.PureComponent<Props, State> {
             label={REFRESH_INTERVALS[this.props.refreshInterval]}
             options={REFRESH_INTERVALS}
             tooltip={'Refresh interval'}
-            tooltipBottom={true}
+            tooltipPosition={TooltipPosition.left}
           />
           <RefreshButtonContainer handleRefresh={this.handleRefresh} disabled={this.props.disabled} />
         </>

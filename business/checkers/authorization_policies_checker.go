@@ -1,11 +1,15 @@
 package checkers
 
 import (
+	"fmt"
+	"strings"
+
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/business/checkers/authorization"
 	"github.com/kiali/kiali/business/checkers/common"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -17,7 +21,7 @@ type AuthorizationPolicyChecker struct {
 	Namespace             string
 	Namespaces            models.Namespaces
 	ServiceEntries        []networking_v1beta1.ServiceEntry
-	WorkloadList          models.WorkloadList
+	WorkloadsPerNamespace map[string]models.WorkloadList
 	MtlsDetails           kubernetes.MTLSDetails
 	VirtualServices       []networking_v1beta1.VirtualService
 	RegistryServices      []*kubernetes.RegistryService
@@ -52,10 +56,11 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy security_v1beta.Authori
 		matchLabels = authPolicy.Spec.Selector.MatchLabels
 	}
 	enabledCheckers := []Checker{
-		common.SelectorNoWorkloadFoundChecker(AuthorizationPolicyCheckerType, matchLabels, a.WorkloadList),
+		common.SelectorNoWorkloadFoundChecker(AuthorizationPolicyCheckerType, matchLabels, a.WorkloadsPerNamespace[a.Namespace]),
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
 		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, Namespace: a.Namespace, Namespaces: a.Namespaces,
 			ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices, RegistryServices: a.RegistryServices},
+		authorization.PrincipalsChecker{AuthorizationPolicy: authPolicy, ServiceAccounts: a.ServiceAccountNames(strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, "svc.", "", 1))},
 	}
 
 	for _, checker := range enabledCheckers {
@@ -65,4 +70,28 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy security_v1beta.Authori
 	}
 
 	return models.IstioValidations{key: rrValidation}
+}
+
+// ServiceAccountNames returns a list of names of the ServiceAccounts retrieved from Registry Services.
+func (a AuthorizationPolicyChecker) ServiceAccountNames(clusterName string) []string {
+	names := make([]string, 0)
+
+	for _, wpn := range a.WorkloadsPerNamespace {
+		for _, wl := range wpn.Workloads {
+			for _, sAccountName := range wl.ServiceAccountNames {
+				saFullName := fmt.Sprintf("%s/ns/%s/sa/%s", clusterName, wpn.Namespace.Name, sAccountName)
+				found := false
+				for _, name := range names {
+					if name == saFullName {
+						found = true
+						break
+					}
+				}
+				if !found {
+					names = append(names, saFullName)
+				}
+			}
+		}
+	}
+	return names
 }

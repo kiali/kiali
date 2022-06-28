@@ -75,7 +75,12 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
     const { isDropdownOpen } = this.state;
 
     const Toggle = (
-      <DropdownToggle onToggle={this.onDropdownToggle} iconComponent={null} style={{ marginTop: 3 }}>
+      <DropdownToggle
+        toggleIndicator={null}
+        onToggle={this.onDropdownToggle}
+        aria-label="Help"
+        style={{ marginTop: 3, verticalAlign: "-0.1em" }}
+      >
         <QuestionCircleIcon />
       </DropdownToggle>
     );
@@ -116,6 +121,7 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
           <IstioCertsInfoConnected ref={this.certsInformation} />
         )}
         <Dropdown
+          data-test="about-help-button"
           isPlain={true}
           position="right"
           onSelect={this.onDropdownSelect}

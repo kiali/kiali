@@ -16,7 +16,7 @@ const labelContainerStyle = style({
 class Matches extends React.Component<Props> {
   render() {
     const matches: any[] = this.props.matches.map((match, index) => (
-      <span key={match + '-' + index}>
+      <span key={match + '-' + index} data-test={match}>
         <Chip onClick={() => this.props.onRemoveMatch(match)} isOverflowChip={true}>
           {match}
         </Chip>{' '}

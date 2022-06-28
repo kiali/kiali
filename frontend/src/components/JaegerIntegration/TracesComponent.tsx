@@ -227,7 +227,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
         <RenderComponentScroll>
           <Card>
             <CardBody>
-              <Toolbar>
+              <Toolbar style={{ padding: 0 }}>
                 <ToolbarGroup>
                   <ToolbarItem>
                     <TracesDisplayOptions
@@ -266,6 +266,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
             >
               <Tabs
                 id="trace-details"
+                data-test="trace-details-tabs"
                 activeKey={this.state.activeTab}
                 onSelect={(_, idx: any) => this.setState({ activeTab: idx })}
               >
@@ -278,7 +279,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                     otherTraces={this.state.traces}
                   />
                 </Tab>
-                <Tab eventKey={spansDetailsTab} title="Spans Details">
+                <Tab eventKey={spansDetailsTab} title="Span Details">
                   <SpanDetails
                     namespace={this.props.namespace}
                     target={this.props.target}

@@ -17,6 +17,11 @@ type PropsType = {
   toggleSystemErrorsCenter: () => void;
 };
 
+const systemErrorCountStyle = style ({
+  marginRight: "0.3em",
+  paddingTop: "0.1em"
+});
+
 export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
   render() {
     return (
@@ -39,7 +44,7 @@ export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
         onClick={this.props.toggleSystemErrorsCenter}
         variant={ButtonVariant.plain}
       >
-        <KialiIcon.Warning />
+        <KialiIcon.Warning className={systemErrorCountStyle} />
         {this.props.systemErrorsCount}
         {this.props.systemErrorsCount === 1 ? ' Open Issue' : ' Open Issues'}
       </Button>
@@ -52,6 +57,11 @@ export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
       right: '5px',
       top: '2px'
     });
+    const count = style({
+      position: 'relative',
+      top: '2px',
+      verticalAlign: "0.125em"
+    });
 
     return (
       <Button
@@ -62,7 +72,7 @@ export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
       >
         <KialiIcon.Bell className={bell} />
         {this.props.newMessagesCount > 0 && (
-          <Badge className={'pf-badge-bordered' + (this.props.badgeDanger ? ' badge-danger' : '')}>
+          <Badge className={`${count} ${this.props.badgeDanger ? ' badge-danger' : ''}`}>
             {this.props.newMessagesCount > 0 ? this.props.newMessagesCount : ' '}
           </Badge>
         )}

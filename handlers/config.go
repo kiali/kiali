@@ -185,7 +185,17 @@ func getPrometheusConfig() PrometheusConfig {
 
 		flags, err := client.GetFlags()
 		if checkErr(err, "Failed to fetch Prometheus flags") {
-			if retentionString, ok := flags["storage.tsdb.retention.time"]; ok {
+			// Prometheus deprecated the storage.tsdb.retention setting in lieu of storage.tsdb.retention.time.
+			// But the old one still takes effect if the new one is not set.
+			// See: https://prometheus.io/docs/prometheus/latest/storage/#operational-aspects
+			retentionString := ""
+			if flag, ok := flags["storage.tsdb.retention.time"]; ok && flag != "0s" {
+				retentionString = flag
+			} else if flag, ok := flags["storage.tsdb.retention"]; ok {
+				retentionString = flag
+				log.Debugf("Prometheus is using deprecated retention setting: %v", flag)
+			}
+			if retentionString != "" {
 				retention, err := model.ParseDuration(retentionString)
 				if checkErr(err, fmt.Sprintf("Invalid storage.tsdb.retention.time [%s]", retentionString)) {
 					if retention == 0 {
@@ -194,6 +204,8 @@ func getPrometheusConfig() PrometheusConfig {
 						promConfig.StorageTsdbRetention = int64(time.Duration(retention).Seconds())
 					}
 				}
+			} else {
+				log.Warning("Cannot determine Prometheus retention time; ignoring...")
 			}
 		}
 	}

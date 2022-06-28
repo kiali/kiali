@@ -1,0 +1,81 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: service-entry-labels
+  namespace: bookinfo
+spec:
+  endpoints:
+    - address: XXX.us-east-1.elb.amazonaws.com
+      labels:
+        cluster: cluster-1a
+      ports:
+        data: 443
+  hosts:
+    - app-rpc.bookinfo.svc.cluster-1a.global
+  location: MESH_INTERNAL
+  ports:
+    - name: data
+      number: 8765
+      protocol: TCP
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: dest-rule-labels-wrong
+  namespace: bookinfo
+spec:
+  host: app-rpc.bookinfo.svc.cluster-1a.global
+  subsets:
+    - labels:
+        cluster: wrong
+      name: cluster-1a
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      sni: app-rpc.bookinfo
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: app-rpc-icc
+  namespace: bookinfo
+spec:
+  hosts:
+    - app-rpc
+    - app-rpc.bookinfo
+  gateways:
+    - bookinfo/ingress-app
+    - mesh
+  http:
+    - route:
+        - destination:
+            host: app-rpc.bookinfo.svc.cluster-1b.global
+            subset: cluster-1b
+          weight: 0
+        - destination:
+            host: app-rpc.bookinfo.svc.cluster-1a.global
+            subset: cluster-1a
+          weight: 0
+        - destination:
+            host: app-rpc.bookinfo.svc.cluster.local
+          weight: 100
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: ingress-app
+  namespace: bookinfo
+spec:
+  selector:
+    app: istio-ingressgateway
+  servers:
+    - hosts:
+        - bookinfo/app-rpc.bookinfo
+      port:
+        name: grpc
+        number: 443
+        protocol: HTTPS
+      tls:
+        credentialName: istio-icc-app
+        mode: SIMPLE

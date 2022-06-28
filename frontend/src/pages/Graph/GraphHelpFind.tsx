@@ -11,7 +11,7 @@ export interface GraphHelpFindProps {
 }
 
 const tabFont: React.CSSProperties = {
-  fontSize: '14px'
+  fontSize: 'var(--kiali-global--font-size)'
 };
 
 const contentWidth = '540px';
@@ -59,6 +59,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
           onResize={this.onResize}
         />
         <Popover
+          data-test="graph-find-hide-help"
           className={popoverStyle}
           position={PopoverPosition.auto}
           isVisible={true}

@@ -1,20 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`#Badge render correctly with data should render badge 1`] = `
-<span
-  className="label-pair"
+<Label
+  className="fahj8d2"
+  isCompact={true}
 >
-  <Label
-    className="label-key"
-    isCompact={true}
-  >
-    app
-  </Label>
-  <Label
-    className="label-value"
-    isCompact={true}
-  >
-    bookinfo
-  </Label>
-</span>
+  app=bookinfo
+</Label>
 `;

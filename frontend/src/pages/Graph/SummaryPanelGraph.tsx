@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Tab } from '@patternfly/react-core';
+import { Tab, Tooltip } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import _ from 'lodash';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from '../../components/SummaryPanel/RateTable';
@@ -181,9 +181,13 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     const { grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
       this.graphTraffic || this.getGraphTraffic();
 
+    const tooltipInboundRef = React.createRef();
+    const tooltipOutboundRef = React.createRef();
+    const tooltipTotalRef = React.createRef();
+
     return (
-      <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
-        <div className="panel-heading" style={summaryHeader}>
+      <div id="summary-panel-graph" className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
+        <div id="summary-panel-graph-heading" className="panel-heading" style={summaryHeader}>
           {getTitle('Current Graph')}
           {this.renderNamespacesSummary()}
           <br />
@@ -191,7 +195,25 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
         </div>
         <div className={summaryBodyTabs}>
           <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
-            <Tab style={summaryFont} title="Inbound" eventKey={0}>
+            <Tooltip
+              id="tooltip-inbound"
+              content="Traffic entering from traffic sources."
+              entryDelay={1250}
+              reference={tooltipInboundRef}
+            />
+            <Tooltip
+              id="tooltip-outbound"
+              content="Traffic exiting the requested namespaces."
+              entryDelay={1250}
+              reference={tooltipOutboundRef}
+            />
+            <Tooltip
+              id="tooltip-total"
+              content="All inbound, outbound and traffic within the requested namespaces."
+              entryDelay={1250}
+              reference={tooltipTotalRef}
+            />
+            <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
               <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
                   <>
@@ -223,7 +245,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Outbound" eventKey={1}>
+            <Tab style={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
               <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
                   <>
@@ -255,7 +277,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Total" eventKey={2}>
+            <Tab style={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
               <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
                   <>
@@ -364,9 +386,9 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
   private renderNamespace = (ns: string) => {
     return (
-      <React.Fragment key={ns}>
-        <span>
-          <PFBadge badge={PFBadges.Namespace} style={{ marginBottom: '2px' }} />
+      <React.Fragment key={`rf-${ns}`}>
+        <span id={`ns-${ns}`}>
+          <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
           {ns} {this.renderValidations(ns)}
         </span>
         <br />

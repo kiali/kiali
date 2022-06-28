@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
-import { Button, TextInputBase as TextInput } from '@patternfly/react-core';
+import { Button, ButtonVariant, TextInputBase as TextInput } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
-import { isValidRequestHeaderName } from '../../../../helpers/ValidationHelpers';
+import { isValidRequestHeaderName, isValidRequestAuthClaimName } from '../../../../helpers/ValidationHelpers';
 import { style } from 'typestyle';
 import { PFColors } from '../../../../components/Pf/PfColors';
 import { isValidIp } from '../../../../utils/IstioConfigUtils';
+import { isValid } from 'utils/Common';
 
 export type Condition = {
   key: string;
@@ -46,6 +47,7 @@ const noValidKeyStyle = style({
 
 const conditionFixedKeys = [
   'source.ip',
+  'remote.ip',
   'source.namespace',
   'source.principal',
   'request.auth.principal',
@@ -55,6 +57,8 @@ const conditionFixedKeys = [
   'destination.port',
   'connection.sni'
 ];
+
+const conditionIpAddressKeys = ['source.ip', 'remote.ip', 'destination.ip'];
 
 class ConditionBuilder extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -120,6 +124,9 @@ class ConditionBuilder extends React.Component<Props, State> {
     if (key.startsWith('experimental.envoy.filters.')) {
       return true;
     }
+    if (key.startsWith('request.auth.claims[')) {
+      return isValidRequestAuthClaimName(key);
+    }
     return false;
   };
 
@@ -135,7 +142,8 @@ class ConditionBuilder extends React.Component<Props, State> {
     if ((!values || values.length === 0) && (!notValues || notValues.length === 0)) {
       return [true, false, false, 'Values and NotValues cannot be empty'];
     }
-    if (key === 'source.ip' || key === 'destination.ip') {
+
+    if (conditionIpAddressKeys.includes(key)) {
       // If some value is not an IP, then is not valid
       // @ts-ignore
       const valuesValid = values ? !values.some(value => !isValidIp(value)) : true;
@@ -160,7 +168,7 @@ class ConditionBuilder extends React.Component<Props, State> {
               aria-describedby="add new condition key"
               name="addNewConditionKey"
               onChange={this.onAddNewConditionKey}
-              isValid={validKey}
+              validated={isValid(validKey)}
             />
             {!validKey && (
               <div key="hostsHelperText" className={noValidKeyStyle}>
@@ -219,7 +227,7 @@ class ConditionBuilder extends React.Component<Props, State> {
           <TableBody />
         </Table>
         <Button
-          variant="link"
+          variant={ButtonVariant.link}
           icon={<PlusCircleIcon />}
           isDisabled={!validCondition}
           onClick={this.onAddConditionToList}

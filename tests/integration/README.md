@@ -10,7 +10,7 @@
 ## Environment Setup
 
 * System dependencies that will need to be available
-    *  `oc`
+    *  `oc` or `kubectl`
     *  `go`
     *  `make`
     *  `npm`
@@ -70,7 +70,7 @@ $ git clone https://github.com/kiali/kiali.git
 $ kubectl -n istio-system port-forward $(kubectl -n istio-system get pod -l app.kubernetes.io/name=kiali -o name) 20001:20001
 
 # Run all tests using the Kiali port-forward proxy and authenticated as the Kiali service account
-$ make test-integration -e URL="http://localhost:20001/kiali" -e TOKEN="$(kubectl get -n istio-system $(kubectl get secret -n istio-system -o name | grep 'kiali.*-token' | head -n 1) -o jsonpath={.data.token} | base64 -d)"
+$ make test-integration -e CLIENT_EXE="kubectl" -e URL="http://localhost:20001/kiali" -e TOKEN="$(kubectl get -n istio-system $(kubectl get secret -n istio-system -o name | grep 'kiali.*-token' | head -n 1) -o jsonpath={.data.token} | base64 -d)"
 
 # test results are stored in the "tests/integration/junit-rest-report.xml" file
 ```

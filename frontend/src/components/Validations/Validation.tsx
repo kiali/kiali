@@ -5,7 +5,7 @@ import {
   ExclamationTriangleIcon,
   InfoCircleIcon
 } from '@patternfly/react-icons';
-import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
+import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { ValidationTypes } from '../../types/IstioObjects';
 import { Text, TextVariants } from '@patternfly/react-core';
 import './Validation.css';
@@ -26,7 +26,7 @@ export type ValidationDescription = {
 export type ValidationType = {
   name: string;
   color: string;
-  icon: IconType;
+  icon: React.ComponentClass<SVGIconProps>;
 };
 
 const ErrorValidation: ValidationType = {
@@ -79,7 +79,7 @@ class Validation extends React.Component<Props> {
   }
 
   iconStyle() {
-    const iconStyle = this.props.iconStyle || {};
+    const iconStyle = this.props.iconStyle ? { ...this.props.iconStyle } : {};
     const defaultStyle: CSSProperties = {
       verticalAlign: '-0.125em'
     };

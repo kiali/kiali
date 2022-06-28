@@ -3,7 +3,7 @@ import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import Namespace from '../../types/Namespace';
-import { ActionGroup, Button, Form, FormGroup, TextInput } from '@patternfly/react-core';
+import { ActionGroup, Button, ButtonVariant, Form, FormGroup, TextInput } from '@patternfly/react-core';
 import { RenderContent } from '../../components/Nav/Page';
 import { style } from 'typestyle';
 import GatewayForm, { GATEWAY, GATEWAYS, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
@@ -56,6 +56,7 @@ import ServiceEntryForm, {
   ServiceEntryState
 } from './ServiceEntryForm';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
+import { isValid } from 'utils/Common';
 
 export interface IstioConfigNewPageId {
   objectType: string;
@@ -366,7 +367,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
               isRequired={true}
               fieldId="name"
               helperTextInvalid={'A valid ' + this.props.match.params.objectType + ' name is required'}
-              isValid={isNameValid}
+              validated={isValid(isNameValid)}
             >
               <TextInput
                 value={this.state.name}
@@ -376,7 +377,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
                 aria-describedby="name"
                 name="name"
                 onChange={this.onNameChange}
-                isValid={isNameValid}
+                validated={isValid(isNameValid)}
               />
             </FormGroup>
             {this.props.match.params.objectType === AUTHORIZACION_POLICY && (
@@ -407,10 +408,10 @@ class IstioConfigNewPage extends React.Component<Props, State> {
               <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
             )}
             <ActionGroup>
-              <Button variant="primary" isDisabled={!isFormValid} onClick={() => this.showPreview()}>
+              <Button variant={ButtonVariant.primary} isDisabled={!isFormValid} onClick={() => this.showPreview()}>
                 Preview
               </Button>
-              <Button variant="secondary" onClick={() => this.backToList()}>
+              <Button variant={ButtonVariant.secondary} onClick={() => this.backToList()}>
                 Cancel
               </Button>
               {!isNamespacesValid && (

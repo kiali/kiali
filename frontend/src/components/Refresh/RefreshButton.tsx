@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { Button, Tooltip } from '@patternfly/react-core';
+import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import { TimeInMilliseconds } from '../../types/Common';
 import { KialiAppAction } from '../../actions/KialiAppAction';
@@ -34,10 +34,11 @@ class RefreshButton extends React.Component<Props> {
       <Tooltip position="bottom" content={<>Refresh</>}>
         <Button
           id={this.getElementId()}
+          data-test="refresh-button"
           onClick={this.handleRefresh}
           isDisabled={this.getDisabled()}
           aria-label="Action"
-          variant="primary"
+          variant={ButtonVariant.primary}
         >
           <SyncAltIcon />
         </Button>

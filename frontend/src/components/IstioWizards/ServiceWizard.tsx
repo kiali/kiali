@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Expandable, Modal, Tab, Tabs } from '@patternfly/react-core';
+import { Button, ButtonVariant, ExpandableSection, Modal, ModalVariant, Tab, Tabs } from '@patternfly/react-core';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { Response } from '../../services/Api';
@@ -538,19 +538,30 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           ? 'Update ' + WIZARD_TITLES[this.props.type]
           : 'Create ' + WIZARD_TITLES[this.props.type]
         : '';
+    const titleModal =
+      this.props.type.length > 0
+        ? this.props.update
+          ? 'Update ' + WIZARD_TITLES[this.props.type]
+          : 'Create ' + WIZARD_TITLES[this.props.type]
+        : '';
     return (
       <>
         <Modal
-          isSmall={true}
+          variant={ModalVariant.small}
           title={titleAction}
           isOpen={this.state.confirmationModal}
           onClose={() => this.onClose(false)}
           actions={[
-            <Button key="cancel" variant="secondary" onClick={() => this.onClose(false)}>
-              Cancel
-            </Button>,
-            <Button key="confirm" variant={'primary'} onClick={this.onCreateUpdate}>
+            <Button
+              key="confirm"
+              variant={ButtonVariant.primary}
+              onClick={this.onCreateUpdate}
+              data-test={'confirm-' + (this.props.update ? 'update' : 'create')}
+            >
               {this.props.update ? 'Update' : 'Create'}
+            </Button>,
+            <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
+              Cancel
             </Button>
           ]}
         >
@@ -561,13 +572,8 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         </Modal>
         <Modal
           width={'75%'}
-          title={
-            this.props.type.length > 0
-              ? this.props.update
-                ? 'Update ' + WIZARD_TITLES[this.props.type]
-                : 'Create ' + WIZARD_TITLES[this.props.type]
-              : ''
-          }
+          title={titleModal}
+          aria-label={titleModal}
           isOpen={this.state.showWizard}
           onClose={() => this.onClose(false)}
           onKeyPress={e => {
@@ -576,11 +582,17 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             }
           }}
           actions={[
-            <Button key="cancel" variant="secondary" onClick={() => this.onClose(false)}>
-              Cancel
-            </Button>,
-            <Button isDisabled={!this.isValid(this.state)} key="confirm" variant="primary" onClick={this.onPreview}>
+            <Button
+              isDisabled={!this.isValid(this.state)}
+              key="confirm"
+              variant={ButtonVariant.primary}
+              onClick={this.onPreview}
+              data-test="preview"
+            >
               Preview
+            </Button>,
+            <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
+              Cancel
             </Button>
           ]}
         >
@@ -642,10 +654,11 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             this.props.type === WIZARD_TRAFFIC_SHIFTING ||
             this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING ||
             this.props.type === WIZARD_REQUEST_TIMEOUTS) && (
-            <Expandable
+            <ExpandableSection
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}
               toggleText={(this.state.showAdvanced ? 'Hide' : 'Show') + ' Advanced Options'}
+              contentId={(this.state.showAdvanced ? 'hide' : 'show') + '_advanced_options'}
               onToggle={() => {
                 this.setState({
                   showAdvanced: !this.state.showAdvanced
@@ -662,7 +675,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
                     />
                   </div>
                 </Tab>
-                <Tab eventKey={1} title={'Gateways'}>
+                <Tab eventKey={1} title={'Gateways'} data-test={'Gateways'}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
                     <GatewaySelector
                       serviceName={this.props.serviceName}
@@ -709,7 +722,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
                   </Tab>
                 )}
               </Tabs>
-            </Expandable>
+            </ExpandableSection>
           )}
         </Modal>
       </>

@@ -26,3 +26,14 @@ export function groupBy<T>(items: T[], key: keyof T): { [key: string]: T[] } {
     {} as { [key: string]: T[] }
   );
 }
+
+export type validationType = 'success' | 'warning' | 'error' | 'default';
+export const isValid = (isValid?: boolean, isWarning?: boolean): validationType => {
+  if (isValid === undefined) {
+    return 'default';
+  }
+  if (isValid) {
+    return 'success';
+  }
+  return isWarning ? 'warning' : 'error';
+};

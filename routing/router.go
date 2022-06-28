@@ -18,26 +18,30 @@ import (
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
+func ensureEndsWithSlash(url string) string {
+	if !strings.HasSuffix(url, "/") {
+		url += "/"
+	}
+	return url
+}
+
 // NewRouter creates the router with all API routes and the static files handler
 func NewRouter() *mux.Router {
 
 	conf := config.Get()
-	webRoot := conf.Server.WebRoot
-	webRootWithSlash := webRoot + "/"
-
 	rootRouter := mux.NewRouter().StrictSlash(false)
 	appRouter := rootRouter
 
 	staticFileServer := http.FileServer(http.Dir(conf.Server.StaticContentRootDirectory))
 
-	if webRoot != "/" {
+	if conf.Server.WebRoot != "/" {
 		// help the user out - if a request comes in for "/", redirect to our true webroot
 		rootRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, webRootWithSlash, http.StatusFound)
+			http.Redirect(w, r, ensureEndsWithSlash(conf.Server.WebRoot), http.StatusFound)
 		})
 
 		appRouter = rootRouter.PathPrefix(conf.Server.WebRoot).Subrouter()
-		staticFileServer = http.StripPrefix(webRootWithSlash, staticFileServer)
+		staticFileServer = http.StripPrefix(ensureEndsWithSlash(conf.Server.WebRoot), staticFileServer)
 
 		// Because of OIDC, when we receive a request for the webroot without
 		// the trailing slash, we can not redirect the user to the correct
@@ -45,12 +49,10 @@ func NewRouter() *mux.Router {
 		// server).
 		//
 		// See https://github.com/kiali/kiali/issues/3103
-		rootRouter.HandleFunc(webRoot, func(w http.ResponseWriter, r *http.Request) {
-			r.URL.Path = webRootWithSlash
+		rootRouter.HandleFunc(conf.Server.WebRoot, func(w http.ResponseWriter, r *http.Request) {
+			r.URL.Path = ensureEndsWithSlash(conf.Server.WebRoot)
 			rootRouter.ServeHTTP(w, r)
 		})
-	} else {
-		webRootWithSlash = "/"
 	}
 
 	fileServerHandler := func(w http.ResponseWriter, r *http.Request) {
@@ -59,9 +61,9 @@ func NewRouter() *mux.Router {
 			urlPath = r.URL.Path
 		}
 
-		if urlPath == webRootWithSlash || urlPath == webRoot || urlPath == webRootWithSlash+"index.html" {
+		if urlPath == ensureEndsWithSlash(conf.Server.WebRoot) || urlPath == conf.Server.WebRoot || urlPath == ensureEndsWithSlash(conf.Server.WebRoot)+"index.html" {
 			serveIndexFile(w)
-		} else if urlPath == webRootWithSlash+"env.js" {
+		} else if urlPath == ensureEndsWithSlash(conf.Server.WebRoot)+"env.js" {
 			serveEnvJsFile(w)
 		} else {
 			staticFileServer.ServeHTTP(w, r)
@@ -102,11 +104,11 @@ func NewRouter() *mux.Router {
 	if authController := authentication.GetAuthController(); authController != nil {
 		if ac, ok := authController.(*authentication.OpenIdAuthController); ok {
 			authCallback := ac.GetAuthCallbackHandler(http.HandlerFunc(fileServerHandler))
-			rootRouter.Methods("GET").Path(webRootWithSlash).Handler(authCallback)
+			rootRouter.Methods("GET").Path(ensureEndsWithSlash(conf.Server.WebRoot)).Handler(authCallback)
 		}
 	}
 
-	rootRouter.PathPrefix(webRootWithSlash).HandlerFunc(fileServerHandler)
+	rootRouter.PathPrefix(ensureEndsWithSlash(conf.Server.WebRoot)).HandlerFunc(fileServerHandler)
 
 	return rootRouter
 }

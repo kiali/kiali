@@ -35,6 +35,10 @@ while [[ $# -gt 0 ]]; do
       HELM_CHARTS_REPO="$2"
       shift;shift
       ;;
+    -jxf|--junit-xml-file)
+      JUNIT_XML_FILE="$2"
+      shift;shift
+      ;;
     -ksh|--kiali-src-home)
       KIALI_SRC_HOME="$2"
       shift;shift
@@ -97,6 +101,7 @@ $0 [option...] command
 -d|--debug               True if you want the molecule tests to output large amounts of debug messages. (default: true)
 -dorp|--docker-or-podman What should be used - "docker" or "podman"
 -hcr|--helm-charts-repo  Location of the helm charts git repo. (default: ../helm-charts)
+-jxf|--junit-xml-file    Location of the JUnit XML results file; set to "" to not output this file. (default: results.xml in the --test-logs-dir)
 -ksh|--kiali_src-home    Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
 -kn|--kind-name          If cluster type is 'kind' you can specify the cluster name that is in use via this option.
 -me|--minikube-exe       If cluster type is 'minikube' you can specify the minikube executable that should be used.
@@ -201,6 +206,9 @@ TEST_LOGS_DIR="${TEST_LOGS_DIR:-/tmp/kiali-molecule-test-logs.$(date +'%Y-%m-%d_
 # If you want color in the output, set this to 'true'.
 COLOR=${COLOR:-true}
 
+# If -jxf is explicitly specified as empty string, leave it as empty string (it means the user doesn't want to dump the xml file)
+JUNIT_XML_FILE="${JUNIT_XML_FILE-${TEST_LOGS_DIR}/results.xml}"
+
 if [ "${MOLECULE_USE_DEV_IMAGES}" == "true" -a "${MOLECULE_USE_DEFAULT_SERVER_IMAGE}" == "true" ]; then
   echo "You set --use-dev-images to true, but you also set --use-default-server-image to true. These are mutually exclusive."
   echo "If you want to test the default server image then you cannot tell the tests to use dev images at the same time."
@@ -222,6 +230,7 @@ echo MOLECULE_KIALI_CR_SPEC_VERSION="${MOLECULE_KIALI_CR_SPEC_VERSION}"
 echo MOLECULE_OPERATOR_INSTALLER="$MOLECULE_OPERATOR_INSTALLER"
 echo MOLECULE_OPERATOR_PROFILER_ENABLED="$MOLECULE_OPERATOR_PROFILER_ENABLED"
 echo TEST_LOGS_DIR="$TEST_LOGS_DIR"
+echo JUNIT_XML_FILE="$JUNIT_XML_FILE"
 echo TEST_CLIENT_EXE="$TEST_CLIENT_EXE"
 echo COLOR="$COLOR"
 echo MINIKUBE_EXE="$MINIKUBE_EXE"
@@ -308,6 +317,33 @@ unprepare_test() {
   esac
 }
 
+output_junit_xml_results() {
+  junit_total_tests="${#junit_name[@]}"
+
+  if [ ! -f "${JUNIT_XML_FILE}" ] && touch "${JUNIT_XML_FILE}"; then
+    cat <<EOM >> "${JUNIT_XML_FILE}"
+<testsuites  id="0" name="kiali molecule tests" tests="${junit_total_tests}" failures="${junit_total_failures}" time="${junit_total_time}">
+  <testsuite id="0" name="kiali molecule tests" tests="${junit_total_tests}" failures="${junit_total_failures}" time="${junit_total_time}">
+EOM
+
+    for i in ${!junit_name[@]};
+    do
+      echo -n "    <testcase id=\"${junit_name[$i]}\" name=\"${junit_name[$i]}\" classname=\"${junit_name[$i]}\" time=\"${junit_duration[$i]}\">" >> "${JUNIT_XML_FILE}"
+      if [ "${junit_failure[$i]}" != "0" ]; then
+        printf "\n      <failure type=\"error\" message=\"For details, see ${TEST_LOGS_DIR}/${junit_name[$i]}.log\"/>\n    " >> "${JUNIT_XML_FILE}"
+      fi
+      echo  "</testcase>" >> "${JUNIT_XML_FILE}"
+    done
+
+    cat <<EOM >> "${JUNIT_XML_FILE}"
+  </testsuite>
+</testsuites>
+EOM
+  else
+    echo "!!! Failed to create JUnit XML Results file - make sure the filename is valid and it does not exist: ${JUNIT_XML_FILE}"
+  fi
+}
+
 # Prepare some environment variables needed by the makefile
 
 # tell make what client to use if we were explicitly given one
@@ -353,8 +389,17 @@ else
   echo "Skipping helm - will use the operator that is already installed"
 fi
 
-# Run the tests
+# initialize some array and counter variables for the optional junit xml results file
+junit_name=()
+junit_duration=()
+junit_failure=()
+junit_total_time=0
+junit_total_failures=0
+
 EXIT_CODE=0
+
+# Run the tests
+
 echo
 echo "====================="
 echo "=== TEST RESULTS: ==="
@@ -407,10 +452,25 @@ do
     fi
   fi
 
+  # populate data for junit xml results file
+  junit_name+=("${t}")
+  junit_duration+=("${endtime}")
+  ((junit_total_time=junit_total_time+${endtime}))
+  if [ "${exitcode}" == "0" ]; then
+    junit_failure+=("0")
+  else
+    junit_failure+=("1")
+    ((junit_total_failures=junit_total_failures+1))
+  fi
 done
 
 echo
 echo
+
+if [ -n "${JUNIT_XML_FILE}" ]; then
+  output_junit_xml_results
+fi
+
 echo "Test logs can be found at: ${TEST_LOGS_DIR}"
 echo
 

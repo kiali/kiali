@@ -1,24 +1,22 @@
 FROM registry.access.redhat.com/ubi8-minimal
 
-LABEL maintainer="kiali-dev@googlegroups.com"
+ENV CAI_HOME=/opt/kiali \
+    PATH=$CAI_HOME:$PATH
 
-ENV KIALI_HOME=/opt/kiali \
-    PATH=$KIALI_HOME:$PATH
-
-WORKDIR $KIALI_HOME
+WORKDIR $CAI_HOME
 
 RUN microdnf install -y shadow-utils && \
     microdnf clean all && \
     rm -rf /var/cache/yum && \
-    adduser --uid 1000 kiali
+    adduser --uid 1000 cai
 
-COPY kiali $KIALI_HOME/
+COPY kiali $CAI_HOME/
 
-ADD console $KIALI_HOME/console/
+ADD console $CAI_HOME/console/
 
-RUN chown -R kiali:kiali $KIALI_HOME/console && \
-    chmod -R g=u $KIALI_HOME/console
+RUN chown -R cai:cai $CAI_HOME/console && \
+    chmod -R g=u $CAI_HOME/console
 
 USER 1000
 
-ENTRYPOINT ["/opt/kiali/kiali"]
+ENTRYPOINT ["${CAI_HOME}/kiali"]

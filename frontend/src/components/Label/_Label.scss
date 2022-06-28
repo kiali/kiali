@@ -1,0 +1,8 @@
+/*
+PF4 adds a wrapper for the label content
+And the label color is override by .pf-c-label__content
+And there are not styles with the color white
+*/
+.whiteColorLabelContent > .pf-c-label__content {
+  color: #FFF;
+}

@@ -2,6 +2,8 @@ import React from 'react';
 import { style } from 'typestyle';
 import { PFColors } from '../../Pf/PfColors';
 import BreadcrumbView from '../../BreadcrumbView/BreadcrumbView';
+import {KialiAppState} from "../../../store/Store";
+import {connect} from "react-redux";
 
 const containerPadding = style({ padding: '0 20px 28px 20px' });
 const containerWhite = style({ backgroundColor: PFColors.White });
@@ -22,10 +24,12 @@ const actionsToolbarStyle = style({
   float: 'right',
   backgroundColor: '#fff',
   padding: '0px 20px 22px 5px',
-  marginTop: '-18px'
+  marginTop: '-19px',
+  borderBottom: '1px solid #d2d2d2'
 });
 
 interface RenderHeaderProps {
+  isKiosk: boolean;
   location?: {
     pathname: string;
     search: string;
@@ -36,7 +40,9 @@ interface RenderHeaderProps {
 
 export class RenderHeader extends React.Component<RenderHeaderProps> {
   render() {
-    return (
+    // RenderHeader is used only in the detail pages
+    // On kiosk mode, it should be hidden
+    return this.props.isKiosk ? (null) : (
       <>
         <div className={`${containerPadding} ${containerWhite}`}>
           {this.props.location && (
@@ -56,3 +62,10 @@ export class RenderHeader extends React.Component<RenderHeaderProps> {
     );
   }
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  isKiosk: state.globalState.isKiosk,
+});
+
+const RenderHeaderContainer = connect(mapStateToProps)(RenderHeader);
+export default RenderHeaderContainer;

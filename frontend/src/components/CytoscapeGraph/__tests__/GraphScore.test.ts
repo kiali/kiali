@@ -6,7 +6,8 @@ import {
   DecoratedGraphNodeWrapper,
   DecoratedGraphEdgeWrapper
 } from '../../../types/Graph';
-import { KialiIcon } from 'config/KialiIcon';
+import { WarningTriangleIcon } from '@patternfly/react-icons';
+
 import { ScoringCriteria, scoreNodes } from '../GraphScore';
 
 const findById = (id: string) => (node: DecoratedGraphNodeWrapper) => node.data.id === id;
@@ -33,7 +34,7 @@ describe('scoreNodes', () => {
           name: 'any',
           color: 'any',
           priority: 1,
-          icon: KialiIcon['warning'],
+          icon: WarningTriangleIcon,
           class: 'any'
         }),
         getStatusConfig: () => undefined,

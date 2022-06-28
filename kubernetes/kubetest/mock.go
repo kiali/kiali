@@ -7,7 +7,6 @@ import (
 	istio_fake "istio.io/client-go/pkg/clientset/versioned/fake"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
-	batch_apps_v1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -64,7 +63,7 @@ func (o *K8SClientMock) MockEmptyWorkloads(namespace interface{}) {
 	o.On("GetStatefulSets", namespace).Return([]apps_v1.StatefulSet{}, nil)
 	o.On("GetDaemonSets", namespace).Return([]apps_v1.DaemonSet{}, nil)
 	o.On("GetJobs", namespace).Return([]batch_v1.Job{}, nil)
-	o.On("GetCronJobs", namespace).Return([]batch_apps_v1.CronJob{}, nil)
+	o.On("GetCronJobs", namespace).Return([]batch_v1.CronJob{}, nil)
 }
 
 // MockEmptyWorkload setup the current mock to return an empty workload for every type of workloads (deployment, dc, rs, jobs, etc.)
@@ -81,7 +80,7 @@ func (o *K8SClientMock) MockEmptyWorkload(namespace interface{}, workload interf
 	o.On("GetReplicaSets", namespace).Return([]apps_v1.ReplicaSet{}, nil)
 	o.On("GetReplicationControllers", namespace).Return([]core_v1.ReplicationController{}, nil)
 	o.On("GetJobs", namespace).Return([]batch_v1.Job{}, nil)
-	o.On("GetCronJobs", namespace).Return([]batch_apps_v1.CronJob{}, nil)
+	o.On("GetCronJobs", namespace).Return([]batch_v1.CronJob{}, nil)
 }
 
 func (o *K8SClientMock) IsOpenShift() bool {

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from '../../types/Health';
 import OverviewStatus from './OverviewStatus';
-import { OverviewType } from './OverviewToolbar';
+import { OverviewType, DirectionType } from './OverviewToolbar';
 import { NamespaceStatus } from './NamespaceInfo';
 import { switchType } from './OverviewHelper';
 import { Paths } from '../../config';
@@ -14,6 +14,7 @@ type Props = {
   type: OverviewType;
   duration: DurationInSeconds;
   status: NamespaceStatus;
+  direction: DirectionType
   metrics?: Metric[];
   errorMetrics?: Metric[];
 };
@@ -26,7 +27,8 @@ class OverviewCardContentExpanded extends React.Component<Props> {
         <div
           style={{
             width: '100%',
-            height: 90,
+            height: 100,
+            paddingTop: 10,
             verticalAlign: 'top'
           }}
         >
@@ -34,6 +36,7 @@ class OverviewCardContentExpanded extends React.Component<Props> {
             metrics={this.props.metrics}
             errorMetrics={this.props.errorMetrics}
             duration={this.props.duration}
+            direction={this.props.direction}
           />
         </div>
       </>
@@ -72,7 +75,7 @@ class OverviewCardContentExpanded extends React.Component<Props> {
         <div style={{ textAlign: 'left' }}>
           <span>
             {mainLink}
-            <div style={{ display: 'inline-block' }}>
+            <div style={{ display: 'inline-block' }} data-test="overview-app-health">
               {status.inNotReady.length > 0 && (
                 <OverviewStatus
                   id={name + '-not-ready'}

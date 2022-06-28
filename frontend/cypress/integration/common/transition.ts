@@ -1,5 +1,4 @@
-import { And } from 'cypress-cucumber-preprocessor/steps';
-
-And('Kiali is done loading', () => {
+export function ensureKialiFinishedLoading() {
   cy.get('#loading_kiali_spinner').should('not.exist');
-});
+  cy.getBySel('loading-screen').should('not.exist');
+}

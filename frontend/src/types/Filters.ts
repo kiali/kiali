@@ -13,19 +13,16 @@ enum NonInputTypes {
   nsLabel = 'nsLabel'
 }
 
-export const FilterTypes = {
+export const AllFilterTypes = {
   ...TextInputTypes,
   ...NonInputTypes
 };
 
-type FilterTypes = NonInputTypes | TextInputTypes;
-
 // FilterType maps a Patternfly property. Modify with care.
 export interface FilterType {
-  id: string;
-  title: string;
+  category: string; // unique filter category name, should be suitable for display or URL query parameter
   placeholder: string;
-  filterType: FilterTypes;
+  filterType: NonInputTypes | TextInputTypes;
   action: string;
   filterValues: FilterValue[];
   loader?: () => Promise<FilterValue[]>;
@@ -39,8 +36,7 @@ export const FILTER_ACTION_APPEND = 'append';
 export const FILTER_ACTION_UPDATE = 'update';
 
 export interface ActiveFilter {
-  id: string;
-  title: string;
+  category: string;
   value: string;
 }
 

@@ -1,8 +1,11 @@
 name: Build Backend
 
 on:
-  workflow_call
-
+  workflow_call:
+    inputs:
+      build_branch:
+        required: true
+        type: string
 jobs:
   build_backend:
     name: Build and unit test backend
@@ -10,11 +13,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.build_branch }}
 
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.17.7
+          go-version: 1.17.10
 
       - name: Cache Go deps
         uses: actions/cache@v3
@@ -26,17 +31,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Swagger Install
-        run: make swagger-install
-
       - name: Lint Install
         run: make lint-install
 
       - name: Verify code linting
         run: make lint
-
-      - name: Verify swagger file
-        run: make swagger-ci
 
       - name: Build
         run: make -e GO_BUILD_FLAGS=${{ env.GO_BUILD_FLAGS }} -e CGO_ENABLED=${{ env.CGO_ENABLED }} clean-all build

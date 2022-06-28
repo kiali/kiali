@@ -1,15 +1,16 @@
 import * as React from 'react';
-import { Select, SelectOption, Text, TextVariants, Tooltip } from '@patternfly/react-core';
+import { Select, SelectOption, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
 
 const widthAuto = style({
   width: 'auto'
 });
 
-const spacingRight = style({
+const dropdownTitle = style({
+  fontSize: 'var(--pf-global--FontSize--md)',  // valueOf --pf-c-select__toggle--FontSize
+  // @ts-ignore
+  fontWeight: 'var(--pf-global--FontSize--normal)', // valueOf --pf-c-select__toggle--FontWeigt
   marginRight: '10px',
-  marginTop: '10px',
-  display: 'inline'
 });
 
 type ToolbarDropdownProps = {
@@ -21,7 +22,7 @@ type ToolbarDropdownProps = {
   nameDropdown?: string;
   options: object;
   tooltip?: string;
-  tooltipBottom?: boolean;
+  tooltipPosition?: TooltipPosition;
   value?: number | string;
   useName?: boolean;
   classNameSelect?: string;
@@ -34,7 +35,7 @@ type ToolbarDropdownProps = {
 type ToolbarDropdownState = {
   currentValue?: number | string;
   currentName?: string;
-  isExpanded: boolean;
+  isOpen: boolean;
 };
 
 export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, ToolbarDropdownState> {
@@ -43,7 +44,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
     this.state = {
       currentValue: props.value || props.initialValue,
       currentName: props.label || props.initialLabel,
-      isExpanded: false
+      isOpen: false
     };
   }
 
@@ -53,16 +54,16 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
       const nameOrKey = this.props.useName ? this.props.options[selection] : selection;
       this.props.handleSelect(nameOrKey);
     }
-    this.setState({ isExpanded: false });
+    this.setState({ isOpen: false });
   };
 
-  onToggle = (isExpanded: boolean) => {
-    this.setState({ isExpanded });
-    this.props.onToggle && this.props.onToggle(isExpanded);
+  onToggle = (isOpen: boolean) => {
+    this.setState({ isOpen: isOpen });
+    this.props.onToggle && this.props.onToggle(isOpen);
   };
 
   render() {
-    const { isExpanded, currentName, currentValue } = this.state;
+    const { isOpen, currentName, currentValue } = this.state;
     const dropdownButton = (
       <Select
         onSelect={this.onKeyChanged}
@@ -73,14 +74,15 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
         data-test={this.props.id}
         toggleId={this.props.id + '-toggle'}
         onToggle={this.onToggle}
-        isExpanded={isExpanded}
-        ariaLabelledBy={this.props.id}
+        isOpen={isOpen}
+        aria-labelledby={this.props.id}
         isDisabled={this.props.disabled}
         className={this.props.classNameSelect ? `${this.props.classNameSelect} ${widthAuto}` : widthAuto}
       >
         {Object.keys(this.props.options).map(key => {
           return (
             <SelectOption
+              id={key}
               key={key}
               isDisabled={this.props.disabled}
               isSelected={key === String(this.props.value || this.state.currentValue)}
@@ -94,16 +96,12 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
     );
     return (
       <>
-        {this.props.nameDropdown && (
-          <Text component={TextVariants.h5} className={spacingRight}>
-            {this.props.nameDropdown}
-          </Text>
-        )}
+        {this.props.nameDropdown && <span className={dropdownTitle}>{this.props.nameDropdown}</span>}
         {this.props.tooltip ? (
           <Tooltip
             key={'ot-' + this.props.id}
             entryDelay={1000}
-            position={this.props.tooltipBottom ? 'bottom' : 'top'}
+            position={this.props.tooltipPosition ? this.props.tooltipPosition : TooltipPosition.auto}
             content={<>{this.props.tooltip}</>}
           >
             {dropdownButton}

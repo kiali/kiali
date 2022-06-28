@@ -1,4 +1,4 @@
-= Kiali image:https://img.shields.io/twitter/url/http/shields.io.svg?style=social["Tweet about Kiali", link="https://twitter.com/intent/tweet?text=Learn%20what%20your%20Istio-Mesh%20is%20doing.%20Visit%20https://www.kiali.io/%20and%20@kiali_project"]
+= Kiali image:https://img.shields.io/twitter/url/http/shields.io.svg?style=social["Tweet about Kiali", link="https://twitter.com/intent/tweet?text=Learn%20what%20your%20Istio-Mesh%20is%20doing.%20Visit%20https://www.kiali.io/%20and%20@kialiProject"]
 :toc: macro
 :toc-title:
 
@@ -264,9 +264,11 @@ make -e YARN_START_URL=http://<kiali-url> yarn-start
 # Start the cypress tests. The tests will run against the frontend development server by default.
 # Otherwise you can pass a custom url with env vars:
 #
-# make -e CYPRESS_BASE_URL=http://<kiali-url> cypress
-make cypress
+# make -e CYPRESS_BASE_URL=http://<kiali-url> cypress-gui
+make cypress-gui
 ----
+
+Note that `make cypress-gui` runs the Cypress GUI that allows you to pick which individual tests to run. To run the entire test suite in headless mode, use the make target `cypress-run` instead.
 
 ==== Debugging With VisualStudio Code
 
@@ -305,14 +307,15 @@ Many configuration settings can optionally be set within the Kiali Operator cust
 
 If you want to embed Kiali in other applications, Kiali offers a simple feature called _Kiosk mode_. In this mode, Kiali won't show the main header, nor the main navigation bar.
 
-To enable Kiosk mode, you only need to add a `kiosk=true` URL parameter. You will need to use the full path of the page you want to embed. For example, assuming that you access Kiali through HTTPS:
+To enable Kiosk mode, you only need to add a `kiosk=<platform_id>` URL parameter. You will need to use the full path of the page you want to embed. For example, assuming that you access Kiali through HTTPS:
 
-* To embed the _Overview_ page, use `https://_kiali_path_/overview?kiosk=true`.
-* To embed the _Graph_ page, use `https://_kiali_path_/graph/namespaces?kiosk=true`.
-* To embed the _Applications list_ page, use `https://_kiali_path_/applications?kiosk=true`.
+* To embed the _Overview_ page, use `https://_kiali_path_/overview?kiosk=console`.
+* To embed the _Graph_ page, use `https://_kiali_path_/graph/namespaces?kiosk=console`.
+* To embed the _Applications list_ page, use `https://_kiali_path_/applications?kiosk=console`.
 
-If the page you want to embed uses other URL arguments, you can specify any of them to preset options. For example, if you want to embed the graph of the _bookinfo_ namespace, use the following URL: `http://_kiali_path_/graph/namespaces?namespaces=bookinfo&kiosk=true`.
+If the page you want to embed uses other URL arguments, you can specify any of them to preset options. For example, if you want to embed the graph of the _bookinfo_ namespace, use the following URL: `http://_kiali_path_/graph/namespaces?namespaces=bookinfo&kiosk=console`.
 
+`<platform_id>` value in the `kiosk` URL parameter will be used in future use cases to add conditional logic on embedded use cases, for now, any non empty value will enable the kiosk mode.
 
 == Configure External Services
 
@@ -423,11 +426,12 @@ The "Central IstioD" setup is currently named "Primary-remote" multi-cluster set
 [WARNING]
 When this support was incorporated into Kiali, the "Central IstioD" setup of Istio was in an early development phase. These instructions are probably now broken.
 
-There are certain use cases where Kiali needs to be deployed in one cluster (Control Plane) and observe a different cluster (Data Plane). link:https://user-images.githubusercontent.com/6889074/87819080-ad099980-c839-11ea-834b-56eec038ce4d.png[Diagram].
+There are certain use cases where Kiali needs to be deployed in one cluster (Control Plane) and observe a different cluster (Data Plane).
+image:https://user-images.githubusercontent.com/6889074/87819080-ad099980-c839-11ea-834b-56eec038ce4d.png[Diagram]
 
 Follow these steps:
 
-1: You should have the link:https://github.com/istio/istio/wiki/Central-Istiod-single-cluster-steps[remote central istiod with a single cluster] setup running
+1: You should have the link:https://istio.io/latest/docs/setup/install/external-controlplane[Istio with an External Control Plane] setup running
 
 2: Create the link:https://github.com/istio/istio/blob/master/samples/addons/kiali.yaml[Kiali ClusterRole, ClusterRoleBinding, and ServiceAccount] in the Data Plane cluster
 
@@ -455,11 +459,6 @@ spec:
           secretName: istio-remote-secret-kiali
 ----
 
-5: Kiali now needs the Istio metrics from the sidecars. You need to run Prometheus in the Control Plane and have it scrape the metrics from an link:https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/#MeshConfig:[envoyMetricsService]. These metrics are *required*:
-
-  - istio_requests_total
-  - istio_request_duration_milliseconds
-  - istio_response_bytes
-  - istio_request_bytes
+5: Kiali now needs the Istio metrics from the sidecars. You need to run Prometheus in the Control Plane and have it scrape the metrics from an link:https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/#ProxyConfig[envoyMetricsService]. These link:https://kiali.io/docs/faq/general/#which-istio-metrics-and-attributes-are-required-by-kiali[metrics] are *required*.
 
 6: Kiali in the Control Plane should now be fully functional with the Data Plane

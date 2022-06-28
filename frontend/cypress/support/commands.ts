@@ -68,8 +68,8 @@ Cypress.Commands.add('login', (provider: string, username: string, password: str
         }
 
         if (auth_strategy === 'openshift') {
-          cy.get('#inputUsername').type(username);
-          cy.get('#inputPassword').type(password);
+          cy.get('#inputUsername').clear().type(username);
+          cy.get('#inputPassword').clear().type(password);
           cy.get('button[type="submit"]').click();
           cy.wait('@authorized').its('response.statusCode').should('eq', 200);
           cy.getCookie('kiali-token-aes', { timeout: 15000 })
@@ -77,6 +77,10 @@ Cypress.Commands.add('login', (provider: string, username: string, password: str
             .then(() => {
               haveCookie = true;
             });
+          // Wait for the redirect to the overview page after a successful login.
+          // Otherwise the redirect can mess with page loading on subsequent tests.
+          cy.contains('loading', {matchCase: false}).should('not.exist')
+          cy.url().should('include', '/overview');
         }
       } else {
         cy.log('got an auth cookie, skipping login');

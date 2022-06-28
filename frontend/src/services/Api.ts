@@ -90,7 +90,7 @@ export const extendSession = () => {
 };
 
 export const login = async (
-  request: LoginRequest = { username: ANONYMOUS_USER, password: 'anonymous', token: '' }
+  request: LoginRequest
 ): Promise<Response<LoginSession>> => {
   const params = new URLSearchParams();
   params.append('token', request.token);
@@ -376,22 +376,22 @@ export const getNodeGraphElements = (node: NodeParamsType, params: any) => {
     case NodeType.AGGREGATE:
       return !node.service
         ? newRequest<GraphDefinition>(
-            HTTP_VERBS.GET,
-            urls.aggregateGraphElements(node.namespace.name, node.aggregate!, node.aggregateValue!),
-            params,
-            {}
-          )
+          HTTP_VERBS.GET,
+          urls.aggregateGraphElements(node.namespace.name, node.aggregate!, node.aggregateValue!),
+          params,
+          {}
+        )
         : newRequest<GraphDefinition>(
-            HTTP_VERBS.GET,
-            urls.aggregateByServiceGraphElements(
-              node.namespace.name,
-              node.aggregate!,
-              node.aggregateValue!,
-              node.service
-            ),
-            params,
-            {}
-          );
+          HTTP_VERBS.GET,
+          urls.aggregateByServiceGraphElements(
+            node.namespace.name,
+            node.aggregate!,
+            node.aggregateValue!,
+            node.service
+          ),
+          params,
+          {}
+        );
     case NodeType.APP:
     case NodeType.BOX: // we only support app box node graphs, so treat like app
       return newRequest<GraphDefinition>(

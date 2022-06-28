@@ -1,0 +1,10 @@
+diff a/frontend/src/store/ConfigStore.ts b/frontend/src/store/ConfigStore.ts	(rejected hunks)
+@@ -1,7 +1,7 @@
+ import { createStore, applyMiddleware, compose } from 'redux';
+ import { KialiAppState } from './Store';
+ import { persistStore, persistReducer } from 'redux-persist';
+-import { persistFilter } from 'redux-persist-transform-filter';
++import { persistFilter } from 'utils/PersistFilter';
+ import { createTransform } from 'redux-persist';
+
+ import rootReducer from '../reducers';

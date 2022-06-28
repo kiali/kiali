@@ -47,7 +47,7 @@ const tlsStatus: ResourceType<NamespaceInfo> = {
   name: 'TLS',
   param: 'tls',
   column: 'TLS',
-  transforms: [sortable, cellWidth(5)],
+  transforms: [sortable, cellWidth(10)],
   renderer: Renderers.tls
 };
 
@@ -55,7 +55,7 @@ const istioConfiguration: ResourceType<NamespaceInfo> = {
   name: 'IstioConfiguration',
   param: 'ic',
   column: 'Config',
-  transforms: [sortable, cellWidth(5)],
+  transforms: [sortable, cellWidth(10)],
   renderer: Renderers.istioConfig
 };
 
@@ -81,7 +81,7 @@ const item: ResourceType<TResource> = {
   name: 'Item',
   param: 'wn',
   column: 'Name',
-  transforms: [sortable],
+  transforms: [sortable, cellWidth(30)],
   renderer: Renderers.item
 };
 
@@ -89,7 +89,7 @@ const serviceItem: ResourceType<ServiceListItem> = {
   name: 'Item',
   param: 'sn',
   column: 'Name',
-  transforms: [sortable],
+  transforms: [sortable, cellWidth(30)],
   renderer: Renderers.item
 };
 
@@ -105,7 +105,7 @@ const namespace: ResourceType<TResource> = {
   name: 'Namespace',
   param: 'ns',
   column: 'Namespace',
-  transforms: [sortable],
+  transforms: [sortable, cellWidth(20)],
   renderer: Renderers.namespace
 };
 
@@ -121,7 +121,7 @@ const health: ResourceType<TResource> = {
   name: 'Health',
   param: 'he',
   column: 'Health',
-  transforms: [sortable, cellWidth(10)],
+  transforms: [sortable, cellWidth(15)],
   renderer: Renderers.health
 };
 
@@ -129,7 +129,7 @@ const details: ResourceType<AppListItem | WorkloadListItem | ServiceListItem> = 
   name: 'Details',
   param: 'is',
   column: 'Details',
-  transforms: [sortable, cellWidth(10)],
+  transforms: [sortable, cellWidth(15)],
   renderer: Renderers.details
 };
 
@@ -137,7 +137,7 @@ const serviceConfiguration: ResourceType<ServiceListItem> = {
   name: 'Configuration',
   param: 'cv',
   column: 'Configuration',
-  transforms: [sortable, cellWidth(10)],
+  transforms: [sortable, cellWidth(20)],
   renderer: Renderers.serviceConfiguration
 };
 
@@ -145,7 +145,7 @@ const istioObjectConfiguration: ResourceType<IstioConfigItem> = {
   name: 'Configuration',
   param: 'cv',
   column: 'Configuration',
-  transforms: [sortable, cellWidth(10)],
+  transforms: [sortable, cellWidth(20)],
   renderer: Renderers.istioConfiguration
 };
 

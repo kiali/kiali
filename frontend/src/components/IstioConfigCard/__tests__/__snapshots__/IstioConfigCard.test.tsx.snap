@@ -5,25 +5,25 @@ exports[`IstioConfigCard shows empty state when no items 1`] = `
   id="IstioConfigCard"
   isCompact={true}
 >
-  <CardHead>
+  <CardHeader>
     <CardActions />
-    <CardHeader>
-      <Title
-        headingLevel="h5"
-        size="lg"
-        style={
-          Object {
-            "float": "left",
-          }
+    <CardTitle
+      style={
+        Object {
+          "float": "left",
         }
-      >
-        Istio Config
-      </Title>
-    </CardHeader>
-  </CardHead>
+      }
+    >
+      Istio Config
+    </CardTitle>
+  </CardHeader>
   <CardBody>
-    <Component
+    <Table
       aria-label="list_istio_config"
+      borders={true}
+      canCollapseAll={true}
+      canSelectAll={true}
+      canSortFavorites={true}
       cells={
         Array [
           Object {
@@ -38,6 +38,19 @@ exports[`IstioConfigCard shows empty state when no items 1`] = `
         ]
       }
       className="table"
+      collapseAllAriaLabel=""
+      contentId="expanded-content"
+      dropdownDirection="down"
+      dropdownPosition="right"
+      expandId="expandable-toggle"
+      gridBreakPoint="grid-md"
+      isHeaderSelectDisabled={false}
+      isNested={false}
+      isStickyHeader={false}
+      isTreeTable={false}
+      ouiaSafe={true}
+      role="grid"
+      rowLabeledBy="simple-node"
       rows={
         Array [
           Object {
@@ -52,6 +65,7 @@ exports[`IstioConfigCard shows empty state when no items 1`] = `
                 >
                   <EmptyStateBody
                     className="fvhz1n5"
+                    data-test="istio-config-empty"
                   >
                     No Istio Config found for 
                     reviews
@@ -62,11 +76,12 @@ exports[`IstioConfigCard shows empty state when no items 1`] = `
           },
         ]
       }
+      selectVariant="checkbox"
       variant="compact"
     >
       <TableHeader />
       <TableBody />
-    </Component>
+    </Table>
   </CardBody>
 </Card>
 `;
@@ -76,25 +91,25 @@ exports[`IstioConfigCard sort by type and name 1`] = `
   id="IstioConfigCard"
   isCompact={true}
 >
-  <CardHead>
+  <CardHeader>
     <CardActions />
-    <CardHeader>
-      <Title
-        headingLevel="h5"
-        size="lg"
-        style={
-          Object {
-            "float": "left",
-          }
+    <CardTitle
+      style={
+        Object {
+          "float": "left",
         }
-      >
-        Istio Config
-      </Title>
-    </CardHeader>
-  </CardHead>
+      }
+    >
+      Istio Config
+    </CardTitle>
+  </CardHeader>
   <CardBody>
-    <Component
+    <Table
       aria-label="list_istio_config"
+      borders={true}
+      canCollapseAll={true}
+      canSelectAll={true}
+      canSortFavorites={true}
       cells={
         Array [
           Object {
@@ -109,6 +124,19 @@ exports[`IstioConfigCard sort by type and name 1`] = `
         ]
       }
       className="table"
+      collapseAllAriaLabel=""
+      contentId="expanded-content"
+      dropdownDirection="down"
+      dropdownPosition="right"
+      expandId="expandable-toggle"
+      gridBreakPoint="grid-md"
+      isHeaderSelectDisabled={false}
+      isNested={false}
+      isStickyHeader={false}
+      isTreeTable={false}
+      ouiaSafe={true}
+      role="grid"
+      rowLabeledBy="simple-node"
       rows={
         Array [
           Object {
@@ -428,11 +456,12 @@ exports[`IstioConfigCard sort by type and name 1`] = `
           },
         ]
       }
+      selectVariant="checkbox"
       variant="compact"
     >
       <TableHeader />
       <TableBody />
-    </Component>
+    </Table>
   </CardBody>
 </Card>
 `;

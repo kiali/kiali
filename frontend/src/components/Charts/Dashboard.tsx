@@ -9,6 +9,7 @@ import { Overlay } from 'types/Overlay';
 import KChart from './KChart';
 import { LineInfo, RawOrBucket } from 'types/VictoryChartInfo';
 import { BrushHandlers } from './Container';
+import { isArray } from 'lodash';
 
 export type Props<T extends LineInfo> = {
   colors?: string[];
@@ -74,11 +75,14 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
   };
 
   private renderChart(chart: ChartModel) {
-    const colors = this.props.colors || getTheme(ChartThemeColor.multi, ChartThemeVariant.default).chart.colorScale;
+    let colorScale = this.props.colors || getTheme(ChartThemeColor.multi, ChartThemeVariant.default).chart!.colorScale!;
+    if (!isArray(colorScale)) {
+      colorScale = [colorScale];
+    }
     const dataSupplier = getDataSupplier(
       chart,
       { values: this.props.labelValues, prettifier: this.props.labelPrettifier },
-      colors
+      colorScale as string[]
     );
     let onClick: ((datum: RawOrBucket<T>) => void) | undefined = undefined;
     if (this.props.onClick) {

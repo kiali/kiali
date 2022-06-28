@@ -8,7 +8,9 @@ import {
   Grid,
   GridItem,
   Modal,
+  ModalVariant,
   Title,
+  TitleSizes,
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
@@ -107,7 +109,7 @@ class IstioCertsInfo extends React.Component<IstioCertsInfoProps, IstioCertsInfo
   render() {
     return (
       <Modal
-        isSmall={true}
+        variant={ModalVariant.small}
         isOpen={this.state.showModal}
         onClose={this.close}
         title="Certificates information"
@@ -123,7 +125,7 @@ class IstioCertsInfo extends React.Component<IstioCertsInfoProps, IstioCertsInfo
               <li key={index}>
                 <Card>
                   <CardHeader>
-                    <Title headingLevel="h3" size="lg">
+                    <Title headingLevel="h3" size={TitleSizes.lg}>
                       From {certInfo.secretName} secret
                     </Title>
                   </CardHeader>

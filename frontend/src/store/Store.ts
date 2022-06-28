@@ -33,6 +33,8 @@ import { CertsInfo } from 'types/CertsInfo';
 export interface GlobalState {
   readonly loadingCounter: number;
   readonly isPageVisible: boolean;
+  readonly isKiosk: boolean;
+  readonly kiosk: string;
   lastRefreshAt: TimeInMilliseconds;
 }
 

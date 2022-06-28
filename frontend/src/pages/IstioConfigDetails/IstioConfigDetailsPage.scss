@@ -8,7 +8,7 @@
   position: relative;
   min-height: 200px;
   border: 1px solid #8b8d8f;
-  font-size: 14px !important;
+  font-size: var(--kiali-global--font-size) !important;
 }
 
 .istio-validation-error {
@@ -29,7 +29,7 @@
 div.ace_gutter-cell.ace_info {
   background-image: none;
   &::before {
-    content: '\E026';
+    content: '\E92b';
     font-family: 'pficon';
     left: 5px;
     position: absolute;

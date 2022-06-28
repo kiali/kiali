@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Tabs, Tab } from '@patternfly/react-core';
+import { Button, Tabs, Tab, ButtonVariant } from '@patternfly/react-core';
 import MatchBuilder from './MatchBuilder';
 import Matches from './Matches';
 import { style } from 'typestyle';
@@ -82,13 +82,13 @@ class RuleBuilder extends React.Component<Props, State> {
     return (
       <>
         <Tabs isFilled={true} activeKey={this.state.ruleTabKey} onSelect={this.ruleHandleTabClick}>
-          <Tab eventKey={0} title={'Request Matching'}>
+          <Tab eventKey={0} title={'Request Matching'} data-test={'Request Matching'}>
             <div style={{ marginTop: '20px' }}>
               <MatchBuilder {...this.props} />
               <Matches {...this.props} />
             </div>
           </Tab>
-          <Tab eventKey={1} title={'Route To'}>
+          <Tab eventKey={1} title={'Route To'} data-test={'Route To'}>
             <div
               style={{
                 marginBottom: '10px'
@@ -103,7 +103,7 @@ class RuleBuilder extends React.Component<Props, State> {
               />
             </div>
           </Tab>
-          <Tab eventKey={2} title={'Fault Injection'}>
+          <Tab eventKey={2} title={'Fault Injection'} data-test={'Fault Injection'}>
             <div style={{ marginTop: '10px' }}>
               <FaultInjection
                 initFaultInjectionRoute={this.props.faultInjectionRoute}
@@ -111,7 +111,7 @@ class RuleBuilder extends React.Component<Props, State> {
               />
             </div>
           </Tab>
-          <Tab eventKey={3} title={'Request Timeouts'}>
+          <Tab eventKey={3} title={'Request Timeouts'} data-test={'Request Timeouts'}>
             <div style={{ marginTop: '10px' }}>
               <RequestTimeouts
                 initTimeoutRetry={this.props.timeoutRetryRoute}
@@ -123,7 +123,12 @@ class RuleBuilder extends React.Component<Props, State> {
         <div className={addRuleStyle}>
           <span>
             {this.props.validationMsg.length > 0 && <div className={validationStyle}>{this.props.validationMsg}</div>}
-            <Button variant="secondary" isDisabled={!this.props.isValid} onClick={this.props.onAddRule}>
+            <Button
+              variant={ButtonVariant.secondary}
+              isDisabled={!this.props.isValid}
+              onClick={this.props.onAddRule}
+              data-test="add-route"
+            >
               Add Route Rule
             </Button>
           </span>

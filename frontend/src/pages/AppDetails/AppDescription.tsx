@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { App } from '../../types/App';
-import { Card, CardBody, CardHeader, Title, TooltipPosition } from '@patternfly/react-core';
+import { Card, CardBody, CardHeader, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
 import DetailDescription from '../../components/Details/DetailDescription';
 import { serverConfig } from '../../config';
 import Labels from '../../components/Label/Labels';
@@ -33,9 +33,9 @@ class AppDescription extends React.Component<AppDescriptionProps> {
       appLabels[serverConfig.istioLabels.appLabelName] = this.props.app.name;
     }
     return this.props.app ? (
-      <Card id={'AppDescriptionCard'}>
+      <Card id={'AppDescriptionCard'} data-test="app-description-card">
         <CardHeader>
-          <Title headingLevel="h5" size="lg">
+          <Title headingLevel="h5" size={TitleSizes.lg}>
             <div key="service-icon" className={iconStyle}>
               <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
             </div>

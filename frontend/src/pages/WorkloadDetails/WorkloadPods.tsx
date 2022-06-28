@@ -9,6 +9,7 @@ import {
   EmptyStateBody,
   EmptyStateVariant,
   Title,
+  TitleSizes,
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
@@ -136,7 +137,7 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
               title: (
                 <span>
                   <div key="service-icon" className={iconStyle}>
-                    <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
+                    <PFBadge badge={PFBadges.Pod} size="sm" position={TooltipPosition.top} />
                   </div>
                   {pod.name}
                   <Tooltip
@@ -167,7 +168,7 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
     return (
       <Card isCompact={true} id={'WorkloadPodsCard'}>
         <CardHeader>
-          <Title headingLevel="h5" size="lg">
+          <Title headingLevel="h5" size={TitleSizes.lg}>
             Pods
           </Title>
         </CardHeader>

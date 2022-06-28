@@ -1,3 +1,4 @@
+import { camelCase } from 'lodash';
 import history, { URLParam, HistoryManager } from '../../app/History';
 import { config } from '../../config';
 import {
@@ -24,10 +25,9 @@ export const getFiltersFromURL = (filterTypes: FilterType[]): ActiveFiltersInfo 
   const urlParams = new URLSearchParams(history.location.search);
   const activeFilters: ActiveFilter[] = [];
   filterTypes.forEach(filter => {
-    urlParams.getAll(filter.id).forEach(value => {
+    urlParams.getAll(camelCase(filter.category)).forEach(value => {
       activeFilters.push({
-        id: filter.id,
-        title: filter.title,
+        category: filter.category,
         value: value
       });
     });
@@ -42,19 +42,19 @@ export const getFiltersFromURL = (filterTypes: FilterType[]): ActiveFiltersInfo 
 export const setFiltersToURL = (filterTypes: FilterType[], filters: ActiveFiltersInfo): ActiveFiltersInfo => {
   const urlParams = new URLSearchParams(history.location.search);
   filterTypes.forEach(type => {
-    urlParams.delete(type.id);
+    urlParams.delete(camelCase(type.category));
   });
   // Remove manually the special Filter opLabel
   urlParams.delete('opLabel');
   const cleanFilters: ActiveFilter[] = [];
 
   filters.filters.forEach(activeFilter => {
-    const filterType = filterTypes.find(filter => filter.id === activeFilter.id);
+    const filterType = filterTypes.find(filter => filter.category === activeFilter.category);
     if (!filterType) {
       return;
     }
     cleanFilters.push(activeFilter);
-    urlParams.append(filterType.id, activeFilter.value);
+    urlParams.append(camelCase(filterType.category), activeFilter.value);
   });
   urlParams.append(ID_LABEL_OPERATION, filters.op);
   // Resetting pagination when filters change
@@ -66,17 +66,17 @@ export const filtersMatchURL = (filterTypes: FilterType[], filters: ActiveFilter
   // This can probably be improved and/or simplified?
   const fromFilters: Map<string, string[]> = new Map<string, string[]>();
   filters.filters.forEach(activeFilter => {
-    const existingValue = fromFilters.get(activeFilter.id) || [];
-    fromFilters.set(activeFilter.id, existingValue.concat(activeFilter.value));
+    const existingValue = fromFilters.get(activeFilter.category) || [];
+    fromFilters.set(activeFilter.category, existingValue.concat(activeFilter.value));
   });
 
   const fromURL: Map<string, string[]> = new Map<string, string[]>();
   const urlParams = new URLSearchParams(history.location.search);
   filterTypes.forEach(filter => {
-    const values = urlParams.getAll(filter.id);
+    const values = urlParams.getAll(camelCase(filter.category));
     if (values.length > 0) {
-      const existing = fromURL.get(filter.id) || [];
-      fromURL.set(filter.id, existing.concat(values));
+      const existing = fromURL.get(camelCase(filter.category)) || [];
+      fromURL.set(filter.category, existing.concat(values));
     }
   });
 
@@ -133,7 +133,7 @@ export const runFilters = <T>(items: T[], filters: RunnableFilter<T>[], active: 
 };
 
 const runOneFilter = <T>(items: T[], filter: RunnableFilter<T>, active: ActiveFiltersInfo) => {
-  const relatedActive = { filters: active.filters.filter(af => af.id === filter.id), op: active.op };
+  const relatedActive = { filters: active.filters.filter(af => af.category === filter.category), op: active.op };
   if (relatedActive.filters.length) {
     return items.filter(item => filter.run(item, relatedActive));
   }

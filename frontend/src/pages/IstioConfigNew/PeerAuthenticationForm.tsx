@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { Button, FormGroup, FormSelect, FormSelectOption, Switch } from '@patternfly/react-core';
+import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption, Switch } from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { style } from 'typestyle';
 import { PFColors } from '../../components/Pf/PfColors';
 import { PlusCircleIcon } from '@patternfly/react-icons';
+import { isValid } from 'utils/Common';
 
 const noPortMtlsStyle = style({
   marginTop: 15,
@@ -259,7 +260,9 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
                 aria-describedby="add port number"
                 name="addPortNumber"
                 onChange={this.onAddPortNumber}
-                isValid={this.state.addNewPortMtls.port.length > 0 && !isNaN(Number(this.state.addNewPortMtls.port))}
+                validated={isValid(
+                  this.state.addNewPortMtls.port.length > 0 && !isNaN(Number(this.state.addNewPortMtls.port))
+                )}
               />
             </>,
             <>
@@ -277,7 +280,7 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
             <>
               <Button
                 id="addServerBtn"
-                variant="link"
+                variant={ButtonVariant.link}
                 icon={<PlusCircleIcon />}
                 isDisabled={
                   this.state.addNewPortMtls.port.length === 0 || isNaN(Number(this.state.addNewPortMtls.port))
@@ -308,7 +311,7 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
             label="Labels"
             helperText="One or more labels to select a workload where the PeerAuthentication is applied."
             helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
-            isValid={this.state.workloadSelectorValid}
+            validated={isValid(this.state.workloadSelectorValid)}
           >
             <TextInput
               id="gwHosts"
@@ -316,7 +319,7 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
               isDisabled={!this.state.addWorkloadSelector}
               value={this.state.workloadSelector}
               onChange={this.addWorkloadLabels}
-              isValid={this.state.workloadSelectorValid}
+              validated={isValid(this.state.workloadSelectorValid)}
             />
           </FormGroup>
         )}

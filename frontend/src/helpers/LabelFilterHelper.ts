@@ -21,7 +21,7 @@ const orLabelOperation = (labels: { [key: string]: string }, filters: string[]):
   }
   // Check key and value
   keyValues.map(filter => {
-    const [key, value] = filter.split(':');
+    const [key, value] = filter.split('=');
     // Check if multiple values
     value.split(',').map(v => {
       if (key in labels && !filterOkForLabel) {
@@ -62,7 +62,7 @@ const andLabelOperation = (labels: { [key: string]: string }, filters: string[])
   // If label presence is validated we continue checking with key,value
   if (filterOkForLabel) {
     keyValues.map(filter => {
-      const [key, value] = filter.split(':');
+      const [key, value] = filter.split('=');
       if (key in labels && filterOkForLabel) {
         // We need to check if some value of filter match
         value.split(',').map(val => {
@@ -94,11 +94,7 @@ export const filterByLabel = (items: itemsType[], filter: string[], op: string =
 const getKeyAndValues = (filters: string[]): { keys: string[]; keyValues: string[] } => {
   // keys => List of filters with only Label Presence
   // keyValues => List of filters with Label and value
-  /*
-    TS Error but this works...
-  */
-  // const [keys, keyValues] = filters.reduce(([p, f], e) => (!e.includes(':') ? [[...p, e], f] : [p, [...f, e]]), [[], []]);
-  const keys = filters.filter(f => !f.includes(':'));
-  const keyValues = filters.filter(f => f.includes(':'));
+  const keys = filters.filter(f => !f.includes('='));
+  const keyValues = filters.filter(f => f.includes('='));
   return { keys, keyValues };
 };

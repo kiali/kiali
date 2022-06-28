@@ -26,7 +26,9 @@ const contextMenu = style({
 });
 
 const contextMenuHeader = style({
-  marginBottom: '2px'
+  fontSize: 'var(--graph-side-panel--font-size)',
+  marginBottom: '3px',
+  textAlign: 'left'
 });
 
 const contextMenuSubTitle = style({
@@ -122,15 +124,13 @@ export class NodeContextMenu extends React.PureComponent<Props> {
     const header: React.ReactFragment = (
       <>
         {title}
-        <div className={contextMenuHeader}>
-          {(!isBox || isBox === BoxByType.APP) && (
-            <>
-              <PFBadge badge={PFBadges.Namespace} />
-              {this.props.namespace}
-            </>
-          )}
-          {renderBadgedName(this.props)}
-        </div>
+        {(!isBox || isBox === BoxByType.APP) && (
+          <div className={contextMenuHeader}>
+            <PFBadge badge={PFBadges.Namespace} size="sm" />
+            {this.props.namespace}
+          </div>
+        )}
+        {renderBadgedName(this.props)}
       </>
     );
 

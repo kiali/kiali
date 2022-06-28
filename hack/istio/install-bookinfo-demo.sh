@@ -197,6 +197,8 @@ if [ "${DELETE_BOOKINFO}" == "true" ]; then
     fi
     $CLIENT_EXE delete scc bookinfo-scc
     $CLIENT_EXE delete project ${NAMESPACE}
+    # oc delete project does not wait for a namespace to be removed, we need to also call 'oc delete namespace'
+    $CLIENT_EXE delete namespace ${NAMESPACE}
   else
     $CLIENT_EXE delete namespace ${NAMESPACE}
   fi

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Tab } from '@patternfly/react-core';
+import { Tab, Tooltip } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from '../../components/SummaryPanel/RateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
@@ -174,6 +174,10 @@ export default class SummaryPanelNamespaceBox extends React.Component<
     const { grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
       this.boxTraffic || this.getBoxTraffic();
 
+    const tooltipInboundRef = React.createRef();
+    const tooltipOutboundRef = React.createRef();
+    const tooltipTotalRef = React.createRef();
+
     return (
       <div className="panel panel-default" style={SummaryPanelNamespaceBox.panelStyle}>
         <div className="panel-heading" style={summaryHeader}>
@@ -184,7 +188,25 @@ export default class SummaryPanelNamespaceBox extends React.Component<
         </div>
         <div className={summaryBodyTabs}>
           <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
-            <Tab style={summaryFont} title="Inbound" eventKey={0}>
+            <Tooltip
+              id="tooltip-inbound"
+              content="Traffic entering from another namespace."
+              entryDelay={1250}
+              reference={tooltipInboundRef}
+            />
+            <Tooltip
+              id="tooltip-outbound"
+              content="Traffic exiting to another namespace."
+              entryDelay={1250}
+              reference={tooltipOutboundRef}
+            />
+            <Tooltip
+              id="tooltip-total"
+              content="All inbound, outbound and internal namespace traffic."
+              entryDelay={1250}
+              reference={tooltipTotalRef}
+            />
+            <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
               <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
                   <>
@@ -216,7 +238,7 @@ export default class SummaryPanelNamespaceBox extends React.Component<
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Outbound" eventKey={1}>
+            <Tab style={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
               <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
                   <>
@@ -248,7 +270,7 @@ export default class SummaryPanelNamespaceBox extends React.Component<
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Total" eventKey={2}>
+            <Tab style={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
               <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
                   <>
@@ -340,7 +362,7 @@ export default class SummaryPanelNamespaceBox extends React.Component<
     return (
       <React.Fragment key={ns}>
         <span>
-          <PFBadge badge={PFBadges.Namespace} style={{ marginBottom: '2px' }} />
+          <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '2px' }} />
           {ns}{' '}
           {!!validation && (
             <ValidationSummaryLink
@@ -422,7 +444,7 @@ export default class SummaryPanelNamespaceBox extends React.Component<
 
     // When there is any traffic for the protocol, show both inbound and outbound charts. It's a little
     // confusing because for the tabs inbound is limited to just traffic entering the namespace, and outbound
-    // is limited to just traffic exitingt the namespace.  But in the charts inbound ad outbound also
+    // is limited to just traffic exiting the namespace.  But in the charts inbound ad outbound also
     // includes traffic within the namespace.
     const { grpcTotal, httpTotal, isGrpcRequests, tcpTotal } = this.boxTraffic!;
 

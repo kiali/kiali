@@ -94,11 +94,11 @@ export const defaultFilter = (value: EnvoySummary, filterMethods: FilterMethodMa
   // Group filters by id
   const groupedFilters: ActiveFilter[][] = activeFilters.filters.reduce(
     (groupedFilters: ActiveFilter[][], filter: ActiveFilter): ActiveFilter[][] => {
-      let filterGroup = groupedFilters[filter.id];
+      let filterGroup = groupedFilters[filter.category];
       if (!filterGroup) {
         filterGroup = [];
       }
-      groupedFilters[filter.id] = filterGroup.concat(filter);
+      groupedFilters[filter.category] = filterGroup.concat(filter);
       return groupedFilters;
     },
     []
@@ -110,7 +110,7 @@ export const defaultFilter = (value: EnvoySummary, filterMethods: FilterMethodMa
     return (
       prevMatch &&
       groupedFilters[filterId].some((filter: ActiveFilter) => {
-        return filterMethods[filter.id](value, filter);
+        return filterMethods[filter.category](value, filter);
       })
     );
   }, true);

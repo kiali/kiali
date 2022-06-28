@@ -29,7 +29,7 @@ export class ServiceLink extends React.Component<Props> {
     return (
       <>
         <PFBadge badge={PFBadges.Service} position={TooltipPosition.top} />
-        <Link to={getServiceURL(name, namespace, query)}>
+        <Link to={getServiceURL(name, namespace, query)} data-test={'service-' + namespace + '-' + name}>
           {namespace}/{name}
         </Link>
       </>

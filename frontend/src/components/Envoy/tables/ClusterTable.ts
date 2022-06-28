@@ -1,7 +1,7 @@
 import { SummaryTable, SummaryTableRenderer } from './BaseTable';
 import { ICell, ISortBy, sortable, SortByDirection } from '@patternfly/react-table';
 import { ClusterSummary } from '../../../types/IstioObjects';
-import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, FilterTypes } from '../../../types/Filters';
+import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
 import Namespace from '../../../types/Namespace';
 import { defaultFilter, istioConfigLink, serviceLink } from '../../../helpers/EnvoyHelpers';
@@ -24,34 +24,30 @@ export class ClusterTable implements SummaryTable {
   availableFilters = (): FilterType[] => {
     return [
       {
-        id: 'fqdn',
-        title: 'FQDN',
+        category: 'FQDN',
         placeholder: 'FQDN',
-        filterType: FilterTypes.text,
+        filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        id: 'port',
-        title: 'Port',
+        category: 'Port',
         placeholder: 'Port',
-        filterType: FilterTypes.text,
+        filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        id: 'subset',
-        title: 'Subset',
+        category: 'Subset',
         placeholder: 'Subset',
-        filterType: FilterTypes.text,
+        filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        id: 'direction',
-        title: 'Direction',
+        category: 'Direction',
         placeholder: 'Direction',
-        filterType: FilterTypes.select,
+        filterType: AllFilterTypes.select,
         action: FILTER_ACTION_APPEND,
         filterValues: [
           { id: 'inbound', title: 'inbound' },
@@ -63,18 +59,18 @@ export class ClusterTable implements SummaryTable {
 
   filterMethods = (): { [filter_id: string]: (ClusterSummary, ActiveFilter) => boolean } => {
     return {
-      fqdn: (entry: ClusterSummary, filter: ActiveFilter): boolean => {
+      "FQDN": (entry: ClusterSummary, filter: ActiveFilter): boolean => {
         return [entry.service_fqdn.service, entry.service_fqdn.namespace, entry.service_fqdn.cluster]
           .join('.')
           .includes(filter.value);
       },
-      port: (entry: ClusterSummary, filter: ActiveFilter): boolean => {
+      "Port": (entry: ClusterSummary, filter: ActiveFilter): boolean => {
         return entry.port.toString().includes(filter.value);
       },
-      subset: (entry: ClusterSummary, filter: ActiveFilter): boolean => {
+      "Subset": (entry: ClusterSummary, filter: ActiveFilter): boolean => {
         return entry.subset.toString().includes(filter.value);
       },
-      direction: (entry: ClusterSummary, filter: ActiveFilter): boolean => {
+      "Direction": (entry: ClusterSummary, filter: ActiveFilter): boolean => {
         return entry.direction.toString().includes(filter.value);
       }
     };

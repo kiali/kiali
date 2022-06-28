@@ -44,7 +44,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
     const valueType = typeof value;
     if (valueType === 'string' || valueType === 'number' || valueType === 'boolean') {
       return (
-        <div className="label-collection">
+        <div>
           {isLabel ? (
             this.label(name, value)
           ) : (

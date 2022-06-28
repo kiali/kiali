@@ -1,12 +1,11 @@
-import { ActiveFiltersInfo, FILTER_ACTION_APPEND, FilterTypes, RunnableFilter, FilterValue } from '../../types/Filters';
+import { ActiveFiltersInfo, FILTER_ACTION_APPEND, AllFilterTypes, RunnableFilter, FilterValue } from '../../types/Filters';
 import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from '../../types/Health';
 import { NamespaceInfo } from './NamespaceInfo';
 import { MTLSStatuses } from '../../types/TLSStatus';
 import { TextInputTypes } from '@patternfly/react-core';
 
 export const nameFilter: RunnableFilter<NamespaceInfo> = {
-  id: 'namespace_search',
-  title: 'Namespace',
+  category: 'Namespace',
   placeholder: 'Filter by Namespace',
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
@@ -29,10 +28,9 @@ const statusMap = new Map<string, string>([
 ]);
 
 export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
-  id: 'mtls',
-  title: 'mTLS status',
-  placeholder: 'Filter by mTLS status',
-  filterType: FilterTypes.select,
+  category: 'mTLS',
+  placeholder: 'Filter by mTLS',
+  filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: mtlsValues,
   run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {
@@ -41,16 +39,15 @@ export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
 };
 
 export const labelFilter: RunnableFilter<NamespaceInfo> = {
-  id: 'nsLabel',
-  title: 'Namespace Label',
+  category: 'Namespace Label',
   placeholder: 'Filter by Namespace Label',
-  filterType: FilterTypes.nsLabel,
+  filterType: AllFilterTypes.nsLabel,
   action: FILTER_ACTION_APPEND,
   filterValues: [],
   run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {
     return filters.filters.some(f => {
-      if (f.value.includes(':')) {
-        const [k, v] = f.value.split(':');
+      if (f.value.includes('=')) {
+        const [k, v] = f.value.split('=');
         return v.split(',').some(val => !!ns.labels && k in ns.labels && ns.labels[k].startsWith(val));
       } else {
         return !!ns.labels && Object.keys(ns.labels).some(label => label.startsWith(f.value));
@@ -107,10 +104,9 @@ const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo) => {
 };
 
 export const healthFilter: RunnableFilter<NamespaceInfo> = {
-  id: 'health',
-  title: 'Health',
+  category: 'Health',
   placeholder: 'Filter by Application Health',
-  filterType: FilterTypes.select,
+  filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: healthValues,
   run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {

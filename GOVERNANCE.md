@@ -21,7 +21,7 @@ Current list of maintainers (alphabetically ordered):
 * [jmazzitelli](https://github.com/jmazzitelli)
 * [leandroberetta](https://github.com/leandroberetta)
 * [nrfox](https://github.com/nrfox)
-* [xeviknal](https://github.com/xeviknal)
+* [xunzhuo](https://github.com/xunzhuo)
 
 ### Becoming a Maintainer
 
@@ -105,7 +105,6 @@ Thus, they are able to guide and mentor other Maintainers, give direction, and s
 
 Current list of leaders (alphabetically ordered):
 
-* [abonas](https://github.com/abonas)
 * [jshaughn](https://github.com/jshaughn)
 * [lucasponce](https://github.com/lucasponce)
 
@@ -143,6 +142,25 @@ Involuntary removal or demotion is handled through a vote by simple majority of 
 If and when contributors commitment levels change, contributors can consider stepping down (moving down the contributor ladder) vs moving to emeritus status (completely stepping away from the project).
 
 Contact the Maintainers about changing to Emeritus status, or reducing your contributor level.
+
+### Emeritus contributors
+
+* [abonas](https://github.com/abonas)
+* [beaumorley](https://github.com/beaumorley)
+* [burmanm](https://github.com/burmanm)
+* [cfcosta](https://github.com/cfcosta)
+* [gbaufake](https://github.com/gbaufake)
+* [josejulio](https://github.com/josejulio)
+* [jotak](https://github.com/jotak)
+* [jpkrohling](https://github.com/jpkrohling)
+* [kevinearls](https://github.com/kevinearls)
+* [lwrigh](https://github.com/lwrigh)
+* [maltron](https://github.com/maltron)
+* [mtho11](https://github.com/mtho11)
+* [mwringe](https://github.com/mwringe)
+* [pavolloffay](https://github.com/pavolloffay)
+* [serenamarie125](https://github.com/serenamarie125)
+* [xeviknal](https://github.com/xeviknal)
 
 ## Voting
 

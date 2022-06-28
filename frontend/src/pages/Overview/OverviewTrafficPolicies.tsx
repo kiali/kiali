@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Modal } from '@patternfly/react-core';
+import { Button, ButtonVariant, Modal, ModalVariant } from '@patternfly/react-core';
 import NamespaceInfo from './NamespaceInfo';
 import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
 import { MessageType } from 'types/MessageCenter';
@@ -36,8 +36,6 @@ type State = {
   canaryVersion: string;
   loaded: boolean;
 };
-
-type colorButton = 'primary' | 'secondary' | 'tertiary' | 'danger' | 'link' | 'plain' | 'control';
 
 export default class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoliciesProps, State> {
   private promises = new PromisesRegistry();
@@ -267,7 +265,9 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
       this.props.opTarget.length > 0
         ? this.props.opTarget.charAt(0).toLocaleUpperCase() + this.props.opTarget.slice(1)
         : '';
-    const colorAction = ['enable', 'disable', 'create'].includes(this.props.opTarget) ? 'primary' : 'danger';
+    const colorAction = ['enable', 'disable', 'create'].includes(this.props.opTarget)
+      ? ButtonVariant.primary
+      : ButtonVariant.danger;
     const title =
       'Confirm ' +
       modalAction +
@@ -296,21 +296,22 @@ export default class OverviewTrafficPolicies extends React.Component<OverviewTra
           />
         )}
         <Modal
-          isSmall={true}
+          variant={ModalVariant.small}
           title={title}
           isOpen={this.state.confirmationModal}
           onClose={this.onHideConfirmModal}
           actions={[
-            <Button key="cancel" variant="secondary" onClick={this.onHideConfirmModal}>
-              Cancel
-            </Button>,
             <Button
+              data-test="confirm-traffic-policies"
               key="confirm"
               isDisabled={this.state.disableOp}
-              variant={colorAction as colorButton}
+              variant={colorAction}
               onClick={this.onConfirm}
             >
               {modalAction}
+            </Button>,
+            <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.onHideConfirmModal}>
+              Cancel
             </Button>
           ]}
         >

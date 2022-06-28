@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppState } from 'store/Store';
-import { Card, Button, CardBody, CardFooter } from '@patternfly/react-core';
+import { Card, Button, CardBody, CardFooter, ButtonVariant } from '@patternfly/react-core';
 import { InfoIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 import { NotificationGroup } from '../../types/MessageCenter';
@@ -55,10 +55,18 @@ class AlertDrawerGroup extends React.PureComponent<AlertDrawerGroupProps> {
         </CardBody>
         {group.showActions && group.messages.length > 0 && (
           <CardFooter className={AlertDrawerGroup.footer}>
-            <Button className={AlertDrawerGroup.left} variant="link" onClick={() => this.props.markGroupAsRead(group)}>
+            <Button
+              className={AlertDrawerGroup.left}
+              variant={ButtonVariant.link}
+              onClick={() => this.props.markGroupAsRead(group)}
+            >
               Mark All Read
             </Button>
-            <Button className={AlertDrawerGroup.right} variant="link" onClick={() => this.props.clearGroup(group)}>
+            <Button
+              className={AlertDrawerGroup.right}
+              variant={ButtonVariant.link}
+              onClick={() => this.props.clearGroup(group)}
+            >
               Clear All
             </Button>
           </CardFooter>

@@ -1,4 +1,4 @@
-import { Stack, StackItem, Title, TitleLevel, TitleSize, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Stack, StackItem, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import Labels from 'components/Label/Labels';
 import { PFBadge } from 'components/Pf/PfBadges';
 import LocalTime from 'components/Time/LocalTime';
@@ -95,9 +95,9 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
     );
 
     return (
-      <Stack gutter="md">
+      <Stack hasGutter={true}>
         <StackItem>
-          <Title headingLevel={TitleLevel.h3} size={TitleSize.xl}>
+          <Title headingLevel="h3" size={TitleSizes.xl}>
             Overview
           </Title>
         </StackItem>
@@ -114,7 +114,7 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
               >
                 <KialiIcon.Info className={infoStyle} />
               </Tooltip>
-              {this.props.istioValidations && (
+              {this.props.istioValidations && (!this.props.statusMessages || this.props.statusMessages.length === 0) && (
                 <span className={healthIconStyle}>
                   <ValidationObjectSummary
                     id={'config-validation'}
@@ -135,7 +135,7 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
 
         {this.props.statusMessages && this.props.statusMessages.length > 0 && (
           <StackItem>
-            <IstioStatusMessageList messages={this.props.statusMessages} />
+            <IstioStatusMessageList messages={this.props.statusMessages} checks={this.props.istioValidations?.checks} />
           </StackItem>
         )}
 

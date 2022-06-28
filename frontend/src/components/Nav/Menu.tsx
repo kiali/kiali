@@ -2,11 +2,10 @@ import _ from 'lodash';
 import * as React from 'react';
 import { matchPath } from 'react-router';
 import { Link } from 'react-router-dom';
-import { Nav, NavList, NavItem, PageSidebar } from '@patternfly/react-core';
+import { Nav, NavList, NavItem } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-
 import history from '../../app/History';
-import { navItems } from '../../routes';
+import { navMenuItems } from '../../routes';
 import { serverConfig } from '../../config';
 
 const ExternalLink = ({ href, name }) => (
@@ -50,8 +49,8 @@ class Menu extends React.Component<MenuProps, MenuState> {
 
   renderMenuItems = () => {
     const { location } = this.props;
-    const allNavItems = navItems;
-    const activeItem = allNavItems.find(item => {
+    const allNavMenuItems = navMenuItems;
+    const activeMenuItem = allNavMenuItems.find(item => {
       let isRoute = matchPath(location.pathname, { path: item.to, exact: true, strict: false }) ? true : false;
       if (!isRoute && item.pathsActive) {
         isRoute = _.filter(item.pathsActive, path => path.test(location.pathname)).length > 0;
@@ -59,7 +58,7 @@ class Menu extends React.Component<MenuProps, MenuState> {
       return isRoute;
     });
 
-    return allNavItems
+    return allNavMenuItems
       .filter(item => {
         if (item.title === 'Mesh') {
           return serverConfig.clusterInfo?.name !== undefined;
@@ -76,7 +75,7 @@ class Menu extends React.Component<MenuProps, MenuState> {
         }
 
         return (
-          <NavItem isActive={activeItem === item} key={item.to}>
+          <NavItem isActive={activeMenuItem === item} key={item.to}>
             <Link id={item.title} to={item.to} onClick={() => history.push(item.to)}>
               {item.title}
             </Link>
@@ -86,15 +85,11 @@ class Menu extends React.Component<MenuProps, MenuState> {
   };
 
   render() {
-    const { isNavOpen } = this.props;
-
-    const PageNav = (
-      <Nav onSelect={() => undefined} onToggle={() => undefined} aria-label="Nav" theme={'dark'}>
+    return (
+      <Nav aria-label="Nav" theme={'dark'}>
         <NavList>{this.renderMenuItems()}</NavList>
       </Nav>
     );
-
-    return <PageSidebar isNavOpen={isNavOpen} nav={PageNav} theme={'dark'} />;
   }
 }
 

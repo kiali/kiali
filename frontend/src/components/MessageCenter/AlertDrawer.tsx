@@ -1,15 +1,16 @@
 import * as React from 'react';
 import {
   Card,
-  CardHead,
   CardActions,
   CardHeader,
+  CardTitle,
   Button,
   CardBody,
   Accordion,
   AccordionToggle,
   AccordionItem,
-  AccordionContent
+  AccordionContent,
+  ButtonVariant
 } from '@patternfly/react-core';
 import { CloseIcon, InfoIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
@@ -90,23 +91,23 @@ export class AlertDrawer extends React.PureComponent<AlertDrawerProps> {
     return (
       !this.props.isHidden && (
         <Card className={drawer} hidden={this.props.isHidden}>
-          <CardHead className={AlertDrawer.head}>
+          <CardHeader className={AlertDrawer.head}>
             <CardActions>
               {this.props.isExpanded ? (
-                <Button id="alert_drawer_collapse" variant="plain" onClick={this.props.expandDrawer}>
+                <Button id="alert_drawer_collapse" variant={ButtonVariant.plain} onClick={this.props.expandDrawer}>
                   <KialiIcon.AngleDoubleRight />
                 </Button>
               ) : (
-                <Button id="alert_drawer_expand" variant="plain" onClick={this.props.expandDrawer}>
+                <Button id="alert_drawer_expand" variant={ButtonVariant.plain} onClick={this.props.expandDrawer}>
                   <KialiIcon.AngleDoubleLeft />
                 </Button>
               )}
-              <Button id="alert_drawer_close" variant="plain" onClick={this.props.hideDrawer}>
+              <Button id="alert_drawer_close" variant={ButtonVariant.plain} onClick={this.props.hideDrawer}>
                 <CloseIcon />
               </Button>
             </CardActions>
-            <CardHeader>{this.props.title}</CardHeader>
-          </CardHead>
+            <CardTitle>{this.props.title}</CardTitle>
+          </CardHeader>
           <CardBody className={AlertDrawer.body}>
             {this.props.groups.length === 0 ? (
               noNotificationsMessage

@@ -38,12 +38,12 @@ class ConditionList extends React.Component<Props> {
             <b>key: </b> [{condition.key}]<br />
             {condition.values && (
               <>
-                <b>values: </b> [{condition.values}]<br />
+                <b>values: </b> [{condition.values.join(',')}]<br />
               </>
             )}
             {condition.notValues && (
               <>
-                <b>notValues: </b> [{condition.notValues}]<br />
+                <b>notValues: </b> [{condition.notValues.join(',')}]<br />
               </>
             )}
           </>,

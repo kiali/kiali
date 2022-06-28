@@ -4,7 +4,7 @@ import {
   FILTER_ACTION_UPDATE,
   FilterValue,
   ActiveFiltersInfo,
-  FilterTypes
+  AllFilterTypes
 } from '../../types/Filters';
 import { HEALTHY, DEGRADED, FAILURE, NA, NOT_READY } from '../../types/Health';
 import { removeDuplicatesArray } from '../../utils/Common';
@@ -21,19 +21,17 @@ export const presenceValues: FilterValue[] = [
 ];
 
 export const istioSidecarFilter: FilterType = {
-  id: 'istiosidecar',
-  title: 'Istio Sidecar',
-  placeholder: 'Filter by IstioSidecar Validation',
-  filterType: FilterTypes.select,
+  category: 'Istio Sidecar',
+  placeholder: 'Filter by Istio Sidecar Validation',
+  filterType: AllFilterTypes.select,
   action: FILTER_ACTION_UPDATE,
   filterValues: presenceValues
 };
 
 export const healthFilter: FilterType = {
-  id: 'health',
-  title: 'Health',
+  category: 'Health',
   placeholder: 'Filter by Health',
-  filterType: FilterTypes.select,
+  filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {
@@ -60,23 +58,22 @@ export const healthFilter: FilterType = {
 };
 
 export const labelFilter: FilterType = {
-  id: 'label',
-  title: 'Label',
+  category: 'Label',
   placeholder: 'Filter by Label',
-  filterType: FilterTypes.label,
+  filterType: AllFilterTypes.label,
   action: FILTER_ACTION_APPEND,
   filterValues: []
 };
 
 export const getFilterSelectedValues = (filter: FilterType, activeFilters: ActiveFiltersInfo): string[] => {
   const selected: string[] = activeFilters.filters
-    .filter(activeFilter => activeFilter.id === filter.id)
+    .filter(activeFilter => activeFilter.category === filter.category)
     .map(activeFilter => activeFilter.value);
   return removeDuplicatesArray(selected);
 };
 
 export const getPresenceFilterValue = (filter: FilterType, activeFilters: ActiveFiltersInfo): boolean | undefined => {
-  const presenceFilters = activeFilters.filters.filter(activeFilter => activeFilter.id === filter.id);
+  const presenceFilters = activeFilters.filters.filter(activeFilter => activeFilter.category === filter.category);
 
   if (presenceFilters.length > 0) {
     return presenceFilters[0].value === 'Present';

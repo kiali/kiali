@@ -17,7 +17,7 @@ import MeshPage from 'pages/Mesh/MeshPage';
  * Return array of objects that describe vertical menu
  * @return {array}
  */
-const navItems: MenuItem[] = [
+const navMenuItems: MenuItem[] = [
   {
     title: 'Overview',
     to: '/overview',
@@ -135,4 +135,4 @@ const pathRoutes: Path[] = [
   }
 ];
 
-export { defaultRoute, navItems, pathRoutes };
+export { defaultRoute, navMenuItems, pathRoutes };

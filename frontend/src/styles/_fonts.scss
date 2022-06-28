@@ -1,9 +1,5 @@
-// PF4 needed config for fonts
-$pf-global--disable-fontawesome: true;
-$pf-global--font-path: '@patternfly/patternfly/assets/fonts/';
-
 // This is necessary to have icons into Graph edge
 @font-face {
   font-family: 'pficon';
-  src: url(../../node_modules/@patternfly/patternfly/assets/pficon/pficon.woff2);
+  src: url(../../node_modules/@patternfly/patternfly/assets/pficon/pficon.woff2) format("woff2");
 }

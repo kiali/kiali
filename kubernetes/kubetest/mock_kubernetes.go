@@ -6,7 +6,6 @@ import (
 	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
-	batch_apps_v1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -28,9 +27,9 @@ func (o *K8SClientMock) GetConfigMap(namespace, name string) (*core_v1.ConfigMap
 	return args.Get(0).(*core_v1.ConfigMap), args.Error(1)
 }
 
-func (o *K8SClientMock) GetCronJobs(namespace string) ([]batch_apps_v1.CronJob, error) {
+func (o *K8SClientMock) GetCronJobs(namespace string) ([]batch_v1.CronJob, error) {
 	args := o.Called(namespace)
-	return args.Get(0).([]batch_apps_v1.CronJob), args.Error(1)
+	return args.Get(0).([]batch_v1.CronJob), args.Error(1)
 }
 
 func (o *K8SClientMock) GetDaemonSet(namespace string, name string) (*apps_v1.DaemonSet, error) {

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Tab } from '@patternfly/react-core';
+import { Tab, Tooltip } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { summaryFont, summaryHeader, summaryBodyTabs, summaryPanelWidth, getTitle } from './SummaryPanelCommon';
 import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
@@ -75,6 +75,10 @@ export default class SummaryPanelClusterBox extends React.Component<SummaryPanel
     const tcpOut = getAccumulatedTrafficRateTcp(outboundEdges);
     const tcpTotal = getAccumulatedTrafficRateTcp(totalEdges);
 
+    const tooltipInboundRef = React.createRef();
+    const tooltipOutboundRef = React.createRef();
+    const tooltipTotalRef = React.createRef();
+
     return (
       <div className="panel panel-default" style={SummaryPanelClusterBox.panelStyle}>
         <div className="panel-heading" style={summaryHeader}>
@@ -84,7 +88,25 @@ export default class SummaryPanelClusterBox extends React.Component<SummaryPanel
         </div>
         <div className={summaryBodyTabs}>
           <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
-            <Tab style={summaryFont} title="Inbound" eventKey={0}>
+            <Tooltip
+              id="tooltip-inbound"
+              content="Traffic entering from another cluster."
+              entryDelay={1250}
+              reference={tooltipInboundRef}
+            />
+            <Tooltip
+              id="tooltip-outbound"
+              content="Traffic exiting to another cluster."
+              entryDelay={1250}
+              reference={tooltipOutboundRef}
+            />
+            <Tooltip
+              id="tooltip-total"
+              content="All inbound, outbound and internal cluster traffic."
+              entryDelay={1250}
+              reference={tooltipTotalRef}
+            />
+            <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
               <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
                   <>
@@ -116,7 +138,7 @@ export default class SummaryPanelClusterBox extends React.Component<SummaryPanel
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Outbound" eventKey={1}>
+            <Tab style={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
               <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
                   <>
@@ -148,7 +170,7 @@ export default class SummaryPanelClusterBox extends React.Component<SummaryPanel
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Total" eventKey={2}>
+            <Tab style={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
               <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
                   <>
@@ -205,7 +227,7 @@ export default class SummaryPanelClusterBox extends React.Component<SummaryPanel
     return (
       <React.Fragment key={cluster}>
         <span>
-          <PFBadge badge={PFBadges.Cluster} style={{ marginBottom: '2px' }} />
+          <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '2px' }} />
           <KialiPageLink href="/" cluster={cluster}>
             {cluster}
           </KialiPageLink>{' '}

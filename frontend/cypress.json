@@ -12,5 +12,10 @@
   "responseTimeout": 15000,
   "supportFile": "cypress/support/index.ts",
   "pluginsFile": "cypress/plugins/bdd.ts",
-  "fixturesFolder": "cypress/fixtures"
+  "fixturesFolder": "cypress/fixtures",
+  "env": {
+    "cypress-react-selector": {
+      "root": "#root"
+    }
+  }
 }

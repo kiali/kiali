@@ -104,7 +104,7 @@ export class IstioStatus extends React.Component<Props> {
     if (!this.healthyComponents()) {
       return (
         <Tooltip position={TooltipPosition.left} enableFlip={true} content={this.tooltipContent()} maxWidth={'25rem'}>
-          <ResourcesFullIcon color={this.tooltipColor()} style={{ verticalAlign: '-0.3em', marginRight: 8 }} />
+          <ResourcesFullIcon color={this.tooltipColor()} style={{ verticalAlign: '-0.2em', marginRight: -8 }} />
         </Tooltip>
       );
     }
