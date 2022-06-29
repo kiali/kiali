@@ -25,6 +25,7 @@ import { style } from 'typestyle';
 import AceEditor from 'react-ace';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import ToolbarDropdown from 'components/ToolbarDropdown/ToolbarDropdown';
+import { activeTab } from '../../components/Tab/Tabs';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { aceOptions } from 'types/IstioConfigDetails';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
@@ -33,6 +34,8 @@ import { DashboardRef } from 'types/Runtimes';
 import CustomMetricsContainer from 'components/Metrics/CustomMetrics';
 import { serverConfig } from 'config';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
+import history from '../../app/History';
+import {tabName as workloadTabName, defaultTab as workloadDefaultTab} from '../../pages/WorkloadDetails/WorkloadDetailsPage';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -45,6 +48,8 @@ const iconStyle = style({
 });
 
 const envoyTabs = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
+const tabName = 'envoyTab'
+const defaultTab = 'clusters'
 
 export type ResourceSorts = { [resource: string]: ISortBy };
 
@@ -84,8 +89,8 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
       config: {},
       tabHeight: 300,
       fetch: true,
-      activeKey: 0,
-      resource: 'clusters',
+      activeKey: envoyTabs.indexOf(activeTab(tabName, defaultTab)),
+      resource: activeTab(tabName, defaultTab),
       tableSortBy: {
         clusters: {
           index: 0,
@@ -108,8 +113,12 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
   }
 
   componentDidUpdate(_prevProps: EnvoyDetailsProps, prevState: EnvoyDetailsState) {
+    const currentTabIndex = envoyTabs.indexOf(activeTab(tabName, defaultTab));
     if (this.state.pod.name !== prevState.pod.name || this.state.resource !== prevState.resource) {
       this.fetchContent();
+      if (currentTabIndex !== this.state.activeKey) {
+        this.setState({ activeKey: currentTabIndex });
+      }
     }
   }
 
@@ -122,8 +131,13 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
         fetch: true,
         resource: targetResource,
         activeKey: tabIndex
-      });
-    }
+      });    
+      const mainTab = new URLSearchParams(history.location.search).get(workloadTabName) || workloadDefaultTab
+      const urlParams = new URLSearchParams('');
+      urlParams.set(tabName, targetResource);
+      urlParams.set(workloadTabName, mainTab);
+      history.push(history.location.pathname + '?' + urlParams.toString());
+    }  
   };
 
   fetchEnvoyProxyResourceEntries = (resource: string) => {
