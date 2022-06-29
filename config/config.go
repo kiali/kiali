@@ -687,7 +687,7 @@ func NewConfig() (c *Config) {
 				MetricsOutbound:   MetricsDefaults{},
 				MetricsPerRefresh: "1m",
 				Namespaces:        make([]string, 0),
-				RefreshInterval:   "15s",
+				RefreshInterval:   "60s",
 			},
 			Validations: Validations{
 				Ignore: make([]string, 0),
