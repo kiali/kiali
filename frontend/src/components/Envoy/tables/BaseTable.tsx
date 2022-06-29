@@ -20,11 +20,11 @@ export interface SummaryTable {
   sortBy: () => ISortBy;
   setSorting: (columnIndex: number, direction: 'asc' | 'desc') => void;
   availableFilters: () => FilterType[];
+  tooltip: () => React.ReactNode;
 }
 
 const iconStyle = style({
-  display: 'inline-block',
-  verticalAlign: '2px !important'
+  display: 'inline-block'
 });
 
 export function SummaryTableRenderer<T extends SummaryTable>() {
@@ -61,7 +61,7 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
             onFilterChange={this.onFilterApplied}
             childrenFirst={true}
           >
-            <span>
+            <>
               <div key="service-icon" className={iconStyle}>
                 <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
               </div>
@@ -72,8 +72,11 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
                 value={this.props.pod}
                 label={this.props.pod}
                 options={this.props.pods.sort()}
-              />
-            </span>
+              /> 
+              <div className={style({position: 'fixed', right: '60px'})}>                
+               {this.props.writer.tooltip()} 
+              </div>
+            </>                          
           </StatefulFilters>
           <Table
             aria-label="Sortable Table"

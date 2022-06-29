@@ -5,6 +5,11 @@ import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '
 import { SortField } from '../../../types/SortFilters';
 import Namespace from '../../../types/Namespace';
 import { defaultFilter, routeLink } from '../../../helpers/EnvoyHelpers';
+import { Tooltip } from '@patternfly/react-core';
+import { PFColors } from 'components/Pf/PfColors';
+import { KialiIcon } from 'config/KialiIcon';
+import { style } from 'typestyle';
+
 
 export class ListenerTable implements SummaryTable {
   summaries: ListenerSummary[];
@@ -125,10 +130,13 @@ export class ListenerTable implements SummaryTable {
 
   head = (): ICell[] => {
     return [
-      { title: 'Address', transforms: [sortable] },
+      { title: 'Address', transforms: [sortable], header: {info: { tooltip: 
+        <div className={style({textAlign: 'left'})}>The address that the listener should listen on. In general, the address must be unique, though that is governed by the bind rules of the OS</div>}} },
       { title: 'Port', transforms: [sortable] },
       { title: 'Match', transforms: [sortable] },
-      { title: 'Destination', transforms: [sortable] }
+      { title: 'Destination', transforms: [sortable], header: {info: { tooltip: 
+        <div className={style({textAlign: 'left'})}>Original destination listener filter reads the SO_ORIGINAL_DST socket option set when a connection has been redirected by an iptables REDIRECT target, or by an iptables TPROXY target in combination with setting the listener’s transparent option</div>
+        }} }
     ];
   };
 
@@ -145,6 +153,14 @@ export class ListenerTable implements SummaryTable {
       direction: this.sortingDirection
     };
   };
+
+  tooltip = (): React.ReactNode => {
+    return (
+      <Tooltip content={<div className={style({textAlign: 'left'})}>Network location that can be connected to by downstream clients (Incomming to envoy). List of endpoints:ports that envoy lets traffic</div>}>               
+          <KialiIcon.Help className={style({width: '14px', height: '14px', color: PFColors.Blue400})}/>     
+      </Tooltip>   
+    );
+  }
 
   rows(): (string | number | JSX.Element)[][] {
     return this.summaries

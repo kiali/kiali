@@ -5,6 +5,10 @@ import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '
 import { SortField } from '../../../types/SortFilters';
 import Namespace from '../../../types/Namespace';
 import { defaultFilter, istioConfigLink, serviceLink } from '../../../helpers/EnvoyHelpers';
+import { Tooltip } from '@patternfly/react-core';
+import { PFColors } from 'components/Pf/PfColors';
+import { KialiIcon } from 'config/KialiIcon';
+import { style } from 'typestyle';
 
 export class ClusterTable implements SummaryTable {
   summaries: ClusterSummary[];
@@ -137,13 +141,30 @@ export class ClusterTable implements SummaryTable {
     ];
   };
 
+  render_cluster_type = (): React.ReactNode => {
+    return (
+        <ul className={style({textAlign: 'left'})}>
+          <li><b>STATIC</b>: Static is the simplest service discovery type. The configuration explicitly specifies the resolved network name (IP address/port, unix domain socket, etc.) of each upstream host.</li>
+          <li><b>STRICT_DNS</b>: Envoy will continuously and asynchronously resolve the specified DNS targets</li>
+          <li><b>LOGICAL_DNS</b>: Logical DNS uses a similar asynchronous resolution mechanism to strict DNS. However, instead of strictly taking the results of the DNS query and assuming that they comprise the entire upstream cluster, a logical DNS cluster only uses the first IP address returned when a new connection needs to be initiated</li>
+          <li><b>EDS</b>: The endpoint discovery service is a xDS management server based on gRPC or REST-JSON API server used by Envoy to fetch cluster members. </li>
+          <li><b>ORIGINAL_DST</b>: Original destination cluster can be used when incoming connections are redirected to Envoy either via an iptables REDIRECT or TPROXY target or with Proxy Protocol</li>
+        </ul>
+    )
+  }
+  
   head = (): ICell[] => {
     return [
-      { title: 'Service FQDN', transforms: [sortable] },
+      { title: 'Service FQDN', transforms: [sortable], header: {info: { tooltip: <>Fully Qualified Domain Name</>}} },
       { title: 'Port', transforms: [sortable] },
       { title: 'Subset', transforms: [sortable] },
-      { title: 'Direction', transforms: [sortable] },
-      { title: 'Type', transforms: [sortable] },
+      { title: 'Direction', transforms: [sortable], header: {info: { tooltip: 
+      <ul className={style({textAlign: 'left'})}>
+        <li><b>inbound</b>: The inbound cluster events are the events that come into a node. These cluster events come from another node and enter other nodes.</li>
+        <li><b>outbound</b>: The outbound cluster events are the events that go out of a node. These cluster events are produced and sent from a node to other nodes.</li>
+      </ul>
+      }} },
+      { title: 'Type', transforms: [sortable], header: {info: { tooltip: this.render_cluster_type()}} },
       { title: 'DestinationRule', transforms: [sortable] }
     ];
   };
@@ -161,6 +182,14 @@ export class ClusterTable implements SummaryTable {
       direction: this.sortingDirection || 'asc'
     };
   };
+
+  tooltip = (): React.ReactNode => {
+    return (
+      <Tooltip content={<div className={style({textAlign: 'left'})}>Group of logically similar upstream hosts that Envoy connects to. (All the hosts that envoy manage traffic)</div>}>               
+          <KialiIcon.Help className={style({width: '14px', height: '14px', color: PFColors.Blue400})}/>     
+      </Tooltip>
+    );
+  }
 
   rows(): (string | number | JSX.Element)[][] {
     return this.summaries

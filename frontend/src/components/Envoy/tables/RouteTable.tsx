@@ -5,6 +5,10 @@ import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '
 import { SortField } from '../../../types/SortFilters';
 import Namespace from '../../../types/Namespace';
 import { defaultFilter, istioConfigLink, serviceLink } from '../../../helpers/EnvoyHelpers';
+import { Tooltip } from '@patternfly/react-core';
+import { PFColors } from 'components/Pf/PfColors';
+import { KialiIcon } from 'config/KialiIcon';
+import { style } from 'typestyle';
 
 export class RouteTable implements SummaryTable {
   summaries: RouteSummary[];
@@ -97,8 +101,12 @@ export class RouteTable implements SummaryTable {
   head(): ICell[] {
     return [
       { title: 'Name', transforms: [sortable] },
-      { title: 'Domains', transforms: [sortable] },
-      { title: 'Match', transforms: [sortable] },
+      { title: 'Domains', transforms: [sortable] , header: {info: { tooltip: 
+        <div className={style({textAlign: 'left'})}>Envoy will be matched this domain to this virtual host.</div>
+        }}},
+      { title: 'Match', transforms: [sortable], header: {info: { tooltip: 
+        <div className={style({textAlign: 'left'})}>The match tree to use when resolving route actions for incoming requests</div>
+        }} },
       { title: 'Virtual Service', transforms: [sortable] }
     ];
   }
@@ -116,6 +124,14 @@ export class RouteTable implements SummaryTable {
       direction: this.sortingDirection
     };
   };
+
+  tooltip = (): React.ReactNode => {
+    return (
+      <Tooltip content={<div className={style({textAlign: 'left'})}>Network connection between source a destination that is configured in envoy</div>}>               
+          <KialiIcon.Help className={style({width: '14px', height: '14px', color: PFColors.Blue400})}/>     
+      </Tooltip>
+    );
+  }
 
   rows(): (string | number | JSX.Element)[][] {
     return this.summaries
