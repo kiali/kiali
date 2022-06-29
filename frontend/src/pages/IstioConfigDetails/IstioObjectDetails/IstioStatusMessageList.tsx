@@ -44,11 +44,12 @@ class IstioStatusMessageList extends React.Component<Props> {
           })}
           <Stack>
             {(this.props.checks || []).map((check, index) => {
+              const severity: ValidationTypes = IstioLevelToSeverity[check.severity.toUpperCase() || 'UNKNOWN'];
               return (
                 <StackItem id={'valid_msg-' + index} className={'validation-message'}>
                   <Flex>
                     <FlexItem>
-                      <Validation severity={check.severity} />
+                      <Validation severity={severity} />
                     </FlexItem>
                     <FlexItem>
                       {check.code}
