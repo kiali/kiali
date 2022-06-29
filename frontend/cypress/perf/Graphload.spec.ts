@@ -14,6 +14,12 @@ describe('graphload', () => {
                     +"&namespaceLayout="+data.namespaceLayout);
             })
             .as('data');
+
+        cy.login("ibmcloud", Cypress.env('USERNAME'), Cypress.env('PASSWD'));
+    })
+
+    beforeEach(() => {
+        Cypress.Cookies.preserveOnce('kiali-token-aes');
     })
 
     it('Visit Main Page', () => {

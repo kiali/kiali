@@ -1,4 +1,4 @@
-import { Given, When, And, Then } from "cypress-cucumber-preprocessor/steps";
+import { Given, And, Then } from "cypress-cucumber-preprocessor/steps";
 
 const USERNAME = Cypress.env('USERNAME') || 'jenkins'; // CYPRESS_USERNAME to the user
 const PASSWD = Cypress.env('PASSWD'); // CYPRESS_PASSWD to the user
@@ -40,7 +40,7 @@ And('user clicks my_htpasswd_provider', () => {
 And('user fill in username and password', () => {
     if (auth_strategy === 'openshift') {
         cy.log('Log in as user: ' + USERNAME)
-        cy.get('#inputUsername').type('' || USERNAME);
+        cy.get('#inputUsername').clear().type('' || USERNAME);
         cy.get('#inputPassword').type('' || PASSWD);
         cy.get('button[type="submit"]').click()
     }

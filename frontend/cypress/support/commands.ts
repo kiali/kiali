@@ -32,7 +32,7 @@ declare namespace Cypress {
      */
     getBySel(selector: string, ...args: any): Chainable<Subject>;
 
-    login(providerName?: string, username?: string, password?: string, auth_strategy?: string): Chainable<Subject>;
+    login(provider: string, username: string, password: string): Chainable<Subject>;
 
     logout(): Chainable<Subject>;
   }
@@ -40,8 +40,10 @@ declare namespace Cypress {
 
 let haveCookie = Cypress.env('cookie');
 
-Cypress.Commands.add('login', (provider: string, username: string, password: string, auth_strategy: string) => {
-  cy.log('auth cookie is:', haveCookie);
+Cypress.Commands.add('login', (provider: string, username: string, password: string) => {
+  cy.log(`auth cookie is: ${haveCookie}`);
+
+  const auth_strategy = Cypress.env('AUTH_STRATEGY');
 
   cy.window().then((win: any) => {
     if (auth_strategy !== 'openshift') {
@@ -49,7 +51,7 @@ Cypress.Commands.add('login', (provider: string, username: string, password: str
       return;
     }
 
-    if (haveCookie === false) {
+    if (haveCookie === false || haveCookie === undefined) {
       cy.intercept('api/authenticate').as('authorized'); //request setting kiali cookie
       // Cypress.Cookies.debug(true) // now Cypress will log when it alters cookies
       // cy.getCookies()
@@ -59,31 +61,94 @@ Cypress.Commands.add('login', (provider: string, username: string, password: str
 					username: ${username},
 					auth_strategy: ${auth_strategy}`
       );
-      // Disabling refresh as this can prevent navigation to another page
-      // until the overview page has fully loaded which can be greatly delayed
-      // if the refresh interval is lower and the api requests are slow.
-      cy.visit('/console/overview?duration=60&refresh=0');
 
       if (auth_strategy === 'openshift') {
-        cy.get('.pf-c-form').contains(auth_strategy, { matchCase: false }).click();
-        cy.get('.pf-c-button').contains(provider, { matchCase: false }).click();
-        cy.get('#inputUsername').clear().type(username);
-        cy.get('#inputPassword').clear().type(password);
-        cy.get('button[type="submit"]').click();
-        cy.wait('@authorized').its('response.statusCode').should('eq', 200);
+        if (provider === 'my_htpasswd_provider') {
+          // This flow is ripped from the kiali-operator molecule tests:
+          // https://github.com/kiali/kiali-operator/blob/master/molecule/openshift-auth-test/converge.yml#L59
+          cy.request('api/auth/info').then(({ body }) => {
+            const authEndpoint = body.authorizationEndpoint;
+            cy.request({
+              url: authEndpoint,
+              method: 'GET',
+              followRedirect: false
+            }).then(resp => {
+              const auth2Endpoint = resp.redirectedToUrl!;
+              cy.request({
+                url: auth2Endpoint,
+                method: 'GET',
+                followRedirect: false
+              }).then(() => {
+                const openshiftLoginEndpointURL = new URL(auth2Endpoint);
+                const openshiftLoginEndpoint = openshiftLoginEndpointURL.origin + openshiftLoginEndpointURL.pathname;
+                const loginParams = new URLSearchParams(openshiftLoginEndpointURL.search);
+                cy.getCookie('csrf').then(cookie => {
+                  cy.request({
+                    url: openshiftLoginEndpoint,
+                    method: 'POST',
+                    form: true,
+                    body: {
+                      username: username,
+                      password: password,
+                      then: loginParams.get('then'),
+                      csrf: cookie.value
+                    }
+                  }).then(resp => {
+                    const kialiURLWithToken = new URL(resp.redirects[1].replace('302: ', ''));
+                    const kialiParams = new URLSearchParams(kialiURLWithToken.hash.slice(1));
+                    cy.request({
+                      url: 'api/authenticate',
+                      body: {
+                        access_token: kialiParams.get('access_token'),
+                        expires_in: kialiParams.get('expires_in'),
+                        scope: kialiParams.get('scope'),
+                        token_type: kialiParams.get('token_type')
+                      },
+                      method: 'POST',
+                      form: true
+                    });
+                  });
+                });
+              });
+            });
+          });
+        } else if (provider === 'ibmcloud') {
+          // This flow comes from: https://cloud.ibm.com/docs/openshift?topic=openshift-access_cluster#access_api_key
+          cy.request('api/auth/info').then(({ body }) => {
+            const authEndpoint = body.authorizationEndpoint;
+            cy.request({
+              url: authEndpoint,
+              method: 'GET',
+              headers: { 'X-CSRF-TOKEN': 'a' },
+              auth: { user: 'apikey', pass: password },
+              followRedirect: false
+            }).then(resp => {
+              // cookie automatically set by cypress for the next request.
+              const redirectURL = new URL(resp.headers.location as string);
+              // Strip first # out of hash.
+              const params = new URLSearchParams(redirectURL.hash.slice(1));
+
+              cy.request({
+                url: 'api/authenticate',
+                method: 'POST',
+                followRedirect: false,
+                form: true,
+                body: {
+                  access_token: params.get('access_token'),
+                  expires_in: params.get('expires_in'),
+                  scope: params.get('scope'),
+                  token_type: params.get('token_type')
+                }
+              });
+            });
+          });
+        }
+
         cy.getCookie('kiali-token-aes', { timeout: 15000 })
           .should('exist')
           .then(() => {
             haveCookie = true;
           });
-        // Wait for the redirect to the overview page after a successful login.
-        // Otherwise the redirect can mess with page loading on subsequent tests.
-        cy.contains('loading', { matchCase: false }).should('not.exist');
-        cy.url().should('include', '/overview');
-        // Wait for the overview page to load some elements to be sure that things
-        // have settled. Otherwise some part of the overview page will change the
-        // url back to the overview page.
-        cy.getBySel('alpha-EXPAND');
       }
     } else {
       cy.log('got an auth cookie, skipping login');
