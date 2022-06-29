@@ -369,7 +369,7 @@ for s in \
    "--set values.global.network=${NETWORK}" \
    "--set values.meshConfig.accessLogFile=/dev/stdout" \
    "${CNI_OPTIONS}" \
-   "${REDUCE_RESOURCES_OPTIONS}=" \
+   "${REDUCE_RESOURCES_OPTIONS}" \
    "${CUSTOM_INSTALL_SETTINGS}"
 do
   MANIFEST_CONFIG_SETTINGS_TO_APPLY="${MANIFEST_CONFIG_SETTINGS_TO_APPLY} ${s}"
