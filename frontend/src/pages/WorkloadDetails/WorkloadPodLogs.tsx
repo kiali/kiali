@@ -153,7 +153,7 @@ const logsDisplay = style({
   fontFamily: 'monospace',
   margin: 0,
   overflow: 'auto',
-  padding: '10px',
+  padding: 0,
   resize: 'none',
   whiteSpace: 'pre',
   width: '100%'
@@ -446,7 +446,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     let e = this.filteredEntries(this.state.entries, this.state.showLogValue, this.state.hideLogValue, this.state.useRegex)[index];
     if (e.span) {
       return (
-        <div key={`s-${index}`} style={{ height: '22px', lineHeight: '22px', ...style }}>
+        <div key={`s-${index}`} style={{ height: '22px', lineHeight: '22px', paddingLeft: '10px', ...style }}>
           {this.state.showTimestamps && (
             <span key={`al-s-${index}`} style={{ color: spanColor, fontSize: '12px', marginRight: '5px' }}>
                             {e.timestamp}
@@ -491,13 +491,13 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     }
     const le = e.logEntry!;
     return !le.accessLog ? (
-      <div key={`le-d-${index}`} style={{ height: '22px', lineHeight: '22px', ...style }}>
+      <div key={`le-d-${index}`} style={{ height: '22px', lineHeight: '22px', paddingLeft: '10px', ...style }}>
         <p key={`le-${index}`} style={{ color: le.color!, fontSize: '12px' }}>
           {this.entryToString(e)}
         </p>
       </div>
     ) : (
-      <div key={`al-${index}`} style={{ height: '22px', lineHeight: '22px', ...style }}>
+      <div key={`al-${index}`} style={{ height: '22px', lineHeight: '22px', paddingLeft: '10px', ...style }}>
         {this.state.showTimestamps && (
           <span key={`al-s-${index}`} style={{ color: le.color!, fontSize: '12px', marginRight: '5px' }}>
                           {e.timestamp}
@@ -656,7 +656,8 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                 height={height}
                 width={width}
                 scrollToIndex={logEntries.length - 1}
-                noRowsRenderer={() => (NoLogsFoundMessage)}
+                noRowsRenderer={() => (<div style={{ paddingTop: '10px', paddingLeft: '10px' }}>{NoLogsFoundMessage}</div>)}
+                containerStyle={{ overflow: 'initial !important' }}
               />
             )}
           </AutoSizer>
