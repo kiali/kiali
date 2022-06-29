@@ -84,6 +84,30 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
     <SelectOption
       className=""
       component="button"
+      id="120"
+      index={0}
+      inputId=""
+      isChecked={false}
+      isDisabled={false}
+      isFavorite={null}
+      isLastOptionBeforeFooter={[Function]}
+      isLoad={false}
+      isLoading={false}
+      isNoResultsOption={false}
+      isPlaceholder={false}
+      isSelected={false}
+      key="120"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      setViewMoreNextIndex={[Function]}
+      value="120"
+    >
+      2m
+    </SelectOption>
+    <SelectOption
+      className=""
+      component="button"
       id="300"
       index={0}
       inputId=""
@@ -274,10 +298,10 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
     onToggle={[Function]}
     onTypeaheadInputChanged={null}
     ouiaSafe={true}
-    placeholderText="Every 15s"
+    placeholderText="Every 1m"
     position="left"
     removeSelectionAriaLabel="Remove"
-    selections={15000}
+    selections={60000}
     toggleAriaLabel="Options menu"
     toggleIcon={null}
     toggleId="metrics_filter_poll_interval-toggle"
@@ -348,7 +372,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
       isLoading={false}
       isNoResultsOption={false}
       isPlaceholder={false}
-      isSelected={true}
+      isSelected={false}
       key="15000"
       keyHandler={[Function]}
       onClick={[Function]}
@@ -396,7 +420,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
       isLoading={false}
       isNoResultsOption={false}
       isPlaceholder={false}
-      isSelected={false}
+      isSelected={true}
       key="60000"
       keyHandler={[Function]}
       onClick={[Function]}
@@ -675,6 +699,30 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     <SelectOption
       className=""
       component="button"
+      id="120"
+      index={0}
+      inputId=""
+      isChecked={false}
+      isDisabled={false}
+      isFavorite={null}
+      isLastOptionBeforeFooter={[Function]}
+      isLoad={false}
+      isLoading={false}
+      isNoResultsOption={false}
+      isPlaceholder={false}
+      isSelected={false}
+      key="120"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      setViewMoreNextIndex={[Function]}
+      value="120"
+    >
+      2m
+    </SelectOption>
+    <SelectOption
+      className=""
+      component="button"
       id="300"
       index={0}
       inputId=""
@@ -865,10 +913,10 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     onToggle={[Function]}
     onTypeaheadInputChanged={null}
     ouiaSafe={true}
-    placeholderText="Every 15s"
+    placeholderText="Every 1m"
     position="left"
     removeSelectionAriaLabel="Remove"
-    selections={15000}
+    selections={60000}
     toggleAriaLabel="Options menu"
     toggleIcon={null}
     toggleId="metrics_filter_poll_interval-toggle"
@@ -939,7 +987,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
       isLoading={false}
       isNoResultsOption={false}
       isPlaceholder={false}
-      isSelected={true}
+      isSelected={false}
       key="15000"
       keyHandler={[Function]}
       onClick={[Function]}
@@ -987,7 +1035,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
       isLoading={false}
       isNoResultsOption={false}
       isPlaceholder={false}
-      isSelected={false}
+      isSelected={true}
       key="60000"
       keyHandler={[Function]}
       onClick={[Function]}

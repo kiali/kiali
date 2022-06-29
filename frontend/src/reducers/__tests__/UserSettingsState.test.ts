@@ -23,7 +23,7 @@ describe('UserSettingsState reducer', () => {
     expect(UserSettingsState(undefined, GlobalActions.unknown())).toEqual({
       duration: 60,
       interface: { navCollapse: false },
-      refreshInterval: 15000,
+      refreshInterval: 60000,
       replayActive: false,
       replayQueryTime: 0,
       timeRange: { rangeDuration: 600 }
