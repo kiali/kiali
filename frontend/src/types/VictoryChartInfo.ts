@@ -11,6 +11,7 @@ export type VCDataPoint = {
   name: string;
   x: number | Date | string;
   y: number;
+  y0?: number;
   style?: Style;
 };
 

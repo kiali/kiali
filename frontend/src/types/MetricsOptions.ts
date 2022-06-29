@@ -28,7 +28,7 @@ export interface IstioMetricsOptions extends MetricsQuery {
   reporter: Reporter;
 }
 
-export type Reporter = 'source' | 'destination';
+export type Reporter = 'source' | 'destination' | 'both';
 export type Direction = 'inbound' | 'outbound';
 
 export interface Target {

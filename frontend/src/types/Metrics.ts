@@ -1,5 +1,5 @@
-// First is timestamp, second is value
-export type Datapoint = [number, number];
+// First is timestamp, second is value, third is y0
+export type Datapoint = [number, number, number?];
 
 export interface Metric {
   labels: Labels;

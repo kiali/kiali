@@ -21,7 +21,8 @@ const infoStyle = style({
 export default class MetricsReporter extends React.Component<Props> {
   static ReporterOptions: { [key: string]: string } = {
     destination: 'Destination',
-    source: 'Source'
+    source: 'Source',
+    both: 'Both'
   };
 
   static initialReporter = (direction: Direction): Reporter => {
