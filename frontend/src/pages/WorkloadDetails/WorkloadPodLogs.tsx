@@ -767,7 +767,6 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
   // set is discarded.
   private filteredEntries = memoize((entries: Entry[], showValue: string, hideValue: string, useRegex: boolean) => {
     let filteredEntries = entries;
-    filteredEntries.forEach((e) => { console.log('Entry:', e.logEntry && e.logEntry.message);});
 
     if (!!showValue) {
       if (useRegex) {
