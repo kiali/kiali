@@ -129,13 +129,7 @@ hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
 infomsg "Installing istio"
 # Apparently you can't set the requests to zero for the proxy so just setting them to some really low number.
-hack/istio/install-istio-via-istioctl.sh --client-exe-path "$(which kubectl)" \
-  --set "values.global.proxy.resources.requests.cpu=1m" \
-  --set "values.global.proxy.resources.requests.memory=1Mi" \
-  --set "values.global.proxy_init.resources.requests.cpu=1m" \
-  --set "values.global.proxy_init.resources.requests.memory=1Mi" \
-  --set "components.pilot.k8s.resources.requests.cpu=1m" \
-  --set "components.pilot.k8s.resources.requests.memory=1Mi"
+hack/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)"
   
 infomsg "Pushing the images into the cluster..."
 make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali

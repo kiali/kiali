@@ -29,6 +29,7 @@ MESH_ID="mesh-default"
 MTLS="true"
 NAMESPACE="istio-system"
 NETWORK="network-default"
+REDUCE_RESOURCES="false"
 IMAGE_HUB="gcr.io/istio-release"
 IMAGE_TAG="default"
 
@@ -133,6 +134,15 @@ while [[ $# -gt 0 ]]; do
       NETWORK="$2"
       shift;shift
       ;;
+    -rr|--reduce-resources)
+      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
+        REDUCE_RESOURCES="$2"
+      else
+        echo "ERROR: The --reduce-resources flag must be 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -s|--set)
       CUSTOM_INSTALL_SETTINGS="${CUSTOM_INSTALL_SETTINGS} --set $2"
       shift;shift
@@ -202,6 +212,11 @@ Valid command line arguments:
   -net|--network <network>:
        Installs istio as part of network with the given name.
        Default: network-default
+  -rr|--reduce-resources (true|false):
+       When true some Istio components (such as the sidecar proxies) will be given
+       a smaller amount of resources (CPU and memory) which will allow you
+       to run Istio on a cluster that does not have a large amount of resources.
+       Default: false
   -s|--set <name=value>:
        Sets a name/value pair for a custom install setting. Some examples you may want to use:
        --set installPackagePath=/git/clone/istio.io/installer
@@ -332,6 +347,16 @@ if [ "${NAMESPACE}" != "istio-system" ]; then
   fi
 fi
 
+if [ "${REDUCE_RESOURCES}" == "true" ]; then
+  REDUCE_RESOURCES_OPTIONS=" \
+    --set values.global.proxy.resources.requests.cpu=1m \
+    --set values.global.proxy.resources.requests.memory=1Mi \
+    --set values.global.proxy_init.resources.requests.cpu=1m \
+    --set values.global.proxy_init.resources.requests.memory=1Mi \
+    --set components.pilot.k8s.resources.requests.cpu=1m \
+    --set components.pilot.k8s.resources.requests.memory=1Mi"
+fi
+
 for s in \
    "${IMAGE_HUB_OPTION}" \
    "${IMAGE_TAG_OPTION}" \
@@ -344,6 +369,7 @@ for s in \
    "--set values.global.network=${NETWORK}" \
    "--set values.meshConfig.accessLogFile=/dev/stdout" \
    "${CNI_OPTIONS}" \
+   "${REDUCE_RESOURCES_OPTIONS}" \
    "${CUSTOM_INSTALL_SETTINGS}"
 do
   MANIFEST_CONFIG_SETTINGS_TO_APPLY="${MANIFEST_CONFIG_SETTINGS_TO_APPLY} ${s}"
