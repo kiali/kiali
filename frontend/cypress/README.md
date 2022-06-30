@@ -11,12 +11,11 @@ Installed all dev dependencies from frontend folder. Ensure the `baseUrl` field 
 Before you start using Cypress suite, you might need export some environment variables - depending on environment where tests are executed. If your authentication method defaults to `anonymous` **(i.e. dev env), no actions are needed.**
 
 ```bash
-export CYPRESS_BASE_URL=<value>           # defaults to http://localhost:3000
-export CYPRESS_USERNAME=<value>           # defaults to jenkins, opt. kubeadmin
-export CYPRESS_PASSWD=<value>             # no defaults
-export CYPRESS_AUTH_PROVIDER=<value>      # defaults to my_htpasswd_provider,
-export CYPRESS_AUTH_PROVIDER_NAME=<value> # defaults to my_htpasswd_provider. Can pass a custom name for the htp provider.
-                                          # or optionally openshift for AWS
+export CYPRESS_BASE_URL=<value>               # defaults to http://localhost:3000
+export CYPRESS_USERNAME=<value>               # defaults to jenkins, opt. kubeadmin
+export CYPRESS_PASSWD=<value>                 # no defaults
+export CYPRESS_AUTH_PROVIDER=<value>          # defaults to my_htpasswd_provider
+export CYPRESS_AUTH_HTP_PROVIDER_NAME=<value> # defaults to my_htpasswd_provider. Can pass a custom name for the htp provider.
 ```
 
 Tests can be run with the cypress browser:

@@ -73,7 +73,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
       );
 
       if (auth_strategy === 'openshift') {
-        if (provider === Cypress.env('AUTH_HTTP_PROVIDER_NAME')) {
+        if (provider === Cypress.env('AUTH_HTP_PROVIDER_NAME')) {
           // This flow is ripped from the kiali-operator molecule tests:
           // https://github.com/kiali/kiali-operator/blob/master/molecule/openshift-auth-test/converge.yml#L59
           cy.request('api/auth/info').then(({ body }) => {
