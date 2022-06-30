@@ -12,5 +12,5 @@ module.exports = (on, config) => {
 
   on('file:preprocessor', cucumber(options));
 
-  return config
+  return config;
 };
