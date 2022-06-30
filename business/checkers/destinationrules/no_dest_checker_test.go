@@ -664,7 +664,6 @@ func TestSubsetWithoutLabels(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NoDestinationChecker{
-		Namespace: "test-namespace",
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
 			"test-namespace": data.CreateWorkloadList("test-namespace",
 				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
