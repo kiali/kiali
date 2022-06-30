@@ -255,21 +255,6 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Missing one or more addresses from matching WorkloadEntries",
 		Severity: WarningSeverity,
 	},
-	"servicerole.invalid.services": {
-		Code:     "KIA0901",
-		Message:  "Unable to find all the defined services",
-		Severity: ErrorSeverity,
-	},
-	"servicerole.invalid.namespace": {
-		Code:     "KIA0902",
-		Message:  "ServiceRole can only point to current namespace",
-		Severity: ErrorSeverity,
-	},
-	"servicerolebinding.invalid.role": {
-		Code:     "KIA0903",
-		Message:  "ServiceRole does not exists in this namespace",
-		Severity: ErrorSeverity,
-	},
 	"sidecar.egress.servicenotfound": {
 		Code:     "KIA1004",
 		Message:  "This host has no matching entry in the service registry",
@@ -315,13 +300,8 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Subset not found",
 		Severity: WarningSeverity,
 	},
-	"validation.unable.cross-namespace": {
-		Code:     "KIA0001",
-		Message:  "Unable to verify the validity, cross-namespace validation is not supported for this field",
-		Severity: Unknown,
-	},
 	"workload.authorizationpolicy.needstobecovered": {
-		Code:     "KIA1201",
+		Code:     "KIA1301",
 		Message:  "This workload is not covered by any authorization policy",
 		Severity: WarningSeverity,
 	},
