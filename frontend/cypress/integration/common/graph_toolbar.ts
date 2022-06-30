@@ -131,8 +131,9 @@ Then(`user does not see any traffic`, () => {
 Then('user sees graph duration menu', () => {
   cy.get('button#time_range_duration-toggle').invoke('attr', 'aria-expanded').should('eq', 'true');
   cy.get('ul#time_range_duration').within(() => {
-    cy.get('li').should('have.length', 10);
+    cy.get('li').should('have.length', 11);
     cy.get('li#60').should('exist');
+    cy.get('li#120').should('exist');
     cy.get('li#300').should('exist');
     cy.get('li#600').should('exist');
     cy.get('li#1800').should('exist');

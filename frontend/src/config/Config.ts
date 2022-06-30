@@ -12,11 +12,11 @@ const conf = {
   },
   /** Toolbar Configuration */
   toolbar: {
-    /** Duration default in 1 minute */
+    /** Duration default is 1 minute */
     defaultDuration: 1 * UNIT_TIME.MINUTE,
-    /** By default refresh is 15 seconds */
-    defaultRefreshInterval: 15 * MILLISECONDS,
-    /** Time Range default in 10 minutes **/
+    /** By default refresh is 1 minute */
+    defaultRefreshInterval: 60 * MILLISECONDS,
+    /** Time Range default is 10 minutes **/
     defaultTimeRange: {
       rangeDuration: 10 * UNIT_TIME.MINUTE
     },

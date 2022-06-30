@@ -21,6 +21,7 @@ const toDurations = (tupleArray: [number, string][]): Durations => {
 
 const durationsTuples: [number, string][] = [
   [60, '1m'],
+  [120, '2m'],
   [300, '5m'],
   [600, '10m'],
   [1800, '30m'],
@@ -34,14 +35,14 @@ const durationsTuples: [number, string][] = [
 ];
 
 const computeValidDurations = (cfg: ComputedServerConfig) => {
-  let filtered = durationsTuples;
-  if (cfg.prometheus.storageTsdbRetention) {
-    // Make sure we'll keep at least one item
-    if (cfg.prometheus.storageTsdbRetention <= durationsTuples[0][0]) {
-      filtered = [durationsTuples[0]];
-    } else {
-      filtered = durationsTuples.filter(d => d[0] <= cfg.prometheus.storageTsdbRetention!);
-    }
+  const tsdbRetention = cfg.prometheus.storageTsdbRetention;
+  const scrapeInterval = cfg.prometheus.globalScrapeInterval;
+  let filtered = durationsTuples.filter(
+    d => (!tsdbRetention || d[0] <= tsdbRetention!) && (!scrapeInterval || d[0] >= scrapeInterval * 2)
+  );
+  // Make sure we keep at least one item, even if it's silly
+  if (filtered.length === 0) {
+    filtered = [durationsTuples[0]];
   }
   cfg.durations = toDurations(filtered);
 };
@@ -114,12 +115,13 @@ export const toValidDuration = (duration: number): number => {
     return duration;
   }
   // Get closest duration
-  for (let i = durationsTuples.length - 1; i >= 0; i--) {
+  const validDurations = durationsTuples.filter(d => serverConfig.durations[d[0]]);
+  for (let i = validDurations.length - 1; i > 0; i--) {
     if (duration > durationsTuples[i][0]) {
-      return durationsTuples[i][0];
+      return validDurations[i][0];
     }
   }
-  return durationsTuples[0][0];
+  return validDurations[0][0];
 };
 
 export const setServerConfig = (cfg: ServerConfig) => {
@@ -129,7 +131,6 @@ export const setServerConfig = (cfg: ServerConfig) => {
   };
 
   serverConfig.healthConfig = cfg.healthConfig ? parseHealthConfig(cfg.healthConfig) : serverConfig.healthConfig;
-
   computeValidDurations(serverConfig);
 };
 
