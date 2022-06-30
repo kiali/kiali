@@ -12,11 +12,11 @@ import (
 const SidecarCheckerType = "sidecar"
 
 type SidecarChecker struct {
-	Sidecars         []networking_v1beta1.Sidecar
-	ServiceEntries   []networking_v1beta1.ServiceEntry
-	Namespaces       models.Namespaces
-	WorkloadList     models.WorkloadList
-	RegistryServices []*kubernetes.RegistryService
+	Sidecars              []networking_v1beta1.Sidecar
+	ServiceEntries        []networking_v1beta1.ServiceEntry
+	Namespaces            models.Namespaces
+	WorkloadsPerNamespace map[string]models.WorkloadList
+	RegistryServices      []*kubernetes.RegistryService
 }
 
 func (s SidecarChecker) Check() models.IstioValidations {
@@ -32,7 +32,7 @@ func (s SidecarChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	enabledDRCheckers := []GroupChecker{
-		common.SidecarSelectorMultiMatchChecker(SidecarCheckerType, s.Sidecars, s.WorkloadList),
+		common.SidecarSelectorMultiMatchChecker(SidecarCheckerType, s.Sidecars, s.WorkloadsPerNamespace),
 	}
 
 	for _, checker := range enabledDRCheckers {
@@ -62,7 +62,7 @@ func (s SidecarChecker) runChecks(sidecar networking_v1beta1.Sidecar) models.Ist
 	}
 
 	enabledCheckers := []Checker{
-		common.WorkloadSelectorNoWorkloadFoundChecker(SidecarCheckerType, selectorLabels, s.WorkloadList),
+		common.WorkloadSelectorNoWorkloadFoundChecker(SidecarCheckerType, selectorLabels, s.WorkloadsPerNamespace),
 		sidecars.EgressHostChecker{Sidecar: sidecar, ServiceEntries: serviceHosts, RegistryServices: s.RegistryServices},
 		sidecars.GlobalChecker{Sidecar: sidecar},
 	}

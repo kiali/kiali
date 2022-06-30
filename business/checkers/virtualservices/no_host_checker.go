@@ -11,7 +11,6 @@ import (
 )
 
 type NoHostChecker struct {
-	Namespace         string
 	Namespaces        models.Namespaces
 	VirtualService    networking_v1beta1.VirtualService
 	ServiceEntryHosts map[string][]string

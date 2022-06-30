@@ -27,6 +27,11 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 			parsedTypes = strings.Split(objects, ",")
 		}
 	}
+	namespaces := query.Get("namespaces") // csl of namespaces
+	nss := []string{}
+	if len(namespaces) > 0 {
+		nss = strings.Split(namespaces, ",")
+	}
 
 	allNamespaces := false
 	if namespace == "" {
@@ -89,7 +94,12 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondWithJSON(w, http.StatusOK, istioConfig)
+	if len(nss) > 0 {
+		// From allNamespaces load only requested ones
+		RespondWithJSON(w, http.StatusOK, istioConfig.FilterIstioConfigs(nss))
+	} else {
+		RespondWithJSON(w, http.StatusOK, istioConfig)
+	}
 }
 
 func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {

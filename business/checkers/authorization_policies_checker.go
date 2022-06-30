@@ -18,7 +18,6 @@ const AuthorizationPolicyCheckerType = "authorizationpolicy"
 
 type AuthorizationPolicyChecker struct {
 	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
-	Namespace             string
 	Namespaces            models.Namespaces
 	ServiceEntries        []networking_v1beta1.ServiceEntry
 	WorkloadsPerNamespace map[string]models.WorkloadList
@@ -37,7 +36,6 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 
 	// Group Validations
 	validations.MergeValidations(authorization.MtlsEnabledChecker{
-		Namespace:             a.Namespace,
 		AuthorizationPolicies: a.AuthorizationPolicies,
 		MtlsDetails:           a.MtlsDetails,
 		RegistryServices:      a.RegistryServices,
@@ -56,9 +54,9 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy security_v1beta.Authori
 		matchLabels = authPolicy.Spec.Selector.MatchLabels
 	}
 	enabledCheckers := []Checker{
-		common.SelectorNoWorkloadFoundChecker(AuthorizationPolicyCheckerType, matchLabels, a.WorkloadsPerNamespace[a.Namespace]),
+		common.SelectorNoWorkloadFoundChecker(AuthorizationPolicyCheckerType, matchLabels, a.WorkloadsPerNamespace),
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
-		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, Namespace: a.Namespace, Namespaces: a.Namespaces,
+		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces,
 			ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices, RegistryServices: a.RegistryServices},
 		authorization.PrincipalsChecker{AuthorizationPolicy: authPolicy, ServiceAccounts: a.ServiceAccountNames(strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, "svc.", "", 1))},
 	}

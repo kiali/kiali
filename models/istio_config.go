@@ -157,3 +157,83 @@ type ResourcesPermissions map[string]*ResourcePermissions
 
 // IstioConfigPermissions holds a map of ResourcesPermissions per namespace
 type IstioConfigPermissions map[string]*ResourcesPermissions
+
+// IstioConfigs holds a map of IstioConfigList per namespace
+type IstioConfigs map[string]*IstioConfigList
+
+// FilterIstioConfigs Filters all Istio configs from Istio registry by given namespaces and return a map config list per namespace
+func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs {
+	filtered := IstioConfigs{}
+
+	for _, ns := range nss {
+		if filtered[ns] == nil {
+			filtered[ns] = new(IstioConfigList)
+		}
+		for _, dr := range configList.DestinationRules {
+			if dr.Namespace == ns {
+				filtered[ns].DestinationRules = append(filtered[ns].DestinationRules, dr)
+			}
+		}
+
+		for _, ef := range configList.EnvoyFilters {
+			if ef.Namespace == ns {
+				filtered[ns].EnvoyFilters = append(filtered[ns].EnvoyFilters, ef)
+			}
+		}
+
+		for _, gw := range configList.Gateways {
+			if gw.Namespace == ns {
+				filtered[ns].Gateways = append(filtered[ns].Gateways, gw)
+			}
+		}
+
+		for _, se := range configList.ServiceEntries {
+			if se.Namespace == ns {
+				filtered[ns].ServiceEntries = append(filtered[ns].ServiceEntries, se)
+			}
+		}
+
+		for _, sc := range configList.Sidecars {
+			if sc.Namespace == ns {
+				filtered[ns].Sidecars = append(filtered[ns].Sidecars, sc)
+			}
+		}
+
+		for _, vs := range configList.VirtualServices {
+			if vs.Namespace == ns {
+				filtered[ns].VirtualServices = append(filtered[ns].VirtualServices, vs)
+			}
+		}
+
+		for _, we := range configList.WorkloadEntries {
+			if we.Namespace == ns {
+				filtered[ns].WorkloadEntries = append(filtered[ns].WorkloadEntries, we)
+			}
+		}
+
+		for _, wg := range configList.WorkloadGroups {
+			if wg.Namespace == ns {
+				filtered[ns].WorkloadGroups = append(filtered[ns].WorkloadGroups, wg)
+			}
+		}
+
+		for _, ap := range configList.AuthorizationPolicies {
+			if ap.Namespace == ns {
+				filtered[ns].AuthorizationPolicies = append(filtered[ns].AuthorizationPolicies, ap)
+			}
+		}
+
+		for _, pa := range configList.PeerAuthentications {
+			if pa.Namespace == ns {
+				filtered[ns].PeerAuthentications = append(filtered[ns].PeerAuthentications, pa)
+			}
+		}
+
+		for _, ra := range configList.RequestAuthentications {
+			if ra.Namespace == ns {
+				filtered[ns].RequestAuthentications = append(filtered[ns].RequestAuthentications, ra)
+			}
+		}
+	}
+	return &filtered
+}

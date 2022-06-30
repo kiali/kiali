@@ -11,13 +11,13 @@ const RequestAuthenticationCheckerType = "requestauthentication"
 
 type RequestAuthenticationChecker struct {
 	RequestAuthentications []security_v1beta.RequestAuthentication
-	WorkloadList           models.WorkloadList
+	WorkloadsPerNamespace  map[string]models.WorkloadList
 }
 
 func (m RequestAuthenticationChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	validations.MergeValidations(common.RequestAuthenticationMultiMatchChecker(RequestAuthenticationCheckerType, m.RequestAuthentications, m.WorkloadList).Check())
+	validations.MergeValidations(common.RequestAuthenticationMultiMatchChecker(RequestAuthenticationCheckerType, m.RequestAuthentications, m.WorkloadsPerNamespace).Check())
 
 	for _, peerAuthn := range m.RequestAuthentications {
 		validations.MergeValidations(m.runChecks(peerAuthn))
@@ -35,7 +35,7 @@ func (m RequestAuthenticationChecker) runChecks(requestAuthn security_v1beta.Req
 		matchLabels = requestAuthn.Spec.Selector.MatchLabels
 	}
 	enabledCheckers := []Checker{
-		common.SelectorNoWorkloadFoundChecker(RequestAuthenticationCheckerType, matchLabels, m.WorkloadList),
+		common.SelectorNoWorkloadFoundChecker(RequestAuthenticationCheckerType, matchLabels, m.WorkloadsPerNamespace),
 	}
 
 	for _, checker := range enabledCheckers {

@@ -3,6 +3,7 @@ package handlers
 import (
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -47,10 +48,40 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 		log.Error(errValidations)
 		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
 	} else {
-		validationSummary = istioConfigValidationResults.SummarizeValidation(namespace)
+		validationSummary = *istioConfigValidationResults.SummarizeValidation(namespace)
 	}
 
 	RespondWithJSON(w, http.StatusOK, validationSummary)
+}
+
+// ConfigValidationSummary is the API handler to fetch validations summary to be displayed.
+// It is related to all the Istio Objects within given namespaces
+func ConfigValidationSummary(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	namespaces := params.Get("namespaces") // csl of namespaces
+	nss := []string{}
+	if len(namespaces) > 0 {
+		nss = strings.Split(namespaces, ",")
+	}
+	business, err := getBusiness(r)
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	validationSummaries := models.ValidationSummaries{}
+	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), "", "", "")
+	if errValidations != nil {
+		log.Error(errValidations)
+		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
+	} else {
+		for _, ns := range nss {
+			validationSummaries[ns] = istioConfigValidationResults.SummarizeValidation(ns)
+		}
+	}
+
+	RespondWithJSON(w, http.StatusOK, validationSummaries)
 }
 
 // NamespaceUpdate is the API to perform a patch on a Namespace configuration

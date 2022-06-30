@@ -11,7 +11,6 @@ import (
 )
 
 type NoDestinationChecker struct {
-	Namespace             string
 	Namespaces            models.Namespaces
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	DestinationRule       networking_v1beta1.DestinationRule

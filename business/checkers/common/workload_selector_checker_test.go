@@ -54,10 +54,10 @@ func testFailureWithWorkloadList(assert *assert.Assertions, selector map[string]
 }
 
 func testFailureWithEmptyWorkloadList(assert *assert.Assertions, selector map[string]string) {
-	testFailure(assert, selector, data.CreateWorkloadList("test", models.WorkloadListItem{}), "generic.selector.workloadnotfound")
+	testFailure(assert, selector, data.CreateWorkloadsPerNamespace("test", models.WorkloadListItem{}), "generic.selector.workloadnotfound")
 }
 
-func testFailure(assert *assert.Assertions, selector map[string]string, wl models.WorkloadList, code string) {
+func testFailure(assert *assert.Assertions, selector map[string]string, wl map[string]models.WorkloadList, code string) {
 	vals, valid := WorkloadSelectorNoWorkloadFoundChecker(
 		"sidecar",
 		selector,

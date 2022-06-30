@@ -10,7 +10,6 @@ import (
 )
 
 type SubsetPresenceChecker struct {
-	Namespace        string
 	Namespaces       []string
 	DestinationRules []networking_v1beta1.DestinationRule
 	VirtualService   networking_v1beta1.VirtualService
@@ -116,7 +115,7 @@ func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost stri
 		host := destinationRule.Spec.Host
 
 		drHost := kubernetes.GetHost(host, destinationRule.Namespace, destinationRule.ClusterName, checker.Namespaces)
-		vsHost := kubernetes.GetHost(virtualServiceHost, checker.Namespace, checker.VirtualService.ClusterName, checker.Namespaces)
+		vsHost := kubernetes.GetHost(virtualServiceHost, checker.VirtualService.Namespace, checker.VirtualService.ClusterName, checker.Namespaces)
 
 		// TODO Host could be in another namespace (FQDN)
 		if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) {

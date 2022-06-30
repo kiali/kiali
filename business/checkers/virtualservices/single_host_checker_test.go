@@ -17,7 +17,6 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 		*buildVirtualService("virtual-2", "ratings"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -29,7 +28,6 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 		*buildVirtualService("virtual-2", "ratings"),
 	}
 	vals = SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -42,7 +40,6 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 		*buildVirtualServiceWithGateway("virtual-2", "ratings", "bookinfo-gateway"),
 	}
 	vals = SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -56,7 +53,6 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 	}
 
 	vals = SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -70,7 +66,6 @@ func TestOneVirtualServicePerFQDNHost(t *testing.T) {
 		*buildVirtualService("virtual-2", "ratings.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -83,7 +78,6 @@ func TestOneVirtualServicePerFQDNWildcardHost(t *testing.T) {
 		*buildVirtualService("virtual-2", "*.eshop.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -98,7 +92,6 @@ func TestRepeatingSimpleHost(t *testing.T) {
 	}
 
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -125,7 +118,6 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 	}
 
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -138,7 +130,6 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 	}
 
 	vals = SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -151,7 +142,6 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 	}
 
 	vals = SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -170,7 +160,6 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		*buildVirtualService("virtual-2", "reviews.bookinfo"),
 	}
 	vals := SingleHostChecker{
-		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
@@ -185,7 +174,6 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		*buildVirtualService("virtual-2", "reviews.bookinfo"),
 	}
 	vals = SingleHostChecker{
-		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
@@ -201,7 +189,6 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		*buildVirtualServiceWithGateway("virtual-3", "reviews", "bookinfo-gateway-auto"),
 	}
 	vals = SingleHostChecker{
-		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
@@ -216,7 +203,6 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		*buildVirtualService("virtual-2", "reviews.bookinfo"),
 	}
 	vals = SingleHostChecker{
-		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
@@ -231,7 +217,6 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		*buildVirtualService("virtual-2", "details.bookinfo"),
 	}
 	vals = SingleHostChecker{
-		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
@@ -247,7 +232,6 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 		*buildVirtualService("virtual-2", "details.bookinfo"),
 	}
 	vals = SingleHostChecker{
-		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
 			{Name: "bookinfo"},
 		},
@@ -266,7 +250,6 @@ func TestRepeatingFQDNHost(t *testing.T) {
 		*buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -293,7 +276,6 @@ func TestRepeatingFQDNWildcardHost(t *testing.T) {
 		*buildVirtualService("virtual-3", "*.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -320,7 +302,6 @@ func TestIncludedIntoWildCard(t *testing.T) {
 		*buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -346,7 +327,6 @@ func TestIncludedIntoWildCard(t *testing.T) {
 		*buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
 	vals = SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -373,7 +353,6 @@ func TestShortHostNameIncludedIntoWildCard(t *testing.T) {
 		*buildVirtualService("virtual-3", "reviews"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -400,7 +379,6 @@ func TestWildcardisMarkedInvalid(t *testing.T) {
 		*buildVirtualService("virtual-3", "reviews"),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -427,7 +405,6 @@ func TestMultipleHostsFailing(t *testing.T) {
 			"mongo.backup.svc.cluster.local", "mongo.staging.svc.cluster.local"}),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 
@@ -451,7 +428,6 @@ func TestMultipleHostsPassing(t *testing.T) {
 			"mongo.backup.svc.cluster.local", "mongo.staging.svc.cluster.local"}),
 	}
 	vals := SingleHostChecker{
-		Namespace:       "bookinfo",
 		VirtualServices: vss,
 	}.Check()
 

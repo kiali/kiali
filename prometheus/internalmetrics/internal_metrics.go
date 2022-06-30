@@ -309,9 +309,14 @@ func GetValidationProcessingTimePrometheusTimer(namespace string, service string
 			labelNamespace: namespace,
 			labelService:   service,
 		}
-	} else {
+	} else if namespace != "" {
 		labels = prometheus.Labels{
 			labelNamespace: namespace,
+			labelService:   "_all_",
+		}
+	} else {
+		labels = prometheus.Labels{
+			labelNamespace: "_all_",
 			labelService:   "_all_",
 		}
 	}

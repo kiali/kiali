@@ -428,7 +428,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   fetchValidations(isAscending: boolean, sortField: SortField<NamespaceInfo>) {
     _.chunk(this.state.namespaces, 10).forEach(chunk => {
       this.promises
-        .registerChained('validationchunks', undefined, () => this.fetchValidationChunk(chunk))
+        .registerChained('validation', undefined, () => this.fetchValidationResult(chunk))
         .then(() => {
           this.setState(prevState => {
             let newNamespaces = prevState.namespaces.slice();
@@ -441,21 +441,22 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     });
   }
 
-  fetchValidationChunk(chunk: NamespaceInfo[]) {
+  fetchValidationResult(chunk: NamespaceInfo[]) {
+    const nss: string[] = [];
+    chunk.forEach(ns => {
+      nss.push(ns.name);
+    });
+
     return Promise.all(
-      chunk.map(nsInfo => {
-        return Promise.all([
-          API.getNamespaceValidations(nsInfo.name),
-          API.getIstioConfig(nsInfo.name, ['authorizationpolicies', 'sidecars'], false, '', '')
-        ]).then(results => {
-          return { validations: results[0].data, istioConfig: results[1].data, nsInfo: nsInfo };
-        });
-      })
+      [
+        API.getConfigValidations(nss),
+        API.getAllIstioConfigs(nss, false, '', '')
+      ]
     )
       .then(results => {
-        results.forEach(result => {
-          result.nsInfo.validations = result.validations;
-          result.nsInfo.istioConfig = result.istioConfig;
+        chunk.forEach(nsInfo => {
+          nsInfo.validations = results[0].data[nsInfo.name]
+          nsInfo.istioConfig = results[1].data[nsInfo.name]
         });
       })
       .catch(err => this.handleAxiosError('Could not fetch validations status', err));

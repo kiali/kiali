@@ -8,7 +8,6 @@ import (
 )
 
 type SingleHostChecker struct {
-	Namespace       string
 	Namespaces      models.Namespaces
 	VirtualServices []networking_v1beta1.VirtualService
 }

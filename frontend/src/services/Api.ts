@@ -176,8 +176,27 @@ export const getIstioConfig = (
   if (namespace) {
     return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.istioConfig(namespace), params, {});
   } else {
-    return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.allIstioConfigs, params, {});
+    return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.allIstioConfigs(), params, {});
   }
+};
+
+export const getAllIstioConfigs = (
+  namespaces: string[],
+  validate: boolean,
+  labelSelector: string,
+  workloadSelector: string
+) => {
+  const params: any = namespaces && namespaces.length > 0 ? { namespaces: namespaces.join(',') } : {};
+  if (validate) {
+    params.validate = validate;
+  }
+  if (labelSelector) {
+    params.labelSelector = labelSelector;
+  }
+  if (workloadSelector) {
+    params.workloadSelector = workloadSelector;
+  }
+  return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.allIstioConfigs(), params, {});
 };
 
 export const getIstioConfigDetail = (namespace: string, objectType: string, object: string, validate: boolean) => {
@@ -208,6 +227,10 @@ export const createIstioConfigDetail = (
   json: string
 ): Promise<Response<string>> => {
   return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(namespace, objectType), {}, json);
+};
+
+export const getConfigValidations = (namespaces: string[]) => {
+  return newRequest<ValidationStatus>(HTTP_VERBS.GET, urls.configValidations(), { namespaces: namespaces.join(',') }, {});
 };
 
 export const getServices = (namespace: string, params: { [key: string]: string } = {}) => {

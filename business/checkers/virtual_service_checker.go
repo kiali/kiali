@@ -11,7 +11,6 @@ import (
 const VirtualCheckerType = "virtualservice"
 
 type VirtualServiceChecker struct {
-	Namespace        string
 	Namespaces       models.Namespaces
 	VirtualServices  []networking_v1beta1.VirtualService
 	DestinationRules []networking_v1beta1.DestinationRule
@@ -46,7 +45,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	enabledCheckers := []GroupChecker{
-		virtualservices.SingleHostChecker{Namespace: in.Namespace, Namespaces: in.Namespaces, VirtualServices: in.VirtualServices},
+		virtualservices.SingleHostChecker{Namespaces: in.Namespaces, VirtualServices: in.VirtualServices},
 	}
 
 	for _, checker := range enabledCheckers {
@@ -62,8 +61,8 @@ func (in VirtualServiceChecker) runChecks(virtualService networking_v1beta1.Virt
 	key, rrValidation := EmptyValidValidation(virtualServiceName, virtualService.Namespace, VirtualCheckerType)
 
 	enabledCheckers := []Checker{
-		virtualservices.RouteChecker{VirtualService: virtualService, Namespace: in.Namespace, Namespaces: in.Namespaces.GetNames()},
-		virtualservices.SubsetPresenceChecker{Namespace: in.Namespace, Namespaces: in.Namespaces.GetNames(), VirtualService: virtualService, DestinationRules: in.DestinationRules},
+		virtualservices.RouteChecker{VirtualService: virtualService, Namespaces: in.Namespaces.GetNames()},
+		virtualservices.SubsetPresenceChecker{Namespaces: in.Namespaces.GetNames(), VirtualService: virtualService, DestinationRules: in.DestinationRules},
 		common.ExportToNamespaceChecker{ExportTo: virtualService.Spec.ExportTo, Namespaces: in.Namespaces},
 	}
 

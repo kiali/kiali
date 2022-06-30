@@ -20,7 +20,6 @@ func prepareTestForVirtualService(vs *networking_v1beta1.VirtualService) models.
 	}
 
 	virtualServiceChecker := VirtualServiceChecker{
-		Namespace:        "bookinfo",
 		DestinationRules: destinationList,
 		VirtualServices:  vss,
 	}
@@ -87,7 +86,6 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	}
 
 	virtualServiceChecker := VirtualServiceChecker{
-		Namespace:        "bookinfo",
 		DestinationRules: destinationList,
 		VirtualServices:  fakeVirtualServiceMultipleIstioObjects(),
 	}

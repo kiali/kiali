@@ -86,8 +86,8 @@ describe('Overview page', () => {
     // Ignore other calls
     mockAPIToPromise('getNamespaceMetrics', null, false);
     mockAPIToPromise('getNamespaceTls', null, false);
-    mockAPIToPromise('getNamespaceValidations', null, false);
-    mockAPIToPromise('getIstioConfig', null, false);
+    mockAPIToPromise('getConfigValidations', null, false);
+    mockAPIToPromise('getAllIstioConfigs', null, false);
     mockAPIToPromise('getIstioPermissions', {}, false);
   });
 

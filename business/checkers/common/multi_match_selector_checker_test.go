@@ -155,12 +155,12 @@ func assertMultimatchFailure(t *testing.T, code string, vals models.IstioValidat
 	}
 }
 
-func workloadList() models.WorkloadList {
+func workloadList() map[string]models.WorkloadList {
 	wli := []models.WorkloadListItem{
 		data.CreateWorkloadListItem("details-v1", map[string]string{"app": "details", "version": "v1"}),
 		data.CreateWorkloadListItem("details-v2", map[string]string{"app": "details", "version": "v2"}),
 		data.CreateWorkloadListItem("details-v3", map[string]string{"app": "details", "version": "v3"}),
 	}
 
-	return data.CreateWorkloadList("bookinfo", wli...)
+	return data.CreateWorkloadsPerNamespace("bookinfo", wli...)
 }
