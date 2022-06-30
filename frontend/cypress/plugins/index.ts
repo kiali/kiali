@@ -19,6 +19,8 @@ const axios = require('axios');
 // eslint-disable-next-line no-unused-vars
 module.exports = (on, config) => {
   config.env.cookie = false;
+  config.env.AUTH_PROVIDER = config.env.AUTH_PROVIDER || 'my_htpasswd_provider';
+
   async function exportConfig() {
     const getAuthStrategy = async (url: string) => {
       try {
