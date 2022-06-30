@@ -15,7 +15,7 @@ describe('graphload', () => {
             })
             .as('data');
 
-        cy.login("ibmcloud", Cypress.env('USERNAME'), Cypress.env('PASSWD'));
+        cy.login(Cypress.env('USERNAME'), Cypress.env('PASSWD'));
     })
 
     beforeEach(() => {

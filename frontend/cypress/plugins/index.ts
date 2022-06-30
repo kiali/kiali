@@ -19,6 +19,9 @@ const axios = require('axios');
 // eslint-disable-next-line no-unused-vars
 module.exports = (on, config) => {
   config.env.cookie = false;
+  // This name is non-standard and might change based on your environment hence the separate
+  // env variable.
+  config.env.AUTH_HTTP_PROVIDER_NAME = config.env.AUTH_HTTP_PROVIDER_NAME || 'my_htpasswd_provider';
   config.env.AUTH_PROVIDER = config.env.AUTH_PROVIDER || 'my_htpasswd_provider';
 
   async function exportConfig() {

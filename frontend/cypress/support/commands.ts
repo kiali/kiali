@@ -32,7 +32,16 @@ declare namespace Cypress {
      */
     getBySel(selector: string, ...args: any): Chainable<Subject>;
 
-    login(provider: string, username: string, password: string): Chainable<Subject>;
+    /**
+     * Login to Kiali with the given username and password.
+     * Sets the 'kiali-token-aes' cookie for later use.
+     *
+     * Provider will be determined by the environment variable AUTH_PROVIDER
+     * and auth strategy is fetched from the Kiali API.
+     * @param username
+     * @param password
+     */
+    login(username: string, password: string): Chainable<Subject>;
 
     logout(): Chainable<Subject>;
   }
@@ -40,10 +49,11 @@ declare namespace Cypress {
 
 let haveCookie = Cypress.env('cookie');
 
-Cypress.Commands.add('login', (provider: string, username: string, password: string) => {
+Cypress.Commands.add('login', (username: string, password: string) => {
   cy.log(`auth cookie is: ${haveCookie}`);
 
   const auth_strategy = Cypress.env('AUTH_STRATEGY');
+  const provider = Cypress.env('AUTH_PROVIDER');
 
   cy.window().then((win: any) => {
     if (auth_strategy !== 'openshift') {
@@ -63,7 +73,7 @@ Cypress.Commands.add('login', (provider: string, username: string, password: str
       );
 
       if (auth_strategy === 'openshift') {
-        if (provider === 'my_htpasswd_provider') {
+        if (provider === Cypress.env('AUTH_HTTP_PROVIDER_NAME')) {
           // This flow is ripped from the kiali-operator molecule tests:
           // https://github.com/kiali/kiali-operator/blob/master/molecule/openshift-auth-test/converge.yml#L59
           cy.request('api/auth/info').then(({ body }) => {
