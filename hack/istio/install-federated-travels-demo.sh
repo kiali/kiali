@@ -11,7 +11,6 @@
 : ${CLIENT_EXE:=oc}
 : ${DELETE_DEMOS:=false}
 : ${FTRAVELS:=federated-travels}
-: ${MSTORE:=music-store}
 : ${BASE_URL:=https://raw.githubusercontent.com/kiali/demos/master}
 
 apply_network_attachment() {
@@ -41,28 +40,33 @@ SCC
 
 install_ftravels_app() {
   APP="federated-travels"
+
   declare -a arr=("east-mesh-system" "west-mesh-system" "east-travel-agency" "east-travel-portal" "east-travel-control" "west-travel-agency")
 
   for i in "${arr[@]}"
   do
     if [ "${IS_OPENSHIFT}" == "true" ]; then
-      ${CLIENT_EXE} new-project ${i}
+        ${CLIENT_EXE} new-project ${i}
     else
       ${CLIENT_EXE} create namespace ${i}
     fi
+    ${CLIENT_EXE} label namespace ${i} istio-injection=enabled --overwrite
   done
 
   ${CLIENT_EXE} apply -f ${BASE_URL}/${APP}/ossm-subs.yaml
 
   ${CLIENT_EXE} apply -n east-mesh-system -f ${BASE_URL}/${APP}/east/east-ossm.yaml
   ${CLIENT_EXE} apply -n west-mesh-system -f ${BASE_URL}/${APP}/west/west-ossm.yaml
+
   ${CLIENT_EXE} wait --for condition=Ready -n east-mesh-system smmr/default --timeout 300s
   ${CLIENT_EXE} wait --for condition=Ready -n west-mesh-system smmr/default --timeout 300s
+
   ${CLIENT_EXE} get configmap istio-ca-root-cert -o jsonpath='{.data.root-cert\.pem}' -n east-mesh-system > east-cert.pem
   ${CLIENT_EXE} create configmap east-ca-root-cert --from-file=root-cert.pem=east-cert.pem -n west-mesh-system
 
   ${CLIENT_EXE} get configmap istio-ca-root-cert -o jsonpath='{.data.root-cert\.pem}' -n west-mesh-system > west-cert.pem
   ${CLIENT_EXE} create configmap west-ca-root-cert --from-file=root-cert.pem=west-cert.pem -n east-mesh-system
+
   ${CLIENT_EXE} apply -n east-mesh-system -f ${BASE_URL}/${APP}/east/east-federation.yaml
   ${CLIENT_EXE} apply -n west-mesh-system -f ${BASE_URL}/${APP}/west/west-federation.yaml
 
@@ -128,10 +132,10 @@ else
     declare -a arr=("east-mesh-system" "west-mesh-system" "east-travel-agency" "east-travel-portal" "east-travel-control" "west-travel-agency")
 
     for i in "${arr[@]}"
-    do
+      do
         if [ "${IS_OPENSHIFT}" == "true" ]; then
           ${CLIENT_EXE} delete project ${i}
-        else
+         else
           ${CLIENT_EXE} delete ns ${i} --ignore-not-found=true
         fi
     done

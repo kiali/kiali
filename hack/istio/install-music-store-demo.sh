@@ -50,8 +50,8 @@ install_mstore_app() {
   ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/ui.yaml -n ${MSTORE}
   ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/backend.yaml -n ${MSTORE}
 
-  #${CLIENT_EXE} wait --timeout 60s --for condition=available deployment/music-store-backend-v1 -n music-store
-  #${CLIENT_EXE} wait --timeout 60s --for condition=available deployment/music-store-ui-v1 -n music-store
+  ${CLIENT_EXE} wait --timeout 60s --for condition=available deployment/music-store-backend-v1 -n music-store
+  ${CLIENT_EXE} wait --timeout 60s --for condition=available deployment/music-store-ui-v1 -n music-store
 
   export INGRESS_PORT=$(${CLIENT_EXE} -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
   if [ "${IS_OPENSHIFT}" == "true" ]; then
@@ -63,9 +63,6 @@ install_mstore_app() {
   export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
   export MUSIC_STORE_UI=http://$GATEWAY_URL/
   export MUSIC_STORE_BACKEND=http://$GATEWAY_URL/api
-
-  echo "API url: ${MUSIC_STORE_BACKEND} "
-  echo "UI url: ${MUSIC_STORE_UI} "
 
   cat <<EOF | $CLIENT_EXE apply -f -
 apiVersion: networking.istio.io/v1alpha3
@@ -158,7 +155,8 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
 
     echo "Installing the ${MSTORE} app in the ${MSTORE} namespace..."
     install_mstore_app
-
+    echo "You should be able to access the API with the url: ${MUSIC_STORE_BACKEND} "
+    echo "You should be able to access the UI with the url: ${MUSIC_STORE_UI} "
 else
 
     echo "Deleting the '${MSTORE}' app in the '${MSTORE}' namespace..."

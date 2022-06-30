@@ -50,7 +50,10 @@ install_topology_generator_demo() {
         ${CLIENT_EXE} create ns ${TOPO}
     fi
     ${CLIENT_EXE} label namespace  ${TOPO} istio-injection=enabled --overwrite=true
-    apply_network_attachment ${TOPO}
+
+    if [ "${IS_OPENSHIFT}" == "true" ]; then
+      apply_network_attachment ${TOPO}
+    fi
 
     ${CLIENT_EXE} apply -n ${TOPO}  -f ${BASE_URL}/topology-generator/deploy/generator.yaml
 }
@@ -133,12 +136,11 @@ else
     echo "Deleting the '${TOPO}' app in the '${TOPO}' namespace..."
 
     if [ "${IS_OPENSHIFT}" == "true" ]; then
-            ${CLIENT_EXE} delete project ${TOPO}
-            ${CLIENT_EXE} delete SecurityContextConstraints ${TOPO}
-            ${CLIENT_EXE} delete ns --selector=generated-by=mimik
-            ${CLIENT_EXE} delete ns ${TOPO}
+        ${CLIENT_EXE} delete project ${TOPO}
+        ${CLIENT_EXE} delete SecurityContextConstraints ${TOPO}
     fi
-
+    ${CLIENT_EXE} delete ns --selector=generated-by=mimik
+    ${CLIENT_EXE} delete ns ${TOPO}
   fi
 fi
 

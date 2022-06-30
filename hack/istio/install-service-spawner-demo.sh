@@ -60,6 +60,7 @@ install_service_spawner_demo() {
                                      | sed -e "s:this-service:service-$c:g" \
                                      | sed -e "s:target-service:service-$next:g" \
                                      | sed -e "s:this-namespace:$SSPAWNER:g" \
+                                     | sed -e "s:wget:sleep 60;wget:g" \
                                      > tmp-$c.yaml
       ${CLIENT_EXE} apply -f tmp-${c}.yaml -n ${SSPAWNER}
   done
@@ -68,7 +69,6 @@ install_service_spawner_demo() {
     do
       rm tmp-${c}.yaml
   done
-  #rm tmp.yaml
 }
 
 while [ $# -gt 0 ]; do
