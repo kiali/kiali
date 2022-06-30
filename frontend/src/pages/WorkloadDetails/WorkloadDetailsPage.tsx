@@ -44,8 +44,8 @@ type ReduxProps = {
 
 type WorkloadDetailsPageProps = ReduxProps & RouteComponentProps<WorkloadId>;
 
-const tabName = 'tab';
-const defaultTab = 'info';
+export const tabName = 'tab';
+export const defaultTab = 'info';
 
 const paramToTab: { [key: string]: number } = {
   info: 0,
