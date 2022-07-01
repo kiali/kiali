@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import {Title, TitleSizes, Tooltip, TooltipPosition} from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { IRow, sortable, SortByDirection, Table, TableBody, TableHeader, cellWidth } from '@patternfly/react-table';
 import { Link } from 'react-router-dom';
@@ -13,7 +13,7 @@ import { createIcon } from 'components/Health/Helper';
 import { sortFields } from './FiltersAndSorts';
 import { SortField } from 'types/SortFilters';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { createTooltipIcon } from 'config/KialiIcon';
+import { createTooltipIcon, KialiIcon } from 'config/KialiIcon';
 
 export interface TrafficListItem {
   direction: TrafficDirection;
@@ -21,6 +21,7 @@ export interface TrafficListItem {
   badge: PFBadgeType;
   node: TrafficNode;
   protocol: string;
+  mTLS?: number;
   trafficRate: string;
   trafficPercentSuccess: string;
 }
@@ -57,8 +58,21 @@ const columns = [
   }
 ];
 
+function LockIcon(props) {
+
+  return (
+    <Tooltip
+      position={TooltipPosition.top}
+      content={<>{props.mTLS} % of mTLS traffic </>}
+    >
+      <KialiIcon.MtlsLock className={lockIconStyle}/>
+    </Tooltip>
+  );
+};
+
 // Style constants
 const containerPadding = style({ padding: '20px' });
+const lockIconStyle = style({ marginLeft: '5px' });
 
 class TrafficListComponent extends FilterComponent.Component<
   TrafficListComponentProps,
@@ -168,6 +182,7 @@ class TrafficListComponent extends FilterComponent.Component<
         badge: badge,
         node: ti.node,
         protocol: (ti.traffic.protocol || 'N/A').toUpperCase(),
+        mTLS: ti.mTLS,
         healthStatus: this.getHealthStatus(ti),
         ...this.getTraffic(ti.traffic)
       };
@@ -243,7 +258,7 @@ class TrafficListComponent extends FilterComponent.Component<
             </>,
             <>{item.trafficRate}</>,
             <>{item.trafficPercentSuccess}</>,
-            <>{item.protocol}</>,
+            <>{item.mTLS ? <>{item.protocol}<LockIcon mTLS={item.mTLS}></LockIcon></> : item.protocol }</>,
             <>
               {!!links.metrics && (
                 <Link key={`link_m_${item.badge}_${name}`} to={links.metrics} className={'virtualitem_definition_link'}>
