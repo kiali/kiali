@@ -15,7 +15,6 @@ export CYPRESS_BASE_URL=<value>               # defaults to http://localhost:300
 export CYPRESS_USERNAME=<value>               # defaults to jenkins, opt. kubeadmin
 export CYPRESS_PASSWD=<value>                 # no defaults
 export CYPRESS_AUTH_PROVIDER=<value>          # defaults to my_htpasswd_provider
-export CYPRESS_AUTH_HTP_PROVIDER_NAME=<value> # defaults to my_htpasswd_provider. Can pass a custom name for the htp provider.
 ```
 
 Tests can be run with the cypress browser:

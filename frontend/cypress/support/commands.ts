@@ -49,6 +49,49 @@ declare namespace Cypress {
 
 let haveCookie = Cypress.env('cookie');
 
+// Converts redirects from:
+//   302: https://localhost:8080/login?redirect=%2F
+// to:
+//   https://localhost:8080/login?redirect=%2F
+function parseRedirect(redirect: string) {
+  return redirect.replace('302: ', '');
+}
+
+// finishLogin is only separated because we need to chain off .then
+// and this same block is repeated.
+function finishLogin(authEndpoint: string, username: string, password: string) {
+  const openshiftLoginEndpointURL = new URL(authEndpoint);
+  const openshiftLoginEndpoint = openshiftLoginEndpointURL.origin + openshiftLoginEndpointURL.pathname;
+  const loginParams = new URLSearchParams(openshiftLoginEndpointURL.search);
+  cy.getCookie('csrf').then(cookie => {
+    cy.request({
+      url: openshiftLoginEndpoint,
+      method: 'POST',
+      form: true,
+      body: {
+        username: username,
+        password: password,
+        then: loginParams.get('then'),
+        csrf: cookie.value
+      }
+    }).then(resp => {
+      const kialiURLWithToken = new URL(resp.redirects[1].replace('302: ', ''));
+      const kialiParams = new URLSearchParams(kialiURLWithToken.hash.slice(1));
+      cy.request({
+        url: 'api/authenticate',
+        body: {
+          access_token: kialiParams.get('access_token'),
+          expires_in: kialiParams.get('expires_in'),
+          scope: kialiParams.get('scope'),
+          token_type: kialiParams.get('token_type')
+        },
+        method: 'POST',
+        form: true
+      });
+    });
+  });
+}
+
 Cypress.Commands.add('login', (username: string, password: string) => {
   cy.log(`auth cookie is: ${haveCookie}`);
 
@@ -62,10 +105,6 @@ Cypress.Commands.add('login', (username: string, password: string) => {
     }
 
     if (haveCookie === false || haveCookie === undefined) {
-      cy.intercept('api/authenticate').as('authorized'); //request setting kiali cookie
-      // Cypress.Cookies.debug(true) // now Cypress will log when it alters cookies
-      // cy.getCookies()
-
       cy.log(
         `provider: ${provider},
 					username: ${username},
@@ -73,56 +112,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
       );
 
       if (auth_strategy === 'openshift') {
-        if (provider === Cypress.env('AUTH_HTP_PROVIDER_NAME')) {
-          // This flow is ripped from the kiali-operator molecule tests:
-          // https://github.com/kiali/kiali-operator/blob/master/molecule/openshift-auth-test/converge.yml#L59
-          cy.request('api/auth/info').then(({ body }) => {
-            const authEndpoint = body.authorizationEndpoint;
-            cy.request({
-              url: authEndpoint,
-              method: 'GET',
-              followRedirect: false
-            }).then(resp => {
-              const auth2Endpoint = resp.redirectedToUrl!;
-              cy.request({
-                url: auth2Endpoint,
-                method: 'GET',
-                followRedirect: false
-              }).then(() => {
-                const openshiftLoginEndpointURL = new URL(auth2Endpoint);
-                const openshiftLoginEndpoint = openshiftLoginEndpointURL.origin + openshiftLoginEndpointURL.pathname;
-                const loginParams = new URLSearchParams(openshiftLoginEndpointURL.search);
-                cy.getCookie('csrf').then(cookie => {
-                  cy.request({
-                    url: openshiftLoginEndpoint,
-                    method: 'POST',
-                    form: true,
-                    body: {
-                      username: username,
-                      password: password,
-                      then: loginParams.get('then'),
-                      csrf: cookie.value
-                    }
-                  }).then(resp => {
-                    const kialiURLWithToken = new URL(resp.redirects[1].replace('302: ', ''));
-                    const kialiParams = new URLSearchParams(kialiURLWithToken.hash.slice(1));
-                    cy.request({
-                      url: 'api/authenticate',
-                      body: {
-                        access_token: kialiParams.get('access_token'),
-                        expires_in: kialiParams.get('expires_in'),
-                        scope: kialiParams.get('scope'),
-                        token_type: kialiParams.get('token_type')
-                      },
-                      method: 'POST',
-                      form: true
-                    });
-                  });
-                });
-              });
-            });
-          });
-        } else if (provider === 'ibmcloud') {
+        if (provider === 'ibmcloud') {
           // This flow comes from: https://cloud.ibm.com/docs/openshift?topic=openshift-access_cluster#access_api_key
           cy.request('api/auth/info').then(({ body }) => {
             const authEndpoint = body.authorizationEndpoint;
@@ -150,6 +140,40 @@ Cypress.Commands.add('login', (username: string, password: string) => {
                   token_type: params.get('token_type')
                 }
               });
+            });
+          });
+        } else {
+          // For all other providers, we assume it's an htpasswd like provider.
+          // This covers cases where the provider is htpasswd but named something different.
+          //
+          // This flow is ripped from the kiali-operator molecule tests:
+          // https://github.com/kiali/kiali-operator/blob/master/molecule/openshift-auth-test/converge.yml#L59
+          cy.request('api/auth/info').then(({ body }) => {
+            let authEndpoint = body.authorizationEndpoint;
+            cy.request({
+              url: authEndpoint,
+              method: 'GET',
+              followRedirect: true
+            }).then(resp => {
+              // If we got redirected, the login endpoint should be the redirect url and not the auth endpoint from the API.
+              if (resp.redirects && resp.redirects.length > 0) {
+                authEndpoint = parseRedirect(resp.redirects[0]);
+                finishLogin(authEndpoint, username, password);
+              } else {
+                // If we didn't get redirected, there's multiple providers and we need to choose the provider
+                // that was requested by adding it as a query param and then we'll get redirected after login.
+                const authEndpointURL = new URL(authEndpoint);
+                authEndpointURL.searchParams.set('idp', provider);
+                authEndpoint = authEndpointURL.toString();
+                cy.request({
+                  url: authEndpoint,
+                  method: 'GET',
+                  followRedirect: true
+                }).then(resp => {
+                  authEndpoint = parseRedirect(resp.redirects[0]);
+                  finishLogin(authEndpoint, username, password);
+                });
+              }
             });
           });
         }
