@@ -546,6 +546,12 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
           this.contextMenuRef!.current!.handleContextMenu(cytoscapeEvent.summaryTarget, true);
         }
       }, CytoscapeGraph.hoverInMs);
+
+      // change to mouse pointer for consistency in UI
+      const container = cy.container();
+      if (container !== null) {
+        container.style.cursor = 'pointer';
+      }
     });
 
     cy.on('mouseout', 'node,edge', (evt: Cy.EventObject) => {
@@ -569,6 +575,12 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
 
       // remove highlighting
       this.handleMouseOut(cytoscapeEvent);
+
+      // change to mouse pointer back to default, for consistency in UI
+      const container = cy.container();
+      if (container !== null) {
+        container.style.cursor = 'default';
+      }
     });
 
     cy.on('viewport', (evt: Cy.EventObject) => {
