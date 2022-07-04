@@ -55,9 +55,9 @@ install_mstore_app() {
 
   export INGRESS_PORT=$(${CLIENT_EXE} -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-       export INGRESS_HOST=$(crc ip)
-    else
-       export INGRESS_HOST=$(minikube ip)
+    export INGRESS_HOST=$(crc ip)
+  else
+    export INGRESS_HOST=$(minikube ip)
   fi
 
   export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
