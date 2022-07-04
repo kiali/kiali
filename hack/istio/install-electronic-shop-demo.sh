@@ -98,7 +98,7 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
 else
 
     echo "Deleting the '${ESHOP}' app in the '${ESHOP}' namespace..."
-    ${CLIENT_EXE} delete -n ${ESHOP} -f <(curl -L ${BASE_RUL}/${ESHOP}/${ESHOP}.yaml)
+    ${CLIENT_EXE} delete -n ${ESHOP} -f <(curl -L ${BASE_URL}/${ESHOP}/${ESHOP}.yaml)
     ${CLIENT_EXE} delete ns ${ESHOP} --ignore-not-found=true
     if [ "${IS_OPENSHIFT}" == "true" ]; then
       ${CLIENT_EXE} delete project ${ESHOP}
