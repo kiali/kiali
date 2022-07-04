@@ -80,7 +80,7 @@ while [ $# -gt 0 ]; do
       NUM_NS="$2"
       shift;shift
       ;;
-    -g|--generate_config)
+    -g|--generate-config)
       GENERATE_CONFIG="$2"
       shift;shift
       ;;
