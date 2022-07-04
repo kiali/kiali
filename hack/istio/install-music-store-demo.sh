@@ -42,14 +42,16 @@ install_mstore_app() {
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     ${CLIENT_EXE} get project ${MSTORE} || ${CLIENT_EXE} new-project ${MSTORE}
-  else
-    ${CLIENT_EXE} get ns ${MSTORE} || ${CLIENT_EXE} create ns ${MSTORE}
   fi
 
+  ${CLIENT_EXE} get ns ${MSTORE} || ${CLIENT_EXE} create ns ${MSTORE}
   ${CLIENT_EXE} label namespace ${MSTORE} istio-injection=enabled --overwrite=true
   ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/ui.yaml -n ${MSTORE}
   ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/backend.yaml -n ${MSTORE}
 
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    apply_network_attachment ${MSTORE}
+  fi
   ${CLIENT_EXE} wait --timeout 60s --for condition=available deployment/music-store-backend-v1 -n music-store
   ${CLIENT_EXE} wait --timeout 60s --for condition=available deployment/music-store-ui-v1 -n music-store
 
@@ -110,10 +112,6 @@ spec:
               number: 8080
 EOF
 
-  if [ "${IS_OPENSHIFT}" == "true" ]; then
-    apply_network_attachment ${MSTORE}
-  fi
-
 }
 
 while [ $# -gt 0 ]; do
@@ -154,8 +152,8 @@ echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 if [ "${DELETE_DEMOS}" != "true" ]; then
   echo "Installing the ${MSTORE} app in the ${MSTORE} namespace..."
   install_mstore_app
-  echo "You should be able to access the API with the url: ${MUSIC_STORE_BACKEND} "
-  echo "You should be able to access the UI with the url: ${MUSIC_STORE_UI} "
+  echo "You should be able to access the API with the url: ${MUSIC_STORE_BACKEND} in order to generate traffic"
+  echo "You should be able to access the UI with the url: ${MUSIC_STORE_UI} in order to generate traffic"
 else
   echo "Deleting the '${MSTORE}' app in the '${MSTORE}' namespace..."
   ${CLIENT_EXE} delete -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/ui.yaml -n ${MSTORE}
