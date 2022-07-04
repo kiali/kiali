@@ -92,7 +92,7 @@ while [ $# -gt 0 ]; do
       cat <<HELPMSG
 Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
-  -n|--num_ns: number of namespaces to be generate in the generator to apply the network policies
+  -n|--namespaces: number of namespaces to be generate in the generator to apply the network policies
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
   -g|--generate_config: Generate configuration of the topology based in the number of namespaces (-n)
   -h|--help: this text
