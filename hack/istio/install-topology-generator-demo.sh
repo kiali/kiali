@@ -92,7 +92,7 @@ while [ $# -gt 0 ]; do
       cat <<HELPMSG
 Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
-  -n|--namespaces: number of namespaces to be generate in the generator to apply the network policies
+  -n|--namespaces: number of namespaces to be created in the generator to apply the network policies
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
   -g|--generate-config: Generate configuration of the topology based in the number of namespaces (-n)
   -h|--help: this text
@@ -101,7 +101,7 @@ Usage:
   1) Run with no args - or -c - to install the topology generator
   2) Run the proxy: CLIENT port-forward svc/topology-generator 8080:8080 -n topology-generator
   3) Go to the app and generate the topology
-  4) Run -g to run the openshift configuration and -n with the number of namespaces created
+  4) Run -g to configure the demo to work on OpenShift along with -n argument. You only need to run this if you are on OpenShift and using upstream Istio (not OSSM).
 HELPMSG
       exit 1
       ;;

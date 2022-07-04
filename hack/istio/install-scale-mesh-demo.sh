@@ -44,9 +44,9 @@ install_scale_mesh_demo() {
   while [ $x -lt ${NUM_NS} ]
   do
     if [ "${IS_OPENSHIFT}" == "true" ]; then
-        ${CLIENT_EXE} new-project depth-${x}
-      else
-        ${CLIENT_EXE} create ns depth-${x}
+      ${CLIENT_EXE} new-project depth-${x}
+    else
+      ${CLIENT_EXE} create ns depth-${x}
     fi
     ${CLIENT_EXE} label namespace  depth-${x} istio-injection=enabled --overwrite=true
     apply_network_attachment depth-${x}
@@ -97,28 +97,23 @@ echo "CLIENT_EXE=${CLIENT_EXE}"
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 
 if [ "${DELETE_DEMOS}" != "true" ]; then
-
-    echo "Installing the ${SMESH} app in the ${SMESH} namespace..."
-    install_scale_mesh_demo
-
+  echo "Installing the ${SMESH} app in the ${SMESH} namespace..."
+  install_scale_mesh_demo
 else
+  echo "Deleting the '${SMESH}' app in the '${SMESH}' namespace..."
 
-    echo "Deleting the '${SMESH}' app in the '${SMESH}' namespace..."
+  bash <(curl -L ${BASE_URL}/scale-mesh/scale-mesh.sh) uninstall --mesh-type depth --versions 3
 
-    bash <(curl -L ${BASE_URL}/scale-mesh/scale-mesh.sh) uninstall --mesh-type depth --versions 3
+  x=0
+  while [ $x -lt ${NUM_NS} ]
+  do
+    if [ "${IS_OPENSHIFT}" == "true" ]; then
+      ${CLIENT_EXE} delete project depth-${x}
+      ${CLIENT_EXE} delete SecurityContextConstraints depth-${x}-scc
+    else
+      ${CLIENT_EXE} delete ns depth-${x} --ignore-not-found=true
+    fi
 
-    x=0
-    while [ $x -lt ${NUM_NS} ]
-    do
-        if [ "${IS_OPENSHIFT}" == "true" ]; then
-            ${CLIENT_EXE} delete project depth-${x}
-            ${CLIENT_EXE} delete SecurityContextConstraints depth-${x}-scc
-          else
-            ${CLIENT_EXE} delete ns depth-${x} --ignore-not-found=true
-        fi
-
-        x=$(( $x + 1 ))
-    done
+    x=$(( $x + 1 ))
+  done
 fi
-
-

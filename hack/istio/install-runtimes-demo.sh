@@ -40,16 +40,16 @@ SCC
 
 install_runtimes_demo() {
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-      ${CLIENT_EXE} get project ${RUNTIMES} || ${CLIENT_EXE} new-project ${RUNTIMES}
-    else
-      ${CLIENT_EXE} get ns ${RUNTIMES} || ${CLIENT_EXE} create ns ${RUNTIMES}
+    ${CLIENT_EXE} get project ${RUNTIMES} || ${CLIENT_EXE} new-project ${RUNTIMES}
+  else
+    ${CLIENT_EXE} get ns ${RUNTIMES} || ${CLIENT_EXE} create ns ${RUNTIMES}
   fi
 
   ${CLIENT_EXE} label namespace ${RUNTIMES} istio-injection=enabled --overwrite=true
   ${CLIENT_EXE} apply -f ${BASE_URL}/runtimes-demo/quickstart.yml -n ${RUNTIMES}
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-      apply_network_attachment ${RUNTIMES}
+    apply_network_attachment ${RUNTIMES}
   fi
 }
 
@@ -89,20 +89,15 @@ echo "CLIENT_EXE=${CLIENT_EXE}"
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 
 if [ "${DELETE_DEMOS}" != "true" ]; then
-
-    echo "Installing the ${RUNTIMES} app in the ${RUNTIMES} namespace..."
-    install_runtimes_demo
-
+  echo "Installing the ${RUNTIMES} app in the ${RUNTIMES} namespace..."
+  install_runtimes_demo
 else
+  echo "Deleting the '${RUNTIMES}' app in the '${RUNTIMES}' namespace..."
+  ${CLIENT_EXE} delete -f ${BASE_URL}/runtimes-demo/quickstart.yml -n ${RUNTIMES}
 
-    echo "Deleting the '${RUNTIMES}' app in the '${RUNTIMES}' namespace..."
-    ${CLIENT_EXE} delete -f ${BASE_URL}/runtimes-demo/quickstart.yml -n ${RUNTIMES}
-
-    ${CLIENT_EXE} delete ns ${RUNTIMES} --ignore-not-found=true
-    if [ "${IS_OPENSHIFT}" == "true" ]; then
-      ${CLIENT_EXE} delete project ${RUNTIMES}
-      ${CLIENT_EXE} delete SecurityContextConstraints ${RUNTIMES}-scc
-    fi
+  ${CLIENT_EXE} delete ns ${RUNTIMES} --ignore-not-found=true
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    ${CLIENT_EXE} delete project ${RUNTIMES}
+    ${CLIENT_EXE} delete SecurityContextConstraints ${RUNTIMES}-scc
+  fi
 fi
-
-

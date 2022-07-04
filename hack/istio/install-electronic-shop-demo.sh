@@ -53,7 +53,7 @@ install_eshop_app() {
   ${CLIENT_EXE} apply -n ${APP} -f <(curl -L ${BASE_URL}/${APP}/${APP}.yaml)
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-      apply_network_attachment ${APP}
+    apply_network_attachment ${APP}
   fi
 }
 
@@ -93,18 +93,16 @@ echo "CLIENT_EXE=${CLIENT_EXE}"
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 
 if [ "${DELETE_DEMOS}" != "true" ]; then
-    echo "Installing the 'electronic-shop' app in the 'electronic-shop' namespace..."
-    install_eshop_app
+  echo "Installing the 'electronic-shop' app in the 'electronic-shop' namespace..."
+  install_eshop_app
 else
-
-    echo "Deleting the '${ESHOP}' app in the '${ESHOP}' namespace..."
-    ${CLIENT_EXE} delete -n ${ESHOP} -f <(curl -L ${BASE_URL}/${ESHOP}/${ESHOP}.yaml)
-    ${CLIENT_EXE} delete ns ${ESHOP} --ignore-not-found=true
-    if [ "${IS_OPENSHIFT}" == "true" ]; then
-      ${CLIENT_EXE} delete project ${ESHOP}
-      ${CLIENT_EXE} delete SecurityContextConstraints ${ESHOP}-scc
-    fi
-
+  echo "Deleting the '${ESHOP}' app in the '${ESHOP}' namespace..."
+  ${CLIENT_EXE} delete -n ${ESHOP} -f <(curl -L ${BASE_URL}/${ESHOP}/${ESHOP}.yaml)
+  ${CLIENT_EXE} delete ns ${ESHOP} --ignore-not-found=true
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    ${CLIENT_EXE} delete project ${ESHOP}
+    ${CLIENT_EXE} delete SecurityContextConstraints ${ESHOP}-scc
+  fi
 fi
 
 

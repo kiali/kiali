@@ -46,7 +46,7 @@ install_ftravels_app() {
   for i in "${arr[@]}"
   do
     if [ "${IS_OPENSHIFT}" == "true" ]; then
-        ${CLIENT_EXE} new-project ${i}
+      ${CLIENT_EXE} new-project ${i}
     else
       ${CLIENT_EXE} create namespace ${i}
     fi
@@ -112,34 +112,30 @@ echo "CLIENT_EXE=${CLIENT_EXE}"
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 
 if [ "${DELETE_DEMOS}" != "true" ]; then
-    echo "Installing the ${FTRAVELS} app in the ${FTRAVELS} namespace..."
-    install_ftravels_app
+  echo "Installing the ${FTRAVELS} app in the ${FTRAVELS} namespace..."
+  install_ftravels_app
 else
+  echo "Deleting the '${FTRAVELS}' app in the '${FTRAVELS}' namespace..."
+  ${CLIENT_EXE} delete -n east-mesh-system -f ${BASE_URL}/${FTRAVELS}/east/east-ossm.yaml
+  ${CLIENT_EXE} delete -n west-mesh-system -f ${BASE_URL}/${FTRAVELS}/west/west-ossm.yaml
+  ${CLIENT_EXE} delete configmap east-ca-root-cert --from-file=root-cert.pem=east-cert.pem -n west-mesh-system
+  ${CLIENT_EXE} delete configmap west-ca-root-cert --from-file=root-cert.pem=west-cert.pem -n east-mesh-system
+  ${CLIENT_EXE} delete -n east-mesh-system -f ${BASE_URL}/${FTRAVELS}/east/east-federation.yaml
+  ${CLIENT_EXE} delete -n west-mesh-system -f ${BASE_URL}/${FTRAVELS}/west/west-federation.yaml
 
-    echo "Deleting the '${FTRAVELS}' app in the '${FTRAVELS}' namespace..."
-    ${CLIENT_EXE} delete -n east-mesh-system -f ${BASE_URL}/${FTRAVELS}/east/east-ossm.yaml
-    ${CLIENT_EXE} delete -n west-mesh-system -f ${BASE_URL}/${FTRAVELS}/west/west-ossm.yaml
-    ${CLIENT_EXE} delete configmap east-ca-root-cert --from-file=root-cert.pem=east-cert.pem -n west-mesh-system
-    ${CLIENT_EXE} delete configmap west-ca-root-cert --from-file=root-cert.pem=west-cert.pem -n east-mesh-system
-    ${CLIENT_EXE} delete -n east-mesh-system -f ${BASE_URL}/${FTRAVELS}/east/east-federation.yaml
-    ${CLIENT_EXE} delete -n west-mesh-system -f ${BASE_URL}/${FTRAVELS}/west/west-federation.yaml
+  ${CLIENT_EXE} delete -n east-travel-agency -f ${BASE_URL}/${FTRAVELS}/east/east-travel-agency.yaml
+  ${CLIENT_EXE} delete -n east-travel-portal -f ${BASE_URL}/${FTRAVELS}/east/east-travel-portal.yaml
+  ${CLIENT_EXE} delete -n east-travel-control -f ${BASE_URL}/${FTRAVELS}/east/east-travel-control.yaml
+  ${CLIENT_EXE} delete -n west-travel-agency -f ${BASE_URL}/${FTRAVELS}/west/west-travel-agency.yaml
 
-    ${CLIENT_EXE} delete -n east-travel-agency -f ${BASE_URL}/${FTRAVELS}/east/east-travel-agency.yaml
-    ${CLIENT_EXE} delete -n east-travel-portal -f ${BASE_URL}/${FTRAVELS}/east/east-travel-portal.yaml
-    ${CLIENT_EXE} delete -n east-travel-control -f ${BASE_URL}/${FTRAVELS}/east/east-travel-control.yaml
-    ${CLIENT_EXE} delete -n west-travel-agency -f ${BASE_URL}/${FTRAVELS}/west/west-travel-agency.yaml
+  declare -a arr=("east-mesh-system" "west-mesh-system" "east-travel-agency" "east-travel-portal" "east-travel-control" "west-travel-agency")
 
-    declare -a arr=("east-mesh-system" "west-mesh-system" "east-travel-agency" "east-travel-portal" "east-travel-control" "west-travel-agency")
-
-    for i in "${arr[@]}"
-      do
-        if [ "${IS_OPENSHIFT}" == "true" ]; then
-          ${CLIENT_EXE} delete project ${i}
-         else
-          ${CLIENT_EXE} delete ns ${i} --ignore-not-found=true
-        fi
-    done
-
+  for i in "${arr[@]}"
+  do
+    if [ "${IS_OPENSHIFT}" == "true" ]; then
+      ${CLIENT_EXE} delete project ${i}
+    else
+      ${CLIENT_EXE} delete ns ${i} --ignore-not-found=true
+    fi
+  done
 fi
-
-

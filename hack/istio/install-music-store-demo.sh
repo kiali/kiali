@@ -111,7 +111,7 @@ spec:
 EOF
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-      apply_network_attachment ${MSTORE}
+    apply_network_attachment ${MSTORE}
   fi
 
 }
@@ -152,22 +152,20 @@ echo "CLIENT_EXE=${CLIENT_EXE}"
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 
 if [ "${DELETE_DEMOS}" != "true" ]; then
-
-    echo "Installing the ${MSTORE} app in the ${MSTORE} namespace..."
-    install_mstore_app
-    echo "You should be able to access the API with the url: ${MUSIC_STORE_BACKEND} "
-    echo "You should be able to access the UI with the url: ${MUSIC_STORE_UI} "
+  echo "Installing the ${MSTORE} app in the ${MSTORE} namespace..."
+  install_mstore_app
+  echo "You should be able to access the API with the url: ${MUSIC_STORE_BACKEND} "
+  echo "You should be able to access the UI with the url: ${MUSIC_STORE_UI} "
 else
+  echo "Deleting the '${MSTORE}' app in the '${MSTORE}' namespace..."
+  ${CLIENT_EXE} delete -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/ui.yaml -n ${MSTORE}
+  ${CLIENT_EXE} delete -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/backend.yaml -n ${MSTORE}
 
-    echo "Deleting the '${MSTORE}' app in the '${MSTORE}' namespace..."
-    ${CLIENT_EXE} delete -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/ui.yaml -n ${MSTORE}
-    ${CLIENT_EXE} delete -f https://raw.githubusercontent.com/leandroberetta/demos/master/music-store/backend.yaml -n ${MSTORE}
-
-    ${CLIENT_EXE} delete ns ${MSTORE} --ignore-not-found=true
-    if [ "${IS_OPENSHIFT}" == "true" ]; then
-      ${CLIENT_EXE} delete project ${MSTORE}
-      ${CLIENT_EXE} delete SecurityContextConstraints ${MSTORE}-scc
-    fi
+  ${CLIENT_EXE} delete ns ${MSTORE} --ignore-not-found=true
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    ${CLIENT_EXE} delete project ${MSTORE}
+    ${CLIENT_EXE} delete SecurityContextConstraints ${MSTORE}-scc
+  fi
 fi
 
 
