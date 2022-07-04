@@ -58,9 +58,10 @@ install_service_spawner_demo() {
     curl -L ${BASE_URL}/service-spawner/deployment-tpl.yaml -o deployment-tpl.yaml
     cat deployment-tpl.yaml \
           | sed -e "s:this-service:service-$c:g" \
-          | sed -e "s:target-service:service-$next:g" \
+          | sed -e "s:80:8080:g" \
+          | sed -e "s:target-service:service-$next\:8080:g" \
           | sed -e "s:this-namespace:$SSPAWNER:g" \
-          | sed -e "s:wget:sleep 60;wget:g" \
+          | sed -e "s:quay.io/jotak/nginx-hello:nginxdemos/nginx-hello:g" \
           > tmp-$c.yaml
     ${CLIENT_EXE} apply -f tmp-${c}.yaml -n ${SSPAWNER}
   done
