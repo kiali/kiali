@@ -130,6 +130,7 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
             seriesComponent={<ChartScatter />}
             onClick={dp => this.props.setTraceId(dp.trace.traceID)}
             labelComponent={<TraceTooltip />}
+            pointer={true}
           />
         </div>
       </div>
