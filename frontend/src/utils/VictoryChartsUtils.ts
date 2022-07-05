@@ -20,7 +20,7 @@ export const toVCDatapoints = (dps: Datapoint[], name: string): VCDataPoint[] =>
         name: name,
         x: new Date(dp[0] * 1000),
         y: Number(dp[1]),
-        y0: dp[2] ?? Number(dp[1])
+        y0: dp.length > 2 ? dp[2] : undefined
       };
     })
     .filter(dp => !isNaN(dp.y) && (dp.y0 === undefined || !isNaN(dp.y0)));
