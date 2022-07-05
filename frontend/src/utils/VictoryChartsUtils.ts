@@ -87,15 +87,29 @@ export const toVCLines = (
       let name: string = '';
       if (twoLines[0] !== undefined && twoLines[1] !== undefined) {
         name = twoLines[0].name;
-        datapoints = Array.from(twoLines[0].datapoints);
+        const minDatapointsLength = twoLines[0].datapoints.length < twoLines[1].datapoints.length ?
+          twoLines[0].datapoints.length : twoLines[1].datapoints.length;
 
-        for (let j = 0; j < datapoints.length; j++) {
-          if (datapoints[j][0] !== twoLines[1].datapoints[j][0]) {
-            // TODO: Check how to handle the exception.
-            break;
+        for (let j = 0, sourceIdx = 0, destIdx = 0; j < minDatapointsLength; j++) {
+          if (twoLines[0].datapoints[sourceIdx][0] !== twoLines[1].datapoints[destIdx][0]) {
+            // Usually, all series have the same samples at same timestamps (i.e. series are time synced or synced on the x axis).
+            // There are rare cases when there are some additional samples usually at the beginning or end of some series.
+            // If this happens, let's skip these additional samples, to have properly x-axis synced values.
+            if (twoLines[0].datapoints[sourceIdx][0] < twoLines[1].datapoints[destIdx][0]) {
+              sourceIdx++;
+            } else {
+              destIdx++;
+            }
+            continue;
           }
 
-          datapoints[j][2] = twoLines[1].datapoints[j][1];
+          datapoints.push([
+            twoLines[0].datapoints[sourceIdx][0],
+            twoLines[0].datapoints[sourceIdx][1],
+            twoLines[1].datapoints[destIdx][1],
+          ]);
+          sourceIdx++;
+          destIdx++;
         }
       } else if (twoLines[0] !== undefined) {
         // Assign zero value to "y0" to denote "no data" for the destination reporter

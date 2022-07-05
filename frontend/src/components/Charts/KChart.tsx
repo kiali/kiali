@@ -158,7 +158,7 @@ class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, State> 
     if (this.props.chart.chartType === undefined) {
       if (this.props.chart.xAxis === 'series') {
         return barInfo;
-      } else if (this.props.chart.metrics.some(m => m.datapoints.some(dp => dp[2]))) {
+      } else if (this.props.data.some(m => m.datapoints.some(dp => dp.y0))) {
         return areaInfo;
       } else {
         return lineInfo;
