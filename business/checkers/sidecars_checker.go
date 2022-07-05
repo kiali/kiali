@@ -12,8 +12,8 @@ import (
 const SidecarCheckerType = "sidecar"
 
 type SidecarChecker struct {
-	Sidecars              []networking_v1beta1.Sidecar
-	ServiceEntries        []networking_v1beta1.ServiceEntry
+	Sidecars              []*networking_v1beta1.Sidecar
+	ServiceEntries        []*networking_v1beta1.ServiceEntry
 	Namespaces            models.Namespaces
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	RegistryServices      []*kubernetes.RegistryService
@@ -46,7 +46,7 @@ func (s SidecarChecker) runIndividualChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	for _, sidecar := range s.Sidecars {
-		validations.MergeValidations(s.runChecks(sidecar))
+		validations.MergeValidations(s.runChecks(*sidecar))
 	}
 
 	return validations

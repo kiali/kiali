@@ -17,12 +17,12 @@ import (
 const AuthorizationPolicyCheckerType = "authorizationpolicy"
 
 type AuthorizationPolicyChecker struct {
-	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
+	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
 	Namespaces            models.Namespaces
-	ServiceEntries        []networking_v1beta1.ServiceEntry
+	ServiceEntries        []*networking_v1beta1.ServiceEntry
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	MtlsDetails           kubernetes.MTLSDetails
-	VirtualServices       []networking_v1beta1.VirtualService
+	VirtualServices       []*networking_v1beta1.VirtualService
 	RegistryServices      []*kubernetes.RegistryService
 }
 
@@ -31,7 +31,7 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 
 	// Individual validations
 	for _, authPolicy := range a.AuthorizationPolicies {
-		validations.MergeValidations(a.runChecks(authPolicy))
+		validations.MergeValidations(a.runChecks(*authPolicy))
 	}
 
 	// Group Validations

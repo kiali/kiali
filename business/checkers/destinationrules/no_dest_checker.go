@@ -14,8 +14,8 @@ type NoDestinationChecker struct {
 	Namespaces            models.Namespaces
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	DestinationRule       networking_v1beta1.DestinationRule
-	VirtualServices       []networking_v1beta1.VirtualService
-	ServiceEntries        []networking_v1beta1.ServiceEntry
+	VirtualServices       []*networking_v1beta1.VirtualService
+	ServiceEntries        []*networking_v1beta1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
 }
 
@@ -25,7 +25,7 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 	labelValidations := make([]*models.IstioCheck, 0)
 
-	namespace, clusterName := n.DestinationRule.Namespace, n.DestinationRule.ClusterName
+	namespace, clusterName := n.DestinationRule.Namespace, n.DestinationRule.ZZZ_DeprecatedClusterName
 
 	fqdn := kubernetes.GetHost(n.DestinationRule.Spec.Host, namespace, clusterName, n.Namespaces.GetNames())
 	// Testing Kubernetes Services + Istio ServiceEntries + Istio Runtime Registry (cross namespace)
@@ -170,11 +170,11 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						}
 						host := dest.Destination.Host
 						subset := dest.Destination.Subset
-						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ClusterName, n.Namespaces.GetNames())
-						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ZZZ_DeprecatedClusterName, n.Namespaces.GetNames())
+						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ZZZ_DeprecatedClusterName, n.Namespaces.GetNames())
 						// Host could be in another namespace (FQDN)
 						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
-							vss = append(vss, virtualService)
+							vss = append(vss, *virtualService)
 						}
 					}
 				}
@@ -193,11 +193,11 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						}
 						host := dest.Destination.Host
 						subset := dest.Destination.Subset
-						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ClusterName, n.Namespaces.GetNames())
-						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ZZZ_DeprecatedClusterName, n.Namespaces.GetNames())
+						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ZZZ_DeprecatedClusterName, n.Namespaces.GetNames())
 						// Host could be in another namespace (FQDN)
 						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
-							vss = append(vss, virtualService)
+							vss = append(vss, *virtualService)
 						}
 					}
 				}
@@ -216,11 +216,11 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						}
 						host := dest.Destination.Host
 						subset := dest.Destination.Subset
-						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ClusterName, n.Namespaces.GetNames())
-						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+						drHost := kubernetes.GetHost(host, n.DestinationRule.Namespace, n.DestinationRule.ZZZ_DeprecatedClusterName, n.Namespaces.GetNames())
+						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, virtualService.ZZZ_DeprecatedClusterName, n.Namespaces.GetNames())
 						// Host could be in another namespace (FQDN)
 						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
-							vss = append(vss, virtualService)
+							vss = append(vss, *virtualService)
 						}
 					}
 				}

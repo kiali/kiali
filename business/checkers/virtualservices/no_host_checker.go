@@ -20,7 +20,7 @@ type NoHostChecker struct {
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 	valid := true
-	namespace, clusterName := n.VirtualService.Namespace, n.VirtualService.ClusterName
+	namespace, clusterName := n.VirtualService.Namespace, n.VirtualService.ZZZ_DeprecatedClusterName
 
 	for k, httpRoute := range n.VirtualService.Spec.Http {
 		if httpRoute != nil {

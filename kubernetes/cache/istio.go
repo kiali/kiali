@@ -19,28 +19,28 @@ type (
 		CheckIstioResource(resourceType string) bool
 
 		GetDestinationRule(namespace, name string) (*networking_v1beta1.DestinationRule, error)
-		GetDestinationRules(namespace, labelSelector string) ([]networking_v1beta1.DestinationRule, error)
+		GetDestinationRules(namespace, labelSelector string) ([]*networking_v1beta1.DestinationRule, error)
 		GetEnvoyFilter(namespace, name string) (*networking_v1alpha3.EnvoyFilter, error)
-		GetEnvoyFilters(namespace, labelSelector string) ([]networking_v1alpha3.EnvoyFilter, error)
+		GetEnvoyFilters(namespace, labelSelector string) ([]*networking_v1alpha3.EnvoyFilter, error)
 		GetGateway(namespace, name string) (*networking_v1beta1.Gateway, error)
-		GetGateways(namespace, labelSelector string) ([]networking_v1beta1.Gateway, error)
+		GetGateways(namespace, labelSelector string) ([]*networking_v1beta1.Gateway, error)
 		GetServiceEntry(namespace, name string) (*networking_v1beta1.ServiceEntry, error)
-		GetServiceEntries(namespace, labelSelector string) ([]networking_v1beta1.ServiceEntry, error)
+		GetServiceEntries(namespace, labelSelector string) ([]*networking_v1beta1.ServiceEntry, error)
 		GetSidecar(namespace, name string) (*networking_v1beta1.Sidecar, error)
-		GetSidecars(namespace, labelSelector string) ([]networking_v1beta1.Sidecar, error)
+		GetSidecars(namespace, labelSelector string) ([]*networking_v1beta1.Sidecar, error)
 		GetVirtualService(namespace, name string) (*networking_v1beta1.VirtualService, error)
-		GetVirtualServices(namespace, labelSelector string) ([]networking_v1beta1.VirtualService, error)
+		GetVirtualServices(namespace, labelSelector string) ([]*networking_v1beta1.VirtualService, error)
 		GetWorkloadEntry(namespace, name string) (*networking_v1beta1.WorkloadEntry, error)
-		GetWorkloadEntries(namespace, labelSelector string) ([]networking_v1beta1.WorkloadEntry, error)
+		GetWorkloadEntries(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadEntry, error)
 		GetWorkloadGroup(namespace, name string) (*networking_v1beta1.WorkloadGroup, error)
-		GetWorkloadGroups(namespace, labelSelector string) ([]networking_v1beta1.WorkloadGroup, error)
+		GetWorkloadGroups(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadGroup, error)
 
 		GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error)
-		GetAuthorizationPolicies(namespace, labelSelector string) ([]security_v1beta1.AuthorizationPolicy, error)
+		GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1beta1.AuthorizationPolicy, error)
 		GetPeerAuthentication(namespace, name string) (*security_v1beta1.PeerAuthentication, error)
-		GetPeerAuthentications(namespace, labelSelector string) ([]security_v1beta1.PeerAuthentication, error)
+		GetPeerAuthentications(namespace, labelSelector string) ([]*security_v1beta1.PeerAuthentication, error)
 		GetRequestAuthentication(namespace, name string) (*security_v1beta1.RequestAuthentication, error)
-		GetRequestAuthentications(namespace, labelSelector string) ([]security_v1beta1.RequestAuthentication, error)
+		GetRequestAuthentications(namespace, labelSelector string) ([]*security_v1beta1.RequestAuthentication, error)
 	}
 )
 
@@ -168,7 +168,7 @@ func (c *kialiCacheImpl) GetDestinationRule(namespace, name string) (*networking
 	return nil, nil
 }
 
-func (c *kialiCacheImpl) GetDestinationRules(namespace, labelSelector string) ([]networking_v1beta1.DestinationRule, error) {
+func (c *kialiCacheImpl) GetDestinationRules(namespace, labelSelector string) ([]*networking_v1beta1.DestinationRule, error) {
 	if !c.CheckIstioResource(kubernetes.DestinationRules) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.DestinationRuleType)
 	}
@@ -178,11 +178,11 @@ func (c *kialiCacheImpl) GetDestinationRules(namespace, labelSelector string) ([
 		if lenL > 0 {
 			_, ok := l[0].(*networking_v1beta1.DestinationRule)
 			if !ok {
-				return []networking_v1beta1.DestinationRule{}, errors.New("bad DestinationRule type found in cache")
+				return []*networking_v1beta1.DestinationRule{}, errors.New("bad DestinationRule type found in cache")
 			}
-			nsL := make([]networking_v1beta1.DestinationRule, lenL)
+			nsL := make([]*networking_v1beta1.DestinationRule, lenL)
 			for i, li := range l {
-				nsL[i] = *(li.(*networking_v1beta1.DestinationRule))
+				nsL[i] = li.(*networking_v1beta1.DestinationRule)
 				// Informers don't always populate Kind field
 				nsL[i].Kind = kubernetes.DestinationRuleType
 			}
@@ -190,10 +190,10 @@ func (c *kialiCacheImpl) GetDestinationRules(namespace, labelSelector string) ([
 			if labelSelector == "" {
 				return nsL, nil
 			}
-			var filteredL []networking_v1beta1.DestinationRule
+			var filteredL []*networking_v1beta1.DestinationRule
 			selector, selErr := labels.Parse(labelSelector)
 			if selErr != nil {
-				return []networking_v1beta1.DestinationRule{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
+				return []*networking_v1beta1.DestinationRule{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
 			}
 			for _, li := range nsL {
 				if selector.Matches(labels.Set(li.Labels)) {
@@ -203,7 +203,7 @@ func (c *kialiCacheImpl) GetDestinationRules(namespace, labelSelector string) ([
 			return filteredL, nil
 		}
 	}
-	return []networking_v1beta1.DestinationRule{}, nil
+	return []*networking_v1beta1.DestinationRule{}, nil
 }
 
 func (c *kialiCacheImpl) GetEnvoyFilter(namespace, name string) (*networking_v1alpha3.EnvoyFilter, error) {
@@ -230,7 +230,7 @@ func (c *kialiCacheImpl) GetEnvoyFilter(namespace, name string) (*networking_v1a
 	return nil, nil
 }
 
-func (c *kialiCacheImpl) GetEnvoyFilters(namespace, labelSelector string) ([]networking_v1alpha3.EnvoyFilter, error) {
+func (c *kialiCacheImpl) GetEnvoyFilters(namespace, labelSelector string) ([]*networking_v1alpha3.EnvoyFilter, error) {
 	if !c.CheckIstioResource(kubernetes.EnvoyFilters) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.EnvoyFilterType)
 	}
@@ -240,21 +240,21 @@ func (c *kialiCacheImpl) GetEnvoyFilters(namespace, labelSelector string) ([]net
 		if lenL > 0 {
 			_, ok := l[0].(*networking_v1alpha3.EnvoyFilter)
 			if !ok {
-				return []networking_v1alpha3.EnvoyFilter{}, errors.New("bad EnvoyFilter type found in cache")
+				return []*networking_v1alpha3.EnvoyFilter{}, errors.New("bad EnvoyFilter type found in cache")
 			}
-			nsL := make([]networking_v1alpha3.EnvoyFilter, lenL)
+			nsL := make([]*networking_v1alpha3.EnvoyFilter, lenL)
 			for i, li := range l {
-				nsL[i] = *(li.(*networking_v1alpha3.EnvoyFilter))
+				nsL[i] = li.(*networking_v1alpha3.EnvoyFilter)
 				nsL[i].Kind = kubernetes.EnvoyFilterType
 			}
 			log.Tracef("[Kiali Cache] Get [resource: EnvoyFilter] for [namespace: %s] = %d", namespace, lenL)
 			if labelSelector == "" {
 				return nsL, nil
 			}
-			var filteredL []networking_v1alpha3.EnvoyFilter
+			var filteredL []*networking_v1alpha3.EnvoyFilter
 			selector, selErr := labels.Parse(labelSelector)
 			if selErr != nil {
-				return []networking_v1alpha3.EnvoyFilter{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
+				return []*networking_v1alpha3.EnvoyFilter{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
 			}
 			for _, li := range nsL {
 				if selector.Matches(labels.Set(li.Labels)) {
@@ -264,7 +264,7 @@ func (c *kialiCacheImpl) GetEnvoyFilters(namespace, labelSelector string) ([]net
 			return filteredL, nil
 		}
 	}
-	return []networking_v1alpha3.EnvoyFilter{}, nil
+	return []*networking_v1alpha3.EnvoyFilter{}, nil
 }
 
 func (c *kialiCacheImpl) GetGateway(namespace, name string) (*networking_v1beta1.Gateway, error) {
@@ -291,7 +291,7 @@ func (c *kialiCacheImpl) GetGateway(namespace, name string) (*networking_v1beta1
 	return nil, nil
 }
 
-func (c *kialiCacheImpl) GetGateways(namespace, labelSelector string) ([]networking_v1beta1.Gateway, error) {
+func (c *kialiCacheImpl) GetGateways(namespace, labelSelector string) ([]*networking_v1beta1.Gateway, error) {
 	if !c.CheckIstioResource(kubernetes.Gateways) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.Gateways)
 	}
@@ -301,21 +301,21 @@ func (c *kialiCacheImpl) GetGateways(namespace, labelSelector string) ([]network
 		if lenL > 0 {
 			_, ok := l[0].(*networking_v1beta1.Gateway)
 			if !ok {
-				return []networking_v1beta1.Gateway{}, errors.New("bad Gateway type found in cache")
+				return []*networking_v1beta1.Gateway{}, errors.New("bad Gateway type found in cache")
 			}
-			nsL := make([]networking_v1beta1.Gateway, lenL)
+			nsL := make([]*networking_v1beta1.Gateway, lenL)
 			for i, li := range l {
-				nsL[i] = *(li.(*networking_v1beta1.Gateway))
+				nsL[i] = li.(*networking_v1beta1.Gateway)
 				nsL[i].Kind = kubernetes.GatewayType
 			}
 			log.Tracef("[Kiali Cache] Get [resource: Gateway] for [namespace: %s] = %d", namespace, lenL)
 			if labelSelector == "" {
 				return nsL, nil
 			}
-			var filteredL []networking_v1beta1.Gateway
+			var filteredL []*networking_v1beta1.Gateway
 			selector, selErr := labels.Parse(labelSelector)
 			if selErr != nil {
-				return []networking_v1beta1.Gateway{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
+				return []*networking_v1beta1.Gateway{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
 			}
 			for _, li := range nsL {
 				if selector.Matches(labels.Set(li.Labels)) {
@@ -325,7 +325,7 @@ func (c *kialiCacheImpl) GetGateways(namespace, labelSelector string) ([]network
 			return filteredL, nil
 		}
 	}
-	return []networking_v1beta1.Gateway{}, nil
+	return []*networking_v1beta1.Gateway{}, nil
 }
 
 func (c *kialiCacheImpl) GetServiceEntry(namespace, name string) (*networking_v1beta1.ServiceEntry, error) {
@@ -352,7 +352,7 @@ func (c *kialiCacheImpl) GetServiceEntry(namespace, name string) (*networking_v1
 	return nil, nil
 }
 
-func (c *kialiCacheImpl) GetServiceEntries(namespace, labelSelector string) ([]networking_v1beta1.ServiceEntry, error) {
+func (c *kialiCacheImpl) GetServiceEntries(namespace, labelSelector string) ([]*networking_v1beta1.ServiceEntry, error) {
 	if !c.CheckIstioResource(kubernetes.ServiceEntries) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.ServiceEntryType)
 	}
@@ -362,21 +362,21 @@ func (c *kialiCacheImpl) GetServiceEntries(namespace, labelSelector string) ([]n
 		if lenL > 0 {
 			_, ok := l[0].(*networking_v1beta1.ServiceEntry)
 			if !ok {
-				return []networking_v1beta1.ServiceEntry{}, errors.New("bad ServiceEntry type found in cache")
+				return []*networking_v1beta1.ServiceEntry{}, errors.New("bad ServiceEntry type found in cache")
 			}
-			nsL := make([]networking_v1beta1.ServiceEntry, lenL)
+			nsL := make([]*networking_v1beta1.ServiceEntry, lenL)
 			for i, li := range l {
-				nsL[i] = *(li.(*networking_v1beta1.ServiceEntry))
+				nsL[i] = li.(*networking_v1beta1.ServiceEntry)
 				nsL[i].Kind = kubernetes.ServiceEntryType
 			}
 			log.Tracef("[Kiali Cache] Get [resource: ServiceEntry] for [namespace: %s] = %d", namespace, lenL)
 			if labelSelector == "" {
 				return nsL, nil
 			}
-			var filteredL []networking_v1beta1.ServiceEntry
+			var filteredL []*networking_v1beta1.ServiceEntry
 			selector, selErr := labels.Parse(labelSelector)
 			if selErr != nil {
-				return []networking_v1beta1.ServiceEntry{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
+				return []*networking_v1beta1.ServiceEntry{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
 			}
 			for _, li := range nsL {
 				if selector.Matches(labels.Set(li.Labels)) {
@@ -386,7 +386,7 @@ func (c *kialiCacheImpl) GetServiceEntries(namespace, labelSelector string) ([]n
 			return filteredL, nil
 		}
 	}
-	return []networking_v1beta1.ServiceEntry{}, nil
+	return []*networking_v1beta1.ServiceEntry{}, nil
 }
 
 func (c *kialiCacheImpl) GetSidecar(namespace, name string) (*networking_v1beta1.Sidecar, error) {
@@ -413,7 +413,7 @@ func (c *kialiCacheImpl) GetSidecar(namespace, name string) (*networking_v1beta1
 	return nil, nil
 }
 
-func (c *kialiCacheImpl) GetSidecars(namespace, labelSelector string) ([]networking_v1beta1.Sidecar, error) {
+func (c *kialiCacheImpl) GetSidecars(namespace, labelSelector string) ([]*networking_v1beta1.Sidecar, error) {
 	if !c.CheckIstioResource(kubernetes.Sidecars) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.SidecarType)
 	}
@@ -423,21 +423,21 @@ func (c *kialiCacheImpl) GetSidecars(namespace, labelSelector string) ([]network
 		if lenL > 0 {
 			_, ok := l[0].(*networking_v1beta1.Sidecar)
 			if !ok {
-				return []networking_v1beta1.Sidecar{}, errors.New("bad Sidecar type found in cache")
+				return []*networking_v1beta1.Sidecar{}, errors.New("bad Sidecar type found in cache")
 			}
-			nsL := make([]networking_v1beta1.Sidecar, lenL)
+			nsL := make([]*networking_v1beta1.Sidecar, lenL)
 			for i, li := range l {
-				nsL[i] = *(li.(*networking_v1beta1.Sidecar))
+				nsL[i] = li.(*networking_v1beta1.Sidecar)
 				nsL[i].Kind = kubernetes.SidecarType
 			}
 			log.Tracef("[Kiali Cache] Get [resource: Sidecar] for [namespace: %s] = %d", namespace, lenL)
 			if labelSelector == "" {
 				return nsL, nil
 			}
-			var filteredL []networking_v1beta1.Sidecar
+			var filteredL []*networking_v1beta1.Sidecar
 			selector, selErr := labels.Parse(labelSelector)
 			if selErr != nil {
-				return []networking_v1beta1.Sidecar{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
+				return []*networking_v1beta1.Sidecar{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
 			}
 			for _, li := range nsL {
 				if selector.Matches(labels.Set(li.Labels)) {
@@ -447,7 +447,7 @@ func (c *kialiCacheImpl) GetSidecars(namespace, labelSelector string) ([]network
 			return filteredL, nil
 		}
 	}
-	return []networking_v1beta1.Sidecar{}, nil
+	return []*networking_v1beta1.Sidecar{}, nil
 }
 
 func (c *kialiCacheImpl) GetVirtualService(namespace, name string) (*networking_v1beta1.VirtualService, error) {
@@ -474,7 +474,7 @@ func (c *kialiCacheImpl) GetVirtualService(namespace, name string) (*networking_
 	return nil, nil
 }
 
-func (c *kialiCacheImpl) GetVirtualServices(namespace, labelSelector string) ([]networking_v1beta1.VirtualService, error) {
+func (c *kialiCacheImpl) GetVirtualServices(namespace, labelSelector string) ([]*networking_v1beta1.VirtualService, error) {
 	if !c.CheckIstioResource(kubernetes.VirtualServices) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.VirtualServiceType)
 	}
@@ -484,21 +484,21 @@ func (c *kialiCacheImpl) GetVirtualServices(namespace, labelSelector string) ([]
 		if lenL > 0 {
 			_, ok := l[0].(*networking_v1beta1.VirtualService)
 			if !ok {
-				return []networking_v1beta1.VirtualService{}, errors.New("bad VirtualService type found in cache")
+				return []*networking_v1beta1.VirtualService{}, errors.New("bad VirtualService type found in cache")
 			}
-			nsL := make([]networking_v1beta1.VirtualService, lenL)
+			nsL := make([]*networking_v1beta1.VirtualService, lenL)
 			for i, li := range l {
-				nsL[i] = *(li.(*networking_v1beta1.VirtualService))
+				nsL[i] = li.(*networking_v1beta1.VirtualService)
 				nsL[i].Kind = kubernetes.VirtualServiceType
 			}
 			log.Tracef("[Kiali Cache] Get [resource: VirtualService] for [namespace: %s] = %d", namespace, lenL)
 			if labelSelector == "" {
 				return nsL, nil
 			}
-			var filteredL []networking_v1beta1.VirtualService
+			var filteredL []*networking_v1beta1.VirtualService
 			selector, selErr := labels.Parse(labelSelector)
 			if selErr != nil {
-				return []networking_v1beta1.VirtualService{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
+				return []*networking_v1beta1.VirtualService{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
 			}
 			for _, li := range nsL {
 				if selector.Matches(labels.Set(li.Labels)) {
@@ -508,7 +508,7 @@ func (c *kialiCacheImpl) GetVirtualServices(namespace, labelSelector string) ([]
 			return filteredL, nil
 		}
 	}
-	return []networking_v1beta1.VirtualService{}, nil
+	return []*networking_v1beta1.VirtualService{}, nil
 }
 
 func (c *kialiCacheImpl) GetWorkloadEntry(namespace, name string) (*networking_v1beta1.WorkloadEntry, error) {
@@ -535,7 +535,7 @@ func (c *kialiCacheImpl) GetWorkloadEntry(namespace, name string) (*networking_v
 	return nil, nil
 }
 
-func (c *kialiCacheImpl) GetWorkloadEntries(namespace, labelSelector string) ([]networking_v1beta1.WorkloadEntry, error) {
+func (c *kialiCacheImpl) GetWorkloadEntries(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadEntry, error) {
 	if !c.CheckIstioResource(kubernetes.WorkloadEntries) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadEntryType)
 	}
@@ -545,21 +545,21 @@ func (c *kialiCacheImpl) GetWorkloadEntries(namespace, labelSelector string) ([]
 		if lenL > 0 {
 			_, ok := l[0].(*networking_v1beta1.WorkloadEntry)
 			if !ok {
-				return []networking_v1beta1.WorkloadEntry{}, errors.New("bad WorkloadEntry type found in cache")
+				return []*networking_v1beta1.WorkloadEntry{}, errors.New("bad WorkloadEntry type found in cache")
 			}
-			nsL := make([]networking_v1beta1.WorkloadEntry, lenL)
+			nsL := make([]*networking_v1beta1.WorkloadEntry, lenL)
 			for i, li := range l {
-				nsL[i] = *(li.(*networking_v1beta1.WorkloadEntry))
+				nsL[i] = li.(*networking_v1beta1.WorkloadEntry)
 				nsL[i].Kind = kubernetes.WorkloadEntryType
 			}
 			log.Tracef("[Kiali Cache] Get [resource: WorkloadEntry] for [namespace: %s] = %d", namespace, lenL)
 			if labelSelector == "" {
 				return nsL, nil
 			}
-			var filteredL []networking_v1beta1.WorkloadEntry
+			var filteredL []*networking_v1beta1.WorkloadEntry
 			selector, selErr := labels.Parse(labelSelector)
 			if selErr != nil {
-				return []networking_v1beta1.WorkloadEntry{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
+				return []*networking_v1beta1.WorkloadEntry{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
 			}
 			for _, li := range nsL {
 				if selector.Matches(labels.Set(li.Labels)) {
@@ -569,7 +569,7 @@ func (c *kialiCacheImpl) GetWorkloadEntries(namespace, labelSelector string) ([]
 			return filteredL, nil
 		}
 	}
-	return []networking_v1beta1.WorkloadEntry{}, nil
+	return []*networking_v1beta1.WorkloadEntry{}, nil
 }
 
 func (c *kialiCacheImpl) GetWorkloadGroup(namespace, name string) (*networking_v1beta1.WorkloadGroup, error) {
@@ -596,7 +596,7 @@ func (c *kialiCacheImpl) GetWorkloadGroup(namespace, name string) (*networking_v
 	return nil, nil
 }
 
-func (c *kialiCacheImpl) GetWorkloadGroups(namespace, labelSelector string) ([]networking_v1beta1.WorkloadGroup, error) {
+func (c *kialiCacheImpl) GetWorkloadGroups(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadGroup, error) {
 	if !c.CheckIstioResource(kubernetes.WorkloadGroups) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroups)
 	}
@@ -606,21 +606,21 @@ func (c *kialiCacheImpl) GetWorkloadGroups(namespace, labelSelector string) ([]n
 		if lenL > 0 {
 			_, ok := l[0].(*networking_v1beta1.WorkloadGroup)
 			if !ok {
-				return []networking_v1beta1.WorkloadGroup{}, errors.New("bad WorkloadGroup type found in cache")
+				return []*networking_v1beta1.WorkloadGroup{}, errors.New("bad WorkloadGroup type found in cache")
 			}
-			nsL := make([]networking_v1beta1.WorkloadGroup, lenL)
+			nsL := make([]*networking_v1beta1.WorkloadGroup, lenL)
 			for i, li := range l {
-				nsL[i] = *(li.(*networking_v1beta1.WorkloadGroup))
+				nsL[i] = li.(*networking_v1beta1.WorkloadGroup)
 				nsL[i].Kind = kubernetes.WorkloadGroupType
 			}
 			log.Tracef("[Kiali Cache] Get [resource: WorkloadGroup] for [namespace: %s] = %d", namespace, lenL)
 			if labelSelector == "" {
 				return nsL, nil
 			}
-			var filteredL []networking_v1beta1.WorkloadGroup
+			var filteredL []*networking_v1beta1.WorkloadGroup
 			selector, selErr := labels.Parse(labelSelector)
 			if selErr != nil {
-				return []networking_v1beta1.WorkloadGroup{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
+				return []*networking_v1beta1.WorkloadGroup{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
 			}
 			for _, li := range nsL {
 				if selector.Matches(labels.Set(li.Labels)) {
@@ -630,7 +630,7 @@ func (c *kialiCacheImpl) GetWorkloadGroups(namespace, labelSelector string) ([]n
 			return filteredL, nil
 		}
 	}
-	return []networking_v1beta1.WorkloadGroup{}, nil
+	return []*networking_v1beta1.WorkloadGroup{}, nil
 }
 
 func (c *kialiCacheImpl) GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error) {
@@ -657,7 +657,7 @@ func (c *kialiCacheImpl) GetAuthorizationPolicy(namespace, name string) (*securi
 	return nil, nil
 }
 
-func (c *kialiCacheImpl) GetAuthorizationPolicies(namespace, labelSelector string) ([]security_v1beta1.AuthorizationPolicy, error) {
+func (c *kialiCacheImpl) GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1beta1.AuthorizationPolicy, error) {
 	if !c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.AuthorizationPolicies)
 	}
@@ -667,21 +667,21 @@ func (c *kialiCacheImpl) GetAuthorizationPolicies(namespace, labelSelector strin
 		if lenL > 0 {
 			_, ok := l[0].(*security_v1beta1.AuthorizationPolicy)
 			if !ok {
-				return []security_v1beta1.AuthorizationPolicy{}, errors.New("bad AuthorizationPolicy type found in cache")
+				return []*security_v1beta1.AuthorizationPolicy{}, errors.New("bad AuthorizationPolicy type found in cache")
 			}
-			nsL := make([]security_v1beta1.AuthorizationPolicy, lenL)
+			nsL := make([]*security_v1beta1.AuthorizationPolicy, lenL)
 			for i, li := range l {
-				nsL[i] = *(li.(*security_v1beta1.AuthorizationPolicy))
+				nsL[i] = li.(*security_v1beta1.AuthorizationPolicy)
 				nsL[i].Kind = kubernetes.AuthorizationPoliciesType
 			}
 			log.Tracef("[Kiali Cache] Get [resource: AuthorizationPolicy] for [namespace: %s] = %d", namespace, lenL)
 			if labelSelector == "" {
 				return nsL, nil
 			}
-			var filteredL []security_v1beta1.AuthorizationPolicy
+			var filteredL []*security_v1beta1.AuthorizationPolicy
 			selector, selErr := labels.Parse(labelSelector)
 			if selErr != nil {
-				return []security_v1beta1.AuthorizationPolicy{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
+				return []*security_v1beta1.AuthorizationPolicy{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
 			}
 			for _, li := range nsL {
 				if selector.Matches(labels.Set(li.Labels)) {
@@ -691,7 +691,7 @@ func (c *kialiCacheImpl) GetAuthorizationPolicies(namespace, labelSelector strin
 			return filteredL, nil
 		}
 	}
-	return []security_v1beta1.AuthorizationPolicy{}, nil
+	return []*security_v1beta1.AuthorizationPolicy{}, nil
 }
 
 func (c *kialiCacheImpl) GetPeerAuthentication(namespace, name string) (*security_v1beta1.PeerAuthentication, error) {
@@ -718,7 +718,7 @@ func (c *kialiCacheImpl) GetPeerAuthentication(namespace, name string) (*securit
 	return nil, nil
 }
 
-func (c *kialiCacheImpl) GetPeerAuthentications(namespace, labelSelector string) ([]security_v1beta1.PeerAuthentication, error) {
+func (c *kialiCacheImpl) GetPeerAuthentications(namespace, labelSelector string) ([]*security_v1beta1.PeerAuthentication, error) {
 	if !c.CheckIstioResource(kubernetes.PeerAuthentications) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.PeerAuthenticationsType)
 	}
@@ -728,21 +728,21 @@ func (c *kialiCacheImpl) GetPeerAuthentications(namespace, labelSelector string)
 		if lenL > 0 {
 			_, ok := l[0].(*security_v1beta1.PeerAuthentication)
 			if !ok {
-				return []security_v1beta1.PeerAuthentication{}, errors.New("bad PeerAuthentication type found in cache")
+				return []*security_v1beta1.PeerAuthentication{}, errors.New("bad PeerAuthentication type found in cache")
 			}
-			nsL := make([]security_v1beta1.PeerAuthentication, lenL)
+			nsL := make([]*security_v1beta1.PeerAuthentication, lenL)
 			for i, li := range l {
-				nsL[i] = *(li.(*security_v1beta1.PeerAuthentication))
+				nsL[i] = li.(*security_v1beta1.PeerAuthentication)
 				nsL[i].Kind = kubernetes.PeerAuthenticationsType
 			}
 			log.Tracef("[Kiali Cache] Get [resource: PeerAuthentication] for [namespace: %s] = %d", namespace, lenL)
 			if labelSelector == "" {
 				return nsL, nil
 			}
-			var filteredL []security_v1beta1.PeerAuthentication
+			var filteredL []*security_v1beta1.PeerAuthentication
 			selector, selErr := labels.Parse(labelSelector)
 			if selErr != nil {
-				return []security_v1beta1.PeerAuthentication{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
+				return []*security_v1beta1.PeerAuthentication{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
 			}
 			for _, li := range nsL {
 				if selector.Matches(labels.Set(li.Labels)) {
@@ -752,7 +752,7 @@ func (c *kialiCacheImpl) GetPeerAuthentications(namespace, labelSelector string)
 			return filteredL, nil
 		}
 	}
-	return []security_v1beta1.PeerAuthentication{}, nil
+	return []*security_v1beta1.PeerAuthentication{}, nil
 }
 
 func (c *kialiCacheImpl) GetRequestAuthentication(namespace, name string) (*security_v1beta1.RequestAuthentication, error) {
@@ -779,7 +779,7 @@ func (c *kialiCacheImpl) GetRequestAuthentication(namespace, name string) (*secu
 	return nil, nil
 }
 
-func (c *kialiCacheImpl) GetRequestAuthentications(namespace, labelSelector string) ([]security_v1beta1.RequestAuthentication, error) {
+func (c *kialiCacheImpl) GetRequestAuthentications(namespace, labelSelector string) ([]*security_v1beta1.RequestAuthentication, error) {
 	if !c.CheckIstioResource(kubernetes.RequestAuthentications) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.RequestAuthenticationsType)
 	}
@@ -789,21 +789,21 @@ func (c *kialiCacheImpl) GetRequestAuthentications(namespace, labelSelector stri
 		if lenL > 0 {
 			_, ok := l[0].(*security_v1beta1.RequestAuthentication)
 			if !ok {
-				return []security_v1beta1.RequestAuthentication{}, errors.New("bad RequestAuthentication type found in cache")
+				return []*security_v1beta1.RequestAuthentication{}, errors.New("bad RequestAuthentication type found in cache")
 			}
-			nsL := make([]security_v1beta1.RequestAuthentication, lenL)
+			nsL := make([]*security_v1beta1.RequestAuthentication, lenL)
 			for i, li := range l {
-				nsL[i] = *(li.(*security_v1beta1.RequestAuthentication))
+				nsL[i] = li.(*security_v1beta1.RequestAuthentication)
 				nsL[i].Kind = kubernetes.RequestAuthenticationsType
 			}
 			log.Tracef("[Kiali Cache] Get [resource: RequestAuthentication] for [namespace: %s] = %d", namespace, lenL)
 			if labelSelector == "" {
 				return nsL, nil
 			}
-			var filteredL []security_v1beta1.RequestAuthentication
+			var filteredL []*security_v1beta1.RequestAuthentication
 			selector, selErr := labels.Parse(labelSelector)
 			if selErr != nil {
-				return []security_v1beta1.RequestAuthentication{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
+				return []*security_v1beta1.RequestAuthentication{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
 			}
 			for _, li := range nsL {
 				if selector.Matches(labels.Set(li.Labels)) {
@@ -813,5 +813,5 @@ func (c *kialiCacheImpl) GetRequestAuthentications(namespace, labelSelector stri
 			return filteredL, nil
 		}
 	}
-	return []security_v1beta1.RequestAuthentication{}, nil
+	return []*security_v1beta1.RequestAuthentication{}, nil
 }

@@ -143,7 +143,7 @@ func (route RouteChecker) trackHttpSubset(routeIdx int, kind string, destination
 		if destinationWeight.Destination == nil {
 			return
 		}
-		fqdn := kubernetes.GetHost(destinationWeight.Destination.Host, route.VirtualService.Namespace, route.VirtualService.ClusterName, route.Namespaces)
+		fqdn := kubernetes.GetHost(destinationWeight.Destination.Host, route.VirtualService.Namespace, route.VirtualService.ZZZ_DeprecatedClusterName, route.Namespaces)
 		subset := destinationWeight.Destination.Subset
 		key := fmt.Sprintf("%s%s", fqdn.String(), subset)
 		collisions := subsetCollitions[key]
@@ -166,7 +166,7 @@ func (route RouteChecker) trackTcpTlsSubset(routeIdx int, kind string, destinati
 		if destinationWeight.Destination == nil {
 			return
 		}
-		fqdn := kubernetes.GetHost(destinationWeight.Destination.Host, route.VirtualService.Namespace, route.VirtualService.ClusterName, route.Namespaces)
+		fqdn := kubernetes.GetHost(destinationWeight.Destination.Host, route.VirtualService.Namespace, route.VirtualService.ZZZ_DeprecatedClusterName, route.Namespaces)
 		subset := destinationWeight.Destination.Subset
 		key := fmt.Sprintf("%s%s", fqdn.String(), subset)
 		collisions := subsetCollitions[key]

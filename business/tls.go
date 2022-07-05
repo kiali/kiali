@@ -130,7 +130,7 @@ func (in *TLSService) GetAllDestinationRules(ctx context.Context, namespaces []s
 			}
 		}
 		if found {
-			allDestinationRules = append(allDestinationRules, dr)
+			allDestinationRules = append(allDestinationRules, *dr)
 		}
 	}
 	return allDestinationRules, nil

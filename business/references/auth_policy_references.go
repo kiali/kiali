@@ -12,11 +12,11 @@ import (
 )
 
 type AuthorizationPolicyReferences struct {
-	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
+	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
 	Namespace             string
 	Namespaces            models.Namespaces
-	ServiceEntries        []networking_v1beta1.ServiceEntry
-	VirtualServices       []networking_v1beta1.VirtualService
+	ServiceEntries        []*networking_v1beta1.ServiceEntry
+	VirtualServices       []*networking_v1beta1.VirtualService
 	RegistryServices      []*kubernetes.RegistryService
 	WorkloadsPerNamespace map[string]models.WorkloadList
 }
@@ -25,7 +25,7 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 	result := models.IstioReferencesMap{}
 
 	for _, ap := range n.AuthorizationPolicies {
-		namespace, clusterName := ap.Namespace, ap.ClusterName
+		namespace, clusterName := ap.Namespace, ap.ZZZ_DeprecatedClusterName
 		key := models.IstioReferenceKey{Namespace: namespace, Name: ap.Name, ObjectType: models.ObjectTypeSingular[kubernetes.AuthorizationPolicies]}
 		references := &models.IstioReferences{}
 		for _, rule := range ap.Spec.Rules {
@@ -51,7 +51,7 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 				}
 			}
 		}
-		references.WorkloadReferences = append(references.WorkloadReferences, n.getWorkloadReferences(ap)...)
+		references.WorkloadReferences = append(references.WorkloadReferences, n.getWorkloadReferences(*ap)...)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
 	}
 
@@ -80,7 +80,7 @@ func (n AuthorizationPolicyReferences) getConfigReferences(host kubernetes.Host)
 		for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
 			vHost := vs.Spec.Hosts[hostIdx]
 
-			hostS := kubernetes.ParseHost(vHost, vs.Namespace, vs.ClusterName)
+			hostS := kubernetes.ParseHost(vHost, vs.Namespace, vs.ZZZ_DeprecatedClusterName)
 			if hostS.String() == host.String() {
 				result = append(result, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
 				continue

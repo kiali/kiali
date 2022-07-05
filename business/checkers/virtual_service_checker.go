@@ -12,8 +12,8 @@ const VirtualCheckerType = "virtualservice"
 
 type VirtualServiceChecker struct {
 	Namespaces       models.Namespaces
-	VirtualServices  []networking_v1beta1.VirtualService
-	DestinationRules []networking_v1beta1.DestinationRule
+	VirtualServices  []*networking_v1beta1.VirtualService
+	DestinationRules []*networking_v1beta1.DestinationRule
 }
 
 // An Object Checker runs all checkers for an specific object type (i.e.: pod, route rule,...)
@@ -34,7 +34,7 @@ func (in VirtualServiceChecker) runIndividualChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	for _, virtualService := range in.VirtualServices {
-		validations.MergeValidations(in.runChecks(virtualService))
+		validations.MergeValidations(in.runChecks(*virtualService))
 	}
 
 	return validations

@@ -27,7 +27,7 @@ func (s NoGatewayChecker) Check() ([]*models.IstioCheck, bool) {
 // ValidateVirtualServiceGateways checks all VirtualService gateways (except mesh, which is reserved word) and checks that they're found from the given list of gatewayNames. Also return index of missing gatways to show clearer error path in editor
 func (s NoGatewayChecker) ValidateVirtualServiceGateways(validations *[]*models.IstioCheck) bool {
 	namespace := s.VirtualService.Namespace
-	clusterName := s.VirtualService.ClusterName
+	clusterName := s.VirtualService.ZZZ_DeprecatedClusterName
 	valid := true
 
 	if len(s.VirtualService.Spec.Gateways) > 0 {

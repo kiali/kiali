@@ -11,9 +11,9 @@ import (
 const ServiceEntryCheckerType = "serviceentry"
 
 type ServiceEntryChecker struct {
-	ServiceEntries  []networking_v1beta1.ServiceEntry
+	ServiceEntries  []*networking_v1beta1.ServiceEntry
 	Namespaces      models.Namespaces
-	WorkloadEntries []networking_v1beta1.WorkloadEntry
+	WorkloadEntries []*networking_v1beta1.WorkloadEntry
 }
 
 func (s ServiceEntryChecker) Check() models.IstioValidations {
@@ -22,7 +22,7 @@ func (s ServiceEntryChecker) Check() models.IstioValidations {
 	weMap := serviceentries.GroupWorkloadEntriesByLabels(s.WorkloadEntries)
 
 	for _, se := range s.ServiceEntries {
-		validations.MergeValidations(s.runSingleChecks(se, weMap))
+		validations.MergeValidations(s.runSingleChecks(*se, weMap))
 	}
 
 	return validations

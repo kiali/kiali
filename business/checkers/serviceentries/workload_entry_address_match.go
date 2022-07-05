@@ -59,7 +59,7 @@ func (in HasMatchingWorkloadEntryAddress) Check() ([]*models.IstioCheck, bool) {
 	return validations, true
 }
 
-func GroupWorkloadEntriesByLabels(workloads []networking_v1beta1.WorkloadEntry) map[string][]string {
+func GroupWorkloadEntriesByLabels(workloads []*networking_v1beta1.WorkloadEntry) map[string][]string {
 	workloadEntriesMap := map[string][]string{}
 	for _, we := range workloads {
 		selector := labels.Set(we.Spec.Labels).String()

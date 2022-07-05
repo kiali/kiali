@@ -15,7 +15,7 @@ type NoHostChecker struct {
 	AuthorizationPolicy security_v1beta.AuthorizationPolicy
 	Namespaces          models.Namespaces
 	ServiceEntries      map[string][]string
-	VirtualServices     []networking_v1beta1.VirtualService
+	VirtualServices     []*networking_v1beta1.VirtualService
 	RegistryServices    []*kubernetes.RegistryService
 }
 
@@ -47,7 +47,7 @@ func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1beta.Rule_
 	if len(to) == 0 {
 		return nil, true
 	}
-	namespace, clusterName := n.AuthorizationPolicy.Namespace, n.AuthorizationPolicy.ClusterName
+	namespace, clusterName := n.AuthorizationPolicy.Namespace, n.AuthorizationPolicy.ZZZ_DeprecatedClusterName
 	checks, valid := make([]*models.IstioCheck, 0, len(to)), true
 	for toIdx, t := range to {
 		if t == nil {

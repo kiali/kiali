@@ -9,7 +9,7 @@ import (
 
 type SingleHostChecker struct {
 	Namespaces      models.Namespaces
-	VirtualServices []networking_v1beta1.VirtualService
+	VirtualServices []*networking_v1beta1.VirtualService
 }
 
 func (s SingleHostChecker) Check() models.IstioValidations {
@@ -17,8 +17,8 @@ func (s SingleHostChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	for _, vs := range s.VirtualServices {
-		for _, host := range s.getHosts(vs) {
-			storeHost(hostCounter, vs, host)
+		for _, host := range s.getHosts(*vs) {
+			storeHost(hostCounter, *vs, host)
 		}
 	}
 
@@ -138,7 +138,7 @@ func storeHost(hostCounter map[string]map[string]map[string]map[string][]*networ
 }
 
 func (s SingleHostChecker) getHosts(virtualService networking_v1beta1.VirtualService) []kubernetes.Host {
-	namespace, clusterName := virtualService.Namespace, virtualService.ClusterName
+	namespace, clusterName := virtualService.Namespace, virtualService.ZZZ_DeprecatedClusterName
 
 	if len(virtualService.Spec.Hosts) == 0 {
 		return []kubernetes.Host{}

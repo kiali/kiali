@@ -11,9 +11,9 @@ import (
 type VirtualServiceReferences struct {
 	Namespace             string
 	Namespaces            models.Namespaces
-	VirtualServices       []networking_v1beta1.VirtualService
-	DestinationRules      []networking_v1beta1.DestinationRule
-	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
+	VirtualServices       []*networking_v1beta1.VirtualService
+	DestinationRules      []*networking_v1beta1.DestinationRule
+	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
 }
 
 func (n VirtualServiceReferences) References() models.IstioReferencesMap {
@@ -22,8 +22,8 @@ func (n VirtualServiceReferences) References() models.IstioReferencesMap {
 	for _, vs := range n.VirtualServices {
 		key := models.IstioReferenceKey{Namespace: vs.Namespace, Name: vs.Name, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]}
 		references := &models.IstioReferences{}
-		references.ServiceReferences = n.getServiceReferences(vs)
-		references.ObjectReferences = n.getConfigReferences(vs)
+		references.ServiceReferences = n.getServiceReferences(*vs)
+		references.ObjectReferences = n.getConfigReferences(*vs)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
 	}
 
@@ -34,7 +34,7 @@ func (n VirtualServiceReferences) getServiceReferences(vs networking_v1beta1.Vir
 	keys := make(map[string]bool)
 	allServices := make([]models.ServiceReference, 0)
 	result := make([]models.ServiceReference, 0)
-	namespace, clusterName := vs.Namespace, vs.ClusterName
+	namespace, clusterName := vs.Namespace, vs.ZZZ_DeprecatedClusterName
 
 	for _, httpRoute := range vs.Spec.Http {
 		if httpRoute != nil {
@@ -140,8 +140,8 @@ func (n VirtualServiceReferences) getAllDestinationRules(virtualService networki
 							continue
 						}
 						host := dest.Destination.Host
-						drHost := kubernetes.GetHost(host, dr.Namespace, dr.ClusterName, n.Namespaces.GetNames())
-						vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+						drHost := kubernetes.GetHost(host, dr.Namespace, dr.ZZZ_DeprecatedClusterName, n.Namespaces.GetNames())
+						vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, virtualService.ZZZ_DeprecatedClusterName, n.Namespaces.GetNames())
 						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) {
 							allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.DestinationRules]})
 						}
@@ -161,8 +161,8 @@ func (n VirtualServiceReferences) getAllDestinationRules(virtualService networki
 							continue
 						}
 						host := dest.Destination.Host
-						drHost := kubernetes.GetHost(host, dr.Namespace, dr.ClusterName, n.Namespaces.GetNames())
-						vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+						drHost := kubernetes.GetHost(host, dr.Namespace, dr.ZZZ_DeprecatedClusterName, n.Namespaces.GetNames())
+						vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, virtualService.ZZZ_DeprecatedClusterName, n.Namespaces.GetNames())
 						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) {
 							allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.DestinationRules]})
 						}
@@ -182,8 +182,8 @@ func (n VirtualServiceReferences) getAllDestinationRules(virtualService networki
 							continue
 						}
 						host := dest.Destination.Host
-						drHost := kubernetes.GetHost(host, dr.Namespace, dr.ClusterName, n.Namespaces.GetNames())
-						vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+						drHost := kubernetes.GetHost(host, dr.Namespace, dr.ZZZ_DeprecatedClusterName, n.Namespaces.GetNames())
+						vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, virtualService.ZZZ_DeprecatedClusterName, n.Namespaces.GetNames())
 						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) {
 							allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.DestinationRules]})
 						}
@@ -197,7 +197,7 @@ func (n VirtualServiceReferences) getAllDestinationRules(virtualService networki
 
 func getAllGateways(vs networking_v1beta1.VirtualService) []models.IstioReference {
 	allGateways := make([]models.IstioReference, 0)
-	namespace, clusterName := vs.Namespace, vs.ClusterName
+	namespace, clusterName := vs.Namespace, vs.ZZZ_DeprecatedClusterName
 	if len(vs.Spec.Gateways) > 0 {
 		allGateways = append(allGateways, getGatewayReferences(vs.Spec.Gateways, namespace, clusterName)...)
 	}
@@ -245,7 +245,7 @@ func getGatewayReferences(gateways []string, namespace string, clusterName strin
 func (n VirtualServiceReferences) getAuthPolicies(vs networking_v1beta1.VirtualService) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 	for _, ap := range n.AuthorizationPolicies {
-		namespace, clusterName := ap.Namespace, ap.ClusterName
+		namespace, clusterName := ap.Namespace, ap.ZZZ_DeprecatedClusterName
 		for _, rule := range ap.Spec.Rules {
 			if rule == nil {
 				continue
@@ -261,7 +261,7 @@ func (n VirtualServiceReferences) getAuthPolicies(vs networking_v1beta1.VirtualS
 							for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
 								vHost := vs.Spec.Hosts[hostIdx]
 
-								hostS := kubernetes.ParseHost(vHost, vs.Namespace, vs.ClusterName)
+								hostS := kubernetes.ParseHost(vHost, vs.Namespace, vs.ZZZ_DeprecatedClusterName)
 								if hostS.String() == fqdn.String() {
 									result = append(result, models.IstioReference{Name: ap.Name, Namespace: ap.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.AuthorizationPolicies]})
 									continue

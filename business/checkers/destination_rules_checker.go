@@ -12,9 +12,9 @@ import (
 const DestinationRuleCheckerType = "destinationrule"
 
 type DestinationRulesChecker struct {
-	DestinationRules []networking_v1beta1.DestinationRule
+	DestinationRules []*networking_v1beta1.DestinationRule
 	MTLSDetails      kubernetes.MTLSDetails
-	ServiceEntries   []networking_v1beta1.ServiceEntry
+	ServiceEntries   []*networking_v1beta1.ServiceEntry
 	Namespaces       []models.Namespace
 }
 
@@ -52,7 +52,7 @@ func (in DestinationRulesChecker) runIndividualChecks() models.IstioValidations 
 	validations := models.IstioValidations{}
 
 	for _, destinationRule := range in.DestinationRules {
-		validations.MergeValidations(in.runChecks(destinationRule))
+		validations.MergeValidations(in.runChecks(*destinationRule))
 	}
 
 	return validations

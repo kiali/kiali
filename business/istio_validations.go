@@ -398,19 +398,19 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 	in.filterAuthPolicies(namespace, rbacDetails, istioConfigList.AuthorizationPolicies)
 }
 
-func (in *IstioValidationsService) filterPeerAuths(namespace string, mtlsDetails *kubernetes.MTLSDetails, peerAuths []security_v1beta.PeerAuthentication) {
+func (in *IstioValidationsService) filterPeerAuths(namespace string, mtlsDetails *kubernetes.MTLSDetails, peerAuths []*security_v1beta.PeerAuthentication) {
 	rootNs := config.Get().ExternalServices.Istio.RootNamespace
 	for _, pa := range peerAuths {
 		if pa.Namespace == rootNs {
-			mtlsDetails.MeshPeerAuthentications = append(mtlsDetails.MeshPeerAuthentications, pa)
+			mtlsDetails.MeshPeerAuthentications = append(mtlsDetails.MeshPeerAuthentications, *pa)
 		}
 		if pa.Namespace == namespace || namespace == "" {
-			mtlsDetails.PeerAuthentications = append(mtlsDetails.PeerAuthentications, pa)
+			mtlsDetails.PeerAuthentications = append(mtlsDetails.PeerAuthentications, *pa)
 		}
 	}
 }
 
-func (in *IstioValidationsService) filterAuthPolicies(namespace string, rbacDetails *kubernetes.RBACDetails, authPolicies []security_v1beta.AuthorizationPolicy) {
+func (in *IstioValidationsService) filterAuthPolicies(namespace string, rbacDetails *kubernetes.RBACDetails, authPolicies []*security_v1beta.AuthorizationPolicy) {
 	for _, ap := range authPolicies {
 		if ap.Namespace == namespace || namespace == "" {
 			rbacDetails.AuthorizationPolicies = append(rbacDetails.AuthorizationPolicies, ap)
@@ -418,11 +418,11 @@ func (in *IstioValidationsService) filterAuthPolicies(namespace string, rbacDeta
 	}
 }
 
-func (in *IstioValidationsService) filterVSExportToNamespaces(namespace string, vs []networking_v1beta1.VirtualService) []networking_v1beta1.VirtualService {
+func (in *IstioValidationsService) filterVSExportToNamespaces(namespace string, vs []*networking_v1beta1.VirtualService) []*networking_v1beta1.VirtualService {
 	if namespace == "" {
 		return vs
 	}
-	var result []networking_v1beta1.VirtualService
+	var result []*networking_v1beta1.VirtualService
 	for _, v := range vs {
 		if len(v.Spec.ExportTo) > 0 {
 			for _, exportToNs := range v.Spec.ExportTo {
@@ -439,11 +439,11 @@ func (in *IstioValidationsService) filterVSExportToNamespaces(namespace string, 
 	return result
 }
 
-func (in *IstioValidationsService) filterDRExportToNamespaces(namespace string, dr []networking_v1beta1.DestinationRule) []networking_v1beta1.DestinationRule {
+func (in *IstioValidationsService) filterDRExportToNamespaces(namespace string, dr []*networking_v1beta1.DestinationRule) []*networking_v1beta1.DestinationRule {
 	if namespace == "" {
 		return dr
 	}
-	var result []networking_v1beta1.DestinationRule
+	var result []*networking_v1beta1.DestinationRule
 	for _, d := range dr {
 		if len(d.Spec.ExportTo) > 0 {
 			for _, exportToNs := range d.Spec.ExportTo {
@@ -460,11 +460,11 @@ func (in *IstioValidationsService) filterDRExportToNamespaces(namespace string, 
 	return result
 }
 
-func (in *IstioValidationsService) filterSEExportToNamespaces(namespace string, se []networking_v1beta1.ServiceEntry) []networking_v1beta1.ServiceEntry {
+func (in *IstioValidationsService) filterSEExportToNamespaces(namespace string, se []*networking_v1beta1.ServiceEntry) []*networking_v1beta1.ServiceEntry {
 	if namespace == "" {
 		return se
 	}
-	var result []networking_v1beta1.ServiceEntry
+	var result []*networking_v1beta1.ServiceEntry
 	for _, s := range se {
 		if len(s.Spec.ExportTo) > 0 {
 			for _, exportToNs := range s.Spec.ExportTo {

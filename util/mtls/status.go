@@ -17,7 +17,7 @@ const (
 
 type MtlsStatus struct {
 	PeerAuthentications []security_v1beta.PeerAuthentication
-	DestinationRules    []networking_v1beta1.DestinationRule
+	DestinationRules    []*networking_v1beta1.DestinationRule
 	MatchingLabels      labels.Labels
 	AutoMtlsEnabled     bool
 	AllowPermissive     bool
@@ -47,7 +47,7 @@ func (m MtlsStatus) hasPeerAuthnNamespacemTLSDefinition() string {
 
 func (m MtlsStatus) hasDesinationRuleEnablingNamespacemTLS(namespace string) string {
 	for _, dr := range m.DestinationRules {
-		if _, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(namespace, dr); mode != "" {
+		if _, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(namespace, *dr); mode != "" {
 			return mode
 		}
 	}
@@ -90,7 +90,7 @@ func (m MtlsStatus) WorkloadMtlsStatus(namespace string) string {
 				for _, nameNamespace := range nameNamespaces {
 					filteredDrs := kubernetes.FilterDestinationRulesByService(m.DestinationRules, nameNamespace.Namespace, nameNamespace.Name)
 					for _, dr := range filteredDrs {
-						enabled, mode := kubernetes.DestinationRuleHasMTLSEnabled(dr)
+						enabled, mode := kubernetes.DestinationRuleHasMTLSEnabled(*dr)
 						if enabled || mode == "MUTUAL" {
 							return MTLSEnabled
 						} else if mode == "DISABLE" {
@@ -155,7 +155,7 @@ func (m MtlsStatus) hasPeerAuthnMeshTLSDefinition() string {
 
 func (m MtlsStatus) hasDestinationRuleMeshTLSDefinition() string {
 	for _, dr := range m.DestinationRules {
-		if _, mode := kubernetes.DestinationRuleHasMTLSEnabledForHost("*.local", dr); mode != "" {
+		if _, mode := kubernetes.DestinationRuleHasMTLSEnabledForHost("*.local", *dr); mode != "" {
 			return mode
 		}
 	}

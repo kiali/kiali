@@ -12,10 +12,10 @@ import (
 )
 
 type SidecarReferences struct {
-	Sidecars              []networking_v1beta1.Sidecar
+	Sidecars              []*networking_v1beta1.Sidecar
 	Namespace             string
 	Namespaces            models.Namespaces
-	ServiceEntries        []networking_v1beta1.ServiceEntry
+	ServiceEntries        []*networking_v1beta1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
 	WorkloadsPerNamespace map[string]models.WorkloadList
 }
@@ -37,7 +37,7 @@ func (n SidecarReferences) References() models.IstioReferencesMap {
 					if hostNs == "*" || hostNs == "~" || hostNs == "." || dnsName == "*" {
 						continue
 					}
-					fqdn := kubernetes.ParseHost(dnsName, hostNs, sc.ClusterName)
+					fqdn := kubernetes.ParseHost(dnsName, hostNs, sc.ZZZ_DeprecatedClusterName)
 
 					configRef := n.getConfigReferences(fqdn, hostNs)
 					references.ObjectReferences = append(references.ObjectReferences, configRef...)
@@ -48,7 +48,7 @@ func (n SidecarReferences) References() models.IstioReferencesMap {
 				}
 			}
 		}
-		references.WorkloadReferences = append(references.WorkloadReferences, n.getWorkloadReferences(sc)...)
+		references.WorkloadReferences = append(references.WorkloadReferences, n.getWorkloadReferences(*sc)...)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
 	}
 

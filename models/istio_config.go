@@ -17,19 +17,19 @@ type IstioConfigList struct {
 	// required: true
 	Namespace Namespace `json:"namespace"`
 
-	DestinationRules []networking_v1beta1.DestinationRule `json:"destinationRules"`
-	EnvoyFilters     []networking_v1alpha3.EnvoyFilter    `json:"envoyFilters"`
-	Gateways         []networking_v1beta1.Gateway         `json:"gateways"`
-	ServiceEntries   []networking_v1beta1.ServiceEntry    `json:"serviceEntries"`
-	Sidecars         []networking_v1beta1.Sidecar         `json:"sidecars"`
-	VirtualServices  []networking_v1beta1.VirtualService  `json:"virtualServices"`
-	WorkloadEntries  []networking_v1beta1.WorkloadEntry   `json:"workloadEntries"`
-	WorkloadGroups   []networking_v1beta1.WorkloadGroup   `json:"workloadGroups"`
+	DestinationRules []*networking_v1beta1.DestinationRule `json:"destinationRules"`
+	EnvoyFilters     []*networking_v1alpha3.EnvoyFilter    `json:"envoyFilters"`
+	Gateways         []*networking_v1beta1.Gateway         `json:"gateways"`
+	ServiceEntries   []*networking_v1beta1.ServiceEntry    `json:"serviceEntries"`
+	Sidecars         []*networking_v1beta1.Sidecar         `json:"sidecars"`
+	VirtualServices  []*networking_v1beta1.VirtualService  `json:"virtualServices"`
+	WorkloadEntries  []*networking_v1beta1.WorkloadEntry   `json:"workloadEntries"`
+	WorkloadGroups   []*networking_v1beta1.WorkloadGroup   `json:"workloadGroups"`
 
-	AuthorizationPolicies  []security_v1beta.AuthorizationPolicy   `json:"authorizationPolicies"`
-	PeerAuthentications    []security_v1beta.PeerAuthentication    `json:"peerAuthentications"`
-	RequestAuthentications []security_v1beta.RequestAuthentication `json:"requestAuthentications"`
-	IstioValidations       IstioValidations                        `json:"validations"`
+	AuthorizationPolicies  []*security_v1beta.AuthorizationPolicy   `json:"authorizationPolicies"`
+	PeerAuthentications    []*security_v1beta.PeerAuthentication    `json:"peerAuthentications"`
+	RequestAuthentications []*security_v1beta.RequestAuthentication `json:"requestAuthentications"`
+	IstioValidations       IstioValidations                         `json:"validations"`
 }
 
 type IstioConfigDetails struct {

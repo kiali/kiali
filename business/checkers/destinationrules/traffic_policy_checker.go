@@ -10,7 +10,7 @@ import (
 )
 
 type TrafficPolicyChecker struct {
-	DestinationRules []networking_v1beta1.DestinationRule
+	DestinationRules []*networking_v1beta1.DestinationRule
 	MTLSDetails      kubernetes.MTLSDetails
 }
 
@@ -21,7 +21,7 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 
 	// Check whether DRs override mTLS.
 	for _, dr := range t.DestinationRules {
-		drSameHosts := sameHostDestinationRules(dr, refdMtls, t.DestinationRules)
+		drSameHosts := sameHostDestinationRules(*dr, refdMtls, t.DestinationRules)
 
 		// Continue if there aren't DestinationRules enabling mTLS non-locally
 		// and pointing to same host as dr.
@@ -30,7 +30,7 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 		}
 
 		// Invalid if there isn't trafficPolicy specified or trafficPolicy doesn't specify TLSSettings
-		if !hasTrafficPolicy(dr) || !hasTLSSettings(dr) {
+		if !hasTrafficPolicy(*dr) || !hasTLSSettings(*dr) {
 			check := models.Build("destinationrules.trafficpolicy.notlssettings", "spec/trafficPolicy")
 			key := models.BuildKey(DestinationRulesCheckerType, dr.Name, dr.Namespace)
 
@@ -39,7 +39,7 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 				refKeys = append(refKeys, models.BuildKey(DestinationRulesCheckerType, dr.Name, dr.Namespace))
 			}
 
-			validation := buildDestinationRuleValidation(dr, check, true, refKeys)
+			validation := buildDestinationRuleValidation(*dr, check, true, refKeys)
 
 			if _, exists := validations[key]; !exists {
 				validations.MergeValidations(models.IstioValidations{key: validation})
@@ -50,23 +50,23 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []networking_v1beta1.DestinationRule {
-	mtlsDrs := make([]networking_v1beta1.DestinationRule, 0)
+func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []*networking_v1beta1.DestinationRule {
+	mtlsDrs := make([]*networking_v1beta1.DestinationRule, 0)
 	for _, dr := range t.MTLSDetails.DestinationRules {
-		fqdn := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace, dr.ClusterName)
-		if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
+		fqdn := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace, dr.ZZZ_DeprecatedClusterName)
+		if isNonLocalmTLSForServiceEnabled(*dr, fqdn.String()) {
 			mtlsDrs = append(mtlsDrs, dr)
 		}
 	}
 	return mtlsDrs
 }
 
-func sameHostDestinationRules(dr networking_v1beta1.DestinationRule, mdrs []networking_v1beta1.DestinationRule, edrs []networking_v1beta1.DestinationRule) []networking_v1beta1.DestinationRule {
-	shdrs := make([]networking_v1beta1.DestinationRule, 0, len(mdrs)+len(edrs))
-	drHost := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace, dr.ClusterName)
+func sameHostDestinationRules(dr networking_v1beta1.DestinationRule, mdrs []*networking_v1beta1.DestinationRule, edrs []*networking_v1beta1.DestinationRule) []*networking_v1beta1.DestinationRule {
+	shdrs := make([]*networking_v1beta1.DestinationRule, 0, len(mdrs)+len(edrs))
+	drHost := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace, dr.ZZZ_DeprecatedClusterName)
 
 	for _, mdr := range mdrs {
-		mdrHost := kubernetes.ParseHost(mdr.Spec.Host, dr.Namespace, dr.ClusterName)
+		mdrHost := kubernetes.ParseHost(mdr.Spec.Host, dr.Namespace, dr.ZZZ_DeprecatedClusterName)
 		if mdrHost.Service == "*.local" ||
 			(mdrHost.Cluster == drHost.Cluster && mdrHost.Namespace == drHost.Namespace) {
 			shdrs = append(shdrs, mdr)
@@ -79,7 +79,7 @@ func sameHostDestinationRules(dr networking_v1beta1.DestinationRule, mdrs []netw
 			continue
 		}
 		dHost := edr.Spec.Host
-		if ismTLSEnabled(edr) &&
+		if ismTLSEnabled(*edr) &&
 			(dHost == fmt.Sprintf("*.%s.%s", drHost.Namespace, drHost.Cluster) || dHost == drHost.String()) {
 			shdrs = append(shdrs, edr)
 		}

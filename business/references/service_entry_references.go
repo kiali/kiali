@@ -11,10 +11,10 @@ import (
 type ServiceEntryReferences struct {
 	Namespace             string
 	Namespaces            models.Namespaces
-	ServiceEntries        []networking_v1beta1.ServiceEntry
-	Sidecars              []networking_v1beta1.Sidecar
-	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
-	DestinationRules      []networking_v1beta1.DestinationRule
+	ServiceEntries        []*networking_v1beta1.ServiceEntry
+	Sidecars              []*networking_v1beta1.Sidecar
+	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
+	DestinationRules      []*networking_v1beta1.DestinationRule
 	RegistryServices      []*kubernetes.RegistryService
 }
 
@@ -24,8 +24,8 @@ func (n ServiceEntryReferences) References() models.IstioReferencesMap {
 	for _, se := range n.ServiceEntries {
 		key := models.IstioReferenceKey{Namespace: se.Namespace, Name: se.Name, ObjectType: models.ObjectTypeSingular[kubernetes.ServiceEntries]}
 		references := &models.IstioReferences{}
-		references.ObjectReferences = append(references.ObjectReferences, n.getConfigReferences(se)...)
-		references.ServiceReferences = append(references.ServiceReferences, n.getServiceReferences(se)...)
+		references.ObjectReferences = append(references.ObjectReferences, n.getConfigReferences(*se)...)
+		references.ServiceReferences = append(references.ServiceReferences, n.getServiceReferences(*se)...)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
 	}
 
@@ -36,7 +36,7 @@ func (n ServiceEntryReferences) References() models.IstioReferencesMap {
 func (n ServiceEntryReferences) getConfigReferences(se networking_v1beta1.ServiceEntry) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 	for _, dr := range n.DestinationRules {
-		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, dr.ClusterName, n.Namespaces.GetNames())
+		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, dr.ZZZ_DeprecatedClusterName, n.Namespaces.GetNames())
 		if !fqdn.IsWildcard() {
 			for _, seHost := range se.Spec.Hosts {
 				if seHost == fqdn.String() {
@@ -57,7 +57,7 @@ func (n ServiceEntryReferences) getConfigReferences(se networking_v1beta1.Servic
 					if hostNs == "*" || hostNs == "~" || hostNs == "." || dnsName == "*" {
 						continue
 					}
-					fqdn := kubernetes.ParseHost(dnsName, hostNs, sc.ClusterName)
+					fqdn := kubernetes.ParseHost(dnsName, hostNs, sc.ZZZ_DeprecatedClusterName)
 
 					if se.Namespace != hostNs {
 						continue
@@ -79,7 +79,7 @@ func (n ServiceEntryReferences) getConfigReferences(se networking_v1beta1.Servic
 func (n ServiceEntryReferences) getAuthPoliciesReferences(se networking_v1beta1.ServiceEntry) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 	for _, ap := range n.AuthorizationPolicies {
-		namespace, clusterName := ap.Namespace, ap.ClusterName
+		namespace, clusterName := ap.Namespace, ap.ZZZ_DeprecatedClusterName
 		for _, rule := range ap.Spec.Rules {
 			if rule == nil {
 				continue

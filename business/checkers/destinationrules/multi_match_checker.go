@@ -13,7 +13,7 @@ import (
 const DestinationRulesCheckerType = "destinationrule"
 
 type MultiMatchChecker struct {
-	DestinationRules []networking_v1beta1.DestinationRule
+	DestinationRules []*networking_v1beta1.DestinationRule
 	ServiceEntries   map[string][]string
 	Namespaces       models.Namespaces
 }
@@ -39,14 +39,14 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	for _, dr := range m.DestinationRules {
 		destinationRulesName := dr.Name
 		destinationRulesNamespace := dr.Namespace
-		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, dr.ClusterName, m.Namespaces.GetNames())
+		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, dr.ZZZ_DeprecatedClusterName, m.Namespaces.GetNames())
 
 		// Skip DR validation if it enables mTLS either namespace or mesh-wide
-		if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
+		if isNonLocalmTLSForServiceEnabled(*dr, fqdn.String()) {
 			continue
 		}
 
-		foundSubsets := extractSubsets(dr, destinationRulesName, destinationRulesNamespace)
+		foundSubsets := extractSubsets(*dr, destinationRulesName, destinationRulesNamespace)
 
 		if fqdn.IsWildcard() {
 			// We need to check the matching subsets from all hosts now

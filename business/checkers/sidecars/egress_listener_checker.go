@@ -73,7 +73,7 @@ func (elc EgressHostChecker) validateHost(host string, egrIdx, hostIdx int) ([]*
 		return checks, true
 	}
 
-	fqdn := kubernetes.ParseHost(dnsName, sns, elc.Sidecar.ClusterName)
+	fqdn := kubernetes.ParseHost(dnsName, sns, elc.Sidecar.ZZZ_DeprecatedClusterName)
 
 	// Lookup for matching services
 	if !elc.HasMatchingService(fqdn, sns) {

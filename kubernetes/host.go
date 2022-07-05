@@ -173,7 +173,7 @@ func HasMatchingServiceEntries(service string, serviceEntries map[string][]strin
 	return false
 }
 
-func HasMatchingVirtualServices(host Host, virtualServices []networking_v1beta1.VirtualService) bool {
+func HasMatchingVirtualServices(host Host, virtualServices []*networking_v1beta1.VirtualService) bool {
 	for _, vs := range virtualServices {
 		for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
 			vHost := vs.Spec.Hosts[hostIdx]
@@ -204,7 +204,7 @@ func HasMatchingVirtualServices(host Host, virtualServices []networking_v1beta1.
 			}
 
 			// Non-internal service name
-			hostS := ParseHost(vHost, vs.Namespace, vs.ClusterName)
+			hostS := ParseHost(vHost, vs.Namespace, vs.ZZZ_DeprecatedClusterName)
 			if hostS.Service == host.Service && hostS.CompleteInput == host.CompleteInput && !hostS.CompleteInput {
 				return true
 			}

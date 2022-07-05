@@ -10,8 +10,8 @@ import (
 )
 
 type GatewayReferences struct {
-	Gateways              []networking_v1beta1.Gateway
-	VirtualServices       []networking_v1beta1.VirtualService
+	Gateways              []*networking_v1beta1.Gateway
+	VirtualServices       []*networking_v1beta1.VirtualService
 	WorkloadsPerNamespace map[string]models.WorkloadList
 }
 
@@ -24,8 +24,8 @@ func (n GatewayReferences) References() models.IstioReferencesMap {
 		}
 		key := models.IstioReferenceKey{Namespace: gw.Namespace, Name: gw.Name, ObjectType: models.ObjectTypeSingular[kubernetes.Gateways]}
 		references := &models.IstioReferences{}
-		references.WorkloadReferences = n.getWorkloadReferences(gw)
-		references.ObjectReferences = n.getConfigReferences(gw)
+		references.WorkloadReferences = n.getWorkloadReferences(*gw)
+		references.ObjectReferences = n.getConfigReferences(*gw)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
 	}
 
@@ -53,7 +53,7 @@ func (n GatewayReferences) getConfigReferences(gw networking_v1beta1.Gateway) []
 	result := make([]models.IstioReference, 0)
 	allVSs := make([]models.IstioReference, 0)
 	for _, vs := range n.VirtualServices {
-		namespace, clusterName := vs.Namespace, vs.ClusterName
+		namespace, clusterName := vs.Namespace, vs.ZZZ_DeprecatedClusterName
 		if len(vs.Spec.Gateways) > 0 && isGatewayListed(gw, vs.Spec.Gateways, namespace, clusterName) {
 			allVSs = append(allVSs, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
 		}
@@ -92,7 +92,7 @@ func (n GatewayReferences) getConfigReferences(gw networking_v1beta1.Gateway) []
 }
 
 func isGatewayListed(gw networking_v1beta1.Gateway, gateways []string, namespace string, clusterName string) bool {
-	hostname := kubernetes.ParseGatewayAsHost(gw.Name, gw.Namespace, gw.ClusterName)
+	hostname := kubernetes.ParseGatewayAsHost(gw.Name, gw.Namespace, gw.ZZZ_DeprecatedClusterName)
 	for _, gate := range gateways {
 		gwHostname := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName)
 		if hostname.String() == gwHostname.String() {

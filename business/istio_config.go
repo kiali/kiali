@@ -111,18 +111,18 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 	istioConfigList := models.IstioConfigList{
 		Namespace: models.Namespace{Name: criteria.Namespace},
 
-		DestinationRules: []networking_v1beta1.DestinationRule{},
-		EnvoyFilters:     []networking_v1alpha3.EnvoyFilter{},
-		Gateways:         []networking_v1beta1.Gateway{},
-		VirtualServices:  []networking_v1beta1.VirtualService{},
-		ServiceEntries:   []networking_v1beta1.ServiceEntry{},
-		Sidecars:         []networking_v1beta1.Sidecar{},
-		WorkloadEntries:  []networking_v1beta1.WorkloadEntry{},
-		WorkloadGroups:   []networking_v1beta1.WorkloadGroup{},
+		DestinationRules: []*networking_v1beta1.DestinationRule{},
+		EnvoyFilters:     []*networking_v1alpha3.EnvoyFilter{},
+		Gateways:         []*networking_v1beta1.Gateway{},
+		VirtualServices:  []*networking_v1beta1.VirtualService{},
+		ServiceEntries:   []*networking_v1beta1.ServiceEntry{},
+		Sidecars:         []*networking_v1beta1.Sidecar{},
+		WorkloadEntries:  []*networking_v1beta1.WorkloadEntry{},
+		WorkloadGroups:   []*networking_v1beta1.WorkloadGroup{},
 
-		AuthorizationPolicies:  []security_v1beta1.AuthorizationPolicy{},
-		PeerAuthentications:    []security_v1beta1.PeerAuthentication{},
-		RequestAuthentications: []security_v1beta1.RequestAuthentication{},
+		AuthorizationPolicies:  []*security_v1beta1.AuthorizationPolicy{},
+		PeerAuthentications:    []*security_v1beta1.PeerAuthentication{},
+		RequestAuthentications: []*security_v1beta1.RequestAuthentication{},
 	}
 
 	// Use the Istio Registry when AllNamespaces is present
