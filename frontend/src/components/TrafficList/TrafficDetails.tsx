@@ -139,6 +139,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           this.props.itemName
         );
         params.includeHealth = false;
+        params.showSecurity = true;
         this.graphDataSource.fetchGraphData(params);
         break;
       }
@@ -150,6 +151,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
         );
         params.includeHealth = false;
         params.injectServiceNodes = false;
+        params.showSecurity = true;
         this.graphDataSource.fetchGraphData(params);
         break;
       }

@@ -59,13 +59,16 @@ const columns = [
 ];
 
 function LockIcon(props) {
-
+  const msg = props.mTLS ? props.mTLS + " % of mTLS traffic" : "mTLS is disabled";
   return (
     <Tooltip
       position={TooltipPosition.top}
-      content={<>{props.mTLS} % of mTLS traffic </>}
+      content={msg}
     >
-      <KialiIcon.MtlsLock className={lockIconStyle}/>
+      <>
+      {props.mTLS && (<KialiIcon.MtlsLock className={lockIconStyle}/>)}
+      {!props.mTLS && (<KialiIcon.MtlsUnlock className={lockIconStyle}/>)}
+      </>
     </Tooltip>
   );
 };
@@ -258,7 +261,7 @@ class TrafficListComponent extends FilterComponent.Component<
             </>,
             <>{item.trafficRate}</>,
             <>{item.trafficPercentSuccess}</>,
-            <>{item.mTLS ? <>{item.protocol}<LockIcon mTLS={item.mTLS}></LockIcon></> : item.protocol }</>,
+            <>{item.protocol}<LockIcon mTLS={item.mTLS}></LockIcon></>,
             <>
               {!!links.metrics && (
                 <Link key={`link_m_${item.badge}_${name}`} to={links.metrics} className={'virtualitem_definition_link'}>
