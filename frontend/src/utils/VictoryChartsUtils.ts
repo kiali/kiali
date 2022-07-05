@@ -83,17 +83,28 @@ export const toVCLines = (
     return Object.values(pairedMetrics).map((twoLines, i) => {
       const color = colors[i % colors.length];
 
-      // TODO: Remove bang
-      const name = twoLines[0]!.name;
-      const datapoints = Array.from(twoLines[0]!.datapoints);
+      let datapoints: Datapoint[] = [];
+      let name: string = '';
+      if (twoLines[0] !== undefined && twoLines[1] !== undefined) {
+        name = twoLines[0].name;
+        datapoints = Array.from(twoLines[0].datapoints);
 
-      for (let j = 0; j < datapoints.length; j++) {
-        if (datapoints[j][0] !== twoLines[1]!.datapoints[j][0]) {
-          // TODO: Check how to handle the exception.
-          break;
+        for (let j = 0; j < datapoints.length; j++) {
+          if (datapoints[j][0] !== twoLines[1].datapoints[j][0]) {
+            // TODO: Check how to handle the exception.
+            break;
+          }
+
+          datapoints[j][2] = twoLines[1].datapoints[j][1];
         }
-
-        datapoints[j][2] = twoLines[1]!.datapoints[j][1];
+      } else if (twoLines[0] !== undefined) {
+        // Assign zero value to "y0" to denote "no data" for the destination reporter
+        name = twoLines[0].name;
+        datapoints = twoLines[0].datapoints.map(d => ([d[0], d[1], 0]));
+      } else if (twoLines[1] !== undefined) {
+        // Assign zero value to "y" to denote "no data" for the source reporter
+        name = twoLines[1].name;
+        datapoints = twoLines[1].datapoints.map(d => ([d[0], 0, d[1]]));
       }
 
       const dps =
