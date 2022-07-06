@@ -60,6 +60,7 @@ export interface TrafficItem {
   node: TrafficNode;
   proxy?: TrafficItem;
   traffic: ProtocolTraffic;
+  mTLS?: number;
 }
 
 type TrafficDetailsProps = {
@@ -138,6 +139,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           this.props.itemName
         );
         params.includeHealth = false;
+        params.showSecurity = true;
         this.graphDataSource.fetchGraphData(params);
         break;
       }
@@ -149,6 +151,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
         );
         params.includeHealth = false;
         params.injectServiceNodes = false;
+        params.showSecurity = true;
         this.graphDataSource.fetchGraphData(params);
         break;
       }
@@ -160,6 +163,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
         );
         params.includeHealth = false;
         params.injectServiceNodes = false;
+        params.showSecurity = true;
         this.graphDataSource.fetchGraphData(params);
         break;
       }
@@ -229,14 +233,16 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
         const trafficItem: TrafficItem = {
           direction: 'outbound',
           node: this.buildTrafficNode('out', targetNode),
-          traffic: edge.data.traffic!
+          traffic: edge.data.traffic!,
+          mTLS: edge.data.isMTLS
         };
         traffic.push(trafficItem);
       } else if (myNode.id === edge.data.target) {
         const trafficItem: TrafficItem = {
           direction: 'inbound',
           node: this.buildTrafficNode('in', sourceNode),
-          traffic: edge.data.traffic!
+          traffic: edge.data.traffic!,
+          mTLS: edge.data.isMTLS
         };
         traffic.push(trafficItem);
       }
