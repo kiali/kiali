@@ -552,11 +552,7 @@ func GatewayNames(gateways []networking_v1beta1.Gateway) map[string]struct{} {
 	var empty struct{}
 	names := make(map[string]struct{})
 	for _, gw := range gateways {
-		clusterName := gw.ClusterName
-		if clusterName == "" {
-			clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
-		}
-		names[ParseHost(gw.Name, gw.Namespace, clusterName).String()] = empty
+		names[ParseHost(gw.Name, gw.Namespace).String()] = empty
 	}
 	return names
 }

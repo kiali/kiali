@@ -114,8 +114,8 @@ func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost stri
 	for _, destinationRule := range checker.DestinationRules {
 		host := destinationRule.Spec.Host
 
-		drHost := kubernetes.GetHost(host, destinationRule.Namespace, destinationRule.ClusterName, checker.Namespaces)
-		vsHost := kubernetes.GetHost(virtualServiceHost, checker.VirtualService.Namespace, checker.VirtualService.ClusterName, checker.Namespaces)
+		drHost := kubernetes.GetHost(host, destinationRule.Namespace, "", checker.Namespaces)
+		vsHost := kubernetes.GetHost(virtualServiceHost, checker.VirtualService.Namespace, "", checker.Namespaces)
 
 		// TODO Host could be in another namespace (FQDN)
 		if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) {

@@ -53,7 +53,7 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []networking_v1beta1.DestinationRule {
 	mtlsDrs := make([]networking_v1beta1.DestinationRule, 0)
 	for _, dr := range t.MTLSDetails.DestinationRules {
-		fqdn := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace, dr.ClusterName)
+		fqdn := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace)
 		if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
 			mtlsDrs = append(mtlsDrs, dr)
 		}
@@ -63,10 +63,10 @@ func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []networking_v1beta1.
 
 func sameHostDestinationRules(dr networking_v1beta1.DestinationRule, mdrs []networking_v1beta1.DestinationRule, edrs []networking_v1beta1.DestinationRule) []networking_v1beta1.DestinationRule {
 	shdrs := make([]networking_v1beta1.DestinationRule, 0, len(mdrs)+len(edrs))
-	drHost := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace, dr.ClusterName)
+	drHost := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace)
 
 	for _, mdr := range mdrs {
-		mdrHost := kubernetes.ParseHost(mdr.Spec.Host, dr.Namespace, dr.ClusterName)
+		mdrHost := kubernetes.ParseHost(mdr.Spec.Host, dr.Namespace)
 		if mdrHost.Service == "*.local" ||
 			(mdrHost.Cluster == drHost.Cluster && mdrHost.Namespace == drHost.Namespace) {
 			shdrs = append(shdrs, mdr)
