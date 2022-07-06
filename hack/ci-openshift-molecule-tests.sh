@@ -123,6 +123,13 @@ Options:
     than to install its own operator.
     Default: helm
 
+-rr|--reduce-resources <true|false>
+    When true, and if Istio will be installed (see --install-istio), some Istio components
+    (such as sidecar proxies) will be given a smaller amount of resources (CPU and memory)
+    which will allow you to run the tests on a cluster that does not have a large amount
+    of resources.
+    Default: false
+
 -sd|--src-dir <directory>
     Where the git source repositories will be cloned.
     Default: /tmp/KIALI-GIT
@@ -188,6 +195,7 @@ while [[ $# -gt 0 ]]; do
     -oapi|--openshift-api)        OPENSHIFT_API="$2";         shift;shift; ;;
     -oc)                          OC="$2";                    shift;shift; ;;
     -oi|--operator-installer)     OPERATOR_INSTALLER="$2";    shift;shift; ;;
+    -rr|--reduce-resources)       REDUCE_RESOURCES="$2";      shift;shift; ;;
     -sd|--src-dir)                SRC="$2";                   shift;shift; ;;
     -st|--skip-tests)             SKIP_TESTS="$2";            shift;shift; ;;
     -sv|--spec-version)           SPEC_VERSION="$2";          shift;shift; ;;
@@ -251,7 +259,9 @@ IRC_ROOM="${IRC_ROOM-kiali-molecule-tests}"
 UPLOAD_LOGS="${UPLOAD_LOGS:-false}"
 
 # Only if this is set to "true" will Istio be installed if it is missing
+# The reduce resources flag is not used unless Istio will be installed.
 INSTALL_ISTIO="${INSTALL_ISTIO:-true}"
+REDUCE_RESOURCES="${REDUCE_RESOURCES:-false}"
 
 # Determines if we should build and push dev images
 USE_DEV_IMAGES="${USE_DEV_IMAGES:-false}"
@@ -287,6 +297,7 @@ LOGS_LOCAL_SUBDIR=$LOGS_LOCAL_SUBDIR
 LOGS_LOCAL_SUBDIR_ABS=$LOGS_LOCAL_SUBDIR_ABS
 OC=$OC
 OPERATOR_INSTALLER=$OPERATOR_INSTALLER
+REDUCE_RESOURCES=$REDUCE_RESOURCES
 SKIP_TESTS=$SKIP_TESTS
 SPEC_VERSION=$SPEC_VERSION
 SRC=$SRC
@@ -392,7 +403,7 @@ if ! $OC get namespace istio-system > /dev/null; then
       DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
     fi
     hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
-    hack/istio/install-istio-via-istioctl.sh --client-exe-path "$OC"
+    hack/istio/install-istio-via-istioctl.sh --client-exe-path "$OC" --reduce-resources "${REDUCE_RESOURCES}"
   else
     infomsg "There is no 'istio-system' namespace, and this script was told not to install Istio. Aborting."
     exit 1
