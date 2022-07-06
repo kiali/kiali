@@ -2,9 +2,9 @@ package business
 
 import (
 	"context"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"testing"
 
-	"github.com/gogo/protobuf/types"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -299,6 +299,7 @@ func fakeGetDestinationRules() []networking_v1beta1.DestinationRule {
 		data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"),
 			data.CreateEmptyDestinationRule("test", "reviews-dr", "reviews")))
 
+	errors := wrappers.UInt32Value{Value: 50}
 	destinationRule1.Spec.TrafficPolicy = &api_networking_v1beta1.TrafficPolicy{
 		ConnectionPool: &api_networking_v1beta1.ConnectionPoolSettings{
 			Http: &api_networking_v1beta1.ConnectionPoolSettings_HTTPSettings{
@@ -306,9 +307,7 @@ func fakeGetDestinationRules() []networking_v1beta1.DestinationRule {
 			},
 		},
 		OutlierDetection: &api_networking_v1beta1.OutlierDetection{
-			Consecutive_5XxErrors: &types.UInt32Value{
-				Value: 50,
-			},
+			Consecutive_5XxErrors: &errors,
 		},
 	}
 
@@ -323,9 +322,7 @@ func fakeGetDestinationRules() []networking_v1beta1.DestinationRule {
 			},
 		},
 		OutlierDetection: &api_networking_v1beta1.OutlierDetection{
-			Consecutive_5XxErrors: &types.UInt32Value{
-				Value: 50,
-			},
+			Consecutive_5XxErrors: &errors,
 		},
 	}
 
@@ -425,6 +422,7 @@ func TestHasCircuitBreaker(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
+	errors := wrappers.UInt32Value{Value: 50}
 	dRule1 := data.CreateEmptyDestinationRule("test", "reviews", "reviews")
 	dRule1.Spec.TrafficPolicy = &api_networking_v1beta1.TrafficPolicy{
 		ConnectionPool: &api_networking_v1beta1.ConnectionPoolSettings{
@@ -433,9 +431,7 @@ func TestHasCircuitBreaker(t *testing.T) {
 			},
 		},
 		OutlierDetection: &api_networking_v1beta1.OutlierDetection{
-			Consecutive_5XxErrors: &types.UInt32Value{
-				Value: 50,
-			},
+			Consecutive_5XxErrors: &errors,
 		},
 	}
 	dRule1 = data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), dRule1)
@@ -459,9 +455,7 @@ func TestHasCircuitBreaker(t *testing.T) {
 			},
 		},
 		OutlierDetection: &api_networking_v1beta1.OutlierDetection{
-			Consecutive_5XxErrors: &types.UInt32Value{
-				Value: 50,
-			},
+			Consecutive_5XxErrors: &errors,
 		},
 	}
 

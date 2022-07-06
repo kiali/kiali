@@ -3,8 +3,6 @@ package data
 import (
 	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-
-	"github.com/kiali/kiali/config"
 )
 
 func CreateEmptyGateway(name, namespace string, selector map[string]string) *networking_v1beta1.Gateway {
@@ -13,7 +11,6 @@ func CreateEmptyGateway(name, namespace string, selector map[string]string) *net
 	gw.Namespace = namespace
 	gw.Kind = "Gateway"
 	gw.APIVersion = "networking.istio.io/v1beta1"
-	gw.ClusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
 	gw.Spec.Selector = selector
 	return &gw
 }
