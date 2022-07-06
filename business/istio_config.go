@@ -29,6 +29,9 @@ type IstioConfigService struct {
 	businessLayer *Layer
 }
 
+type Mapper interface {
+}
+
 type IstioConfigCriteria struct {
 	// When AllNamespaces is true the IstioConfigService will use the Istio registry to return the configuration
 	// from all namespaces directly from the Istio registry instead of the individual API
@@ -183,7 +186,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 				istioConfigList.DestinationRules, err = kialiCache.GetDestinationRules(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				drl, e := in.k8s.Istio().NetworkingV1beta1().DestinationRules(criteria.Namespace).List(ctx, listOpts)
-				istioConfigList.DestinationRules = drl.Items
+				istioConfigList.DestinationRules = getDestinationRulesAsArray(drl)
 				err = e
 			}
 			if err != nil {
@@ -200,7 +203,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 				istioConfigList.EnvoyFilters, err = kialiCache.GetEnvoyFilters(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				efl, e := in.k8s.Istio().NetworkingV1alpha3().EnvoyFilters(criteria.Namespace).List(ctx, listOpts)
-				istioConfigList.EnvoyFilters = efl.Items
+				istioConfigList.EnvoyFilters = getEnvoyFiltersAsArray(efl.Items)
 				err = e
 			}
 			if err == nil {
@@ -222,7 +225,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 				istioConfigList.Gateways, err = kialiCache.GetGateways(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				gwl, e := in.k8s.Istio().NetworkingV1beta1().Gateways(criteria.Namespace).List(ctx, listOpts)
-				istioConfigList.Gateways = gwl.Items
+				istioConfigList.Gateways = getGatewaysAsArray(gwl.Items)
 				err = e
 			}
 			if err == nil {
@@ -244,7 +247,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 				istioConfigList.ServiceEntries, err = kialiCache.GetServiceEntries(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				sel, e := in.k8s.Istio().NetworkingV1beta1().ServiceEntries(criteria.Namespace).List(ctx, listOpts)
-				istioConfigList.ServiceEntries = sel.Items
+				istioConfigList.ServiceEntries = getServiceEntriesAsArray(sel.Items)
 				err = e
 			}
 			if err != nil {
@@ -261,7 +264,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 				istioConfigList.Sidecars, err = kialiCache.GetSidecars(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				scl, e := in.k8s.Istio().NetworkingV1beta1().Sidecars(criteria.Namespace).List(ctx, listOpts)
-				istioConfigList.Sidecars = scl.Items
+				istioConfigList.Sidecars = getSidecarsAsArray(scl.Items)
 				err = e
 			}
 			if err == nil {
@@ -283,7 +286,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 				istioConfigList.VirtualServices, err = kialiCache.GetVirtualServices(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				vsl, e := in.k8s.Istio().NetworkingV1beta1().VirtualServices(criteria.Namespace).List(ctx, listOpts)
-				istioConfigList.VirtualServices = vsl.Items
+				istioConfigList.VirtualServices = getVirtualServicesAsArray(vsl.Items)
 				err = e
 			}
 			if err != nil {
@@ -300,7 +303,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 				istioConfigList.WorkloadEntries, err = kialiCache.GetWorkloadEntries(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				wel, e := in.k8s.Istio().NetworkingV1beta1().WorkloadEntries(criteria.Namespace).List(ctx, listOpts)
-				istioConfigList.WorkloadEntries = wel.Items
+				istioConfigList.WorkloadEntries = getWorkloadsEntriesAsArray(wel.Items)
 				err = e
 			}
 			if err != nil {
@@ -317,7 +320,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 				istioConfigList.WorkloadGroups, err = kialiCache.GetWorkloadGroups(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				wgl, e := in.k8s.Istio().NetworkingV1beta1().WorkloadGroups(criteria.Namespace).List(ctx, listOpts)
-				istioConfigList.WorkloadGroups = wgl.Items
+				istioConfigList.WorkloadGroups = getWorkloadGroupsAsArray(wgl.Items)
 				err = e
 			}
 			if err != nil {
@@ -334,7 +337,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 				istioConfigList.AuthorizationPolicies, err = kialiCache.GetAuthorizationPolicies(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				apl, e := in.k8s.Istio().SecurityV1beta1().AuthorizationPolicies(criteria.Namespace).List(ctx, listOpts)
-				istioConfigList.AuthorizationPolicies = apl.Items
+				istioConfigList.AuthorizationPolicies = getAuthorizationPoliciesAsArray(apl.Items)
 				err = e
 			}
 			if err == nil {
@@ -355,7 +358,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 				istioConfigList.PeerAuthentications, err = kialiCache.GetPeerAuthentications(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				pal, e := in.k8s.Istio().SecurityV1beta1().PeerAuthentications(criteria.Namespace).List(ctx, listOpts)
-				istioConfigList.PeerAuthentications = pal.Items
+				istioConfigList.PeerAuthentications = getPeerAuthenticationsAsArray(pal.Items)
 				err = e
 			}
 			if err == nil {
@@ -376,7 +379,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 				istioConfigList.RequestAuthentications, err = kialiCache.GetRequestAuthentications(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				ral, e := in.k8s.Istio().SecurityV1beta1().RequestAuthentications(criteria.Namespace).List(ctx, listOpts)
-				istioConfigList.RequestAuthentications = ral.Items
+				istioConfigList.RequestAuthentications = getRequestAuthenticationsAsArray(ral.Items)
 				err = e
 			}
 			if err == nil {
@@ -401,6 +404,97 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 
 	return istioConfigList, nil
 }
+
+// Backwards compatibility functions in istio/client.go migration where []type was changed to []*type
+func getRequestAuthenticationsAsArray(items []*security_v1beta1.RequestAuthentication) []security_v1beta1.RequestAuthentication {
+	ds := []security_v1beta1.RequestAuthentication{}
+	for i, v := range items {
+		ds[i] = *v
+	}
+	return ds
+}
+
+func getPeerAuthenticationsAsArray(items []*security_v1beta1.PeerAuthentication) []security_v1beta1.PeerAuthentication {
+	ds := []security_v1beta1.PeerAuthentication{}
+	for i, v := range items {
+		ds[i] = *v
+	}
+	return ds
+}
+
+func getAuthorizationPoliciesAsArray(items []*security_v1beta1.AuthorizationPolicy) []security_v1beta1.AuthorizationPolicy {
+	ds := []security_v1beta1.AuthorizationPolicy{}
+	for i, v := range items {
+		ds[i] = *v
+	}
+	return ds
+}
+
+func getWorkloadsEntriesAsArray(items []*networking_v1beta1.WorkloadEntry) []networking_v1beta1.WorkloadEntry {
+	ds := []networking_v1beta1.WorkloadEntry{}
+	for i, v := range items {
+		ds[i] = *v
+	}
+	return ds
+}
+
+func getWorkloadGroupsAsArray(items []*networking_v1beta1.WorkloadGroup) []networking_v1beta1.WorkloadGroup {
+	ds := []networking_v1beta1.WorkloadGroup{}
+	for i, v := range items {
+		ds[i] = *v
+	}
+	return ds
+}
+
+func getVirtualServicesAsArray(items []*networking_v1beta1.VirtualService) []networking_v1beta1.VirtualService {
+	ds := []networking_v1beta1.VirtualService{}
+	for i, v := range items {
+		ds[i] = *v
+	}
+	return ds
+}
+
+func getSidecarsAsArray(items []*networking_v1beta1.Sidecar) []networking_v1beta1.Sidecar {
+	ds := []networking_v1beta1.Sidecar{}
+	for i, v := range items {
+		ds[i] = *v
+	}
+	return ds
+}
+
+func getServiceEntriesAsArray(items []*networking_v1beta1.ServiceEntry) []networking_v1beta1.ServiceEntry {
+	ds := []networking_v1beta1.ServiceEntry{}
+	for i, v := range items {
+		ds[i] = *v
+	}
+	return ds
+}
+
+func getGatewaysAsArray(items []*networking_v1beta1.Gateway) []networking_v1beta1.Gateway {
+	ds := []networking_v1beta1.Gateway{}
+	for i, v := range items {
+		ds[i] = *v
+	}
+	return ds
+}
+
+func getEnvoyFiltersAsArray(items []*networking_v1alpha3.EnvoyFilter) []networking_v1alpha3.EnvoyFilter {
+	ds := []networking_v1alpha3.EnvoyFilter{}
+	for i, v := range items {
+		ds[i] = *v
+	}
+	return ds
+}
+
+func getDestinationRulesAsArray(items *networking_v1beta1.DestinationRuleList) []networking_v1beta1.DestinationRule {
+	ds := []networking_v1beta1.DestinationRule{}
+	for i, v := range items.Items {
+		ds[i] = *v
+	}
+	return ds
+}
+
+//
 
 // GetIstioConfigDetails returns a specific Istio configuration object.
 // It uses following parameters:
