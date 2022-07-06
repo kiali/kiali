@@ -13,7 +13,7 @@ func CreateEmptyGateway(name, namespace string, selector map[string]string) *net
 	gw.Namespace = namespace
 	gw.Kind = "Gateway"
 	gw.APIVersion = "networking.istio.io/v1beta1"
-	gw.ClusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
+	gw.ZZZ_DeprecatedClusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
 	gw.Spec.Selector = selector
 	return &gw
 }

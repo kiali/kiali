@@ -9,7 +9,7 @@ func CreateEmptyDestinationRule(namespace string, name string, host string) *net
 	dr := networking_v1beta1.DestinationRule{}
 	dr.Name = name
 	dr.Namespace = namespace
-	dr.ClusterName = "svc.cluster.local"
+	dr.ZZZ_DeprecatedClusterName = "svc.cluster.local"
 	dr.Spec.Host = host
 	return &dr
 }

@@ -21,8 +21,8 @@ func (n PeerAuthReferences) References() models.IstioReferencesMap {
 	for _, pa := range n.MTLSDetails.PeerAuthentications {
 		key := models.IstioReferenceKey{Namespace: pa.Namespace, Name: pa.Name, ObjectType: models.ObjectTypeSingular[kubernetes.PeerAuthentications]}
 		references := &models.IstioReferences{}
-		references.ObjectReferences = n.getConfigReferences(pa)
-		references.WorkloadReferences = n.getWorkloadReferences(pa)
+		references.ObjectReferences = n.getConfigReferences(*pa)
+		references.WorkloadReferences = n.getWorkloadReferences(*pa)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
 	}
 

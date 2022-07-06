@@ -178,15 +178,15 @@ func emptyIstioConfigList() *models.IstioConfigList {
 func fakeIstioConfigList() *models.IstioConfigList {
 	result := models.IstioConfigList{}
 
-	result.VirtualServices = []networking_v1beta1.VirtualService{
-		*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("product", "v1", -1),
+	result.VirtualServices = []*networking_v1beta1.VirtualService{
+		data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("product", "v1", -1),
 			data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("product", "v1", -1),
 				data.CreateEmptyVirtualService("product-vs", "test", []string{"product"}),
 			),
 		)}
 
-	result.DestinationRules = []networking_v1beta1.DestinationRule{
-		*data.CreateEmptyDestinationRule("test", "customer-dr", "customer"),
+	result.DestinationRules = []*networking_v1beta1.DestinationRule{
+		data.CreateEmptyDestinationRule("test", "customer-dr", "customer"),
 	}
 	return &result
 }

@@ -1,9 +1,9 @@
 package data
 
 import (
+	"google.golang.org/protobuf/types/known/durationpb"
 	"time"
 
-	"github.com/gogo/protobuf/types"
 	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 )
@@ -13,7 +13,7 @@ func CreateEmptyVirtualService(name string, namespace string, hosts []string) *n
 	vs.Name = name
 	vs.Namespace = namespace
 	vs.Spec.Hosts = hosts
-	vs.ClusterName = "svc.cluster.local"
+	vs.ZZZ_DeprecatedClusterName = "svc.cluster.local"
 	return &vs
 }
 
@@ -99,7 +99,7 @@ func CreateVirtualServiceWithServiceEntryTarget() *networking_v1beta1.VirtualSer
 	timeout, _ := time.ParseDuration("5s")
 	vs.Spec.Http = []*api_networking_v1beta1.HTTPRoute{
 		{
-			Timeout: types.DurationProto(timeout),
+			Timeout: durationpb.New(timeout),
 			Route: []*api_networking_v1beta1.HTTPRouteDestination{
 				{
 					Destination: &api_networking_v1beta1.Destination{

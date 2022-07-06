@@ -123,8 +123,8 @@ type IstioMeshConfig struct {
 // MTLSDetails is a wrapper to group all Istio objects related to non-local mTLS configurations
 type MTLSDetails struct {
 	DestinationRules        []*networking_v1beta1.DestinationRule `json:"destinationrules"`
-	MeshPeerAuthentications []security_v1beta.PeerAuthentication  `json:"meshpeerauthentications"`
-	PeerAuthentications     []security_v1beta.PeerAuthentication  `json:"peerauthentications"`
+	MeshPeerAuthentications []*security_v1beta.PeerAuthentication `json:"meshpeerauthentications"`
+	PeerAuthentications     []*security_v1beta.PeerAuthentication `json:"peerauthentications"`
 	EnabledAutoMtls         bool                                  `json:"enabledautomtls"`
 }
 

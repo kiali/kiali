@@ -22,8 +22,8 @@ import (
 func TestMeshPolicymTLSEnabled(t *testing.T) {
 	meshPolicy := data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []networking_v1beta1.DestinationRule{
-			*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		DestinationRules: []*networking_v1beta1.DestinationRule{
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("default", "default", "*.local")),
 		},
 	}
@@ -37,8 +37,8 @@ func TestMeshPolicymTLSEnabled(t *testing.T) {
 func TestMeshPolicyEnabledDRNamespaceWide(t *testing.T) {
 	meshPolicy := data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []networking_v1beta1.DestinationRule{
-			*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		DestinationRules: []*networking_v1beta1.DestinationRule{
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.bookinfo.svc.cluster.local")),
 		},
 	}
@@ -52,8 +52,8 @@ func TestMeshPolicyEnabledDRNamespaceWide(t *testing.T) {
 func TestMeshPolicyEnabledDRmTLSDisabled(t *testing.T) {
 	meshPolicy := data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []networking_v1beta1.DestinationRule{
-			*data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),
+		DestinationRules: []*networking_v1beta1.DestinationRule{
+			data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),
 		},
 	}
 
@@ -66,7 +66,7 @@ func TestMeshPolicyEnabledDRmTLSDisabled(t *testing.T) {
 func TestMeshPolicymTLSEnabledDestinationRuleMissing(t *testing.T) {
 	meshPolicy := data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []networking_v1beta1.DestinationRule{},
+		DestinationRules: []*networking_v1beta1.DestinationRule{},
 	}
 
 	testValidationAdded(t, *meshPolicy, mTLSDetails)
@@ -78,8 +78,8 @@ func TestMeshPolicymTLSEnabledDestinationRuleMissing(t *testing.T) {
 func TestMeshPolicymTLSDisabledDestinationRulePresent(t *testing.T) {
 	meshPolicy := data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE"))
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []networking_v1beta1.DestinationRule{
-			*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		DestinationRules: []*networking_v1beta1.DestinationRule{
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("default", "default", "*.local")),
 		},
 	}
@@ -93,8 +93,8 @@ func TestMeshPolicymTLSDisabledDestinationRulePresent(t *testing.T) {
 func TestMeshPolicyDisabledDRNamespaceWide(t *testing.T) {
 	meshPolicy := data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE"))
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []networking_v1beta1.DestinationRule{
-			*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		DestinationRules: []*networking_v1beta1.DestinationRule{
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.bookinfo.svc.cluster.local")),
 		},
 	}
@@ -108,8 +108,8 @@ func TestMeshPolicyDisabledDRNamespaceWide(t *testing.T) {
 func TestMeshPolicyDisabledDRmTLSDisabled(t *testing.T) {
 	meshPolicy := data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE"))
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []networking_v1beta1.DestinationRule{
-			*data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),
+		DestinationRules: []*networking_v1beta1.DestinationRule{
+			data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),
 		},
 	}
 
@@ -122,7 +122,7 @@ func TestMeshPolicyDisabledDRmTLSDisabled(t *testing.T) {
 func TestMeshPolicymTLSDisabledDestinationRuleMissing(t *testing.T) {
 	meshPolicy := data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE"))
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []networking_v1beta1.DestinationRule{},
+		DestinationRules: []*networking_v1beta1.DestinationRule{},
 	}
 
 	testValidationsNotAdded(t, *meshPolicy, mTLSDetails)

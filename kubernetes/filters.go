@@ -184,11 +184,11 @@ func FilterPodsByController(controllerName string, controllerType string, allPod
 	return pods
 }
 
-func FilterPeerAuthenticationByNamespace(namespace string, peerauthentications []*security_v1beta1.PeerAuthentication) []security_v1beta1.PeerAuthentication {
-	filtered := []security_v1beta1.PeerAuthentication{}
+func FilterPeerAuthenticationByNamespace(namespace string, peerauthentications []*security_v1beta1.PeerAuthentication) []*security_v1beta1.PeerAuthentication {
+	filtered := []*security_v1beta1.PeerAuthentication{}
 	for _, pa := range peerauthentications {
 		if pa.Namespace == namespace {
-			filtered = append(filtered, *pa)
+			filtered = append(filtered, pa)
 		}
 	}
 	return filtered

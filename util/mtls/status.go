@@ -16,7 +16,7 @@ const (
 )
 
 type MtlsStatus struct {
-	PeerAuthentications []security_v1beta.PeerAuthentication
+	PeerAuthentications []*security_v1beta.PeerAuthentication
 	DestinationRules    []*networking_v1beta1.DestinationRule
 	MatchingLabels      labels.Labels
 	AutoMtlsEnabled     bool
@@ -37,7 +37,7 @@ type NameNamespace struct {
 
 func (m MtlsStatus) hasPeerAuthnNamespacemTLSDefinition() string {
 	for _, p := range m.PeerAuthentications {
-		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(p); mode != "" {
+		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(*p); mode != "" {
 			return mode
 		}
 	}
@@ -70,7 +70,7 @@ func (m MtlsStatus) WorkloadMtlsStatus(namespace string) string {
 			continue
 		}
 
-		_, mode := kubernetes.PeerAuthnMTLSMode(pa)
+		_, mode := kubernetes.PeerAuthnMTLSMode(*pa)
 		if mode == "STRICT" {
 			return MTLSEnabled
 		} else if mode == "DISABLE" {
@@ -146,7 +146,7 @@ func (m MtlsStatus) MeshMtlsStatus() TlsStatus {
 
 func (m MtlsStatus) hasPeerAuthnMeshTLSDefinition() string {
 	for _, mp := range m.PeerAuthentications {
-		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(mp); mode != "" {
+		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(*mp); mode != "" {
 			return mode
 		}
 	}

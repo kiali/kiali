@@ -85,7 +85,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace str
 
 	pas := kubernetes.FilterPeerAuthenticationByNamespace(namespace, istioConfigList.PeerAuthentications)
 	if config.IsRootNamespace(namespace) {
-		pas = []security_v1beta1.PeerAuthentication{}
+		pas = []*security_v1beta1.PeerAuthentication{}
 	}
 	drs := kubernetes.FilterDestinationRulesByNamespaces(nss, istioConfigList.DestinationRules)
 

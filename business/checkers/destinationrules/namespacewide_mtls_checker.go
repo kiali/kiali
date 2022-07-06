@@ -22,14 +22,14 @@ func (m NamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 
 	// otherwise, check among PeerAuthentications for a rule enabling ns-wide mTLS
 	for _, mp := range m.MTLSDetails.PeerAuthentications {
-		if enabled, _ := kubernetes.PeerAuthnHasMTLSEnabled(mp); enabled {
+		if enabled, _ := kubernetes.PeerAuthnHasMTLSEnabled(*mp); enabled {
 			return validations, true
 		}
 	}
 
 	// In case any PeerAuthn enables mTLS, check among MeshPeerAuthentications for a rule enabling it
 	for _, mp := range m.MTLSDetails.MeshPeerAuthentications {
-		if enabled, _ := kubernetes.PeerAuthnHasMTLSEnabled(mp); enabled {
+		if enabled, _ := kubernetes.PeerAuthnHasMTLSEnabled(*mp); enabled {
 			return validations, true
 		}
 	}

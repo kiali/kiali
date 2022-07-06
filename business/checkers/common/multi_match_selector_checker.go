@@ -17,7 +17,7 @@ type GenericMultiMatchChecker struct {
 	skipSelSubj           bool
 }
 
-func PeerAuthenticationMultiMatchChecker(subjectType string, pa []security_v1beta.PeerAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func PeerAuthenticationMultiMatchChecker(subjectType string, pa []*security_v1beta.PeerAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(pa))
 	for i, p := range pa {

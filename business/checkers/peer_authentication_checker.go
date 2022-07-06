@@ -13,7 +13,7 @@ import (
 const PeerAuthenticationCheckerType = "peerauthentication"
 
 type PeerAuthenticationChecker struct {
-	PeerAuthentications   []security_v1beta.PeerAuthentication
+	PeerAuthentications   []*security_v1beta.PeerAuthentication
 	MTLSDetails           kubernetes.MTLSDetails
 	WorkloadsPerNamespace map[string]models.WorkloadList
 }
@@ -24,7 +24,7 @@ func (m PeerAuthenticationChecker) Check() models.IstioValidations {
 	validations.MergeValidations(common.PeerAuthenticationMultiMatchChecker(PeerAuthenticationCheckerType, m.PeerAuthentications, m.WorkloadsPerNamespace).Check())
 
 	for _, peerAuthn := range m.PeerAuthentications {
-		validations.MergeValidations(m.runChecks(peerAuthn))
+		validations.MergeValidations(m.runChecks(*peerAuthn))
 	}
 
 	return validations

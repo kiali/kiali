@@ -12,11 +12,11 @@ import (
 )
 
 func prepareTestForVirtualService(vs *networking_v1beta1.VirtualService) models.IstioValidations {
-	vss := []networking_v1beta1.VirtualService{*vs}
+	vss := []*networking_v1beta1.VirtualService{vs}
 
 	// Setup mocks
-	destinationList := []networking_v1beta1.DestinationRule{
-		*data.CreateTestDestinationRule("bookinfo", "reviewsrule", "reviews"),
+	destinationList := []*networking_v1beta1.DestinationRule{
+		data.CreateTestDestinationRule("bookinfo", "reviewsrule", "reviews"),
 	}
 
 	virtualServiceChecker := VirtualServiceChecker{
@@ -81,8 +81,8 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	destinationList := []networking_v1beta1.DestinationRule{
-		*data.CreateTestDestinationRule("bookinfo", "reviewsrule1", "reviews"),
+	destinationList := []*networking_v1beta1.DestinationRule{
+		data.CreateTestDestinationRule("bookinfo", "reviewsrule1", "reviews"),
 	}
 
 	virtualServiceChecker := VirtualServiceChecker{
@@ -137,6 +137,6 @@ func fakeVirtualServiceMixedChecker() *networking_v1beta1.VirtualService {
 	return validVirtualService
 }
 
-func fakeVirtualServiceMultipleIstioObjects() []networking_v1beta1.VirtualService {
-	return []networking_v1beta1.VirtualService{*fakeVirtualServiceMixedChecker(), *fakeVirtualServicesMultipleChecks()}
+func fakeVirtualServiceMultipleIstioObjects() []*networking_v1beta1.VirtualService {
+	return []*networking_v1beta1.VirtualService{fakeVirtualServiceMixedChecker(), fakeVirtualServicesMultipleChecks()}
 }

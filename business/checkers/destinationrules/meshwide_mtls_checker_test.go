@@ -21,7 +21,7 @@ func TestMTLSMeshWideDREnabledWithNoMeshPolicy(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []security_v1beta1.PeerAuthentication{},
+		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{},
 	}
 
 	testReturnsAValidation(t, *destinationRule, mTlsDetails)
@@ -35,8 +35,8 @@ func TestMTLSMeshWideDREnabledWithMeshPolicyDisabled(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
+		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
 
@@ -51,8 +51,8 @@ func TestMTLSMeshWideDREnabledWithMeshPolicy(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
+		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
 
@@ -67,8 +67,8 @@ func TestMTLSNamespaceWideDREnabledWithMeshPolicy(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.istio-system.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
+		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
 
@@ -83,8 +83,8 @@ func TestMTLSNamespaceWideDREnabledWithMeshPolicyDisabled(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.istio-system.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
+		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
 
@@ -98,8 +98,8 @@ func TestMTLSDRDisabledWithMeshPolicy(t *testing.T) {
 	destinationRule := data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.istio-system.svc.cluster.local")
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
+		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
 
@@ -113,8 +113,8 @@ func TestMTLSDRDisabledWithMeshPolicyDisabled(t *testing.T) {
 	destinationRule := data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.istio-system.svc.cluster.local")
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
+		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
 

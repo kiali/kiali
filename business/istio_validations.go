@@ -402,10 +402,10 @@ func (in *IstioValidationsService) filterPeerAuths(namespace string, mtlsDetails
 	rootNs := config.Get().ExternalServices.Istio.RootNamespace
 	for _, pa := range peerAuths {
 		if pa.Namespace == rootNs {
-			mtlsDetails.MeshPeerAuthentications = append(mtlsDetails.MeshPeerAuthentications, *pa)
+			mtlsDetails.MeshPeerAuthentications = append(mtlsDetails.MeshPeerAuthentications, pa)
 		}
 		if pa.Namespace == namespace || namespace == "" {
-			mtlsDetails.PeerAuthentications = append(mtlsDetails.PeerAuthentications, *pa)
+			mtlsDetails.PeerAuthentications = append(mtlsDetails.PeerAuthentications, pa)
 		}
 	}
 }

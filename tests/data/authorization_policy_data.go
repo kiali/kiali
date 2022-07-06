@@ -10,7 +10,7 @@ func CreateAuthorizationPolicy(sourceNamespaces, operationMethods, operationHost
 	ap := security_v1beta1.AuthorizationPolicy{}
 	ap.Name = "auth-policy"
 	ap.Namespace = "bookinfo"
-	ap.ClusterName = "svc.cluster.local"
+	ap.ZZZ_DeprecatedClusterName = "svc.cluster.local"
 	ap.Spec.Selector = &api_v1beta1.WorkloadSelector{
 		MatchLabels: selector,
 	}
