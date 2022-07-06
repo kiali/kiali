@@ -17,9 +17,16 @@ export type BrushHandlers = {
   /* eslint-enable @typescript-eslint/no-explicit-any */
 };
 
-const formatValue = (label: string, datum: RichDataPoint, value: number) => {
+const formatValue = (label: string, datum: RichDataPoint, value: number, y0?: number) => {
   // Formats a value based on unit and scale factor.
   // Scale factor is usually undefined, except when a second axis is in use (then it's the ratio between first axis and second axis maxs)
+
+  if (y0 !== undefined) {
+    return label + ':' +
+      ' source = ' + getFormatter(d3Format, datum.unit!, true)(value / (datum.scaleFactor || 1)) +
+      '; destination = ' + getFormatter(d3Format, datum.unit!, true)(y0 / (datum.scaleFactor || 1));
+  }
+
   return label + ': ' + getFormatter(d3Format, datum.unit!, true)(value / (datum.scaleFactor || 1));
 };
 
@@ -48,7 +55,7 @@ export const newBrushVoronoiContainer = (
           obj.datum._median
         )}, ${formatValue('p75', obj.datum, obj.datum._q3)}`;
       }
-      return formatValue(obj.datum.name, obj.datum, obj.datum.y);
+      return formatValue(obj.datum.name, obj.datum, obj.datum.y, obj.datum.y0);
     },
     labelComponent: labelComponent,
     // We blacklist "parent" as a workaround to avoid the VictoryVoronoiContainer crashing.

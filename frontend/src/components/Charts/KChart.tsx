@@ -156,7 +156,13 @@ class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, State> 
 
   private determineChartType() {
     if (this.props.chart.chartType === undefined) {
-      return this.props.chart.xAxis === 'series' ? barInfo : lineInfo;
+      if (this.props.chart.xAxis === 'series') {
+        return barInfo;
+      } else if (this.props.data.some(m => m.datapoints.some(dp => dp.y0))) {
+        return areaInfo;
+      } else {
+        return lineInfo;
+      }
     }
     const chartType = this.props.chart.chartType;
     switch (chartType) {

@@ -7,7 +7,8 @@ import {
   ChartProps,
   ChartTooltipProps,
   ChartLabel,
-  ChartLegend
+  ChartLegend,
+  ChartLine
 } from '@patternfly/react-charts';
 import { VictoryBoxPlot, VictoryPortal } from 'victory';
 import { format as d3Format } from 'd3-format';
@@ -426,20 +427,30 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
             // serie.datapoints may contain undefined values in certain scenarios i.e. "unknown" values
             if (this.props.showTrendline === true && serie.datapoints[0]) {
               const first_dpx = (serie.datapoints[0].x as Date).getTime() / 1000;
-              const datapoints = serie.datapoints.map(d => [
-                ((d.x as Date).getTime() / 1000 - first_dpx) / 10000,
-                parseFloat(d.y.toString())
-              ]);
+              const datapoints = serie.datapoints.map(d => {
+                let t = ((d.x as Date).getTime() / 1000 - first_dpx) / 10000;
+                let trendPoint = parseFloat(d.y.toString());
+                if (d.y0) {
+                  // If both reporters are enabled, generate the trend line using
+                  // the mean values of both reporters
+                  trendPoint += parseFloat(d.y0.toString());
+                  trendPoint *= 0.5;
+                }
+
+                // Array is [time, y];
+                return [t, trendPoint];
+              });
               const linearRegression = regression.linear(datapoints, { precision: 10 });
 
               let regressionDatapoints = serie.datapoints.map(d => ({
                 ...d,
                 name: d.name + ' (trendline)',
-                y: linearRegression.predict(((d.x as Date).getTime() / 1000 - first_dpx) / 10000)[1]
+                y: linearRegression.predict(((d.x as Date).getTime() / 1000 - first_dpx) / 10000)[1],
+                y0: undefined // Clear y0, in case it is set to prevent the tooltip showing this value.
               }));
 
               const regressionPlot = React.cloneElement(
-                this.props.seriesComponent,
+                <ChartLine />, // Trend lines are always line charts.
                 this.withStyle(
                   {
                     key: 'serie-reg-' + idx,

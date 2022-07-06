@@ -25,7 +25,7 @@ type IstioMetricsQuery struct {
 	Service         string
 	Direction       string // outbound | inbound
 	RequestProtocol string // e.g. http | grpc
-	Reporter        string // source | destination, defaults to source if not provided
+	Reporter        string // source | destination | both, defaults to source if not provided
 	Aggregate       string
 	AggregateValue  string
 }

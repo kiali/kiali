@@ -49,7 +49,9 @@ const renameMetrics = (metrics: Metric[], labelPrettifier?: KVMapper): Metric[] 
   return metrics.map(m => {
     const name = m.name;
     const stat = mapStatForDisplay(m.stat);
-    const otherLabels = Object.entries(m.labels)
+    let labelsNoReporter = { ...m.labels };
+    delete labelsNoReporter.reporter;
+    const otherLabels = Object.entries(labelsNoReporter)
       .filter(e => multipleValuesLabels.has(e[0]))
       .map(e => (labelPrettifier ? labelPrettifier(e[0], e[1]) : e[1]));
     const labels = (stat ? [stat] : []).concat(otherLabels).join(',');

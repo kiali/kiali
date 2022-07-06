@@ -19,21 +19,23 @@ export const toVCDatapoints = (dps: Datapoint[], name: string): VCDataPoint[] =>
       return {
         name: name,
         x: new Date(dp[0] * 1000),
-        y: Number(dp[1])
+        y: Number(dp[1]),
+        y0: dp.length > 2 ? dp[2] : undefined
       };
     })
-    .filter(dp => !isNaN(dp.y));
+    .filter(dp => !isNaN(dp.y) && (dp.y0 === undefined || !isNaN(dp.y0)));
 };
 
 export const toVCSinglePoint = (dps: Datapoint[], name: string): VCDataPoint[] => {
-  const last = dps.filter(dp => !isNaN(dp[1])).reduce((p, c) => (c[0] > p[0] ? c : p));
+  const last = dps.filter(dp => !isNaN(dp[1]) && (dp[2] === undefined || !isNaN(dp[2]))).reduce((p, c) => (c[0] > p[0] ? c : p));
   if (last) {
     return [
       {
         name: name,
         time: new Date(last[0] * 1000),
         x: 0, // placeholder
-        y: Number(last[1])
+        y: Number(last[1]),
+        y0: last[2] ?? Number(last[1])
       } as VCDataPoint
     ];
   }
@@ -60,12 +62,77 @@ export const toVCLines = (
   colors: string[],
   xAxis: XAxisType = 'time'
 ): VCLines<RichDataPoint> => {
-  return metrics.map((line, i) => {
-    const color = colors[i % colors.length];
-    const dps =
-      xAxis === 'time' ? toVCDatapoints(line.datapoints, line.name) : toVCSinglePoint(line.datapoints, line.name);
-    return buildVCLine(dps, { name: line.name, unit: unit, color: color });
-  });
+  // In case "reporter" is in the labels, arrange the metrics in source-destination pairs to
+  // draw area charts.
+  if (metrics.length > 0 && metrics[0].labels?.reporter !== undefined) {
+    let pairedMetrics: { [key: string]: [Metric?, Metric?] } = {};
+    metrics.forEach(metric => {
+      let reporter = metric.labels.reporter;
+      let labelsNoReporter = { ...metric.labels };
+      delete labelsNoReporter.reporter
+      let labelsStr = Object.keys(labelsNoReporter).map(k => `${k}=${labelsNoReporter[k]}`).sort().join(',');
+      labelsStr = `name=${metric.name},stat=${metric.stat}%` + labelsStr;
+
+      if (!pairedMetrics[labelsStr]) {
+        pairedMetrics[labelsStr] = [undefined, undefined];
+      }
+
+      pairedMetrics[labelsStr][reporter === 'source' ? 0 : 1] = metric;
+    });
+
+    return Object.values(pairedMetrics).map((twoLines, i) => {
+      const color = colors[i % colors.length];
+
+      let datapoints: Datapoint[] = [];
+      let name: string = '';
+      if (twoLines[0] !== undefined && twoLines[1] !== undefined) {
+        name = twoLines[0].name;
+        const minDatapointsLength = twoLines[0].datapoints.length < twoLines[1].datapoints.length ?
+          twoLines[0].datapoints.length : twoLines[1].datapoints.length;
+
+        for (let j = 0, sourceIdx = 0, destIdx = 0; j < minDatapointsLength; j++) {
+          if (twoLines[0].datapoints[sourceIdx][0] !== twoLines[1].datapoints[destIdx][0]) {
+            // Usually, all series have the same samples at same timestamps (i.e. series are time synced or synced on the x axis).
+            // There are rare cases when there are some additional samples usually at the beginning or end of some series.
+            // If this happens, let's skip these additional samples, to have properly x-axis synced values.
+            if (twoLines[0].datapoints[sourceIdx][0] < twoLines[1].datapoints[destIdx][0]) {
+              sourceIdx++;
+            } else {
+              destIdx++;
+            }
+            continue;
+          }
+
+          datapoints.push([
+            twoLines[0].datapoints[sourceIdx][0],
+            twoLines[0].datapoints[sourceIdx][1],
+            twoLines[1].datapoints[destIdx][1],
+          ]);
+          sourceIdx++;
+          destIdx++;
+        }
+      } else if (twoLines[0] !== undefined) {
+        // Assign zero value to "y0" to denote "no data" for the destination reporter
+        name = twoLines[0].name;
+        datapoints = twoLines[0].datapoints.map(d => ([d[0], d[1], 0]));
+      } else if (twoLines[1] !== undefined) {
+        // Assign zero value to "y" to denote "no data" for the source reporter
+        name = twoLines[1].name;
+        datapoints = twoLines[1].datapoints.map(d => ([d[0], 0, d[1]]));
+      }
+
+      const dps =
+        xAxis === 'time' ? toVCDatapoints(datapoints, name) : toVCSinglePoint(datapoints, name);
+      return buildVCLine(dps, {name: name, unit: unit, color: color});
+    });
+  } else {
+    return metrics.map((line, i) => {
+      const color = colors[i % colors.length];
+      const dps =
+        xAxis === 'time' ? toVCDatapoints(line.datapoints, line.name) : toVCSinglePoint(line.datapoints, line.name);
+      return buildVCLine(dps, {name: line.name, unit: unit, color: color});
+    });
+  }
 };
 
 export const getDataSupplier = (

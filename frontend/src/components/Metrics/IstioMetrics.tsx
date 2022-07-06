@@ -149,17 +149,22 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   private fetchMetrics = () => {
     // Time range needs to be reevaluated everytime fetching
     MetricsHelper.timeRangeToOptions(this.props.timeRange, this.options);
+    let opts = { ...this.options };
+    if (opts.reporter === 'both') {
+      opts.byLabels = (opts.byLabels ?? []).concat('reporter');
+    }
+
     let promise: Promise<API.Response<DashboardModel>>;
     switch (this.props.objectType) {
       case MetricsObjectTypes.WORKLOAD:
-        promise = API.getWorkloadDashboard(this.props.namespace, this.props.object, this.options);
+        promise = API.getWorkloadDashboard(this.props.namespace, this.props.object, opts);
         break;
       case MetricsObjectTypes.APP:
-        promise = API.getAppDashboard(this.props.namespace, this.props.object, this.options);
+        promise = API.getAppDashboard(this.props.namespace, this.props.object, opts);
         break;
       case MetricsObjectTypes.SERVICE:
       default:
-        promise = API.getServiceDashboard(this.props.namespace, this.props.object, this.options);
+        promise = API.getServiceDashboard(this.props.namespace, this.props.object, opts);
         break;
     }
     return promise

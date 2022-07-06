@@ -208,8 +208,8 @@ func extractIstioMetricsQueryParams(r *http.Request, q *models.IstioMetricsQuery
 	}
 	reporter := queryParams.Get("reporter")
 	if reporter != "" {
-		if reporter != "source" && reporter != "destination" {
-			return errors.New("bad request, query parameter 'reporter' must be either 'source' or 'destination'")
+		if reporter != "source" && reporter != "destination" && reporter != "both" {
+			return errors.New("bad request, query parameter 'reporter' must be either 'source', 'destination' or 'both'")
 		}
 		q.Reporter = reporter
 	}
