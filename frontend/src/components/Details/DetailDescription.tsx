@@ -167,14 +167,27 @@ class DetailDescription extends React.Component<Props> {
       }
     }
     if (workload) {
+      const href = '/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName;
+      const link = isParentKiosk(this.props.kiosk) ? (
+        <Link
+          to={''}
+          onClick={() => {
+            kioskContextMenuAction(href);
+          }}
+        >
+          {workload.workloadName}
+        </Link>
+      ) : (
+        <Link to={href}>
+          {workload.workloadName}
+        </Link>
+      );
       return (
         <span key={'WorkloadItem_' + workload.workloadName}>
           <div key="service-icon" className={iconStyle}>
             <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
           </div>
-          <Link to={'/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName}>
-            {workload.workloadName}
-          </Link>
+          {link}
           <Tooltip position={TooltipPosition.right} content={this.renderServiceAccounts(workload)}>
             <KialiIcon.Info className={infoStyle} />
           </Tooltip>
