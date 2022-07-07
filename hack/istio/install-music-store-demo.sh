@@ -12,6 +12,8 @@
 : ${DELETE_DEMOS:=false}
 : ${MSTORE:=music-store}
 : ${BASE_URL:=https://raw.githubusercontent.com/kiali/demos/master}
+: ${MINIKUBE_PROFILE=minikube}
+: ${ISTIO_NAMESPACE=istio-system}
 
 apply_network_attachment() {
   NAME=$1
@@ -55,11 +57,17 @@ install_mstore_app() {
   ${CLIENT_EXE} wait --timeout 60s --for condition=available deployment/music-store-backend-v1 -n music-store
   ${CLIENT_EXE} wait --timeout 60s --for condition=available deployment/music-store-ui-v1 -n music-store
 
-  export INGRESS_PORT=$(${CLIENT_EXE} -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
+  export INGRESS_PORT=$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     export INGRESS_HOST=$(crc ip)
   else
-    export INGRESS_HOST=$(minikube ip)
+    if minikube -p ${MINIKUBE_PROFILE} status > /dev/null 2>&1 ; then
+      export INGRESS_HOST=$(minikube -p ${MINIKUBE_PROFILE} ip)
+    else
+      echo "Failed to get minikube ip. If you are using minikube, make sure it is up and your profile is defined properly (--minikube-profile option)"
+      echo "Will try to get the ingressgateway IP in case you are running 'kind' and we can access it directly."
+      export INGRESS_HOST=$($CLIENT_EXE get service -n ${ISTIO_NAMESPACE} istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    fi
   fi
 
   export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
@@ -125,11 +133,16 @@ while [ $# -gt 0 ]; do
       DELETE_DEMOS="$2"
       shift;shift
       ;;
+    -mp|--minikube-profile)
+      MINIKUBE_PROFILE="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
+  -mp|--minikube-profile <name>: If using minikube, this is the minikube profile name (default: minikube)
   -h|--help: this text
 HELPMSG
       exit 1
