@@ -43,28 +43,25 @@ SCC
 }
 
 install_topology_generator_demo() {
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    ${CLIENT_EXE} new-project ${TOPO}
+  else
+    ${CLIENT_EXE} create ns ${TOPO}
+  fi
+  ${CLIENT_EXE} label namespace  ${TOPO} istio-injection=enabled --overwrite=true
 
-    if [ "${IS_OPENSHIFT}" == "true" ]; then
-        ${CLIENT_EXE} new-project ${TOPO}
-      else
-        ${CLIENT_EXE} create ns ${TOPO}
-    fi
-    ${CLIENT_EXE} label namespace  ${TOPO} istio-injection=enabled --overwrite=true
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    apply_network_attachment ${TOPO}
+  fi
 
-    if [ "${IS_OPENSHIFT}" == "true" ]; then
-      apply_network_attachment ${TOPO}
-    fi
-
-    ${CLIENT_EXE} apply -n ${TOPO}  -f ${BASE_URL}/topology-generator/deploy/generator.yaml
+  ${CLIENT_EXE} apply -n ${TOPO}  -f ${BASE_URL}/topology-generator/deploy/generator.yaml
 }
 
 generate_config() {
-
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     for (( i=1; i<=$NUM_NS; i++ ))
-        do
-
-            apply_network_attachment n${i}
+    do
+      apply_network_attachment n${i}
     done
   fi
 }
