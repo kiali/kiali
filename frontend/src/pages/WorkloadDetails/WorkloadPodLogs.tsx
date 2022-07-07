@@ -48,13 +48,14 @@ import moment from 'moment';
 import { formatDuration } from 'utils/tracing/TracingHelper';
 import { infoStyle } from 'styles/DropdownStyles';
 import { isValid } from 'utils/Common';
+import {isKiosk} from "../../components/Kiosk/KioskActions";
 
 const appContainerColors = [PFColors.White, PFColors.LightGreen400, PFColors.Purple100, PFColors.LightBlue400];
 const proxyContainerColor = PFColors.Gold400;
 const spanColor = PFColors.Cyan300;
 
 type ReduxProps = {
-  isKiosk: boolean;
+  kiosk: string;
   lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
 };
@@ -169,13 +170,13 @@ const toolbarInputStyle = style({
 });
 
 const logsBackground = (enabled: boolean) => ({ backgroundColor: enabled ? PFColors.Black1000 : 'gray' });
-const logsHeight = (showToolbar: boolean, fullscreen: boolean, isKiosk: boolean, showMaxLinesWarning: boolean) => {
+const logsHeight = (showToolbar: boolean, fullscreen: boolean, kiosk: string, showMaxLinesWarning: boolean) => {
   const toolbarHeight = showToolbar ? '0px' : '49px';
   const maxLinesWarningHeight = showMaxLinesWarning ? '27px' : '0px'
   return {
     height: fullscreen
       ? `calc(100vh - 130px + ${toolbarHeight} - ${maxLinesWarningHeight})`
-      : `calc(var(--kiali-details-pages-tab-content-height) - ${!isKiosk ? '155px' : '0px'} + ${toolbarHeight} - ${maxLinesWarningHeight})`
+      : `calc(var(--kiali-details-pages-tab-content-height) - ${!isKiosk(kiosk) ? '155px' : '0px'} + ${toolbarHeight} - ${maxLinesWarningHeight})`
   };
 };
 
@@ -642,7 +643,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           // (to max) and when we try to assign scrollTop to scrollHeight (above),it stays at 0
           // and we fail to set the scroll correctly. So, don't change this!
           style={{
-            ...logsHeight(this.state.showToolbar, this.state.fullscreen, this.props.isKiosk, this.state.linesTruncatedContainers.length > 0),
+            ...logsHeight(this.state.showToolbar, this.state.fullscreen, this.props.kiosk, this.state.linesTruncatedContainers.length > 0),
             ...logsBackground(this.hasEntries(this.state.entries))
           }}
         >
@@ -1019,7 +1020,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    isKiosk: state.globalState.isKiosk,
+    kiosk: state.globalState.kiosk,
     timeRange: timeRangeSelector(state),
     lastRefreshAt: state.globalState.lastRefreshAt
   };

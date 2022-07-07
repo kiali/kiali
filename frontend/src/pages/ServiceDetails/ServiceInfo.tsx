@@ -19,11 +19,11 @@ import {
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { durationSelector, meshWideMTLSEnabledSelector } from '../../store/Selectors';
-import MiniGraphCard from '../../components/CytoscapeGraph/MiniGraphCard';
-import IstioConfigCard from '../../components/IstioConfigCard/IstioConfigCard';
 import ServiceNetwork from './ServiceNetwork';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import history, { URLParam } from '../../app/History';
+import MiniGraphCardContainer from "../../components/CytoscapeGraph/MiniGraphCard";
+import IstioConfigCard from "../../components/IstioConfigCard/IstioConfigCard";
 
 interface Props extends ServiceId {
   duration: DurationInSeconds;
@@ -143,7 +143,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
               </Stack>
             </GridItem>
             <GridItem span={8}>
-              <MiniGraphCard
+              <MiniGraphCardContainer
                 dataSource={this.graphDataSource}
                 mtlsEnabled={this.props.mtlsEnabled}
                 onEdgeTap={this.goToMetrics}

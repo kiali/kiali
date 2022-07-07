@@ -19,7 +19,7 @@ import { TraceListItem } from 'components/JaegerIntegration/TraceListItem';
 import { summaryFont } from './SummaryPanelCommon';
 import { DecoratedGraphNodeData } from 'types/Graph';
 import transformTraceData from 'utils/tracing/TraceTransform';
-import {kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
+import {isParentKiosk, kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
 
 type ReduxProps = {
   kiosk: string;
@@ -192,7 +192,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
         <Button
           style={summaryFont}
           onClick={() => {
-            if (this.props.kiosk.length > 0 && this.props.kiosk !== 'true') {
+            if (isParentKiosk(this.props.kiosk)) {
               kioskContextMenuAction(tracesDetailsURL);
             } else {
               history.push(tracesDetailsURL);

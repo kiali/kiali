@@ -11,7 +11,7 @@ import { createIcon } from '../../components/Health/Helper';
 import '../../components/Health/Health.css';
 import {KialiAppState} from "../../store/Store";
 import {connect} from "react-redux";
-import {kioskGraphAction} from "../../components/Kiosk/KioskActions";
+import {isParentKiosk, kioskGraphAction} from "../../components/Kiosk/KioskActions";
 import {durationSelector, refreshIntervalSelector} from "../../store/Selectors";
 import {DurationInSeconds, IntervalInMilliseconds} from "../../types/Common";
 
@@ -43,7 +43,7 @@ class OverviewStatus extends React.Component<Props, {}> {
   linkAction = () => {
     // Kiosk actions are used when the kiosk specifies a parent,
     // otherwise the kiosk=true will keep the links inside Kiali
-    if (this.props.kiosk.length > 0 && this.props.kiosk !== 'true') {
+    if (isParentKiosk(this.props.kiosk)) {
       kioskGraphAction(this.props.namespace, this.props.status.name, this.props.duration, this.props.refreshInterval, this.props.targetPage)
     } else {
       this.setFilters()

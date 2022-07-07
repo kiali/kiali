@@ -73,7 +73,7 @@ import GraphTour from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 import { EdgeContextMenu } from 'components/CytoscapeGraph/ContextMenu/EdgeContextMenu';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import {kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
+import {isParentKiosk, kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -670,7 +670,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       urlNodeType = 'applications';
     }
     const detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
-    if (this.props.kiosk.length > 0 && this.props.kiosk !== 'true') {
+    if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(detailsPageUrl);
     } else {
       history.push(detailsPageUrl);

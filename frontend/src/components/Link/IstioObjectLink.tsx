@@ -6,18 +6,29 @@ import { PFBadge } from 'components/Pf/PfBadges';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import { style } from 'typestyle';
+import {KialiAppState} from "../../store/Store";
+import {connect} from "react-redux";
+import {isParentKiosk, kioskContextMenuAction} from "../Kiosk/KioskActions";
 
 export const infoStyle = style({
   margin: '0px 0px -2px 3px'
 });
 
-interface Props {
+type ReduxProps = {
+  kiosk: string;
+}
+
+type ReferenceIstioObjectProps = {
   name: string;
   namespace: string;
   type: string;
   subType?: string;
   query?: string;
 }
+
+type IstioObjectProps = ReduxProps & ReferenceIstioObjectProps & {
+  children: React.ReactNode;
+};
 
 export const GetIstioObjectUrl = (name: string, namespace: string, type: string, query?: string): string => {
   const istioType = IstioTypes[type];
@@ -32,7 +43,7 @@ export const GetIstioObjectUrl = (name: string, namespace: string, type: string,
   return to;
 };
 
-export class ReferenceIstioObjectLink extends React.Component<Props> {
+export class ReferenceIstioObjectLink extends React.Component<ReferenceIstioObjectProps> {
   render() {
     const { name, namespace, type, subType } = this.props;
     const istioType = IstioTypes[type];
@@ -52,9 +63,9 @@ export class ReferenceIstioObjectLink extends React.Component<Props> {
       <>
         <PFBadge badge={istioType.badge} position={TooltipPosition.top} />
         {showLink && (
-          <IstioObjectLink name={name} namespace={namespace} type={type} subType={subType}>
+          <IstioObjectLinkContainer name={name} namespace={namespace} type={type} subType={subType}>
             {reference}
-          </IstioObjectLink>
+          </IstioObjectLinkContainer>
         )}
         {!showLink && <div style={{ display: 'inline-block' }}>{reference}</div>}
         {showTooltip && (
@@ -67,12 +78,26 @@ export class ReferenceIstioObjectLink extends React.Component<Props> {
   }
 }
 
-class IstioObjectLink extends React.Component<Props> {
+class IstioObjectLink extends React.Component<IstioObjectProps> {
   render() {
     const { name, namespace, type, query } = this.props;
-
-    return <Link to={GetIstioObjectUrl(name, namespace, type, query)} data-test={type + '-' + namespace + '-' + name}>{this.props.children}</Link>;
+    const href = GetIstioObjectUrl(name, namespace, type, query);
+    return isParentKiosk(this.props.kiosk) ? (
+      <Link
+        to={''}
+        onClick={() => {
+          kioskContextMenuAction(href);
+        }}
+      >{this.props.children}</Link>
+    ) : (
+      <Link to={href} data-test={type + '-' + namespace + '-' + name}>{this.props.children}</Link>
+    );
   }
 }
 
-export default IstioObjectLink;
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
+  kiosk: state.globalState.kiosk,
+});
+
+const IstioObjectLinkContainer = connect(mapStateToProps)(IstioObjectLink);
+export default IstioObjectLinkContainer;

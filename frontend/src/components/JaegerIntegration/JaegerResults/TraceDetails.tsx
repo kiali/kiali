@@ -6,7 +6,7 @@ import { Button, ButtonVariant, Card, CardBody, Grid, GridItem, Tooltip } from '
 import { InfoAltIcon, WarningTriangleIcon } from '@patternfly/react-icons';
 
 import { JaegerTrace, RichSpanData } from 'types/JaegerInfo';
-import { JaegerTraceTitle } from './JaegerTraceTitle';
+import JaegerTraceTitleContainer from './JaegerTraceTitle';
 import { CytoscapeGraphSelectorBuilder } from 'components/CytoscapeGraph/CytoscapeGraphSelector';
 import { GraphType, NodeType } from 'types/Graph';
 import { FormattedTraceInfo, shortIDStyle } from './FormattedTraceInfo';
@@ -31,15 +31,18 @@ import { renderTraceHeatMap } from './StatsComparison';
 import { HeatMap } from 'components/HeatMap/HeatMap';
 import { formatDuration, sameSpans } from 'utils/tracing/TracingHelper';
 
-interface Props {
+type ReduxProps = {
+  loadMetricsStats: (queries: MetricsStatsQuery[]) => void;
+  setTraceId: (traceId?: string) => void;
+};
+
+type Props = ReduxProps & {
   otherTraces: JaegerTrace[];
   jaegerURL: string;
   namespace: string;
   target: string;
   targetKind: TargetKind;
-  setTraceId: (traceId?: string) => void;
   trace?: JaegerTrace;
-  loadMetricsStats: (queries: MetricsStatsQuery[]) => void;
   statsMatrix?: StatsMatrix;
   isStatsMatrixComplete: boolean;
 }
@@ -188,7 +191,7 @@ class TraceDetails extends React.Component<Props, State> {
 
     return (
       <Card isCompact style={{ border: '1px solid #e6e6e6' }}>
-        <JaegerTraceTitle
+        <JaegerTraceTitleContainer
           formattedTrace={formattedTrace}
           externalURL={jaegerURL ? `${jaegerURL}/trace/${trace.traceID}` : undefined}
           graphURL={this.getGraphURL(trace.traceID)}

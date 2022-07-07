@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ServiceDetailsInfo, WorkloadOverview } from '../../types/ServiceInfo';
-import DetailDescription from '../../components/Details/DetailDescription';
 import { AppWorkload } from '../../types/App';
 import { serverConfig } from '../../config';
 import Labels from '../../components/Label/Labels';
@@ -12,6 +11,7 @@ import { TextOrLink } from '../../components/TextOrLink';
 import { KialiIcon } from '../../config/KialiIcon';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
+import DetailDescriptionContainer from "../../components/Details/DetailDescription";
 
 interface ServiceInfoDescriptionProps {
   namespace: string;
@@ -184,7 +184,7 @@ class ServiceDescription extends React.Component<ServiceInfoDescriptionProps, St
               tooltipMessage={'Labels defined on the ' + (showServiceLabels ? 'Selector' : 'Service and Selector')}
             />
           )}
-          <DetailDescription
+          <DetailDescriptionContainer
             namespace={this.props.namespace}
             apps={apps}
             workloads={workloads}

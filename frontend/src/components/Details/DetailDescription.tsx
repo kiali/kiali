@@ -10,8 +10,15 @@ import { renderTrafficStatus } from '../Health/HealthDetails';
 import { createIcon } from '../Health/Helper';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
 import { KialiIcon } from '../../config/KialiIcon';
+import {KialiAppState} from "../../store/Store";
+import {connect} from "react-redux";
+import {isParentKiosk, kioskContextMenuAction} from "../Kiosk/KioskActions";
 
-type Props = {
+type ReduxProps = {
+  kiosk: string;
+}
+
+type Props = ReduxProps & {
   namespace: string;
   apps?: string[];
   workloads?: AppWorkload[];
@@ -45,28 +52,50 @@ const infoStyle = style({
   verticalAlign: '-4px !important'
 });
 
-class DetailDescription extends React.PureComponent<Props> {
+class DetailDescription extends React.Component<Props> {
   private renderAppItem(namespace: string, appName: string) {
+    const href = '/namespaces/' + namespace + '/applications/' + appName;
+    const link = isParentKiosk(this.props.kiosk) ? (
+      <Link
+        to={''}
+        onClick={() => {
+          kioskContextMenuAction(href);
+        }}
+      >{appName}</Link>
+    ) : (
+      <Link to={href}>{appName}</Link>
+    );
     return (
       <li key={`App_${appName}`}>
         <div key="service-icon" className={iconStyle}>
           <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
         </div>
         <span>
-          <Link to={'/namespaces/' + namespace + '/applications/' + appName}>{appName}</Link>
+          {link}
         </span>
       </li>
     );
   }
 
   private renderServiceItem(namespace: string, serviceName: string) {
+    const href = '/namespaces/' + namespace + '/services/' + serviceName;
+    const link = isParentKiosk(this.props.kiosk) ? (
+      <Link
+        to={''}
+        onClick={() => {
+          kioskContextMenuAction(href);
+        }}
+      >{serviceName}</Link>
+    ) : (
+      <Link to={href}>{serviceName}</Link>
+    );
     return (
       <li key={`Service_${serviceName}`}>
         <div key="service-icon" className={iconStyle}>
           <PFBadge badge={PFBadges.Service} position={TooltipPosition.top} />
         </div>
         <span>
-          <Link to={'/namespaces/' + namespace + '/services/' + serviceName}>{serviceName}</Link>
+          {link}
         </span>
       </li>
     );
@@ -95,14 +124,27 @@ class DetailDescription extends React.PureComponent<Props> {
   }
 
   private renderWorkloadItem(workload: AppWorkload) {
+    const href = '/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName;
+    const link = isParentKiosk(this.props.kiosk) ? (
+      <Link
+        to={''}
+        onClick={() => {
+          kioskContextMenuAction(href);
+        }}
+      >
+        {workload.workloadName}
+      </Link>
+    ) : (
+      <Link to={href}>
+        {workload.workloadName}
+      </Link>
+    );
     return (
       <span key={'WorkloadItem_' + workload.workloadName}>
         <div className={iconStyle}>
           <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
         </div>
-        <Link to={'/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName}>
-          {workload.workloadName}
-        </Link>
+        {link}
         <Tooltip position={TooltipPosition.right} content={this.renderServiceAccounts(workload)}>
           <KialiIcon.Info className={infoStyle} />
         </Tooltip>
@@ -125,14 +167,27 @@ class DetailDescription extends React.PureComponent<Props> {
       }
     }
     if (workload) {
+      const href = '/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName;
+      const link = isParentKiosk(this.props.kiosk) ? (
+        <Link
+          to={''}
+          onClick={() => {
+            kioskContextMenuAction(href);
+          }}
+        >
+          {workload.workloadName}
+        </Link>
+      ) : (
+        <Link to={href}>
+          {workload.workloadName}
+        </Link>
+      );
       return (
         <span key={'WorkloadItem_' + workload.workloadName}>
           <div key="service-icon" className={iconStyle}>
             <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
           </div>
-          <Link to={'/namespaces/' + this.props.namespace + '/workloads/' + workload.workloadName}>
-            {workload.workloadName}
-          </Link>
+          {link}
           <Tooltip position={TooltipPosition.right} content={this.renderServiceAccounts(workload)}>
             <KialiIcon.Info className={infoStyle} />
           </Tooltip>
@@ -247,4 +302,9 @@ class DetailDescription extends React.PureComponent<Props> {
   }
 }
 
-export default DetailDescription;
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
+  kiosk: state.globalState.kiosk,
+});
+
+const DetailDescriptionContainer = connect(mapStateToProps)(DetailDescription)
+export default DetailDescriptionContainer;

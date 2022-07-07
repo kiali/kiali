@@ -72,11 +72,11 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
                 value={this.props.pod}
                 label={this.props.pod}
                 options={this.props.pods.sort()}
-              /> 
-              <div className={style({position: 'fixed', right: '60px'})}>                
-               {this.props.writer.tooltip()} 
+              />
+              <div className={style({position: 'fixed', right: '60px'})}>
+               {this.props.writer.tooltip()}
               </div>
-            </>                          
+            </>
           </StatefulFilters>
           <Table
             aria-label="Sortable Table"
@@ -101,14 +101,15 @@ export const SummaryTableBuilder = (
   namespaces: Namespace[],
   namespace: string,
   routeLinkHandler: () => void,
-  workload?: string
+  kiosk: string,
+  workload?: string,
 ) => {
   let writerComp, writerProps;
 
   switch (resource) {
     case 'clusters':
       writerComp = ClusterSummaryTable;
-      writerProps = new ClusterTable(config.clusters || [], sortBy['clusters'], namespaces, namespace);
+      writerProps = new ClusterTable(config.clusters || [], sortBy['clusters'], namespaces, namespace, kiosk);
       break;
     case 'listeners':
       writerComp = ListenerSummaryTable;
@@ -118,12 +119,12 @@ export const SummaryTableBuilder = (
         namespaces,
         namespace,
         workload,
-        routeLinkHandler
+        routeLinkHandler,
       );
       break;
     case 'routes':
       writerComp = RouteSummaryTable;
-      writerProps = new RouteTable(config.routes || [], sortBy['routes'], namespaces, namespace);
+      writerProps = new RouteTable(config.routes || [], sortBy['routes'], namespaces, namespace, kiosk);
       break;
   }
   return [writerComp, writerProps];

@@ -16,11 +16,11 @@ import { IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { meshWideMTLSEnabledSelector } from '../../store/Selectors';
-import MiniGraphCard from '../../components/CytoscapeGraph/MiniGraphCard';
-import IstioConfigCard from '../../components/IstioConfigCard/IstioConfigCard';
 import WorkloadPods from './WorkloadPods';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import history, { URLParam } from '../../app/History';
+import MiniGraphCardContainer from "../../components/CytoscapeGraph/MiniGraphCard";
+import IstioConfigCard from "../../components/IstioConfigCard/IstioConfigCard";
 
 type WorkloadInfoProps = {
   duration: DurationInSeconds;
@@ -274,7 +274,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
               </Stack>
             </GridItem>
             <GridItem span={8}>
-              <MiniGraphCard
+              <MiniGraphCardContainer
                 onEdgeTap={this.goToMetrics}
                 dataSource={this.graphDataSource}
                 mtlsEnabled={this.props.mtlsEnabled}

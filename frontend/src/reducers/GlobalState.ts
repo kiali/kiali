@@ -7,7 +7,6 @@ import { getType } from 'typesafe-actions';
 export const INITIAL_GLOBAL_STATE: GlobalState = {
   loadingCounter: 0,
   isPageVisible: true,
-  isKiosk: false,
   kiosk: '',
   lastRefreshAt: 0,
 };
@@ -27,7 +26,7 @@ const globalState = (state: GlobalState = INITIAL_GLOBAL_STATE, action: KialiApp
       return updateState(state, { lastRefreshAt: action.payload });
     case getType(GlobalActions.setKiosk):
       const kiosk = action.payload;
-      return updateState(state, { isKiosk: kiosk !== '', kiosk: kiosk });
+      return updateState(state, { kiosk: kiosk });
     default:
       return state;
   }

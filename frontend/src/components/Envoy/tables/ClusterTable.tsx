@@ -9,6 +9,7 @@ import { Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { style } from 'typestyle';
+import {isParentKiosk} from "../../Kiosk/KioskActions";
 
 export class ClusterTable implements SummaryTable {
   summaries: ClusterSummary[];
@@ -16,13 +17,15 @@ export class ClusterTable implements SummaryTable {
   sortingDirection: 'asc' | 'desc';
   namespaces: Namespace[] | undefined;
   namespace: string;
+  kiosk: string;
 
-  constructor(summaries: ClusterSummary[], sortBy: ISortBy, namespaces: Namespace[], namespace: string) {
+  constructor(summaries: ClusterSummary[], sortBy: ISortBy, namespaces: Namespace[], namespace: string, kiosk: string) {
     this.summaries = summaries;
     this.sortingIndex = sortBy.index || 0;
     this.sortingDirection = sortBy.direction || SortByDirection.asc;
     this.namespaces = namespaces;
     this.namespace = namespace;
+    this.kiosk = kiosk;
   }
 
   availableFilters = (): FilterType[] => {
@@ -152,13 +155,13 @@ export class ClusterTable implements SummaryTable {
         </ul>
     )
   }
-  
+
   head = (): ICell[] => {
     return [
       { title: 'Service FQDN', transforms: [sortable], header: {info: { tooltip: <>Fully Qualified Domain Name</>}} },
       { title: 'Port', transforms: [sortable] },
       { title: 'Subset', transforms: [sortable] },
-      { title: 'Direction', transforms: [sortable], header: {info: { tooltip: 
+      { title: 'Direction', transforms: [sortable], header: {info: { tooltip:
       <ul className={style({textAlign: 'left'})}>
         <li><b>inbound</b>: The inbound cluster events are the events that come into a node. These cluster events come from another node and enter other nodes.</li>
         <li><b>outbound</b>: The outbound cluster events are the events that go out of a node. These cluster events are produced and sent from a node to other nodes.</li>
@@ -185,13 +188,14 @@ export class ClusterTable implements SummaryTable {
 
   tooltip = (): React.ReactNode => {
     return (
-      <Tooltip content={<div className={style({textAlign: 'left'})}>Group of logically similar upstream hosts that Envoy connects to. (All the hosts that envoy manage traffic)</div>}>               
-          <KialiIcon.Help className={style({width: '14px', height: '14px', color: PFColors.Blue400})}/>     
+      <Tooltip content={<div className={style({textAlign: 'left'})}>Group of logically similar upstream hosts that Envoy connects to. (All the hosts that envoy manage traffic)</div>}>
+          <KialiIcon.Help className={style({width: '14px', height: '14px', color: PFColors.Blue400})}/>
       </Tooltip>
     );
   }
 
   rows(): (string | number | JSX.Element)[][] {
+    const parentKiosk = isParentKiosk(this.kiosk);
     return this.summaries
       .filter((value: ClusterSummary): boolean => {
         return defaultFilter(value, this.filterMethods());
@@ -204,7 +208,7 @@ export class ClusterTable implements SummaryTable {
       })
       .map((value: ClusterSummary): (string | number | JSX.Element)[] => {
         return [
-          serviceLink(value.service_fqdn, this.namespaces, this.namespace),
+          serviceLink(value.service_fqdn, this.namespaces, this.namespace, false, parentKiosk),
           value.port,
           value.subset,
           value.direction,
