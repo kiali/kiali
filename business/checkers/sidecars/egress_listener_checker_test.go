@@ -31,6 +31,7 @@ func TestEgressHostFormatCorrect(t *testing.T) {
 			"bookinfo/reviews.bookinfo.svc.cluster.local",
 			"bookinfo/wikipedia.org",
 		}),
+		ClusterName: "svc.cluster.local",
 	}.Check()
 
 	assert.Empty(vals)

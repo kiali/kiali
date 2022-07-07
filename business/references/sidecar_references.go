@@ -37,7 +37,7 @@ func (n SidecarReferences) References() models.IstioReferencesMap {
 					if hostNs == "*" || hostNs == "~" || hostNs == "." || dnsName == "*" {
 						continue
 					}
-					fqdn := kubernetes.ParseHost(dnsName, hostNs)
+					fqdn := kubernetes.ParseHost(dnsName, hostNs, "")
 
 					configRef := n.getConfigReferences(fqdn, hostNs)
 					references.ObjectReferences = append(references.ObjectReferences, configRef...)

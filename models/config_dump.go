@@ -273,7 +273,7 @@ func (cs *Cluster) Parse(cluster kubernetes.EnvoyCluster) {
 
 	parts := strings.Split(cluster.Name, "|")
 	if len(parts) > 3 {
-		cs.ServiceFQDN = kubernetes.ParseHost(parts[3], "")
+		cs.ServiceFQDN = kubernetes.ParseHost(parts[3], "", "")
 		cs.Port, _ = strconv.Atoi(strings.TrimSuffix(parts[1], "_"))
 		cs.Subset = parts[2]
 		cs.Direction = strings.TrimSuffix(parts[0], "_")

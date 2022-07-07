@@ -551,8 +551,9 @@ func MatchPortAppProtocolWithValidProtocols(appProtocol *string) bool {
 func GatewayNames(gateways []networking_v1beta1.Gateway) map[string]struct{} {
 	var empty struct{}
 	names := make(map[string]struct{})
+	clusterName := config.Get().ExternalServices.Istio.IstioIdentityDomain
 	for _, gw := range gateways {
-		names[ParseHost(gw.Name, gw.Namespace).String()] = empty
+		names[ParseHost(gw.Name, gw.Namespace, clusterName).String()] = empty
 	}
 	return names
 }

@@ -261,7 +261,7 @@ func (n VirtualServiceReferences) getAuthPolicies(vs networking_v1beta1.VirtualS
 							for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
 								vHost := vs.Spec.Hosts[hostIdx]
 
-								hostS := kubernetes.ParseHost(vHost, vs.Namespace)
+								hostS := kubernetes.ParseHost(vHost, vs.Namespace, "")
 								if hostS.String() == fqdn.String() {
 									result = append(result, models.IstioReference{Name: ap.Name, Namespace: ap.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.AuthorizationPolicies]})
 									continue
