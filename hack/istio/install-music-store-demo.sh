@@ -12,8 +12,8 @@
 : ${DELETE_DEMOS:=false}
 : ${MSTORE:=music-store}
 : ${BASE_URL:=https://raw.githubusercontent.com/kiali/demos/master}
-: ${MINIKUBE_PROFILE=minikube}
-: ${ISTIO_NAMESPACE=istio-system}
+: ${MINIKUBE_PROFILE:=minikube}
+: ${ISTIO_NAMESPACE:=istio-system}
 
 apply_network_attachment() {
   NAME=$1
