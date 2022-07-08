@@ -186,7 +186,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 				istioConfigList.DestinationRules, err = kialiCache.GetDestinationRules(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				drl, e := in.k8s.Istio().NetworkingV1beta1().DestinationRules(criteria.Namespace).List(ctx, listOpts)
-				istioConfigList.DestinationRules = getDestinationRulesAsArray(drl)
+				istioConfigList.DestinationRules = getDestinationRulesAsArray(drl.Items)
 				err = e
 			}
 			if err != nil {
@@ -408,88 +408,110 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 // Backwards compatibility functions in istio/client.go migration where []type was changed to []*type
 func getRequestAuthenticationsAsArray(items []*security_v1beta1.RequestAuthentication) []security_v1beta1.RequestAuthentication {
 	ds := []security_v1beta1.RequestAuthentication{}
-	for i, v := range items {
-		ds[i] = *v
+	for _, v := range items {
+		newItem := security_v1beta1.RequestAuthentication{}
+		v.DeepCopyInto(&newItem)
+		ds = append(ds, newItem)
 	}
 	return ds
 }
 
 func getPeerAuthenticationsAsArray(items []*security_v1beta1.PeerAuthentication) []security_v1beta1.PeerAuthentication {
 	ds := []security_v1beta1.PeerAuthentication{}
-	for i, v := range items {
-		ds[i] = *v
+	for _, v := range items {
+		newItem := security_v1beta1.PeerAuthentication{}
+		v.DeepCopyInto(&newItem)
+		ds = append(ds, newItem)
 	}
 	return ds
 }
 
 func getAuthorizationPoliciesAsArray(items []*security_v1beta1.AuthorizationPolicy) []security_v1beta1.AuthorizationPolicy {
 	ds := []security_v1beta1.AuthorizationPolicy{}
-	for i, v := range items {
-		ds[i] = *v
+	for _, v := range items {
+		newItem := security_v1beta1.AuthorizationPolicy{}
+		v.DeepCopyInto(&newItem)
+		ds = append(ds, newItem)
 	}
 	return ds
 }
 
 func getWorkloadsEntriesAsArray(items []*networking_v1beta1.WorkloadEntry) []networking_v1beta1.WorkloadEntry {
 	ds := []networking_v1beta1.WorkloadEntry{}
-	for i, v := range items {
-		ds[i] = *v
+	for _, v := range items {
+		newItem := networking_v1beta1.WorkloadEntry{}
+		v.DeepCopyInto(&newItem)
+		ds = append(ds, newItem)
 	}
 	return ds
 }
 
 func getWorkloadGroupsAsArray(items []*networking_v1beta1.WorkloadGroup) []networking_v1beta1.WorkloadGroup {
 	ds := []networking_v1beta1.WorkloadGroup{}
-	for i, v := range items {
-		ds[i] = *v
+	for _, v := range items {
+		newItem := networking_v1beta1.WorkloadGroup{}
+		v.DeepCopyInto(&newItem)
+		ds = append(ds, newItem)
 	}
 	return ds
 }
 
 func getVirtualServicesAsArray(items []*networking_v1beta1.VirtualService) []networking_v1beta1.VirtualService {
 	ds := []networking_v1beta1.VirtualService{}
-	for i, v := range items {
-		ds[i] = *v
+	for _, v := range items {
+		newItem := networking_v1beta1.VirtualService{}
+		v.DeepCopyInto(&newItem)
+		ds = append(ds, newItem)
 	}
 	return ds
 }
 
 func getSidecarsAsArray(items []*networking_v1beta1.Sidecar) []networking_v1beta1.Sidecar {
 	ds := []networking_v1beta1.Sidecar{}
-	for i, v := range items {
-		ds[i] = *v
+	for _, v := range items {
+		newItem := networking_v1beta1.Sidecar{}
+		v.DeepCopyInto(&newItem)
+		ds = append(ds, newItem)
 	}
 	return ds
 }
 
 func getServiceEntriesAsArray(items []*networking_v1beta1.ServiceEntry) []networking_v1beta1.ServiceEntry {
 	ds := []networking_v1beta1.ServiceEntry{}
-	for i, v := range items {
-		ds[i] = *v
+	for _, v := range items {
+		newItem := networking_v1beta1.ServiceEntry{}
+		v.DeepCopyInto(&newItem)
+		ds = append(ds, newItem)
 	}
 	return ds
 }
 
 func getGatewaysAsArray(items []*networking_v1beta1.Gateway) []networking_v1beta1.Gateway {
 	ds := []networking_v1beta1.Gateway{}
-	for i, v := range items {
-		ds[i] = *v
+	for _, v := range items {
+		newItem := networking_v1beta1.Gateway{}
+		v.DeepCopyInto(&newItem)
+		ds = append(ds, newItem)
 	}
 	return ds
 }
 
 func getEnvoyFiltersAsArray(items []*networking_v1alpha3.EnvoyFilter) []networking_v1alpha3.EnvoyFilter {
 	ds := []networking_v1alpha3.EnvoyFilter{}
-	for i, v := range items {
-		ds[i] = *v
+	for _, v := range items {
+		newItem := networking_v1alpha3.EnvoyFilter{}
+		v.DeepCopyInto(&newItem)
+		ds = append(ds, newItem)
 	}
 	return ds
 }
 
-func getDestinationRulesAsArray(items *networking_v1beta1.DestinationRuleList) []networking_v1beta1.DestinationRule {
+func getDestinationRulesAsArray(items []*networking_v1beta1.DestinationRule) []networking_v1beta1.DestinationRule {
 	ds := []networking_v1beta1.DestinationRule{}
-	for i, v := range items.Items {
-		ds[i] = *v
+	for _, v := range items {
+		newItem := networking_v1beta1.DestinationRule{}
+		v.DeepCopyInto(&newItem)
+		ds = append(ds, newItem)
 	}
 	return ds
 }
