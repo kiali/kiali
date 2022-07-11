@@ -34,7 +34,7 @@ func (in VirtualServiceChecker) runIndividualChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	for _, virtualService := range in.VirtualServices {
-		validations.MergeValidations(in.runChecks(*virtualService))
+		validations.MergeValidations(in.runChecks(virtualService))
 	}
 
 	return validations
@@ -56,7 +56,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 }
 
 // runChecks runs all the individual checks for a single virtual service and appends the result into validations.
-func (in VirtualServiceChecker) runChecks(virtualService networking_v1beta1.VirtualService) models.IstioValidations {
+func (in VirtualServiceChecker) runChecks(virtualService *networking_v1beta1.VirtualService) models.IstioValidations {
 	virtualServiceName := virtualService.Name
 	key, rrValidation := EmptyValidValidation(virtualServiceName, virtualService.Namespace, VirtualCheckerType)
 

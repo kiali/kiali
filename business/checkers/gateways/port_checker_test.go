@@ -21,7 +21,7 @@ func TestValidPortDefinition(t *testing.T) {
 		data.CreateServer([]string{"localhost"}, uint32(80), "http", "http"),
 		data.CreateEmptyGateway("valid-gw", "test", map[string]string{"istio": "ingressgateway"}),
 	)
-	pc := PortChecker{Gateway: *gw}
+	pc := PortChecker{Gateway: gw}
 	vals, valid := pc.Check()
 	assert.True(valid)
 	assert.Empty(vals)
@@ -37,7 +37,7 @@ func TestInvalidPortDefinition(t *testing.T) {
 		data.CreateServer([]string{"localhost"}, uint32(80), "http", "http2"),
 		data.CreateEmptyGateway("notvalid-gw", "test", map[string]string{"istio": "ingressgateway"}),
 	)
-	pc := PortChecker{Gateway: *gw}
+	pc := PortChecker{Gateway: gw}
 	vals, valid := pc.Check()
 	assert.False(valid)
 	assert.NotEmpty(vals)

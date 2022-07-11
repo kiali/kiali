@@ -46,13 +46,13 @@ func (s SidecarChecker) runIndividualChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	for _, sidecar := range s.Sidecars {
-		validations.MergeValidations(s.runChecks(*sidecar))
+		validations.MergeValidations(s.runChecks(sidecar))
 	}
 
 	return validations
 }
 
-func (s SidecarChecker) runChecks(sidecar networking_v1beta1.Sidecar) models.IstioValidations {
+func (s SidecarChecker) runChecks(sidecar *networking_v1beta1.Sidecar) models.IstioValidations {
 	policyName := sidecar.Name
 	key, rrValidation := EmptyValidValidation(policyName, sidecar.Namespace, SidecarCheckerType)
 	serviceHosts := kubernetes.ServiceEntryHostnames(s.ServiceEntries)

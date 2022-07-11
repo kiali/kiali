@@ -10,7 +10,7 @@ import (
 )
 
 type HasMatchingWorkloadEntryAddress struct {
-	ServiceEntry    networking_v1beta1.ServiceEntry
+	ServiceEntry    *networking_v1beta1.ServiceEntry
 	WorkloadEntries map[string][]string
 }
 

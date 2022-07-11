@@ -22,13 +22,13 @@ func (s ServiceEntryChecker) Check() models.IstioValidations {
 	weMap := serviceentries.GroupWorkloadEntriesByLabels(s.WorkloadEntries)
 
 	for _, se := range s.ServiceEntries {
-		validations.MergeValidations(s.runSingleChecks(*se, weMap))
+		validations.MergeValidations(s.runSingleChecks(se, weMap))
 	}
 
 	return validations
 }
 
-func (s ServiceEntryChecker) runSingleChecks(se networking_v1beta1.ServiceEntry, workloadEntriesMap map[string][]string) models.IstioValidations {
+func (s ServiceEntryChecker) runSingleChecks(se *networking_v1beta1.ServiceEntry, workloadEntriesMap map[string][]string) models.IstioValidations {
 	key, validations := EmptyValidValidation(se.Name, se.Namespace, ServiceEntryCheckerType)
 
 	enabledCheckers := []Checker{

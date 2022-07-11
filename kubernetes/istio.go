@@ -568,10 +568,10 @@ func PeerAuthnHasMTLSEnabled(peerAuthn *security_v1beta1.PeerAuthentication) (bo
 	if peerAuthn.Spec.Selector != nil && len(peerAuthn.Spec.Selector.MatchLabels) >= 0 {
 		return false, ""
 	}
-	return PeerAuthnMTLSMode(*peerAuthn)
+	return PeerAuthnMTLSMode(peerAuthn)
 }
 
-func PeerAuthnMTLSMode(peerAuthn security_v1beta1.PeerAuthentication) (bool, string) {
+func PeerAuthnMTLSMode(peerAuthn *security_v1beta1.PeerAuthentication) (bool, string) {
 	// It is globally enabled when mtls is in STRICT mode
 	if peerAuthn.Spec.Mtls != nil {
 		mode := peerAuthn.Spec.Mtls.Mode.String()

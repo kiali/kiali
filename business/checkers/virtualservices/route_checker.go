@@ -12,7 +12,7 @@ import (
 
 type RouteChecker struct {
 	Namespaces     []string
-	VirtualService networking_v1beta1.VirtualService
+	VirtualService *networking_v1beta1.VirtualService
 }
 
 // Check returns both an array of IstioCheck and a boolean indicating if the current route rule is valid.

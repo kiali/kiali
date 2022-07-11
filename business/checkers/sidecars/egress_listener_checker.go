@@ -11,7 +11,7 @@ import (
 )
 
 type EgressHostChecker struct {
-	Sidecar          networking_v1beta1.Sidecar
+	Sidecar          *networking_v1beta1.Sidecar
 	ServiceEntries   map[string][]string
 	RegistryServices []*kubernetes.RegistryService
 	ClusterName      string

@@ -42,11 +42,11 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, "", m.Namespaces.GetNames())
 
 		// Skip DR validation if it enables mTLS either namespace or mesh-wide
-		if isNonLocalmTLSForServiceEnabled(*dr, fqdn.String()) {
+		if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
 			continue
 		}
 
-		foundSubsets := extractSubsets(*dr, destinationRulesName, destinationRulesNamespace)
+		foundSubsets := extractSubsets(dr, destinationRulesName, destinationRulesNamespace)
 
 		if fqdn.IsWildcard() {
 			// We need to check the matching subsets from all hosts now
@@ -78,11 +78,11 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func isNonLocalmTLSForServiceEnabled(dr networking_v1beta1.DestinationRule, service string) bool {
+func isNonLocalmTLSForServiceEnabled(dr *networking_v1beta1.DestinationRule, service string) bool {
 	return strings.HasPrefix(service, "*") && ismTLSEnabled(dr)
 }
 
-func ismTLSEnabled(dr networking_v1beta1.DestinationRule) bool {
+func ismTLSEnabled(dr *networking_v1beta1.DestinationRule) bool {
 	if dr.Spec.TrafficPolicy != nil && dr.Spec.TrafficPolicy.Tls != nil {
 		mode := dr.Spec.TrafficPolicy.Tls.Mode.String()
 		return mode == "ISTIO_MUTUAL"
@@ -90,7 +90,7 @@ func ismTLSEnabled(dr networking_v1beta1.DestinationRule) bool {
 	return false
 }
 
-func extractSubsets(dr networking_v1beta1.DestinationRule, destinationRulesName string, destinationRulesNamespace string) []subset {
+func extractSubsets(dr *networking_v1beta1.DestinationRule, destinationRulesName string, destinationRulesNamespace string) []subset {
 	if len(dr.Spec.Subsets) > 0 {
 		foundSubsets := []subset{}
 		for _, ss := range dr.Spec.Subsets {

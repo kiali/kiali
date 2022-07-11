@@ -8,7 +8,7 @@ import (
 )
 
 type GlobalChecker struct {
-	Sidecar networking_v1beta1.Sidecar
+	Sidecar *networking_v1beta1.Sidecar
 }
 
 func (gc GlobalChecker) Check() ([]*models.IstioCheck, bool) {

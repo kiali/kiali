@@ -83,7 +83,7 @@ func subsetPresenceCheckerPrep(scenario string, t *testing.T) ([]*models.IstioCh
 	vals, valid := SubsetPresenceChecker{
 		Namespaces:       namespaceNames(loader.GetNamespaces()),
 		DestinationRules: append(loader.FindDestinationRuleIn("bookinfo"), loader.FindDestinationRuleNotIn("bookinfo")...),
-		VirtualService:   *loader.GetResources().VirtualServices[0],
+		VirtualService:   loader.GetResources().VirtualServices[0],
 	}.Check()
 
 	if err != nil {

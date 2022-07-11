@@ -10,7 +10,7 @@ import (
 )
 
 type PortChecker struct {
-	Gateway networking_v1beta1.Gateway
+	Gateway *networking_v1beta1.Gateway
 }
 
 func (p PortChecker) Check() ([]*models.IstioCheck, bool) {

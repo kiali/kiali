@@ -16,7 +16,7 @@ func TestSidecarWithoutSelectorOutOfControlPlane(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	vals, valid := GlobalChecker{
-		Sidecar: *data.CreateSidecar("sidecar1", "bookinfo"),
+		Sidecar: data.CreateSidecar("sidecar1", "bookinfo"),
 	}.Check()
 
 	assert.Empty(vals)
@@ -29,7 +29,7 @@ func TestSidecarWithoutSelectorInControlPlane(t *testing.T) {
 	config.Set(conf)
 
 	vals, valid := GlobalChecker{
-		Sidecar: *data.CreateSidecar("sidecar1", conf.ExternalServices.Istio.RootNamespace),
+		Sidecar: data.CreateSidecar("sidecar1", conf.ExternalServices.Istio.RootNamespace),
 	}.Check()
 
 	assert.Empty(vals)
@@ -41,7 +41,7 @@ func TestSidecarWithSelectorOutOfControlPlane(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	vals, valid := GlobalChecker{
-		Sidecar: *data.AddSelectorToSidecar(map[string]string{
+		Sidecar: data.AddSelectorToSidecar(map[string]string{
 			"app": "reviews",
 		}, data.CreateSidecar("sidecar1", "bookinfo")),
 	}.Check()
@@ -56,7 +56,7 @@ func TestSidecarWithSelectorInControlPlane(t *testing.T) {
 	config.Set(conf)
 
 	vals, valid := GlobalChecker{
-		Sidecar: *data.AddSelectorToSidecar(map[string]string{
+		Sidecar: data.AddSelectorToSidecar(map[string]string{
 			"app": "reviews",
 		}, data.CreateSidecar("sidecar1", conf.ExternalServices.Istio.RootNamespace)),
 	}.Check()

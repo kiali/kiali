@@ -70,7 +70,7 @@ func (m MtlsStatus) WorkloadMtlsStatus(namespace string) string {
 			continue
 		}
 
-		_, mode := kubernetes.PeerAuthnMTLSMode(*pa)
+		_, mode := kubernetes.PeerAuthnMTLSMode(pa)
 		if mode == "STRICT" {
 			return MTLSEnabled
 		} else if mode == "DISABLE" {

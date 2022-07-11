@@ -153,8 +153,8 @@ func (n NoDestinationChecker) isSubsetReferenced(host string, subset string) boo
 	return false
 }
 
-func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virtualServiceSubset string) ([]networking_v1beta1.VirtualService, bool) {
-	vss := make([]networking_v1beta1.VirtualService, 0, len(n.VirtualServices))
+func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virtualServiceSubset string) ([]*networking_v1beta1.VirtualService, bool) {
+	vss := make([]*networking_v1beta1.VirtualService, 0, len(n.VirtualServices))
 
 	for _, virtualService := range n.VirtualServices {
 
@@ -174,7 +174,7 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, "", n.Namespaces.GetNames())
 						// Host could be in another namespace (FQDN)
 						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
-							vss = append(vss, *virtualService)
+							vss = append(vss, virtualService)
 						}
 					}
 				}
@@ -197,7 +197,7 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, "", n.Namespaces.GetNames())
 						// Host could be in another namespace (FQDN)
 						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
-							vss = append(vss, *virtualService)
+							vss = append(vss, virtualService)
 						}
 					}
 				}
@@ -220,7 +220,7 @@ func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virt
 						vsHost := kubernetes.GetHost(virtualServiceHost, virtualService.Namespace, "", n.Namespaces.GetNames())
 						// Host could be in another namespace (FQDN)
 						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) && subset == virtualServiceSubset {
-							vss = append(vss, *virtualService)
+							vss = append(vss, virtualService)
 						}
 					}
 				}

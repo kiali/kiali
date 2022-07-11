@@ -12,7 +12,7 @@ import (
 type SubsetPresenceChecker struct {
 	Namespaces       []string
 	DestinationRules []*networking_v1beta1.DestinationRule
-	VirtualService   networking_v1beta1.VirtualService
+	VirtualService   *networking_v1beta1.VirtualService
 }
 
 func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
