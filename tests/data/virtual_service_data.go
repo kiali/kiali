@@ -13,7 +13,6 @@ func CreateEmptyVirtualService(name string, namespace string, hosts []string) *n
 	vs.Name = name
 	vs.Namespace = namespace
 	vs.Spec.Hosts = hosts
-	vs.ZZZ_DeprecatedClusterName = "svc.cluster.local"
 	return &vs
 }
 

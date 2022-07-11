@@ -47,7 +47,7 @@ func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1beta.Rule_
 	if len(to) == 0 {
 		return nil, true
 	}
-	namespace, clusterName := n.AuthorizationPolicy.Namespace, n.AuthorizationPolicy.ZZZ_DeprecatedClusterName
+	namespace := n.AuthorizationPolicy.Namespace
 	checks, valid := make([]*models.IstioCheck, 0, len(to)), true
 	for toIdx, t := range to {
 		if t == nil {
@@ -63,7 +63,7 @@ func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1beta.Rule_
 		}
 
 		for hostIdx, h := range t.Operation.Hosts {
-			fqdn := kubernetes.GetHost(h, namespace, clusterName, n.Namespaces.GetNames())
+			fqdn := kubernetes.GetHost(h, namespace, "", n.Namespaces.GetNames())
 			if !n.hasMatchingService(fqdn, namespace) {
 				path := fmt.Sprintf("spec/rules[%d]/to[%d]/operation/hosts[%d]", ruleIdx, toIdx, hostIdx)
 				validation := models.Build("authorizationpolicy.nodest.matchingregistry", path)

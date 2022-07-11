@@ -53,15 +53,15 @@ func (n GatewayReferences) getConfigReferences(gw networking_v1beta1.Gateway) []
 	result := make([]models.IstioReference, 0)
 	allVSs := make([]models.IstioReference, 0)
 	for _, vs := range n.VirtualServices {
-		namespace, clusterName := vs.Namespace, vs.ZZZ_DeprecatedClusterName
-		if len(vs.Spec.Gateways) > 0 && isGatewayListed(gw, vs.Spec.Gateways, namespace, clusterName) {
+		namespace := vs.Namespace
+		if len(vs.Spec.Gateways) > 0 && isGatewayListed(gw, vs.Spec.Gateways, namespace, "") {
 			allVSs = append(allVSs, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
 		}
 		if len(vs.Spec.Http) > 0 {
 			for _, httpRoute := range vs.Spec.Http {
 				if httpRoute != nil {
 					for _, match := range httpRoute.Match {
-						if match != nil && isGatewayListed(gw, match.Gateways, namespace, clusterName) {
+						if match != nil && isGatewayListed(gw, match.Gateways, namespace, "") {
 							allVSs = append(allVSs, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
 						}
 					}
@@ -72,7 +72,7 @@ func (n GatewayReferences) getConfigReferences(gw networking_v1beta1.Gateway) []
 			for _, tlsRoute := range vs.Spec.Tls {
 				if tlsRoute != nil {
 					for _, match := range tlsRoute.Match {
-						if match != nil && isGatewayListed(gw, match.Gateways, namespace, clusterName) {
+						if match != nil && isGatewayListed(gw, match.Gateways, namespace, "") {
 							allVSs = append(allVSs, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
 						}
 					}
@@ -92,7 +92,7 @@ func (n GatewayReferences) getConfigReferences(gw networking_v1beta1.Gateway) []
 }
 
 func isGatewayListed(gw networking_v1beta1.Gateway, gateways []string, namespace string, clusterName string) bool {
-	hostname := kubernetes.ParseGatewayAsHost(gw.Name, gw.Namespace, gw.ZZZ_DeprecatedClusterName)
+	hostname := kubernetes.ParseGatewayAsHost(gw.Name, gw.Namespace, "")
 	for _, gate := range gateways {
 		gwHostname := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName)
 		if hostname.String() == gwHostname.String() {

@@ -204,7 +204,7 @@ func HasMatchingVirtualServices(host Host, virtualServices []*networking_v1beta1
 			}
 
 			// Non-internal service name
-			hostS := ParseHost(vHost, vs.Namespace, vs.ZZZ_DeprecatedClusterName)
+			hostS := ParseHost(vHost, vs.Namespace, "")
 			if hostS.Service == host.Service && hostS.CompleteInput == host.CompleteInput && !hostS.CompleteInput {
 				return true
 			}

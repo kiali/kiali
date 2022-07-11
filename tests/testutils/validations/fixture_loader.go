@@ -142,7 +142,6 @@ func (l YamlFixtureLoader) FindAuthorizationPolicy(name, namespace string) *secu
 func (l YamlFixtureLoader) FindDestinationRule(name, namespace string) *networking_v1beta1.DestinationRule {
 	for _, d := range l.istioConfigList.DestinationRules {
 		if d.Name == name && d.Namespace == namespace {
-			d.ZZZ_DeprecatedClusterName = "svc.cluster.local"
 			return d
 		}
 	}
@@ -152,7 +151,6 @@ func (l YamlFixtureLoader) FindDestinationRule(name, namespace string) *networki
 func (l YamlFixtureLoader) FindVirtualService(name, namespace string) *networking_v1beta1.VirtualService {
 	for _, v := range l.istioConfigList.VirtualServices {
 		if v.Name == name && v.Namespace == namespace {
-			v.ZZZ_DeprecatedClusterName = "svc.cluster.local"
 			return v
 		}
 	}

@@ -9,7 +9,6 @@ func CreateSidecar(name string, namespace string) *networking_v1beta1.Sidecar {
 	sc := networking_v1beta1.Sidecar{}
 	sc.Name = name
 	sc.Namespace = namespace
-	sc.ZZZ_DeprecatedClusterName = "svc.cluster.local"
 	return &sc
 }
 

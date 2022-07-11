@@ -138,7 +138,7 @@ func storeHost(hostCounter map[string]map[string]map[string]map[string][]*networ
 }
 
 func (s SingleHostChecker) getHosts(virtualService networking_v1beta1.VirtualService) []kubernetes.Host {
-	namespace, clusterName := virtualService.Namespace, virtualService.ZZZ_DeprecatedClusterName
+	namespace := virtualService.Namespace
 
 	if len(virtualService.Spec.Hosts) == 0 {
 		return []kubernetes.Host{}
@@ -147,7 +147,7 @@ func (s SingleHostChecker) getHosts(virtualService networking_v1beta1.VirtualSer
 	targetHosts := make([]kubernetes.Host, 0, len(virtualService.Spec.Hosts))
 
 	for _, hostName := range virtualService.Spec.Hosts {
-		targetHosts = append(targetHosts, kubernetes.GetHost(hostName, namespace, clusterName, s.Namespaces.GetNames()))
+		targetHosts = append(targetHosts, kubernetes.GetHost(hostName, namespace, "", s.Namespaces.GetNames()))
 	}
 	return targetHosts
 }

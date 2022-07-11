@@ -14,6 +14,7 @@ type EgressHostChecker struct {
 	Sidecar          networking_v1beta1.Sidecar
 	ServiceEntries   map[string][]string
 	RegistryServices []*kubernetes.RegistryService
+	ClusterName      string
 }
 
 type HostWithIndex struct {
@@ -73,7 +74,7 @@ func (elc EgressHostChecker) validateHost(host string, egrIdx, hostIdx int) ([]*
 		return checks, true
 	}
 
-	fqdn := kubernetes.ParseHost(dnsName, sns, elc.Sidecar.ZZZ_DeprecatedClusterName)
+	fqdn := kubernetes.ParseHost(dnsName, sns, elc.ClusterName)
 
 	// Lookup for matching services
 	if !elc.HasMatchingService(fqdn, sns) {

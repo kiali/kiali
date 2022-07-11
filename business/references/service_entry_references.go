@@ -36,7 +36,7 @@ func (n ServiceEntryReferences) References() models.IstioReferencesMap {
 func (n ServiceEntryReferences) getConfigReferences(se networking_v1beta1.ServiceEntry) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 	for _, dr := range n.DestinationRules {
-		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, dr.ZZZ_DeprecatedClusterName, n.Namespaces.GetNames())
+		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, "", n.Namespaces.GetNames())
 		if !fqdn.IsWildcard() {
 			for _, seHost := range se.Spec.Hosts {
 				if seHost == fqdn.String() {
@@ -57,7 +57,7 @@ func (n ServiceEntryReferences) getConfigReferences(se networking_v1beta1.Servic
 					if hostNs == "*" || hostNs == "~" || hostNs == "." || dnsName == "*" {
 						continue
 					}
-					fqdn := kubernetes.ParseHost(dnsName, hostNs, sc.ZZZ_DeprecatedClusterName)
+					fqdn := kubernetes.ParseHost(dnsName, hostNs, "")
 
 					if se.Namespace != hostNs {
 						continue
@@ -79,7 +79,7 @@ func (n ServiceEntryReferences) getConfigReferences(se networking_v1beta1.Servic
 func (n ServiceEntryReferences) getAuthPoliciesReferences(se networking_v1beta1.ServiceEntry) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 	for _, ap := range n.AuthorizationPolicies {
-		namespace, clusterName := ap.Namespace, ap.ZZZ_DeprecatedClusterName
+		namespace := ap.Namespace
 		for _, rule := range ap.Spec.Rules {
 			if rule == nil {
 				continue
@@ -90,7 +90,7 @@ func (n ServiceEntryReferences) getAuthPoliciesReferences(se networking_v1beta1.
 						continue
 					}
 					for _, h := range t.Operation.Hosts {
-						fqdn := kubernetes.GetHost(h, namespace, clusterName, n.Namespaces.GetNames())
+						fqdn := kubernetes.GetHost(h, namespace, "", n.Namespaces.GetNames())
 						if !fqdn.IsWildcard() {
 							for _, seHost := range se.Spec.Hosts {
 								if seHost == fqdn.String() {

@@ -25,7 +25,7 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 	result := models.IstioReferencesMap{}
 
 	for _, ap := range n.AuthorizationPolicies {
-		namespace, clusterName := ap.Namespace, ap.ZZZ_DeprecatedClusterName
+		namespace := ap.Namespace
 		key := models.IstioReferenceKey{Namespace: namespace, Name: ap.Name, ObjectType: models.ObjectTypeSingular[kubernetes.AuthorizationPolicies]}
 		references := &models.IstioReferences{}
 		for _, rule := range ap.Spec.Rules {
@@ -38,7 +38,7 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 						continue
 					}
 					for _, h := range t.Operation.Hosts {
-						fqdn := kubernetes.GetHost(h, namespace, clusterName, n.Namespaces.GetNames())
+						fqdn := kubernetes.GetHost(h, namespace, "", n.Namespaces.GetNames())
 						if !fqdn.IsWildcard() {
 							configRef := n.getConfigReferences(fqdn)
 							references.ObjectReferences = append(references.ObjectReferences, configRef...)
@@ -80,7 +80,7 @@ func (n AuthorizationPolicyReferences) getConfigReferences(host kubernetes.Host)
 		for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
 			vHost := vs.Spec.Hosts[hostIdx]
 
-			hostS := kubernetes.ParseHost(vHost, vs.Namespace, vs.ZZZ_DeprecatedClusterName)
+			hostS := kubernetes.ParseHost(vHost, vs.Namespace, "")
 			if hostS.String() == host.String() {
 				result = append(result, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
 				continue

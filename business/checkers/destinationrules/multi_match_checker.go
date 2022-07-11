@@ -39,7 +39,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	for _, dr := range m.DestinationRules {
 		destinationRulesName := dr.Name
 		destinationRulesNamespace := dr.Namespace
-		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, dr.ZZZ_DeprecatedClusterName, m.Namespaces.GetNames())
+		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, "", m.Namespaces.GetNames())
 
 		// Skip DR validation if it enables mTLS either namespace or mesh-wide
 		if isNonLocalmTLSForServiceEnabled(*dr, fqdn.String()) {

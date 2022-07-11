@@ -20,7 +20,7 @@ type NoHostChecker struct {
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 	valid := true
-	namespace, clusterName := n.VirtualService.Namespace, n.VirtualService.ZZZ_DeprecatedClusterName
+	namespace := n.VirtualService.Namespace
 
 	for k, httpRoute := range n.VirtualService.Spec.Http {
 		if httpRoute != nil {
@@ -30,7 +30,7 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 					if host == "" {
 						continue
 					}
-					fqdn := kubernetes.GetHost(host, namespace, clusterName, n.Namespaces.GetNames())
+					fqdn := kubernetes.GetHost(host, namespace, "", n.Namespaces.GetNames())
 					if !n.checkDestination(fqdn.String(), namespace) {
 						path := fmt.Sprintf("spec/http[%d]/route[%d]/destination/host", k, i)
 						validation := models.Build("virtualservices.nohost.hostnotfound", path)
@@ -50,7 +50,7 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 					if host == "" {
 						continue
 					}
-					fqdn := kubernetes.GetHost(host, namespace, clusterName, n.Namespaces.GetNames())
+					fqdn := kubernetes.GetHost(host, namespace, "", n.Namespaces.GetNames())
 					if !n.checkDestination(fqdn.String(), namespace) {
 						path := fmt.Sprintf("spec/tcp[%d]/route[%d]/destination/host", k, i)
 						validation := models.Build("virtualservices.nohost.hostnotfound", path)
@@ -70,7 +70,7 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 					if host == "" {
 						continue
 					}
-					fqdn := kubernetes.GetHost(host, namespace, clusterName, n.Namespaces.GetNames())
+					fqdn := kubernetes.GetHost(host, namespace, "", n.Namespaces.GetNames())
 					if !n.checkDestination(fqdn.String(), namespace) {
 						path := fmt.Sprintf("spec/tls[%d]/route[%d]/destination/host", k, i)
 						validation := models.Build("virtualservices.nohost.hostnotfound", path)
