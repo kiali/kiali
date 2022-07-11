@@ -24,7 +24,7 @@ func TestMTLSMeshWideDREnabledWithNoMeshPolicy(t *testing.T) {
 		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{},
 	}
 
-	testReturnsAValidation(t, *destinationRule, mTlsDetails)
+	testReturnsAValidation(t, destinationRule, mTlsDetails)
 }
 
 // Context: DestinationRule enables mesh-wide mTLS
@@ -40,7 +40,7 @@ func TestMTLSMeshWideDREnabledWithMeshPolicyDisabled(t *testing.T) {
 		},
 	}
 
-	testNoValidationsFound(t, *destinationRule, mTlsDetails)
+	testNoValidationsFound(t, destinationRule, mTlsDetails)
 }
 
 // Context: DestinationRule enables mesh-wide mTLS
@@ -56,7 +56,7 @@ func TestMTLSMeshWideDREnabledWithMeshPolicy(t *testing.T) {
 		},
 	}
 
-	testNoValidationsFound(t, *destinationRule, mTlsDetails)
+	testNoValidationsFound(t, destinationRule, mTlsDetails)
 }
 
 // Context: DestinationRule enables namespace-wide mTLS
@@ -72,7 +72,7 @@ func TestMTLSNamespaceWideDREnabledWithMeshPolicy(t *testing.T) {
 		},
 	}
 
-	testNoValidationsFound(t, *destinationRule, mTlsDetails)
+	testNoValidationsFound(t, destinationRule, mTlsDetails)
 }
 
 // Context: DestinationRule enables namespace-wide mTLS
@@ -88,7 +88,7 @@ func TestMTLSNamespaceWideDREnabledWithMeshPolicyDisabled(t *testing.T) {
 		},
 	}
 
-	testNoValidationsFound(t, *destinationRule, mTlsDetails)
+	testNoValidationsFound(t, destinationRule, mTlsDetails)
 }
 
 // Context: DestinationRule not enabling mTLS
@@ -103,7 +103,7 @@ func TestMTLSDRDisabledWithMeshPolicy(t *testing.T) {
 		},
 	}
 
-	testNoValidationsFound(t, *destinationRule, mTlsDetails)
+	testNoValidationsFound(t, destinationRule, mTlsDetails)
 }
 
 // Context: DestinationRule not enabling mTLS
@@ -118,10 +118,10 @@ func TestMTLSDRDisabledWithMeshPolicyDisabled(t *testing.T) {
 		},
 	}
 
-	testNoValidationsFound(t, *destinationRule, mTlsDetails)
+	testNoValidationsFound(t, destinationRule, mTlsDetails)
 }
 
-func testReturnsAValidation(t *testing.T, destinationRule networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails) {
+func testReturnsAValidation(t *testing.T, destinationRule *networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
 	vals, valid := MeshWideMTLSChecker{
@@ -140,7 +140,7 @@ func testReturnsAValidation(t *testing.T, destinationRule networking_v1beta1.Des
 	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.mtls.meshpolicymissing", validation))
 }
 
-func testNoValidationsFound(t *testing.T, destinationRule networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails) {
+func testNoValidationsFound(t *testing.T, destinationRule *networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
 	validations, valid := MeshWideMTLSChecker{

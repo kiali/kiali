@@ -21,7 +21,7 @@ func TestMissingGateway(t *testing.T) {
 
 	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway", "mesh"}, data.CreateVirtualService())
 	checker := NoGatewayChecker{
-		VirtualService: *virtualService,
+		VirtualService: virtualService,
 		GatewayNames:   make(map[string]struct{}),
 	}
 
@@ -39,7 +39,7 @@ func TestMissingGateways(t *testing.T) {
 
 	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway", "my-gateway2", "mesh"}, data.CreateVirtualService())
 	checker := NoGatewayChecker{
-		VirtualService: *virtualService,
+		VirtualService: virtualService,
 		GatewayNames:   make(map[string]struct{}),
 	}
 
@@ -77,7 +77,7 @@ func TestMissingGatewayInHTTPMatch(t *testing.T) {
 
 			virtualService := loader.FindVirtualService("test", "default")
 			checker := NoGatewayChecker{
-				VirtualService: *virtualService,
+				VirtualService: virtualService,
 				GatewayNames:   map[string]struct{}{"valid-gateway": {}},
 			}
 
@@ -100,7 +100,7 @@ func TestValidAndMissingGateway(t *testing.T) {
 
 	virtualService := data.AddGatewaysToVirtualService([]string{"correctgw", "my-gateway", "mesh"}, data.CreateVirtualService())
 	checker := NoGatewayChecker{
-		VirtualService: *virtualService,
+		VirtualService: virtualService,
 		GatewayNames:   map[string]struct{}{"correctgw": empty},
 	}
 
@@ -122,7 +122,7 @@ func TestFoundGateway(t *testing.T) {
 	})
 
 	checker := NoGatewayChecker{
-		VirtualService: *virtualService,
+		VirtualService: virtualService,
 		GatewayNames:   gatewayNames,
 	}
 
@@ -142,7 +142,7 @@ func TestFoundGatewayTwoPartNaming(t *testing.T) {
 	})
 
 	checker := NoGatewayChecker{
-		VirtualService: *virtualService,
+		VirtualService: virtualService,
 		GatewayNames:   gatewayNames,
 	}
 
@@ -165,7 +165,7 @@ func TestFQDNFoundGateway(t *testing.T) {
 	})
 
 	checker := NoGatewayChecker{
-		VirtualService: *virtualService,
+		VirtualService: virtualService,
 		GatewayNames:   gatewayNames,
 	}
 
@@ -189,7 +189,7 @@ func TestFQDNFoundOtherNamespaceGateway(t *testing.T) {
 	})
 
 	checker := NoGatewayChecker{
-		VirtualService: *virtualService,
+		VirtualService: virtualService,
 		GatewayNames:   gatewayNames,
 	}
 
@@ -213,7 +213,7 @@ func TestNewIstioGatewayNameFormat(t *testing.T) {
 	})
 
 	checker := NoGatewayChecker{
-		VirtualService: *virtualService,
+		VirtualService: virtualService,
 		GatewayNames:   gatewayNames,
 	}
 

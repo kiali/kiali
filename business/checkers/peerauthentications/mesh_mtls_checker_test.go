@@ -28,7 +28,7 @@ func TestMeshPolicymTLSEnabled(t *testing.T) {
 		},
 	}
 
-	testValidationsNotAdded(t, *meshPolicy, mTLSDetails)
+	testValidationsNotAdded(t, meshPolicy, mTLSDetails)
 }
 
 // Context: MeshPolicy enables mTLS
@@ -43,7 +43,7 @@ func TestMeshPolicyEnabledDRNamespaceWide(t *testing.T) {
 		},
 	}
 
-	testValidationAdded(t, *meshPolicy, mTLSDetails)
+	testValidationAdded(t, meshPolicy, mTLSDetails)
 }
 
 // Context: MeshPolicy enables mTLS
@@ -57,7 +57,7 @@ func TestMeshPolicyEnabledDRmTLSDisabled(t *testing.T) {
 		},
 	}
 
-	testValidationAdded(t, *meshPolicy, mTLSDetails)
+	testValidationAdded(t, meshPolicy, mTLSDetails)
 }
 
 // Context: MeshPolicy enables mTLS
@@ -69,7 +69,7 @@ func TestMeshPolicymTLSEnabledDestinationRuleMissing(t *testing.T) {
 		DestinationRules: []*networking_v1beta1.DestinationRule{},
 	}
 
-	testValidationAdded(t, *meshPolicy, mTLSDetails)
+	testValidationAdded(t, meshPolicy, mTLSDetails)
 }
 
 // Context: MeshPolicy doesn't enable mTLS
@@ -84,7 +84,7 @@ func TestMeshPolicymTLSDisabledDestinationRulePresent(t *testing.T) {
 		},
 	}
 
-	testValidationsNotAdded(t, *meshPolicy, mTLSDetails)
+	testValidationsNotAdded(t, meshPolicy, mTLSDetails)
 }
 
 // Context: MeshPolicy doesn't enable mTLS
@@ -99,7 +99,7 @@ func TestMeshPolicyDisabledDRNamespaceWide(t *testing.T) {
 		},
 	}
 
-	testValidationsNotAdded(t, *meshPolicy, mTLSDetails)
+	testValidationsNotAdded(t, meshPolicy, mTLSDetails)
 }
 
 // Context: MeshPolicy doesn't enable mTLS
@@ -113,7 +113,7 @@ func TestMeshPolicyDisabledDRmTLSDisabled(t *testing.T) {
 		},
 	}
 
-	testValidationsNotAdded(t, *meshPolicy, mTLSDetails)
+	testValidationsNotAdded(t, meshPolicy, mTLSDetails)
 }
 
 // Context: MeshPolicy doesn't enable mTLS
@@ -125,10 +125,10 @@ func TestMeshPolicymTLSDisabledDestinationRuleMissing(t *testing.T) {
 		DestinationRules: []*networking_v1beta1.DestinationRule{},
 	}
 
-	testValidationsNotAdded(t, *meshPolicy, mTLSDetails)
+	testValidationsNotAdded(t, meshPolicy, mTLSDetails)
 }
 
-func testValidationAdded(t *testing.T, meshPolicy security_v1beta.PeerAuthentication, mTLSDetails kubernetes.MTLSDetails) {
+func testValidationAdded(t *testing.T, meshPolicy *security_v1beta.PeerAuthentication, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
 	vals, valid := MeshMtlsChecker{
@@ -147,7 +147,7 @@ func testValidationAdded(t *testing.T, meshPolicy security_v1beta.PeerAuthentica
 	assert.NoError(validations.ConfirmIstioCheckMessage("peerauthentication.mtls.destinationrulemissing", validation))
 }
 
-func testValidationsNotAdded(t *testing.T, meshPolicy security_v1beta.PeerAuthentication, mTLSDetails kubernetes.MTLSDetails) {
+func testValidationsNotAdded(t *testing.T, meshPolicy *security_v1beta.PeerAuthentication, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
 	vals, valid := MeshMtlsChecker{

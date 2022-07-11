@@ -33,7 +33,7 @@ func TestPeerAuthnmTLSEnabled(t *testing.T) {
 	}
 
 	vals, valid := NamespaceMtlsChecker{
-		PeerAuthn:   *policy,
+		PeerAuthn:   policy,
 		MTLSDetails: mTLSDetails,
 	}.Check()
 
@@ -60,7 +60,7 @@ func TestPolicyEnabledDRmTLSEnabled(t *testing.T) {
 		},
 	}
 
-	assertNoValidations(t, *peerAuthn, mTLSDetails)
+	assertNoValidations(t, peerAuthn, mTLSDetails)
 }
 
 // Context: PeerAuthn enables mTLS for a namespace
@@ -77,7 +77,7 @@ func TestPolicyEnabledDRmTLSMeshWideEnabled(t *testing.T) {
 		},
 	}
 
-	assertNoValidations(t, *peerAuthn, mTLSDetails)
+	assertNoValidations(t, peerAuthn, mTLSDetails)
 
 }
 
@@ -91,10 +91,10 @@ func TestPolicyPermissive(t *testing.T) {
 			data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),
 		},
 	}
-	assertNoValidations(t, *peerAuthn, mTLSDetails)
+	assertNoValidations(t, peerAuthn, mTLSDetails)
 }
 
-func assertNoValidations(t *testing.T, peerAuth security_v1beta.PeerAuthentication, mTLSDetails kubernetes.MTLSDetails) {
+func assertNoValidations(t *testing.T, peerAuth *security_v1beta.PeerAuthentication, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)

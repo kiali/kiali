@@ -31,7 +31,7 @@ func TestMTLSNshWideDREnabledWithNsPolicyPermissive(t *testing.T) {
 	}
 
 	validations, valid := NamespaceWideMTLSChecker{
-		DestinationRule: *destinationRule,
+		DestinationRule: destinationRule,
 		MTLSDetails:     mTlsDetails,
 	}.Check()
 
@@ -55,7 +55,7 @@ func TestMTLSNsWideDREnabledWithPolicy(t *testing.T) {
 	assert := assert.New(t)
 
 	validations, valid := NamespaceWideMTLSChecker{
-		DestinationRule: *destinationRule,
+		DestinationRule: destinationRule,
 		MTLSDetails:     mTlsDetails,
 	}.Check()
 
@@ -79,7 +79,7 @@ func TestMTLSNsWideDREnabledWithMeshPolicy(t *testing.T) {
 	assert := assert.New(t)
 
 	validations, valid := NamespaceWideMTLSChecker{
-		DestinationRule: *destinationRule,
+		DestinationRule: destinationRule,
 		MTLSDetails:     mTlsDetails,
 	}.Check()
 
@@ -99,7 +99,7 @@ func TestMTLSNsWideDREnabledWithoutPolicy(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NamespaceWideMTLSChecker{
-		DestinationRule: *destinationRule,
+		DestinationRule: destinationRule,
 		MTLSDetails:     mTlsDetails,
 	}.Check()
 

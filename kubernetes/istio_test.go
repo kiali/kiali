@@ -110,7 +110,7 @@ func TestInvalidPortAppProtocolMatcher(t *testing.T) {
 func TestPolicyHasMtlsEnabledStructMode(t *testing.T) {
 	policy := createPeerAuthn("default", "bookinfo", nil)
 
-	enabled, mode := PeerAuthnHasMTLSEnabled(*policy)
+	enabled, mode := PeerAuthnHasMTLSEnabled(policy)
 	assert.False(t, enabled)
 	assert.Equal(t, "", mode)
 }
@@ -118,7 +118,7 @@ func TestPolicyHasMtlsEnabledStructMode(t *testing.T) {
 func TestPolicyHasMTLSEnabledStrictMode(t *testing.T) {
 	policy := createPeerAuthn("default", "bookinfo", createMtls("STRICT"))
 
-	enabled, mode := PeerAuthnHasMTLSEnabled(*policy)
+	enabled, mode := PeerAuthnHasMTLSEnabled(policy)
 	assert.True(t, enabled)
 	assert.Equal(t, "STRICT", mode)
 }
@@ -126,7 +126,7 @@ func TestPolicyHasMTLSEnabledStrictMode(t *testing.T) {
 func TestPolicyHasMTLSEnabledStructMtls(t *testing.T) {
 	policy := createPeerAuthn("default", "bookinfo", createMtls("STRICT"))
 
-	enabled, mode := PeerAuthnHasMTLSEnabled(*policy)
+	enabled, mode := PeerAuthnHasMTLSEnabled(policy)
 	assert.True(t, enabled)
 	assert.Equal(t, "STRICT", mode)
 }
@@ -134,7 +134,7 @@ func TestPolicyHasMTLSEnabledStructMtls(t *testing.T) {
 func TestPolicyHasMTLSEnabledPermissiveMode(t *testing.T) {
 	policy := createPeerAuthn("default", "bookinfo", createMtls("PERMISSIVE"))
 
-	enabled, mode := PeerAuthnHasMTLSEnabled(*policy)
+	enabled, mode := PeerAuthnHasMTLSEnabled(policy)
 	assert.True(t, enabled)
 	assert.Equal(t, "PERMISSIVE", mode)
 }
