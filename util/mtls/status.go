@@ -36,7 +36,9 @@ type NameNamespace struct {
 }
 
 func (m MtlsStatus) hasPeerAuthnNamespacemTLSDefinition() string {
-	for _, p := range m.PeerAuthentications {
+	pa := []security_v1beta.PeerAuthentication{}
+	copy(m.PeerAuthentications, pa)
+	for _, p := range pa {
 		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(p); mode != "" {
 			return mode
 		}
