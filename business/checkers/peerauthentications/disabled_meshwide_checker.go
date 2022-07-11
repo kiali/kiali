@@ -9,7 +9,7 @@ import (
 )
 
 type DisabledMeshWideChecker struct {
-	PeerAuthn        security_v1beta.PeerAuthentication
+	PeerAuthn        *security_v1beta.PeerAuthentication
 	DestinationRules []*networking_v1beta1.DestinationRule
 }
 
@@ -22,7 +22,7 @@ func (c DisabledMeshWideChecker) Check() ([]*models.IstioCheck, bool) {
 	}
 
 	for _, dr := range c.DestinationRules {
-		if _, mode := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(*dr); mode == "ISTIO_MUTUAL" || mode == "MUTUAL" {
+		if _, mode := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); mode == "ISTIO_MUTUAL" || mode == "MUTUAL" {
 			check := models.Build("peerauthentications.mtls.disablemeshdestinationrulemissing", "spec/mtls")
 			return append(validations, &check), false
 		}

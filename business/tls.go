@@ -102,7 +102,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace str
 }
 
 // TODO refactor business/istio_validations.go
-func (in *TLSService) GetAllDestinationRules(ctx context.Context, namespaces []string) ([]networking_v1beta1.DestinationRule, error) {
+func (in *TLSService) GetAllDestinationRules(ctx context.Context, namespaces []string) ([]*networking_v1beta1.DestinationRule, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetAllDestinationRules",
 		observability.Attribute("package", "business"),
@@ -120,7 +120,7 @@ func (in *TLSService) GetAllDestinationRules(ctx context.Context, namespaces []s
 		return nil, err
 	}
 
-	allDestinationRules := make([]networking_v1beta1.DestinationRule, 0)
+	allDestinationRules := make([]*networking_v1beta1.DestinationRule, 0)
 	for _, dr := range istioConfigList.DestinationRules {
 		found := false
 		for _, ns := range namespaces {
@@ -130,7 +130,7 @@ func (in *TLSService) GetAllDestinationRules(ctx context.Context, namespaces []s
 			}
 		}
 		if found {
-			allDestinationRules = append(allDestinationRules, *dr)
+			allDestinationRules = append(allDestinationRules, dr)
 		}
 	}
 	return allDestinationRules, nil

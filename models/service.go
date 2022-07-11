@@ -65,7 +65,7 @@ type ServiceDetails struct {
 	Endpoints        Endpoints                             `json:"endpoints"`
 	VirtualServices  []*networking_v1beta1.VirtualService  `json:"virtualServices"`
 	DestinationRules []*networking_v1beta1.DestinationRule `json:"destinationRules"`
-	ServiceEntries   []networking_v1beta1.ServiceEntry     `json:"serviceEntries"`
+	ServiceEntries   []*networking_v1beta1.ServiceEntry    `json:"serviceEntries"`
 	IstioPermissions ResourcePermissions                   `json:"istioPermissions"`
 	Workloads        WorkloadOverviews                     `json:"workloads"`
 	Health           ServiceHealth                         `json:"health"`

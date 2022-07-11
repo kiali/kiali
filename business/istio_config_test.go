@@ -234,7 +234,7 @@ func mockGetIstioConfigList() IstioConfigService {
 	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 }
 
-func fakeGetGateways() []networking_v1beta1.Gateway {
+func fakeGetGateways() []*networking_v1beta1.Gateway {
 	gw1 := data.CreateEmptyGateway("gw-1", "test", map[string]string{
 		"app": "my-gateway1-controller",
 	})
@@ -275,10 +275,10 @@ func fakeGetGateways() []networking_v1beta1.Gateway {
 		},
 	}
 
-	return []networking_v1beta1.Gateway{*gw1, *gw2}
+	return []*networking_v1beta1.Gateway{gw1, gw2}
 }
 
-func fakeGetVirtualServices() []networking_v1beta1.VirtualService {
+func fakeGetVirtualServices() []*networking_v1beta1.VirtualService {
 	virtualService1 := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v2", 50),
 		data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v3", 50),
 			data.CreateEmptyVirtualService("reviews", "test", []string{"reviews"}),
@@ -291,10 +291,10 @@ func fakeGetVirtualServices() []networking_v1beta1.VirtualService {
 		),
 	)
 
-	return []networking_v1beta1.VirtualService{*virtualService1, *virtualService2}
+	return []*networking_v1beta1.VirtualService{virtualService1, virtualService2}
 }
 
-func fakeGetDestinationRules() []networking_v1beta1.DestinationRule {
+func fakeGetDestinationRules() []*networking_v1beta1.DestinationRule {
 	destinationRule1 := data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"),
 		data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"),
 			data.CreateEmptyDestinationRule("test", "reviews-dr", "reviews")))
@@ -326,10 +326,10 @@ func fakeGetDestinationRules() []networking_v1beta1.DestinationRule {
 		},
 	}
 
-	return []networking_v1beta1.DestinationRule{*destinationRule1, *destinationRule2}
+	return []*networking_v1beta1.DestinationRule{destinationRule1, destinationRule2}
 }
 
-func fakeGetServiceEntries() []networking_v1beta1.ServiceEntry {
+func fakeGetServiceEntries() []*networking_v1beta1.ServiceEntry {
 	serviceEntry := networking_v1beta1.ServiceEntry{}
 	serviceEntry.Name = "googleapis"
 	serviceEntry.Namespace = "test"
@@ -343,7 +343,7 @@ func fakeGetServiceEntries() []networking_v1beta1.ServiceEntry {
 			Protocol: "HTTP",
 		},
 	}
-	return []networking_v1beta1.ServiceEntry{serviceEntry}
+	return []*networking_v1beta1.ServiceEntry{&serviceEntry}
 }
 
 func fakeGetSelfSubjectAccessReview() []*auth_v1.SelfSubjectAccessReview {
@@ -392,10 +392,10 @@ func fakeGetSelfSubjectAccessReview() []*auth_v1.SelfSubjectAccessReview {
 func mockGetIstioConfigDetails() IstioConfigService {
 	k8s := new(kubetest.K8SClientMock)
 	fakeIstioObjects := []runtime.Object{}
-	fakeIstioObjects = append(fakeIstioObjects, &fakeGetGateways()[0])
-	fakeIstioObjects = append(fakeIstioObjects, &fakeGetVirtualServices()[0])
-	fakeIstioObjects = append(fakeIstioObjects, &fakeGetDestinationRules()[0])
-	fakeIstioObjects = append(fakeIstioObjects, &fakeGetServiceEntries()[0])
+	fakeIstioObjects = append(fakeIstioObjects, fakeGetGateways()[0])
+	fakeIstioObjects = append(fakeIstioObjects, fakeGetVirtualServices()[0])
+	fakeIstioObjects = append(fakeIstioObjects, fakeGetDestinationRules()[0])
+	fakeIstioObjects = append(fakeIstioObjects, fakeGetServiceEntries()[0])
 	k8s.MockIstio(fakeIstioObjects...)
 
 	k8s.On("IsOpenShift").Return(true)

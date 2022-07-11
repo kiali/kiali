@@ -12,7 +12,7 @@ import (
 
 type NoHostChecker struct {
 	Namespaces        models.Namespaces
-	VirtualService    networking_v1beta1.VirtualService
+	VirtualService    *networking_v1beta1.VirtualService
 	ServiceEntryHosts map[string][]string
 	RegistryServices  []*kubernetes.RegistryService
 }

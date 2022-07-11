@@ -8,7 +8,7 @@ import (
 )
 
 type DisabledNamespaceWideMTLSChecker struct {
-	DestinationRule networking_v1beta1.DestinationRule
+	DestinationRule *networking_v1beta1.DestinationRule
 	MTLSDetails     kubernetes.MTLSDetails
 }
 
@@ -24,7 +24,7 @@ func (m DisabledNamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 	// otherwise, check among PeerAuthentications for a rule enabling mTLS
 	nsDisablePeerAuthnFound := false
 	for _, mp := range m.MTLSDetails.PeerAuthentications {
-		enabled, mode := kubernetes.PeerAuthnHasMTLSEnabled(*mp)
+		enabled, mode := kubernetes.PeerAuthnHasMTLSEnabled(mp)
 		if enabled {
 			// If PeerAuthn has mTLS enabled in STRICT mode
 			// traffic going through DestinationRule won't work
@@ -46,7 +46,7 @@ func (m DisabledNamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 	if !nsDisablePeerAuthnFound {
 		// In case any PeerAuthn enables mTLS, check among MeshPeerAuthentications for a rule enabling it
 		for _, mp := range m.MTLSDetails.MeshPeerAuthentications {
-			if strictMode := kubernetes.PeerAuthnHasStrictMTLS(*mp); strictMode {
+			if strictMode := kubernetes.PeerAuthnHasStrictMTLS(mp); strictMode {
 				check := models.Build("destinationrules.mtls.meshpolicymtlsenabled", "spec/trafficPolicy/tls/mode")
 				return append(validations, &check), false
 			}

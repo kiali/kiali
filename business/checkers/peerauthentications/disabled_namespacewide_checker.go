@@ -9,7 +9,7 @@ import (
 )
 
 type DisabledNamespaceWideChecker struct {
-	PeerAuthn        security_v1beta.PeerAuthentication
+	PeerAuthn        *security_v1beta.PeerAuthentication
 	DestinationRules []*networking_v1beta1.DestinationRule
 }
 
@@ -25,7 +25,7 @@ func (c DisabledNamespaceWideChecker) Check() ([]*models.IstioCheck, bool) {
 	meshEnabledDRFound := false
 	for _, dr := range c.DestinationRules {
 		// If ns-wide Destination Rule enabling mtls found, error found
-		_, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(c.PeerAuthn.Namespace, *dr)
+		_, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(c.PeerAuthn.Namespace, dr)
 		if mode == "ISTIO_MUTUAL" || mode == "MUTUAL" {
 			check := models.Build("peerauthentications.mtls.disabledestinationrulemissing", "spec/mtls")
 			return append(validations, &check), false
@@ -34,7 +34,7 @@ func (c DisabledNamespaceWideChecker) Check() ([]*models.IstioCheck, bool) {
 			break
 		}
 
-		if _, mode := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(*dr); mode == "ISTIO_MUTUAL" || mode == "MUTUAL" {
+		if _, mode := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); mode == "ISTIO_MUTUAL" || mode == "MUTUAL" {
 			meshEnabledDRFound = true
 		}
 	}

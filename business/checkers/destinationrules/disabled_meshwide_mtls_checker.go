@@ -9,7 +9,7 @@ import (
 )
 
 type DisabledMeshWideMTLSChecker struct {
-	DestinationRule networking_v1beta1.DestinationRule
+	DestinationRule *networking_v1beta1.DestinationRule
 	MeshPeerAuthns  []*security_v1beta.PeerAuthentication
 }
 
@@ -21,7 +21,7 @@ func (c DisabledMeshWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 	}
 
 	for _, pa := range c.MeshPeerAuthns {
-		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(*pa); mode == "STRICT" {
+		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(pa); mode == "STRICT" {
 			check := models.Build("destinationrules.mtls.meshpolicymtlsenabled", "spec/trafficPolicy/tls/mode")
 			return append(validations, &check), false
 		}

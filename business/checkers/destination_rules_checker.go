@@ -52,13 +52,13 @@ func (in DestinationRulesChecker) runIndividualChecks() models.IstioValidations 
 	validations := models.IstioValidations{}
 
 	for _, destinationRule := range in.DestinationRules {
-		validations.MergeValidations(in.runChecks(*destinationRule))
+		validations.MergeValidations(in.runChecks(destinationRule))
 	}
 
 	return validations
 }
 
-func (in DestinationRulesChecker) runChecks(destinationRule networking_v1beta1.DestinationRule) models.IstioValidations {
+func (in DestinationRulesChecker) runChecks(destinationRule *networking_v1beta1.DestinationRule) models.IstioValidations {
 	destinationRuleName := destinationRule.Name
 	key, rrValidation := EmptyValidValidation(destinationRuleName, destinationRule.Namespace, DestinationRuleCheckerType)
 

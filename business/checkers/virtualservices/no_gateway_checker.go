@@ -11,7 +11,7 @@ import (
 )
 
 type NoGatewayChecker struct {
-	VirtualService networking_v1beta1.VirtualService
+	VirtualService *networking_v1beta1.VirtualService
 	GatewayNames   map[string]struct{}
 }
 

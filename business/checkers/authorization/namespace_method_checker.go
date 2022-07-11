@@ -15,7 +15,7 @@ import (
 var methodMatcher = regexp.MustCompile(`^((\/[a-zA-Z\.]+)+)(\/[a-zA-Z]+)$`)
 
 type NamespaceMethodChecker struct {
-	AuthorizationPolicy security_v1beta.AuthorizationPolicy
+	AuthorizationPolicy *security_v1beta.AuthorizationPolicy
 	Namespaces          models.NamespaceNames
 }
 

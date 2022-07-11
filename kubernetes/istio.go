@@ -558,17 +558,17 @@ func GatewayNames(gateways []*networking_v1beta1.Gateway) map[string]struct{} {
 	return names
 }
 
-func PeerAuthnHasStrictMTLS(peerAuthn security_v1beta1.PeerAuthentication) bool {
+func PeerAuthnHasStrictMTLS(peerAuthn *security_v1beta1.PeerAuthentication) bool {
 	_, mode := PeerAuthnHasMTLSEnabled(peerAuthn)
 	return mode == "STRICT"
 }
 
-func PeerAuthnHasMTLSEnabled(peerAuthn security_v1beta1.PeerAuthentication) (bool, string) {
+func PeerAuthnHasMTLSEnabled(peerAuthn *security_v1beta1.PeerAuthentication) (bool, string) {
 	// It is no globally enabled when has targets
 	if peerAuthn.Spec.Selector != nil && len(peerAuthn.Spec.Selector.MatchLabels) >= 0 {
 		return false, ""
 	}
-	return PeerAuthnMTLSMode(peerAuthn)
+	return PeerAuthnMTLSMode(*peerAuthn)
 }
 
 func PeerAuthnMTLSMode(peerAuthn security_v1beta1.PeerAuthentication) (bool, string) {
@@ -580,27 +580,27 @@ func PeerAuthnMTLSMode(peerAuthn security_v1beta1.PeerAuthentication) (bool, str
 	return false, ""
 }
 
-func DestinationRuleHasMeshWideMTLSEnabled(destinationRule networking_v1beta1.DestinationRule) (bool, string) {
+func DestinationRuleHasMeshWideMTLSEnabled(destinationRule *networking_v1beta1.DestinationRule) (bool, string) {
 	// Following the suggested procedure to enable mesh-wide mTLS, host might be '*.local':
 	// https://istio.io/docs/tasks/security/authn-policy/#globally-enabling-istio-mutual-tls
 	return DestinationRuleHasMTLSEnabledForHost("*.local", destinationRule)
 }
 
-func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule networking_v1beta1.DestinationRule) (bool, string) {
+func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule *networking_v1beta1.DestinationRule) (bool, string) {
 	// Following the suggested procedure to enable namespace-wide mTLS, host might be '*.namespace.svc.cluster.local'
 	// https://istio.io/docs/tasks/security/authn-policy/#namespace-wide-policy
 	nsHost := fmt.Sprintf("*.%s.%s", namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain)
 	return DestinationRuleHasMTLSEnabledForHost(nsHost, destinationRule)
 }
 
-func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule networking_v1beta1.DestinationRule) (bool, string) {
+func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule *networking_v1beta1.DestinationRule) (bool, string) {
 	if destinationRule.Spec.Host == "" || destinationRule.Spec.Host != expectedHost {
 		return false, ""
 	}
 	return DestinationRuleHasMTLSEnabled(destinationRule)
 }
 
-func DestinationRuleHasMTLSEnabled(destinationRule networking_v1beta1.DestinationRule) (bool, string) {
+func DestinationRuleHasMTLSEnabled(destinationRule *networking_v1beta1.DestinationRule) (bool, string) {
 	if destinationRule.Spec.TrafficPolicy != nil && destinationRule.Spec.TrafficPolicy.Tls != nil {
 		mode := destinationRule.Spec.TrafficPolicy.Tls.Mode.String()
 		return mode == "ISTIO_MUTUAL", mode

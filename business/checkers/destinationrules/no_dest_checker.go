@@ -13,7 +13,7 @@ import (
 type NoDestinationChecker struct {
 	Namespaces            models.Namespaces
 	WorkloadsPerNamespace map[string]models.WorkloadList
-	DestinationRule       networking_v1beta1.DestinationRule
+	DestinationRule       *networking_v1beta1.DestinationRule
 	VirtualServices       []*networking_v1beta1.VirtualService
 	ServiceEntries        []*networking_v1beta1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService

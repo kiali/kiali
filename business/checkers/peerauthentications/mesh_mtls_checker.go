@@ -9,7 +9,7 @@ import (
 
 // Note that MeshMtlsChecker will work with MeshPolicy resources
 type MeshMtlsChecker struct {
-	MeshPolicy    security_v1beta.PeerAuthentication
+	MeshPolicy    *security_v1beta.PeerAuthentication
 	MTLSDetails   kubernetes.MTLSDetails
 	IsServiceMesh bool
 }
@@ -24,7 +24,7 @@ func (t MeshMtlsChecker) Check() ([]*models.IstioCheck, bool) {
 
 	// otherwise, check among Destination Rules for a rule enabling mTLS mesh-wide.
 	for _, dr := range t.MTLSDetails.DestinationRules {
-		if enabled, _ := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(*dr); enabled {
+		if enabled, _ := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); enabled {
 			return validations, true
 		}
 	}

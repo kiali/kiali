@@ -66,15 +66,15 @@ func FilterByHost(host, hostNamespace, serviceName, svcNamespace string) bool {
 	return false
 }
 
-func FilterDestinationRulesByHostname(allDr []*networking_v1beta1.DestinationRule, hostname string) []networking_v1beta1.DestinationRule {
-	destinationRules := []networking_v1beta1.DestinationRule{}
+func FilterDestinationRulesByHostname(allDr []*networking_v1beta1.DestinationRule, hostname string) []*networking_v1beta1.DestinationRule {
+	destinationRules := []*networking_v1beta1.DestinationRule{}
 	for _, destinationRule := range allDr {
 		appendDestinationRule := hostname == ""
 		if destinationRule.Spec.Host == hostname {
 			appendDestinationRule = true
 		}
 		if appendDestinationRule {
-			destinationRules = append(destinationRules, *destinationRule)
+			destinationRules = append(destinationRules, destinationRule)
 		}
 	}
 	return destinationRules
@@ -339,12 +339,12 @@ func FilterServicesByLabels(selector labels.Selector, allServices []core_v1.Serv
 	return services
 }
 
-func FilterServiceEntriesByHostname(serviceEntries []*networking_v1beta1.ServiceEntry, hostname string) []networking_v1beta1.ServiceEntry {
-	filtered := []networking_v1beta1.ServiceEntry{}
+func FilterServiceEntriesByHostname(serviceEntries []*networking_v1beta1.ServiceEntry, hostname string) []*networking_v1beta1.ServiceEntry {
+	filtered := []*networking_v1beta1.ServiceEntry{}
 	for _, se := range serviceEntries {
 		for _, h := range se.Spec.Hosts {
 			if h == hostname {
-				filtered = append(filtered, *se)
+				filtered = append(filtered, se)
 				break
 			}
 		}

@@ -31,7 +31,7 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 
 	// Individual validations
 	for _, authPolicy := range a.AuthorizationPolicies {
-		validations.MergeValidations(a.runChecks(*authPolicy))
+		validations.MergeValidations(a.runChecks(authPolicy))
 	}
 
 	// Group Validations
@@ -45,7 +45,7 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 }
 
 // runChecks runs all the individual checks for a single mesh policy and appends the result into validations.
-func (a AuthorizationPolicyChecker) runChecks(authPolicy security_v1beta.AuthorizationPolicy) models.IstioValidations {
+func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1beta.AuthorizationPolicy) models.IstioValidations {
 	policyName := authPolicy.Name
 	key, rrValidation := EmptyValidValidation(policyName, authPolicy.Namespace, AuthorizationPolicyCheckerType)
 	serviceHosts := kubernetes.ServiceEntryHostnames(a.ServiceEntries)

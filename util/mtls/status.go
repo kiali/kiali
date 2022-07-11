@@ -37,7 +37,7 @@ type NameNamespace struct {
 
 func (m MtlsStatus) hasPeerAuthnNamespacemTLSDefinition() string {
 	for _, p := range m.PeerAuthentications {
-		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(*p); mode != "" {
+		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(p); mode != "" {
 			return mode
 		}
 	}
@@ -47,7 +47,7 @@ func (m MtlsStatus) hasPeerAuthnNamespacemTLSDefinition() string {
 
 func (m MtlsStatus) hasDesinationRuleEnablingNamespacemTLS(namespace string) string {
 	for _, dr := range m.DestinationRules {
-		if _, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(namespace, *dr); mode != "" {
+		if _, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(namespace, dr); mode != "" {
 			return mode
 		}
 	}
@@ -90,7 +90,7 @@ func (m MtlsStatus) WorkloadMtlsStatus(namespace string) string {
 				for _, nameNamespace := range nameNamespaces {
 					filteredDrs := kubernetes.FilterDestinationRulesByService(m.DestinationRules, nameNamespace.Namespace, nameNamespace.Name)
 					for _, dr := range filteredDrs {
-						enabled, mode := kubernetes.DestinationRuleHasMTLSEnabled(*dr)
+						enabled, mode := kubernetes.DestinationRuleHasMTLSEnabled(dr)
 						if enabled || mode == "MUTUAL" {
 							return MTLSEnabled
 						} else if mode == "DISABLE" {
@@ -146,7 +146,7 @@ func (m MtlsStatus) MeshMtlsStatus() TlsStatus {
 
 func (m MtlsStatus) hasPeerAuthnMeshTLSDefinition() string {
 	for _, mp := range m.PeerAuthentications {
-		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(*mp); mode != "" {
+		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(mp); mode != "" {
 			return mode
 		}
 	}
@@ -155,7 +155,7 @@ func (m MtlsStatus) hasPeerAuthnMeshTLSDefinition() string {
 
 func (m MtlsStatus) hasDestinationRuleMeshTLSDefinition() string {
 	for _, dr := range m.DestinationRules {
-		if _, mode := kubernetes.DestinationRuleHasMTLSEnabledForHost("*.local", *dr); mode != "" {
+		if _, mode := kubernetes.DestinationRuleHasMTLSEnabledForHost("*.local", dr); mode != "" {
 			return mode
 		}
 	}

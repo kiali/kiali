@@ -12,7 +12,7 @@ import (
 )
 
 type NoHostChecker struct {
-	AuthorizationPolicy security_v1beta.AuthorizationPolicy
+	AuthorizationPolicy *security_v1beta.AuthorizationPolicy
 	Namespaces          models.Namespaces
 	ServiceEntries      map[string][]string
 	VirtualServices     []*networking_v1beta1.VirtualService

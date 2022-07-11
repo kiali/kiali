@@ -81,20 +81,20 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 
 	var currentIstioObjects []*networking_v1beta1.VirtualService
 	vs1to3 := loadVirtualService("vs_bookinfo1_to_2_3.yaml", t)
-	currentIstioObjects = append(currentIstioObjects, &vs1to3)
+	currentIstioObjects = append(currentIstioObjects, vs1to3)
 	vs1tothis := loadVirtualService("vs_bookinfo1_to_this.yaml", t)
-	currentIstioObjects = append(currentIstioObjects, &vs1tothis)
+	currentIstioObjects = append(currentIstioObjects, vs1tothis)
 	vs2to1 := loadVirtualService("vs_bookinfo2_to_1.yaml", t)
-	currentIstioObjects = append(currentIstioObjects, &vs2to1)
+	currentIstioObjects = append(currentIstioObjects, vs2to1)
 	vs2tothis := loadVirtualService("vs_bookinfo2_to_this.yaml", t)
-	currentIstioObjects = append(currentIstioObjects, &vs2tothis)
+	currentIstioObjects = append(currentIstioObjects, vs2tothis)
 	vs3to2 := loadVirtualService("vs_bookinfo3_to_2.yaml", t)
-	currentIstioObjects = append(currentIstioObjects, &vs3to2)
+	currentIstioObjects = append(currentIstioObjects, vs3to2)
 	vs3toall := loadVirtualService("vs_bookinfo3_to_all.yaml", t)
-	currentIstioObjects = append(currentIstioObjects, &vs3toall)
+	currentIstioObjects = append(currentIstioObjects, vs3toall)
 	v := mockEmptyValidationService()
 	filteredVSs := v.filterVSExportToNamespaces("bookinfo", currentIstioObjects)
-	var expectedVS []networking_v1beta1.VirtualService
+	var expectedVS []*networking_v1beta1.VirtualService
 	expectedVS = append(expectedVS, vs1tothis)
 	expectedVS = append(expectedVS, vs2to1)
 	expectedVS = append(expectedVS, vs3toall)
@@ -253,17 +253,17 @@ func fakeIstioConfigList() *models.IstioConfigList {
 	return &istioConfigList
 }
 
-func fakeMeshPolicies() []security_v1beta.PeerAuthentication {
-	return []security_v1beta.PeerAuthentication{
-		*data.CreateEmptyMeshPeerAuthentication("default", nil),
-		*data.CreateEmptyMeshPeerAuthentication("test", nil),
+func fakeMeshPolicies() []*security_v1beta.PeerAuthentication {
+	return []*security_v1beta.PeerAuthentication{
+		data.CreateEmptyMeshPeerAuthentication("default", nil),
+		data.CreateEmptyMeshPeerAuthentication("test", nil),
 	}
 }
 
-func fakePolicies() []security_v1beta.PeerAuthentication {
-	return []security_v1beta.PeerAuthentication{
-		*data.CreateEmptyPeerAuthentication("default", "bookinfo", nil),
-		*data.CreateEmptyPeerAuthentication("test", "foo", nil),
+func fakePolicies() []*security_v1beta.PeerAuthentication {
+	return []*security_v1beta.PeerAuthentication{
+		data.CreateEmptyPeerAuthentication("default", "bookinfo", nil),
+		data.CreateEmptyPeerAuthentication("test", "foo", nil),
 	}
 }
 
@@ -333,13 +333,13 @@ func getGateway(name, namespace string) []*networking_v1beta1.Gateway {
 			}))}
 }
 
-func loadVirtualService(file string, t *testing.T) networking_v1beta1.VirtualService {
+func loadVirtualService(file string, t *testing.T) *networking_v1beta1.VirtualService {
 	loader := yamlFixtureLoaderFor(file)
 	err := loader.Load()
 	if err != nil {
 		t.Error("Error loading test data.")
 	}
-	return *loader.GetResources().VirtualServices[0]
+	return loader.GetResources().VirtualServices[0]
 }
 
 func yamlFixtureLoaderFor(file string) *validations.YamlFixtureLoader {

@@ -24,14 +24,14 @@ func (m PeerAuthenticationChecker) Check() models.IstioValidations {
 	validations.MergeValidations(common.PeerAuthenticationMultiMatchChecker(PeerAuthenticationCheckerType, m.PeerAuthentications, m.WorkloadsPerNamespace).Check())
 
 	for _, peerAuthn := range m.PeerAuthentications {
-		validations.MergeValidations(m.runChecks(*peerAuthn))
+		validations.MergeValidations(m.runChecks(peerAuthn))
 	}
 
 	return validations
 }
 
 // runChecks runs all the individual checks for a single mesh policy and appends the result into validations.
-func (m PeerAuthenticationChecker) runChecks(peerAuthn security_v1beta.PeerAuthentication) models.IstioValidations {
+func (m PeerAuthenticationChecker) runChecks(peerAuthn *security_v1beta.PeerAuthentication) models.IstioValidations {
 	peerAuthnName := peerAuthn.Name
 	key, rrValidation := EmptyValidValidation(peerAuthnName, peerAuthn.Namespace, PeerAuthenticationCheckerType)
 
