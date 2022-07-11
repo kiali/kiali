@@ -121,6 +121,7 @@ export class OverviewNamespaceActions extends React.Component<Props, State> {
         isPlain={true}
         isOpen={this.state.isKebabOpen}
         position={'right'}
+        style={{width: 22}}
       />
     );
   }

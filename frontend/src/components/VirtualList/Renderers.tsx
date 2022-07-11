@@ -18,7 +18,7 @@ import { Health } from '../../types/Health';
 import NamespaceInfo from '../../pages/Overview/NamespaceInfo';
 import NamespaceMTLSStatusContainer from '../MTls/NamespaceMTLSStatus';
 import ValidationSummary from '../Validations/ValidationSummary';
-import OverviewCardContentExpanded from '../../pages/Overview/OverviewCardContentExpanded';
+import OverviewCardSparklineCharts from '../../pages/Overview/OverviewCardSparklineCharts';
 import { OverviewToolbar } from '../../pages/Overview/OverviewToolbar';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import IstioObjectLink, { GetIstioObjectUrl } from '../Link/IstioObjectLink';
@@ -31,6 +31,9 @@ import MissingLabel from '../MissingLabel/MissingLabel';
 import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { getReconciliationCondition } from 'utils/IstioConfigUtils';
 import Label from 'components/Label/Label';
+import { serverConfig } from 'config/ServerConfig';
+import ControlPlaneBadge from 'pages/Overview/ControlPlaneBadge';
+import NamespaceStatuses from 'pages/Overview/NamespaceStatuses';
 
 // Links
 
@@ -147,15 +150,17 @@ export const status: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
         className="pf-m-center"
         style={{ verticalAlign: 'middle' }}
       >
-        <OverviewCardContentExpanded
+        { ns.status && 
+          <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={OverviewToolbar.currentOverviewType()} /> 
+        }
+        <OverviewCardSparklineCharts
           key={ns.name}
           name={ns.name}
           duration={FilterHelper.currentDuration()}
-          status={ns.status}
-          type={OverviewToolbar.currentOverviewType()}
           direction={OverviewToolbar.currentDirectionType()}
           metrics={ns.metrics}
           errorMetrics={ns.errorMetrics}
+          controlPlaneMetrics={ns.controlPlaneMetrics}
         />
       </td>
     );
@@ -168,6 +173,9 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Reso
     <td role="gridcell" key={'VirtuaItem_NamespaceItem_' + ns.name} style={{ verticalAlign: 'middle' }}>
       <PFBadge badge={badge} />
       {ns.name}
+      {ns.name === serverConfig.istioNamespace &&
+        <ControlPlaneBadge />                         
+      }
     </td>
   );
 };

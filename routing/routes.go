@@ -1420,6 +1420,24 @@ func NewRoutes() (r *Routes) {
 			handlers.OutboundTrafficPolicyMode,
 			true,
 		},
+		// GET /api/mesh/resources/thresholds
+		// ---
+		// Endpoint to get the IstiodResourceThresholds.
+		//              Produces:
+		//              - application/json
+		//
+		//              Schemes: http, https
+		//
+		// responses:
+		//              500: internalError
+		//              200: istiodResourceThreholds
+		{
+			"IstiodResourceThresholds",
+			"GET",
+			"/api/mesh/resources/thresholds",
+			handlers.IstiodResourceThresholds,
+			true,
+		},
 	}
 
 	return

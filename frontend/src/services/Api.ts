@@ -24,9 +24,10 @@ import {
   ValidationStatus,
   EnvoyProxyDump,
   VirtualService,
-  DestinationRuleC
+  DestinationRuleC,
+  OutboundTrafficPolicy
 } from '../types/IstioObjects';
-import { ComponentStatus } from '../types/IstioStatus';
+import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
 import { JaegerInfo, JaegerResponse, JaegerSingleResponse } from '../types/JaegerInfo';
 import { MeshClusters } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
@@ -138,7 +139,7 @@ export const getMeshTls = () => {
 };
 
 export const getOutboundTrafficPolicyMode = () => {
-  return newRequest<string>(HTTP_VERBS.GET, urls.outboundTrafficPolicyMode(), {}, {});
+  return newRequest<OutboundTrafficPolicy>(HTTP_VERBS.GET, urls.outboundTrafficPolicyMode(), {}, {});
 };
 
 export const getIstioStatus = () => {
@@ -147,6 +148,10 @@ export const getIstioStatus = () => {
 
 export const getIstioCertsInfo = () => {
   return newRequest<CertsInfo[]>(HTTP_VERBS.GET, urls.istioCertsInfo(), {}, {});
+};
+
+export const getIstiodResourceThresholds = () => {
+  return newRequest<IstiodResourceThresholds>(HTTP_VERBS.GET, urls.istiodResourceThresholds(), {}, {});
 };
 
 export const getNamespaceTls = (namespace: string) => {

@@ -148,6 +148,7 @@ const conf = {
       outboundTrafficPolicyMode: () => 'api/mesh/outbound_traffic_policy/mode',
       istioStatus: () => 'api/istio/status',
       istioCertsInfo: () => 'api/istio/certs',
+      istiodResourceThresholds: () => 'api/mesh/resources/thresholds',
       pod: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}`,
       podLogs: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}/logs`,
       podEnvoyProxy: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}/config_dump`,

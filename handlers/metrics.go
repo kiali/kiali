@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
@@ -185,6 +186,24 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
+
+	if namespace == config.Get().IstioNamespace {
+		controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, nil)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		for k, v := range controlPlaneMetrics {
+			metrics[k] = v
+		}
+	}
+
+	if err != nil {
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 

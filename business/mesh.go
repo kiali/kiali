@@ -18,6 +18,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/httputil"
 )
 
@@ -582,9 +583,9 @@ func (in *MeshService) resolveNetwork(clusterName string, kubeconfig *kubernetes
 	return networkName
 }
 
-func (in *MeshService) OutboundTrafficPolicy() (string, error) {
+func (in *MeshService) OutboundTrafficPolicy() (*models.OutboundPolicy, error) {
 	cfg := config.Get()
-
+	otp := models.OutboundPolicy{Mode: "ALLOW_ANY"}
 	var istioConfig *core_v1.ConfigMap
 	var err error
 	if IsNamespaceCached(cfg.IstioNamespace) {
@@ -596,25 +597,48 @@ func (in *MeshService) OutboundTrafficPolicy() (string, error) {
 		if errors.IsNotFound(err) {
 			err = fmt.Errorf("%w in namespace \"%s\"", err, cfg.IstioNamespace)
 		}
-		return "", err
+		return nil, err
 	}
 
 	meshConfigYaml, ok := istioConfig.Data["mesh"]
 	if !ok {
 		log.Warning("Istio config not found when resolving if mesh-id is set. Falling back to mesh-id not configured.")
-		return "", nil
+		return &otp, nil
 	}
 
 	meshConfig := meshTrafficPolicyConfig{}
 	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	outboundTrafficPolicy := ""
 	if len(meshConfig.OutboundTrafficPolicy.Mode) > 0 {
-		outboundTrafficPolicy = meshConfig.OutboundTrafficPolicy.Mode
+		otp.Mode = meshConfig.OutboundTrafficPolicy.Mode
 	}
 
-	return outboundTrafficPolicy, nil
+	return &otp, nil
+}
+
+func (in *MeshService) IstiodResourceThresholds() (*models.IstiodThresholds, error) {
+	conf := config.Get()
+
+	var istioDeployment *v1.Deployment
+	var istioDeploymentConfig = conf.ExternalServices.Istio.IstiodDeploymentName
+	var err error
+
+	if IsNamespaceCached(conf.IstioNamespace) {
+		istioDeployment, err = kialiCache.GetDeployment(conf.IstioNamespace, istioDeploymentConfig)
+	} else {
+		istioDeployment, err = in.k8s.GetDeployment(conf.IstioNamespace, istioDeploymentConfig)
+	}
+	if err != nil && !errors.IsNotFound(err) {
+		return nil, err
+	}
+
+	memoryLimit := istioDeployment.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().AsApproximateFloat64() / 1000000 // in Mb
+	cpuLimit := istioDeployment.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().AsApproximateFloat64()
+
+	thresholds := models.IstiodThresholds{Memory: memoryLimit, CPU: cpuLimit}
+
+	return &thresholds, nil
 }

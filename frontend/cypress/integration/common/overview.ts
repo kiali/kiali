@@ -191,7 +191,7 @@ Then(`user sees the {string} namespace list`, (nslist) => {
 });
 
 Then(`user sees the {string} namespace with {string} traffic {string}`, (ns, direction, duration) => {
-    cy.get('article[data-test^="' + ns + '"]').find('span[data-test="sparkline-' + direction + '-duration-' + duration + '"]');
+    cy.get('article[data-test^="' + ns + '"]').find('div[data-test="sparkline-' + direction + '-duration-' + duration + '"]');
 });
 
 Then('there should be a {string} application indicator in the namespace', function (healthStatus: string) {

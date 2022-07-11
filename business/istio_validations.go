@@ -555,7 +555,7 @@ func (in *IstioValidationsService) isPolicyAllowAny() bool {
 	allowAny := false
 	if in.businessLayer != nil {
 		if otp, err := in.businessLayer.Mesh.OutboundTrafficPolicy(); err == nil {
-			if otp == "" || otp == AllowAny {
+			if otp.Mode == "" || otp.Mode == AllowAny {
 				return true
 			}
 		}
