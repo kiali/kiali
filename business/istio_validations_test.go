@@ -79,19 +79,19 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	var currentIstioObjects []networking_v1beta1.VirtualService
+	var currentIstioObjects []*networking_v1beta1.VirtualService
 	vs1to3 := loadVirtualService("vs_bookinfo1_to_2_3.yaml", t)
-	currentIstioObjects = append(currentIstioObjects, vs1to3)
+	currentIstioObjects = append(currentIstioObjects, &vs1to3)
 	vs1tothis := loadVirtualService("vs_bookinfo1_to_this.yaml", t)
-	currentIstioObjects = append(currentIstioObjects, vs1tothis)
+	currentIstioObjects = append(currentIstioObjects, &vs1tothis)
 	vs2to1 := loadVirtualService("vs_bookinfo2_to_1.yaml", t)
-	currentIstioObjects = append(currentIstioObjects, vs2to1)
+	currentIstioObjects = append(currentIstioObjects, &vs2to1)
 	vs2tothis := loadVirtualService("vs_bookinfo2_to_this.yaml", t)
-	currentIstioObjects = append(currentIstioObjects, vs2tothis)
+	currentIstioObjects = append(currentIstioObjects, &vs2tothis)
 	vs3to2 := loadVirtualService("vs_bookinfo3_to_2.yaml", t)
-	currentIstioObjects = append(currentIstioObjects, vs3to2)
+	currentIstioObjects = append(currentIstioObjects, &vs3to2)
 	vs3toall := loadVirtualService("vs_bookinfo3_to_all.yaml", t)
-	currentIstioObjects = append(currentIstioObjects, vs3toall)
+	currentIstioObjects = append(currentIstioObjects, &vs3toall)
 	v := mockEmptyValidationService()
 	filteredVSs := v.filterVSExportToNamespaces("bookinfo", currentIstioObjects)
 	var expectedVS []networking_v1beta1.VirtualService
@@ -238,14 +238,14 @@ func fakeEmptyIstioConfigList() *models.IstioConfigList {
 func fakeIstioConfigList() *models.IstioConfigList {
 	istioConfigList := models.IstioConfigList{}
 
-	istioConfigList.VirtualServices = []networking_v1beta1.VirtualService{
-		*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("product", "v1", -1),
+	istioConfigList.VirtualServices = []*networking_v1beta1.VirtualService{
+		data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("product", "v1", -1),
 			data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("product2", "v1", -1),
 				data.CreateEmptyVirtualService("product-vs", "test", []string{"product"})))}
 
-	istioConfigList.DestinationRules = []networking_v1beta1.DestinationRule{
-		*data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule("test", "product-dr", "product")),
-		*data.CreateEmptyDestinationRule("test", "customer-dr", "customer"),
+	istioConfigList.DestinationRules = []*networking_v1beta1.DestinationRule{
+		data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule("test", "product-dr", "product")),
+		data.CreateEmptyDestinationRule("test", "customer-dr", "customer"),
 	}
 
 	istioConfigList.Gateways = append(getGateway("first", "test"), getGateway("second", "test2")...)
@@ -325,9 +325,9 @@ func fakePods() *core_v1.PodList {
 	}
 }
 
-func getGateway(name, namespace string) []networking_v1beta1.Gateway {
-	return []networking_v1beta1.Gateway{
-		*data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
+func getGateway(name, namespace string) []*networking_v1beta1.Gateway {
+	return []*networking_v1beta1.Gateway{
+		data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
 			data.CreateEmptyGateway(name, namespace, map[string]string{
 				"app": "real",
 			}))}
@@ -339,7 +339,7 @@ func loadVirtualService(file string, t *testing.T) networking_v1beta1.VirtualSer
 	if err != nil {
 		t.Error("Error loading test data.")
 	}
-	return loader.GetResources().VirtualServices[0]
+	return *loader.GetResources().VirtualServices[0]
 }
 
 func yamlFixtureLoaderFor(file string) *validations.YamlFixtureLoader {

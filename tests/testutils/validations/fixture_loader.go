@@ -63,7 +63,7 @@ func (l *YamlFixtureLoader) Load() error {
 					switch kind {
 					case "DestinationRule":
 						dr := networking_v1beta1.DestinationRule{}
-						err = json.Unmarshal(bValue, dr)
+						err = json.Unmarshal(bValue, &dr)
 						l.istioConfigList.DestinationRules = append(l.istioConfigList.DestinationRules, &dr)
 					case "EnvoyFilter":
 						ef := networking_v1alpha3.EnvoyFilter{}
