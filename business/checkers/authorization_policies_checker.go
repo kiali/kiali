@@ -24,6 +24,7 @@ type AuthorizationPolicyChecker struct {
 	MtlsDetails           kubernetes.MTLSDetails
 	VirtualServices       []*networking_v1beta1.VirtualService
 	RegistryServices      []*kubernetes.RegistryService
+	PolicyAllowAny        bool
 }
 
 func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
@@ -57,7 +58,7 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1beta.Author
 		common.SelectorNoWorkloadFoundChecker(AuthorizationPolicyCheckerType, matchLabels, a.WorkloadsPerNamespace),
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
 		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces,
-			ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices, RegistryServices: a.RegistryServices},
+			ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices, RegistryServices: a.RegistryServices, PolicyAllowAny: a.PolicyAllowAny},
 		authorization.PrincipalsChecker{AuthorizationPolicy: authPolicy, ServiceAccounts: a.ServiceAccountNames(strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, "svc.", "", 1))},
 	}
 

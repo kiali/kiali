@@ -17,6 +17,7 @@ type NoDestinationChecker struct {
 	VirtualServices       []*networking_v1beta1.VirtualService
 	ServiceEntries        []*networking_v1beta1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
+	PolicyAllowAny        bool
 }
 
 // Check parses the DestinationRule definitions and verifies that they point to an existing service, including any subset definitions
@@ -31,6 +32,9 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	// Testing Kubernetes Services + Istio ServiceEntries + Istio Runtime Registry (cross namespace)
 	if !n.hasMatchingService(fqdn, namespace) {
 		validation := models.Build("destinationrules.nodest.matchingregistry", "spec/host")
+		if n.PolicyAllowAny {
+			validation.Severity = models.WarningSeverity
+		}
 		valid = false
 		validations = append(validations, &validation)
 	} else if len(n.DestinationRule.Spec.Subsets) > 0 {

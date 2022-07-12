@@ -17,6 +17,7 @@ type NoHostChecker struct {
 	ServiceEntries      map[string][]string
 	VirtualServices     []*networking_v1beta1.VirtualService
 	RegistryServices    []*kubernetes.RegistryService
+	PolicyAllowAny      bool
 }
 
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
@@ -67,6 +68,9 @@ func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1beta.Rule_
 			if !n.hasMatchingService(fqdn, namespace) {
 				path := fmt.Sprintf("spec/rules[%d]/to[%d]/operation/hosts[%d]", ruleIdx, toIdx, hostIdx)
 				validation := models.Build("authorizationpolicy.nodest.matchingregistry", path)
+				if n.PolicyAllowAny {
+					validation.Severity = models.WarningSeverity
+				}
 				valid = false
 				checks = append(checks, &validation)
 			}

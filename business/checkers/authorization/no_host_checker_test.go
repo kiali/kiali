@@ -24,6 +24,7 @@ func TestPresentService(t *testing.T) {
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		ServiceEntries:      map[string][]string{},
 		RegistryServices:    append(registryService1, registryService2...),
+		PolicyAllowAny:      true,
 	}.Check()
 
 	// Well configured object
@@ -42,13 +43,14 @@ func TestNonExistingService(t *testing.T) {
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		ServiceEntries:      map[string][]string{},
 		RegistryServices:    append(registryService1, registryService2...),
+		PolicyAllowAny:      true,
 	}.Check()
 
 	// Wrong host is not present
 	assert.False(valid)
 	assert.NotEmpty(vals)
 	assert.Len(vals, 1)
-	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.Equal(models.WarningSeverity, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
 	assert.Equal("spec/rules[0]/to[0]/operation/hosts[1]", vals[0].Path)
 }
@@ -312,13 +314,14 @@ func TestWildcardServiceEntryHost(t *testing.T) {
 		AuthorizationPolicy: authPolicyWithHost([]string{"maps.apple.com"}),
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
 		ServiceEntries:      kubernetes.ServiceEntryHostnames([]*networking_v1beta1.ServiceEntry{&serviceEntry}),
+		PolicyAllowAny:      true,
 	}.Check()
 
 	// apple.com host is not present
 	assert.False(valid)
 	assert.NotEmpty(vals)
 	assert.Len(vals, 1)
-	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.Equal(models.WarningSeverity, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
 	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
 }
