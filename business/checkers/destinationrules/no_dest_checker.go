@@ -23,6 +23,7 @@ type NoDestinationChecker struct {
 func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	valid := true
 	validations := make([]*models.IstioCheck, 0)
+	labelValidations := make([]*models.IstioCheck, 0)
 
 	namespace, clusterName := n.DestinationRule.Namespace, n.DestinationRule.ClusterName
 
@@ -34,6 +35,7 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 		validations = append(validations, &validation)
 	} else if len(n.DestinationRule.Spec.Subsets) > 0 {
 		// Check that each subset has a matching workload somewhere..
+		hasLabel := false
 		for i, subset := range n.DestinationRule.Spec.Subsets {
 			if len(subset.Labels) > 0 {
 				if !n.hasMatchingWorkload(fqdn, subset.Labels) {
@@ -45,13 +47,21 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 						validation.Severity = models.Unknown
 					}
 					validations = append(validations, &validation)
+				} else {
+					hasLabel = true
 				}
 			} else {
 				validation := models.Build("destinationrules.nodest.subsetnolabels",
 					"spec/subsets["+strconv.Itoa(i)+"]")
-				validations = append(validations, &validation)
+				labelValidations = append(labelValidations, &validation)
 				// Not changing valid value, if other subset is on error, a valid = false has priority
 			}
+		}
+		for _, v := range labelValidations {
+			if hasLabel {
+				v.Severity = models.Unknown
+			}
+			validations = append(validations, v)
 		}
 	}
 	return validations, valid

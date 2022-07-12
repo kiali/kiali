@@ -654,10 +654,33 @@ func TestNoLabelsInSubset(t *testing.T) {
 
 	assert.True(valid)
 	assert.NotEmpty(vals)
-	assert.Equal(models.WarningSeverity, vals[0].Severity)
+	assert.Equal(models.Unknown, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetnolabels", vals[0]))
 	assert.Equal("spec/subsets[0]", vals[0].Path)
 
+}
+
+func TestSubsetWithoutLabels(t *testing.T) {
+	assert := assert.New(t)
+
+	vals, valid := NoDestinationChecker{
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test-namespace": data.CreateWorkloadList("test-namespace",
+				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+				data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2"))),
+		},
+		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
+		DestinationRule:  *data.CreateNoSubsetLabelsDestinationRule("test-namespace", "name", "reviews"),
+	}.Check()
+
+	assert.True(valid)
+	assert.Len(vals, 2)
+	assert.Equal(models.WarningSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetnolabels", vals[0]))
+	assert.Equal("spec/subsets[0]", vals[0].Path)
+	assert.Equal(models.WarningSeverity, vals[1].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetnolabels", vals[1]))
+	assert.Equal("spec/subsets[1]", vals[1].Path)
 }
 
 func TestValidServiceRegistry(t *testing.T) {
