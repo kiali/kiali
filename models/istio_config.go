@@ -235,6 +235,7 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 				filtered[ns].RequestAuthentications = append(filtered[ns].RequestAuthentications, ra)
 			}
 		}
+		filtered[ns].IstioValidations = configList.IstioValidations
 	}
 	return &filtered
 }

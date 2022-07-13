@@ -140,30 +140,20 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
   // Fetch the Istio configs, apply filters and map them into flattened list items
   fetchIstioConfigs(namespaces: string[], typeFilters: string[], istioNameFilters: string[]) {
-    // return this.promises
-    //   .registerAll(
-    //     'configs',
-    //     // THIS should be one call, not per namespace , OR the next section
-    //     namespaces.map(_ => API.getAllIstioConfigs(namespaces, typeFilters, true, '', ''))
-    //   )
-    //   .then(responses => {
-    //     let istioItems: IstioConfigItem[] = [];
-    //     responses.forEach(response => {
-    //       namespaces.forEach(ns => {
-    //         istioItems = istioItems.concat(toIstioItems(filterByName(response.data[ns], istioNameFilters)));
-    //       })
-    //     });
-    //     return istioItems;
-    //     });
-    // OR PER Chunk
-    let istioItems: IstioConfigItem[] = [];
-    _.chunk(namespaces, 10).forEach(chunk => {
-      return this.promises
-        .registerChained('configs', undefined, () => this.fetchIstioConfigChunks(chunk, typeFilters, istioNameFilters, istioItems))
-        .then(() => {
-          return istioItems;
-        })
-    })
+    return this.promises
+      .registerAll(
+        'configs',
+        namespaces.slice(0,1).map(_ => API.getAllIstioConfigs(namespaces, typeFilters, true, '', ''))
+      )
+      .then(responses => {
+        let istioItems: IstioConfigItem[] = [];
+        responses.forEach(response => {
+          namespaces.forEach(ns => {
+            istioItems = istioItems.concat(toIstioItems(filterByName(response.data[ns], istioNameFilters)));
+          })
+        });
+        return istioItems;
+        });
   }
 
   fetchIstioConfigChunks(chunk: string[], typeFilters: string[], istioNameFilters: string[], istioItems: IstioConfigItem[]) {
