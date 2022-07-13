@@ -2,9 +2,9 @@ package business
 
 import (
 	"context"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"testing"
 
+	"github.com/golang/protobuf/ptypes/wrappers"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
