@@ -345,7 +345,7 @@ func bestDomainMatch(domains []string, namespaces []string) kubernetes.Host {
 	}
 
 	if len(domains) == 1 {
-		return kubernetes.GetHost(domains[0], "", "", namespaces)
+		return kubernetes.GetHost(domains[0], "", namespaces)
 	}
 
 	bestMatch := domains[0]
@@ -363,7 +363,7 @@ func bestDomainMatch(domains []string, namespaces []string) kubernetes.Host {
 			bestMatch = domain
 		}
 	}
-	return kubernetes.GetHost(bestMatch, "", "", namespaces)
+	return kubernetes.GetHost(bestMatch, "", namespaces)
 }
 
 func istioMetadata(metadata *kubernetes.EnvoyMetadata) string {

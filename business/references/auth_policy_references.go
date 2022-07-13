@@ -38,7 +38,7 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 						continue
 					}
 					for _, h := range t.Operation.Hosts {
-						fqdn := kubernetes.GetHost(h, namespace, "", n.Namespaces.GetNames())
+						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces.GetNames())
 						if !fqdn.IsWildcard() {
 							configRef := n.getConfigReferences(fqdn)
 							references.ObjectReferences = append(references.ObjectReferences, configRef...)

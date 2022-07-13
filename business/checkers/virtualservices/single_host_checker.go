@@ -146,7 +146,7 @@ func (s SingleHostChecker) getHosts(virtualService *networking_v1beta1.VirtualSe
 	targetHosts := make([]kubernetes.Host, 0, len(virtualService.Spec.Hosts))
 
 	for _, hostName := range virtualService.Spec.Hosts {
-		targetHosts = append(targetHosts, kubernetes.GetHost(hostName, namespace, "", s.Namespaces.GetNames()))
+		targetHosts = append(targetHosts, kubernetes.GetHost(hostName, namespace, s.Namespaces.GetNames()))
 	}
 	return targetHosts
 }
