@@ -13,6 +13,14 @@ func CreateEmptyDestinationRule(namespace string, name string, host string) *net
 	return &dr
 }
 
+func CreateEmptyDestinationRuleNonRef(namespace string, name string, host string) networking_v1beta1.DestinationRule {
+	dr := networking_v1beta1.DestinationRule{}
+	dr.Name = name
+	dr.Namespace = namespace
+	dr.Spec.Host = host
+	return dr
+}
+
 func CreateDestinationRuleWithLabel(namespace string, name string, host string, labelKey, labelValue string) *networking_v1beta1.DestinationRule {
 	destinationRule := AddSubsetToDestinationRule(CreateCustomLabelSubset("v1", labelKey, labelValue), CreateEmptyDestinationRule(namespace, name, host))
 	return destinationRule

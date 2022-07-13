@@ -689,17 +689,17 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	assert := assert.New(t)
 
-	dr := data.CreateEmptyDestinationRule("test", "test-exported", "ratings.mesh2-bookinfo.svc.mesh1-imports.local")
-
+	//dr := data.CreateEmptyDestinationRule("test", "test-exported", "ratings.mesh2-bookinfo.svc.mesh1-imports.local")
+	dr := data.CreateEmptyDestinationRuleNonRef("test", "test-exported", "ratings.mesh2-bookinfo.svc.mesh1-imports.local")
 	vals, valid := NoDestinationChecker{
-		DestinationRule: dr,
+		DestinationRule: &dr,
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(vals)
 
 	vals, valid = NoDestinationChecker{
-		DestinationRule:  dr,
+		DestinationRule:  &dr,
 		RegistryServices: data.CreateFakeRegistryServices("ratings.mesh2-bookinfo.svc.mesh1-imports.local", "test", "*"),
 	}.Check()
 
@@ -707,17 +707,17 @@ func TestValidServiceRegistry(t *testing.T) {
 	assert.Empty(vals)
 
 	vals, valid = NoDestinationChecker{
-		DestinationRule:  dr,
+		DestinationRule:  &dr,
 		RegistryServices: data.CreateFakeRegistryServices("ratings2.mesh2-bookinfo.svc.mesh1-imports.local", "test", "."),
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(vals)
 
-	dr = data.CreateEmptyDestinationRule("test", "test-exported", "ratings.bookinfo.svc.cluster.local")
+	dr = data.CreateEmptyDestinationRuleNonRef("test", "test-exported", "ratings.bookinfo.svc.cluster.local")
 
 	vals, valid = NoDestinationChecker{
-		DestinationRule:  dr,
+		DestinationRule:  &dr,
 		RegistryServices: data.CreateFakeRegistryServices("ratings.bookinfo.svc.cluster.local", "test", "test"),
 	}.Check()
 
@@ -725,7 +725,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	assert.Empty(vals)
 
 	vals, valid = NoDestinationChecker{
-		DestinationRule:  dr,
+		DestinationRule:  &dr,
 		RegistryServices: data.CreateFakeRegistryServices("ratings2.bookinfo.svc.cluster.local", "test", "test"),
 	}.Check()
 
