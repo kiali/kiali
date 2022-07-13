@@ -73,31 +73,39 @@ describe('Performance tests', () => {
         });
 
         it('loads the overview page', () => {
-          // Disabling refresh so that we can see how long it takes to load the page without additional requests
-          // being made due to the refresh.
-          cy.visit('/console/overview?refresh=0', {
-            onBeforeLoad(win) {
-              win.performance.mark('start');
-            }
-          })
-            .its('performance')
-            .then(performance => {
-              cy.get('.pf-l-grid').should('be.visible');
-              cy.get('#loading_kiali_spinner', { timeout: 300000 })
-                .should('not.exist')
-                .then(() => {
-                  performance.mark('end');
-                  performance.measure('initPageLoad', 'start', 'end');
-                  const measure = performance.getEntriesByName('initPageLoad')[0];
-                  const duration = measure.duration;
-                  assert.isAtMost(duration, Cypress.env('threshold'));
-
-                  const contents = `Namespaces: ${testCase.namespaces}
-  Init page load time: ${(duration / 1000).toPrecision(5)} seconds
+          // Getting an average to smooth out the results.
+          let sum = 0;
+          const visits = Array.from({ length: 5 });
+          cy.wrap(visits)
+            .each(() => {
+              // Disabling refresh so that we can see how long it takes to load the page without additional requests
+              // being made due to the refresh.
+              cy.visit('/console/overview?refresh=0', {
+                onBeforeLoad(win) {
+                  win.performance.mark('start');
+                }
+              })
+                .its('performance')
+                .then(performance => {
+                  cy.get('.pf-l-grid').should('be.visible');
+                  cy.get('#loading_kiali_spinner', { timeout: 300000 })
+                    .should('not.exist')
+                    .then(() => {
+                      performance.mark('end');
+                      performance.measure('initPageLoad', 'start', 'end');
+                      const measure = performance.getEntriesByName('initPageLoad')[0];
+                      const duration = measure.duration;
+                      sum += duration;
+                    });
+                });
+            })
+            .then(() => {
+              sum = sum / visits.length;
+              const contents = `Namespaces: ${testCase.namespaces}
+  Init page load time: ${(sum / 1000).toPrecision(5)} seconds
 
 `;
-                  cy.writeFile(reportFilePath, contents, { flag: 'a+' });
-                });
+              cy.writeFile(reportFilePath, contents, { flag: 'a+' });
             });
         });
       });
