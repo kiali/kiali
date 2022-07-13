@@ -11,11 +11,10 @@ Installed all dev dependencies from frontend folder. Ensure the `baseUrl` field 
 Before you start using Cypress suite, you might need export some environment variables - depending on environment where tests are executed. If your authentication method defaults to `anonymous` **(i.e. dev env), no actions are needed.**
 
 ```bash
-export CYPRESS_BASE_URL=<value>        # defaults to http://localhost:3000
-export CYPRESS_USERNAME=<value>        # defaults to jenkins, opt. kubeadmin
-export CYPRESS_PASSWD=<value>          # no defaults 
-export CYPRESS_AUTH_PROVIDER=<value>   # defaults to my_htpasswd_provider, 
-                                       # or optionally openshift for AWS
+export CYPRESS_BASE_URL=<value>               # defaults to http://localhost:3000
+export CYPRESS_USERNAME=<value>               # defaults to jenkins, opt. kubeadmin
+export CYPRESS_PASSWD=<value>                 # no defaults
+export CYPRESS_AUTH_PROVIDER=<value>          # defaults to my_htpasswd_provider
 ```
 
 Tests can be run with the cypress browser:
@@ -93,6 +92,14 @@ You can adjust some inputs of the performance tests by changing the [fixture fil
 ### Results:
 
 Results are logged here: `logs/performance.txt`
+
+### Running on IBM Cloud:
+
+You can use the [perf hack script](../../hack/perf-ibmcloud-openshift.sh) to spin up an openshift cluster on IBMCloud with Kiali + Istio + Kiali demos installed. To run the perf tests against the cluster, you must generate an IBM Cloud API Key and pass that in as the `CYPRESS_PASSWD`.
+
+```
+make -e CYPRESS_BASE_URL="https://<kiali-openshift-route>" -e CYPRESS_PASSWD="<IBMCloud API Key>" -e CYPRESS_USERNAME="IAM#<SSO-EMAIL>" -e CYPRESS_AUTH_PROVIDER="ibmcloud" perf-tests-gui
+```
 
 ## Testing Strategies
 
