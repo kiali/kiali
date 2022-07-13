@@ -213,7 +213,7 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 	}
 }
 
-func decorateMatchingGateways(gwCrd networking_v1beta1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
+func decorateMatchingGateways(gwCrd *networking_v1beta1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
 	gwSelector := labels.Set(gwCrd.Spec.Selector).AsSelector()
 	for gw, nodes := range gatewayNodeMapping {
 		if gwSelector.Matches(labels.Set(gw.Labels)) {
@@ -274,8 +274,8 @@ func (a IstioAppender) decorateGateways(trafficMap graph.TrafficMap, globalInfo 
 		gatewaysCrds := a.getIstioGatewayResources(globalInfo)
 
 		for _, gwCrd := range gatewaysCrds {
-			decorateMatchingGateways(*gwCrd, ingressNodeMapping, graph.IsIngressGateway)
-			decorateMatchingGateways(*gwCrd, egressNodeMapping, graph.IsEgressGateway)
+			decorateMatchingGateways(gwCrd, ingressNodeMapping, graph.IsIngressGateway)
+			decorateMatchingGateways(gwCrd, egressNodeMapping, graph.IsEgressGateway)
 		}
 	}
 }

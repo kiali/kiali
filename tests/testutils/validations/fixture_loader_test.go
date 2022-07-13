@@ -22,13 +22,13 @@ func TestGetResources(t *testing.T) {
 	assert.Equal(rsc.Kind, "PeerAuthentication")
 	assert.Equal(rsc.Name, "default")
 	assert.Equal(rsc.Namespace, "bookinfo")
-	assert.NotEmpty(rsc.Spec)
+	assert.NotEmpty(&rsc.Spec)
 
 	rsc = rscs.PeerAuthentications[1]
 	assert.Equal(rsc.Kind, "PeerAuthentication")
 	assert.Equal(rsc.Name, "default")
 	assert.Equal(rsc.Namespace, "istio-system")
-	assert.NotEmpty(rsc.Spec)
+	assert.NotEmpty(&rsc.Spec)
 
 	assert.Equal(len(rscs.VirtualServices), 0)
 }
