@@ -670,7 +670,7 @@ func TestSubsetWithoutLabels(t *testing.T) {
 				data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2"))),
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
-		DestinationRule:  *data.CreateNoSubsetLabelsDestinationRule("test-namespace", "name", "reviews"),
+		DestinationRule:  data.CreateNoSubsetLabelsDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
 
 	assert.True(valid)
