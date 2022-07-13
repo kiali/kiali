@@ -108,8 +108,8 @@ func (checker SubsetPresenceChecker) subsetPresent(host string, subset string) b
 	return false
 }
 
-func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost string) ([]networking_v1beta1.DestinationRule, bool) {
-	drs := make([]networking_v1beta1.DestinationRule, 0, len(checker.DestinationRules))
+func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost string) ([]*networking_v1beta1.DestinationRule, bool) {
+	drs := make([]*networking_v1beta1.DestinationRule, 0, len(checker.DestinationRules))
 
 	for _, destinationRule := range checker.DestinationRules {
 		host := destinationRule.Spec.Host
@@ -119,14 +119,14 @@ func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost stri
 
 		// TODO Host could be in another namespace (FQDN)
 		if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) {
-			drs = append(drs, *destinationRule)
+			drs = append(drs, destinationRule)
 		}
 	}
 
 	return drs, len(drs) > 0
 }
 
-func hasSubsetDefined(destinationRule networking_v1beta1.DestinationRule, subsetTarget string) bool {
+func hasSubsetDefined(destinationRule *networking_v1beta1.DestinationRule, subsetTarget string) bool {
 	for _, subset := range destinationRule.Spec.Subsets {
 		if subset == nil {
 			continue

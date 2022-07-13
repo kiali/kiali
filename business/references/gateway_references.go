@@ -24,15 +24,15 @@ func (n GatewayReferences) References() models.IstioReferencesMap {
 		}
 		key := models.IstioReferenceKey{Namespace: gw.Namespace, Name: gw.Name, ObjectType: models.ObjectTypeSingular[kubernetes.Gateways]}
 		references := &models.IstioReferences{}
-		references.WorkloadReferences = n.getWorkloadReferences(*gw)
-		references.ObjectReferences = n.getConfigReferences(*gw)
+		references.WorkloadReferences = n.getWorkloadReferences(gw)
+		references.ObjectReferences = n.getConfigReferences(gw)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
 	}
 
 	return result
 }
 
-func (n GatewayReferences) getWorkloadReferences(gw networking_v1beta1.Gateway) []models.WorkloadReference {
+func (n GatewayReferences) getWorkloadReferences(gw *networking_v1beta1.Gateway) []models.WorkloadReference {
 	result := make([]models.WorkloadReference, 0)
 	selector := labels.SelectorFromSet(gw.Spec.Selector)
 
@@ -48,7 +48,7 @@ func (n GatewayReferences) getWorkloadReferences(gw networking_v1beta1.Gateway) 
 	return result
 }
 
-func (n GatewayReferences) getConfigReferences(gw networking_v1beta1.Gateway) []models.IstioReference {
+func (n GatewayReferences) getConfigReferences(gw *networking_v1beta1.Gateway) []models.IstioReference {
 	keys := make(map[string]bool)
 	result := make([]models.IstioReference, 0)
 	allVSs := make([]models.IstioReference, 0)
@@ -91,7 +91,7 @@ func (n GatewayReferences) getConfigReferences(gw networking_v1beta1.Gateway) []
 	return result
 }
 
-func isGatewayListed(gw networking_v1beta1.Gateway, gateways []string, namespace string, clusterName string) bool {
+func isGatewayListed(gw *networking_v1beta1.Gateway, gateways []string, namespace string, clusterName string) bool {
 	hostname := kubernetes.ParseGatewayAsHost(gw.Name, gw.Namespace, "")
 	for _, gate := range gateways {
 		gwHostname := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName)

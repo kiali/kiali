@@ -48,7 +48,7 @@ func (n SidecarReferences) References() models.IstioReferencesMap {
 				}
 			}
 		}
-		references.WorkloadReferences = append(references.WorkloadReferences, n.getWorkloadReferences(*sc)...)
+		references.WorkloadReferences = append(references.WorkloadReferences, n.getWorkloadReferences(sc)...)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
 	}
 
@@ -98,7 +98,7 @@ func (n SidecarReferences) getConfigReferences(host kubernetes.Host, hostNs stri
 	return result
 }
 
-func (n SidecarReferences) getWorkloadReferences(sc networking_v1beta1.Sidecar) []models.WorkloadReference {
+func (n SidecarReferences) getWorkloadReferences(sc *networking_v1beta1.Sidecar) []models.WorkloadReference {
 	result := make([]models.WorkloadReference, 0)
 	if sc.Spec.WorkloadSelector != nil {
 		selector := labels.SelectorFromSet(sc.Spec.WorkloadSelector.Labels)

@@ -22,7 +22,7 @@ func (n PeerAuthReferences) References() models.IstioReferencesMap {
 		key := models.IstioReferenceKey{Namespace: pa.Namespace, Name: pa.Name, ObjectType: models.ObjectTypeSingular[kubernetes.PeerAuthentications]}
 		references := &models.IstioReferences{}
 		references.ObjectReferences = n.getConfigReferences(pa)
-		references.WorkloadReferences = n.getWorkloadReferences(*pa)
+		references.WorkloadReferences = n.getWorkloadReferences(pa)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
 	}
 
@@ -92,7 +92,7 @@ func (n PeerAuthReferences) getConfigReferences(peerAuthn *security_v1beta.PeerA
 	return result
 }
 
-func (n PeerAuthReferences) getWorkloadReferences(pa security_v1beta.PeerAuthentication) []models.WorkloadReference {
+func (n PeerAuthReferences) getWorkloadReferences(pa *security_v1beta.PeerAuthentication) []models.WorkloadReference {
 	result := make([]models.WorkloadReference, 0)
 
 	if pa.Spec.Selector != nil {

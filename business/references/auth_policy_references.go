@@ -51,7 +51,7 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 				}
 			}
 		}
-		references.WorkloadReferences = append(references.WorkloadReferences, n.getWorkloadReferences(*ap)...)
+		references.WorkloadReferences = append(references.WorkloadReferences, n.getWorkloadReferences(ap)...)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
 	}
 
@@ -90,7 +90,7 @@ func (n AuthorizationPolicyReferences) getConfigReferences(host kubernetes.Host)
 	return result
 }
 
-func (n AuthorizationPolicyReferences) getWorkloadReferences(ap security_v1beta.AuthorizationPolicy) []models.WorkloadReference {
+func (n AuthorizationPolicyReferences) getWorkloadReferences(ap *security_v1beta.AuthorizationPolicy) []models.WorkloadReference {
 	result := make([]models.WorkloadReference, 0)
 	if ap.Spec.Selector != nil {
 		selector := labels.SelectorFromSet(ap.Spec.Selector.MatchLabels)

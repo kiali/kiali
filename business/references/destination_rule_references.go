@@ -25,20 +25,20 @@ func (n DestinationRuleReferences) References() models.IstioReferencesMap {
 	for _, dr := range n.DestinationRules {
 		key := models.IstioReferenceKey{Namespace: dr.Namespace, Name: dr.Name, ObjectType: models.ObjectTypeSingular[kubernetes.DestinationRules]}
 		references := &models.IstioReferences{}
-		seRefs := n.getSEReferences(*dr)
+		seRefs := n.getSEReferences(dr)
 		references.ObjectReferences = append(references.ObjectReferences, seRefs...)
 		if len(seRefs) == 0 {
-			references.ServiceReferences = n.getServiceReferences(*dr)
+			references.ServiceReferences = n.getServiceReferences(dr)
 		}
-		references.WorkloadReferences = n.getWorkloadReferences(*dr)
-		references.ObjectReferences = append(references.ObjectReferences, n.getConfigReferences(*dr)...)
+		references.WorkloadReferences = n.getWorkloadReferences(dr)
+		references.ObjectReferences = append(references.ObjectReferences, n.getConfigReferences(dr)...)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
 	}
 
 	return result
 }
 
-func (n DestinationRuleReferences) getServiceReferences(dr networking_v1beta1.DestinationRule) []models.ServiceReference {
+func (n DestinationRuleReferences) getServiceReferences(dr *networking_v1beta1.DestinationRule) []models.ServiceReference {
 	result := make([]models.ServiceReference, 0)
 
 	fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, "", n.Namespaces.GetNames())
@@ -48,7 +48,7 @@ func (n DestinationRuleReferences) getServiceReferences(dr networking_v1beta1.De
 	return result
 }
 
-func (n DestinationRuleReferences) getWorkloadReferences(dr networking_v1beta1.DestinationRule) []models.WorkloadReference {
+func (n DestinationRuleReferences) getWorkloadReferences(dr *networking_v1beta1.DestinationRule) []models.WorkloadReference {
 	keys := make(map[string]bool)
 	allWorklaods := make([]models.WorkloadReference, 0)
 	result := make([]models.WorkloadReference, 0)
@@ -103,7 +103,7 @@ func (n DestinationRuleReferences) getWorkloadReferences(dr networking_v1beta1.D
 	return result
 }
 
-func (n DestinationRuleReferences) getSEReferences(dr networking_v1beta1.DestinationRule) []models.IstioReference {
+func (n DestinationRuleReferences) getSEReferences(dr *networking_v1beta1.DestinationRule) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 
 	fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, "", n.Namespaces.GetNames())
@@ -120,7 +120,7 @@ func (n DestinationRuleReferences) getSEReferences(dr networking_v1beta1.Destina
 	return result
 }
 
-func (n DestinationRuleReferences) getConfigReferences(dr networking_v1beta1.DestinationRule) []models.IstioReference {
+func (n DestinationRuleReferences) getConfigReferences(dr *networking_v1beta1.DestinationRule) []models.IstioReference {
 	keys := make(map[string]bool)
 	allConfigs := make([]models.IstioReference, 0)
 	result := make([]models.IstioReference, 0)

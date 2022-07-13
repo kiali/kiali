@@ -18,7 +18,7 @@ func (s SingleHostChecker) Check() models.IstioValidations {
 
 	for _, vs := range s.VirtualServices {
 		for _, host := range s.getHosts(vs) {
-			storeHost(hostCounter, *vs, host)
+			storeHost(hostCounter, vs, host)
 		}
 	}
 
@@ -36,7 +36,7 @@ func (s SingleHostChecker) Check() models.IstioValidations {
 						//   a host for that namespace
 						if targetSameHost {
 							// Reference everything within serviceCounter
-							multipleVirtualServiceCheck(*virtualService, validations, serviceCounter)
+							multipleVirtualServiceCheck(virtualService, validations, serviceCounter)
 						}
 
 						if isNamespaceWildcard && otherServiceHosts {
@@ -45,7 +45,7 @@ func (s SingleHostChecker) Check() models.IstioValidations {
 							refs := make([]*networking_v1beta1.VirtualService, 0, len(namespaceCounter))
 							// here in case of a, b and *, references should be a -> *, b -> *, * -> q,b
 							// * should be referenced to a,b
-							if containsVirtualService(*virtualService, namespaceCounter["*"]) {
+							if containsVirtualService(virtualService, namespaceCounter["*"]) {
 								for _, _serviceCounter := range namespaceCounter {
 									refs = append(refs, _serviceCounter...)
 								}
@@ -53,7 +53,7 @@ func (s SingleHostChecker) Check() models.IstioValidations {
 								// a or b referencing to *
 								refs = append(refs, namespaceCounter["*"]...)
 							}
-							multipleVirtualServiceCheck(*virtualService, validations, refs)
+							multipleVirtualServiceCheck(virtualService, validations, refs)
 						}
 					}
 				}
@@ -64,7 +64,7 @@ func (s SingleHostChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func containsVirtualService(vs networking_v1beta1.VirtualService, vss []*networking_v1beta1.VirtualService) bool {
+func containsVirtualService(vs *networking_v1beta1.VirtualService, vss []*networking_v1beta1.VirtualService) bool {
 	for _, item := range vss {
 		if vs.Name == item.Name && vs.Namespace == item.Namespace {
 			return true
@@ -73,7 +73,7 @@ func containsVirtualService(vs networking_v1beta1.VirtualService, vss []*network
 	return false
 }
 
-func multipleVirtualServiceCheck(virtualService networking_v1beta1.VirtualService, validations models.IstioValidations, references []*networking_v1beta1.VirtualService) {
+func multipleVirtualServiceCheck(virtualService *networking_v1beta1.VirtualService, validations models.IstioValidations, references []*networking_v1beta1.VirtualService) {
 	virtualServiceName := virtualService.Name
 	key := models.IstioValidationKey{Name: virtualServiceName, Namespace: virtualService.Namespace, ObjectType: "virtualservice"}
 	checks := models.Build("virtualservices.singlehost", "spec/hosts")
@@ -88,7 +88,6 @@ func multipleVirtualServiceCheck(virtualService networking_v1beta1.VirtualServic
 	}
 
 	for _, ref := range references {
-		ref := *ref
 		refKey := models.IstioValidationKey{Name: ref.Name, Namespace: ref.Namespace, ObjectType: "virtualservice"}
 		if refKey != key {
 			rrValidation.References = append(rrValidation.References, refKey)
@@ -98,8 +97,8 @@ func multipleVirtualServiceCheck(virtualService networking_v1beta1.VirtualServic
 	validations.MergeValidations(models.IstioValidations{key: rrValidation})
 }
 
-func storeHost(hostCounter map[string]map[string]map[string]map[string][]*networking_v1beta1.VirtualService, vs networking_v1beta1.VirtualService, host kubernetes.Host) {
-	vsList := []*networking_v1beta1.VirtualService{&vs}
+func storeHost(hostCounter map[string]map[string]map[string]map[string][]*networking_v1beta1.VirtualService, vs *networking_v1beta1.VirtualService, host kubernetes.Host) {
+	vsList := []*networking_v1beta1.VirtualService{vs}
 
 	gwList := vs.Spec.Gateways
 	if len(gwList) == 0 {
@@ -132,7 +131,7 @@ func storeHost(hostCounter map[string]map[string]map[string]map[string][]*networ
 		} else if _, ok := hostCounter[gw][cluster][namespace][service]; !ok {
 			hostCounter[gw][cluster][namespace][service] = vsList
 		} else {
-			hostCounter[gw][cluster][namespace][service] = append(hostCounter[gw][cluster][namespace][service], &vs)
+			hostCounter[gw][cluster][namespace][service] = append(hostCounter[gw][cluster][namespace][service], vs)
 		}
 	}
 }
