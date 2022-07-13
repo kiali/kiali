@@ -689,7 +689,6 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	assert := assert.New(t)
 
-	//dr := data.CreateEmptyDestinationRule("test", "test-exported", "ratings.mesh2-bookinfo.svc.mesh1-imports.local")
 	dr := data.CreateEmptyDestinationRule("test", "test-exported", "ratings.mesh2-bookinfo.svc.mesh1-imports.local")
 	vals, valid := NoDestinationChecker{
 		DestinationRule: dr,
