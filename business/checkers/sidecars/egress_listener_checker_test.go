@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/kiali/kiali/config"
 	"github.com/stretchr/testify/assert"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
@@ -15,6 +16,10 @@ import (
 
 func TestEgressHostFormatCorrect(t *testing.T) {
 	assert := assert.New(t)
+
+	c := config.Get()
+	c.ExternalServices.Istio.IstioIdentityDomain = "svc.cluster.local"
+	config.Set(c)
 
 	vals, valid := EgressHostChecker{
 		RegistryServices: data.CreateFakeMultiRegistryServices([]string{"details.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo", "*"),
@@ -31,7 +36,6 @@ func TestEgressHostFormatCorrect(t *testing.T) {
 			"bookinfo/reviews.bookinfo.svc.cluster.local",
 			"bookinfo/wikipedia.org",
 		}),
-		ClusterName: "svc.cluster.local",
 	}.Check()
 
 	assert.Empty(vals)

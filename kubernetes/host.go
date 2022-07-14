@@ -23,10 +23,8 @@ type Host struct {
 }
 
 // ParseHost takes as an input a hostname (simple or full FQDN), namespace and clusterName and returns a parsed Host struct
-func ParseHost(hostName, namespace, cluster string) Host {
-	if cluster == "" {
-		cluster = config.Get().ExternalServices.Istio.IstioIdentityDomain
-	}
+func ParseHost(hostName, namespace string) Host {
+	cluster := config.Get().ExternalServices.Istio.IstioIdentityDomain
 
 	domainParts := strings.Split(hostName, ".")
 	host := Host{
@@ -88,7 +86,7 @@ func GetHost(hostName, namespace string, clusterNamespaces []string) Host {
 		}
 	}
 
-	return ParseHost(hostName, namespace, cluster)
+	return ParseHost(hostName, namespace)
 }
 
 func includes(nss []string, namespace string) bool {
@@ -202,7 +200,7 @@ func HasMatchingVirtualServices(host Host, virtualServices []*networking_v1beta1
 			}
 
 			// Non-internal service name
-			hostS := ParseHost(vHost, vs.Namespace, "")
+			hostS := ParseHost(vHost, vs.Namespace)
 			if hostS.Service == host.Service && hostS.CompleteInput == host.CompleteInput && !hostS.CompleteInput {
 				return true
 			}

@@ -80,7 +80,7 @@ func (n AuthorizationPolicyReferences) getConfigReferences(host kubernetes.Host)
 		for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
 			vHost := vs.Spec.Hosts[hostIdx]
 
-			hostS := kubernetes.ParseHost(vHost, vs.Namespace, "")
+			hostS := kubernetes.ParseHost(vHost, vs.Namespace)
 			if hostS.String() == host.String() {
 				result = append(result, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
 				continue

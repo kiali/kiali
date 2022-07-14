@@ -57,7 +57,7 @@ func (n ServiceEntryReferences) getConfigReferences(se *networking_v1beta1.Servi
 					if hostNs == "*" || hostNs == "~" || hostNs == "." || dnsName == "*" {
 						continue
 					}
-					fqdn := kubernetes.ParseHost(dnsName, hostNs, "")
+					fqdn := kubernetes.ParseHost(dnsName, hostNs)
 
 					if se.Namespace != hostNs {
 						continue
