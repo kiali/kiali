@@ -12,8 +12,8 @@ import (
 const SidecarCheckerType = "sidecar"
 
 type SidecarChecker struct {
-	Sidecars              []networking_v1beta1.Sidecar
-	ServiceEntries        []networking_v1beta1.ServiceEntry
+	Sidecars              []*networking_v1beta1.Sidecar
+	ServiceEntries        []*networking_v1beta1.ServiceEntry
 	Namespaces            models.Namespaces
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	RegistryServices      []*kubernetes.RegistryService
@@ -52,7 +52,7 @@ func (s SidecarChecker) runIndividualChecks() models.IstioValidations {
 	return validations
 }
 
-func (s SidecarChecker) runChecks(sidecar networking_v1beta1.Sidecar) models.IstioValidations {
+func (s SidecarChecker) runChecks(sidecar *networking_v1beta1.Sidecar) models.IstioValidations {
 	policyName := sidecar.Name
 	key, rrValidation := EmptyValidValidation(policyName, sidecar.Namespace, SidecarCheckerType)
 	serviceHosts := kubernetes.ServiceEntryHostnames(s.ServiceEntries)

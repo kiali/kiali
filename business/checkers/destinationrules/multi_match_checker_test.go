@@ -19,9 +19,9 @@ func TestMultiHostMatchCorrect(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []networking_v1beta1.DestinationRule{
-		*data.CreateTestDestinationRule("test", "rule1", "host1"),
-		*data.CreateTestDestinationRule("test", "rule2", "host2.test.svc.cluster.local"),
+	destinationRules := []*networking_v1beta1.DestinationRule{
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
+		data.CreateTestDestinationRule("test", "rule2", "host2.test.svc.cluster.local"),
 	}
 
 	vals := MultiMatchChecker{
@@ -40,10 +40,10 @@ func TestMultiHostMatchInvalid(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []networking_v1beta1.DestinationRule{
-		*data.CreateTestDestinationRule("test", "rule1", "host1"),
-		*data.CreateTestDestinationRule("test", "rule2", "host1.test.svc.cluster.local"),
-		*data.CreateTestDestinationRule("test", "rule3", "host1"),
+	destinationRules := []*networking_v1beta1.DestinationRule{
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
+		data.CreateTestDestinationRule("test", "rule2", "host1.test.svc.cluster.local"),
+		data.CreateTestDestinationRule("test", "rule3", "host1"),
 	}
 
 	vals := MultiMatchChecker{
@@ -85,9 +85,9 @@ func TestMultiHostMatchInvalidShortFormat(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []networking_v1beta1.DestinationRule{
-		*data.CreateTestDestinationRule("test", "rule1", "host1"),
-		*data.CreateTestDestinationRule("test", "rule2", "host1.test"),
+	destinationRules := []*networking_v1beta1.DestinationRule{
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
+		data.CreateTestDestinationRule("test", "rule2", "host1.test"),
 	}
 
 	vals := MultiMatchChecker{
@@ -113,9 +113,9 @@ func TestMultiHostMatchValidShortFormat(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []networking_v1beta1.DestinationRule{
-		*data.CreateTestDestinationRule("test", "rule1", "host1"),
-		*data.CreateTestDestinationRule("test", "rule2", "host2.test"),
+	destinationRules := []*networking_v1beta1.DestinationRule{
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
+		data.CreateTestDestinationRule("test", "rule2", "host2.test"),
 	}
 
 	vals := MultiMatchChecker{
@@ -134,9 +134,9 @@ func TestMultiHostMatchValidShortFormatDiffNamespace(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []networking_v1beta1.DestinationRule{
-		*data.CreateTestDestinationRule("test", "rule1", "host1"),
-		*data.CreateTestDestinationRule("test", "rule2", "host2.bookinfo"),
+	destinationRules := []*networking_v1beta1.DestinationRule{
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
+		data.CreateTestDestinationRule("test", "rule2", "host2.bookinfo"),
 	}
 
 	vals := MultiMatchChecker{
@@ -157,9 +157,9 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []networking_v1beta1.DestinationRule{
-		*data.CreateTestDestinationRule("test", "rule1", "host1"),
-		*data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
+	destinationRules := []*networking_v1beta1.DestinationRule{
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
+		data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
 	}
 
 	vals := MultiMatchChecker{
@@ -176,9 +176,9 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	assert.NotEmpty(validation.References)
 	assert.Equal("rule1", validation.References[0].Name)
 
-	destinationRules = []networking_v1beta1.DestinationRule{
-		*data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
-		*data.CreateTestDestinationRule("test", "rule1", "host1"),
+	destinationRules = []*networking_v1beta1.DestinationRule{
+		data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
 	}
 
 	vals = MultiMatchChecker{
@@ -202,9 +202,9 @@ func TestMultiHostMatchBothWildcardInvalid(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []networking_v1beta1.DestinationRule{
-		*data.CreateTestDestinationRule("test", "rule1", "*"),
-		*data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
+	destinationRules := []*networking_v1beta1.DestinationRule{
+		data.CreateTestDestinationRule("test", "rule1", "*"),
+		data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
 	}
 
 	vals := MultiMatchChecker{
@@ -221,9 +221,9 @@ func TestMultiHostMatchBothWildcardInvalid(t *testing.T) {
 	assert.NotEmpty(validation.References)
 	assert.Equal("rule1", validation.References[0].Name)
 
-	destinationRules = []networking_v1beta1.DestinationRule{
-		*data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
-		*data.CreateTestDestinationRule("test", "rule1", "*"),
+	destinationRules = []*networking_v1beta1.DestinationRule{
+		data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
+		data.CreateTestDestinationRule("test", "rule1", "*"),
 	}
 
 	vals = MultiMatchChecker{
@@ -247,9 +247,9 @@ func TestMultiHostMatchingMeshWideMTLSDestinationRule(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []networking_v1beta1.DestinationRule{
-		*data.CreateTestDestinationRule("test", "rule1", "host1"),
-		*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+	destinationRules := []*networking_v1beta1.DestinationRule{
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
+		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateTestDestinationRule("test", "rule2", "*.local")),
 	}
 
@@ -269,9 +269,9 @@ func TestMultiHostMatchingNamespaceWideMTLSDestinationRule(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []networking_v1beta1.DestinationRule{
-		*data.CreateTestDestinationRule("test", "rule1", "host1"),
-		*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+	destinationRules := []*networking_v1beta1.DestinationRule{
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
+		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local")),
 	}
 
@@ -291,10 +291,10 @@ func TestMultiHostMatchDifferentSubsets(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []networking_v1beta1.DestinationRule{
-		*data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"),
+	destinationRules := []*networking_v1beta1.DestinationRule{
+		data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"),
 			data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"), data.CreateEmptyDestinationRule("test", "rule1", "host1"))),
-		*data.AddSubsetToDestinationRule(data.CreateSubset("v3", "v3"),
+		data.AddSubsetToDestinationRule(data.CreateSubset("v3", "v3"),
 			data.AddSubsetToDestinationRule(data.CreateSubset("v4", "v4"), data.CreateEmptyDestinationRule("test", "rule2", "host1"))),
 	}
 
@@ -305,7 +305,7 @@ func TestMultiHostMatchDifferentSubsets(t *testing.T) {
 	assert.Empty(vals)
 
 	destinationRules = append(destinationRules,
-		*data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"),
+		data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"),
 			data.AddSubsetToDestinationRule(data.CreateSubset("v5", "v5"), data.CreateEmptyDestinationRule("test", "rule5", "*.test.svc.cluster.local"))),
 	)
 
@@ -322,10 +322,10 @@ func TestReviewsExample(t *testing.T) {
 
 	assert := assert.New(t)
 
-	destinationRules := []networking_v1beta1.DestinationRule{
-		*data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"),
+	destinationRules := []*networking_v1beta1.DestinationRule{
+		data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"),
 			data.AddSubsetToDestinationRule(data.CreateSubset("v3", "v3"), data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews"))),
-		*data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule("bookinfo", "reviews2", "reviews")),
+		data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule("bookinfo", "reviews2", "reviews")),
 	}
 
 	vals := MultiMatchChecker{
@@ -335,7 +335,7 @@ func TestReviewsExample(t *testing.T) {
 	assert.Empty(vals)
 
 	allMatch := data.CreateEmptyDestinationRule("bookinfo", "reviews3", "reviews")
-	destinationRules = append(destinationRules, *allMatch)
+	destinationRules = append(destinationRules, allMatch)
 
 	vals = MultiMatchChecker{
 		DestinationRules: destinationRules,
@@ -366,8 +366,8 @@ func TestMultiServiceEntry(t *testing.T) {
 	drB := data.CreateEmptyDestinationRule("test", "service-b", "api.service_b.com")
 
 	vals := MultiMatchChecker{
-		DestinationRules: []networking_v1beta1.DestinationRule{*drA, *drB},
-		ServiceEntries:   kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*seA, *seB}),
+		DestinationRules: []*networking_v1beta1.DestinationRule{drA, drB},
+		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1beta1.ServiceEntry{seA, seB}),
 	}.Check()
 
 	assert.Empty(vals)
@@ -385,8 +385,8 @@ func TestMultiServiceEntryInvalid(t *testing.T) {
 	drB := data.CreateEmptyDestinationRule("test", "service-a2", "api.service_a.com")
 
 	vals := MultiMatchChecker{
-		DestinationRules: []networking_v1beta1.DestinationRule{*drA, *drB},
-		ServiceEntries:   kubernetes.ServiceEntryHostnames([]networking_v1beta1.ServiceEntry{*seA}),
+		DestinationRules: []*networking_v1beta1.DestinationRule{drA, drB},
+		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1beta1.ServiceEntry{seA}),
 	}.Check()
 
 	assert.NotEmpty(vals)

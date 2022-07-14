@@ -10,7 +10,7 @@ import (
 )
 
 type PrincipalsChecker struct {
-	AuthorizationPolicy security_v1beta.AuthorizationPolicy
+	AuthorizationPolicy *security_v1beta.AuthorizationPolicy
 	ServiceAccounts     []string
 }
 

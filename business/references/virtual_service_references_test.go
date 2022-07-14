@@ -22,9 +22,9 @@ func prepareTestForVirtualService(vs *networking_v1beta1.VirtualService, dr *net
 			{Name: "bookinfo2"},
 			{Name: "bookinfo3"},
 		},
-		VirtualServices:       []networking_v1beta1.VirtualService{*vs},
-		DestinationRules:      []networking_v1beta1.DestinationRule{*dr},
-		AuthorizationPolicies: []security_v1beta.AuthorizationPolicy{*ap, *data.CreateEmptyAuthorizationPolicy("test", "bookinfo")},
+		VirtualServices:       []*networking_v1beta1.VirtualService{vs},
+		DestinationRules:      []*networking_v1beta1.DestinationRule{dr},
+		AuthorizationPolicies: []*security_v1beta.AuthorizationPolicy{ap, data.CreateEmptyAuthorizationPolicy("test", "bookinfo")},
 	}
 	return *virtualServiceReferences.References()[models.IstioReferenceKey{ObjectType: "virtualservice", Namespace: vs.Namespace, Name: vs.Name}]
 }

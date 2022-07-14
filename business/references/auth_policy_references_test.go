@@ -20,9 +20,9 @@ func prepareTestForAuthPolicy(ap *security_v1beta.AuthorizationPolicy, vs *netwo
 			{Name: "bookinfo2"},
 			{Name: "bookinfo3"},
 		},
-		AuthorizationPolicies: []security_v1beta.AuthorizationPolicy{*ap},
-		ServiceEntries:        []networking_v1beta1.ServiceEntry{*se},
-		VirtualServices:       []networking_v1beta1.VirtualService{*vs},
+		AuthorizationPolicies: []*security_v1beta.AuthorizationPolicy{ap},
+		ServiceEntries:        []*networking_v1beta1.ServiceEntry{se},
+		VirtualServices:       []*networking_v1beta1.VirtualService{vs},
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
 			"istio-system": data.CreateWorkloadList("istio-system",
 				data.CreateWorkloadListItem("istiod", map[string]string{"app": "istio-ingressgateway"}),

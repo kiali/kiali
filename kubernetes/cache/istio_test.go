@@ -47,42 +47,42 @@ func TestGetSidecar(t *testing.T) {
 		resourceType    string
 		namespace       string
 		expectedErr     error
-		expectedObjects []networking_v1beta1.Sidecar
+		expectedObjects []*networking_v1beta1.Sidecar
 	}{
 		"With selector that matches": {
 			selector:        "app=bookinfo",
 			resourceType:    kubernetes.Sidecars,
 			expectedErr:     nil,
-			expectedObjects: []networking_v1beta1.Sidecar{*sidecar},
+			expectedObjects: []*networking_v1beta1.Sidecar{sidecar},
 		},
 		"With selector that doesn't match": {
 			selector:        "app=anotherapp",
 			resourceType:    kubernetes.Sidecars,
 			expectedErr:     nil,
-			expectedObjects: []networking_v1beta1.Sidecar{},
+			expectedObjects: []*networking_v1beta1.Sidecar{},
 		},
 		"Without selector": {
 			resourceType:    kubernetes.Sidecars,
 			expectedErr:     nil,
-			expectedObjects: []networking_v1beta1.Sidecar{*sidecar},
+			expectedObjects: []*networking_v1beta1.Sidecar{sidecar},
 		},
 		"With unparseable selector": {
 			selector:        "unpar$ablestr!ng!",
 			resourceType:    kubernetes.Sidecars,
 			expectedErr:     fmt.Errorf("Any"),
-			expectedObjects: []networking_v1beta1.Sidecar{},
+			expectedObjects: []*networking_v1beta1.Sidecar{},
 		},
 		"With unknown type": {
 			selector:        "unpar$ablestr!ng!",
 			resourceType:    "unknowntype",
 			expectedErr:     fmt.Errorf("Any"),
-			expectedObjects: []networking_v1beta1.Sidecar{},
+			expectedObjects: []*networking_v1beta1.Sidecar{},
 		},
 		"Uncached namespace returns empty": {
 			namespace:       "uncachednamespace",
 			resourceType:    kubernetes.Sidecars,
 			expectedErr:     nil,
-			expectedObjects: []networking_v1beta1.Sidecar{},
+			expectedObjects: []*networking_v1beta1.Sidecar{},
 		},
 	}
 

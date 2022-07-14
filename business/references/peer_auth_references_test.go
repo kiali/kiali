@@ -13,10 +13,10 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForPeerAuth(pa *security_v1beta.PeerAuthentication, drs []networking_v1beta1.DestinationRule) models.IstioReferences {
+func prepareTestForPeerAuth(pa *security_v1beta.PeerAuthentication, drs []*networking_v1beta1.DestinationRule) models.IstioReferences {
 	drReferences := PeerAuthReferences{
 		MTLSDetails: kubernetes.MTLSDetails{
-			PeerAuthentications: []security_v1beta.PeerAuthentication{*pa},
+			PeerAuthentications: []*security_v1beta.PeerAuthentication{pa},
 			DestinationRules:    drs,
 			EnabledAutoMtls:     false,
 		},
@@ -183,7 +183,7 @@ func TestNamespacePeerAuthWorkloadReferences(t *testing.T) {
 	assert.Equal(references.WorkloadReferences[0].Namespace, "bookinfo")
 }
 
-func getPADestinationRules(t *testing.T, namespace string) []networking_v1beta1.DestinationRule {
+func getPADestinationRules(t *testing.T, namespace string) []*networking_v1beta1.DestinationRule {
 	loader := yamlFixtureLoader("peer-auth-drs.yaml")
 	err := loader.Load()
 	if err != nil {

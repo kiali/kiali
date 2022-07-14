@@ -11,9 +11,9 @@ import (
 const ServiceEntryCheckerType = "serviceentry"
 
 type ServiceEntryChecker struct {
-	ServiceEntries  []networking_v1beta1.ServiceEntry
+	ServiceEntries  []*networking_v1beta1.ServiceEntry
 	Namespaces      models.Namespaces
-	WorkloadEntries []networking_v1beta1.WorkloadEntry
+	WorkloadEntries []*networking_v1beta1.WorkloadEntry
 }
 
 func (s ServiceEntryChecker) Check() models.IstioValidations {
@@ -28,7 +28,7 @@ func (s ServiceEntryChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func (s ServiceEntryChecker) runSingleChecks(se networking_v1beta1.ServiceEntry, workloadEntriesMap map[string][]string) models.IstioValidations {
+func (s ServiceEntryChecker) runSingleChecks(se *networking_v1beta1.ServiceEntry, workloadEntriesMap map[string][]string) models.IstioValidations {
 	key, validations := EmptyValidValidation(se.Name, se.Namespace, ServiceEntryCheckerType)
 
 	enabledCheckers := []Checker{

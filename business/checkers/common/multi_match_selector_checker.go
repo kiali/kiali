@@ -17,7 +17,7 @@ type GenericMultiMatchChecker struct {
 	skipSelSubj           bool
 }
 
-func PeerAuthenticationMultiMatchChecker(subjectType string, pa []security_v1beta.PeerAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func PeerAuthenticationMultiMatchChecker(subjectType string, pa []*security_v1beta.PeerAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(pa))
 	for i, p := range pa {
@@ -42,7 +42,7 @@ func PeerAuthenticationMultiMatchChecker(subjectType string, pa []security_v1bet
 	}
 }
 
-func RequestAuthenticationMultiMatchChecker(subjectType string, ra []security_v1beta.RequestAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func RequestAuthenticationMultiMatchChecker(subjectType string, ra []*security_v1beta.RequestAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(ra))
 	for i, r := range ra {
@@ -69,7 +69,7 @@ func RequestAuthenticationMultiMatchChecker(subjectType string, ra []security_v1
 	}
 }
 
-func SidecarSelectorMultiMatchChecker(subjectType string, sc []networking_v1beta1.Sidecar, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func SidecarSelectorMultiMatchChecker(subjectType string, sc []*networking_v1beta1.Sidecar, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(sc))
 	i := 0

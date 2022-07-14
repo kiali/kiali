@@ -9,8 +9,8 @@ import (
 )
 
 type DisabledMeshWideMTLSChecker struct {
-	DestinationRule networking_v1beta1.DestinationRule
-	MeshPeerAuthns  []security_v1beta.PeerAuthentication
+	DestinationRule *networking_v1beta1.DestinationRule
+	MeshPeerAuthns  []*security_v1beta.PeerAuthentication
 }
 
 func (c DisabledMeshWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {

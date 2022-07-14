@@ -17,12 +17,12 @@ import (
 const AuthorizationPolicyCheckerType = "authorizationpolicy"
 
 type AuthorizationPolicyChecker struct {
-	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
+	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
 	Namespaces            models.Namespaces
-	ServiceEntries        []networking_v1beta1.ServiceEntry
+	ServiceEntries        []*networking_v1beta1.ServiceEntry
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	MtlsDetails           kubernetes.MTLSDetails
-	VirtualServices       []networking_v1beta1.VirtualService
+	VirtualServices       []*networking_v1beta1.VirtualService
 	RegistryServices      []*kubernetes.RegistryService
 }
 
@@ -45,7 +45,7 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 }
 
 // runChecks runs all the individual checks for a single mesh policy and appends the result into validations.
-func (a AuthorizationPolicyChecker) runChecks(authPolicy security_v1beta.AuthorizationPolicy) models.IstioValidations {
+func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1beta.AuthorizationPolicy) models.IstioValidations {
 	policyName := authPolicy.Name
 	key, rrValidation := EmptyValidValidation(policyName, authPolicy.Namespace, AuthorizationPolicyCheckerType)
 	serviceHosts := kubernetes.ServiceEntryHostnames(a.ServiceEntries)

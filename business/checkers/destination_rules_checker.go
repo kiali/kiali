@@ -12,9 +12,9 @@ import (
 const DestinationRuleCheckerType = "destinationrule"
 
 type DestinationRulesChecker struct {
-	DestinationRules []networking_v1beta1.DestinationRule
+	DestinationRules []*networking_v1beta1.DestinationRule
 	MTLSDetails      kubernetes.MTLSDetails
-	ServiceEntries   []networking_v1beta1.ServiceEntry
+	ServiceEntries   []*networking_v1beta1.ServiceEntry
 	Namespaces       []models.Namespace
 }
 
@@ -58,7 +58,7 @@ func (in DestinationRulesChecker) runIndividualChecks() models.IstioValidations 
 	return validations
 }
 
-func (in DestinationRulesChecker) runChecks(destinationRule networking_v1beta1.DestinationRule) models.IstioValidations {
+func (in DestinationRulesChecker) runChecks(destinationRule *networking_v1beta1.DestinationRule) models.IstioValidations {
 	destinationRuleName := destinationRule.Name
 	key, rrValidation := EmptyValidValidation(destinationRuleName, destinationRule.Namespace, DestinationRuleCheckerType)
 

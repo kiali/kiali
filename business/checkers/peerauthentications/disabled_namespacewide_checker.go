@@ -9,8 +9,8 @@ import (
 )
 
 type DisabledNamespaceWideChecker struct {
-	PeerAuthn        security_v1beta.PeerAuthentication
-	DestinationRules []networking_v1beta1.DestinationRule
+	PeerAuthn        *security_v1beta.PeerAuthentication
+	DestinationRules []*networking_v1beta1.DestinationRule
 }
 
 func (c DisabledNamespaceWideChecker) Check() ([]*models.IstioCheck, bool) {

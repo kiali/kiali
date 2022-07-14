@@ -10,7 +10,7 @@ import (
 const RequestAuthenticationCheckerType = "requestauthentication"
 
 type RequestAuthenticationChecker struct {
-	RequestAuthentications []security_v1beta.RequestAuthentication
+	RequestAuthentications []*security_v1beta.RequestAuthentication
 	WorkloadsPerNamespace  map[string]models.WorkloadList
 }
 
@@ -27,7 +27,7 @@ func (m RequestAuthenticationChecker) Check() models.IstioValidations {
 }
 
 // runChecks runs all the individual checks for a single mesh policy and appends the result into validations.
-func (m RequestAuthenticationChecker) runChecks(requestAuthn security_v1beta.RequestAuthentication) models.IstioValidations {
+func (m RequestAuthenticationChecker) runChecks(requestAuthn *security_v1beta.RequestAuthentication) models.IstioValidations {
 	requestAuthnName := requestAuthn.Name
 	key, rrValidation := EmptyValidValidation(requestAuthnName, requestAuthn.Namespace, RequestAuthenticationCheckerType)
 	matchLabels := make(map[string]string)

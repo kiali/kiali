@@ -9,7 +9,7 @@ import (
 
 // Note that MeshMtlsChecker will work with MeshPolicy resources
 type MeshMtlsChecker struct {
-	MeshPolicy    security_v1beta.PeerAuthentication
+	MeshPolicy    *security_v1beta.PeerAuthentication
 	MTLSDetails   kubernetes.MTLSDetails
 	IsServiceMesh bool
 }

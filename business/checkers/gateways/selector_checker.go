@@ -9,7 +9,7 @@ import (
 
 type SelectorChecker struct {
 	WorkloadsPerNamespace map[string]models.WorkloadList
-	Gateway               networking_v1beta1.Gateway
+	Gateway               *networking_v1beta1.Gateway
 	IsGatewayToNamespace  bool
 }
 

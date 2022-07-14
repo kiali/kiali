@@ -29,7 +29,7 @@ func (n PeerAuthReferences) References() models.IstioReferencesMap {
 	return result
 }
 
-func (n PeerAuthReferences) getConfigReferences(peerAuthn security_v1beta.PeerAuthentication) []models.IstioReference {
+func (n PeerAuthReferences) getConfigReferences(peerAuthn *security_v1beta.PeerAuthentication) []models.IstioReference {
 	keys := make(map[string]bool)
 	allDRs := make([]models.IstioReference, 0)
 	result := make([]models.IstioReference, 0)
@@ -92,7 +92,7 @@ func (n PeerAuthReferences) getConfigReferences(peerAuthn security_v1beta.PeerAu
 	return result
 }
 
-func (n PeerAuthReferences) getWorkloadReferences(pa security_v1beta.PeerAuthentication) []models.WorkloadReference {
+func (n PeerAuthReferences) getWorkloadReferences(pa *security_v1beta.PeerAuthentication) []models.WorkloadReference {
 	result := make([]models.WorkloadReference, 0)
 
 	if pa.Spec.Selector != nil {

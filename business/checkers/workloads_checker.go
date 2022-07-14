@@ -10,7 +10,7 @@ import (
 const WorkloadCheckerType = "workload"
 
 type WorkloadChecker struct {
-	AuthorizationPolicies []security_v1beta1.AuthorizationPolicy
+	AuthorizationPolicies []*security_v1beta1.AuthorizationPolicy
 	WorkloadsPerNamespace map[string]models.WorkloadList
 }
 

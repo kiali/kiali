@@ -79,7 +79,7 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	var currentIstioObjects []networking_v1beta1.VirtualService
+	var currentIstioObjects []*networking_v1beta1.VirtualService
 	vs1to3 := loadVirtualService("vs_bookinfo1_to_2_3.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, vs1to3)
 	vs1tothis := loadVirtualService("vs_bookinfo1_to_this.yaml", t)
@@ -94,7 +94,7 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, vs3toall)
 	v := mockEmptyValidationService()
 	filteredVSs := v.filterVSExportToNamespaces("bookinfo", currentIstioObjects)
-	var expectedVS []networking_v1beta1.VirtualService
+	var expectedVS []*networking_v1beta1.VirtualService
 	expectedVS = append(expectedVS, vs1tothis)
 	expectedVS = append(expectedVS, vs2to1)
 	expectedVS = append(expectedVS, vs3toall)
@@ -238,14 +238,14 @@ func fakeEmptyIstioConfigList() *models.IstioConfigList {
 func fakeIstioConfigList() *models.IstioConfigList {
 	istioConfigList := models.IstioConfigList{}
 
-	istioConfigList.VirtualServices = []networking_v1beta1.VirtualService{
-		*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("product", "v1", -1),
+	istioConfigList.VirtualServices = []*networking_v1beta1.VirtualService{
+		data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("product", "v1", -1),
 			data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("product2", "v1", -1),
 				data.CreateEmptyVirtualService("product-vs", "test", []string{"product"})))}
 
-	istioConfigList.DestinationRules = []networking_v1beta1.DestinationRule{
-		*data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule("test", "product-dr", "product")),
-		*data.CreateEmptyDestinationRule("test", "customer-dr", "customer"),
+	istioConfigList.DestinationRules = []*networking_v1beta1.DestinationRule{
+		data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule("test", "product-dr", "product")),
+		data.CreateEmptyDestinationRule("test", "customer-dr", "customer"),
 	}
 
 	istioConfigList.Gateways = append(getGateway("first", "test"), getGateway("second", "test2")...)
@@ -253,17 +253,17 @@ func fakeIstioConfigList() *models.IstioConfigList {
 	return &istioConfigList
 }
 
-func fakeMeshPolicies() []security_v1beta.PeerAuthentication {
-	return []security_v1beta.PeerAuthentication{
-		*data.CreateEmptyMeshPeerAuthentication("default", nil),
-		*data.CreateEmptyMeshPeerAuthentication("test", nil),
+func fakeMeshPolicies() []*security_v1beta.PeerAuthentication {
+	return []*security_v1beta.PeerAuthentication{
+		data.CreateEmptyMeshPeerAuthentication("default", nil),
+		data.CreateEmptyMeshPeerAuthentication("test", nil),
 	}
 }
 
-func fakePolicies() []security_v1beta.PeerAuthentication {
-	return []security_v1beta.PeerAuthentication{
-		*data.CreateEmptyPeerAuthentication("default", "bookinfo", nil),
-		*data.CreateEmptyPeerAuthentication("test", "foo", nil),
+func fakePolicies() []*security_v1beta.PeerAuthentication {
+	return []*security_v1beta.PeerAuthentication{
+		data.CreateEmptyPeerAuthentication("default", "bookinfo", nil),
+		data.CreateEmptyPeerAuthentication("test", "foo", nil),
 	}
 }
 
@@ -325,15 +325,15 @@ func fakePods() *core_v1.PodList {
 	}
 }
 
-func getGateway(name, namespace string) []networking_v1beta1.Gateway {
-	return []networking_v1beta1.Gateway{
-		*data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
+func getGateway(name, namespace string) []*networking_v1beta1.Gateway {
+	return []*networking_v1beta1.Gateway{
+		data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
 			data.CreateEmptyGateway(name, namespace, map[string]string{
 				"app": "real",
 			}))}
 }
 
-func loadVirtualService(file string, t *testing.T) networking_v1beta1.VirtualService {
+func loadVirtualService(file string, t *testing.T) *networking_v1beta1.VirtualService {
 	loader := yamlFixtureLoaderFor(file)
 	err := loader.Load()
 	if err != nil {

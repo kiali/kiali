@@ -37,13 +37,13 @@ func TestTlsPerfNsDr(t *testing.T) {
 
 	testPerfScenario(MTLSPartiallyEnabled, nss, drs, pss, false, t)
 	testPerfScenario(MTLSEnabled, nss, drs, pss, true, t)
-	testPerfScenario(MTLSEnabled, nss, []networking_v1beta1.DestinationRule{}, pss, true, t)
+	testPerfScenario(MTLSEnabled, nss, []*networking_v1beta1.DestinationRule{}, pss, true, t)
 }
 
-func preparePerfScenario(numNs, numDr int) ([]core_v1.Namespace, []security_v1beta1.PeerAuthentication, []networking_v1beta1.DestinationRule) {
+func preparePerfScenario(numNs, numDr int) ([]core_v1.Namespace, []*security_v1beta1.PeerAuthentication, []*networking_v1beta1.DestinationRule) {
 	nss := []core_v1.Namespace{}
-	pss := []security_v1beta1.PeerAuthentication{}
-	drs := []networking_v1beta1.DestinationRule{}
+	pss := []*security_v1beta1.PeerAuthentication{}
+	drs := []*networking_v1beta1.DestinationRule{}
 
 	fmt.Printf("TLS perf test. Num NS: %d DR per NS: %d\n", numNs, numDr)
 	i := 0
@@ -52,11 +52,11 @@ func preparePerfScenario(numNs, numDr int) ([]core_v1.Namespace, []security_v1be
 		ns.Name = fmt.Sprintf("bookinfo-%d", i)
 		nss = append(nss, ns)
 		ps := *data.CreateEmptyPeerAuthentication(fmt.Sprintf("pa-%d", i), ns.Name, data.CreateMTLS("STRICT"))
-		pss = append(pss, ps)
+		pss = append(pss, &ps)
 		j := 0
 		for j < numDr {
 			dr := *data.CreateEmptyDestinationRule(ns.Name, fmt.Sprintf("dr-%d-%d", i, j), fmt.Sprintf("*.%s.svc.cluster.local", ns.Name))
-			drs = append(drs, dr)
+			drs = append(drs, &dr)
 			j++
 		}
 		i++
@@ -64,7 +64,7 @@ func preparePerfScenario(numNs, numDr int) ([]core_v1.Namespace, []security_v1be
 	return nss, pss, drs
 }
 
-func testPerfScenario(exStatus string, nss []core_v1.Namespace, drs []networking_v1beta1.DestinationRule, ps []security_v1beta1.PeerAuthentication, autoMtls bool, t *testing.T) {
+func testPerfScenario(exStatus string, nss []core_v1.Namespace, drs []*networking_v1beta1.DestinationRule, ps []*security_v1beta1.PeerAuthentication, autoMtls bool, t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)

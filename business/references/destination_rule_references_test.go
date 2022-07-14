@@ -19,8 +19,8 @@ func prepareTestForDestinationRule(dr *networking_v1beta1.DestinationRule, vs *n
 			{Name: "bookinfo2"},
 			{Name: "bookinfo3"},
 		},
-		DestinationRules: []networking_v1beta1.DestinationRule{*dr},
-		VirtualServices:  []networking_v1beta1.VirtualService{*vs},
+		DestinationRules: []*networking_v1beta1.DestinationRule{dr},
+		VirtualServices:  []*networking_v1beta1.VirtualService{vs},
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
 			"test-namespace": data.CreateWorkloadList("test-namespace",
 				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -28,7 +28,7 @@ func prepareTestForDestinationRule(dr *networking_v1beta1.DestinationRule, vs *n
 				data.CreateWorkloadListItem("reviewsv3", appVersionLabel("reviews", "v3")),
 				data.CreateWorkloadListItem("reviewsv4", appVersionLabel("reviews", "v4"))),
 		},
-		ServiceEntries:   []networking_v1beta1.ServiceEntry{*fakeServiceEntry()},
+		ServiceEntries:   []*networking_v1beta1.ServiceEntry{fakeServiceEntry()},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 	}
 	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "destinationrule", Namespace: dr.Namespace, Name: dr.Name}]

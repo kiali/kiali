@@ -122,15 +122,15 @@ type IstioMeshConfig struct {
 
 // MTLSDetails is a wrapper to group all Istio objects related to non-local mTLS configurations
 type MTLSDetails struct {
-	DestinationRules        []networking_v1beta1.DestinationRule `json:"destinationrules"`
-	MeshPeerAuthentications []security_v1beta.PeerAuthentication `json:"meshpeerauthentications"`
-	PeerAuthentications     []security_v1beta.PeerAuthentication `json:"peerauthentications"`
-	EnabledAutoMtls         bool                                 `json:"enabledautomtls"`
+	DestinationRules        []*networking_v1beta1.DestinationRule `json:"destinationrules"`
+	MeshPeerAuthentications []*security_v1beta.PeerAuthentication `json:"meshpeerauthentications"`
+	PeerAuthentications     []*security_v1beta.PeerAuthentication `json:"peerauthentications"`
+	EnabledAutoMtls         bool                                  `json:"enabledautomtls"`
 }
 
 // RBACDetails is a wrapper for objects related to Istio RBAC (Role Based Access Control)
 type RBACDetails struct {
-	AuthorizationPolicies []security_v1beta.AuthorizationPolicy `json:"authorizationpolicies"`
+	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy `json:"authorizationpolicies"`
 }
 
 type ProxyStatus struct {
@@ -157,18 +157,18 @@ type SyncStatus struct {
 // Resources not used (i.e. EnvoyFilters) are not added, those will require update them in the future
 type RegistryConfiguration struct {
 	// Networking
-	DestinationRules []networking_v1beta1.DestinationRule
-	EnvoyFilters     []networking_v1alpha3.EnvoyFilter
-	Gateways         []networking_v1beta1.Gateway
-	ServiceEntries   []networking_v1beta1.ServiceEntry
-	Sidecars         []networking_v1beta1.Sidecar
-	VirtualServices  []networking_v1beta1.VirtualService
-	WorkloadEntries  []networking_v1beta1.WorkloadEntry
-	WorkloadGroups   []networking_v1beta1.WorkloadGroup
+	DestinationRules []*networking_v1beta1.DestinationRule
+	EnvoyFilters     []*networking_v1alpha3.EnvoyFilter
+	Gateways         []*networking_v1beta1.Gateway
+	ServiceEntries   []*networking_v1beta1.ServiceEntry
+	Sidecars         []*networking_v1beta1.Sidecar
+	VirtualServices  []*networking_v1beta1.VirtualService
+	WorkloadEntries  []*networking_v1beta1.WorkloadEntry
+	WorkloadGroups   []*networking_v1beta1.WorkloadGroup
 	// Security
-	AuthorizationPolicies  []security_v1beta.AuthorizationPolicy
-	PeerAuthentications    []security_v1beta.PeerAuthentication
-	RequestAuthentications []security_v1beta.RequestAuthentication
+	AuthorizationPolicies  []*security_v1beta.AuthorizationPolicy
+	PeerAuthentications    []*security_v1beta.PeerAuthentication
+	RequestAuthentications []*security_v1beta.RequestAuthentication
 }
 
 type RegistryEndpoint struct {

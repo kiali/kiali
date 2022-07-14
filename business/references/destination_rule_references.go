@@ -12,10 +12,10 @@ import (
 type DestinationRuleReferences struct {
 	Namespace             string
 	Namespaces            models.Namespaces
-	DestinationRules      []networking_v1beta1.DestinationRule
-	VirtualServices       []networking_v1beta1.VirtualService
+	DestinationRules      []*networking_v1beta1.DestinationRule
+	VirtualServices       []*networking_v1beta1.VirtualService
 	WorkloadsPerNamespace map[string]models.WorkloadList
-	ServiceEntries        []networking_v1beta1.ServiceEntry
+	ServiceEntries        []*networking_v1beta1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
 }
 
@@ -38,22 +38,22 @@ func (n DestinationRuleReferences) References() models.IstioReferencesMap {
 	return result
 }
 
-func (n DestinationRuleReferences) getServiceReferences(dr networking_v1beta1.DestinationRule) []models.ServiceReference {
+func (n DestinationRuleReferences) getServiceReferences(dr *networking_v1beta1.DestinationRule) []models.ServiceReference {
 	result := make([]models.ServiceReference, 0)
 
-	fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, dr.ClusterName, n.Namespaces.GetNames())
+	fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces.GetNames())
 	if !fqdn.IsWildcard() && kubernetes.HasMatchingRegistryService(dr.Namespace, fqdn.String(), n.RegistryServices) {
 		result = append(result, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
 	}
 	return result
 }
 
-func (n DestinationRuleReferences) getWorkloadReferences(dr networking_v1beta1.DestinationRule) []models.WorkloadReference {
+func (n DestinationRuleReferences) getWorkloadReferences(dr *networking_v1beta1.DestinationRule) []models.WorkloadReference {
 	keys := make(map[string]bool)
 	allWorklaods := make([]models.WorkloadReference, 0)
 	result := make([]models.WorkloadReference, 0)
 
-	host := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, dr.ClusterName, n.Namespaces.GetNames())
+	host := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces.GetNames())
 	if host.IsWildcard() {
 		return result
 	}
@@ -103,10 +103,10 @@ func (n DestinationRuleReferences) getWorkloadReferences(dr networking_v1beta1.D
 	return result
 }
 
-func (n DestinationRuleReferences) getSEReferences(dr networking_v1beta1.DestinationRule) []models.IstioReference {
+func (n DestinationRuleReferences) getSEReferences(dr *networking_v1beta1.DestinationRule) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 
-	fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, dr.ClusterName, n.Namespaces.GetNames())
+	fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces.GetNames())
 	if !fqdn.IsWildcard() {
 		for _, se := range n.ServiceEntries {
 			for _, seHost := range se.Spec.Hosts {
@@ -120,7 +120,7 @@ func (n DestinationRuleReferences) getSEReferences(dr networking_v1beta1.Destina
 	return result
 }
 
-func (n DestinationRuleReferences) getConfigReferences(dr networking_v1beta1.DestinationRule) []models.IstioReference {
+func (n DestinationRuleReferences) getConfigReferences(dr *networking_v1beta1.DestinationRule) []models.IstioReference {
 	keys := make(map[string]bool)
 	allConfigs := make([]models.IstioReference, 0)
 	result := make([]models.IstioReference, 0)
@@ -140,8 +140,8 @@ func (n DestinationRuleReferences) getConfigReferences(dr networking_v1beta1.Des
 									continue
 								}
 								host := dest.Destination.Host
-								drHost := kubernetes.GetHost(host, dr.Namespace, dr.ClusterName, n.Namespaces.GetNames())
-								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+								drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces.GetNames())
+								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces.GetNames())
 								if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) {
 									allConfigs = append(allConfigs, models.IstioReference{Name: virtualService.Name, Namespace: virtualService.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
 								}
@@ -161,8 +161,8 @@ func (n DestinationRuleReferences) getConfigReferences(dr networking_v1beta1.Des
 									continue
 								}
 								host := dest.Destination.Host
-								drHost := kubernetes.GetHost(host, dr.Namespace, dr.ClusterName, n.Namespaces.GetNames())
-								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+								drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces.GetNames())
+								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces.GetNames())
 								if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) {
 									allConfigs = append(allConfigs, models.IstioReference{Name: virtualService.Name, Namespace: virtualService.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
 								}
@@ -182,8 +182,8 @@ func (n DestinationRuleReferences) getConfigReferences(dr networking_v1beta1.Des
 									continue
 								}
 								host := dest.Destination.Host
-								drHost := kubernetes.GetHost(host, dr.Namespace, dr.ClusterName, n.Namespaces.GetNames())
-								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, virtualService.ClusterName, n.Namespaces.GetNames())
+								drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces.GetNames())
+								vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces.GetNames())
 								if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) {
 									allConfigs = append(allConfigs, models.IstioReference{Name: virtualService.Name, Namespace: virtualService.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
 								}

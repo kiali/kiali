@@ -16,11 +16,11 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 
 	validations := SidecarSelectorMultiMatchChecker(
 		"sidecar",
-		[]networking_v1beta1.Sidecar{
-			*data.AddSelectorToSidecar(map[string]string{
+		[]*networking_v1beta1.Sidecar{
+			data.AddSelectorToSidecar(map[string]string{
 				"app": "reviews",
 			}, data.CreateSidecar("sidecar1", "bookinfo")),
-			*data.AddSelectorToSidecar(map[string]string{
+			data.AddSelectorToSidecar(map[string]string{
 				"app": "details",
 			}, data.CreateSidecar("sidecar2", "bookinfo")),
 		},
@@ -33,9 +33,9 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 func TestTwoSidecarsWithoutSelector(t *testing.T) {
 	validations := SidecarSelectorMultiMatchChecker(
 		"sidecar",
-		[]networking_v1beta1.Sidecar{
-			*data.CreateSidecar("sidecar1", "bookinfo"),
-			*data.CreateSidecar("sidecar2", "bookinfo"),
+		[]*networking_v1beta1.Sidecar{
+			data.CreateSidecar("sidecar1", "bookinfo"),
+			data.CreateSidecar("sidecar2", "bookinfo"),
 		},
 		workloadList(),
 	).Check()
@@ -45,19 +45,19 @@ func TestTwoSidecarsWithoutSelector(t *testing.T) {
 }
 
 func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
-	sidecars := []networking_v1beta1.Sidecar{
-		*data.AddSelectorToSidecar(map[string]string{
+	sidecars := []*networking_v1beta1.Sidecar{
+		data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
 			"version": "v1",
 		}, data.CreateSidecar("sidecar1", "bookinfo")),
-		*data.AddSelectorToSidecar(map[string]string{
+		data.AddSelectorToSidecar(map[string]string{
 			"app":     "reviews",
 			"version": "v1",
 		}, data.CreateSidecar("sidecar2", "bookinfo")),
-		*data.AddSelectorToSidecar(map[string]string{
+		data.AddSelectorToSidecar(map[string]string{
 			"app": "details",
 		}, data.CreateSidecar("sidecar3", "bookinfo")),
-		*data.AddSelectorToSidecar(map[string]string{
+		data.AddSelectorToSidecar(map[string]string{
 			"version": "v1",
 		}, data.CreateSidecar("sidecar4", "bookinfo")),
 	}
@@ -73,20 +73,20 @@ func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
 }
 
 func TestSidecarsCrossNamespaces(t *testing.T) {
-	sidecars := []networking_v1beta1.Sidecar{
-		*data.AddSelectorToSidecar(map[string]string{
+	sidecars := []*networking_v1beta1.Sidecar{
+		data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
 			"version": "v1",
 		}, data.CreateSidecar("sidecar1", "bookinfo")),
-		*data.AddSelectorToSidecar(map[string]string{
+		data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
 			"version": "v1",
 		}, data.CreateSidecar("sidecar2", "bookinfo")),
-		*data.AddSelectorToSidecar(map[string]string{
+		data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
 			"version": "v1",
 		}, data.CreateSidecar("sidecar3", "bookinfo2")),
-		*data.AddSelectorToSidecar(map[string]string{
+		data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
 			"version": "v1",
 		}, data.CreateSidecar("sidecar4", "bookinfo2")),
@@ -104,20 +104,20 @@ func TestSidecarsCrossNamespaces(t *testing.T) {
 func TestSidecarsDifferentNamespaces(t *testing.T) {
 	assert := assert.New(t)
 
-	sidecars := []networking_v1beta1.Sidecar{
-		*data.AddSelectorToSidecar(map[string]string{
+	sidecars := []*networking_v1beta1.Sidecar{
+		data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
 			"version": "v1",
 		}, data.CreateSidecar("sidecar1", "bookinfo")),
-		*data.AddSelectorToSidecar(map[string]string{
+		data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
 			"version": "v1",
 		}, data.CreateSidecar("sidecar2", "bookinfo2")),
-		*data.AddSelectorToSidecar(map[string]string{
+		data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
 			"version": "v1",
 		}, data.CreateSidecar("sidecar3", "bookinfo3")),
-		*data.AddSelectorToSidecar(map[string]string{
+		data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
 			"version": "v1",
 		}, data.CreateSidecar("sidecar4", "bookinfo4")),

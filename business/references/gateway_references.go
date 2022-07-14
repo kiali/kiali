@@ -10,8 +10,8 @@ import (
 )
 
 type GatewayReferences struct {
-	Gateways              []networking_v1beta1.Gateway
-	VirtualServices       []networking_v1beta1.VirtualService
+	Gateways              []*networking_v1beta1.Gateway
+	VirtualServices       []*networking_v1beta1.VirtualService
 	WorkloadsPerNamespace map[string]models.WorkloadList
 }
 
@@ -32,7 +32,7 @@ func (n GatewayReferences) References() models.IstioReferencesMap {
 	return result
 }
 
-func (n GatewayReferences) getWorkloadReferences(gw networking_v1beta1.Gateway) []models.WorkloadReference {
+func (n GatewayReferences) getWorkloadReferences(gw *networking_v1beta1.Gateway) []models.WorkloadReference {
 	result := make([]models.WorkloadReference, 0)
 	selector := labels.SelectorFromSet(gw.Spec.Selector)
 
@@ -48,20 +48,20 @@ func (n GatewayReferences) getWorkloadReferences(gw networking_v1beta1.Gateway) 
 	return result
 }
 
-func (n GatewayReferences) getConfigReferences(gw networking_v1beta1.Gateway) []models.IstioReference {
+func (n GatewayReferences) getConfigReferences(gw *networking_v1beta1.Gateway) []models.IstioReference {
 	keys := make(map[string]bool)
 	result := make([]models.IstioReference, 0)
 	allVSs := make([]models.IstioReference, 0)
 	for _, vs := range n.VirtualServices {
-		namespace, clusterName := vs.Namespace, vs.ClusterName
-		if len(vs.Spec.Gateways) > 0 && isGatewayListed(gw, vs.Spec.Gateways, namespace, clusterName) {
+		namespace := vs.Namespace
+		if len(vs.Spec.Gateways) > 0 && isGatewayListed(gw, vs.Spec.Gateways, namespace) {
 			allVSs = append(allVSs, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
 		}
 		if len(vs.Spec.Http) > 0 {
 			for _, httpRoute := range vs.Spec.Http {
 				if httpRoute != nil {
 					for _, match := range httpRoute.Match {
-						if match != nil && isGatewayListed(gw, match.Gateways, namespace, clusterName) {
+						if match != nil && isGatewayListed(gw, match.Gateways, namespace) {
 							allVSs = append(allVSs, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
 						}
 					}
@@ -72,7 +72,7 @@ func (n GatewayReferences) getConfigReferences(gw networking_v1beta1.Gateway) []
 			for _, tlsRoute := range vs.Spec.Tls {
 				if tlsRoute != nil {
 					for _, match := range tlsRoute.Match {
-						if match != nil && isGatewayListed(gw, match.Gateways, namespace, clusterName) {
+						if match != nil && isGatewayListed(gw, match.Gateways, namespace) {
 							allVSs = append(allVSs, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
 						}
 					}
@@ -91,10 +91,10 @@ func (n GatewayReferences) getConfigReferences(gw networking_v1beta1.Gateway) []
 	return result
 }
 
-func isGatewayListed(gw networking_v1beta1.Gateway, gateways []string, namespace string, clusterName string) bool {
-	hostname := kubernetes.ParseGatewayAsHost(gw.Name, gw.Namespace, gw.ClusterName)
+func isGatewayListed(gw *networking_v1beta1.Gateway, gateways []string, namespace string) bool {
+	hostname := kubernetes.ParseGatewayAsHost(gw.Name, gw.Namespace)
 	for _, gate := range gateways {
-		gwHostname := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName)
+		gwHostname := kubernetes.ParseGatewayAsHost(gate, namespace)
 		if hostname.String() == gwHostname.String() {
 			return true
 		}

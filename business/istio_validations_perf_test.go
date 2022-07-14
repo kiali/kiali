@@ -61,14 +61,14 @@ func fakeIstioConfigListPerf(numNs, numDr, numVs, numGw int) *models.IstioConfig
 		d := 0
 		for d < numDr {
 			istioConfigList.DestinationRules = append(istioConfigList.DestinationRules,
-				*data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule(fmt.Sprintf("test%d", n), fmt.Sprintf("product-dr%d", d), fmt.Sprintf("product%d", d))),
-				*data.CreateEmptyDestinationRule(fmt.Sprintf("test%d", n), fmt.Sprintf("customer-dr%d", d), fmt.Sprintf("customer%d", d)))
+				data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule(fmt.Sprintf("test%d", n), fmt.Sprintf("product-dr%d", d), fmt.Sprintf("product%d", d))),
+				data.CreateEmptyDestinationRule(fmt.Sprintf("test%d", n), fmt.Sprintf("customer-dr%d", d), fmt.Sprintf("customer%d", d)))
 			d++
 		}
 		v := 0
 		for v < numVs {
 			istioConfigList.VirtualServices = append(istioConfigList.VirtualServices,
-				*data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination(fmt.Sprintf("product-%d", v), "v1", -1),
+				data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination(fmt.Sprintf("product-%d", v), "v1", -1),
 					data.AddTcpRoutesToVirtualService(data.CreateTcpRoute(fmt.Sprintf("product2-%d", v), "v1", -1),
 						data.CreateEmptyVirtualService(fmt.Sprintf("product-vs%d", v), fmt.Sprintf("test%d", n), []string{fmt.Sprintf("product%d", v)}))))
 			v++

@@ -11,9 +11,9 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForGateway(gw *networking_v1beta1.Gateway, vss []networking_v1beta1.VirtualService) models.IstioReferences {
+func prepareTestForGateway(gw *networking_v1beta1.Gateway, vss []*networking_v1beta1.VirtualService) models.IstioReferences {
 	gwReferences := GatewayReferences{
-		Gateways:        []networking_v1beta1.Gateway{*gw},
+		Gateways:        []*networking_v1beta1.Gateway{gw},
 		VirtualServices: vss,
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
 			"test": data.CreateWorkloadList("istio-system",
@@ -67,7 +67,7 @@ func fakeGateway(t *testing.T) *networking_v1beta1.Gateway {
 	return gwObject
 }
 
-func fakeVirtualServices(t *testing.T) []networking_v1beta1.VirtualService {
+func fakeVirtualServices(t *testing.T) []*networking_v1beta1.VirtualService {
 	loader := yamlFixtureLoader("multiple-vs-gateways.yaml")
 	err := loader.Load()
 	if err != nil {

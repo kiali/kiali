@@ -8,7 +8,7 @@ import (
 )
 
 type NamespaceMtlsChecker struct {
-	PeerAuthn   security_v1beta.PeerAuthentication
+	PeerAuthn   *security_v1beta.PeerAuthentication
 	MTLSDetails kubernetes.MTLSDetails
 }
 

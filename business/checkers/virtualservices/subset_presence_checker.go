@@ -11,8 +11,8 @@ import (
 
 type SubsetPresenceChecker struct {
 	Namespaces       []string
-	DestinationRules []networking_v1beta1.DestinationRule
-	VirtualService   networking_v1beta1.VirtualService
+	DestinationRules []*networking_v1beta1.DestinationRule
+	VirtualService   *networking_v1beta1.VirtualService
 }
 
 func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
@@ -108,14 +108,14 @@ func (checker SubsetPresenceChecker) subsetPresent(host string, subset string) b
 	return false
 }
 
-func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost string) ([]networking_v1beta1.DestinationRule, bool) {
-	drs := make([]networking_v1beta1.DestinationRule, 0, len(checker.DestinationRules))
+func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost string) ([]*networking_v1beta1.DestinationRule, bool) {
+	drs := make([]*networking_v1beta1.DestinationRule, 0, len(checker.DestinationRules))
 
 	for _, destinationRule := range checker.DestinationRules {
 		host := destinationRule.Spec.Host
 
-		drHost := kubernetes.GetHost(host, destinationRule.Namespace, destinationRule.ClusterName, checker.Namespaces)
-		vsHost := kubernetes.GetHost(virtualServiceHost, checker.VirtualService.Namespace, checker.VirtualService.ClusterName, checker.Namespaces)
+		drHost := kubernetes.GetHost(host, destinationRule.Namespace, checker.Namespaces)
+		vsHost := kubernetes.GetHost(virtualServiceHost, checker.VirtualService.Namespace, checker.Namespaces)
 
 		// TODO Host could be in another namespace (FQDN)
 		if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace) {
@@ -126,7 +126,7 @@ func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost stri
 	return drs, len(drs) > 0
 }
 
-func hasSubsetDefined(destinationRule networking_v1beta1.DestinationRule, subsetTarget string) bool {
+func hasSubsetDefined(destinationRule *networking_v1beta1.DestinationRule, subsetTarget string) bool {
 	for _, subset := range destinationRule.Spec.Subsets {
 		if subset == nil {
 			continue

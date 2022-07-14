@@ -16,7 +16,7 @@ func TestSourceNamespaceExisting(t *testing.T) {
 	assert := assert.New(t)
 
 	validations, valid := NamespaceMethodChecker{
-		AuthorizationPolicy: *sourceNamespaceAuthPolicy([]string{"bookinfo", "bookinfo2"}),
+		AuthorizationPolicy: sourceNamespaceAuthPolicy([]string{"bookinfo", "bookinfo2"}),
 		Namespaces:          []string{"bookinfo", "bookinfo2"},
 	}.Check()
 
@@ -29,7 +29,7 @@ func TestSourceNamespaceNotFound(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NamespaceMethodChecker{
-		AuthorizationPolicy: *sourceNamespaceAuthPolicy([]string{"wrong1", "wrong2"}),
+		AuthorizationPolicy: sourceNamespaceAuthPolicy([]string{"wrong1", "wrong2"}),
 		Namespaces:          []string{"bookinfo"},
 	}.Check()
 
@@ -48,7 +48,7 @@ func TestToMethodWrongHTTP(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NamespaceMethodChecker{
-		AuthorizationPolicy: *toMethodsAuthPolicy([]string{
+		AuthorizationPolicy: toMethodsAuthPolicy([]string{
 			"GET", "/grpc.package/method", "/grpc.package/subpackage/subpackage/method",
 			"GOT", "WRONG", "/grpc.pkg/hello.method", "grpc.pkg/noinitialslash",
 		}),

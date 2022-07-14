@@ -13,7 +13,7 @@ import (
 const PeerAuthenticationCheckerType = "peerauthentication"
 
 type PeerAuthenticationChecker struct {
-	PeerAuthentications   []security_v1beta.PeerAuthentication
+	PeerAuthentications   []*security_v1beta.PeerAuthentication
 	MTLSDetails           kubernetes.MTLSDetails
 	WorkloadsPerNamespace map[string]models.WorkloadList
 }
@@ -31,7 +31,7 @@ func (m PeerAuthenticationChecker) Check() models.IstioValidations {
 }
 
 // runChecks runs all the individual checks for a single mesh policy and appends the result into validations.
-func (m PeerAuthenticationChecker) runChecks(peerAuthn security_v1beta.PeerAuthentication) models.IstioValidations {
+func (m PeerAuthenticationChecker) runChecks(peerAuthn *security_v1beta.PeerAuthentication) models.IstioValidations {
 	peerAuthnName := peerAuthn.Name
 	key, rrValidation := EmptyValidValidation(peerAuthnName, peerAuthn.Namespace, PeerAuthenticationCheckerType)
 

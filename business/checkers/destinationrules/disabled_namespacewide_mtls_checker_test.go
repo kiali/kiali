@@ -25,13 +25,13 @@ func TestDRNSWideDisablingTLSPolicyPermissive(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		PeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
+		PeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
 
-	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, false)
-	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, true)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, false)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
@@ -45,13 +45,13 @@ func TestDRNSWideDisablingTLSPolicyDisable(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		PeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("DISABLE")),
+		PeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("DISABLE")),
 		},
 	}
 
-	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, false)
-	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, true)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, false)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
@@ -66,16 +66,16 @@ func TestDRNSWideDisablingTLSPolicyPermissiveMeshStrict(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		PeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
+		PeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
 		},
-		MeshPeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
+		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
 
-	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, false)
-	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, true)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, false)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
@@ -86,13 +86,13 @@ func TestDRNSWideDisablingTLSPolicyStrict(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		PeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("STRICT")),
+		PeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("STRICT")),
 		},
 	}
 
-	testDisabledMtlsValidationsFound(t, "destinationrules.mtls.policymtlsenabled", *destinationRule, mTlsDetails, false)
-	testDisabledMtlsValidationsFound(t, "destinationrules.mtls.policymtlsenabled", *destinationRule, mTlsDetails, true)
+	testDisabledMtlsValidationsFound(t, "destinationrules.mtls.policymtlsenabled", destinationRule, mTlsDetails, false)
+	testDisabledMtlsValidationsFound(t, "destinationrules.mtls.policymtlsenabled", destinationRule, mTlsDetails, true)
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
@@ -104,13 +104,13 @@ func TestDRNSWideDisablingTLSMeshPolicyStrict(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
+		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
 
-	testDisabledMtlsValidationsFound(t, "destinationrules.mtls.meshpolicymtlsenabled", *destinationRule, mTlsDetails, false)
-	testDisabledMtlsValidationsFound(t, "destinationrules.mtls.meshpolicymtlsenabled", *destinationRule, mTlsDetails, true)
+	testDisabledMtlsValidationsFound(t, "destinationrules.mtls.meshpolicymtlsenabled", destinationRule, mTlsDetails, false)
+	testDisabledMtlsValidationsFound(t, "destinationrules.mtls.meshpolicymtlsenabled", destinationRule, mTlsDetails, true)
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
@@ -122,13 +122,13 @@ func TestDRNSWideDisablingTLSMeshPolicyPermissive(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
+		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
 
-	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, false)
-	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, true)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, false)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
@@ -141,8 +141,8 @@ func TestDRNSWideDisablingTLSWithoutPolicy(t *testing.T) {
 
 	mTlsDetails := kubernetes.MTLSDetails{}
 
-	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, false)
-	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, true)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, false)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
 }
 
 // Context: There isn't any ns-wide DestinationRule defining mTLS connections
@@ -153,8 +153,8 @@ func TestDRNonTLSRelated(t *testing.T) {
 
 	mTlsDetails := kubernetes.MTLSDetails{}
 
-	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, false)
-	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, true)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, false)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
 }
 
 // Context: mTLS is strict at MESH-level
@@ -164,22 +164,22 @@ func TestMtlsStrictNsDisable(t *testing.T) {
 	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateDisabledMTLSTrafficPolicyForDestinationRules(), data.CreateEmptyDestinationRule("bookinfo", "dr-mtls-disabled", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
+		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
-		PeerAuthentications: []security_v1beta1.PeerAuthentication{
-			*data.CreateEmptyPeerAuthentication("disable-bookinfo", "bookinfo", data.CreateMTLS("DISABLE")),
+		PeerAuthentications: []*security_v1beta1.PeerAuthentication{
+			data.CreateEmptyPeerAuthentication("disable-bookinfo", "bookinfo", data.CreateMTLS("DISABLE")),
 		},
-		DestinationRules: []networking_v1beta1.DestinationRule{
-			*data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(), data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local")),
+		DestinationRules: []*networking_v1beta1.DestinationRule{
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(), data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local")),
 		},
 	}
 
-	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, false)
-	testNoDisabledMtlsValidationsFound(t, *destinationRule, mTlsDetails, true)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, false)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
 }
 
-func testNoDisabledMtlsValidationsFound(t *testing.T, destinationRule networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
+func testNoDisabledMtlsValidationsFound(t *testing.T, destinationRule *networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
@@ -196,7 +196,7 @@ func testNoDisabledMtlsValidationsFound(t *testing.T, destinationRule networking
 	assert.True(valid)
 }
 
-func testDisabledMtlsValidationsFound(t *testing.T, validationId string, destinationRule networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
+func testDisabledMtlsValidationsFound(t *testing.T, validationId string, destinationRule *networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
 	conf := config.NewConfig()
 	config.Set(conf)
 

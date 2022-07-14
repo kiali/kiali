@@ -8,7 +8,7 @@ import (
 )
 
 type MeshWideMTLSChecker struct {
-	DestinationRule networking_v1beta1.DestinationRule
+	DestinationRule *networking_v1beta1.DestinationRule
 	MTLSDetails     kubernetes.MTLSDetails
 }
 

@@ -17,7 +17,7 @@ import (
 const objectType = "authorizationpolicy"
 
 type MtlsEnabledChecker struct {
-	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
+	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
 	MtlsDetails           kubernetes.MTLSDetails
 	ServiceEntries        []networking_v1beta1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
@@ -34,7 +34,7 @@ func (c MtlsEnabledChecker) Check() models.IstioValidations {
 		}
 		receiveMtlsTraffic := c.IsMtlsEnabledFor(matchLabels, ap.Namespace)
 		if !receiveMtlsTraffic {
-			if need, paths := needsMtls(&ap); need {
+			if need, paths := needsMtls(ap); need {
 				checks := make([]*models.IstioCheck, 0)
 				key := models.BuildKey(objectType, ap.Name, ap.Namespace)
 

@@ -76,25 +76,22 @@ func TestFilterGateways(t *testing.T) {
 	vs1 := networking_v1beta1.VirtualService{}
 	vs1.Name = "reviews"
 	vs1.Namespace = "bookinfo"
-	vs1.ClusterName = "svc.cluster.local"
 	vs1.Spec.Hosts = []string{"reviews"}
 	vs1.Spec.Gateways = []string{"bookinfo/gateway1", "bookinfo2/gateway2", "wronggateway", "bookinfo2/wronggateway2"}
 
 	vs2 := networking_v1beta1.VirtualService{}
 	vs2.Name = "ratings"
 	vs2.Namespace = "bookinfo"
-	vs2.ClusterName = "svc.cluster.local"
 	vs2.Spec.Hosts = []string{"ratings"}
 	vs2.Spec.Gateways = []string{"gateway4", "gateway2"}
 
 	vs3 := networking_v1beta1.VirtualService{}
 	vs3.Name = "details"
 	vs3.Namespace = "bookinfo"
-	vs3.ClusterName = "svc.cluster.local"
 	vs3.Spec.Hosts = []string{"details"}
 	vs3.Spec.Gateways = []string{"gateway1", "bookinfo3/gateway3", "wronggateway2"}
 
-	virtualServices := []networking_v1beta1.VirtualService{vs1, vs2, vs3}
+	virtualServices := []*networking_v1beta1.VirtualService{&vs1, &vs2, &vs3}
 
 	gw1 := networking_v1beta1.Gateway{}
 	gw1.Name = "gateway1"
@@ -116,7 +113,7 @@ func TestFilterGateways(t *testing.T) {
 	gw5.Name = "gateway5"
 	gw5.Namespace = "bookinfo2"
 
-	gateways := []networking_v1beta1.Gateway{gw1, gw2, gw3, gw4, gw5}
+	gateways := []*networking_v1beta1.Gateway{&gw1, &gw2, &gw3, &gw4, &gw5}
 
 	filtered := FilterGatewaysByVirtualServices(gateways, virtualServices)
 	assert.Len(filtered, 4)

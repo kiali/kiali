@@ -244,18 +244,18 @@ func ParseRegistryEndpoints(endpoints map[string][]byte) ([]*RegistryEndpoint, e
 
 func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, error) {
 	registry := RegistryConfiguration{
-		DestinationRules: []networking_v1beta1.DestinationRule{},
-		EnvoyFilters:     []networking_v1alpha3.EnvoyFilter{},
-		Gateways:         []networking_v1beta1.Gateway{},
-		VirtualServices:  []networking_v1beta1.VirtualService{},
-		ServiceEntries:   []networking_v1beta1.ServiceEntry{},
-		Sidecars:         []networking_v1beta1.Sidecar{},
-		WorkloadEntries:  []networking_v1beta1.WorkloadEntry{},
-		WorkloadGroups:   []networking_v1beta1.WorkloadGroup{},
+		DestinationRules: []*networking_v1beta1.DestinationRule{},
+		EnvoyFilters:     []*networking_v1alpha3.EnvoyFilter{},
+		Gateways:         []*networking_v1beta1.Gateway{},
+		VirtualServices:  []*networking_v1beta1.VirtualService{},
+		ServiceEntries:   []*networking_v1beta1.ServiceEntry{},
+		Sidecars:         []*networking_v1beta1.Sidecar{},
+		WorkloadEntries:  []*networking_v1beta1.WorkloadEntry{},
+		WorkloadGroups:   []*networking_v1beta1.WorkloadGroup{},
 
-		AuthorizationPolicies:  []security_v1beta1.AuthorizationPolicy{},
-		PeerAuthentications:    []security_v1beta1.PeerAuthentication{},
-		RequestAuthentications: []security_v1beta1.RequestAuthentication{},
+		AuthorizationPolicies:  []*security_v1beta1.AuthorizationPolicy{},
+		PeerAuthentications:    []*security_v1beta1.PeerAuthentication{},
+		RequestAuthentications: []*security_v1beta1.RequestAuthentication{},
 	}
 	isRegistryLoaded := false
 	for istiod, bRegistry := range config {
@@ -286,77 +286,77 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 						}
 						switch kind {
 						case "DestinationRule":
-							var dr networking_v1beta1.DestinationRule
+							var dr *networking_v1beta1.DestinationRule
 							err := bDec.Decode(&dr)
 							if err != nil {
 								log.Errorf("Error parsing RegistryConfig results for DestinationRule: %s", err)
 							}
 							registry.DestinationRules = append(registry.DestinationRules, dr)
 						case "EnvoyFilter":
-							var ef networking_v1alpha3.EnvoyFilter
+							var ef *networking_v1alpha3.EnvoyFilter
 							err := bDec.Decode(&ef)
 							if err != nil {
 								log.Errorf("Error parsing RegistryConfig results for EnvoyFilter: %s", err)
 							}
 							registry.EnvoyFilters = append(registry.EnvoyFilters, ef)
 						case "Gateway":
-							var gw networking_v1beta1.Gateway
+							var gw *networking_v1beta1.Gateway
 							err := bDec.Decode(&gw)
 							if err != nil {
 								log.Errorf("Error parsing RegistryConfig results for Gateways: %s", err)
 							}
 							registry.Gateways = append(registry.Gateways, gw)
 						case "ServiceEntry":
-							var se networking_v1beta1.ServiceEntry
+							var se *networking_v1beta1.ServiceEntry
 							err := bDec.Decode(&se)
 							if err != nil {
 								log.Errorf("Error parsing RegistryConfig results for Gateways: %s", err)
 							}
 							registry.ServiceEntries = append(registry.ServiceEntries, se)
 						case "Sidecar":
-							var sc networking_v1beta1.Sidecar
+							var sc *networking_v1beta1.Sidecar
 							err := bDec.Decode(&sc)
 							if err != nil {
 								log.Errorf("Error parsing RegistryConfig results for Gateways: %s", err)
 							}
 							registry.Sidecars = append(registry.Sidecars, sc)
 						case "VirtualService":
-							var vs networking_v1beta1.VirtualService
+							var vs *networking_v1beta1.VirtualService
 							err := bDec.Decode(&vs)
 							if err != nil {
 								log.Errorf("Error parsing RegistryConfig results for Gateways: %s", err)
 							}
 							registry.VirtualServices = append(registry.VirtualServices, vs)
 						case "WorkloadEntry":
-							var we networking_v1beta1.WorkloadEntry
+							var we *networking_v1beta1.WorkloadEntry
 							err := bDec.Decode(&we)
 							if err != nil {
 								log.Errorf("Error parsing RegistryConfig results for Gateways: %s", err)
 							}
 							registry.WorkloadEntries = append(registry.WorkloadEntries, we)
 						case "WorkloadGroup":
-							var wg networking_v1beta1.WorkloadGroup
+							var wg *networking_v1beta1.WorkloadGroup
 							err := bDec.Decode(&wg)
 							if err != nil {
 								log.Errorf("Error parsing RegistryConfig results for WorkloadGroup: %s", err)
 							}
 							registry.WorkloadGroups = append(registry.WorkloadGroups, wg)
 						case "AuthorizationPolicy":
-							var ap security_v1beta1.AuthorizationPolicy
+							var ap *security_v1beta1.AuthorizationPolicy
 							err := bDec.Decode(&ap)
 							if err != nil {
 								log.Errorf("Error parsing RegistryConfig results for AuthorizationPolicies: %s", err)
 							}
 							registry.AuthorizationPolicies = append(registry.AuthorizationPolicies, ap)
 						case "PeerAuthentication":
-							var pa security_v1beta1.PeerAuthentication
+							var pa *security_v1beta1.PeerAuthentication
 							err := bDec.Decode(&pa)
 							if err != nil {
 								log.Errorf("Error parsing RegistryConfig results for AuthorizationPolicies: %s", err)
 							}
 							registry.PeerAuthentications = append(registry.PeerAuthentications, pa)
 						case "RequestAuthentication":
-							var ra security_v1beta1.RequestAuthentication
+							var ra *security_v1beta1.RequestAuthentication
 							err := bDec.Decode(&ra)
 							if err != nil {
 								log.Errorf("Error parsing RegistryConfig results for RequestAuthentication: %s", err)
@@ -455,7 +455,7 @@ func GetIstioConfigMap(istioConfig *core_v1.ConfigMap) (*IstioMeshConfig, error)
 
 // ServiceEntryHostnames returns a list of hostnames defined in the ServiceEntries Specs. Key in the resulting map is the protocol (in lowercase) + hostname
 // exported for test
-func ServiceEntryHostnames(serviceEntries []networking_v1beta1.ServiceEntry) map[string][]string {
+func ServiceEntryHostnames(serviceEntries []*networking_v1beta1.ServiceEntry) map[string][]string {
 	hostnames := make(map[string][]string)
 
 	for _, v := range serviceEntries {
@@ -548,25 +548,21 @@ func MatchPortAppProtocolWithValidProtocols(appProtocol *string) bool {
 }
 
 // GatewayNames extracts the gateway names for easier matching
-func GatewayNames(gateways []networking_v1beta1.Gateway) map[string]struct{} {
+func GatewayNames(gateways []*networking_v1beta1.Gateway) map[string]struct{} {
 	var empty struct{}
 	names := make(map[string]struct{})
 	for _, gw := range gateways {
-		clusterName := gw.ClusterName
-		if clusterName == "" {
-			clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
-		}
-		names[ParseHost(gw.Name, gw.Namespace, clusterName).String()] = empty
+		names[ParseHost(gw.Name, gw.Namespace).String()] = empty
 	}
 	return names
 }
 
-func PeerAuthnHasStrictMTLS(peerAuthn security_v1beta1.PeerAuthentication) bool {
+func PeerAuthnHasStrictMTLS(peerAuthn *security_v1beta1.PeerAuthentication) bool {
 	_, mode := PeerAuthnHasMTLSEnabled(peerAuthn)
 	return mode == "STRICT"
 }
 
-func PeerAuthnHasMTLSEnabled(peerAuthn security_v1beta1.PeerAuthentication) (bool, string) {
+func PeerAuthnHasMTLSEnabled(peerAuthn *security_v1beta1.PeerAuthentication) (bool, string) {
 	// It is no globally enabled when has targets
 	if peerAuthn.Spec.Selector != nil && len(peerAuthn.Spec.Selector.MatchLabels) >= 0 {
 		return false, ""
@@ -574,7 +570,7 @@ func PeerAuthnHasMTLSEnabled(peerAuthn security_v1beta1.PeerAuthentication) (boo
 	return PeerAuthnMTLSMode(peerAuthn)
 }
 
-func PeerAuthnMTLSMode(peerAuthn security_v1beta1.PeerAuthentication) (bool, string) {
+func PeerAuthnMTLSMode(peerAuthn *security_v1beta1.PeerAuthentication) (bool, string) {
 	// It is globally enabled when mtls is in STRICT mode
 	if peerAuthn.Spec.Mtls != nil {
 		mode := peerAuthn.Spec.Mtls.Mode.String()
@@ -583,27 +579,27 @@ func PeerAuthnMTLSMode(peerAuthn security_v1beta1.PeerAuthentication) (bool, str
 	return false, ""
 }
 
-func DestinationRuleHasMeshWideMTLSEnabled(destinationRule networking_v1beta1.DestinationRule) (bool, string) {
+func DestinationRuleHasMeshWideMTLSEnabled(destinationRule *networking_v1beta1.DestinationRule) (bool, string) {
 	// Following the suggested procedure to enable mesh-wide mTLS, host might be '*.local':
 	// https://istio.io/docs/tasks/security/authn-policy/#globally-enabling-istio-mutual-tls
 	return DestinationRuleHasMTLSEnabledForHost("*.local", destinationRule)
 }
 
-func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule networking_v1beta1.DestinationRule) (bool, string) {
+func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule *networking_v1beta1.DestinationRule) (bool, string) {
 	// Following the suggested procedure to enable namespace-wide mTLS, host might be '*.namespace.svc.cluster.local'
 	// https://istio.io/docs/tasks/security/authn-policy/#namespace-wide-policy
 	nsHost := fmt.Sprintf("*.%s.%s", namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain)
 	return DestinationRuleHasMTLSEnabledForHost(nsHost, destinationRule)
 }
 
-func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule networking_v1beta1.DestinationRule) (bool, string) {
+func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule *networking_v1beta1.DestinationRule) (bool, string) {
 	if destinationRule.Spec.Host == "" || destinationRule.Spec.Host != expectedHost {
 		return false, ""
 	}
 	return DestinationRuleHasMTLSEnabled(destinationRule)
 }
 
-func DestinationRuleHasMTLSEnabled(destinationRule networking_v1beta1.DestinationRule) (bool, string) {
+func DestinationRuleHasMTLSEnabled(destinationRule *networking_v1beta1.DestinationRule) (bool, string) {
 	if destinationRule.Spec.TrafficPolicy != nil && destinationRule.Spec.TrafficPolicy.Tls != nil {
 		mode := destinationRule.Spec.TrafficPolicy.Tls.Mode.String()
 		return mode == "ISTIO_MUTUAL", mode

@@ -11,7 +11,7 @@ import (
 type UncoveredWorkloadChecker struct {
 	Workload              models.WorkloadListItem
 	Namespace             string
-	AuthorizationPolicies []security_v1beta.AuthorizationPolicy
+	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
 }
 
 func (ucw UncoveredWorkloadChecker) Check() ([]*models.IstioCheck, bool) {

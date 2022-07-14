@@ -15,7 +15,7 @@ func TestPresentServiceAccount(t *testing.T) {
 	assert := assert.New(t)
 
 	validations, valid := PrincipalsChecker{
-		AuthorizationPolicy: *authPolicyWithPrincipals([]string{"cluster.local/ns/bookinfo/sa/default", "cluster.local/ns/bookinfo/sa/test"}),
+		AuthorizationPolicy: authPolicyWithPrincipals([]string{"cluster.local/ns/bookinfo/sa/default", "cluster.local/ns/bookinfo/sa/test"}),
 		ServiceAccounts:     []string{"cluster.local/ns/bookinfo/sa/default", "cluster.local/ns/bookinfo/sa/test"},
 	}.Check()
 
@@ -28,7 +28,7 @@ func TestEmptyPrincipals(t *testing.T) {
 	assert := assert.New(t)
 
 	validations, valid := PrincipalsChecker{
-		AuthorizationPolicy: *authPolicyWithPrincipals([]string{}),
+		AuthorizationPolicy: authPolicyWithPrincipals([]string{}),
 		ServiceAccounts:     []string{"cluster.local/ns/bookinfo/sa/default", "cluster.local/ns/bookinfo/sa/test"},
 	}.Check()
 
@@ -41,7 +41,7 @@ func TestNotPresentServiceAccount(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := PrincipalsChecker{
-		AuthorizationPolicy: *authPolicyWithPrincipals([]string{"cluster.local/ns/bookinfo/sa/wrong", "test"}),
+		AuthorizationPolicy: authPolicyWithPrincipals([]string{"cluster.local/ns/bookinfo/sa/wrong", "test"}),
 		ServiceAccounts:     []string{"cluster.local/ns/bookinfo/sa/default", "cluster.local/ns/bookinfo/sa/test"},
 	}.Check()
 
@@ -61,7 +61,7 @@ func TestEmptyServiceAccount(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := PrincipalsChecker{
-		AuthorizationPolicy: *authPolicyWithPrincipals([]string{"cluster.local/ns/bookinfo/sa/wrong"}),
+		AuthorizationPolicy: authPolicyWithPrincipals([]string{"cluster.local/ns/bookinfo/sa/wrong"}),
 		ServiceAccounts:     []string{},
 	}.Check()
 

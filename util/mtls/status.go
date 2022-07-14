@@ -16,8 +16,8 @@ const (
 )
 
 type MtlsStatus struct {
-	PeerAuthentications []security_v1beta.PeerAuthentication
-	DestinationRules    []networking_v1beta1.DestinationRule
+	PeerAuthentications []*security_v1beta.PeerAuthentication
+	DestinationRules    []*networking_v1beta1.DestinationRule
 	MatchingLabels      labels.Labels
 	AutoMtlsEnabled     bool
 	AllowPermissive     bool

@@ -20,10 +20,10 @@ func prepareTestForServiceEntry(ap *security_v1beta.AuthorizationPolicy, dr *net
 			{Name: "bookinfo2"},
 			{Name: "bookinfo3"},
 		},
-		AuthorizationPolicies: []security_v1beta.AuthorizationPolicy{*ap},
-		ServiceEntries:        []networking_v1beta1.ServiceEntry{*se},
-		Sidecars:              []networking_v1beta1.Sidecar{*sc},
-		DestinationRules:      []networking_v1beta1.DestinationRule{*dr},
+		AuthorizationPolicies: []*security_v1beta.AuthorizationPolicy{ap},
+		ServiceEntries:        []*networking_v1beta1.ServiceEntry{se},
+		Sidecars:              []*networking_v1beta1.Sidecar{sc},
+		DestinationRules:      []*networking_v1beta1.DestinationRule{dr},
 		RegistryServices:      append(data.CreateFakeRegistryServices("foo-dev.bookinfo.svc.cluster.local", "bookinfo", "."), data.CreateFakeRegistryServices("foo-dev.istio-system.svc.cluster.local", "istio-system", "*")...),
 	}
 	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "serviceentry", Namespace: se.Namespace, Name: se.Name}]

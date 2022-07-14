@@ -80,7 +80,7 @@ NODES:
 		switch {
 		case n.NodeType == graph.NodeTypeService:
 			for _, destinationRule := range istioCfg.DestinationRules {
-				if models.HasDRCircuitBreaker(&destinationRule, namespace, n.Service, "") {
+				if models.HasDRCircuitBreaker(destinationRule, namespace, n.Service, "") {
 					n.Metadata[graph.HasCB] = true
 					continue NODES
 				}
@@ -89,7 +89,7 @@ NODES:
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(graph.DestServicesMetadata) {
 					for _, destinationRule := range istioCfg.DestinationRules {
-						if models.HasDRCircuitBreaker(&destinationRule, ds.Namespace, ds.Name, "") {
+						if models.HasDRCircuitBreaker(destinationRule, ds.Namespace, ds.Name, "") {
 							n.Metadata[graph.HasCB] = true
 							continue NODES
 						}
@@ -100,7 +100,7 @@ NODES:
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(graph.DestServicesMetadata) {
 					for _, destinationRule := range istioCfg.DestinationRules {
-						if models.HasDRCircuitBreaker(&destinationRule, ds.Namespace, ds.Name, n.Version) {
+						if models.HasDRCircuitBreaker(destinationRule, ds.Namespace, ds.Name, n.Version) {
 							n.Metadata[graph.HasCB] = true
 							continue NODES
 						}
@@ -120,7 +120,7 @@ NODES:
 			continue
 		}
 		for _, virtualService := range istioCfg.VirtualServices {
-			if models.IsVSValidHost(&virtualService, n.Namespace, n.Service) {
+			if models.IsVSValidHost(virtualService, n.Namespace, n.Service) {
 				var vsMetadata graph.VirtualServicesMetadata
 				var vsOk bool
 				if vsMetadata, vsOk = n.Metadata[graph.HasVS].(graph.VirtualServicesMetadata); !vsOk {
@@ -132,27 +132,27 @@ NODES:
 					vsMetadata[virtualService.Name] = virtualService.Spec.Hosts
 				}
 
-				if models.HasVSRequestRouting(&virtualService) {
+				if models.HasVSRequestRouting(virtualService) {
 					n.Metadata[graph.HasRequestRouting] = true
 				}
 
-				if models.HasVSRequestTimeout(&virtualService) {
+				if models.HasVSRequestTimeout(virtualService) {
 					n.Metadata[graph.HasRequestTimeout] = true
 				}
 
-				if models.HasVSFaultInjection(&virtualService) {
+				if models.HasVSFaultInjection(virtualService) {
 					n.Metadata[graph.HasFaultInjection] = true
 				}
 
-				if models.HasVSTrafficShifting(&virtualService) {
+				if models.HasVSTrafficShifting(virtualService) {
 					n.Metadata[graph.HasTrafficShifting] = true
 				}
 
-				if models.HasVSTCPTrafficShifting(&virtualService) {
+				if models.HasVSTCPTrafficShifting(virtualService) {
 					n.Metadata[graph.HasTCPTrafficShifting] = true
 				}
 
-				if models.HasVSMirroring(&virtualService) {
+				if models.HasVSMirroring(virtualService) {
 					n.Metadata[graph.HasMirroring] = true
 				}
 
@@ -213,7 +213,7 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 	}
 }
 
-func decorateMatchingGateways(gwCrd networking_v1beta1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
+func decorateMatchingGateways(gwCrd *networking_v1beta1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
 	gwSelector := labels.Set(gwCrd.Spec.Selector).AsSelector()
 	for gw, nodes := range gatewayNodeMapping {
 		if gwSelector.Matches(labels.Set(gw.Labels)) {
@@ -308,8 +308,8 @@ func (a IstioAppender) getIstioComponentWorkloads(component string, globalInfo *
 	return componentWorkloads
 }
 
-func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) []networking_v1beta1.Gateway {
-	retVal := []networking_v1beta1.Gateway{}
+func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) []*networking_v1beta1.Gateway {
+	retVal := []*networking_v1beta1.Gateway{}
 	for namespace := range a.AccessibleNamespaces {
 		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
 			IncludeGateways: true,
