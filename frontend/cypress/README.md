@@ -101,6 +101,22 @@ You can use the [perf hack script](../../hack/perf-ibmcloud-openshift.sh) to spi
 make -e CYPRESS_BASE_URL="https://<kiali-openshift-route>" -e CYPRESS_PASSWD="<IBMCloud API Key>" -e CYPRESS_USERNAME="IAM#<SSO-EMAIL>" -e CYPRESS_AUTH_PROVIDER="ibmcloud" perf-tests-gui
 ```
 
+#### Logging into your cluster on IBM Cloud:
+
+For `kubectl` or `oc` access to your cluster, use:
+
+```
+ibmcloud oc cluster config --cluster <cluster-name> --admin
+```
+
+#### Teardown cluster
+
+The cluster can be cleaned up with the `ibmcloud-openshift.sh` script. You must provide the cluster name without the trailing `-cluster` e.g. if your cluster is named `my-perf-cluster` you should pass `my-perf` as the name prefix (np).
+
+```
+./hack/ibmcloud-openshift.sh -np <cluster-name-without-trailing-cluster> delete
+```
+
 ## Testing Strategies
 
 
