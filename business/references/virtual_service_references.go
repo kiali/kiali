@@ -199,14 +199,14 @@ func getAllGateways(vs *networking_v1beta1.VirtualService) []models.IstioReferen
 	allGateways := make([]models.IstioReference, 0)
 	namespace := vs.Namespace
 	if len(vs.Spec.Gateways) > 0 {
-		allGateways = append(allGateways, getGatewayReferences(vs.Spec.Gateways, namespace, "")...)
+		allGateways = append(allGateways, getGatewayReferences(vs.Spec.Gateways, namespace)...)
 	}
 	if len(vs.Spec.Http) > 0 {
 		for _, httpRoute := range vs.Spec.Http {
 			if httpRoute != nil {
 				for _, match := range httpRoute.Match {
 					if match != nil && match.Gateways != nil {
-						allGateways = append(allGateways, getGatewayReferences(match.Gateways, namespace, "")...)
+						allGateways = append(allGateways, getGatewayReferences(match.Gateways, namespace)...)
 					}
 				}
 			}
@@ -218,7 +218,7 @@ func getAllGateways(vs *networking_v1beta1.VirtualService) []models.IstioReferen
 			if tlsRoute != nil {
 				for _, match := range tlsRoute.Match {
 					if match != nil {
-						allGateways = append(allGateways, getGatewayReferences(match.Gateways, namespace, "")...)
+						allGateways = append(allGateways, getGatewayReferences(match.Gateways, namespace)...)
 					}
 				}
 			}
@@ -227,10 +227,10 @@ func getAllGateways(vs *networking_v1beta1.VirtualService) []models.IstioReferen
 	return allGateways
 }
 
-func getGatewayReferences(gateways []string, namespace string, clusterName string) []models.IstioReference {
+func getGatewayReferences(gateways []string, namespace string) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 	for _, gate := range gateways {
-		gw := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName)
+		gw := kubernetes.ParseGatewayAsHost(gate, namespace)
 		if !gw.IsWildcard() {
 			if gate == "mesh" {
 				result = append(result, models.IstioReference{Name: gw.Service, ObjectType: models.ObjectTypeSingular[kubernetes.Gateways]})

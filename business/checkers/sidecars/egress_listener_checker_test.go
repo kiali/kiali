@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kiali/kiali/config"
 	"github.com/stretchr/testify/assert"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"

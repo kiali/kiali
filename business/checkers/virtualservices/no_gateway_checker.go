@@ -30,14 +30,14 @@ func (s NoGatewayChecker) ValidateVirtualServiceGateways(validations *[]*models.
 	valid := true
 
 	if len(s.VirtualService.Spec.Gateways) > 0 {
-		valid = s.checkGateways(s.VirtualService.Spec.Gateways, namespace, "", validations, "spec")
+		valid = s.checkGateways(s.VirtualService.Spec.Gateways, namespace, validations, "spec")
 	}
 	if len(s.VirtualService.Spec.Http) > 0 {
 		for index, httpRoute := range s.VirtualService.Spec.Http {
 			if httpRoute != nil {
 				for _, match := range httpRoute.Match {
 					if match != nil {
-						valid = valid && s.checkGateways(match.Gateways, namespace, "", validations, fmt.Sprintf("spec/http[%d]/match", index))
+						valid = valid && s.checkGateways(match.Gateways, namespace, validations, fmt.Sprintf("spec/http[%d]/match", index))
 					}
 				}
 			}
@@ -46,7 +46,7 @@ func (s NoGatewayChecker) ValidateVirtualServiceGateways(validations *[]*models.
 	return valid
 }
 
-func (s NoGatewayChecker) checkGateways(gateways []string, namespace, clusterName string, validations *[]*models.IstioCheck, location string) bool {
+func (s NoGatewayChecker) checkGateways(gateways []string, namespace string, validations *[]*models.IstioCheck, location string) bool {
 	result := true
 GatewaySearch:
 	for index, gate := range gateways {
@@ -57,7 +57,7 @@ GatewaySearch:
 		// Gateways should be using <namespace>/<gateway>
 		checkNomenclature(gate, index, validations)
 
-		hostname := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName)
+		hostname := kubernetes.ParseGatewayAsHost(gate, namespace)
 		for gw := range s.GatewayNames {
 			gwHostname := kubernetes.ParseHost(gw, namespace)
 			if found := kubernetes.FilterByHost(hostname.String(), hostname.Namespace, gw, gwHostname.Namespace); found {

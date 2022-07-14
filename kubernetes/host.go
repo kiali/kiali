@@ -236,10 +236,8 @@ func HostWithinWildcardHost(subdomain, wildcardDomain string) bool {
 	return len(wildcardDomain) > 2 && strings.HasSuffix(subdomain, wildcardDomain[2:])
 }
 
-func ParseGatewayAsHost(gateway, currentNamespace, currentCluster string) Host {
-	if currentCluster == "" {
-		currentCluster = config.Get().ExternalServices.Istio.IstioIdentityDomain
-	}
+func ParseGatewayAsHost(gateway, currentNamespace string) Host {
+	currentCluster := config.Get().ExternalServices.Istio.IstioIdentityDomain
 
 	host := Host{
 		Service:       gateway,
