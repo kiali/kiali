@@ -168,6 +168,7 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 	for _, ns := range nss {
 		if filtered[ns] == nil {
 			filtered[ns] = new(IstioConfigList)
+			filtered[ns].IstioValidations = IstioValidations{}
 			filtered[ns].Namespace = Namespace{Name: ns}
 		}
 		for _, dr := range configList.DestinationRules {
@@ -235,7 +236,11 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 				filtered[ns].RequestAuthentications = append(filtered[ns].RequestAuthentications, ra)
 			}
 		}
-		filtered[ns].IstioValidations = configList.IstioValidations
+		for k, v := range configList.IstioValidations {
+			if k.Namespace == ns {
+				filtered[ns].IstioValidations.MergeValidations(IstioValidations{k: v})
+			}
+		}
 	}
 	return &filtered
 }

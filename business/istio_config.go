@@ -140,17 +140,39 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		}
 		// AllNamespaces will return an empty namespace
 		istioConfigList.Namespace.Name = ""
-		istioConfigList.DestinationRules = registryConfiguration.DestinationRules
-		istioConfigList.EnvoyFilters = registryConfiguration.EnvoyFilters
-		istioConfigList.Gateways = registryConfiguration.Gateways
-		istioConfigList.VirtualServices = registryConfiguration.VirtualServices
-		istioConfigList.ServiceEntries = registryConfiguration.ServiceEntries
-		istioConfigList.Sidecars = registryConfiguration.Sidecars
-		istioConfigList.WorkloadEntries = registryConfiguration.WorkloadEntries
-		istioConfigList.WorkloadGroups = registryConfiguration.WorkloadGroups
-		istioConfigList.AuthorizationPolicies = registryConfiguration.AuthorizationPolicies
-		istioConfigList.PeerAuthentications = registryConfiguration.PeerAuthentications
-		istioConfigList.RequestAuthentications = registryConfiguration.RequestAuthentications
+		if criteria.Include(kubernetes.DestinationRules) {
+			istioConfigList.DestinationRules = registryConfiguration.DestinationRules
+		}
+		if criteria.Include(kubernetes.EnvoyFilters) {
+			istioConfigList.EnvoyFilters = registryConfiguration.EnvoyFilters
+		}
+		if criteria.Include(kubernetes.Gateways) {
+			istioConfigList.Gateways = registryConfiguration.Gateways
+		}
+		if criteria.Include(kubernetes.VirtualServices) {
+			istioConfigList.VirtualServices = registryConfiguration.VirtualServices
+		}
+		if criteria.Include(kubernetes.ServiceEntries) {
+			istioConfigList.ServiceEntries = registryConfiguration.ServiceEntries
+		}
+		if criteria.Include(kubernetes.Sidecars) {
+			istioConfigList.Sidecars = registryConfiguration.Sidecars
+		}
+		if criteria.Include(kubernetes.WorkloadEntries) {
+			istioConfigList.WorkloadEntries = registryConfiguration.WorkloadEntries
+		}
+		if criteria.Include(kubernetes.WorkloadGroups) {
+			istioConfigList.WorkloadGroups = registryConfiguration.WorkloadGroups
+		}
+		if criteria.Include(kubernetes.AuthorizationPolicies) {
+			istioConfigList.AuthorizationPolicies = registryConfiguration.AuthorizationPolicies
+		}
+		if criteria.Include(kubernetes.PeerAuthentications) {
+			istioConfigList.PeerAuthentications = registryConfiguration.PeerAuthentications
+		}
+		if criteria.Include(kubernetes.RequestAuthentications) {
+			istioConfigList.RequestAuthentications = registryConfiguration.RequestAuthentications
+		}
 
 		return istioConfigList, nil
 	}

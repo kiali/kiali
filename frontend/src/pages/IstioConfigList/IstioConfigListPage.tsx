@@ -27,7 +27,6 @@ import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
-import _ from "lodash";
 
 interface IstioConfigListPageState extends FilterComponent.State<IstioConfigItem> {}
 interface IstioConfigListPageProps extends FilterComponent.Props<IstioConfigItem> {
@@ -143,7 +142,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     return this.promises
       .registerAll(
         'configs',
-        namespaces.slice(0,1).map(_ => API.getAllIstioConfigs(namespaces, typeFilters, true, '', ''))
+        [""].map(_ => API.getAllIstioConfigs(namespaces, typeFilters, true, '', ''))
       )
       .then(responses => {
         let istioItems: IstioConfigItem[] = [];
