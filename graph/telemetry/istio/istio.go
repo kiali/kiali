@@ -104,7 +104,7 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, cl
 // nodes either directly send and/or receive requests from a node in the namespace.
 func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "buildNamespaceTrafficMap",
+	_, end = observability.StartSpan(ctx, "buildNamespaceTrafficMap",
 		observability.Attribute("package", "istio"),
 		observability.Attribute("namespace", namespace),
 	)
