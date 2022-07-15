@@ -17,6 +17,7 @@ type NoServiceChecker struct {
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	AuthorizationDetails  *kubernetes.RBACDetails
 	RegistryServices      []*kubernetes.RegistryService
+	PolicyAllowAny        bool
 }
 
 func (in NoServiceChecker) Check() models.IstioValidations {
@@ -30,17 +31,17 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	gatewayNames := kubernetes.GatewayNames(in.IstioConfigList.Gateways)
 
 	for _, virtualService := range in.IstioConfigList.VirtualServices {
-		validations.MergeValidations(runVirtualServiceCheck(virtualService, serviceHosts, in.Namespaces, in.RegistryServices))
+		validations.MergeValidations(runVirtualServiceCheck(virtualService, serviceHosts, in.Namespaces, in.RegistryServices, in.PolicyAllowAny))
 
 		validations.MergeValidations(runGatewayCheck(virtualService, gatewayNames))
 	}
 	for _, destinationRule := range in.IstioConfigList.DestinationRules {
-		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.WorkloadsPerNamespace, in.IstioConfigList.ServiceEntries, in.Namespaces, in.RegistryServices, in.IstioConfigList.VirtualServices))
+		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.WorkloadsPerNamespace, in.IstioConfigList.ServiceEntries, in.Namespaces, in.RegistryServices, in.IstioConfigList.VirtualServices, in.PolicyAllowAny))
 	}
 	return validations
 }
 
-func runVirtualServiceCheck(virtualService *networking_v1beta1.VirtualService, serviceHosts map[string][]string, clusterNamespaces models.Namespaces, registryStatus []*kubernetes.RegistryService) models.IstioValidations {
+func runVirtualServiceCheck(virtualService *networking_v1beta1.VirtualService, serviceHosts map[string][]string, clusterNamespaces models.Namespaces, registryStatus []*kubernetes.RegistryService, policyAllowAny bool) models.IstioValidations {
 	key, validations := EmptyValidValidation(virtualService.Name, virtualService.Namespace, VirtualCheckerType)
 
 	result, valid := virtualservices.NoHostChecker{
@@ -48,6 +49,7 @@ func runVirtualServiceCheck(virtualService *networking_v1beta1.VirtualService, s
 		VirtualService:    virtualService,
 		ServiceEntryHosts: serviceHosts,
 		RegistryServices:  registryStatus,
+		PolicyAllowAny:    policyAllowAny,
 	}.Check()
 
 	validations.Valid = valid
@@ -71,7 +73,7 @@ func runGatewayCheck(virtualService *networking_v1beta1.VirtualService, gatewayN
 }
 
 func runDestinationRuleCheck(destinationRule *networking_v1beta1.DestinationRule, workloads map[string]models.WorkloadList,
-	serviceEntries []*networking_v1beta1.ServiceEntry, clusterNamespaces models.Namespaces, registryStatus []*kubernetes.RegistryService, virtualServices []*networking_v1beta1.VirtualService) models.IstioValidations {
+	serviceEntries []*networking_v1beta1.ServiceEntry, clusterNamespaces models.Namespaces, registryStatus []*kubernetes.RegistryService, virtualServices []*networking_v1beta1.VirtualService, policyAllowAny bool) models.IstioValidations {
 	key, validations := EmptyValidValidation(destinationRule.Name, destinationRule.Namespace, DestinationRuleCheckerType)
 
 	result, valid := destinationrules.NoDestinationChecker{
@@ -81,6 +83,7 @@ func runDestinationRuleCheck(destinationRule *networking_v1beta1.DestinationRule
 		VirtualServices:       virtualServices,
 		ServiceEntries:        serviceEntries,
 		RegistryServices:      registryStatus,
+		PolicyAllowAny:        policyAllowAny,
 	}.Check()
 
 	validations.Valid = valid

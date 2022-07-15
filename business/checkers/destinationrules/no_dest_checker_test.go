@@ -630,11 +630,12 @@ func TestExportedExternalServiceEntryFail(t *testing.T) {
 	vals, valid := NoDestinationChecker{
 		ServiceEntries:  []*networking_v1beta1.ServiceEntry{se},
 		DestinationRule: dr,
+		PolicyAllowAny:  true,
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(vals)
-	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.Equal(models.WarningSeverity, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", vals[0]))
 	assert.Equal("spec/host", vals[0].Path)
 }

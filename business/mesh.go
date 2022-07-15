@@ -21,7 +21,10 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
-const DefaultClusterID = "Kubernetes"
+const (
+	DefaultClusterID = "Kubernetes"
+	AllowAny         = "ALLOW_ANY"
+)
 
 // MeshService is a support service for retrieving data about the mesh environment
 // when Istio is installed with multi-cluster enabled. Prefer initializing this

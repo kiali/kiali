@@ -156,11 +156,12 @@ func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
 		},
 		RegistryServices: append(registryService1, registryService2...),
 		VirtualService:   virtualService,
+		PolicyAllowAny:   true,
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(vals)
-	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.Equal(models.WarningSeverity, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", vals[0]))
 	assert.Equal("spec/tcp[0]/route[0]/destination/host", vals[0].Path)
 }

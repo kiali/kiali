@@ -15,6 +15,7 @@ type NoHostChecker struct {
 	VirtualService    *networking_v1beta1.VirtualService
 	ServiceEntryHosts map[string][]string
 	RegistryServices  []*kubernetes.RegistryService
+	PolicyAllowAny    bool
 }
 
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
@@ -34,6 +35,9 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 					if !n.checkDestination(fqdn.String(), namespace) {
 						path := fmt.Sprintf("spec/http[%d]/route[%d]/destination/host", k, i)
 						validation := models.Build("virtualservices.nohost.hostnotfound", path)
+						if n.PolicyAllowAny {
+							validation.Severity = models.WarningSeverity
+						}
 						validations = append(validations, &validation)
 						valid = false
 					}
@@ -54,6 +58,9 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 					if !n.checkDestination(fqdn.String(), namespace) {
 						path := fmt.Sprintf("spec/tcp[%d]/route[%d]/destination/host", k, i)
 						validation := models.Build("virtualservices.nohost.hostnotfound", path)
+						if n.PolicyAllowAny {
+							validation.Severity = models.WarningSeverity
+						}
 						validations = append(validations, &validation)
 						valid = false
 					}
@@ -74,6 +81,9 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 					if !n.checkDestination(fqdn.String(), namespace) {
 						path := fmt.Sprintf("spec/tls[%d]/route[%d]/destination/host", k, i)
 						validation := models.Build("virtualservices.nohost.hostnotfound", path)
+						if n.PolicyAllowAny {
+							validation.Severity = models.WarningSeverity
+						}
 						validations = append(validations, &validation)
 						valid = false
 					}
