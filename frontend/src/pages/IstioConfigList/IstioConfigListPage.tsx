@@ -142,7 +142,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     return this.promises
       .registerAll(
         'configs',
-        [""].map(_ => API.getAllIstioConfigs(namespaces, typeFilters, true, '', ''))
+        [""].map(_ => API.getAllIstioConfigs([], typeFilters, true, '', ''))
       )
       .then(responses => {
         let istioItems: IstioConfigItem[] = [];
@@ -153,20 +153,6 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
         });
         return istioItems;
         });
-  }
-
-  fetchIstioConfigChunks(chunk: string[], typeFilters: string[], istioNameFilters: string[], istioItems: IstioConfigItem[]) {
-    return Promise.all(
-      [
-        API.getAllIstioConfigs(chunk, typeFilters, true, '', '')
-      ]
-    )
-      .then( results => {
-          chunk.forEach(ns => {
-            istioItems = istioItems.concat(toIstioItems(filterByName(results[0].data[ns], istioNameFilters)));
-          })
-      })
-      .catch(err => this.handleAxiosError('Could not fetch Istio configs', err));
   }
 
   render() {
