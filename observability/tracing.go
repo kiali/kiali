@@ -42,7 +42,7 @@ func InitTracer(jaegerURL string) *sdktrace.TracerProvider {
 	}
 
 	tp := sdktrace.NewTracerProvider(
-		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(0.5))), // Sample half of traces.
+		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(config.Get().Server.Observability.Tracing.SamplingRate))),
 		sdktrace.WithBatcher(exporter),
 		// Record information about this application in an Resource.
 		sdktrace.WithResource(resource.NewWithAttributes(

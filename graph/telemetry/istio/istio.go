@@ -39,6 +39,7 @@ import (
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
@@ -53,7 +54,13 @@ var (
 )
 
 // BuildNamespacesTrafficMap is required by the graph/TelemtryVendor interface
-func BuildNamespacesTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "BuildNamespacesTrafficMap",
+		observability.Attribute("package", "istio"),
+	)
+	defer end()
+
 	log.Tracef("Build [%s] graph for [%d] namespaces [%v]", o.GraphType, len(o.Namespaces), o.Namespaces)
 
 	appenders, finalizers := appender.ParseAppenders(o)
@@ -61,14 +68,20 @@ func BuildNamespacesTrafficMap(o graph.TelemetryOptions, client *prometheus.Clie
 
 	for _, namespace := range o.Namespaces {
 		log.Tracef("Build traffic map for namespace [%v]", namespace)
-		namespaceTrafficMap := buildNamespaceTrafficMap(namespace.Name, o, client)
+		namespaceTrafficMap := buildNamespaceTrafficMap(ctx, namespace.Name, o, client)
 
 		// The appenders can add/remove/alter nodes for the namespace
 		namespaceInfo := graph.NewAppenderNamespaceInfo(namespace.Name)
 		for _, a := range appenders {
+			var appenderEnd observability.EndFunc
+			_, appenderEnd = observability.StartSpan(ctx, "Appender "+a.Name(),
+				observability.Attribute("package", "istio"),
+				observability.Attribute("namespace", namespace.Name),
+			)
 			appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
 			a.AppendGraph(namespaceTrafficMap, globalInfo, namespaceInfo)
 			appenderTimer.ObserveDuration()
+			appenderEnd()
 		}
 
 		// Merge this namespace into the final TrafficMap
@@ -89,7 +102,13 @@ func BuildNamespacesTrafficMap(o graph.TelemetryOptions, client *prometheus.Clie
 
 // buildNamespaceTrafficMap returns a map of all namespace nodes (key=id).  All
 // nodes either directly send and/or receive requests from a node in the namespace.
-func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
+func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "buildNamespaceTrafficMap",
+		observability.Attribute("package", "istio"),
+		observability.Attribute("namespace", namespace),
+	)
+	defer end()
 	// create map to aggregate traffic by protocol and response code
 	trafficMap := graph.NewTrafficMap()
 	duration := o.Namespaces[namespace].Duration
@@ -426,9 +445,9 @@ func timeSeriesHash(cluster, serviceNs, service, workloadNs, workload, app, vers
 }
 
 // BuildNodeTrafficMap is required by the graph/TelemtryVendor interface
-func BuildNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	if o.NodeOptions.Aggregate != "" {
-		return handleAggregateNodeTrafficMap(o, client, globalInfo)
+		return handleAggregateNodeTrafficMap(ctx, o, client, globalInfo)
 	}
 
 	n := graph.NewNode(o.NodeOptions.Cluster, o.NodeOptions.Namespace, o.NodeOptions.Service, o.NodeOptions.Namespace, o.NodeOptions.Workload, o.NodeOptions.App, o.NodeOptions.Version, o.GraphType)
@@ -436,7 +455,7 @@ func BuildNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, gl
 	log.Tracef("Build graph for node [%+v]", n)
 
 	appenders, finalizers := appender.ParseAppenders(o)
-	trafficMap := buildNodeTrafficMap(o.Cluster, o.NodeOptions.Namespace, n, o, client)
+	trafficMap := buildNodeTrafficMap(ctx, o.Cluster, o.NodeOptions.Namespace, n, o, client)
 
 	namespaceInfo := graph.NewAppenderNamespaceInfo(o.NodeOptions.Namespace)
 
@@ -461,7 +480,7 @@ func BuildNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, gl
 // buildNodeTrafficMap returns a map of all nodes requesting or requested by the target node (key=id). Node graphs
 // are from the perspective of the node, as such we use destination telemetry for incoming traffic and source telemetry
 // for outgoing traffic.
-func buildNodeTrafficMap(cluster, namespace string, n graph.Node, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
+func buildNodeTrafficMap(ctx context.Context, cluster, namespace string, n graph.Node, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
 	// create map to aggregate traffic by protocol and response code
 	trafficMap := graph.NewTrafficMap()
 	duration := o.Namespaces[namespace].Duration
@@ -808,7 +827,7 @@ func buildNodeTrafficMap(cluster, namespace string, n graph.Node, o graph.Teleme
 	return trafficMap
 }
 
-func handleAggregateNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	n := graph.NewAggregateNode(o.NodeOptions.Cluster, o.NodeOptions.Namespace, o.NodeOptions.Aggregate, o.NodeOptions.AggregateValue, o.NodeOptions.Service, o.NodeOptions.App)
 
 	log.Tracef("Build graph for aggregate node [%+v]", n)
@@ -817,7 +836,7 @@ func handleAggregateNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.
 		o.Appenders.AppenderNames = append(o.Appenders.AppenderNames, appender.AggregateNodeAppenderName)
 	}
 	appenders, finalizers := appender.ParseAppenders(o)
-	trafficMap := buildAggregateNodeTrafficMap(o.NodeOptions.Namespace, n, o, client)
+	trafficMap := buildAggregateNodeTrafficMap(ctx, o.NodeOptions.Namespace, n, o, client)
 
 	namespaceInfo := graph.NewAppenderNamespaceInfo(o.NodeOptions.Namespace)
 
@@ -837,7 +856,7 @@ func handleAggregateNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.
 
 // buildAggregateNodeTrafficMap returns a map of all incoming and outgoing traffic from the perspective of the aggregate. Aggregates
 // are always generated for serviced requests and therefore via destination telemetry.
-func buildAggregateNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
+func buildAggregateNodeTrafficMap(ctx context.Context, namespace string, n graph.Node, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
 	interval := o.Namespaces[namespace].Duration
 
 	// create map to aggregate traffic by response code
@@ -876,6 +895,7 @@ func buildAggregateNodeTrafficMap(namespace string, n graph.Node, o graph.Teleme
 	return trafficMap
 }
 
+// TODO: Can this be combined with graph.telemetry.istio.appender.promQuery?
 func promQuery(query string, queryTime time.Time, api prom_v1.API) model.Vector {
 	if query == "" {
 		return model.Vector{}
