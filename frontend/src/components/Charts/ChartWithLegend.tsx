@@ -144,10 +144,18 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
     const overlayIdx = this.props.data.length;
     const showOverlay = (this.props.overlay && this.props.showSpans) || false;
     const overlayRightPadding = showOverlay ? 15 : 0;
+    let largestSize = 0;
+    this.props.data.forEach(dataSet => {
+      dataSet.datapoints.forEach(dp => {
+        if (dp.size !== undefined) {
+          largestSize = Math.max(largestSize, dp.size);
+        }
+      });
+    });
     const padding: Padding = {
-      top: 0,
+      top: largestSize,
       bottom: chartHeight > MIN_HEIGHT_YAXIS ? LEGEND_HEIGHT : 0,
-      left: 0,
+      left: largestSize,
       right: 10 + overlayRightPadding
     };
 
@@ -241,11 +249,7 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
                 }}
               />
             ) : (
-              <ChartAxis
-                tickCount={scaleInfo.count}
-                style={AxisStyle}
-                domain={this.props.timeWindow}
-              />
+              <ChartAxis tickCount={scaleInfo.count} style={AxisStyle} domain={this.props.timeWindow} />
             )
           }
           <ChartAxis
@@ -507,7 +511,7 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
               fill: this.props.fill ? color : undefined,
               stroke: this.props.stroke ? color : undefined,
               strokeDasharray: strokeDasharray === true ? '3 5' : undefined,
-              cursor: this.props.pointer ? 'pointer' : 'default',
+              cursor: this.props.pointer ? 'pointer' : 'default'
             }
           }
         };
