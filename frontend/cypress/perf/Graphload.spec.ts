@@ -16,7 +16,8 @@ metadata:
 
 function deleteNamespaces() {
   cy.log('Deleting namespaces...');
-  cy.exec('kubectl delete --ignore-not-found=true -l kiali.io=perf-testing ns');
+  // This can take awhile to delete. Waiting for 10 mins max.
+  cy.exec('kubectl delete --ignore-not-found=true -l kiali.io=perf-testing ns', {timeout: 600000});
 }
 
 type OverviewCase = {
