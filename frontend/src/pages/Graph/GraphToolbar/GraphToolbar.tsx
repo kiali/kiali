@@ -187,7 +187,7 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
           onHandleRefresh={this.handleRefresh}
         />
         <Toolbar style={{ width: '100%' }}>
-          <ToolbarGroup aria-label="graph settings" style={{ margin: 0 }}>
+          <ToolbarGroup aria-label="graph settings" style={{ margin: 0, alignItems: "flex-start"}}>
             {this.props.node && (
               <ToolbarItem style={{ margin: 0 }}>
                 <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content={'Back to full graph'}>
