@@ -70,7 +70,7 @@ Feature: Kiali Istio Config page
     And the AuthorizationPolicy has a to-operation rule with "missing.hostname" host
     When the user refreshes the list page
     And user selects the "bookinfo" namespace
-    Then the AuthorizationPolicy should have a "danger"
+    Then the AuthorizationPolicy should have a "warning"
 
   @crd-validation
   Scenario: KIA0106 validation
@@ -96,7 +96,7 @@ Feature: Kiali Istio Config page
     Given a "foo" DestinationRule in the "sleep" namespace for "nonexistent" host
     When the user refreshes the list page
     And user selects the "sleep" namespace
-    Then the "foo" "DestinationRule" of the "sleep" namespace should have a "danger"
+    Then the "foo" "DestinationRule" of the "sleep" namespace should have a "warning"
 
   @crd-validation
   Scenario: KIA0203 validation
@@ -181,7 +181,7 @@ Feature: Kiali Istio Config page
   Scenario: KIA1101 validation
     Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "foo"
     When user selects the "sleep" namespace
-    Then the "foo" "VirtualService" of the "sleep" namespace should have a "danger"
+    Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
 
   @crd-validation
   Scenario: KIA1102 validation
