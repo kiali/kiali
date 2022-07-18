@@ -1,12 +1,10 @@
 {
   "compilerOptions": {
+    "esModuleInterop": true,
     "target": "es5",
     "lib": ["es2019", "dom"],
-    "types": [
-      "cypress",
-      "cypress-react-selector",
-      "node"
-    ]
+    "resolveJsonModule": true,
+    "types": ["cypress", "cypress-react-selector", "node"]
   },
   "include": ["**/*.ts"]
 }

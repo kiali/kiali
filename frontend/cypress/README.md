@@ -75,6 +75,8 @@ cli
 make -e CYPRESS_BASE_URL=http://mybaseurl perf-tests-run
 ```
 
+**Note**: The performance tests are typically long running tests that perform many actions. The Cypress GUI generally does not handle this well so it's recommended to use the CLI instead.
+
 gui
 ```
 make perf-tests-gui
@@ -85,13 +87,20 @@ yarn from current dir
 yarn cypress --config-file cypress-perf.json
 ```
 
-### Update url parameters:
+### Parameterizing tests:
 
-You can adjust some inputs of the performance tests by changing the [fixture file](fixtures/perf/graphParams.json).
+You can adjust some inputs of the performance tests by changing the [fixture files](fixtures/perf/).
 
 ### Results:
 
 Results are logged here: `logs/performance.txt`
+
+### Cleanup
+
+If the test runner fails for any reason, this can leave some resources lingering around after the tests have run. You can clean these up by running:
+```
+kubectl delete --ignore-not-found=true -l kiali.io=perf-testing ns
+```
 
 ### Running on IBM Cloud:
 

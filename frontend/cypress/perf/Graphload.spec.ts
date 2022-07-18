@@ -1,34 +1,27 @@
-function namespaceName(index: number) {
-  return `perf-testing-${index}`;
-}
+import overviewCases from '../fixtures/perf/overviewPage.json';
 
 function createNamespaces(count: number) {
   cy.log(`Creating ${count} namespaces...`);
   for (let i = 1; i <= count; i++) {
-    createNamespace(namespaceName(i));
+    const namespaceTemplate = `apiVersion: v1
+kind: Namespace
+metadata:
+  name: perf-testing-${i}
+  labels:
+    kiali.io: perf-testing
+`;
+    cy.exec(`printf "${namespaceTemplate}" | kubectl apply -f -`);
   }
 }
 
-function createNamespace(name: string) {
-  cy.exec(`kubectl get ns ${name} || kubectl create ns ${name}`);
+function deleteNamespaces() {
+  cy.log('Deleting namespaces...');
+  cy.exec('kubectl delete --ignore-not-found=true -l kiali.io=perf-testing ns');
 }
 
-function deleteNamespaces(count: number) {
-  cy.log(`Deleting ${count} namespaces...`);
-  // Fire off async delete requests then wait for them to complete.
-  for (let i = 1; i <= count; i++) {
-    deleteNamespace(namespaceName(i));
-  }
-
-  cy.log('Waiting for namespaces to be deleted...');
-  for (let i = 1; i <= count; i++) {
-    cy.exec(`kubectl wait --for=delete --timeout=5m namespace/${namespaceName(i)}`);
-  }
-}
-
-function deleteNamespace(name: string) {
-  cy.exec(`kubectl delete --ignore-not-found=true --wait=false ns ${name}`);
-}
+type OverviewCase = {
+  namespaces: number;
+};
 
 describe('Performance tests', () => {
   const reportFilePath = 'logs/performance.txt';
@@ -46,30 +39,18 @@ describe('Performance tests', () => {
 
   // Testing empty namespaces to understand the impact of adding namespaces alone.
   describe('Overview page with empty namespaces', () => {
-    const overviewCases = [
-      {
-        namespaces: 10
-      },
-      {
-        namespaces: 50
-      },
-      {
-        namespaces: 300
-      }
-    ];
-
     before(() => {
       cy.writeFile(reportFilePath, '[Empty Namespaces]\n\n', { flag: 'a+' });
     });
 
-    overviewCases.forEach(function (testCase) {
+    (overviewCases as OverviewCase[]).forEach(function (testCase) {
       describe(`Test with ${testCase.namespaces} empty namespaces`, () => {
         before(() => {
           createNamespaces(testCase.namespaces);
         });
 
         after(() => {
-          deleteNamespaces(testCase.namespaces);
+          deleteNamespaces();
         });
 
         it('loads the overview page', () => {
