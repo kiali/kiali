@@ -2,9 +2,11 @@ package data
 
 import "github.com/kiali/kiali/models"
 
-func CreateWorkloadsPerNamespace(namespace string, items ...models.WorkloadListItem) map[string]models.WorkloadList {
+func CreateWorkloadsPerNamespace(namespaces []string, items ...models.WorkloadListItem) map[string]models.WorkloadList {
 	allWorkloads := map[string]models.WorkloadList{}
-	allWorkloads[namespace] = CreateWorkloadList(namespace, items...)
+	for _, namespace := range namespaces {
+		allWorkloads[namespace] = CreateWorkloadList(namespace, items...)
+	}
 	return allWorkloads
 }
 
