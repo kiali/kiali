@@ -21,7 +21,6 @@ import { authenticationConfig, kialiLogo } from '../../config';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import LoginThunkActions from '../../actions/LoginThunkActions';
 import { isAuthStrategyOAuth } from '../../config/AuthenticationConfig';
-//import { c_wizard__nav_BoxShadow } from '@patternfly/react-tokens';
 
 type LoginProps = {
   status: LoginStatus;

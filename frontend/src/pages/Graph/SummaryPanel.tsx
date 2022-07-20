@@ -16,6 +16,8 @@ import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import TourStopContainer from 'components/Tour/TourStop';
 import { summaryPanelWidth } from './SummaryPanelCommon';
+import { ServiceDetailsInfo } from "types/ServiceInfo";
+import { WizardAction, WizardMode } from "components/IstioWizards/WizardActions";
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -25,6 +27,10 @@ type MainSummaryPanelPropType = SummaryPanelPropType & {
   isPageVisible: boolean;
   jaegerState: JaegerState;
   kiosk: string;
+  onDeleteTrafficRouting?: () => void;
+  onKebabOpened?: () => void;
+  onLaunchWizard?: (action: WizardAction, mode: WizardMode) => void;
+  serviceDetails?: ServiceDetailsInfo | null;
 };
 
 const mainStyle = style({
@@ -208,7 +214,11 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
             injectServiceNodes={this.props.injectServiceNodes}
             namespaces={this.props.namespaces}
             rateInterval={this.props.rateInterval}
+            onKebabOpened={this.props.onKebabOpened}
+            onLaunchWizard={this.props.onLaunchWizard}
+            onDeleteTrafficRouting={this.props.onDeleteTrafficRouting}
             queryTime={this.props.queryTime}
+            serviceDetails={this.props.serviceDetails}
             step={this.props.step}
             trafficRates={this.props.trafficRates}
           />

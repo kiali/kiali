@@ -63,6 +63,9 @@ export const SERVICE_WIZARD_ACTIONS = [
   WIZARD_REQUEST_TIMEOUTS
 ];
 
+export type WizardAction = 'request_routing' | 'fault_injection' | 'traffic_shifting' | 'tcp_traffic_shifting' | 'request_timeouts';
+export type WizardMode = 'create' | 'update';
+
 export const WIZARD_TITLES = {
   [WIZARD_REQUEST_ROUTING]: 'Request Routing',
   [WIZARD_FAULT_INJECTION]: 'Fault Injection',

@@ -73,7 +73,16 @@ import GraphTour from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 import { EdgeContextMenu } from 'components/CytoscapeGraph/ContextMenu/EdgeContextMenu';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import {isParentKiosk, kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
+import { isParentKiosk, kioskContextMenuAction } from "../../components/Kiosk/KioskActions";
+import ServiceWizard from "components/IstioWizards/ServiceWizard";
+import { ServiceDetailsInfo } from "types/ServiceInfo";
+import { DestinationRuleC, PeerAuthentication } from "types/IstioObjects";
+import { serverConfig } from "config";
+import * as API from "services/Api";
+import { decoratedNodeData } from "components/CytoscapeGraph/CytoscapeGraphUtils";
+import { WizardAction, WizardMode } from "components/IstioWizards/WizardActions";
+import ConfirmDeleteTrafficRoutingModal from "components/IstioWizards/ConfirmDeleteTrafficRoutingModal";
+import { deleteServiceTrafficRouting } from "services/Api";
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -149,8 +158,26 @@ export type GraphData = {
   timestamp: TimeInMilliseconds;
 };
 
+type WizardsData = {
+  // Wizard configuration
+  showWizard: boolean;
+  wizardType: string;
+  updateMode: boolean;
+
+  // Data sent to the wizard
+  gateways: string[];
+  peerAuthentications: PeerAuthentication[];
+
+  // This is a 3-state field: {null} value means that it was tried to fetch the data
+  // from the back-end but fetching failed (either no data, or there was an error; {undefined}
+  // means that it is loading.
+  serviceDetails?: ServiceDetailsInfo | null;
+}
+
 type GraphPageState = {
   graphData: GraphData;
+  wizardsData: WizardsData;
+  showConfirmDeleteTrafficRouting: boolean;
 };
 
 const NUMBER_OF_DATAPOINTS = 30;
@@ -303,7 +330,15 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
         fetchParams: this.graphDataSource.fetchParameters,
         isLoading: true,
         timestamp: 0
-      }
+      },
+      wizardsData: {
+        showWizard: false,
+        wizardType: '',
+        updateMode: false,
+        gateways: [],
+        peerAuthentications: []
+      },
+      showConfirmDeleteTrafficRouting: false
     };
   }
 
@@ -485,13 +520,40 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
                 injectServiceNodes={this.props.showServiceNodes}
                 isPageVisible={this.props.isPageVisible}
                 namespaces={this.props.activeNamespaces}
+                onKebabOpened={this.handleSidePanelKebabOpened}
+                onLaunchWizard={this.handleLaunchWizard}
+                onDeleteTrafficRouting={() => this.setState({showConfirmDeleteTrafficRouting: true})}
                 queryTime={this.state.graphData.timestamp / 1000}
+                serviceDetails={this.state.wizardsData.serviceDetails}
                 trafficRates={this.props.trafficRates}
                 {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
               />
             )}
           </FlexView>
         </FlexView>
+        <ServiceWizard
+          show={this.state.wizardsData.showWizard}
+          type={this.state.wizardsData.wizardType}
+          update={this.state.wizardsData.updateMode}
+          namespace={this.props.summaryData?.summaryTarget ? decoratedNodeData(this.props.summaryData.summaryTarget).namespace : ''}
+          serviceName={this.state.wizardsData.serviceDetails?.service?.name || ''}
+          workloads={this.state.wizardsData.serviceDetails?.workloads || []}
+          createOrUpdate={/*this.canCreate() || this.canUpdate()*/ !serverConfig.deployment.viewOnlyMode && (this.state.wizardsData?.serviceDetails?.istioPermissions.create === true || this.state.wizardsData?.serviceDetails?.istioPermissions.update === true)}
+          virtualServices={this.state.wizardsData.serviceDetails?.virtualServices || []}
+          destinationRules={this.state.wizardsData.serviceDetails?.destinationRules || []}
+          gateways={this.state.wizardsData.gateways || []}
+          peerAuthentications={this.state.wizardsData.peerAuthentications || []}
+          tlsStatus={this.state.wizardsData.serviceDetails?.namespaceMTLS}
+          onClose={this.handleWizardClose}
+        />
+        {this.state.showConfirmDeleteTrafficRouting && (
+          <ConfirmDeleteTrafficRoutingModal
+            isOpen={true}
+            destinationRules={DestinationRuleC.fromDrArray(this.state.wizardsData.serviceDetails!.destinationRules)}
+            virtualServices={this.state.wizardsData.serviceDetails!.virtualServices}
+            onCancel={() => this.setState({showConfirmDeleteTrafficRouting: false})}
+            onConfirm={this.handleDeleteServiceTrafficRouting} />
+        )}
       </>
     );
   }
@@ -676,6 +738,110 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       history.push(detailsPageUrl);
     }
     return;
+  };
+
+  private handleLaunchWizard = (action: WizardAction, mode: WizardMode) => {
+    this.setState(prevState => ({
+      wizardsData: {
+        ...prevState.wizardsData,
+        showWizard: true,
+        wizardType: action,
+        updateMode: mode === "update"
+      }
+    }));
+  };
+
+  private handleWizardClose = (changed: boolean) => {
+    if (changed) {
+      // TODO: Reload graph
+      this.setState(prevState => ({
+        wizardsData: {
+          ...prevState.wizardsData,
+          showWizard: false,
+          gateways: [],
+          peerAuthentications: [],
+          serviceDetails: null
+        }
+      }));
+    } else {
+      this.setState(prevState => ({
+        wizardsData: {
+          ...prevState.wizardsData,
+          showWizard: false }
+      }));
+    }
+  }
+
+  private handleSidePanelKebabOpened = () => {
+    if (!this.props.summaryData) {
+      return;
+    }
+
+    const node = this.props.summaryData.summaryTarget;
+    const nodeData = decoratedNodeData(node);
+
+    if (!nodeData.service || nodeData.nodeType !== NodeType.SERVICE) {
+      return;
+    }
+
+    // TODO: How to know the namespace?:
+    if (/*this.state.wizardsData?.namespace === nodeData.namespace &&*/ this.state.wizardsData.serviceDetails?.service?.name === nodeData.service) {
+      return;
+    }
+
+    this.setState(prevState => ({
+      wizardsData: {
+        ...prevState.wizardsData,
+        serviceDetails: undefined
+      }
+    }));
+
+    let getDetailPromise = API.getServiceDetail(nodeData.namespace, nodeData.service, false, this.props.duration);
+    let getGwPromise = API.getIstioConfig('', ['gateways'], false, '', '');
+    let getPeerAuthsPromise = API.getIstioConfig(nodeData.namespace, ['peerauthentications'], false, '', '');
+
+    Promise.all([getDetailPromise, getGwPromise, getPeerAuthsPromise])
+      .then(results => {
+        this.setState(prevState => ({
+          wizardsData: {
+            ...prevState.wizardsData,
+            serviceDetails: results[0],
+            gateways: results[1].data.gateways.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort(),
+            peerAuthentications: results[2].data.peerAuthentications
+          }
+        }));
+      })
+      .catch(error => {
+        AlertUtils.addError('Could not fetch Service Details.', error);
+        this.setState(prevState => ({
+          wizardsData: {
+            ...prevState.wizardsData,
+            serviceDetails: null
+          }
+        }));
+      });
+  };
+
+  private handleDeleteServiceTrafficRouting = () => {
+    this.setState({
+      showConfirmDeleteTrafficRouting:false
+    });
+
+    deleteServiceTrafficRouting(this.state.wizardsData!.serviceDetails!)
+      .then(_results => {
+        // TODO: Reload graph data.
+        this.setState(prevState => ({
+          wizardsData: {
+            ...prevState.wizardsData,
+            gateways: [],
+            peerAuthentications: [],
+            serviceDetails: null
+          }
+        }));
+      })
+      .catch(error => {
+        AlertUtils.addError('Could not delete Istio config objects.', error);
+      });
   };
 
   private toggleHelp = () => {

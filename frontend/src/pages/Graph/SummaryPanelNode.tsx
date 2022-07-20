@@ -10,10 +10,10 @@ import {
   renderHealth
 } from './SummaryLink';
 import { DecoratedGraphNodeData, DestService, NodeType, RankResult, SummaryPanelPropType } from '../../types/Graph';
-import { summaryHeader, summaryPanel, summaryBodyTabs, summaryFont, getTitle } from './SummaryPanelCommon';
+import { getTitle, summaryBodyTabs, summaryFont, summaryHeader, summaryPanel } from './SummaryPanelCommon';
 import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
+import { clickHandler, getOptions } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import {
   Dropdown,
   DropdownGroup,
@@ -21,6 +21,7 @@ import {
   DropdownPosition,
   ExpandableSection,
   KebabToggle,
+  Spinner,
   Tab
 } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
@@ -30,6 +31,9 @@ import SimpleTabs from 'components/Tab/SimpleTabs';
 import { JaegerState } from 'reducers/JaegerState';
 import { classes, style } from 'typestyle';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { ServiceDetailsInfo } from "types/ServiceInfo";
+import { WizardAction, WizardMode } from "components/IstioWizards/WizardActions";
+import ServiceWizardActionsDropdownGroup from "components/IstioWizards/ServiceWizardActionsDropdownGroup";
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -46,7 +50,12 @@ type ReduxProps = {
   showRank: boolean;
 };
 
-export type SummaryPanelNodeProps = ReduxProps & SummaryPanelPropType;
+export type SummaryPanelNodeProps = ReduxProps & SummaryPanelPropType & {
+  onDeleteTrafficRouting?: () => void;
+  onLaunchWizard?: (action: WizardAction, mode: WizardMode) => void;
+  onKebabOpened?: () => void;
+  serviceDetails?: ServiceDetailsInfo | null;
+};
 
 const expandableSectionStyle = style({
   fontSize: 'var(--graph-side-panel--font-size)',
@@ -117,6 +126,27 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
         })}
       </DropdownGroup>
     ];
+
+    if (nodeType === NodeType.SERVICE) {
+      if (this.props.serviceDetails === undefined) {
+        items.push(
+          <DropdownGroup key="wizards" label="Actions" className="kiali-group-menu">
+            <DropdownItem isDisabled={true}>
+              <Spinner isSVG={true} size="md" aria-label="Loading actions..." />
+            </DropdownItem>
+          </DropdownGroup>
+        );
+      } else if (this.props.serviceDetails !== null) {
+        items.push(
+          <ServiceWizardActionsDropdownGroup
+            virtualServices={this.props.serviceDetails.virtualServices || []}
+            destinationRules={this.props.serviceDetails.destinationRules || []}
+            istioPermissions={this.props.serviceDetails.istioPermissions}
+            onAction={this.props.onLaunchWizard}
+            onDelete={this.props.onDeleteTrafficRouting} />
+        );
+      }
+    }
 
     return (
       <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
@@ -252,6 +282,9 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
 
   private onToggleActions = isOpen => {
     this.setState({ isActionOpen: isOpen });
+    if (this.props.onKebabOpened) {
+      this.props.onKebabOpened();
+    }
   };
 
   // TODO:(see https://github.com/kiali/kiali-design/issues/63) If we want to show an icon for SE uncomment below

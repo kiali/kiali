@@ -101,8 +101,6 @@ export class NodeContextMenu extends React.PureComponent<Props> {
     };
     let item: any;
     if (external) {
-      // Linter is not taking care that 'title' is passed as a property
-      // eslint-disable-next-line
       item = (
         <a href={href} rel="noreferrer noopener" {...commonLinkProps}>
           {commonLinkProps.children} <ExternalLinkAltIcon />
