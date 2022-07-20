@@ -142,6 +142,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     return this.promises
       .registerAll(
         'configs',
+        // hacky way to load all configs in one call
         [""].map(_ => API.getAllIstioConfigs([], typeFilters, true, '', ''))
       )
       .then(responses => {
