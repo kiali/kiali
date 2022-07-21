@@ -445,9 +445,9 @@ func timeSeriesHash(cluster, serviceNs, service, workloadNs, workload, app, vers
 }
 
 // BuildNodeTrafficMap is required by the graph/TelemtryVendor interface
-func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+func BuildNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	if o.NodeOptions.Aggregate != "" {
-		return handleAggregateNodeTrafficMap(ctx, o, client, globalInfo)
+		return handleAggregateNodeTrafficMap(o, client, globalInfo)
 	}
 
 	n := graph.NewNode(o.NodeOptions.Cluster, o.NodeOptions.Namespace, o.NodeOptions.Service, o.NodeOptions.Namespace, o.NodeOptions.Workload, o.NodeOptions.App, o.NodeOptions.Version, o.GraphType)
@@ -455,7 +455,7 @@ func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, client *
 	log.Tracef("Build graph for node [%+v]", n)
 
 	appenders, finalizers := appender.ParseAppenders(o)
-	trafficMap := buildNodeTrafficMap(ctx, o.Cluster, o.NodeOptions.Namespace, n, o, client)
+	trafficMap := buildNodeTrafficMap(o.Cluster, o.NodeOptions.Namespace, n, o, client)
 
 	namespaceInfo := graph.NewAppenderNamespaceInfo(o.NodeOptions.Namespace)
 
@@ -480,7 +480,7 @@ func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, client *
 // buildNodeTrafficMap returns a map of all nodes requesting or requested by the target node (key=id). Node graphs
 // are from the perspective of the node, as such we use destination telemetry for incoming traffic and source telemetry
 // for outgoing traffic.
-func buildNodeTrafficMap(ctx context.Context, cluster, namespace string, n graph.Node, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
+func buildNodeTrafficMap(cluster, namespace string, n graph.Node, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
 	// create map to aggregate traffic by protocol and response code
 	trafficMap := graph.NewTrafficMap()
 	duration := o.Namespaces[namespace].Duration
@@ -827,7 +827,7 @@ func buildNodeTrafficMap(ctx context.Context, cluster, namespace string, n graph
 	return trafficMap
 }
 
-func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+func handleAggregateNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	n := graph.NewAggregateNode(o.NodeOptions.Cluster, o.NodeOptions.Namespace, o.NodeOptions.Aggregate, o.NodeOptions.AggregateValue, o.NodeOptions.Service, o.NodeOptions.App)
 
 	log.Tracef("Build graph for aggregate node [%+v]", n)
@@ -836,7 +836,7 @@ func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions
 		o.Appenders.AppenderNames = append(o.Appenders.AppenderNames, appender.AggregateNodeAppenderName)
 	}
 	appenders, finalizers := appender.ParseAppenders(o)
-	trafficMap := buildAggregateNodeTrafficMap(ctx, o.NodeOptions.Namespace, n, o, client)
+	trafficMap := buildAggregateNodeTrafficMap(o.NodeOptions.Namespace, n, o, client)
 
 	namespaceInfo := graph.NewAppenderNamespaceInfo(o.NodeOptions.Namespace)
 
@@ -856,7 +856,7 @@ func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions
 
 // buildAggregateNodeTrafficMap returns a map of all incoming and outgoing traffic from the perspective of the aggregate. Aggregates
 // are always generated for serviced requests and therefore via destination telemetry.
-func buildAggregateNodeTrafficMap(ctx context.Context, namespace string, n graph.Node, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
+func buildAggregateNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
 	interval := o.Namespaces[namespace].Duration
 
 	// create map to aggregate traffic by response code
