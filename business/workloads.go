@@ -467,6 +467,7 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	}
 
 	// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
+	// Split by blanks, to get the miliseconds for sorting, try RFC3339Nano
 	splittedTimestamp := strings.Fields(splitted[0])
 	if len(splittedTimestamp) == 1 {
 		entry.Timestamp = splittedTimestamp[0]
