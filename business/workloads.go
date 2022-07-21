@@ -539,7 +539,7 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 		parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
 		parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second(), milisec)
 	entry.Timestamp = timestamp
-	entry.TimestampUnix = parsedTimestamp.Unix()
+	entry.TimestampUnix = parsedTimestamp.UnixMilli()
 
 	return &entry
 }

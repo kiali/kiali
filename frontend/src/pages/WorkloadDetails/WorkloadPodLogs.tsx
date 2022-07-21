@@ -959,12 +959,6 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
         }
 
         const sortedEntries = entries.sort((a, b) => {
-
-          if (a.timestampUnix == b.timestampUnix) {
-            let at = a.timestamp.substring(a.timestamp.indexOf(".")+1, a.timestamp.length)
-            let bt = b.timestamp.substring(b.timestamp.indexOf(".")+1, b.timestamp.length)
-            return parseInt(at) - parseInt(bt)
-          }
           return a.timestampUnix - b.timestampUnix
         });
 
