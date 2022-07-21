@@ -1,7 +1,7 @@
 import Namespace from './Namespace';
 import { ServicePort } from './ServiceInfo';
 import { ProxyStatus } from './Health';
-import { TimeInSeconds } from './Common';
+import {TimeInMilliseconds, TimeInSeconds} from './Common';
 import { PFColorVal } from 'components/Pf/PfColors';
 
 // Common types
@@ -232,6 +232,7 @@ export type AccessLog = {
 };
 
 export type LogEntry = {
+  milis: TimeInMilliseconds;
   accessLog?: AccessLog;
   color?: PFColorVal;
   message: string;

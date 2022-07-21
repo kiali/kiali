@@ -75,6 +75,7 @@ type ContainerOption = {
 };
 
 type Entry = {
+  milis: TimeInMilliseconds;
   logEntry?: LogEntry;
   span?: Span;
   timestamp: string;
@@ -932,7 +933,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
             return {
               timestamp: moment(span.startTime * 1000)
                 .utc()
-                .format('YYYY-MM-DD HH:mm:ss'),
+                .format('YYYY-MM-DD HH:mm:ss.sss'),
               timestampUnix: span.startTime,
               span: span
             } as Entry;
@@ -950,7 +951,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           const color = selectedContainers[i].color;
           containerLogEntries.forEach(le => {
             le.color = color;
-            entries.push({ timestamp: le.timestamp, timestampUnix: le.timestampUnix, logEntry: le } as Entry);
+            entries.push({ timestamp: le.timestamp, timestampUnix: le.timestampUnix, milis: le.milis, logEntry: le } as Entry);
           });
 
           if (response.linesTruncated) {
@@ -959,7 +960,10 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
         }
 
         const sortedEntries = entries.sort((a, b) => {
-          return a.timestampUnix - b.timestampUnix;
+          //return a.milis - b.milis;
+          console.log(a.timestamp)
+          console.log(moment(b.timestamp).milliseconds())
+          return moment(a.timestamp).milliseconds() - moment(b.timestamp).milliseconds()
         });
 
         this.setState({
@@ -984,10 +988,12 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
             {
               timestamp: now.toString(),
               timestampUnix: now,
+              milis: now,
               logEntry: {
                 severity: 'Error',
                 timestamp: now.toString(),
                 timestampUnix: now,
+                milis: now,
                 message: `Failed to fetch workload logs: ${errorMsg}`
               }
             }

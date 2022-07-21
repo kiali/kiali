@@ -61,6 +61,7 @@ type PodLog struct {
 type AccessLogEntry struct {
 	Timestamp     string `json:"timestamp,omitempty"`
 	TimestampUnix int64  `json:"timestampUnix,omitempty"`
+	Milis         int64  `json:"timestampUnix,omitempty"`
 }
 
 // LogEntry holds a single log entry
@@ -71,6 +72,7 @@ type LogEntry struct {
 	Timestamp     string            `json:"timestamp,omitempty"`
 	TimestampUnix int64             `json:"timestampUnix,omitempty"`
 	AccessLog     *parser.AccessLog `json:"accessLog,omitempty"`
+	Milis         int64             `json:"timestampUnix,omitempty"`
 }
 
 // LogOptions holds query parameter values
@@ -436,7 +438,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 			return nil, fmt.Errorf("Invalid sinceTime [%s]: %v", sinceTime, err)
 		}
 
-		opts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
+		opts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 1000000)}
 	}
 
 	if maxLines != "" {
@@ -457,6 +459,7 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 		Message:       "",
 		Timestamp:     "",
 		TimestampUnix: 0,
+		Milis:         0,
 		Severity:      "INFO",
 	}
 
@@ -526,12 +529,14 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	}
 
 	// override the timestamp with a simpler format
-	timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d",
+	timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d.%02d",
 		parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
-		parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second())
+		parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second(), parsedTimestamp.UnixMilli())
 	entry.Timestamp = timestamp
 	entry.TimestampUnix = parsedTimestamp.Unix()
 
+	entry.Milis = parsedTimestamp.UnixMilli()
+	fmt.Println(entry.Milis)
 	return &entry
 }
 
@@ -1836,7 +1841,7 @@ func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOpt
 	}
 
 	engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
-
+	//engardeParser := parser.New(`\[%{TIMESTAMP:timestamp:ts-"YYYY-MM-dd HH:mm:ss[,.]SSS"}\] \"%{DATA:method} (?:(?:%{URIPATH:uri_path}(?:%{URIPARAM:uri_param})?)|%{DATA}) %{DATA:protocol}\" %{NUMBER:status_code} %{DATA:response_flags} \"%{DATA:mixer_status}\"(?: \"%{DATA:upstream_failure_reason}\")? %{NUMBER:bytes_received} %{NUMBER:bytes_sent} %{NUMBER:duration} (?:%{NUMBER:upstream_service_time}|%{DATA:tcp_service_time}) \"%{DATA:forwarded_for}\" \"%{DATA:user_agent}\" \"%{DATA:request_id}\" \"%{DATA:authority}\" \"%{DATA:upstream_service}\" %{DATA:upstream_cluster} %{DATA:upstream_local} %{DATA:downstream_local} %{DATA:downstream_remote} %{DATA:requested_server}(?: %{DATA:route_name})?$`)
 	// To avoid high memory usage, the JSON will be written
 	// to the HTTP Response as it's received from the cluster API.
 	// That is, each log line is parsed, decorated with Kiali's metadata,
