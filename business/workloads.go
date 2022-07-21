@@ -541,7 +541,6 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	entry.Timestamp = timestamp
 	entry.TimestampUnix = parsedTimestamp.Unix()
 
-	fmt.Println("timestamp: " + timestamp + " message:  " + entry.Message)
 	return &entry
 }
 
@@ -1846,7 +1845,7 @@ func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOpt
 	}
 
 	engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
-	//engardeParser := parser.New(`\[%{TIMESTAMP:timestamp:ts-"YYYY-MM-dd HH:mm:ss[,.]SSS"}\] \"%{DATA:method} (?:(?:%{URIPATH:uri_path}(?:%{URIPARAM:uri_param})?)|%{DATA}) %{DATA:protocol}\" %{NUMBER:status_code} %{DATA:response_flags} \"%{DATA:mixer_status}\"(?: \"%{DATA:upstream_failure_reason}\")? %{NUMBER:bytes_received} %{NUMBER:bytes_sent} %{NUMBER:duration} (?:%{NUMBER:upstream_service_time}|%{DATA:tcp_service_time}) \"%{DATA:forwarded_for}\" \"%{DATA:user_agent}\" \"%{DATA:request_id}\" \"%{DATA:authority}\" \"%{DATA:upstream_service}\" %{DATA:upstream_cluster} %{DATA:upstream_local} %{DATA:downstream_local} %{DATA:downstream_remote} %{DATA:requested_server}(?: %{DATA:route_name})?$`)
+
 	// To avoid high memory usage, the JSON will be written
 	// to the HTTP Response as it's received from the cluster API.
 	// That is, each log line is parsed, decorated with Kiali's metadata,
