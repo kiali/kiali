@@ -959,7 +959,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
         }
 
         const sortedEntries = entries.sort((a, b) => {
-          return a.timestampUnix - b.timestampUnix
+          return a.timestampUnix - b.timestampUnix;
         });
 
         this.setState({
