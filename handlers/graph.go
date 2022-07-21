@@ -85,7 +85,7 @@ func handlePanic(w http.ResponseWriter) {
 		if code == http.StatusInternalServerError {
 			stack := debug.Stack()
 			log.Errorf("%s: %s", message, stack)
-			RespondWithDetailedError(w, code, message, string(stack))
+			RespondWithDetailedError(w, code, message, "")
 			return
 		}
 		RespondWithError(w, code, message)
