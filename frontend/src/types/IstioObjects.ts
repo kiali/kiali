@@ -1,7 +1,7 @@
 import Namespace from './Namespace';
 import { ServicePort } from './ServiceInfo';
 import { ProxyStatus } from './Health';
-import {TimeInMilliseconds} from './Common';
+import { TimeInSeconds } from './Common';
 import { PFColorVal } from 'components/Pf/PfColors';
 
 // Common types
@@ -237,7 +237,7 @@ export type LogEntry = {
   message: string;
   severity: string;
   timestamp: string;
-  timestampUnix: TimeInMilliseconds;
+  timestampUnix: TimeInSeconds;
 };
 
 export interface PodLogs {

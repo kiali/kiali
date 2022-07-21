@@ -436,7 +436,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 			return nil, fmt.Errorf("Invalid sinceTime [%s]: %v", sinceTime, err)
 		}
 
-		opts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 1000000)}
+		opts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
 	}
 
 	if maxLines != "" {

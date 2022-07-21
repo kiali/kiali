@@ -78,7 +78,7 @@ type Entry = {
   logEntry?: LogEntry;
   span?: Span;
   timestamp: string;
-  timestampUnix: TimeInMilliseconds;
+  timestampUnix: TimeInSeconds;
 };
 
 interface WorkloadPodLogsState {
