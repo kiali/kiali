@@ -61,7 +61,6 @@ type PodLog struct {
 type AccessLogEntry struct {
 	Timestamp     string `json:"timestamp,omitempty"`
 	TimestampUnix int64  `json:"timestampUnix,omitempty"`
-	Milis         int64  `json:"timestampUnix,omitempty"`
 }
 
 // LogEntry holds a single log entry
@@ -72,7 +71,6 @@ type LogEntry struct {
 	Timestamp     string            `json:"timestamp,omitempty"`
 	TimestampUnix int64             `json:"timestampUnix,omitempty"`
 	AccessLog     *parser.AccessLog `json:"accessLog,omitempty"`
-	Milis         int64             `json:"timestampUnix,omitempty"`
 }
 
 // LogOptions holds query parameter values
@@ -459,7 +457,6 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 		Message:       "",
 		Timestamp:     "",
 		TimestampUnix: 0,
-		Milis:         0,
 		Severity:      "INFO",
 	}
 
@@ -470,7 +467,7 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	}
 
 	// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
-	splittedTimestamp := strings.Split(splitted[0], ".")
+	splittedTimestamp := strings.Fields(splitted[0])
 	if len(splittedTimestamp) == 1 {
 		entry.Timestamp = splittedTimestamp[0]
 	} else {
@@ -484,7 +481,7 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	}
 
 	// If we are past the requested time window then stop processing
-	parsedTimestamp, err := time.Parse(time.RFC3339, entry.Timestamp)
+	parsedTimestamp, err := time.Parse(time.RFC3339Nano, entry.Timestamp)
 	entry.OriginalTime = parsedTimestamp
 	if err != nil {
 		log.Debugf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())
@@ -529,14 +526,22 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	}
 
 	// override the timestamp with a simpler format
-	timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d.%02d",
+	milis := strings.Split(parsedTimestamp.String(), ".")
+	var m, milisec string
+	if len(milis) > 1 {
+		m = milis[1]
+		milisec = m[:3]
+	} else {
+		milisec = "000"
+	}
+
+	timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d.%s",
 		parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
-		parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second(), parsedTimestamp.UnixMilli())
+		parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second(), milisec)
 	entry.Timestamp = timestamp
 	entry.TimestampUnix = parsedTimestamp.Unix()
 
-	entry.Milis = parsedTimestamp.UnixMilli()
-	fmt.Println(entry.Milis)
+	fmt.Println("timestamp: " + timestamp + " message:  " + entry.Message)
 	return &entry
 }
 

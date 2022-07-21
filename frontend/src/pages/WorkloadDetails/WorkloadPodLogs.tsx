@@ -75,11 +75,10 @@ type ContainerOption = {
 };
 
 type Entry = {
-  milis: TimeInMilliseconds;
   logEntry?: LogEntry;
   span?: Span;
   timestamp: string;
-  timestampUnix: TimeInSeconds;
+  timestampUnix: TimeInMilliseconds;
 };
 
 interface WorkloadPodLogsState {
@@ -951,7 +950,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           const color = selectedContainers[i].color;
           containerLogEntries.forEach(le => {
             le.color = color;
-            entries.push({ timestamp: le.timestamp, timestampUnix: le.timestampUnix, milis: le.milis, logEntry: le } as Entry);
+            entries.push({ timestamp: le.timestamp, timestampUnix: le.timestampUnix, logEntry: le } as Entry);
           });
 
           if (response.linesTruncated) {
@@ -960,10 +959,13 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
         }
 
         const sortedEntries = entries.sort((a, b) => {
-          //return a.milis - b.milis;
-          console.log(a.timestamp)
-          console.log(moment(b.timestamp).milliseconds())
-          return moment(a.timestamp).milliseconds() - moment(b.timestamp).milliseconds()
+
+          if (a.timestampUnix == b.timestampUnix) {
+            let at = a.timestamp.substring(a.timestamp.indexOf(".")+1, a.timestamp.length)
+            let bt = b.timestamp.substring(b.timestamp.indexOf(".")+1, b.timestamp.length)
+            return parseInt(at) - parseInt(bt)
+          }
+          return a.timestampUnix - b.timestampUnix
         });
 
         this.setState({
@@ -988,12 +990,10 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
             {
               timestamp: now.toString(),
               timestampUnix: now,
-              milis: now,
               logEntry: {
                 severity: 'Error',
                 timestamp: now.toString(),
                 timestampUnix: now,
-                milis: now,
                 message: `Failed to fetch workload logs: ${errorMsg}`
               }
             }
