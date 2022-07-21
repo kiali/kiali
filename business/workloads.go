@@ -527,18 +527,18 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	}
 
 	// override the timestamp with a simpler format
-	milis := strings.Split(parsedTimestamp.String(), ".")
-	var m, milisec string
-	if len(milis) > 1 {
-		m = milis[1]
-		milisec = m[:3]
+	precision := strings.Split(parsedTimestamp.String(), ".")
+	var milliseconds string
+	if len(precision) > 1 {
+		ms := precision[1]
+		milliseconds = ms[:3]
 	} else {
-		milisec = "000"
+		milliseconds = "000"
 	}
 
 	timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d.%s",
 		parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
-		parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second(), milisec)
+		parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second(), milliseconds)
 	entry.Timestamp = timestamp
 	entry.TimestampUnix = parsedTimestamp.UnixMilli()
 
