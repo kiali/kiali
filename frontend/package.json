@@ -35,7 +35,7 @@
   ],
   "scripts": {
     "build": "if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run build:prod; else npm run build:dev; fi",
-    "build-css": "node-sass src/ --output-style compressed --include-path $npm_package_sassIncludes_src -o src/",
+    "build-css": "sass src/:src/ --style=compressed --load-path=$npm_package_sassIncludes_src",
     "build:dev": "sh -ac '. ./.env.upstream; npm run lint && npm run build:kiali'",
     "build:kiali": "npm run build-css && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) GENERATE_SOURCEMAP=false EXTEND_ESLINT=true react-scripts build --profile",
     "build:prod": "sh -ac '. ./.env.downstream; npm run build:kiali'",
@@ -92,6 +92,7 @@
     "redux-thunk": "2.4.1",
     "regression": "^2.0.1",
     "reselect": "4.0.0",
+    "sass": "^1.53.0",
     "screenfull": "5.0.2",
     "seedrandom": "3.0.1",
     "tippy.js": "3.4.1",
@@ -124,7 +125,6 @@
     "jest-localstorage-mock": "2.4.2",
     "junit-report-merger": "^3.0.5",
     "mocha-junit-reporter": "^2.0.2",
-    "node-sass": "^7.0.1",
     "prettier": "2.0.5",
     "pretty-quick": "2.0.1",
     "react-scripts": "5.0.0",
@@ -137,7 +137,8 @@
     "minimist": "^1.2.6",
     "nth-check": "^2.0.1",
     "postcss": "^8.4.12",
-    "victory-core": ">=36.5.0"
+    "victory-core": ">=36.5.0",
+    "terser": "5.14.2"
   },
   "engines": {
     "node": ">=12.22.0 && <16",
