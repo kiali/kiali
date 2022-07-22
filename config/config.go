@@ -86,6 +86,8 @@ type Metrics struct {
 type Tracing struct {
 	CollectorURL string `yaml:"collector_url,omitempty"` // Endpoint for Kiali server traces
 	Enabled      bool   `yaml:"enabled,omitempty"`
+	// Sampling rate for Kiali server traces. >= 1.0 always samples and <= 0 never samples.
+	SamplingRate float64 `yaml:"sampling_rate,omitempty"`
 }
 
 // Observability provides configuration for tracing and metrics exported by the Kiali server.
@@ -718,6 +720,8 @@ func NewConfig() (c *Config) {
 				Tracing: Tracing{
 					CollectorURL: "http://jaeger-collector.istio-system:14268/api/traces",
 					Enabled:      false,
+					// Sample half of traces.
+					SamplingRate: 0.5,
 				},
 			},
 			Port:                       20001,

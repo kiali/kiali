@@ -39,6 +39,7 @@ import (
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
@@ -53,7 +54,13 @@ var (
 )
 
 // BuildNamespacesTrafficMap is required by the graph/TelemtryVendor interface
-func BuildNamespacesTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "BuildNamespacesTrafficMap",
+		observability.Attribute("package", "istio"),
+	)
+	defer end()
+
 	log.Tracef("Build [%s] graph for [%d] namespaces [%v]", o.GraphType, len(o.Namespaces), o.Namespaces)
 
 	appenders, finalizers := appender.ParseAppenders(o)
@@ -61,14 +68,20 @@ func BuildNamespacesTrafficMap(o graph.TelemetryOptions, client *prometheus.Clie
 
 	for _, namespace := range o.Namespaces {
 		log.Tracef("Build traffic map for namespace [%v]", namespace)
-		namespaceTrafficMap := buildNamespaceTrafficMap(namespace.Name, o, client)
+		namespaceTrafficMap := buildNamespaceTrafficMap(ctx, namespace.Name, o, client)
 
 		// The appenders can add/remove/alter nodes for the namespace
 		namespaceInfo := graph.NewAppenderNamespaceInfo(namespace.Name)
 		for _, a := range appenders {
+			var appenderEnd observability.EndFunc
+			_, appenderEnd = observability.StartSpan(ctx, "Appender "+a.Name(),
+				observability.Attribute("package", "istio"),
+				observability.Attribute("namespace", namespace.Name),
+			)
 			appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
 			a.AppendGraph(namespaceTrafficMap, globalInfo, namespaceInfo)
 			appenderTimer.ObserveDuration()
+			appenderEnd()
 		}
 
 		// Merge this namespace into the final TrafficMap
@@ -89,7 +102,13 @@ func BuildNamespacesTrafficMap(o graph.TelemetryOptions, client *prometheus.Clie
 
 // buildNamespaceTrafficMap returns a map of all namespace nodes (key=id).  All
 // nodes either directly send and/or receive requests from a node in the namespace.
-func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
+func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
+	var end observability.EndFunc
+	_, end = observability.StartSpan(ctx, "buildNamespaceTrafficMap",
+		observability.Attribute("package", "istio"),
+		observability.Attribute("namespace", namespace),
+	)
+	defer end()
 	// create map to aggregate traffic by protocol and response code
 	trafficMap := graph.NewTrafficMap()
 	duration := o.Namespaces[namespace].Duration
@@ -876,6 +895,7 @@ func buildAggregateNodeTrafficMap(namespace string, n graph.Node, o graph.Teleme
 	return trafficMap
 }
 
+// TODO: Can this be combined with graph.telemetry.istio.appender.promQuery?
 func promQuery(query string, queryTime time.Time, api prom_v1.API) model.Vector {
 	if query == "" {
 		return model.Vector{}

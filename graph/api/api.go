@@ -10,12 +10,18 @@ import (
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/graph/telemetry/istio"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // GraphNamespaces generates a namespaces graph using the provided options
 func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Options) (code int, config interface{}) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GraphNamespaces",
+		observability.Attribute("package", "api"),
+	)
+	defer end()
 	// time how long it takes to generate this graph
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
@@ -43,7 +49,7 @@ func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom *p
 	globalInfo.Business = business
 	globalInfo.Context = ctx
 
-	trafficMap := istio.BuildNamespacesTrafficMap(o.TelemetryOptions, prom, globalInfo)
+	trafficMap := istio.BuildNamespacesTrafficMap(ctx, o.TelemetryOptions, prom, globalInfo)
 	code, config = generateGraph(trafficMap, o)
 
 	return code, config
