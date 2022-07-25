@@ -67,7 +67,7 @@ func getSecretFromVault(mountPath string, secretPath string) (*map[string]interf
 func getOIDCSecretFromVault() (string, error) {
 
 	// get data from Vault
-	data, err := getSecretFromVault("caiobservability", "oidc")
+	data, err := getSecretFromVault("isc-minerva-swb-dscw-oss-caiobservability", "oidc")
 	if err != nil {
 		return "", err
 	}
@@ -85,7 +85,7 @@ func getOIDCSecretFromVault() (string, error) {
 // Fetches Prometheus Auth secret stored in Vault
 func getPrometheusAuthSecretFromVault() (map[string]string, error) {
 
-	data, err := getSecretFromVault("prometheus", "credentials")
+	data, err := getSecretFromVault("isc-minerva-swb-dscw-oss-prometheus", "credentials")
 	if err != nil {
 		return map[string]string{}, err
 	}
