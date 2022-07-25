@@ -1,0 +1,56 @@
+name: Build Backend
+
+on:
+  workflow_call:
+    inputs:
+      build_branch:
+        required: true
+        type: string
+jobs:
+  build_backend:
+    name: Build and unit test backend
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.build_branch }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.17.10
+
+      - name: Cache Go deps
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Lint Install
+        run: make lint-install
+
+      - name: Verify code linting
+        run: make lint
+
+      - name: Build
+        run: make -e GO_BUILD_FLAGS=${{ env.GO_BUILD_FLAGS }} -e CGO_ENABLED=${{ env.CGO_ENABLED }} clean-all build
+        env:
+          # Build with -race flag if this is a PR, otherwise it is a release and
+          # we don't want to build with race detection because of the perf penalty.
+          GO_BUILD_FLAGS: ${{ github.base_ref && '-race' }}
+          # The -race flag requires CGO_ENABLED
+          CGO_ENABLED: ${{ github.base_ref && '1' }}
+
+      - name: Test backend
+        run: make test-race
+
+      - name: Upload go binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: kiali
+          path: ~/go/bin/kiali
