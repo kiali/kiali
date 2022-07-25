@@ -144,18 +144,10 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
     const overlayIdx = this.props.data.length;
     const showOverlay = (this.props.overlay && this.props.showSpans) || false;
     const overlayRightPadding = showOverlay ? 15 : 0;
-    let largestSize = 0;
-    this.props.data.forEach(dataSet => {
-      dataSet.datapoints.forEach(dp => {
-        if (dp.size !== undefined) {
-          largestSize = Math.max(largestSize, dp.size);
-        }
-      });
-    });
     const padding: Padding = {
-      top: largestSize,
+      top: 0,
       bottom: chartHeight > MIN_HEIGHT_YAXIS ? LEGEND_HEIGHT : 0,
-      left: largestSize,
+      left: 0,
       right: 10 + overlayRightPadding
     };
 
@@ -226,8 +218,11 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
             () => this.mouseOnLegend
           )}
           scale={{ x: this.props.xAxis === 'series' ? 'linear' : 'time' }}
-          // Hack: 1 pxl on Y domain padding to prevent harsh clipping (https://github.com/kiali/kiali/issues/2069)
-          domainPadding={{ y: 1, x: this.props.xAxis === 'series' ? 50 : undefined }}
+          // Hack: Need at least 1 pxl on Y domain padding to prevent harsh clipping (https://github.com/kiali/kiali/issues/2069)
+          // Hack: Chart points on the very edges are not clickable due to extra padding and the chart
+          // not resizing correctly for some reason. The additional domain padding squeezes the elements
+          // into the chart so that they are no longer on the edges (https://github.com/kiali/kiali/issues/5222).
+          domainPadding={{ y: 10, x: this.props.xAxis === 'series' ? 50 : 15 }}
           {...this.props.moreChartProps}
         >
           {
