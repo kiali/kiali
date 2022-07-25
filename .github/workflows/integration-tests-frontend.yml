@@ -15,6 +15,7 @@ env:
 
 jobs:
   integration_tests_frontend:
+    if: ${{ !contains(inputs.build_branch, 'v1.48') }}
     name: Cypress integration tests
     runs-on: ubuntu-20.04
     steps:
