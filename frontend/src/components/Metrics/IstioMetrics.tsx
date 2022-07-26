@@ -307,7 +307,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   private renderOptionsBar() {
     return (
       <div ref={this.toolbarRef}>
-        <Toolbar style={{ padding: 0 }}>
+        <Toolbar style={{ padding: 0, marginBottom: "20px" }}>
           <ToolbarGroup>
             <ToolbarItem>
               <MetricsSettingsDropdown
@@ -345,14 +345,14 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                 onChange={checked => this.onTrendlines(checked)}
               />
             </ToolbarItem>
-          </ToolbarGroup>
-          <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>
-            <GrafanaLinks
-              links={this.state.grafanaLinks}
-              namespace={this.props.namespace}
-              object={this.props.object}
-              objectType={this.props.objectType}
-            />
+            <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '20px' }}>
+              <GrafanaLinks
+                links={this.state.grafanaLinks}
+                namespace={this.props.namespace}
+                object={this.props.object}
+                objectType={this.props.objectType}
+              />
+            </ToolbarItem>
           </ToolbarGroup>
         </Toolbar>
       </div>

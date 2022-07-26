@@ -248,18 +248,17 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                       disabled={this.state.toolbarDisabled}
                     />
                   </ToolbarItem>
-                </ToolbarGroup>
-                {jaegerURL && (
-                  <ToolbarGroup style={{ marginLeft: 'auto' }}>
-                    <ToolbarItem>
-                      <Tooltip content={<>Open Chart in Jaeger UI</>}>
-                        <a href={jaegerURL} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '10px' }}>
-                          View in Tracing <ExternalLinkAltIcon />
-                        </a>
-                      </Tooltip>
+                  {jaegerURL && (
+                    <ToolbarItem style={{ marginLeft: 'auto' }}>
+                        <Tooltip content={<>Open Chart in Jaeger UI</>}>
+                          <a href={jaegerURL} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '10px' }}>
+                            View in Tracing <ExternalLinkAltIcon />
+                          </a>
+                        </Tooltip>
                     </ToolbarItem>
-                  </ToolbarGroup>
-                )}
+                  )}
+                </ToolbarGroup>
+
               </Toolbar>
               <JaegerScatter
                 showSpansAverage={this.state.displaySettings.showSpansAverage}
