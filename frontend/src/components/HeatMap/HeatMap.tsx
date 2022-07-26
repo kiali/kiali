@@ -21,16 +21,25 @@ type Props = {
   displayMode?: 'compact' | 'normal' | 'large';
 };
 
-const cellStyle = style({
-  alignItems: 'center',
-  borderRadius: 3,
-  display: 'flex',
-  fontSize: '.7rem',
-  justifyContent: 'center',
-  overflow: 'hidden',
-  textOverflow: 'clip',
-  whiteSpace: 'nowrap'
-});
+
+const baseStyle = {
+    alignItems: 'center',
+    borderRadius: 3,
+    display: 'flex',
+    fontSize: '.7rem',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    textOverflow: 'clip'
+};
+
+const labelStyle = style(
+  baseStyle
+);
+
+const cellStyle = style(
+  baseStyle,
+  { whiteSpace: 'nowrap'}
+);
 
 export class HeatMap extends React.Component<Props> {
   static HealthColorMap: ColorMap = [
@@ -87,14 +96,14 @@ export class HeatMap extends React.Component<Props> {
       <div style={this.getGridStyle()}>
         <div></div>
         {this.props.xLabels.map((xLabel, x) => (
-          <div key={'xlabel_' + x} className={cellStyle}>
+          <div key={'xlabel_' + x} className={labelStyle}>
             {isCompact ? '' : xLabel}
           </div>
         ))}
         {this.props.yLabels.map((yLabel, y) => {
           return (
             <>
-              <div key={'ylabel_' + y} className={cellStyle}>
+              <div key={'ylabel_' + y} className={labelStyle}>
                 {isCompact ? '' : yLabel}
               </div>
               {this.props.xLabels.map((_, x) => {
