@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
   ActionGroup,
+  Alert,
   Button,
   ButtonVariant,
   Form,
@@ -14,7 +15,6 @@ import {
   LoginPage as LoginNext,
   TextInput
 } from '@patternfly/react-core';
-import { ExclamationCircleIcon, ExclamationTriangleIcon } from '@patternfly/react-icons';
 import { KialiAppState, LoginSession, LoginStatus } from '../../store/Store';
 import { AuthStrategy } from '../../types/Auth';
 import { authenticationConfig, kialiLogo } from '../../config';
@@ -103,22 +103,12 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
       }
     }
   };
-  renderMessage = (message: React.ReactNode | undefined, type: string | undefined, key: string) => {
+  renderMessage = (message: React.ReactNode | undefined, type: 'success' | 'danger' | 'warning' | 'info' | 'default' | undefined, key: string) => {
     if (!message) {
       return '';
     }
-    const variant = type
-      ? type
-      : this.props.status === LoginStatus.error || this.state.filledInputs
-      ? 'danger'
-      : 'warning';
-    const icon = variant === 'danger' ? <ExclamationCircleIcon /> : <ExclamationTriangleIcon />;
-    return (
-      <span key={key} style={{ color: variant === 'danger' ? '#c00' : '#f0ab00', fontWeight: 'bold', fontSize: 16 }}>
-        {icon}
-        &nbsp; {message}
-      </span>
-    );
+    const variant = type ?? (this.props.status === LoginStatus.error || this.state.filledInputs ? 'danger' : 'warning');
+    return (<Alert key={key} variant={variant} isInline={true} isPlain={true} title={message} />);
   };
 
   getHelperMessage = () => {
