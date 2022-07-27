@@ -25,16 +25,19 @@ SCRIPT_DIR=$( dirname -- "$0"; )
 DEFAULT_HELM_CHARTS_REPO="${SCRIPT_DIR}/../../helm-charts"
 DEFAULT_ISTIO_VERSION=""
 DEFAULT_KIALI_VERSION="dev"
+DEFAULT_CLUSTER_NAME="${USER}-kiali-perf"
 DEFAULT_NODE_FLAVOR="bx2.8x32"
 DEFAULT_NODES="3"
 DEFAULT_OPENSHIFT_VERSION="4.10_openshift"
 DEFAULT_REGION="us-south"
+DEFAULT_WORKLOADS="50"
 
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     # OPTIONS
     -akf|--api-key-file)      API_KEY_FILE="$2";       shift;shift ;;
+    -cn|--cluster-name)       CLUSTER_NAME="$2";       shift;shift ;;
     -hr|--helm-charts-repo)   HELM_CHARTS_REPO="$2";   shift;shift ;;
     -iv|--istio-version)      ISTIO_VERSION="$2";      shift;shift ;;
     -kv|--kiali-version)      KIALI_VERSION="$2";      shift;shift ;;
@@ -42,6 +45,7 @@ while [[ $# -gt 0 ]]; do
     -n|--nodes)               NODES="$2";              shift;shift ;;
     -ov|--openshift-version)  OPENSHIFT_VERSION="$2";  shift;shift ;;
     -r|--region)              REGION="$2";             shift;shift ;;
+    -w|--workloads)           WORKLOADS="$2";          shift;shift ;;
     -h|--help )
       cat <<HELPMSG
 Create a performance cluster on IBM Cloud and install istio, kiali, and the testing demos.
@@ -55,27 +59,42 @@ Valid options:
     and other resources in IBM Cloud. Learn how to create an API Key here:
     https://www.ibm.com/docs/en/app-connect/containers_cd?topic=servers-creating-cloud-api-key.
 
+  -cn|--cluster-name
+    The name of the openshift cluster.
+    Default: ${DEFAULT_CLUSTER_NAME}
+
   -hr|--helm-charts-repo
     The local dir where the helm charts repo is located.
+    Default: ${DEFAULT_HELM_CHARTS_REPO}
   
   -iv|--istio-version
     The Istio Version to install. Only upstream Istio supported.
+    Default: latest
 
   -kv|--kiali-version
     The Kiali version to install.
+    Default: ${DEFAULT_KIALI_VERSION}
 
   -nf|--node-flavor
     The node flavor to use for the openshift cluster worker nodes.
     Use 'ibmcloud ks flavors --zone <zone>' to see all available flavors in the region/zone.
+    Default: ${DEFAULT_NODE_FLAVOR}
 
   -n|--nodes
     The number of worker nodes in the openshift cluster's node pool.
+    Default: ${DEFAULT_NODES}
 
   -ov|--openshift-version
     The version of openshift to install for the worker nodes.
+    Default: ${DEFAULT_OPENSHIFT_VERSION}
 
   -r|--region
     The region to install the openshift worker nodes.
+    Default: ${DEFAULT_REGION}
+
+  -w|--workloads
+    The number of workloads to create in addition to the demo apps.
+    Default: ${DEFAULT_WORKLOADS}
 
   -h|--help )
 HELPMSG
@@ -99,6 +118,7 @@ if [ ! -f "${API_KEY_FILE}" ]; then
 fi
 
 # Set the config
+: "${CLUSTER_NAME:=${DEFAULT_CLUSTER_NAME}}"
 : "${HELM_CHARTS_REPO:=${DEFAULT_HELM_CHARTS_REPO}}"
 : "${ISTIO_VERSION:=${DEFAULT_ISTIO_VERSION}}"
 : "${KIALI_VERSION:=${DEFAULT_KIALI_VERSION}}"
@@ -106,12 +126,14 @@ fi
 : "${NODES:=${DEFAULT_NODES}}"
 : "${OPENSHIFT_VERSION:=${DEFAULT_OPENSHIFT_VERSION}}"
 : "${REGION:=${DEFAULT_REGION}}"
-API_KEY="$(cat ${API_KEY_FILE})"
+: "${WORKLOADS:=${DEFAULT_WORKLOADS}}"
+API_KEY="$(cat "${API_KEY_FILE}")"
 
 # Dump config
 infomsg "==START CONFIG=="
 cat<<EOM
 API_KEY_FILE=${API_KEY_FILE}
+CLUSTER_NAME=${CLUSTER_NAME}
 HELM_CHARTS_REPO=${HELM_CHARTS_REPO}
 ISTIO_VERSION=${ISTIO_VERSION}
 KIALI_VERSION=${KIALI_VERSION}
@@ -119,6 +141,7 @@ NODE_FLAVOR=${NODE_FLAVOR}
 NODES=${NODES}
 OPENSHIFT_VERSION=${OPENSHIFT_VERSION}
 REGION=${REGION}
+WORKLOADS=${WORKLOADS}
 EOM
 infomsg "==END CONFIG=="
 
@@ -150,6 +173,8 @@ users:
 - "system:serviceaccount:prometheus:prometheus-pushgateway"
 - "system:serviceaccount:prometheus:prometheus-server"
 SCC
+  # There's an existing scc for the node exporter. Just need to add the service account to it.
+  oc patch scc node-exporter --type='json' -p '[{"op": "replace", "path": "/users", "value":["system:serviceaccount:prometheus:prometheus-node-exporter"]}]'
 
   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
   helm repo update
@@ -158,6 +183,7 @@ server:
   retention: 14d
   persistentVolume:
     enabled: true
+    size: 75Gi
   statefulSet:
     enabled: true
 
@@ -179,7 +205,7 @@ install_kiali() {
   local cluster_repo
   cluster_repo=$(oc get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)
   local master_url
-  master_url=$(ibmcloud oc cluster get -c ${USER}-kiali-perf-cluster --output json | jq -r '.masterURL')
+  master_url=$(ibmcloud oc cluster get -c "${CLUSTER_NAME}-cluster" --output json | jq -r '.masterURL')
     
   oc login -u apikey -p "${API_KEY}" --server "${master_url}"
   local token
@@ -268,15 +294,15 @@ EOF
 REGION="us-south"
 
 install_openshift() {
-  if hack/ibmcloud-openshift.sh status -np ${USER}-kiali-perf | grep -q 'Cluster is deployed'; then
+  if hack/ibmcloud-openshift.sh status -np "${CLUSTER_NAME}" | grep -q 'Cluster is deployed'; then
     infomsg "Openshift cluster is already deployed. Waiting for it to be ready to use..."
-    hack/ibmcloud-openshift.sh finish -r "${REGION}" -np ${USER}-kiali-perf
+    hack/ibmcloud-openshift.sh finish -r "${REGION}" -np "${CLUSTER_NAME}"
     infomsg "Openshift cluster is ready to use."
     return 0
   fi
 
   hack/ibmcloud-openshift.sh create \
-    --name-prefix ${USER}-kiali-perf \
+    --name-prefix "${CLUSTER_NAME}" \
     --openshift-version "${OPENSHIFT_VERSION}" \
     --region "${REGION}" \
     --worker-flavor "${NODE_FLAVOR}" \
@@ -285,6 +311,27 @@ install_openshift() {
 
 install_demo_apps() {
   "${SCRIPT_DIR}"/istio/install-testing-demos.sh
+}
+
+install_workloads() {
+  cat <<SCC | oc apply -f -
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: depth-scc
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+users:
+- "system:serviceaccount:depth-0:default"
+SCC
+
+  local cluster_id
+  cluster_id=$(ibmcloud cs cluster get --cluster "${CLUSTER_NAME}-cluster" --output json | jq '.id')
+  bash <(curl -L https://raw.githubusercontent.com/kiali/demos/master/scale-mesh/scale-mesh.sh) install --mesh-type depth --apps "${WORKLOADS}" --services "${WORKLOADS}" -tgr 100 -mc "${HOME}/.bluemix/plugins/container-service/clusters/${CLUSTER_NAME}-cluster-${cluster_id}-admin/"
 }
 
 # Make sure we are logged in
@@ -300,3 +347,4 @@ install_prometheus
 install_istio
 install_kiali
 install_demo_apps
+install_workloads
