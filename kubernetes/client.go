@@ -15,6 +15,7 @@ import (
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd/api"
+	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
 	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -37,6 +38,7 @@ type ClientInterface interface {
 	GetToken() string
 	GetAuthInfo() *api.AuthInfo
 	IsOpenShift() bool
+	IsGatewayAPI() bool
 	K8SClientInterface
 	IstioClientInterface
 	OSClientInterface
@@ -55,6 +57,9 @@ type K8SClient struct {
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsOpenShift() for more details.
 	isOpenShift *bool
+	// isGatewayAPI private variable will check if K8s Gateway API CRD exists on cluster or not
+	isGatewayAPI *bool
+	gatewayapi   gatewayapiclient.Interface
 }
 
 // GetK8sApi returns the clientset referencing all K8s rest clients
@@ -153,6 +158,11 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 	client.k8s = k8s
 
 	client.istioClientset, err = istio.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	client.gatewayapi, err = gatewayapiclient.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}

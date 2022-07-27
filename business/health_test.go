@@ -34,6 +34,7 @@ func TestGetServiceHealth(t *testing.T) {
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockServiceRequestRates("ns", "httpbin", serviceRates)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Service{}, nil)
 
@@ -70,6 +71,7 @@ func TestGetAppHealth(t *testing.T) {
 	config.Set(conf)
 
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.MockEmptyWorkloads("ns")
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
@@ -121,6 +123,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 	config.Set(conf)
 
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.MockEmptyWorkload("ns", "reviews-v1")
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployment", "ns", "reviews-v1").Return(&fakeDeploymentsHealthReview()[0], nil)
@@ -168,6 +171,7 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 	config.Set(conf)
 
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.MockEmptyWorkloads("ns")
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
@@ -197,6 +201,7 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 	config.Set(conf)
 
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.MockEmptyWorkload("ns", "reviews-v1")
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployment", "ns", "reviews-v1").Return(&fakeDeploymentsHealthReview()[0], nil)
@@ -226,6 +231,7 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	config.Set(conf)
 
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.MockEmptyWorkloads("ns")
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetServices", "ns", mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
@@ -250,6 +256,7 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 	config.Set(conf)
 
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.MockServices("tutorial", []string{"reviews", "httpbin"})
 	prom.On("GetNamespaceServicesRequestRates", "tutorial", mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)

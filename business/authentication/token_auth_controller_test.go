@@ -87,6 +87,7 @@ func TestTokenAuthControllerRejectsInvalidToken(t *testing.T) {
 	// a rejected authentication.
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespaces", "").Return([]v1.Namespace{
 		{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
 	}, k8s_errors.NewForbidden(schema.GroupResource{Group: "v1", Resource: "Projects"}, "", errors.New("err")))
@@ -186,6 +187,7 @@ func TestTokenAuthControllerValidatesSessionForUserWithMissingPrivileges(t *test
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespaces", "").Return([]v1.Namespace{
 		{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
 	}, k8s_errors.NewForbidden(schema.GroupResource{Group: "v1", Resource: "Projects"}, "", errors.New("err")))

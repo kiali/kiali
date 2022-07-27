@@ -173,6 +173,9 @@ type istioConfigType = {
 
 export const IstioTypes = {
   gateway: { name: 'Gateway', url: 'gateways', badge: PFBadges.Gateway } as istioConfigType,
+  httproute: { name: 'HTTPRoute', url: 'k8shttproutes', badge: PFBadges.HTTPRoute } as istioConfigType,
+  k8sgateway: { name: 'Gateway (K8s)', url: 'k8sgateways', badge: PFBadges.K8sGateway } as istioConfigType,
+  k8shttproute: { name: 'HTTPRoute (K8s)', url: 'k8shttproutes', badge: PFBadges.K8sHTTPRoute } as istioConfigType,
   virtualservice: { name: 'VirtualService', url: 'virtualservices', badge: PFBadges.VirtualService } as istioConfigType,
   destinationrule: {
     name: 'DestinationRule',

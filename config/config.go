@@ -700,7 +700,7 @@ func NewConfig() (c *Config) {
 			Burst:                       200,
 			CacheDuration:               5 * 60,
 			CacheEnabled:                true,
-			CacheIstioTypes:             []string{"AuthorizationPolicy", "DestinationRule", "EnvoyFilter", "Gateway", "PeerAuthentication", "RequestAuthentication", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup"},
+			CacheIstioTypes:             []string{"AuthorizationPolicy", "DestinationRule", "EnvoyFilter", "Gateway", "PeerAuthentication", "RequestAuthentication", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup", "WasmPlugin", "Telemetry", "K8sGateway", "K8sHTTPRoute"},
 			CacheNamespaces:             []string{".*"},
 			CacheTokenNamespaceDuration: 10,
 			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController"},

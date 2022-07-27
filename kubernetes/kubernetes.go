@@ -206,6 +206,18 @@ func (in *K8SClient) IsOpenShift() bool {
 	return *in.isOpenShift
 }
 
+func (in *K8SClient) IsGatewayAPI() bool {
+	if in.isGatewayAPI == nil {
+		isGatewayAPI := false
+		_, err := in.GatewayAPI().GatewayV1alpha2().GatewayClasses().List(in.ctx, emptyListOptions)
+		if err == nil {
+			isGatewayAPI = true
+		}
+		in.isGatewayAPI = &isGatewayAPI
+	}
+	return *in.isGatewayAPI
+}
+
 // GetServices returns a list of services for a given namespace.
 // If selectorLabels is defined the list of services is filtered for those that matches Services selector labels.
 // It returns an error on any problem.

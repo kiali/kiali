@@ -8,6 +8,8 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
       name: 'test'
     },
     gateways: [],
+    k8sGateways: [],
+    k8sHTTPRoutes: [],
     virtualServices: [],
     destinationRules: [],
     serviceEntries: [],
@@ -57,6 +59,8 @@ describe('IstioConfigListContainer#filterByName', () => {
     expect(filtered.serviceEntries.length).toBe(0);
     expect(filtered.wasmPlugins.length).toBe(0);
     expect(filtered.telemetries.length).toBe(0);
+    expect(filtered.k8sGateways.length).toBe(0);
+    expect(filtered.k8sHTTPRoutes.length).toBe(0);
   });
 });
 

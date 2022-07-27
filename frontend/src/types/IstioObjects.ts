@@ -701,6 +701,38 @@ export function getGatewaysAsList(gws: Gateway[]): string[] {
   return gws.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort();
 }
 
+// K8s Gateway API https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/
+
+export interface Listener {
+  name: string;
+  hostname: string;
+  port: number;
+  protocol: string;
+}
+
+export interface ParentRef {
+  name: string;
+  namespace: string;
+}
+
+export interface K8sGatewaySpec {
+  listeners?: Listener[];
+  gatewayClassName: string;
+}
+
+export interface K8sGateway extends IstioObject {
+  spec: K8sGatewaySpec;
+}
+
+export interface K8sHTTPRouteSpec {
+  parentRefs?: ParentRef[];
+  hostnames: string[];
+}
+
+export interface K8sHTTPRoute extends IstioObject {
+  spec: K8sHTTPRouteSpec;
+}
+
 // Sidecar resource https://preliminary.istio.io/docs/reference/config/networking/v1alpha3/sidecar
 
 // 1.6

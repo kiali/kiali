@@ -4,6 +4,8 @@ import {
   AuthorizationPolicy,
   DestinationRule,
   Gateway,
+  K8sGateway,
+  K8sHTTPRoute,
   ServiceEntry,
   VirtualService,
   ObjectValidation,
@@ -28,6 +30,8 @@ export interface IstioConfigId {
 export interface IstioConfigDetails {
   namespace: Namespace;
   gateway: Gateway;
+  k8sGateway: K8sGateway;
+  k8sHTTPRoute: K8sHTTPRoute;
   virtualService: VirtualService;
   destinationRule: DestinationRule;
   serviceEntry: ServiceEntry;

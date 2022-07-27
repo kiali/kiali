@@ -14,6 +14,19 @@ func TestIstioConfigList(t *testing.T) {
 	configList, err := utils.IstioConfigsList(utils.BOOKINFO)
 
 	assert.Nil(err)
+	assertConfigs(*configList, assert)
+}
+
+func TestIstioConfigs(t *testing.T) {
+	assert := assert.New(t)
+	configMap, err := utils.IstioConfigs()
+
+	assert.Nil(err)
+	assert.NotEmpty(configMap)
+	assertConfigs(*configMap["bookinfo"], assert)
+}
+
+func assertConfigs(configList utils.IstioConfigListJson, assert *assert.Assertions) {
 	assert.NotEmpty(configList)
 	assert.NotNil(configList.IstioValidations)
 	assert.Equal(utils.BOOKINFO, configList.Namespace.Name)

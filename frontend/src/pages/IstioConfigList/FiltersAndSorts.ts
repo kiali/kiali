@@ -94,6 +94,14 @@ export const istioTypeFilter: FilterType = {
       title: 'Gateway'
     },
     {
+      id: 'K8sGateway',
+      title: 'K8sGateway'
+    },
+    {
+      id: 'K8sHTTPRoute',
+      title: 'K8sHTTPRoute'
+    },
+    {
       id: 'PeerAuthentication',
       title: 'PeerAuthentication'
     },

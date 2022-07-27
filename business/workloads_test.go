@@ -55,6 +55,7 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDeployments(), nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
@@ -99,6 +100,7 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
@@ -141,6 +143,7 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
@@ -184,6 +187,7 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDeploymentConfigs(), nil)
@@ -227,6 +231,7 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
@@ -270,6 +275,7 @@ func TestGetWorkloadListFromDaemonSets(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
@@ -313,6 +319,7 @@ func TestGetWorkloadListFromDepRCPod(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
@@ -347,6 +354,7 @@ func TestGetWorkloadListFromPod(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
@@ -381,6 +389,7 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
@@ -418,6 +427,7 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 	notfound := errors.NewNotFound(gr, "not found")
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}, nil)
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&FakeDepSyncedWithRS()[0], nil)
 	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&osapps_v1.DeploymentConfig{}, notfound)
@@ -455,6 +465,7 @@ func TestGetWorkloadWithInvalidWorkloadType(t *testing.T) {
 	notfound := errors.NewNotFound(gr, "not found")
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&FakeDepSyncedWithRS()[0], nil)
 	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&osapps_v1.DeploymentConfig{}, notfound)
@@ -493,6 +504,7 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	notfound := errors.NewNotFound(gr, "not found")
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&apps_v1.Deployment{}, notfound)
 	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&osapps_v1.DeploymentConfig{}, notfound)
@@ -531,6 +543,7 @@ func TestGetPods(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakePodsSyncedWithDeployments(), nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 
 	svc := setupWorkloadService(k8s)
 
@@ -549,6 +562,7 @@ func TestGetPod(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetPod", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakePodSyncedWithDeployments(), nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 
 	svc := setupWorkloadService(k8s)
 
@@ -567,6 +581,7 @@ func TestGetPodLogs(t *testing.T) {
 	fplswd := FakePodLogsSyncedWithDeployments()
 	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 
 	svc := setupWorkloadService(k8s)
 	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}})
@@ -604,6 +619,7 @@ func TestGetPodLogsMaxLines(t *testing.T) {
 	fplswd := FakePodLogsSyncedWithDeployments()
 	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 
 	svc := setupWorkloadService(k8s)
 
@@ -626,6 +642,7 @@ func TestGetPodLogsDuration(t *testing.T) {
 	fplswd := FakePodLogsSyncedWithDeployments()
 	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	svc := setupWorkloadService(k8s)
 
 	duration, _ := time.ParseDuration("59m")
@@ -637,6 +654,7 @@ func TestGetPodLogsDuration(t *testing.T) {
 	k8s = new(kubetest.K8SClientMock)
 	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	svc = setupWorkloadService(k8s)
 
 	duration, _ = time.ParseDuration("1h")
@@ -649,6 +667,7 @@ func TestGetPodLogsDuration(t *testing.T) {
 	k8s = new(kubetest.K8SClientMock)
 	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	svc = setupWorkloadService(k8s)
 
 	duration, _ = time.ParseDuration("2h")
@@ -669,6 +688,7 @@ func TestGetPodLogsMaxLinesAndDurations(t *testing.T) {
 	fplswd := FakePodLogsSyncedWithDeployments()
 	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	svc := setupWorkloadService(k8s)
 
 	maxLines := 2
@@ -683,6 +703,7 @@ func TestGetPodLogsMaxLinesAndDurations(t *testing.T) {
 	k8s = new(kubetest.K8SClientMock)
 	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplswd.Logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	svc = setupWorkloadService(k8s)
 
 	maxLines = 3
@@ -705,6 +726,7 @@ func TestGetPodLogsProxy(t *testing.T) {
 	fplp := FakePodLogsProxy()
 	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(fplp.Logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 
 	svc := setupWorkloadService(k8s)
 
@@ -728,6 +750,7 @@ func TestDuplicatedControllers(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDuplicatedDeployments(), nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
@@ -785,6 +808,7 @@ func TestGetWorkloadListFromGenericPodController(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
@@ -835,6 +859,7 @@ func TestGetWorkloadListKindsWithSameName(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
@@ -889,6 +914,7 @@ func TestGetWorkloadListRSWithoutPrefix(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
@@ -948,6 +974,7 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
@@ -1004,6 +1031,7 @@ func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
 2021-10-05T00:32:40.309457Z     ':scheme', 'http'`
 	k8s.On("StreamPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(io.NopCloser(strings.NewReader(logs)), nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 
 	svc := setupWorkloadService(k8s)
 

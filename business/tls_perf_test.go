@@ -71,6 +71,7 @@ func testPerfScenario(exStatus string, nss []core_v1.Namespace, drs []*networkin
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(nss, nil)
 	k8s.On("GetToken").Return("token")

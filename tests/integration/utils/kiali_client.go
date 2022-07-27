@@ -63,6 +63,8 @@ type IstioConfigListJson struct {
 	IstioValidations ObjectValidations `json:"validations"`
 }
 
+type IstioConfigMapJson map[string]*IstioConfigListJson
+
 type MetricJson struct {
 	Labels     map[string]string `json:"labels"`
 	Datapoints []interface{}     `json:"datapoints"`
@@ -374,6 +376,21 @@ func WorkloadDetails(name, namespace string) (*WorkloadJson, int, error) {
 		}
 	} else {
 		return nil, code, err
+	}
+}
+
+func IstioConfigs() (IstioConfigMapJson, error) {
+	body, _, _, err := httputil.HttpGet(client.kialiURL+"/api/istio/config?validate=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	if err == nil {
+		configsMap := new(IstioConfigMapJson)
+		err = json.Unmarshal(body, &configsMap)
+		if err == nil {
+			return *configsMap, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
 	}
 }
 

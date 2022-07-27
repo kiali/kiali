@@ -69,6 +69,7 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 		}, nil)
 
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 
 	api := new(prometheustest.PromAPIMock)
 	client, err := prometheus.NewClient()
@@ -144,6 +145,7 @@ func setupMockedWithIstioComponentNamespaces(meshId string) (*prometheus.Client,
 		}, nil)
 
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 
 	api := new(prometheustest.PromAPIMock)
 	client, err := prometheus.NewClient()

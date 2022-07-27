@@ -23,6 +23,7 @@ func TestServiceListParsing(t *testing.T) {
 	k8s.MockServices("Namespace", []string{"reviews", "httpbin"})
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(kubetest.FakePodList(), nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -49,6 +50,7 @@ func TestParseRegistryServices(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	setupGlobalMeshConfig()
 	svc := SvcService{k8s: nil, businessLayer: NewWithBackends(k8s, nil, nil)}
 

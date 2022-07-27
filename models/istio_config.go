@@ -6,6 +6,7 @@ import (
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
+	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
 // IstioConfigList istioConfigList
@@ -30,6 +31,9 @@ type IstioConfigList struct {
 	WasmPlugins      []*extentions_v1alpha1.WasmPlugin     `json:"wasmPlugins"`
 	Telemetries      []*v1alpha1.Telemetry                 `json:"telemetries"`
 
+	K8sGateways   []k8s_networking_v1alpha2.Gateway   `json:"k8sGateways"`
+	K8sHTTPRoutes []k8s_networking_v1alpha2.HTTPRoute `json:"k8sHTTPRoutes"`
+
 	AuthorizationPolicies  []*security_v1beta.AuthorizationPolicy   `json:"authorizationPolicies"`
 	PeerAuthentications    []*security_v1beta.PeerAuthentication    `json:"peerAuthentications"`
 	RequestAuthentications []*security_v1beta.RequestAuthentication `json:"requestAuthentications"`
@@ -53,6 +57,9 @@ type IstioConfigDetails struct {
 	WorkloadGroup         *networking_v1beta1.WorkloadGroup      `json:"workloadGroup"`
 	WasmPlugin            *extentions_v1alpha1.WasmPlugin        `json:"wasmPlugin"`
 	Telemetry             *v1alpha1.Telemetry                    `json:"telemetry"`
+
+	K8sGateway   *k8s_networking_v1alpha2.Gateway   `json:"k8sGateway"`
+	K8sHTTPRoute *k8s_networking_v1alpha2.HTTPRoute `json:"k8sHTTPRoute"`
 
 	Permissions           ResourcePermissions `json:"permissions"`
 	IstioValidation       *IstioValidation    `json:"validation"`
@@ -154,6 +161,12 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 	"telemetries": { //TODO
 		{},
 	},
+	"k8sgateways": { //TODO
+		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. A Gateway describes how traffic can be translated to Services within the cluster."},
+	},
+	"k8shttproutes": { //TODO
+		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. HTTPRoute is for multiplexing HTTP or terminated HTTPS connections."},
+	},
 	"internal": {
 		{ObjectField: "", Message: "Internal resources are not editable"},
 	},
@@ -188,6 +201,8 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 			filtered[ns].DestinationRules = []*networking_v1beta1.DestinationRule{}
 			filtered[ns].EnvoyFilters = []*networking_v1alpha3.EnvoyFilter{}
 			filtered[ns].Gateways = []*networking_v1beta1.Gateway{}
+			filtered[ns].K8sGateways = []k8s_networking_v1alpha2.Gateway{}
+			filtered[ns].K8sHTTPRoutes = []k8s_networking_v1alpha2.HTTPRoute{}
 			filtered[ns].VirtualServices = []*networking_v1beta1.VirtualService{}
 			filtered[ns].ServiceEntries = []*networking_v1beta1.ServiceEntry{}
 			filtered[ns].Sidecars = []*networking_v1beta1.Sidecar{}
@@ -214,6 +229,18 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 		for _, gw := range configList.Gateways {
 			if gw.Namespace == ns {
 				filtered[ns].Gateways = append(filtered[ns].Gateways, gw)
+			}
+		}
+
+		for _, gw := range configList.K8sGateways {
+			if gw.Namespace == ns {
+				filtered[ns].K8sGateways = append(filtered[ns].K8sGateways, gw)
+			}
+		}
+
+		for _, route := range configList.K8sHTTPRoutes {
+			if route.Namespace == ns {
+				filtered[ns].K8sHTTPRoutes = append(filtered[ns].K8sHTTPRoutes, route)
 			}
 		}
 
