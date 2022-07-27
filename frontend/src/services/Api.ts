@@ -186,7 +186,7 @@ export const getAllIstioConfigs = (
   validate: boolean,
   labelSelector: string,
   workloadSelector: string
-) => {
+): Promise<Response<IstioConfigList>> => {
   const params: any = namespaces && namespaces.length > 0 ? { namespaces: namespaces.join(',') } : {};
   if (objects && objects.length > 0) {
     params.objects = objects.join(',');
