@@ -36,12 +36,28 @@ func TestTwoSidecarsWithoutSelector(t *testing.T) {
 		[]*networking_v1beta1.Sidecar{
 			data.CreateSidecar("sidecar1", "bookinfo"),
 			data.CreateSidecar("sidecar2", "bookinfo"),
+			data.CreateSidecar("sidecar3", "bookinfo2"),
 		},
 		workloadList(),
 	).Check()
 
 	assertMultimatchFailure(t, "generic.multimatch.selectorless", validations, "sidecar1", []string{"sidecar2"})
 	assertMultimatchFailure(t, "generic.multimatch.selectorless", validations, "sidecar2", []string{"sidecar1"})
+}
+
+func TestTwoSidecarsWithoutSelectorDifferentNamespaces(t *testing.T) {
+	assert := assert.New(t)
+
+	validations := SidecarSelectorMultiMatchChecker(
+		"sidecar",
+		[]*networking_v1beta1.Sidecar{
+			data.CreateSidecar("sidecar1", "bookinfo"),
+			data.CreateSidecar("sidecar2", "bookinfo2"),
+		},
+		workloadList(),
+	).Check()
+
+	assert.Empty(validations)
 }
 
 func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
@@ -111,15 +127,15 @@ func TestSidecarsDifferentNamespaces(t *testing.T) {
 		}, data.CreateSidecar("sidecar1", "bookinfo")),
 		data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
-			"version": "v1",
+			"version": "v2",
 		}, data.CreateSidecar("sidecar2", "bookinfo2")),
 		data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
-			"version": "v1",
+			"version": "v3",
 		}, data.CreateSidecar("sidecar3", "bookinfo3")),
 		data.AddSelectorToSidecar(map[string]string{
 			"app":     "details",
-			"version": "v1",
+			"version": "v4",
 		}, data.CreateSidecar("sidecar4", "bookinfo4")),
 	}
 	validations := SidecarSelectorMultiMatchChecker(
@@ -162,5 +178,5 @@ func workloadList() map[string]models.WorkloadList {
 		data.CreateWorkloadListItem("details-v3", map[string]string{"app": "details", "version": "v3"}),
 	}
 
-	return data.CreateWorkloadsPerNamespace("bookinfo", wli...)
+	return data.CreateWorkloadsPerNamespace([]string{"bookinfo", "bookinfo2", "bookinfo3", "bookinfo4"}, wli...)
 }

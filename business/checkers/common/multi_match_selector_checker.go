@@ -29,6 +29,7 @@ func PeerAuthenticationMultiMatchChecker(subjectType string, pa []*security_v1be
 		keys = append(keys, key)
 		selectors[i] = make(map[string]string)
 		if p.Spec.Selector != nil {
+
 			selectors[i] = p.Spec.Selector.MatchLabels
 		}
 	}
@@ -159,9 +160,17 @@ func (m GenericMultiMatchChecker) buildSelectorLessSubjectValidations(subjects [
 	if len(subjects) < 2 {
 		return validations
 	}
+	namespaceNumbers := make(map[string]int)
+	for _, subjectWithIndex := range subjects {
+		namespaceNumbers[subjectWithIndex.Key.Namespace]++
+	}
 
 	for _, subjectWithIndex := range subjects {
-		references := extractReferences(subjectWithIndex.Index, subjects)
+		// skip subjects which do not have duplicates in same namespace
+		if namespaceNumbers[subjectWithIndex.Key.Namespace] < 2 {
+			continue
+		}
+		references := extractReferences(subjectWithIndex.Index, subjectWithIndex.Key.Namespace, subjects)
 		checks := models.Build("generic.multimatch.selectorless", m.Path)
 		validations.MergeValidations(
 			models.IstioValidations{
@@ -180,11 +189,11 @@ func (m GenericMultiMatchChecker) buildSelectorLessSubjectValidations(subjects [
 	return validations
 }
 
-func extractReferences(index int, subjects []KeyWithIndex) []models.IstioValidationKey {
+func extractReferences(index int, namespace string, subjects []KeyWithIndex) []models.IstioValidationKey {
 	references := make([]models.IstioValidationKey, 0, len(subjects)-1)
 
 	for _, s := range subjects {
-		if s.Index != index {
+		if s.Index != index && s.Key.Namespace == namespace {
 			references = append(references, *s.Key)
 		}
 	}
@@ -240,12 +249,22 @@ func (m GenericMultiMatchChecker) buildSubjectValidations(workloadSubject Refere
 func (m GenericMultiMatchChecker) buildMultipleSubjectValidation(scs []models.IstioValidationKey) models.IstioValidations {
 	validations := models.IstioValidations{}
 
+	namespaceNumbers := make(map[string]int)
+	for _, sck := range scs {
+		namespaceNumbers[sck.Namespace]++
+	}
+
 	for i, sck := range scs {
-		// Remove validation subject from references
+		// skip subjects which do not have duplicates in same namespace
+		if namespaceNumbers[sck.Namespace] < 2 {
+			continue
+		}
+		// Remove validation subject and other namespace subjects from references
 		refs := make([]models.IstioValidationKey, 0, len(scs)-1)
-		refs = append(refs, scs[:i]...)
-		if len(scs) > i {
-			refs = append(refs, scs[i+1:]...)
+		for refIndex, refSck := range scs {
+			if refIndex != i && refSck.Namespace == sck.Namespace {
+				refs = append(refs, refSck)
+			}
 		}
 
 		checks := models.Build("generic.multimatch.selector", m.Path)
