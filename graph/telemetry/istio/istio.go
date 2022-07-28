@@ -39,6 +39,7 @@ import (
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
 	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -385,10 +386,26 @@ func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val flo
 	}
 }
 
+func initHealthData(node *graph.Node) {
+	if _, ok := node.Metadata[graph.HealthData]; !ok {
+		if node.NodeType == graph.NodeTypeService {
+			m := models.EmptyServiceHealth()
+			node.Metadata[graph.HealthData] = &m
+		} else if node.NodeType == graph.NodeTypeWorkload {
+			m := models.EmptyWorkloadHealth()
+			node.Metadata[graph.HealthData] = m
+		} else if node.NodeType == graph.NodeTypeApp {
+			m := models.EmptyAppHealth()
+			mApp := models.EmptyAppHealth()
+			node.Metadata[graph.HealthData] = &m
+			node.Metadata[graph.HealthDataApp] = &mApp
+		}
+	}
+}
+
 // addEdgeTraffic uses edgeTSHash that the metric information has not been applied to the edge. Returns true
 // if the the metric information is applied, false if it determined to be a duplicate.
 func addEdgeTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags, host string, source, dest *graph.Node, edgeTSHash string, o graph.TelemetryOptions) bool {
-
 	var edge *graph.Edge
 	for _, e := range source.Edges {
 		if dest.ID == e.Dest.ID && e.Metadata[graph.ProtocolKey] == protocol {
@@ -396,7 +413,7 @@ func addEdgeTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, fl
 			break
 		}
 	}
-	if nil == edge {
+	if edge == nil {
 		edge = source.AddEdge(dest)
 		edge.Metadata[graph.ProtocolKey] = protocol
 		edge.Metadata[tsHashMap] = make(map[string]bool)
@@ -405,10 +422,59 @@ func addEdgeTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, fl
 	if _, ok := edge.Metadata[tsHashMap].(map[string]bool)[edgeTSHash]; !ok {
 		edge.Metadata[tsHashMap].(map[string]bool)[edgeTSHash] = true
 		graph.AddToMetadata(protocol, val, code, flags, host, source.Metadata, dest.Metadata, edge.Metadata)
+		if o.Appenders.Includes(appender.HealthAppenderName) {
+			initHealthData(source)
+			initHealthData(dest)
+			switch source.NodeType {
+			case graph.NodeTypeService:
+				health := source.Metadata[graph.HealthData].(*models.ServiceHealth)
+				addValueToRequests(health.Requests.Outbound, protocol, code, val)
+				source.Metadata[graph.HealthData] = health
+			case graph.NodeTypeWorkload:
+				health := source.Metadata[graph.HealthData].(*models.WorkloadHealth)
+				addValueToRequests(health.Requests.Outbound, protocol, code, val)
+				source.Metadata[graph.HealthData] = health
+			case graph.NodeTypeApp:
+				health := source.Metadata[graph.HealthData].(*models.AppHealth)
+				addValueToRequests(health.Requests.Outbound, protocol, code, val)
+				source.Metadata[graph.HealthData] = health
+				health = source.Metadata[graph.HealthDataApp].(*models.AppHealth)
+				addValueToRequests(health.Requests.Outbound, protocol, code, val)
+				source.Metadata[graph.HealthDataApp] = health
+			}
+
+			switch dest.NodeType {
+			case graph.NodeTypeService:
+				health := dest.Metadata[graph.HealthData].(*models.ServiceHealth)
+				addValueToRequests(health.Requests.Inbound, protocol, code, val)
+				dest.Metadata[graph.HealthData] = health
+			case graph.NodeTypeWorkload:
+				health := dest.Metadata[graph.HealthData].(*models.WorkloadHealth)
+				addValueToRequests(health.Requests.Inbound, protocol, code, val)
+				dest.Metadata[graph.HealthData] = health
+			case graph.NodeTypeApp:
+				health := dest.Metadata[graph.HealthData].(*models.AppHealth)
+				addValueToRequests(health.Requests.Inbound, protocol, code, val)
+				dest.Metadata[graph.HealthData] = health
+				health = dest.Metadata[graph.HealthDataApp].(*models.AppHealth)
+				addValueToRequests(health.Requests.Inbound, protocol, code, val)
+				dest.Metadata[graph.HealthDataApp] = health
+			}
+		}
 		return true
 	}
 
 	return false
+}
+
+func addValueToRequests(requests map[string]map[string]float64, protocol, code string, val float64) {
+	if _, ok := requests[protocol]; !ok {
+		requests[protocol] = make(map[string]float64)
+	}
+	if _, ok := requests[protocol][code]; !ok {
+		requests[protocol][code] = 0
+	}
+	requests[protocol][code] += val
 }
 
 func addToDestServices(md graph.Metadata, cluster, namespace, service string) {

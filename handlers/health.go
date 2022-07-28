@@ -18,7 +18,7 @@ const defaultHealthRateInterval = "10m"
 // NamespaceHealth is the API handler to get app-based health of every services in the given namespace
 func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 	// Get business layer
-	business, err := getBusiness(r)
+	businessLayer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -32,29 +32,30 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Adjust rate interval
-	rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime)
+	rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime)
 	if err != nil {
 		handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 		return
 	}
 
+	healthCriteria := business.NamespaceHealthCriteria{Namespace: p.Namespace, RateInterval: rateInterval, QueryTime: p.QueryTime, IncludeMetrics: true}
 	switch p.Type {
 	case "app":
-		health, err := business.Health.GetNamespaceAppHealth(r.Context(), p.Namespace, rateInterval, p.QueryTime)
+		health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), healthCriteria)
 		if err != nil {
 			handleErrorResponse(w, err, "Error while fetching app health: "+err.Error())
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, health)
 	case "service":
-		health, err := business.Health.GetNamespaceServiceHealth(r.Context(), p.Namespace, rateInterval, p.QueryTime)
+		health, err := businessLayer.Health.GetNamespaceServiceHealth(r.Context(), healthCriteria)
 		if err != nil {
 			handleErrorResponse(w, err, "Error while fetching service health: "+err.Error())
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, health)
 	case "workload":
-		health, err := business.Health.GetNamespaceWorkloadHealth(r.Context(), p.Namespace, rateInterval, p.QueryTime)
+		health, err := businessLayer.Health.GetNamespaceWorkloadHealth(r.Context(), healthCriteria)
 		if err != nil {
 			handleErrorResponse(w, err, "Error while fetching workload health: "+err.Error())
 			return

@@ -136,6 +136,7 @@ func TestHealthDataPresent(t *testing.T) {
 func TestErrorCausesPanic(t *testing.T) {
 	assert := assert.New(t)
 
+
 	config.Set(config.NewConfig())
 	trafficMap := buildAppTrafficMap()
 	k8s := kubetest.NewK8SClientMock()
@@ -149,7 +150,8 @@ func TestErrorCausesPanic(t *testing.T) {
 	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
 	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	k8s.On("GetDaemonSets", mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{}, fmt.Errorf("test error! This should cause a panic"))
+	const panicErrMsg = "test error! This should cause a panic"
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{}, fmt.Errorf(panicErrMsg))
 	config.Set(config.NewConfig())
 	business.SetKialiControlPlaneCluster(&business.Cluster{
 		Name: business.DefaultClusterID,
@@ -166,7 +168,7 @@ func TestErrorCausesPanic(t *testing.T) {
 
 	a := HealthAppender{}
 
-	assert.Panics(func() { a.AppendGraph(trafficMap, globalInfo, namespaceInfo) })
+	assert.PanicsWithValue(panicErrMsg, func() { a.AppendGraph(trafficMap, globalInfo, namespaceInfo) })
 }
 
 func buildFakeServicesHealth(rate string) []core_v1.Service {

@@ -233,8 +233,8 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	k8s.On("GetPods", "ns", "").Return(fakePodsHealthReviewWithoutIstio(), nil)
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
-
-	_, _ = hs.GetNamespaceAppHealth(context.TODO(), "ns", "1m", time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC))
+	criteria := NamespaceHealthCriteria{Namespace: "ns", RateInterval: "1m", QueryTime: time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
+	_, _ = hs.GetNamespaceAppHealth(context.TODO(), criteria)
 
 	// Make sure unnecessary call isn't performed
 	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 0)
@@ -256,7 +256,8 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	health, err := hs.GetNamespaceServiceHealth(context.TODO(), "tutorial", "1m", time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC))
+	criteria := NamespaceHealthCriteria{Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
+	health, err := hs.GetNamespaceServiceHealth(context.TODO(), criteria) 
 
 	assert.Nil(err)
 	// Make sure we get services with N/A health
