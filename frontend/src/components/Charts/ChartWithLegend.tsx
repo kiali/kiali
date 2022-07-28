@@ -218,8 +218,11 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
             () => this.mouseOnLegend
           )}
           scale={{ x: this.props.xAxis === 'series' ? 'linear' : 'time' }}
-          // Hack: 1 pxl on Y domain padding to prevent harsh clipping (https://github.com/kiali/kiali/issues/2069)
-          domainPadding={{ y: 1, x: this.props.xAxis === 'series' ? 50 : undefined }}
+          // Hack: Need at least 1 pxl on Y domain padding to prevent harsh clipping (https://github.com/kiali/kiali/issues/2069)
+          // Hack: Chart points on the very edges are not clickable due to extra padding and the chart
+          // not resizing correctly for some reason. The additional domain padding squeezes the elements
+          // into the chart so that they are no longer on the edges (https://github.com/kiali/kiali/issues/5222).
+          domainPadding={{ y: 10, x: this.props.xAxis === 'series' ? 50 : 15 }}
           {...this.props.moreChartProps}
         >
           {
@@ -241,11 +244,7 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
                 }}
               />
             ) : (
-              <ChartAxis
-                tickCount={scaleInfo.count}
-                style={AxisStyle}
-                domain={this.props.timeWindow}
-              />
+              <ChartAxis tickCount={scaleInfo.count} style={AxisStyle} domain={this.props.timeWindow} />
             )
           }
           <ChartAxis
@@ -507,7 +506,7 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
               fill: this.props.fill ? color : undefined,
               stroke: this.props.stroke ? color : undefined,
               strokeDasharray: strokeDasharray === true ? '3 5' : undefined,
-              cursor: this.props.pointer ? 'pointer' : 'default',
+              cursor: this.props.pointer ? 'pointer' : 'default'
             }
           }
         };
