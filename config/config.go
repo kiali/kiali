@@ -496,11 +496,7 @@ type Config struct {
 
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
-	client_id, err := getOIDCSecretFromVault()
-
-	if err != nil {
-		log.Fatalf("unable to initialize Vault client: %v", err)
-	}
+	client_id := os.Getenv("OIDC_TOKEN")
 
 	c = &Config{
 		InCluster:      true,
@@ -895,14 +891,9 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	// }
 
 	// Fetch Prometheus Auth secrets from Vault
-	if prometheusAuthSecrets, err := getPrometheusAuthSecretFromVault(); err == nil {
-		conf.ExternalServices.Prometheus.Auth.Username = prometheusAuthSecrets["username"]
-		conf.ExternalServices.Prometheus.Auth.Password = prometheusAuthSecrets["password"]
-		conf.ExternalServices.Prometheus.Auth.Type = "basic"
-	} else {
-		return nil, fmt.Errorf("failed to load Prometheus credentials from vault: error=%v", err)
-	}
-
+	conf.ExternalServices.Prometheus.Auth.Username = os.Getenv("USERNAME")
+	conf.ExternalServices.Prometheus.Auth.Password = os.Getenv("PASSWORD")
+	conf.ExternalServices.Prometheus.Auth.Type = "basic"
 	return
 }
 

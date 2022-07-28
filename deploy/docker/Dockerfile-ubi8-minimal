@@ -18,5 +18,3 @@ RUN chown -R cai:cai $CAI_HOME/console && \
     chmod -R g=u $CAI_HOME/console
 
 USER 1000
-
-ENTRYPOINT ["${CAI_HOME}/kiali"]
