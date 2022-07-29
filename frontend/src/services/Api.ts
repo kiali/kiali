@@ -162,7 +162,7 @@ export const getIstioConfig = (
   validate: boolean,
   labelSelector: string,
   workloadSelector: string
-) => {
+): Promise<Response<IstioConfigList>> => {
   const params: any = objects && objects.length > 0 ? { objects: objects.join(',') } : {};
   if (validate) {
     params.validate = validate;
@@ -173,11 +173,7 @@ export const getIstioConfig = (
   if (workloadSelector) {
     params.workloadSelector = workloadSelector;
   }
-  if (namespace) {
-    return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.istioConfig(namespace), params, {});
-  } else {
-    return newRequest<IstioConfigsMap>(HTTP_VERBS.GET, urls.allIstioConfigs(), params, {});
-  }
+  return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.istioConfig(namespace), params, {});
 };
 
 export const getAllIstioConfigs = (
