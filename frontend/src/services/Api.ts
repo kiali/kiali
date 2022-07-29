@@ -19,7 +19,7 @@ import {
   WorkloadHealth
 } from '../types/Health';
 import { IstioConfigDetails, IstioPermissions } from '../types/IstioConfigDetails';
-import { IstioConfigList } from '../types/IstioConfigList';
+import { IstioConfigList, IstioConfigsMap } from '../types/IstioConfigList';
 import { Pod, PodLogs, ValidationStatus, EnvoyProxyDump } from '../types/IstioObjects';
 import { ComponentStatus } from '../types/IstioStatus';
 import { JaegerInfo, JaegerResponse, JaegerSingleResponse } from '../types/JaegerInfo';
@@ -176,7 +176,7 @@ export const getIstioConfig = (
   if (namespace) {
     return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.istioConfig(namespace), params, {});
   } else {
-    return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.allIstioConfigs(), params, {});
+    return newRequest<IstioConfigsMap>(HTTP_VERBS.GET, urls.allIstioConfigs(), params, {});
   }
 };
 
@@ -186,7 +186,7 @@ export const getAllIstioConfigs = (
   validate: boolean,
   labelSelector: string,
   workloadSelector: string
-): Promise<Response<IstioConfigList>> => {
+): Promise<Response<IstioConfigsMap>> => {
   const params: any = namespaces && namespaces.length > 0 ? { namespaces: namespaces.join(',') } : {};
   if (objects && objects.length > 0) {
     params.objects = objects.join(',');
@@ -200,7 +200,7 @@ export const getAllIstioConfigs = (
   if (workloadSelector) {
     params.workloadSelector = workloadSelector;
   }
-  return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.allIstioConfigs(), params, {});
+  return newRequest<IstioConfigsMap>(HTTP_VERBS.GET, urls.allIstioConfigs(), params, {});
 };
 
 export const getIstioConfigDetail = (namespace: string, objectType: string, object: string, validate: boolean) => {
