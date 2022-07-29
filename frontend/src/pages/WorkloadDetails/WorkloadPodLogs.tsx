@@ -924,15 +924,14 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       .registerAll('logs', promises)
       .then(responses => {
         let entries = [] as Entry[];
-
         if (showSpans) {
           const spans = showSpans ? (responses[0].data as Span[]) : ([] as Span[]);
           entries = spans.map(span => {
-            span.startTime = Math.floor(span.startTime / 1000000);
+             span.startTime = Math.floor(span.startTime / 1000);
             return {
-              timestamp: moment(span.startTime * 1000)
+              timestamp: moment(span.startTime)
                 .utc()
-                .format('YYYY-MM-DD HH:mm:ss.sss'),
+                .format('YYYY-MM-DD HH:mm:ss.SSS'),
               timestampUnix: span.startTime,
               span: span
             } as Entry;
