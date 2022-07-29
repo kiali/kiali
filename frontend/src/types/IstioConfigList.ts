@@ -114,17 +114,17 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
   }
   return {
     namespace: unfiltered.namespace,
-    gateways: unfiltered.gateways.filter(gw => includeName(gw.metadata.name, names)),
-    virtualServices: unfiltered.virtualServices.filter(vs => includeName(vs.metadata.name, names)),
-    destinationRules: unfiltered.destinationRules.filter(dr => includeName(dr.metadata.name, names)),
-    serviceEntries: unfiltered.serviceEntries.filter(se => includeName(se.metadata.name, names)),
-    authorizationPolicies: unfiltered.authorizationPolicies.filter(rc => includeName(rc.metadata.name, names)),
-    sidecars: unfiltered.sidecars.filter(sc => includeName(sc.metadata.name, names)),
-    peerAuthentications: unfiltered.peerAuthentications.filter(pa => includeName(pa.metadata.name, names)),
-    requestAuthentications: unfiltered.requestAuthentications.filter(ra => includeName(ra.metadata.name, names)),
-    workloadEntries: unfiltered.workloadEntries.filter(we => includeName(we.metadata.name, names)),
-    workloadGroups: unfiltered.workloadGroups.filter(wg => includeName(wg.metadata.name, names)),
-    envoyFilters: unfiltered.envoyFilters.filter(ef => includeName(ef.metadata.name, names)),
+    gateways: unfiltered.gateways?.filter(gw => includeName(gw.metadata.name, names)),
+    virtualServices: unfiltered.virtualServices?.filter(vs => includeName(vs.metadata.name, names)),
+    destinationRules: unfiltered.destinationRules?.filter(dr => includeName(dr.metadata.name, names)),
+    serviceEntries: unfiltered.serviceEntries?.filter(se => includeName(se.metadata.name, names)),
+    authorizationPolicies: unfiltered.authorizationPolicies?.filter(rc => includeName(rc.metadata.name, names)),
+    sidecars: unfiltered.sidecars?.filter(sc => includeName(sc.metadata.name, names)),
+    peerAuthentications: unfiltered.peerAuthentications?.filter(pa => includeName(pa.metadata.name, names)),
+    requestAuthentications: unfiltered.requestAuthentications?.filter(ra => includeName(ra.metadata.name, names)),
+    workloadEntries: unfiltered.workloadEntries?.filter(we => includeName(we.metadata.name, names)),
+    workloadGroups: unfiltered.workloadGroups?.filter(wg => includeName(wg.metadata.name, names)),
+    envoyFilters: unfiltered.envoyFilters?.filter(ef => includeName(ef.metadata.name, names)),
     validations: unfiltered.validations,
     permissions: unfiltered.permissions
   };
