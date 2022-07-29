@@ -66,6 +66,7 @@ import { toRangeString } from 'components/Time/Utils';
 import { replayBorder } from 'components/Time/Replay';
 import GraphDataSource, { FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
 import { NamespaceActions } from '../../actions/NamespaceAction';
+import { GlobalActions } from "../../actions/GlobalActions";
 import GraphThunkActions from '../../actions/GraphThunkActions';
 import { JaegerTrace } from 'types/JaegerInfo';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
@@ -78,8 +79,6 @@ import ServiceWizard from "components/IstioWizards/ServiceWizard";
 import { ServiceDetailsInfo } from "types/ServiceInfo";
 import { DestinationRuleC, PeerAuthentication } from "types/IstioObjects";
 import { serverConfig } from "config";
-import * as API from "services/Api";
-import { decoratedNodeData } from "components/CytoscapeGraph/CytoscapeGraphUtils";
 import { WizardAction, WizardMode } from "components/IstioWizards/WizardActions";
 import ConfirmDeleteTrafficRoutingModal from "components/IstioWizards/ConfirmDeleteTrafficRoutingModal";
 import { deleteServiceTrafficRouting } from "services/Api";
@@ -123,6 +122,7 @@ type ReduxProps = {
   replayQueryTime: TimeInMilliseconds;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
   setGraphDefinition: (graphDefinition: GraphDefinition) => void;
+  setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => void;
   setRankResult: (result: RankResult) => void;
   setNode: (node?: NodeParamsType) => void;
   setTraceId: (traceId?: string) => void;
@@ -167,6 +167,8 @@ type WizardsData = {
   // Data sent to the wizard
   gateways: string[];
   peerAuthentications: PeerAuthentication[];
+
+  namespace: string;
 
   // This is a 3-state field: {null} value means that it was tried to fetch the data
   // from the back-end but fetching failed (either no data, or there was an error; {undefined}
@@ -336,7 +338,8 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
         wizardType: '',
         updateMode: false,
         gateways: [],
-        peerAuthentications: []
+        peerAuthentications: [],
+        namespace: ''
       },
       showConfirmDeleteTrafficRouting: false
     };
@@ -498,6 +501,8 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
                   graphData={this.state.graphData}
                   isMTLSEnabled={this.props.mtlsEnabled}
                   onEmptyGraphAction={this.handleEmptyGraphAction}
+                  onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
+                  onLaunchWizard={this.handleLaunchWizard}
                   onNodeDoubleTap={this.handleDoubleTap}
                   ref={refInstance => this.setCytoscapeGraph(refInstance)}
                   {...this.props}
@@ -520,11 +525,9 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
                 injectServiceNodes={this.props.showServiceNodes}
                 isPageVisible={this.props.isPageVisible}
                 namespaces={this.props.activeNamespaces}
-                onKebabOpened={this.handleSidePanelKebabOpened}
                 onLaunchWizard={this.handleLaunchWizard}
-                onDeleteTrafficRouting={() => this.setState({showConfirmDeleteTrafficRouting: true})}
+                onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
                 queryTime={this.state.graphData.timestamp / 1000}
-                serviceDetails={this.state.wizardsData.serviceDetails}
                 trafficRates={this.props.trafficRates}
                 {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
               />
@@ -535,7 +538,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
           show={this.state.wizardsData.showWizard}
           type={this.state.wizardsData.wizardType}
           update={this.state.wizardsData.updateMode}
-          namespace={this.props.summaryData?.summaryTarget ? decoratedNodeData(this.props.summaryData.summaryTarget).namespace : ''}
+          namespace={this.state.wizardsData.namespace}
           serviceName={this.state.wizardsData.serviceDetails?.service?.name || ''}
           workloads={this.state.wizardsData.serviceDetails?.workloads || []}
           createOrUpdate={/*this.canCreate() || this.canUpdate()*/ !serverConfig.deployment.viewOnlyMode && (this.state.wizardsData?.serviceDetails?.istioPermissions.create === true || this.state.wizardsData?.serviceDetails?.istioPermissions.update === true)}
@@ -552,7 +555,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
             destinationRules={DestinationRuleC.fromDrArray(this.state.wizardsData.serviceDetails!.destinationRules)}
             virtualServices={this.state.wizardsData.serviceDetails!.virtualServices}
             onCancel={() => this.setState({showConfirmDeleteTrafficRouting: false})}
-            onConfirm={this.handleDeleteServiceTrafficRouting} />
+            onConfirm={this.handleConfirmDeleteServiceTrafficRouting} />
         )}
       </>
     );
@@ -740,104 +743,58 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
     return;
   };
 
-  private handleLaunchWizard = (action: WizardAction, mode: WizardMode) => {
+  private handleLaunchWizard = (action: WizardAction, mode: WizardMode, namespace: string, serviceDetails: ServiceDetailsInfo, gateways: string[], peerAuths: PeerAuthentication[]) => {
     this.setState(prevState => ({
       wizardsData: {
         ...prevState.wizardsData,
         showWizard: true,
         wizardType: action,
-        updateMode: mode === "update"
+        updateMode: mode === "update",
+        namespace: namespace,
+        serviceDetails: serviceDetails,
+        gateways: gateways,
+        peerAuthentications: peerAuths
       }
     }));
   };
 
   private handleWizardClose = (changed: boolean) => {
     if (changed) {
-      // TODO: Reload graph
       this.setState(prevState => ({
         wizardsData: {
           ...prevState.wizardsData,
-          showWizard: false,
-          gateways: [],
-          peerAuthentications: [],
-          serviceDetails: null
+          showWizard: false
         }
       }));
+      this.props.setLastRefreshAt(Date.now());
     } else {
       this.setState(prevState => ({
         wizardsData: {
           ...prevState.wizardsData,
-          showWizard: false }
+          showWizard: false
+        }
       }));
     }
   }
 
-  private handleSidePanelKebabOpened = () => {
-    if (!this.props.summaryData) {
-      return;
-    }
-
-    const node = this.props.summaryData.summaryTarget;
-    const nodeData = decoratedNodeData(node);
-
-    if (!nodeData.service || nodeData.nodeType !== NodeType.SERVICE) {
-      return;
-    }
-
-    // TODO: How to know the namespace?:
-    if (/*this.state.wizardsData?.namespace === nodeData.namespace &&*/ this.state.wizardsData.serviceDetails?.service?.name === nodeData.service) {
-      return;
-    }
-
+  private handleDeleteTrafficRouting = (_key: string, serviceDetail: ServiceDetailsInfo) => {
     this.setState(prevState => ({
+      showConfirmDeleteTrafficRouting: true,
       wizardsData: {
         ...prevState.wizardsData,
-        serviceDetails: undefined
+        serviceDetails: serviceDetail
       }
     }));
-
-    let getDetailPromise = API.getServiceDetail(nodeData.namespace, nodeData.service, false, this.props.duration);
-    let getGwPromise = API.getIstioConfig('', ['gateways'], false, '', '');
-    let getPeerAuthsPromise = API.getIstioConfig(nodeData.namespace, ['peerauthentications'], false, '', '');
-
-    Promise.all([getDetailPromise, getGwPromise, getPeerAuthsPromise])
-      .then(results => {
-        this.setState(prevState => ({
-          wizardsData: {
-            ...prevState.wizardsData,
-            serviceDetails: results[0],
-            gateways: results[1].data.gateways.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort(),
-            peerAuthentications: results[2].data.peerAuthentications
-          }
-        }));
-      })
-      .catch(error => {
-        AlertUtils.addError('Could not fetch Service Details.', error);
-        this.setState(prevState => ({
-          wizardsData: {
-            ...prevState.wizardsData,
-            serviceDetails: null
-          }
-        }));
-      });
   };
 
-  private handleDeleteServiceTrafficRouting = () => {
+  private handleConfirmDeleteServiceTrafficRouting = () => {
     this.setState({
       showConfirmDeleteTrafficRouting:false
     });
 
     deleteServiceTrafficRouting(this.state.wizardsData!.serviceDetails!)
       .then(_results => {
-        // TODO: Reload graph data.
-        this.setState(prevState => ({
-          wizardsData: {
-            ...prevState.wizardsData,
-            gateways: [],
-            peerAuthentications: [],
-            serviceDetails: null
-          }
-        }));
+        this.props.setLastRefreshAt(Date.now());
       })
       .catch(error => {
         AlertUtils.addError('Could not delete Istio config objects.', error);
@@ -941,6 +898,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   onReady: (cy: Cy.Core) => dispatch(GraphThunkActions.graphReady(cy)),
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),
+  setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => dispatch(GlobalActions.setLastRefreshAt(lastRefreshAt)),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   setRankResult: bindActionCreators(GraphActions.setRankResult, dispatch),
   setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId)),

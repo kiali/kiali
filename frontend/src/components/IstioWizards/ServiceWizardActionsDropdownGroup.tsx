@@ -71,6 +71,7 @@ const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props 
   });
 
   actionItems.push(<DropdownSeparator key="actions_separator" />);
+  // TODO: Add tooltip
   actionItems.push(
     <DropdownItem
       key={DELETE_TRAFFIC_ROUTING}

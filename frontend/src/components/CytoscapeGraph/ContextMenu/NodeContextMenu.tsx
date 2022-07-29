@@ -2,11 +2,13 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { style } from 'typestyle';
+import { Spinner, Tooltip, TooltipPosition } from "@patternfly/react-core";
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 
 import history from 'app/History';
 import { NodeType, DecoratedGraphNodeData, BoxByType } from 'types/Graph';
 import { JaegerInfo } from 'types/JaegerInfo';
+import { durationSelector } from "store/Selectors";
 import { KialiAppState } from 'store/Store';
 import { Paths, serverConfig } from 'config';
 import { NodeContextMenuProps } from '../CytoscapeContextMenu';
@@ -14,11 +16,26 @@ import { getTitle } from 'pages/Graph/SummaryPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { renderBadgedName } from 'pages/Graph/SummaryLink';
 import { PFColors } from 'components/Pf/PfColors';
+import {
+  KIALI_WIZARD_LABEL,
+  SERVICE_WIZARD_ACTIONS,
+  WIZARD_TITLES,
+  WizardAction
+} from "../../IstioWizards/WizardActions";
+import { DELETE_TRAFFIC_ROUTING } from "../../IstioWizards/ServiceWizardActionsDropdownGroup";
 import {isParentKiosk, kioskContextMenuAction} from "../../Kiosk/KioskActions";
+import * as API from "services/Api";
+import { DurationInSeconds, TimeInMilliseconds } from "types/Common";
+import { PeerAuthentication } from "types/IstioObjects";
+import { ServiceDetailsInfo } from "types/ServiceInfo";
+import * as AlertUtils from "utils/AlertUtils";
+import { CancelablePromise } from "utils/CancelablePromises";
 
 type ReduxProps = {
+  duration: DurationInSeconds;
   jaegerInfo?: JaegerInfo;
   kiosk: string;
+  updateTime: TimeInMilliseconds;
 };
 
 // Note, in the below styles we assign colors to be consistent with PF Dropdown
@@ -57,46 +74,127 @@ const contextMenuItemLink = style({
 type Props = NodeContextMenuProps & ReduxProps;
 type LinkParams = { cluster: string; namespace: string; name: string; type: string };
 
-export class NodeContextMenu extends React.PureComponent<Props> {
-  static derivedValuesFromProps(node: DecoratedGraphNodeData): LinkParams | undefined {
-    const cluster: string = node.cluster;
-    const namespace: string = node.isServiceEntry ? node.isServiceEntry.namespace : node.namespace;
-    let name: string | undefined = undefined;
-    let type: string | undefined = undefined;
-    switch (node.nodeType) {
-      case NodeType.APP:
-      case NodeType.BOX:
-        // only app boxes have full context menus
-        const isBox = node.isBox;
-        if (!isBox || isBox === BoxByType.APP) {
-          // Prefer workload links
-          if (node.workload && node.parent) {
-            name = node.workload;
-            type = Paths.WORKLOADS;
-          } else {
-            type = Paths.APPLICATIONS;
-            name = node.app;
-          }
+function getLinkParamsForNode(node: DecoratedGraphNodeData): LinkParams | undefined {
+  const cluster: string = node.cluster;
+  const namespace: string = node.isServiceEntry ? node.isServiceEntry.namespace : node.namespace;
+  let name: string | undefined = undefined;
+  let type: string | undefined = undefined;
+  switch (node.nodeType) {
+    case NodeType.APP:
+    case NodeType.BOX:
+      // only app boxes have full context menus
+      const isBox = node.isBox;
+      if (!isBox || isBox === BoxByType.APP) {
+        // Prefer workload links
+        if (node.workload && node.parent) {
+          name = node.workload;
+          type = Paths.WORKLOADS;
+        } else {
+          type = Paths.APPLICATIONS;
+          name = node.app;
         }
-        break;
-      case NodeType.SERVICE:
-        type = node.isServiceEntry ? Paths.SERVICEENTRIES : Paths.SERVICES;
-        name = node.service;
-        break;
-      case NodeType.WORKLOAD:
-        name = node.workload;
-        type = Paths.WORKLOADS;
-        break;
-    }
-
-    return type && name ? { cluster, namespace, type, name } : undefined;
+      }
+      break;
+    case NodeType.SERVICE:
+      type = node.isServiceEntry ? Paths.SERVICEENTRIES : Paths.SERVICES;
+      name = node.service;
+      break;
+    case NodeType.WORKLOAD:
+      name = node.workload;
+      type = Paths.WORKLOADS;
+      break;
   }
 
-  createMenuItem(href: string, title: string, target: string = '_self', external: boolean = false) {
+  return type && name ? { cluster, namespace, type, name } : undefined;
+}
+
+export function NodeContextMenu(props: Props) {
+
+  const [isServiceDetailsLoading, setServiceDetailsLoading] = React.useState<boolean>(false);
+  const [serviceDetails, setServiceDetails] = React.useState<ServiceDetailsInfo | null>(null);
+  const [updateLabel, setUpdateLabel] = React.useState<string>('');
+  const [gateways, setGateways] = React.useState<string[] | null>(null);
+  const [peerAuthentications, setPeerAuthentications] = React.useState<PeerAuthentication[] | null>(null);
+
+  React.useEffect(() => {
+    if (!props.service || props.nodeType !== NodeType.SERVICE || props.isServiceEntry) {
+      return;
+    }
+
+    setServiceDetailsLoading(true); // Mark as loading
+
+    let getDetailPromise = API.getServiceDetail(props.namespace, props.service, false, props.duration);
+    let getGwPromise = API.getIstioConfig('', ['gateways'], false, '', '');
+    let getPeerAuthsPromise = API.getIstioConfig(props.namespace, ['peerauthentications'], false, '', '');
+
+    const allPromise = new CancelablePromise(Promise.all([getDetailPromise, getGwPromise, getPeerAuthsPromise]));
+    allPromise.promise
+      .then(results => {
+        setServiceDetailsLoading(false);
+        setServiceDetails(results[0]);
+        // TODO: Deduplicate updateLabel
+        setUpdateLabel( results[0].virtualServices.length === 1 &&
+        results[0].virtualServices[0].metadata.labels &&
+        results[0].virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]
+          ? results[0].virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]
+          : '');
+        setGateways(results[1].data.gateways.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort());
+        setPeerAuthentications(results[2].data.peerAuthentications);
+      })
+      .catch(error => {
+        if (error.isCanceled) {
+          return;
+        }
+        AlertUtils.addError('Could not fetch Service Details.', error);
+        setServiceDetailsLoading(false);
+      });
+
+    return function () {
+      // Cancel the promise, just in case there is still some ongoing request
+      // after the component is unmounted.
+      allPromise.cancel();
+
+      // Reset wizard-related state
+      setServiceDetailsLoading(false);
+      setServiceDetails(null);
+      setGateways(null);
+      setPeerAuthentications(null);
+      setUpdateLabel('');
+    }
+  }, [props.nodeType, props.namespace, props.service, props.isServiceEntry, props.updateTime]);
+
+  // TODO: Deduplicate
+  function hasTrafficRouting() {
+    if (!serviceDetails) {
+      return false;
+    }
+    return serviceDetails.virtualServices.length > 0 || serviceDetails.destinationRules.length > 0;
+  }
+
+  // TODO: Deduplicate
+  function getDropdownItemTooltipMessage(): string {
+    if (serverConfig.deployment.viewOnlyMode) {
+      return 'User does not have permission';
+    } else if (hasTrafficRouting()) {
+      return 'Traffic routing already exists for this service';
+    } else {
+      return "Traffic routing doesn't exists for this service";
+    }
+  }
+
+  // TODO: Deduplicate
+  function canDelete() {
+    if (!serviceDetails) {
+      return false;
+    }
+    return serviceDetails.istioPermissions.delete && !serverConfig.deployment.viewOnlyMode;
+  }
+
+  function createMenuItem(href: string, title: string, target: string = '_self', external: boolean = false) {
     const commonLinkProps = {
       className: contextMenuItemLink,
       children: title,
-      onClick: this.onClick,
+      onClick: onClick,
       target
     };
     let item: any;
@@ -109,7 +207,7 @@ export class NodeContextMenu extends React.PureComponent<Props> {
     } else {
       // Kiosk actions are used when the kiosk specifies a parent,
       // otherwise the kiosk=true will keep the links inside Kiali
-      if (isParentKiosk(this.props.kiosk)) {
+      if (isParentKiosk(props.kiosk)) {
         item =
           <Link
             to={''}
@@ -131,59 +229,155 @@ export class NodeContextMenu extends React.PureComponent<Props> {
     );
   }
 
-  render() {
-    const isBox = this.props.isBox;
-    const title = isBox ? getTitle(isBox) : getTitle(this.props.nodeType);
-    const header: React.ReactFragment = (
+  function onClick(_e: React.MouseEvent<HTMLAnchorElement>) {
+    props.contextMenu.hide(0);
+  }
+
+  function handleClickWizard(e: React.MouseEvent<HTMLAnchorElement>, eventKey: WizardAction) {
+    e.preventDefault();
+    props.contextMenu.hide(0);
+
+    if (props.onLaunchWizard && serviceDetails && gateways && peerAuthentications) {
+      props.onLaunchWizard(eventKey, updateLabel.length === 0 ? 'create' : 'update', props.namespace, serviceDetails, gateways, peerAuthentications);
+    }
+  }
+
+  function handleDeleteTrafficRouting(e: React.MouseEvent<HTMLAnchorElement>) {
+    e.preventDefault();
+    props.contextMenu.hide(0);
+
+    if (props.onDeleteTrafficRouting && serviceDetails) {
+      props.onDeleteTrafficRouting(DELETE_TRAFFIC_ROUTING, serviceDetails);
+    }
+  }
+
+  function renderHeader() {
+    return (
       <>
-        {title}
-        {(!isBox || isBox === BoxByType.APP) && (
+        {props.isBox ? getTitle(props.isBox) : getTitle(props.nodeType)}
+        {(!props.isBox || props.isBox === BoxByType.APP) && (
           <div className={contextMenuHeader}>
             <PFBadge badge={PFBadges.Namespace} size="sm" />
-            {this.props.namespace}
+            {props.namespace}
           </div>
         )}
-        {renderBadgedName(this.props)}
+        {renderBadgedName(props)}
       </>
     );
+  }
 
-    if (this.props.isHover) {
-      return <div className={contextMenu}>{header}</div>;
+  function renderWizardActionItem(eventKey: string) {
+    const enabledItem = !hasTrafficRouting() || (hasTrafficRouting() && updateLabel === eventKey);
+
+    // An Item is enabled under two conditions:
+    // a) No traffic -> Wizard can create new one
+    // b) Existing traffic generated by the traffic -> Wizard can update that scenario
+    // Otherwise, the item should be disabled
+    if (!enabledItem) {
+      return (
+        <div key={eventKey} className={contextMenuItem} style={{color: '#d2d2d2'}}>
+          <Tooltip position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage()}</>}>
+            <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{WIZARD_TITLES[eventKey]}</div>
+          </Tooltip>
+        </div>
+      )
+    } else {
+      return (
+        <div key={eventKey} className={contextMenuItem}>
+          <a href="#" rel="noreferrer noopener" className={contextMenuItemLink} onClick={(e) => handleClickWizard(e, eventKey as WizardAction)}>
+            {WIZARD_TITLES[eventKey]}
+          </a>
+        </div>
+      );
+    }
+  }
+
+  function renderDeleteTrafficRoutingItem() {
+    if (!canDelete() || !hasTrafficRouting() /*|| props.isDisabled*/) {
+      return (
+        <div className={contextMenuItem} style={{color: '#d2d2d2'}}>
+          <Tooltip position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage()}</>}>
+            <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>Delete Traffic Routing</div>
+          </Tooltip>
+        </div>
+      );
+    } else {
+      return (
+        <div className={contextMenuItem}>
+          <a href="#" rel="noreferrer noopener" className={contextMenuItemLink} onClick={handleDeleteTrafficRouting}>
+            Delete Traffic Routing
+          </a>
+        </div>
+      );
+    }
+  }
+
+  function renderWizardsItems() {
+    if (isServiceDetailsLoading) {
+      return (
+        <>
+          <hr style={{ margin: '8px 0 5px 0' }} />
+          <div className={contextMenuSubTitle}>Actions</div>
+          <div className={contextMenuItem}>
+            <Spinner isSVG={true} size="md" aria-label="Loading actions..." />
+          </div>
+        </>
+      );
     }
 
-    const linkParams = NodeContextMenu.derivedValuesFromProps(this.props);
-
-    // Disable context menu if we are dealing with an aggregate (currently has no detail) or an inaccessible node
-    if (!linkParams || this.props.isInaccessible) {
-      this.props.contextMenu.disable();
-      return null;
+    if (serviceDetails) {
+      return (
+        <>
+          <hr style={{ margin: '8px 0 5px 0' }} />
+          <div className={contextMenuSubTitle}>{updateLabel === '' ? 'Create' : 'Update'}</div>
+          {SERVICE_WIZARD_ACTIONS.map(eventKey => renderWizardActionItem(eventKey))}
+          <hr style={{ margin: '8px 0 5px 0' }} />
+          {renderDeleteTrafficRoutingItem()}
+        </>
+      );
     }
 
+    return null;
+  }
+
+  function renderFullContextMenu(linkParams: LinkParams) {
     // The getOptionsFromLinkParams function can potentially return a blank list if the
     // node associated to the context menu is for a remote cluster with no accessible Kialis.
     // That would lead to an empty menu. Here, we assume that whoever is the host/parent component,
     // that component won't render this context menu in case this menu would be blank. So, here
     // it's simply assumed that the context menu will look good.
-    const options: ContextMenuOption[] = getOptionsFromLinkParams(linkParams, this.props.jaegerInfo);
+    const options: ContextMenuOption[] = getOptionsFromLinkParams(linkParams, props.jaegerInfo);
     const menuOptions = (
       <>
         <div className={contextMenuSubTitle}>Show</div>
-        {options.map(o => this.createMenuItem(o.url, o.text, o.target, o.external))}
+        {options.map(o => createMenuItem(o.url, o.text, o.target, o.external))}
       </>
     );
 
     return (
       <div className={contextMenu}>
-        {header}
+        {renderHeader()}
         <hr style={{ margin: '8px 0 5px 0' }} />
         {menuOptions}
+        {renderWizardsItems()}
       </div>
     );
   }
 
-  private onClick = (_e: React.MouseEvent<HTMLAnchorElement>) => {
-    this.props.contextMenu.hide(0);
-  };
+  // render()
+  if (props.isHover) {
+    return <div className={contextMenu}>{renderHeader()}</div>;
+  }
+
+  const linkParams = getLinkParamsForNode(props);
+
+  // Disable context menu if we are dealing with an aggregate (currently has no detail) or an inaccessible node
+  if (!linkParams || props.isInaccessible) {
+    props.contextMenu.disable();
+    return null;
+  }
+
+  return renderFullContextMenu(linkParams);
 }
 
 const getJaegerURL = (namespace: string, namespaceSelector: boolean, jaegerURL: string, name?: string): string => {
@@ -210,7 +404,7 @@ export const clickHandler = (o: ContextMenuOption, kiosk: string) => {
 };
 
 export const getOptions = (node: DecoratedGraphNodeData, jaegerInfo?: JaegerInfo): ContextMenuOption[] => {
-  const linkParams = NodeContextMenu.derivedValuesFromProps(node);
+  const linkParams = getLinkParamsForNode(node);
   if (!linkParams) {
     return [];
   }
@@ -271,6 +465,8 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInf
 };
 
 const mapStateToProps = (state: KialiAppState) => ({
+  duration: durationSelector(state),
+  updateTime: state.graph.updateTime,
   jaegerInfo: state.jaegerState.info,
   kiosk: state.globalState.kiosk
 });
