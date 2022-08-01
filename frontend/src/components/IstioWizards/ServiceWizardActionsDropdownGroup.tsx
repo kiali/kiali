@@ -64,18 +64,29 @@ const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props 
   });
 
   actionItems.push(<DropdownSeparator key="actions_separator" />);
-  // TODO: Add tooltip
-  actionItems.push(
+
+  const deleteDisabled = !canDelete(props.istioPermissions) || !hasTrafficRouting() || props.isDisabled;
+  let deleteDropdownItem = (
     <DropdownItem
       key={DELETE_TRAFFIC_ROUTING}
       component="button"
       onClick={() => {if (props.onDelete) { props.onDelete(DELETE_TRAFFIC_ROUTING); }}}
-      isDisabled={!canDelete(props.istioPermissions) || !hasTrafficRouting() || props.isDisabled}
+      isDisabled={deleteDisabled}
       data-test={DELETE_TRAFFIC_ROUTING}
     >
       Delete Traffic Routing
     </DropdownItem>
   );
+
+  if (deleteDisabled) {
+    deleteDropdownItem = (
+      <Tooltip key={'tooltip_' + DELETE_TRAFFIC_ROUTING} position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage()}</>}>
+        <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{deleteDropdownItem}</div>
+      </Tooltip>
+    );
+  }
+
+  actionItems.push(deleteDropdownItem);
 
   return (
     <DropdownGroup
