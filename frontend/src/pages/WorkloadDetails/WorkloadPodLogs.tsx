@@ -927,12 +927,12 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
         if (showSpans) {
           const spans = showSpans ? (responses[0].data as Span[]) : ([] as Span[]);
           entries = spans.map(span => {
-             span.startTime = Math.floor(span.startTime / 1000);
+             let startTimeU = Math.floor(span.startTime / 1000);
             return {
-              timestamp: moment(span.startTime)
+              timestamp: moment(startTimeU)
                 .utc()
                 .format('YYYY-MM-DD HH:mm:ss.SSS'),
-              timestampUnix: span.startTime,
+              timestampUnix: startTimeU,
               span: span
             } as Entry;
           });
@@ -1021,7 +1021,6 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 const formatDate = (timestamp: string): string => {
 
   let entryTimestamp = moment(timestamp)
-      .utc()
       .format('YYYY-MM-DD HH:mm:ss.SSS')
     return entryTimestamp
 };
