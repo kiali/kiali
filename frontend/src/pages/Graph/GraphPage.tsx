@@ -78,10 +78,10 @@ import { isParentKiosk, kioskContextMenuAction } from "../../components/Kiosk/Ki
 import ServiceWizard from "components/IstioWizards/ServiceWizard";
 import { ServiceDetailsInfo } from "types/ServiceInfo";
 import { DestinationRuleC, PeerAuthentication } from "types/IstioObjects";
-import { serverConfig } from "config";
 import { WizardAction, WizardMode } from "components/IstioWizards/WizardActions";
 import ConfirmDeleteTrafficRoutingModal from "components/IstioWizards/ConfirmDeleteTrafficRoutingModal";
 import { deleteServiceTrafficRouting } from "services/Api";
+import { canCreate, canUpdate } from "../../types/Permissions";
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -536,7 +536,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
           namespace={this.state.wizardsData.namespace}
           serviceName={this.state.wizardsData.serviceDetails?.service?.name || ''}
           workloads={this.state.wizardsData.serviceDetails?.workloads || []}
-          createOrUpdate={/*this.canCreate() || this.canUpdate()*/ !serverConfig.deployment.viewOnlyMode && (this.state.wizardsData?.serviceDetails?.istioPermissions.create === true || this.state.wizardsData?.serviceDetails?.istioPermissions.update === true)}
+          createOrUpdate={canCreate(this.state.wizardsData.serviceDetails?.istioPermissions) || canUpdate(this.state.wizardsData.serviceDetails?.istioPermissions)}
           virtualServices={this.state.wizardsData.serviceDetails?.virtualServices || []}
           destinationRules={this.state.wizardsData.serviceDetails?.destinationRules || []}
           gateways={this.state.wizardsData.gateways || []}

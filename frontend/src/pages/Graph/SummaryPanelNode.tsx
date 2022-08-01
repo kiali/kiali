@@ -454,11 +454,9 @@ export default function SummaryPanelNodeHOC(props: SummaryPanelNodeHocProps) {
   const updateTime = useSelector<KialiAppState, TimeInMilliseconds>(state => state.graph.updateTime);
 
   const [isKebabOpen, setIsKebabOpen] = React.useState<boolean>(false);
-  // const [, setUpdateLabel] = React.useState<string>('');
 
   const node = props.data.summaryTarget;
   const nodeData = decoratedNodeData(node);
-
   const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(nodeData, isKebabOpen, props.duration, updateTime);
 
   function handleKebabToggled(isOpen: boolean) {
