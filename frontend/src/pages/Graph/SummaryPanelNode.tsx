@@ -35,10 +35,8 @@ import { ServiceDetailsInfo } from "types/ServiceInfo";
 import { WizardAction, WizardMode } from "components/IstioWizards/WizardActions";
 import ServiceWizardActionsDropdownGroup from "components/IstioWizards/ServiceWizardActionsDropdownGroup";
 import { PeerAuthentication } from "../../types/IstioObjects";
-import * as API from "../../services/Api";
-import { CancelablePromise } from "../../utils/CancelablePromises";
-import * as AlertUtils from "../../utils/AlertUtils";
 import { TimeInMilliseconds } from "../../types/Common";
+import { useServiceDetailForGraphNode } from "../../hooks/services";
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -449,89 +447,19 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
 }
 
 export default function SummaryPanelNodeHOC(props: SummaryPanelNodeHocProps) {
-  // jaegerState: state.jaegerState,
-  //   kiosk: state.globalState.kiosk,
-  //   rankResult: state.graph.rankResult,
-  //   showRank: state.graph.toolbarState.showRank,
-  //   updateTime: state.graph.updateTime
   const jaegerState = useSelector<KialiAppState, JaegerState>(state => state.jaegerState);
   const kiosk = useSelector<KialiAppState, string>(state => state.globalState.kiosk);
   const rankResult = useSelector<KialiAppState, RankResult>(state => state.graph.rankResult);
   const showRank = useSelector<KialiAppState, boolean>(state => state.graph.toolbarState.showRank);
   const updateTime = useSelector<KialiAppState, TimeInMilliseconds>(state => state.graph.updateTime);
 
-  const [reloadKey, setReloadKey] = React.useState<string>('');
   const [isKebabOpen, setIsKebabOpen] = React.useState<boolean>(false);
-  const [serviceDetails, setServiceDetails] = React.useState<ServiceDetailsInfo | null | undefined>(null);
   // const [, setUpdateLabel] = React.useState<string>('');
-  const [gateways, setGateways] = React.useState<string[] | null>(null);
-  const [peerAuthentications, setPeerAuthentications] = React.useState<PeerAuthentication[] | null>(null);
 
   const node = props.data.summaryTarget;
   const nodeData = decoratedNodeData(node);
 
-  React.useEffect(() => {
-    if (isKebabOpen) {
-      let shouldLoad = nodeData.nodeType + '+' +
-        nodeData.namespace + '+' +
-        nodeData.service + '+' +
-        (nodeData.isServiceEntry ? '0' : '1') + '+' +
-         updateTime;
-      setReloadKey(shouldLoad);
-    }
-  }, [nodeData.nodeType, nodeData.namespace, nodeData.service, nodeData.isServiceEntry, updateTime, isKebabOpen]);
-
-  // TODO: Deduplicate
-  React.useEffect(() => {
-    if (reloadKey.length === 0) {
-      return;
-    }
-    if (!nodeData.service || nodeData.nodeType !== NodeType.SERVICE || nodeData.isServiceEntry) {
-      return;
-    }
-
-    //setServiceDetailsLoading(true); // Mark as loading
-    setServiceDetails(undefined); // Mark as loading
-
-    let getDetailPromise = API.getServiceDetail(nodeData.namespace, nodeData.service, false, props.duration);
-    let getGwPromise = API.getIstioConfig('', ['gateways'], false, '', '');
-    let getPeerAuthsPromise = API.getIstioConfig(nodeData.namespace, ['peerauthentications'], false, '', '');
-
-    const allPromise = new CancelablePromise(Promise.all([getDetailPromise, getGwPromise, getPeerAuthsPromise]));
-    allPromise.promise
-      .then(results => {
-        //setServiceDetailsLoading(false);
-        setServiceDetails(results[0]);
-        // // TODO: Deduplicate updateLabel
-        // setUpdateLabel( results[0].virtualServices.length === 1 &&
-        // results[0].virtualServices[0].metadata.labels &&
-        // results[0].virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]
-        //   ? results[0].virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]
-        //   : '');
-        setGateways(results[1].data.gateways.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort());
-        setPeerAuthentications(results[2].data.peerAuthentications);
-      })
-      .catch(error => {
-        if (error.isCanceled) {
-          return;
-        }
-        AlertUtils.addError('Could not fetch Service Details.', error);
-        //setServiceDetailsLoading(false);
-      });
-
-    return function () {
-      // Cancel the promise, just in case there is still some ongoing request
-      // after the component is unmounted.
-      allPromise.cancel();
-
-      // Reset wizard-related state
-      //setServiceDetailsLoading(false);
-      setServiceDetails(null);
-      setGateways(null);
-      setPeerAuthentications(null);
-      // setUpdateLabel('');
-    }
-  }, [reloadKey]);
+  const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(nodeData, isKebabOpen, props.duration, updateTime);
 
   function handleKebabToggled(isOpen: boolean) {
     setIsKebabOpen(isOpen);
@@ -543,7 +471,7 @@ export default function SummaryPanelNodeHOC(props: SummaryPanelNodeHocProps) {
       kiosk={kiosk}
       rankResult={rankResult}
       showRank={showRank}
-      serviceDetails={serviceDetails}
+      serviceDetails={isServiceDetailsLoading ? undefined : serviceDetails}
       gateways={gateways}
       peerAuthentications={peerAuthentications}
       onKebabToggled={handleKebabToggled}

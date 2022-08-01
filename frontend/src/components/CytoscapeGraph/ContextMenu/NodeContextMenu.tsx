@@ -6,7 +6,7 @@ import { Spinner, Tooltip, TooltipPosition } from "@patternfly/react-core";
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 
 import history from 'app/History';
-import { NodeType, DecoratedGraphNodeData, BoxByType } from 'types/Graph';
+import { BoxByType, DecoratedGraphNodeData, NodeType } from 'types/Graph';
 import { JaegerInfo } from 'types/JaegerInfo';
 import { durationSelector } from "store/Selectors";
 import { KialiAppState } from 'store/Store';
@@ -23,13 +23,9 @@ import {
   WizardAction
 } from "../../IstioWizards/WizardActions";
 import { DELETE_TRAFFIC_ROUTING } from "../../IstioWizards/ServiceWizardActionsDropdownGroup";
-import {isParentKiosk, kioskContextMenuAction} from "../../Kiosk/KioskActions";
-import * as API from "services/Api";
+import { isParentKiosk, kioskContextMenuAction } from "../../Kiosk/KioskActions";
 import { DurationInSeconds, TimeInMilliseconds } from "types/Common";
-import { PeerAuthentication } from "types/IstioObjects";
-import { ServiceDetailsInfo } from "types/ServiceInfo";
-import * as AlertUtils from "utils/AlertUtils";
-import { CancelablePromise } from "utils/CancelablePromises";
+import { useServiceDetailForGraphNode } from "../../../hooks/services";
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -110,58 +106,19 @@ function getLinkParamsForNode(node: DecoratedGraphNodeData): LinkParams | undefi
 
 export function NodeContextMenu(props: Props) {
 
-  const [isServiceDetailsLoading, setServiceDetailsLoading] = React.useState<boolean>(false);
-  const [serviceDetails, setServiceDetails] = React.useState<ServiceDetailsInfo | null>(null);
   const [updateLabel, setUpdateLabel] = React.useState<string>('');
-  const [gateways, setGateways] = React.useState<string[] | null>(null);
-  const [peerAuthentications, setPeerAuthentications] = React.useState<PeerAuthentication[] | null>(null);
+  const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(props, true, props.duration, props.updateTime);
 
   React.useEffect(() => {
-    if (!props.service || props.nodeType !== NodeType.SERVICE || props.isServiceEntry) {
-      return;
-    }
-
-    setServiceDetailsLoading(true); // Mark as loading
-
-    let getDetailPromise = API.getServiceDetail(props.namespace, props.service, false, props.duration);
-    let getGwPromise = API.getIstioConfig('', ['gateways'], false, '', '');
-    let getPeerAuthsPromise = API.getIstioConfig(props.namespace, ['peerauthentications'], false, '', '');
-
-    const allPromise = new CancelablePromise(Promise.all([getDetailPromise, getGwPromise, getPeerAuthsPromise]));
-    allPromise.promise
-      .then(results => {
-        setServiceDetailsLoading(false);
-        setServiceDetails(results[0]);
-        // TODO: Deduplicate updateLabel
-        setUpdateLabel( results[0].virtualServices.length === 1 &&
-        results[0].virtualServices[0].metadata.labels &&
-        results[0].virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]
-          ? results[0].virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]
-          : '');
-        setGateways(results[1].data.gateways.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort());
-        setPeerAuthentications(results[2].data.peerAuthentications);
-      })
-      .catch(error => {
-        if (error.isCanceled) {
-          return;
-        }
-        AlertUtils.addError('Could not fetch Service Details.', error);
-        setServiceDetailsLoading(false);
-      });
-
-    return function () {
-      // Cancel the promise, just in case there is still some ongoing request
-      // after the component is unmounted.
-      allPromise.cancel();
-
-      // Reset wizard-related state
-      setServiceDetailsLoading(false);
-      setServiceDetails(null);
-      setGateways(null);
-      setPeerAuthentications(null);
+    // TODO: deduplicate
+    if (serviceDetails && serviceDetails.virtualServices.length === 1 &&
+      serviceDetails.virtualServices[0].metadata.labels &&
+      serviceDetails.virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]) {
+      setUpdateLabel(serviceDetails.virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]);
+    } else {
       setUpdateLabel('');
     }
-  }, [props.nodeType, props.namespace, props.service, props.isServiceEntry, props.updateTime]);
+  }, [serviceDetails]);
 
   // TODO: Deduplicate
   function hasTrafficRouting() {

@@ -92,6 +92,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
       if (!isHover || this.isHover) {
         currentContextMenu.hide(0); // hide it in 0ms
         this.isHover = undefined;
+        ReactDOM.unmountComponentAtNode(this.contextMenuRef.current as HTMLDivElement);
       }
     }
   }
