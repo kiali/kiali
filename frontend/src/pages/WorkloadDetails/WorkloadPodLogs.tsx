@@ -501,7 +501,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       <div key={`al-${index}`} style={{ height: '22px', lineHeight: '22px', paddingLeft: '10px', ...style }}>
         {this.state.showTimestamps && (
           <span key={`al-s-${index}`} style={{ color: le.color!, fontSize: '12px', marginRight: '5px' }}>
-                          {e.timestamp}
+                          {formatDate(le.timestamp)}
                         </span>
         )}
         <Tooltip
@@ -924,16 +924,15 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       .registerAll('logs', promises)
       .then(responses => {
         let entries = [] as Entry[];
-
         if (showSpans) {
           const spans = showSpans ? (responses[0].data as Span[]) : ([] as Span[]);
           entries = spans.map(span => {
-            span.startTime = Math.floor(span.startTime / 1000000);
+             let startTimeU = Math.floor(span.startTime / 1000);
             return {
-              timestamp: moment(span.startTime * 1000)
+              timestamp: moment(startTimeU)
                 .utc()
-                .format('YYYY-MM-DD HH:mm:ss'),
-              timestampUnix: span.startTime,
+                .format('YYYY-MM-DD HH:mm:ss.SSS'),
+              timestampUnix: startTimeU,
               span: span
             } as Entry;
           });
@@ -1006,9 +1005,10 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
   };
 
   private entryToString = (entry: Entry): string => {
+
     if (entry.logEntry) {
       const le = entry.logEntry;
-      return this.state.showTimestamps ? `${entry.timestamp} ${le.message}` : le.message;
+      return this.state.showTimestamps ? `${formatDate(entry.timestamp)} ${le.message}` : le.message;
     }
 
     const { duration, operationName } = entry.span!;
@@ -1017,6 +1017,14 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
   private hasEntries = (entries: Entry[]): boolean => !!entries && entries.length > 0;
 }
+
+const formatDate = (timestamp: string): string => {
+
+  let entryTimestamp = moment(timestamp)
+      .format('YYYY-MM-DD HH:mm:ss.SSS')
+
+  return entryTimestamp
+};
 
 const mapStateToProps = (state: KialiAppState) => {
   return {

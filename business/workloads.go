@@ -467,12 +467,8 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	}
 
 	// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
-	splittedTimestamp := strings.Split(splitted[0], ".")
-	if len(splittedTimestamp) == 1 {
-		entry.Timestamp = splittedTimestamp[0]
-	} else {
-		entry.Timestamp = fmt.Sprintf("%sZ", splittedTimestamp[0])
-	}
+	// Split by blanks, to get the miliseconds for sorting, try RFC3339Nano
+	entry.Timestamp = splitted[0]
 
 	entry.Message = strings.TrimSpace(splitted[1])
 	if entry.Message == "" {
@@ -481,7 +477,7 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	}
 
 	// If we are past the requested time window then stop processing
-	parsedTimestamp, err := time.Parse(time.RFC3339, entry.Timestamp)
+	parsedTimestamp, err := time.Parse(time.RFC3339Nano, entry.Timestamp)
 	entry.OriginalTime = parsedTimestamp
 	if err != nil {
 		log.Debugf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())
@@ -526,11 +522,22 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	}
 
 	// override the timestamp with a simpler format
-	timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d",
+	precision := strings.Split(parsedTimestamp.String(), ".")
+	var milliseconds string
+	if len(precision) > 1 {
+		ms := precision[1]
+		milliseconds = ms[:3]
+		splittedms := strings.Fields(milliseconds) // This is needed to avoid invalid dates in ms like 200
+		milliseconds = splittedms[0]
+	} else {
+		milliseconds = "000"
+	}
+
+	timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d.%s",
 		parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
-		parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second())
+		parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second(), milliseconds)
 	entry.Timestamp = timestamp
-	entry.TimestampUnix = parsedTimestamp.Unix()
+	entry.TimestampUnix = parsedTimestamp.UnixMilli()
 
 	return &entry
 }
