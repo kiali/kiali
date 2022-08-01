@@ -527,6 +527,8 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	if len(precision) > 1 {
 		ms := precision[1]
 		milliseconds = ms[:3]
+		splittedms := strings.Fields(milliseconds) // This is needed to avoid invalid dates in ms like 200
+		milliseconds = splittedms[0]
 	} else {
 		milliseconds = "000"
 	}

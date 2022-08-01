@@ -1022,7 +1022,8 @@ const formatDate = (timestamp: string): string => {
 
   let entryTimestamp = moment(timestamp)
       .format('YYYY-MM-DD HH:mm:ss.SSS')
-    return entryTimestamp
+
+  return entryTimestamp
 };
 
 const mapStateToProps = (state: KialiAppState) => {
