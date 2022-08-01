@@ -1,9 +1,10 @@
 import * as React from "react";
 import { DropdownGroup, DropdownItem, DropdownSeparator, Tooltip, TooltipPosition } from "@patternfly/react-core";
 import {serverConfig} from "config";
-import { DestinationRule, VirtualService } from "types/IstioObjects";
-import { ResourcePermissions } from "types/Permissions";
-import { KIALI_WIZARD_LABEL, SERVICE_WIZARD_ACTIONS, WIZARD_TITLES, WizardAction, WizardMode } from "./WizardActions";
+import { DestinationRule, getVirtualServiceUpdateLabel, VirtualService } from "types/IstioObjects";
+import { canDelete, ResourcePermissions } from "types/Permissions";
+import { SERVICE_WIZARD_ACTIONS, WIZARD_TITLES, WizardAction, WizardMode } from "./WizardActions";
+import { hasServiceDetailsTrafficRouting } from "../../types/ServiceInfo";
 
 export const DELETE_TRAFFIC_ROUTING = 'delete_traffic_routing';
 
@@ -17,18 +18,10 @@ type Props = {
 }
 
 const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props => {
-  const updateLabel = props.virtualServices.length === 1 &&
-    props.virtualServices[0].metadata.labels &&
-    props.virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]
-      ? props.virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]
-      : '';
-
-  function canDelete() {
-    return props.istioPermissions.delete && !serverConfig.deployment.viewOnlyMode;
-  }
+  const updateLabel = getVirtualServiceUpdateLabel(props.virtualServices);
 
   function hasTrafficRouting() {
-    return props.virtualServices.length > 0 || props.destinationRules.length > 0;
+    return hasServiceDetailsTrafficRouting(props.virtualServices, props.destinationRules);
   }
 
   function handleActionClick(eventKey: string) {
@@ -77,7 +70,7 @@ const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props 
       key={DELETE_TRAFFIC_ROUTING}
       component="button"
       onClick={() => {if (props.onDelete) { props.onDelete(DELETE_TRAFFIC_ROUTING); }}}
-      isDisabled={!canDelete() || !hasTrafficRouting() || props.isDisabled}
+      isDisabled={!canDelete(props.istioPermissions) || !hasTrafficRouting() || props.isDisabled}
       data-test={DELETE_TRAFFIC_ROUTING}
     >
       Delete Traffic Routing

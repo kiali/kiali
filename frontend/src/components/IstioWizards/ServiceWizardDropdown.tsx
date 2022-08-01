@@ -7,12 +7,17 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { WorkloadOverview } from '../../types/ServiceInfo';
-import { DestinationRule, DestinationRuleC, PeerAuthentication, VirtualService } from '../../types/IstioObjects';
+import {
+  DestinationRule,
+  DestinationRuleC,
+  getVirtualServiceUpdateLabel,
+  PeerAuthentication,
+  VirtualService
+} from '../../types/IstioObjects';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { serverConfig } from '../../config/ServerConfig';
+import { serverConfig } from '../../config';
 import { TLSStatus } from '../../types/TLSStatus';
 import {
-  KIALI_WIZARD_LABEL,
   WIZARD_REQUEST_ROUTING,
   WIZARD_FAULT_INJECTION,
   WIZARD_TRAFFIC_SHIFTING,
@@ -20,7 +25,7 @@ import {
   WIZARD_TCP_TRAFFIC_SHIFTING
 } from './WizardActions';
 import ServiceWizard from './ServiceWizard';
-import { ResourcePermissions } from '../../types/Permissions';
+import { canCreate, canUpdate, ResourcePermissions } from '../../types/Permissions';
 import ServiceWizardActionsDropdownGroup, {DELETE_TRAFFIC_ROUTING} from "./ServiceWizardActionsDropdownGroup";
 import ConfirmDeleteTrafficRoutingModal from "./ConfirmDeleteTrafficRoutingModal";
 import { deleteServiceTrafficRouting } from "services/Api";
@@ -66,19 +71,6 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
   private appLabelName = serverConfig.istioLabels.appLabelName;
   private versionLabelName = serverConfig.istioLabels.versionLabelName;
 
-  // Wizard can be opened when there are not existing VS & DR and there are update permissions
-  canCreate = () => {
-    return (
-      this.props.istioPermissions.create && !serverConfig.deployment.viewOnlyMode
-    );
-  };
-
-  canUpdate = () => {
-    return (
-      this.props.istioPermissions.update && !serverConfig.deployment.viewOnlyMode
-    );
-  };
-
   hasSidecarWorkloads = (): boolean => {
     let hasSidecarWorkloads = false;
     for (let i = 0; i < this.props.workloads.length; i++) {
@@ -106,16 +98,8 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
     });
   };
 
-  getVSWizardLabel = () => {
-    return this.props.virtualServices.length === 1 &&
-      this.props.virtualServices[0].metadata.labels &&
-      this.props.virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]
-      ? this.props.virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]
-      : '';
-  };
-
   onAction = (key: string) => {
-    const updateLabel = this.getVSWizardLabel();
+    const updateLabel = getVirtualServiceUpdateLabel(this.props.virtualServices);
     switch (key) {
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
@@ -229,7 +213,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
           namespace={this.props.namespace}
           serviceName={this.props.serviceName}
           workloads={validWorkloads}
-          createOrUpdate={this.canCreate() || this.canUpdate()}
+          createOrUpdate={canCreate(this.props.istioPermissions) || canUpdate(this.props.istioPermissions)}
           virtualServices={this.props.virtualServices}
           destinationRules={this.props.destinationRules}
           gateways={this.props.gateways}

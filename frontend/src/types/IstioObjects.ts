@@ -2,7 +2,7 @@ import Namespace from './Namespace';
 import { ServicePort } from './ServiceInfo';
 import { ProxyStatus } from './Health';
 import { TimeInSeconds } from './Common';
-import { KIALI_RELATED_LABEL } from "components/IstioWizards/WizardActions";
+import { KIALI_RELATED_LABEL, KIALI_WIZARD_LABEL } from "components/IstioWizards/WizardActions";
 import { PFColorVal } from 'components/Pf/PfColors';
 
 // Common types
@@ -653,6 +653,28 @@ export interface VirtualServiceSpec {
 // 1.6
 export interface VirtualService extends IstioObject {
   spec: VirtualServiceSpec;
+}
+
+export function getVirtualServiceUpdateLabel(vs: VirtualService | VirtualService[] | null) {
+  if (!vs) {
+    return '';
+  }
+
+  let virtualService: VirtualService | null = null;
+  if ('length' in vs) {
+    if (vs.length === 1) {
+      virtualService = vs[0];
+    }
+  } else {
+    virtualService = vs;
+  }
+
+  if (virtualService && virtualService.metadata.labels &&
+    virtualService.metadata.labels[KIALI_WIZARD_LABEL]) {
+    return virtualService.metadata.labels[KIALI_WIZARD_LABEL];
+  } else {
+    return '';
+  }
 }
 
 export interface K8sOwnerReference {

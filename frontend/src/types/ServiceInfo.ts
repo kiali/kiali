@@ -1,6 +1,7 @@
 import { DEGRADED, FAILURE, HEALTHY, NA, ServiceHealth, Status } from './Health';
 import {
   DestinationRule,
+  getVirtualServiceUpdateLabel,
   ObjectCheck,
   ObjectValidation,
   ServiceEntry,
@@ -69,6 +70,31 @@ export interface ServiceDetailsInfo {
   namespaceMTLS?: TLSStatus;
   validations: Validations;
   additionalDetails: AdditionalItem[];
+}
+
+export function getServiceDetailsUpdateLabel(serviceDetails: ServiceDetailsInfo | null) {
+  return getVirtualServiceUpdateLabel(serviceDetails?.virtualServices || null);
+}
+
+export function hasServiceDetailsTrafficRouting(serviceDetails: ServiceDetailsInfo | null);
+export function hasServiceDetailsTrafficRouting(vsList: VirtualService[], drList: DestinationRule[]);
+export function hasServiceDetailsTrafficRouting(serviceDetailsOrVsList: ServiceDetailsInfo | VirtualService[] | null, drList?: DestinationRule[]) {
+  let virtualServicesList: VirtualService[];
+  let destinationRulesList: DestinationRule[];
+
+  if (serviceDetailsOrVsList === null) {
+    return false;
+  }
+
+  if ('length' in serviceDetailsOrVsList) {
+    virtualServicesList = serviceDetailsOrVsList;
+    destinationRulesList = drList || [];
+  } else {
+    virtualServicesList = serviceDetailsOrVsList.virtualServices;
+    destinationRulesList = serviceDetailsOrVsList.destinationRules;
+  }
+
+  return virtualServicesList.length > 0 || destinationRulesList.length > 0;
 }
 
 const higherThan = [

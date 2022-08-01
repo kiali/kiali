@@ -164,16 +164,11 @@ type WizardsData = {
   wizardType: string;
   updateMode: boolean;
 
-  // Data sent to the wizard
+  // Data (payload) sent to the wizard or the confirm delete dialog
   gateways: string[];
   peerAuthentications: PeerAuthentication[];
-
   namespace: string;
-
-  // This is a 3-state field: {null} value means that it was tried to fetch the data
-  // from the back-end but fetching failed (either no data, or there was an error; {undefined}
-  // means that it is loading.
-  serviceDetails?: ServiceDetailsInfo | null;
+  serviceDetails?: ServiceDetailsInfo;
 }
 
 type GraphPageState = {

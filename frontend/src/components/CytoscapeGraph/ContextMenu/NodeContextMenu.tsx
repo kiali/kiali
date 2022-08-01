@@ -17,7 +17,6 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { renderBadgedName } from 'pages/Graph/SummaryLink';
 import { PFColors } from 'components/Pf/PfColors';
 import {
-  KIALI_WIZARD_LABEL,
   SERVICE_WIZARD_ACTIONS,
   WIZARD_TITLES,
   WizardAction
@@ -26,6 +25,8 @@ import { DELETE_TRAFFIC_ROUTING } from "../../IstioWizards/ServiceWizardActionsD
 import { isParentKiosk, kioskContextMenuAction } from "../../Kiosk/KioskActions";
 import { DurationInSeconds, TimeInMilliseconds } from "types/Common";
 import { useServiceDetailForGraphNode } from "../../../hooks/services";
+import { canDelete } from "../../../types/Permissions";
+import { getServiceDetailsUpdateLabel, hasServiceDetailsTrafficRouting } from "../../../types/ServiceInfo";
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -105,46 +106,18 @@ function getLinkParamsForNode(node: DecoratedGraphNodeData): LinkParams | undefi
 }
 
 export function NodeContextMenu(props: Props) {
-
-  const [updateLabel, setUpdateLabel] = React.useState<string>('');
   const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(props, true, props.duration, props.updateTime);
-
-  React.useEffect(() => {
-    // TODO: deduplicate
-    if (serviceDetails && serviceDetails.virtualServices.length === 1 &&
-      serviceDetails.virtualServices[0].metadata.labels &&
-      serviceDetails.virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]) {
-      setUpdateLabel(serviceDetails.virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]);
-    } else {
-      setUpdateLabel('');
-    }
-  }, [serviceDetails]);
-
-  // TODO: Deduplicate
-  function hasTrafficRouting() {
-    if (!serviceDetails) {
-      return false;
-    }
-    return serviceDetails.virtualServices.length > 0 || serviceDetails.destinationRules.length > 0;
-  }
+  const updateLabel = getServiceDetailsUpdateLabel(serviceDetails);
 
   // TODO: Deduplicate
   function getDropdownItemTooltipMessage(): string {
     if (serverConfig.deployment.viewOnlyMode) {
       return 'User does not have permission';
-    } else if (hasTrafficRouting()) {
+    } else if (hasServiceDetailsTrafficRouting(serviceDetails)) {
       return 'Traffic routing already exists for this service';
     } else {
       return "Traffic routing doesn't exists for this service";
     }
-  }
-
-  // TODO: Deduplicate
-  function canDelete() {
-    if (!serviceDetails) {
-      return false;
-    }
-    return serviceDetails.istioPermissions.delete && !serverConfig.deployment.viewOnlyMode;
   }
 
   function createMenuItem(href: string, title: string, target: string = '_self', external: boolean = false) {
@@ -224,7 +197,7 @@ export function NodeContextMenu(props: Props) {
   }
 
   function renderWizardActionItem(eventKey: string) {
-    const enabledItem = !hasTrafficRouting() || (hasTrafficRouting() && updateLabel === eventKey);
+    const enabledItem = !hasServiceDetailsTrafficRouting(serviceDetails) || (hasServiceDetailsTrafficRouting(serviceDetails) && updateLabel === eventKey);
 
     // An Item is enabled under two conditions:
     // a) No traffic -> Wizard can create new one
@@ -250,7 +223,7 @@ export function NodeContextMenu(props: Props) {
   }
 
   function renderDeleteTrafficRoutingItem() {
-    if (!canDelete() || !hasTrafficRouting() /*|| props.isDisabled*/) {
+    if (!canDelete(serviceDetails?.istioPermissions) || !hasServiceDetailsTrafficRouting(serviceDetails) /*|| props.isDisabled*/) {
       return (
         <div className={contextMenuItem} style={{color: '#d2d2d2'}}>
           <Tooltip position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage()}</>}>
