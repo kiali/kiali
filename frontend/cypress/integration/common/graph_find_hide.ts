@@ -114,3 +114,11 @@ Then('user sees the help menu', () => {
 And('the help menu has info on {string}', (helpMenuItem: string) => {
   cy.get('#graph_find_help_tabs').contains(helpMenuItem).should('be.visible').click();
 });
+
+When("user fills {string} in find and submits", (input: string) => {
+  cy.get('#graph_find').type(input+'{enter}')
+})
+
+Then("user sees the {string} message",(error: string)=> {
+  cy.get('[aria-label="graph settings"]').should("contain.text", error)
+})

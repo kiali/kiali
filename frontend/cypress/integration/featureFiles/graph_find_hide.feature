@@ -43,3 +43,8 @@ Feature: Kiali Graph page - Find/Hide
     And the help menu has info on "Edges"
     And the help menu has info on "Operators"
     And the help menu has info on "Usage Notes"
+
+  @graph-page-find-hide
+  Scenario: Filling the find form with nonsense
+    When user fills "hello world" in find and submits
+    Then user sees the "Find: No valid operator found in expression" message 
