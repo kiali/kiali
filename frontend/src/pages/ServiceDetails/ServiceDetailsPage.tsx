@@ -72,6 +72,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     if (
       prevProps.match.params.namespace !== this.props.match.params.namespace ||
       prevProps.match.params.service !== this.props.match.params.service ||
+      currentTab !== this.state.currentTab ||
       prevProps.lastRefreshAt !== this.props.lastRefreshAt
     ) {
       if (currentTab === 'info') {
