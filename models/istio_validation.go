@@ -421,7 +421,7 @@ func (iv IstioValidations) MergeReferences(validations IstioValidations) IstioVa
 func (iv IstioValidations) SummarizeValidation(ns string) *IstioValidationSummary {
 	ivs := IstioValidationSummary{}
 	for k, v := range iv {
-		if k.Namespace == ns {
+		if k.Namespace == ns && k.ObjectType != "workload" {
 			ivs.mergeSummaries(v.Checks)
 		}
 	}
