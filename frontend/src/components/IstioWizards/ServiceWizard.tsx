@@ -537,13 +537,13 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         ? this.props.update
           ? 'Update ' + WIZARD_TITLES[this.props.type]
           : 'Create ' + WIZARD_TITLES[this.props.type]
-        : 'View '+ WIZARD_TITLES[this.props.type];
+        : 'View Modal';
     const titleModal =
       this.props.type.length > 0
         ? this.props.update
           ? 'Update ' + WIZARD_TITLES[this.props.type]
           : 'Create ' + WIZARD_TITLES[this.props.type]
-        : 'View '+ WIZARD_TITLES[this.props.type];
+        : 'View Modal';
     return (
       <>
         <Modal
