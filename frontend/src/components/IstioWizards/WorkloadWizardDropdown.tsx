@@ -7,7 +7,6 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import { CaretDownIcon } from '@patternfly/react-icons';
 import { serverConfig } from '../../config';
 import { Workload } from '../../types/Workload';
 import {
@@ -204,7 +203,7 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         position={DropdownPosition.right}
         onSelect={this.onActionsSelect}
         toggle={
-          <DropdownToggle onToggle={this.onActionsToggle} icon={CaretDownIcon}>
+          <DropdownToggle onToggle={this.onActionsToggle}>
             Actions
           </DropdownToggle>
         }

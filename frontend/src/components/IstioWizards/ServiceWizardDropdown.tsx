@@ -13,7 +13,6 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import { CaretDownIcon } from '@patternfly/react-icons';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { DestinationRule, PeerAuthentication, VirtualService } from '../../types/IstioObjects';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -366,7 +365,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
         position={DropdownPosition.right}
         onSelect={this.onActionsSelect}
         toggle={
-          <DropdownToggle onToggle={this.onActionsToggle} icon={CaretDownIcon} data-test="wizard-actions">
+          <DropdownToggle onToggle={this.onActionsToggle} data-test="wizard-actions">
             Actions
           </DropdownToggle>
         }
