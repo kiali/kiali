@@ -442,6 +442,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     resetclock) _CMD="resetclock"; shift ;;
+    olm) _CMD="olm"; shift ;;
     -ce|--client-exe) CLIENT_EXE="$2"; shift;shift ;;
     -de|--dex-enabled) DEX_ENABLED="$2"; shift;shift ;;
     -dr|--dex-repo) DEX_REPO="$2"; shift;shift ;;
@@ -573,6 +574,7 @@ The command must be either:
                 displays the Ingress Gateway URL. If a port name is given, the gateway port is also shown.
                 If the port name is "all" then all the URLs for all known ports are shown.
   resetclock:   If the VM's clock gets skewed (e.g. by sleeping) run this to reset it to the current time.
+  olm:          Install OLM.
 HELPMSG
       exit 1
       ;;
@@ -761,6 +763,10 @@ elif [ "$_CMD" = "resetclock" ]; then
   ensure_minikube_is_running
   echo "Resetting the clock in the minikube VM"
   ${MINIKUBE_EXEC_WITH_PROFILE} ssh -- sudo date -u $(date -u +%m%d%H%M%Y.%S)
+
+elif [ "$_CMD" = "olm" ]; then
+  ensure_minikube_is_running
+  install_olm
 
 else
   echo "ERROR: Missing required command"
