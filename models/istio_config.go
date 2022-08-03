@@ -168,6 +168,19 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 	for _, ns := range nss {
 		if filtered[ns] == nil {
 			filtered[ns] = new(IstioConfigList)
+			filtered[ns].IstioValidations = IstioValidations{}
+			filtered[ns].Namespace = Namespace{Name: ns}
+			filtered[ns].DestinationRules = []*networking_v1beta1.DestinationRule{}
+			filtered[ns].EnvoyFilters = []*networking_v1alpha3.EnvoyFilter{}
+			filtered[ns].Gateways = []*networking_v1beta1.Gateway{}
+			filtered[ns].VirtualServices = []*networking_v1beta1.VirtualService{}
+			filtered[ns].ServiceEntries = []*networking_v1beta1.ServiceEntry{}
+			filtered[ns].Sidecars = []*networking_v1beta1.Sidecar{}
+			filtered[ns].WorkloadEntries = []*networking_v1beta1.WorkloadEntry{}
+			filtered[ns].WorkloadGroups = []*networking_v1beta1.WorkloadGroup{}
+			filtered[ns].AuthorizationPolicies = []*security_v1beta.AuthorizationPolicy{}
+			filtered[ns].PeerAuthentications = []*security_v1beta.PeerAuthentication{}
+			filtered[ns].RequestAuthentications = []*security_v1beta.RequestAuthentication{}
 		}
 		for _, dr := range configList.DestinationRules {
 			if dr.Namespace == ns {
@@ -232,6 +245,11 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 		for _, ra := range configList.RequestAuthentications {
 			if ra.Namespace == ns {
 				filtered[ns].RequestAuthentications = append(filtered[ns].RequestAuthentications, ra)
+			}
+		}
+		for k, v := range configList.IstioValidations {
+			if k.Namespace == ns {
+				filtered[ns].IstioValidations.MergeValidations(IstioValidations{k: v})
 			}
 		}
 	}

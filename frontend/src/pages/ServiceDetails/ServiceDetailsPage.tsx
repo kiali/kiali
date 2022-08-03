@@ -87,9 +87,11 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   private fetchService = () => {
     this.promises.cancelAll();
     this.promises
-      .register('gateways', API.getIstioConfig('', ['gateways'], false, '', ''))
+      .register('gateways', API.getAllIstioConfigs([], ['gateways'], false, '', ''))
       .then(response => {
-        this.setState({ gateways: response.data.gateways });
+        Object.values(response.data).forEach(item => {
+          this.setState({ gateways: this.state.gateways.concat(item.gateways) });
+        });
       })
       .catch(gwError => {
         AlertUtils.addError('Could not fetch Gateways list.', gwError);

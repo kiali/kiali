@@ -62,6 +62,13 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if allNamespaces && len(nss) == 0 {
+		allNamespaces, _ := business.Namespace.GetNamespaces(r.Context())
+		for _, ns := range allNamespaces {
+			nss = append(nss, ns.Name)
+		}
+	}
+
 	var istioConfigValidations models.IstioValidations
 
 	wg := sync.WaitGroup{}
