@@ -82,6 +82,10 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
               this.setState({ currentTab: currentTab });
             }
         });
+      } else {
+        if (currentTab !== this.state.currentTab) {
+          this.setState({ currentTab: currentTab });
+        }
       }
 
     }
