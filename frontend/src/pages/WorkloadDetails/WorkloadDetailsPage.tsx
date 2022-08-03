@@ -77,21 +77,23 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       this.props.duration !== prevProps.duration
     ) {
       if (currentTab === 'info' || currentTab === 'logs' || currentTab === 'envoy') {
-        this.fetchWorkload();
+        this.fetchWorkload().then(() => {
+            if (currentTab !== this.state.currentTab) {
+              this.setState({ currentTab: currentTab });
+            }
+        });
       }
-      if (currentTab !== this.state.currentTab) {
-        this.setState({ currentTab: currentTab });
-      }
+
     }
   }
 
-  private fetchWorkload = () => {
+  private fetchWorkload = async () => {
     const params: { [key: string]: string } = {
       validate: 'true',
       rateInterval: String(this.props.duration) + 's',
       health: 'true'
     };
-    API.getWorkload(this.props.match.params.namespace, this.props.match.params.workload, params)
+    await API.getWorkload(this.props.match.params.namespace, this.props.match.params.workload, params)
       .then(details => {
         this.setState({
           workload: details.data,
