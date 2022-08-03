@@ -31,6 +31,9 @@ endif
 		rm /tmp/kiali-operator-pull-secret.json; \
 	fi
 
+.remove-operator-pull-secret:
+	@# no op
+
 ## operator-create: Deploy the Kiali operator to the cluster using the install script.
 # By default, this target will not deploy Kiali - it will only deploy the operator.
 # You can tell it to also install Kiali by setting OPERATOR_INSTALL_KIALI=true.
