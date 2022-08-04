@@ -111,12 +111,12 @@ endif
 	@echo "  sourceType: grpc"                        >> ${OUTDIR}/kiali-catalogsource.yaml
 	@echo "  image: ${CLUSTER_REPO_INTERNAL}/${OLM_INDEX_NAME}:${BUNDLE_VERSION}" >> ${OUTDIR}/kiali-catalogsource.yaml
 
-## deploy-catalog-source: Creates the OLM CatalogSource on the remote cluster
-deploy-catalog-source: .generate-catalog-source cluster-push-olm-index .create-operator-pull-secret
+## catalog-source-create: Creates the OLM CatalogSource on the remote cluster
+catalog-source-create: .generate-catalog-source cluster-push-olm-index .create-operator-pull-secret
 	${OC} apply -f "${OUTDIR}/kiali-catalogsource.yaml"
 
-## undeploy-catalog-source: Deletes the OLM CatalogSource from the remote cluster
-undeploy-catalog-source: .generate-catalog-source .remove-operator-pull-secret
+## catalog-source-delete: Deletes the OLM CatalogSource from the remote cluster
+catalog-source-delete: .generate-catalog-source .remove-operator-pull-secret
 	${OC} delete --ignore-not-found=true -f "${OUTDIR}/kiali-catalogsource.yaml"
 
 .generate-subscription: .determine-olm-operators-namespace
@@ -139,11 +139,11 @@ undeploy-catalog-source: .generate-catalog-source .remove-operator-pull-secret
 	@echo "    - name: ALLOW_AD_HOC_KIALI_IMAGE"      >> ${OUTDIR}/kiali-subscription.yaml
 	@echo '      value: "true"'                       >> ${OUTDIR}/kiali-subscription.yaml
 
-## deploy-subscription: Creates the OLM Subscription on the remote cluster which installs the operator
-deploy-subscription: .ensure-oc-login .generate-subscription
+## subscription-create: Creates the OLM Subscription on the remote cluster which installs the operator
+subscription-create: .ensure-oc-login .generate-subscription
 	${OC} apply -f ${OUTDIR}/kiali-subscription.yaml
 
-## undeploy-subscription: Deletes the OLM Subscription from the remote cluster which uninstalls the operator
-undeploy-subscription: .ensure-oc-login .generate-subscription
+## subscription-delete: Deletes the OLM Subscription from the remote cluster which uninstalls the operator
+subscription-delete: .ensure-oc-login .generate-subscription
 	${OC} delete --ignore-not-found=true -f ${OUTDIR}/kiali-subscription.yaml
 

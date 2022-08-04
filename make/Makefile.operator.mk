@@ -230,12 +230,12 @@ operator-set-config-ansible-profiler-off: .operator-set-env-ansible-profiler-off
 get-ansible-operator: .ensure-ansible-operator-exists .ensure-ansible-runner-exists
 	@echo "Ansible Operator location: ${ANSIBLE_OPERATOR_BIN} (ansible-runner: ${ANSIBLE_RUNNER_BIN})"
 
-## install-kiali-crd: Installs the Kiali CRD. Useful if running the operator outside of OLM or Helm.
-install-kiali-crd: .ensure-oc-login
+## crd-create: Installs the Kiali CRD. Useful if running the operator outside of OLM or Helm.
+crd-create: .ensure-oc-login
 	${OC} apply -f "${OPERATOR_DIR}/manifests/kiali-ossm/manifests/kiali.crd.yaml"
 
-## uninstall-kiali-crd: Uninstalls the Kiali CRD and all CRs. Useful if running the operator outside of OLM or Helm.
-uninstall-kiali-crd:
+## crd-delete: Uninstalls the Kiali CRD and all CRs. Useful if running the operator outside of OLM or Helm.
+crd-delete:
 	${OC} delete --ignore-not-found=true crd kialis.kiali.io
 
 .wait-for-kiali-crd:
@@ -249,7 +249,7 @@ uninstall-kiali-crd:
 	${OC} wait --for condition=established --timeout=60s crd kialis.kiali.io
 
 ## run-operator: Runs the Kiali Operator via the ansible-operator locally.
-run-operator: get-ansible-operator install-kiali-crd .wait-for-kiali-crd
+run-operator: get-ansible-operator crd-create .wait-for-kiali-crd
 	cd ${OPERATOR_DIR} && \
 	ANSIBLE_ROLES_PATH="${OPERATOR_DIR}/roles" \
 	ALLOW_AD_HOC_KIALI_NAMESPACE="true" \
