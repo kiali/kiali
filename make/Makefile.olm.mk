@@ -93,8 +93,10 @@ endif
 
 .determine-olm-operators-namespace:
 	@$(eval OLM_OPERATORS_NAMESPACE ?= $(shell if [[ "${OC}" = *"oc" ]]; then echo 'openshift-operators'; else echo 'operators'; fi))
+	@$(eval OPERATOR_NAMESPACE = ${OLM_OPERATORS_NAMESPACE})
+	@echo "Using OLM requires that the OPERATOR_NAMESPACE be set to [${OPERATOR_NAMESPACE}]"
 
-.generate-catalog-source: .prepare-cluster .determine-olm-bundle-version .prepare-operator-pull-secret .determine-olm-operators-namespace
+.generate-catalog-source: .prepare-cluster .determine-olm-bundle-version .determine-olm-operators-namespace .prepare-operator-pull-secret
 	@mkdir -p "${OUTDIR}"
 	@echo "apiVersion: operators.coreos.com/v1alpha1" >  ${OUTDIR}/kiali-catalogsource.yaml
 	@echo "kind: CatalogSource"                       >> ${OUTDIR}/kiali-catalogsource.yaml
