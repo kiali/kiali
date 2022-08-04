@@ -187,3 +187,77 @@ operator-set-config-ansible-profiler-off: .operator-set-env-ansible-profiler-off
 .operator-set-env-ansible-profiler-off:
 	@$(eval OPERATOR_ENV_NAME = ANSIBLE_CONFIG)
 	@$(eval OPERATOR_ENV_VALUE ?= /etc/ansible/ansible.cfg)
+
+#
+# The following targets will allow you to run the operator external to the cluster in the same manner it runs in the cluster
+#
+
+.download-ansible-operator-if-needed:
+	@if [ "$(shell which ansible-operator 2>/dev/null || echo -n "")" == "" ]; then \
+	  sdk_version="$$(sed -rn 's/^OPERATOR_SDK_VERSION *\?= *(.*)/\1/p' ${OPERATOR_DIR}/Makefile)" ;\
+	  mkdir -p "${OUTDIR}/ansible-operator-install" ;\
+	  if [ -x "${OUTDIR}/ansible-operator-install/ansible-operator" ]; then \
+	    echo "You do not have ansible-operator installed in your PATH. Will use the one found here: ${OUTDIR}/ansible-operator-install/ansible-operator" ;\
+	  else \
+	    echo "You do not have ansible-operator installed in your PATH. The binary will be downloaded to ${OUTDIR}/ansible-operator-install/ansible-operator" ;\
+	    curl -L https://github.com/operator-framework/operator-sdk/releases/download/v$${sdk_version}/ansible-operator_${OS}_${ARCH} > "${OUTDIR}/ansible-operator-install/ansible-operator" ;\
+	    chmod +x "${OUTDIR}/ansible-operator-install/ansible-operator" ;\
+	  fi ;\
+	fi
+
+.ensure-ansible-operator-exists: .download-ansible-operator-if-needed
+	@$(eval ANSIBLE_OPERATOR_BIN ?= $(shell which ansible-operator 2>/dev/null || echo "${OUTDIR}/ansible-operator-install/ansible-operator"))
+	@"${ANSIBLE_OPERATOR_BIN}" version
+
+.download-ansible-runner-if-needed:
+	@if [ "$(shell which ansible-runner 2>/dev/null || echo -n "")" == "" ]; then \
+	  mkdir -p "${OUTDIR}/ansible-operator-install" ;\
+	  if [ -x "${OUTDIR}/ansible-operator-install/ansible-runner" ]; then \
+	    echo "You do not have ansible-runner installed in your PATH.  Will use the one found here: ${OUTDIR}/ansible-operator-install/ansible-runner" ;\
+	  else \
+	    echo "You do not have ansible-runner installed in your PATH. An attempt to install it will be made and a softlink to its binary placed at ${OUTDIR}/ansible-operator-install/ansible-runner" ;\
+	    echo "If the installation fails, you must install it manually. See: https://ansible-runner.readthedocs.io/en/latest/install/" ;\
+	    python3 -m pip install ansible-runner ansible-runner-http openshift ;\
+	    ln --force -s "${HOME}/.local/bin/ansible-runner" "${OUTDIR}/ansible-operator-install/ansible-runner" ;\
+	  fi ;\
+	fi
+
+.ensure-ansible-runner-exists: .download-ansible-runner-if-needed
+	@$(eval ANSIBLE_RUNNER_BIN ?= $(shell which ansible-runner 2>/dev/null || echo "${OUTDIR}/ansible-operator-install/ansible-runner"))
+	@"${ANSIBLE_RUNNER_BIN}" --version
+
+## get-ansible-operator: Downloads the Ansible Operator binary if it is not already in PATH.
+get-ansible-operator: .ensure-ansible-operator-exists .ensure-ansible-runner-exists
+	@echo "Ansible Operator location: ${ANSIBLE_OPERATOR_BIN} (ansible-runner: ${ANSIBLE_RUNNER_BIN})"
+
+## install-kiali-crd: Installs the Kiali CRD. Useful if running the operator outside of OLM or Helm.
+install-kiali-crd: .ensure-oc-login
+	${OC} apply -f "${OPERATOR_DIR}/manifests/kiali-ossm/manifests/kiali.crd.yaml"
+
+## uninstall-kiali-crd: Uninstalls the Kiali CRD and all CRs. Useful if running the operator outside of OLM or Helm.
+uninstall-kiali-crd:
+	${OC} delete --ignore-not-found=true crd kialis.kiali.io
+
+.wait-for-kiali-crd:
+	@echo -n "Waiting for the Kiali CRD to be established"
+	@i=0 ;\
+	until [ $${i} -eq 30 ] || ${OC} get crd kialis.kiali.io &> /dev/null; do \
+	    echo -n '.' ; sleep 1 ; (( i++ )) ;\
+	done ;\
+	echo ;\
+	[ $${i} -lt 30 ] || (echo "The Kiali CRD does not exist. You should install the operator." && exit 1)
+	${OC} wait --for condition=established --timeout=60s crd kialis.kiali.io
+
+## run-operator: Runs the Kiali Operator via the ansible-operator locally.
+run-operator: get-ansible-operator install-kiali-crd .wait-for-kiali-crd
+	cd ${OPERATOR_DIR} && \
+	ANSIBLE_ROLES_PATH="${OPERATOR_DIR}/roles" \
+	ALLOW_AD_HOC_KIALI_NAMESPACE="true" \
+	ALLOW_AD_HOC_KIALI_IMAGE="true" \
+	ANSIBLE_VERBOSITY_KIALI_KIALI_IO="1" \
+	ANSIBLE_DEBUG_LOGS="True" \
+	PROFILE_TASKS_TASK_OUTPUT_LIMIT="100" \
+	POD_NAMESPACE="does-not-exist" \
+	WATCH_NAMESPACE="" \
+	PATH="${PATH}:${OUTDIR}/ansible-operator-install" \
+	ansible-operator run --zap-log-level=debug --leader-election-id=kiali-operator
