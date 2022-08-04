@@ -147,3 +147,10 @@ subscription-create: .ensure-oc-login .generate-subscription
 subscription-delete: .ensure-oc-login .generate-subscription
 	${OC} delete --ignore-not-found=true -f ${OUTDIR}/kiali-subscription.yaml
 
+## olm-operator-delete: Deletes the Kiali CR, undeploys the OLM subscription and catalog source and purges the operator
+olm-operator-delete: kiali-delete subscription-delete catalog-source-delete
+	@echo "Deleting OLM CSVs to fully uninstall Kiali operator and its related resources"
+	@for csv in $$(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep kiali-operator) ;\
+	do \
+	  ${OC} delete --ignore-not-found=true csv -n $$(echo -n $${csv} | cut -d: -f1) $$(echo -n $${csv} | cut -d: -f2) ;\
+	done
