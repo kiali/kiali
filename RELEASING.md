@@ -13,7 +13,7 @@ Tags and branches are also created in the Kiali's GitHub repositories, as a refe
 
 ## Troubleshooting (WIP)
 
-For troubleshooting, look the following [documentation](./github/troubleshooting.md).
+For troubleshooting, take a look to the following [documentation](./.github/troubleshooting.md).
 
 ## How releases are generated?
 
