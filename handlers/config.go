@@ -276,8 +276,8 @@ func CrippledFeatures(w http.ResponseWriter, r *http.Request) {
 	crippledFeatures.ResponseSizePercentiles = crippledFeatures.ResponseSizeAverage || !exists["istio_response_bytes_bucket"]
 
 	crippledFeatures.ResponseTime = !exists["istio_request_duration_milliseconds_sum"]
-	crippledFeatures.ResponseTimeAverage = crippledFeatures.ResponseSize || !exists["istio_request_duration_milliseconds_count"]
-	crippledFeatures.ResponseTimePercentiles = crippledFeatures.ResponseSizeAverage || !exists["istio_request_duration_milliseconds_bucket"]
+	crippledFeatures.ResponseTimeAverage = crippledFeatures.ResponseTime || !exists["istio_request_duration_milliseconds_count"]
+	crippledFeatures.ResponseTimePercentiles = crippledFeatures.ResponseTimeAverage || !exists["istio_request_duration_milliseconds_bucket"]
 
 	RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
 }
