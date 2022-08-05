@@ -320,6 +320,39 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 	return metricsWeFound, nil
 }
 
+// GetExistingMetricNames returns a list of the requested metric names that exist in Prometheus (meaning there is a matching __name__ label).
+func (in *Client) GetExistingMetricNames(metricNames []string) ([]string, error) {
+	if len(metricNames) == 0 {
+		return []string{}, nil
+	}
+
+	log.Tracef("[Prom] GetExistingMetricNames: metricNames=[%v]", metricNames)
+	startT := time.Now()
+	results, warnings, err := in.api.LabelValues(in.ctx, "__name__", []string{}, time.Unix(0, 0), time.Now())
+	if warnings != nil && len(warnings) > 0 {
+		log.Warningf("GetExistingMetricNames. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+	}
+	if err != nil {
+		return nil, errors.NewServiceUnavailable(err.Error())
+	}
+
+	metricsWeAreLookingFor := make(map[string]bool, len(metricNames))
+	for i := 0; i < len(metricNames); i++ {
+		metricsWeAreLookingFor[string(metricNames[i])] = true
+	}
+
+	metricsWeFound := make([]string, 0, 5)
+	for _, item := range results {
+		name := string(item)
+		if metricsWeAreLookingFor[name] {
+			metricsWeFound = append(metricsWeFound, name)
+		}
+	}
+
+	log.Tracef("[Prom] GetExistingMetricNames: exec time=[%v], results count=[%v], looking for count=[%v], found count=[%v]", time.Since(startT), len(results), len(metricsWeAreLookingFor), len(metricsWeFound))
+	return metricsWeFound, nil
+}
+
 // SanitizeLabelName replaces anything that doesn't match invalidLabelCharRE with an underscore.
 // Copied from https://github.com/prometheus/prometheus/blob/df80dc4d3970121f2f76cba79050983ffb3cdbb0/util/strutil/strconv.go
 func SanitizeLabelName(name string) string {

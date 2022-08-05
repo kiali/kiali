@@ -179,6 +179,25 @@ func NewRoutes() (r *Routes) {
 			handlers.Config,
 			true,
 		},
+		// swagger:route GET /crippled kiali getCrippledFeatures
+		// ---
+		// Endpoint to get the crippled features of Kiali
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      200: statusInfo
+		{
+			"Crippled",
+			"GET",
+			"/api/crippled",
+			handlers.CrippledFeatures,
+			true,
+		},
 		// swagger:route GET /istio/permissions config getPermissions
 		// ---
 		// Endpoint to get the caller permissions on new Istio Config objects

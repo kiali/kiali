@@ -60,6 +60,20 @@ interface KialiFeatureFlags {
   uiDefaults: UIDefaults;
 }
 
+// Not based exactly on Kiali configuration but rather whether things like prometheus config
+// allow for certain Kiali features. True means the feature is crippled, false means supported.
+export interface KialiCrippledFeatures {
+  requestSize: boolean;
+  requestSizeAverage: boolean;
+  requestSizePercentiles: boolean;
+  responseSize: boolean;
+  responseSizeAverage: boolean;
+  responseSizePercentiles: boolean;
+  responseTime: boolean;
+  responseTimeAverage: boolean;
+  responseTimePercentiles: boolean;
+}
+
 interface IstioCanaryRevision {
   current: string;
   upgrade: string;
