@@ -30,6 +30,10 @@ And('the {string} column on the {string} row is empty', (column: string, rowText
   getColWithRowText(rowText, column).children().should('be.empty');
 });
 
+And('user clicks in {string} column on the {string} text', (column: string, rowText: string) => {
+  getColWithRowText(rowText, column).find('a').click();
+});
+
 Then('user sees {string} in the table', (service: string) => {
   cy.get('tbody').within(() => {
     if (service === 'nothing') {
