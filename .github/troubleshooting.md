@@ -4,13 +4,11 @@ The project Kiali has four release pipelines mentioned in the release document. 
 
 An important step to check for all of the pipelines is the initialize job, specifically the "Log information" step. The following is an example of a release execution, where the inputs are logged to help troubleshooting. It indicates the inputs that will make the pipeline behave accordingly.
 
-´´´
-Release type: minor
-Release version: v1.54.0
-Next version: v1.55.0
-Branch version: v1.54
-Quay tag: quay.io/kiali/kiali:v1.54.0 quay.io/kiali/kiali:v1.54
-´´´
+* Release type: minor
+* Release version: v1.54.0
+* Next version: v1.55.0
+* Branch version: v1.54
+* Quay tag: quay.io/kiali/kiali:v1.54.0 quay.io/kiali/kiali:v1.54
 
 With this information, the person troubleshooting would know the type of release (is a minor, a patch?), the release version, the next version and also the tags for pushing the images.
 
