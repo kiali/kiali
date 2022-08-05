@@ -687,7 +687,7 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 		err = fmt.Errorf("object type not found: %v", objectType)
 	}
 
-	return istioConfigDetail, err
+	return istioConfigDetail, errors.New("Object is not found in registry")
 }
 
 // GetIstioAPI provides the Kubernetes API that manages this Istio resource type
