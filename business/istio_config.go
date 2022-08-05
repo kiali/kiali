@@ -542,6 +542,154 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, namespa
 	return istioConfigDetail, err
 }
 
+// GetIstioConfigDetailsFromRegistry returns a specific Istio configuration object from Istio Registry.
+// The returned object is Read only.
+// It uses following parameters:
+// - "namespace": 		namespace where configuration is stored
+// - "objectType":		type of the configuration
+// - "object":			name of the configuration
+func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Context, namespace, objectType, object string) (models.IstioConfigDetails, error) {
+	var err error
+
+	istioConfigDetail := models.IstioConfigDetails{}
+	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
+	istioConfigDetail.ObjectType = objectType
+
+	istioConfigDetail.Permissions = models.ResourcePermissions{
+		Create: false,
+		Update: false,
+		Delete: false,
+	}
+
+	registryCriteria := RegistryCriteria{
+		AllNamespaces: true,
+	}
+	registryConfiguration, err := in.businessLayer.RegistryStatus.GetRegistryConfiguration(registryCriteria)
+	if err != nil {
+		return istioConfigDetail, err
+	}
+	if registryConfiguration == nil {
+		return istioConfigDetail, errors.New("RegistryConfiguration is nil. This is an unexpected case. Is the Kiali cache disabled ?")
+	}
+
+	switch objectType {
+	case kubernetes.DestinationRules:
+		configs := registryConfiguration.DestinationRules
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.DestinationRule = cfg
+				istioConfigDetail.Gateway.Kind = kubernetes.DestinationRuleType
+				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.EnvoyFilters:
+		configs := registryConfiguration.EnvoyFilters
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.EnvoyFilter = cfg
+				istioConfigDetail.Gateway.Kind = kubernetes.EnvoyFilterType
+				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Alpha3
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.Gateways:
+		configs := registryConfiguration.Gateways
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.Gateway = cfg
+				istioConfigDetail.Gateway.Kind = kubernetes.GatewayType
+				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.ServiceEntries:
+		configs := registryConfiguration.ServiceEntries
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.ServiceEntry = cfg
+				istioConfigDetail.Gateway.Kind = kubernetes.ServiceEntryType
+				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.Sidecars:
+		configs := registryConfiguration.Sidecars
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.Sidecar = cfg
+				istioConfigDetail.Gateway.Kind = kubernetes.SidecarType
+				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.VirtualServices:
+		configs := registryConfiguration.VirtualServices
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.VirtualService = cfg
+				istioConfigDetail.Gateway.Kind = kubernetes.VirtualServiceType
+				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.WorkloadEntries:
+		configs := registryConfiguration.WorkloadEntries
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.WorkloadEntry = cfg
+				istioConfigDetail.Gateway.Kind = kubernetes.WorkloadEntryType
+				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.WorkloadGroups:
+		configs := registryConfiguration.WorkloadGroups
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.WorkloadGroup = cfg
+				istioConfigDetail.Gateway.Kind = kubernetes.WorkloadGroupType
+				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.AuthorizationPolicies:
+		configs := registryConfiguration.AuthorizationPolicies
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.AuthorizationPolicy = cfg
+				istioConfigDetail.Gateway.Kind = kubernetes.AuthorizationPoliciesType
+				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiSecurityVersion
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.PeerAuthentications:
+		configs := registryConfiguration.PeerAuthentications
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.PeerAuthentication = cfg
+				istioConfigDetail.Gateway.Kind = kubernetes.PeerAuthenticationsType
+				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiSecurityVersion
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.RequestAuthentications:
+		configs := registryConfiguration.RequestAuthentications
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.RequestAuthentication = cfg
+				istioConfigDetail.Gateway.Kind = kubernetes.RequestAuthenticationsType
+				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiSecurityVersion
+				return istioConfigDetail, nil
+			}
+		}
+	default:
+		err = fmt.Errorf("object type not found: %v", objectType)
+	}
+
+	return istioConfigDetail, err
+}
+
 // GetIstioAPI provides the Kubernetes API that manages this Istio resource type
 // or empty string if it's not managed
 func GetIstioAPI(resourceType string) bool {
