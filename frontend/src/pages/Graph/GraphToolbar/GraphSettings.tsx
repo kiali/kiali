@@ -160,7 +160,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
   }
 
   componentDidMount(): void {
-    console.log('Mount')!;
     getCrippledFeatures().then(response => {
       this.setState({ crippledFeatures: response.data });
     });
@@ -320,13 +319,13 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       toggleTrafficAnimation
     } = this.props;
 
-    console.log(`GetMenuOptions: ${JSON.stringify(this.state.crippledFeatures)}`);
-
     const edgeLabelOptions: DisplayOptionType[] = [
       {
         id: EdgeLabelMode.RESPONSE_TIME_GROUP,
         isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP),
-        isDisabled: this.state.crippledFeatures?.responseTime,
+        isDisabled:
+          this.state.crippledFeatures?.responseTime ||
+          (this.state.crippledFeatures?.responseTimeAverage && this.state.crippledFeatures?.responseTimePercentiles),
         labelText: _.startCase(EdgeLabelMode.RESPONSE_TIME_GROUP),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -341,6 +340,9 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
             </div>
             <div>- edges into service nodes</div>
             <div>- edges into or out of operation nodes.</div>
+            <div>
+              This option will be disabled if response time telemetry is unavailable. Some options may be disabled for the same reason.
+            </div>
           </div>
         )
       },
@@ -361,6 +363,9 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
             </div>
             <div>- edges into service nodes</div>
             <div>- edges into or out of operation nodes.</div>
+            <div>
+              This option will be disabled if throughput telemetry is unavailable. Some options may be disabled for the same reason.
+            </div>
           </div>
         )
       },
@@ -391,14 +396,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       }
     ];
 
-    console.log(
-      `ELO: ${JSON.stringify(
-        edgeLabelOptions.map(elo => {
-          return `${elo.id}:${elo.isDisabled}`;
-        })
-      )}`
-    );
-
     const throughputOptions: DisplayOptionType[] = [
       {
         id: EdgeLabelMode.THROUGHPUT_REQUEST,
@@ -424,14 +421,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       }
     ];
 
-    console.log(
-      `TO: ${JSON.stringify(
-        throughputOptions.map(elo => {
-          return `${elo.id}:${elo.isDisabled}`;
-        })
-      )}`
-    );
-
     const responseTimeOptions: DisplayOptionType[] = [
       {
         id: EdgeLabelMode.RESPONSE_TIME_AVERAGE,
@@ -445,33 +434,28 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       {
         id: EdgeLabelMode.RESPONSE_TIME_P50,
         labelText: 'Median',
-        isChecked: !this.state.crippledFeatures?.responseTimePercentiles && edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P50),
+        isChecked:
+          !this.state.crippledFeatures?.responseTimePercentiles && edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P50),
         isDisabled: this.state.crippledFeatures?.responseTimePercentiles,
         tooltip: <div style={{ textAlign: 'left' }}>Median request response time (50th Percentile)</div>
       },
       {
         id: EdgeLabelMode.RESPONSE_TIME_P95,
         labelText: '95th Percentile',
-        isChecked: !this.state.crippledFeatures?.responseTimePercentiles && edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P95),
+        isChecked:
+          !this.state.crippledFeatures?.responseTimePercentiles && edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P95),
         isDisabled: this.state.crippledFeatures?.responseTimePercentiles,
         tooltip: <div style={{ textAlign: 'left' }}>Max response time for 95% of requests (95th Percentile)</div>
       },
       {
         id: EdgeLabelMode.RESPONSE_TIME_P99,
         labelText: '99th Percentile',
-        isChecked: !this.state.crippledFeatures?.responseTimePercentiles && edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P99),
+        isChecked:
+          !this.state.crippledFeatures?.responseTimePercentiles && edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P99),
         isDisabled: this.state.crippledFeatures?.responseTimePercentiles,
         tooltip: <div style={{ textAlign: 'left' }}>Max response time for 99% of requests (99th Percentile)</div>
       }
     ];
-
-    console.log(
-      `RTO: ${JSON.stringify(
-        responseTimeOptions.map(elo => {
-          return `${elo.id}:${elo.isDisabled}`;
-        })
-      )}`
-    );
 
     const visibilityOptions: DisplayOptionType[] = [
       {

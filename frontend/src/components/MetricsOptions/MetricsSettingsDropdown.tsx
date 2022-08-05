@@ -1,5 +1,14 @@
 import * as React from 'react';
-import { Divider, Dropdown, DropdownToggle, DropdownToggleCheckbox, Radio } from '@patternfly/react-core';
+import {
+  Checkbox,
+  Divider,
+  Dropdown,
+  DropdownToggle,
+  DropdownToggleCheckbox,
+  Radio,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { style } from 'typestyle';
 import isEqual from 'lodash/isEqual';
 
@@ -11,17 +20,18 @@ import {
   combineLabelsSettings,
   retrieveMetricsSettings
 } from 'components/Metrics/Helper';
-import {
-  titleStyle
-} from 'styles/DropdownStyles';
+import { titleStyle } from 'styles/DropdownStyles';
 import { PFColors } from '../Pf/PfColors';
 import { PromLabel } from 'types/Metrics';
+import { KialiIcon } from 'config/KialiIcon';
 
 interface Props {
   onChanged: (state: MetricsSettings) => void;
   onLabelsFiltersChanged: (labelsFilters: LabelsSettings) => void;
   direction: string;
   hasHistograms: boolean;
+  hasHistogramsAverage: boolean;
+  hasHistogramsPercentiles: boolean;
   labelsSettings: LabelsSettings;
 }
 
@@ -31,10 +41,9 @@ type State = MetricsSettings & {
 };
 
 const checkboxSelectAllStyle = style({ marginLeft: 10 });
-const checkboxStyle = style({ marginLeft: 10, fontWeight: 400 });
 const secondLevelStyle = style({ marginLeft: 18 });
 const spacerStyle = style({ height: '1em' });
-const titlePaddingStyle = style({ paddingLeft: 0, fontSize: "small" });
+const titlePaddingStyle = style({ paddingLeft: 0, fontSize: 'small' });
 
 export class MetricsSettingsDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -244,12 +253,12 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
                   />
                 ) : (
                   <label>
-                    <input
-                      type="checkbox"
-                      checked={lblObj.values[val]}
-                      onChange={event => this.onLabelsFiltersChanged(promName, val, event.target.checked, false)}
+                    <Checkbox
+                      id={val}
+                      isChecked={lblObj.values[val]}
+                      onChange={checked => this.onLabelsFiltersChanged(promName, val, checked, false)}
+                      label={prettyLabelValues(promName, val)}
                     />
-                    <span className={checkboxStyle}>{prettyLabelValues(promName, val)}</span>
                   </label>
                 )}
               </div>
@@ -258,12 +267,12 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
       displayGroupingLabels.push(
         <div key={'groupings_' + promName}>
           <label>
-            <input
-              type="checkbox"
-              checked={lblObj.checked}
-              onChange={event => this.onGroupingChanged(promName, event.target.checked)}
+            <Checkbox
+              id={lblObj.displayName}
+              label={lblObj.displayName}
+              isChecked={lblObj.checked}
+              onChange={checked => this.onGroupingChanged(promName, checked)}
             />
-            <span className={checkboxStyle}>{lblObj.displayName}</span>
           </label>
           {labelsHTML}
         </div>
@@ -281,29 +290,35 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
   renderHistogramOptions(): JSX.Element {
     // Prettier removes the parenthesis introducing JSX
     // prettier-ignore
-    const displayHistogramOptions = [(
-      <div key={'histo_avg'}>
+    const infoStyle = style({
+      margin: '8px 5px -1px 2px'
+    });
+
+    const displayHistogramOptions = [
+      <div key="histo_avg">
         <label>
-          <input
-            type="checkbox"
-            checked={this.state.showAverage}
-            onChange={event => this.onHistogramAverageChanged(event.target.checked)}
+          <Checkbox
+            id="histo_avg"
+            isChecked={this.state.showAverage && this.props.hasHistogramsAverage}
+            isDisabled={!this.props.hasHistogramsAverage}
+            onChange={checked => this.onHistogramAverageChanged(checked)}
+            label="Average"
           />
-          <span className={checkboxStyle}>Average</span>
         </label>
       </div>
-    )].concat(
+    ].concat(
       allQuantiles.map((o, idx) => {
         const checked = this.state.showQuantiles.includes(o);
         return (
           <div key={'histo_' + idx}>
             <label>
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={event => this.onHistogramOptionsChanged(o, event.target.checked)}
+              <Checkbox
+                id={o}
+                isChecked={checked && this.props.hasHistogramsPercentiles}
+                isDisabled={!this.props.hasHistogramsPercentiles}
+                onChange={checked => this.onHistogramOptionsChanged(o, checked)}
+                label={`Quantile ${o}`}
               />
-              <span className={checkboxStyle}>Quantile {o}</span>
             </label>
           </div>
         );
@@ -311,7 +326,24 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     );
     return (
       <>
-        <label className={`${titlePaddingStyle} ${titleStyle}`}>Histograms:</label>
+        <label className={`${titlePaddingStyle} ${titleStyle}`} style={{ paddingRight: '4px' }}>
+          Histograms:
+        </label>
+        <Tooltip
+          key="tooltip_histograms"
+          position={TooltipPosition.right}
+          content={
+            <div style={{ textAlign: 'left' }}>
+              <div>
+                "No data available" is displayed for a histogram that does not have telemetry supporting the selected
+                option. If no histograms support the necessary telemetry, the option will be disabled.
+              </div>
+            </div>
+          }
+        >
+          <KialiIcon.Info className={infoStyle} />
+        </Tooltip>
+
         {displayHistogramOptions}
         <div className={spacerStyle} />
       </>

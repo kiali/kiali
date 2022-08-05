@@ -28,15 +28,17 @@ import { Dashboard } from 'components/Charts/Dashboard';
 import { timeRangeSelector } from 'store/Selectors';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
+import { KialiCrippledFeatures } from 'types/ServerConfig';
 
 type MetricsState = {
+  crippledFeatures?: KialiCrippledFeatures;
   dashboard?: DashboardModel;
-  labelsSettings: LabelsSettings;
   grafanaLinks: ExternalLink[];
+  labelsSettings: LabelsSettings;
   spanOverlay?: Overlay<JaegerLineInfo>;
-  tabHeight: number;
   showSpans: boolean;
   showTrendlines: boolean;
+  tabHeight: number;
 };
 
 type ObjectId = {
@@ -108,6 +110,9 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   }
 
   componentDidMount() {
+    API.getCrippledFeatures().then(response => {
+      this.setState({ crippledFeatures: response.data });
+    });
     this.fetchGrafanaInfo();
     this.refresh();
   }
@@ -305,9 +310,18 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   };
 
   private renderOptionsBar() {
-    return (
+    const hasHistogramsAverage =
+      !this.state.crippledFeatures?.requestSizeAverage ||
+      !this.state.crippledFeatures?.responseSizeAverage ||
+      !this.state.crippledFeatures?.responseTimeAverage;
+    const hasHistogramsPercentiles =
+      !this.state.crippledFeatures?.requestSizePercentiles ||
+      !this.state.crippledFeatures?.responseSizePercentiles ||
+      !this.state.crippledFeatures?.responseTimePercentiles;
+
+      return (
       <div ref={this.toolbarRef}>
-        <Toolbar style={{ padding: 0, marginBottom: "20px" }}>
+        <Toolbar style={{ padding: 0, marginBottom: '20px' }}>
           <ToolbarGroup>
             <ToolbarItem>
               <MetricsSettingsDropdown
@@ -316,6 +330,8 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                 direction={this.props.direction}
                 labelsSettings={this.state.labelsSettings}
                 hasHistograms={true}
+                hasHistogramsAverage={hasHistogramsAverage}
+                hasHistogramsPercentiles={hasHistogramsPercentiles}
               />
             </ToolbarItem>
             <ToolbarItem>

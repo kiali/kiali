@@ -264,6 +264,8 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
                   direction={this.state.dashboard?.title || 'dashboard'}
                   labelsSettings={this.state.labelsSettings}
                   hasHistograms={hasHistograms}
+                  hasHistogramsAverage={hasHistograms}
+                  hasHistogramsPercentiles={hasHistograms}
                 />
               </ToolbarItem>
             )}
