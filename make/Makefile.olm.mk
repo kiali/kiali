@@ -7,6 +7,9 @@ OLM_IMAGE_ORG ?= ${IMAGE_ORG}
 OLM_BUNDLE_NAME ?= ${OLM_IMAGE_ORG}/kiali-operator-bundle
 OLM_INDEX_NAME ?= ${OLM_IMAGE_ORG}/kiali-operator-index
 
+# set this package name to kiali-ossm if you want to test with the OSSM metadata
+OLM_BUNDLE_PACKAGE ?= kiali
+
 OLM_INDEX_BASE_IMAGE ?= quay.io/openshift/origin-operator-registry:4.10
 OPM_VERSION ?= 1.22.1
 
@@ -35,15 +38,21 @@ get-opm: .ensure-opm-exists
 
 ## build-olm-bundle: Builds the latest bundle version for deploying the operator in OLM
 build-olm-bundle: .prepare-cluster .determine-olm-bundle-version
-	@echo "Will build OLM bundle version [${BUNDLE_VERSION}] - set 'BUNDLE_VERSION' env var if you want a different one"
 	@( \
 	  mkdir -p ${OUTDIR}/bundle ;\
 	  rm -rf ${OUTDIR}/bundle/* ;\
-	  cp -R "${OPERATOR_DIR}/manifests/kiali-$$(if [[ "${OC}" = *"oc" ]]; then echo 'community'; else echo 'upstream'; fi)/$$(echo ${BUNDLE_VERSION} | sed 's/^v//')"/* ${OUTDIR}/bundle ;\
+	  if [ "${OLM_BUNDLE_PACKAGE}" == "kiali" ]; then \
+	    echo "Will build OLM bundle version [${BUNDLE_VERSION}] - set 'BUNDLE_VERSION' env var if you want a different one" ;\
+	    cp -R "${OPERATOR_DIR}/manifests/kiali-$$(if [[ "${OC}" = *"oc" ]]; then echo 'community'; else echo 'upstream'; fi)/$$(echo ${BUNDLE_VERSION} | sed 's/^v//')"/* ${OUTDIR}/bundle ;\
+	  else \
+	    echo "Will build OSSM OLM bundle - unset 'OLM_BUNDLE_PACKAGE' if you want to use upstream bundles" ;\
+	    cp -R ${OPERATOR_DIR}/manifests/${OLM_BUNDLE_PACKAGE}/* ${OUTDIR}/bundle ;\
+	  fi ;\
      csv="$$(ls -1 ${OUTDIR}/bundle/manifests/kiali*clusterserviceversion.yaml)" ;\
 	  sed -i "s/replaces:.*/#replaces:/g" $${csv} ;\
 	  sed -i "s|image: .*kiali.*operator.*|image: ${CLUSTER_OPERATOR_INTERNAL_NAME}:${OPERATOR_CONTAINER_VERSION}|g" $${csv} ;\
 	  sed -i "s|containerImage: .*kiali.*operator.*|containerImage: ${CLUSTER_OPERATOR_INTERNAL_NAME}:${OPERATOR_CONTAINER_VERSION}|g" $${csv} ;\
+	  sed -E -i "/.*kiali.*-operator.*/ n; s~(value:)(.*/.*-kiali-.*)~\1 ${CLUSTER_KIALI_INTERNAL_NAME}:${CONTAINER_VERSION}~g" $${csv} ;\
 	)
 	${DORP} build -f ${OUTDIR}/bundle/bundle.Dockerfile -t ${CLUSTER_REPO}/${OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
 
@@ -68,7 +77,7 @@ build-olm-index: .ensure-opm-exists cluster-push-olm-bundle
 	sed -i 's|${CLUSTER_REPO}|${CLUSTER_REPO_INTERNAL}|g' ${OUTDIR}/index/kiali-index/index.yaml
 	@echo "---"                                               >> ${OUTDIR}/index/kiali-index/index.yaml
 	@echo "schema: olm.channel"                               >> ${OUTDIR}/index/kiali-index/index.yaml
-	@echo "package: kiali"                                    >> ${OUTDIR}/index/kiali-index/index.yaml
+	@echo "package: ${OLM_BUNDLE_PACKAGE}"                    >> ${OUTDIR}/index/kiali-index/index.yaml
 	@echo "name: stable"                                      >> ${OUTDIR}/index/kiali-index/index.yaml
 	@echo "entries:"                                          >> ${OUTDIR}/index/kiali-index/index.yaml
 	@echo "- name: kiali-operator.${BUNDLE_VERSION}"          >> ${OUTDIR}/index/kiali-index/index.yaml
@@ -131,7 +140,7 @@ catalog-source-delete: .generate-catalog-source .remove-operator-pull-secret
 	@echo "spec:"                                     >> ${OUTDIR}/kiali-subscription.yaml
 	@echo "  channel: stable"                         >> ${OUTDIR}/kiali-subscription.yaml
 	@echo "  installPlanApproval: Automatic"          >> ${OUTDIR}/kiali-subscription.yaml
-	@echo "  name: kiali"                             >> ${OUTDIR}/kiali-subscription.yaml
+	@echo "  name: ${OLM_BUNDLE_PACKAGE}"             >> ${OUTDIR}/kiali-subscription.yaml
 	@echo "  source: kiali-catalog"                   >> ${OUTDIR}/kiali-subscription.yaml
 	@echo "  sourceNamespace: ${OLM_OPERATORS_NAMESPACE}"  >> ${OUTDIR}/kiali-subscription.yaml
 	@echo "  config:"                                 >> ${OUTDIR}/kiali-subscription.yaml
