@@ -23,8 +23,10 @@ import (
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
-const rateDefinition = "400,10,20,http,inbound"
-const rateWorkloadDefinition = "4xx,20,30,http,inbound"
+const (
+	rateDefinition         = "400,10,20,http,inbound"
+	rateWorkloadDefinition = "4xx,20,30,http,inbound"
+)
 
 func TestServicesHealthConfigPasses(t *testing.T) {
 	config.Set(config.NewConfig())
@@ -135,7 +137,6 @@ func TestHealthDataPresent(t *testing.T) {
 
 func TestErrorCausesPanic(t *testing.T) {
 	assert := assert.New(t)
-
 
 	config.Set(config.NewConfig())
 	trafficMap := buildAppTrafficMap()

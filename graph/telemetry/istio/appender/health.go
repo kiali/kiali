@@ -68,15 +68,15 @@ func (a *HealthAppender) attachHealthConfig(trafficMap graph.TrafficMap, globalI
 
 func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
 	type healthRequest struct {
-		app bool
-		service bool
+		app      bool
+		service  bool
 		workload bool
 	}
 
 	// Health requests are per namespace meaning if a single node in the namespace
 	// has health info then we send a namespace wide health request to fetch the
 	// health info for the whole namespace.
-	var healthReqs = make(map[string]healthRequest)
+	healthReqs := make(map[string]healthRequest)
 	var nodesWithHealth []*graph.Node
 
 	// Limit health fetches to only the necessary namespaces for the necessary types
@@ -107,7 +107,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 		case graph.NodeTypeService:
 			req.service = true
 		}
-		
+
 		healthReqs[n.Namespace] = req
 		nodesWithHealth = append(nodesWithHealth, n)
 	}
@@ -124,33 +124,33 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 	defer cancel()
 
 	type result struct {
-		namespace string
-		appNSHealth models.NamespaceAppHealth
+		namespace        string
+		appNSHealth      models.NamespaceAppHealth
+		serviceNSHealth  models.NamespaceServiceHealth
 		workloadNSHealth models.NamespaceWorkloadHealth
-		serviceNSHealth models.NamespaceServiceHealth
-		err error
+		err              error
 	}
 	resultsCh := make(chan result)
 	// Fetch all the health data in parallel. The health data will most likely be cached
 	// and no prom queries are performed.
-	go func (ctx context.Context) {
+	go func(ctx context.Context) {
 		wg := &sync.WaitGroup{}
 		for namespace, req := range healthReqs {
-			if req.workload {
-				wg.Add(1)
-				go func(ctx context.Context, namespace string) {
-					defer wg.Done()
-					h, err := bs.Health.GetNamespaceWorkloadHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, IncludeMetrics: false})
-					resultsCh <- result{workloadNSHealth: h, namespace: namespace, err: err}
-				}(ctx, namespace)
-			}
-
 			if req.app {
 				wg.Add(1)
 				go func(ctx context.Context, namespace string) {
 					defer wg.Done()
 					h, err := bs.Health.GetNamespaceAppHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, IncludeMetrics: false})
 					resultsCh <- result{appNSHealth: h, namespace: namespace, err: err}
+				}(ctx, namespace)
+			}
+
+			if req.workload {
+				wg.Add(1)
+				go func(ctx context.Context, namespace string) {
+					defer wg.Done()
+					h, err := bs.Health.GetNamespaceWorkloadHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, IncludeMetrics: false})
+					resultsCh <- result{workloadNSHealth: h, namespace: namespace, err: err}
 				}(ctx, namespace)
 			}
 
@@ -170,9 +170,9 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 
 	// Note: these are key'd off of namespace+name instead of namespace to make lookups unique
 	// and keep the map flatter.
-	var appHealth = make(map[string]*models.AppHealth)
-	var serviceHealth = make(map[string]*models.ServiceHealth)
-	var workloadHealth = make(map[string]*models.WorkloadHealth)
+	appHealth := make(map[string]*models.AppHealth)
+	serviceHealth := make(map[string]*models.ServiceHealth)
+	workloadHealth := make(map[string]*models.WorkloadHealth)
 	var errors []error
 	// This will block until all requests have finished.
 	for result := range resultsCh {
@@ -233,7 +233,7 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 			if h, found := serviceHealth[n.Service+n.Namespace]; found {
 				health.Requests.HealthAnnotations = h.Requests.HealthAnnotations
 			}
-			n.Metadata[graph.HealthData] = health	
+			n.Metadata[graph.HealthData] = health
 		case graph.NodeTypeWorkload:
 			var health *models.WorkloadHealth
 			if h, found := n.Metadata[graph.HealthData]; found {

@@ -21,10 +21,10 @@ type HealthService struct {
 }
 
 type NamespaceHealthCriteria struct {
-	Namespace              string
+	Namespace      string
 	IncludeMetrics bool
-	RateInterval           string
-	QueryTime              time.Time
+	RateInterval   string
+	QueryTime      time.Time
 }
 
 // Annotation Filter for Health
