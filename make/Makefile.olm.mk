@@ -41,18 +41,21 @@ build-olm-bundle: .prepare-cluster .determine-olm-bundle-version
 	@( \
 	  mkdir -p ${OUTDIR}/bundle ;\
 	  rm -rf ${OUTDIR}/bundle/* ;\
+	  bundle_version_sans_v="$$(echo ${BUNDLE_VERSION} | sed 's/^v//')" ;\
 	  if [ "${OLM_BUNDLE_PACKAGE}" == "kiali" ]; then \
 	    echo "Will build OLM bundle version [${BUNDLE_VERSION}] - set 'BUNDLE_VERSION' env var if you want a different one" ;\
-	    cp -R "${OPERATOR_DIR}/manifests/kiali-$$(if [[ "${OC}" = *"oc" ]]; then echo 'community'; else echo 'upstream'; fi)/$$(echo ${BUNDLE_VERSION} | sed 's/^v//')"/* ${OUTDIR}/bundle ;\
+	    cp -R "${OPERATOR_DIR}/manifests/kiali-$$(if [[ "${OC}" = *"oc" ]]; then echo 'community'; else echo 'upstream'; fi)/$${bundle_version_sans_v}"/* ${OUTDIR}/bundle ;\
 	  else \
 	    echo "Will build OSSM OLM bundle - unset 'OLM_BUNDLE_PACKAGE' if you want to use upstream bundles" ;\
 	    cp -R ${OPERATOR_DIR}/manifests/${OLM_BUNDLE_PACKAGE}/* ${OUTDIR}/bundle ;\
 	  fi ;\
-     csv="$$(ls -1 ${OUTDIR}/bundle/manifests/kiali*clusterserviceversion.yaml)" ;\
+	  csv="$$(ls -1 ${OUTDIR}/bundle/manifests/kiali*clusterserviceversion.yaml)" ;\
 	  sed -i "s/replaces:.*/#replaces:/g" $${csv} ;\
 	  sed -i "s|image: .*kiali.*operator.*|image: ${CLUSTER_OPERATOR_INTERNAL_NAME}:${OPERATOR_CONTAINER_VERSION}|g" $${csv} ;\
 	  sed -i "s|containerImage: .*kiali.*operator.*|containerImage: ${CLUSTER_OPERATOR_INTERNAL_NAME}:${OPERATOR_CONTAINER_VERSION}|g" $${csv} ;\
 	  sed -E -i "/.*kiali.*-operator.*/ n; s~(value:)(.*/.*-kiali-.*)~\1 ${CLUSTER_KIALI_INTERNAL_NAME}:${CONTAINER_VERSION}~g" $${csv} ;\
+	  sed -i "s/\$${KIALI_OPERATOR_VERSION}/$${bundle_version_sans_v}/g" $${csv} ;\
+	  sed -i "s/\$${CREATED_AT}/Created-By-Kiali-Makefile/g" $${csv} ;\
 	)
 	${DORP} build -f ${OUTDIR}/bundle/bundle.Dockerfile -t ${CLUSTER_REPO}/${OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
 
@@ -71,7 +74,7 @@ endif
 build-olm-index: .ensure-opm-exists cluster-push-olm-bundle
 	@rm -rf ${OUTDIR}/index
 	@mkdir -p ${OUTDIR}/index/kiali-index
-	${OPM} init kiali --default-channel=stable --output yaml > ${OUTDIR}/index/kiali-index/index.yaml
+	${OPM} init ${OLM_BUNDLE_PACKAGE} --default-channel=stable --output yaml > ${OUTDIR}/index/kiali-index/index.yaml
 	${OPM} render $$(if [[ "${OC}" = *"oc" ]]; then echo '--skip-tls-verify'; else echo '--use-http'; fi) ${CLUSTER_REPO}/${OLM_BUNDLE_NAME}:${BUNDLE_VERSION} --output yaml >> ${OUTDIR}/index/kiali-index/index.yaml
 	@# We need OLM to pull the index from the internal registry - change the index to only use the internal registry name
 	sed -i 's|${CLUSTER_REPO}|${CLUSTER_REPO_INTERNAL}|g' ${OUTDIR}/index/kiali-index/index.yaml

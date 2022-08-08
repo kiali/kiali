@@ -241,11 +241,11 @@ crd-delete:
 .wait-for-kiali-crd:
 	@echo -n "Waiting for the Kiali CRD to be established"
 	@i=0 ;\
-	until [ $${i} -eq 30 ] || ${OC} get crd kialis.kiali.io &> /dev/null; do \
-	    echo -n '.' ; sleep 1 ; (( i++ )) ;\
+	until [ $${i} -eq 60 ] || ${OC} get crd kialis.kiali.io &> /dev/null; do \
+	    echo -n '.' ; sleep 2 ; (( i++ )) ;\
 	done ;\
 	echo ;\
-	[ $${i} -lt 30 ] || (echo "The Kiali CRD does not exist. You should install the operator." && exit 1)
+	[ $${i} -lt 60 ] || (echo "The Kiali CRD does not exist. You should install the operator." && exit 1)
 	${OC} wait --for condition=established --timeout=60s crd kialis.kiali.io
 
 ## run-operator: Runs the Kiali Operator via the ansible-operator locally.
