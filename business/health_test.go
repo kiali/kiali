@@ -31,7 +31,7 @@ func TestGetServiceHealth(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockServiceRequestRates("ns", "httpbin", serviceRates)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
@@ -46,7 +46,7 @@ func TestGetServiceHealth(t *testing.T) {
 	health, _ := hs.GetServiceHealth(context.TODO(), "ns", "httpbin", "1m", queryTime, &mockSvc)
 
 	prom.AssertNumberOfCalls(t, "GetServiceRequestRates", 1)
-	var result = map[string]map[string]float64{
+	result := map[string]map[string]float64{
 		"http": {
 			"200": 14,
 			"404": 1.4,
@@ -78,7 +78,7 @@ func TestGetAppHealth(t *testing.T) {
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
 
 	mockWkd := models.Workload{}
@@ -92,7 +92,7 @@ func TestGetAppHealth(t *testing.T) {
 	health, _ := hs.GetAppHealth(context.TODO(), "ns", "reviews", "1m", queryTime, &mockApp)
 
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 1)
-	var result = map[string]map[string]float64{
+	result := map[string]map[string]float64{
 		"http": {
 			"500": 1.6,
 		},
@@ -127,7 +127,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 	k8s.On("GetPods", "ns", "").Return(fakePodsHealthReview(), nil)
 	k8s.On("GetProxyStatus").Return([]*kubernetes.ProxyStatus{}, nil)
 
-	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockWorkloadRequestRates("ns", "reviews-v1", otherRatesIn, otherRatesOut)
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
@@ -139,7 +139,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 	health, _ := hs.GetWorkloadHealth(context.TODO(), "ns", "reviews-v1", "1m", queryTime, &mockWorkload)
 
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 1)
-	var result = map[string]map[string]float64{
+	result := map[string]map[string]float64{
 		"http": {
 			"500": 1.6,
 		},
@@ -173,7 +173,7 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
 	k8s.On("GetPods", "ns", "app=reviews").Return(fakePodsHealthReviewWithoutIstio(), nil)
 
-	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
@@ -203,7 +203,7 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 	k8s.On("GetPods", "ns", "").Return(fakePodsHealthReviewWithoutIstio(), nil)
 	k8s.On("GetWorkload", "ns", "wk", "", false).Return(&models.Workload{}, nil)
 
-	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockWorkloadRequestRates("ns", "reviews-v1", otherRatesIn, otherRatesOut)
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
@@ -233,7 +233,7 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	k8s.On("GetPods", "ns", "").Return(fakePodsHealthReviewWithoutIstio(), nil)
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
-	criteria := NamespaceHealthCriteria{Namespace: "ns", RateInterval: "1m", QueryTime: time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
+	criteria := NamespaceHealthCriteria{Namespace: "ns", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 	_, _ = hs.GetNamespaceAppHealth(context.TODO(), criteria)
 
 	// Make sure unnecessary call isn't performed
@@ -256,15 +256,15 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	criteria := NamespaceHealthCriteria{Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
-	health, err := hs.GetNamespaceServiceHealth(context.TODO(), criteria) 
+	criteria := NamespaceHealthCriteria{Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
+	health, err := hs.GetNamespaceServiceHealth(context.TODO(), criteria)
 
 	assert.Nil(err)
 	// Make sure we get services with N/A health
 	assert.Len(health, 2)
 	assert.Equal(emptyResult, health["reviews"].Requests.Inbound)
 	assert.Equal(emptyResult, health["reviews"].Requests.Outbound)
-	var result = map[string]map[string]float64{
+	result := map[string]map[string]float64{
 		"http": {
 			"200": 14,
 			"404": 1.4,
@@ -436,22 +436,33 @@ func fakeDeploymentsHealthReview() []apps_v1.Deployment {
 	return []apps_v1.Deployment{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "reviews-v1"},
+				Name: "reviews-v1",
+			},
 			Status: apps_v1.DeploymentStatus{
 				Replicas:            3,
 				AvailableReplicas:   2,
-				UnavailableReplicas: 1},
+				UnavailableReplicas: 1,
+			},
 			Spec: apps_v1.DeploymentSpec{
 				Selector: &meta_v1.LabelSelector{
-					MatchLabels: map[string]string{"app": "reviews", "version": "v1"}}}},
+					MatchLabels: map[string]string{"app": "reviews", "version": "v1"},
+				},
+			},
+		},
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "reviews-v2"},
+				Name: "reviews-v2",
+			},
 			Status: apps_v1.DeploymentStatus{
 				Replicas:            2,
 				AvailableReplicas:   1,
-				UnavailableReplicas: 1},
+				UnavailableReplicas: 1,
+			},
 			Spec: apps_v1.DeploymentSpec{
 				Selector: &meta_v1.LabelSelector{
-					MatchLabels: map[string]string{"app": "reviews", "version": "v2"}}}}}
+					MatchLabels: map[string]string{"app": "reviews", "version": "v2"},
+				},
+			},
+		},
+	}
 }
