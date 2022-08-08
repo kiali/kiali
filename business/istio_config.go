@@ -578,8 +578,8 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 		for _, cfg := range configs {
 			if cfg.Name == object && cfg.Namespace == namespace {
 				istioConfigDetail.DestinationRule = cfg
-				istioConfigDetail.Gateway.Kind = kubernetes.DestinationRuleType
-				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				istioConfigDetail.DestinationRule.Kind = kubernetes.DestinationRuleType
+				istioConfigDetail.DestinationRule.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
 				return istioConfigDetail, nil
 			}
 		}
@@ -588,8 +588,8 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 		for _, cfg := range configs {
 			if cfg.Name == object && cfg.Namespace == namespace {
 				istioConfigDetail.EnvoyFilter = cfg
-				istioConfigDetail.Gateway.Kind = kubernetes.EnvoyFilterType
-				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Alpha3
+				istioConfigDetail.EnvoyFilter.Kind = kubernetes.EnvoyFilterType
+				istioConfigDetail.EnvoyFilter.APIVersion = kubernetes.ApiNetworkingVersionV1Alpha3
 				return istioConfigDetail, nil
 			}
 		}
@@ -608,8 +608,8 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 		for _, cfg := range configs {
 			if cfg.Name == object && cfg.Namespace == namespace {
 				istioConfigDetail.ServiceEntry = cfg
-				istioConfigDetail.Gateway.Kind = kubernetes.ServiceEntryType
-				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				istioConfigDetail.ServiceEntry.Kind = kubernetes.ServiceEntryType
+				istioConfigDetail.ServiceEntry.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
 				return istioConfigDetail, nil
 			}
 		}
@@ -618,8 +618,8 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 		for _, cfg := range configs {
 			if cfg.Name == object && cfg.Namespace == namespace {
 				istioConfigDetail.Sidecar = cfg
-				istioConfigDetail.Gateway.Kind = kubernetes.SidecarType
-				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				istioConfigDetail.Sidecar.Kind = kubernetes.SidecarType
+				istioConfigDetail.Sidecar.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
 				return istioConfigDetail, nil
 			}
 		}
@@ -628,8 +628,8 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 		for _, cfg := range configs {
 			if cfg.Name == object && cfg.Namespace == namespace {
 				istioConfigDetail.VirtualService = cfg
-				istioConfigDetail.Gateway.Kind = kubernetes.VirtualServiceType
-				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				istioConfigDetail.VirtualService.Kind = kubernetes.VirtualServiceType
+				istioConfigDetail.VirtualService.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
 				return istioConfigDetail, nil
 			}
 		}
@@ -638,8 +638,8 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 		for _, cfg := range configs {
 			if cfg.Name == object && cfg.Namespace == namespace {
 				istioConfigDetail.WorkloadEntry = cfg
-				istioConfigDetail.Gateway.Kind = kubernetes.WorkloadEntryType
-				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				istioConfigDetail.WorkloadEntry.Kind = kubernetes.WorkloadEntryType
+				istioConfigDetail.WorkloadEntry.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
 				return istioConfigDetail, nil
 			}
 		}
@@ -648,8 +648,8 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 		for _, cfg := range configs {
 			if cfg.Name == object && cfg.Namespace == namespace {
 				istioConfigDetail.WorkloadGroup = cfg
-				istioConfigDetail.Gateway.Kind = kubernetes.WorkloadGroupType
-				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				istioConfigDetail.WorkloadGroup.Kind = kubernetes.WorkloadGroupType
+				istioConfigDetail.WorkloadGroup.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
 				return istioConfigDetail, nil
 			}
 		}
@@ -658,8 +658,8 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 		for _, cfg := range configs {
 			if cfg.Name == object && cfg.Namespace == namespace {
 				istioConfigDetail.AuthorizationPolicy = cfg
-				istioConfigDetail.Gateway.Kind = kubernetes.AuthorizationPoliciesType
-				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiSecurityVersion
+				istioConfigDetail.AuthorizationPolicy.Kind = kubernetes.AuthorizationPoliciesType
+				istioConfigDetail.AuthorizationPolicy.APIVersion = kubernetes.ApiSecurityVersion
 				return istioConfigDetail, nil
 			}
 		}
@@ -668,8 +668,8 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 		for _, cfg := range configs {
 			if cfg.Name == object && cfg.Namespace == namespace {
 				istioConfigDetail.PeerAuthentication = cfg
-				istioConfigDetail.Gateway.Kind = kubernetes.PeerAuthenticationsType
-				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiSecurityVersion
+				istioConfigDetail.PeerAuthentication.Kind = kubernetes.PeerAuthenticationsType
+				istioConfigDetail.PeerAuthentication.APIVersion = kubernetes.ApiSecurityVersion
 				return istioConfigDetail, nil
 			}
 		}
@@ -678,8 +678,8 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 		for _, cfg := range configs {
 			if cfg.Name == object && cfg.Namespace == namespace {
 				istioConfigDetail.RequestAuthentication = cfg
-				istioConfigDetail.Gateway.Kind = kubernetes.RequestAuthenticationsType
-				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiSecurityVersion
+				istioConfigDetail.RequestAuthentication.Kind = kubernetes.RequestAuthenticationsType
+				istioConfigDetail.RequestAuthentication.APIVersion = kubernetes.ApiSecurityVersion
 				return istioConfigDetail, nil
 			}
 		}
