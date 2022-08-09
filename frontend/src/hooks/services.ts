@@ -24,14 +24,14 @@ export function useServiceDetail(namespace: string, serviceName: string, duratio
 
     setIsLoading(true); // Mark as loading
     let getDetailPromise = API.getServiceDetail(namespace, serviceName, false, duration);
-    let getGwPromise = API.getIstioConfig('', ['gateways'], false, '', '');
+    let getGwPromise = API.getAllIstioConfigs([], ['gateways'], false, '', '');
     let getPeerAuthsPromise = API.getIstioConfig(namespace, ['peerauthentications'], false, '', '');
 
     const allPromise = new CancelablePromise(Promise.all([getDetailPromise, getGwPromise, getPeerAuthsPromise]));
     allPromise.promise
       .then(results => {
         setServiceDetails(results[0]);
-        setGateways(results[1].data.gateways.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort());
+        setGateways(Object.values(results[1].data).map(nsCfg => nsCfg.gateways.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name)).flat().sort());
         setPeerAuthentications(results[2].data.peerAuthentications);
         setFetchError(null);
         setIsLoading(false);
@@ -41,6 +41,7 @@ export function useServiceDetail(namespace: string, serviceName: string, duratio
           return;
         }
         setFetchError(error);
+        setIsLoading(false);
       });
 
     return function () {

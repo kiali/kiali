@@ -36,7 +36,7 @@ export interface IstioConfigItem {
   validation?: ObjectValidation;
 }
 
-export declare type IstioConfigsMap = Map<string, IstioConfigList>;
+export declare type IstioConfigsMap = { [key: string]: IstioConfigList };
 
 export interface IstioConfigList {
   namespace: Namespace;
