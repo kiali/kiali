@@ -42,6 +42,93 @@ func (a HealthAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *gra
 	a.attachHealth(trafficMap, globalInfo)
 }
 
+func addValueToRequests(requests map[string]map[string]float64, protocol, code string, val float64) {
+	if _, ok := requests[protocol]; !ok {
+		requests[protocol] = make(map[string]float64)
+	}
+	if _, ok := requests[protocol][code]; !ok {
+		requests[protocol][code] = 0
+	}
+	requests[protocol][code] += val
+}
+
+// addEdgeToHealthData adds the edge's responses to the source and destination nodes' health data.
+func addEdgeTrafficToNodeHealth(edge *graph.Edge) {
+	source := edge.Source
+	dest := edge.Dest
+	initHealthData(source)
+	initHealthData(dest)
+
+	var (
+		protocol  string
+		responses graph.Responses
+		ok        bool
+	)
+	if protocol, ok = edge.Metadata[graph.ProtocolKey].(string); !ok {
+		return
+	}
+	if responses, ok = edge.Metadata[graph.MetadataKey(protocol+"Responses")].(graph.Responses); !ok {
+		return
+	}
+
+	for code, detail := range responses {
+		for _, val := range detail.Flags {
+			switch source.NodeType {
+			case graph.NodeTypeService:
+				health := source.Metadata[graph.HealthData].(*models.ServiceHealth)
+				addValueToRequests(health.Requests.Outbound, protocol, code, val)
+				source.Metadata[graph.HealthData] = health
+			case graph.NodeTypeWorkload:
+				health := source.Metadata[graph.HealthData].(*models.WorkloadHealth)
+				addValueToRequests(health.Requests.Outbound, protocol, code, val)
+				source.Metadata[graph.HealthData] = health
+			case graph.NodeTypeApp:
+				health := source.Metadata[graph.HealthData].(*models.AppHealth)
+				addValueToRequests(health.Requests.Outbound, protocol, code, val)
+				source.Metadata[graph.HealthData] = health
+				health = source.Metadata[graph.HealthDataApp].(*models.AppHealth)
+				addValueToRequests(health.Requests.Outbound, protocol, code, val)
+				source.Metadata[graph.HealthDataApp] = health
+			}
+
+			switch dest.NodeType {
+			case graph.NodeTypeService:
+				health := dest.Metadata[graph.HealthData].(*models.ServiceHealth)
+				addValueToRequests(health.Requests.Inbound, protocol, code, val)
+				dest.Metadata[graph.HealthData] = health
+			case graph.NodeTypeWorkload:
+				health := dest.Metadata[graph.HealthData].(*models.WorkloadHealth)
+				addValueToRequests(health.Requests.Inbound, protocol, code, val)
+				dest.Metadata[graph.HealthData] = health
+			case graph.NodeTypeApp:
+				health := dest.Metadata[graph.HealthData].(*models.AppHealth)
+				addValueToRequests(health.Requests.Inbound, protocol, code, val)
+				dest.Metadata[graph.HealthData] = health
+				health = dest.Metadata[graph.HealthDataApp].(*models.AppHealth)
+				addValueToRequests(health.Requests.Inbound, protocol, code, val)
+				dest.Metadata[graph.HealthDataApp] = health
+			}
+		}
+	}
+}
+
+func initHealthData(node *graph.Node) {
+	if _, ok := node.Metadata[graph.HealthData]; !ok {
+		if node.NodeType == graph.NodeTypeService {
+			m := models.EmptyServiceHealth()
+			node.Metadata[graph.HealthData] = &m
+		} else if node.NodeType == graph.NodeTypeWorkload {
+			m := models.EmptyWorkloadHealth()
+			node.Metadata[graph.HealthData] = m
+		} else if node.NodeType == graph.NodeTypeApp {
+			m := models.EmptyAppHealth()
+			mApp := models.EmptyAppHealth()
+			node.Metadata[graph.HealthData] = &m
+			node.Metadata[graph.HealthDataApp] = &mApp
+		}
+	}
+}
+
 func (a *HealthAppender) attachHealthConfig(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
 	for _, n := range trafficMap {
 		// skip health for inaccessible nodes.  For now, include health for outsider nodes because edge health
@@ -67,6 +154,11 @@ func (a *HealthAppender) attachHealthConfig(trafficMap graph.TrafficMap, globalI
 }
 
 func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
+	for _, e := range trafficMap.Edges() {
+		addEdgeTrafficToNodeHealth(e)
+	}
+
+	var nodesWithHealth []*graph.Node
 	type healthRequest struct {
 		app      bool
 		service  bool
@@ -77,7 +169,6 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 	// has health info then we send a namespace wide health request to fetch the
 	// health info for the whole namespace.
 	healthReqs := make(map[string]healthRequest)
-	var nodesWithHealth []*graph.Node
 
 	// Limit health fetches to only the necessary namespaces for the necessary types
 	for _, n := range trafficMap {
@@ -119,8 +210,11 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	// All requests shouldn't take longer than the requested duration.
-	ctx, cancel = context.WithTimeout(ctx, a.RequestedDuration)
+	// TODO: Decide if this should be the request duration. If so,
+	// then the user should be informed why the graph request failed
+	// so that they can increase the refresh interval.
+	const maxRequestDuration = time.Minute * 15
+	ctx, cancel = context.WithTimeout(ctx, maxRequestDuration)
 	defer cancel()
 
 	type result struct {
