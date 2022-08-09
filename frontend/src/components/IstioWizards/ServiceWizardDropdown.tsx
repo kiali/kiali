@@ -1,37 +1,34 @@
 import * as React from 'react';
 import {
-  Button,
-  ButtonVariant,
   Dropdown,
-  DropdownGroup,
-  DropdownItem,
   DropdownPosition,
-  DropdownSeparator,
   DropdownToggle,
-  Modal,
-  ModalVariant,
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
 import { WorkloadOverview } from '../../types/ServiceInfo';
-import { DestinationRule, PeerAuthentication, VirtualService } from '../../types/IstioObjects';
+import {
+  DestinationRule,
+  DestinationRuleC,
+  getVirtualServiceUpdateLabel,
+  PeerAuthentication,
+  VirtualService
+} from '../../types/IstioObjects';
 import * as AlertUtils from '../../utils/AlertUtils';
-import * as API from '../../services/Api';
-import { serverConfig } from '../../config/ServerConfig';
+import { serverConfig } from '../../config';
 import { TLSStatus } from '../../types/TLSStatus';
 import {
-  KIALI_RELATED_LABEL,
-  KIALI_WIZARD_LABEL,
-  SERVICE_WIZARD_ACTIONS,
   WIZARD_REQUEST_ROUTING,
   WIZARD_FAULT_INJECTION,
-  WIZARD_TITLES,
   WIZARD_TRAFFIC_SHIFTING,
   WIZARD_REQUEST_TIMEOUTS,
   WIZARD_TCP_TRAFFIC_SHIFTING
 } from './WizardActions';
 import ServiceWizard from './ServiceWizard';
-import { ResourcePermissions } from '../../types/Permissions';
+import { canCreate, canUpdate, ResourcePermissions } from '../../types/Permissions';
+import ServiceWizardActionsDropdownGroup, {DELETE_TRAFFIC_ROUTING} from "./ServiceWizardActionsDropdownGroup";
+import ConfirmDeleteTrafficRoutingModal from "./ConfirmDeleteTrafficRoutingModal";
+import { deleteServiceTrafficRouting } from "services/Api";
 
 type Props = {
   namespace: string;
@@ -57,8 +54,6 @@ type State = {
   isActionsOpen: boolean;
 };
 
-const DELETE_TRAFFIC_ROUTING = 'delete_traffic_routing';
-
 class ServiceWizardDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -76,29 +71,6 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
   private appLabelName = serverConfig.istioLabels.appLabelName;
   private versionLabelName = serverConfig.istioLabels.versionLabelName;
 
-  // Wizard can be opened when there are not existing VS & DR and there are update permissions
-  canCreate = () => {
-    return (
-      this.props.istioPermissions.create && this.props.istioPermissions.create && !serverConfig.deployment.viewOnlyMode
-    );
-  };
-
-  canUpdate = () => {
-    return (
-      this.props.istioPermissions.update && this.props.istioPermissions.update && !serverConfig.deployment.viewOnlyMode
-    );
-  };
-
-  canDelete = () => {
-    return (
-      this.props.istioPermissions.delete && this.props.istioPermissions.delete && !serverConfig.deployment.viewOnlyMode
-    );
-  };
-
-  hasTrafficRouting = () => {
-    return this.props.virtualServices.length > 0 || this.props.destinationRules.length > 0;
-  };
-
   hasSidecarWorkloads = (): boolean => {
     let hasSidecarWorkloads = false;
     for (let i = 0; i < this.props.workloads.length; i++) {
@@ -115,61 +87,6 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
     this.setState({ showConfirmDelete: false });
   };
 
-  getDeleteMessage = () => {
-    const deleteMessage = 'Are you sure you want to delete ?';
-    const deleteItems: JSX.Element[] = [];
-    switch (this.state.deleteAction) {
-      case DELETE_TRAFFIC_ROUTING:
-        let vsMessage =
-          this.props.virtualServices.length > 0
-            ? `VirtualService${this.props.virtualServices.length > 1 ? 's' : ''}: '${this.props.virtualServices.map(
-                vs => vs.metadata.name
-              )}'`
-            : '';
-        deleteItems.push(<div>{vsMessage}</div>);
-
-        let drMessage =
-          this.props.destinationRules.length > 0
-            ? `DestinationRule${this.props.destinationRules.length > 1 ? 's' : ''}: '${this.props.destinationRules.map(
-                dr => dr.metadata.name
-              )}'`
-            : '';
-        deleteItems.push(<div>{drMessage}</div>);
-
-        let paMessage =
-          this.props.destinationRules.length > 0 && this.hasAnyPeerAuthn(this.props.destinationRules)
-            ? `PeerAuthentication${
-                this.props.destinationRules.length > 1 ? 's' : ''
-              }: '${this.props.destinationRules.map(dr => dr.metadata.name)}'`
-            : '';
-        deleteItems.push(<div>{paMessage}</div>);
-
-        break;
-      default:
-    }
-    return (
-      <>
-        <div style={{ marginBottom: 5 }}>{deleteMessage}</div>
-        {deleteItems}
-      </>
-    );
-  };
-
-  hasAnyPeerAuthn = (drs: DestinationRule[]): boolean => {
-    return drs.filter(dr => !!this.hasPeerAuthentication(dr)).length > 0;
-  };
-
-  hasPeerAuthentication = (dr: DestinationRule): string => {
-    if (!!dr.metadata && !!dr.metadata.annotations && dr.metadata.annotations[KIALI_RELATED_LABEL] !== undefined) {
-      const anno = dr.metadata.annotations[KIALI_RELATED_LABEL];
-      const parts = anno.split('/');
-      if (parts.length > 1) {
-        return parts[1];
-      }
-    }
-    return '';
-  };
-
   getValidWorkloads = (): WorkloadOverview[] => {
     return this.props.workloads.filter(workload => {
       // A workload could skip the version label on this check only when there is a single workload list
@@ -181,16 +98,8 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
     });
   };
 
-  getVSWizardLabel = () => {
-    return this.props.virtualServices.length === 1 &&
-      this.props.virtualServices[0].metadata.labels &&
-      this.props.virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]
-      ? this.props.virtualServices[0].metadata.labels[KIALI_WIZARD_LABEL]
-      : '';
-  };
-
   onAction = (key: string) => {
-    const updateLabel = this.getVSWizardLabel();
+    const updateLabel = getVirtualServiceUpdateLabel(this.props.virtualServices);
     switch (key) {
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
@@ -232,32 +141,8 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
     this.setState({
       isDeleting: true
     });
-    const deletePromises: Promise<any>[] = [];
-    switch (this.state.deleteAction) {
-      case DELETE_TRAFFIC_ROUTING:
-        this.props.virtualServices.forEach(vs => {
-          deletePromises.push(
-            API.deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name)
-          );
-        });
-        this.props.destinationRules.forEach(dr => {
-          deletePromises.push(
-            API.deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name)
-          );
-
-          const paName = this.hasPeerAuthentication(dr);
-          if (!!paName) {
-            deletePromises.push(
-              API.deleteIstioConfigDetail(dr.metadata.namespace || '', 'peerauthentications', paName)
-            );
-          }
-        });
-
-        break;
-    }
-    // For slow scenarios, dialog is hidden and Delete All action blocked until promises have finished
     this.hideConfirmDelete();
-    Promise.all(deletePromises)
+    deleteServiceTrafficRouting(this.props.virtualServices, DestinationRuleC.fromDrArray(this.props.destinationRules))
       .then(_results => {
         this.setState({
           isDeleting: false
@@ -280,76 +165,17 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
     );
   };
 
-  getDropdownItemTooltipMessage = (): string => {
-    if (serverConfig.deployment.viewOnlyMode) {
-      return 'User does not have permission';
-    } else if (this.hasTrafficRouting()) {
-      return 'Traffic routing already exists for this service';
-    } else {
-      return "Traffic routing doesn't exists for this service";
-    }
-  };
-
-  renderDropdownItem = (eventKey: string, updateLabel: string) => {
-    switch (eventKey) {
-      case WIZARD_REQUEST_ROUTING:
-      case WIZARD_FAULT_INJECTION:
-      case WIZARD_TRAFFIC_SHIFTING:
-      case WIZARD_TCP_TRAFFIC_SHIFTING:
-      case WIZARD_REQUEST_TIMEOUTS:
-        // An Item is rendered under two conditions:
-        // a) No traffic -> Wizard can create new one
-        // b) Existing traffic generated by the traffic -> Wizard can update that scenario
-        // Otherwise, the item should be disabled
-        const enabledItem = !this.hasTrafficRouting() || (this.hasTrafficRouting() && updateLabel === eventKey);
-        const wizardItem = (
-          <DropdownItem
-            key={eventKey}
-            component="button"
-            isDisabled={!enabledItem}
-            onClick={() => this.onAction(eventKey)}
-            data-test={eventKey}
-          >
-            {WIZARD_TITLES[eventKey]}
-          </DropdownItem>
-        );
-        return !enabledItem
-          ? this.renderTooltip(eventKey, TooltipPosition.left, this.getDropdownItemTooltipMessage(), wizardItem)
-          : wizardItem;
-      case DELETE_TRAFFIC_ROUTING:
-        const deleteItem = (
-          <DropdownItem
-            key={eventKey}
-            component="button"
-            onClick={() => this.onAction(eventKey)}
-            isDisabled={!this.canDelete() || !this.hasTrafficRouting() || this.state.isDeleting}
-            data-test={eventKey}
-          >
-            Delete Traffic Routing
-          </DropdownItem>
-        );
-        return !this.hasTrafficRouting()
-          ? this.renderTooltip(eventKey, TooltipPosition.left, this.getDropdownItemTooltipMessage(), deleteItem)
-          : deleteItem;
-      default:
-        return <>Unsupported</>;
-    }
-  };
-
   renderDropdownItems = () => {
-    var items: any[] = [];
-    const updateLabel = this.getVSWizardLabel();
-    items = [
-      <DropdownGroup
-        key={'group_create'}
-        label={updateLabel === '' ? 'Create' : 'Update'}
-        className="kiali-group-menu"
-        children={SERVICE_WIZARD_ACTIONS.map(action => this.renderDropdownItem(action, updateLabel))}
+    return [
+      <ServiceWizardActionsDropdownGroup
+        isDisabled={this.state.isDeleting}
+        virtualServices={this.props.virtualServices}
+        destinationRules={this.props.destinationRules}
+        istioPermissions={this.props.istioPermissions}
+        onAction={this.onAction}
+        onDelete={this.onAction}
       />
     ];
-    items.push(<DropdownSeparator key="actions_separator" />);
-    items.push(this.renderDropdownItem(DELETE_TRAFFIC_ROUTING, ''));
-    return items;
   };
 
   render() {
@@ -387,7 +213,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
           namespace={this.props.namespace}
           serviceName={this.props.serviceName}
           workloads={validWorkloads}
-          createOrUpdate={this.canCreate() || this.canUpdate()}
+          createOrUpdate={canCreate(this.props.istioPermissions) || canUpdate(this.props.istioPermissions)}
           virtualServices={this.props.virtualServices}
           destinationRules={this.props.destinationRules}
           gateways={this.props.gateways}
@@ -395,22 +221,13 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
           tlsStatus={this.props.tlsStatus}
           onClose={this.onClose}
         />
-        <Modal
-          variant={ModalVariant.small}
-          title="Confirm Delete Traffic Routing ?"
+        <ConfirmDeleteTrafficRoutingModal
+          destinationRules={DestinationRuleC.fromDrArray(this.props.destinationRules)}
+          virtualServices={this.props.virtualServices}
           isOpen={this.state.showConfirmDelete}
-          onClose={this.hideConfirmDelete}
-          actions={[
-            <Button key="confirm" variant={ButtonVariant.danger} onClick={this.onDelete} data-test={'confirm-delete'}>
-              Delete
-            </Button>,
-            <Button key="cancel" variant={ButtonVariant.secondary} isInline onClick={this.hideConfirmDelete}>
-              Cancel
-            </Button>
-          ]}
-        >
-          {this.getDeleteMessage()}
-        </Modal>
+          onCancel={this.hideConfirmDelete}
+          onConfirm={this.onDelete}
+        />
       </>
     );
   }

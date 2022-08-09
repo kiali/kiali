@@ -2,6 +2,7 @@ import Namespace from './Namespace';
 import { ServicePort } from './ServiceInfo';
 import { ProxyStatus } from './Health';
 import { TimeInSeconds } from './Common';
+import { KIALI_RELATED_LABEL, KIALI_WIZARD_LABEL } from "components/IstioWizards/WizardActions";
 import { PFColorVal } from 'components/Pf/PfColors';
 
 // Common types
@@ -554,6 +555,30 @@ export interface DestinationRule extends IstioObject {
   spec: DestinationRuleSpec;
 }
 
+export class DestinationRuleC implements DestinationRule {
+  metadata: K8sMetadata = {name: ''};
+  spec: DestinationRuleSpec = {};
+
+  constructor(dr: DestinationRule) {
+    Object.assign(this, dr);
+  }
+
+  static fromDrArray(drs: DestinationRule[]) {
+    return drs.map(item => new DestinationRuleC(item));
+  }
+
+  hasPeerAuthentication(): string {
+    if (!!this.metadata && !!this.metadata.annotations && this.metadata.annotations[KIALI_RELATED_LABEL] !== undefined) {
+      const anno = this.metadata.annotations[KIALI_RELATED_LABEL];
+      const parts = anno.split('/');
+      if (parts.length > 1) {
+        return parts[1];
+      }
+    }
+    return '';
+  }
+}
+
 // Virtual Service
 
 // 1.6
@@ -628,6 +653,28 @@ export interface VirtualServiceSpec {
 // 1.6
 export interface VirtualService extends IstioObject {
   spec: VirtualServiceSpec;
+}
+
+export function getVirtualServiceUpdateLabel(vs: VirtualService | VirtualService[] | null) {
+  if (!vs) {
+    return '';
+  }
+
+  let virtualService: VirtualService | null = null;
+  if ('length' in vs) {
+    if (vs.length === 1) {
+      virtualService = vs[0];
+    }
+  } else {
+    virtualService = vs;
+  }
+
+  if (virtualService && virtualService.metadata.labels &&
+    virtualService.metadata.labels[KIALI_WIZARD_LABEL]) {
+    return virtualService.metadata.labels[KIALI_WIZARD_LABEL];
+  } else {
+    return '';
+  }
 }
 
 export interface K8sOwnerReference {

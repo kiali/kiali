@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import {
   getBadge,
@@ -10,10 +10,10 @@ import {
   renderHealth
 } from './SummaryLink';
 import { DecoratedGraphNodeData, DestService, NodeType, RankResult, SummaryPanelPropType } from '../../types/Graph';
-import { summaryHeader, summaryPanel, summaryBodyTabs, summaryFont, getTitle } from './SummaryPanelCommon';
+import { getTitle, summaryBodyTabs, summaryFont, summaryHeader, summaryPanel } from './SummaryPanelCommon';
 import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
+import { clickHandler, getOptions } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import {
   Dropdown,
   DropdownGroup,
@@ -21,6 +21,7 @@ import {
   DropdownPosition,
   ExpandableSection,
   KebabToggle,
+  Spinner,
   Tab
 } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
@@ -30,6 +31,12 @@ import SimpleTabs from 'components/Tab/SimpleTabs';
 import { JaegerState } from 'reducers/JaegerState';
 import { classes, style } from 'typestyle';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { ServiceDetailsInfo } from "types/ServiceInfo";
+import { WizardAction, WizardMode } from "components/IstioWizards/WizardActions";
+import ServiceWizardActionsDropdownGroup from "components/IstioWizards/ServiceWizardActionsDropdownGroup";
+import { PeerAuthentication } from "../../types/IstioObjects";
+import { TimeInMilliseconds } from "../../types/Common";
+import { useServiceDetailForGraphNode } from "../../hooks/services";
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -46,7 +53,17 @@ type ReduxProps = {
   showRank: boolean;
 };
 
-export type SummaryPanelNodeProps = ReduxProps & SummaryPanelPropType;
+export type SummaryPanelNodeHocProps = Omit<SummaryPanelPropType, 'kiosk'> & {
+  onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
+  onLaunchWizard?: (key: WizardAction, mode: WizardMode, namespace: string, serviceDetails: ServiceDetailsInfo, gateways: string[], peerAuths: PeerAuthentication[]) => void;
+};
+
+export type SummaryPanelNodeProps = ReduxProps & SummaryPanelNodeHocProps & {
+  gateways: string[] | null;
+  onKebabToggled?: (isOpen: boolean) => void;
+  peerAuthentications: PeerAuthentication[] | null;
+  serviceDetails: ServiceDetailsInfo | null | undefined;
+};
 
 const expandableSectionStyle = style({
   fontSize: 'var(--graph-side-panel--font-size)',
@@ -117,6 +134,27 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
         })}
       </DropdownGroup>
     ];
+
+    if (nodeType === NodeType.SERVICE) {
+      if (this.props.serviceDetails === undefined) {
+        items.push(
+          <DropdownGroup key="wizards" label="Actions" className="kiali-group-menu">
+            <DropdownItem isDisabled={true}>
+              <Spinner isSVG={true} size="md" aria-label="Loading actions..." />
+            </DropdownItem>
+          </DropdownGroup>
+        );
+      } else if (this.props.serviceDetails !== null) {
+        items.push(
+          <ServiceWizardActionsDropdownGroup
+            virtualServices={this.props.serviceDetails.virtualServices || []}
+            destinationRules={this.props.serviceDetails.destinationRules || []}
+            istioPermissions={this.props.serviceDetails.istioPermissions}
+            onAction={this.handleLaunchWizard}
+            onDelete={this.handleDeleteTrafficRouting} />
+        );
+      }
+    }
 
     return (
       <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
@@ -252,6 +290,9 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
 
   private onToggleActions = isOpen => {
     this.setState({ isActionOpen: isOpen });
+    if (this.props.onKebabToggled) {
+      this.props.onKebabToggled(isOpen);
+    }
   };
 
   // TODO:(see https://github.com/kiali/kiali-design/issues/63) If we want to show an icon for SE uncomment below
@@ -387,14 +428,52 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
 
     return entries;
   };
+
+  private handleLaunchWizard = (key: WizardAction, mode: WizardMode) => {
+    this.onToggleActions(false);
+    if (this.props.onLaunchWizard) {
+      const node = this.props.data.summaryTarget;
+      const nodeData = decoratedNodeData(node);
+      this.props.onLaunchWizard(key, mode, nodeData.namespace, this.props.serviceDetails!, this.props.gateways!, this.props.peerAuthentications!);
+    }
+  };
+
+  private handleDeleteTrafficRouting = (key: string) => {
+    this.onToggleActions(false);
+    if (this.props.onDeleteTrafficRouting) {
+      this.props.onDeleteTrafficRouting(key, this.props.serviceDetails!);
+    }
+  }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
-  jaegerState: state.jaegerState,
-  kiosk: state.globalState.kiosk,
-  rankResult: state.graph.rankResult,
-  showRank: state.graph.toolbarState.showRank
-});
+export default function SummaryPanelNodeHOC(props: SummaryPanelNodeHocProps) {
+  const jaegerState = useSelector<KialiAppState, JaegerState>(state => state.jaegerState);
+  const kiosk = useSelector<KialiAppState, string>(state => state.globalState.kiosk);
+  const rankResult = useSelector<KialiAppState, RankResult>(state => state.graph.rankResult);
+  const showRank = useSelector<KialiAppState, boolean>(state => state.graph.toolbarState.showRank);
+  const updateTime = useSelector<KialiAppState, TimeInMilliseconds>(state => state.graph.updateTime);
 
-const SummaryPanelNodeContainer = connect(mapStateToProps)(SummaryPanelNode);
-export default SummaryPanelNodeContainer;
+  const [isKebabOpen, setIsKebabOpen] = React.useState<boolean>(false);
+
+  const node = props.data.summaryTarget;
+  const nodeData = decoratedNodeData(node);
+  const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(nodeData, isKebabOpen, props.duration, updateTime);
+
+  function handleKebabToggled(isOpen: boolean) {
+    setIsKebabOpen(isOpen);
+  }
+
+  return (
+    <SummaryPanelNode
+      jaegerState={jaegerState}
+      kiosk={kiosk}
+      rankResult={rankResult}
+      showRank={showRank}
+      serviceDetails={isServiceDetailsLoading ? undefined : serviceDetails}
+      gateways={gateways}
+      peerAuthentications={peerAuthentications}
+      onKebabToggled={handleKebabToggled}
+      {...props} />
+  );
+}
+

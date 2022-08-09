@@ -4,20 +4,28 @@ import * as Cy from 'cytoscape';
 import { Router } from 'react-router';
 import tippy, { Instance } from 'tippy.js';
 import { DecoratedGraphEdgeData, DecoratedGraphNodeData } from '../../types/Graph';
+import { PeerAuthentication } from "../../types/IstioObjects";
+import { ServiceDetailsInfo } from "../../types/ServiceInfo";
 import { Provider } from 'react-redux';
 import { store } from '../../store/ConfigStore';
 import history from '../../app/History';
 import { getOptions } from './ContextMenu/NodeContextMenu';
+import { WizardAction, WizardMode } from "../IstioWizards/WizardActions";
 
 export type EdgeContextMenuProps = DecoratedGraphEdgeData & ContextMenuProps;
 export type EdgeContextMenuComponentType = React.ComponentType<EdgeContextMenuProps>;
-export type NodeContextMenuProps = DecoratedGraphNodeData & ContextMenuProps;
+export type NodeContextMenuProps = DecoratedGraphNodeData & ContextMenuProps & {
+  onLaunchWizard?: (key: WizardAction, mode: WizardMode, namespace: string, serviceDetails: ServiceDetailsInfo, gateways: string[], peerAuths: PeerAuthentication[]) => void;
+  onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
+};
 export type NodeContextMenuComponentType = React.ComponentType<NodeContextMenuProps>;
 export type ContextMenuComponentType = EdgeContextMenuComponentType | NodeContextMenuComponentType;
 
 type Props = {
   contextMenuEdgeComponent?: EdgeContextMenuComponentType;
   contextMenuNodeComponent?: NodeContextMenuComponentType;
+  onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
+  onLaunchWizard?: (key: WizardAction, mode: WizardMode, namespace: string, serviceDetails: ServiceDetailsInfo, gateways: string[], peerAuths: PeerAuthentication[]) => void;
 };
 
 type TippyInstance = Instance;
@@ -74,7 +82,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
     const contextMenuType = elem.isNode() ? this.props.contextMenuNodeComponent : this.props.contextMenuEdgeComponent;
 
     if (contextMenuType) {
-      this.makeContextMenu(contextMenuType, elem, isHover);
+      this.makeContextMenu(contextMenuType, elem, isHover, elem.isNode());
     }
   }
 
@@ -84,6 +92,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
       if (!isHover || this.isHover) {
         currentContextMenu.hide(0); // hide it in 0ms
         this.isHover = undefined;
+        ReactDOM.unmountComponentAtNode(this.contextMenuRef.current as HTMLDivElement);
       }
     }
   }
@@ -107,7 +116,8 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
   private makeContextMenu(
     ContextMenuComponentType: ContextMenuComponentType,
     target: Cy.NodeSingular | Cy.EdgeSingular,
-    isHover: boolean
+    isHover: boolean,
+    isNode: boolean
   ) {
     // Don't let a hover trump a non-hover context menu
     if (isHover && this.isHover === false) {
@@ -141,10 +151,23 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
       }
     ).instances[0];
 
+    let menuComponent = (<ContextMenuComponentType element={target} contextMenu={tippyInstance} isHover={isHover} {...target.data()} />);
+    if (isNode) {
+      menuComponent = (
+        <ContextMenuComponentType
+          element={target}
+          contextMenu={tippyInstance}
+          isHover={isHover}
+          onDeleteTrafficRouting={this.props.onDeleteTrafficRouting}
+          onLaunchWizard={this.props.onLaunchWizard}
+          {...target.data()} />
+      );
+    }
+
     const result = (
       <Provider store={store}>
         <Router history={history}>
-          <ContextMenuComponentType element={target} contextMenu={tippyInstance} isHover={isHover} {...target.data()} />
+          {menuComponent}
         </Router>
       </Provider>
     );

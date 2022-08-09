@@ -20,7 +20,14 @@ import {
 } from '../types/Health';
 import { IstioConfigDetails, IstioPermissions } from '../types/IstioConfigDetails';
 import { IstioConfigList, IstioConfigsMap } from '../types/IstioConfigList';
-import { Pod, PodLogs, ValidationStatus, EnvoyProxyDump } from '../types/IstioObjects';
+import {
+  Pod,
+  PodLogs,
+  ValidationStatus,
+  EnvoyProxyDump,
+  VirtualService,
+  DestinationRuleC
+} from '../types/IstioObjects';
 import { ComponentStatus } from '../types/IstioStatus';
 import { JaegerInfo, JaegerResponse, JaegerSingleResponse } from '../types/JaegerInfo';
 import { MeshClusters } from '../types/Mesh';
@@ -593,3 +600,40 @@ export const getMetricsStats = (queries: MetricsStatsQuery[]) => {
 export const getClusters = () => {
   return newRequest<MeshClusters>(HTTP_VERBS.GET, urls.clusters, {}, {});
 };
+
+export function deleteServiceTrafficRouting(virtualServices: VirtualService[], destinationRules: DestinationRuleC[]): Promise<any>;
+export function deleteServiceTrafficRouting(serviceDetail: ServiceDetailsInfo): Promise<any>;
+export function deleteServiceTrafficRouting(vsOrSvc: VirtualService[] | ServiceDetailsInfo, destinationRules?: DestinationRuleC[]): Promise<any> {
+  let vsList: VirtualService[];
+  let drList: DestinationRuleC[];
+  const deletePromises: Promise<any>[] = [];
+
+  if ('virtualServices' in vsOrSvc) {
+    vsList = vsOrSvc.virtualServices;
+    drList = DestinationRuleC.fromDrArray(vsOrSvc.destinationRules);
+  } else {
+    vsList = vsOrSvc;
+    drList = destinationRules || [];
+  }
+
+  vsList.forEach(vs => {
+    deletePromises.push(
+      deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name)
+    );
+  });
+
+  drList.forEach(dr => {
+    deletePromises.push(
+      deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name)
+    );
+
+    const paName = dr.hasPeerAuthentication();
+    if (!!paName) {
+      deletePromises.push(
+        deleteIstioConfigDetail(dr.metadata.namespace || '', 'peerauthentications', paName)
+      );
+    }
+  });
+
+  return Promise.all(deletePromises);
+}

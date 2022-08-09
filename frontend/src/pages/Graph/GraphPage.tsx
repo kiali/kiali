@@ -66,6 +66,7 @@ import { toRangeString } from 'components/Time/Utils';
 import { replayBorder } from 'components/Time/Replay';
 import GraphDataSource, { FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
 import { NamespaceActions } from '../../actions/NamespaceAction';
+import { GlobalActions } from "../../actions/GlobalActions";
 import GraphThunkActions from '../../actions/GraphThunkActions';
 import { JaegerTrace } from 'types/JaegerInfo';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
@@ -73,7 +74,14 @@ import GraphTour from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 import { EdgeContextMenu } from 'components/CytoscapeGraph/ContextMenu/EdgeContextMenu';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import {isParentKiosk, kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
+import { isParentKiosk, kioskContextMenuAction } from "../../components/Kiosk/KioskActions";
+import ServiceWizard from "components/IstioWizards/ServiceWizard";
+import { ServiceDetailsInfo } from "types/ServiceInfo";
+import { DestinationRuleC, PeerAuthentication } from "types/IstioObjects";
+import { WizardAction, WizardMode } from "components/IstioWizards/WizardActions";
+import ConfirmDeleteTrafficRoutingModal from "components/IstioWizards/ConfirmDeleteTrafficRoutingModal";
+import { deleteServiceTrafficRouting } from "services/Api";
+import { canCreate, canUpdate } from "../../types/Permissions";
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -114,6 +122,7 @@ type ReduxProps = {
   replayQueryTime: TimeInMilliseconds;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
   setGraphDefinition: (graphDefinition: GraphDefinition) => void;
+  setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => void;
   setRankResult: (result: RankResult) => void;
   setNode: (node?: NodeParamsType) => void;
   setTraceId: (traceId?: string) => void;
@@ -149,8 +158,23 @@ export type GraphData = {
   timestamp: TimeInMilliseconds;
 };
 
+type WizardsData = {
+  // Wizard configuration
+  showWizard: boolean;
+  wizardType: string;
+  updateMode: boolean;
+
+  // Data (payload) sent to the wizard or the confirm delete dialog
+  gateways: string[];
+  peerAuthentications: PeerAuthentication[];
+  namespace: string;
+  serviceDetails?: ServiceDetailsInfo;
+}
+
 type GraphPageState = {
   graphData: GraphData;
+  wizardsData: WizardsData;
+  showConfirmDeleteTrafficRouting: boolean;
 };
 
 const NUMBER_OF_DATAPOINTS = 30;
@@ -303,7 +327,16 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
         fetchParams: this.graphDataSource.fetchParameters,
         isLoading: true,
         timestamp: 0
-      }
+      },
+      wizardsData: {
+        showWizard: false,
+        wizardType: '',
+        updateMode: false,
+        gateways: [],
+        peerAuthentications: [],
+        namespace: ''
+      },
+      showConfirmDeleteTrafficRouting: false
     };
   }
 
@@ -463,6 +496,8 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
                   graphData={this.state.graphData}
                   isMTLSEnabled={this.props.mtlsEnabled}
                   onEmptyGraphAction={this.handleEmptyGraphAction}
+                  onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
+                  onLaunchWizard={this.handleLaunchWizard}
                   onNodeDoubleTap={this.handleDoubleTap}
                   ref={refInstance => this.setCytoscapeGraph(refInstance)}
                   {...this.props}
@@ -485,6 +520,8 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
                 injectServiceNodes={this.props.showServiceNodes}
                 isPageVisible={this.props.isPageVisible}
                 namespaces={this.props.activeNamespaces}
+                onLaunchWizard={this.handleLaunchWizard}
+                onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
                 queryTime={this.state.graphData.timestamp / 1000}
                 trafficRates={this.props.trafficRates}
                 {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
@@ -492,6 +529,29 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
             )}
           </FlexView>
         </FlexView>
+        <ServiceWizard
+          show={this.state.wizardsData.showWizard}
+          type={this.state.wizardsData.wizardType}
+          update={this.state.wizardsData.updateMode}
+          namespace={this.state.wizardsData.namespace}
+          serviceName={this.state.wizardsData.serviceDetails?.service?.name || ''}
+          workloads={this.state.wizardsData.serviceDetails?.workloads || []}
+          createOrUpdate={canCreate(this.state.wizardsData.serviceDetails?.istioPermissions) || canUpdate(this.state.wizardsData.serviceDetails?.istioPermissions)}
+          virtualServices={this.state.wizardsData.serviceDetails?.virtualServices || []}
+          destinationRules={this.state.wizardsData.serviceDetails?.destinationRules || []}
+          gateways={this.state.wizardsData.gateways || []}
+          peerAuthentications={this.state.wizardsData.peerAuthentications || []}
+          tlsStatus={this.state.wizardsData.serviceDetails?.namespaceMTLS}
+          onClose={this.handleWizardClose}
+        />
+        {this.state.showConfirmDeleteTrafficRouting && (
+          <ConfirmDeleteTrafficRoutingModal
+            isOpen={true}
+            destinationRules={DestinationRuleC.fromDrArray(this.state.wizardsData.serviceDetails!.destinationRules)}
+            virtualServices={this.state.wizardsData.serviceDetails!.virtualServices}
+            onCancel={() => this.setState({showConfirmDeleteTrafficRouting: false})}
+            onConfirm={this.handleConfirmDeleteServiceTrafficRouting} />
+        )}
       </>
     );
   }
@@ -678,6 +738,64 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
     return;
   };
 
+  private handleLaunchWizard = (action: WizardAction, mode: WizardMode, namespace: string, serviceDetails: ServiceDetailsInfo, gateways: string[], peerAuths: PeerAuthentication[]) => {
+    this.setState(prevState => ({
+      wizardsData: {
+        ...prevState.wizardsData,
+        showWizard: true,
+        wizardType: action,
+        updateMode: mode === "update",
+        namespace: namespace,
+        serviceDetails: serviceDetails,
+        gateways: gateways,
+        peerAuthentications: peerAuths
+      }
+    }));
+  };
+
+  private handleWizardClose = (changed: boolean) => {
+    if (changed) {
+      this.setState(prevState => ({
+        wizardsData: {
+          ...prevState.wizardsData,
+          showWizard: false
+        }
+      }));
+      this.props.setLastRefreshAt(Date.now());
+    } else {
+      this.setState(prevState => ({
+        wizardsData: {
+          ...prevState.wizardsData,
+          showWizard: false
+        }
+      }));
+    }
+  }
+
+  private handleDeleteTrafficRouting = (_key: string, serviceDetail: ServiceDetailsInfo) => {
+    this.setState(prevState => ({
+      showConfirmDeleteTrafficRouting: true,
+      wizardsData: {
+        ...prevState.wizardsData,
+        serviceDetails: serviceDetail
+      }
+    }));
+  };
+
+  private handleConfirmDeleteServiceTrafficRouting = () => {
+    this.setState({
+      showConfirmDeleteTrafficRouting:false
+    });
+
+    deleteServiceTrafficRouting(this.state.wizardsData!.serviceDetails!)
+      .then(_results => {
+        this.props.setLastRefreshAt(Date.now());
+      })
+      .catch(error => {
+        AlertUtils.addError('Could not delete Istio config objects.', error);
+      });
+  };
+
   private toggleHelp = () => {
     if (this.props.showLegend) {
       this.props.toggleLegend();
@@ -775,6 +893,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   onReady: (cy: Cy.Core) => dispatch(GraphThunkActions.graphReady(cy)),
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),
+  setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => dispatch(GlobalActions.setLastRefreshAt(lastRefreshAt)),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   setRankResult: bindActionCreators(GraphActions.setRankResult, dispatch),
   setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId)),

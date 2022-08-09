@@ -39,7 +39,10 @@ describe('SummaryPanelNode', () => {
       showRank: false,
       rateInterval: '30s',
       step: 15,
-      trafficRates: []
+      trafficRates: [],
+      gateways: null,
+      peerAuthentications: null,
+      serviceDetails: null
     };
   });
 
