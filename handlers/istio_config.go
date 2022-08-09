@@ -167,6 +167,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		istioConfigDetailsReg, errReg := business.IstioConfig.GetIstioConfigDetailsFromRegistry(context.TODO(), namespace, objectType, object)
 		if errReg == nil {
 			istioConfigDetails = istioConfigDetailsReg
+			istioConfigDetails.IstioConfigHelpFields = models.IstioConfigHelpMessages["internal"]
 			err = nil
 		}
 	}

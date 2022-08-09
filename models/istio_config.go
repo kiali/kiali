@@ -142,6 +142,9 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "spec.template", Message: "Template to be used for the generation of WorkloadEntry resources that belong to this WorkloadGroup."},
 		{ObjectField: "spec.probe", Message: "ReadinessProbe describes the configuration the user must provide for healthchecking on their workload."},
 	},
+	"internal": {
+		{ObjectField: "", Message: "Internal resources are not editable"},
+	},
 }
 
 // ResourcePermissions holds permission flags for an object type
