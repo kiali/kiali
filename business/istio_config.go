@@ -147,7 +147,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 			istioConfigList.EnvoyFilters = registryConfiguration.EnvoyFilters
 		}
 		if criteria.Include(kubernetes.Gateways) {
-			istioConfigList.Gateways = registryConfiguration.Gateways
+			istioConfigList.Gateways = kubernetes.FilterSupportedGateways(registryConfiguration.Gateways)
 		}
 		if criteria.Include(kubernetes.VirtualServices) {
 			istioConfigList.VirtualServices = registryConfiguration.VirtualServices
