@@ -16,6 +16,20 @@ OPM_VERSION ?= 1.22.1
 # which OLM to install (for olm-install target)
 OLM_VERSION ?= latest
 
+.prepare-olm-cluster-names: .prepare-cluster
+ifeq ($(CLUSTER_TYPE),minikube)
+	@$(eval CLUSTER_OLM_BUNDLE_NAME ?= ${CLUSTER_REPO}/${OLM_BUNDLE_NAME})
+	@$(eval CLUSTER_OLM_INDEX_NAME ?= ${CLUSTER_REPO}/${OLM_INDEX_NAME})
+	@$(eval CLUSTER_INTERNAL_OLM_INDEX_NAME ?= ${CLUSTER_REPO_INTERNAL}/${OLM_INDEX_NAME})
+else ifeq ($(CLUSTER_TYPE),openshift)
+	@$(eval CLUSTER_OLM_BUNDLE_NAME ?= ${CLUSTER_REPO}/${OLM_BUNDLE_NAME})
+	@$(eval CLUSTER_OLM_INDEX_NAME ?= ${CLUSTER_REPO}/${OLM_INDEX_NAME})
+	@$(eval CLUSTER_INTERNAL_OLM_INDEX_NAME ?= ${CLUSTER_REPO_INTERNAL}/${OLM_INDEX_NAME})
+else
+	@echo "ERROR: CLUSTER_TYPE [${CLUSTER_TYPE}] is not supported - must be one of: openshift, minikube"
+	@exit 1
+endif
+
 .download-opm-if-needed:
 	@if [ "$(shell which opm 2>/dev/null || echo -n "")" == "" ]; then \
 	  mkdir -p "${OUTDIR}/operator-sdk-install" ;\
@@ -40,7 +54,7 @@ get-opm: .ensure-opm-exists
 	@$(eval BUNDLE_VERSION ?= $(shell echo -n "${VERSION}" | sed 's/-SNAPSHOT//' ))
 
 ## build-olm-bundle: Builds the latest bundle version for deploying the operator in OLM
-build-olm-bundle: .prepare-cluster .determine-olm-bundle-version
+build-olm-bundle: .prepare-olm-cluster-names .determine-olm-bundle-version
 	@( \
 	  mkdir -p ${OUTDIR}/bundle ;\
 	  rm -rf ${OUTDIR}/bundle/* ;\
@@ -60,16 +74,16 @@ build-olm-bundle: .prepare-cluster .determine-olm-bundle-version
 	  sed -i "s/\$${KIALI_OPERATOR_VERSION}/$${bundle_version_sans_v}/g" $${csv} ;\
 	  sed -i "s/\$${CREATED_AT}/Created-By-Kiali-Makefile/g" $${csv} ;\
 	)
-	${DORP} build -f ${OUTDIR}/bundle/bundle.Dockerfile -t ${CLUSTER_REPO}/${OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
+	${DORP} build -f ${OUTDIR}/bundle/bundle.Dockerfile -t ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
 
 ## cluster-push-olm-bundle: Builds then pushes the OLM bundle container image to a remote cluster
 cluster-push-olm-bundle: build-olm-bundle
 ifeq ($(DORP),docker)
-	@echo Pushing olm bundle image to remote cluster using docker: ${CLUSTER_REPO}/${OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
-	docker push ${CLUSTER_REPO}/${OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
+	@echo Pushing OLM bundle image to remote cluster using docker: ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
+	docker push ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
 else
-	@echo Pushing olm bundle image to remote cluster using podman: ${CLUSTER_REPO}/${OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
-	podman push --tls-verify=false ${CLUSTER_REPO}/${OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
+	@echo Pushing OLM bundle image to remote cluster using podman: ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
+	podman push --tls-verify=false ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION}
 endif
 
 ## build-olm-index: Pushes the OLM bundle then generates the OLM index
@@ -78,7 +92,7 @@ build-olm-index: .ensure-opm-exists cluster-push-olm-bundle
 	@rm -rf ${OUTDIR}/index
 	@mkdir -p ${OUTDIR}/index/kiali-index
 	${OPM} init ${OLM_BUNDLE_PACKAGE} --default-channel=stable --output yaml > ${OUTDIR}/index/kiali-index/index.yaml
-	${OPM} render $$(if [[ "${OC}" = *"oc" ]]; then echo '--skip-tls-verify'; else echo '--use-http'; fi) ${CLUSTER_REPO}/${OLM_BUNDLE_NAME}:${BUNDLE_VERSION} --output yaml >> ${OUTDIR}/index/kiali-index/index.yaml
+	${OPM} render $$(if [[ "${OC}" = *"oc" ]]; then echo '--skip-tls-verify'; else echo '--use-http'; fi) ${CLUSTER_OLM_BUNDLE_NAME}:${BUNDLE_VERSION} --output yaml >> ${OUTDIR}/index/kiali-index/index.yaml
 	@# We need OLM to pull the index from the internal registry - change the index to only use the internal registry name
 	sed -i 's|${CLUSTER_REPO}|${CLUSTER_REPO_INTERNAL}|g' ${OUTDIR}/index/kiali-index/index.yaml
 	@echo "---"                                               >> ${OUTDIR}/index/kiali-index/index.yaml
@@ -94,16 +108,16 @@ build-olm-index: .ensure-opm-exists cluster-push-olm-bundle
 	@echo 'CMD ["serve", "/configs"]'                                      >> ${OUTDIR}/index/kiali-index.Dockerfile
 	@echo "ADD kiali-index /configs"                                       >> ${OUTDIR}/index/kiali-index.Dockerfile
 	@echo "LABEL operators.operatorframework.io.index.configs.v1=/configs" >> ${OUTDIR}/index/kiali-index.Dockerfile
-	cd ${OUTDIR}/index && ${DORP} build . -f kiali-index.Dockerfile -t ${CLUSTER_REPO}/${OLM_INDEX_NAME}:${BUNDLE_VERSION}
+	cd ${OUTDIR}/index && ${DORP} build . -f kiali-index.Dockerfile -t ${CLUSTER_OLM_INDEX_NAME}:${BUNDLE_VERSION}
 
 ## cluster-push-olm-index: Pushes the OLM bundle and then builds and pushes the OLM index to the cluster
 cluster-push-olm-index: build-olm-index
 ifeq ($(DORP),docker)
-	@echo Pushing OLM index image to remote cluster using docker: ${CLUSTER_REPO}/${OLM_INDEX_NAME}:${BUNDLE_VERSION}
-	docker push ${CLUSTER_REPO}/${OLM_INDEX_NAME}:${BUNDLE_VERSION}
+	@echo Pushing OLM index image to remote cluster using docker: ${CLUSTER_OLM_INDEX_NAME}:${BUNDLE_VERSION}
+	docker push ${CLUSTER_OLM_INDEX_NAME}:${BUNDLE_VERSION}
 else
-	@echo Pushing OLM index image to remote cluster using podman: ${CLUSTER_REPO}/${OLM_INDEX_NAME}:${BUNDLE_VERSION}
-	podman push --tls-verify=false ${CLUSTER_REPO}/${OLM_INDEX_NAME}:${BUNDLE_VERSION}
+	@echo Pushing OLM index image to remote cluster using podman: ${CLUSTER_OLM_INDEX_NAME}:${BUNDLE_VERSION}
+	podman push --tls-verify=false ${CLUSTER_OLM_INDEX_NAME}:${BUNDLE_VERSION}
 endif
 
 .determine-olm-operators-namespace:
@@ -111,7 +125,7 @@ endif
 	@$(eval OPERATOR_NAMESPACE = ${OLM_OPERATORS_NAMESPACE})
 	@echo "Using OLM requires that the OPERATOR_NAMESPACE be set to [${OPERATOR_NAMESPACE}]"
 
-.generate-catalog-source: .prepare-cluster .determine-olm-bundle-version .determine-olm-operators-namespace .prepare-operator-pull-secret
+.generate-catalog-source: .prepare-olm-cluster-names .determine-olm-bundle-version .determine-olm-operators-namespace .prepare-operator-pull-secret
 	@mkdir -p "${OUTDIR}"
 	@echo "apiVersion: operators.coreos.com/v1alpha1" >  ${OUTDIR}/kiali-catalogsource.yaml
 	@echo "kind: CatalogSource"                       >> ${OUTDIR}/kiali-catalogsource.yaml
@@ -126,7 +140,7 @@ endif
 	 echo "  - ${OPERATOR_IMAGE_PULL_SECRET_NAME}"    >> ${OUTDIR}/kiali-catalogsource.yaml ;\
 	fi
 	@echo "  sourceType: grpc"                        >> ${OUTDIR}/kiali-catalogsource.yaml
-	@echo "  image: ${CLUSTER_REPO_INTERNAL}/${OLM_INDEX_NAME}:${BUNDLE_VERSION}" >> ${OUTDIR}/kiali-catalogsource.yaml
+	@echo "  image: ${CLUSTER_INTERNAL_OLM_INDEX_NAME}:${BUNDLE_VERSION}" >> ${OUTDIR}/kiali-catalogsource.yaml
 
 ## catalog-source-create: Creates the OLM CatalogSource on the remote cluster
 catalog-source-create: .generate-catalog-source cluster-push-olm-index .create-operator-pull-secret

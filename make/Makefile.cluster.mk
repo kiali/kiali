@@ -50,6 +50,8 @@
 	 fi
 
 .prepare-kind: .ensure-oc-exists .ensure-kind-exists
+	@$(eval CLUSTER_REPO_INTERNAL ?= localhost)
+	@$(eval CLUSTER_REPO ?= )
 	@$(eval CLUSTER_KIALI_TAG ?= ${CONTAINER_NAME}:${CONTAINER_VERSION})
 	@$(eval CLUSTER_OPERATOR_TAG ?= ${OPERATOR_CONTAINER_NAME}:${OPERATOR_CONTAINER_VERSION})
 ifeq ($(DORP),docker)
