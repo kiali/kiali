@@ -10,7 +10,8 @@ import (
 // Be careful with how you use this token. This is the Kiali Service Account token, not the user token.
 // We need the Service Account token to access third-party in-cluster services (e.g. Grafana).
 
-const DefaultServiceAccountPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+var DefaultServiceAccountPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+var refreshTime = int64(60)
 
 var KialiToken string
 var LastRead, timer time.Time
@@ -18,6 +19,14 @@ var isRemote bool
 
 func getDefaultServiceAccountPath() string {
 	return DefaultServiceAccountPath
+}
+
+func setDefaultServiceAccountPath(path string) {
+	DefaultServiceAccountPath = path
+}
+
+func setRefreshTime(secs int64) {
+	refreshTime = secs
 }
 
 func GetKialiToken() (string, error) {
@@ -63,7 +72,7 @@ func getLastModified(fileName string) (time.Time, error) {
 // Just checking once every minute
 func IsTokenExpired() (bool, error) {
 
-	if time.Now().Unix()-timer.Unix() > 60 {
+	if time.Now().Unix()-timer.Unix() > refreshTime {
 		path := getDefaultServiceAccountPath()
 		if isRemote {
 			path = RemoteSecretData
