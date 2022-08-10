@@ -4,6 +4,7 @@ SHELL=/bin/bash
 # Directories based on the root project directory
 ROOTDIR=$(CURDIR)
 OUTDIR=${ROOTDIR}/_output
+OPERATOR_DIR=${ROOTDIR}/operator
 
 # list for multi-arch image publishing
 TARGET_ARCHS ?= amd64 arm64 s390x ppc64le
@@ -49,6 +50,10 @@ OPERATOR_QUAY_TAG ?= ${OPERATOR_QUAY_NAME}:${OPERATOR_CONTAINER_VERSION}
 ISTIO_NAMESPACE ?= istio-system
 # Declares the namespace/project where the objects are to be deployed.
 NAMESPACE ?= ${ISTIO_NAMESPACE}
+
+# Local arch details needed when downloading tools
+OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+ARCH := $(shell uname -m | sed 's/x86_64/amd64/')
 
 # A default go GOPATH if it isn't user defined
 GOPATH ?= ${HOME}/go
@@ -168,6 +173,7 @@ include make/Makefile.helm.mk
 include make/Makefile.operator.mk
 include make/Makefile.molecule.mk
 include make/Makefile.ui.mk
+include make/Makefile.olm.mk
 
 .PHONY: help
 help: Makefile
@@ -193,6 +199,9 @@ help: Makefile
 	@echo "UI targets"
 	@sed -n 's/^##//p' make/Makefile.ui.mk | column -t -s ':' |  sed -e 's/^/ /'
 	@echo
+	@echo "OLM targets"
+	@sed -n 's/^##//p' make/Makefile.olm.mk | column -t -s ':' |  sed -e 's/^/ /'
+	@echo
 	@echo "Misc targets"
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
 	@echo
@@ -206,6 +215,9 @@ git-init:
 	@if [ ! -x "${OC}" ]; then \
 	  echo "Missing 'oc' or 'kubectl'"; exit 1; \
 	fi
+
+.ensure-oc-login: .ensure-oc-exists
+	@if [[ "${OC}" = *"oc" ]]; then if ! ${OC} whoami &> /dev/null; then echo "You are not logged into an OpenShift cluster. Run 'oc login' before continuing."; exit 1; fi; fi
 
 .ensure-minikube-exists:
 	@if [ ! -x "${MINIKUBE}" ]; then \
