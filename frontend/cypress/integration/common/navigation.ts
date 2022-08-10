@@ -24,6 +24,12 @@ And('user is at the details page for the {string} {string}', (detail: detailType
       break;
     case detailType.Service:
       pageDetail = 'services';
+      cy.intercept({
+        pathname: '**/api/namespaces/bookinfo/services/productpage',
+        query: {
+          objects: ''
+        }
+      }).as('waitForCall');
       break;
     case detailType.Workload:
       pageDetail = 'workloads';
