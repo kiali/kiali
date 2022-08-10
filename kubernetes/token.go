@@ -14,14 +14,22 @@ const DefaultServiceAccountPath = "/var/run/secrets/kubernetes.io/serviceaccount
 
 var KialiToken string
 var LastRead, timer time.Time
+var isRemote bool
+
+func getDefaultServiceAccountPath() string {
+	return DefaultServiceAccountPath
+}
 
 func GetKialiToken() (string, error) {
 	expired, err := IsTokenExpired()
 	if KialiToken == "" || (expired && err == nil) {
 		if remoteSecret, err := GetRemoteSecret(RemoteSecretData); err == nil {
 			KialiToken = remoteSecret.Users[0].User.Token
+			LastRead = time.Now()
+			isRemote = true
 		} else {
 			errUpdating := updateKialiToken()
+			isRemote = false
 			if errUpdating != nil {
 				fmt.Errorf("Error updating Kiali token: " + errUpdating.Error())
 			}
@@ -32,7 +40,7 @@ func GetKialiToken() (string, error) {
 
 // Set Kiali Service Account Token
 func updateKialiToken() error {
-	token, errRead := ioutil.ReadFile(DefaultServiceAccountPath)
+	token, errRead := ioutil.ReadFile(getDefaultServiceAccountPath())
 	if errRead != nil {
 		fmt.Println(errRead)
 	}
@@ -56,7 +64,11 @@ func getLastModified(fileName string) (time.Time, error) {
 func IsTokenExpired() (bool, error) {
 
 	if time.Now().Unix()-timer.Unix() > 60 {
-		checkModifiedTime, err := getLastModified(DefaultServiceAccountPath)
+		path := getDefaultServiceAccountPath()
+		if isRemote {
+			path = RemoteSecretData
+		}
+		checkModifiedTime, err := getLastModified(path)
 		timer = time.Now()
 		if err != nil {
 			return false, err
