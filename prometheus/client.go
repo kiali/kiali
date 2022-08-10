@@ -341,7 +341,7 @@ func (in *Client) GetExistingMetricNames(metricNames []string) ([]string, error)
 		metricsWeAreLookingFor[string(metricNames[i])] = true
 	}
 
-	metricsWeFound := make([]string, 0, 5)
+	metricsWeFound := make([]string, 0, len(metricNames))
 	for _, item := range results {
 		name := string(item)
 		if metricsWeAreLookingFor[name] {
