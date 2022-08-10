@@ -604,10 +604,15 @@ export const getClusters = () => {
   return newRequest<MeshClusters>(HTTP_VERBS.GET, urls.clusters, {}, {});
 };
 
-
-export function deleteServiceTrafficRouting(virtualServices: VirtualService[], destinationRules: DestinationRuleC[]): Promise<any>;
+export function deleteServiceTrafficRouting(
+  virtualServices: VirtualService[],
+  destinationRules: DestinationRuleC[]
+): Promise<any>;
 export function deleteServiceTrafficRouting(serviceDetail: ServiceDetailsInfo): Promise<any>;
-export function deleteServiceTrafficRouting(vsOrSvc: VirtualService[] | ServiceDetailsInfo, destinationRules?: DestinationRuleC[]): Promise<any> {
+export function deleteServiceTrafficRouting(
+  vsOrSvc: VirtualService[] | ServiceDetailsInfo,
+  destinationRules?: DestinationRuleC[]
+): Promise<any> {
   let vsList: VirtualService[];
   let drList: DestinationRuleC[];
   const deletePromises: Promise<any>[] = [];
@@ -621,21 +626,15 @@ export function deleteServiceTrafficRouting(vsOrSvc: VirtualService[] | ServiceD
   }
 
   vsList.forEach(vs => {
-    deletePromises.push(
-      deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name)
-    );
+    deletePromises.push(deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name));
   });
 
   drList.forEach(dr => {
-    deletePromises.push(
-      deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name)
-    );
+    deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name));
 
     const paName = dr.hasPeerAuthentication();
     if (!!paName) {
-      deletePromises.push(
-        deleteIstioConfigDetail(dr.metadata.namespace || '', 'peerauthentications', paName)
-      );
+      deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace || '', 'peerauthentications', paName));
     }
   });
 
@@ -645,4 +644,3 @@ export function deleteServiceTrafficRouting(vsOrSvc: VirtualService[] | ServiceD
 export const getCrippledFeatures = (): Promise<Response<KialiCrippledFeatures>> => {
   return newRequest<KialiCrippledFeatures>(HTTP_VERBS.GET, urls.crippledFeatures, {}, {});
 };
-
