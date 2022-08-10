@@ -13,6 +13,9 @@ OLM_BUNDLE_PACKAGE ?= kiali
 OLM_INDEX_BASE_IMAGE ?= quay.io/openshift/origin-operator-registry:4.10
 OPM_VERSION ?= 1.22.1
 
+# which OLM to install (for olm-install target)
+OLM_VERSION ?= latest
+
 .download-opm-if-needed:
 	@if [ "$(shell which opm 2>/dev/null || echo -n "")" == "" ]; then \
 	  mkdir -p "${OUTDIR}/operator-sdk-install" ;\
@@ -172,3 +175,26 @@ olm-operator-delete: kiali-delete subscription-delete catalog-source-delete crd-
 	do \
 	  ${OC} delete --ignore-not-found=true csv -n $$(echo -n $${csv} | cut -d: -f1) $$(echo -n $${csv} | cut -d: -f2) ;\
 	done
+
+## olm-install: Installs the OLM infrastructure into the cluster. This is a no-op for OpenShift since it already has OLM installed.
+ifeq ($(CLUSTER_TYPE),openshift)
+olm-install:
+	@echo "OpenShift already has OLM installed - nothing to do."
+else
+olm-install:
+	@( \
+	  echo "Installing OLM..." ;\
+	  version_we_want="${OLM_VERSION}" ;\
+	  if [ "$${version_we_want}" == "latest" ]; then \
+	    version_we_want="$$(curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases 2> /dev/null | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)" ;\
+	    if [ -z "$${version_we_want}" ]; then \
+	      echo "Failed to obtain the latest OLM version from Github. You will need to specify an explicit version via OLM_VERSION." ;\
+	      exit 1 ;\
+	    else \
+	      echo "Github reports the latest OLM version is: $${version_we_want}" ;\
+	    fi ;\
+	  fi ;\
+	  if ! curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/$${version_we_want}/install.sh | bash -s $${version_we_want}; then echo "ERROR: Failed to install OLM" && exit 1; fi ;\
+	  echo "OLM $${version_we_want} is installed." ;\
+	)
+endif
