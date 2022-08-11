@@ -154,10 +154,6 @@ func (a *HealthAppender) attachHealthConfig(trafficMap graph.TrafficMap, globalI
 }
 
 func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
-	for _, e := range trafficMap.Edges() {
-		addEdgeTrafficToNodeHealth(e)
-	}
-
 	var nodesWithHealth []*graph.Node
 	type healthRequest struct {
 		app      bool
@@ -172,6 +168,11 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 
 	// Limit health fetches to only the necessary namespaces for the necessary types
 	for _, n := range trafficMap {
+		// This also gets initialized when summarizing health data from the edges but
+		// not all nodes (idle nodes) have edges so we init the health data here as well.
+		// Frontend expects the health data to not be null and will fail if it is.
+		initHealthData(n)
+
 		// skip health for inaccessible nodes.  For now, include health for outsider nodes because edge health
 		// may depend on any health config for those nodes.  And, users likely find the health useful.
 		if b, ok := n.Metadata[graph.IsInaccessible]; ok && b.(bool) {
@@ -292,6 +293,10 @@ func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *g
 	if len(errors) > 0 {
 		// This just panics with the first error.
 		graph.CheckError(errors[0])
+	}
+
+	for _, e := range trafficMap.Edges() {
+		addEdgeTrafficToNodeHealth(e)
 	}
 
 	for _, n := range nodesWithHealth {

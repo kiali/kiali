@@ -430,6 +430,27 @@ func TestHealthDataBadResponses(t *testing.T) {
 	assert.Empty(destHealth.Requests.Inbound)
 }
 
+func TestIdleNodesHaveHealthData(t *testing.T) {
+	assert := assert.New(t)
+
+	config.Set(config.NewConfig())
+	trafficMap := make(graph.TrafficMap)
+	idleNode := graph.NewNode("cluster-default", "testNamespace", "svc", "", "", "", "v1", graph.GraphTypeVersionedApp)
+	trafficMap[idleNode.ID] = &idleNode
+	idleNode.Metadata[graph.IsIdle] = true
+	idleNode.Metadata[graph.IsInaccessible] = true
+	businessLayer := setupHealthConfig(buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
+	a := HealthAppender{}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	assert.NotNil(trafficMap[idleNode.ID].Metadata[graph.HealthData])
+}
+
 func TestErrorCausesPanic(t *testing.T) {
 	assert := assert.New(t)
 
