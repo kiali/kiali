@@ -84,20 +84,6 @@ type RequestedAppenders struct {
 	AppenderNames []string
 }
 
-func (ra *RequestedAppenders) Includes(name string) bool {
-	if ra.All {
-		return true
-	}
-
-	for _, appenderName := range ra.AppenderNames {
-		if appenderName == name {
-			return true
-		}
-	}
-
-	return false
-}
-
 type RequestedRates struct {
 	Grpc string
 	Http string
