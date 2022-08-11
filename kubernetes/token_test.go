@@ -55,6 +55,17 @@ func TestGetLastModified(t *testing.T) {
 
 }
 
+func TestGetKialiToken(t *testing.T) {
+	data := "thisisarandomtoken"
+	setupFile(data)
+	token, err := GetKialiToken()
+	if err == nil {
+		fmt.Println("Error getting token")
+	}
+	assert.True(t, data == token)
+
+}
+
 func setupFile(content string) {
 	data := []byte(content)
 	err := os.WriteFile(tempFile, data, 0644)
