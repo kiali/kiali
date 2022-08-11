@@ -213,6 +213,75 @@ func getPrometheusConfig() PrometheusConfig {
 	return promConfig
 }
 
+type KialiCrippledFeatures struct {
+	RequestSize             bool `json:"requestSize"`
+	RequestSizeAverage      bool `json:"requestSizeAverage"`
+	RequestSizePercentiles  bool `json:"requestSizePercentiles"`
+	ResponseSize            bool `json:"responseSize"`
+	ResponseSizeAverage     bool `json:"responseSizeAverage"`
+	ResponseSizePercentiles bool `json:"responseSizePercentiles"`
+	ResponseTime            bool `json:"responseTime"`
+	ResponseTimeAverage     bool `json:"responseTimeAverage"`
+	ResponseTimePercentiles bool `json:"responseTimePercentiles"`
+}
+
+func CrippledFeatures(w http.ResponseWriter, r *http.Request) {
+	defer handlePanic(w)
+
+	requiredMetrics := []string{
+		"istio_request_bytes_bucket",
+		"istio_request_bytes_count",
+		"istio_request_bytes_sum",
+		"istio_request_duration_milliseconds_bucket",
+		"istio_request_duration_milliseconds_count",
+		"istio_request_duration_milliseconds_sum",
+		"istio_requests_total",
+		"istio_response_bytes_bucket",
+		"istio_response_bytes_count",
+		"istio_response_bytes_sum",
+	}
+
+	// assume nothing crippled on error
+	crippledFeatures := KialiCrippledFeatures{}
+
+	client, err := prometheus.NewClient()
+	if !checkErr(err, "") {
+		log.Error(err)
+		RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
+	}
+
+	existingMetrics, err := client.GetExistingMetricNames(requiredMetrics)
+	if !checkErr(err, "") {
+		log.Error(err)
+		RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
+	}
+
+	// if we have all of the metrics then nothing is crippled, just return
+	// if we have no metrics then we have no requests (note that we check for istio_request_totals), nothing is known to be crippled
+	if len(existingMetrics) == len(requiredMetrics) || len(existingMetrics) == 0 {
+		RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
+	}
+
+	exists := make(map[string]bool, len(existingMetrics))
+	for _, metric := range existingMetrics {
+		exists[metric] = true
+	}
+
+	crippledFeatures.RequestSize = !exists["istio_request_bytes_sum"]
+	crippledFeatures.RequestSizeAverage = crippledFeatures.RequestSize || !exists["istio_request_bytes_count"]
+	crippledFeatures.RequestSizePercentiles = crippledFeatures.RequestSizeAverage || !exists["istio_request_bytes_bucket"]
+
+	crippledFeatures.ResponseSize = !exists["istio_response_bytes_sum"]
+	crippledFeatures.ResponseSizeAverage = crippledFeatures.ResponseSize || !exists["istio_response_bytes_count"]
+	crippledFeatures.ResponseSizePercentiles = crippledFeatures.ResponseSizeAverage || !exists["istio_response_bytes_bucket"]
+
+	crippledFeatures.ResponseTime = !exists["istio_request_duration_milliseconds_sum"]
+	crippledFeatures.ResponseTimeAverage = crippledFeatures.ResponseTime || !exists["istio_request_duration_milliseconds_count"]
+	crippledFeatures.ResponseTimePercentiles = crippledFeatures.ResponseTimeAverage || !exists["istio_request_duration_milliseconds_bucket"]
+
+	RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
+}
+
 func checkErr(err error, message string) bool {
 	if err != nil {
 		log.Errorf("%s: %v", message, err)

@@ -116,6 +116,7 @@ const conf = {
       appDashboard: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/dashboard`,
       appSpans: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/spans`,
       clusters: 'api/clusters',
+      crippledFeatures: 'api/crippled',
       serviceSpans: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}/spans`,
       workloadSpans: (namespace: string, workload: string) => `api/namespaces/${namespace}/workloads/${workload}/spans`,
       customDashboard: (namespace: string, template: string) =>

@@ -9,6 +9,7 @@ import { store } from '../../../store/ConfigStore';
 import { MetricsObjectTypes } from '../../../types/Metrics';
 import MounterMocker from 'services/__mocks__/MounterMocker';
 import { ChartModel, DashboardModel } from 'types/Dashboards';
+import { KialiCrippledFeatures } from 'types/ServerConfig';
 
 const createMetricChart = (name: string): ChartModel => {
   return {
@@ -78,8 +79,18 @@ const createHistogramChart = (name: string): ChartModel => {
 
 describe('Metrics for a service', () => {
   beforeEach(() => {
-    const spy = jest.spyOn(API, 'getGrafanaInfo');
-    spy.mockResolvedValue({ externalLinks: [] });
+    jest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ externalLinks: [] });
+    jest.spyOn(API, 'getCrippledFeatures').mockResolvedValue({
+      requestSize: false,
+      requestSizeAverage: false,
+      requestSizePercentiles: false,
+      responseSize: false,
+      responseSizeAverage: false,
+      responseSizePercentiles: false,
+      responseTime: false,
+      responseTimeAverage: false,
+      responseTimePercentiles: false
+    } as KialiCrippledFeatures);
   });
 
   afterEach(() => {
@@ -144,6 +155,24 @@ describe('Metrics for a service', () => {
 });
 
 describe('Inbound Metrics for a workload', () => {
+  beforeEach(() => {
+    jest.spyOn(API, 'getCrippledFeatures').mockResolvedValue({
+      requestSize: false,
+      requestSizeAverage: false,
+      requestSizePercentiles: false,
+      responseSize: false,
+      responseSizeAverage: false,
+      responseSizePercentiles: false,
+      responseTime: false,
+      responseTimeAverage: false,
+      responseTimePercentiles: false
+    } as KialiCrippledFeatures);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders initial layout', () => {
     const wrapper = shallow(
       <Provider store={store}>

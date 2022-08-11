@@ -1,8 +1,6 @@
 import axios, { AxiosError } from 'axios';
-
 import { config } from '../config';
 import { LoginSession } from '../store/Store';
-
 import { App } from '../types/App';
 import { AppList } from '../types/AppList';
 import { AuthInfo } from '../types/Auth';
@@ -34,7 +32,7 @@ import { MeshClusters } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
 import { IstioMetricsMap, MetricsStatsResult } from '../types/Metrics';
 import Namespace from '../types/Namespace';
-import { ServerConfig } from '../types/ServerConfig';
+import { KialiCrippledFeatures, ServerConfig } from '../types/ServerConfig';
 import { StatusState } from '../types/StatusState';
 import { ServiceDetailsInfo } from '../types/ServiceInfo';
 import { ServiceList } from '../types/ServiceList';
@@ -237,7 +235,12 @@ export const createIstioConfigDetail = (
 };
 
 export const getConfigValidations = (namespaces: string[]) => {
-  return newRequest<ValidationStatus>(HTTP_VERBS.GET, urls.configValidations(), { namespaces: namespaces.join(',') }, {});
+  return newRequest<ValidationStatus>(
+    HTTP_VERBS.GET,
+    urls.configValidations(),
+    { namespaces: namespaces.join(',') },
+    {}
+  );
 };
 
 export const getServices = (namespace: string, params: { [key: string]: string } = {}) => {
@@ -601,9 +604,15 @@ export const getClusters = () => {
   return newRequest<MeshClusters>(HTTP_VERBS.GET, urls.clusters, {}, {});
 };
 
-export function deleteServiceTrafficRouting(virtualServices: VirtualService[], destinationRules: DestinationRuleC[]): Promise<any>;
+export function deleteServiceTrafficRouting(
+  virtualServices: VirtualService[],
+  destinationRules: DestinationRuleC[]
+): Promise<any>;
 export function deleteServiceTrafficRouting(serviceDetail: ServiceDetailsInfo): Promise<any>;
-export function deleteServiceTrafficRouting(vsOrSvc: VirtualService[] | ServiceDetailsInfo, destinationRules?: DestinationRuleC[]): Promise<any> {
+export function deleteServiceTrafficRouting(
+  vsOrSvc: VirtualService[] | ServiceDetailsInfo,
+  destinationRules?: DestinationRuleC[]
+): Promise<any> {
   let vsList: VirtualService[];
   let drList: DestinationRuleC[];
   const deletePromises: Promise<any>[] = [];
@@ -617,23 +626,21 @@ export function deleteServiceTrafficRouting(vsOrSvc: VirtualService[] | ServiceD
   }
 
   vsList.forEach(vs => {
-    deletePromises.push(
-      deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name)
-    );
+    deletePromises.push(deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name));
   });
 
   drList.forEach(dr => {
-    deletePromises.push(
-      deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name)
-    );
+    deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name));
 
     const paName = dr.hasPeerAuthentication();
     if (!!paName) {
-      deletePromises.push(
-        deleteIstioConfigDetail(dr.metadata.namespace || '', 'peerauthentications', paName)
-      );
+      deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace || '', 'peerauthentications', paName));
     }
   });
 
   return Promise.all(deletePromises);
 }
+
+export const getCrippledFeatures = (): Promise<Response<KialiCrippledFeatures>> => {
+  return newRequest<KialiCrippledFeatures>(HTTP_VERBS.GET, urls.crippledFeatures, {}, {});
+};
