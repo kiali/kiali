@@ -393,7 +393,7 @@ func addEdgeTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, fl
 			break
 		}
 	}
-	if edge == nil {
+	if nil == edge {
 		edge = source.AddEdge(dest)
 		edge.Metadata[graph.ProtocolKey] = protocol
 		edge.Metadata[tsHashMap] = make(map[string]bool)
