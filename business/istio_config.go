@@ -147,7 +147,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 			istioConfigList.EnvoyFilters = registryConfiguration.EnvoyFilters
 		}
 		if criteria.Include(kubernetes.Gateways) {
-			istioConfigList.Gateways = registryConfiguration.Gateways
+			istioConfigList.Gateways = kubernetes.FilterSupportedGateways(registryConfiguration.Gateways)
 		}
 		if criteria.Include(kubernetes.VirtualServices) {
 			istioConfigList.VirtualServices = registryConfiguration.VirtualServices
@@ -538,6 +538,158 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, namespa
 	}
 
 	wg.Wait()
+
+	return istioConfigDetail, err
+}
+
+// GetIstioConfigDetailsFromRegistry returns a specific Istio configuration object from Istio Registry.
+// The returned object is Read only.
+// It uses following parameters:
+// - "namespace": 		namespace where configuration is stored
+// - "objectType":		type of the configuration
+// - "object":			name of the configuration
+func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Context, namespace, objectType, object string) (models.IstioConfigDetails, error) {
+	var err error
+
+	istioConfigDetail := models.IstioConfigDetails{}
+	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
+	istioConfigDetail.ObjectType = objectType
+
+	istioConfigDetail.Permissions = models.ResourcePermissions{
+		Create: false,
+		Update: false,
+		Delete: false,
+	}
+
+	registryCriteria := RegistryCriteria{
+		AllNamespaces: true,
+	}
+	registryConfiguration, err := in.businessLayer.RegistryStatus.GetRegistryConfiguration(registryCriteria)
+	if err != nil {
+		return istioConfigDetail, err
+	}
+	if registryConfiguration == nil {
+		return istioConfigDetail, errors.New("RegistryConfiguration is nil. This is an unexpected case. Is the Kiali cache disabled ?")
+	}
+
+	switch objectType {
+	case kubernetes.DestinationRules:
+		configs := registryConfiguration.DestinationRules
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.DestinationRule = cfg
+				istioConfigDetail.DestinationRule.Kind = kubernetes.DestinationRuleType
+				istioConfigDetail.DestinationRule.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.EnvoyFilters:
+		configs := registryConfiguration.EnvoyFilters
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.EnvoyFilter = cfg
+				istioConfigDetail.EnvoyFilter.Kind = kubernetes.EnvoyFilterType
+				istioConfigDetail.EnvoyFilter.APIVersion = kubernetes.ApiNetworkingVersionV1Alpha3
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.Gateways:
+		configs := registryConfiguration.Gateways
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.Gateway = cfg
+				istioConfigDetail.Gateway.Kind = kubernetes.GatewayType
+				istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.ServiceEntries:
+		configs := registryConfiguration.ServiceEntries
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.ServiceEntry = cfg
+				istioConfigDetail.ServiceEntry.Kind = kubernetes.ServiceEntryType
+				istioConfigDetail.ServiceEntry.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.Sidecars:
+		configs := registryConfiguration.Sidecars
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.Sidecar = cfg
+				istioConfigDetail.Sidecar.Kind = kubernetes.SidecarType
+				istioConfigDetail.Sidecar.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.VirtualServices:
+		configs := registryConfiguration.VirtualServices
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.VirtualService = cfg
+				istioConfigDetail.VirtualService.Kind = kubernetes.VirtualServiceType
+				istioConfigDetail.VirtualService.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.WorkloadEntries:
+		configs := registryConfiguration.WorkloadEntries
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.WorkloadEntry = cfg
+				istioConfigDetail.WorkloadEntry.Kind = kubernetes.WorkloadEntryType
+				istioConfigDetail.WorkloadEntry.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.WorkloadGroups:
+		configs := registryConfiguration.WorkloadGroups
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.WorkloadGroup = cfg
+				istioConfigDetail.WorkloadGroup.Kind = kubernetes.WorkloadGroupType
+				istioConfigDetail.WorkloadGroup.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.AuthorizationPolicies:
+		configs := registryConfiguration.AuthorizationPolicies
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.AuthorizationPolicy = cfg
+				istioConfigDetail.AuthorizationPolicy.Kind = kubernetes.AuthorizationPoliciesType
+				istioConfigDetail.AuthorizationPolicy.APIVersion = kubernetes.ApiSecurityVersion
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.PeerAuthentications:
+		configs := registryConfiguration.PeerAuthentications
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.PeerAuthentication = cfg
+				istioConfigDetail.PeerAuthentication.Kind = kubernetes.PeerAuthenticationsType
+				istioConfigDetail.PeerAuthentication.APIVersion = kubernetes.ApiSecurityVersion
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.RequestAuthentications:
+		configs := registryConfiguration.RequestAuthentications
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.RequestAuthentication = cfg
+				istioConfigDetail.RequestAuthentication.Kind = kubernetes.RequestAuthenticationsType
+				istioConfigDetail.RequestAuthentication.APIVersion = kubernetes.ApiSecurityVersion
+				return istioConfigDetail, nil
+			}
+		}
+	default:
+		err = fmt.Errorf("object type not found: %v", objectType)
+	}
+
+	if err == nil {
+		err = errors.New("Object is not found in registry")
+	}
 
 	return istioConfigDetail, err
 }
