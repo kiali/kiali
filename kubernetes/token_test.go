@@ -15,13 +15,13 @@ func TestIsTokenExpired(t *testing.T) {
 
 	setDefaultServiceAccountPath(tempFile)
 	token, err := GetKialiToken()
-	assert.True(t, err != nil)
+	assert.True(t, err == nil)
 	assert.True(t, token != "")
 
 	setupFile("thisisarandomtoken")
 
 	test, err := IsTokenExpired()
-	assert.True(t, err != nil)
+	assert.True(t, err == nil)
 	assert.False(t, test)
 
 	setRefreshTime(int64(2))
@@ -29,7 +29,7 @@ func TestIsTokenExpired(t *testing.T) {
 	setupFile("thisisarandomModifiedtoken")
 
 	test2, err2 := IsTokenExpired()
-	assert.True(t, err2 != nil)
+	assert.True(t, err2 == nil)
 	assert.True(t, test2)
 
 	time.Sleep(5000000000) // It looks like update stats of the file takes a while
@@ -40,7 +40,7 @@ func TestIsTokenExpired(t *testing.T) {
 	time.Sleep(6000000000)
 
 	test3, err3 := IsTokenExpired()
-	assert.True(t, err3 != nil)
+	assert.True(t, err3 == nil)
 	assert.False(t, test3)
 }
 
