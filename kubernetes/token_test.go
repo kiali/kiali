@@ -2,10 +2,11 @@ package kubernetes
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const tempFile = "/tmp/token"
@@ -32,8 +33,9 @@ func TestIsTokenExpired(t *testing.T) {
 	assert.True(t, test2)
 
 	time.Sleep(5000000000) // It looks like update stats of the file takes a while
-	token, errGetToken := GetKialiToken()
+	token2, errGetToken := GetKialiToken()
 	assert.True(t, errGetToken == nil)
+	assert.True(t, token2 != "")
 
 	time.Sleep(6000000000)
 
