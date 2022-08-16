@@ -1,10 +1,11 @@
 package kubernetes
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
+
+	"github.com/kiali/kiali/log"
 )
 
 // Be careful with how you use this token. This is the Kiali Service Account token, not the user token.
@@ -40,7 +41,7 @@ func GetKialiToken() (string, error) {
 			errUpdating := updateKialiToken()
 			isRemote = false
 			if errUpdating != nil {
-				fmt.Errorf("Error updating Kiali token: " + errUpdating.Error())
+				log.Error("Error updating Kiali token: " + errUpdating.Error())
 			}
 		}
 	}
@@ -51,7 +52,7 @@ func GetKialiToken() (string, error) {
 func updateKialiToken() error {
 	token, errRead := ioutil.ReadFile(getDefaultServiceAccountPath())
 	if errRead != nil {
-		fmt.Println(errRead)
+		log.Errorf("Error reading file %v", errRead)
 	}
 	KialiToken = string(token)
 	LastRead = time.Now()
