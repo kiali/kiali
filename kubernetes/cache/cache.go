@@ -163,7 +163,11 @@ func NewKialiCache() (KialiCache, error) {
 				} else {
 					log.Debug("Kiali Cache: Updating token")
 					istioConfig.BearerToken = newToken
-					istioClient, err = kubernetes.NewClientFromConfig(&istioConfig)
+					var errorInitClient error
+					istioClient, errorInitClient = kubernetes.NewClientFromConfig(&istioConfig)
+					if errorInitClient != nil {
+						log.Errorf("Error creating new Client From Config")
+					}
 					kialiCacheImpl.istioClient = *istioClient
 					kialiCacheImpl.k8sApi = istioClient.GetK8sApi()
 					kialiCacheImpl.istioApi = istioClient.Istio()
