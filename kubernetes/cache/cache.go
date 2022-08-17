@@ -116,6 +116,8 @@ func NewKialiCache() (KialiCache, error) {
 
 	refreshDuration := time.Duration(kConfig.KubernetesConfig.CacheDuration) * time.Second
 	tokenNamespaceDuration := time.Duration(kConfig.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
+	tokenExpireDuration := time.Duration(kConfig.KubernetesConfig.TokenExpireDuration) * time.Second
+
 	cacheNamespaces := kConfig.KubernetesConfig.CacheNamespaces
 	cacheIstioTypes := make(map[string]bool)
 	for _, iType := range kConfig.KubernetesConfig.CacheIstioTypes {
@@ -148,6 +150,30 @@ func NewKialiCache() (KialiCache, error) {
 
 	kialiCacheImpl.k8sApi = istioClient.GetK8sApi()
 	kialiCacheImpl.istioApi = istioClient.Istio()
+
+	// Update SA Token
+	ticker := time.NewTicker(tokenExpireDuration)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				if newToken, err := kubernetes.GetKialiToken(); err != nil {
+					log.Errorf("Error updating Kiali Token")
+				} else {
+					log.Debug("Kiali Cache: Updating token")
+					istioConfig.BearerToken = newToken
+					istioClient, err = kubernetes.NewClientFromConfig(&istioConfig)
+					kialiCacheImpl.istioClient = *istioClient
+					kialiCacheImpl.k8sApi = istioClient.GetK8sApi()
+					kialiCacheImpl.istioApi = istioClient.Istio()
+				}
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 
 	log.Infof("Kiali Cache is active for namespaces %v", cacheNamespaces)
 	return &kialiCacheImpl, nil
