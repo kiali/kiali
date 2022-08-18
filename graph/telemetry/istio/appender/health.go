@@ -1,11 +1,12 @@
 package appender
 
 import (
+	"context"
 	"sync"
 	"time"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -41,6 +42,93 @@ func (a HealthAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *gra
 	a.attachHealth(trafficMap, globalInfo)
 }
 
+func addValueToRequests(requests map[string]map[string]float64, protocol, code string, val float64) {
+	if _, ok := requests[protocol]; !ok {
+		requests[protocol] = make(map[string]float64)
+	}
+	if _, ok := requests[protocol][code]; !ok {
+		requests[protocol][code] = 0
+	}
+	requests[protocol][code] += val
+}
+
+// addEdgeToHealthData adds the edge's responses to the source and destination nodes' health data.
+func addEdgeTrafficToNodeHealth(edge *graph.Edge) {
+	source := edge.Source
+	dest := edge.Dest
+	initHealthData(source)
+	initHealthData(dest)
+
+	var (
+		protocol  string
+		responses graph.Responses
+		ok        bool
+	)
+	if protocol, ok = edge.Metadata[graph.ProtocolKey].(string); !ok {
+		return
+	}
+	if responses, ok = edge.Metadata[graph.MetadataKey(protocol+"Responses")].(graph.Responses); !ok {
+		return
+	}
+
+	for code, detail := range responses {
+		for _, val := range detail.Flags {
+			switch source.NodeType {
+			case graph.NodeTypeService:
+				health := source.Metadata[graph.HealthData].(*models.ServiceHealth)
+				addValueToRequests(health.Requests.Outbound, protocol, code, val)
+				source.Metadata[graph.HealthData] = health
+			case graph.NodeTypeWorkload:
+				health := source.Metadata[graph.HealthData].(*models.WorkloadHealth)
+				addValueToRequests(health.Requests.Outbound, protocol, code, val)
+				source.Metadata[graph.HealthData] = health
+			case graph.NodeTypeApp:
+				health := source.Metadata[graph.HealthData].(*models.AppHealth)
+				addValueToRequests(health.Requests.Outbound, protocol, code, val)
+				source.Metadata[graph.HealthData] = health
+				health = source.Metadata[graph.HealthDataApp].(*models.AppHealth)
+				addValueToRequests(health.Requests.Outbound, protocol, code, val)
+				source.Metadata[graph.HealthDataApp] = health
+			}
+
+			switch dest.NodeType {
+			case graph.NodeTypeService:
+				health := dest.Metadata[graph.HealthData].(*models.ServiceHealth)
+				addValueToRequests(health.Requests.Inbound, protocol, code, val)
+				dest.Metadata[graph.HealthData] = health
+			case graph.NodeTypeWorkload:
+				health := dest.Metadata[graph.HealthData].(*models.WorkloadHealth)
+				addValueToRequests(health.Requests.Inbound, protocol, code, val)
+				dest.Metadata[graph.HealthData] = health
+			case graph.NodeTypeApp:
+				health := dest.Metadata[graph.HealthData].(*models.AppHealth)
+				addValueToRequests(health.Requests.Inbound, protocol, code, val)
+				dest.Metadata[graph.HealthData] = health
+				health = dest.Metadata[graph.HealthDataApp].(*models.AppHealth)
+				addValueToRequests(health.Requests.Inbound, protocol, code, val)
+				dest.Metadata[graph.HealthDataApp] = health
+			}
+		}
+	}
+}
+
+func initHealthData(node *graph.Node) {
+	if _, ok := node.Metadata[graph.HealthData]; !ok {
+		if node.NodeType == graph.NodeTypeService {
+			m := models.EmptyServiceHealth()
+			node.Metadata[graph.HealthData] = &m
+		} else if node.NodeType == graph.NodeTypeWorkload {
+			m := models.EmptyWorkloadHealth()
+			node.Metadata[graph.HealthData] = m
+		} else if node.NodeType == graph.NodeTypeApp {
+			m := models.EmptyAppHealth()
+			mApp := models.EmptyAppHealth()
+			node.Metadata[graph.HealthData] = &m
+			node.Metadata[graph.HealthDataApp] = &mApp
+		}
+	}
+}
+
 func (a *HealthAppender) attachHealthConfig(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
 	for _, n := range trafficMap {
 		// skip health for inaccessible nodes.  For now, include health for outsider nodes because edge health
@@ -66,170 +154,198 @@ func (a *HealthAppender) attachHealthConfig(trafficMap graph.TrafficMap, globalI
 }
 
 func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
-	healthReqs := make(map[string]map[string][]*graph.Node)
+	var nodesWithHealth []*graph.Node
+	type healthRequest struct {
+		app      bool
+		service  bool
+		workload bool
+	}
+
+	// Health requests are per namespace meaning if a single node in the namespace
+	// has health info then we send a namespace wide health request to fetch the
+	// health info for the whole namespace.
+	healthReqs := make(map[string]healthRequest)
 
 	// Limit health fetches to only the necessary namespaces for the necessary types
 	for _, n := range trafficMap {
+		// This also gets initialized when summarizing health data from the edges but
+		// not all nodes (idle nodes) have edges so we init the health data here as well.
+		// Frontend expects the health data to not be null and will fail if it is.
+		initHealthData(n)
+
 		// skip health for inaccessible nodes.  For now, include health for outsider nodes because edge health
 		// may depend on any health config for those nodes.  And, users likely find the health useful.
 		if b, ok := n.Metadata[graph.IsInaccessible]; ok && b.(bool) {
 			continue
 		}
 
+		var req healthRequest
+		var ok bool
+		if req, ok = healthReqs[n.Namespace]; !ok {
+			req = healthRequest{}
+		}
+
 		switch n.NodeType {
 		case graph.NodeTypeApp:
-			if _, nsOk := healthReqs[n.Namespace]; !nsOk {
-				healthReqs[n.Namespace] = make(map[string][]*graph.Node)
-			}
 			// always get app health for app node (used for app box health)
-			healthReqs[n.Namespace][graph.NodeTypeApp] = append(healthReqs[n.Namespace][graph.NodeTypeApp], n)
+			req.app = true
 
 			// for versioned app node, get workload health as well (used for the versioned app node itself)
 			if graph.IsOK(n.Workload) {
-				healthReqs[n.Namespace][graph.NodeTypeWorkload] = append(healthReqs[n.Namespace][graph.NodeTypeWorkload], n)
+				req.workload = true
 			}
 		case graph.NodeTypeWorkload:
-			if _, nsOk := healthReqs[n.Namespace]; !nsOk {
-				healthReqs[n.Namespace] = make(map[string][]*graph.Node)
-			}
-
-			healthReqs[n.Namespace][graph.NodeTypeWorkload] = append(healthReqs[n.Namespace][graph.NodeTypeWorkload], n)
+			req.workload = true
 		case graph.NodeTypeService:
-			if _, nsOk := healthReqs[n.Namespace]; !nsOk {
-				healthReqs[n.Namespace] = make(map[string][]*graph.Node)
-			}
-
-			healthReqs[n.Namespace][graph.NodeTypeService] = append(healthReqs[n.Namespace][graph.NodeTypeService], n)
+			req.service = true
 		}
+
+		healthReqs[n.Namespace] = req
+		nodesWithHealth = append(nodesWithHealth, n)
 	}
 
-	// Execute health fetches and attach retrieved health data to nodes
 	bs := globalInfo.Business
 	ctx := globalInfo.Context
 
-	// Gather all the health data we'll need ahead of time key'd by namespace.
-	appHealth := make(map[string]models.NamespaceAppHealth)
-	serviceHealth := make(map[string]models.NamespaceServiceHealth)
-	workloadHealth := make(map[string]models.NamespaceWorkloadHealth)
+	var cancel context.CancelFunc
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	// TODO: Decide if this should be the request duration. If so,
+	// then the user should be informed why the graph request failed
+	// so that they can increase the refresh interval.
+	const maxRequestDuration = time.Minute * 15
+	ctx, cancel = context.WithTimeout(ctx, maxRequestDuration)
+	defer cancel()
+
 	type result struct {
-		namespace      string
-		appHealth      *models.NamespaceAppHealth
-		serviceHealth  *models.NamespaceServiceHealth
-		workloadHealth *models.NamespaceWorkloadHealth
-		err            error
+		namespace        string
+		appNSHealth      models.NamespaceAppHealth
+		serviceNSHealth  models.NamespaceServiceHealth
+		workloadNSHealth models.NamespaceWorkloadHealth
+		err              error
 	}
-	healthCh := make(chan result)
+	resultsCh := make(chan result)
+	// Fetch all the health data in parallel. The health data will most likely be cached
+	// and no prom queries are performed.
+	go func(ctx context.Context) {
+		wg := &sync.WaitGroup{}
+		for namespace, req := range healthReqs {
+			if req.app {
+				wg.Add(1)
+				go func(ctx context.Context, namespace string) {
+					defer wg.Done()
+					h, err := bs.Health.GetNamespaceAppHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, IncludeMetrics: false})
+					resultsCh <- result{appNSHealth: h, namespace: namespace, err: err}
+				}(ctx, namespace)
+			}
+
+			if req.workload {
+				wg.Add(1)
+				go func(ctx context.Context, namespace string) {
+					defer wg.Done()
+					h, err := bs.Health.GetNamespaceWorkloadHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, IncludeMetrics: false})
+					resultsCh <- result{workloadNSHealth: h, namespace: namespace, err: err}
+				}(ctx, namespace)
+			}
+
+			if req.service {
+				wg.Add(1)
+				go func(ctx context.Context, namespace string) {
+					defer wg.Done()
+					s, err := bs.Health.GetNamespaceServiceHealth(ctx, business.NamespaceHealthCriteria{Namespace: namespace, IncludeMetrics: false})
+					resultsCh <- result{serviceNSHealth: s, namespace: namespace, err: err}
+				}(ctx, namespace)
+			}
+		}
+		// Wait for all requests to finish sending before closing the channel.
+		wg.Wait()
+		close(resultsCh)
+	}(ctx)
+
+	// Note: these are key'd off of namespace+name instead of namespace to make lookups unique
+	// and keep the map flatter.
+	appHealth := make(map[string]*models.AppHealth)
+	serviceHealth := make(map[string]*models.ServiceHealth)
+	workloadHealth := make(map[string]*models.WorkloadHealth)
 	var errors []error
-
-	// Start accumulating results before fetching health info
-	doneAccumulating := make(chan struct{})
-	go func() {
-		// Need to loop over healthCh until closed, otherwise any go routines
-		// sending to this chan will remain blocked forever. Ideally as soon
-		// as we get an error we'd propagate cancellation to all the running
-		// goroutines.
-		for res := range healthCh {
-			if res.err != nil {
-				errors = append(errors, res.err)
-			}
-			if res.appHealth != nil {
-				appHealth[res.namespace] = *res.appHealth
-			} else if res.serviceHealth != nil {
-				serviceHealth[res.namespace] = *res.serviceHealth
-			} else if res.workloadHealth != nil {
-				workloadHealth[res.namespace] = *res.workloadHealth
-			}
-		}
-		doneAccumulating <- struct{}{}
-	}()
-
-	wg := sync.WaitGroup{}
-	for namespace, kinds := range healthReqs {
-		// use RequestedDuration as a default (for outsider nodes), otherwise use the safe duration for the requested namespace
-		duration := a.RequestedDuration
-		if ns, ok := a.Namespaces[namespace]; ok {
-			duration = ns.Duration
+	// This will block until all requests have finished.
+	for result := range resultsCh {
+		if result.err != nil {
+			errors = append(errors, result.err)
+			continue
 		}
 
-		for kind := range kinds {
-			wg.Add(1)
-			go func(namespace, kind string) {
-				defer wg.Done()
-				switch kind {
-				case graph.NodeTypeApp:
-					health, err := bs.Health.GetNamespaceAppHealth(ctx, namespace, duration.String(), time.Unix(a.QueryTime, 0))
-					healthCh <- result{
-						namespace: namespace,
-						appHealth: &health,
-						err:       err,
-					}
-				case graph.NodeTypeService:
-					health, err := bs.Health.GetNamespaceServiceHealth(ctx, namespace, duration.String(), time.Unix(a.QueryTime, 0))
-					healthCh <- result{
-						namespace:     namespace,
-						serviceHealth: &health,
-						err:           err,
-					}
-				case graph.NodeTypeWorkload:
-					health, err := bs.Health.GetNamespaceWorkloadHealth(ctx, namespace, duration.String(), time.Unix(a.QueryTime, 0))
-					healthCh <- result{
-						namespace:      namespace,
-						workloadHealth: &health,
-						err:            err,
-					}
-				}
-			}(namespace, kind)
+		if result.appNSHealth != nil {
+			for name, health := range result.appNSHealth {
+				appHealth[name+result.namespace] = health
+			}
+		} else if result.workloadNSHealth != nil {
+			for name, health := range result.workloadNSHealth {
+				workloadHealth[name+result.namespace] = health
+			}
+		} else if result.serviceNSHealth != nil {
+			for name, health := range result.serviceNSHealth {
+				serviceHealth[name+result.namespace] = health
+			}
 		}
 	}
-
-	// Wait until all results have been sent on the chan until closing
-	wg.Wait()
-	close(healthCh)
-	<-doneAccumulating
 	if len(errors) > 0 {
-		// Check for error needs to happen in the main routine or else panic won't get propagated up
+		// This just panics with the first error.
 		graph.CheckError(errors[0])
 	}
 
-	for namespace, kinds := range healthReqs {
-		for kind, nodes := range kinds {
-			switch kind {
-			case graph.NodeTypeApp:
-				health := appHealth[namespace]
-				for _, n := range nodes {
-					if h, ok := health[n.App]; ok {
-						// versionedApp nodes store the app health (for use with appBox health) but natively reflect workload health
-						if graph.IsOK(n.Workload) {
-							n.Metadata[graph.HealthDataApp] = h
-						} else {
-							n.Metadata[graph.HealthData] = h
-						}
-					} else {
-						n.Metadata[graph.HealthData] = []int{}
-						log.Tracef("No health found for [%s] [%s]", n.NodeType, n.App)
-					}
-				}
-			case graph.NodeTypeService:
-				health := serviceHealth[namespace]
-				for _, n := range nodes {
-					if h, ok := health[n.Service]; ok {
-						n.Metadata[graph.HealthData] = h
-					} else {
-						n.Metadata[graph.HealthData] = []int{}
-						log.Tracef("No health found for [%s] [%s]", n.NodeType, n.Service)
-					}
-				}
-			case graph.NodeTypeWorkload:
-				health := workloadHealth[namespace]
-				for _, n := range nodes {
-					if h, ok := health[n.Workload]; ok {
-						n.Metadata[graph.HealthData] = h
-					} else {
-						n.Metadata[graph.HealthData] = []int{}
-						log.Tracef("No health found for [%s] [%s]", n.NodeType, n.Workload)
-					}
-				}
+	for _, e := range trafficMap.Edges() {
+		addEdgeTrafficToNodeHealth(e)
+	}
+
+	for _, n := range nodesWithHealth {
+		switch n.NodeType {
+		case graph.NodeTypeApp:
+			var key graph.MetadataKey
+			if graph.IsOK(n.Workload) {
+				key = graph.HealthDataApp
+			} else {
+				key = graph.HealthData
 			}
+
+			var health *models.AppHealth
+			if h, found := n.Metadata[key]; found {
+				health = h.(*models.AppHealth)
+			} else {
+				health = &models.AppHealth{}
+			}
+
+			if h, found := appHealth[n.App+n.Namespace]; found {
+				health.WorkloadStatuses = h.WorkloadStatuses
+				health.Requests.HealthAnnotations = h.Requests.HealthAnnotations
+			}
+			n.Metadata[key] = health
+		case graph.NodeTypeService:
+			var health *models.ServiceHealth
+			if h, found := n.Metadata[graph.HealthData]; found {
+				health = h.(*models.ServiceHealth)
+			} else {
+				health = &models.ServiceHealth{}
+			}
+
+			if h, found := serviceHealth[n.Service+n.Namespace]; found {
+				health.Requests.HealthAnnotations = h.Requests.HealthAnnotations
+			}
+			n.Metadata[graph.HealthData] = health
+		case graph.NodeTypeWorkload:
+			var health *models.WorkloadHealth
+			if h, found := n.Metadata[graph.HealthData]; found {
+				health = h.(*models.WorkloadHealth)
+			} else {
+				health = &models.WorkloadHealth{}
+			}
+
+			if h, found := workloadHealth[n.Workload+n.Namespace]; found {
+				health.WorkloadStatus = h.WorkloadStatus
+				health.Requests.HealthAnnotations = h.Requests.HealthAnnotations
+			}
+			n.Metadata[graph.HealthData] = health
 		}
 	}
 }

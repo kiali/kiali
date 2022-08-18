@@ -35,7 +35,7 @@ func Panic(message string, code int) Response {
 // CheckError panics with the supplied error if it is non-nil
 func CheckError(err error) {
 	if err != nil {
-		panic(err.Error)
+		panic(err.Error())
 	}
 }
 

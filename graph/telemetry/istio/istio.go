@@ -49,9 +49,7 @@ const (
 	tsHashMap graph.MetadataKey = "tsHashMap"
 )
 
-var (
-	grpcMetric = regexp.MustCompile(`istio_.*_messages`)
-)
+var grpcMetric = regexp.MustCompile(`istio_.*_messages`)
 
 // BuildNamespacesTrafficMap is required by the graph/TelemtryVendor interface
 func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
@@ -388,7 +386,6 @@ func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val flo
 // addEdgeTraffic uses edgeTSHash that the metric information has not been applied to the edge. Returns true
 // if the the metric information is applied, false if it determined to be a duplicate.
 func addEdgeTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags, host string, source, dest *graph.Node, edgeTSHash string, o graph.TelemetryOptions) bool {
-
 	var edge *graph.Edge
 	for _, e := range source.Edges {
 		if dest.ID == e.Dest.ID && e.Metadata[graph.ProtocolKey] == protocol {

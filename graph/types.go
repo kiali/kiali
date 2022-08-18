@@ -87,6 +87,15 @@ func (s *ServiceName) Key() string {
 // namespace.
 type TrafficMap map[string]*Node
 
+// Edges returns all of the edges in the traffic map.
+func (tm TrafficMap) Edges() []*Edge {
+	var edges []*Edge
+	for _, n := range tm {
+		edges = append(edges, n.Edges...)
+	}
+	return edges
+}
+
 // NewNode constructor
 func NewNode(cluster, serviceNamespace, service, workloadNamespace, workload, app, version, graphType string) Node {
 	id, nodeType := Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, version, graphType)
