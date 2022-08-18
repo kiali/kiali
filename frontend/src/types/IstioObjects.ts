@@ -802,6 +802,24 @@ export interface ServiceEntry extends IstioObject {
   spec: ServiceEntrySpec;
 }
 
+export interface WasmPlugin extends IstioObject {
+  spec: WasmPluginSpec;
+}
+
+export interface WasmPluginSpec extends IstioObject {
+  workloadSelector?: WorkloadSelector;
+  url: string;
+  pluginName: string;
+}
+
+export interface Telemetry extends IstioObject {
+  spec: TelemetrySpec;
+}
+
+export interface TelemetrySpec extends IstioObject {
+  workloadSelector?: WorkloadSelector;
+}
+
 export interface Endpoint {
   address: string;
   ports: { [key: string]: number };

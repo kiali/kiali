@@ -3,10 +3,11 @@ package cache
 import (
 	"errors"
 	"fmt"
-
+	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
 	istio "istio.io/client-go/pkg/informers/externalversions"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -34,6 +35,10 @@ type (
 		GetWorkloadEntries(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadEntry, error)
 		GetWorkloadGroup(namespace, name string) (*networking_v1beta1.WorkloadGroup, error)
 		GetWorkloadGroups(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadGroup, error)
+		GetWasmPlugin(namespace, name string) (*extentions_v1alpha1.WasmPlugin, error)
+		GetWasmPlugins(namespace, labelSelector string) ([]*extentions_v1alpha1.WasmPlugin, error)
+		GetTelemetry(namespace, name string) (*v1alpha1.Telemetry, error)
+		GetTelemetries(namespace, labelSelector string) ([]*v1alpha1.Telemetry, error)
 
 		GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error)
 		GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1beta1.AuthorizationPolicy, error)
@@ -631,6 +636,128 @@ func (c *kialiCacheImpl) GetWorkloadGroups(namespace, labelSelector string) ([]*
 		}
 	}
 	return []*networking_v1beta1.WorkloadGroup{}, nil
+}
+
+func (c *kialiCacheImpl) GetWasmPlugin(namespace, name string) (*extentions_v1alpha1.WasmPlugin, error) {
+	if !c.CheckIstioResource(kubernetes.WasmPlugins) {
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroupType)
+	}
+	if nsCache, ok := c.nsCache[namespace]; ok {
+		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
+		key := namespace + "/" + name
+		obj, exist, err := nsCache[kubernetes.WasmPluginType].GetStore().GetByKey(key)
+		if err != nil {
+			return nil, err
+		}
+		if exist {
+			l, ok := obj.(*extentions_v1alpha1.WasmPlugin)
+			if !ok {
+				return nil, errors.New("bad WorkloadGroup type found in cache")
+			}
+			l.Kind = kubernetes.WasmPlugins
+			log.Tracef("[Kiali Cache] Get [resource: WasmPlugin] for [namespace: %s] [name: %s]", namespace, name)
+			return l, nil
+		}
+	}
+	return nil, nil
+}
+
+func (c *kialiCacheImpl) GetWasmPlugins(namespace, labelSelector string) ([]*extentions_v1alpha1.WasmPlugin, error) {
+	if !c.CheckIstioResource(kubernetes.WasmPlugins) {
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroups)
+	}
+	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
+		l := nsCache[kubernetes.WasmPluginType].GetStore().List()
+		lenL := len(l)
+		if lenL > 0 {
+			_, ok := l[0].(*extentions_v1alpha1.WasmPlugin)
+			if !ok {
+				return []*extentions_v1alpha1.WasmPlugin{}, errors.New("bad WorkloadGroup type found in cache")
+			}
+			nsL := make([]*extentions_v1alpha1.WasmPlugin, lenL)
+			for i, li := range l {
+				nsL[i] = li.(*extentions_v1alpha1.WasmPlugin)
+				nsL[i].Kind = kubernetes.WasmPluginType
+			}
+			log.Tracef("[Kiali Cache] Get [resource: WorkloadGroup] for [namespace: %s] = %d", namespace, lenL)
+			if labelSelector == "" {
+				return nsL, nil
+			}
+			var filteredL []*extentions_v1alpha1.WasmPlugin
+			selector, selErr := labels.Parse(labelSelector)
+			if selErr != nil {
+				return []*extentions_v1alpha1.WasmPlugin{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
+			}
+			for _, li := range nsL {
+				if selector.Matches(labels.Set(li.Labels)) {
+					filteredL = append(filteredL, li)
+				}
+			}
+			return filteredL, nil
+		}
+	}
+	return []*extentions_v1alpha1.WasmPlugin{}, nil
+}
+
+func (c *kialiCacheImpl) GetTelemetry(namespace, name string) (*v1alpha1.Telemetry, error) {
+	if !c.CheckIstioResource(kubernetes.Telemetries) {
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroupType)
+	}
+	if nsCache, ok := c.nsCache[namespace]; ok {
+		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
+		key := namespace + "/" + name
+		obj, exist, err := nsCache[kubernetes.TelemetryType].GetStore().GetByKey(key)
+		if err != nil {
+			return nil, err
+		}
+		if exist {
+			l, ok := obj.(*v1alpha1.Telemetry)
+			if !ok {
+				return nil, errors.New("bad WorkloadGroup type found in cache")
+			}
+			l.Kind = kubernetes.Telemetries
+			log.Tracef("[Kiali Cache] Get [resource: Telemetry] for [namespace: %s] [name: %s]", namespace, name)
+			return l, nil
+		}
+	}
+	return nil, nil
+}
+
+func (c *kialiCacheImpl) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1.Telemetry, error) {
+	if !c.CheckIstioResource(kubernetes.Telemetries) {
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroups)
+	}
+	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
+		l := nsCache[kubernetes.Telemetries].GetStore().List()
+		lenL := len(l)
+		if lenL > 0 {
+			_, ok := l[0].(*v1alpha1.Telemetry)
+			if !ok {
+				return []*v1alpha1.Telemetry{}, errors.New("bad WorkloadGroup type found in cache")
+			}
+			nsL := make([]*v1alpha1.Telemetry, lenL)
+			for i, li := range l {
+				nsL[i] = li.(*v1alpha1.Telemetry)
+				nsL[i].Kind = kubernetes.TelemetryType
+			}
+			log.Tracef("[Kiali Cache] Get [resource: WorkloadGroup] for [namespace: %s] = %d", namespace, lenL)
+			if labelSelector == "" {
+				return nsL, nil
+			}
+			var filteredL []*v1alpha1.Telemetry
+			selector, selErr := labels.Parse(labelSelector)
+			if selErr != nil {
+				return []*v1alpha1.Telemetry{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
+			}
+			for _, li := range nsL {
+				if selector.Matches(labels.Set(li.Labels)) {
+					filteredL = append(filteredL, li)
+				}
+			}
+			return filteredL, nil
+		}
+	}
+	return []*v1alpha1.Telemetry{}, nil
 }
 
 func (c *kialiCacheImpl) GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error) {
