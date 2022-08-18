@@ -22,6 +22,7 @@ import { bindActionCreators } from 'redux';
 import { style } from 'typestyle';
 
 type Props = {
+  menuAppendTo?: HTMLElement | (() => HTMLElement) | 'parent' | 'inline';
   timeRange: TimeRange;
   tooltip: string;
   setTimeRange: (range: TimeRange) => void;
@@ -101,6 +102,7 @@ class TimeRangeComponent extends React.Component<Props> {
         initialLabel={d ? serverConfig.durations[d] : 'Custom'}
         options={options}
         tooltip={this.props.tooltip}
+        menuAppendTo={this.props.menuAppendTo}
       />
     );
   }
