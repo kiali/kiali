@@ -63,9 +63,10 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		case config.AuthStrategyAnonymous:
 			log.Tracef("Access to the server endpoint is not secured with credentials - letting request come in. Url: [%s]", r.URL.String())
 			token, err := kubernetes.GetKialiToken()
-			if err == nil {
-				authInfo = &api.AuthInfo{Token: token}
+			if err != nil {
+				token = ""
 			}
+			authInfo = &api.AuthInfo{Token: token}
 		}
 
 		switch statusCode {
