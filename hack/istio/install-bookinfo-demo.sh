@@ -213,12 +213,47 @@ else
   $CLIENT_EXE create namespace ${NAMESPACE}
 fi
 
+
+# If OpenShift, we need to do some additional things
+if [ "${IS_OPENSHIFT}" == "true" ]; then
+  $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
+  $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
+  if [ "${IS_MAISTRA}" != "true" ]; then
+    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} apply -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+NAD
+  fi
+  cat <<SCC | $CLIENT_EXE apply -f -
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: bookinfo-scc
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+users:
+- "system:serviceaccount:${NAMESPACE}:bookinfo-details"
+- "system:serviceaccount:${NAMESPACE}:bookinfo-productpage"
+- "system:serviceaccount:${NAMESPACE}:bookinfo-ratings"
+- "system:serviceaccount:${NAMESPACE}:bookinfo-ratings=v2"
+- "system:serviceaccount:${NAMESPACE}:bookinfo-reviews"
+- "system:serviceaccount:${NAMESPACE}:default"
+SCC
+fi
+
 if [ "${AUTO_INJECTION}" == "true" ]; then
   $CLIENT_EXE label namespace ${NAMESPACE} "istio-injection=enabled"
   $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
 else
   $ISTIOCTL kube-inject -f ${BOOKINFO_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
 fi
+
 
 $CLIENT_EXE apply -n ${NAMESPACE} -f ${GATEWAY_YAML}
 
@@ -259,39 +294,6 @@ sleep 4
 echo "Bookinfo Demo should be installed and starting up - here are the pods and services"
 $CLIENT_EXE get services -n ${NAMESPACE}
 $CLIENT_EXE get pods -n ${NAMESPACE}
-
-# If OpenShift, we need to do some additional things
-if [ "${IS_OPENSHIFT}" == "true" ]; then
-  $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
-  $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
-  if [ "${IS_MAISTRA}" != "true" ]; then
-    cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} apply -f -
-apiVersion: "k8s.cni.cncf.io/v1"
-kind: NetworkAttachmentDefinition
-metadata:
-  name: istio-cni
-NAD
-  fi  
-  cat <<SCC | $CLIENT_EXE apply -f -
-apiVersion: security.openshift.io/v1
-kind: SecurityContextConstraints
-metadata:
-  name: bookinfo-scc
-runAsUser:
-  type: RunAsAny
-seLinuxContext:
-  type: RunAsAny
-supplementalGroups:
-  type: RunAsAny
-users:
-- "system:serviceaccount:${NAMESPACE}:bookinfo-details"
-- "system:serviceaccount:${NAMESPACE}:bookinfo-productpage"
-- "system:serviceaccount:${NAMESPACE}:bookinfo-ratings"
-- "system:serviceaccount:${NAMESPACE}:bookinfo-ratings=v2"
-- "system:serviceaccount:${NAMESPACE}:bookinfo-reviews"
-- "system:serviceaccount:${NAMESPACE}:default"
-SCC
-fi
 
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
   echo "Installing Traffic Generator"

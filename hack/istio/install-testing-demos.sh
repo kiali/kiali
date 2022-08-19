@@ -18,8 +18,6 @@ install_sleep_app() {
   
   ${CLIENT_EXE} label namespace "sleep" istio-injection=enabled --overwrite=true
 
-  ${CLIENT_EXE} apply -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
-
   if [ "${IS_OPENSHIFT}" == "true" ]; then
       cat <<NAD | $CLIENT_EXE -n sleep apply -f -
 apiVersion: "k8s.cni.cncf.io/v1"
@@ -43,6 +41,14 @@ users:
 - "system:serviceaccount:sleep:sleep"
 SCC
   fi
+
+  # For OpenShift 4.11, adds default service account in the current ns to use as a user
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n sleep
+  fi
+
+  ${CLIENT_EXE} apply -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
+
 }
 
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"

@@ -132,10 +132,12 @@ if [ "${ENABLE_INJECTION}" == "true" ]; then
   ${CLIENT_EXE} label namespace ${NAMESPACE_BETA} istio-injection=enabled
 fi
 
-# Deploy the demo
+# For OpenShift 4.11, adds default service account in the current ns to use as a user
+if [ "${IS_OPENSHIFT}" == "true" ]; then
+  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE_ALPHA}
+  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE_BETA}
+fi
 
-${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/error-rates/alpha.yaml") -n ${NAMESPACE_ALPHA}
-${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/error-rates/beta.yaml") -n ${NAMESPACE_BETA}
 
 if [ "${IS_MAISTRA}" == "true" ]; then
   prepare_maistra "${NAMESPACE_ALPHA}"
@@ -173,3 +175,7 @@ users:
 - "system:serviceaccount:${NAMESPACE_BETA}:default"
 SCC
 fi
+
+# Deploy the demo
+${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/error-rates/alpha.yaml") -n ${NAMESPACE_ALPHA}
+${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/error-rates/beta.yaml") -n ${NAMESPACE_BETA}
