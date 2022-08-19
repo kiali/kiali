@@ -166,7 +166,7 @@ func NewKialiCache() (KialiCache, error) {
 					var errorInitClient error
 					istioClient, errorInitClient = kubernetes.NewClientFromConfig(&istioConfig)
 					if errorInitClient != nil {
-						log.Errorf("Error creating new Client From Config")
+						log.Errorf("Error creating new Client From Config %v", errorInitClient)
 					}
 					kialiCacheImpl.istioClient = *istioClient
 					kialiCacheImpl.k8sApi = istioClient.GetK8sApi()
