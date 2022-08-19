@@ -149,10 +149,10 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "spec.probe", Message: "ReadinessProbe describes the configuration the user must provide for healthchecking on their workload."},
 	},
 	"wasmplugins": {
-		{ObjectField: "", Message: "TODO"},
+		{ObjectField: "spec.metadata", Message: "TODO"},
 	},
 	"telemetries": {
-		{ObjectField: "", Message: "TODO"},
+		{ObjectField: "spec.metadata", Message: "TODO"},
 	},
 	"internal": {
 		{ObjectField: "", Message: "Internal resources are not editable"},

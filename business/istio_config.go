@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
+	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
 	"strings"
 	"sync"
 
@@ -47,6 +49,8 @@ type IstioConfigCriteria struct {
 	IncludeWorkloadGroups         bool
 	IncludeRequestAuthentications bool
 	IncludeEnvoyFilters           bool
+	IncludeWasmPlugins            bool
+	IncludeTelemetry              bool
 	LabelSelector                 string
 	WorkloadSelector              string
 }
@@ -77,6 +81,10 @@ func (icc IstioConfigCriteria) Include(resource string) bool {
 		return icc.IncludeRequestAuthentications
 	case kubernetes.EnvoyFilters:
 		return icc.IncludeEnvoyFilters
+	case kubernetes.WasmPlugins:
+		return icc.IncludeWasmPlugins
+	case kubernetes.Telemetries:
+		return icc.IncludeTelemetry
 	}
 	return false
 }
@@ -119,6 +127,8 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		Sidecars:         []*networking_v1beta1.Sidecar{},
 		WorkloadEntries:  []*networking_v1beta1.WorkloadEntry{},
 		WorkloadGroups:   []*networking_v1beta1.WorkloadGroup{},
+		WasmPlugins:      []*extentions_v1alpha1.WasmPlugin{},
+		Telemetries:      []*v1alpha1.Telemetry{},
 
 		AuthorizationPolicies:  []*security_v1beta1.AuthorizationPolicy{},
 		PeerAuthentications:    []*security_v1beta1.PeerAuthentication{},
@@ -164,6 +174,12 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		if criteria.Include(kubernetes.WorkloadGroups) {
 			istioConfigList.WorkloadGroups = registryConfiguration.WorkloadGroups
 		}
+		if criteria.Include(kubernetes.WasmPlugins) {
+			istioConfigList.WasmPlugins = registryConfiguration.WasmPlugins
+		}
+		if criteria.Include(kubernetes.Telemetries) {
+			istioConfigList.Telemetries = registryConfiguration.Telemetries
+		}
 		if criteria.Include(kubernetes.AuthorizationPolicies) {
 			istioConfigList.AuthorizationPolicies = registryConfiguration.AuthorizationPolicies
 		}
@@ -192,7 +208,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 	errChan := make(chan error, 11)
 
 	var wg sync.WaitGroup
-	wg.Add(11)
+	wg.Add(13)
 
 	listOpts := meta_v1.ListOptions{LabelSelector: criteria.LabelSelector}
 
@@ -340,6 +356,40 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 			} else {
 				wgl, e := in.k8s.Istio().NetworkingV1beta1().WorkloadGroups(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.WorkloadGroups = wgl.Items
+				err = e
+			}
+			if err != nil {
+				errChan <- err
+			}
+		}
+	}(ctx, errChan)
+
+	go func(ctx context.Context, errChan chan error) {
+		defer wg.Done()
+		if criteria.Include(kubernetes.WasmPlugins) {
+			var err error
+			if IsResourceCached(criteria.Namespace, kubernetes.WasmPlugins) {
+				istioConfigList.WorkloadGroups, err = kialiCache.GetWorkloadGroups(criteria.Namespace, criteria.LabelSelector)
+			} else {
+				wgl, e := in.k8s.Istio().ExtensionsV1alpha1().WasmPlugins(criteria.Namespace).List(ctx, listOpts)
+				istioConfigList.WasmPlugins = wgl.Items
+				err = e
+			}
+			if err != nil {
+				errChan <- err
+			}
+		}
+	}(ctx, errChan)
+
+	go func(ctx context.Context, errChan chan error) {
+		defer wg.Done()
+		if criteria.Include(kubernetes.Telemetries) {
+			var err error
+			if IsResourceCached(criteria.Namespace, kubernetes.Telemetries) {
+				istioConfigList.Telemetries, err = kialiCache.GetTelemetries(criteria.Namespace, criteria.LabelSelector)
+			} else {
+				wgl, e := in.k8s.Istio().TelemetryV1alpha1().Telemetries(criteria.Namespace).List(ctx, listOpts)
+				istioConfigList.Telemetries = wgl.Items
 				err = e
 			}
 			if err != nil {
@@ -515,6 +565,12 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, namespa
 			istioConfigDetail.WorkloadGroup.Kind = kubernetes.WorkloadGroupType
 			istioConfigDetail.WorkloadGroup.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
 		}
+	case kubernetes.WasmPlugins:
+		istioConfigDetail.WasmPlugin, err = in.k8s.Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Get(ctx, object, getOpts)
+		if err == nil {
+			istioConfigDetail.WasmPlugin.Kind = kubernetes.WasmPluginType
+			istioConfigDetail.WasmPlugin.APIVersion = kubernetes.ApiNetworkingVersionV1Alpha3
+		}
 	case kubernetes.AuthorizationPolicies:
 		istioConfigDetail.AuthorizationPolicy, err = in.k8s.Istio().SecurityV1beta1().AuthorizationPolicies(namespace).Get(ctx, object, getOpts)
 		if err == nil {
@@ -650,6 +706,26 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 				istioConfigDetail.WorkloadGroup = cfg
 				istioConfigDetail.WorkloadGroup.Kind = kubernetes.WorkloadGroupType
 				istioConfigDetail.WorkloadGroup.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.WasmPlugins:
+		configs := registryConfiguration.WasmPlugins
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.WasmPlugin = cfg
+				istioConfigDetail.WasmPlugin.Kind = kubernetes.WasmPluginType
+				istioConfigDetail.WasmPlugin.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				return istioConfigDetail, nil
+			}
+		}
+	case kubernetes.Telemetries:
+		configs := registryConfiguration.Telemetries
+		for _, cfg := range configs {
+			if cfg.Name == object && cfg.Namespace == namespace {
+				istioConfigDetail.Telemetry = cfg
+				istioConfigDetail.Telemetry.Kind = kubernetes.TelemetryType
+				istioConfigDetail.Telemetry.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
 				return istioConfigDetail, nil
 			}
 		}
@@ -861,6 +937,20 @@ func (in *IstioConfigService) CreateIstioConfigDetail(namespace, resourceType st
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
 		istioConfigDetail.WorkloadGroup, err = in.k8s.Istio().NetworkingV1beta1().WorkloadGroups(namespace).Create(ctx, istioConfigDetail.WorkloadGroup, createOpts)
+	case kubernetes.WasmPlugins:
+		istioConfigDetail.WasmPlugin = &extentions_v1alpha1.WasmPlugin{}
+		err = json.Unmarshal(body, istioConfigDetail.WasmPlugin)
+		if err != nil {
+			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
+		}
+		istioConfigDetail.WasmPlugin, err = in.k8s.Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Create(ctx, istioConfigDetail.WasmPlugin, createOpts)
+	case kubernetes.Telemetries:
+		istioConfigDetail.Telemetry = &v1alpha1.Telemetry{}
+		err = json.Unmarshal(body, istioConfigDetail.Telemetry)
+		if err != nil {
+			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
+		}
+		istioConfigDetail.Telemetry, err = in.k8s.Istio().TelemetryV1alpha1().Telemetries(namespace).Create(ctx, istioConfigDetail.Telemetry, createOpts)
 	case kubernetes.AuthorizationPolicies:
 		istioConfigDetail.AuthorizationPolicy = &security_v1beta1.AuthorizationPolicy{}
 		err = json.Unmarshal(body, istioConfigDetail.AuthorizationPolicy)
@@ -1033,6 +1123,8 @@ func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelecto
 	criteria.IncludeWorkloadGroups = defaultInclude
 	criteria.IncludeRequestAuthentications = defaultInclude
 	criteria.IncludeEnvoyFilters = defaultInclude
+	criteria.IncludeWasmPlugins = defaultInclude
+	criteria.IncludeTelemetry = defaultInclude
 	criteria.LabelSelector = labelSelector
 	criteria.WorkloadSelector = workloadSelector
 
@@ -1073,6 +1165,12 @@ func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelecto
 	}
 	if checkType(types, kubernetes.WorkloadGroups) {
 		criteria.IncludeWorkloadGroups = true
+	}
+	if checkType(types, kubernetes.WasmPlugins) {
+		criteria.IncludeWasmPlugins = true
+	}
+	if checkType(types, kubernetes.Telemetries) {
+		criteria.IncludeTelemetry = true
 	}
 	if checkType(types, kubernetes.RequestAuthentications) {
 		criteria.IncludeRequestAuthentications = true
