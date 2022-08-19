@@ -88,7 +88,7 @@ export const dicIstioType = {
   workloadgroups: 'WorkloadGroup',
   envoyfilters: 'EnvoyFilter',
   telemetries: 'Telemetry',
-  wasmPlugins: 'WasmPlugin',
+  wasmplugins: 'WasmPlugin',
 
   gateway: 'Gateway',
   virtualservice: 'VirtualService',
