@@ -571,6 +571,12 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, namespa
 			istioConfigDetail.WasmPlugin.Kind = kubernetes.WasmPluginType
 			istioConfigDetail.WasmPlugin.APIVersion = kubernetes.ApiNetworkingVersionV1Alpha3
 		}
+	case kubernetes.Telemetries:
+		istioConfigDetail.Telemetry, err = in.k8s.Istio().TelemetryV1alpha1().Telemetries(namespace).Get(ctx, object, getOpts)
+		if err == nil {
+			istioConfigDetail.Telemetry.Kind = kubernetes.Telemetries
+			istioConfigDetail.Telemetry.APIVersion = kubernetes.ApiNetworkingVersionV1Alpha3
+		}
 	case kubernetes.AuthorizationPolicies:
 		istioConfigDetail.AuthorizationPolicy, err = in.k8s.Istio().SecurityV1beta1().AuthorizationPolicies(namespace).Get(ctx, object, getOpts)
 		if err == nil {
