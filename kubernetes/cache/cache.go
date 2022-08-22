@@ -159,7 +159,7 @@ func NewKialiCache() (KialiCache, error) {
 			select {
 			case <-ticker.C:
 				if newToken, err := kubernetes.GetKialiToken(); err != nil {
-					log.Errorf("Error updating Kiali Token")
+					log.Errorf("Error updating Kiali Token %v", err)
 				} else {
 					log.Debug("Kiali Cache: Updating token")
 					istioConfig.BearerToken = newToken

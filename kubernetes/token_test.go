@@ -1,7 +1,6 @@
 package kubernetes
 
 import (
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -18,42 +17,43 @@ func TestIsTokenExpired(t *testing.T) {
 	SetDefaultServiceAccountPath(tmpFileTokenExpired)
 	SetTokenExpireDuration(5 * time.Second)
 
-	setupFile("thisisarandomtoken", tmpFileTokenExpired)
+	errCr := setupFile("thisisarandomtoken", tmpFileTokenExpired)
+	assert.Nil(t, errCr)
 	token, err := GetKialiToken()
+	assert.Nil(t, err)
 
-	assert.True(t, err == nil)
 	assert.True(t, token != "")
 	assert.False(t, IsTokenExpired())
 
-	removeFile(tmpFileTokenExpired)
+	errRm := removeFile(tmpFileTokenExpired)
+	assert.Nil(t, errRm)
 }
 
 // Test Kiali Get Token
 func TestGetKialiToken(t *testing.T) {
 	SetDefaultServiceAccountPath(tmpFileGetToken)
 	data := "thisisarandomtoken"
-	setupFile(data, tmpFileGetToken)
+	
+	errCr := setupFile(data, tmpFileGetToken)
+	assert.Nil(t, errCr)
+
 	token, err := GetKialiToken()
-	if err != nil {
-		fmt.Println("Error getting token")
-	}
+	assert.Nil(t, err)
+
 	assert.True(t, data == token)
-	removeFile(tmpFileGetToken)
+	errRm := removeFile(tmpFileGetToken)
+	assert.Nil(t, errRm)
 }
 
 // Aux func to setup files
-func setupFile(content string, name string) {
+func setupFile(content string, name string) error {
 	data := []byte(content)
 	err := os.WriteFile(name, data, 0644)
-	if err != nil {
-		fmt.Println("Error writting file")
-	}
+	return err
 }
 
 // Aux func to remove file
-func removeFile(name string) {
+func removeFile(name string) error {
 	err := os.Remove(name)
-	if err != nil {
-		fmt.Println("Error writting file")
-	}
+	return err
 }
