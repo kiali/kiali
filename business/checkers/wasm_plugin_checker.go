@@ -1,8 +1,9 @@
 package checkers
 
 import (
-	"github.com/kiali/kiali/models"
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
+
+	"github.com/kiali/kiali/models"
 )
 
 const WasmPluginCheckerType = "wasmplugin"

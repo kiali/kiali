@@ -1,8 +1,9 @@
 package checkers
 
 import (
-	"github.com/kiali/kiali/models"
 	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
+
+	"github.com/kiali/kiali/models"
 )
 
 const TelemetryCheckerType = "telemetry"
