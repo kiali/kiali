@@ -220,6 +220,7 @@ export const IstioTypes = {
   envoyfilter: { name: 'EnvoyFilter', url: 'envoyfilters', badge: PFBadges.EnvoyFilter } as istioConfigType,
   wasmplugin: {name: 'WasmPlugin', url: 'wasmplugins', badge: PFBadges.WasmPlugin} as istioConfigType,
   telemetry: {name: 'Telemetry', url: 'telemetries', badge: PFBadges.Telemetry} as istioConfigType,
+  telemetries: {name: 'Telemetry', url: 'telemetries', badge: PFBadges.Telemetry} as istioConfigType,
   attributemanifest: {
     name: 'AttributeManifest',
     url: 'attributemanifests',

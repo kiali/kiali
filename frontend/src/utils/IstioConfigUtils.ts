@@ -45,6 +45,10 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails | IstioCo
       istioObject = istioObjectDetails.requestAuthentication;
     } else if (istioObjectDetails.sidecar) {
       istioObject = istioObjectDetails.sidecar;
+    } else if (istioObjectDetails.wasmPlugin) {
+      istioObject = istioObjectDetails.wasmPlugin;
+    } else if (istioObjectDetails.telemetry) {
+      istioObject = istioObjectDetails.telemetry;
     }
   }
   return istioObject;

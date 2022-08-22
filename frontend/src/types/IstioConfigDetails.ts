@@ -15,7 +15,7 @@ import {
   EnvoyFilter,
   WorkloadGroup,
   References,
-  HelpMessage
+  HelpMessage, WasmPlugin, Telemetry
 } from './IstioObjects';
 import { AceOptions } from 'react-ace/types';
 
@@ -35,6 +35,8 @@ export interface IstioConfigDetails {
   workloadEntry: WorkloadEntry;
   workloadGroup: WorkloadGroup;
   envoyFilter: EnvoyFilter;
+  wasmPlugin: WasmPlugin;
+  telemetry: Telemetry;
   authorizationPolicy: AuthorizationPolicy;
   peerAuthentication: PeerAuthentication;
   requestAuthentication: RequestAuthentication;
