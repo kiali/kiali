@@ -112,6 +112,8 @@ var ObjectTypeSingular = map[string]string{
 	"peerauthentications":    "peerauthentication",
 	"requestauthentications": "requestauthentication",
 	"workloads":              "workload",
+	"wasmplugins":            "wasmpluin",
+	"telemetries":            "telemetry",
 }
 
 var checkDescriptors = map[string]IstioCheck{

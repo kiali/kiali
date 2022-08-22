@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
-	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
 	"strings"
 	"sync"
 
+	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
 	api_errors "k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	api_types "k8s.io/apimachinery/pkg/types"
@@ -575,7 +575,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, namespa
 		istioConfigDetail.Telemetry, err = in.k8s.Istio().TelemetryV1alpha1().Telemetries(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.Telemetry.Kind = kubernetes.Telemetries
-			istioConfigDetail.Telemetry.APIVersion = kubernetes.ApiNetworkingVersionV1Alpha3
+			istioConfigDetail.Telemetry.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
 		}
 	case kubernetes.AuthorizationPolicies:
 		istioConfigDetail.AuthorizationPolicy, err = in.k8s.Istio().SecurityV1beta1().AuthorizationPolicies(namespace).Get(ctx, object, getOpts)

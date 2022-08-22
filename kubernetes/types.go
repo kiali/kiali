@@ -53,7 +53,7 @@ const (
 	WorkloadGroups    = "workloadgroups"
 	WorkloadGroupType = "WorkloadGroup"
 
-	WasmPlugins    = "wasmPlugins"
+	WasmPlugins    = "wasmplugins"
 	WasmPluginType = "WasmPlugin"
 
 	Telemetries   = "telemetries"
