@@ -57,7 +57,7 @@ const (
 	WasmPluginType = "WasmPlugin"
 
 	Telemetries   = "telemetries"
-	TelemetryType = "TelemetryType"
+	TelemetryType = "Telemetry"
 
 	// Authorization PeerAuthentications
 	AuthorizationPolicies     = "authorizationpolicies"
@@ -90,6 +90,18 @@ var (
 		Version: "v1beta1",
 	}
 	ApiSecurityVersion = SecurityGroupVersion.Group + "/" + SecurityGroupVersion.Version
+
+	ExtensionGroupVersionV1Alpha1 = schema.GroupVersion{
+		Group:   "extensions.istio.io",
+		Version: "v1alpha1",
+	}
+	ApiExtensionV1Alpha1 = ExtensionGroupVersionV1Alpha1.Group + "/" + ExtensionGroupVersionV1Alpha1.Version
+
+	TelemetryGroupV1Alpha1 = schema.GroupVersion{
+		Group:   "telemetry.istio.io",
+		Version: "v1alpha1",
+	}
+	ApiTelemetryV1Alpha1 = TelemetryGroupV1Alpha1.Group + "/" + TelemetryGroupV1Alpha1.Version
 
 	PluralType = map[string]string{
 		// Networking

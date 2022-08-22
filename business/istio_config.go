@@ -569,13 +569,13 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, namespa
 		istioConfigDetail.WasmPlugin, err = in.k8s.Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.WasmPlugin.Kind = kubernetes.WasmPluginType
-			istioConfigDetail.WasmPlugin.APIVersion = kubernetes.ApiNetworkingVersionV1Alpha3
+			istioConfigDetail.WasmPlugin.APIVersion = kubernetes.ApiExtensionV1Alpha1
 		}
 	case kubernetes.Telemetries:
 		istioConfigDetail.Telemetry, err = in.k8s.Istio().TelemetryV1alpha1().Telemetries(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.Telemetry.Kind = kubernetes.Telemetries
-			istioConfigDetail.Telemetry.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+			istioConfigDetail.Telemetry.Kind = kubernetes.TelemetryType
+			istioConfigDetail.Telemetry.APIVersion = kubernetes.ApiTelemetryV1Alpha1
 		}
 	case kubernetes.AuthorizationPolicies:
 		istioConfigDetail.AuthorizationPolicy, err = in.k8s.Istio().SecurityV1beta1().AuthorizationPolicies(namespace).Get(ctx, object, getOpts)
@@ -721,7 +721,7 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 			if cfg.Name == object && cfg.Namespace == namespace {
 				istioConfigDetail.WasmPlugin = cfg
 				istioConfigDetail.WasmPlugin.Kind = kubernetes.WasmPluginType
-				istioConfigDetail.WasmPlugin.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				istioConfigDetail.WasmPlugin.APIVersion = kubernetes.ApiExtensionV1Alpha1
 				return istioConfigDetail, nil
 			}
 		}
@@ -731,7 +731,7 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 			if cfg.Name == object && cfg.Namespace == namespace {
 				istioConfigDetail.Telemetry = cfg
 				istioConfigDetail.Telemetry.Kind = kubernetes.TelemetryType
-				istioConfigDetail.Telemetry.APIVersion = kubernetes.ApiNetworkingVersionV1Beta1
+				istioConfigDetail.Telemetry.APIVersion = kubernetes.ApiTelemetryV1Alpha1
 				return istioConfigDetail, nil
 			}
 		}
@@ -866,6 +866,12 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(namespace, resourceType, n
 	case kubernetes.RequestAuthentications:
 		istioConfigDetail.RequestAuthentication = &security_v1beta1.RequestAuthentication{}
 		istioConfigDetail.RequestAuthentication, err = in.k8s.Istio().SecurityV1beta1().RequestAuthentications(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+	case kubernetes.WasmPlugins:
+		istioConfigDetail.WasmPlugin = &extentions_v1alpha1.WasmPlugin{}
+		istioConfigDetail.WasmPlugin, err = in.k8s.Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+	case kubernetes.Telemetries:
+		istioConfigDetail.Telemetry = &v1alpha1.Telemetry{}
+		istioConfigDetail.Telemetry, err = in.k8s.Istio().TelemetryV1alpha1().Telemetries(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
