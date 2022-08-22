@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 	"time"
-
+	
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,7 +33,7 @@ func TestIsTokenExpired(t *testing.T) {
 func TestGetKialiToken(t *testing.T) {
 	SetDefaultServiceAccountPath(tmpFileGetToken)
 	data := "thisisarandomtoken"
-	
+
 	errCr := setupFile(data, tmpFileGetToken)
 	assert.Nil(t, errCr)
 
