@@ -57,6 +57,7 @@ const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = props =
       title="Confirm Delete Traffic Routing ?"
       isOpen={props.isOpen}
       onClose={props.onCancel}
+      data-test="delete-traffic-routing-modal"
       actions={[
         <Button key="confirm" variant={ButtonVariant.danger} onClick={props.onConfirm} data-test={'confirm-delete'}>
           Delete

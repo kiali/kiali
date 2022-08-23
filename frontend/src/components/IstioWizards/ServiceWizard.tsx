@@ -574,6 +574,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           width={'75%'}
           title={titleModal}
           aria-label={titleModal}
+          data-test={this.props.type + '_modal'}
           isOpen={this.state.showWizard}
           onClose={() => this.onClose(false)}
           onKeyPress={e => {

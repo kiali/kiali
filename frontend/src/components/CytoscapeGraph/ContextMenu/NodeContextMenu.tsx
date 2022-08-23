@@ -213,7 +213,7 @@ export function NodeContextMenu(props: Props) {
       )
     } else {
       return (
-        <div key={eventKey} className={contextMenuItem}>
+        <div key={eventKey} className={contextMenuItem} data-test={eventKey + '_action'}>
           <a href="#" rel="noreferrer noopener" className={contextMenuItemLink} onClick={(e) => handleClickWizard(e, eventKey as WizardAction)}>
             {WIZARD_TITLES[eventKey]}
           </a>
@@ -234,7 +234,7 @@ export function NodeContextMenu(props: Props) {
     } else {
       return (
         <div className={contextMenuItem}>
-          <a href="#" rel="noreferrer noopener" className={contextMenuItemLink} onClick={handleDeleteTrafficRouting}>
+          <a href="#" rel="noreferrer noopener" className={contextMenuItemLink} onClick={handleDeleteTrafficRouting} data-test="delete-traffic-routing">
             Delete Traffic Routing
           </a>
         </div>
@@ -285,7 +285,7 @@ export function NodeContextMenu(props: Props) {
     );
 
     return (
-      <div className={contextMenu}>
+      <div className={contextMenu} data-test="graph-node-context-menu">
         {renderHeader()}
         <hr style={{ margin: '8px 0 5px 0' }} />
         {menuOptions}
