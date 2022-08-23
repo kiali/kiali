@@ -29,8 +29,6 @@
 	@${OC} get namespace ${OPERATOR_IMAGE_NAMESPACE} &> /dev/null || \
 	  ${OC} create namespace ${OPERATOR_IMAGE_NAMESPACE} &> /dev/null
 	@${OC} policy add-role-to-group system:image-puller system:serviceaccounts:${OPERATOR_NAMESPACE} --namespace=${OPERATOR_IMAGE_NAMESPACE} &> /dev/null
-	@# we need to make sure the 'default' service account is created - we'll need it later for the pull secret
-	@for i in {1..5}; do ${OC} get sa default -n ${OPERATOR_IMAGE_NAMESPACE} &> /dev/null && break || echo -n "." && sleep 1; done; echo
 
 .prepare-minikube: .ensure-oc-exists .ensure-minikube-exists
 	@$(eval CLUSTER_REPO_INTERNAL ?= localhost:5000)
