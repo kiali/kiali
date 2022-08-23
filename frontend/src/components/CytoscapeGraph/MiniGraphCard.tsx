@@ -108,7 +108,7 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
               {!isParentKiosk(this.props.kiosk) ? (
                 <>{intervalTitle}</>
               ) : (
-                <Button variant="link" isLarge={true} icon={<KialiIcon.Clock />} onClick={this.toggleTimeOptionsVisibility}>{intervalTitle}</Button>
+                <Button variant="link" style={{font: 'inherit', padding: 0}} icon={<KialiIcon.Clock />} onClick={this.toggleTimeOptionsVisibility}>{intervalTitle}</Button>
               )}
             </CardTitle>
           </CardHeader>
