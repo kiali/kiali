@@ -32,11 +32,7 @@ endif
 	fi
 
 .remove-operator-pull-secret: .prepare-operator-pull-secret
-ifeq ($(CLUSTER_TYPE),openshift)
-	${OC} delete --ignore-not-found=true secret ${OPERATOR_IMAGE_PULL_SECRET_NAME} --namespace=${OPERATOR_NAMESPACE}
-else
-	@# no-op
-endif
+	@if [ -n "${OPERATOR_IMAGE_PULL_SECRET_NAME}" ]; then ${OC} delete --ignore-not-found=true secret ${OPERATOR_IMAGE_PULL_SECRET_NAME} --namespace=${OPERATOR_NAMESPACE} ; fi
 
 ## operator-create: Deploy the Kiali operator to the cluster using the install script.
 # By default, this target will not deploy Kiali - it will only deploy the operator.
