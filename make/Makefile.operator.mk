@@ -14,7 +14,7 @@
 
 .prepare-operator-pull-secret: .prepare-cluster
 ifeq ($(CLUSTER_TYPE),openshift)
-	@# base64 encode a pull secret (using the 'default' sa secret) that can be used to pull the operator image from the OpenShift internal registry
+	@# base64 encode a pull secret (using the logged in user token) that can be used to pull the operator image from the OpenShift internal registry
 	@$(eval OPERATOR_IMAGE_PULL_SECRET_JSON = $(shell ${OC} registry login --registry="$(shell ${OC} registry info --internal)" --namespace=${OPERATOR_IMAGE_NAMESPACE} --to=- | base64 -w0))
 	@$(eval OPERATOR_IMAGE_PULL_SECRET_NAME ?= kiali-operator-pull-secret)
 else
