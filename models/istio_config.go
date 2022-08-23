@@ -28,7 +28,7 @@ type IstioConfigList struct {
 	WorkloadEntries  []*networking_v1beta1.WorkloadEntry   `json:"workloadEntries"`
 	WorkloadGroups   []*networking_v1beta1.WorkloadGroup   `json:"workloadGroups"`
 	WasmPlugins      []*extentions_v1alpha1.WasmPlugin     `json:"wasmPlugins"`
-	Telemetries      []*v1alpha1.Telemetry                 `json:"Telemetries"`
+	Telemetries      []*v1alpha1.Telemetry                 `json:"telemetries"`
 
 	AuthorizationPolicies  []*security_v1beta.AuthorizationPolicy   `json:"authorizationPolicies"`
 	PeerAuthentications    []*security_v1beta.PeerAuthentication    `json:"peerAuthentications"`

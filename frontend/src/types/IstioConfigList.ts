@@ -96,6 +96,8 @@ export const dicIstioType = {
   serviceentry: 'ServiceEntry',
   authorizationpolicy: 'AuthorizationPolicy',
   sidecar: 'Sidecar',
+  wasmplugin: 'WasmPlugin',
+  telemetry: 'Telemetry',
   peerauthentication: 'PeerAuthentication',
   requestauthentication: 'RequestAuthentication',
   workloadentry: 'WorkloadEntry',
@@ -137,8 +139,8 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     workloadEntries: unfiltered.workloadEntries.filter(we => includeName(we.metadata.name, names)),
     workloadGroups: unfiltered.workloadGroups.filter(wg => includeName(wg.metadata.name, names)),
     envoyFilters: unfiltered.envoyFilters.filter(ef => includeName(ef.metadata.name, names)),
-    wasmPlugins: unfiltered.wasmPlugins.filter(ef => includeName(ef.metadata.name, names)),
-    telemetries: unfiltered.telemetries.filter(ef => includeName(ef.metadata.name, names)),
+    wasmPlugins: unfiltered.wasmPlugins.filter(wp => includeName(wp.metadata.name, names)),
+    telemetries: unfiltered.telemetries.filter(tm => includeName(tm.metadata.name, names)),
     validations: unfiltered.validations,
     permissions: unfiltered.permissions
   };

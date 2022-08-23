@@ -369,7 +369,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		if criteria.Include(kubernetes.WasmPlugins) {
 			var err error
 			if IsResourceCached(criteria.Namespace, kubernetes.WasmPlugins) {
-				istioConfigList.WorkloadGroups, err = kialiCache.GetWorkloadGroups(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.WasmPlugins, err = kialiCache.GetWasmPlugins(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				wgl, e := in.k8s.Istio().ExtensionsV1alpha1().WasmPlugins(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.WasmPlugins = wgl.Items

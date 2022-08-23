@@ -131,8 +131,8 @@ var (
 		VirtualServices:  NetworkingGroupVersionV1Beta1.Group,
 		WorkloadEntries:  NetworkingGroupVersionV1Beta1.Group,
 		WorkloadGroups:   NetworkingGroupVersionV1Beta1.Group,
-		WasmPlugins:      NetworkingGroupVersionV1Alpha3.Group,
-		Telemetries:      NetworkingGroupVersionV1Beta1.Group,
+		WasmPlugins:      ExtensionGroupVersionV1Alpha1.Group,
+		Telemetries:      TelemetryGroupV1Alpha1.Group,
 
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,
