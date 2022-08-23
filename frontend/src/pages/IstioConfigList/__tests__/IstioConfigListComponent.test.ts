@@ -83,7 +83,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     const sorted = IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending);
     expect(sorted).toBeDefined();
-    expect(sorted.length).toBe(17);
+    expect(sorted.length).toBe(15);
 
     const first = sorted[0];
     expect(first.authorizationPolicy).toBeDefined();
@@ -106,7 +106,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
     // Descending
     const sorted = IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending);
     expect(sorted).toBeDefined();
-    expect(sorted.length).toBe(17);
+    expect(sorted.length).toBe(15);
 
     const first = sorted[0];
     expect(first.virtualService).toBeDefined();
@@ -124,7 +124,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     const sorted = IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending);
     expect(sorted).toBeDefined();
-    expect(sorted.length).toBe(17);
+    expect(sorted.length).toBe(15);
 
     const first = sorted[0];
     expect(first.authorizationPolicy).toBeDefined();
@@ -146,7 +146,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     const sorted = IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending);
     expect(sorted).toBeDefined();
-    expect(sorted.length).toBe(17);
+    expect(sorted.length).toBe(15);
 
     const first = sorted[0];
     expect(first.virtualService).toBeDefined();
