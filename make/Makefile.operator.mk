@@ -31,8 +31,12 @@ endif
 		rm /tmp/kiali-operator-pull-secret.json; \
 	fi
 
-.remove-operator-pull-secret:
-	@# no op
+.remove-operator-pull-secret: .prepare-operator-pull-secret
+ifeq ($(CLUSTER_TYPE),openshift)
+	${OC} delete --ignore-not-found=true secret ${OPERATOR_IMAGE_PULL_SECRET_NAME} --namespace=${OPERATOR_NAMESPACE}
+else
+	@# no-op
+endif
 
 ## operator-create: Deploy the Kiali operator to the cluster using the install script.
 # By default, this target will not deploy Kiali - it will only deploy the operator.
@@ -66,7 +70,7 @@ operator-create: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists
     --version                       "${KIALI_CR_SPEC_VERSION}"
 
 ## operator-delete: Remove the Kiali operator resources from the cluster along with Kiali itself
-operator-delete: .ensure-oc-exists kiali-delete kiali-purge
+operator-delete: .ensure-oc-exists kiali-delete kiali-purge .remove-operator-pull-secret
 	@echo Remove Operator
 	${OC} delete --ignore-not-found=true all,sa,deployments,secrets --selector="app.kubernetes.io/name=kiali-operator" -n "${OPERATOR_NAMESPACE}"
 	${OC} delete --ignore-not-found=true clusterroles,clusterrolebindings --selector="app.kubernetes.io/name=kiali-operator"
