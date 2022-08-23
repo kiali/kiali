@@ -232,6 +232,7 @@ func readQuery(values url.Values) (models.TracingQuery, error) {
 		Limit: 100,
 		Tags:  make(map[string]string),
 	}
+
 	if v := values.Get("startMicros"); v != "" {
 		if num, err := strconv.ParseInt(v, 10, 64); err == nil {
 			q.Start = time.Unix(0, num*int64(time.Microsecond))
@@ -268,5 +269,10 @@ func readQuery(values url.Values) (models.TracingQuery, error) {
 			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'minDuration': " + err.Error())
 		}
 	}
+
+	for key, value := range config.Get().ExternalServices.Tracing.QueryScope {
+		q.Tags[key] = value
+	}
+
 	return q, nil
 }

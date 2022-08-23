@@ -201,6 +201,10 @@ func (in *Client) GetErrorTraces(ns, app string, duration time.Duration) (int, e
 		End:   now,
 		Tags:  map[string]string{"error": "true"},
 	}
+	for key, value := range config.Get().ExternalServices.Tracing.QueryScope {
+		query.Tags[key] = value
+	}
+
 	traces, err := in.GetAppTraces(ns, app, query)
 	if err != nil {
 		return 0, err
