@@ -19,6 +19,7 @@ type ToolbarDropdownProps = {
   initialLabel?: string;
   initialValue?: number | string;
   label?: string;
+  menuAppendTo?: HTMLElement | (() => HTMLElement) | 'parent' | 'inline';
   nameDropdown?: string;
   options: object;
   tooltip?: string;
@@ -77,6 +78,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
         isOpen={isOpen}
         aria-labelledby={this.props.id}
         isDisabled={this.props.disabled}
+        menuAppendTo={this.props.menuAppendTo}
         className={this.props.classNameSelect ? `${this.props.classNameSelect} ${widthAuto}` : widthAuto}
       >
         {Object.keys(this.props.options).map(key => {

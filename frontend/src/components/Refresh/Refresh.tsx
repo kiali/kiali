@@ -23,7 +23,9 @@ type ComponentProps = {
   id: string;
   disabled?: boolean;
   hideLabel?: boolean;
+  hideRefreshButton?: boolean;
   manageURL?: boolean;
+  menuAppendTo?: HTMLElement | (() => HTMLElement) | 'parent' | 'inline';
 
   handleRefresh?: () => void;
 };
@@ -36,7 +38,7 @@ type State = {
 
 const REFRESH_INTERVALS = config.toolbar.refreshInterval;
 
-class Refresh extends React.PureComponent<Props, State> {
+export class Refresh extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
@@ -88,15 +90,16 @@ class Refresh extends React.PureComponent<Props, State> {
             handleSelect={value => this.updateRefreshInterval(Number(value))}
             value={String(this.props.refreshInterval)}
             label={REFRESH_INTERVALS[this.props.refreshInterval]}
+            menuAppendTo={this.props.menuAppendTo}
             options={REFRESH_INTERVALS}
             tooltip={'Refresh interval'}
             tooltipPosition={TooltipPosition.left}
           />
-          <RefreshButtonContainer handleRefresh={this.handleRefresh} disabled={this.props.disabled} />
+          {this.props.hideRefreshButton || <RefreshButtonContainer handleRefresh={this.handleRefresh} disabled={this.props.disabled}/>}
         </>
       );
     } else {
-      return <RefreshButtonContainer handleRefresh={this.handleRefresh} />;
+      return this.props.hideRefreshButton ? null : <RefreshButtonContainer handleRefresh={this.handleRefresh} />;
     }
   }
 
