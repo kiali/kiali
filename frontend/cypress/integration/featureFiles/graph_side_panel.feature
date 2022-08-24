@@ -1,12 +1,12 @@
-Feature: Kiali Graph page - Sidepanel menu actions
+Feature: Kiali Graph page - Side panel menu actions
 
-  User opens the Graph page and opens the context menu of graph nodes.
+  User opens the Graph page and uses the kebab menu to perform actions.
 
   Background:
     Given user is at administrator perspective
 
   @graph-page-context
-  Scenario: Actions in context menu for service node with existing traffic routing
+  Scenario: Actions in kebab menu of the side panel for a service node with existing traffic routing
     When user graphs "bookinfo" namespaces
     And user clicks the "productpage" service node
     And user opens the kebab menu of the graph side panel
