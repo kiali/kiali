@@ -254,6 +254,9 @@ TMP_ROOT_DIR="${TMP_ROOT_DIR:-${DEFAULT_TMP_ROOT_DIR}}"
 KUBERNETES_SERVICE_HOST="${API_PROXY_HOST}"
 KUBERNETES_SERVICE_PORT="${API_PROXY_PORT}"
 
+# this is the secret we will manage if we need to set up our own context
+SERVICE_ACCOUNT_SECRET_NAME="runkiali-secret"
+
 # This is a directory where we write temp files needed to run Kiali locally
 
 TMP_DIR="${TMP_ROOT_DIR}/run-kiali"
@@ -558,12 +561,29 @@ else
   CA_FILE="${TMP_SECRETS_DIR}/ca.crt"
 
   infomsg "Attempting to obtain the service account token and certificates..."
-  SERVICE_ACCOUNT_NAME="$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get sa -l app=kiali -o name)"
+  SERVICE_ACCOUNT_NAME="$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get sa -l app.kubernetes.io/name=kiali -o jsonpath={.items[0].metadata.name})"
   if [ -z "${SERVICE_ACCOUNT_NAME}" ]; then
     errormsg "Cannot get the service account name. Kiali must be deployed in [${ISTIO_NAMESPACE}]. If you do not want to deploy Kiali in the cluster, use '--kube-context current'"
     exit 1
   fi
-  SERVICE_ACCOUNT_SECRET_NAME="$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get ${SERVICE_ACCOUNT_NAME} -o jsonpath='{.secrets[0].name}')"
+
+  # Newer k8s/OpenShift clusters no longer provide secrets for SAs - so manually create a secret that will contain the certs/token
+  cat <<EOM | ${CLIENT_EXE} apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${SERVICE_ACCOUNT_SECRET_NAME}
+  namespace: ${ISTIO_NAMESPACE}
+  annotations:
+    kubernetes.io/service-account.name: ${SERVICE_ACCOUNT_NAME}
+type: kubernetes.io/service-account-token
+EOM
+
+  wait_for_secret=1
+  until [ $wait_for_secret -eq 5 ] || [ "$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath="{.data.token}" 2> /dev/null)" != "" ] ; do
+    sleep $(( wait_for_secret++ ))
+  done
+
   ${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath="{.data.token}" | base64 --decode > "${TOKEN_FILE}"
   ${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath="{.data['ca\.crt']}" | base64 --decode > "${CA_FILE}"
   if [ ! -s "${TOKEN_FILE}"  ]; then errormsg "Cannot obtain the Kiali service account token"; exit 1; fi
@@ -761,6 +781,8 @@ restore_original_context() {
     ${CLIENT_EXE} config delete-cluster ${KUBE_CONTEXT}
     ${CLIENT_EXE} config delete-user ${KUBE_CONTEXT}
     ${CLIENT_EXE} config delete-context ${KUBE_CONTEXT}
+    infomsg "Removing the custom sa secret [${SERVICE_ACCOUNT_SECRET_NAME}] from namespace [${ISTIO_NAMESPACE}]"
+    ${CLIENT_EXE} delete secret -n ${ISTIO_NAMESPACE} ${SERVICE_ACCOUNT_SECRET_NAME}
   fi
 }
 
