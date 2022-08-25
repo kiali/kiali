@@ -68,6 +68,7 @@ build-olm-bundle: .prepare-olm-cluster-names .determine-olm-bundle-version
 	  fi ;\
 	  csv="$$(ls -1 ${OUTDIR}/bundle/manifests/kiali*clusterserviceversion.yaml)" ;\
 	  sed -i "s/replaces:.*/#replaces:/g" $${csv} ;\
+	  sed -i "s/IfNotPresent/Always/g" $${csv} ;\
 	  sed -i "s|image: .*kiali.*operator.*|image: ${CLUSTER_OPERATOR_INTERNAL_NAME}:${OPERATOR_CONTAINER_VERSION}|g" $${csv} ;\
 	  sed -i "s|containerImage: .*kiali.*operator.*|containerImage: ${CLUSTER_OPERATOR_INTERNAL_NAME}:${OPERATOR_CONTAINER_VERSION}|g" $${csv} ;\
 	  sed -E -i "/.*kiali.*-operator.*/ n; s~(value:)(.*/.*-kiali-.*)~\1 ${CLUSTER_KIALI_INTERNAL_NAME}:${CONTAINER_VERSION}~g" $${csv} ;\
