@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Card, CardBody, Grid, GridItem } from '@patternfly/react-core';
+import {Button, Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem} from '@patternfly/react-core';
 import * as AlertUtils from '../../utils/AlertUtils';
 import {
   GraphDefinition,
@@ -21,6 +21,9 @@ import { connect } from 'react-redux';
 import { durationSelector } from '../../store/Selectors';
 import { HealthAnnotationType } from '../../types/HealthAnnotation';
 import TrafficListComponentContainer from "components/TrafficList/TrafficListComponent";
+import {KialiIcon} from "../../config/KialiIcon";
+import {KioskElement} from "../Kiosk/KioskElement";
+import {TimeDurationModal} from "../Time/TimeDurationModal";
 
 export interface AppNode {
   id: string;
@@ -75,6 +78,7 @@ type TrafficDetailsProps = ReduxProps & {
 };
 
 type TrafficDetailsState = {
+  isTimeOptionsOpen: boolean;
   traffic: TrafficItem[];
 };
 
@@ -84,6 +88,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
   constructor(props: TrafficDetailsProps) {
     super(props);
     this.state = {
+      isTimeOptionsOpen: false,
       traffic: []
     };
   }
@@ -119,6 +124,17 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
             <GridItem span={12}>
               <Card>
                 <CardBody>
+                  <Toolbar style={{ padding: 0, width: '100%' }}>
+                    <ToolbarGroup>
+                      <KioskElement>
+                        <ToolbarItem style={{ marginLeft: 'auto' }}>
+                          <Button variant="link" onClick={this.toggleTimeOptionsVisibility}>
+                            <KialiIcon.Clock className="" />
+                          </Button>
+                        </ToolbarItem>
+                      </KioskElement>
+                    </ToolbarGroup>
+                  </Toolbar>
                   <TrafficListComponentContainer
                     currentSortField={FilterHelper.currentSortField(TrafficListFilters.sortFields)}
                     isSortAscending={FilterHelper.isCurrentSortAscending()}
@@ -129,6 +145,11 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
             </GridItem>
           </Grid>
         </RenderComponentScroll>
+        <TimeDurationModal
+          customDuration={false}
+          isOpen={this.state.isTimeOptionsOpen}
+          onConfirm={this.toggleTimeOptionsVisibility}
+          onCancel={this.toggleTimeOptionsVisibility} />
       </>
     );
   }
@@ -305,6 +326,10 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     // Process the direct inbound/outbound traffic to/from the item of interest.
     this.setState(this.processTraffic(traffic.elements.edges!, nodes, myNode));
   };
+
+  private toggleTimeOptionsVisibility = () => {
+    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }) );
+  }
 }
 
 const mapStateToProps = (state: KialiAppState) => {

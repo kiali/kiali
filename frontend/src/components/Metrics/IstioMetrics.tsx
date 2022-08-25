@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { RouteComponentProps, withRouter } from 'react-router';
-import { Card, CardBody, Checkbox, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
+import { Button, Card, CardBody, Checkbox, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import * as API from 'services/Api';
 import { KialiAppState } from 'store/Store';
@@ -29,11 +29,15 @@ import { timeRangeSelector } from 'store/Selectors';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
+import { KialiIcon } from "../../config/KialiIcon";
+import { TimeDurationModal } from "../Time/TimeDurationModal";
+import { KioskElement } from "../Kiosk/KioskElement";
 
 type MetricsState = {
   crippledFeatures?: KialiCrippledFeatures;
   dashboard?: DashboardModel;
   grafanaLinks: ExternalLink[];
+  isTimeOptionsOpen: boolean;
   labelsSettings: LabelsSettings;
   spanOverlay?: Overlay<JaegerLineInfo>;
   showSpans: boolean;
@@ -65,6 +69,11 @@ const fullHeightStyle = style({
   height: '100%'
 });
 
+const infoStyle = style({
+  margin: '0px 5px 2px 5px',
+  verticalAlign: '-5px !important'
+});
+
 // For some reason checkbox as a ToolbarItem needs to be tweaked
 const toolbarInputStyle = style({
   $nest: {
@@ -89,6 +98,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     this.state = {
       labelsSettings: settings.labelsSettings,
       grafanaLinks: [],
+      isTimeOptionsOpen: false,
       tabHeight: 300,
       showSpans: settings.showSpans,
       showTrendlines: settings.showTrendlines
@@ -269,29 +279,36 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     const toolbarSpace = 20 + 24 + toolbarHeight + 15 + 24 + 20;
     const dashboardHeight = this.state.tabHeight - toolbarSpace;
     return (
-      <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-        <Card className={fullHeightStyle}>
-          <CardBody>
-            {this.renderOptionsBar()}
-            {this.state.dashboard && (
-              <Dashboard
-                dashboard={this.state.dashboard}
-                labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
-                maximizedChart={expandedChart}
-                expandHandler={this.expandHandler}
-                onClick={this.onClickDataPoint}
-                labelPrettifier={MetricsHelper.prettyLabelValues}
-                overlay={this.state.spanOverlay}
-                showSpans={this.state.showSpans}
-                showTrendlines={this.state.showTrendlines}
-                dashboardHeight={dashboardHeight}
-                timeWindow={evalTimeRange(this.props.timeRange)}
-                brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
-              />
-            )}
-          </CardBody>
-        </Card>
-      </RenderComponentScroll>
+      <>
+        <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
+          <Card className={fullHeightStyle}>
+            <CardBody>
+              {this.renderOptionsBar()}
+              {this.state.dashboard && (
+                <Dashboard
+                  dashboard={this.state.dashboard}
+                  labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
+                  maximizedChart={expandedChart}
+                  expandHandler={this.expandHandler}
+                  onClick={this.onClickDataPoint}
+                  labelPrettifier={MetricsHelper.prettyLabelValues}
+                  overlay={this.state.spanOverlay}
+                  showSpans={this.state.showSpans}
+                  showTrendlines={this.state.showTrendlines}
+                  dashboardHeight={dashboardHeight}
+                  timeWindow={evalTimeRange(this.props.timeRange)}
+                  brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
+                />
+              )}
+            </CardBody>
+          </Card>
+        </RenderComponentScroll>
+        <TimeDurationModal
+          customDuration={true}
+          isOpen={this.state.isTimeOptionsOpen}
+          onConfirm={this.toggleTimeOptionsVisibility}
+          onCancel={this.toggleTimeOptionsVisibility} />
+      </>
     );
   }
 
@@ -308,6 +325,10 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     history.replace(history.location.pathname + '?' + urlParams.toString());
     this.setState({ showTrendlines: !this.state.showTrendlines });
   };
+
+  private toggleTimeOptionsVisibility = () => {
+    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }) );
+  }
 
   private renderOptionsBar() {
     const hasHistogramsAverage =
@@ -369,6 +390,13 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                 objectType={this.props.objectType}
               />
             </ToolbarItem>
+            <KioskElement>
+              <ToolbarItem>
+                <Button variant="link" onClick={this.toggleTimeOptionsVisibility}>
+                  <KialiIcon.Clock className={infoStyle} />
+                </Button>
+              </ToolbarItem>
+            </KioskElement>
           </ToolbarGroup>
         </Toolbar>
       </div>

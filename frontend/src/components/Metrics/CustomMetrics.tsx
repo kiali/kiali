@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
-import { Toolbar, ToolbarGroup, ToolbarItem, Card, CardBody, Checkbox } from '@patternfly/react-core';
+import {Toolbar, ToolbarGroup, ToolbarItem, Card, CardBody, Checkbox, Button} from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { serverConfig } from '../../config/ServerConfig';
 import history, { URLParam } from '../../app/History';
@@ -27,9 +27,13 @@ import { KialiAppAction } from '../../actions/KialiAppAction';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { timeRangeSelector } from '../../store/Selectors';
+import {KialiIcon} from "../../config/KialiIcon";
+import {KioskElement} from "../Kiosk/KioskElement";
+import {TimeDurationModal} from "../Time/TimeDurationModal";
 
 type MetricsState = {
   dashboard?: DashboardModel;
+  isTimeOptionsOpen: boolean;
   labelsSettings: LabelsSettings;
   grafanaLinks: ExternalLink[];
   spanOverlay?: Overlay<JaegerLineInfo>;
@@ -82,6 +86,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
     this.state = {
+      isTimeOptionsOpen: false,
       labelsSettings: settings.labelsSettings,
       grafanaLinks: [],
       tabHeight: 300,
@@ -237,6 +242,11 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
             </Card>
           </RenderComponentScroll>
         )}
+        <TimeDurationModal
+          customDuration={true}
+          isOpen={this.state.isTimeOptionsOpen}
+          onConfirm={this.toggleTimeOptionsVisibility}
+          onCancel={this.toggleTimeOptionsVisibility} />
       </>
     );
   }
@@ -282,6 +292,13 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
                 onChange={checked => this.onSpans(checked)}
               />
             </ToolbarItem>
+            <KioskElement>
+              <ToolbarItem style={{ marginLeft: 'auto' }}>
+                <Button variant="link" onClick={this.toggleTimeOptionsVisibility}>
+                  <KialiIcon.Clock className="" />
+                </Button>
+              </ToolbarItem>
+            </KioskElement>
           </ToolbarGroup>
           <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>
             <GrafanaLinks
@@ -304,6 +321,10 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
       urlParams.set('expand', expandedChart);
     }
     history.push(history.location.pathname + '?' + urlParams.toString());
+  };
+
+  private toggleTimeOptionsVisibility = () => {
+    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }) );
   };
 }
 

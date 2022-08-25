@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Card, CardBody, Tab, Tabs, Toolbar, ToolbarGroup, ToolbarItem, Tooltip } from '@patternfly/react-core';
+import {Button, Card, CardBody, Tab, Tabs, Toolbar, ToolbarGroup, ToolbarItem, Tooltip} from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
 
@@ -19,6 +19,9 @@ import { TracesDisplayOptions, QuerySettings, DisplaySettings, percentilesOption
 import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
+import {KialiIcon} from "../../config/KialiIcon";
+import {KioskElement} from "../Kiosk/KioskElement";
+import {TimeDurationModal} from "../Time/TimeDurationModal";
 
 /*
     timeRange: timeRangeSelector(state),
@@ -43,6 +46,7 @@ type TracesProps = ReduxProps & {
 }
 
 interface TracesState {
+  isTimeOptionsOpen: boolean;
   url: string;
   width: number;
   querySettings: QuerySettings;
@@ -68,6 +72,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
       targetApp = this.props.namespaceSelector ? this.props.target + '.' + this.props.namespace : this.props.target;
     }
     this.state = {
+      isTimeOptionsOpen: false,
       url: '',
       width: 0,
       querySettings: TracesDisplayOptions.retrieveQuerySettings(),
@@ -231,6 +236,10 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
     this.setState({ displaySettings: settings });
   };
 
+  private toggleTimeOptionsVisibility = () => {
+    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }) );
+  }
+
   render() {
     const jaegerURL = this.getJaegerUrl();
     return (
@@ -248,8 +257,11 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                       disabled={this.state.toolbarDisabled}
                     />
                   </ToolbarItem>
+                  <ToolbarItem style={{ marginLeft: 'auto' }}>
+                    {/*Blank item used as a separator do shift the following ToolbarItems to the right*/}
+                  </ToolbarItem>
                   {jaegerURL && (
-                    <ToolbarItem style={{ marginLeft: 'auto' }}>
+                    <ToolbarItem>
                         <Tooltip content={<>Open Chart in Jaeger UI</>}>
                           <a href={jaegerURL} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '10px' }}>
                             View in Tracing <ExternalLinkAltIcon />
@@ -257,8 +269,14 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                         </Tooltip>
                     </ToolbarItem>
                   )}
+                  <KioskElement>
+                    <ToolbarItem>
+                      <Button variant="link" onClick={this.toggleTimeOptionsVisibility}>
+                        <KialiIcon.Clock className="" />
+                      </Button>
+                    </ToolbarItem>
+                  </KioskElement>
                 </ToolbarGroup>
-
               </Toolbar>
               <JaegerScatter
                 showSpansAverage={this.state.displaySettings.showSpansAverage}
@@ -301,6 +319,11 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
             </div>
           )}
         </RenderComponentScroll>
+        <TimeDurationModal
+          customDuration={true}
+          isOpen={this.state.isTimeOptionsOpen}
+          onConfirm={this.toggleTimeOptionsVisibility}
+          onCancel={this.toggleTimeOptionsVisibility} />
       </>
     );
   }

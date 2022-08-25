@@ -177,6 +177,7 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
           </CardBody>
         </Card>
         <TimeDurationModal
+          customDuration={false}
           isOpen={this.state.isTimeOptionsOpen}
           onConfirm={this.toggleTimeOptionsVisibility}
           onCancel={this.toggleTimeOptionsVisibility} />

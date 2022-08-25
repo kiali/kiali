@@ -49,6 +49,8 @@ import { formatDuration } from 'utils/tracing/TracingHelper';
 import { infoStyle } from 'styles/DropdownStyles';
 import { isValid } from 'utils/Common';
 import {isKiosk} from "../../components/Kiosk/KioskActions";
+import {KioskElement} from "../../components/Kiosk/KioskElement";
+import {TimeDurationModal} from "../../components/Time/TimeDurationModal";
 
 const appContainerColors = [PFColors.White, PFColors.LightGreen400, PFColors.Purple100, PFColors.LightBlue400];
 const proxyContainerColor = PFColors.Gold400;
@@ -88,6 +90,7 @@ interface WorkloadPodLogsState {
   fullscreen: boolean;
   hideError?: string;
   hideLogValue: string;
+  isTimeOptionsOpen: boolean;
   kebabOpen: boolean;
   linesTruncatedContainers: string[];
   loadingLogs: boolean;
@@ -197,6 +200,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       entries: [],
       fullscreen: false,
       hideLogValue: '',
+      isTimeOptionsOpen: false,
       kebabOpen: false,
       linesTruncatedContainers: [],
       loadingLogs: false,
@@ -380,6 +384,13 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                               classNameSelect={toolbarTail}
                             />
                           </ToolbarItem>
+                          <KioskElement>
+                            <ToolbarItem>
+                              <Button variant="link" onClick={this.toggleTimeOptionsVisibility}>
+                                <KialiIcon.Clock className="" />
+                              </Button>
+                            </ToolbarItem>
+                          </KioskElement>
                         </ToolbarGroup>
                       </Toolbar>
                     )}
@@ -392,6 +403,11 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           )}
           {this.state.loadingLogsError && <div>{this.state.loadingLogsError}</div>}
         </RenderComponentScroll>
+        <TimeDurationModal
+          customDuration={true}
+          isOpen={this.state.isTimeOptionsOpen}
+          onConfirm={this.toggleTimeOptionsVisibility}
+          onCancel={this.toggleTimeOptionsVisibility} />
       </>
     );
   }
@@ -442,6 +458,10 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
     c.isSelected = !c.isSelected;
     this.setState({ containerOptions: [...this.state.containerOptions!] });
   };
+
+  private toggleTimeOptionsVisibility = () => {
+    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }) );
+  }
 
   private renderLogLine = ({index, style}: {index: number, style: Object}) => {
     let e = this.filteredEntries(this.state.entries, this.state.showLogValue, this.state.hideLogValue, this.state.useRegex)[index];
