@@ -31,21 +31,25 @@ DEFAULT_NODES="3"
 DEFAULT_OPENSHIFT_VERSION="4.10_openshift"
 DEFAULT_REGION="us-south"
 DEFAULT_WORKLOADS="50"
+DEFAULT_WORKLOAD_NAMESPACES="1"
+DEFAULT_WORKLOAD_REQUEST_RATE="100"
 
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     # OPTIONS
-    -akf|--api-key-file)      API_KEY_FILE="$2";       shift;shift ;;
-    -cn|--cluster-name)       CLUSTER_NAME="$2";       shift;shift ;;
-    -hr|--helm-charts-repo)   HELM_CHARTS_REPO="$2";   shift;shift ;;
-    -iv|--istio-version)      ISTIO_VERSION="$2";      shift;shift ;;
-    -kv|--kiali-version)      KIALI_VERSION="$2";      shift;shift ;;
-    -nf|--node-flavor)        NODE_FLAVOR="$2";        shift;shift ;;
-    -n|--nodes)               NODES="$2";              shift;shift ;;
-    -ov|--openshift-version)  OPENSHIFT_VERSION="$2";  shift;shift ;;
-    -r|--region)              REGION="$2";             shift;shift ;;
-    -w|--workloads)           WORKLOADS="$2";          shift;shift ;;
+    -akf|--api-key-file)          API_KEY_FILE="$2";          shift;shift ;;
+    -cn|--cluster-name)           CLUSTER_NAME="$2";          shift;shift ;;
+    -hr|--helm-charts-repo)       HELM_CHARTS_REPO="$2";      shift;shift ;;
+    -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift ;;
+    -kv|--kiali-version)          KIALI_VERSION="$2";         shift;shift ;;
+    -nf|--node-flavor)            NODE_FLAVOR="$2";           shift;shift ;;
+    -n|--nodes)                   NODES="$2";                 shift;shift ;;
+    -ov|--openshift-version)      OPENSHIFT_VERSION="$2";     shift;shift ;;
+    -r|--region)                  REGION="$2";                shift;shift ;;
+    -w|--workloads)               WORKLOADS="$2";             shift;shift ;;
+    -wn|--workload-namespaces)    WORKLOAD_NAMESPACES="$2";   shift;shift ;;
+    -wrr|--workload-request-rate) WORKLOAD_REQUEST_RATE="$2"; shift;shift ;;
     -h|--help )
       cat <<HELPMSG
 Create a performance cluster on IBM Cloud and install istio, kiali, and the testing demos.
@@ -96,6 +100,17 @@ Valid options:
     The number of workloads to create in addition to the demo apps.
     Default: ${DEFAULT_WORKLOADS}
 
+  -wn|--workload-namespaces
+    The number of namespaces to create for the demo workloads.
+    Workloads will be distributed across these namespaces.
+    Default: ${DEFAULT_WORKLOAD_NAMESPACES}
+
+  -wrr|--workload-request-rate
+    The number of requests per second workload will send to each other.
+    This increases traffic between workloads. You may start to run into
+    issues if you go above 200.
+    Default: ${DEFAULT_WORKLOAD_REQUEST_RATE}
+
   -h|--help )
 HELPMSG
       exit 1
@@ -127,6 +142,8 @@ fi
 : "${OPENSHIFT_VERSION:=${DEFAULT_OPENSHIFT_VERSION}}"
 : "${REGION:=${DEFAULT_REGION}}"
 : "${WORKLOADS:=${DEFAULT_WORKLOADS}}"
+: "${WORKLOAD_NAMESPACES:=${DEFAULT_WORKLOAD_NAMESPACESS}}"
+: "${WORKLOAD_REQUEST_RATE:=${DEFAULT_WORKLOAD_REQUEST_RATE}}"
 API_KEY="$(cat "${API_KEY_FILE}")"
 
 # Dump config
@@ -142,6 +159,8 @@ NODES=${NODES}
 OPENSHIFT_VERSION=${OPENSHIFT_VERSION}
 REGION=${REGION}
 WORKLOADS=${WORKLOADS}
+WORKLOAD_NAMESPACES=${WORKLOAD_NAMESPACES}
+WORKLOAD_REQUEST_RATE=${WORKLOAD_REQUEST_RATE}
 EOM
 infomsg "==END CONFIG=="
 
@@ -314,6 +333,14 @@ install_demo_apps() {
 }
 
 install_workloads() {
+  SCC_SERVICE_ACCOUNTS=""
+  for (( c=0; c<WORKLOAD_NAMESPACES; c++ ))
+  do
+    SCC_SERVICE_ACCOUNTS="${SCC_SERVICE_ACCOUNTS}- \"system:serviceaccount:depth-$c:default\"
+"
+  # The quote on a newline by itself above is on purpose to separate the lines within the final yaml below.
+  done
+
   cat <<SCC | oc apply -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
@@ -326,12 +353,12 @@ seLinuxContext:
 supplementalGroups:
   type: RunAsAny
 users:
-- "system:serviceaccount:depth-0:default"
+${SCC_SERVICE_ACCOUNTS}
 SCC
 
   local cluster_id
   cluster_id=$(ibmcloud cs cluster get --cluster "${CLUSTER_NAME}-cluster" --output json | jq '.id')
-  bash <(curl -L https://raw.githubusercontent.com/kiali/demos/master/scale-mesh/scale-mesh.sh) install --mesh-type depth --apps "${WORKLOADS}" --services "${WORKLOADS}" -tgr 100 -mc "${HOME}/.bluemix/plugins/container-service/clusters/${CLUSTER_NAME}-cluster-${cluster_id}-admin/"
+  bash <(curl -L https://raw.githubusercontent.com/kiali/demos/master/scale-mesh/scale-mesh.sh) install --mesh-type depth --apps "${WORKLOADS}" --services "${WORKLOADS}" --namespaces "${WORKLOAD_NAMESPACES}" -tgr "${WORKLOAD_REQUEST_RATE}" -mc "${HOME}/.bluemix/plugins/container-service/clusters/${CLUSTER_NAME}-cluster-${cluster_id}-admin/"
 }
 
 # Make sure we are logged in
