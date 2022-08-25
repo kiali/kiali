@@ -84,6 +84,8 @@ frontend/yarn-error.log*
 
 frontend/package-lock.json
 
+frontend/logs
+
 # compiled patternfly assets
 frontend/src/**/*.css
 frontend/src/**/*.css.map
