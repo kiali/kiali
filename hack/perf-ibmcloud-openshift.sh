@@ -338,6 +338,7 @@ install_workloads() {
   do
     SCC_SERVICE_ACCOUNTS="${SCC_SERVICE_ACCOUNTS}- \"system:serviceaccount:depth-$c:default\"
 "
+  # The quote on a newline by itself above is on purpose to separate the lines within the final yaml below.
   done
 
   cat <<SCC | oc apply -f -
