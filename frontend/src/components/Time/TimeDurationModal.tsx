@@ -1,11 +1,9 @@
 import * as React from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { Button, Form, FormGroup, Modal, ModalVariant, TooltipPosition } from "@patternfly/react-core";
 import { UserSettingsActions } from "../../actions/UserSettingsActions";
 import { HistoryManager, URLParam } from "../../app/History";
-import { KialiAppState } from "../../store/Store";
+import { useKialiDispatch, useKialiSelector } from "../../hooks/redux";
 import { DurationInSeconds, IntervalInMilliseconds, TimeRange } from "../../types/Common";
-import { KialiDispatch } from "../../types/Redux";
 import { DurationDropdownComponent } from "../DurationDropdown/DurationDropdown";
 import { Refresh } from "../Refresh/Refresh";
 import { TimeRangeComponent } from "./TimeRangeComponent";
@@ -19,14 +17,14 @@ interface Props {
 }
 
 export function TimeDurationModal(props: Props) {
-  const dispatch = useDispatch<KialiDispatch>();
-  const reduxDuration = useSelector<KialiAppState, DurationInSeconds>((state) => state.userSettings.duration);
-  const reduxRefreshInterval = useSelector<KialiAppState, IntervalInMilliseconds>((state) => state.userSettings.refreshInterval);
-  const reduxTimeRange = useSelector<KialiAppState, TimeRange>((state) => state.userSettings.timeRange);
+  const dispatch = useKialiDispatch();
+  const reduxDuration = useKialiSelector((state) => state.userSettings.duration);
+  const reduxRefreshInterval = useKialiSelector((state) => state.userSettings.refreshInterval);
+  const reduxTimeRange = useKialiSelector((state) => state.userSettings.timeRange);
 
-  const [duration, setDuration] = React.useState<DurationInSeconds>(reduxDuration);
-  const [refreshInterval, setRefreshInterval] = React.useState<IntervalInMilliseconds>(reduxRefreshInterval);
-  const [timeRange, setTimeRange] = React.useState<TimeRange>(reduxTimeRange);
+  const [duration, setDuration] = React.useState(reduxDuration);
+  const [refreshInterval, setRefreshInterval] = React.useState(reduxRefreshInterval);
+  const [timeRange, setTimeRange] = React.useState(reduxTimeRange);
 
   function handleCancel() {
     // reset the dialog
