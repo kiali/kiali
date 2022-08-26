@@ -64,9 +64,23 @@ cypress/
 
 ## Performance Tests
 
-These coarsly measure metrics such as page load time. These are meant to give a general baseline of performance but are not useful for benchmarking.
+These tests coarsely measure metrics such as page load time. They are meant to give a general baseline of performance but are not useful for benchmarking.  This is roughly how to use the tests:
 
-### Run performance tests:
+1. Environment is setup either manually or with the perf cluster hack script.
+2. Tests are run multiple times with one of the make commands.
+3. Results for each run are copied manually from the output folder to a text document or spreadsheet.
+4. Results are analyzed.
+
+### Setup
+
+These tests are environment agnostic however they do assume that you have:
+
+1. Deployed istio and kiali
+2. Run the [install testing demos script](../../hack/istio/install-testing-demos.sh)
+
+If you'd like to test on ibmclould, there's a hack script that will setup a testing environment for you. See the "Running on IBM Cloud" section for more details.
+
+### Run performance tests
 
 From the kiali root:
 
@@ -87,13 +101,29 @@ yarn from current dir
 yarn cypress --config-file cypress-perf.json
 ```
 
-### Parameterizing tests:
+### Parameterizing tests
 
 You can adjust some inputs of the performance tests by changing the [fixture files](fixtures/perf/).
 
-### Results:
+### Limiting the suite to a single test
 
-Results are logged here: `logs/performance.txt`
+You can easily limit your test run to a single test but unfortunately it requires a minor code change. Adding a `.only` to a `describe` or `it` statement will limit testing to that particular block. For example:
+
+```
+it.only('loads the overview page', () => {
+ ...
+})
+
+it('Measures Graph load time', () => {
+ ...
+})
+```
+
+With the addition of the `.only`, only the "loads the overview page" test will be run.
+
+### Results
+
+Results are logged here: `logs/performance.txt`.
 
 ### Cleanup
 
