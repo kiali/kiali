@@ -3,9 +3,11 @@ package kubernetes
 import (
 	"time"
 
+	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -51,6 +53,12 @@ const (
 	WorkloadGroups    = "workloadgroups"
 	WorkloadGroupType = "WorkloadGroup"
 
+	WasmPlugins    = "wasmplugins"
+	WasmPluginType = "WasmPlugin"
+
+	Telemetries   = "telemetries"
+	TelemetryType = "Telemetry"
+
 	// Authorization PeerAuthentications
 	AuthorizationPolicies     = "authorizationpolicies"
 	AuthorizationPoliciesType = "AuthorizationPolicy"
@@ -83,6 +91,18 @@ var (
 	}
 	ApiSecurityVersion = SecurityGroupVersion.Group + "/" + SecurityGroupVersion.Version
 
+	ExtensionGroupVersionV1Alpha1 = schema.GroupVersion{
+		Group:   "extensions.istio.io",
+		Version: "v1alpha1",
+	}
+	ApiExtensionV1Alpha1 = ExtensionGroupVersionV1Alpha1.Group + "/" + ExtensionGroupVersionV1Alpha1.Version
+
+	TelemetryGroupV1Alpha1 = schema.GroupVersion{
+		Group:   "telemetry.istio.io",
+		Version: "v1alpha1",
+	}
+	ApiTelemetryV1Alpha1 = TelemetryGroupV1Alpha1.Group + "/" + TelemetryGroupV1Alpha1.Version
+
 	PluralType = map[string]string{
 		// Networking
 		Gateways:         GatewayType,
@@ -93,6 +113,8 @@ var (
 		WorkloadEntries:  WorkloadEntryType,
 		WorkloadGroups:   WorkloadGroupType,
 		EnvoyFilters:     EnvoyFilterType,
+		WasmPlugins:      WasmPluginType,
+		Telemetries:      TelemetryType,
 
 		// Security
 		AuthorizationPolicies:  AuthorizationPoliciesType,
@@ -101,14 +123,17 @@ var (
 	}
 
 	ResourceTypesToAPI = map[string]string{
-		DestinationRules:       NetworkingGroupVersionV1Beta1.Group,
-		EnvoyFilters:           NetworkingGroupVersionV1Alpha3.Group,
-		Gateways:               NetworkingGroupVersionV1Beta1.Group,
-		ServiceEntries:         NetworkingGroupVersionV1Beta1.Group,
-		Sidecars:               NetworkingGroupVersionV1Beta1.Group,
-		VirtualServices:        NetworkingGroupVersionV1Beta1.Group,
-		WorkloadEntries:        NetworkingGroupVersionV1Beta1.Group,
-		WorkloadGroups:         NetworkingGroupVersionV1Beta1.Group,
+		DestinationRules: NetworkingGroupVersionV1Beta1.Group,
+		EnvoyFilters:     NetworkingGroupVersionV1Alpha3.Group,
+		Gateways:         NetworkingGroupVersionV1Beta1.Group,
+		ServiceEntries:   NetworkingGroupVersionV1Beta1.Group,
+		Sidecars:         NetworkingGroupVersionV1Beta1.Group,
+		VirtualServices:  NetworkingGroupVersionV1Beta1.Group,
+		WorkloadEntries:  NetworkingGroupVersionV1Beta1.Group,
+		WorkloadGroups:   NetworkingGroupVersionV1Beta1.Group,
+		WasmPlugins:      ExtensionGroupVersionV1Alpha1.Group,
+		Telemetries:      TelemetryGroupV1Alpha1.Group,
+
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,
 		RequestAuthentications: SecurityGroupVersion.Group,
@@ -165,6 +190,9 @@ type RegistryConfiguration struct {
 	VirtualServices  []*networking_v1beta1.VirtualService
 	WorkloadEntries  []*networking_v1beta1.WorkloadEntry
 	WorkloadGroups   []*networking_v1beta1.WorkloadGroup
+	WasmPlugins      []*extentions_v1alpha1.WasmPlugin
+	Telemetries      []*v1alpha1.Telemetry
+
 	// Security
 	AuthorizationPolicies  []*security_v1beta.AuthorizationPolicy
 	PeerAuthentications    []*security_v1beta.PeerAuthentication

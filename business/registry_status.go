@@ -121,6 +121,18 @@ func filterRegistryConfiguration(registryStatus *kubernetes.RegistryStatus, crit
 		}
 	}
 
+	for _, wp := range registryStatus.Configuration.WasmPlugins {
+		if wp.Namespace == criteria.Namespace {
+			filtered.WasmPlugins = append(filtered.WasmPlugins, wp)
+		}
+	}
+
+	for _, tm := range registryStatus.Configuration.Telemetries {
+		if tm.Namespace == criteria.Namespace {
+			filtered.Telemetries = append(filtered.Telemetries, tm)
+		}
+	}
+
 	for _, ap := range registryStatus.Configuration.AuthorizationPolicies {
 		if ap.Namespace == criteria.Namespace {
 			filtered.AuthorizationPolicies = append(filtered.AuthorizationPolicies, ap)

@@ -218,6 +218,8 @@ export const IstioTypes = {
   workloadentry: { name: 'WorkloadEntry', url: 'workloadentries', badge: PFBadges.WorkloadEntry } as istioConfigType,
   workloadgroup: { name: 'WorkloadGroup', url: 'workloadgroups', badge: PFBadges.WorkloadGroup } as istioConfigType,
   envoyfilter: { name: 'EnvoyFilter', url: 'envoyfilters', badge: PFBadges.EnvoyFilter } as istioConfigType,
+  wasmplugin: {name: 'WasmPlugin', url: 'wasmplugins', badge: PFBadges.WasmPlugin} as istioConfigType,
+  telemetry: {name: 'Telemetry', url: 'telemetries', badge: PFBadges.Telemetry} as istioConfigType,
   attributemanifest: {
     name: 'AttributeManifest',
     url: 'attributemanifests',

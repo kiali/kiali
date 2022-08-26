@@ -9,6 +9,8 @@ import {
   RequestAuthentication,
   ServiceEntry,
   Sidecar,
+  WasmPlugin,
+  Telemetry,
   Validations,
   VirtualService,
   WorkloadEntry,
@@ -28,6 +30,8 @@ export interface IstioConfigItem {
   serviceEntry?: ServiceEntry;
   authorizationPolicy?: AuthorizationPolicy;
   sidecar?: Sidecar;
+  wasmPlugin?: WasmPlugin;
+  telemetry?: Telemetry;
   peerAuthentication?: PeerAuthentication;
   requestAuthentication?: RequestAuthentication;
   workloadEntry?: WorkloadEntry;
@@ -49,6 +53,8 @@ export interface IstioConfigList {
   envoyFilters: EnvoyFilter[];
   authorizationPolicies: AuthorizationPolicy[];
   sidecars: Sidecar[];
+  wasmPlugins: WasmPlugin[];
+  telemetries: Telemetry[];
   peerAuthentications: PeerAuthentication[];
   requestAuthentications: RequestAuthentication[];
   permissions: { [key: string]: ResourcePermissions };
@@ -67,6 +73,8 @@ export const dicIstioType = {
   WorkloadEntry: 'workloadentries',
   WorkloadGroup: 'workloadgroups',
   EnvoyFilter: 'envoyfilters',
+  WasmPlugin: 'wasmPlugins',
+  Telemetry: 'telemetries',
 
   gateways: 'Gateway',
   virtualservices: 'VirtualService',
@@ -79,6 +87,8 @@ export const dicIstioType = {
   workloadentries: 'WorkloadEntry',
   workloadgroups: 'WorkloadGroup',
   envoyfilters: 'EnvoyFilter',
+  telemetries: 'Telemetry',
+  wasmplugins: 'WasmPlugin',
 
   gateway: 'Gateway',
   virtualservice: 'VirtualService',
@@ -86,6 +96,8 @@ export const dicIstioType = {
   serviceentry: 'ServiceEntry',
   authorizationpolicy: 'AuthorizationPolicy',
   sidecar: 'Sidecar',
+  wasmplugin: 'WasmPlugin',
+  telemetry: 'Telemetry',
   peerauthentication: 'PeerAuthentication',
   requestauthentication: 'RequestAuthentication',
   workloadentry: 'WorkloadEntry',
@@ -127,6 +139,8 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     workloadEntries: unfiltered.workloadEntries.filter(we => includeName(we.metadata.name, names)),
     workloadGroups: unfiltered.workloadGroups.filter(wg => includeName(wg.metadata.name, names)),
     envoyFilters: unfiltered.envoyFilters.filter(ef => includeName(ef.metadata.name, names)),
+    wasmPlugins: unfiltered.wasmPlugins.filter(wp => includeName(wp.metadata.name, names)),
+    telemetries: unfiltered.telemetries.filter(tm => includeName(tm.metadata.name, names)),
     validations: unfiltered.validations,
     permissions: unfiltered.permissions
   };

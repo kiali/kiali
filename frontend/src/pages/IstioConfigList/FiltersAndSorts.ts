@@ -110,8 +110,16 @@ export const istioTypeFilter: FilterType = {
       title: 'Sidecar'
     },
     {
+      id: 'Telemetry',
+      title: 'Telemetry'
+    },
+    {
       id: 'VirtualService',
       title: 'VirtualService'
+    },
+    {
+      id: 'WasmPlugin',
+      title: 'WasmPlugin'
     },
     {
       id: 'WorkloadEntry',

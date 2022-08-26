@@ -19,7 +19,9 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     workloadGroups: [],
     envoyFilters: [],
     validations: {},
-    permissions: {}
+    permissions: {},
+    wasmPlugins: [],
+    telemetries: [],
   };
   names.forEach(name => {
     testData.authorizationPolicies.push({ metadata: { name: name + '0' }, spec: {} });
@@ -53,6 +55,8 @@ describe('IstioConfigListContainer#filterByName', () => {
     expect(filtered.virtualServices.length).toBe(0);
     expect(filtered.destinationRules.length).toBe(0);
     expect(filtered.serviceEntries.length).toBe(0);
+    expect(filtered.wasmPlugins.length).toBe(0);
+    expect(filtered.telemetries.length).toBe(0);
   });
 });
 

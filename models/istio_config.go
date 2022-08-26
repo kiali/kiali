@@ -1,9 +1,11 @@
 package models
 
 import (
+	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
 )
 
 // IstioConfigList istioConfigList
@@ -25,6 +27,8 @@ type IstioConfigList struct {
 	VirtualServices  []*networking_v1beta1.VirtualService  `json:"virtualServices"`
 	WorkloadEntries  []*networking_v1beta1.WorkloadEntry   `json:"workloadEntries"`
 	WorkloadGroups   []*networking_v1beta1.WorkloadGroup   `json:"workloadGroups"`
+	WasmPlugins      []*extentions_v1alpha1.WasmPlugin     `json:"wasmPlugins"`
+	Telemetries      []*v1alpha1.Telemetry                 `json:"telemetries"`
 
 	AuthorizationPolicies  []*security_v1beta.AuthorizationPolicy   `json:"authorizationPolicies"`
 	PeerAuthentications    []*security_v1beta.PeerAuthentication    `json:"peerAuthentications"`
@@ -47,6 +51,8 @@ type IstioConfigDetails struct {
 	VirtualService        *networking_v1beta1.VirtualService     `json:"virtualService"`
 	WorkloadEntry         *networking_v1beta1.WorkloadEntry      `json:"workloadEntry"`
 	WorkloadGroup         *networking_v1beta1.WorkloadGroup      `json:"workloadGroup"`
+	WasmPlugin            *extentions_v1alpha1.WasmPlugin        `json:"wasmPlugin"`
+	Telemetry             *v1alpha1.Telemetry                    `json:"telemetry"`
 
 	Permissions           ResourcePermissions `json:"permissions"`
 	IstioValidation       *IstioValidation    `json:"validation"`
@@ -142,6 +148,12 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "spec.template", Message: "Template to be used for the generation of WorkloadEntry resources that belong to this WorkloadGroup."},
 		{ObjectField: "spec.probe", Message: "ReadinessProbe describes the configuration the user must provide for healthchecking on their workload."},
 	},
+	"wasmplugins": { //TODO
+		{},
+	},
+	"telemetries": { //TODO
+		{},
+	},
 	"internal": {
 		{ObjectField: "", Message: "Internal resources are not editable"},
 	},
@@ -184,6 +196,8 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 			filtered[ns].AuthorizationPolicies = []*security_v1beta.AuthorizationPolicy{}
 			filtered[ns].PeerAuthentications = []*security_v1beta.PeerAuthentication{}
 			filtered[ns].RequestAuthentications = []*security_v1beta.RequestAuthentication{}
+			filtered[ns].WasmPlugins = []*extentions_v1alpha1.WasmPlugin{}
+			filtered[ns].Telemetries = []*v1alpha1.Telemetry{}
 		}
 		for _, dr := range configList.DestinationRules {
 			if dr.Namespace == ns {
@@ -230,6 +244,18 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 		for _, wg := range configList.WorkloadGroups {
 			if wg.Namespace == ns {
 				filtered[ns].WorkloadGroups = append(filtered[ns].WorkloadGroups, wg)
+			}
+		}
+
+		for _, wp := range configList.WasmPlugins {
+			if wp.Namespace == ns {
+				filtered[ns].WasmPlugins = append(filtered[ns].WasmPlugins, wp)
+			}
+		}
+
+		for _, tm := range configList.Telemetries {
+			if tm.Namespace == ns {
+				filtered[ns].Telemetries = append(filtered[ns].Telemetries, tm)
 			}
 		}
 
