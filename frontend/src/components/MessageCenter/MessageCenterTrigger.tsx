@@ -1,10 +1,9 @@
 import * as React from 'react';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import { connect } from 'react-redux';
 import { Badge, Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiAppState } from '../../store/Store';
 import { MessageType, NotificationGroup, NotificationMessage } from '../../types/MessageCenter';
-import { KialiAppAction } from '../../actions/KialiAppAction';
 import MessageCenterThunkActions from '../../actions/MessageCenterThunkActions';
 import { KialiIcon } from 'config/KialiIcon';
 import { style } from 'typestyle';
@@ -117,7 +116,7 @@ const mapStateToPropsMessageCenterTrigger = (state: KialiAppState) => {
     );
 };
 
-const mapDispatchToPropsMessageCenterTrigger = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToPropsMessageCenterTrigger = (dispatch: KialiDispatch) => {
   return {
     toggleMessageCenter: () => dispatch(MessageCenterThunkActions.toggleMessageCenter()),
     toggleSystemErrorsCenter: () => dispatch(MessageCenterThunkActions.toggleSystemErrorsCenter())

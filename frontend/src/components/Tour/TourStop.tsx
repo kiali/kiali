@@ -2,11 +2,10 @@ import * as React from 'react';
 import { Button, ButtonVariant, Popover, PopoverPosition } from '@patternfly/react-core';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import { KialiAppState } from 'store/Store';
 import ReactResizeDetector from 'react-resize-detector';
 import { KialiIcon } from 'config/KialiIcon';
-import { KialiAppAction } from 'actions/KialiAppAction';
 import { TourActions } from 'actions/TourActions';
 import { style } from 'typestyle';
 import { PFColors } from 'components/Pf/PfColors';
@@ -209,7 +208,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   activeStop: state.tourState.activeStop
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     endTour: bindActionCreators(TourActions.endTour, dispatch),
     setStop: bindActionCreators(TourActions.setStop, dispatch)

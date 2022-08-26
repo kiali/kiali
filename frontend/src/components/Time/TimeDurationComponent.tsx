@@ -8,8 +8,7 @@ import { DurationInSeconds } from 'types/Common';
 import { Tooltip, TooltipPosition, Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from 'actions/KialiAppAction';
+import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 
 type ReduxProps = {
@@ -90,7 +89,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   replayActive: replayActiveSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   toggleReplayActive: bindActionCreators(UserSettingsActions.toggleReplayActive, dispatch)
 });
 

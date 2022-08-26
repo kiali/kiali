@@ -5,8 +5,7 @@ import { style } from 'typestyle';
 import { NotificationMessage, NotificationGroup } from '../../types/MessageCenter';
 import AlertDrawerContainer from './AlertDrawer';
 import { KialiAppState } from 'store/Store';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from 'actions/KialiAppAction';
+import { KialiDispatch } from 'types/Redux';
 import { MessageCenterActions } from 'actions/MessageCenterActions';
 
 const notificationStyle = style({
@@ -56,7 +55,7 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     onDismissNotification: (message, userDismissed) => {
       if (userDismissed) {

@@ -25,8 +25,7 @@ import { Overlay } from 'types/Overlay';
 import { Aggregator, DashboardQuery } from 'types/MetricsOptions';
 import { RawOrBucket } from 'types/VictoryChartInfo';
 import { Dashboard } from 'components/Charts/Dashboard';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from '../../actions/KialiAppAction';
+import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { timeRangeSelector } from '../../store/Selectors';
@@ -336,7 +335,7 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setTimeRange: bindActionCreators(UserSettingsActions.setTimeRange, dispatch)
   };

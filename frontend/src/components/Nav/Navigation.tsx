@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import RenderPage from './RenderPage';
 import { RouteComponentProps } from 'react-router';
 import MastheadItems from './Masthead/Masthead';
@@ -21,7 +21,6 @@ import { style } from 'typestyle';
 import MessageCenterContainer from '../../components/MessageCenter/MessageCenter';
 import { kialiLogo, serverConfig } from '../../config';
 import { KialiAppState } from '../../store/Store';
-import { KialiAppAction } from '../../actions/KialiAppAction';
 import UserSettingsThunkActions from '../../actions/UserSettingsThunkActions';
 import Menu from './Menu';
 import { Link } from 'react-router-dom';
@@ -150,7 +149,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   jaegerUrl: state.jaegerState.info && state.jaegerState.info.url ? state.jaegerState.info.url : undefined
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setNavCollapsed: (collapse: boolean) => dispatch(UserSettingsThunkActions.setNavCollapsed(collapse))
 });
 

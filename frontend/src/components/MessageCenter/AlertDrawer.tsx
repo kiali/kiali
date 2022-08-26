@@ -14,12 +14,11 @@ import {
 } from '@patternfly/react-core';
 import { CloseIcon, InfoIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import { KialiAppState } from 'store/Store';
 import { style } from 'typestyle';
 import { NotificationMessage, NotificationGroup } from '../../types/MessageCenter';
 import { MessageCenterActions } from 'actions/MessageCenterActions';
-import { KialiAppAction } from 'actions/KialiAppAction';
 import AlertDrawerGroupContainer from './AlertDrawerGroup';
 import {
   BoundingClientAwareComponent,
@@ -154,7 +153,7 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     expandDrawer: () => dispatch(MessageCenterActions.toggleExpandedMessageCenter()),
     hideDrawer: () => dispatch(MessageCenterActions.hideMessageCenter()),

@@ -1,12 +1,11 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import { KialiAppState } from '../../store/Store';
 import { refreshIntervalSelector } from '../../store/Selectors';
 import { config } from '../../config';
 import { IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
-import { KialiAppAction } from '../../actions/KialiAppAction';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import RefreshButtonContainer from './RefreshButton';
 import { GlobalActions } from '../../actions/GlobalActions';
@@ -131,7 +130,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   refreshInterval: refreshIntervalSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setRefreshInterval: (refresh: IntervalInMilliseconds) => {
       dispatch(UserSettingsActions.setRefreshInterval(refresh));

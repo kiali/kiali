@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import _round from 'lodash/round';
 import { Button, ButtonVariant, Card, CardBody, Grid, GridItem, Tooltip } from '@patternfly/react-core';
 import { InfoAltIcon, WarningTriangleIcon } from '@patternfly/react-icons';
@@ -12,7 +12,6 @@ import { GraphType, NodeType } from 'types/Graph';
 import { FormattedTraceInfo, shortIDStyle } from './FormattedTraceInfo';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiAppState } from 'store/Store';
-import { KialiAppAction } from 'actions/KialiAppAction';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import { getTraceId } from 'utils/SearchParamUtils';
 import { average } from 'utils/MathUtils';
@@ -270,7 +269,7 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId)),
   loadMetricsStats: (queries: MetricsStatsQuery[]) => dispatch(MetricsStatsThunkActions.load(queries))
 });

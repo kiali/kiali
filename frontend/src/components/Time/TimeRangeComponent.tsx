@@ -14,8 +14,7 @@ import { retrieveTimeRange, storeTimeRange } from './TimeRangeHelper';
 import { DateTimePicker } from './DateTimePicker';
 import { KialiAppState } from '../../store/Store';
 import { timeRangeSelector } from '../../store/Selectors';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from '../../actions/KialiAppAction';
+import { KialiDispatch } from 'types/Redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -135,7 +134,7 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setTimeRange: bindActionCreators(UserSettingsActions.setTimeRange, dispatch)
   };
