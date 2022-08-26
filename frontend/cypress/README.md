@@ -64,7 +64,7 @@ cypress/
 
 ## Performance Tests
 
-These coarsly measure metrics such as page load time. These are meant to give a general baseline of performance but are not useful for benchmarking. Here's roughly how these tests are expected to be used:
+These tests coarsely measure metrics such as page load time. They are meant to give a general baseline of performance but are not useful for benchmarking.  This is roughly how to use the tests:
 
 1. Environment is setup either manually or with the perf cluster hack script.
 2. Tests are run multiple times with one of the make commands.
@@ -105,7 +105,7 @@ yarn cypress --config-file cypress-perf.json
 
 You can adjust some inputs of the performance tests by changing the [fixture files](fixtures/perf/).
 
-### Limiting suite to a single test
+### Limiting the suite to a single test
 
 You can easily limit your test run to a single test but unfortunately it requires a minor code change. Adding a `.only` to a `describe` or `it` statement will limit testing to that particular block. For example:
 
