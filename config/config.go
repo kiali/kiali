@@ -705,7 +705,7 @@ func NewConfig() (c *Config) {
 			CacheIstioTypes:             []string{"AuthorizationPolicy", "DestinationRule", "EnvoyFilter", "Gateway", "PeerAuthentication", "RequestAuthentication", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup"},
 			CacheNamespaces:             []string{".*"},
 			CacheTokenNamespaceDuration: 10,
-			TokenExpireDuration:         90 * 86400, // Default to 90 days
+			TokenExpireDuration:         60, // Default to 60 seconds
 			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController"},
 			QPS:                         175,
 		},
