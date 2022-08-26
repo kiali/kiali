@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {Button, Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem} from '@patternfly/react-core';
+import { KialiIcon } from "../../config/KialiIcon";
 import * as AlertUtils from '../../utils/AlertUtils';
 import {
   GraphDefinition,
@@ -21,9 +22,8 @@ import { connect } from 'react-redux';
 import { durationSelector } from '../../store/Selectors';
 import { HealthAnnotationType } from '../../types/HealthAnnotation';
 import TrafficListComponentContainer from "components/TrafficList/TrafficListComponent";
-import {KialiIcon} from "../../config/KialiIcon";
-import {KioskElement} from "../Kiosk/KioskElement";
-import {TimeDurationModal} from "../Time/TimeDurationModal";
+import { KioskElement } from "../Kiosk/KioskElement";
+import { TimeDurationModal } from "../Time/TimeDurationModal";
 
 export interface AppNode {
   id: string;

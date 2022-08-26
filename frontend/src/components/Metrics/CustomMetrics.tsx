@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
-import {Toolbar, ToolbarGroup, ToolbarItem, Card, CardBody, Checkbox, Button} from '@patternfly/react-core';
+import { Toolbar, ToolbarGroup, ToolbarItem, Card, CardBody, Checkbox, Button } from '@patternfly/react-core';
 import { style } from 'typestyle';
+import { KialiIcon } from "../../config/KialiIcon";
 import { serverConfig } from '../../config/ServerConfig';
 import history, { URLParam } from '../../app/History';
 import * as API from '../../services/Api';
@@ -11,9 +12,11 @@ import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '
 import * as AlertUtils from '../../utils/AlertUtils';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import * as MetricsHelper from './Helper';
+import { KioskElement } from "../Kiosk/KioskElement";
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
+import { TimeDurationModal } from "../Time/TimeDurationModal";
 import { GrafanaLinks } from './GrafanaLinks';
 import { MetricsObjectTypes } from 'types/Metrics';
 import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
@@ -27,9 +30,6 @@ import { KialiAppAction } from '../../actions/KialiAppAction';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { timeRangeSelector } from '../../store/Selectors';
-import {KialiIcon} from "../../config/KialiIcon";
-import {KioskElement} from "../Kiosk/KioskElement";
-import {TimeDurationModal} from "../Time/TimeDurationModal";
 
 type MetricsState = {
   dashboard?: DashboardModel;

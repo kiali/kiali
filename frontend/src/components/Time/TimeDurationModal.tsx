@@ -4,7 +4,7 @@ import { Button, Form, FormGroup, Modal, ModalVariant, TooltipPosition } from "@
 import { UserSettingsActions } from "../../actions/UserSettingsActions";
 import { HistoryManager, URLParam } from "../../app/History";
 import { KialiAppState } from "../../store/Store";
-import {DurationInSeconds, IntervalInMilliseconds, TimeRange} from "../../types/Common";
+import { DurationInSeconds, IntervalInMilliseconds, TimeRange } from "../../types/Common";
 import { KialiDispatch } from "../../types/Redux";
 import { DurationDropdownComponent } from "../DurationDropdown/DurationDropdown";
 import { Refresh } from "../Refresh/Refresh";

@@ -1,11 +1,14 @@
 import * as React from 'react';
-import {Button, Card, CardBody, Tab, Tabs, Toolbar, ToolbarGroup, ToolbarItem, Tooltip} from '@patternfly/react-core';
+import { Button, Card, CardBody, Tab, Tabs, Toolbar, ToolbarGroup, ToolbarItem, Tooltip } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
 
+import { KialiIcon } from "config/KialiIcon";
 import * as API from 'services/Api';
 import * as AlertUtils from 'utils/AlertUtils';
 import { RenderComponentScroll } from '../Nav/Page';
+import { KioskElement } from "../Kiosk/KioskElement";
+import { TimeDurationModal } from "../Time/TimeDurationModal";
 import { KialiAppState } from 'store/Store';
 import { JaegerError, JaegerTrace } from 'types/JaegerInfo';
 import TraceDetails from './JaegerResults/TraceDetails';
@@ -19,9 +22,6 @@ import { TracesDisplayOptions, QuerySettings, DisplaySettings, percentilesOption
 import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
-import {KialiIcon} from "../../config/KialiIcon";
-import {KioskElement} from "../Kiosk/KioskElement";
-import {TimeDurationModal} from "../Time/TimeDurationModal";
 
 /*
     timeRange: timeRangeSelector(state),
