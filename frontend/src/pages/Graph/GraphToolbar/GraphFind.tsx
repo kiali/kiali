@@ -1,12 +1,10 @@
 import * as React from 'react';
 import { Button, Tooltip, ButtonVariant, TextInput, Form } from '@patternfly/react-core';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../../store/Store';
 import { findValueSelector, hideValueSelector, edgeLabelsSelector, edgeModeSelector } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
-import { KialiAppAction } from '../../../actions/KialiAppAction';
 import GraphHelpFind from '../../../pages/Graph/GraphHelpFind';
 import { CyNode, CyEdge } from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
@@ -17,6 +15,7 @@ import { style } from 'typestyle';
 import TourStopContainer from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { TimeInMilliseconds } from 'types/Common';
+import { KialiDispatch } from "types/Redux";
 import { AutoComplete } from 'utils/AutoComplete';
 import { DEGRADED, FAILURE, HEALTHY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
@@ -1058,7 +1057,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   updateTime: state.graph.updateTime
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),
     setFindValue: bindActionCreators(GraphToolbarActions.setFindValue, dispatch),

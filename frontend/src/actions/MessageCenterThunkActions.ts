@@ -1,7 +1,6 @@
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from './KialiAppAction';
 import { MessageCenterActions } from './MessageCenterActions';
 import { KialiAppState } from '../store/Store';
+import { KialiDispatch } from "../types/Redux";
 
 const MessageCenterThunkActions = {
   toggleMessageCenter: () => {
@@ -39,7 +38,7 @@ const MessageCenterThunkActions = {
     };
   },
   clearGroup: (groupId: string) => {
-    return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>, getState: () => KialiAppState) => {
+    return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
       const state = getState();
       const foundGroup = state.messageCenter.groups.find(group => group.id === groupId);
       if (foundGroup) {
