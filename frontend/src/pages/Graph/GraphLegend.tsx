@@ -41,7 +41,7 @@ export default class GraphLegend extends React.Component<GraphLegendProps> {
     });
 
     return (
-      <div className={legendBoxStyle} style={summaryFont}>
+      <div className={legendBoxStyle} style={summaryFont} data-test="graph-legend">
         <div className={`${headerStyle} ${summaryTitle}`}>
           <span>Legend</span>
           <span className={closeBoxStyle}>
