@@ -3,6 +3,7 @@
 exports[`GraphLegend test should render correctly 1`] = `
 <div
   className="fsg7me4"
+  data-test="graph-legend"
   style={
     Object {
       "fontSize": "var(--graph-side-panel--font-size)",
