@@ -79,10 +79,9 @@ type (
 		registryStatusLock     sync.RWMutex
 		registryStatusCreated  *time.Time
 		registryStatus         *kubernetes.RegistryStatus
+		stopCacheChan          chan bool
 	}
 )
-
-var stopCacheChan chan bool
 
 func NewKialiCache() (KialiCache, error) {
 	config, err := kubernetes.ConfigClient()
@@ -154,7 +153,7 @@ func NewKialiCache() (KialiCache, error) {
 	kialiCacheImpl.istioApi = istioClient.Istio()
 
 	// Update SA Token
-	stopCacheChan = kialiCacheImpl.RefreshCache(tokenExpireDuration, istioConfig)
+	kialiCacheImpl.stopCacheChan = kialiCacheImpl.RefreshCache(tokenExpireDuration, istioConfig)
 	log.Infof("Kiali Cache is active for namespaces %v", cacheNamespaces)
 	return &kialiCacheImpl, nil
 }
@@ -293,7 +292,7 @@ func (c *kialiCacheImpl) Stop() {
 	for ns := range c.nsCache {
 		delete(c.nsCache, ns)
 	}
-	stopCacheChan <- true
+	c.stopCacheChan <- true
 }
 
 func (c *kialiCacheImpl) GetClient() *kubernetes.K8SClient {

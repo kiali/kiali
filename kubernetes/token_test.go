@@ -14,8 +14,8 @@ const tmpFileGetToken = "/tmp/token2"
 // Test Token is Expired
 func TestIsTokenExpired(t *testing.T) {
 
-	SetDefaultServiceAccountPath(tmpFileTokenExpired)
-	SetTokenExpireDuration(5 * time.Second)
+	DefaultServiceAccountPath = tmpFileTokenExpired
+	tokenExpireDuration = 5 * time.Second
 
 	setupFile("thisisarandomtoken", tmpFileTokenExpired, t)
 	token, err := GetKialiToken()
@@ -29,7 +29,7 @@ func TestIsTokenExpired(t *testing.T) {
 
 // Test Kiali Get Token
 func TestGetKialiToken(t *testing.T) {
-	SetDefaultServiceAccountPath(tmpFileGetToken)
+	DefaultServiceAccountPath = tmpFileGetToken
 	data := "thisisarandomtoken"
 
 	setupFile(data, tmpFileGetToken, t)

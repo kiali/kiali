@@ -46,13 +46,3 @@ func IsTokenExpired() bool {
 		return false
 	}
 }
-
-// Set ServiceAccountPath
-func SetDefaultServiceAccountPath(path string) {
-	DefaultServiceAccountPath = path
-}
-
-// Set Token Expiration
-func SetTokenExpireDuration(expireTime time.Duration) {
-	tokenExpireDuration = expireTime
-}
