@@ -697,6 +697,10 @@ export interface Gateway extends IstioObject {
   spec: GatewaySpec;
 }
 
+export function getGatewaysAsList(gws: Gateway[]): string[] {
+  return gws.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort();
+}
+
 // Sidecar resource https://preliminary.istio.io/docs/reference/config/networking/v1alpha3/sidecar
 
 // 1.6

@@ -3,7 +3,7 @@ import { CancelablePromise } from "../utils/CancelablePromises";
 import * as API from "../services/Api";
 import { DurationInSeconds, TimeInMilliseconds } from "../types/Common";
 import { ServiceDetailsInfo } from "../types/ServiceInfo";
-import { PeerAuthentication } from "../types/IstioObjects";
+import { getGatewaysAsList, PeerAuthentication } from "../types/IstioObjects";
 import { AxiosError } from "axios";
 import { DecoratedGraphNodeData, NodeType } from "../types/Graph";
 import * as AlertUtils from "../utils/AlertUtils";
@@ -31,7 +31,7 @@ export function useServiceDetail(namespace: string, serviceName: string, duratio
     allPromise.promise
       .then(results => {
         setServiceDetails(results[0]);
-        setGateways(Object.values(results[1].data).map(nsCfg => nsCfg.gateways.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name)).flat().sort());
+        setGateways(Object.values(results[1].data).map(nsCfg => getGatewaysAsList(nsCfg.gateways)).flat().sort());
         setPeerAuthentications(results[2].data.peerAuthentications);
         setFetchError(null);
         setIsLoading(false);

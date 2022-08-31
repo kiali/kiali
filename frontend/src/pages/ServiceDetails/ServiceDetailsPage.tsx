@@ -17,7 +17,7 @@ import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
-import { Gateway, PeerAuthentication, Validations } from '../../types/IstioObjects';
+import { Gateway, getGatewaysAsList, PeerAuthentication, Validations } from '../../types/IstioObjects';
 import ServiceWizardDropdown from '../../components/IstioWizards/ServiceWizardDropdown';
 import TimeControl from '../../components/Time/TimeControl';
 import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
@@ -89,9 +89,11 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     this.promises
       .register('gateways', API.getAllIstioConfigs([], ['gateways'], false, '', ''))
       .then(response => {
+        const gws: Gateway[] = [];
         Object.values(response.data).forEach(item => {
-          this.setState({ gateways: this.state.gateways.concat(item.gateways) });
+          gws.push(...item.gateways);
         });
+        this.setState({ gateways: gws });
       })
       .catch(gwError => {
         AlertUtils.addError('Could not fetch Gateways list.', gwError);
@@ -120,10 +122,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         AlertUtils.addError('Could not fetch PeerAuthentications.', error);
       });
   };
-
-  private getGatewaysAsList(): string[] {
-    return this.state.gateways.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort();
-  }
 
   private renderTabs() {
     const overTab = (
@@ -197,7 +195,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         virtualServices={this.state.serviceDetails.virtualServices}
         destinationRules={this.state.serviceDetails.destinationRules}
         istioPermissions={this.state.serviceDetails.istioPermissions}
-        gateways={this.getGatewaysAsList()}
+        gateways={getGatewaysAsList(this.state.gateways)}
         peerAuthentications={this.state.peerAuthentications}
         tlsStatus={this.state.serviceDetails.namespaceMTLS}
         onChange={this.fetchService}
