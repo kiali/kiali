@@ -263,11 +263,13 @@ func (c *kialiCacheImpl) RefreshCache(tokenExpireDuration time.Duration, istioCo
 							c.istioClient = *istioClient
 							c.k8sApi = istioClient.GetK8sApi()
 							c.istioApi = istioClient.Istio()
-							c.RefreshTokenNamespaces()
+							for ns := range c.nsCache {
+								c.RefreshNamespace(ns)
+							}
 						}
 
 					} else {
-						log.Info("Kiali Cache: Nothing to refresh")
+						log.Debug("Kiali Cache: Nothing to refresh")
 					}
 				}
 			case <-quit:
