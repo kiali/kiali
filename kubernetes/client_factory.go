@@ -179,6 +179,8 @@ func (cf *clientFactory) getRecycleClient(authInfo *api.AuthInfo, expirationTime
 }
 
 // hasClient check if clientFactory has a client, return the client if clientFactory has it
+// This is a helper function for testing.
+// It uses the shared lock so beware of nested locking with other methods.
 func (cf *clientFactory) hasClient(authInfo *api.AuthInfo) (*ClientInterface, bool) {
 	tokenHash := getTokenHash(authInfo)
 	cf.mutex.RLock()
@@ -187,7 +189,9 @@ func (cf *clientFactory) hasClient(authInfo *api.AuthInfo) (*ClientInterface, bo
 	return cEntry, ok
 }
 
-// getClientsLength returns the length of clients
+// getClientsLength returns the length of clients.
+// This is a helper function for testing.
+// It uses the shared lock so beware of nested locking with other methods.
 func (cf *clientFactory) getClientsLength() int {
 	cf.mutex.Lock()
 	defer cf.mutex.Unlock()
