@@ -22,7 +22,7 @@ func TestIsTokenExpired(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.True(t, token != "")
-	assert.False(t, IsTokenExpired())
+	assert.False(t, shouldRefreshToken())
 
 	removeFile(tmpFileTokenExpired, t)
 }
