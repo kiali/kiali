@@ -11,7 +11,7 @@ set -eu
   
 install_sleep_app() {
 
-  if [[ "${ISTIO_DIR}" = "" ]]; then
+  if [ "${ISTIO_DIR}" == "" ]; then
     ISTIO_DIR=$(ls -dt1 ${SCRIPT_DIR}/../../_output/istio-* | head -n1)
   fi
 
