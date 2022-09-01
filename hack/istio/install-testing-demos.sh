@@ -10,6 +10,11 @@
 set -eu
   
 install_sleep_app() {
+
+  if [[ "${ISTIO_DIR}" = "" ]]; then
+    ISTIO_DIR=$(ls -dt1 ${SCRIPT_DIR}/../../_output/istio-* | head -n1)
+  fi
+
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     ${CLIENT_EXE} get project "sleep" || ${CLIENT_EXE} new-project "sleep"
   else
