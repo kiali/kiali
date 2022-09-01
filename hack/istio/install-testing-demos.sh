@@ -15,8 +15,13 @@ install_sleep_app() {
   else
     ${CLIENT_EXE} get ns sleep || ${CLIENT_EXE} create ns sleep
   fi
-  
+
   ${CLIENT_EXE} label namespace "sleep" istio-injection=enabled --overwrite=true
+
+  # For OpenShift 4.11, adds default service account in the current ns to use as a user
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid system:serviceaccount:sleep:sleep
+  fi
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
       cat <<NAD | $CLIENT_EXE -n sleep apply -f -
@@ -25,7 +30,7 @@ kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
-    cat <<SCC | $CLIENT_EXE apply -f -
+    cat <<SCC | $CLIENT_EXE apply -n sleep -f -
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
@@ -40,11 +45,6 @@ users:
 - "system:serviceaccount:sleep:default"
 - "system:serviceaccount:sleep:sleep"
 SCC
-  fi
-
-  # For OpenShift 4.11, adds default service account in the current ns to use as a user
-  if [ "${IS_OPENSHIFT}" == "true" ]; then
-    $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n sleep
   fi
 
   ${CLIENT_EXE} apply -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
@@ -139,10 +139,12 @@ else
 
   echo "Deleting the 'sleep' app in the 'sleep' namespace..."
   ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
-  ${CLIENT_EXE} delete ns sleep --ignore-not-found=true
   if [ "${IS_OPENSHIFT}" == "true" ]; then
+    ${CLIENT_EXE} delete network-attachment-definition istio-cni -n sleep
+    ${CLIENT_EXE} delete scc sleep-scc
     ${CLIENT_EXE} delete project sleep
   fi
+  ${CLIENT_EXE} delete namespace sleep
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     echo "Deleting bookinfo demo ..."
