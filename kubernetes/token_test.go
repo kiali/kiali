@@ -1,11 +1,9 @@
 package kubernetes
 
 import (
+	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
-	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
 const tmpFileTokenExpired = "/tmp/token"
@@ -15,7 +13,6 @@ const tmpFileGetToken = "/tmp/token2"
 func TestIsTokenExpired(t *testing.T) {
 
 	DefaultServiceAccountPath = tmpFileTokenExpired
-	tokenExpireDuration = 5 * time.Second
 
 	setupFile("thisisarandomtoken", tmpFileTokenExpired, t)
 	token, err := GetKialiToken()

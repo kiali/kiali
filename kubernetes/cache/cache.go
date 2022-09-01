@@ -117,7 +117,6 @@ func NewKialiCache() (KialiCache, error) {
 
 	refreshDuration := time.Duration(kConfig.KubernetesConfig.CacheDuration) * time.Second
 	tokenNamespaceDuration := time.Duration(kConfig.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
-	tokenExpireDuration := time.Duration(kConfig.KubernetesConfig.TokenExpireDuration) * time.Second
 
 	cacheNamespaces := kConfig.KubernetesConfig.CacheNamespaces
 	cacheIstioTypes := make(map[string]bool)
@@ -153,7 +152,7 @@ func NewKialiCache() (KialiCache, error) {
 	kialiCacheImpl.istioApi = istioClient.Istio()
 
 	// Update SA Token
-	kialiCacheImpl.stopCacheChan = kialiCacheImpl.refreshCache(tokenExpireDuration, istioConfig)
+	kialiCacheImpl.stopCacheChan = kialiCacheImpl.refreshCache(istioConfig)
 	log.Infof("Kiali Cache is active for namespaces %v", cacheNamespaces)
 	return &kialiCacheImpl, nil
 }
@@ -242,8 +241,8 @@ func (c *kialiCacheImpl) RefreshNamespace(namespace string) {
 }
 
 // RefreshNamespace will delete the specific namespace's cache and create a new one.
-func (c *kialiCacheImpl) refreshCache(tokenExpireDuration time.Duration, istioConfig rest.Config) chan bool {
-	ticker := time.NewTicker(tokenExpireDuration)
+func (c *kialiCacheImpl) refreshCache(istioConfig rest.Config) chan bool {
+	ticker := time.NewTicker(60 * time.Second)
 	quit := make(chan bool)
 	go func() {
 		for {

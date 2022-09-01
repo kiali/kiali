@@ -3,8 +3,6 @@ package kubernetes
 import (
 	"io/ioutil"
 	"time"
-
-	kialiConfig "github.com/kiali/kiali/config"
 )
 
 // Be careful with how you use this token. This is the Kiali Service Account token, not the user token.
@@ -14,7 +12,6 @@ var DefaultServiceAccountPath = "/var/run/secrets/kubernetes.io/serviceaccount/t
 
 var KialiToken string
 var tokenRead time.Time
-var tokenExpireDuration time.Duration
 
 func GetKialiToken() (string, error) {
 	// TODO:refresh the token when it changes rather than after it expires
@@ -36,12 +33,9 @@ func GetKialiToken() (string, error) {
 // Check if token expired based on the kubernetes configuration
 func shouldRefreshToken() bool {
 
-	if tokenExpireDuration == 0 {
-		kConfig := kialiConfig.Get()
-		tokenExpireDuration = time.Duration(kConfig.KubernetesConfig.TokenExpireDuration) * time.Second
-	}
+	timerDuration := time.Second * 60
 
-	if time.Since(tokenRead) > tokenExpireDuration {
+	if time.Since(tokenRead) > timerDuration {
 		return true
 	} else {
 		return false

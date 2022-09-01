@@ -281,9 +281,6 @@ type KubernetesConfig struct {
 	// Kiali cache list of namespaces per user, this is typically short lived cache compared with the duration of the
 	// namespace cache defined by previous CacheDuration parameter
 	CacheTokenNamespaceDuration int `yaml:"cache_token_namespace_duration,omitempty"`
-	// Cache token duration (seconds)
-	// Refresh the SA token
-	TokenExpireDuration int `yaml:"token_expire_duration,omitempty"`
 	// List of controllers that won't be used for Workload calculation
 	// Kiali queries Deployment,ReplicaSet,ReplicationController,DeploymentConfig,StatefulSet,Job and CronJob controllers
 	// Deployment and ReplicaSet will be always queried, but ReplicationController,DeploymentConfig,StatefulSet,Job and CronJobs
@@ -705,7 +702,6 @@ func NewConfig() (c *Config) {
 			CacheIstioTypes:             []string{"AuthorizationPolicy", "DestinationRule", "EnvoyFilter", "Gateway", "PeerAuthentication", "RequestAuthentication", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup"},
 			CacheNamespaces:             []string{".*"},
 			CacheTokenNamespaceDuration: 10,
-			TokenExpireDuration:         60, // Default to 60 seconds
 			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController"},
 			QPS:                         175,
 		},
