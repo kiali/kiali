@@ -322,6 +322,9 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
   fi
 
   if [ "${INGRESS_ROUTE}" != "" ] ; then
+    if [ "${IS_OPENSHIFT}" == "true" ]; then
+      $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE}
+    fi
     # TODO - these access the "openshift" yaml files - but there are no kubernetes specific versions. using --validate=false
     curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION='0s' ROUTE="http://${INGRESS_ROUTE}/productpage" RATE="${RATE}" envsubst | $CLIENT_EXE apply -n ${NAMESPACE} -f -
     curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml | $CLIENT_EXE apply --validate=false -n ${NAMESPACE} -f -
