@@ -1,9 +1,8 @@
 import * as React from 'react';
-import { Button, Card, CardBody, Tab, Tabs, Toolbar, ToolbarGroup, ToolbarItem, Tooltip } from '@patternfly/react-core';
+import { Card, CardBody, Tab, Tabs, Toolbar, ToolbarGroup, ToolbarItem, Tooltip } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
 
-import { KialiIcon } from "config/KialiIcon";
 import * as API from 'services/Api';
 import * as AlertUtils from 'utils/AlertUtils';
 import { RenderComponentScroll } from '../Nav/Page';
@@ -22,6 +21,7 @@ import { TracesDisplayOptions, QuerySettings, DisplaySettings, percentilesOption
 import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
+import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton";
 
 /*
     timeRange: timeRangeSelector(state),
@@ -271,9 +271,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                   )}
                   <KioskElement>
                     <ToolbarItem>
-                      <Button variant="link" onClick={this.toggleTimeOptionsVisibility}>
-                        <KialiIcon.Clock className="" />
-                      </Button>
+                      <TimeDurationIndicatorButton onClick={this.toggleTimeOptionsVisibility} />
                     </ToolbarItem>
                   </KioskElement>
                 </ToolbarGroup>

@@ -39,9 +39,9 @@ export function TimeDurationModal(props: Props) {
   }
 
   function handleConfirm() {
-    dispatch(UserSettingsActions.setDuration(duration));
+    dispatch(UserSettingsActions.setRefreshInterval(refreshInterval));
     if (!props.customDuration) {
-      dispatch(UserSettingsActions.setRefreshInterval(refreshInterval));
+      dispatch(UserSettingsActions.setDuration(duration));
     } else {
       dispatch(UserSettingsActions.setTimeRange(timeRange));
     }

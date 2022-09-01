@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
-import { Toolbar, ToolbarGroup, ToolbarItem, Card, CardBody, Checkbox, Button } from '@patternfly/react-core';
+import { Toolbar, ToolbarGroup, ToolbarItem, Card, CardBody, Checkbox } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import { KialiIcon } from "../../config/KialiIcon";
 import { serverConfig } from '../../config/ServerConfig';
 import history, { URLParam } from '../../app/History';
 import * as API from '../../services/Api';
@@ -29,6 +28,7 @@ import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { timeRangeSelector } from '../../store/Selectors';
+import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton";
 
 type MetricsState = {
   dashboard?: DashboardModel;
@@ -293,9 +293,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
             </ToolbarItem>
             <KioskElement>
               <ToolbarItem style={{ marginLeft: 'auto' }}>
-                <Button variant="link" onClick={this.toggleTimeOptionsVisibility}>
-                  <KialiIcon.Clock className="" />
-                </Button>
+                <TimeDurationIndicatorButton onClick={this.toggleTimeOptionsVisibility} />
               </ToolbarItem>
             </KioskElement>
           </ToolbarGroup>

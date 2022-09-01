@@ -1,6 +1,5 @@
 import * as React from 'react';
-import {Button, Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem} from '@patternfly/react-core';
-import { KialiIcon } from "../../config/KialiIcon";
+import { Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import * as AlertUtils from '../../utils/AlertUtils';
 import {
   GraphDefinition,
@@ -24,6 +23,7 @@ import { HealthAnnotationType } from '../../types/HealthAnnotation';
 import TrafficListComponentContainer from "components/TrafficList/TrafficListComponent";
 import { KioskElement } from "../Kiosk/KioskElement";
 import { TimeDurationModal } from "../Time/TimeDurationModal";
+import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton";
 
 export interface AppNode {
   id: string;
@@ -128,9 +128,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
                     <ToolbarGroup>
                       <KioskElement>
                         <ToolbarItem style={{ marginLeft: 'auto' }}>
-                          <Button variant="link" onClick={this.toggleTimeOptionsVisibility}>
-                            <KialiIcon.Clock className="" />
-                          </Button>
+                          <TimeDurationIndicatorButton isDuration={true} onClick={this.toggleTimeOptionsVisibility} />
                         </ToolbarItem>
                       </KioskElement>
                     </ToolbarGroup>

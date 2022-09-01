@@ -3,12 +3,17 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { KialiDispatch } from 'types/Redux';
 import { RouteComponentProps, withRouter } from 'react-router';
-import { Button, Card, CardBody, Checkbox, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
+import { Card, CardBody, Checkbox, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import { KialiIcon } from "config/KialiIcon";
 import * as API from 'services/Api';
 import { KialiAppState } from 'store/Store';
-import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from 'types/Common';
+import {
+  TimeRange,
+  evalTimeRange,
+  TimeInMilliseconds,
+  isEqualTimeRange,
+  IntervalInMilliseconds
+} from 'types/Common';
 import { Direction, IstioMetricsOptions, Reporter } from 'types/MetricsOptions';
 import * as AlertUtils from 'utils/AlertUtils';
 import { RenderComponentScroll } from 'components/Nav/Page';
@@ -28,9 +33,10 @@ import { DashboardModel, ExternalLink } from 'types/Dashboards';
 import { Overlay } from 'types/Overlay';
 import { RawOrBucket } from 'types/VictoryChartInfo';
 import { Dashboard } from 'components/Charts/Dashboard';
-import { timeRangeSelector } from 'store/Selectors';
+import { refreshIntervalSelector, timeRangeSelector } from 'store/Selectors';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
+import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton";
 
 type MetricsState = {
   crippledFeatures?: KialiCrippledFeatures;
@@ -59,6 +65,7 @@ type ReduxProps = {
   jaegerIntegration: boolean;
   lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
+  refreshInterval: IntervalInMilliseconds;
   setTimeRange: (range: TimeRange) => void;
 };
 
@@ -66,11 +73,6 @@ type Props = ReduxProps & IstioMetricsProps;
 
 const fullHeightStyle = style({
   height: '100%'
-});
-
-const infoStyle = style({
-  margin: '0px 5px 2px 5px',
-  verticalAlign: '-5px !important'
 });
 
 // For some reason checkbox as a ToolbarItem needs to be tweaked
@@ -391,9 +393,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
             </ToolbarItem>
             <KioskElement>
               <ToolbarItem>
-                <Button variant="link" onClick={this.toggleTimeOptionsVisibility}>
-                  <KialiIcon.Clock className={infoStyle} />
-                </Button>
+                <TimeDurationIndicatorButton onClick={this.toggleTimeOptionsVisibility} />
               </ToolbarItem>
             </KioskElement>
           </ToolbarGroup>
@@ -416,7 +416,8 @@ const mapStateToProps = (state: KialiAppState) => {
   return {
     jaegerIntegration: state.jaegerState.info ? state.jaegerState.info.integration : false,
     lastRefreshAt: state.globalState.lastRefreshAt,
-    timeRange: timeRangeSelector(state)
+    timeRange: timeRangeSelector(state),
+    refreshInterval: refreshIntervalSelector(state)
   };
 };
 
