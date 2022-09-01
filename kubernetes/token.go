@@ -17,7 +17,8 @@ var tokenRead time.Time
 var tokenExpireDuration time.Duration
 
 func GetKialiToken() (string, error) {
-	if KialiToken == "" || IsTokenExpired() {
+	// TODO:refresh the token when it changes rather than after it expires
+	if KialiToken == "" || shouldRefreshToken() {
 		if remoteSecret, err := GetRemoteSecret(RemoteSecretData); err == nil {
 			KialiToken = remoteSecret.Users[0].User.Token
 		} else {
@@ -32,8 +33,8 @@ func GetKialiToken() (string, error) {
 	return KialiToken, nil
 }
 
-// Check if token expired based on the k configuration
-func IsTokenExpired() bool {
+// Check if token expired based on the kubernetes configuration
+func shouldRefreshToken() bool {
 
 	if tokenExpireDuration == 0 {
 		kConfig := kialiConfig.Get()
