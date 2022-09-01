@@ -14,7 +14,6 @@ import (
 
 // TestClientExpiration Verify the details that clients expire are correct
 func TestClientExpiration(t *testing.T) {
-
 	istioConfig := rest.Config{}
 	clientFactory := newClientFactory(&istioConfig)
 

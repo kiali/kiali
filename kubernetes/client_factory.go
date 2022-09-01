@@ -15,12 +15,6 @@ import (
 
 var factory *clientFactory
 
-// mutex for when modifying the stored clients
-var mutex = &sync.RWMutex{}
-
-// when a client is expired, a signal with its tokenHash will be sent to recycleChan
-var recycleChan = make(chan string, 10)
-
 // defaultExpirationTime set the default expired time of a client
 const defaultExpirationTime = time.Minute * 15
 
@@ -31,9 +25,12 @@ type ClientFactory interface {
 
 // clientFactory used to generate per users clients
 type clientFactory struct {
-	ClientFactory
 	baseIstioConfig *rest.Config
 	clientEntries   map[string]*ClientInterface
+	// mutex for when modifying the stored clients
+	mutex sync.RWMutex
+	// when a client is expired, a signal with its tokenHash will be sent to recycleChan
+	recycleChan chan string
 }
 
 // GetClientFactory returns the client factory. Creates a new one if necessary
@@ -53,8 +50,7 @@ func GetClientFactory() (ClientFactory, error) {
 			Burst:           config.Burst,
 		}
 
-		return newClientFactory(&istioConfig), nil
-
+		factory = newClientFactory(&istioConfig)
 	}
 	return factory, nil
 }
@@ -62,20 +58,20 @@ func GetClientFactory() (ClientFactory, error) {
 // newClientFactory allows for specifying the config and expiry duration
 // Mock friendly for testing purposes
 func newClientFactory(istioConfig *rest.Config) *clientFactory {
-	if factory == nil {
-		clientEntriesMap := make(map[string]*ClientInterface)
+	clientEntriesMap := make(map[string]*ClientInterface)
 
-		factory = &clientFactory{
-			baseIstioConfig: istioConfig,
-			clientEntries:   clientEntriesMap,
-		}
-
-		// after creating a client factory
-		// background goroutines will be watching the clients` expiration
-		// if a client is expired, it will be removed from clientEntries
-		go watchClients(clientEntriesMap)
+	f := &clientFactory{
+		baseIstioConfig: istioConfig,
+		clientEntries:   clientEntriesMap,
+		recycleChan:     make(chan string),
 	}
-	return factory
+
+	// after creating a client factory
+	// background goroutines will be watching the clients` expiration
+	// if a client is expired, it will be removed from clientEntries
+	go f.watchClients()
+
+	return f
 }
 
 // newClient creates a new ClientInterface based on a users k8s token
@@ -141,7 +137,7 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 	go func(token string, err error) {
 		if err == nil {
 			<-time.After(expirationTime)
-			recycleChan <- token
+			cf.recycleChan <- token
 		}
 	}(getTokenHash(authInfo), err)
 
@@ -164,7 +160,10 @@ func (cf *clientFactory) getClient(authInfo *api.AuthInfo) (*ClientInterface, er
 
 // getRecycleClient returns a client for the specified token with expirationTime. Creating one if necessary.
 func (cf *clientFactory) getRecycleClient(authInfo *api.AuthInfo, expirationTime time.Duration) (*ClientInterface, error) {
-	if cEntry, ok := cf.hasClient(authInfo); ok {
+	cf.mutex.Lock()
+	defer cf.mutex.Unlock()
+	tokenHash := getTokenHash(authInfo)
+	if cEntry, ok := cf.clientEntries[tokenHash]; ok {
 		return cEntry, nil
 	} else {
 		client, err := cf.newClient(authInfo, expirationTime)
@@ -173,46 +172,51 @@ func (cf *clientFactory) getRecycleClient(authInfo *api.AuthInfo, expirationTime
 			return nil, err
 		}
 
-		mutex.Lock()
 		cf.clientEntries[getTokenHash(authInfo)] = &client
 		internalmetrics.SetKubernetesClients(len(cf.clientEntries))
-		mutex.Unlock()
 		return &client, nil
 	}
 }
 
 // hasClient check if clientFactory has a client, return the client if clientFactory has it
+// This is a helper function for testing.
+// It uses the shared lock so beware of nested locking with other methods.
 func (cf *clientFactory) hasClient(authInfo *api.AuthInfo) (*ClientInterface, bool) {
 	tokenHash := getTokenHash(authInfo)
-	mutex.RLock()
+	cf.mutex.RLock()
 	cEntry, ok := cf.clientEntries[tokenHash]
-	mutex.RUnlock()
+	cf.mutex.RUnlock()
 	return cEntry, ok
 }
 
-// getClientsLength returns the length of clients
+// getClientsLength returns the length of clients.
+// This is a helper function for testing.
+// It uses the shared lock so beware of nested locking with other methods.
 func (cf *clientFactory) getClientsLength() int {
-	mutex.RLock()
-	length := len(cf.clientEntries)
-	mutex.RUnlock()
-	return length
+	cf.mutex.Lock()
+	defer cf.mutex.Unlock()
+	return len(cf.clientEntries)
 }
 
 // watchClients listen signal from recycleChan and clean the expired clients
-func watchClients(clientEntries map[string]*ClientInterface) {
+func (cf *clientFactory) watchClients() {
 	for {
 		// listen signal from recycleChan
-		tokenHash, ok := <-recycleChan
+		tokenHash, ok := <-cf.recycleChan
 		if !ok {
 			log.Error("recycleChan closed when watching clients")
 			return
 		}
 		// clean expired client with its token hash
-		mutex.Lock()
-		delete(clientEntries, tokenHash)
-		internalmetrics.SetKubernetesClients(len(clientEntries))
-		mutex.Unlock()
+		cf.deleteClient(tokenHash)
 	}
+}
+
+func (cf *clientFactory) deleteClient(token string) {
+	cf.mutex.Lock()
+	defer cf.mutex.Unlock()
+	delete(cf.clientEntries, token)
+	internalmetrics.SetKubernetesClients(len(cf.clientEntries))
 }
 
 // getTokenHash get the token hash of a client
@@ -235,7 +239,6 @@ func getTokenHash(authInfo *api.AuthInfo) string {
 				tokenData += key + userExtra
 			}
 		}
-
 	}
 
 	h := md5.New()
@@ -249,5 +252,4 @@ func getTokenHash(authInfo *api.AuthInfo) string {
 		panic("md5.Write returned error.")
 	}
 	return string(h.Sum(nil))
-
 }
