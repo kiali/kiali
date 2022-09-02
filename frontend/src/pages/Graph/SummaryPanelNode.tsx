@@ -21,7 +21,6 @@ import {
   DropdownPosition,
   ExpandableSection,
   KebabToggle,
-  Spinner,
   Tab
 } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
@@ -32,6 +31,7 @@ import { JaegerState } from 'reducers/JaegerState';
 import { classes, style } from 'typestyle';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ServiceDetailsInfo } from "types/ServiceInfo";
+import { LoadingWizardActionsDropdownGroup } from "components/IstioWizards/LoadingWizardActionsDropdownGroup";
 import { WizardAction, WizardMode } from "components/IstioWizards/WizardActions";
 import ServiceWizardActionsDropdownGroup from "components/IstioWizards/ServiceWizardActionsDropdownGroup";
 import { PeerAuthentication } from "../../types/IstioObjects";
@@ -138,11 +138,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     if (nodeType === NodeType.SERVICE) {
       if (this.props.serviceDetails === undefined) {
         items.push(
-          <DropdownGroup key="wizards" label="Actions" className="kiali-group-menu">
-            <DropdownItem isDisabled={true}>
-              <Spinner isSVG={true} size="md" aria-label="Loading actions..." />
-            </DropdownItem>
-          </DropdownGroup>
+          <LoadingWizardActionsDropdownGroup />
         );
       } else if (this.props.serviceDetails !== null) {
         items.push(

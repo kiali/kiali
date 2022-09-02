@@ -1,10 +1,18 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
 import { style } from 'typestyle';
 import { Grid, GridItem, Stack, StackItem } from '@patternfly/react-core';
 import ServiceId from '../../types/ServiceId';
 import ServiceDescription from './ServiceDescription';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
-import { Gateway, ObjectValidation, PeerAuthentication, Validations } from '../../types/IstioObjects';
+import {
+  DestinationRuleC,
+  Gateway,
+  getGatewaysAsList,
+  ObjectValidation,
+  PeerAuthentication,
+  Validations
+} from '../../types/IstioObjects';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
@@ -16,20 +24,28 @@ import {
   seToIstioItems,
   validationKey
 } from '../../types/IstioConfigList';
+import { canCreate, canUpdate } from "../../types/Permissions";
+import { KialiDispatch } from "../../types/Redux";
 import { KialiAppState } from '../../store/Store';
-import { connect } from 'react-redux';
+import { GlobalActions } from "../../actions/GlobalActions";
 import { durationSelector, meshWideMTLSEnabledSelector } from '../../store/Selectors';
 import ServiceNetwork from './ServiceNetwork';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import history, { URLParam } from '../../app/History';
 import MiniGraphCardContainer from "../../components/CytoscapeGraph/MiniGraphCard";
 import IstioConfigCard from "../../components/IstioConfigCard/IstioConfigCard";
+import ServiceWizard from "../../components/IstioWizards/ServiceWizard";
+import ConfirmDeleteTrafficRoutingModal from "../../components/IstioWizards/ConfirmDeleteTrafficRoutingModal";
+import { WizardAction, WizardMode } from "../../components/IstioWizards/WizardActions";
+import { deleteServiceTrafficRouting } from "../../services/Api";
+import * as AlertUtils from "../../utils/AlertUtils";
 
 interface Props extends ServiceId {
   duration: DurationInSeconds;
   lastRefreshAt: TimeInMilliseconds;
   mtlsEnabled: boolean;
   serviceDetails?: ServiceDetailsInfo;
+  setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => void;
   gateways: Gateway[];
   peerAuthentications: PeerAuthentication[];
   validations: Validations;
@@ -37,6 +53,12 @@ interface Props extends ServiceId {
 
 type ServiceInfoState = {
   tabHeight?: number;
+
+  // Wizards related
+  showWizard: boolean;
+  wizardType: string;
+  updateMode: boolean;
+  showConfirmDeleteTrafficRouting: boolean;
 };
 
 const fullHeightStyle = style({
@@ -50,7 +72,11 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      tabHeight: 300
+      tabHeight: 300,
+      showWizard: false,
+      wizardType: '',
+      updateMode: false,
+      showConfirmDeleteTrafficRouting: false
     };
   }
 
@@ -92,6 +118,42 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     }
     return undefined;
   }
+
+  private handleWizardClose = (changed: boolean) => {
+    this.setState({
+      showWizard: false
+    });
+
+    if (changed) {
+      this.props.setLastRefreshAt(Date.now());
+    }
+  }
+
+  private handleConfirmDeleteServiceTrafficRouting = () => {
+    this.setState({
+      showConfirmDeleteTrafficRouting:false
+    });
+
+    deleteServiceTrafficRouting(this.props.serviceDetails!)
+      .then(_results => {
+        this.props.setLastRefreshAt(Date.now());
+      })
+      .catch(error => {
+        AlertUtils.addError('Could not delete Istio config objects.', error);
+      });
+  };
+
+  private handleDeleteTrafficRouting = (_key: string) => {
+    this.setState({ showConfirmDeleteTrafficRouting: true });
+  };
+
+  private handleLaunchWizard = (action: WizardAction, mode: WizardMode) => {
+    this.setState({
+      showWizard: true,
+      wizardType: action,
+      updateMode: mode === "update",
+    });
+  };
 
   render() {
     const vsIstioConfigItems = this.props.serviceDetails?.virtualServices
@@ -148,10 +210,37 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
                 mtlsEnabled={this.props.mtlsEnabled}
                 onEdgeTap={this.goToMetrics}
                 graphContainerStyle={graphContainerStyle}
+                serviceDetails={this.props.serviceDetails}
+                onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
+                onLaunchWizard={this.handleLaunchWizard}
               />
             </GridItem>
           </Grid>
         </RenderComponentScroll>
+        <ServiceWizard
+          show={this.state.showWizard}
+          type={this.state.wizardType}
+          update={this.state.updateMode}
+          namespace={this.props.namespace}
+          serviceName={this.props.serviceDetails?.service?.name || ''}
+          workloads={this.props.serviceDetails?.workloads || []}
+          createOrUpdate={canCreate(this.props.serviceDetails?.istioPermissions) || canUpdate(this.props.serviceDetails?.istioPermissions)}
+          virtualServices={this.props.serviceDetails?.virtualServices || []}
+          destinationRules={this.props.serviceDetails?.destinationRules || []}
+          gateways={getGatewaysAsList(this.props.gateways)}
+          peerAuthentications={this.props.peerAuthentications}
+          tlsStatus={this.props.serviceDetails?.namespaceMTLS}
+          onClose={this.handleWizardClose}
+        />
+        {this.state.showConfirmDeleteTrafficRouting && (
+          <ConfirmDeleteTrafficRoutingModal
+            destinationRules={DestinationRuleC.fromDrArray(this.props.serviceDetails!.destinationRules)}
+            virtualServices={this.props.serviceDetails!.virtualServices}
+            isOpen={true}
+            onCancel={() => this.setState({showConfirmDeleteTrafficRouting: false})}
+            onConfirm={this.handleConfirmDeleteServiceTrafficRouting}
+          />
+        )}
       </>
     );
   }
@@ -163,5 +252,9 @@ const mapStateToProps = (state: KialiAppState) => ({
   mtlsEnabled: meshWideMTLSEnabledSelector(state)
 });
 
-const ServiceInfoContainer = connect(mapStateToProps)(ServiceInfo);
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+  setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => dispatch(GlobalActions.setLastRefreshAt(lastRefreshAt))
+});
+
+const ServiceInfoContainer = connect(mapStateToProps, mapDispatchToProps)(ServiceInfo);
 export default ServiceInfoContainer;

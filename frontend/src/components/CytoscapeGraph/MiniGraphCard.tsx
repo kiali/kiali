@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { connect } from "react-redux";
 import {
   Card,
   CardActions,
@@ -20,11 +21,14 @@ import { store } from 'store/ConfigStore';
 import { style } from 'typestyle';
 import { toRangeString } from '../Time/Utils';
 import { TimeInMilliseconds } from '../../types/Common';
+import { ServiceDetailsInfo } from "../../types/ServiceInfo";
 import { KialiDagreGraph } from './graphs/KialiDagreGraph';
 import {KialiAppState} from "../../store/Store";
-import {connect} from "react-redux";
-import {isParentKiosk, kioskContextMenuAction} from "../Kiosk/KioskActions";
+import { isParentKiosk, kioskContextMenuAction } from "../Kiosk/KioskActions";
 import { KialiIcon } from 'config/KialiIcon';
+import { LoadingWizardActionsDropdownGroup } from "../IstioWizards/LoadingWizardActionsDropdownGroup";
+import ServiceWizardActionsDropdownGroup from "../IstioWizards/ServiceWizardActionsDropdownGroup";
+import { WizardAction, WizardMode } from "../IstioWizards/WizardActions";
 import { TimeDurationModal } from "../Time/TimeDurationModal";
 
 const initGraphContainerStyle = style({ width: '100%', height: '100%' });
@@ -38,6 +42,11 @@ type MiniGraphCardProps = ReduxProps & {
   graphContainerStyle?: string;
   mtlsEnabled: boolean;
   onEdgeTap?: (e: GraphEdgeTapEvent) => void;
+
+  serviceDetails?: ServiceDetailsInfo | null;
+
+  onDeleteTrafficRouting?: (key: string) => void;
+  onLaunchWizard?: (key: WizardAction, mode: WizardMode) => void;
 };
 
 type MiniGraphCardState = {
@@ -76,7 +85,18 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
       </DropdownItem>,
     ];
     if (isParentKiosk(this.props.kiosk)) {
-      // TODO Kiosk would have the time selectors on the graph; this condition will updated shortly
+      if (this.props.serviceDetails === undefined) {
+        graphCardActions.push(<LoadingWizardActionsDropdownGroup />);
+      } else if (this.props.serviceDetails) {
+        graphCardActions.push(
+          <ServiceWizardActionsDropdownGroup
+            virtualServices={this.props.serviceDetails.virtualServices || []}
+            destinationRules={this.props.serviceDetails.destinationRules || []}
+            istioPermissions={this.props.serviceDetails.istioPermissions}
+            onAction={this.handleLaunchWizard}
+            onDelete={this.handleDeleteTrafficRouting} />
+        );
+      }
     } else {
       graphCardActions.push(
         <DropdownItem key="viewNodeGraph" onClick={this.onViewNodeGraph}>
@@ -166,6 +186,20 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
 
   private setCytoscapeGraph(cytoscapeGraph: any) {
     this.cytoscapeGraphRef.current = cytoscapeGraph;
+  }
+
+  private handleLaunchWizard = (key: WizardAction, mode: WizardMode) => {
+    this.onGraphActionsToggle(false);
+    if (this.props.onLaunchWizard) {
+      this.props.onLaunchWizard(key, mode);
+    }
+  }
+
+  private handleDeleteTrafficRouting = (key: string) => {
+    this.onGraphActionsToggle(false);
+    if (this.props.onDeleteTrafficRouting) {
+      this.props.onDeleteTrafficRouting(key);
+    }
   }
 
   private handleNodeTap = (e: GraphNodeTapEvent) => {
