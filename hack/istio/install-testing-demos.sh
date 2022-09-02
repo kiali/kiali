@@ -61,6 +61,9 @@ SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 # install the Istio release that was last downloaded (that's the -t option to ls)
 ISTIO_DIR=$(ls -dt1 ${SCRIPT_DIR}/../../_output/istio-* | head -n1)
 
+# only used when cluster is minikube
+MINIKUBE_PROFILE="minikube"
+
 : ${CLIENT_EXE:=oc}
 : ${DELETE_DEMOS:=false}
 
@@ -75,11 +78,16 @@ while [ $# -gt 0 ]; do
       DELETE_DEMOS="$2"
       shift;shift
       ;;
+    -mp|--minikube-profile)
+      MINIKUBE_PROFILE="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
+  -mp|--minikube-profile <name>: If using minikube, this is the minikube profile name (default: minikube).
   -h|--help: this text
 HELPMSG
       exit 1
@@ -121,7 +129,7 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
     "${SCRIPT_DIR}/install-error-rates-demo.sh"
   else
     echo "Deploying bookinfo demo..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -tg
+    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg
     echo "Deploying error rates demo..."
     "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl
   fi
