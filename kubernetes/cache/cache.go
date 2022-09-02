@@ -79,6 +79,7 @@ type (
 		registryStatusLock     sync.RWMutex
 		registryStatusCreated  *time.Time
 		registryStatus         *kubernetes.RegistryStatus
+		stopCacheChan          chan bool
 	}
 )
 
@@ -116,6 +117,7 @@ func NewKialiCache() (KialiCache, error) {
 
 	refreshDuration := time.Duration(kConfig.KubernetesConfig.CacheDuration) * time.Second
 	tokenNamespaceDuration := time.Duration(kConfig.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
+
 	cacheNamespaces := kConfig.KubernetesConfig.CacheNamespaces
 	cacheIstioTypes := make(map[string]bool)
 	for _, iType := range kConfig.KubernetesConfig.CacheIstioTypes {
@@ -149,6 +151,8 @@ func NewKialiCache() (KialiCache, error) {
 	kialiCacheImpl.k8sApi = istioClient.GetK8sApi()
 	kialiCacheImpl.istioApi = istioClient.Istio()
 
+	// Update SA Token
+	kialiCacheImpl.stopCacheChan = kialiCacheImpl.refreshCache(istioConfig)
 	log.Infof("Kiali Cache is active for namespaces %v", cacheNamespaces)
 	return &kialiCacheImpl, nil
 }
@@ -236,6 +240,49 @@ func (c *kialiCacheImpl) RefreshNamespace(namespace string) {
 	c.createCache(namespace)
 }
 
+// RefreshNamespace will delete the specific namespace's cache and create a new one.
+func (c *kialiCacheImpl) refreshCache(istioConfig rest.Config) chan bool {
+	ticker := time.NewTicker(60 * time.Second)
+	quit := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				if newToken, err := kubernetes.GetKialiToken(); err != nil {
+					log.Errorf("Error updating Kiali Token %v", err)
+				} else {
+					if istioConfig.BearerToken != newToken {
+						oldToken := istioConfig.BearerToken
+						log.Info("Kiali Cache: Updating cache with new token")
+						istioConfig.BearerToken = newToken
+
+						istioClient, errorInitClient := kubernetes.NewClientFromConfig(&istioConfig)
+						if errorInitClient != nil {
+							log.Errorf("Error creating new Client From Config %v", errorInitClient)
+							istioConfig.BearerToken = oldToken
+						} else {
+							c.istioClient = *istioClient
+							c.k8sApi = istioClient.GetK8sApi()
+							c.istioApi = istioClient.Istio()
+							for ns := range c.nsCache {
+								c.RefreshNamespace(ns)
+							}
+						}
+
+					} else {
+						log.Debug("Kiali Cache: Nothing to refresh")
+					}
+				}
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+
+	return quit
+}
+
 func (c *kialiCacheImpl) Stop() {
 	log.Infof("Stopping Kiali Cache")
 	defer c.cacheLock.Unlock()
@@ -248,6 +295,7 @@ func (c *kialiCacheImpl) Stop() {
 	for ns := range c.nsCache {
 		delete(c.nsCache, ns)
 	}
+	c.stopCacheChan <- true
 }
 
 func (c *kialiCacheImpl) GetClient() *kubernetes.K8SClient {
