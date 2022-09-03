@@ -32,7 +32,6 @@ import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton
  */
 
 type ReduxProps = {
-  lastRefreshAt: TimeInMilliseconds;
   namespaceSelector: boolean;
   selectedTrace?: JaegerTrace;
   timeRange: TimeRange;
@@ -40,6 +39,7 @@ type ReduxProps = {
 };
 
 type TracesProps = ReduxProps & {
+  lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   target: string;
   targetKind: TargetKind;
@@ -333,7 +333,6 @@ const mapStateToProps = (state: KialiAppState) => {
     urlJaeger: state.jaegerState.info ? state.jaegerState.info.url : '',
     namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true,
     selectedTrace: state.jaegerState.selectedTrace,
-    lastRefreshAt: state.globalState.lastRefreshAt
   };
 };
 

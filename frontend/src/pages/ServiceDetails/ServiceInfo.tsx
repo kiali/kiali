@@ -15,7 +15,7 @@ import {
 } from '../../types/IstioObjects';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { PromisesRegistry } from 'utils/CancelablePromises';
-import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
+import { DurationInSeconds } from 'types/Common';
 import GraphDataSource from 'services/GraphDataSource';
 import {
   drToIstioItems,
@@ -42,7 +42,6 @@ import * as AlertUtils from "../../utils/AlertUtils";
 
 interface Props extends ServiceId {
   duration: DurationInSeconds;
-  lastRefreshAt: TimeInMilliseconds;
   mtlsEnabled: boolean;
   serviceDetails?: ServiceDetailsInfo;
   setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => void;
@@ -248,7 +247,6 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  lastRefreshAt: state.globalState.lastRefreshAt,
   mtlsEnabled: meshWideMTLSEnabledSelector(state)
 });
 

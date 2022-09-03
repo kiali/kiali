@@ -36,6 +36,7 @@ import { serverConfig } from 'config';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import history from '../../app/History';
 import {tabName as workloadTabName, defaultTab as workloadDefaultTab} from '../../pages/WorkloadDetails/WorkloadDetailsPage';
+import { TimeInMilliseconds } from "../../types/Common";
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -59,6 +60,7 @@ type ReduxProps = {
 };
 
 type EnvoyDetailsProps = ReduxProps & {
+  lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   workload: Workload;
 };
@@ -318,6 +320,7 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
                 </div>
               ) : this.showMetrics() && envoyMetricsDashboardRef ? (
                 <CustomMetricsContainer
+                  lastRefreshAt={this.props.lastRefreshAt}
                   namespace={this.props.namespace}
                   app={app}
                   version={version}
