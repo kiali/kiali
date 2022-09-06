@@ -56,7 +56,8 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, namespaces []strin
 	}
 
 	return models.MTLSStatus{
-		Status: mtlsStatus.MeshMtlsStatus().OverallStatus,
+		Status:          mtlsStatus.MeshMtlsStatus().OverallStatus,
+		AutoMTLSEnabled: *in.enabledAutoMtls,
 	}, nil
 }
 
@@ -97,7 +98,8 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace str
 	}
 
 	return models.MTLSStatus{
-		Status: mtlsStatus.NamespaceMtlsStatus(namespace).OverallStatus,
+		Status:          mtlsStatus.NamespaceMtlsStatus(namespace).OverallStatus,
+		AutoMTLSEnabled: *in.enabledAutoMtls,
 	}, nil
 }
 

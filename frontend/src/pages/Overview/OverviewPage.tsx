@@ -418,7 +418,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       .then(results => {
         results.forEach(result => {
           result.nsInfo.tlsStatus = {
-            status: nsWideMTLSStatus(result.status.status, this.props.meshStatus)
+            status: nsWideMTLSStatus(result.status.status, this.props.meshStatus),
+            autoMTLSEnabled: result.status.autoMTLSEnabled
           };
         });
       })

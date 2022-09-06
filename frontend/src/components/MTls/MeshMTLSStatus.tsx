@@ -4,7 +4,12 @@ import { KialiAppState } from '../../store/Store';
 import { MTLSIconTypes } from './MTLSIcon';
 import { default as MTLSStatus, emptyDescriptor, StatusDescriptor } from './MTLSStatus';
 import { style } from 'typestyle';
-import { lastRefreshAtSelector, meshWideMTLSStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
+import {
+  lastRefreshAtSelector,
+  meshWideMTLSEnabledSelector,
+  meshWideMTLSStatusSelector,
+  namespaceItemsSelector
+} from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { MTLSStatuses, TLSStatus } from '../../types/TLSStatus';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -21,6 +26,7 @@ type ReduxProps = {
   setMeshTlsStatus: (meshStatus: TLSStatus) => void;
   namespaces: Namespace[] | undefined;
   status: string;
+  autoMTLSEnabled: boolean;
 };
 
 type Props = ReduxProps & {};
@@ -38,6 +44,22 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
     MTLSStatuses.PARTIALLY,
     {
       message: 'Mesh-wide TLS is partially enabled',
+      icon: MTLSIconTypes.LOCK_HOLLOW,
+      showStatus: true
+    }
+  ],
+  [
+    MTLSStatuses.ENABLED_DEFAULT,
+    {
+      message: 'Mesh-wide mTLS is enabled, configured by default',
+      icon: MTLSIconTypes.LOCK_FULL,
+      showStatus: true
+    }
+  ],
+  [
+    MTLSStatuses.PARTIALLY_DEFAULT,
+    {
+      message: 'Mesh-wide TLS is partially enabled, configured by default',
       icon: MTLSIconTypes.LOCK_HOLLOW,
       showStatus: true
     }
@@ -80,13 +102,26 @@ class MeshMTLSStatus extends React.Component<Props> {
     });
   }
 
+  finalStatus() {
+    if (this.props.autoMTLSEnabled) {
+      if (this.props.status === MTLSStatuses.ENABLED) {
+        return MTLSStatuses.ENABLED_DEFAULT
+      }
+      if (this.props.status === MTLSStatuses.PARTIALLY) {
+        return MTLSStatuses.PARTIALLY_DEFAULT
+      }
+    }
+    return this.props.status
+  }
+
   render() {
-    return <MTLSStatus className={this.iconStyle()} status={this.props.status} statusDescriptors={statusDescriptors} />;
+    return <MTLSStatus className={this.iconStyle()} status={this.finalStatus()} statusDescriptors={statusDescriptors} />;
   }
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
   status: meshWideMTLSStatusSelector(state),
+  autoMTLSEnabled: meshWideMTLSEnabledSelector(state),
   lastRefreshAt: lastRefreshAtSelector(state),
   namespaces: namespaceItemsSelector(state)
 });
