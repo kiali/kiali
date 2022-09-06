@@ -165,7 +165,6 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     let loginLabel = 'Log In';
 
     if (authenticationConfig.skipLoginScreen === true) {
-      console.log("updating auth config location" )
       window.location.href = authenticationConfig.authorizationEndpoint!;
     }
 

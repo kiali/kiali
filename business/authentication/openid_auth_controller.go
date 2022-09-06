@@ -612,7 +612,6 @@ func (p *openidFlowHelper) checkOpenIdAuthorizationCodeFlowParams() *openidFlowH
 
 	if p.Code == "" {
 		p.Error = &badOidcRequest{Detail: "no authorization code is present"}
-		log.Errorf("Error with Open Id authorization %v", p)
 	}
 
 	return p
@@ -657,22 +656,22 @@ func (p *openidFlowHelper) checkUserPrivileges() *openidFlowHelper {
 		return p
 	}
 
-	//conf := config.Get()
+	conf := config.Get()
 	p.UseAccessToken = false
-	//if conf.Auth.OpenId.DisableRBAC {
-	// When RBAC is on, we delegate some validations to the Kubernetes cluster. However, if RBAC is off
-	// the token must be fully validated, as we no longer pass the OpenId token to the cluster API server.
-	// Since the configuration indicates RBAC is off, we do the validations:
-	err := validateOpenIdTokenInHouse(p)
-	if err != nil {
-		p.Error = &AuthenticationFailureError{
-			HttpStatus: http.StatusForbidden,
-			Reason:     "the OpenID token was rejected",
-			Detail:     err,
+	if conf.Auth.OpenId.DisableRBAC {
+		// When RBAC is on, we delegate some validations to the Kubernetes cluster. However, if RBAC is off
+		// the token must be fully validated, as we no longer pass the OpenId token to the cluster API server.
+		// Since the configuration indicates RBAC is off, we do the validations:
+		err := validateOpenIdTokenInHouse(p)
+		if err != nil {
+			p.Error = &AuthenticationFailureError{
+				HttpStatus: http.StatusForbidden,
+				Reason:     "the OpenID token was rejected",
+				Detail:     err,
+			}
+			return p
 		}
-		return p
-	}
-	/*	} else {
+	} else {
 		// Check if user trying to login has enough privileges to login. This check is only done if
 		// config indicates that RBAC is on. For cases where RBAC is off, we simply assume that the
 		// Kiali ServiceAccount token should have enough privileges and skip this privilege check.
@@ -690,7 +689,7 @@ func (p *openidFlowHelper) checkUserPrivileges() *openidFlowHelper {
 			}
 			return p
 		}
-	}*/
+	}
 
 	return p
 }
@@ -867,8 +866,6 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 
 	if len(cfg.ClientSecret) > 0 {
 		tokenRequest.SetBasicAuth(url.QueryEscape(cfg.ClientId), url.QueryEscape(cfg.ClientSecret))
-		log.Infof("Adding basic auth client ID %v", cfg.ClientId)
-		log.Infof("Client Secret %v", cfg.ClientSecret)
 	}
 
 	tokenRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -880,7 +877,6 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 
 	defer response.Body.Close()
 	rawTokenResponse, err := ioutil.ReadAll(response.Body)
-	log.Infof("Response %v", response)
 	if err != nil {
 		p.Error = fmt.Errorf("failed to read token response from IdP: %w", err)
 		return p

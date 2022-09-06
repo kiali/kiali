@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"github.com/kiali/kiali/util/httputil"
 	"net/http"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util/httputil"
 )
 
 type AuthenticationHandler struct {
