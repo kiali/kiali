@@ -6,5 +6,5 @@ type MTLSStatus struct {
 	// required: true
 	// example: MTLS_ENABLED
 	Status          string `json:"status"`
-	AutoMTLSEnabled bool   `json:"autoMTLSEnabled""`
+	AutoMTLSEnabled bool   `json:"autoMTLSEnabled"`
 }
