@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"github.com/kiali/kiali/util/httputil"
 	"net/http"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/util/httputil"
 )
 
 type AuthenticationHandler struct {
@@ -26,6 +26,7 @@ type AuthInfo struct {
 	LogoutRedirect        string      `json:"logoutRedirect,omitempty"`
 	SessionInfo           sessionInfo `json:"sessionInfo"`
 	SecretMissing         bool        `json:"secretMissing,omitempty"`
+	SkipLoginScreen       bool        `json:"skipLoginScreen,omitempty"`
 }
 
 type sessionInfo struct {
@@ -149,9 +150,11 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 		response.LogoutEndpoint = metadata.LogoutEndpoint
 		response.LogoutRedirect = metadata.LogoutRedirect
 	case config.AuthStrategyOpenId:
-		// Do the redirection through an intermediary own endpoint
-		response.AuthorizationEndpoint = fmt.Sprintf("%s/api/auth/openid_redirect",
-			httputil.GuessKialiURL(r))
+		response.AuthorizationEndpoint = fmt.Sprintf("%s/api/auth/openid_redirect", httputil.GuessKialiURL(r))
+		if conf.Auth.SkipLoginScreen == true {
+			response.SkipLoginScreen = true
+		}
+
 	}
 
 	if conf.Auth.Strategy != config.AuthStrategyAnonymous {

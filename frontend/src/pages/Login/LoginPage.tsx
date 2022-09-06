@@ -163,6 +163,12 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
 
   render() {
     let loginLabel = 'Log In';
+
+    if (authenticationConfig.skipLoginScreen === true) {
+      console.log("updating auth config location" )
+      window.location.href = authenticationConfig.authorizationEndpoint!;
+    }
+
     if (authenticationConfig.strategy === AuthStrategy.openshift) {
       loginLabel = 'Log In With OpenShift';
     } else if (authenticationConfig.strategy === AuthStrategy.openid) {

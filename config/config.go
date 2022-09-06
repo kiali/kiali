@@ -303,9 +303,10 @@ type ApiNamespacesConfig struct {
 
 // AuthConfig provides details on how users are to authenticate
 type AuthConfig struct {
-	OpenId    OpenIdConfig    `yaml:"openid,omitempty"`
-	OpenShift OpenShiftConfig `yaml:"openshift,omitempty"`
-	Strategy  string          `yaml:"strategy,omitempty"`
+	OpenId          OpenIdConfig    `yaml:"openid,omitempty"`
+	OpenShift       OpenShiftConfig `yaml:"openshift,omitempty"`
+	SkipLoginScreen bool            `yaml:"skip_login_screen,omitempty"`
+	Strategy        string          `yaml:"strategy,omitempty"`
 }
 
 // OpenShiftConfig contains specific configuration for authentication when on OpenShift
@@ -514,7 +515,8 @@ func NewConfig() (c *Config) {
 			},
 		},
 		Auth: AuthConfig{
-			Strategy: "token",
+			SkipLoginScreen: true,
+			Strategy:        "token",
 			OpenId: OpenIdConfig{
 				AdditionalRequestParams: map[string]string{},
 				AllowedDomains:          []string{},

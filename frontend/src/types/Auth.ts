@@ -3,6 +3,7 @@ export interface AuthConfig {
   logoutEndpoint?: string;
   logoutRedirect?: string;
   strategy: AuthStrategy;
+  skipLoginScreen?: boolean;
 }
 
 export type AuthInfo = {

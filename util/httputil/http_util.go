@@ -199,6 +199,11 @@ func GuessKialiURL(r *http.Request) string {
 	if len(host) == 0 {
 		if fwdHost, ok := r.Header["X-Forwarded-Host"]; ok && len(fwdHost) == 1 {
 			host = fwdHost[0]
+			s := strings.Split(host, ":")
+			if len(s) > 1 {
+				host = s[0]
+				port = s[1]
+			}
 		} else if len(r.URL.Hostname()) != 0 {
 			host = r.URL.Hostname()
 		} else if len(r.Host) != 0 {
