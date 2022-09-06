@@ -53,6 +53,9 @@
 # The Compatible Version Matrix between OpenShift Service Mesh and Kiali (there is a 1-to-1 relationship between Kiali and OSSM versions)
 - meshName: "OpenShift Service Mesh"
   versionRange: 
+    - meshVersion: "2.3"
+      kialiFixedVersion:
+      - "1.57"
     - meshVersion: "2.2"
       kialiFixedVersion: 
       - "1.48"
