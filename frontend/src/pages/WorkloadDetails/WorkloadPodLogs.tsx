@@ -293,7 +293,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                   <CardBody>
                     {this.state.showToolbar && (
                       <Toolbar style={{ padding: 0, width: '100%' }}>
-                        <ToolbarGroup style={{ margin: 0 }}>
+                        <ToolbarGroup style={{ margin: 0, marginRight: '5px' }}>
                           <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
                           <ToolbarItem>
                             <ToolbarDropdown

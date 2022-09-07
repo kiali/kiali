@@ -9,7 +9,7 @@ import {
   Dropdown,
   DropdownItem,
   KebabToggle,
-  Button
+  ToolbarItem
 } from '@patternfly/react-core';
 import history from '../../app/History';
 import GraphDataSource from '../../services/GraphDataSource';
@@ -25,11 +25,12 @@ import { ServiceDetailsInfo } from "../../types/ServiceInfo";
 import { KialiDagreGraph } from './graphs/KialiDagreGraph';
 import {KialiAppState} from "../../store/Store";
 import { isParentKiosk, kioskContextMenuAction } from "../Kiosk/KioskActions";
-import { KialiIcon } from 'config/KialiIcon';
 import { LoadingWizardActionsDropdownGroup } from "../IstioWizards/LoadingWizardActionsDropdownGroup";
 import ServiceWizardActionsDropdownGroup from "../IstioWizards/ServiceWizardActionsDropdownGroup";
 import { WizardAction, WizardMode } from "../IstioWizards/WizardActions";
 import { TimeDurationModal } from "../Time/TimeDurationModal";
+import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton";
+import { KioskElement } from "../Kiosk/KioskElement";
 
 const initGraphContainerStyle = style({ width: '100%', height: '100%' });
 
@@ -116,6 +117,11 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
         <Card style={{ height: '100%' }} id={'MiniGraphCard'} data-test="mini-graph">
           <CardHeader>
             <CardActions>
+              <KioskElement>
+                <ToolbarItem>
+                  <TimeDurationIndicatorButton onClick={this.toggleTimeOptionsVisibility} />
+                </ToolbarItem>
+              </KioskElement>
               <Dropdown
                 toggle={<KebabToggle onToggle={this.onGraphActionsToggle} />}
                 dropdownItems={graphCardActions}
@@ -124,13 +130,7 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
                 position={'right'}
               />
             </CardActions>
-            <CardTitle style={{ float: 'left' }}>
-              {!isParentKiosk(this.props.kiosk) ? (
-                <>{intervalTitle}</>
-              ) : (
-                <Button variant="link" style={{font: 'inherit', padding: 0}} icon={<KialiIcon.Clock />} onClick={this.toggleTimeOptionsVisibility}>{intervalTitle}</Button>
-              )}
-            </CardTitle>
+            <CardTitle style={{ float: 'left' }}>{intervalTitle}</CardTitle>
           </CardHeader>
           <CardBody>
             <div style={{ height: '100%' }}>
