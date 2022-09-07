@@ -149,7 +149,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 		response.LogoutEndpoint = metadata.LogoutEndpoint
 		response.LogoutRedirect = metadata.LogoutRedirect
 	case config.AuthStrategyOpenId:
-		// Do the redirection through an intermediary own endpoint (If SkipLoginScreen is false)
+		// Do the redirection through an intermediary own endpoint
 		response.AuthorizationEndpoint = fmt.Sprintf("%s/api/auth/openid_redirect",
 			httputil.GuessKialiURL(r))
 	}
