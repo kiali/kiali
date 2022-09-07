@@ -99,8 +99,7 @@ EOF
 infomsg "Create Kind LoadBalancer via MetalLB"
 lb_addr_range="255.70-255.84"
 
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
 
 subnet=$(${DORP} network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
 subnet_trimmed=$(echo "${subnet}" | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')
