@@ -130,5 +130,5 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setMeshTlsStatus: bindActionCreators(MeshTlsActions.setinfo, dispatch)
 });
 
-const MeshMTLSSatutsConnected = connect(mapStateToProps, mapDispatchToProps)(MeshMTLSStatus);
-export default MeshMTLSSatutsConnected;
+const MeshMTLSStatusConnected = connect(mapStateToProps, mapDispatchToProps)(MeshMTLSStatus);
+export default MeshMTLSStatusConnected;
