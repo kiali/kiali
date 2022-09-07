@@ -1,14 +1,13 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import { KialiAppState } from 'store/Store';
 import { replayQueryTimeSelector, durationSelector } from 'store/Selectors';
 import { Tooltip, ButtonVariant, Button, Text } from '@patternfly/react-core';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import ToolbarDropdown from 'components/ToolbarDropdown/ToolbarDropdown';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { KialiAppAction } from 'actions/KialiAppAction';
 import Slider from 'components/IstioWizards/Slider/Slider';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { style } from 'typestyle';
@@ -453,7 +452,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   replayQueryTime: replayQueryTimeSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setReplayQueryTime: bindActionCreators(UserSettingsActions.setReplayQueryTime, dispatch),
   toggleReplayActive: bindActionCreators(UserSettingsActions.toggleReplayActive, dispatch)
 });

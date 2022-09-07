@@ -3,9 +3,7 @@ import { connect } from 'react-redux';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import { TimeInMilliseconds } from '../../types/Common';
-import { KialiAppAction } from '../../actions/KialiAppAction';
-import { KialiAppState } from '../../store/Store';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import { GlobalActions } from '../../actions/GlobalActions';
 
 type ComponentProps = {
@@ -52,7 +50,7 @@ class RefreshButton extends React.Component<Props> {
   };
 }
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => {
       dispatch(GlobalActions.setLastRefreshAt(lastRefreshAt));

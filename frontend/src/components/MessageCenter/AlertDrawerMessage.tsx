@@ -4,10 +4,8 @@ import { ExpandableSection, Card, CardBody } from '@patternfly/react-core';
 import { MessageType, NotificationMessage } from '../../types/MessageCenter';
 import moment from 'moment';
 import { MessageCenterActions } from 'actions/MessageCenterActions';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppState } from 'store/Store';
+import { KialiDispatch } from 'types/Redux';
 import { style } from 'typestyle';
-import { KialiAppAction } from 'actions/KialiAppAction';
 import { KialiIcon } from 'config/KialiIcon';
 
 const getIcon = (type: MessageType) => {
@@ -75,7 +73,7 @@ class AlertDrawerMessage extends React.PureComponent<AlertDrawerMessageProps> {
   }
 }
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     markAsRead: message => dispatch(MessageCenterActions.markAsRead(message.id)),
     toggleMessageDetail: message => dispatch(MessageCenterActions.toggleMessageDetail(message.id))

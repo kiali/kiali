@@ -1,8 +1,10 @@
 import * as React from 'react';
+import { Provider } from "react-redux";
 import { mount, shallow } from 'enzyme';
 import screenfull, { Screenfull } from 'screenfull';
 import { WorkloadPodLogs } from '../WorkloadPodLogs';
 import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core';
+import { store } from "../../../store/ConfigStore";
 
 const defaultProps = () => ({
   kiosk: '',
@@ -52,8 +54,15 @@ describe('WorkloadPodLogs', () => {
 
   it('renders a log level action in the kebab', () => {
     // using 'mount' since the dropdowns are children of the kebab
-    const wrapper = mount(<WorkloadPodLogs {...defaultProps()} />);
-    wrapper.setState({ kebabOpen: true });
+    const wrapper = mount(
+      <Provider store={store}>
+        <WorkloadPodLogs {...defaultProps()} />
+      </Provider>
+    );
+    wrapper
+      .find(KebabToggle)
+      .find('button')
+      .simulate('click');
     expect(
       wrapper
         .find(DropdownItem)
@@ -65,8 +74,15 @@ describe('WorkloadPodLogs', () => {
   it('does not render log level actions in the kebab when proxy not present', () => {
     let props = defaultProps();
     props.pods[0].istioContainers = [];
-    const wrapper = mount(<WorkloadPodLogs {...props} />);
-    wrapper.setState({ kebabOpen: true });
+    const wrapper = mount(
+      <Provider store={store}>
+        <WorkloadPodLogs {...props} />
+      </Provider>
+    );
+    wrapper
+      .find(KebabToggle)
+      .find('button')
+      .simulate('click');
     expect(
       wrapper
         .find(DropdownItem)
@@ -79,8 +95,15 @@ describe('WorkloadPodLogs', () => {
     const api = require('../../../services/Api');
     const spy = jest.spyOn(api, 'setPodEnvoyProxyLogLevel');
 
-    const wrapper = mount(<WorkloadPodLogs {...defaultProps()} />);
-    wrapper.setState({ kebabOpen: true });
+    const wrapper = mount(
+      <Provider store={store}>
+        <WorkloadPodLogs {...defaultProps()} />
+      </Provider>
+    );
+    wrapper
+      .find(KebabToggle)
+      .find('button')
+      .simulate('click');
     wrapper
       .find(DropdownItem)
       .findWhere(n => n.key() === 'setLogLevelDebug')

@@ -1,10 +1,8 @@
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppState } from '../store/Store';
-import { KialiAppAction } from './KialiAppAction';
+import { KialiDispatch } from "../types/Redux";
 import { UserSettingsActions } from './UserSettingsActions';
 
 const UserSettingsThunkActions = {
-  setNavCollapsed: (collapsed: boolean) => (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) =>
+  setNavCollapsed: (collapsed: boolean) => (dispatch: KialiDispatch) =>
     dispatch(UserSettingsActions.navCollapse(collapsed))
 };
 

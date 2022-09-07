@@ -1,20 +1,28 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Card, CardBody, Checkbox, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import * as API from 'services/Api';
 import { KialiAppState } from 'store/Store';
-import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from 'types/Common';
+import {
+  TimeRange,
+  evalTimeRange,
+  TimeInMilliseconds,
+  isEqualTimeRange,
+  IntervalInMilliseconds
+} from 'types/Common';
 import { Direction, IstioMetricsOptions, Reporter } from 'types/MetricsOptions';
 import * as AlertUtils from 'utils/AlertUtils';
 import { RenderComponentScroll } from 'components/Nav/Page';
 import * as MetricsHelper from './Helper';
+import { KioskElement } from "../Kiosk/KioskElement";
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import MetricsReporter from '../MetricsOptions/MetricsReporter';
+import { TimeDurationModal } from "../Time/TimeDurationModal";
 import history, { URLParam } from 'app/History';
 import { MetricsObjectTypes } from 'types/Metrics';
 import { GrafanaInfo } from 'types/GrafanaInfo';
@@ -25,15 +33,16 @@ import { DashboardModel, ExternalLink } from 'types/Dashboards';
 import { Overlay } from 'types/Overlay';
 import { RawOrBucket } from 'types/VictoryChartInfo';
 import { Dashboard } from 'components/Charts/Dashboard';
-import { timeRangeSelector } from 'store/Selectors';
-import { KialiAppAction } from 'actions/KialiAppAction';
+import { refreshIntervalSelector, timeRangeSelector } from 'store/Selectors';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
+import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton";
 
 type MetricsState = {
   crippledFeatures?: KialiCrippledFeatures;
   dashboard?: DashboardModel;
   grafanaLinks: ExternalLink[];
+  isTimeOptionsOpen: boolean;
   labelsSettings: LabelsSettings;
   spanOverlay?: Overlay<JaegerLineInfo>;
   showSpans: boolean;
@@ -56,6 +65,7 @@ type ReduxProps = {
   jaegerIntegration: boolean;
   lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
+  refreshInterval: IntervalInMilliseconds;
   setTimeRange: (range: TimeRange) => void;
 };
 
@@ -89,6 +99,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     this.state = {
       labelsSettings: settings.labelsSettings,
       grafanaLinks: [],
+      isTimeOptionsOpen: false,
       tabHeight: 300,
       showSpans: settings.showSpans,
       showTrendlines: settings.showTrendlines
@@ -269,29 +280,36 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     const toolbarSpace = 20 + 24 + toolbarHeight + 15 + 24 + 20;
     const dashboardHeight = this.state.tabHeight - toolbarSpace;
     return (
-      <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-        <Card className={fullHeightStyle}>
-          <CardBody>
-            {this.renderOptionsBar()}
-            {this.state.dashboard && (
-              <Dashboard
-                dashboard={this.state.dashboard}
-                labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
-                maximizedChart={expandedChart}
-                expandHandler={this.expandHandler}
-                onClick={this.onClickDataPoint}
-                labelPrettifier={MetricsHelper.prettyLabelValues}
-                overlay={this.state.spanOverlay}
-                showSpans={this.state.showSpans}
-                showTrendlines={this.state.showTrendlines}
-                dashboardHeight={dashboardHeight}
-                timeWindow={evalTimeRange(this.props.timeRange)}
-                brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
-              />
-            )}
-          </CardBody>
-        </Card>
-      </RenderComponentScroll>
+      <>
+        <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
+          <Card className={fullHeightStyle}>
+            <CardBody>
+              {this.renderOptionsBar()}
+              {this.state.dashboard && (
+                <Dashboard
+                  dashboard={this.state.dashboard}
+                  labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
+                  maximizedChart={expandedChart}
+                  expandHandler={this.expandHandler}
+                  onClick={this.onClickDataPoint}
+                  labelPrettifier={MetricsHelper.prettyLabelValues}
+                  overlay={this.state.spanOverlay}
+                  showSpans={this.state.showSpans}
+                  showTrendlines={this.state.showTrendlines}
+                  dashboardHeight={dashboardHeight}
+                  timeWindow={evalTimeRange(this.props.timeRange)}
+                  brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
+                />
+              )}
+            </CardBody>
+          </Card>
+        </RenderComponentScroll>
+        <TimeDurationModal
+          customDuration={true}
+          isOpen={this.state.isTimeOptionsOpen}
+          onConfirm={this.toggleTimeOptionsVisibility}
+          onCancel={this.toggleTimeOptionsVisibility} />
+      </>
     );
   }
 
@@ -308,6 +326,10 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     history.replace(history.location.pathname + '?' + urlParams.toString());
     this.setState({ showTrendlines: !this.state.showTrendlines });
   };
+
+  private toggleTimeOptionsVisibility = () => {
+    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }) );
+  }
 
   private renderOptionsBar() {
     const hasHistogramsAverage =
@@ -369,6 +391,11 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                 objectType={this.props.objectType}
               />
             </ToolbarItem>
+            <KioskElement>
+              <ToolbarItem>
+                <TimeDurationIndicatorButton onClick={this.toggleTimeOptionsVisibility} />
+              </ToolbarItem>
+            </KioskElement>
           </ToolbarGroup>
         </Toolbar>
       </div>
@@ -389,11 +416,12 @@ const mapStateToProps = (state: KialiAppState) => {
   return {
     jaegerIntegration: state.jaegerState.info ? state.jaegerState.info.integration : false,
     lastRefreshAt: state.globalState.lastRefreshAt,
-    timeRange: timeRangeSelector(state)
+    timeRange: timeRangeSelector(state),
+    refreshInterval: refreshIntervalSelector(state)
   };
 };
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setTimeRange: bindActionCreators(UserSettingsActions.setTimeRange, dispatch)
   };

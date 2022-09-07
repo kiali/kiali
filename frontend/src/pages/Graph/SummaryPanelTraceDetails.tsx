@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
 import { style } from 'typestyle';
 import { Tooltip, Button, ButtonVariant, pluralize, SelectOption } from '@patternfly/react-core';
 import {
@@ -15,7 +14,6 @@ import {
 import { URLParam } from '../../app/History';
 import { JaegerTrace, RichSpanData, EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo } from 'types/JaegerInfo';
 import { KialiAppState } from 'store/Store';
-import { KialiAppAction } from 'actions/KialiAppAction';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import { GraphActions } from 'actions/GraphActions';
 import { PFColors } from 'components/Pf/PfColors';
@@ -27,6 +25,7 @@ import { FormattedTraceInfo, shortIDStyle } from 'components/JaegerIntegration/J
 import SimplerSelect from 'components/SimplerSelect';
 import { summaryFont, summaryTitle } from './SummaryPanelCommon';
 import { NodeParamsType, GraphType } from 'types/Graph';
+import { KialiDispatch } from "types/Redux";
 import { bindActionCreators } from 'redux';
 import responseFlags from 'utils/ResponseFlags';
 import {isParentKiosk, kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
@@ -362,7 +361,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk,
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   close: () => dispatch(JaegerThunkActions.setTraceId(undefined)),
   setNode: bindActionCreators(GraphActions.setNode, dispatch)
 });

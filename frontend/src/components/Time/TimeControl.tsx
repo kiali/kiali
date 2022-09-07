@@ -14,7 +14,7 @@ export default class TimeControl extends React.Component<Props> {
     );
     const timeRangeComponent = (
       <div style={{ display: 'flex' }}>
-        <TimeRangeContainer tooltip={'Time range'} />
+        <TimeRangeContainer manageURL={true} tooltip={'Time range'} />
         <RefreshContainer id="metrics-refresh" hideLabel={true} manageURL={true} />
       </div>
     );
