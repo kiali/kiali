@@ -26,7 +26,6 @@ type AuthInfo struct {
 	LogoutRedirect        string      `json:"logoutRedirect,omitempty"`
 	SessionInfo           sessionInfo `json:"sessionInfo"`
 	SecretMissing         bool        `json:"secretMissing,omitempty"`
-	SkipLoginScreen       bool        `json:"skipLoginScreen,omitempty"`
 }
 
 type sessionInfo struct {
@@ -151,7 +150,8 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 		response.LogoutRedirect = metadata.LogoutRedirect
 	case config.AuthStrategyOpenId:
 		// Do the redirection through an intermediary own endpoint (If SkipLoginScreen is false)
-		response.AuthorizationEndpoint = fmt.Sprintf("%s/api/auth/openid_redirect", httputil.GuessKialiURL(r))
+		response.AuthorizationEndpoint = fmt.Sprintf("%s/api/auth/openid_redirect",
+			httputil.GuessKialiURL(r))
 	}
 
 	if conf.Auth.Strategy != config.AuthStrategyAnonymous {
