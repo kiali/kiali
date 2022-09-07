@@ -2,7 +2,6 @@ import * as Cy from 'cytoscape';
 import * as React from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
 import { RouteComponentProps } from 'react-router-dom';
 import FlexView from 'react-flexview';
 import { style } from 'typestyle';
@@ -53,7 +52,6 @@ import {
   trafficRatesSelector
 } from '../../store/Selectors';
 import { KialiAppState } from '../../store/Store';
-import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphActions } from '../../actions/GraphActions';
 import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { NodeContextMenuContainer } from '../../components/CytoscapeGraph/ContextMenu/NodeContextMenu';
@@ -69,6 +67,7 @@ import { NamespaceActions } from '../../actions/NamespaceAction';
 import { GlobalActions } from "../../actions/GlobalActions";
 import GraphThunkActions from '../../actions/GraphThunkActions';
 import { JaegerTrace } from 'types/JaegerInfo';
+import { KialiDispatch } from "types/Redux";
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import GraphTour from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
@@ -887,7 +886,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   trafficRates: trafficRatesSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   onNamespaceChange: bindActionCreators(GraphActions.onNamespaceChange, dispatch),
   onReady: (cy: Cy.Core) => dispatch(GraphThunkActions.graphReady(cy)),

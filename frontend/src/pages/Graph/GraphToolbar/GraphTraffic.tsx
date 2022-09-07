@@ -1,12 +1,11 @@
 import { Radio, Dropdown, DropdownToggle, Checkbox, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../../store/Store';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { TrafficRate, isGrpcRate, isHttpRate, isTcpRate } from '../../../types/Graph';
-import { KialiAppAction } from 'actions/KialiAppAction';
 import * as _ from 'lodash';
 import { trafficRatesSelector } from 'store/Selectors';
 import {
@@ -389,7 +388,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 // Map our actions to Redux
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setTrafficRates: bindActionCreators(GraphToolbarActions.setTrafficRates, dispatch)
   };

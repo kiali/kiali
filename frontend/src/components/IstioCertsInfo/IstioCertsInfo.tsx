@@ -16,8 +16,7 @@ import {
 } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
 import { istioCertsInfoSelector, lastRefreshAtSelector } from 'store/Selectors';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from 'actions/KialiAppAction';
+import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { IstioCertsInfoActions } from 'actions/IstioCertsInfoActions';
 import { connect } from 'react-redux';
@@ -175,7 +174,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   lastRefreshAt: lastRefreshAtSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setIstioCertsInfo: bindActionCreators(IstioCertsInfoActions.setinfo, dispatch)
 });
 

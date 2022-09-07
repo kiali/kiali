@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import {
   Button,
   ButtonVariant,
@@ -29,7 +29,6 @@ import {
 import { compareNullable } from 'components/FilterList/FilterHelper';
 import { MetricsStats } from 'types/Metrics';
 import { KialiAppState } from 'store/Store';
-import { KialiAppAction } from 'actions/KialiAppAction';
 import { MetricsStatsQuery } from 'types/MetricsOptions';
 import MetricsStatsThunkActions from 'actions/MetricsStatsThunkActions';
 import { EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo, RichSpanData } from 'types/JaegerInfo';
@@ -540,7 +539,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   metricsStats: state.metricsStats.data,
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   loadMetricsStats: (queries: MetricsStatsQuery[]) => dispatch(MetricsStatsThunkActions.load(queries))
 });
 

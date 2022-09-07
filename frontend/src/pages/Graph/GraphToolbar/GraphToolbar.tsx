@@ -9,7 +9,6 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../../store/Store';
 import {
@@ -26,9 +25,9 @@ import GraphFindContainer from './GraphFind';
 import GraphSettingsContainer from './GraphSettings';
 import history, { HistoryManager, URLParam } from '../../../app/History';
 import Namespace, { namespacesFromString, namespacesToString } from '../../../types/Namespace';
+import { KialiDispatch } from "../../../types/Redux";
 import { NamespaceActions } from '../../../actions/NamespaceAction';
 import { GraphActions } from '../../../actions/GraphActions';
-import { KialiAppAction } from '../../../actions/KialiAppAction';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import TourStopContainer from 'components/Tour/TourStop';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
@@ -263,7 +262,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   trafficRates: trafficRatesSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),

@@ -1,9 +1,7 @@
 import React from 'react';
 import { GraphToolbarActions } from 'actions/GraphToolbarActions';
-import { KialiAppAction } from 'actions/KialiAppAction';
 import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppState } from 'store/Store';
+import { KialiDispatch } from 'types/Redux';
 import { connect } from 'react-redux';
 import { Tooltip, Button, ButtonVariant } from '@patternfly/react-core';
 import { defaultIconStyle, KialiIcon } from 'config/KialiIcon';
@@ -37,7 +35,7 @@ class GraphReset extends React.Component<GraphResetProps, GraphResetState> {
   }
 }
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     resetSettings: bindActionCreators(GraphToolbarActions.resetSettings, dispatch)
   };

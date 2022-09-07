@@ -15,8 +15,7 @@ import IstioStatusList from './IstioStatusList';
 import { PFColors } from '../Pf/PfColors';
 import './IstioStatus.css';
 import { ResourcesFullIcon } from '@patternfly/react-icons';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from '../../actions/KialiAppAction';
+import { KialiDispatch } from 'types/Redux';
 import NamespaceThunkActions from '../../actions/NamespaceThunkActions';
 
 type ReduxProps = {
@@ -119,7 +118,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   namespaces: namespaceItemsSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setIstioStatus: bindActionCreators(IstioStatusActions.setinfo, dispatch),
   refreshNamespaces: () => {
     dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());

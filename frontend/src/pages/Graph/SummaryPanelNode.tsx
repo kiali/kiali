@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useSelector } from 'react-redux';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import {
   getBadge,
@@ -23,7 +22,6 @@ import {
   KebabToggle,
   Tab
 } from '@patternfly/react-core';
-import { KialiAppState } from 'store/Store';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
 import SummaryPanelNodeTraces from './SummaryPanelNodeTraces';
 import SimpleTabs from 'components/Tab/SimpleTabs';
@@ -35,8 +33,8 @@ import { LoadingWizardActionsDropdownGroup } from "components/IstioWizards/Loadi
 import { WizardAction, WizardMode } from "components/IstioWizards/WizardActions";
 import ServiceWizardActionsDropdownGroup from "components/IstioWizards/ServiceWizardActionsDropdownGroup";
 import { PeerAuthentication } from "../../types/IstioObjects";
-import { TimeInMilliseconds } from "../../types/Common";
 import { useServiceDetailForGraphNode } from "../../hooks/services";
+import { useKialiSelector } from "../../hooks/redux";
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -443,11 +441,11 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
 }
 
 export default function SummaryPanelNodeHOC(props: SummaryPanelNodeHocProps) {
-  const jaegerState = useSelector<KialiAppState, JaegerState>(state => state.jaegerState);
-  const kiosk = useSelector<KialiAppState, string>(state => state.globalState.kiosk);
-  const rankResult = useSelector<KialiAppState, RankResult>(state => state.graph.rankResult);
-  const showRank = useSelector<KialiAppState, boolean>(state => state.graph.toolbarState.showRank);
-  const updateTime = useSelector<KialiAppState, TimeInMilliseconds>(state => state.graph.updateTime);
+  const jaegerState = useKialiSelector(state => state.jaegerState);
+  const kiosk = useKialiSelector(state => state.globalState.kiosk);
+  const rankResult = useKialiSelector(state => state.graph.rankResult);
+  const showRank = useKialiSelector(state => state.graph.toolbarState.showRank);
+  const updateTime = useKialiSelector(state => state.graph.updateTime);
 
   const [isKebabOpen, setIsKebabOpen] = React.useState<boolean>(false);
 

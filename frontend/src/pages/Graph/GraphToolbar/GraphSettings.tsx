@@ -1,13 +1,11 @@
 import { Radio, Dropdown, DropdownToggle, Checkbox, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
 import { HistoryManager, URLParam } from '../../../app/History';
 import { GraphToolbarState, KialiAppState } from '../../../store/Store';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphType, EdgeLabelMode, isResponseTimeMode, isThroughputMode, RankMode } from '../../../types/Graph';
-import { KialiAppAction } from 'actions/KialiAppAction';
 import * as _ from 'lodash';
 import { edgeLabelsSelector } from 'store/Selectors';
 import {
@@ -25,6 +23,7 @@ import {
   titleStyle
 } from 'styles/DropdownStyles';
 import { INITIAL_GRAPH_STATE } from 'reducers/GraphDataState';
+import { KialiDispatch } from "types/Redux";
 import { KialiCrippledFeatures } from 'types/ServerConfig';
 import { getCrippledFeatures } from 'services/Api';
 
@@ -934,7 +933,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 // Map our actions to Redux
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),
     setRankBy: bindActionCreators(GraphToolbarActions.setRankBy, dispatch),
