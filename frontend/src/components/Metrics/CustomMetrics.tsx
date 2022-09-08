@@ -1,7 +1,16 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
-import { Toolbar, ToolbarGroup, ToolbarItem, Card, CardBody, Checkbox } from '@patternfly/react-core';
+import {
+  Toolbar,
+  ToolbarGroup,
+  ToolbarItem,
+  Card,
+  CardBody,
+  Checkbox,
+  EmptyState,
+  EmptyStateVariant, Title, TitleSizes, EmptyStateBody
+} from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { serverConfig } from '../../config/ServerConfig';
 import history, { URLParam } from '../../app/History';
@@ -71,6 +80,16 @@ const toolbarInputStyle = style({
       marginTop: '2px'
     }
   }
+});
+
+const emptyStyle = style({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  overflow: 'hidden',
+  // fix height + padding
+  height: '350px',
+  textAlign: 'center'
 });
 
 class CustomMetrics extends React.Component<Props, MetricsState> {
@@ -198,6 +217,19 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     }
   }
 
+  renderFetchMetrics = (title, msg) => {
+    return (
+      <div className={emptyStyle}>
+        <EmptyState variant={EmptyStateVariant.small}>
+          <Title headingLevel="h5" size={TitleSizes.lg}>
+            {title}
+          </Title>
+          <EmptyStateBody>{msg}</EmptyStateBody>
+        </EmptyState>
+      </div>
+    );
+  };
+
   render() {
     const urlParams = new URLSearchParams(history.location.search);
     const expandedChart = urlParams.get('expand') || undefined;
@@ -226,7 +258,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     const content = (
       <>
         {this.renderOptionsBar()}
-        {this.state.dashboard && dashboard}
+        {this.state.dashboard !== undefined ? dashboard : this.renderFetchMetrics('Loading metrics', 'Metrics will be loaded in a few seconds...')}
       </>
     );
 

@@ -160,6 +160,7 @@ Then('the user sees the metrics tab', () => {
   openEnvoyTab('Metrics');
   cy.wait('@fetchEnvoyMetrics');
   cy.waitForReact(1000, '#root');
+  cy.contains('Loading metrics').should('not.exist');
   cy.getReact('CustomMetrics', { props: { 'data-test': 'envoy-metrics-component' } })
     .then((metricsComponents: any) => metricsComponents.filter(component => component.name === 'CustomMetrics')[0])
     .getCurrentState()
