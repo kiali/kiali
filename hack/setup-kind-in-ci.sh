@@ -105,19 +105,6 @@ subnet=$(${DORP} network inspect kind --format '{{(index .IPAM.Config 0).Subnet}
 subnet_trimmed=$(echo "${subnet}" | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')
 first_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 1)"
 last_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 2)"
-cat <<LBCONFIGMAP | kubectl apply -f -
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  namespace: metallb-system
-  name: config
-data:
-  config: |
-    address-pools:
-    - name: default
-      protocol: layer2
-      addresses: ['${first_ip}-${last_ip}']
-LBCONFIGMAP
 
 if [ -n "${ISTIO_VERSION}" ]; then
   DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
@@ -192,3 +179,14 @@ if [ "${TIMEOUT}" == "True" ]; then
 fi
 
 infomsg "Kiali is ready."
+
+cat <<LBCONFIGMAP | kubectl apply -f -
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  namespace: metallb-system
+  name: config
+spec:
+  addresses:
+  - ${first_ip}-${last_ip}
+LBCONFIGMAP
