@@ -1,10 +1,4 @@
 import * as React from 'react';
-import { TimeInMilliseconds } from '../../types/Common';
-import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from '../../actions/KialiAppAction';
-import { KialiAppState } from '../../store/Store';
-import { GlobalActions } from '../../actions/GlobalActions';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { triggerRefresh } from "../../hooks/refresh";
 
