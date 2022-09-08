@@ -170,7 +170,13 @@ The kiali graph is primarily a canvas element which makes it more difficult to t
 Try setting the `numTestsKeptInMemory` setting to a lower value.
 
 ```
-make -e CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0 cypress
+make -e CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0 cypress-run
+```
+
+For debugging locally, try setting the `video` setting to true to watch the recordings from test run.
+
+```
+make -e CYPRESS_VIDEO=true cypress-run
 ```
 
 ### Tests are flaking 
