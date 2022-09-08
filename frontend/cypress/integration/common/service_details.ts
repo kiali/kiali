@@ -1,10 +1,7 @@
-import { And, Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
-import {checkHealthIndicatorInTable, checkHealthStatusInTable, getCellsForCol, getColWithRowText} from './table';
-import { ensureKialiFinishedLoading } from './transition';
+import { And, Given, Then } from 'cypress-cucumber-preprocessor/steps';
 
 const NAMESPACE = 'bookinfo';
 const SERVICE = 'productpage';
-const URL = '/console/namespaces/'+NAMESPACE+'/services/'+SERVICE+'?refresh=0';
 const tracingDotQuery = '[style*="fill: var(--pf-global--palette--blue-200)"][style*="stroke: transparent"]';
 
 function openTab(tab: string) {
@@ -79,25 +76,22 @@ Then('the user does not see No data message in the {string} graph', (graph: stri
 Then('user sees graph with traces information', (graph: string) => {
     openTab('Traces');
     cy.getBySel('jaeger-scatterplot');
-});
-
-And('And user sees trace details after selecting a trace', () => {
     cy.getBySel('trace-details-tabs').should('not.exist');
     cy.getBySel('jaeger-scatterplot').contains('Traces');
     cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
+});
+
+And('And user sees trace details after selecting a trace', () => {
     cy.getBySel('trace-details-tabs').should('be.visible').contains("Trace Details");
     cy.getBySel('.pf-l-grid').should('be.visible').get(".pf-c-label__content").should('be.visible');
     cy.getBySel('trace-details-kebab').click().contains('View on Graph');
 });
 
 And('user sees table details after selecting a trace', () => {
-    cy.getBySel('trace-details-tabs').should('not.exist');
-    cy.getBySel('jaeger-scatterplot').contains('Traces');
-    cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
     cy.getBySel('trace-details-tabs').should('be.visible').contains("Span Details").click();
     cy.get('table').should('be.visible').contains('th', 'Timeline');
     cy.get('#pf-tab-section-1-trace-details').within(() => {
-        cy.get('.pf-c-dropdown__toggle.pf-m-plain').first().click();
+        cy.get('.pf-c-dropdown__toggle.pf-m-plain').first().should('be.visible').click();
         cy.get('ul.pf-c-dropdown__menu').should('be.visible').contains('Inbound Metrics');
     });
 });
