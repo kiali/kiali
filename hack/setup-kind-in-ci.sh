@@ -113,6 +113,30 @@ fi
 infomsg "Downloading istio"
 hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
+kubectl rollout status deployment controller -n metallb-system
+
+cat <<LBCONFIGMAP | kubectl apply -f -
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  namespace: metallb-system
+  name: config
+spec:
+  addresses:
+  - ${first_ip}-${last_ip}
+LBCONFIGMAP
+
+cat <<LBCONFIGMAP | kubectl apply -f -
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  namespace: metallb-system
+  name: l2config
+spec:
+  ipAddressPools:
+  - config
+LBCONFIGMAP
+
 infomsg "Installing istio"
 # Apparently you can't set the requests to zero for the proxy so just setting them to some really low number.
 hack/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)"
@@ -180,13 +204,5 @@ fi
 
 infomsg "Kiali is ready."
 
-cat <<LBCONFIGMAP | kubectl apply -f -
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  namespace: metallb-system
-  name: config
-spec:
-  addresses:
-  - ${first_ip}-${last_ip}
-LBCONFIGMAP
+
+
