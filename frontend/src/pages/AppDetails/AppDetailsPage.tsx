@@ -23,6 +23,7 @@ import { AppHealth } from 'types/Health';
 import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
 import {ErrorMsg} from "../../types/ErrorMsg";
 import ErrorSection from "../../components/ErrorSection/ErrorSection";
+import connectRefresh from "../../components/Refresh/connectRefresh";
 
 type AppDetailsState = {
   app?: App;
@@ -36,11 +37,12 @@ type AppDetailsState = {
 type ReduxProps = {
   duration: DurationInSeconds;
   jaegerInfo?: JaegerInfo;
-  lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
 };
 
-type AppDetailsProps = RouteComponentProps<AppId> & ReduxProps;
+type AppDetailsProps = RouteComponentProps<AppId> & ReduxProps & {
+  lastRefreshAt: TimeInMilliseconds;
+};
 
 const tabName = 'tab';
 const defaultTab = 'info';
@@ -117,6 +119,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             const tab = (
               <Tab title={dashboard.title} key={'cd-' + dashboard.template} eventKey={tabKey}>
                 <CustomMetricsContainer
+                  lastRefreshAt={this.props.lastRefreshAt}
                   namespace={this.props.match.params.namespace}
                   app={this.props.match.params.app}
                   template={dashboard.template}
@@ -145,6 +148,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         <TrafficDetails
           itemName={this.props.match.params.app}
           itemType={MetricsObjectTypes.APP}
+          lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.match.params.namespace}
         />
       </Tab>
@@ -154,6 +158,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       <Tab title="Inbound Metrics" eventKey={2} key={'Inbound Metrics'}>
         <IstioMetricsContainer
           data-test="inbound-metrics-component"
+          lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.app}
           objectType={MetricsObjectTypes.APP}
@@ -166,6 +171,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       <Tab title="Outbound Metrics" eventKey={3} key={'Outbound Metrics'}>
         <IstioMetricsContainer
           data-test="outbound-metrics-component"
+          lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.app}
           objectType={MetricsObjectTypes.APP}
@@ -183,6 +189,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         tabsArray.push(
           <Tab eventKey={4} style={{ textAlign: 'center' }} title={'Traces'} key={tracesTabName}>
             <TracesComponent
+              lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.match.params.namespace}
               target={this.props.match.params.app}
               targetKind={'app'}
@@ -259,9 +266,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  jaegerInfo: state.jaegerState.info,
-  lastRefreshAt: state.globalState.lastRefreshAt
+  jaegerInfo: state.jaegerState.info
 });
 
-const AppDetailsContainer = connect(mapStateToProps)(AppDetails);
+const AppDetailsContainer = connectRefresh(connect(mapStateToProps)(AppDetails));
 export default AppDetailsContainer;

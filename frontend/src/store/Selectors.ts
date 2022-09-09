@@ -66,10 +66,6 @@ const replayQueryTime = (state: KialiAppState) => state.userSettings.replayQuery
 
 export const replayQueryTimeSelector = createIdentitySelector(replayQueryTime);
 
-const lastRefreshAt = (state: KialiAppState) => state.globalState.lastRefreshAt;
-
-export const lastRefreshAtSelector = createIdentitySelector(lastRefreshAt);
-
 const showIdleNodes = (state: KialiAppState) => state.graph.toolbarState.showIdleNodes;
 
 export const showIdleNodesSelector = createIdentitySelector(showIdleNodes);

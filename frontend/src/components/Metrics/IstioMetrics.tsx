@@ -59,11 +59,12 @@ type IstioMetricsProps = ObjectId &
   RouteComponentProps<{}> & {
     objectType: MetricsObjectTypes;
     direction: Direction;
+  } & {
+  lastRefreshAt: TimeInMilliseconds;
   };
 
 type ReduxProps = {
   jaegerIntegration: boolean;
-  lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
   refreshInterval: IntervalInMilliseconds;
   setTimeRange: (range: TimeRange) => void;
@@ -415,7 +416,6 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
 const mapStateToProps = (state: KialiAppState) => {
   return {
     jaegerIntegration: state.jaegerState.info ? state.jaegerState.info.integration : false,
-    lastRefreshAt: state.globalState.lastRefreshAt,
     timeRange: timeRangeSelector(state),
     refreshInterval: refreshIntervalSelector(state)
   };

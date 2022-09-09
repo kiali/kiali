@@ -23,6 +23,7 @@ import TimeControl from '../../components/Time/TimeControl';
 import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
 import {ErrorMsg} from "../../types/ErrorMsg";
 import ErrorSection from "../../components/ErrorSection/ErrorSection";
+import connectRefresh from "../../components/Refresh/connectRefresh";
 
 type ServiceDetailsState = {
   currentTab: string;
@@ -141,6 +142,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         <TrafficDetails
           itemName={this.props.match.params.service}
           itemType={MetricsObjectTypes.SERVICE}
+          lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.match.params.namespace}
         />
       </Tab>
@@ -149,6 +151,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     const inTab = (
       <Tab eventKey={2} title="Inbound Metrics" key="Inbound Metrics">
         <IstioMetricsContainer
+          lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.service}
           objectType={MetricsObjectTypes.SERVICE}
@@ -163,6 +166,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       tabsArray.push(
         <Tab eventKey={3} title="Traces" key="Traces">
           <TracesComponent
+            lastRefreshAt={this.props.lastRefreshAt}
             namespace={this.props.match.params.namespace}
             target={this.props.match.params.service}
             targetKind={'service'}
@@ -235,8 +239,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
 const mapStateToProps = (state: KialiAppState) => ({
   jaegerInfo: state.jaegerState.info,
-  lastRefreshAt: state.globalState.lastRefreshAt
 });
 
-const ServiceDetailsPageContainer = connect(mapStateToProps)(ServiceDetails);
+const ServiceDetailsPageContainer = connectRefresh( connect(mapStateToProps)(ServiceDetails));
 export default ServiceDetailsPageContainer;

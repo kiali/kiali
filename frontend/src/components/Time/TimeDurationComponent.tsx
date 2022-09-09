@@ -22,8 +22,6 @@ type TimeControlsProps = ReduxProps & {
   disabled: boolean;
   id: string;
   supportsReplay?: boolean;
-
-  handleRefresh?: () => void;
 };
 
 export class TimeDurationComponent extends React.PureComponent<TimeControlsProps> {
@@ -58,7 +56,6 @@ export class TimeDurationComponent extends React.PureComponent<TimeControlsProps
             id="time_range_refresh"
             disabled={this.props.disabled}
             hideLabel={true}
-            handleRefresh={this.props.handleRefresh}
             manageURL={true}
           />
         )}

@@ -15,7 +15,7 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
-import { istioCertsInfoSelector, lastRefreshAtSelector } from 'store/Selectors';
+import { istioCertsInfoSelector } from 'store/Selectors';
 import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { IstioCertsInfoActions } from 'actions/IstioCertsInfoActions';
@@ -25,6 +25,7 @@ import { CertsInfo } from 'types/CertsInfo';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { infoStyle } from 'styles/DropdownStyles';
+import connectRefresh from "../Refresh/connectRefresh";
 
 type IstioCertsInfoState = {
   showModal: boolean;
@@ -32,12 +33,12 @@ type IstioCertsInfoState = {
 };
 
 type ReduxProps = {
-  lastRefreshAt: TimeInMilliseconds;
   setIstioCertsInfo: (istioCertsInfo: CertsInfo[]) => void;
   certsInfo: CertsInfo[];
 };
 
 type IstioCertsInfoProps = ReduxProps & {
+  lastRefreshAt: TimeInMilliseconds;
   ref: React.RefObject<any>;
 };
 
@@ -171,15 +172,14 @@ class IstioCertsInfo extends React.Component<IstioCertsInfoProps, IstioCertsInfo
 
 const mapStateToProps = (state: KialiAppState) => ({
   certsInfo: istioCertsInfoSelector(state),
-  lastRefreshAt: lastRefreshAtSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setIstioCertsInfo: bindActionCreators(IstioCertsInfoActions.setinfo, dispatch)
 });
 
-const IstioCertsInfoConnected = connect(mapStateToProps, mapDispatchToProps, null, { forwardRef: true })(
+const IstioCertsInfoConnected = connectRefresh(connect(mapStateToProps, mapDispatchToProps, null, { forwardRef: true })(
   IstioCertsInfo
-);
+));
 
 export default IstioCertsInfoConnected;

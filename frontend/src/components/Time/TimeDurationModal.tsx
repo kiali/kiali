@@ -110,7 +110,6 @@ export function TimeDurationModal(props: Props) {
             menuAppendTo="parent"
             refreshInterval={refreshInterval}
             setRefreshInterval={handleSetRefreshInterval}
-            setLastRefreshAt={() => undefined}
           />
         </FormGroup>
       </Form>

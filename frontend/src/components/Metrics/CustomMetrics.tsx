@@ -52,6 +52,7 @@ type MetricsState = {
 type CustomMetricsProps = RouteComponentProps<{}> & {
   namespace: string;
   app: string;
+  lastRefreshAt: TimeInMilliseconds;
   version?: string;
   workload?: string;
   workloadType?: string;
@@ -62,7 +63,6 @@ type CustomMetricsProps = RouteComponentProps<{}> & {
 
 type ReduxProps = {
   jaegerIntegration: boolean;
-  lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
   setTimeRange: (range: TimeRange) => void;
 };
@@ -359,7 +359,6 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
 const mapStateToProps = (state: KialiAppState) => {
   return {
     jaegerIntegration: state.jaegerState.info ? state.jaegerState.info.integration : false,
-    lastRefreshAt: state.globalState.lastRefreshAt,
     timeRange: timeRangeSelector(state)
   };
 };
