@@ -4,7 +4,8 @@ import { TLSStatus } from '../types/TLSStatus';
 import { MeshTlsActions } from '../actions/MeshTlsActions';
 
 export const INITIAL_MESH_TLS_STATE: TLSStatus = {
-  status: ''
+  status: '',
+  autoMTLSEnabled: false
 };
 
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store
@@ -13,7 +14,8 @@ const MeshTlsState = (state: TLSStatus = INITIAL_MESH_TLS_STATE, action: KialiAp
     case getType(MeshTlsActions.setinfo):
       return {
         ...INITIAL_MESH_TLS_STATE,
-        status: action.payload.status
+        status: action.payload.status,
+        autoMTLSEnabled: action.payload.autoMTLSEnabled
       };
     default:
       return state;

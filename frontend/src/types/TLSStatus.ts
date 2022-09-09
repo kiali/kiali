@@ -1,13 +1,16 @@
 export enum MTLSStatuses {
   ENABLED = 'MTLS_ENABLED',
+  ENABLED_DEFAULT = 'MTLS_ENABLED_DEFAULT',
   ENABLED_EXTENDED = 'MTLS_ENABLED_EXTENDED',
   PARTIALLY = 'MTLS_PARTIALLY_ENABLED',
+  PARTIALLY_DEFAULT = 'MTLS_PARTIALLY_ENABLED_DEFAULT',
   NOT_ENABLED = 'MTLS_NOT_ENABLED',
   DISABLED = 'MTLS_DISABLED'
 }
 
 export interface TLSStatus {
   status: string;
+  autoMTLSEnabled: boolean;
 }
 
 export const nsWideMTLSStatus = (nsStatus: string, meshStatus: string): string => {
@@ -20,8 +23,4 @@ export const nsWideMTLSStatus = (nsStatus: string, meshStatus: string): string =
   }
 
   return finalStatus;
-};
-
-export const isMTLSEnabled = (status: string): boolean => {
-  return status === MTLSStatuses.ENABLED;
 };

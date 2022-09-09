@@ -14,8 +14,6 @@ import InitializingScreen from './InitializingScreen';
 import {getKioskMode, isKioskMode} from '../utils/SearchParamUtils';
 import * as AlertUtils from '../utils/AlertUtils';
 import { setServerConfig, serverConfig, humanDurations } from '../config/ServerConfig';
-import { TLSStatus } from '../types/TLSStatus';
-import { MeshTlsActions } from '../actions/MeshTlsActions';
 import { AuthStrategy } from '../types/Auth';
 import { JaegerInfo } from '../types/JaegerInfo';
 import { ServerConfig } from '../types/ServerConfig';
@@ -43,7 +41,6 @@ interface AuthenticationControllerReduxProps {
   setDuration: (duration: DurationInSeconds) => void;
   setJaegerInfo: (jaegerInfo: JaegerInfo | null) => void;
   setLandingRoute: (route: string | undefined) => void;
-  setMeshTlsStatus: (meshStatus: TLSStatus) => void;
   setNamespaces: (namespaces: Namespace[], receivedAt: Date) => void;
   setRefreshInterval: (interval: IntervalInMilliseconds) => void;
   setTrafficRates: (rates: TrafficRate[]) => void;
@@ -365,7 +362,6 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch),
   setJaegerInfo: bindActionCreators(JaegerActions.setInfo, dispatch),
   setLandingRoute: bindActionCreators(LoginActions.setLandingRoute, dispatch),
-  setMeshTlsStatus: bindActionCreators(MeshTlsActions.setinfo, dispatch),
   setNamespaces: bindActionCreators(NamespaceActions.receiveList, dispatch),
   setRefreshInterval: bindActionCreators(UserSettingsActions.setRefreshInterval, dispatch),
   setTrafficRates: bindActionCreators(GraphToolbarActions.setTrafficRates, dispatch),
