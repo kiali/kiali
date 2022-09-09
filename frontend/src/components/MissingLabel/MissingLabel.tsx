@@ -43,7 +43,7 @@ class MissingLabel extends React.Component<MissingLabelProps, {}> {
             <div>The label is recommended as it affects telemetry.</div>
           </>
         )}
-        <div>Missing labels will impact in the telemetry collected by the Istio proxy.</div>
+        <div>Missing labels may impact telemetry reported by the Istio proxy.</div>
       </div>
     );
     const iconComponent = (
