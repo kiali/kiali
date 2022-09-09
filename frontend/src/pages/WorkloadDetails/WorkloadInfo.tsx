@@ -10,7 +10,7 @@ import { Grid, GridItem, Stack, StackItem } from '@patternfly/react-core';
 import { activeTab } from '../../components/Tab/Tabs';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import GraphDataSource from '../../services/GraphDataSource';
-import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
+import { DurationInSeconds } from 'types/Common';
 import { isIstioNamespace } from '../../config/ServerConfig';
 import { IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
 import { KialiAppState } from '../../store/Store';
@@ -26,7 +26,6 @@ type WorkloadInfoProps = {
   duration: DurationInSeconds;
   namespace: string;
   workload?: Workload;
-  lastRefreshAt: TimeInMilliseconds;
   health?: WorkloadHealth;
   mtlsEnabled: boolean;
   refreshWorkload: () => void;
@@ -289,7 +288,6 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  lastRefreshAt: state.globalState.lastRefreshAt,
   mtlsEnabled: meshWideMTLSEnabledSelector(state)
 });
 

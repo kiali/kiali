@@ -44,7 +44,6 @@ import {
   findValueSelector,
   graphTypeSelector,
   hideValueSelector,
-  lastRefreshAtSelector,
   meshWideMTLSEnabledSelector,
   refreshIntervalSelector,
   replayActiveSelector,
@@ -64,7 +63,6 @@ import { toRangeString } from 'components/Time/Utils';
 import { replayBorder } from 'components/Time/Replay';
 import GraphDataSource, { FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
 import { NamespaceActions } from '../../actions/NamespaceAction';
-import { GlobalActions } from "../../actions/GlobalActions";
 import GraphThunkActions from '../../actions/GraphThunkActions';
 import { JaegerTrace } from 'types/JaegerInfo';
 import { KialiDispatch } from "types/Redux";
@@ -81,6 +79,8 @@ import { WizardAction, WizardMode } from "components/IstioWizards/WizardActions"
 import ConfirmDeleteTrafficRoutingModal from "components/IstioWizards/ConfirmDeleteTrafficRoutingModal";
 import { deleteServiceTrafficRouting } from "services/Api";
 import { canCreate, canUpdate } from "../../types/Permissions";
+import connectRefresh from "../../components/Refresh/connectRefresh";
+import { triggerRefresh } from "../../hooks/refresh";
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -108,7 +108,6 @@ type ReduxProps = {
   hideValue: string;
   isPageVisible: boolean;
   kiosk: string;
-  lastRefreshAt: TimeInMilliseconds;
   layout: Layout;
   namespaceLayout: Layout;
   mtlsEnabled: boolean;
@@ -121,7 +120,6 @@ type ReduxProps = {
   replayQueryTime: TimeInMilliseconds;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
   setGraphDefinition: (graphDefinition: GraphDefinition) => void;
-  setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => void;
   setRankResult: (result: RankResult) => void;
   setNode: (node?: NodeParamsType) => void;
   setTraceId: (traceId?: string) => void;
@@ -145,7 +143,9 @@ type ReduxProps = {
   updateSummary: (event: CytoscapeEvent) => void;
 };
 
-export type GraphPageProps = RouteComponentProps<Partial<GraphURLPathProps>> & ReduxProps;
+export type GraphPageProps = RouteComponentProps<Partial<GraphURLPathProps>> & ReduxProps & {
+  lastRefreshAt: TimeInMilliseconds;
+};
 
 export type GraphData = {
   elements: DecoratedGraphElements;
@@ -760,7 +760,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
           showWizard: false
         }
       }));
-      this.props.setLastRefreshAt(Date.now());
+      triggerRefresh();
     } else {
       this.setState(prevState => ({
         wizardsData: {
@@ -788,7 +788,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
 
     deleteServiceTrafficRouting(this.state.wizardsData!.serviceDetails!)
       .then(_results => {
-        this.props.setLastRefreshAt(Date.now());
+        triggerRefresh();
       })
       .catch(error => {
         AlertUtils.addError('Could not delete Istio config objects.', error);
@@ -862,7 +862,6 @@ const mapStateToProps = (state: KialiAppState) => ({
   hideValue: hideValueSelector(state),
   isPageVisible: state.globalState.isPageVisible,
   kiosk: state.globalState.kiosk,
-  lastRefreshAt: lastRefreshAtSelector(state),
   layout: state.graph.layout,
   mtlsEnabled: meshWideMTLSEnabledSelector(state),
   namespaceLayout: state.graph.namespaceLayout,
@@ -892,7 +891,6 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   onReady: (cy: Cy.Core) => dispatch(GraphThunkActions.graphReady(cy)),
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),
-  setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => dispatch(GlobalActions.setLastRefreshAt(lastRefreshAt)),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   setRankResult: bindActionCreators(GraphActions.setRankResult, dispatch),
   setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId)),
@@ -903,5 +901,5 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   updateSummary: (event: CytoscapeEvent) => dispatch(GraphActions.updateSummary(event))
 });
 
-const GraphPageContainer = connect(mapStateToProps, mapDispatchToProps)(GraphPage);
+const GraphPageContainer = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(GraphPage));
 export default GraphPageContainer;

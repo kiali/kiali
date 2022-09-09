@@ -1,15 +1,8 @@
 import * as React from 'react';
-import { TimeInMilliseconds } from '../../types/Common';
-import { connect } from 'react-redux';
-import { KialiDispatch } from 'types/Redux';
-import { GlobalActions } from '../../actions/GlobalActions';
 import { Button, ButtonVariant } from '@patternfly/react-core';
+import { triggerRefresh } from "../../hooks/refresh";
 
-type ReduxProps = {
-  setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => void;
-};
-
-type Props = ReduxProps & {
+type Props = {
   objectName: string;
   readOnly: boolean;
   canUpdate: boolean;
@@ -70,18 +63,8 @@ class IstioActionButtons extends React.Component<Props, State> {
 
   private handleRefresh = () => {
     this.props.onRefresh();
-    this.props.setLastRefreshAt(Date.now());
+    triggerRefresh();
   };
 }
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
-  return {
-    setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => {
-      dispatch(GlobalActions.setLastRefreshAt(lastRefreshAt));
-    }
-  };
-};
-
-const IstioActionButtonsContainer = connect(null, mapDispatchToProps)(IstioActionButtons);
-
-export default IstioActionButtonsContainer;
+export default IstioActionButtons;

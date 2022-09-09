@@ -19,6 +19,7 @@ import { style } from 'typestyle';
 import { PFColors } from '../../components/Pf/PfColors';
 import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
 import { KialiDispatch } from "../../types/Redux";
+import RefreshNotifier from "../../components/Refresh/RefreshNotifier";
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -218,11 +219,11 @@ export class OverviewToolbar extends React.Component<Props, State> {
     );
     const timeToolbar = (
       <div className={timeToolbarStyle}>
+        <RefreshNotifier onTick={this.props.onRefresh} />
         <TimeDurationContainer
           key="overview-time-range"
           id="overview-time-range"
           disabled={false}
-          handleRefresh={this.props.onRefresh}
         />
       </div>
     );

@@ -68,12 +68,12 @@ export interface TrafficItem {
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  lastRefreshAt: TimeInMilliseconds;
 }
 
 type TrafficDetailsProps = ReduxProps & {
   itemName: string;
   itemType: MetricsObjectTypes;
+  lastRefreshAt: TimeInMilliseconds;
   namespace: string;
 };
 
@@ -333,7 +333,6 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
 const mapStateToProps = (state: KialiAppState) => {
   return {
     duration: durationSelector(state),
-    lastRefreshAt: state.globalState.lastRefreshAt
   };
 };
 

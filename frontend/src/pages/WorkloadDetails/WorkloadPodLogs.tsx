@@ -59,11 +59,11 @@ const spanColor = PFColors.Cyan300;
 
 type ReduxProps = {
   kiosk: string;
-  lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
 };
 
 export type WorkloadPodLogsProps = ReduxProps & {
+  lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   pods: Pod[];
   workload: string;
@@ -1049,7 +1049,6 @@ const mapStateToProps = (state: KialiAppState) => {
   return {
     kiosk: state.globalState.kiosk,
     timeRange: timeRangeSelector(state),
-    lastRefreshAt: state.globalState.lastRefreshAt
   };
 };
 

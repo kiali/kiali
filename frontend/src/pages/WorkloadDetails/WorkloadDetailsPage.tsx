@@ -26,6 +26,7 @@ import { WorkloadHealth } from 'types/Health';
 import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
 import ErrorSection from "../../components/ErrorSection/ErrorSection";
 import {ErrorMsg} from "../../types/ErrorMsg";
+import connectRefresh from "../../components/Refresh/connectRefresh";
 
 
 type WorkloadDetailsState = {
@@ -38,11 +39,12 @@ type WorkloadDetailsState = {
 type ReduxProps = {
   duration: DurationInSeconds;
   jaegerInfo?: JaegerInfo;
-  lastRefreshAt: TimeInMilliseconds;
   statusState: StatusState;
 };
 
-type WorkloadDetailsPageProps = ReduxProps & RouteComponentProps<WorkloadId>;
+type WorkloadDetailsPageProps = ReduxProps & RouteComponentProps<WorkloadId> & {
+  lastRefreshAt: TimeInMilliseconds;
+};
 
 export const tabName = 'tab';
 export const defaultTab = 'info';
@@ -138,6 +140,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         <TrafficDetails
           itemName={this.props.match.params.workload}
           itemType={MetricsObjectTypes.WORKLOAD}
+          lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.match.params.namespace}
         />
       </Tab>
@@ -149,6 +152,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         <Tab title="Logs" eventKey={2} key={'Logs'} data-test={"workload-details-logs-tab"}>
           {hasPods ? (
             <WorkloadPodLogs
+              lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.match.params.namespace}
               workload={this.props.match.params.workload}
               pods={this.state.workload!.pods}
@@ -170,6 +174,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       <Tab title="Inbound Metrics" eventKey={3} key={'Inbound Metrics'}>
         <IstioMetricsContainer
           data-test="inbound-metrics-component"
+          lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.workload}
           objectType={MetricsObjectTypes.WORKLOAD}
@@ -183,6 +188,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       <Tab title="Outbound Metrics" eventKey={4} key={'Outbound Metrics'}>
         <IstioMetricsContainer
           data-test="outbound-metrics-component"
+          lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.workload}
           objectType={MetricsObjectTypes.WORKLOAD}
@@ -196,6 +202,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       tabsArray.push(
         <Tab eventKey={5} title="Traces" key="Traces">
           <TracesComponent
+            lastRefreshAt={this.props.lastRefreshAt}
             namespace={this.props.match.params.namespace}
             target={this.props.match.params.workload}
             targetKind={'workload'}
@@ -207,7 +214,10 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       const envoyTab = (
         <Tab title="Envoy" eventKey={10} key={'Envoy'}>
           {this.state.workload && (
-            <EnvoyDetailsContainer namespace={this.props.match.params.namespace} workload={this.state.workload} />
+            <EnvoyDetailsContainer
+              lastRefreshAt={this.props.lastRefreshAt}
+              namespace={this.props.match.params.namespace}
+              workload={this.state.workload} />
           )}
         </Tab>
       );
@@ -254,6 +264,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
               const tab = (
                 <Tab key={dashboard.template} title={dashboard.title} eventKey={tabKey}>
                   <CustomMetricsContainer
+                    lastRefreshAt={this.props.lastRefreshAt}
                     namespace={this.props.match.params.namespace}
                     app={app}
                     version={version}
@@ -338,10 +349,9 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   jaegerInfo: state.jaegerState.info,
-  lastRefreshAt: state.globalState.lastRefreshAt,
   statusState: state.statusState,
 });
 
-const WorkloadDetailsContainer = connect(mapStateToProps)(WorkloadDetails);
+const WorkloadDetailsContainer = connectRefresh(connect(mapStateToProps)(WorkloadDetails));
 
 export default WorkloadDetailsContainer;

@@ -64,7 +64,6 @@ type GraphToolbarProps = ReduxProps & {
   disabled: boolean;
   elementsChanged: boolean;
   onToggleHelp: () => void;
-  onRefresh?: () => void;
 };
 
 export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
@@ -183,7 +182,6 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
           isNodeGraph={!!this.props.node}
           onToggleHelp={this.props.onToggleHelp}
           onGraphTypeChange={this.props.setGraphType}
-          onHandleRefresh={this.handleRefresh}
         />
         <Toolbar style={{ width: '100%' }}>
           <ToolbarGroup aria-label="graph settings" style={{ margin: 0, alignItems: "flex-start"}}>
@@ -228,12 +226,6 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
       </>
     );
   }
-
-  private handleRefresh = () => {
-    if (this.props.onRefresh) {
-      this.props.onRefresh();
-    }
-  };
 
   private handleNamespaceReturn = () => {
     if (

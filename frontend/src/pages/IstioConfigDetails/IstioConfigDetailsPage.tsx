@@ -56,6 +56,7 @@ import { Annotation } from 'react-ace/types';
 import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
 import {ErrorMsg} from "../../types/ErrorMsg";
 import ErrorSection from "../../components/ErrorSection/ErrorSection";
+import RefreshNotifier from "../../components/Refresh/RefreshNotifier";
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -563,9 +564,10 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   render() {
     return (
       <>
+        <RefreshNotifier onTick={this.onRefresh} />
         <RenderHeaderContainer
           location={this.props.location}
-          rightToolbar={<RefreshContainer id="config_details_refresh" hideLabel={true} handleRefresh={this.onRefresh} />}
+          rightToolbar={<RefreshContainer id="config_details_refresh" hideLabel={true} />}
           actionsToolbar={!this.state.error ? this.renderActions() : undefined}
         />
         {this.state.error && (

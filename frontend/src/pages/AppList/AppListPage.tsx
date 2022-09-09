@@ -19,6 +19,7 @@ import * as API from '../../services/Api';
 import * as AppListClass from './AppListClass';
 import VirtualList from '../../components/VirtualList/VirtualList';
 import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
+import RefreshNotifier from "../../components/Refresh/RefreshNotifier";
 
 type AppListPageState = FilterComponent.State<AppListItem>;
 
@@ -113,13 +114,13 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   render() {
     return (
       <>
+        <RefreshNotifier onTick={this.updateListItems} />
         <div style={{ backgroundColor: '#fff' }}>
           <DefaultSecondaryMasthead
             rightToolbar={
               <TimeDurationContainer
                 key={'DurationDropdown'}
                 id="app-list-duration-dropdown"
-                handleRefresh={this.updateListItems}
                 disabled={false}
               />
             }

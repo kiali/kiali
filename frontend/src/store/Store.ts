@@ -34,7 +34,6 @@ export interface GlobalState {
   readonly loadingCounter: number;
   readonly isPageVisible: boolean;
   readonly kiosk: string;
-  lastRefreshAt: TimeInMilliseconds;
 }
 
 export interface NamespaceState {

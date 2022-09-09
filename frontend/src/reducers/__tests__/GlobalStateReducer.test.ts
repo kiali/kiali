@@ -22,8 +22,7 @@ describe('GlobalState reducer', () => {
     expect(globalState(undefined, GlobalActions.unknown())).toEqual({
       loadingCounter: 0,
       isPageVisible: true,
-      kiosk: '',
-      lastRefreshAt: 0
+      kiosk: ''
     });
   });
 
@@ -33,16 +32,14 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 0,
           isPageVisible: true,
-          kiosk: '',
-          lastRefreshAt: currentDate
+          kiosk: ''
         },
         GlobalActions.incrementLoadingCounter()
       )
     ).toEqual({
       loadingCounter: 1,
       isPageVisible: true,
-      kiosk: '',
-      lastRefreshAt: currentDate
+      kiosk: ''
     });
   });
 
@@ -52,16 +49,14 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 1,
           isPageVisible: true,
-          kiosk: '',
-          lastRefreshAt: currentDate
+          kiosk: ''
         },
         GlobalActions.decrementLoadingCounter()
       )
     ).toEqual({
       loadingCounter: 0,
       isPageVisible: true,
-      kiosk: '',
-      lastRefreshAt: currentDate
+      kiosk: ''
     });
   });
 
@@ -71,16 +66,14 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 1,
           isPageVisible: true,
-          kiosk: '',
-          lastRefreshAt: currentDate
+          kiosk: ''
         },
         GlobalActions.incrementLoadingCounter()
       )
     ).toEqual({
       loadingCounter: 2,
       isPageVisible: true,
-      kiosk: '',
-      lastRefreshAt: currentDate
+      kiosk: ''
     });
   });
 
@@ -90,16 +83,14 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 2,
           isPageVisible: true,
-          kiosk: '',
-          lastRefreshAt: currentDate
+          kiosk: ''
         },
         GlobalActions.decrementLoadingCounter()
       )
     ).toEqual({
       loadingCounter: 1,
       isPageVisible: true,
-      kiosk: '',
-      lastRefreshAt: currentDate
+      kiosk: ''
     });
   });
   it('should turn on page visibility status', () => {
@@ -108,16 +99,14 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 0,
           isPageVisible: false,
-          kiosk: '',
-          lastRefreshAt: currentDate
+          kiosk: ''
         },
         GlobalActions.setPageVisibilityVisible()
       )
     ).toEqual({
       loadingCounter: 0,
       isPageVisible: true,
-      kiosk: '',
-      lastRefreshAt: currentDate
+      kiosk: ''
     });
   });
   it('should turn off page visibility status', () => {
@@ -126,16 +115,14 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 0,
           isPageVisible: true,
-          kiosk: '',
-          lastRefreshAt: currentDate
+          kiosk: ''
         },
         GlobalActions.setPageVisibilityHidden()
       )
     ).toEqual({
       loadingCounter: 0,
       isPageVisible: false,
-      kiosk: '',
-      lastRefreshAt: currentDate
+      kiosk: ''
     });
   });
   it('should turn on kiosk status', () => {
@@ -144,16 +131,14 @@ describe('GlobalState reducer', () => {
         {
           loadingCounter: 0,
           isPageVisible: true,
-          kiosk: '',
-          lastRefreshAt: currentDate
+          kiosk: ''
         },
         GlobalActions.setKiosk('test')
       )
     ).toEqual({
       loadingCounter: 0,
       isPageVisible: true,
-      kiosk: 'test',
-      lastRefreshAt: currentDate
+      kiosk: 'test'
     });
   });
 });
