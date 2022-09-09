@@ -9,7 +9,7 @@ import {
   CardBody,
   Checkbox,
   EmptyState,
-  EmptyStateVariant, Title, TitleSizes, EmptyStateBody
+  EmptyStateVariant, Title, TitleSizes
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { serverConfig } from '../../config/ServerConfig';
@@ -217,14 +217,13 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     }
   }
 
-  renderFetchMetrics = (title, msg) => {
+  renderFetchMetrics = (title) => {
     return (
       <div className={emptyStyle}>
         <EmptyState variant={EmptyStateVariant.small}>
           <Title headingLevel="h5" size={TitleSizes.lg}>
             {title}
           </Title>
-          <EmptyStateBody>{msg}</EmptyStateBody>
         </EmptyState>
       </div>
     );
@@ -258,7 +257,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     const content = (
       <>
         {this.renderOptionsBar()}
-        {this.state.dashboard !== undefined ? dashboard : this.renderFetchMetrics('Loading metrics', 'Metrics will be loaded in a few seconds...')}
+        {this.state.dashboard !== undefined ? dashboard : this.renderFetchMetrics('Loading metrics')}
       </>
     );
 
