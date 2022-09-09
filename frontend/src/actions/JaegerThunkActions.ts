@@ -1,10 +1,8 @@
-import { ThunkDispatch } from 'redux-thunk';
 import { AxiosError } from 'axios';
 
 import * as AlertUtils from '../utils/AlertUtils';
-import { KialiAppState } from '../store/Store';
 import * as API from '../services/Api';
-import { KialiAppAction } from './KialiAppAction';
+import { KialiDispatch } from "../types/Redux";
 import { JaegerActions } from './JaegerActions';
 import { setTraceId as setURLTraceId } from 'utils/SearchParamUtils';
 import transformTraceData from 'utils/tracing/TraceTransform';
@@ -12,7 +10,7 @@ import transformTraceData from 'utils/tracing/TraceTransform';
 export const JaegerThunkActions = {
   setTraceId: (traceId?: string) => {
     setURLTraceId(traceId);
-    return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+    return (dispatch: KialiDispatch) => {
       if (traceId) {
         API.getJaegerTrace(traceId)
           .then(response => {

@@ -1,7 +1,6 @@
-import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppState } from '../store/Store';
 import * as Api from '../services/Api';
-import { KialiAppAction } from './KialiAppAction';
+import { KialiDispatch } from "../types/Redux";
 import { NamespaceActions } from './NamespaceAction';
 
 const shouldFetchNamespaces = (state: KialiAppState) => {
@@ -14,7 +13,7 @@ const shouldFetchNamespaces = (state: KialiAppState) => {
 
 const NamespaceThunkActions = {
   asyncFetchNamespaces: () => {
-    return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+    return (dispatch: KialiDispatch) => {
       dispatch(NamespaceActions.requestStarted());
       return Api.getNamespaces()
         .then(response => response.data)
@@ -30,7 +29,7 @@ const NamespaceThunkActions = {
     // which lets you choose what to dispatch next.
     // This is useful for avoiding a network request if
     // a cached value is already available.
-    return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>, getState: () => KialiAppState) => {
+    return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
       if (shouldFetchNamespaces(getState())) {
         const state = getState().authentication;
 

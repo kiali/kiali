@@ -6,7 +6,7 @@ import { ComponentStatus, Status } from '../../types/IstioStatus';
 import { MessageType } from '../../types/MessageCenter';
 import Namespace from '../../types/Namespace';
 import { KialiAppState } from '../../store/Store';
-import { istioStatusSelector, lastRefreshAtSelector, namespaceItemsSelector } from '../../store/Selectors';
+import { istioStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
 import { bindActionCreators } from 'redux';
 import { IstioStatusActions } from '../../actions/IstioStatusActions';
 import { connect } from 'react-redux';
@@ -15,19 +15,20 @@ import IstioStatusList from './IstioStatusList';
 import { PFColors } from '../Pf/PfColors';
 import './IstioStatus.css';
 import { ResourcesFullIcon } from '@patternfly/react-icons';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from '../../actions/KialiAppAction';
+import { KialiDispatch } from 'types/Redux';
 import NamespaceThunkActions from '../../actions/NamespaceThunkActions';
+import connectRefresh from "../Refresh/connectRefresh";
 
 type ReduxProps = {
-  lastRefreshAt: TimeInMilliseconds;
   setIstioStatus: (istioStatus: ComponentStatus[]) => void;
   refreshNamespaces: () => void;
   namespaces: Namespace[] | undefined;
   status: ComponentStatus[];
 };
 
-type Props = ReduxProps & {};
+type Props = ReduxProps & {
+  lastRefreshAt: TimeInMilliseconds;
+};
 
 const ValidToColor = {
   'true-true-true': PFColors.Danger,
@@ -115,17 +116,16 @@ export class IstioStatus extends React.Component<Props> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   status: istioStatusSelector(state),
-  lastRefreshAt: lastRefreshAtSelector(state),
   namespaces: namespaceItemsSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setIstioStatus: bindActionCreators(IstioStatusActions.setinfo, dispatch),
   refreshNamespaces: () => {
     dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());
   }
 });
 
-const IstioStatusConnected = connect(mapStateToProps, mapDispatchToProps)(IstioStatus);
+const IstioStatusConnected = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(IstioStatus));
 
 export default IstioStatusConnected;

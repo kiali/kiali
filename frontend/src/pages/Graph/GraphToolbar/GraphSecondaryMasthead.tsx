@@ -17,7 +17,6 @@ type GraphSecondaryMastheadProps = {
 
   onToggleHelp: () => void;
   onGraphTypeChange: (graphType: GraphType) => void;
-  onHandleRefresh: () => void;
 };
 
 const mastheadStyle = style({
@@ -79,7 +78,6 @@ export default class GraphSecondaryMasthead extends React.PureComponent<GraphSec
               <TimeDurationContainer
                 id="graph_time_range"
                 disabled={this.props.disabled}
-                handleRefresh={this.props.onHandleRefresh}
                 supportsReplay={true}
               />
             </TourStopContainer>

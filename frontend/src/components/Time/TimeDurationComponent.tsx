@@ -8,8 +8,7 @@ import { DurationInSeconds } from 'types/Common';
 import { Tooltip, TooltipPosition, Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from 'actions/KialiAppAction';
+import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 
 type ReduxProps = {
@@ -23,8 +22,6 @@ type TimeControlsProps = ReduxProps & {
   disabled: boolean;
   id: string;
   supportsReplay?: boolean;
-
-  handleRefresh?: () => void;
 };
 
 export class TimeDurationComponent extends React.PureComponent<TimeControlsProps> {
@@ -59,7 +56,6 @@ export class TimeDurationComponent extends React.PureComponent<TimeControlsProps
             id="time_range_refresh"
             disabled={this.props.disabled}
             hideLabel={true}
-            handleRefresh={this.props.handleRefresh}
             manageURL={true}
           />
         )}
@@ -90,7 +86,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   replayActive: replayActiveSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   toggleReplayActive: bindActionCreators(UserSettingsActions.toggleReplayActive, dispatch)
 });
 

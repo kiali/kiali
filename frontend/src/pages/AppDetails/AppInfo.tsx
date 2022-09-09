@@ -3,7 +3,7 @@ import { Grid, GridItem } from '@patternfly/react-core';
 import AppDescription from './AppDescription';
 import { App } from '../../types/App';
 import { RenderComponentScroll } from '../../components/Nav/Page';
-import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
+import { DurationInSeconds } from 'types/Common';
 import GraphDataSource from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
 import { KialiAppState } from '../../store/Store';
@@ -18,7 +18,6 @@ type AppInfoProps = {
   app?: App;
   duration: DurationInSeconds;
   health?: AppHealth;
-  lastRefreshAt: TimeInMilliseconds;
   mtlsEnabled: boolean;
 };
 
@@ -93,7 +92,6 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  lastRefreshAt: state.globalState.lastRefreshAt,
   mtlsEnabled: meshWideMTLSEnabledSelector(state)
 });
 

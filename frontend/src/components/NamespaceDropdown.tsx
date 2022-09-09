@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import _ from 'lodash';
 import { style } from 'typestyle';
 import {
@@ -15,7 +15,6 @@ import {
 } from '@patternfly/react-core';
 import { KialiAppState } from '../store/Store';
 import { activeNamespacesSelector, namespaceFilterSelector, namespaceItemsSelector } from '../store/Selectors';
-import { KialiAppAction } from '../actions/KialiAppAction';
 import { NamespaceActions } from '../actions/NamespaceAction';
 import NamespaceThunkActions from '../actions/NamespaceThunkActions';
 import Namespace from '../types/Namespace';
@@ -298,7 +297,7 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     refresh: () => {
       dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());

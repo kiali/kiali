@@ -9,7 +9,6 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../../store/Store';
 import {
@@ -26,9 +25,9 @@ import GraphFindContainer from './GraphFind';
 import GraphSettingsContainer from './GraphSettings';
 import history, { HistoryManager, URLParam } from '../../../app/History';
 import Namespace, { namespacesFromString, namespacesToString } from '../../../types/Namespace';
+import { KialiDispatch } from "../../../types/Redux";
 import { NamespaceActions } from '../../../actions/NamespaceAction';
 import { GraphActions } from '../../../actions/GraphActions';
-import { KialiAppAction } from '../../../actions/KialiAppAction';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import TourStopContainer from 'components/Tour/TourStop';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
@@ -65,7 +64,6 @@ type GraphToolbarProps = ReduxProps & {
   disabled: boolean;
   elementsChanged: boolean;
   onToggleHelp: () => void;
-  onRefresh?: () => void;
 };
 
 export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
@@ -184,7 +182,6 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
           isNodeGraph={!!this.props.node}
           onToggleHelp={this.props.onToggleHelp}
           onGraphTypeChange={this.props.setGraphType}
-          onHandleRefresh={this.handleRefresh}
         />
         <Toolbar style={{ width: '100%' }}>
           <ToolbarGroup aria-label="graph settings" style={{ margin: 0, alignItems: "flex-start"}}>
@@ -230,12 +227,6 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
     );
   }
 
-  private handleRefresh = () => {
-    if (this.props.onRefresh) {
-      this.props.onRefresh();
-    }
-  };
-
   private handleNamespaceReturn = () => {
     if (
       !this.props.summaryData ||
@@ -263,7 +254,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   trafficRates: trafficRatesSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),

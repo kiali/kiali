@@ -3,8 +3,6 @@ import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/rea
 import { ListIcon, ThIcon, ThLargeIcon } from '@patternfly/react-icons';
 import { SortAlphaDownIcon, SortAlphaUpIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from '../../actions/KialiAppAction';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { HistoryManager, URLParam } from '../../app/History';
 import { StatefulFilters } from '../../components/Filters/StatefulFilters';
@@ -20,6 +18,8 @@ import * as Filters from './Filters';
 import { style } from 'typestyle';
 import { PFColors } from '../../components/Pf/PfColors';
 import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
+import { KialiDispatch } from "../../types/Redux";
+import RefreshNotifier from "../../components/Refresh/RefreshNotifier";
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -219,11 +219,11 @@ export class OverviewToolbar extends React.Component<Props, State> {
     );
     const timeToolbar = (
       <div className={timeToolbarStyle}>
+        <RefreshNotifier onTick={this.props.onRefresh} />
         <TimeDurationContainer
           key="overview-time-range"
           id="overview-time-range"
           disabled={false}
-          handleRefresh={this.props.onRefresh}
         />
       </div>
     );
@@ -304,7 +304,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   refreshInterval: refreshIntervalSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setRefreshInterval: (refreshInterval: IntervalInMilliseconds) => {
       dispatch(UserSettingsActions.setRefreshInterval(refreshInterval));

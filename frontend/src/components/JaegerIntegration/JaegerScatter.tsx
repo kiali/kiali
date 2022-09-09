@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import { ChartScatter } from '@patternfly/react-charts';
 import { Title, EmptyState, EmptyStateVariant, EmptyStateBody, TitleSizes } from '@patternfly/react-core';
 
@@ -9,7 +9,6 @@ import { PFColors } from '../Pf/PfColors';
 
 import { evalTimeRange } from 'types/Common';
 import { KialiAppState } from 'store/Store';
-import { KialiAppAction } from 'actions/KialiAppAction';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import { LineInfo, makeLegend, VCDataPoint } from 'types/VictoryChartInfo';
 import ChartWithLegend from 'components/Charts/ChartWithLegend';
@@ -145,7 +144,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   selectedTrace: state.jaegerState.selectedTrace
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId))
 });
 

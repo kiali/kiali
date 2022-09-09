@@ -15,7 +15,7 @@ import {
 } from '../../types/IstioObjects';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { PromisesRegistry } from 'utils/CancelablePromises';
-import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
+import { DurationInSeconds } from 'types/Common';
 import GraphDataSource from 'services/GraphDataSource';
 import {
   drToIstioItems,
@@ -25,9 +25,7 @@ import {
   validationKey
 } from '../../types/IstioConfigList';
 import { canCreate, canUpdate } from "../../types/Permissions";
-import { KialiDispatch } from "../../types/Redux";
 import { KialiAppState } from '../../store/Store';
-import { GlobalActions } from "../../actions/GlobalActions";
 import { durationSelector, meshWideMTLSEnabledSelector } from '../../store/Selectors';
 import ServiceNetwork from './ServiceNetwork';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
@@ -39,13 +37,12 @@ import ConfirmDeleteTrafficRoutingModal from "../../components/IstioWizards/Conf
 import { WizardAction, WizardMode } from "../../components/IstioWizards/WizardActions";
 import { deleteServiceTrafficRouting } from "../../services/Api";
 import * as AlertUtils from "../../utils/AlertUtils";
+import { triggerRefresh } from "../../hooks/refresh";
 
 interface Props extends ServiceId {
   duration: DurationInSeconds;
-  lastRefreshAt: TimeInMilliseconds;
   mtlsEnabled: boolean;
   serviceDetails?: ServiceDetailsInfo;
-  setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => void;
   gateways: Gateway[];
   peerAuthentications: PeerAuthentication[];
   validations: Validations;
@@ -125,7 +122,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     });
 
     if (changed) {
-      this.props.setLastRefreshAt(Date.now());
+      triggerRefresh();
     }
   }
 
@@ -136,7 +133,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
 
     deleteServiceTrafficRouting(this.props.serviceDetails!)
       .then(_results => {
-        this.props.setLastRefreshAt(Date.now());
+        triggerRefresh();
       })
       .catch(error => {
         AlertUtils.addError('Could not delete Istio config objects.', error);
@@ -248,13 +245,8 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  lastRefreshAt: state.globalState.lastRefreshAt,
   mtlsEnabled: meshWideMTLSEnabledSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => dispatch(GlobalActions.setLastRefreshAt(lastRefreshAt))
-});
-
-const ServiceInfoContainer = connect(mapStateToProps, mapDispatchToProps)(ServiceInfo);
+const ServiceInfoContainer = connect(mapStateToProps)(ServiceInfo);
 export default ServiceInfoContainer;

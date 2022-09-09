@@ -1,14 +1,11 @@
 import * as API from './Api';
-import { ThunkDispatch } from 'redux-thunk';
 import moment from 'moment';
 
-import { KialiAppAction } from '../actions/KialiAppAction';
 import { LoginSession, KialiAppState } from '../store/Store';
 import { AuthStrategy, AuthResult, AuthConfig } from '../types/Auth';
 import { TimeInMilliseconds } from '../types/Common';
+import { KialiDispatch } from "../types/Redux";
 import authenticationConfig from '../config/AuthenticationConfig';
-
-type Dispatch = ThunkDispatch<KialiAppState, void, KialiAppAction>;
 
 export interface LoginResult {
   status: AuthResult;
@@ -22,7 +19,7 @@ interface LoginStrategy<T extends unknown> {
 }
 
 interface DispatchRequest<T> {
-  dispatch: Dispatch;
+  dispatch: KialiDispatch;
   state: KialiAppState;
   data: T;
 }

@@ -4,7 +4,10 @@ import { KialiAppState } from '../../store/Store';
 import { MTLSIconTypes } from './MTLSIcon';
 import { default as MTLSStatus, emptyDescriptor, StatusDescriptor } from './MTLSStatus';
 import { style } from 'typestyle';
-import { lastRefreshAtSelector, meshWideMTLSStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
+import {
+  meshWideMTLSStatusSelector,
+  namespaceItemsSelector
+} from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { MTLSStatuses, TLSStatus } from '../../types/TLSStatus';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -15,15 +18,17 @@ import { bindActionCreators } from 'redux';
 import { MeshTlsActions } from '../../actions/MeshTlsActions';
 import { TimeInMilliseconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
+import connectRefresh from "../Refresh/connectRefresh";
 
 type ReduxProps = {
-  lastRefreshAt: TimeInMilliseconds;
   setMeshTlsStatus: (meshStatus: TLSStatus) => void;
   namespaces: Namespace[] | undefined;
   status: string;
 };
 
-type Props = ReduxProps & {};
+type Props = ReduxProps & {
+  lastRefreshAt: TimeInMilliseconds;
+};
 
 const statusDescriptors = new Map<string, StatusDescriptor>([
   [
@@ -87,7 +92,6 @@ class MeshMTLSStatus extends React.Component<Props> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   status: meshWideMTLSStatusSelector(state),
-  lastRefreshAt: lastRefreshAtSelector(state),
   namespaces: namespaceItemsSelector(state)
 });
 
@@ -95,5 +99,5 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setMeshTlsStatus: bindActionCreators(MeshTlsActions.setinfo, dispatch)
 });
 
-const MeshMTLSSatutsConnected = connect(mapStateToProps, mapDispatchToProps)(MeshMTLSStatus);
-export default MeshMTLSSatutsConnected;
+const MeshMTLSStatusConnected = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(MeshMTLSStatus));
+export default MeshMTLSStatusConnected;

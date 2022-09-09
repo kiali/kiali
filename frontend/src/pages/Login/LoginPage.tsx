@@ -1,6 +1,5 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
 import {
   ActionGroup,
   Alert,
@@ -18,9 +17,9 @@ import {
 import { KialiAppState, LoginSession, LoginStatus } from '../../store/Store';
 import { AuthStrategy } from '../../types/Auth';
 import { authenticationConfig, kialiLogo } from '../../config';
-import { KialiAppAction } from '../../actions/KialiAppAction';
 import LoginThunkActions from '../../actions/LoginThunkActions';
 import { isAuthStrategyOAuth } from '../../config/AuthenticationConfig';
+import { KialiDispatch } from "../../types/Redux";
 
 type LoginProps = {
   status: LoginStatus;
@@ -249,7 +248,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   message: state.authentication.message
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   authenticate: (username: string, password: string) => dispatch(LoginThunkActions.authenticate(username, password))
 });
 

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import { pluralize } from '@patternfly/react-core';
 import { ChartCursorFlyout, ChartLabelProps } from '@patternfly/react-charts';
 import { style } from 'typestyle';
@@ -13,7 +13,6 @@ import {
   reduceMetricsStats,
   StatsMatrix
 } from 'utils/tracing/TraceStats';
-import { KialiAppAction } from 'actions/KialiAppAction';
 import { MetricsStatsQuery } from 'types/MetricsOptions';
 import MetricsStatsThunkActions from 'actions/MetricsStatsThunkActions';
 import { JaegerLineInfo } from './JaegerScatter';
@@ -93,7 +92,7 @@ const mapStateToProps = (state: KialiAppState, props: any) => {
   };
 };
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   loadMetricsStats: (queries: MetricsStatsQuery[]) => dispatch(MetricsStatsThunkActions.load(queries))
 });
 

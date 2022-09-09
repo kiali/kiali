@@ -11,9 +11,11 @@ import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '
 import * as AlertUtils from '../../utils/AlertUtils';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import * as MetricsHelper from './Helper';
+import { KioskElement } from "../Kiosk/KioskElement";
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
+import { TimeDurationModal } from "../Time/TimeDurationModal";
 import { GrafanaLinks } from './GrafanaLinks';
 import { MetricsObjectTypes } from 'types/Metrics';
 import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
@@ -22,14 +24,15 @@ import { Overlay } from 'types/Overlay';
 import { Aggregator, DashboardQuery } from 'types/MetricsOptions';
 import { RawOrBucket } from 'types/VictoryChartInfo';
 import { Dashboard } from 'components/Charts/Dashboard';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from '../../actions/KialiAppAction';
+import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { timeRangeSelector } from '../../store/Selectors';
+import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton";
 
 type MetricsState = {
   dashboard?: DashboardModel;
+  isTimeOptionsOpen: boolean;
   labelsSettings: LabelsSettings;
   grafanaLinks: ExternalLink[];
   spanOverlay?: Overlay<JaegerLineInfo>;
@@ -40,6 +43,7 @@ type MetricsState = {
 type CustomMetricsProps = RouteComponentProps<{}> & {
   namespace: string;
   app: string;
+  lastRefreshAt: TimeInMilliseconds;
   version?: string;
   workload?: string;
   workloadType?: string;
@@ -50,7 +54,6 @@ type CustomMetricsProps = RouteComponentProps<{}> & {
 
 type ReduxProps = {
   jaegerIntegration: boolean;
-  lastRefreshAt: TimeInMilliseconds;
   timeRange: TimeRange;
   setTimeRange: (range: TimeRange) => void;
 };
@@ -82,6 +85,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
     this.state = {
+      isTimeOptionsOpen: false,
       labelsSettings: settings.labelsSettings,
       grafanaLinks: [],
       tabHeight: 300,
@@ -237,6 +241,11 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
             </Card>
           </RenderComponentScroll>
         )}
+        <TimeDurationModal
+          customDuration={true}
+          isOpen={this.state.isTimeOptionsOpen}
+          onConfirm={this.toggleTimeOptionsVisibility}
+          onCancel={this.toggleTimeOptionsVisibility} />
       </>
     );
   }
@@ -282,6 +291,11 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
                 onChange={checked => this.onSpans(checked)}
               />
             </ToolbarItem>
+            <KioskElement>
+              <ToolbarItem style={{ marginLeft: 'auto' }}>
+                <TimeDurationIndicatorButton onClick={this.toggleTimeOptionsVisibility} />
+              </ToolbarItem>
+            </KioskElement>
           </ToolbarGroup>
           <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>
             <GrafanaLinks
@@ -305,17 +319,20 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     }
     history.push(history.location.pathname + '?' + urlParams.toString());
   };
+
+  private toggleTimeOptionsVisibility = () => {
+    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }) );
+  };
 }
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
     jaegerIntegration: state.jaegerState.info ? state.jaegerState.info.integration : false,
-    lastRefreshAt: state.globalState.lastRefreshAt,
     timeRange: timeRangeSelector(state)
   };
 };
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setTimeRange: bindActionCreators(UserSettingsActions.setTimeRange, dispatch)
   };

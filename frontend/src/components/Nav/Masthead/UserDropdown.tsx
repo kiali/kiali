@@ -8,8 +8,7 @@ import { KialiAppState, LoginSession } from '../../../store/Store';
 import authenticationConfig from '../../../config/AuthenticationConfig';
 import { AuthStrategy } from '../../../types/Auth';
 import moment from 'moment';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from '../../../actions/KialiAppAction';
+import { KialiDispatch } from 'types/Redux';
 import LoginThunkActions from '../../../actions/LoginThunkActions';
 import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
@@ -165,7 +164,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   session: state.authentication.session
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   logout: () => dispatch(LoginThunkActions.logout()),
   extendSession: (session: LoginSession) => dispatch(LoginThunkActions.extendSession(session))
 });

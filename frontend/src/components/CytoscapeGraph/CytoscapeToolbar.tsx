@@ -12,12 +12,11 @@ import {
 import { style } from 'typestyle';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { KialiDispatch } from 'types/Redux';
 import { KialiAppState } from '../../store/Store';
 import { PFColors } from '../Pf/PfColors';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 import { EdgeMode, Layout } from '../../types/Graph';
-import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphActions } from '../../actions/GraphActions';
 import { HistoryManager, URLParam } from '../../app/History';
 import * as LayoutDictionary from './graphs/LayoutDictionary';
@@ -379,7 +378,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showLegend: state.graph.toolbarState.showLegend
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setEdgeMode: bindActionCreators(GraphActions.setEdgeMode, dispatch),
   setLayout: bindActionCreators(GraphActions.setLayout, dispatch),
   setNamespaceLayout: bindActionCreators(GraphActions.setNamespaceLayout, dispatch),
