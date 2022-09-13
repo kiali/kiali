@@ -51,14 +51,10 @@ if [ "${TARGET_BRANCH}" == "v1.48" ]; then
   ISTIO_VERSION="1.13.0"
 elif [ "${TARGET_BRANCH}" == "v1.36" ]; then
   ISTIO_VERSION="1.10.0"
-elif [ "${TARGET_BRANCH}" == "v1.24" ]; then
-  ISTIO_VERSION="1.7.0"
 fi
 
 KIND_NODE_IMAGE=""
-if [ "${ISTIO_VERSION}" == "1.7.0" ]; then
-  KIND_NODE_IMAGE="kindest/node:v1.18.20@sha256:e3dca5e16116d11363e31639640042a9b1bd2c90f85717a7fc66be34089a8169"
-elif [ "${ISTIO_VERSION}" == "1.10.0" ]; then
+if [ "${ISTIO_VERSION}" == "1.10.0" ]; then
   KIND_NODE_IMAGE="kindest/node:v1.21.10@sha256:84709f09756ba4f863769bdcabe5edafc2ada72d3c8c44d6515fc581b66b029c"
 elif [ "${ISTIO_VERSION}" == "1.13.0" ]; then
   KIND_NODE_IMAGE="kindest/node:v1.23.4@sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9"
@@ -101,26 +97,12 @@ EOF
 infomsg "Create Kind LoadBalancer via MetalLB"
 lb_addr_range="255.70-255.84"
 
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
 
 subnet=$(${DORP} network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
 subnet_trimmed=$(echo "${subnet}" | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')
 first_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 1)"
 last_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 2)"
-cat <<LBCONFIGMAP | kubectl apply -f -
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  namespace: metallb-system
-  name: config
-data:
-  config: |
-    address-pools:
-    - name: default
-      protocol: layer2
-      addresses: ['${first_ip}-${last_ip}']
-LBCONFIGMAP
 
 if [ -n "${ISTIO_VERSION}" ]; then
   DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
@@ -128,6 +110,30 @@ fi
 
 infomsg "Downloading istio"
 hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
+
+kubectl rollout status deployment controller -n metallb-system
+
+cat <<LBCONFIGMAP | kubectl apply -f -
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  namespace: metallb-system
+  name: config
+spec:
+  addresses:
+  - ${first_ip}-${last_ip}
+LBCONFIGMAP
+
+cat <<LBCONFIGMAP | kubectl apply -f -
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  namespace: metallb-system
+  name: l2config
+spec:
+  ipAddressPools:
+  - config
+LBCONFIGMAP
 
 infomsg "Installing istio"
 # Apparently you can't set the requests to zero for the proxy so just setting them to some really low number.
@@ -195,3 +201,6 @@ if [ "${TIMEOUT}" == "True" ]; then
 fi
 
 infomsg "Kiali is ready."
+
+
+
