@@ -53,6 +53,16 @@ export const kioskOverviewAction = (showType: Show, namespace: string, duration:
   sendParentMessage(showInParent);
 };
 
+export const kioskDurationAction = (duration: DurationInSeconds) => {
+  const showInParent = 'duration=' + duration;
+  sendParentMessage(showInParent);
+}
+
+export const kioskRefreshAction = (refreshInterval: IntervalInMilliseconds) => {
+  const showInParent = 'refresh=' + refreshInterval;
+  sendParentMessage(showInParent);
+}
+
 export const isKiosk = (kiosk: string): boolean => {
   return kiosk.length > 0;
 }
