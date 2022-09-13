@@ -65,6 +65,7 @@ export function TimeDurationModal(props: Props) {
 
   return (
     <Modal
+      aria-label="time-duration"
       variant={ModalVariant.small}
       width={700}
       isOpen={props.isOpen}

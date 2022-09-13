@@ -35,8 +35,10 @@ const renderHeatMap = (
   intervals: string[],
   compactMode: boolean
 ) => {
+  const key = `${item.spanID}-hm`;
   return (
     <HeatMap
+      key={key}
       xLabels={statsAvgWithQuantiles.map(s => statToText[s]?.short || s)}
       yLabels={intervals}
       data={statsToMatrix(stats, intervals)}
@@ -75,24 +77,28 @@ export const renderMetricsComparison = (
 ) => {
   const intervals = compactMode ? compactStatsIntervals : allStatsIntervals;
   const itemStats = getSpanStats(item, intervals, metricsStats);
+  const key = `${item.spanID}-metcomp`;
   if (itemStats.length > 0) {
     return (
-      <>
+      <React.Fragment key={key}>
         {!compactMode && (
-          <Tooltip content="This heatmap is a comparison matrix of this request duration against duration statistics aggregated over time. Move the pointer over cells to get more details.">
+          <Tooltip
+            key={`${key}-tt`}
+            content="This heatmap is a comparison matrix of this request duration against duration statistics aggregated over time. Move the pointer over cells to get more details."
+          >
             <>
-              <InfoAltIcon /> <strong>Comparison map: </strong>
+              <InfoAltIcon key={`${key}-ic`} /> <strong key={`${key}-ic-title`}>Comparison map: </strong>
             </>
           </Tooltip>
         )}
         {renderHeatMap(item, itemStats, intervals, compactMode)}
-      </>
+      </React.Fragment>
     );
   }
   return (
-    <Tooltip content="Click to load more statistics for this request">
-      <Button onClick={load} variant={ButtonVariant.link}>
-        <strong>Load statistics</strong>
+    <Tooltip key={`${key}-tt`} content="Click to load more statistics for this request">
+      <Button key={`${key}-load`} onClick={load} variant={ButtonVariant.link}>
+        <strong key={`${key}-load-title`}>Load statistics</strong>
       </Button>
     </Tooltip>
   );

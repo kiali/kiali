@@ -66,8 +66,8 @@ class DetailDescription extends React.Component<Props> {
       <Link to={href}>{appName}</Link>
     );
     return (
-      <li key={`App_${appName}`}>
-        <div key="service-icon" className={iconStyle}>
+      <li key={`App_${namespace}_${appName}`}>
+        <div className={iconStyle}>
           <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
         </div>
         <span>
@@ -91,7 +91,7 @@ class DetailDescription extends React.Component<Props> {
     );
     return (
       <li key={`Service_${serviceName}`}>
-        <div key="service-icon" className={iconStyle}>
+        <div className={iconStyle}>
           <PFBadge badge={PFBadges.Service} position={TooltipPosition.top} />
         </div>
         <span>
@@ -115,7 +115,7 @@ class DetailDescription extends React.Component<Props> {
         : this.renderEmptyItem('applications');
 
     return [
-      <div className={resourceListStyle}>
+      <div key="app-list" className={resourceListStyle}>
         <ul id="app-list" style={{ listStyleType: 'none' }}>
           {applicationList}
         </ul>
@@ -183,8 +183,8 @@ class DetailDescription extends React.Component<Props> {
         </Link>
       );
       return (
-        <span key={'WorkloadItem_' + workload.workloadName}>
-          <div key="service-icon" className={iconStyle}>
+        <span key={`WorkloadItem_${workload.workloadName}`}>
+          <div className={iconStyle}>
             <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
           </div>
           {link}
@@ -206,7 +206,7 @@ class DetailDescription extends React.Component<Props> {
       );
     } else {
       return (
-        <span key={'WorkloadItem_' + sub.text}>
+        <span key={`WorkloadItem_${sub.text}`}>
           <span style={{ marginRight: '10px' }}>{createIcon(sub.status)}</span>
           {sub.text}
         </span>
@@ -221,8 +221,8 @@ class DetailDescription extends React.Component<Props> {
           <div key="properties-list" className={resourceListStyle}>
             <span>Service accounts</span>
             <ul>
-              {workload.serviceAccountNames.map(serviceAccount => (
-                <li>{serviceAccount}</li>
+              {workload.serviceAccountNames.map((serviceAccount, i) => (
+                <li key={i}>{serviceAccount}</li>
               ))}
             </ul>
           </div>
@@ -281,7 +281,7 @@ class DetailDescription extends React.Component<Props> {
         : this.renderEmptyItem('services');
 
     return [
-      <div className={resourceListStyle}>
+      <div key="service-list" className={resourceListStyle}>
         <ul id="service-list" style={{ listStyleType: 'none' }}>
           {serviceList}
         </ul>

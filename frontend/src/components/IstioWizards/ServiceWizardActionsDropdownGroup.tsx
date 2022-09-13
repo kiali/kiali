@@ -87,11 +87,11 @@ const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props 
   }
 
   actionItems.push(deleteDropdownItem);
-
+  const label = updateLabel === '' ? 'Create' : 'Update';
   return (
     <DropdownGroup
-      key={'group_create'}
-      label={updateLabel === '' ? 'Create' : 'Update'}
+      key={`group_${label}`}
+      label={label}
       className="kiali-group-menu"
       children={actionItems}
     />

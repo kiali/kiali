@@ -1,14 +1,14 @@
-import React from "react";
-import {Button, ButtonVariant, Modal, ModalVariant} from "@patternfly/react-core";
-import {DestinationRuleC, VirtualService} from "../../types/IstioObjects";
+import React from 'react';
+import { Button, ButtonVariant, Modal, ModalVariant } from '@patternfly/react-core';
+import { DestinationRuleC, VirtualService } from '../../types/IstioObjects';
 
 type Props = {
   destinationRules: DestinationRuleC[];
   virtualServices: VirtualService[];
-  isOpen: boolean
+  isOpen: boolean;
   onCancel: () => void;
   onConfirm: () => void;
-}
+};
 
 const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = props => {
   function hasAnyPeerAuthn(drs: DestinationRuleC[]): boolean {
@@ -19,33 +19,36 @@ const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = props =
     const deleteMessage = 'Are you sure you want to delete ?';
     const deleteItems: JSX.Element[] = [];
 
+    let i = 0;
     let vsMessage =
       props.virtualServices.length > 0
         ? `VirtualService${props.virtualServices.length > 1 ? 's' : ''}: '${props.virtualServices.map(
-          vs => vs.metadata.name
-        )}'`
+            vs => vs.metadata.name
+          )}'`
         : '';
-    deleteItems.push(<div>{vsMessage}</div>);
+    deleteItems.push(<div key={`delete_item_${++i}`}>{vsMessage}</div>);
 
     let drMessage =
       props.destinationRules.length > 0
         ? `DestinationRule${props.destinationRules.length > 1 ? 's' : ''}: '${props.destinationRules.map(
-          dr => dr.metadata.name
-        )}'`
+            dr => dr.metadata.name
+          )}'`
         : '';
-    deleteItems.push(<div>{drMessage}</div>);
+    deleteItems.push(<div key={`delete_item_${++i}`}>{drMessage}</div>);
 
     let paMessage =
       props.destinationRules.length > 0 && hasAnyPeerAuthn(props.destinationRules)
-        ? `PeerAuthentication${
-          props.destinationRules.length > 1 ? 's' : ''
-        }: '${props.destinationRules.map(dr => dr.metadata.name)}'`
+        ? `PeerAuthentication${props.destinationRules.length > 1 ? 's' : ''}: '${props.destinationRules.map(
+            dr => dr.metadata.name
+          )}'`
         : '';
-    deleteItems.push(<div>{paMessage}</div>);
+    deleteItems.push(<div key={`delete_item_${++i}`}>{paMessage}</div>);
 
     return (
       <>
-        <div style={{ marginBottom: 5 }}>{deleteMessage}</div>
+        <div key="delete_items" style={{ marginBottom: 5 }}>
+          {deleteMessage}
+        </div>
         {deleteItems}
       </>
     );
@@ -70,6 +73,6 @@ const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = props =
       {getDeleteMessage()}
     </Modal>
   );
-}
+};
 
 export default ConfirmDeleteTrafficRoutingModal;

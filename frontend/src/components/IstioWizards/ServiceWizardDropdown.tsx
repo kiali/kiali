@@ -168,6 +168,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
   renderDropdownItems = () => {
     return [
       <ServiceWizardActionsDropdownGroup
+        key="service_wizard_actions_dropdown_group"
         isDisabled={this.state.isDeleting}
         virtualServices={this.props.virtualServices}
         destinationRules={this.props.destinationRules}
