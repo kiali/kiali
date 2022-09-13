@@ -40,10 +40,10 @@ class MissingLabel extends React.Component<MissingLabelProps, {}> {
               <PFBadge badge={{ badge: versionLabel }} isRead={true} style={{ marginRight: '0px' }} /> label is missing.{' '}
               <br />
             </div>
-            <div>This workload won't have Istio routing capabilities.</div>
+            <div>The label is recommended as it affects telemetry.</div>
           </>
         )}
-        <div>Missing labels will impact in the telemetry collected by the Istio proxy.</div>
+        <div>Missing labels may impact telemetry reported by the Istio proxy.</div>
       </div>
     );
     const iconComponent = (
