@@ -128,7 +128,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
                     <ToolbarGroup>
                       <KioskElement>
                         <ToolbarItem style={{ marginLeft: 'auto' }}>
-                          <TimeDurationIndicatorButton isDuration={true} onClick={this.toggleTimeOptionsVisibility} />
+                          <TimeDurationIndicatorButton onClick={this.toggleTimeOptionsVisibility} />
                         </ToolbarItem>
                       </KioskElement>
                     </ToolbarGroup>
@@ -144,7 +144,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           </Grid>
         </RenderComponentScroll>
         <TimeDurationModal
-          customDuration={false}
+          customDuration={true}
           isOpen={this.state.isTimeOptionsOpen}
           onConfirm={this.toggleTimeOptionsVisibility}
           onCancel={this.toggleTimeOptionsVisibility} />
