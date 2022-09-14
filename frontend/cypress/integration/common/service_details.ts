@@ -1,17 +1,10 @@
-import { And, Given, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { And, Then } from '@badeball/cypress-cucumber-preprocessor';
 
-const NAMESPACE = 'bookinfo';
-const SERVICE = 'productpage';
 const tracingDotQuery = '[style*="fill: var(--pf-global--palette--blue-200)"][style*="stroke: transparent"]';
 
 function openTab(tab: string) {
   cy.get('.pf-c-tabs__list').should('be.visible').contains(tab).click();
 }
-
-Given('a service in the cluster with a healthy amount of traffic', function () {
-  this.targetNamespace = NAMESPACE;
-  this.targetService = SERVICE;
-});
 
 Then('sd::user sees a list with content {string}', (tab: string) => {
   cy.get('.pf-c-tabs__list').contains(tab);
