@@ -16,7 +16,7 @@ import (
 
 func fetchRateRange(ctx context.Context, api prom_v1.API, metricName string, labels []string, grouping string, q *RangeQuery) Metric {
 	var query string
-	// Example: round(sum(rate(my_counter{foo=bar}[5m])) by (baz), 0.001)
+	// Example: sum(rate(my_counter{foo=bar}[5m])) by (baz)
 	for i, labelsInstance := range labels {
 		if i > 0 {
 			query += " OR "
@@ -30,7 +30,6 @@ func fetchRateRange(ctx context.Context, api prom_v1.API, metricName string, lab
 	if len(labels) > 1 {
 		query = fmt.Sprintf("(%s)", query)
 	}
-	query = roundSignificant(query, 0.001)
 	return fetchRange(ctx, api, query, q.Range)
 }
 
@@ -75,7 +74,6 @@ func buildHistogramQueries(metricName, labels, grouping, rateInterval string, av
 		// Example: sum(rate(my_histogram_sum{foo=bar}[5m])) by (baz) / sum(rate(my_histogram_count{foo=bar}[5m])) by (baz)
 		query := fmt.Sprintf("sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s",
 			metricName, labels, rateInterval, groupingAvg, metricName, labels, rateInterval, groupingAvg)
-		query = roundSignificant(query, 0.001)
 		queries["avg"] = query
 	}
 
@@ -84,10 +82,9 @@ func buildHistogramQueries(metricName, labels, grouping, rateInterval string, av
 		groupingQuantile = fmt.Sprintf(",%s", grouping)
 	}
 	for _, quantile := range quantiles {
-		// Example: round(histogram_quantile(0.5, sum(rate(my_histogram_bucket{foo=bar}[5m])) by (le,baz)), 0.001)
+		// Example: histogram_quantile(0.5, sum(rate(my_histogram_bucket{foo=bar}[5m])) by (le,baz))
 		query := fmt.Sprintf("histogram_quantile(%s, sum(rate(%s_bucket%s[%s])) by (le%s))",
 			quantile, metricName, labels, rateInterval, groupingQuantile)
-		query = roundSignificant(query, 0.001)
 		queries[quantile] = query
 	}
 
@@ -186,9 +183,4 @@ func getRequestRatesForLabel(ctx context.Context, api prom_v1.API, time time.Tim
 	}
 	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
 	return result.(model.Vector), nil
-}
-
-// roundSignificant will output promQL that performs rounding only if the resulting value is significant, that is, higher than the requested precision
-func roundSignificant(innerQuery string, precision float64) string {
-	return fmt.Sprintf("round(%s, %f) > %f or %s", innerQuery, precision, precision, innerQuery)
 }
