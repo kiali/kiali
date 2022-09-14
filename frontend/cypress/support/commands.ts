@@ -99,7 +99,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
   const provider = Cypress.env('AUTH_PROVIDER');
 
   cy.window().then((win: any) => {
-    if (auth_strategy !== 'openshift') {
+    if (auth_strategy !== 'openshift' && auth_strategy !== 'token') {
       cy.log('Skipping login, Kiali is running with auth disabled');
       return;
     }
@@ -181,6 +181,17 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         cy.getCookie('kiali-token-aes', { timeout: 15000 })
           .should('exist')
           .then(() => {
+            haveCookie = true;
+          });
+      } else if (auth_strategy === 'token') {
+        cy.exec('kubectl exec deploy/kiali -n istio-system -- cat /var/run/secrets/kubernetes.io/serviceaccount/token')
+          .then(result => {
+            cy.visit('/');
+            cy.get('#token').type(result.stdout, { log: false });
+
+            cy.intercept(Cypress.config('baseUrl') + 'api/authenticate').as('auth')
+            cy.get('button[type=submit]').click();
+            cy.wait('@auth')
             haveCookie = true;
           });
       }
