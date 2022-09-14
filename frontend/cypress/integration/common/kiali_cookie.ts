@@ -1,4 +1,4 @@
-import { And, Given } from "cypress-cucumber-preprocessor/steps";
+import { And, Given } from "@badeball/cypress-cucumber-preprocessor";
 
 const USERNAME = Cypress.env('USERNAME') || 'jenkins';
 const PASSWD = Cypress.env('PASSWD')

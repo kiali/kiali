@@ -1,4 +1,4 @@
-import { And } from 'cypress-cucumber-preprocessor/steps';
+import { And } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 And('user selects the {string} namespace', (namespace: string) => {

@@ -1,4 +1,4 @@
-import {And, When, Then} from "cypress-cucumber-preprocessor/steps";
+import {And, When, Then} from "@badeball/cypress-cucumber-preprocessor";
 
 When('the sidebar is open', () => {
   cy.get('#page-sidebar').should('be.visible').then(($sidebar) => {

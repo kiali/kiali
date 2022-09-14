@@ -1,4 +1,4 @@
-import { And, Given } from 'cypress-cucumber-preprocessor/steps';
+import { And, Given } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 enum detailType {

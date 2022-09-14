@@ -1,4 +1,4 @@
-import { Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 When('user opens the context menu of the {string} service node', function (svcName: string) {
   cy.waitForReact();

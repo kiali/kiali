@@ -1,4 +1,4 @@
-import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 Given('I am on the {string} workload detail page of the {string} namespace', (workload, namespace) => {
   cy.visit(`/console/namespaces/${namespace}/workloads/${workload}?refresh=0`);

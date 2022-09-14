@@ -1,4 +1,4 @@
-import { And, Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { And, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { checkHealthIndicatorInTable, checkHealthStatusInTable, getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from './transition';
 

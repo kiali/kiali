@@ -1,4 +1,4 @@
-import { When, And, Then } from 'cypress-cucumber-preprocessor/steps';
+import { When, And, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 
 function openTab(tab: string) {
@@ -9,17 +9,12 @@ function openEnvoyTab(tab: string) {
   cy.get('#envoy-details').should('be.visible').contains(tab).click();
 }
 
-
 Then('user sees details information for workload', () => {
   cy.getBySel('workload-description-card').within(() => {
     cy.get('#pfbadge-A').parent().parent().contains('details'); // App
     cy.get('#pfbadge-W').parent().parent().contains('details-v1'); // Workload
     cy.get('#pfbadge-S').parent().parent().contains('details'); // Service
   });
-});
-
-Then('user sees a minigraph for workload', () => {
-  cy.getBySel('mini-graph');
 });
 
 Then('user sees workload inbound and outbound traffic information', () => {
@@ -30,7 +25,9 @@ Then('user sees workload inbound and outbound traffic information', () => {
 });
 
 Then('user sees workload inbound metrics information', () => {
-  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as('fetchMetrics');
+  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as(
+    'fetchMetrics'
+  );
   openTab('Inbound Metrics');
   cy.wait('@fetchMetrics');
   cy.waitForReact(1000, '#root');
@@ -44,7 +41,9 @@ Then('user sees workload inbound metrics information', () => {
 });
 
 Then('user sees workload outbound metrics information', () => {
-  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as('fetchMetrics');
+  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as(
+    'fetchMetrics'
+  );
   openTab('Outbound Metrics');
   cy.wait('@fetchMetrics');
   cy.waitForReact(1000, '#root');
@@ -107,13 +106,16 @@ And('user can filter spans by workload', () => {
   getCellsForCol(4).first().click();
 });
 
-When('the user filters by {string} with value {string} on the {string} tab', (filter: string, value: string, tab: string) => {
-  openTab('Envoy');
-  openEnvoyTab(tab);
-  cy.waitForReact(1000, '#root');
-  cy.get('select[aria-label="filter_select_type"]').select(filter);
-  cy.get('input[aria-label="filter_input_value"]').type(`${value}{enter}`);
-});
+When(
+  'the user filters by {string} with value {string} on the {string} tab',
+  (filter: string, value: string, tab: string) => {
+    openTab('Envoy');
+    openEnvoyTab(tab);
+    cy.waitForReact(1000, '#root');
+    cy.get('select[aria-label="filter_select_type"]').select(filter);
+    cy.get('input[aria-label="filter_input_value"]').type(`${value}{enter}`);
+  }
+);
 
 Then('the user sees clusters expected information', () => {
   cy.get('tbody').within(() => {

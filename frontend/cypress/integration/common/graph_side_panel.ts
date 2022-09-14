@@ -1,4 +1,4 @@
-import { When } from 'cypress-cucumber-preprocessor/steps';
+import { When } from '@badeball/cypress-cucumber-preprocessor';
 
 When('user clicks the {string} service node', function (svcName: string) {
   cy.waitForReact();

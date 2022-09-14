@@ -1,4 +1,4 @@
-import { And, Then } from "cypress-cucumber-preprocessor/steps";
+import { And, Then } from "@badeball/cypress-cucumber-preprocessor";
 
 const auth_strategy = Cypress.env('auth_strategy')
 

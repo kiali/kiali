@@ -1,4 +1,4 @@
-import { After, And, Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { After, And, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from "./transition";
 

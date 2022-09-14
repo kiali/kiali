@@ -1,4 +1,4 @@
-import { Given, Then, When } from "cypress-cucumber-preprocessor/steps";
+import { Given, Then, When } from "@badeball/cypress-cucumber-preprocessor";
 import { ensureKialiFinishedLoading } from "./transition";
 
 // Most of these "Given" implementations are directly using the Kiali API

@@ -1,4 +1,4 @@
-import { And, Then } from "cypress-cucumber-preprocessor/steps";
+import { And, Then } from "@badeball/cypress-cucumber-preprocessor";
 
 
 And('user clicks on Help Button', () => {
