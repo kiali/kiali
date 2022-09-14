@@ -161,6 +161,12 @@ helm install \
   --set external_services.grafana.url="http://grafana.istio-system:3000" \
   --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard" \
   --set external_services.tracing.url="http://tracing.istio-system:16685/jaeger" \
+  --set health_config.rate[0].kind="service" \
+  --set health_config.rate[0].name="y-server" \
+  --set health_config.rate[0].namespace="alpha" \
+  --set health_config.rate[0].tolerance[0].code="5xx" \
+  --set health_config.rate[0].tolerance[0].degraded=2 \
+  --set health_config.rate[0].tolerance[0].failure=100 \
   kiali-server \
   helm-charts/_output/charts/kiali-server-*-SNAPSHOT.tgz
 
