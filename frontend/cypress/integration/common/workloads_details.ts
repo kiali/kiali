@@ -1,6 +1,8 @@
 import { When, And, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 
+const tracingDotQuery = '[style*="fill: var(--pf-global--palette--blue-200)"][style*="stroke: transparent;"]';
+
 function openTab(tab: string) {
   cy.get('#basic-tabs').should('be.visible').contains(tab).click();
 }
@@ -57,19 +59,11 @@ Then('user sees workload outbound metrics information', () => {
 });
 
 Then('user sees workload trace information', () => {
-  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/workloads/details-v1/traces*`).as('fetchTraces');
   openTab('Traces');
-  cy.wait('@fetchTraces', { timeout: 15000 });
-  cy.waitForReact(1000, '#root');
   cy.getBySel('jaeger-scatterplot');
-  cy.contains('No traces').should('not.exist');
-  cy.getReact('TracesComponent', { options: { timeout: 30000 } })
-    .nthNode(1)
-    .getCurrentState()
-    .then(state => {
-      cy.wrap(state.traces).should('not.be.empty');
-      cy.wrap(state.jaegerErrors).should('be.undefined');
-    });
+  cy.getBySel('trace-details-tabs').should('not.exist');
+  cy.getBySel('jaeger-scatterplot').contains('Traces');
+  cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
 });
 
 And('user sees workload trace details after selecting a trace', () => {
@@ -78,7 +72,6 @@ And('user sees workload trace details after selecting a trace', () => {
   // The traces component has fully loaded once 'Traces' is visible.
   cy.getBySel('jaeger-scatterplot').contains('Traces');
   // Blue dot on scatterplot is a trace so find one and click on it.
-  const tracingDotQuery = '[style*="fill: var(--pf-global--palette--blue-200)"][style*="stroke: transparent;"]';
   cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
   cy.getBySel('trace-details-tabs').should('be.visible');
   cy.getBySel('trace-details-kebab').click().contains('View on Graph');
@@ -90,7 +83,6 @@ And('user sees workload span details after selecting a trace', () => {
   // The traces component has fully loaded once 'Traces' is visible.
   cy.getBySel('jaeger-scatterplot').contains('Traces');
   // Blue dot on scatterplot is a trace so find one and click on it.
-  const tracingDotQuery = '[style*="fill: var(--pf-global--palette--blue-200)"][style*="stroke: transparent"]';
   cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
   cy.getBySel('trace-details-tabs').should('be.visible').contains('Span Details').click();
 });

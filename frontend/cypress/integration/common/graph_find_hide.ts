@@ -104,6 +104,10 @@ Then('user sees no healthy workloads on the graph', () => {
 });
 
 When('user seeks help for find and hide', () => {
+  // First wait for the graph to load otherwise when the
+  // graph loads the find/hide menu will be closed by a re-render.
+  cy.waitForReact();
+  cy.getReact('CytoscapeGraph').should('have.length', '1');
   cy.getBySel('graph-find-hide-help-button').click();
 });
 
@@ -115,10 +119,10 @@ And('the help menu has info on {string}', (helpMenuItem: string) => {
   cy.get('#graph_find_help_tabs').contains(helpMenuItem).should('be.visible').click();
 });
 
-When("user fills {string} in find and submits", (input: string) => {
-  cy.get('#graph_find').type(input+'{enter}')
-})
+When('user fills {string} in find and submits', (input: string) => {
+  cy.get('#graph_find').type(input + '{enter}');
+});
 
-Then("user sees the {string} message",(error: string)=> {
-  cy.get('[aria-label="graph settings"]').should("contain.text", error)
-})
+Then('user sees the {string} message', (error: string) => {
+  cy.get('[aria-label="graph settings"]').should('contain.text', error);
+});
