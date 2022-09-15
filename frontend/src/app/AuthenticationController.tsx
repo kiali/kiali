@@ -11,7 +11,7 @@ import { MessageCenterActions } from '../actions/MessageCenterActions';
 import { MessageType } from '../types/MessageCenter';
 import { KialiDispatch } from '../types/Redux';
 import InitializingScreen from './InitializingScreen';
-import {getKioskMode, isKioskMode} from '../utils/SearchParamUtils';
+import { getKioskMode, isKioskMode } from '../utils/SearchParamUtils';
 import * as AlertUtils from '../utils/AlertUtils';
 import { setServerConfig, serverConfig, humanDurations } from '../config/ServerConfig';
 import { AuthStrategy } from '../types/Auth';
@@ -29,7 +29,7 @@ import { toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
 import { GraphToolbarActions } from 'actions/GraphToolbarActions';
 import { StatusState, StatusKey } from 'types/StatusState';
 import { PromisesRegistry } from '../utils/CancelablePromises';
-import {GlobalActions} from "../actions/GlobalActions";
+import { GlobalActions } from '../actions/GlobalActions';
 
 interface AuthenticationControllerReduxProps {
   addMessage: (content: string, detail: string, groupId?: string, msgType?: MessageType, showNotif?: boolean) => void;
@@ -334,13 +334,19 @@ export class AuthenticationController extends React.Component<
       document.documentElement.className = isKiosk ? 'kiosk' : '';
       store.dispatch(GlobalActions.setKiosk(getKioskMode()));
     }
-  };R
+  };
 
   private processServerStatus = (status: StatusState) => {
     this.props.statusRefresh(status);
 
     if (status.status[StatusKey.DISABLED_FEATURES]) {
-      this.props.addMessage("The following features are disabled: " + status.status[StatusKey.DISABLED_FEATURES], '', 'default', MessageType.INFO, false)
+      this.props.addMessage(
+        'The following features are disabled: ' + status.status[StatusKey.DISABLED_FEATURES],
+        '',
+        'default',
+        MessageType.INFO,
+        false
+      );
     }
   };
 }

@@ -58,35 +58,6 @@ Then('user sees workload outbound metrics information', () => {
     });
 });
 
-Then('user sees workload trace information', () => {
-  openTab('Traces');
-  cy.getBySel('jaeger-scatterplot');
-  cy.getBySel('trace-details-tabs').should('not.exist');
-  cy.getBySel('jaeger-scatterplot').contains('Traces');
-  cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
-});
-
-And('user sees workload trace details after selecting a trace', () => {
-  // First ensure the trace details tab isn't already on the screen.
-  cy.getBySel('trace-details-tabs').should('not.exist');
-  // The traces component has fully loaded once 'Traces' is visible.
-  cy.getBySel('jaeger-scatterplot').contains('Traces');
-  // Blue dot on scatterplot is a trace so find one and click on it.
-  cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
-  cy.getBySel('trace-details-tabs').should('be.visible');
-  cy.getBySel('trace-details-kebab').click().contains('View on Graph');
-});
-
-And('user sees workload span details after selecting a trace', () => {
-  // First ensure the trace details tab isn't already on the screen.
-  cy.getBySel('trace-details-tabs').should('not.exist');
-  // The traces component has fully loaded once 'Traces' is visible.
-  cy.getBySel('jaeger-scatterplot').contains('Traces');
-  // Blue dot on scatterplot is a trace so find one and click on it.
-  cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
-  cy.getBySel('trace-details-tabs').should('be.visible').contains('Span Details').click();
-});
-
 And('user can filter spans by workload', () => {
   cy.get('select[aria-label="filter_select_type"]').select('Workload');
   cy.get('input[placeholder="Filter by Workload"]').type('details-v1{enter}');

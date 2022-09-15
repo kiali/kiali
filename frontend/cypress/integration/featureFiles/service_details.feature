@@ -50,10 +50,12 @@ Feature: Kiali Service Details page
 
   @service-details-page
   Scenario: See graph traces for productspage service details
-    Then sd::user sees graph with traces information
-    And sd::user sees trace details after selecting a trace
+    And user sees trace information
+    When user selects a trace
+    Then user sees trace details
 
   @service-details-page
   Scenario: See span info after selecting a span
-    Then sd::user sees graph with traces information
-    And sd::user sees table details after selecting a trace
+    And user sees trace information
+    When user selects a trace
+    Then user sees span details

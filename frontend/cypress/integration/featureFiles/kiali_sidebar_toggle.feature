@@ -4,7 +4,7 @@ User opens the Overview page and toggles the main sidebar.
 
   Background:
     Given user is at administrator perspective
-    And user opens the overview page
+    And user is at the "overview" page
 
   @sidebar-toggle
   Scenario: Close the sidebar

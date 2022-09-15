@@ -1,16 +1,20 @@
-import {And, When, Then} from "@badeball/cypress-cucumber-preprocessor";
+import { And, When, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { ensureKialiFinishedLoading } from './transition';
 
 When('the sidebar is open', () => {
-  cy.get('#page-sidebar').should('be.visible').then(($sidebar) => {
-    if ($sidebar.attr('aria-hidden') === 'true') {
-      cy.get('#nav-toggle').click()
-    }
-  })
+  ensureKialiFinishedLoading();
+  cy.get('#page-sidebar')
+    .should('be.visible')
+    .then($sidebar => {
+      if ($sidebar.attr('aria-hidden') === 'true') {
+        cy.get('#nav-toggle').click();
+      }
+    });
   cy.get('#page-sidebar').should('be.visible');
 });
 
 And('user presses the navigation toggle button', () => {
-  cy.get('#nav-toggle').click()
+  cy.get('#nav-toggle').click();
 });
 
 Then('user cannot see the sidebar', () => {
@@ -18,11 +22,14 @@ Then('user cannot see the sidebar', () => {
 });
 
 When('the sidebar is closed', () => {
-  cy.get('#page-sidebar').should('be.visible').then(($sidebar) => {
-    if ($sidebar.attr('aria-hidden') === 'false') {
-      cy.get('#nav-toggle').click()
-    }
-  })
+  ensureKialiFinishedLoading();
+  cy.get('#page-sidebar')
+    .should('be.visible')
+    .then($sidebar => {
+      if ($sidebar.attr('aria-hidden') === 'false') {
+        cy.get('#nav-toggle').click();
+      }
+    });
   cy.get('#page-sidebar').should('not.be.visible');
 });
 
