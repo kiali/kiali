@@ -97,18 +97,18 @@ And('sd::user sees table details after selecting a trace', () => {
   // We're delaying the response until after the test has finished so that
   // we can test the menu opening without it closing prematurely.
   // TODO: Fix whatever is causing new metrics data to undo click actions.
-  // let dropdownVisible = false;
-  // cy.intercept(`${Cypress.config('baseUrl')}/api/stats/metrics`, req => {
-  //   req.continue(res => {
-  //     let timer = 0;
-  //     const timeout = 30000;
-  //     while (!dropdownVisible && timer < timeout) {
-  //       setTimeout(() => {
-  //         timer += 50;
-  //       }, 50);
-  //     }
-  //   });
-  // });
+  let dropdownVisible = false;
+  cy.intercept(`${Cypress.config('baseUrl')}/api/stats/metrics`, req => {
+    req.continue(res => {
+      let timer = 0;
+      const timeout = 30000;
+      while (!dropdownVisible && timer < timeout) {
+        setTimeout(() => {
+          timer += 50;
+        }, 50);
+      }
+    });
+  });
 
   cy.get('table')
     .should('be.visible')
@@ -118,8 +118,10 @@ And('sd::user sees table details after selecting a trace', () => {
     .find('td')
     .eq(4) // take 5th cell (kebab)
     .click();
-  cy.get('ul.pf-c-dropdown__menu').should('be.visible').contains('Inbound Metrics');
-  // .then(() => {
-  //   dropdownVisible = true;
-  // });
+  cy.get('ul.pf-c-dropdown__menu')
+    .should('be.visible')
+    .contains('Inbound Metrics')
+    .then(() => {
+      dropdownVisible = true;
+    });
 });
