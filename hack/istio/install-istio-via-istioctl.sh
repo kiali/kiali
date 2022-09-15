@@ -16,7 +16,7 @@
 # CLIENT_EXE_NAME must be either "oc" or "kubectl"
 ADDONS="prometheus grafana jaeger"
 CLIENT_EXE_NAME="oc"
-CLUSTER_NAME="cluster-default"
+CLUSTER_NAME=""
 CONFIG_PROFILE="" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
 DELETE_ISTIO="false"
 PURGE_UNINSTALL="true"
@@ -25,10 +25,10 @@ ISTIO_DIR=
 ISTIO_EGRESSGATEWAY_ENABLED="true"
 ISTIO_INGRESSGATEWAY_ENABLED="true"
 ISTIO_VERSION=""
-MESH_ID="mesh-default"
+MESH_ID=""
 MTLS="true"
 NAMESPACE="istio-system"
-NETWORK="network-default"
+NETWORK=""
 REDUCE_RESOURCES="false"
 IMAGE_HUB="gcr.io/istio-release"
 IMAGE_TAG="default"
@@ -163,7 +163,7 @@ Valid command line arguments:
        This value overrides any other value set with --client-exe
   -cn|--cluster-name <cluster name>:
        Installs istio as part of cluster with the given name.
-       Default: cluster-default
+       Default: unset (use Istio default of "Kubernetes")
   -cp|--config-profile <profile name>:
        Installs Istio with the given profile.
        Run "istioctl profile list" to see the valid list of configuration profiles available.
@@ -205,13 +205,13 @@ Valid command line arguments:
        Default: true
   -mid|--mesh-id <mesh ID>:
        Installs istio as part of mesh with the given name.
-       Default: mesh-default
+       Default: unset
   -n|--namespace <name>:
        Install Istio in this namespace.
        Default: istio-system
   -net|--network <network>:
        Installs istio as part of network with the given name.
-       Default: network-default
+       Default: unset
   -rr|--reduce-resources (true|false):
        When true some Istio components (such as the sidecar proxies) will be given
        a smaller amount of resources (CPU and memory) which will allow you
