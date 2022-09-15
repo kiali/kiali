@@ -104,15 +104,7 @@ Then('user sees no healthy workloads on the graph', () => {
 });
 
 When('user seeks help for find and hide', () => {
-  // First wait for the graph to load otherwise when the
-  // graph loads the find/hide menu will be closed by a re-render.
-  cy.waitForReact();
-  cy.getReact('CytoscapeGraph').should('have.length', '1');
-  // Even after the initial load of the graph there seems to be some additional
-  // re-renders that happen before the graph "settles". Ideally we'd have a better
-  // way of knowing when the graph rendering has settled.
-  cy.wait(5000);
-  cy.getBySel('graph-find-hide-help-button').click();
+  cy.getBySel('graph-find-hide-help-button').should('be.visible').click();
 });
 
 Then('user sees the help menu', () => {
@@ -120,7 +112,7 @@ Then('user sees the help menu', () => {
 });
 
 And('the help menu has info on {string}', (helpMenuItem: string) => {
-  cy.get('#graph_find_help_tabs').contains(helpMenuItem).should('be.visible').click();
+  cy.get('#graph_find_help_tabs').contains(helpMenuItem).should('be.visible');
 });
 
 When('user fills {string} in find and submits', (input: string) => {
