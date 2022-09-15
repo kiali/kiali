@@ -1,4 +1,4 @@
-import { Before, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 const url = '/console';
 

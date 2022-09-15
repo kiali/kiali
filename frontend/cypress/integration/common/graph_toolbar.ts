@@ -1,4 +1,4 @@
-import { Before, Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { CytoscapeGlobalScratchData, CytoscapeGlobalScratchNamespace } from '../../../src/types/Graph';
 
 const url = '/console';

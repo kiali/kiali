@@ -1,4 +1,4 @@
-import { And, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { TableDefinition } from 'cypress-cucumber-preprocessor';
 
 Then(`user sees a table with headings`, (tableHeadings: TableDefinition) => {

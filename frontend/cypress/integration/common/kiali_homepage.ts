@@ -1,5 +1,5 @@
-import { Given } from 'cypress-cucumber-preprocessor/steps';
-import { Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given } from '@badeball/cypress-cucumber-preprocessor';
+import { Then } from '@badeball/cypress-cucumber-preprocessor';
 
 const url = '/';
 

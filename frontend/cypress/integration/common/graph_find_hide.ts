@@ -1,4 +1,4 @@
-import { And, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 function clearFindAndHide() {
   cy.get('#graph_hide').clear();
@@ -104,7 +104,7 @@ Then('user sees no healthy workloads on the graph', () => {
 });
 
 When('user seeks help for find and hide', () => {
-  cy.getBySel('graph-find-hide-help-button').click();
+  cy.getBySel('graph-find-hide-help-button').should('be.visible').click();
 });
 
 Then('user sees the help menu', () => {
@@ -112,13 +112,13 @@ Then('user sees the help menu', () => {
 });
 
 And('the help menu has info on {string}', (helpMenuItem: string) => {
-  cy.get('#graph_find_help_tabs').contains(helpMenuItem).should('be.visible').click();
+  cy.get('#graph_find_help_tabs').contains(helpMenuItem).should('be.visible');
 });
 
-When("user fills {string} in find and submits", (input: string) => {
-  cy.get('#graph_find').type(input+'{enter}')
-})
+When('user fills {string} in find and submits', (input: string) => {
+  cy.get('#graph_find').type(input + '{enter}');
+});
 
-Then("user sees the {string} message",(error: string)=> {
-  cy.get('[aria-label="graph settings"]').should("contain.text", error)
-})
+Then('user sees the {string} message', (error: string) => {
+  cy.get('[aria-label="graph settings"]').should('contain.text', error);
+});

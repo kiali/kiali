@@ -104,7 +104,6 @@
     "visibilityjs": "2.0.2"
   },
   "devDependencies": {
-    "@types/cypress-cucumber-preprocessor": "^4.0.1",
     "@types/cytoscape": "3.14.0",
     "@types/enzyme": "3.10.5",
     "@types/jest": "23.3.10",
@@ -116,8 +115,9 @@
     "@types/react-router-dom": "5.1.5",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.7",
     "axios-mock-adapter": "1.16.0",
-    "cypress": "^9.2.1",
-    "cypress-cucumber-preprocessor": "^4.3.1",
+    "cypress": "^10.7.0",
+    "@badeball/cypress-cucumber-preprocessor": "^12.2.0",
+    "@cypress/browserify-preprocessor": "3.0.2",
     "cypress-multi-reporters": "^1.6.0",
     "cypress-react-selector": "^2.3.17",
     "enzyme": "3.11.0",
@@ -160,6 +160,6 @@
     "not ie <= 11"
   ],
   "cypress-cucumber-preprocessor": {
-    "nonGlobalStepDefinitions": true
+    "stepDefinitions": "cypress/integration/**/*.{js,ts}"
   }
 }

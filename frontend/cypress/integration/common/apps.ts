@@ -1,4 +1,4 @@
-import { And, Then, When } from 'cypress-cucumber-preprocessor/steps';
+import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { getColWithRowText, ensureObjectsInTable, checkHealthIndicatorInTable, checkHealthStatusInTable } from './table';
 
 // Choosing a random bookinfo app to test with.

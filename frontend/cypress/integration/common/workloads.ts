@@ -1,4 +1,4 @@
-import { And, Given, Then } from 'cypress-cucumber-preprocessor/steps';
+import { And, Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { checkHealthIndicatorInTable, checkHealthStatusInTable } from "./table";
 
 Given('a healthy workload in the cluster', function () {

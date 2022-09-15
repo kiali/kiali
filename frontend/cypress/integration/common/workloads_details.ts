@@ -1,5 +1,7 @@
-import { When, And, Then } from 'cypress-cucumber-preprocessor/steps';
+import { When, And, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
+
+const tracingDotQuery = '[style*="fill: var(--pf-global--palette--blue-200)"][style*="stroke: transparent;"]';
 
 function openTab(tab: string) {
   cy.get('#basic-tabs').should('be.visible').contains(tab).click();
@@ -9,17 +11,12 @@ function openEnvoyTab(tab: string) {
   cy.get('#envoy-details').should('be.visible').contains(tab).click();
 }
 
-
 Then('user sees details information for workload', () => {
   cy.getBySel('workload-description-card').within(() => {
     cy.get('#pfbadge-A').parent().parent().contains('details'); // App
     cy.get('#pfbadge-W').parent().parent().contains('details-v1'); // Workload
     cy.get('#pfbadge-S').parent().parent().contains('details'); // Service
   });
-});
-
-Then('user sees a minigraph for workload', () => {
-  cy.getBySel('mini-graph');
 });
 
 Then('user sees workload inbound and outbound traffic information', () => {
@@ -30,7 +27,9 @@ Then('user sees workload inbound and outbound traffic information', () => {
 });
 
 Then('user sees workload inbound metrics information', () => {
-  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as('fetchMetrics');
+  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as(
+    'fetchMetrics'
+  );
   openTab('Inbound Metrics');
   cy.wait('@fetchMetrics');
   cy.waitForReact(1000, '#root');
@@ -44,7 +43,9 @@ Then('user sees workload inbound metrics information', () => {
 });
 
 Then('user sees workload outbound metrics information', () => {
-  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as('fetchMetrics');
+  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as(
+    'fetchMetrics'
+  );
   openTab('Outbound Metrics');
   cy.wait('@fetchMetrics');
   cy.waitForReact(1000, '#root');
@@ -58,19 +59,11 @@ Then('user sees workload outbound metrics information', () => {
 });
 
 Then('user sees workload trace information', () => {
-  cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/workloads/details-v1/traces*`).as('fetchTraces');
   openTab('Traces');
-  cy.wait('@fetchTraces');
-  cy.waitForReact(1000, '#root');
   cy.getBySel('jaeger-scatterplot');
-  cy.contains('No traces').should('not.exist');
-  cy.getReact('TracesComponent')
-    .nthNode(1)
-    .getCurrentState()
-    .then(state => {
-      cy.wrap(state.traces).should('not.be.empty');
-      cy.wrap(state.jaegerErrors).should('be.undefined');
-    });
+  cy.getBySel('trace-details-tabs').should('not.exist');
+  cy.getBySel('jaeger-scatterplot').contains('Traces');
+  cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
 });
 
 And('user sees workload trace details after selecting a trace', () => {
@@ -79,7 +72,6 @@ And('user sees workload trace details after selecting a trace', () => {
   // The traces component has fully loaded once 'Traces' is visible.
   cy.getBySel('jaeger-scatterplot').contains('Traces');
   // Blue dot on scatterplot is a trace so find one and click on it.
-  const tracingDotQuery = '[style*="fill: var(--pf-global--palette--blue-200)"][style*="stroke: transparent;"]';
   cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
   cy.getBySel('trace-details-tabs').should('be.visible');
   cy.getBySel('trace-details-kebab').click().contains('View on Graph');
@@ -91,7 +83,6 @@ And('user sees workload span details after selecting a trace', () => {
   // The traces component has fully loaded once 'Traces' is visible.
   cy.getBySel('jaeger-scatterplot').contains('Traces');
   // Blue dot on scatterplot is a trace so find one and click on it.
-  const tracingDotQuery = '[style*="fill: var(--pf-global--palette--blue-200)"][style*="stroke: transparent"]';
   cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
   cy.getBySel('trace-details-tabs').should('be.visible').contains('Span Details').click();
 });
@@ -107,13 +98,16 @@ And('user can filter spans by workload', () => {
   getCellsForCol(4).first().click();
 });
 
-When('the user filters by {string} with value {string} on the {string} tab', (filter: string, value: string, tab: string) => {
-  openTab('Envoy');
-  openEnvoyTab(tab);
-  cy.waitForReact(1000, '#root');
-  cy.get('select[aria-label="filter_select_type"]').select(filter);
-  cy.get('input[aria-label="filter_input_value"]').type(`${value}{enter}`);
-});
+When(
+  'the user filters by {string} with value {string} on the {string} tab',
+  (filter: string, value: string, tab: string) => {
+    openTab('Envoy');
+    openEnvoyTab(tab);
+    cy.waitForReact(1000, '#root');
+    cy.get('select[aria-label="filter_select_type"]').select(filter);
+    cy.get('input[aria-label="filter_input_value"]').type(`${value}{enter}`);
+  }
+);
 
 Then('the user sees clusters expected information', () => {
   cy.get('tbody').within(() => {

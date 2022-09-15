@@ -1,5 +1,6 @@
-import { And, Then } from 'cypress-cucumber-preprocessor/steps';
+import { And, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
+import { openTab } from './transition';
 
 const APP = 'details';
 const NAMESPACE = 'bookinfo';
@@ -11,14 +12,6 @@ Then('user sees details information for app', () => {
     cy.get('#pfbadge-S').parent().parent().contains('details'); // Service
   });
 });
-
-Then('user sees a minigraph', () => {
-  cy.getBySel('mini-graph');
-});
-
-function openTab(tab: string) {
-  cy.get('#basic-tabs').should('be.visible').contains(tab).click();
-}
 
 Then('user sees inbound and outbound traffic information', () => {
   openTab('Traffic');
