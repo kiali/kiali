@@ -59,11 +59,11 @@ Then('user sees workload outbound metrics information', () => {
 Then('user sees workload trace information', () => {
   cy.intercept(Cypress.config('baseUrl') + `/api/namespaces/bookinfo/workloads/details-v1/traces*`).as('fetchTraces');
   openTab('Traces');
-  cy.wait('@fetchTraces');
+  cy.wait('@fetchTraces', { timeout: 15000 });
   cy.waitForReact(1000, '#root');
   cy.getBySel('jaeger-scatterplot');
   cy.contains('No traces').should('not.exist');
-  cy.getReact('TracesComponent')
+  cy.getReact('TracesComponent', { options: { timeout: 30000 } })
     .nthNode(1)
     .getCurrentState()
     .then(state => {
