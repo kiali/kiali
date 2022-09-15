@@ -41,9 +41,9 @@ var clientFactory kubernetes.ClientFactory
 
 var (
 	jaegerClient     jaeger.ClientInterface
-	prometheusClient prometheus.ClientInterface
-	once             sync.Once
 	kialiCache       cache.KialiCache
+	once             sync.Once
+	prometheusClient prometheus.ClientInterface
 )
 
 // sets the global kiali cache var.
@@ -66,13 +66,13 @@ func initKialiCache() {
 		if !config.Get().AllNamespacesAccessible() {
 			cfg, err := kubernetes.ConfigClient()
 			if err != nil {
-				log.Errorf("Failed to initialize Kiali Cache: %s", err)
+				log.Errorf("Failed to initialize Kiali Cache. Unable to create Kube rest config. Err: %s", err)
 				return
 			}
 
 			kubeClient, err := kubernetes.NewClientFromConfig(cfg)
 			if err != nil {
-				log.Errorf("Failed to initialize Kiali Cache: %s", err)
+				log.Errorf("Failed to initialize Kiali Cache. Unable to create Kube client. Err: %s", err)
 				return
 			}
 
