@@ -188,10 +188,8 @@ Cypress.Commands.add('login', (username: string, password: string) => {
           .then(result => {
             cy.visit('/');
             cy.get('#token').type(result.stdout, { log: false });
-
-            cy.intercept(Cypress.config('baseUrl') + 'api/authenticate').as('auth')
             cy.get('button[type=submit]').click();
-            cy.wait('@auth')
+            cy.get('#page-sidebar').should('be.visible');
             haveCookie = true;
           });
       }
