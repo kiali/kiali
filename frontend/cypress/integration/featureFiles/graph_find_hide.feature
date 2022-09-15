@@ -9,38 +9,34 @@ Feature: Kiali Graph page - Find/Hide
 
   Background:
     Given user is at administrator perspective
+    And user graphs "alpha,beta" namespaces
 
   @graph-page-find-hide
   Scenario: Find unhealthy workloads
-    When user graphs "alpha,beta" namespaces
-    And user sees nothing highlighted on the graph
+    Then user sees nothing highlighted on the graph
     When user finds unhealthy workloads
     Then user sees unhealthy workloads highlighted on the graph
 
   @graph-page-find-hide
   Scenario: Hide unhealthy workloads
-    When user graphs "alpha,beta" namespaces
-    And user hides unhealthy workloads
+    When user hides unhealthy workloads
     Then user sees no unhealthy workloads on the graph
 
   @graph-page-find-hide
   Scenario: Use preset find option to filter workloads
-    When user graphs "alpha,beta" namespaces
     Then user sees preset find options
     When user selects the preset the find option "Find: unhealthy nodes"
     Then user sees unhealthy workloads highlighted on the graph
   
   @graph-page-find-hide
   Scenario: Use preset hide option to filter workloads
-    When user graphs "alpha,beta" namespaces
     Then user sees preset hide options
     When user selects the preset hide option "Hide: healthy nodes"
     Then user sees no healthy workloads on the graph
 
   @graph-page-find-hide
   Scenario: Show Graph Find/Hide help menu
-    When user graphs "" namespaces
-    And user seeks help for find and hide
+    When user seeks help for find and hide
     Then user sees the help menu
     And the help menu has info on "Examples"
     And the help menu has info on "Nodes"
@@ -50,6 +46,5 @@ Feature: Kiali Graph page - Find/Hide
 
   @graph-page-find-hide
   Scenario: Filling the find form with nonsense
-    When user graphs "alpha,beta" namespaces
-    And user fills "hello world" in find and submits
+    When user fills "hello world" in find and submits
     Then user sees the "Find: No valid operator found in expression" message 
