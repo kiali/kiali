@@ -226,8 +226,31 @@ When('the user refreshes the list page', function () {
   ensureKialiFinishedLoading();
 });
 
+When('user clicks the {string} sorting option',(option:string) => {
+  // cy.intercept(
+  // {
+  //   method: 'GET', 
+  //   url: Cypress.config('baseUrl')+'/api/istio/config*', 
+  // }).as('ascendingOrder');
+  cy.get('thead').contains(option).should('be.visible').click();
+});
+
+When('user double clicks the {string} sorting option',(option:string) => {
+  // cy.intercept(
+  // {
+  //   method: 'GET', 
+  //   url: Cypress.config('baseUrl')+'/api/istio/config*', 
+  // }).as('descendingOrder');
+  cy.get('thead').contains(option).should('be.visible').dblclick()
+});
+
 And('user filters for config {string}', (configName: string) => {
   cy.get('select[aria-label="filter_select_value"]').select(configName);
+});
+
+Then('the table is sorted by the {string} in {string} order', (option:string, sorting:string) => {
+  // cy.wait(`@${sorting}Order`);
+  cy.get(`th[aria-sort="${sorting}"]`).contains(option).should('be.visible');
 });
 
 Then('user sees all the Istio Config objects in the bookinfo namespace', () => {

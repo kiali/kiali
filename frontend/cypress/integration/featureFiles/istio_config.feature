@@ -30,6 +30,26 @@ Feature: Kiali Istio Config page
     Then user sees "bookinfo-gateway"
     And user sees "bookinfo"
 
+  Scenario Outline: Istio Config objects sorted by <option> in ascending order
+    When user clicks the "<option>" sorting option
+    Then the table is sorted by the "<option>" in "ascending" order 
+    Examples:
+        | option |
+        | Name |
+        | Namespace |
+        | Type |
+        | Configuration |
+
+  Scenario Outline: Istio Config objects sorted by <option> in descending order
+    When user double clicks the "<option>" sorting option
+    Then the table is sorted by the "<option>" in "descending" order 
+    Examples:
+        | option |
+        | Name |
+        | Namespace |
+        | Type |
+        | Configuration |
+
   Scenario: Ability to create an AuthorizationPolicy object
     Then the user can create a "AuthorizationPolicy" Istio object
 
