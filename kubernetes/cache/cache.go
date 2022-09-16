@@ -361,6 +361,7 @@ func (c *kialiCacheImpl) refreshCache(istioConfig rest.Config) chan bool {
 							c.istioClient = *istioClient
 							c.k8sApi = istioClient.GetK8sApi()
 							c.istioApi = istioClient.Istio()
+							c.gatewayApi = istioClient.GatewayAPI()
 							if c.clusterScoped {
 								c.Refresh("")
 							} else {

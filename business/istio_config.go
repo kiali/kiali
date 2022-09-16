@@ -137,8 +137,8 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		WasmPlugins:      []*extentions_v1alpha1.WasmPlugin{},
 		Telemetries:      []*v1alpha1.Telemetry{},
 
-		K8sGateways:   []k8s_networking_v1alpha2.Gateway{},
-		K8sHTTPRoutes: []k8s_networking_v1alpha2.HTTPRoute{},
+		K8sGateways:   []*k8s_networking_v1alpha2.Gateway{},
+		K8sHTTPRoutes: []*k8s_networking_v1alpha2.HTTPRoute{},
 
 		AuthorizationPolicies:  []*security_v1beta1.AuthorizationPolicy{},
 		PeerAuthentications:    []*security_v1beta1.PeerAuthentication{},
@@ -297,11 +297,13 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 			// Check if namespace is cached
 			if IsResourceCached(criteria.Namespace, kubernetes.K8sGateways) {
 				istioConfigList.K8sGateways, _ = kialiCache.GetK8sGateways(criteria.Namespace, criteria.LabelSelector)
-			} else {
-				if gwl, e := in.k8s.GatewayAPI().GatewayV1alpha2().Gateways(criteria.Namespace).List(ctx, listOpts); e == nil {
-					istioConfigList.K8sGateways = gwl.Items
-				}
 			}
+			// TODO gwl.Items
+			//else {
+			//	if gwl, e := in.k8s.GatewayAPI().GatewayV1alpha2().Gateways(criteria.Namespace).List(ctx, listOpts); e == nil {
+			//		istioConfigList.K8sGateways = gwl.Items
+			//	}
+			//}
 		}
 	}(ctx, errChan)
 
@@ -312,11 +314,13 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 			// Check if namespace is cached
 			if IsResourceCached(criteria.Namespace, kubernetes.K8sHTTPRoutes) {
 				istioConfigList.K8sHTTPRoutes, _ = kialiCache.GetK8sHTTPRoutes(criteria.Namespace, criteria.LabelSelector)
-			} else {
-				if gwl, e := in.k8s.GatewayAPI().GatewayV1alpha2().HTTPRoutes(criteria.Namespace).List(ctx, listOpts); e == nil {
-					istioConfigList.K8sHTTPRoutes = gwl.Items
-				}
 			}
+			// TODO gwl.Items
+			//else {
+			//	if gwl, e := in.k8s.GatewayAPI().GatewayV1alpha2().HTTPRoutes(criteria.Namespace).List(ctx, listOpts); e == nil {
+			//		istioConfigList.K8sHTTPRoutes = gwl.Items
+			//	}
+			//}
 		}
 	}(ctx, errChan)
 
@@ -728,7 +732,7 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 		configs := registryConfiguration.K8sGateways
 		for _, cfg := range configs {
 			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.K8sGateway = &cfg
+				istioConfigDetail.K8sGateway = cfg
 				istioConfigDetail.K8sGateway.Kind = kubernetes.K8sGatewayType
 				istioConfigDetail.K8sGateway.APIVersion = kubernetes.K8sApiNetworkingVersionV1Alpha2
 				return istioConfigDetail, nil
@@ -738,7 +742,7 @@ func (in *IstioConfigService) GetIstioConfigDetailsFromRegistry(ctx context.Cont
 		configs := registryConfiguration.K8sHTTPRoutes
 		for _, cfg := range configs {
 			if cfg.Name == object && cfg.Namespace == namespace {
-				istioConfigDetail.K8sHTTPRoute = &cfg
+				istioConfigDetail.K8sHTTPRoute = cfg
 				istioConfigDetail.K8sHTTPRoute.Kind = kubernetes.K8sHTTPRouteType
 				istioConfigDetail.K8sHTTPRoute.APIVersion = kubernetes.K8sApiNetworkingVersionV1Alpha2
 				return istioConfigDetail, nil

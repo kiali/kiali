@@ -41,9 +41,9 @@ type (
 		GetTelemetries(namespace, labelSelector string) ([]*v1alpha1.Telemetry, error)
 
 		GetK8sGateway(namespace, name string) (*gatewayapi.Gateway, error)
-		GetK8sGateways(namespace, labelSelector string) ([]gatewayapi.Gateway, error)
+		GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi.Gateway, error)
 		GetK8sHTTPRoute(namespace, name string) (*gatewayapi.HTTPRoute, error)
-		GetK8sHTTPRoutes(namespace, labelSelector string) ([]gatewayapi.HTTPRoute, error)
+		GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi.HTTPRoute, error)
 
 		GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error)
 		GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1beta1.AuthorizationPolicy, error)
@@ -124,7 +124,7 @@ func (c *kialiCacheImpl) createIstioInformers(namespace string) istio.SharedInfo
 	return sharedInformers
 }
 
-func (c *kialiCacheImpl) createGatewayInformers(namespace string) istio.SharedInformerFactory {
+func (c *kialiCacheImpl) createGatewayInformers(namespace string) gateway.SharedInformerFactory {
 	sharedInformers := gateway.NewSharedInformerFactory(c.gatewayApi, c.refreshDuration)
 	lister := c.getCacheLister(namespace)
 
@@ -138,6 +138,7 @@ func (c *kialiCacheImpl) createGatewayInformers(namespace string) istio.SharedIn
 			sharedInformers.Gateway().V1alpha2().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
 		}
 	}
+	return sharedInformers
 }
 
 func (c *kialiCacheImpl) GetDestinationRule(namespace, name string) (*networking_v1beta1.DestinationRule, error) {

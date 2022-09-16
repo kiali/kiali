@@ -267,8 +267,8 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 		Telemetries:      []*v1alpha1.Telemetry{},
 
 		// K8s Networking Gateways
-		K8sGateways:   []k8s_networking_v1alpha2.Gateway{},
-		K8sHTTPRoutes: []k8s_networking_v1alpha2.HTTPRoute{},
+		K8sGateways:   []*k8s_networking_v1alpha2.Gateway{},
+		K8sHTTPRoutes: []*k8s_networking_v1alpha2.HTTPRoute{},
 
 		AuthorizationPolicies:  []*security_v1beta1.AuthorizationPolicy{},
 		PeerAuthentications:    []*security_v1beta1.PeerAuthentication{},
@@ -323,7 +323,7 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 								if err != nil {
 									log.Errorf("Error parsing RegistryConfig results for K8sGateways: %s", err)
 								}
-								registry.K8sGateways = append(registry.K8sGateways, gw)
+								registry.K8sGateways = append(registry.K8sGateways, &gw)
 							} else {
 								var gw networking_v1beta1.Gateway
 								err := bDec.Decode(&gw)
@@ -333,7 +333,7 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 								registry.Gateways = append(registry.Gateways, &gw)
 							}
 						case "HTTPRoute":
-							var route k8s_networking_v1alpha2.HTTPRoute
+							var route *k8s_networking_v1alpha2.HTTPRoute
 							err := bDec.Decode(&route)
 							if err != nil {
 								log.Errorf("Error parsing RegistryConfig results for K8sHTTPRoutes: %s", err)

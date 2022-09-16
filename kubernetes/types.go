@@ -218,8 +218,8 @@ type RegistryConfiguration struct {
 	Telemetries      []*v1alpha1.Telemetry
 
 	// K8s Networking Gateways
-	K8sGateways   []k8s_networking_v1alpha2.Gateway
-	K8sHTTPRoutes []k8s_networking_v1alpha2.HTTPRoute
+	K8sGateways   []*k8s_networking_v1alpha2.Gateway
+	K8sHTTPRoutes []*k8s_networking_v1alpha2.HTTPRoute
 
 	// Security
 	AuthorizationPolicies  []*security_v1beta.AuthorizationPolicy

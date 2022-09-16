@@ -31,8 +31,8 @@ type IstioConfigList struct {
 	WasmPlugins      []*extentions_v1alpha1.WasmPlugin     `json:"wasmPlugins"`
 	Telemetries      []*v1alpha1.Telemetry                 `json:"telemetries"`
 
-	K8sGateways   []k8s_networking_v1alpha2.Gateway   `json:"k8sGateways"`
-	K8sHTTPRoutes []k8s_networking_v1alpha2.HTTPRoute `json:"k8sHTTPRoutes"`
+	K8sGateways   []*k8s_networking_v1alpha2.Gateway   `json:"k8sGateways"`
+	K8sHTTPRoutes []*k8s_networking_v1alpha2.HTTPRoute `json:"k8sHTTPRoutes"`
 
 	AuthorizationPolicies  []*security_v1beta.AuthorizationPolicy   `json:"authorizationPolicies"`
 	PeerAuthentications    []*security_v1beta.PeerAuthentication    `json:"peerAuthentications"`
@@ -201,8 +201,8 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 			filtered[ns].DestinationRules = []*networking_v1beta1.DestinationRule{}
 			filtered[ns].EnvoyFilters = []*networking_v1alpha3.EnvoyFilter{}
 			filtered[ns].Gateways = []*networking_v1beta1.Gateway{}
-			filtered[ns].K8sGateways = []k8s_networking_v1alpha2.Gateway{}
-			filtered[ns].K8sHTTPRoutes = []k8s_networking_v1alpha2.HTTPRoute{}
+			filtered[ns].K8sGateways = []*k8s_networking_v1alpha2.Gateway{}
+			filtered[ns].K8sHTTPRoutes = []*k8s_networking_v1alpha2.HTTPRoute{}
 			filtered[ns].VirtualServices = []*networking_v1beta1.VirtualService{}
 			filtered[ns].ServiceEntries = []*networking_v1beta1.ServiceEntry{}
 			filtered[ns].Sidecars = []*networking_v1beta1.Sidecar{}
