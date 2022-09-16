@@ -53,7 +53,7 @@ const thereIsTrafficData = (seriesData: VCLine<RichDataPoint>) => {
 };
 
 const renderSparklines = (series: VCLines<RichDataPoint>, yTickFormat?: (val: number) => string) => {
-  const yFormat = yTickFormat ? yTickFormat : y => `${y} rps`;
+  const yFormat = yTickFormat ? yTickFormat : y => `${y.toFixed(2)} rps`;
   return (
     <SparklineChart
       name="rps"

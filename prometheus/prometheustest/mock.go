@@ -121,8 +121,8 @@ func (o *PromAPIMock) OnQueryTime(query string, t *time.Time, ret model.Vector) 
 	}
 }
 
-func (o *PromAPIMock) MockTimeRounded(query string, ret model.Vector) {
-	o.OnQueryTime(round(query), nil, ret)
+func (o *PromAPIMock) MockTime(query string, ret model.Vector) {
+	o.OnQueryTime(query, nil, ret)
 }
 
 func (o *PromAPIMock) OnQueryRange(query string, r *prom_v1.Range, ret model.Matrix) {
@@ -155,52 +155,52 @@ func emptyMatrix() model.Matrix {
 			Values: []model.SamplePair{}}}
 }
 
-func (o *PromAPIMock) MockRangeErrRounded(query string, ret model.SampleValue) {
-	o.OnQueryRange(roundErrs(query), nil, singleValueMatrix(ret))
+func (o *PromAPIMock) MockRangeErr(query string, ret model.SampleValue) {
+	o.OnQueryRange(fmt.Sprintf("(%s)", query), nil, singleValueMatrix(ret))
 }
 
-func (o *PromAPIMock) MockRangeRounded(query string, ret model.SampleValue) {
-	o.OnQueryRange(round(query), nil, singleValueMatrix(ret))
+func (o *PromAPIMock) MockRange(query string, ret model.SampleValue) {
+	o.OnQueryRange(query, nil, singleValueMatrix(ret))
 }
 
-func (o *PromAPIMock) MockEmptyRangeRounded(query string) {
-	o.OnQueryRange(round(query), nil, emptyMatrix())
+func (o *PromAPIMock) MockEmptyRange(query string) {
+	o.OnQueryRange(query, nil, emptyMatrix())
 }
 
 func (o *PromAPIMock) MockHistoValue(baseName, suffix string, retAvg model.Vector, retMed model.Vector, ret95 model.Vector, ret99 model.Vector) {
 	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
-	o.MockTimeRounded("histogram_quantile(0.5, "+histMetric, retMed)
-	o.MockTimeRounded("histogram_quantile(0.95, "+histMetric, ret95)
-	o.MockTimeRounded("histogram_quantile(0.99, "+histMetric, ret99)
-	o.MockTimeRounded("histogram_quantile(0.999, "+histMetric, ret99)
-	o.MockTimeRounded("sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))", retAvg)
+	o.MockTime("histogram_quantile(0.5, "+histMetric, retMed)
+	o.MockTime("histogram_quantile(0.95, "+histMetric, ret95)
+	o.MockTime("histogram_quantile(0.99, "+histMetric, ret99)
+	o.MockTime("histogram_quantile(0.999, "+histMetric, ret99)
+	o.MockTime("sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))", retAvg)
 }
 
 func (o *PromAPIMock) MockHistoValueGroupedBy(baseName, labels, groups string, retAvg model.Vector, retMed model.Vector, ret95 model.Vector, ret99 model.Vector) {
 	histMetric := "sum(rate(" + baseName + "_bucket" + labels + ")) by (le," + groups + "))"
-	o.MockTimeRounded("histogram_quantile(0.5, "+histMetric, retMed)
-	o.MockTimeRounded("histogram_quantile(0.95, "+histMetric, ret95)
-	o.MockTimeRounded("histogram_quantile(0.99, "+histMetric, ret99)
-	o.MockTimeRounded("histogram_quantile(0.999, "+histMetric, ret99)
-	o.MockTimeRounded("sum(rate("+baseName+"_sum"+labels+")) by ("+groups+") / sum(rate("+baseName+"_count"+labels+")) by ("+groups+")", retAvg)
+	o.MockTime("histogram_quantile(0.5, "+histMetric, retMed)
+	o.MockTime("histogram_quantile(0.95, "+histMetric, ret95)
+	o.MockTime("histogram_quantile(0.99, "+histMetric, ret99)
+	o.MockTime("histogram_quantile(0.999, "+histMetric, ret99)
+	o.MockTime("sum(rate("+baseName+"_sum"+labels+")) by ("+groups+") / sum(rate("+baseName+"_count"+labels+")) by ("+groups+")", retAvg)
 }
 
 func (o *PromAPIMock) MockHistoRange(baseName string, suffix string, retAvg model.SampleValue, retMed model.SampleValue, ret95 model.SampleValue, ret99 model.SampleValue) {
 	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
-	o.MockRangeRounded("histogram_quantile(0.5, "+histMetric, retMed)
-	o.MockRangeRounded("histogram_quantile(0.95, "+histMetric, ret95)
-	o.MockRangeRounded("histogram_quantile(0.99, "+histMetric, ret99)
-	o.MockRangeRounded("histogram_quantile(0.999, "+histMetric, ret99)
-	o.MockRangeRounded("sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))", retAvg)
+	o.MockRange("histogram_quantile(0.5, "+histMetric, retMed)
+	o.MockRange("histogram_quantile(0.95, "+histMetric, ret95)
+	o.MockRange("histogram_quantile(0.99, "+histMetric, ret99)
+	o.MockRange("histogram_quantile(0.999, "+histMetric, ret99)
+	o.MockRange("sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))", retAvg)
 }
 
 func (o *PromAPIMock) MockEmptyHistoRange(baseName string, suffix string) {
 	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
-	o.MockEmptyRangeRounded("histogram_quantile(0.5, " + histMetric)
-	o.MockEmptyRangeRounded("histogram_quantile(0.95, " + histMetric)
-	o.MockEmptyRangeRounded("histogram_quantile(0.99, " + histMetric)
-	o.MockEmptyRangeRounded("histogram_quantile(0.999, " + histMetric)
-	o.MockEmptyRangeRounded("sum(rate(" + baseName + "_sum" + suffix + ")) / sum(rate(" + baseName + "_count" + suffix + "))")
+	o.MockEmptyRange("histogram_quantile(0.5, " + histMetric)
+	o.MockEmptyRange("histogram_quantile(0.95, " + histMetric)
+	o.MockEmptyRange("histogram_quantile(0.99, " + histMetric)
+	o.MockEmptyRange("histogram_quantile(0.999, " + histMetric)
+	o.MockEmptyRange("sum(rate(" + baseName + "_sum" + suffix + ")) / sum(rate(" + baseName + "_count" + suffix + "))")
 }
 
 // AlwaysReturnEmpty mocks all possible queries to return empty result
@@ -344,14 +344,6 @@ func (o *PromClientMock) FetchHistogramValues(metricName, labels, grouping, rate
 func (o *PromClientMock) GetMetricsForLabels(metricNames []string, labels string) ([]string, error) {
 	args := o.Called(metricNames, labels)
 	return args.Get(0).([]string), args.Error(1)
-}
-
-func round(q string) string {
-	return fmt.Sprintf("round(%s, 0.001000) > 0.001000 or %s", q, q)
-}
-
-func roundErrs(q string) string {
-	return fmt.Sprintf("round((%s), 0.001000) > 0.001000 or (%s)", q, q)
 }
 
 func (o *PromClientMock) MockMetric(name string, labels string, q *prometheus.RangeQuery, value float64) {

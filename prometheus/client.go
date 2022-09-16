@@ -236,7 +236,6 @@ func (in *Client) FetchRange(metricName, labels, grouping, aggregator string, q 
 	if grouping != "" {
 		query += fmt.Sprintf(" by (%s)", grouping)
 	}
-	query = roundSignificant(query, 0.001)
 	return fetchRange(in.ctx, in.api, query, q.Range)
 }
 

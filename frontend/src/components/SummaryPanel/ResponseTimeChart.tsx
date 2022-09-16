@@ -54,7 +54,7 @@ export class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp
                 padding={{ top: 5 }}
                 tooltipFormat={dp => {
                   const val = Math.floor(dp.y * 1000) / 1000;
-                  return `${(dp.x as Date).toLocaleTimeString()} - ${dp.name}: ${val} ms`;
+                  return `${(dp.x as Date).toLocaleTimeString()} - ${dp.name}: ${val.toFixed(2)} ms`;
                 }}
                 series={series}
               />
