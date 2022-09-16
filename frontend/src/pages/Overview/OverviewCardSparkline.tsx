@@ -51,7 +51,7 @@ class OverviewCardSparkline extends React.Component<Props, {}> {
             showLegend={false}
             showYAxis={true}
             padding={{ top: 10, left: 30 }}
-            tooltipFormat={dp => `${(dp.x as Date).toLocaleTimeString()}\n${dp.y} ${dp.name}`}
+            tooltipFormat={dp => `${(dp.x as Date).toLocaleTimeString()}\n${dp.y.toFixed(2)} ${dp.name}`}
             series={series}
           />
         </>
