@@ -20,7 +20,7 @@ func TestKubeGetAndListReturnKindInfo(t *testing.T) {
 			Name: "deployment", Namespace: "test",
 		},
 	}
-	kialiCache := newTestKialiCache([]runtime.Object{d}, nil)
+	kialiCache := newTestKialiCache([]runtime.Object{d}, nil, nil)
 	kialiCache.Refresh("test")
 
 	deploymentFromCache, err := kialiCache.GetDeployment("test", "deployment")
