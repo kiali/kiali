@@ -3,7 +3,6 @@ package cache
 import (
 	"fmt"
 
-	"github.com/kiali/kiali/kubernetes"
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -13,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	gatewayapi "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gateway "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 type (
