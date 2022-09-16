@@ -207,7 +207,6 @@ func TestError(t *testing.T) {
 }
 
 func TestRaces(t *testing.T) {
-
 	wg := sync.WaitGroup{}
 	wg.Add(10)
 
@@ -232,11 +231,48 @@ func TestRaces(t *testing.T) {
 
 func TestMarshalUnmarshalCompatibilityMatrix(t *testing.T) {
 	matrix, err := NewCompatibilityMatrix()
-
 	if err != nil {
 		t.Errorf("Failed to marshal: %v", err)
 	}
 
 	fmt.Printf("%+v", matrix)
 	t.Logf("Config from compatibility matrix file: %+v", matrix)
+}
+
+func TestAllNamespacesAccessible(t *testing.T) {
+	cases := map[string]struct {
+		expectedAccessible   bool
+		accessibleNamespaces []string
+	}{
+		"with **": {
+			expectedAccessible:   true,
+			accessibleNamespaces: []string{"**"},
+		},
+		"with ** and others": {
+			expectedAccessible:   true,
+			accessibleNamespaces: []string{"test1", "test2", "**"},
+		},
+		"without **": {
+			expectedAccessible:   false,
+			accessibleNamespaces: []string{"test1", "test2"},
+		},
+		"empty": {
+			expectedAccessible:   false,
+			accessibleNamespaces: []string{},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			conf := &Config{
+				Deployment: DeploymentConfig{
+					AccessibleNamespaces: tc.accessibleNamespaces,
+				},
+			}
+
+			assert.Equal(tc.expectedAccessible, conf.AllNamespacesAccessible())
+		})
+	}
 }

@@ -459,7 +459,6 @@ type CompatibilityMatrix []struct {
 
 // NewCompatibilityMatrix return compatible kiali versions for mesh
 func NewCompatibilityMatrix() (CompatibilityMatrix, error) {
-
 	in, err := fs.ReadFile(compatibilityMatrixFile, "version-compatibility-matrix.yaml")
 	if err != nil {
 		log.Warningf("Can not load compatibility matrix file. Error: %v", err)
@@ -777,6 +776,18 @@ func (conf *Config) AddHealthDefault() {
 	conf.HealthConfig.Rate = append(conf.HealthConfig.Rate, healthConfig.Rate...)
 }
 
+// AllNamespacesAccessible determines if kiali has access to all namespaces.
+// When using the operator, the operator will grant the kiali service account
+// cluster role permissions when '**' is provided as a namespace.
+func (conf *Config) AllNamespacesAccessible() bool {
+	for _, ns := range conf.Deployment.AccessibleNamespaces {
+		if ns == "**" {
+			return true
+		}
+	}
+	return false
+}
+
 // Get the global Config
 func Get() (conf *Config) {
 	rwMutex.RLock()
@@ -943,7 +954,7 @@ func SaveToFile(filename string, conf *Config) (err error) {
 	}
 
 	log.Debugf("Writing YAML config to [%s]", filename)
-	err = ioutil.WriteFile(filename, []byte(fileContent), 0640)
+	err = ioutil.WriteFile(filename, []byte(fileContent), 0o640)
 	return
 }
 

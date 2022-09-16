@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"errors"
 	"fmt"
 
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
@@ -13,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 )
 
 type (
@@ -56,890 +54,591 @@ func (c *kialiCacheImpl) CheckIstioResource(resourceType string) bool {
 	return exist
 }
 
-func (c *kialiCacheImpl) createIstioInformers(namespace string, informer *typeCache) {
-	sharedInformers := istio.NewSharedInformerFactoryWithOptions(c.istioApi, c.refreshDuration, istio.WithNamespace(namespace))
-	if c.CheckIstioResource(kubernetes.DestinationRules) {
-		(*informer)[kubernetes.DestinationRuleType] = sharedInformers.Networking().V1beta1().DestinationRules().Informer()
-		(*informer)[kubernetes.DestinationRuleType].AddEventHandler(c.registryRefreshHandler)
+func (c *kialiCacheImpl) createIstioInformers(namespace string) istio.SharedInformerFactory {
+	var opts []istio.SharedInformerOption
+	if namespace != "" {
+		opts = append(opts, istio.WithNamespace(namespace))
 	}
-	if c.CheckIstioResource(kubernetes.EnvoyFilters) {
-		(*informer)[kubernetes.EnvoyFilterType] = sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer()
-		(*informer)[kubernetes.EnvoyFilterType].AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.Gateways) {
-		(*informer)[kubernetes.GatewayType] = sharedInformers.Networking().V1beta1().Gateways().Informer()
-		(*informer)[kubernetes.GatewayType].AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.ServiceEntries) {
-		(*informer)[kubernetes.ServiceEntryType] = sharedInformers.Networking().V1beta1().ServiceEntries().Informer()
-		(*informer)[kubernetes.ServiceEntryType].AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.Sidecars) {
-		(*informer)[kubernetes.SidecarType] = sharedInformers.Networking().V1beta1().Sidecars().Informer()
-		(*informer)[kubernetes.SidecarType].AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.VirtualServices) {
-		(*informer)[kubernetes.VirtualServiceType] = sharedInformers.Networking().V1beta1().VirtualServices().Informer()
-		(*informer)[kubernetes.VirtualServiceType].AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.WorkloadEntries) {
-		(*informer)[kubernetes.WorkloadEntryType] = sharedInformers.Networking().V1beta1().WorkloadEntries().Informer()
-		(*informer)[kubernetes.WorkloadEntryType].AddEventHandler(c.registryRefreshHandler)
-	}
-	if c.CheckIstioResource(kubernetes.WorkloadGroups) {
-		(*informer)[kubernetes.WorkloadGroupType] = sharedInformers.Networking().V1beta1().WorkloadGroups().Informer()
-		(*informer)[kubernetes.WorkloadGroupType].AddEventHandler(c.registryRefreshHandler)
-	}
+	sharedInformers := istio.NewSharedInformerFactoryWithOptions(c.istioApi, c.refreshDuration, opts...)
+	lister := c.getCacheLister(namespace)
 
 	if c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
-		(*informer)[kubernetes.AuthorizationPoliciesType] = sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer()
-		(*informer)[kubernetes.AuthorizationPoliciesType].AddEventHandler(c.registryRefreshHandler)
+		lister.authzLister = sharedInformers.Security().V1beta1().AuthorizationPolicies().Lister()
+		sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer().AddEventHandler(c.registryRefreshHandler)
+	}
+	if c.CheckIstioResource(kubernetes.DestinationRules) {
+		lister.destinationRuleLister = sharedInformers.Networking().V1beta1().DestinationRules().Lister()
+		sharedInformers.Networking().V1beta1().DestinationRules().Informer().AddEventHandler(c.registryRefreshHandler)
+	}
+	if c.CheckIstioResource(kubernetes.EnvoyFilters) {
+		lister.envoyFilterLister = sharedInformers.Networking().V1alpha3().EnvoyFilters().Lister()
+		sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer().AddEventHandler(c.registryRefreshHandler)
+	}
+	if c.CheckIstioResource(kubernetes.Gateways) {
+		lister.gatewayLister = sharedInformers.Networking().V1beta1().Gateways().Lister()
+		sharedInformers.Networking().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
 	}
 	if c.CheckIstioResource(kubernetes.PeerAuthentications) {
-		(*informer)[kubernetes.PeerAuthenticationsType] = sharedInformers.Security().V1beta1().PeerAuthentications().Informer()
-		(*informer)[kubernetes.PeerAuthenticationsType].AddEventHandler(c.registryRefreshHandler)
+		lister.peerAuthnLister = sharedInformers.Security().V1beta1().PeerAuthentications().Lister()
+		sharedInformers.Security().V1beta1().PeerAuthentications().Informer().AddEventHandler(c.registryRefreshHandler)
 	}
 	if c.CheckIstioResource(kubernetes.RequestAuthentications) {
-		(*informer)[kubernetes.RequestAuthenticationsType] = sharedInformers.Security().V1beta1().RequestAuthentications().Informer()
-		(*informer)[kubernetes.RequestAuthenticationsType].AddEventHandler(c.registryRefreshHandler)
+		lister.requestAuthnLister = sharedInformers.Security().V1beta1().RequestAuthentications().Lister()
+		sharedInformers.Security().V1beta1().RequestAuthentications().Informer().AddEventHandler(c.registryRefreshHandler)
 	}
-}
-
-func (c *kialiCacheImpl) isIstioSynced(namespace string) bool {
-	var isSynced bool
-	if nsCache, exist := c.nsCache[namespace]; exist {
-		isSynced = true
-		if c.CheckIstioResource(kubernetes.DestinationRules) {
-			isSynced = isSynced && nsCache[kubernetes.DestinationRuleType].HasSynced()
-		}
-		if c.CheckIstioResource(kubernetes.EnvoyFilters) {
-			isSynced = isSynced && nsCache[kubernetes.EnvoyFilterType].HasSynced()
-		}
-		if c.CheckIstioResource(kubernetes.Gateways) {
-			isSynced = isSynced && nsCache[kubernetes.GatewayType].HasSynced()
-		}
-		if c.CheckIstioResource(kubernetes.ServiceEntries) {
-			isSynced = isSynced && nsCache[kubernetes.ServiceEntryType].HasSynced()
-		}
-		if c.CheckIstioResource(kubernetes.Sidecars) {
-			isSynced = isSynced && nsCache[kubernetes.SidecarType].HasSynced()
-		}
-		if c.CheckIstioResource(kubernetes.VirtualServices) {
-			isSynced = isSynced && nsCache[kubernetes.VirtualServiceType].HasSynced()
-		}
-		if c.CheckIstioResource(kubernetes.WorkloadGroups) {
-			isSynced = isSynced && nsCache[kubernetes.WorkloadGroupType].HasSynced()
-		}
-		if c.CheckIstioResource(kubernetes.WorkloadEntries) {
-			isSynced = isSynced && nsCache[kubernetes.WorkloadEntryType].HasSynced()
-		}
-
-		if c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
-			isSynced = isSynced && nsCache[kubernetes.AuthorizationPoliciesType].HasSynced()
-		}
-		if c.CheckIstioResource(kubernetes.PeerAuthentications) {
-			isSynced = isSynced && nsCache[kubernetes.PeerAuthenticationsType].HasSynced()
-		}
-		if c.CheckIstioResource(kubernetes.RequestAuthentications) {
-			isSynced = isSynced && nsCache[kubernetes.RequestAuthenticationsType].HasSynced()
-		}
-	} else {
-		isSynced = false
+	if c.CheckIstioResource(kubernetes.ServiceEntries) {
+		lister.serviceEntryLister = sharedInformers.Networking().V1beta1().ServiceEntries().Lister()
+		sharedInformers.Networking().V1beta1().ServiceEntries().Informer().AddEventHandler(c.registryRefreshHandler)
 	}
-	return isSynced
+	if c.CheckIstioResource(kubernetes.Sidecars) {
+		lister.sidecarLister = sharedInformers.Networking().V1beta1().Sidecars().Lister()
+		sharedInformers.Networking().V1beta1().Sidecars().Informer().AddEventHandler(c.registryRefreshHandler)
+	}
+	if c.CheckIstioResource(kubernetes.Telemetries) {
+		lister.telemetryLister = sharedInformers.Telemetry().V1alpha1().Telemetries().Lister()
+		sharedInformers.Telemetry().V1alpha1().Telemetries().Informer().AddEventHandler(c.registryRefreshHandler)
+	}
+	if c.CheckIstioResource(kubernetes.VirtualServices) {
+		lister.virtualServiceLister = sharedInformers.Networking().V1beta1().VirtualServices().Lister()
+		sharedInformers.Networking().V1beta1().VirtualServices().Informer().AddEventHandler(c.registryRefreshHandler)
+	}
+	if c.CheckIstioResource(kubernetes.WasmPlugins) {
+		lister.wasmPluginLister = sharedInformers.Extensions().V1alpha1().WasmPlugins().Lister()
+		sharedInformers.Extensions().V1alpha1().WasmPlugins().Informer().AddEventHandler(c.registryRefreshHandler)
+	}
+	if c.CheckIstioResource(kubernetes.WorkloadEntries) {
+		lister.workloadEntryLister = sharedInformers.Networking().V1beta1().WorkloadEntries().Lister()
+		sharedInformers.Networking().V1beta1().WorkloadEntries().Informer().AddEventHandler(c.registryRefreshHandler)
+	}
+	if c.CheckIstioResource(kubernetes.WorkloadGroups) {
+		lister.workloadGroupLister = sharedInformers.Networking().V1beta1().WorkloadGroups().Lister()
+		sharedInformers.Networking().V1beta1().WorkloadGroups().Informer().AddEventHandler(c.registryRefreshHandler)
+	}
+
+	return sharedInformers
 }
 
 func (c *kialiCacheImpl) GetDestinationRule(namespace, name string) (*networking_v1beta1.DestinationRule, error) {
 	if !c.CheckIstioResource(kubernetes.DestinationRules) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.DestinationRuleType)
 	}
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.DestinationRuleType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			l, ok := obj.(*networking_v1beta1.DestinationRule)
-			if !ok {
-				return nil, errors.New("bad DestinationRule type found in cache")
-			}
-			// Informers don't always populate Kind field
-			l.Kind = kubernetes.DestinationRuleType
-			log.Tracef("[Kiali Cache] Get [resource: DestinationRule] for [namespace: %s] [name: %s]", namespace, name)
-			return l, nil
-		}
+
+	dr, err := c.getCacheLister(namespace).destinationRuleLister.DestinationRules(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	dr.Kind = kubernetes.DestinationRuleType
+	return dr, nil
 }
 
 func (c *kialiCacheImpl) GetDestinationRules(namespace, labelSelector string) ([]*networking_v1beta1.DestinationRule, error) {
 	if !c.CheckIstioResource(kubernetes.DestinationRules) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.DestinationRuleType)
 	}
-	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
-		l := nsCache[kubernetes.DestinationRuleType].GetStore().List()
-		lenL := len(l)
-		if lenL > 0 {
-			_, ok := l[0].(*networking_v1beta1.DestinationRule)
-			if !ok {
-				return []*networking_v1beta1.DestinationRule{}, errors.New("bad DestinationRule type found in cache")
-			}
-			nsL := make([]*networking_v1beta1.DestinationRule, lenL)
-			for i, li := range l {
-				nsL[i] = li.(*networking_v1beta1.DestinationRule)
-				// Informers don't always populate Kind field
-				nsL[i].Kind = kubernetes.DestinationRuleType
-			}
-			log.Tracef("[Kiali Cache] Get [resource: DestinationRule] for [namespace: %s] = %d", namespace, lenL)
-			if labelSelector == "" {
-				return nsL, nil
-			}
-			var filteredL []*networking_v1beta1.DestinationRule
-			selector, selErr := labels.Parse(labelSelector)
-			if selErr != nil {
-				return []*networking_v1beta1.DestinationRule{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
-			}
-			for _, li := range nsL {
-				if selector.Matches(labels.Set(li.Labels)) {
-					filteredL = append(filteredL, li)
-				}
-			}
-			return filteredL, nil
-		}
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
 	}
-	return []*networking_v1beta1.DestinationRule{}, nil
+
+	drs, err := c.getCacheLister(namespace).destinationRuleLister.DestinationRules(namespace).List(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lister returns nil when there are no results but callers of the cache expect an empty array
+	// so keeping the behavior the same since it matters for json marshalling.
+	if drs == nil {
+		return []*networking_v1beta1.DestinationRule{}, nil
+	}
+
+	for _, dr := range drs {
+		dr.Kind = kubernetes.DestinationRuleType
+	}
+	return drs, nil
 }
 
 func (c *kialiCacheImpl) GetEnvoyFilter(namespace, name string) (*networking_v1alpha3.EnvoyFilter, error) {
 	if !c.CheckIstioResource(kubernetes.EnvoyFilters) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.EnvoyFilterType)
 	}
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.EnvoyFilterType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			l, ok := obj.(*networking_v1alpha3.EnvoyFilter)
-			if !ok {
-				return nil, errors.New("bad EnvoyFilter type found in cache")
-			}
-			l.Kind = kubernetes.EnvoyFilterType
-			log.Tracef("[Kiali Cache] Get [resource: EnvoyFilter] for [namespace: %s] [name: %s]", namespace, name)
-			return l, nil
-		}
+
+	ef, err := c.getCacheLister(namespace).envoyFilterLister.EnvoyFilters(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	ef.Kind = kubernetes.EnvoyFilterType
+	return ef, nil
 }
 
 func (c *kialiCacheImpl) GetEnvoyFilters(namespace, labelSelector string) ([]*networking_v1alpha3.EnvoyFilter, error) {
 	if !c.CheckIstioResource(kubernetes.EnvoyFilters) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.EnvoyFilterType)
 	}
-	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
-		l := nsCache[kubernetes.EnvoyFilterType].GetStore().List()
-		lenL := len(l)
-		if lenL > 0 {
-			_, ok := l[0].(*networking_v1alpha3.EnvoyFilter)
-			if !ok {
-				return []*networking_v1alpha3.EnvoyFilter{}, errors.New("bad EnvoyFilter type found in cache")
-			}
-			nsL := make([]*networking_v1alpha3.EnvoyFilter, lenL)
-			for i, li := range l {
-				nsL[i] = li.(*networking_v1alpha3.EnvoyFilter)
-				nsL[i].Kind = kubernetes.EnvoyFilterType
-			}
-			log.Tracef("[Kiali Cache] Get [resource: EnvoyFilter] for [namespace: %s] = %d", namespace, lenL)
-			if labelSelector == "" {
-				return nsL, nil
-			}
-			var filteredL []*networking_v1alpha3.EnvoyFilter
-			selector, selErr := labels.Parse(labelSelector)
-			if selErr != nil {
-				return []*networking_v1alpha3.EnvoyFilter{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
-			}
-			for _, li := range nsL {
-				if selector.Matches(labels.Set(li.Labels)) {
-					filteredL = append(filteredL, li)
-				}
-			}
-			return filteredL, nil
-		}
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
 	}
-	return []*networking_v1alpha3.EnvoyFilter{}, nil
+
+	efs, err := c.getCacheLister(namespace).envoyFilterLister.EnvoyFilters(namespace).List(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lister returns nil when there are no results but callers of the cache expect an empty array
+	// so keeping the behavior the same since it matters for json marshalling.
+	if efs == nil {
+		return []*networking_v1alpha3.EnvoyFilter{}, nil
+	}
+
+	for _, ef := range efs {
+		ef.Kind = kubernetes.EnvoyFilterType
+	}
+	return efs, nil
 }
 
 func (c *kialiCacheImpl) GetGateway(namespace, name string) (*networking_v1beta1.Gateway, error) {
 	if !c.CheckIstioResource(kubernetes.Gateways) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.GatewayType)
 	}
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.GatewayType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			l, ok := obj.(*networking_v1beta1.Gateway)
-			if !ok {
-				return nil, errors.New("bad Gateway type found in cache")
-			}
-			l.Kind = kubernetes.GatewayType
-			log.Tracef("[Kiali Cache] Get [resource: Gateway] for [namespace: %s] [name: %s]", namespace, name)
-			return l, nil
-		}
+
+	gw, err := c.getCacheLister(namespace).gatewayLister.Gateways(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	gw.Kind = kubernetes.GatewayType
+	return gw, nil
 }
 
 func (c *kialiCacheImpl) GetGateways(namespace, labelSelector string) ([]*networking_v1beta1.Gateway, error) {
 	if !c.CheckIstioResource(kubernetes.Gateways) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.Gateways)
 	}
-	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
-		l := nsCache[kubernetes.GatewayType].GetStore().List()
-		lenL := len(l)
-		if lenL > 0 {
-			_, ok := l[0].(*networking_v1beta1.Gateway)
-			if !ok {
-				return []*networking_v1beta1.Gateway{}, errors.New("bad Gateway type found in cache")
-			}
-			nsL := make([]*networking_v1beta1.Gateway, lenL)
-			for i, li := range l {
-				nsL[i] = li.(*networking_v1beta1.Gateway)
-				nsL[i].Kind = kubernetes.GatewayType
-			}
-			log.Tracef("[Kiali Cache] Get [resource: Gateway] for [namespace: %s] = %d", namespace, lenL)
-			if labelSelector == "" {
-				return nsL, nil
-			}
-			var filteredL []*networking_v1beta1.Gateway
-			selector, selErr := labels.Parse(labelSelector)
-			if selErr != nil {
-				return []*networking_v1beta1.Gateway{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
-			}
-			for _, li := range nsL {
-				if selector.Matches(labels.Set(li.Labels)) {
-					filteredL = append(filteredL, li)
-				}
-			}
-			return filteredL, nil
-		}
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
 	}
-	return []*networking_v1beta1.Gateway{}, nil
+
+	gateways, err := c.getCacheLister(namespace).gatewayLister.Gateways(namespace).List(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lister returns nil when there are no results but callers of the cache expect an empty array
+	// so keeping the behavior the same since it matters for json marshalling.
+	if gateways == nil {
+		return []*networking_v1beta1.Gateway{}, nil
+	}
+
+	for _, gw := range gateways {
+		gw.Kind = kubernetes.GatewayType
+	}
+	return gateways, nil
 }
 
 func (c *kialiCacheImpl) GetServiceEntry(namespace, name string) (*networking_v1beta1.ServiceEntry, error) {
 	if !c.CheckIstioResource(kubernetes.ServiceEntries) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.ServiceEntryType)
 	}
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.ServiceEntryType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			l, ok := obj.(*networking_v1beta1.ServiceEntry)
-			if !ok {
-				return nil, errors.New("bad ServiceEntry type found in cache")
-			}
-			l.Kind = kubernetes.ServiceEntryType
-			log.Tracef("[Kiali Cache] Get [resource: ServiceEntry] for [namespace: %s] [name: %s]", namespace, name)
-			return l, nil
-		}
+
+	se, err := c.getCacheLister(namespace).serviceEntryLister.ServiceEntries(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	se.Kind = kubernetes.ServiceEntryType
+	return se, nil
 }
 
 func (c *kialiCacheImpl) GetServiceEntries(namespace, labelSelector string) ([]*networking_v1beta1.ServiceEntry, error) {
 	if !c.CheckIstioResource(kubernetes.ServiceEntries) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.ServiceEntryType)
 	}
-	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
-		l := nsCache[kubernetes.ServiceEntryType].GetStore().List()
-		lenL := len(l)
-		if lenL > 0 {
-			_, ok := l[0].(*networking_v1beta1.ServiceEntry)
-			if !ok {
-				return []*networking_v1beta1.ServiceEntry{}, errors.New("bad ServiceEntry type found in cache")
-			}
-			nsL := make([]*networking_v1beta1.ServiceEntry, lenL)
-			for i, li := range l {
-				nsL[i] = li.(*networking_v1beta1.ServiceEntry)
-				nsL[i].Kind = kubernetes.ServiceEntryType
-			}
-			log.Tracef("[Kiali Cache] Get [resource: ServiceEntry] for [namespace: %s] = %d", namespace, lenL)
-			if labelSelector == "" {
-				return nsL, nil
-			}
-			var filteredL []*networking_v1beta1.ServiceEntry
-			selector, selErr := labels.Parse(labelSelector)
-			if selErr != nil {
-				return []*networking_v1beta1.ServiceEntry{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
-			}
-			for _, li := range nsL {
-				if selector.Matches(labels.Set(li.Labels)) {
-					filteredL = append(filteredL, li)
-				}
-			}
-			return filteredL, nil
-		}
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
 	}
-	return []*networking_v1beta1.ServiceEntry{}, nil
+
+	ses, err := c.getCacheLister(namespace).serviceEntryLister.ServiceEntries(namespace).List(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lister returns nil when there are no results but callers of the cache expect an empty array
+	// so keeping the behavior the same since it matters for json marshalling.
+	if ses == nil {
+		return []*networking_v1beta1.ServiceEntry{}, nil
+	}
+
+	for _, se := range ses {
+		se.Kind = kubernetes.ServiceEntryType
+	}
+	return ses, nil
 }
 
 func (c *kialiCacheImpl) GetSidecar(namespace, name string) (*networking_v1beta1.Sidecar, error) {
 	if !c.CheckIstioResource(kubernetes.Sidecars) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.SidecarType)
 	}
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.SidecarType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			l, ok := obj.(*networking_v1beta1.Sidecar)
-			if !ok {
-				return nil, errors.New("bad Sidecar type found in cache")
-			}
-			l.Kind = kubernetes.SidecarType
-			log.Tracef("[Kiali Cache] Get [resource: Sidecar] for [namespace: %s] [name: %s]", namespace, name)
-			return l, nil
-		}
+
+	sc, err := c.getCacheLister(namespace).sidecarLister.Sidecars(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	sc.Kind = kubernetes.SidecarType
+	return sc, nil
 }
 
 func (c *kialiCacheImpl) GetSidecars(namespace, labelSelector string) ([]*networking_v1beta1.Sidecar, error) {
 	if !c.CheckIstioResource(kubernetes.Sidecars) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.SidecarType)
 	}
-	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
-		l := nsCache[kubernetes.SidecarType].GetStore().List()
-		lenL := len(l)
-		if lenL > 0 {
-			_, ok := l[0].(*networking_v1beta1.Sidecar)
-			if !ok {
-				return []*networking_v1beta1.Sidecar{}, errors.New("bad Sidecar type found in cache")
-			}
-			nsL := make([]*networking_v1beta1.Sidecar, lenL)
-			for i, li := range l {
-				nsL[i] = li.(*networking_v1beta1.Sidecar)
-				nsL[i].Kind = kubernetes.SidecarType
-			}
-			log.Tracef("[Kiali Cache] Get [resource: Sidecar] for [namespace: %s] = %d", namespace, lenL)
-			if labelSelector == "" {
-				return nsL, nil
-			}
-			var filteredL []*networking_v1beta1.Sidecar
-			selector, selErr := labels.Parse(labelSelector)
-			if selErr != nil {
-				return []*networking_v1beta1.Sidecar{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
-			}
-			for _, li := range nsL {
-				if selector.Matches(labels.Set(li.Labels)) {
-					filteredL = append(filteredL, li)
-				}
-			}
-			return filteredL, nil
-		}
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
 	}
-	return []*networking_v1beta1.Sidecar{}, nil
+
+	sidecars, err := c.getCacheLister(namespace).sidecarLister.Sidecars(namespace).List(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lister returns nil when there are no results but callers of the cache expect an empty array
+	// so keeping the behavior the same since it matters for json marshalling.
+	if sidecars == nil {
+		return []*networking_v1beta1.Sidecar{}, nil
+	}
+
+	for _, sc := range sidecars {
+		sc.Kind = kubernetes.SidecarType
+	}
+	return sidecars, nil
 }
 
 func (c *kialiCacheImpl) GetVirtualService(namespace, name string) (*networking_v1beta1.VirtualService, error) {
 	if !c.CheckIstioResource(kubernetes.VirtualServices) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.VirtualServiceType)
 	}
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.VirtualServiceType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			l, ok := obj.(*networking_v1beta1.VirtualService)
-			if !ok {
-				return nil, errors.New("bad VirtualService type found in cache")
-			}
-			l.Kind = kubernetes.VirtualServiceType
-			log.Tracef("[Kiali Cache] Get [resource: VirtualService] for [namespace: %s] [name: %s]", namespace, name)
-			return l, nil
-		}
+
+	vs, err := c.getCacheLister(namespace).virtualServiceLister.VirtualServices(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	vs.Kind = kubernetes.VirtualServiceType
+	return vs, nil
 }
 
 func (c *kialiCacheImpl) GetVirtualServices(namespace, labelSelector string) ([]*networking_v1beta1.VirtualService, error) {
 	if !c.CheckIstioResource(kubernetes.VirtualServices) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.VirtualServiceType)
 	}
-	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
-		l := nsCache[kubernetes.VirtualServiceType].GetStore().List()
-		lenL := len(l)
-		if lenL > 0 {
-			_, ok := l[0].(*networking_v1beta1.VirtualService)
-			if !ok {
-				return []*networking_v1beta1.VirtualService{}, errors.New("bad VirtualService type found in cache")
-			}
-			nsL := make([]*networking_v1beta1.VirtualService, lenL)
-			for i, li := range l {
-				nsL[i] = li.(*networking_v1beta1.VirtualService)
-				nsL[i].Kind = kubernetes.VirtualServiceType
-			}
-			log.Tracef("[Kiali Cache] Get [resource: VirtualService] for [namespace: %s] = %d", namespace, lenL)
-			if labelSelector == "" {
-				return nsL, nil
-			}
-			var filteredL []*networking_v1beta1.VirtualService
-			selector, selErr := labels.Parse(labelSelector)
-			if selErr != nil {
-				return []*networking_v1beta1.VirtualService{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
-			}
-			for _, li := range nsL {
-				if selector.Matches(labels.Set(li.Labels)) {
-					filteredL = append(filteredL, li)
-				}
-			}
-			return filteredL, nil
-		}
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
 	}
-	return []*networking_v1beta1.VirtualService{}, nil
+
+	vs, err := c.getCacheLister(namespace).virtualServiceLister.VirtualServices(namespace).List(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lister returns nil when there are no results but callers of the cache expect an empty array
+	// so keeping the behavior the same since it matters for json marshalling.
+	if vs == nil {
+		return []*networking_v1beta1.VirtualService{}, nil
+	}
+
+	for _, v := range vs {
+		v.Kind = kubernetes.VirtualServiceType
+	}
+	return vs, nil
 }
 
 func (c *kialiCacheImpl) GetWorkloadEntry(namespace, name string) (*networking_v1beta1.WorkloadEntry, error) {
 	if !c.CheckIstioResource(kubernetes.WorkloadEntries) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadEntryType)
 	}
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.WorkloadEntryType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			l, ok := obj.(*networking_v1beta1.WorkloadEntry)
-			if !ok {
-				return nil, errors.New("bad WorkloadEntry type found in cache")
-			}
-			l.Kind = kubernetes.WorkloadEntryType
-			log.Tracef("[Kiali Cache] Get [resource: WorkloadEntry] for [namespace: %s] [name: %s]", namespace, name)
-			return l, nil
-		}
+
+	we, err := c.getCacheLister(namespace).workloadEntryLister.WorkloadEntries(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	we.Kind = kubernetes.WorkloadEntryType
+	return we, nil
 }
 
 func (c *kialiCacheImpl) GetWorkloadEntries(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadEntry, error) {
 	if !c.CheckIstioResource(kubernetes.WorkloadEntries) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadEntryType)
 	}
-	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
-		l := nsCache[kubernetes.WorkloadEntryType].GetStore().List()
-		lenL := len(l)
-		if lenL > 0 {
-			_, ok := l[0].(*networking_v1beta1.WorkloadEntry)
-			if !ok {
-				return []*networking_v1beta1.WorkloadEntry{}, errors.New("bad WorkloadEntry type found in cache")
-			}
-			nsL := make([]*networking_v1beta1.WorkloadEntry, lenL)
-			for i, li := range l {
-				nsL[i] = li.(*networking_v1beta1.WorkloadEntry)
-				nsL[i].Kind = kubernetes.WorkloadEntryType
-			}
-			log.Tracef("[Kiali Cache] Get [resource: WorkloadEntry] for [namespace: %s] = %d", namespace, lenL)
-			if labelSelector == "" {
-				return nsL, nil
-			}
-			var filteredL []*networking_v1beta1.WorkloadEntry
-			selector, selErr := labels.Parse(labelSelector)
-			if selErr != nil {
-				return []*networking_v1beta1.WorkloadEntry{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
-			}
-			for _, li := range nsL {
-				if selector.Matches(labels.Set(li.Labels)) {
-					filteredL = append(filteredL, li)
-				}
-			}
-			return filteredL, nil
-		}
+
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
 	}
-	return []*networking_v1beta1.WorkloadEntry{}, nil
+
+	we, err := c.getCacheLister(namespace).workloadEntryLister.WorkloadEntries(namespace).List(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lister returns nil when there are no results but callers of the cache expect an empty array
+	// so keeping the behavior the same since it matters for json marshalling.
+	if we == nil {
+		return []*networking_v1beta1.WorkloadEntry{}, nil
+	}
+
+	for _, w := range we {
+		w.Kind = kubernetes.WorkloadEntryType
+	}
+	return we, nil
 }
 
 func (c *kialiCacheImpl) GetWorkloadGroup(namespace, name string) (*networking_v1beta1.WorkloadGroup, error) {
 	if !c.CheckIstioResource(kubernetes.WorkloadGroups) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroupType)
 	}
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.WorkloadGroupType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			l, ok := obj.(*networking_v1beta1.WorkloadGroup)
-			if !ok {
-				return nil, errors.New("bad WorkloadGroup type found in cache")
-			}
-			l.Kind = kubernetes.WorkloadGroupType
-			log.Tracef("[Kiali Cache] Get [resource: WorkloadGroup] for [namespace: %s] [name: %s]", namespace, name)
-			return l, nil
-		}
+
+	wg, err := c.getCacheLister(namespace).workloadGroupLister.WorkloadGroups(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	wg.Kind = kubernetes.WorkloadGroupType
+	return wg, nil
 }
 
 func (c *kialiCacheImpl) GetWorkloadGroups(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadGroup, error) {
 	if !c.CheckIstioResource(kubernetes.WorkloadGroups) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroups)
 	}
-	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
-		l := nsCache[kubernetes.WorkloadGroupType].GetStore().List()
-		lenL := len(l)
-		if lenL > 0 {
-			_, ok := l[0].(*networking_v1beta1.WorkloadGroup)
-			if !ok {
-				return []*networking_v1beta1.WorkloadGroup{}, errors.New("bad WorkloadGroup type found in cache")
-			}
-			nsL := make([]*networking_v1beta1.WorkloadGroup, lenL)
-			for i, li := range l {
-				nsL[i] = li.(*networking_v1beta1.WorkloadGroup)
-				nsL[i].Kind = kubernetes.WorkloadGroupType
-			}
-			log.Tracef("[Kiali Cache] Get [resource: WorkloadGroup] for [namespace: %s] = %d", namespace, lenL)
-			if labelSelector == "" {
-				return nsL, nil
-			}
-			var filteredL []*networking_v1beta1.WorkloadGroup
-			selector, selErr := labels.Parse(labelSelector)
-			if selErr != nil {
-				return []*networking_v1beta1.WorkloadGroup{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
-			}
-			for _, li := range nsL {
-				if selector.Matches(labels.Set(li.Labels)) {
-					filteredL = append(filteredL, li)
-				}
-			}
-			return filteredL, nil
-		}
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
 	}
-	return []*networking_v1beta1.WorkloadGroup{}, nil
+
+	wg, err := c.getCacheLister(namespace).workloadGroupLister.WorkloadGroups(namespace).List(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lister returns nil when there are no results but callers of the cache expect an empty array
+	// so keeping the behavior the same since it matters for json marshalling.
+	if wg == nil {
+		return []*networking_v1beta1.WorkloadGroup{}, nil
+	}
+
+	for _, w := range wg {
+		w.Kind = kubernetes.WorkloadGroupType
+	}
+	return wg, nil
 }
 
 func (c *kialiCacheImpl) GetWasmPlugin(namespace, name string) (*extentions_v1alpha1.WasmPlugin, error) {
 	if !c.CheckIstioResource(kubernetes.WasmPlugins) {
-		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroupType)
+		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WasmPluginType)
 	}
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.WasmPluginType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			l, ok := obj.(*extentions_v1alpha1.WasmPlugin)
-			if !ok {
-				return nil, errors.New("bad WorkloadGroup type found in cache")
-			}
-			l.Kind = kubernetes.WasmPlugins
-			log.Tracef("[Kiali Cache] Get [resource: WasmPlugin] for [namespace: %s] [name: %s]", namespace, name)
-			return l, nil
-		}
+
+	wp, err := c.getCacheLister(namespace).wasmPluginLister.WasmPlugins(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	wp.Kind = kubernetes.WasmPluginType
+	return wp, nil
 }
 
 func (c *kialiCacheImpl) GetWasmPlugins(namespace, labelSelector string) ([]*extentions_v1alpha1.WasmPlugin, error) {
 	if !c.CheckIstioResource(kubernetes.WasmPlugins) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroups)
 	}
-	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
-		l := nsCache[kubernetes.WasmPluginType].GetStore().List()
-		lenL := len(l)
-		if lenL > 0 {
-			_, ok := l[0].(*extentions_v1alpha1.WasmPlugin)
-			if !ok {
-				return []*extentions_v1alpha1.WasmPlugin{}, errors.New("bad WorkloadGroup type found in cache")
-			}
-			nsL := make([]*extentions_v1alpha1.WasmPlugin, lenL)
-			for i, li := range l {
-				nsL[i] = li.(*extentions_v1alpha1.WasmPlugin)
-				nsL[i].Kind = kubernetes.WasmPluginType
-			}
-			log.Tracef("[Kiali Cache] Get [resource: WorkloadGroup] for [namespace: %s] = %d", namespace, lenL)
-			if labelSelector == "" {
-				return nsL, nil
-			}
-			var filteredL []*extentions_v1alpha1.WasmPlugin
-			selector, selErr := labels.Parse(labelSelector)
-			if selErr != nil {
-				return []*extentions_v1alpha1.WasmPlugin{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
-			}
-			for _, li := range nsL {
-				if selector.Matches(labels.Set(li.Labels)) {
-					filteredL = append(filteredL, li)
-				}
-			}
-			return filteredL, nil
-		}
+
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
 	}
-	return []*extentions_v1alpha1.WasmPlugin{}, nil
+
+	wp, err := c.getCacheLister(namespace).wasmPluginLister.WasmPlugins(namespace).List(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lister returns nil when there are no results but callers of the cache expect an empty array
+	// so keeping the behavior the same since it matters for json marshalling.
+	if wp == nil {
+		return []*extentions_v1alpha1.WasmPlugin{}, nil
+	}
+
+	for _, w := range wp {
+		w.Kind = kubernetes.WasmPluginType
+	}
+	return wp, nil
 }
 
 func (c *kialiCacheImpl) GetTelemetry(namespace, name string) (*v1alpha1.Telemetry, error) {
 	if !c.CheckIstioResource(kubernetes.Telemetries) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroupType)
 	}
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.TelemetryType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			l, ok := obj.(*v1alpha1.Telemetry)
-			if !ok {
-				return nil, errors.New("bad WorkloadGroup type found in cache")
-			}
-			l.Kind = kubernetes.Telemetries
-			log.Tracef("[Kiali Cache] Get [resource: Telemetry] for [namespace: %s] [name: %s]", namespace, name)
-			return l, nil
-		}
+
+	t, err := c.getCacheLister(namespace).telemetryLister.Telemetries(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	t.Kind = kubernetes.TelemetryType
+	return t, nil
 }
 
 func (c *kialiCacheImpl) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1.Telemetry, error) {
 	if !c.CheckIstioResource(kubernetes.Telemetries) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroups)
 	}
-	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
-		l := nsCache[kubernetes.Telemetries].GetStore().List()
-		lenL := len(l)
-		if lenL > 0 {
-			_, ok := l[0].(*v1alpha1.Telemetry)
-			if !ok {
-				return []*v1alpha1.Telemetry{}, errors.New("bad WorkloadGroup type found in cache")
-			}
-			nsL := make([]*v1alpha1.Telemetry, lenL)
-			for i, li := range l {
-				nsL[i] = li.(*v1alpha1.Telemetry)
-				nsL[i].Kind = kubernetes.TelemetryType
-			}
-			log.Tracef("[Kiali Cache] Get [resource: WorkloadGroup] for [namespace: %s] = %d", namespace, lenL)
-			if labelSelector == "" {
-				return nsL, nil
-			}
-			var filteredL []*v1alpha1.Telemetry
-			selector, selErr := labels.Parse(labelSelector)
-			if selErr != nil {
-				return []*v1alpha1.Telemetry{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
-			}
-			for _, li := range nsL {
-				if selector.Matches(labels.Set(li.Labels)) {
-					filteredL = append(filteredL, li)
-				}
-			}
-			return filteredL, nil
-		}
+
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
 	}
-	return []*v1alpha1.Telemetry{}, nil
+
+	t, err := c.getCacheLister(namespace).telemetryLister.Telemetries(namespace).List(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lister returns nil when there are no results but callers of the cache expect an empty array
+	// so keeping the behavior the same since it matters for json marshalling.
+	if t == nil {
+		return []*v1alpha1.Telemetry{}, nil
+	}
+
+	for _, w := range t {
+		w.Kind = kubernetes.TelemetryType
+	}
+
+	return t, nil
 }
 
 func (c *kialiCacheImpl) GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error) {
 	if !c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.AuthorizationPoliciesType)
 	}
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.AuthorizationPoliciesType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			l, ok := obj.(*security_v1beta1.AuthorizationPolicy)
-			if !ok {
-				return nil, errors.New("bad AuthorizationPolicy type found in cache")
-			}
-			l.Kind = kubernetes.AuthorizationPoliciesType
-			log.Tracef("[Kiali Cache] Get [resource: AuthorizationPolicy] for [namespace: %s] [name: %s]", namespace, name)
-			return l, nil
-		}
+
+	ap, err := c.getCacheLister(namespace).authzLister.AuthorizationPolicies(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	ap.Kind = kubernetes.AuthorizationPoliciesType
+	return ap, nil
 }
 
 func (c *kialiCacheImpl) GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1beta1.AuthorizationPolicy, error) {
 	if !c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.AuthorizationPolicies)
 	}
-	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
-		l := nsCache[kubernetes.AuthorizationPoliciesType].GetStore().List()
-		lenL := len(l)
-		if lenL > 0 {
-			_, ok := l[0].(*security_v1beta1.AuthorizationPolicy)
-			if !ok {
-				return []*security_v1beta1.AuthorizationPolicy{}, errors.New("bad AuthorizationPolicy type found in cache")
-			}
-			nsL := make([]*security_v1beta1.AuthorizationPolicy, lenL)
-			for i, li := range l {
-				nsL[i] = li.(*security_v1beta1.AuthorizationPolicy)
-				nsL[i].Kind = kubernetes.AuthorizationPoliciesType
-			}
-			log.Tracef("[Kiali Cache] Get [resource: AuthorizationPolicy] for [namespace: %s] = %d", namespace, lenL)
-			if labelSelector == "" {
-				return nsL, nil
-			}
-			var filteredL []*security_v1beta1.AuthorizationPolicy
-			selector, selErr := labels.Parse(labelSelector)
-			if selErr != nil {
-				return []*security_v1beta1.AuthorizationPolicy{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
-			}
-			for _, li := range nsL {
-				if selector.Matches(labels.Set(li.Labels)) {
-					filteredL = append(filteredL, li)
-				}
-			}
-			return filteredL, nil
-		}
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
 	}
-	return []*security_v1beta1.AuthorizationPolicy{}, nil
+
+	authPolicies, err := c.getCacheLister(namespace).authzLister.AuthorizationPolicies(namespace).List(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lister returns nil when there are no results but callers of the cache expect an empty array
+	// so keeping the behavior the same since it matters for json marshalling.
+	if authPolicies == nil {
+		return []*security_v1beta1.AuthorizationPolicy{}, nil
+	}
+
+	for _, ap := range authPolicies {
+		ap.Kind = kubernetes.AuthorizationPoliciesType
+	}
+	return authPolicies, nil
 }
 
 func (c *kialiCacheImpl) GetPeerAuthentication(namespace, name string) (*security_v1beta1.PeerAuthentication, error) {
 	if !c.CheckIstioResource(kubernetes.PeerAuthentications) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.PeerAuthenticationsType)
 	}
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.PeerAuthenticationsType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			l, ok := obj.(*security_v1beta1.PeerAuthentication)
-			if !ok {
-				return nil, errors.New("bad PeerAuthentication type found in cache")
-			}
-			l.Kind = kubernetes.PeerAuthenticationsType
-			log.Tracef("[Kiali Cache] Get [resource: PeerAuthentication] for [namespace: %s] [name: %s]", namespace, name)
-			return l, nil
-		}
+
+	pa, err := c.getCacheLister(namespace).peerAuthnLister.PeerAuthentications(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	pa.Kind = kubernetes.PeerAuthenticationsType
+	return pa, nil
 }
 
 func (c *kialiCacheImpl) GetPeerAuthentications(namespace, labelSelector string) ([]*security_v1beta1.PeerAuthentication, error) {
 	if !c.CheckIstioResource(kubernetes.PeerAuthentications) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.PeerAuthenticationsType)
 	}
-	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
-		l := nsCache[kubernetes.PeerAuthenticationsType].GetStore().List()
-		lenL := len(l)
-		if lenL > 0 {
-			_, ok := l[0].(*security_v1beta1.PeerAuthentication)
-			if !ok {
-				return []*security_v1beta1.PeerAuthentication{}, errors.New("bad PeerAuthentication type found in cache")
-			}
-			nsL := make([]*security_v1beta1.PeerAuthentication, lenL)
-			for i, li := range l {
-				nsL[i] = li.(*security_v1beta1.PeerAuthentication)
-				nsL[i].Kind = kubernetes.PeerAuthenticationsType
-			}
-			log.Tracef("[Kiali Cache] Get [resource: PeerAuthentication] for [namespace: %s] = %d", namespace, lenL)
-			if labelSelector == "" {
-				return nsL, nil
-			}
-			var filteredL []*security_v1beta1.PeerAuthentication
-			selector, selErr := labels.Parse(labelSelector)
-			if selErr != nil {
-				return []*security_v1beta1.PeerAuthentication{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
-			}
-			for _, li := range nsL {
-				if selector.Matches(labels.Set(li.Labels)) {
-					filteredL = append(filteredL, li)
-				}
-			}
-			return filteredL, nil
-		}
+
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
 	}
-	return []*security_v1beta1.PeerAuthentication{}, nil
+
+	peerAuths, err := c.getCacheLister(namespace).peerAuthnLister.PeerAuthentications(namespace).List(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lister returns nil when there are no results but callers of the cache expect an empty array
+	// so keeping the behavior the same since it matters for json marshalling.
+	if peerAuths == nil {
+		return []*security_v1beta1.PeerAuthentication{}, nil
+	}
+
+	for _, pa := range peerAuths {
+		pa.Kind = kubernetes.PeerAuthenticationsType
+	}
+	return peerAuths, nil
 }
 
 func (c *kialiCacheImpl) GetRequestAuthentication(namespace, name string) (*security_v1beta1.RequestAuthentication, error) {
 	if !c.CheckIstioResource(kubernetes.RequestAuthentications) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.RequestAuthentications)
 	}
-	if nsCache, ok := c.nsCache[namespace]; ok {
-		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
-		key := namespace + "/" + name
-		obj, exist, err := nsCache[kubernetes.RequestAuthenticationsType].GetStore().GetByKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if exist {
-			l, ok := obj.(*security_v1beta1.RequestAuthentication)
-			if !ok {
-				return nil, errors.New("bad RequestAuthentication type found in cache")
-			}
-			l.Kind = kubernetes.RequestAuthenticationsType
-			log.Tracef("[Kiali Cache] Get [resource: RequestAuthentication] for [namespace: %s] [name: %s]", namespace, name)
-			return l, nil
-		}
+
+	ra, err := c.getCacheLister(namespace).requestAuthnLister.RequestAuthentications(namespace).Get(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	ra.Kind = kubernetes.RequestAuthenticationsType
+	return ra, nil
 }
 
 func (c *kialiCacheImpl) GetRequestAuthentications(namespace, labelSelector string) ([]*security_v1beta1.RequestAuthentication, error) {
 	if !c.CheckIstioResource(kubernetes.RequestAuthentications) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.RequestAuthenticationsType)
 	}
-	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
-		l := nsCache[kubernetes.RequestAuthenticationsType].GetStore().List()
-		lenL := len(l)
-		if lenL > 0 {
-			_, ok := l[0].(*security_v1beta1.RequestAuthentication)
-			if !ok {
-				return []*security_v1beta1.RequestAuthentication{}, errors.New("bad RequestAuthentication type found in cache")
-			}
-			nsL := make([]*security_v1beta1.RequestAuthentication, lenL)
-			for i, li := range l {
-				nsL[i] = li.(*security_v1beta1.RequestAuthentication)
-				nsL[i].Kind = kubernetes.RequestAuthenticationsType
-			}
-			log.Tracef("[Kiali Cache] Get [resource: RequestAuthentication] for [namespace: %s] = %d", namespace, lenL)
-			if labelSelector == "" {
-				return nsL, nil
-			}
-			var filteredL []*security_v1beta1.RequestAuthentication
-			selector, selErr := labels.Parse(labelSelector)
-			if selErr != nil {
-				return []*security_v1beta1.RequestAuthentication{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
-			}
-			for _, li := range nsL {
-				if selector.Matches(labels.Set(li.Labels)) {
-					filteredL = append(filteredL, li)
-				}
-			}
-			return filteredL, nil
-		}
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
 	}
-	return []*security_v1beta1.RequestAuthentication{}, nil
+
+	reqAuths, err := c.getCacheLister(namespace).requestAuthnLister.RequestAuthentications(namespace).List(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lister returns nil when there are no results but callers of the cache expect an empty array
+	// so keeping the behavior the same since it matters for json marshalling.
+	if reqAuths == nil {
+		return []*security_v1beta1.RequestAuthentication{}, nil
+	}
+
+	for _, ra := range reqAuths {
+		ra.Kind = kubernetes.RequestAuthenticationsType
+	}
+	return reqAuths, nil
 }

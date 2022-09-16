@@ -816,7 +816,7 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(namespace, resourceType, n
 
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh
 	if kialiCache != nil && err == nil {
-		kialiCache.RefreshNamespace(namespace)
+		kialiCache.Refresh(namespace)
 	}
 	return err
 }
@@ -878,7 +878,7 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(namespace, resourceType, n
 
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh
 	if kialiCache != nil && err == nil {
-		kialiCache.RefreshNamespace(namespace)
+		kialiCache.Refresh(namespace)
 	}
 	return istioConfigDetail, err
 }
@@ -989,7 +989,7 @@ func (in *IstioConfigService) CreateIstioConfigDetail(namespace, resourceType st
 	}
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh
 	if kialiCache != nil && err == nil {
-		kialiCache.RefreshNamespace(namespace)
+		kialiCache.Refresh(namespace)
 	}
 	return istioConfigDetail, err
 }

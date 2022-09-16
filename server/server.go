@@ -85,6 +85,11 @@ func NewServer() *Server {
 
 // Start HTTP server asynchronously. TLS may be active depending on the global configuration.
 func (s *Server) Start() {
+	// Start the business to initialize cache dependencies.
+	// The business cache should start before the server endpoint to ensure
+	// that the cache is ready before it's used by one of the server handlers.
+	business.Start()
+
 	conf := config.Get()
 	log.Infof("Server endpoint will start at [%v%v]", s.httpServer.Addr, conf.Server.WebRoot)
 	log.Infof("Server endpoint will serve static content from [%v]", conf.Server.StaticContentRootDirectory)
@@ -106,9 +111,6 @@ func (s *Server) Start() {
 	if conf.Server.Observability.Metrics.Enabled {
 		StartMetricsServer()
 	}
-
-	// Start the business to initialize cache dependencies
-	business.Start()
 }
 
 // Stop the HTTP server
