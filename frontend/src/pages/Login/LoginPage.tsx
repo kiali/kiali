@@ -163,12 +163,23 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
 
   render() {
     let loginLabel = 'Log In';
+    if (authenticationConfig.strategy === AuthStrategy.openshift) {
+      loginLabel = 'Log In With OpenShift';
+    } else if (authenticationConfig.strategy === AuthStrategy.openid) {
+      loginLabel = 'Log In With OpenID';
+    }
 
     const messages = this.getHelperMessage();
     const isLoggingIn = this.props.isPostLoginPerforming || this.props.status === LoginStatus.logging;
     const isLoginButtonDisabled = isLoggingIn || this.props.status === LoginStatus.loggedIn;
-
-    if ((authenticationConfig.strategy === AuthStrategy.openshift || authenticationConfig.strategy === AuthStrategy.openid) && !isLoggingIn) {
+    let isHash = false;
+    // Same conditions as in AuthenticationController
+    if (isAuthStrategyOAuth()) {
+      const pattern = /[#&](access_token|id_token)=/;
+      isHash = pattern.test(window.location.hash);
+    }
+    
+    if ((authenticationConfig.strategy === AuthStrategy.openshift || authenticationConfig.strategy === AuthStrategy.openid) && !isHash && this.props.status == 2) {
       window.location.href = authenticationConfig.authorizationEndpoint!;
     }
 
