@@ -1,16 +1,16 @@
 import * as React from 'react';
-import { Button, Tooltip, ButtonVariant, TextInput, Form } from '@patternfly/react-core';
+import { Button, ButtonVariant, Form, TextInput, Tooltip } from '@patternfly/react-core';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../../store/Store';
-import { findValueSelector, hideValueSelector, edgeLabelsSelector, edgeModeSelector } from '../../../store/Selectors';
+import { edgeLabelsSelector, edgeModeSelector, findValueSelector, hideValueSelector } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import GraphHelpFind from '../../../pages/Graph/GraphHelpFind';
-import { CyNode, CyEdge } from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import { EdgeLabelMode, NodeType, Layout, EdgeMode } from '../../../types/Graph';
+import { CyEdge, CyNode } from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
+import { EdgeLabelMode, EdgeMode, Layout, NodeType } from '../../../types/Graph';
 import * as AlertUtils from '../../../utils/AlertUtils';
-import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
+import { defaultIconStyle, KialiIcon } from 'config/KialiIcon';
 import { style } from 'typestyle';
 import TourStopContainer from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
@@ -221,6 +221,8 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
     const graphChanged = this.props.updateTime !== prevProps.updateTime;
     const graphElementsChanged = graphChanged && this.props.elementsChanged;
+    const layoutChanged = this.props.layout !== prevProps.layout;
+    const namespaceLayoutChanged = this.props.namespaceLayout !== prevProps.namespaceLayout;
 
     // ensure redux state and URL are aligned
     if (findChanged) {
@@ -266,7 +268,9 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
         graphChanged,
         graphElementsChanged,
         edgeModeChanged,
-        compressOnHideChanged
+        compressOnHideChanged,
+        layoutChanged,
+        namespaceLayoutChanged
       );
     }
   }
@@ -485,12 +489,25 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     graphChanged: boolean,
     graphElementsChanged: boolean,
     edgeModeChanged: boolean,
-    compressOnHideChanged: boolean
+    compressOnHideChanged: boolean,
+    layoutChanged: boolean,
+    namespaceLayoutChanged: boolean
   ) => {
     const selector = this.parseValue(this.props.hideValue, false);
     const checkRemovals = selector || this.props.edgeMode !== EdgeMode.ALL;
 
     console.debug(`Hide selector=[${selector}]`);
+
+    // In case edgeModeChanged is true and changed to ALL and also <layoutChanged OR namespaceLayoutChanged> is true, that
+    // would mean user did a factory reset. That will cause a graph change, but since Cy hasn't finished
+    // updating the graph, the change is not visible here until a following update. It's needed to release
+    // the this.removedElements variable so that the following update won't try to do a restore() of no longer
+    // valid elements. Also, it is not possible to do any processing since the graph has not updated properly, so we
+    // stop here.
+    if (edgeModeChanged && (this.props.edgeMode === EdgeMode.ALL) && (layoutChanged || namespaceLayoutChanged)) {
+      this.removedElements = undefined;
+      return;
+    }
 
     cy.startBatch();
 

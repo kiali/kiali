@@ -137,6 +137,9 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       });
     case getType(GraphToolbarActions.resetSettings):
       return updateState(state, {
+        edgeMode: INITIAL_GRAPH_STATE.edgeMode,
+        layout: INITIAL_GRAPH_STATE.layout,
+        namespaceLayout: INITIAL_GRAPH_STATE.namespaceLayout,
         toolbarState: INITIAL_GRAPH_STATE.toolbarState
       });
     case getType(GraphToolbarActions.toggleBoxByCluster):
