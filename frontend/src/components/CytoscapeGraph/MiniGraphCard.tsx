@@ -107,7 +107,7 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
     }
 
     let start;
-    if (store.getState().userSettings.timeRange.rangeDuration != undefined) {
+    if (store.getState().userSettings.timeRange.rangeDuration !== undefined) {
       start = store.getState().userSettings.timeRange.rangeDuration
     }else {
       start = this.props.dataSource.graphDuration
