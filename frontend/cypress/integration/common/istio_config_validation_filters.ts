@@ -1,4 +1,4 @@
-import { When, Then, And } from "cypress-cucumber-preprocessor/steps";
+import { And, Then, When } from "@badeball/cypress-cucumber-preprocessor";
 
 // Some of the steps from istio_config_validation_filters.feature are implemented in
 // the istio_config_type_filters.ts file. This is because some steps are identical.

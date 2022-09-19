@@ -1,4 +1,4 @@
-import { When, Then, And } from "cypress-cucumber-preprocessor/steps";
+import { And, Then, When } from "@badeball/cypress-cucumber-preprocessor";
 import { activeFilters, showMore} from "./label_check";
 
 function optionCheck(name:string){
