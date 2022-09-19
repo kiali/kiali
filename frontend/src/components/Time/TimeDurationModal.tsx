@@ -44,6 +44,9 @@ export function TimeDurationModal(props: Props) {
       dispatch(UserSettingsActions.setDuration(duration));
     } else {
       dispatch(UserSettingsActions.setTimeRange(timeRange));
+      if (timeRange.rangeDuration != undefined) {
+        dispatch(UserSettingsActions.setDuration(timeRange.rangeDuration));
+      }
     }
 
     if (props.onConfirm) {
@@ -71,6 +74,7 @@ export function TimeDurationModal(props: Props) {
       showClose={false}
       actions={[<Button key="confirm" variant="primary" onClick={handleConfirm}>Confirm</Button>,<Button key="cancel" variant="link" onClick={handleCancel}>Cancel</Button>]}
       position="top"
+      aria-label="Time duration"
     >
       <Form isHorizontal={true}>
         {props.customDuration ? (
