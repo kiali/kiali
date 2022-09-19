@@ -252,7 +252,7 @@ func (c *kialiCacheImpl) createNSCache(namespace string) bool {
 	}
 	for _, synced := range gatewayInformerFactory.WaitForCacheSync(c.stopNSChans[namespace]) {
 		if !synced {
-			log.Errorf("[Kiali Cache] failed to sync [namespace: %s] Istio cache", namespace)
+			log.Errorf("[Kiali Cache] failed to sync [namespace: %s] gateway-api cache", namespace)
 			return false
 		}
 	}
