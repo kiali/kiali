@@ -227,20 +227,10 @@ When('the user refreshes the list page', function () {
 });
 
 When('user clicks the {string} sorting option',(option:string) => {
-  // cy.intercept(
-  // {
-  //   method: 'GET', 
-  //   url: Cypress.config('baseUrl')+'/api/istio/config*', 
-  // }).as('ascendingOrder');
   cy.get('thead').contains(option).should('be.visible').click();
 });
 
 When('user double clicks the {string} sorting option',(option:string) => {
-  // cy.intercept(
-  // {
-  //   method: 'GET', 
-  //   url: Cypress.config('baseUrl')+'/api/istio/config*', 
-  // }).as('descendingOrder');
   cy.get('thead').contains(option).should('be.visible').dblclick()
 });
 
@@ -249,7 +239,24 @@ And('user filters for config {string}', (configName: string) => {
 });
 
 Then('the table is sorted by the {string} in {string} order', (option:string, sorting:string) => {
-  // cy.wait(`@${sorting}Order`);
+  var column:Number;
+  switch (option){
+  case "Name":
+    column = 1;
+    break;
+  case "Namespace":
+    column = 2;
+    break;
+  case "Type":
+    column = 3;
+    break;
+  case "Configuration":
+    column = 4;
+    break;
+  }
+
+  cy.get('tbody > tr').find(`:nth-child(${column})`)
+  
   cy.get(`th[aria-sort="${sorting}"]`).contains(option).should('be.visible');
 });
 
