@@ -207,8 +207,12 @@ func (in *K8SClient) IsOpenShift() bool {
 }
 
 func (in *K8SClient) IsGatewayAPI() bool {
+	if in.GatewayAPI() == nil {
+		return false
+	}
 	if in.isGatewayAPI == nil {
 		isGatewayAPI := false
+		// GatewayClass should exist got K8s Gateway API to work.
 		_, err := in.GatewayAPI().GatewayV1alpha2().GatewayClasses().List(in.ctx, emptyListOptions)
 		if err == nil {
 			isGatewayAPI = true
