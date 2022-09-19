@@ -44,7 +44,7 @@ export function TimeDurationModal(props: Props) {
       dispatch(UserSettingsActions.setDuration(duration));
     } else {
       dispatch(UserSettingsActions.setTimeRange(timeRange));
-      if (timeRange.rangeDuration != undefined) {
+      if (timeRange.rangeDuration !== undefined) {
         dispatch(UserSettingsActions.setDuration(timeRange.rangeDuration));
       }
     }
