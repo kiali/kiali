@@ -186,10 +186,14 @@ Cypress.Commands.add('login', (username: string, password: string) => {
       } else if (auth_strategy === 'token') {
         cy.exec('kubectl exec deploy/kiali -n istio-system -- cat /var/run/secrets/kubernetes.io/serviceaccount/token')
           .then(result => {
-            cy.visit('/');
-            cy.get('#token').type(result.stdout, { log: false });
-            cy.get('button[type=submit]').click();
-            cy.get('#page-sidebar').should('be.visible');
+            cy.request({
+              method: 'POST',
+              url: 'api/authenticate',
+              form: true,
+              body: {
+                token: result.stdout
+              }
+            });
             haveCookie = true;
           });
       }
