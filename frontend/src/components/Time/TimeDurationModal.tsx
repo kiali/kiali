@@ -74,7 +74,6 @@ export function TimeDurationModal(props: Props) {
       showClose={false}
       actions={[<Button key="confirm" variant="primary" onClick={handleConfirm}>Confirm</Button>,<Button key="cancel" variant="link" onClick={handleCancel}>Cancel</Button>]}
       position="top"
-      aria-label="Time"
     >
       <Form isHorizontal={true}>
         {props.customDuration ? (
