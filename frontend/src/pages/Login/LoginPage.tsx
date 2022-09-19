@@ -178,8 +178,8 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
       const pattern = /[#&](access_token|id_token)=/;
       isHash = pattern.test(window.location.hash);
     }
-    
-    if ((authenticationConfig.strategy === AuthStrategy.openshift || authenticationConfig.strategy === AuthStrategy.openid) && !isHash && this.props.status == 2) {
+
+    if ((authenticationConfig.strategy === AuthStrategy.openshift || authenticationConfig.strategy === AuthStrategy.openid) && !isHash && this.props.status === LoginStatus.loggedOut) {
       window.location.href = authenticationConfig.authorizationEndpoint!;
     }
 
