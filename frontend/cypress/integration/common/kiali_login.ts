@@ -47,6 +47,8 @@ And('user fill in username and password', () => {
 })
 
 Then('user see console in URL', () => {
-    cy.url().should('include', 'console')
+    if (auth_strategy === 'openshift') {
+        cy.url().should('include', 'console')
+    }
 })
 
