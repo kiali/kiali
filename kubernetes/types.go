@@ -62,12 +62,14 @@ const (
 
 	// K8s Networking
 
-	K8sGateways          = "k8sgateways"
-	K8sGatewayType       = "K8sGateway"
+	K8sGateways    = "k8sgateways"
+	K8sGatewayType = "K8sGateway"
+	// K8sActualGatewayType There is a naming conflict between Istio and K8s Gateways, keeping here an actual type to show in YAML editor
 	K8sActualGatewayType = "Gateway"
 
-	K8sHTTPRoutes          = "k8shttproutes"
-	K8sHTTPRouteType       = "K8sHTTPRoute"
+	K8sHTTPRoutes    = "k8shttproutes"
+	K8sHTTPRouteType = "K8sHTTPRoute"
+	// K8sActualHTTPRouteType There is a naming conflict between Istio and K8s Gateways, keeping here an actual type to show in YAML editor
 	K8sActualHTTPRouteType = "HTTPRoute"
 
 	// Authorization PeerAuthentications

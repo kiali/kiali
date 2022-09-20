@@ -50,7 +50,7 @@ type K8SClientMock struct {
 func NewK8SClientMock() *K8SClientMock {
 	k8s := new(K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetKialiToken").Return("")
 	return k8s
 }

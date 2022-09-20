@@ -216,6 +216,8 @@ func (in *K8SClient) IsGatewayAPI() bool {
 		_, err := in.GatewayAPI().GatewayV1alpha2().GatewayClasses().List(in.ctx, emptyListOptions)
 		if err == nil {
 			isGatewayAPI = true
+		} else if !errors.IsNotFound(err) {
+			log.Errorf("Error checking Kubernetes Gateway API configuration: %v", err)
 		}
 		in.isGatewayAPI = &isGatewayAPI
 	}

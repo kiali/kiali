@@ -293,34 +293,42 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
 		if in.k8s.IsGatewayAPI() && criteria.Include(kubernetes.K8sGateways) {
+			var err error
 			// ignore an error as system could not be configured to support K8s Gateway API
 			// Check if namespace is cached
 			if IsResourceCached(criteria.Namespace, kubernetes.K8sGateways) {
-				istioConfigList.K8sGateways, _ = kialiCache.GetK8sGateways(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.K8sGateways, err = kialiCache.GetK8sGateways(criteria.Namespace, criteria.LabelSelector)
 			}
-			// TODO gwl.Items
+			// TODO gwl.Items, there is conflict itself in Gateway API between returned types referenced or not
 			//else {
 			//	if gwl, e := in.k8s.GatewayAPI().GatewayV1alpha2().Gateways(criteria.Namespace).List(ctx, listOpts); e == nil {
 			//		istioConfigList.K8sGateways = gwl.Items
 			//	}
 			//}
+			if err != nil {
+				errChan <- err
+			}
 		}
 	}(ctx, errChan)
 
 	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
 		if in.k8s.IsGatewayAPI() && criteria.Include(kubernetes.K8sHTTPRoutes) {
+			var err error
 			// ignore an error as system could not be configured to support K8s Gateway API
 			// Check if namespace is cached
 			if IsResourceCached(criteria.Namespace, kubernetes.K8sHTTPRoutes) {
-				istioConfigList.K8sHTTPRoutes, _ = kialiCache.GetK8sHTTPRoutes(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.K8sHTTPRoutes, err = kialiCache.GetK8sHTTPRoutes(criteria.Namespace, criteria.LabelSelector)
 			}
-			// TODO gwl.Items
+			// TODO gwl.Items, there is conflict itself in Gateway API between returned types referenced or not
 			//else {
 			//	if gwl, e := in.k8s.GatewayAPI().GatewayV1alpha2().HTTPRoutes(criteria.Namespace).List(ctx, listOpts); e == nil {
 			//		istioConfigList.K8sHTTPRoutes = gwl.Items
 			//	}
 			//}
+			if err != nil {
+				errChan <- err
+			}
 		}
 	}(ctx, errChan)
 
