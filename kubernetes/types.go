@@ -98,6 +98,12 @@ var (
 	}
 	K8sApiNetworkingVersionV1Alpha2 = K8sNetworkingGroupVersionV1Alpha2.Group + "/" + K8sNetworkingGroupVersionV1Alpha2.Version
 
+	K8sNetworkingGroupVersionV1Beta1 = schema.GroupVersion{
+		Group:   "gateway.networking.k8s.io",
+		Version: "v1beta1",
+	}
+	K8sApiNetworkingVersionV1Beta1 = K8sNetworkingGroupVersionV1Beta1.Group + "/" + K8sNetworkingGroupVersionV1Beta1.Version
+
 	NetworkingGroupVersionV1Beta1 = schema.GroupVersion{
 		Group:   "networking.istio.io",
 		Version: "v1beta1",
