@@ -58,7 +58,7 @@ export class DurationDropdown extends React.Component<DurationDropdownProps> {
 
     if (isKioskMode() ) {
       const range = {rangeDuration: duration};
-      if (this.props.setTimeRange != undefined) {
+      if (this.props.setTimeRange !== undefined) {
         this.props.setTimeRange(range);
       }
       kioskDurationAction(duration);
