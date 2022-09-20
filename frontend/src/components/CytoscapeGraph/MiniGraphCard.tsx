@@ -31,6 +31,7 @@ import { WizardAction, WizardMode } from "../IstioWizards/WizardActions";
 import { TimeDurationModal } from "../Time/TimeDurationModal";
 import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton";
 import { KioskElement } from "../Kiosk/KioskElement";
+import {isKioskMode} from "../../utils/SearchParamUtils";
 
 const initGraphContainerStyle = style({ width: '100%', height: '100%' });
 
@@ -76,6 +77,9 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
   }
 
   private refresh = () => {
+    if (isKioskMode()) {
+      this.props.dataSource.graphDuration = store.getState().userSettings.timeRange.rangeDuration!;
+    }
     this.setState({ graphData: this.props.dataSource.graphData });
   };
 
@@ -106,14 +110,8 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
       );
     }
 
-    let start;
-    if (store.getState().userSettings.timeRange.rangeDuration !== undefined) {
-      start = store.getState().userSettings.timeRange.rangeDuration
-    }else {
-      start = this.props.dataSource.graphDuration
-    }
     const rangeEnd: TimeInMilliseconds = this.props.dataSource.graphTimestamp * 1000;
-    const rangeStart: TimeInMilliseconds = rangeEnd - start * 1000;
+    const rangeStart: TimeInMilliseconds = rangeEnd - this.props.dataSource.graphDuration * 1000;
     const intervalTitle =
       rangeEnd > 0 ? toRangeString(rangeStart, rangeEnd, { second: '2-digit' }, { second: '2-digit' }) : 'Loading';
 
