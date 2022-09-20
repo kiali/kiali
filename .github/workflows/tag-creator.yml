@@ -42,6 +42,10 @@ jobs:
       matrix:
         branch: ${{fromJson(needs.initialize.outputs.branches)}}          
     steps:
+      - name: Checkout Backend
+        uses: actions/checkout@v3        
+        with:
+          ref: ${{matrix.branch}}
       - name: Prepare scripts
         run: |
           cat <<-EOF > bump.py
@@ -62,26 +66,7 @@ jobs:
           elif release_type == 'patch':
               patch = patch + 1
           print('.'.join(['v' + str(major), str(minor), str(patch)]))
-          EOF
-
-          cat <<-EOF > minor.py
-          import datetime
-
-          base = int(datetime.datetime.strptime("24/04/2022", "%d/%m/%Y").timestamp())        
-          now = int(datetime.datetime.now().timestamp())
-
-          diff = now - base
-
-          days_elapsed = int(diff / (24*60*60))
-          weeks_elapsed = int(days_elapsed / 7)
-          weeks_mod3 = int(weeks_elapsed % 3)
-
-          print(weeks_mod3)
-          EOF          
-      - name: Checkout Backend
-        uses: actions/checkout@v3        
-        with:
-          ref: ${{matrix.branch}}          
+          EOF  
       - name: Configure git backend
         run: |
           git config user.email 'kiali-dev@googlegroups.com'
