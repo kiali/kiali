@@ -47,6 +47,8 @@ jobs:
 
       - name: Setup kind
         run: hack/setup-kind-in-ci.sh
+        env:
+          AUTH_STRATEGY: token
 
       - name: Install demo apps
         run: hack/istio/install-testing-demos.sh -c "kubectl"

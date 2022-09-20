@@ -39,6 +39,7 @@ set -e
 
 # set up some of our defaults
 DORP="${DORP:-docker}"
+AUTH_STRATEGY="${AUTH_STRATEGY:-anonymous}"
 
 # Defaults the branch to master unless it is already set
 TARGET_BRANCH="${TARGET_BRANCH:-master}"
@@ -152,7 +153,7 @@ infomsg "Installing kiali server via Helm"
 # Need a single dashboard set for grafana.
 helm install \
   --namespace istio-system \
-  --set auth.strategy="anonymous" \
+  --set auth.strategy="${AUTH_STRATEGY}" \
   --set deployment.logger.log_level="trace" \
   --set deployment.service_type="LoadBalancer" \
   --set deployment.image_name=kiali/kiali \
