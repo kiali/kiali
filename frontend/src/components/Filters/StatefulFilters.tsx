@@ -278,6 +278,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           aria-label="filter_select_value"
           placeholderText={currentFilterType.placeholder}
           width="auto"
+          data-test="istio-type-dropdown"
         >
           {currentFilterType.filterValues.map((filter, index) => (
             <SelectOption key={'filter_' + index} value={filter.id} label={filter.title} />
