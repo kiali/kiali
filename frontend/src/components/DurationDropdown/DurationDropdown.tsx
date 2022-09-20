@@ -1,7 +1,7 @@
 import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
 import { serverConfig, humanDurations } from '../../config/ServerConfig';
 import * as React from 'react';
-import { DurationInSeconds } from '../../types/Common';
+import {DurationInSeconds, TimeRange} from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
 import { KialiDispatch } from 'types/Redux';
@@ -17,6 +17,8 @@ import {kioskDurationAction} from "../Kiosk/KioskActions";
 type ReduxProps = {
   duration: DurationInSeconds;
   setDuration: (duration: DurationInSeconds) => void;
+  timeRange?: TimeRange;
+  setTimeRange?: (timeRange: TimeRange) => void;
 };
 
 type DurationDropdownProps = ReduxProps & {
@@ -53,7 +55,12 @@ export class DurationDropdown extends React.Component<DurationDropdownProps> {
 
   private updateDurationInterval = (duration: number) => {
     this.props.setDuration(duration); // notify redux of the change
+
     if (isKioskMode() ) {
+      const range = {rangeDuration: duration};
+      if (this.props.setTimeRange != undefined) {
+        this.props.setTimeRange(range);
+      }
       kioskDurationAction(duration);
     }
   };
@@ -96,7 +103,8 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
-    setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch)
+    setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch),
+    setTimeRange: bindActionCreators(UserSettingsActions.setTimeRange, dispatch)
   };
 };
 export const DurationDropdownComponent = withDurations(DurationDropdown);
