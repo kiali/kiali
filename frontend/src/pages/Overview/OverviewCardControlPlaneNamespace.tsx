@@ -18,7 +18,6 @@ export const infoStyle = style({
     margin: '0px 0px -1px 4px'
 });
 
-
 type ControlPlaneProps = {
     pilotLatency?: Metric[];
     istiodMemory?: Metric[];
@@ -46,7 +45,7 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
         if (showMetrics(this.props.istiodMemory)) {
             if (this.props.istiodMemory && this.props.istiodMemory?.length > 0) {
                 const data = toVCLine(this.props.istiodMemory[0].datapoints, 'Mb', PFColors.Green400);
-                
+
                 if (this.props.istiodResourceThreholds?.memory) {
                     const datapoint0: Datapoint = [this.props.istiodMemory[0].datapoints[0][0], this.props.istiodMemory[0].datapoints[0][1]];
                     datapoint0[1] = this.props.istiodResourceThreholds?.memory;
@@ -55,16 +54,16 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
                     const dataThre = toVCLine([datapoint0, datapointn], 'Mb (Threshold)', PFColors.Green300);
                     memoryThresholds.push(dataThre);
                 }
-                
+
                 memorySeries.push(data);
-                
+
             }
         }
 
         if (showMetrics(this.props.istiodCpu)) {
             if (this.props.istiodCpu && this.props.istiodCpu?.length > 0) {
                 const data = toVCLine(this.props.istiodCpu[0].datapoints, 'cores', PFColors.Green400);
-                
+
                 if (this.props.istiodResourceThreholds?.cpu) {
                     const datapoint0: Datapoint = [this.props.istiodCpu[0].datapoints[0][0], this.props.istiodCpu[0].datapoints[0][1]];
                     datapoint0[1] = this.props.istiodResourceThreholds?.cpu;

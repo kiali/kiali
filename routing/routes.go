@@ -1402,7 +1402,7 @@ func NewRoutes() (r *Routes) {
 			handlers.GetClusters,
 			true,
 		},
-		// GET /api/mesh/outbound_traffic_policy/mode
+		// swagger:route GET /api/mesh/outbound_traffic_policy/mode
 		// ---
 		// Endpoint to get the OutboundTrafficPolicy Mode configured in the service mesh.
 		//              Produces:
@@ -1420,7 +1420,7 @@ func NewRoutes() (r *Routes) {
 			handlers.OutboundTrafficPolicyMode,
 			true,
 		},
-		// GET /api/mesh/resources/thresholds
+		// swagger:route GET /api/mesh/resources/thresholds
 		// ---
 		// Endpoint to get the IstiodResourceThresholds.
 		//              Produces:

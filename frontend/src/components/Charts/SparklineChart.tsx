@@ -18,14 +18,14 @@ import { CustomTooltip } from './CustomTooltip';
 import { VCEvent, addLegendEvent } from 'utils/VictoryEvents';
 
 type Props = ChartProps & {
+  labelName: string;
   name: string;
   series: VCLines<RichDataPoint>;
   showLegend?: boolean;
+  showXAxisValues?: boolean;
   showYAxis?: boolean;
   tooltipFormat?: (dp: VCDataPoint) => string;
-  labelName: string;
   thresholds?: VCLines<RichDataPoint>;
-  showXAxisValues?: boolean;
 };
 
 type State = {
