@@ -34,6 +34,7 @@ func setupTestLoggingServer(t *testing.T, namespace, pod string) *httptest.Serve
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("SetProxyLogLevel").Return(nil)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)

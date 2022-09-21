@@ -26,6 +26,7 @@ func utilSetupMocks(t *testing.T) (promClientSupplier, *prometheustest.PromAPIMo
 	config.Set(conf)
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespace", "ns1").Return(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns1"}}, nil)
 	k8s.On("GetNamespace", "ns2").Return(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns2"}}, nil)
 	k8s.On("GetNamespace", "nsNil").Return((*core_v1.Namespace)(nil), errors.New("no privileges"))

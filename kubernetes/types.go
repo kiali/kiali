@@ -10,6 +10,7 @@ import (
 	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
 const (
@@ -59,6 +60,18 @@ const (
 	Telemetries   = "telemetries"
 	TelemetryType = "Telemetry"
 
+	// K8s Networking
+
+	K8sGateways    = "k8sgateways"
+	K8sGatewayType = "K8sGateway"
+	// K8sActualGatewayType There is a naming conflict between Istio and K8s Gateways, keeping here an actual type to show in YAML editor
+	K8sActualGatewayType = "Gateway"
+
+	K8sHTTPRoutes    = "k8shttproutes"
+	K8sHTTPRouteType = "K8sHTTPRoute"
+	// K8sActualHTTPRouteType There is a naming conflict between Istio and K8s Gateways, keeping here an actual type to show in YAML editor
+	K8sActualHTTPRouteType = "HTTPRoute"
+
 	// Authorization PeerAuthentications
 	AuthorizationPolicies     = "authorizationpolicies"
 	AuthorizationPoliciesType = "AuthorizationPolicy"
@@ -78,6 +91,18 @@ var (
 		Version: "v1alpha3",
 	}
 	ApiNetworkingVersionV1Alpha3 = NetworkingGroupVersionV1Alpha3.Group + "/" + NetworkingGroupVersionV1Alpha3.Version
+
+	K8sNetworkingGroupVersionV1Alpha2 = schema.GroupVersion{
+		Group:   "gateway.networking.k8s.io",
+		Version: "v1alpha2",
+	}
+	K8sApiNetworkingVersionV1Alpha2 = K8sNetworkingGroupVersionV1Alpha2.Group + "/" + K8sNetworkingGroupVersionV1Alpha2.Version
+
+	K8sNetworkingGroupVersionV1Beta1 = schema.GroupVersion{
+		Group:   "gateway.networking.k8s.io",
+		Version: "v1beta1",
+	}
+	K8sApiNetworkingVersionV1Beta1 = K8sNetworkingGroupVersionV1Beta1.Group + "/" + K8sNetworkingGroupVersionV1Beta1.Version
 
 	NetworkingGroupVersionV1Beta1 = schema.GroupVersion{
 		Group:   "networking.istio.io",
@@ -116,6 +141,10 @@ var (
 		WasmPlugins:      WasmPluginType,
 		Telemetries:      TelemetryType,
 
+		// K8s Networking Gateways
+		K8sGateways:   K8sGatewayType,
+		K8sHTTPRoutes: K8sHTTPRouteType,
+
 		// Security
 		AuthorizationPolicies:  AuthorizationPoliciesType,
 		PeerAuthentications:    PeerAuthenticationsType,
@@ -133,6 +162,9 @@ var (
 		WorkloadGroups:   NetworkingGroupVersionV1Beta1.Group,
 		WasmPlugins:      ExtensionGroupVersionV1Alpha1.Group,
 		Telemetries:      TelemetryGroupV1Alpha1.Group,
+
+		K8sGateways:   K8sNetworkingGroupVersionV1Alpha2.Group,
+		K8sHTTPRoutes: K8sNetworkingGroupVersionV1Alpha2.Group,
 
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,
@@ -192,6 +224,10 @@ type RegistryConfiguration struct {
 	WorkloadGroups   []*networking_v1beta1.WorkloadGroup
 	WasmPlugins      []*extentions_v1alpha1.WasmPlugin
 	Telemetries      []*v1alpha1.Telemetry
+
+	// K8s Networking Gateways
+	K8sGateways   []*k8s_networking_v1alpha2.Gateway
+	K8sHTTPRoutes []*k8s_networking_v1alpha2.HTTPRoute
 
 	// Security
 	AuthorizationPolicies  []*security_v1beta.AuthorizationPolicy

@@ -34,6 +34,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	k8s.On("GetToken").Return("token")
 
@@ -59,6 +60,7 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 
 	TLSService := getTLSService(k8s, true, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
@@ -83,6 +85,7 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
@@ -107,6 +110,7 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
@@ -132,6 +136,7 @@ func TestMeshStatusDisabled(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
@@ -155,6 +160,7 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 
 	TLSService := getTLSService(k8s, true, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
@@ -280,6 +286,7 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 		nss = append(nss, p.Name)
 	}
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetProjects", mock.AnythingOfType("string")).Return(projects, nil)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&projects[0], nil)
@@ -308,6 +315,7 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1beta1.Destinatio
 		nss = append(nss, p.Name)
 	}
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetProjects", mock.AnythingOfType("string")).Return(projects, nil)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&projects[0], nil)

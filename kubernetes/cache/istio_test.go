@@ -107,7 +107,7 @@ func TestGetNonCachedResource(t *testing.T) {
 			Name: "sidecar", Namespace: "test", Labels: map[string]string{"app": "bookinfo", "version": "v1"},
 		},
 	}
-	kialiCache := newTestKialiCache(nil, []runtime.Object{sidecar})
+	kialiCache := newTestKialiCache(nil, []runtime.Object{sidecar}, nil)
 	kialiCache.cacheIstioTypes = nil
 	_, err := kialiCache.GetVirtualServices("testing-ns", "app=bookinfo")
 	assert.Error(err)
@@ -122,7 +122,7 @@ func TestGetAndListReturnKindInfo(t *testing.T) {
 			Name: "vs", Namespace: "test",
 		},
 	}
-	kialiCache := newTestKialiCache(nil, []runtime.Object{vs})
+	kialiCache := newTestKialiCache(nil, []runtime.Object{vs}, nil)
 	kialiCache.cacheIstioTypes = map[string]bool{
 		kubernetes.PluralType[kubernetes.VirtualServices]: true,
 	}

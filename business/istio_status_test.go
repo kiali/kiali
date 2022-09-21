@@ -692,6 +692,7 @@ func mockDeploymentCall(deployments []apps_v1.Deployment, daemonSets []apps_v1.D
 	k8s.On("GetPods", mock.AnythingOfType("string"), labels.Set(map[string]string{"app": "istiod"}).String()).Return(pods, nil)
 
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
 	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)

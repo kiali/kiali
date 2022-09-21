@@ -4,6 +4,8 @@ import {
   DestinationRule,
   EnvoyFilter,
   Gateway,
+  K8sGateway,
+  K8sHTTPRoute,
   ObjectValidation,
   PeerAuthentication,
   RequestAuthentication,
@@ -25,6 +27,8 @@ export interface IstioConfigItem {
   creationTimestamp?: string;
   resourceVersion?: string;
   gateway?: Gateway;
+  k8sGateway?: K8sGateway;
+  k8sHTTPRoute?: K8sHTTPRoute;
   virtualService?: VirtualService;
   destinationRule?: DestinationRule;
   serviceEntry?: ServiceEntry;
@@ -45,6 +49,8 @@ export declare type IstioConfigsMap = { [key: string]: IstioConfigList };
 export interface IstioConfigList {
   namespace: Namespace;
   gateways: Gateway[];
+  k8sGateways: K8sGateway[];
+  k8sHTTPRoutes: K8sHTTPRoute[];
   virtualServices: VirtualService[];
   destinationRules: DestinationRule[];
   serviceEntries: ServiceEntry[];
@@ -64,6 +70,8 @@ export interface IstioConfigList {
 export const dicIstioType = {
   Sidecar: 'sidecars',
   Gateway: 'gateways',
+  K8sGateway: 'k8sgateways',
+  K8sHTTPRoute: 'k8shttproutes',
   VirtualService: 'virtualservices',
   DestinationRule: 'destinationrules',
   ServiceEntry: 'serviceentries',
@@ -77,6 +85,8 @@ export const dicIstioType = {
   Telemetry: 'telemetries',
 
   gateways: 'Gateway',
+  k8sgateways: 'K8sGateway',
+  k8shttproutes: 'K8sHTTPRoute',
   virtualservices: 'VirtualService',
   destinationrules: 'DestinationRule',
   serviceentries: 'ServiceEntry',
@@ -91,6 +101,8 @@ export const dicIstioType = {
   wasmplugins: 'WasmPlugin',
 
   gateway: 'Gateway',
+  k8sgateway: 'K8sGateway',
+  k8shttproute: 'K8sHTTPRoute',
   virtualservice: 'VirtualService',
   destinationrule: 'DestinationRule',
   serviceentry: 'ServiceEntry',
@@ -129,6 +141,8 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
   return {
     namespace: unfiltered.namespace,
     gateways: unfiltered.gateways.filter(gw => includeName(gw.metadata.name, names)),
+    k8sGateways: unfiltered.k8sGateways.filter(gw => includeName(gw.metadata.name, names)),
+    k8sHTTPRoutes: unfiltered.k8sHTTPRoutes.filter(route => includeName(route.metadata.name, names)),
     virtualServices: unfiltered.virtualServices.filter(vs => includeName(vs.metadata.name, names)),
     destinationRules: unfiltered.destinationRules.filter(dr => includeName(dr.metadata.name, names)),
     serviceEntries: unfiltered.serviceEntries.filter(se => includeName(se.metadata.name, names)),

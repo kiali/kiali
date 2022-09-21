@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/tools/clientcmd/api"
+	gatewayapifake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 
 	"github.com/kiali/kiali/kubernetes"
 )
@@ -40,7 +41,8 @@ func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo) (kubernetes.Cli
 
 type K8SClientMock struct {
 	mock.Mock
-	istioClientset *istio_fake.Clientset
+	istioClientset      *istio_fake.Clientset
+	gatewayapiClientSet *gatewayapifake.Clientset
 }
 
 // Constructor
@@ -48,6 +50,7 @@ type K8SClientMock struct {
 func NewK8SClientMock() *K8SClientMock {
 	k8s := new(K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetKialiToken").Return("")
 	return k8s
 }
@@ -84,6 +87,11 @@ func (o *K8SClientMock) MockEmptyWorkload(namespace interface{}, workload interf
 }
 
 func (o *K8SClientMock) IsOpenShift() bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
+func (o *K8SClientMock) IsGatewayAPI() bool {
 	args := o.Called()
 	return args.Get(0).(bool)
 }

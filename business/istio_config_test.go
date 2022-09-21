@@ -215,6 +215,7 @@ func TestGetIstioConfigDetails(t *testing.T) {
 func mockGetIstioConfigList() IstioConfigService {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 
 	fakeIstioObjects := []runtime.Object{}
@@ -399,6 +400,7 @@ func mockGetIstioConfigDetails() IstioConfigService {
 	k8s.MockIstio(fakeIstioObjects...)
 
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetSelfSubjectAccessReview", mock.Anything, "test", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]string")).Return(fakeGetSelfSubjectAccessReview(), nil)
 

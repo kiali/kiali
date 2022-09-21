@@ -154,6 +154,7 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 	}
 	prom.Inject(xapi)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespace", "ns").Return(&core_v1.Namespace{}, nil)
 
 	mr := mux.NewRouter()

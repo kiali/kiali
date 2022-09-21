@@ -21,6 +21,8 @@ import (
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -38,6 +40,8 @@ var (
 
 type IstioClientInterface interface {
 	Istio() istio.Interface
+	// GatewayAPI returns the gateway-api kube client.
+	GatewayAPI() gatewayapiclient.Interface
 
 	GetProxyStatus() ([]*ProxyStatus, error)
 	GetConfigDump(namespace, podName string) (*ConfigDump, error)
@@ -49,6 +53,10 @@ type IstioClientInterface interface {
 
 func (in *K8SClient) Istio() istio.Interface {
 	return in.istioClientset
+}
+
+func (in *K8SClient) GatewayAPI() gatewayapiclient.Interface {
+	return in.gatewayapi
 }
 
 func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, error) {
@@ -258,6 +266,10 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 		WasmPlugins:      []*extentions_v1alpha1.WasmPlugin{},
 		Telemetries:      []*v1alpha1.Telemetry{},
 
+		// K8s Networking Gateways
+		K8sGateways:   []*k8s_networking_v1alpha2.Gateway{},
+		K8sHTTPRoutes: []*k8s_networking_v1alpha2.HTTPRoute{},
+
 		AuthorizationPolicies:  []*security_v1beta1.AuthorizationPolicy{},
 		PeerAuthentications:    []*security_v1beta1.PeerAuthentication{},
 		RequestAuthentications: []*security_v1beta1.RequestAuthentication{},
@@ -281,7 +293,7 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 				if mItem, ok := iItem.(map[string]interface{}); ok {
 					kind := mItem["kind"].(string)
 					switch kind {
-					case "DestinationRule", "EnvoyFilter", "Gateway", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup", "AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication", "WasmPlugin", "Telemetry":
+					case "DestinationRule", "EnvoyFilter", "Gateway", "ServiceEntry", "Sidecar", "VirtualService", "WorkloadEntry", "WorkloadGroup", "AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication", "WasmPlugin", "Telemetry", "HTTPRoute":
 						bItem, err := json.Marshal(iItem)
 						rbItem := bytes.NewReader(bItem)
 						bDec := json.NewDecoder(rbItem)
@@ -305,38 +317,55 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 							}
 							registry.EnvoyFilters = append(registry.EnvoyFilters, ef)
 						case "Gateway":
-							var gw *networking_v1beta1.Gateway
-							err := bDec.Decode(&gw)
-							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for Gateways: %s", err)
+							// It needs to figure out Gateway object type by apiVersion, whether it is Gateway API of Istio Gateway
+							if mItem["apiVersion"] == K8sApiNetworkingVersionV1Beta1 || mItem["apiVersion"] == K8sApiNetworkingVersionV1Alpha2 {
+								var gw k8s_networking_v1alpha2.Gateway
+								err := bDec.Decode(&gw)
+								if err != nil {
+									log.Errorf("Error parsing RegistryConfig results for K8sGateways: %s", err)
+								}
+								registry.K8sGateways = append(registry.K8sGateways, &gw)
+							} else {
+								var gw networking_v1beta1.Gateway
+								err := bDec.Decode(&gw)
+								if err != nil {
+									log.Errorf("Error parsing RegistryConfig results for Gateways: %s", err)
+								}
+								registry.Gateways = append(registry.Gateways, &gw)
 							}
-							registry.Gateways = append(registry.Gateways, gw)
+						case "HTTPRoute":
+							var route *k8s_networking_v1alpha2.HTTPRoute
+							err := bDec.Decode(&route)
+							if err != nil {
+								log.Errorf("Error parsing RegistryConfig results for K8sHTTPRoutes: %s", err)
+							}
+							registry.K8sHTTPRoutes = append(registry.K8sHTTPRoutes, route)
 						case "ServiceEntry":
 							var se *networking_v1beta1.ServiceEntry
 							err := bDec.Decode(&se)
 							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for Gateways: %s", err)
+								log.Errorf("Error parsing RegistryConfig results for ServiceEntries: %s", err)
 							}
 							registry.ServiceEntries = append(registry.ServiceEntries, se)
 						case "Sidecar":
 							var sc *networking_v1beta1.Sidecar
 							err := bDec.Decode(&sc)
 							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for Gateways: %s", err)
+								log.Errorf("Error parsing RegistryConfig results for Sidecars: %s", err)
 							}
 							registry.Sidecars = append(registry.Sidecars, sc)
 						case "VirtualService":
 							var vs *networking_v1beta1.VirtualService
 							err := bDec.Decode(&vs)
 							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for Gateways: %s", err)
+								log.Errorf("Error parsing RegistryConfig results for VirtualServices: %s", err)
 							}
 							registry.VirtualServices = append(registry.VirtualServices, vs)
 						case "WorkloadEntry":
 							var we *networking_v1beta1.WorkloadEntry
 							err := bDec.Decode(&we)
 							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for Gateways: %s", err)
+								log.Errorf("Error parsing RegistryConfig results for WorkloadEntries: %s", err)
 							}
 							registry.WorkloadEntries = append(registry.WorkloadEntries, we)
 						case "WorkloadGroup":
@@ -371,7 +400,7 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 							var pa *security_v1beta1.PeerAuthentication
 							err := bDec.Decode(&pa)
 							if err != nil {
-								log.Errorf("Error parsing RegistryConfig results for AuthorizationPolicies: %s", err)
+								log.Errorf("Error parsing RegistryConfig results for PeerAuthentications: %s", err)
 							}
 							registry.PeerAuthentications = append(registry.PeerAuthentications, pa)
 						case "RequestAuthentication":

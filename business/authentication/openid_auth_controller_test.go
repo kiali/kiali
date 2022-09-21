@@ -767,6 +767,7 @@ func TestOpenIdImplicitFlowRejectsTokenNotAcceptedByK8sAPI(t *testing.T) {
 	// Error from API to simulate a bad token
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetKialiToken").Return("")
 	k8s.On("GetNamespaces", "").Return([]v1.Namespace{}, errors.New("token rejected"))
 

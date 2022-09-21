@@ -16,6 +16,8 @@ import (
 	apps_v1_listers "k8s.io/client-go/listers/apps/v1"
 	core_v1_listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/rest"
+	gatewayapi "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
+	k8s_v1alpha2_listers "sigs.k8s.io/gateway-api/pkg/client/listers/apis/v1alpha2"
 
 	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -81,6 +83,8 @@ type (
 		destinationRuleLister istionet_v1beta1_listers.DestinationRuleLister
 		envoyFilterLister     istionet_v1alpha3_listers.EnvoyFilterLister
 		gatewayLister         istionet_v1beta1_listers.GatewayLister
+		k8sgatewayLister      k8s_v1alpha2_listers.GatewayLister
+		k8shttprouteLister    k8s_v1alpha2_listers.HTTPRouteLister
 		peerAuthnLister       istiosec_v1beta1_listers.PeerAuthenticationLister
 		requestAuthnLister    istiosec_v1beta1_listers.RequestAuthenticationLister
 		serviceEntryLister    istionet_v1beta1_listers.ServiceEntryLister
@@ -97,6 +101,7 @@ type (
 		istioClient            kubernetes.K8SClient
 		k8sApi                 kube.Interface
 		istioApi               istio.Interface
+		gatewayApi             gatewayapi.Interface
 		refreshDuration        time.Duration
 		cacheNamespacesRegexps []regexp.Regexp
 		cacheIstioTypes        map[string]bool
@@ -185,6 +190,7 @@ func NewKialiCache(namespaceSeedList ...string) (KialiCache, error) {
 	}
 	kialiCacheImpl.k8sApi = istioClient.GetK8sApi()
 	kialiCacheImpl.istioApi = istioClient.Istio()
+	kialiCacheImpl.gatewayApi = istioClient.GatewayAPI()
 
 	// Update SA Token
 	kialiCacheImpl.stopCacheChan = kialiCacheImpl.refreshCache(istioConfig)
@@ -220,6 +226,7 @@ func (c *kialiCacheImpl) isCached(namespace string) bool {
 func (c *kialiCacheImpl) createNSCache(namespace string) bool {
 	kubeInformerFactory := c.createKubernetesInformers(namespace)
 	istioInformerFactory := c.createIstioInformers(namespace)
+	gatewayInformerFactory := c.createGatewayInformers(namespace)
 
 	if _, exist := c.stopNSChans[namespace]; !exist {
 		c.stopNSChans[namespace] = make(chan struct{})
@@ -227,6 +234,7 @@ func (c *kialiCacheImpl) createNSCache(namespace string) bool {
 
 	kubeInformerFactory.Start(c.stopNSChans[namespace])
 	istioInformerFactory.Start(c.stopNSChans[namespace])
+	gatewayInformerFactory.Start(c.stopNSChans[namespace])
 
 	log.Infof("[Kiali Cache] waiting for [namespace: %s] cache to sync", namespace)
 
@@ -242,6 +250,12 @@ func (c *kialiCacheImpl) createNSCache(namespace string) bool {
 			return false
 		}
 	}
+	for _, synced := range gatewayInformerFactory.WaitForCacheSync(c.stopNSChans[namespace]) {
+		if !synced {
+			log.Errorf("[Kiali Cache] failed to sync [namespace: %s] gateway-api cache", namespace)
+			return false
+		}
+	}
 
 	log.Infof("[Kiali Cache] started [namespace: %s] cache", namespace)
 
@@ -251,10 +265,12 @@ func (c *kialiCacheImpl) createNSCache(namespace string) bool {
 func (c *kialiCacheImpl) createClusterScopedCache() bool {
 	kubeInformerFactory := c.createKubernetesInformers("")
 	istioInformerFactory := c.createIstioInformers("")
+	gatewayInformerFactory := c.createGatewayInformers("")
 
 	c.stopClusterScopedChan = make(chan struct{})
 	kubeInformerFactory.Start(c.stopClusterScopedChan)
 	istioInformerFactory.Start(c.stopClusterScopedChan)
+	gatewayInformerFactory.Start(c.stopClusterScopedChan)
 
 	log.Info("[Kiali Cache] Waiting for cluster-scoped cache to sync")
 	for _, synced := range kubeInformerFactory.WaitForCacheSync(c.stopClusterScopedChan) {
@@ -264,6 +280,12 @@ func (c *kialiCacheImpl) createClusterScopedCache() bool {
 		}
 	}
 	for _, synced := range istioInformerFactory.WaitForCacheSync(c.stopClusterScopedChan) {
+		if !synced {
+			log.Error("[Kiali Cache] failed to sync Istio cluster-scoped cache")
+			return false
+		}
+	}
+	for _, synced := range gatewayInformerFactory.WaitForCacheSync(c.stopClusterScopedChan) {
 		if !synced {
 			log.Error("[Kiali Cache] failed to sync Istio cluster-scoped cache")
 			return false
@@ -339,6 +361,7 @@ func (c *kialiCacheImpl) refreshCache(istioConfig rest.Config) chan bool {
 							c.istioClient = *istioClient
 							c.k8sApi = istioClient.GetK8sApi()
 							c.istioApi = istioClient.Istio()
+							c.gatewayApi = istioClient.GatewayAPI()
 							if c.clusterScoped {
 								c.Refresh("")
 							} else {

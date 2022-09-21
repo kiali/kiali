@@ -235,6 +235,10 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		// TODO
 	case kubernetes.Telemetries:
 		// TODO
+	case kubernetes.K8sGateways:
+		// TODO
+	case kubernetes.K8sHTTPRoutes:
+		// TODO
 	default:
 		err = fmt.Errorf("object type not found: %v", objectType)
 	}
@@ -318,7 +322,7 @@ func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue
 
 		allWorkloads := map[string]models.WorkloadList{}
 		for _, ns := range nss {
-			criteria := WorkloadCriteria{Namespace: ns.Name, IncludeIstioResources: true, IncludeHealth: false}
+			criteria := WorkloadCriteria{Namespace: ns.Name, IncludeIstioResources: false, IncludeHealth: false}
 			workloadList, err := in.businessLayer.Workload.GetWorkloadList(ctx, criteria)
 			if err != nil {
 				select {

@@ -22,6 +22,7 @@ func TestCertificatesInformationIndicatorsDisabled(t *testing.T) {
 	config.Set(conf)
 
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 
 	layer := NewWithBackends(k8s, nil, nil)
 	ics := layer.IstioCerts
@@ -65,6 +66,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 
 	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&core_v1.ConfigMap{}, nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetSecret", conf.IstioNamespace, "cacerts").Return(&core_v1.Secret{}, kubernetes.NewNotFound("cacerts", "v1", "Secret"))
 	k8s.On("GetSecret", conf.IstioNamespace, "istio-ca-secret").Return(&secret, nil)
 
@@ -118,6 +120,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 
 	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&core_v1.ConfigMap{}, nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetSecret", conf.IstioNamespace, "cacerts").Return(&core_v1.Secret{}, kubernetes.NewNotFound("cacerts", "v1", "Secret"))
 
 	forbiddenError := errors.NewForbidden(schema.GroupResource{Group: "", Resource: "Secret"}, "istio-ca-secret", nil)
@@ -180,6 +183,7 @@ cdLzuNyDoeWOHU7mx52TuTwj3eObtQM+hlI=
 
 	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&core_v1.ConfigMap{}, nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetSecret", conf.IstioNamespace, "cacerts").Return(&secret, nil)
 
 	layer := NewWithBackends(k8s, nil, nil)
@@ -316,6 +320,7 @@ iMXzPzS/OeYyKQ==
 
 	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&istioConfigMap, nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetSecret", conf.IstioNamespace, "dns.example1-service-account").Return(&example1secret, nil)
 	k8s.On("GetSecret", conf.IstioNamespace, "dns.example2-service-account").Return(&example2secret, nil)
 
@@ -400,6 +405,7 @@ iMXzPzS/OeYyKQ==
 
 	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&istioConfigMap, nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetSecret", conf.IstioNamespace, "dns.example1-service-account").Return(&example1secret, nil)
 	k8s.On("GetSecret", conf.IstioNamespace, "dns.example2-service-account").Return(&core_v1.Secret{}, kubernetes.NewNotFound("cacerts", "v1", "Secret"))
 

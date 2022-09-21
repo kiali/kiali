@@ -147,6 +147,7 @@ func TestGetVSReferencesNotExisting(t *testing.T) {
 func mockWorkLoadService(k8s *kubetest.K8SClientMock) WorkloadService {
 	// Setup mocks
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
 	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeRSSyncedWithPods(), nil)
@@ -165,6 +166,7 @@ func mockWorkLoadService(k8s *kubetest.K8SClientMock) WorkloadService {
 func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(fakeNamespaces(), nil)
@@ -213,6 +215,7 @@ func mockCombinedValidationService(istioConfigList *models.IstioConfigList, serv
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(kubetest.FakeNamespace("test"), nil)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(fakeNamespaces(), nil)
 
@@ -227,6 +230,7 @@ func mockEmptyValidationService() IstioValidationsService {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.MockIstio()
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("IsMaistraApi").Return(false)
 	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 }

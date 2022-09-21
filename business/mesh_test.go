@@ -90,6 +90,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	}
 
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetSecrets", conf.IstioNamespace, "istio/multiCluster=true").Return([]core_v1.Secret{}, nil)
 	k8s.On("GetDeployment", conf.IstioNamespace, conf.ExternalServices.Istio.IstiodDeploymentName).Return(&istioDeploymentMock, nil)
 	k8s.On("GetConfigMap", conf.IstioNamespace, conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName).Return(&sidecarConfigMapMock, nil)
@@ -176,6 +177,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 
 	var nilDeployment *apps_v1.Deployment
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetSecrets", conf.IstioNamespace, "istio/multiCluster=true").Return([]core_v1.Secret{secretMock}, nil)
 	k8s.On("GetDeployment", conf.IstioNamespace, "istiod").Return(nilDeployment, nil)
 
@@ -262,6 +264,7 @@ func TestIsMeshConfiguredIsCached(t *testing.T) {
 	}
 
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetConfigMap", "foo", "bar").Return(&istioConfigMapMock, nil)
 
 	// Create a MeshService and invoke IsMeshConfigured
@@ -275,6 +278,7 @@ func TestIsMeshConfiguredIsCached(t *testing.T) {
 	// empty mock should never be called and we still should get a value.
 	k8s = new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 
 	layer = NewWithBackends(k8s, nil, nil)
 	meshSvc = layer.Mesh
@@ -340,6 +344,7 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	var nilNamespace *core_v1.Namespace
 
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetDeployment", "foo", "bar").Return(&istioDeploymentMock, nil)
 	k8s.On("GetConfigMap", "foo", conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName).Return(nilConfigMap, &notFoundErr)
 	k8s.On("GetNamespace", "foo").Return(nilNamespace, &notFoundErr)
@@ -357,6 +362,7 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	// empty mock should never be called and we still should get a value.
 	k8s = new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsGatewayAPI").Return(false)
 
 	layer = NewWithBackends(k8s, nil, nil)
 	meshSvc = layer.Mesh

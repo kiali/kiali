@@ -91,6 +91,18 @@ func filterRegistryConfiguration(registryStatus *kubernetes.RegistryStatus, crit
 		}
 	}
 
+	for _, gw := range registryStatus.Configuration.K8sGateways {
+		if gw.Namespace == criteria.Namespace {
+			filtered.K8sGateways = append(filtered.K8sGateways, gw)
+		}
+	}
+
+	for _, httpr := range registryStatus.Configuration.K8sHTTPRoutes {
+		if httpr.Namespace == criteria.Namespace {
+			filtered.K8sHTTPRoutes = append(filtered.K8sHTTPRoutes, httpr)
+		}
+	}
+
 	for _, se := range registryStatus.Configuration.ServiceEntries {
 		if se.Namespace == criteria.Namespace {
 			filtered.ServiceEntries = append(filtered.ServiceEntries, se)
