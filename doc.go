@@ -3,10 +3,10 @@ package main
 import (
 	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
 
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/jaeger"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
 )
@@ -773,7 +773,7 @@ type swaggIstioConfigPermissions struct {
 // swagger:response istioStatusResponse
 type IstioStatusResponse struct {
 	// in: body
-	Body business.IstioComponentStatus
+	Body kubernetes.IstioComponentStatus
 }
 
 // Return a list of certificates information

@@ -3,7 +3,6 @@ package business
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -91,7 +90,7 @@ func TestComponentNotRunning(t *testing.T) {
 		)
 		wl := &models.Workload{}
 		wl.ParseDeployment(&d)
-		assert.Equal(Unhealthy, GetWorkloadStatus(*wl))
+		assert.Equal(kubernetes.ComponentUnhealthy, GetWorkloadStatus(*wl))
 	}
 }
 
@@ -110,7 +109,7 @@ func TestComponentRunning(t *testing.T) {
 	wl := &models.Workload{}
 	wl.ParseDeployment(&d)
 
-	assert.Equal(Healthy, GetWorkloadStatus(*wl))
+	assert.Equal(kubernetes.ComponentHealthy, GetWorkloadStatus(*wl))
 }
 
 func TestComponentNamespaces(t *testing.T) {
@@ -182,7 +181,6 @@ func fakePod(name, namespace, appLabel, phase string) v1.Pod {
 			Phase: v1.PodPhase(phase),
 		},
 	}
-
 }
 
 func TestGrafanaWorking(t *testing.T) {
@@ -265,7 +263,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 	assert.Equal(1, grafanaCalls)
 	assert.Equal(1, prometheusCalls)
 
-	assertComponent(assert, icsl, "grafana", Unreachable, false)
+	assertComponent(assert, icsl, "grafana", kubernetes.ComponentUnreachable, false)
 	assertNotPresent(assert, icsl, "prometheus")
 	assertNotPresent(assert, icsl, "jaeger")
 	assertNotPresent(assert, icsl, "custom dashboards")
@@ -288,7 +286,7 @@ func TestFailingTracingService(t *testing.T) {
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
 	assertNotPresent(assert, icsl, "custom dashboards")
-	assertComponent(assert, icsl, "jaeger", Unreachable, false)
+	assertComponent(assert, icsl, "jaeger", kubernetes.ComponentUnreachable, false)
 }
 
 func TestOverriddenUrls(t *testing.T) {
@@ -364,10 +362,10 @@ func TestDefaults(t *testing.T) {
 
 	icsl, err := iss.GetStatus(context.TODO())
 	assert.NoError(err)
-	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, true)
-	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
+	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, true)
+	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Don't return healthy deployments
+	// Don't return kubernetes.ComponentHealthy deployments
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
@@ -405,10 +403,10 @@ func TestNonDefaults(t *testing.T) {
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
-	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, false)
-	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
+	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, false)
+	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Don't return healthy deployments
+	// Don't return kubernetes.ComponentHealthy deployments
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
@@ -449,11 +447,11 @@ func TestIstiodNotReady(t *testing.T) {
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
-	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, false)
-	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
-	assertComponent(assert, icsl, "istiod", NotReady, true)
+	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, false)
+	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
+	assertComponent(assert, icsl, "istiod", kubernetes.ComponentNotReady, true)
 
-	// Don't return healthy deployments
+	// Don't return kubernetes.ComponentHealthy deployments
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
 	assertNotPresent(assert, icsl, "jaeger")
@@ -463,7 +461,6 @@ func TestIstiodNotReady(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
-
 }
 
 // Istiod pods are not reachable from kiali
@@ -496,12 +493,12 @@ func TestIstiodUnreachable(t *testing.T) {
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
-	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, false)
-	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
-	assertComponent(assert, icsl, "istiod-x3v1kn0l-running", Unreachable, true)
-	assertComponent(assert, icsl, "istiod-x3v1kn1l-running", Unreachable, true)
+	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, false)
+	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
+	assertComponent(assert, icsl, "istiod-x3v1kn0l-running", kubernetes.ComponentUnreachable, true)
+	assertComponent(assert, icsl, "istiod-x3v1kn1l-running", kubernetes.ComponentUnreachable, true)
 
-	// Don't return healthy deployments
+	// Don't return kubernetes.ComponentHealthy deployments
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
 	assertNotPresent(assert, icsl, "jaeger")
@@ -511,7 +508,6 @@ func TestIstiodUnreachable(t *testing.T) {
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
-
 }
 
 // Istio deployments only have the "app" app_label.
@@ -544,10 +540,10 @@ func TestCustomizedAppLabel(t *testing.T) {
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
-	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, false)
-	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
+	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, false)
+	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Don't return healthy deployments
+	// Don't return kubernetes.ComponentHealthy deployments
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
@@ -589,9 +585,9 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
-	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
+	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Don't return healthy deployments
+	// Don't return kubernetes.ComponentHealthy deployments
 	assertNotPresent(assert, icsl, "istio-ingressgateway")
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
@@ -635,10 +631,10 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
-	assertComponent(assert, icsl, "istio-ingressgateway", Unhealthy, false)
-	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
+	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentUnhealthy, false)
+	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Don't return healthy deployments
+	// Don't return kubernetes.ComponentHealthy deployments
 	assertNotPresent(assert, icsl, "istiod")
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
@@ -649,7 +645,7 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	assert.Equal(1, *promCalls)
 }
 
-func assertComponent(assert *assert.Assertions, icsl IstioComponentStatus, name string, status string, isCore bool) {
+func assertComponent(assert *assert.Assertions, icsl kubernetes.IstioComponentStatus, name string, status string, isCore bool) {
 	componentFound := false
 	for _, ics := range icsl {
 		if ics.Name == name {
@@ -662,7 +658,7 @@ func assertComponent(assert *assert.Assertions, icsl IstioComponentStatus, name 
 	assert.True(componentFound)
 }
 
-func assertNotPresent(assert *assert.Assertions, icsl IstioComponentStatus, name string) {
+func assertNotPresent(assert *assert.Assertions, icsl kubernetes.IstioComponentStatus, name string) {
 	componentFound := false
 	for _, ics := range icsl {
 		if ics.Name == name {
@@ -704,12 +700,20 @@ func mockDeploymentCall(deployments []apps_v1.Deployment, daemonSets []apps_v1.D
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.Pod{}, nil)
 	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(&kubernetes.PodLogs{}, nil)
 
-	var err error
+	var istioStatus kubernetes.IstioComponentStatus
 	if !isIstioReachable {
-		err = fmt.Errorf("the Istio pods are unreachable")
+		for _, pod := range pods {
+			// Only running pods are considered healthy.
+			if pod.Status.Phase == v1.PodRunning && pod.Labels["app"] == "istiod" {
+				istioStatus = append(istioStatus, kubernetes.ComponentStatus{
+					Name:   pod.Name,
+					Status: kubernetes.ComponentUnreachable,
+					IsCore: true,
+				})
+			}
+		}
 	}
-	k8s.On("ForwardGetRequest", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("int"), mock.AnythingOfType("string")).Return([]byte{}, err)
-
+	k8s.On("CanConnectToIstiod").Return(istioStatus, nil)
 	return k8s
 }
 
@@ -728,7 +732,8 @@ func fakeDeploymentWithStatus(name string, labels map[string]string, status apps
 				},
 			},
 			Replicas: &status.Replicas,
-		}}
+		},
+	}
 }
 
 func fakeDaemonSetWithStatus(name string, labels map[string]string, status apps_v1.DaemonSetStatus) apps_v1.DaemonSet {
@@ -745,7 +750,8 @@ func fakeDaemonSetWithStatus(name string, labels map[string]string, status apps_
 					Labels: labels,
 				},
 			},
-		}}
+		},
+	}
 }
 
 func confWithComponentNamespaces() *config.Config {

@@ -35,7 +35,6 @@ import (
 )
 
 type K8SClientInterface interface {
-	ForwardGetRequest(namespace, podName string, localPort, destinationPort int, path string) ([]byte, error)
 	GetClusterServicesByLabels(labelsSelector string) ([]core_v1.Service, error)
 	GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
 	GetCronJobs(namespace string) ([]batch_v1.CronJob, error)
@@ -51,7 +50,6 @@ type K8SClientInterface interface {
 	GetNamespaces(labelSelector string) ([]core_v1.Namespace, error)
 	GetPod(namespace, name string) (*core_v1.Pod, error)
 	GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
-	GetPodPortForwarder(namespace, podName, portMap string) (*httputil.PortForwarder, error)
 	GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error)
 	GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
 	GetSecret(namespace, name string) (*core_v1.Secret, error)
@@ -76,19 +74,22 @@ type OSClientInterface interface {
 	UpdateProject(project string, jsonPatch string) (*osproject_v1.Project, error)
 }
 
-func (in *K8SClient) ForwardGetRequest(namespace, podName string, localPort, destinationPort int, path string) ([]byte, error) {
-	f, err := in.GetPodPortForwarder(namespace, podName, fmt.Sprintf("%d:%d", localPort, destinationPort))
+func (in *K8SClient) forwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
+	localPort := httputil.Pool.GetFreePort()
+	defer httputil.Pool.FreePort(localPort)
+
+	f, err := in.getPodPortForwarder(namespace, podName, fmt.Sprintf("%d:%d", localPort, destinationPort))
 	if err != nil {
 		return nil, err
 	}
 
 	// Start the forwarding
-	if err := (*f).Start(); err != nil {
+	if err := f.Start(); err != nil {
 		return nil, err
 	}
 
 	// Defering the finish of the port-forwarding
-	defer (*f).Stop()
+	defer f.Stop()
 
 	// Ready to create a request
 	resp, code, _, err := httputil.HttpGet(fmt.Sprintf("http://localhost:%d%s", localPort, path), nil, 10*time.Second, nil, nil)
@@ -166,7 +167,7 @@ func (in *K8SClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace, e
 func (in *K8SClient) GetProject(name string) (*osproject_v1.Project, error) {
 	result := &osproject_v1.Project{}
 
-	err := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects", name).Do(in.ctx).Into(result)
+	err := in.k8s.Discovery().RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects", name).Do(in.ctx).Into(result)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +178,7 @@ func (in *K8SClient) GetProject(name string) (*osproject_v1.Project, error) {
 func (in *K8SClient) GetProjects(labelSelector string) ([]osproject_v1.Project, error) {
 	result := &osproject_v1.ProjectList{}
 
-	request := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects")
+	request := in.k8s.Discovery().RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects")
 
 	// Apply label selector filtering if specified
 	if labelSelector != "" {
@@ -195,7 +196,7 @@ func (in *K8SClient) GetProjects(labelSelector string) ([]osproject_v1.Project, 
 func (in *K8SClient) IsOpenShift() bool {
 	if in.isOpenShift == nil {
 		isOpenShift := false
-		_, err := in.k8s.RESTClient().Get().AbsPath("/apis/project.openshift.io").Do(in.ctx).Raw()
+		_, err := in.k8s.Discovery().RESTClient().Get().AbsPath("/apis/project.openshift.io").Do(in.ctx).Raw()
 		if err == nil {
 			isOpenShift = true
 		}
@@ -210,7 +211,7 @@ func (in *K8SClient) IsGatewayAPI() bool {
 	}
 	if in.isGatewayAPI == nil {
 		isGatewayAPI := false
-		_, err := in.k8s.RESTClient().Get().AbsPath("/apis/gateway.networking.k8s.io").Do(in.ctx).Raw()
+		_, err := in.k8s.Discovery().RESTClient().Get().AbsPath("/apis/gateway.networking.k8s.io").Do(in.ctx).Raw()
 		if err == nil {
 			isGatewayAPI = true
 		} else if !errors.IsNotFound(err) {
@@ -280,7 +281,7 @@ func (in *K8SClient) GetDeployment(namespace, name string) (*apps_v1.Deployment,
 // It returns an error on any problem.
 func (in *K8SClient) GetRoute(namespace, name string) (*osroutes_v1.Route, error) {
 	result := &osroutes_v1.Route{}
-	err := in.k8s.RESTClient().Get().Prefix("apis", "route.openshift.io", "v1").Namespace(namespace).Resource("routes").SubResource(name).Do(in.ctx).Into(result)
+	err := in.k8s.Discovery().RESTClient().Get().Prefix("apis", "route.openshift.io", "v1").Namespace(namespace).Resource("routes").SubResource(name).Do(in.ctx).Into(result)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +302,7 @@ func (in *K8SClient) GetDeployments(namespace string) ([]apps_v1.Deployment, err
 // It returns an error on any problem.
 func (in *K8SClient) GetDeploymentConfig(namespace, name string) (*osapps_v1.DeploymentConfig, error) {
 	result := &osapps_v1.DeploymentConfig{}
-	err := in.k8s.RESTClient().Get().Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(name).Do(in.ctx).Into(result)
+	err := in.k8s.Discovery().RESTClient().Get().Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(name).Do(in.ctx).Into(result)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +314,7 @@ func (in *K8SClient) GetDeploymentConfig(namespace, name string) (*osapps_v1.Dep
 // It returns an error on any problem.
 func (in *K8SClient) GetDeploymentConfigs(namespace string) ([]osapps_v1.DeploymentConfig, error) {
 	result := &osapps_v1.DeploymentConfigList{}
-	err := in.k8s.RESTClient().Get().Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").Do(in.ctx).Into(result)
+	err := in.k8s.Discovery().RESTClient().Get().Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").Do(in.ctx).Into(result)
 	if err != nil {
 		return nil, err
 	}
@@ -407,13 +408,18 @@ func (in *K8SClient) GetPods(namespace, labelSelector string) ([]core_v1.Pod, er
 	}
 }
 
-// GetPodPortForwarder returns a port-forwarder struct which represents an open server forwarding request to the
+// getPodPortForwarder returns a port-forwarder struct which represents an open server forwarding request to the
 // requested pod and port
 // namespace: name of the namespace where the pod lives in.
 // name: name of the pod living in the namespace
 // portMap: ports open by the forwarder. Local port and destination port. Format: "80:8080" (local:destination)
 // It returns both a portforwarder and an error (if present)
-func (in *K8SClient) GetPodPortForwarder(namespace, name, portMap string) (*httputil.PortForwarder, error) {
+func (in *K8SClient) getPodPortForwarder(namespace, name, portMap string) (httputil.PortForwarder, error) {
+	// This branch is just used for testing.
+	if in.getPodPortForwarderFunc != nil {
+		return in.getPodPortForwarderFunc(namespace, name, portMap)
+	}
+
 	writer := new(bytes.Buffer)
 
 	clientConfig, err := ConfigClient()
@@ -545,7 +551,7 @@ func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workl
 	case DeploymentConfigType:
 		if in.IsOpenShift() {
 			result := &osapps_v1.DeploymentConfigList{}
-			err = in.k8s.RESTClient().Patch(types.MergePatchType).Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(workloadName).Body(bytePatch).Do(in.ctx).Into(result)
+			err = in.k8s.Discovery().RESTClient().Patch(types.MergePatchType).Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(workloadName).Body(bytePatch).Do(in.ctx).Into(result)
 		}
 	case StatefulSetType:
 		_, err = in.k8s.AppsV1().StatefulSets(namespace).Patch(in.ctx, workloadName, types.MergePatchType, bytePatch, emptyPatchOptions)
@@ -585,7 +591,7 @@ func (in *K8SClient) UpdateNamespace(namespace string, jsonPatch string) (*core_
 func (in *K8SClient) UpdateProject(namespace string, jsonPatch string) (*osproject_v1.Project, error) {
 	result := &osproject_v1.Project{}
 	bytePatch := []byte(jsonPatch)
-	err := in.k8s.RESTClient().Patch(types.MergePatchType).Prefix("apis", "project.openshift.io", "v1", "projects", namespace).Body(bytePatch).Do(in.ctx).Into(result)
+	err := in.k8s.Discovery().RESTClient().Patch(types.MergePatchType).Prefix("apis", "project.openshift.io", "v1", "projects", namespace).Body(bytePatch).Do(in.ctx).Into(result)
 	if err != nil {
 		return nil, err
 	}

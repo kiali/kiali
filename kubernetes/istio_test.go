@@ -2,14 +2,112 @@ package kubernetes
 
 import (
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	api_security_v1beta1 "istio.io/api/security/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/util/httputil"
 )
+
+// Because config.Config is a global variable, we need to reset it after each test.
+// This func will reset the config back to its previous value.
+func setConfig(t *testing.T, newConfig config.Config) {
+	t.Helper()
+	previousConfig := *config.Get()
+	t.Cleanup(func() {
+		config.Set(&previousConfig)
+	})
+	config.Set(&newConfig)
+}
+
+// The port pool is a global variable so we need to reset it between tests.
+func setPortPool(t *testing.T, addr string) {
+	t.Helper()
+	addrPieces := strings.Split(addr, ":")
+	port, err := strconv.Atoi(addrPieces[len(addrPieces)-1])
+	if err != nil {
+		t.Fatalf("Error parsing port from address: %s", err)
+	}
+
+	oldRange := httputil.Pool.PortRangeInit
+	oldBusyPort := httputil.Pool.LastBusyPort
+	oldSize := httputil.Pool.PortRangeSize
+	t.Cleanup(func() {
+		httputil.Pool.PortRangeInit = oldRange
+		httputil.Pool.LastBusyPort = oldBusyPort
+		httputil.Pool.PortRangeSize = oldSize
+	})
+	httputil.Pool.PortRangeInit = port
+	httputil.Pool.LastBusyPort = port - 1
+	httputil.Pool.PortRangeSize = 1
+}
+
+type fakePortForwarder struct{}
+
+func (f *fakePortForwarder) Start() error { return nil }
+func (f *fakePortForwarder) Stop()        {}
+
+// readFile reads a file's contents and calls t.Fatal if any error occurs.
+func readFile(t *testing.T, path string) []byte {
+	t.Helper()
+	contents, err := ioutil.ReadFile(path)
+	if err != nil {
+		t.Fatalf("Error while reading file: %s. Err: %s", path, err)
+	}
+	return contents
+}
+
+func istiodTestServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var file string
+		switch r.URL.Path {
+		case "/debug/configz":
+			file = "../tests/data/registry/registry-configz.json"
+		case "/debug/endpointz":
+			file = "../tests/data/registry/registry-endpointz.json"
+		case "/debug/registryz":
+			file = "../tests/data/registry/registry-registryz.json"
+		case "/debug/syncz":
+			file = "../tests/data/registry/registry-syncz.json"
+		case "/ready":
+			w.WriteHeader(http.StatusOK)
+			return
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			t.Fatalf("Unexpected request path: %s", r.URL.Path)
+			return
+		}
+		w.Write(readFile(t, file))
+	}))
+	t.Cleanup(testServer.Close)
+	return testServer
+}
+
+func runningIstiodPod() *core_v1.Pod {
+	return &core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "istiod-123",
+			Namespace: "istio-system",
+			Labels: map[string]string{
+				"app": "istiod",
+			},
+		},
+		Status: core_v1.PodStatus{
+			Phase: core_v1.PodRunning,
+		},
+	}
+}
 
 func TestFilterByHost(t *testing.T) {
 	conf := config.NewConfig()
@@ -212,4 +310,249 @@ func TestRegistryServices(t *testing.T) {
 
 	assert.Equal(79, len(registry))
 	assert.Equal("*.msn.com", registry[0].Attributes.Name)
+}
+
+func TestGetRegistryConfig(t *testing.T) {
+	assert := assert.New(t)
+
+	testServer := istiodTestServer(t)
+	setPortPool(t, testServer.URL)
+
+	k8sClient := &K8SClient{
+		k8s: fake.NewSimpleClientset(runningIstiodPod()),
+		getPodPortForwarderFunc: func(namespace, name, portMap string) (httputil.PortForwarder, error) {
+			return &fakePortForwarder{}, nil
+		},
+	}
+
+	_, err := k8sClient.GetRegistryConfiguration()
+	assert.NoError(err)
+}
+
+func TestGetRegistryConfigExternal(t *testing.T) {
+	assert := assert.New(t)
+
+	testServer := istiodTestServer(t)
+
+	conf := config.Get()
+	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
+		IstiodURL: testServer.URL,
+	}
+	setConfig(t, *conf)
+
+	k8sClient := &K8SClient{}
+	_, err := k8sClient.GetRegistryConfiguration()
+	assert.NoError(err)
+}
+
+func TestGetRegistryConfigExternalBadResponse(t *testing.T) {
+	assert := assert.New(t)
+
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(testServer.Close)
+
+	conf := config.Get()
+	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
+		IstiodURL: testServer.URL,
+	}
+	setConfig(t, *conf)
+
+	k8sClient := &K8SClient{}
+	_, err := k8sClient.GetRegistryConfiguration()
+	assert.Error(err)
+}
+
+func TestGetRegistryEndpoints(t *testing.T) {
+	assert := assert.New(t)
+
+	testServer := istiodTestServer(t)
+	setPortPool(t, testServer.URL)
+
+	k8sClient := &K8SClient{
+		k8s: fake.NewSimpleClientset(runningIstiodPod()),
+		getPodPortForwarderFunc: func(namespace, name, portMap string) (httputil.PortForwarder, error) {
+			return &fakePortForwarder{}, nil
+		},
+	}
+
+	_, err := k8sClient.GetRegistryEndpoints()
+	assert.NoError(err)
+}
+
+func TestGetRegistryEndpointsExternal(t *testing.T) {
+	assert := assert.New(t)
+
+	testServer := istiodTestServer(t)
+
+	conf := config.Get()
+	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
+		IstiodURL: testServer.URL,
+	}
+	setConfig(t, *conf)
+
+	k8sClient := &K8SClient{}
+	_, err := k8sClient.GetRegistryEndpoints()
+	assert.NoError(err)
+}
+
+func TestGetRegistryEndpointsExternalBadResponse(t *testing.T) {
+	assert := assert.New(t)
+
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(testServer.Close)
+
+	conf := config.Get()
+	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
+		IstiodURL: testServer.URL,
+	}
+	setConfig(t, *conf)
+
+	k8sClient := &K8SClient{}
+	_, err := k8sClient.GetRegistryEndpoints()
+	assert.Error(err)
+}
+
+func TestGetRegistryServices(t *testing.T) {
+	assert := assert.New(t)
+
+	testServer := istiodTestServer(t)
+	setPortPool(t, testServer.URL)
+
+	k8sClient := &K8SClient{
+		k8s: fake.NewSimpleClientset(runningIstiodPod()),
+		getPodPortForwarderFunc: func(namespace, name, portMap string) (httputil.PortForwarder, error) {
+			return &fakePortForwarder{}, nil
+		},
+	}
+
+	_, err := k8sClient.GetRegistryServices()
+	assert.NoError(err)
+}
+
+func TestGetRegistryServicesExternal(t *testing.T) {
+	assert := assert.New(t)
+
+	testServer := istiodTestServer(t)
+
+	conf := config.Get()
+	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
+		IstiodURL: testServer.URL,
+	}
+	setConfig(t, *conf)
+
+	k8sClient := &K8SClient{}
+	_, err := k8sClient.GetRegistryServices()
+	assert.NoError(err)
+}
+
+func TestGetRegistryServicesExternalBadResponse(t *testing.T) {
+	assert := assert.New(t)
+
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(testServer.Close)
+
+	conf := config.Get()
+	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
+		IstiodURL: testServer.URL,
+	}
+	setConfig(t, *conf)
+
+	k8sClient := &K8SClient{}
+	_, err := k8sClient.GetRegistryServices()
+	assert.Error(err)
+}
+
+func TestGetProxyStatus(t *testing.T) {
+	assert := assert.New(t)
+
+	testServer := istiodTestServer(t)
+	setPortPool(t, testServer.URL)
+
+	k8sClient := &K8SClient{
+		k8s: fake.NewSimpleClientset(runningIstiodPod()),
+		getPodPortForwarderFunc: func(namespace, name, portMap string) (httputil.PortForwarder, error) {
+			return &fakePortForwarder{}, nil
+		},
+	}
+
+	_, err := k8sClient.GetProxyStatus()
+	assert.NoError(err)
+}
+
+func TestGetProxyStatusExternal(t *testing.T) {
+	assert := assert.New(t)
+
+	testServer := istiodTestServer(t)
+
+	conf := config.Get()
+	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
+		IstiodURL: testServer.URL,
+	}
+	setConfig(t, *conf)
+
+	k8sClient := &K8SClient{}
+	_, err := k8sClient.GetProxyStatus()
+	assert.NoError(err)
+}
+
+func TestGetProxyStatusExternalBadResponse(t *testing.T) {
+	assert := assert.New(t)
+
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(testServer.Close)
+
+	conf := config.Get()
+	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
+		IstiodURL: testServer.URL,
+	}
+	setConfig(t, *conf)
+
+	k8sClient := &K8SClient{}
+	_, err := k8sClient.GetProxyStatus()
+	assert.Error(err)
+}
+
+func TestCanConnectToIstiodUnreachable(t *testing.T) {
+	assert := assert.New(t)
+	k8sClient := &K8SClient{
+		k8s: fake.NewSimpleClientset(runningIstiodPod()),
+		getPodPortForwarderFunc: func(namespace, name, portMap string) (httputil.PortForwarder, error) {
+			return &fakePortForwarder{}, nil
+		},
+	}
+
+	status, err := k8sClient.CanConnectToIstiod()
+	assert.NoError(err)
+
+	assert.Len(status, 1)
+	assert.Equal(ComponentUnreachable, status[0].Status)
+}
+
+func TestCanConnectToIstiodReachable(t *testing.T) {
+	assert := assert.New(t)
+	k8sClient := &K8SClient{
+		k8s: fake.NewSimpleClientset(runningIstiodPod()),
+		getPodPortForwarderFunc: func(namespace, name, portMap string) (httputil.PortForwarder, error) {
+			return &fakePortForwarder{}, nil
+		},
+	}
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(ts.Close)
+
+	setPortPool(t, ts.URL)
+
+	status, err := k8sClient.CanConnectToIstiod()
+	assert.NoError(err)
+
+	assert.Len(status, 1)
 }

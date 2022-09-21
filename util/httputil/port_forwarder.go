@@ -50,7 +50,7 @@ func (f forwarder) Stop() {
 	Pool.FreePort(f.localPort)
 }
 
-func NewPortForwarder(client *rest.Interface, clientConfig *rest.Config, namespace, pod, address, portMap string, writer io.Writer) (*PortForwarder, error) {
+func NewPortForwarder(client *rest.Interface, clientConfig *rest.Config, namespace, pod, address, portMap string, writer io.Writer) (PortForwarder, error) {
 	stopCh := make(chan struct{})
 	readyCh := make(chan struct{})
 
@@ -69,7 +69,6 @@ func NewPortForwarder(client *rest.Interface, clientConfig *rest.Config, namespa
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, forwarderUrl)
 	fwer, err := portforward.NewOnAddresses(dialer, []string{address}, []string{portMap},
 		stopCh, readyCh, writer, os.Stderr)
-
 	if err != nil {
 		log.Errorf("Error creating the port-forwarder: %v", err)
 		return nil, err
@@ -81,12 +80,12 @@ func NewPortForwarder(client *rest.Interface, clientConfig *rest.Config, namespa
 		return nil, err
 	}
 
-	f := PortForwarder(forwarder{
+	f := forwarder{
 		forwarder: fwer,
 		ReadyCh:   readyCh,
 		StopCh:    stopCh,
 		localPort: localPort,
-	})
+	}
 
 	return &f, nil
 }

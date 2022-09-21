@@ -19,6 +19,7 @@ import (
 
 	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util/httputil"
 )
 
 const RemoteSecretData = "/kiali-remote-secret/kiali"
@@ -49,7 +50,7 @@ type ClientInterface interface {
 type K8SClient struct {
 	ClientInterface
 	token          string
-	k8s            *kube.Clientset
+	k8s            kube.Interface
 	istioClientset *istio.Clientset
 	// Used in REST queries after bump to client-go v0.20.x
 	ctx context.Context
@@ -60,10 +61,13 @@ type K8SClient struct {
 	// isGatewayAPI private variable will check if K8s Gateway API CRD exists on cluster or not
 	isGatewayAPI *bool
 	gatewayapi   gatewayapiclient.Interface
+
+	// Separated out for testing purposes
+	getPodPortForwarderFunc func(namespace, name, portMap string) (httputil.PortForwarder, error)
 }
 
 // GetK8sApi returns the clientset referencing all K8s rest clients
-func (client *K8SClient) GetK8sApi() *kube.Clientset {
+func (client *K8SClient) GetK8sApi() kube.Interface {
 	return client.k8s
 }
 

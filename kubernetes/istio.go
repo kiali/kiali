@@ -2,9 +2,12 @@ package kubernetes
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"regexp"
 	"strings"
 	"sync"
@@ -17,7 +20,6 @@ import (
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
-
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -28,6 +30,45 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/httputil"
 )
+
+const (
+	ComponentHealthy     = "Healthy"
+	ComponentNotFound    = "NotFound"
+	ComponentNotReady    = "NotReady"
+	ComponentUnhealthy   = "Unhealthy"
+	ComponentUnreachable = "Unreachable"
+)
+
+type ComponentStatus struct {
+	// Namespace where the component is deployed.
+	// This field is ignored when marshalling to JSON.
+	Namespace string `json:"-"`
+
+	// The workload name of the Istio component.
+	//
+	// example: istio-ingressgateway
+	// required: true
+	Name string `json:"name"`
+
+	// The status of an Istio component.
+	//
+	// example:  Not Found
+	// required: true
+	Status string `json:"status"`
+
+	// When true, the component is necessary for Istio to function. Otherwise, it is an addon.
+	//
+	// example:  true
+	// required: true
+	IsCore bool `json:"is_core"`
+}
+
+type IstioComponentStatus []ComponentStatus
+
+func (ics *IstioComponentStatus) Merge(cs IstioComponentStatus) IstioComponentStatus {
+	*ics = append(*ics, cs...)
+	return *ics
+}
 
 const (
 	envoyAdminPort = 15000
@@ -43,6 +84,7 @@ type IstioClientInterface interface {
 	// GatewayAPI returns the gateway-api kube client.
 	GatewayAPI() gatewayapiclient.Interface
 
+	CanConnectToIstiod() (IstioComponentStatus, error)
 	GetProxyStatus() ([]*ProxyStatus, error)
 	GetConfigDump(namespace, podName string) (*ConfigDump, error)
 	SetProxyLogLevel(namespace, podName, level string) error
@@ -59,41 +101,106 @@ func (in *K8SClient) GatewayAPI() gatewayapiclient.Interface {
 	return in.gatewayapi
 }
 
-func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, error) {
-	c := config.Get()
-	istiods, err := in.GetPods(c.IstioNamespace, labels.Set(map[string]string{
-		"app": "istiod",
-	}).String())
+// CanConnectToIstiod checks if Kiali can reach the istiod pod(s) via port
+// fowarding through the k8s api server or via http if the registry is
+// configured with a remote url. An error does not indicate that istiod
+// cannot be reached. The IstioComponentStatus must be checked.
+func (in *K8SClient) CanConnectToIstiod() (IstioComponentStatus, error) {
+	cfg := config.Get()
 
+	if cfg.ExternalServices.Istio.Registry != nil {
+		istiodURL := cfg.ExternalServices.Istio.Registry.IstiodURL
+		// Being able to hit /debug doesn't necessarily mean we are authorized to hit the others.
+		url := joinURL(istiodURL, "/debug")
+		if _, err := getRequest(url); err != nil {
+			log.Warningf("Kiali can't connect to remote Istiod: %s", err)
+			return IstioComponentStatus{{Name: istiodURL, Status: ComponentUnreachable, IsCore: true}}, nil
+		}
+		return IstioComponentStatus{{Name: istiodURL, Status: ComponentHealthy, IsCore: true}}, nil
+	}
+
+	istiods, err := in.GetPods(cfg.IstioNamespace, labels.Set(map[string]string{"app": "istiod"}).String())
 	if err != nil {
 		return nil, err
 	}
 
 	healthyIstiods := make([]*core_v1.Pod, 0, len(istiods))
 	for i, istiod := range istiods {
-		if istiod.Status.Phase == "Running" {
+		if istiod.Status.Phase == core_v1.PodRunning {
 			healthyIstiods = append(healthyIstiods, &istiods[i])
 		}
 	}
 
-	if len(healthyIstiods) == 0 {
-		return nil, errors.New("unable to find any healthy Pilot instance")
+	wg := sync.WaitGroup{}
+	wg.Add(len(healthyIstiods))
+	syncChan := make(chan ComponentStatus, len(healthyIstiods))
+
+	for _, istiod := range healthyIstiods {
+		go func(name, namespace string) {
+			defer wg.Done()
+			var status ComponentStatus
+			// The 8080 port is not accessible from outside of the pod. However, it is used for kubernetes to do the live probes.
+			// Using the proxy method to make sure that K8s API has access to the Istio Control Plane namespace.
+			// By proxying one Istiod, we ensure that the following connection is allowed:
+			// Kiali -> K8s API (proxy) -> istiod
+			// This scenario is no obvious for private clusters (like GKE private cluster)
+			_, err := in.forwardGetRequest(namespace, name, 8080, "/ready")
+			if err != nil {
+				log.Warningf("Unable to get ready status of istiod: %s/%s. Err: %s", namespace, name, err)
+				status = ComponentStatus{
+					Name:      name,
+					Namespace: namespace,
+					Status:    ComponentUnreachable,
+					IsCore:    true,
+				}
+			} else {
+				status = ComponentStatus{
+					Name:      name,
+					Namespace: namespace,
+					Status:    ComponentHealthy,
+					IsCore:    true,
+				}
+			}
+			syncChan <- status
+		}(istiod.Name, istiod.Namespace)
 	}
 
-	// Pulling an open port from the port pool
-	freePort := httputil.Pool.GetFreePort()
-	defer httputil.Pool.FreePort(freePort)
+	wg.Wait()
+	close(syncChan)
+	ics := IstioComponentStatus{}
+	for componentStatus := range syncChan {
+		ics.Merge(IstioComponentStatus{componentStatus})
+	}
 
+	return ics, nil
+}
+
+func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, error) {
+	c := config.Get()
 	// Check if the kube-api has proxy access to pods in the istio-system
 	// https://github.com/kiali/kiali/issues/3494#issuecomment-772486224
-	// The 8080 port is not accessible from outside of the pod. However, it is used for kubernetes to do the live probes.
-	// Using the port-forwarding, the call is made as it was in the pod itself, as a localhost call.
-	// Also the port-forwarding to a pod is done via the KubeAPI. Therefore if the call doesn't return any error,
-	// it means that Kiali has access to the KubeAPI and that the KubeAPI has access to the Istiod (control plane).
-	_, err = in.ForwardGetRequest(c.IstioNamespace, istiods[0].Name, freePort, 8080, "/ready")
+	status, err := in.CanConnectToIstiod()
 	if err != nil {
+		return nil, err
+	}
+
+	istiodReachable := false
+	for _, istiodStatus := range status {
+		if istiodStatus.Status != ComponentUnreachable {
+			istiodReachable = true
+			break
+		}
+	}
+	if !istiodReachable {
 		return nil, fmt.Errorf("unable to proxy Istiod pods. " +
 			"Make sure your Kubernetes API server has access to the Istio control plane through 8080 port")
+	}
+
+	var healthyIstiods IstioComponentStatus
+	for _, istiod := range status {
+		if istiod.Status == ComponentHealthy {
+			healthyIstiods = append(healthyIstiods, istiod)
+		}
 	}
 
 	wg := sync.WaitGroup{}
@@ -106,14 +213,10 @@ func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, 
 		go func(name, namespace string) {
 			defer wg.Done()
 
-			// Pulling an open port from the port pool
-			freePort := httputil.Pool.GetFreePort()
-			defer httputil.Pool.FreePort(freePort)
-
 			// The 15014 port on Istiod is open for control plane monitoring.
 			// Here's the Istio doc page about the port usage by istio:
 			// https://istio.io/latest/docs/ops/deployment/requirements/#ports-used-by-istio
-			res, err := in.ForwardGetRequest(namespace, name, freePort, c.ExternalServices.Istio.IstiodPodMonitoringPort, debugPath)
+			res, err := in.forwardGetRequest(namespace, name, c.ExternalServices.Istio.IstiodPodMonitoringPort, debugPath)
 			if err != nil {
 				errChan <- fmt.Errorf("%s: %s", name, err.Error())
 			} else {
@@ -149,42 +252,128 @@ func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, 
 }
 
 func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
-	synczPath := "/debug/syncz"
-	result, err := in.getIstiodDebugStatus(synczPath)
-	if err != nil {
-		return nil, err
+	const synczPath = "/debug/syncz"
+	var result map[string][]byte
+
+	if externalConf := config.Get().ExternalServices.Istio.Registry; externalConf != nil {
+		url := joinURL(externalConf.IstiodURL, synczPath)
+		r, err := getRequest(url)
+		if err != nil {
+			log.Errorf("Failed to get Istiod info from remote endpoint %s error: %s", synczPath, err)
+			return nil, err
+		}
+		result = map[string][]byte{"remote": r}
+	} else {
+		debugStatus, err := in.getIstiodDebugStatus(synczPath)
+		if err != nil {
+			log.Errorf("Failed to call Istiod endpoint %s error: %s", synczPath, err)
+			return nil, err
+		}
+		result = debugStatus
 	}
 	return parseProxyStatus(result)
 }
 
 func (in *K8SClient) GetRegistryServices() ([]*RegistryService, error) {
-	registryzPath := "/debug/registryz"
-	result, err := in.getIstiodDebugStatus(registryzPath)
-	if err != nil {
-		log.Errorf("Failed to call Istiod endpoint %s error: %s", registryzPath, err)
-		return nil, err
+	const registryzPath = "/debug/registryz"
+	var result map[string][]byte
+
+	if externalConf := config.Get().ExternalServices.Istio.Registry; externalConf != nil {
+		url := joinURL(externalConf.IstiodURL, registryzPath)
+		r, err := getRequest(url)
+		if err != nil {
+			log.Errorf("Failed to get Istiod info from remote endpoint %s error: %s", registryzPath, err)
+			return nil, err
+		}
+		result = map[string][]byte{"remote": r}
+	} else {
+		debugStatus, err := in.getIstiodDebugStatus(registryzPath)
+		if err != nil {
+			log.Errorf("Failed to call Istiod endpoint %s error: %s", registryzPath, err)
+			return nil, err
+		}
+		result = debugStatus
 	}
 	return ParseRegistryServices(result)
 }
 
 func (in *K8SClient) GetRegistryEndpoints() ([]*RegistryEndpoint, error) {
-	endpointzPath := "/debug/endpointz"
-	result, err := in.getIstiodDebugStatus(endpointzPath)
-	if err != nil {
-		log.Errorf("Failed to call Istiod endpoint %s error: %s", endpointzPath, err)
-		return nil, err
+	const endpointzPath = "/debug/endpointz"
+	var result map[string][]byte
+
+	if externalConf := config.Get().ExternalServices.Istio.Registry; externalConf != nil {
+		url := joinURL(externalConf.IstiodURL, endpointzPath)
+		r, err := getRequest(url)
+		if err != nil {
+			log.Errorf("Failed to get Istiod info from remote endpoint %s error: %s", endpointzPath, err)
+			return nil, err
+		}
+		result = map[string][]byte{"remote": r}
+	} else {
+		debugStatus, err := in.getIstiodDebugStatus(endpointzPath)
+		if err != nil {
+			log.Errorf("Failed to call Istiod endpoint %s error: %s", endpointzPath, err)
+			return nil, err
+		}
+		result = debugStatus
 	}
 	return ParseRegistryEndpoints(result)
 }
 
 func (in *K8SClient) GetRegistryConfiguration() (*RegistryConfiguration, error) {
-	configzPath := "/debug/configz"
-	result, err := in.getIstiodDebugStatus(configzPath)
-	if err != nil {
-		log.Errorf("Failed to call Istiod endpoint %s error: %s", configzPath, err)
-		return nil, err
+	const configzPath = "/debug/configz"
+	var result map[string][]byte
+
+	if externalConf := config.Get().ExternalServices.Istio.Registry; externalConf != nil {
+		url := joinURL(externalConf.IstiodURL, configzPath)
+		r, err := getRequest(url)
+		if err != nil {
+			log.Errorf("Failed to get Istiod info from remote endpoint %s error: %s", configzPath, err)
+			return nil, err
+		}
+		result = map[string][]byte{"remote": r}
+	} else {
+		debugStatus, err := in.getIstiodDebugStatus(configzPath)
+		if err != nil {
+			log.Errorf("Failed to call Istiod endpoint %s error: %s", configzPath, err)
+			return nil, err
+		}
+		result = debugStatus
 	}
 	return ParseRegistryConfig(result)
+}
+
+func joinURL(base, path string) string {
+	base = strings.TrimSuffix(base, "/")
+	path = strings.TrimPrefix(path, "/")
+	return base + "/" + path
+}
+
+func getRequest(url string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read response body when getting config from remote istiod. Err: %s", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("bad response when getting config from remote istiod. Status: %s. Body: %s", resp.Status, body)
+	}
+
+	return body, err
 }
 
 func parseProxyStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
@@ -423,16 +612,12 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 }
 
 func (in *K8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, error) {
-	// Pulling an open port from the port pool
-	freePort := httputil.Pool.GetFreePort()
-	defer httputil.Pool.FreePort(freePort)
-
 	// Fetching the Config Dump from the pod's Envoy.
 	// The port 15000 is open on each Envoy Sidecar (managed by Istio) to serve the Envoy Admin  interface.
 	// This port can only be accessed by inside the pod.
 	// See the Istio's doc page about its port usage:
 	// https://istio.io/latest/docs/ops/deployment/requirements/#ports-used-by-istio
-	resp, err := in.ForwardGetRequest(namespace, podName, freePort, 15000, "/config_dump")
+	resp, err := in.forwardGetRequest(namespace, podName, 15000, "/config_dump")
 	if err != nil {
 		log.Errorf("Error forwarding the /config_dump request: %v", err)
 		return nil, err
@@ -452,18 +637,18 @@ func (in *K8SClient) SetProxyLogLevel(namespace, pod, level string) error {
 
 	localPort := httputil.Pool.GetFreePort()
 	defer httputil.Pool.FreePort(localPort)
-	f, err := in.GetPodPortForwarder(namespace, pod, fmt.Sprintf("%d:%d", localPort, envoyAdminPort))
+	f, err := in.getPodPortForwarder(namespace, pod, fmt.Sprintf("%d:%d", localPort, envoyAdminPort))
 	if err != nil {
 		return err
 	}
 
 	// Start the forwarding
-	if err := (*f).Start(); err != nil {
+	if err := f.Start(); err != nil {
 		return err
 	}
 
 	// Defering the finish of the port-forwarding
-	defer (*f).Stop()
+	defer f.Stop()
 
 	// Ready to create a request
 	url := fmt.Sprintf("http://localhost:%d%s", localPort, path)
