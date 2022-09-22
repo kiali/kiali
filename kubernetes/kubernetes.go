@@ -167,7 +167,6 @@ func (in *K8SClient) GetProject(name string) (*osproject_v1.Project, error) {
 	result := &osproject_v1.Project{}
 
 	err := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects", name).Do(in.ctx).Into(result)
-
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +185,6 @@ func (in *K8SClient) GetProjects(labelSelector string) ([]osproject_v1.Project, 
 	}
 
 	err := request.Do(in.ctx).Into(result)
-
 	if err != nil {
 		return nil, err
 	}
@@ -212,8 +210,7 @@ func (in *K8SClient) IsGatewayAPI() bool {
 	}
 	if in.isGatewayAPI == nil {
 		isGatewayAPI := false
-		// GatewayClass should exist got K8s Gateway API to work.
-		_, err := in.GatewayAPI().GatewayV1alpha2().GatewayClasses().List(in.ctx, emptyListOptions)
+		_, err := in.k8s.RESTClient().Get().AbsPath("/apis/gateway.networking.k8s.io").Do(in.ctx).Raw()
 		if err == nil {
 			isGatewayAPI = true
 		} else if !errors.IsNotFound(err) {
@@ -609,5 +606,4 @@ func (in *K8SClient) GetTokenSubject(authInfo *api.AuthInfo) (string, error) {
 	} else {
 		return result.Status.User.Username, nil
 	}
-
 }
