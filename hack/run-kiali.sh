@@ -76,6 +76,7 @@ DEFAULT_CLIENT_EXE="kubectl"
 DEFAULT_ENABLE_SERVER="true"
 DEFAULT_ISTIO_NAMESPACE="istio-system"
 DEFAULT_ISTIOD_URL="http://127.0.0.1:15014/version"
+DEFAULT_ISTIOD_SERVICE_NAME="istiod"
 DEFAULT_KIALI_CONFIG_TEMPLATE_FILE="${SCRIPT_DIR}/run-kiali-config-template.yaml"
 DEFAULT_KIALI_EXE="${GOPATH:-.}/bin/kiali"
 DEFAULT_KUBE_CONTEXT="kiali-developer"
@@ -98,6 +99,7 @@ while [[ $# -gt 0 ]]; do
     -es|--enable-server)         ENABLE_SERVER="$2";                 shift;shift ;;
     -gu|--grafana-url)           GRAFANA_URL="$2";                   shift;shift ;;
     -in|--istio-namespace)       ISTIO_NAMESPACE="$2";               shift;shift ;;
+    -isn|--istiod-service-name)  ISTIOD_SERVICE_NAME="$2";           shift;shift ;;
     -iu|--istiod-url)            ISTIOD_URL="$2";                    shift;shift ;;
     -kah|--kubernetes-api-host)  KUBERNETES_API_HOST="$2";           shift;shift ;;
     -kap|--kubernetes-api-port)  KUBERNETES_API_PORT="$2";           shift;shift ;;
@@ -153,6 +155,10 @@ Valid options:
   -in|--istio-namespace
       The name of the control plane namespace - this is where Istio components are installed.
       Default: ${DEFAULT_ISTIO_NAMESPACE}
+  -isn|--istiod-service-name
+      The name of the istiod service.
+      This is used in conjunction with the istiod URL in order to port forward to istiod.
+      Default: ${DEFAULT_ISTIOD_SERVICE_NAME}
   -iu|--istiod-url
       The URL of the istiod endpoint.
       Default: ${DEFAULT_ISTIOD_URL}
@@ -165,7 +171,7 @@ Valid options:
   -kc|--kube-context
       The context used to connect to the cluster. This is a context that will be
       created/modified in order to proxy the requests to the API server.
-      This context will be associatd with the Kiali service account.
+      This context will be associated with the Kiali service account.
       After it is created, you will be able to inspect this context and its
       related information via "kubectl config" while the server is running,
       but it will be deleted when this script exits and you will return back to
@@ -289,7 +295,8 @@ else
 fi
 
 # Port forward data for Istiod, used for the Istiod URL
-PORT_FORWARD_SERVICE_ISTIOD="service/istiod"
+ISTIOD_SERVICE_NAME="${ISTIOD_SERVICE_NAME:-${DEFAULT_ISTIOD_SERVICE_NAME}}"
+PORT_FORWARD_SERVICE_ISTIOD="service/${ISTIOD_SERVICE_NAME}"
 LOCAL_REMOTE_PORTS_ISTIOD="15014:15014"
 ISTIOD_URL="${ISTIOD_URL:-${DEFAULT_ISTIOD_URL}}"
 
