@@ -12,7 +12,7 @@ type Props = {
   status: NamespaceStatus;
 };
 
-class OverviewCardContentCompact extends React.Component<Props> {
+class NamespaceStatuses extends React.Component<Props> {
   render() {
     const targetPage = switchType(this.props.type, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
     const name = this.props.name;
@@ -82,4 +82,4 @@ class OverviewCardContentCompact extends React.Component<Props> {
   }
 }
 
-export default OverviewCardContentCompact;
+export default NamespaceStatuses;

@@ -17,7 +17,6 @@ import {
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { AxiosError } from 'axios';
-import _ from 'lodash';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import * as API from '../../services/Api';
@@ -37,8 +36,8 @@ import OverviewToolbarContainer, { OverviewDisplayMode, OverviewToolbar, Overvie
 import NamespaceInfo, { NamespaceStatus } from './NamespaceInfo';
 import NamespaceMTLSStatusContainer from '../../components/MTls/NamespaceMTLSStatus';
 import { RenderComponentScroll } from '../../components/Nav/Page';
-import OverviewCardContentCompact from './OverviewCardContentCompact';
-import OverviewCardContentExpanded from './OverviewCardContentExpanded';
+import NamespaceStatuses from './NamespaceStatuses';
+import OverviewCardSparklineCharts from './OverviewCardSparklineCharts';
 import OverviewTrafficPolicies from './OverviewTrafficPolicies';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { computePrometheusRateParams } from '../../services/Prometheus';
@@ -58,11 +57,16 @@ import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNam
 import history, { HistoryManager, URLParam } from '../../app/History';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
-import { ValidationStatus } from '../../types/IstioObjects';
+import { OutboundTrafficPolicy, ValidationStatus } from '../../types/IstioObjects';
 import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
 import { ExternalLink } from '../../types/Dashboards';
-import {isParentKiosk, kioskOverviewAction} from "../../components/Kiosk/KioskActions";
+import { isParentKiosk, kioskOverviewAction } from "../../components/Kiosk/KioskActions";
 import ValidationSummaryLinkContainer from "../../components/Link/ValidationSummaryLink";
+import _ from 'lodash';
+import ControlPlaneBadge from './ControlPlaneBadge';
+import OverviewStatusContainer from './OverviewStatus';
+import ControlPlaneNamespaceStatus from './ControlPlaneNamespaceStatus';
+import { IstiodResourceThresholds } from 'types/IstioStatus';
 
 const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
@@ -79,7 +83,12 @@ const gridStyleList = style({
 });
 
 const cardGridStyle = style({
-  borderTop: '2px solid #39a5dc',
+  textAlign: 'center',
+  marginTop: '0px',
+  marginBottom: '10px'
+});
+
+const cardControlPlaneGridStyle = style({
   textAlign: 'center',
   marginTop: '0px',
   marginBottom: '10px'
@@ -129,6 +138,8 @@ type State = {
   nsTarget: string;
   opTarget: string;
   grafanaLinks: ExternalLink[];
+  istiodResourceThreholds: IstiodResourceThresholds;
+  outboundPolicyMode: OutboundTrafficPolicy;
 };
 
 type ReduxProps = {
@@ -159,7 +170,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       kind: '',
       nsTarget: '',
       opTarget: '',
-      grafanaLinks: []
+      grafanaLinks: [],
+      istiodResourceThreholds: {memory: 0, cpu: 0},
+      outboundPolicyMode: {}
     };
   }
 
@@ -216,7 +229,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
               metrics: previous ? previous.metrics : undefined,
               errorMetrics: previous ? previous.errorMetrics : undefined,
               validations: previous ? previous.validations : undefined,
-              labels: ns.labels
+              labels: ns.labels,
+              controlPlaneMetrics: previous ? previous.controlPlaneMetrics : undefined
             };
           });
         const isAscending = FilterHelper.isCurrentSortAscending();
@@ -236,16 +250,18 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
               showTrafficPoliciesModal: prevState.showTrafficPoliciesModal,
               kind: prevState.kind,
               nsTarget: prevState.nsTarget,
-              opTarget: prevState.opTarget
+              opTarget: prevState.opTarget,
             };
           },
           () => {
             this.fetchHealth(isAscending, sortField, type);
             this.fetchTLS(isAscending, sortField);
             this.fetchOutboundTrafficPolicyMode();
+            this.fetchIstiodResourceThresholds();
             this.fetchValidations(isAscending, sortField);
             if (displayMode !== OverviewDisplayMode.COMPACT) {
               this.fetchMetrics(direction);
+              //this.fetchControlPlaneMetrics();
             }
           }
         );
@@ -357,6 +373,24 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       .catch(err => this.handleAxiosError('Could not fetch health', err));
   }
 
+  // fetchControlPlaneMetrics() {
+  //   const duration = FilterHelper.currentDuration();
+  //   const rateParams = computePrometheusRateParams(duration, 10);    
+  //   const options: MetricsQuery = {      
+  //     duration: duration,
+  //     step: rateParams.step,
+  //     rateInterval: rateParams.rateInterval,
+  //   };
+
+  //   API.getControlPlaneMetrics(options)
+  //   .then(response => {
+  //     this.setState({controlPlaneMetrics: response.data});        
+  //   })
+  //   .catch(error => {
+  //     AlertUtils.addError('Error fetching control plane metrics.', error, 'default', MessageType.ERROR);
+  //   });
+  // }
+
   fetchMetrics(direction: DirectionType) {
     const duration = FilterHelper.currentDuration();
     // debounce async for back-pressure, ten by ten
@@ -387,6 +421,13 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         return API.getNamespaceMetrics(nsInfo.name, options).then(rs => {
           nsInfo.metrics = rs.data.request_count;
           nsInfo.errorMetrics = rs.data.request_error_count;
+          if (nsInfo.name === serverConfig.istioNamespace) {
+            nsInfo.controlPlaneMetrics = {
+              istiod_proxy_time: rs.data.pilot_proxy_convergence_time,
+              istiod_cpu: rs.data.process_cpu_seconds_total,
+              istiod_mem: rs.data.process_virtual_memory_bytes
+            }
+          }
           return nsInfo;
         });
       })
@@ -466,14 +507,20 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   fetchOutboundTrafficPolicyMode() {
     API.getOutboundTrafficPolicyMode()
       .then(response => {
-        this.state.namespaces.forEach(nsInfo => {
-          if (serverConfig.istioNamespace === nsInfo.name && response.data !== '') {
-            nsInfo.suffix = ' (' + response.data + ')'
-          }
-        })
+          this.setState({outboundPolicyMode: {mode: response.data.mode}})
       })
       .catch(error => {
         AlertUtils.addError('Error fetching Mesh OutboundTrafficPolicy.Mode.', error, 'default', MessageType.ERROR);
+      });
+  };
+
+  fetchIstiodResourceThresholds() {
+    API.getIstiodResourceThresholds()
+      .then(response => {
+        this.setState({istiodResourceThreholds: response.data})
+      })
+      .catch(error => {
+        AlertUtils.addError('Error fetching Istiod resource threholds.', error, 'default', MessageType.ERROR);
       });
   };
 
@@ -492,6 +539,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     if (mode === OverviewDisplayMode.EXPAND) {
       // Load metrics
       this.fetchMetrics(this.state.direction);
+      //this.fetchControlPlaneMetrics();
     }
   };
 
@@ -499,10 +547,10 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     return (
       !!ns.status &&
       ns.status.inError.length +
-        ns.status.inSuccess.length +
-        ns.status.inWarning.length +
-        ns.status.notAvailable.length ===
-        0
+      ns.status.inSuccess.length +
+      ns.status.inWarning.length +
+      ns.status.notAvailable.length ===
+      0
     );
   };
 
@@ -760,6 +808,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   render() {
     const sm = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 6;
     const md = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 4;
+    const lg = 12;
     const filteredNamespaces = FilterHelper.runFilters(
       this.state.namespaces,
       Filters.availableFilters,
@@ -769,6 +818,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       const actions = this.getNamespaceActions(ns);
       return <OverviewNamespaceActions key={'namespaceAction_' + i} namespace={ns.name} actions={actions} />;
     });
+
     return (
       <>
         <OverviewToolbarContainer
@@ -795,10 +845,13 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                 {filteredNamespaces.map((ns, i) => {
                   const isLongNs = ns.name.length > NS_LONG;
                   return (
-                    <GridItem sm={sm} md={md} key={'CardItem_' + ns.name} style={{ margin: '0px 5px 0 5px' }}>
+                    <GridItem sm={(ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND) ? lg : sm}
+                      md={(ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND) ? lg : md}
+                      key={'CardItem_' + ns.name}
+                      style={{ margin: '0px 5px 0 5px' }}>
                       <Card
                         isCompact={true}
-                        className={cardGridStyle}
+                        className={(ns.name === serverConfig.istioNamespace) ? cardControlPlaneGridStyle : cardGridStyle}
                         data-test={ns.name + '-' + OverviewDisplayMode[this.state.displayMode]}
                       >
                         <CardHeader>
@@ -808,24 +861,59 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 className={isLongNs ? cardNamespaceNameLongStyle : cardNamespaceNameNormalStyle}
                                 title={ns.name}
                               >
-                                {ns.name}{ns.suffix ? ns.suffix : ''}
+                                {ns.name}
+                                {ns.name === serverConfig.istioNamespace &&
+                                  <ControlPlaneBadge></ControlPlaneBadge>
+                                }
                               </span>
                             </Title>
                           </CardHeaderMain>
                           <CardActions>{namespaceActions[i]}</CardActions>
                         </CardHeader>
                         <CardBody>
-                          {this.renderLabels(ns)}
-                          <div style={{ textAlign: 'left' }}>
-                            <div style={{ display: 'inline-block', width: '125px' }}>Istio Config</div>
-                            {ns.tlsStatus && (
-                              <span>
-                                <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} />
-                              </span>
-                            )}
-                            {this.renderIstioConfigStatus(ns)}
-                          </div>
-                          {this.renderStatuses(ns)}
+                          {ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND &&
+                            <Grid>
+                              <GridItem md={3}>
+                                {this.renderLabels(ns)}
+
+                                <div style={{ textAlign: 'left' }}>
+                                  <div style={{ display: 'inline-block', width: '125px' }}>Istio Config</div>
+                                  {ns.tlsStatus && (
+                                    <span>
+                                      <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} />
+                                    </span>
+                                  )}
+                                  {this.renderIstioConfigStatus(ns)}
+                                </div>
+                                { ns.status && <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />}
+                                { this.state.displayMode === OverviewDisplayMode.EXPAND && <ControlPlaneNamespaceStatus outboundTrafficPolicy={this.state.outboundPolicyMode} namespace={ns}></ControlPlaneNamespaceStatus>}
+                              </GridItem>
+                              {ns.name === serverConfig.istioNamespace &&
+                                <GridItem md={9}>
+                                  {this.renderCharts(ns)}
+                                </GridItem>
+                              }
+                            </Grid>
+                          }
+                          {((ns.name !== serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND) || this.state.displayMode === OverviewDisplayMode.COMPACT) &&
+                            <div>
+                              {this.renderLabels(ns)}
+
+                              <div style={{ textAlign: 'left' }}>
+                                <div style={{ display: 'inline-block', width: '125px' }}>Istio Config</div>
+                                {ns.tlsStatus && (
+                                  <span>
+                                    <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} />
+                                  </span>
+                                )}
+                                {this.renderIstioConfigStatus(ns)}
+                              </div>
+                              {this.renderStatus(ns)}
+                              {this.state.displayMode === OverviewDisplayMode.EXPAND && this.renderCharts(ns)}
+                            </div>
+                          }
+
+
                         </CardBody>
                       </Card>
                     </GridItem>
@@ -893,21 +981,21 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     return labelContent;
   }
 
-  renderStatuses(ns: NamespaceInfo): JSX.Element {
+  renderCharts(ns: NamespaceInfo): JSX.Element {
     if (ns.status) {
       if (this.state.displayMode === OverviewDisplayMode.COMPACT) {
-        return <OverviewCardContentCompact key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />;
+        return <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />;
       }
       return (
-        <OverviewCardContentExpanded
+        <OverviewCardSparklineCharts
           key={ns.name}
           name={ns.name}
           duration={FilterHelper.currentDuration()}
-          status={ns.status}
-          type={this.state.type}
           direction={this.state.direction}
           metrics={ns.metrics}
           errorMetrics={ns.errorMetrics}
+          controlPlaneMetrics={ns.controlPlaneMetrics}
+          istiodResourceThreholds={this.state.istiodResourceThreholds}
         />
       );
     }
@@ -936,7 +1024,88 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       </ValidationSummaryLinkContainer>
     );
   }
+
+  renderStatus(ns: NamespaceInfo): JSX.Element {
+    const targetPage = switchType(this.state.type, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
+    const name = ns.name;
+    let nbItems = 0;
+
+    if (ns.status) {
+      nbItems =
+        ns.status.inError.length +
+        ns.status.inWarning.length +
+        ns.status.inSuccess.length +
+        ns.status.notAvailable.length +
+        ns.status.inNotReady.length;
+    }
+    let text: string;
+    if (nbItems === 1) {
+      text = switchType(this.state.type, '1 Application', '1 Service', '1 Workload');
+    } else {
+      text = nbItems + switchType(this.state.type, ' Applications', ' Services', ' Workloads');
+    }
+    const mainLink = <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }} data-test={'overview-type-' + this.state.type}>{text}</div>;
+    if (nbItems === ns.status?.notAvailable.length) {
+      return (
+        <div style={{ textAlign: 'left' }}>
+          <span>
+            {mainLink}
+            <div style={{ display: 'inline-block', marginLeft: '5px' }}>N/A</div>
+          </span>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div style={{ textAlign: 'left' }}>
+          <span>
+            {mainLink}
+            <div style={{ display: 'inline-block' }} data-test="overview-app-health">
+              {ns.status && ns.status.inNotReady.length > 0 && (
+                <OverviewStatusContainer
+                  id={name + '-not-ready'}
+                  namespace={name}
+                  status={NOT_READY}
+                  items={ns.status.inNotReady}
+                  targetPage={targetPage}
+                />
+              )}
+              {ns.status && ns.status.inError.length > 0 && (
+                <OverviewStatusContainer
+                  id={name + '-failure'}
+                  namespace={name}
+                  status={FAILURE}
+                  items={ns.status.inError}
+                  targetPage={targetPage}
+                />
+              )}
+              {ns.status && ns.status.inWarning.length > 0 && (
+                <OverviewStatusContainer
+                  id={name + '-degraded'}
+                  namespace={name}
+                  status={DEGRADED}
+                  items={ns.status.inWarning}
+                  targetPage={targetPage}
+                />
+              )}
+              {ns.status && ns.status.inSuccess.length > 0 && (
+                <OverviewStatusContainer
+                  id={name + '-healthy'}
+                  namespace={name}
+                  status={HEALTHY}
+                  items={ns.status.inSuccess}
+                  targetPage={targetPage}
+                />
+              )}
+            </div>
+          </span>
+        </div>
+      </>
+    );
+  }
 }
+
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),

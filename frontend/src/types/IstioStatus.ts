@@ -11,3 +11,8 @@ export interface ComponentStatus {
   status: Status;
   is_core: boolean;
 }
+
+export interface IstiodResourceThresholds {
+  memory: number;
+  cpu: number;
+}

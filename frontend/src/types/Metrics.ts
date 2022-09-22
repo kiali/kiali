@@ -8,6 +8,12 @@ export interface Metric {
   stat?: string;
 }
 
+export type ControlPlaneMetricsMap = {
+  istiod_proxy_time?: Metric[];
+  istiod_cpu?: Metric[];
+  istiod_mem?: Metric[];
+}
+
 export type IstioMetricsMap = {
   grpc_received?: Metric[];
   grpc_sent?: Metric[];
@@ -20,6 +26,9 @@ export type IstioMetricsMap = {
   response_size?: Metric[];
   tcp_received?: Metric[];
   tcp_sent?: Metric[];
+  pilot_proxy_convergence_time?: Metric[];
+  process_cpu_seconds_total?: Metric[];
+  process_virtual_memory_bytes?: Metric[];
 };
 
 export enum MetricsObjectTypes {

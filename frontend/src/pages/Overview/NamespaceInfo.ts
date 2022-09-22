@@ -1,11 +1,11 @@
 import { TLSStatus } from '../../types/TLSStatus';
-import { Metric } from '../../types/Metrics';
+import { ControlPlaneMetricsMap, Metric } from '../../types/Metrics';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { IstioConfigList } from '../../types/IstioConfigList';
 
 export type NamespaceInfo = {
   name: string;
-  suffix?: string;
+  outboundPolicyMode?: string;
   status?: NamespaceStatus;
   tlsStatus?: TLSStatus;
   istioConfig?: IstioConfigList;
@@ -13,6 +13,7 @@ export type NamespaceInfo = {
   metrics?: Metric[];
   errorMetrics?: Metric[];
   labels?: { [key: string]: string };
+  controlPlaneMetrics?: ControlPlaneMetricsMap;
 };
 
 export type NamespaceStatus = {

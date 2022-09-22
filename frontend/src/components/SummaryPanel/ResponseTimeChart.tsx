@@ -57,6 +57,7 @@ export class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp
                   return `${(dp.x as Date).toLocaleTimeString()} - ${dp.name}: ${val.toFixed(2)} ms`;
                 }}
                 series={series}
+                labelName="ops"
               />
             ) : (
               <div>

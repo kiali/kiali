@@ -63,6 +63,7 @@ const renderSparklines = (series: VCLines<RichDataPoint>, yTickFormat?: (val: nu
       padding={{ top: 5 }}
       tooltipFormat={dp => `${(dp.x as Date).toLocaleTimeString()}\n${yFormat(dp.y)}`}
       series={series}
+      labelName="ops"
     />
   );
 };

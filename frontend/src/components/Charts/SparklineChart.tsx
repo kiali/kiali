@@ -7,19 +7,25 @@ import {
   ChartScatter,
   ChartArea,
   ChartLabel,
-  ChartLegend
+  ChartLegend,
+  ChartThreshold,
+
 } from '@patternfly/react-charts';
+
 
 import { VCLines, VCDataPoint, RichDataPoint } from 'types/VictoryChartInfo';
 import { CustomTooltip } from './CustomTooltip';
 import { VCEvent, addLegendEvent } from 'utils/VictoryEvents';
 
 type Props = ChartProps & {
+  labelName: string;
   name: string;
   series: VCLines<RichDataPoint>;
   showLegend?: boolean;
+  showXAxisValues?: boolean;
   showYAxis?: boolean;
   tooltipFormat?: (dp: VCDataPoint) => string;
+  thresholds?: VCLines<RichDataPoint>;
 };
 
 type State = {
@@ -130,11 +136,17 @@ export class SparklineChart extends React.Component<Props, State> {
         // Hack: 1 pxl on Y domain padding to prevent harsh clipping (https://github.com/kiali/kiali/issues/2069)
         domainPadding={{ y: 1 }}
       >
-        <ChartAxis tickCount={15} style={hiddenAxisStyle} />
+        {this.props.showXAxisValues ?
+          <ChartAxis 
+            tickValues={this.props.series[0].datapoints.map(dp => dp.x)}
+            tickFormat={(x => (x as Date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))}
+            tickCount={2} /> :
+          <ChartAxis tickCount={15} style={hiddenAxisStyle} />
+        }
         {this.props.showYAxis ? (
           <ChartAxis
-            label="ops"
-            axisLabelComponent={<ChartLabel y={-5} x={7} angle={0} renderInPortal={true} />}
+            label={this.props.labelName}
+            axisLabelComponent={<ChartLabel y={-5} x={15} angle={0} renderInPortal={true} />}
             tickCount={2}
             dependentAxis={true}
           />
@@ -190,6 +202,20 @@ export class SparklineChart extends React.Component<Props, State> {
             width={this.state.width}
           />
         )}
+
+        {this.props.thresholds && this.props.thresholds.map((serie, idx) => {
+          if (this.state.hiddenSeries.has(idx)) {
+            return undefined;
+          }
+          return (
+            <ChartThreshold
+              data={serie.datapoints}
+              style={{
+                data: { stroke: serie.color }
+              }}
+            />
+          );
+        })}
       </Chart>
     );
   }
