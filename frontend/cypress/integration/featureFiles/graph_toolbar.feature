@@ -11,11 +11,24 @@ Feature: Kiali Graph page - Toolbar (various)
 # NOTE: Graph Replay has its own test script
 
 @graph-page-toolbar
-Scenario: Graph alpha namespace with query params
-  When user graphs "alpha" namespaces with refresh "900000" and duration "300"
+Scenario Outline: Graph alpha namespace with query params
+  When user graphs "alpha" namespaces with refresh "<refresh_param>" and duration "<duration_param>"
   Then user sees the "alpha" namespace
-  And user sees selected graph duration "Last 5m"
-  And user sees selected graph refresh "Every 15m"
+  And user sees selected graph refresh "<displayed_refresh>"
+  And user sees selected graph duration "<displayed_duration>"
+  Examples:
+      | refresh_param | duration_param | displayed_refresh | displayed_duration |
+      | 0             | 60             | Pause             | Last 1m            |
+      | 10000         | 120            | Every 10s         | Last 2m            |
+      | 15000         | 300            | Every 15s         | Last 5m            |
+      | 30000         | 600            | Every 30s         | Last 10m           |
+      | 60000         | 1800           | Every 1m          | Last 30m           |
+      | 300000        | 3600           | Every 5m          | Last 1h            |
+      | 900000        | 10800          | Every 15m         | Last 3h            |
+      | 900000        | 21600          | Every 15m         | Last 6h            |
+      | 900000        | 43200          | Every 15m         | Last 12h           |
+      | 900000        | 86400          | Every 15m         | Last 1d            |
+      | 900000        | 604800         | Every 15m         | Last 7d            |
 
 @graph-page-toolbar
 Scenario: Open graph Tour
