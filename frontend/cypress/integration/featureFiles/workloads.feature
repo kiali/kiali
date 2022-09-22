@@ -58,6 +58,22 @@ Feature: Kiali Workloads page
     And user should only see healthy workloads in workloads table
 
   @workloads-page
+  Scenario: Filter workloads table by App Label
+    When user selects the "bookinfo" namespace
+    And user selects filter "App Label"
+    And user filters for app label "Present"
+    Then user sees "workloads" in workloads table
+    And user should only see workloads with the "app" label 
+
+  @workloads-page
+  Scenario: Filter workloads table by Version Label
+    When user selects the "bookinfo" namespace
+    And user selects filter "Version Label"
+    And user filters for version "Present"
+    Then user sees "workloads" in workloads table
+    And user should only see workloads with the "version" label
+
+  @workloads-page
   Scenario: Filter workloads table by label
     When user selects the "bookinfo" namespace
     And user selects filter "Label"
