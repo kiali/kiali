@@ -339,10 +339,6 @@ export class AuthenticationController extends React.Component<
   private processServerStatus = (status: StatusState) => {
     this.props.statusRefresh(status);
 
-    status.warningMessages.forEach(wMsg => {
-      this.props.addMessage(wMsg, '', 'systemErrors', MessageType.WARNING);
-    });
-
     if (status.status[StatusKey.DISABLED_FEATURES]) {
       this.props.addMessage("The following features are disabled: " + status.status[StatusKey.DISABLED_FEATURES], '', 'default', MessageType.INFO, false)
     }

@@ -115,7 +115,11 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
 
     return (
       <>
-        <AboutUIModal ref={this.about} status={this.props.status} externalServices={this.props.externalServices} />
+        <AboutUIModal
+          ref={this.about}
+          status={this.props.status}
+          externalServices={this.props.externalServices}
+          warningMessages={this.props.warningMessages} />
         <DebugInformationContainer ref={this.debugInformation} />
         {serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled && (
           <IstioCertsInfoConnected ref={this.certsInformation} />

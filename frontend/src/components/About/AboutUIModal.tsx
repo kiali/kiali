@@ -7,7 +7,8 @@ import {
   Title,
   Button,
   TitleSizes,
-  ButtonVariant
+  ButtonVariant,
+  Alert
 } from '@patternfly/react-core';
 import { ExternalServiceInfo, Status, StatusKey } from '../../types/StatusState';
 import { config, kialiLogo } from '../../config';
@@ -21,6 +22,7 @@ type AboutUIModalState = {
 type AboutUIModalProps = {
   status: Status;
   externalServices: ExternalServiceInfo[];
+  warningMessages: string[];
 };
 
 const iconStyle = style({
@@ -48,6 +50,8 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
         ? this.props.status[StatusKey.KIALI_CORE_VERSION]
         : `${this.props.status[StatusKey.KIALI_CORE_VERSION]} (${this.props.status[StatusKey.KIALI_CORE_COMMIT_HASH]})`;
     const containerVersion = this.props.status[StatusKey.KIALI_CONTAINER_VERSION];
+    const meshVersion = this.props.status[StatusKey.MESH_NAME] ? `${this.props.status[StatusKey.MESH_NAME]} ${this.props.status[StatusKey.MESH_VERSION] || ''}` : 'Unknown';
+
 
     return (
       <AboutModal
@@ -56,6 +60,7 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
         productName=""
         brandImageSrc={kialiLogo}
         brandImageAlt="Kiali Logo"
+        noAboutModalBoxContentContainer={true}
       >
         <TextContent>
           <TextList component="dl">
@@ -71,7 +76,18 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
             <TextListItem key={'kiali-container-version'} component="dd">
               {containerVersion!}
             </TextListItem>
+            <TextListItem key={'service-mesh-name'} component="dt">
+              Service Mesh
+            </TextListItem>
+            <TextListItem key={'service-mesh-version'} component="dd">
+              {meshVersion!}
+            </TextListItem>
           </TextList>
+        </TextContent>
+        {this.props.warningMessages.length > 0 && (
+          <Alert variant="warning" title={this.props.warningMessages[0]} style={{marginTop: '1em'}} />
+        )}
+        <TextContent>
           <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '20px 0px 20px' }}>
             Components
           </Title>

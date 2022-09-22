@@ -45,7 +45,7 @@ type StatusInfo struct {
 	// required: true
 	// swagger:allOf
 	ExternalServices []ExternalServiceInfo `json:"externalServices"`
-	// An array of warningMessages
+	// An array of warningMessages. CAUTION: Please read the doc comments the in AddWarningMessages func.
 	// items.example: Istio version 0.7.1 is not supported, the version should be 0.8.0
 	// swagger:allOf
 	WarningMessages []string `json:"warningMessages"`
@@ -114,6 +114,11 @@ func GetStatuses() map[string]string {
 }
 
 // AddWarningMessages add warning messages to status
+// CAUTION: Currently, the UI assumes that the only messages passed to this
+// function are the result of Istio version checks (see the istioVersion func of versions.go file)
+// and the UI will show any logged warnings in the About dialog. Furthermore, the UI assumes the
+// array will contain a single message.
+// If in the future other kind of warnings need to be logged, please adjust UI code as needed.
 func AddWarningMessages(warningMessages string) {
 	info.WarningMessages = append(info.WarningMessages, warningMessages)
 }
