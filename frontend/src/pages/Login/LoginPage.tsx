@@ -19,7 +19,7 @@ import { AuthStrategy } from '../../types/Auth';
 import { authenticationConfig, kialiLogo } from '../../config';
 import LoginThunkActions from '../../actions/LoginThunkActions';
 import { isAuthStrategyOAuth } from '../../config/AuthenticationConfig';
-import { KialiDispatch } from "../../types/Redux";
+import { KialiDispatch } from '../../types/Redux';
 
 type LoginProps = {
   status: LoginStatus;
@@ -101,12 +101,16 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
       }
     }
   };
-  renderMessage = (message: React.ReactNode | undefined, type: 'success' | 'danger' | 'warning' | 'info' | 'default' | undefined, key: string) => {
+  renderMessage = (
+    message: React.ReactNode | undefined,
+    type: 'success' | 'danger' | 'warning' | 'info' | 'default' | undefined,
+    key: string
+  ) => {
     if (!message) {
       return '';
     }
     const variant = type ?? (this.props.status === LoginStatus.error || this.state.filledInputs ? 'danger' : 'warning');
-    return (<Alert key={key} variant={variant} isInline={true} isPlain={true} title={message} />);
+    return <Alert key={key} variant={variant} isInline={true} isPlain={true} title={message} />;
   };
 
   getHelperMessage = () => {
@@ -187,7 +191,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     let loginPane: React.ReactFragment;
     if (authenticationConfig.strategy === AuthStrategy.token) {
       loginPane = (
-        <Form>
+        <Form data-test="login-form">
           <FormHelperText
             isError={!this.state.isValidToken || this.props.status === LoginStatus.error}
             isHidden={!this.state.showHelperText && this.props.message === '' && messages.length === 0}
@@ -212,7 +216,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
       );
     } else {
       loginPane = (
-        <Form>
+        <Form data-test="login-form">
           <FormHelperText
             isError={this.props.status === LoginStatus.error}
             isHidden={this.props.status !== LoginStatus.error && this.props.message === '' && messages.length === 0}

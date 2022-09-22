@@ -11,7 +11,7 @@ Feature: Kiali Overview page
 
   Background:
     Given user is at administrator perspective
-    And user opens the overview page
+    And user is at the "overview" page
 
   @overview-page
   Scenario: See "alpha" and "beta" namespaces

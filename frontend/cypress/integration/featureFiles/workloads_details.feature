@@ -30,13 +30,15 @@ Feature: Kiali Workload Details page
 
   @workload-details
   Scenario: See workload tracing info after selecting a trace
-    Then user sees workload trace information
-    And user sees workload trace details after selecting a trace
+    And user sees trace information
+    When user selects a trace
+    Then user sees trace details
 
   @workload-details
   Scenario: See workload span info after selecting a span
-    Then user sees workload trace information
-    And user sees workload span details after selecting a trace
+    And user sees trace information
+    When user selects a trace
+    And user sees span details
     And user can filter spans by workload
 
   @workload-details

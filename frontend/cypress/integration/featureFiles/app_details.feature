@@ -32,11 +32,13 @@ Feature: Kiali App Details page
 
   @app-details-page
   Scenario: See tracing info after selecting a trace
-    Then user sees trace information
-    And user sees trace details after selecting a trace
+    And user sees trace information
+    When user selects a trace
+    Then user sees trace details
 
   @app-details-page
   Scenario: See span info after selecting a span
-    Then user sees trace information
-    And user sees span details after selecting a trace
+    And user sees trace information
+    When user selects a trace
+    Then user sees span details
     And user can filter spans by app

@@ -1,6 +1,4 @@
-import { And, Then } from '@badeball/cypress-cucumber-preprocessor';
-
-const tracingDotQuery = '[style*="fill: var(--pf-global--palette--blue-200)"][style*="stroke: transparent"]';
+import { Then } from '@badeball/cypress-cucumber-preprocessor';
 
 function openTab(tab: string) {
   cy.get('.pf-c-tabs__list').should('be.visible').contains(tab).click();
@@ -72,56 +70,4 @@ Then('sd::user does not see No data message in the {string} graph', (graph: stri
     .children()
     .contains(graph)
     .should('not.contain', 'No data available');
-});
-
-Then('sd::user sees graph with traces information', (graph: string) => {
-  openTab('Traces');
-  cy.getBySel('jaeger-scatterplot');
-  cy.getBySel('trace-details-tabs').should('not.exist');
-  cy.getBySel('jaeger-scatterplot').contains('Traces');
-  cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
-});
-
-And('sd::user sees trace details after selecting a trace', () => {
-  cy.getBySel('trace-details-tabs').should('be.visible').contains('Trace Details');
-  cy.getBySel('trace-details-kebab').click().contains('View on Graph');
-});
-
-And('sd::user sees table details after selecting a trace', () => {
-  cy.getBySel('trace-details-tabs').should('be.visible').contains('Span Details').click();
-
-  // The traces tab fetches metrics in the background on a loop.
-  // Unforunately new data causes a re-render which
-  // makes clicking and testing for menus to open
-  // unreliable since re-renders cause the menus to close.
-  // We're delaying the response until after the test has finished so that
-  // we can test the menu opening without it closing prematurely.
-  // TODO: Fix whatever is causing new metrics data to undo click actions.
-  let dropdownVisible = false;
-  cy.intercept(`${Cypress.config('baseUrl')}/api/stats/metrics`, req => {
-    req.continue(res => {
-      let timer = 0;
-      const timeout = 30000;
-      while (!dropdownVisible && timer < timeout) {
-        setTimeout(() => {
-          timer += 50;
-        }, 50);
-      }
-    });
-  });
-
-  cy.get('table')
-    .should('be.visible')
-    .find('tbody tr') // ignore thead rows
-    .should('have.length.above', 1) // retries above cy.find() until we have a non head-row
-    .eq(1) // take 1st  row
-    .find('td')
-    .eq(4) // take 5th cell (kebab)
-    .click();
-  cy.get('ul.pf-c-dropdown__menu')
-    .should('be.visible')
-    .contains('Inbound Metrics')
-    .then(() => {
-      dropdownVisible = true;
-    });
 });
