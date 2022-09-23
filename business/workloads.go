@@ -95,6 +95,11 @@ func isWorkloadIncluded(workload string) bool {
 	return !excludedWorkloads[workload]
 }
 
+func isWorkloadValid(workloadType string) bool {
+	_, knownWorkloadType := controllerOrder[workloadType]
+	return knownWorkloadType && isWorkloadIncluded(workloadType)
+}
+
 func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1beta1.AuthorizationPolicy, workloadsPerNamespace map[string]models.WorkloadList) models.IstioValidations {
 	validations := checkers.WorkloadChecker{
 		AuthorizationPolicies: authpolicies,
@@ -772,13 +777,18 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child ReplicaSet and add the parent controller
 						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = ref.Kind
+							if isWorkloadValid(ref.Kind) {
+								controllers[ref.Name] = ref.Kind
+								delete(controllers, cname)
+							} else {
+								log.Debugf("Defer to ReplicaSet for workload list [%s][%s]", ref.Name, ref.Kind)
+							}
 						} else {
 							if controllers[ref.Name] != ref.Kind {
 								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
 							}
+							delete(controllers, cname)
 						}
-						delete(controllers, cname)
 					}
 				}
 			}
@@ -1370,12 +1380,12 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 	// Resolve ReplicaSets from Deployments
 	// Resolve ReplicationControllers from DeploymentConfigs
 	// Resolve Jobs from CronJobs
-	for cname, ctype := range controllers {
-		if ctype == kubernetes.ReplicaSetType {
+	for controllerName, controllerType := range controllers {
+		if controllerType == kubernetes.ReplicaSetType {
 			found := false
 			iFound := -1
 			for i, rs := range repset {
-				if rs.Name == cname {
+				if rs.Name == controllerName {
 					iFound = i
 					found = true
 					break
@@ -1386,22 +1396,27 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child ReplicaSet and add the parent controller
 						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = ref.Kind
+							if isWorkloadValid(ref.Kind) {
+								controllers[ref.Name] = ref.Kind
+								delete(controllers, controllerName)
+							} else {
+								log.Debugf("Defer to ReplicaSet for workload [%s][%s]", ref.Name, ref.Kind)
+							}
 						} else {
 							if controllers[ref.Name] != ref.Kind {
 								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
 							}
+							delete(controllers, controllerName)
 						}
-						delete(controllers, cname)
 					}
 				}
 			}
 		}
-		if ctype == kubernetes.ReplicationControllerType {
+		if controllerType == kubernetes.ReplicationControllerType {
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
-				if rc.Name == cname {
+				if rc.Name == controllerName {
 					iFound = i
 					found = true
 					break
@@ -1418,16 +1433,16 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
 							}
 						}
-						delete(controllers, cname)
+						delete(controllers, controllerName)
 					}
 				}
 			}
 		}
-		if ctype == kubernetes.JobType {
+		if controllerType == kubernetes.JobType {
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
-				if jb.Name == cname {
+				if jb.Name == controllerName {
 					iFound = i
 					found = true
 					break
@@ -1454,7 +1469,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 							}
 						}
 						if cnExist {
-							delete(controllers, cname)
+							delete(controllers, controllerName)
 						}
 					}
 				}
