@@ -233,12 +233,13 @@ func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet,
 			if len(rs.OwnerReferences) > 0 {
 				for _, ownerRef := range rs.OwnerReferences {
 					if ownerRef.Controller != nil && *ownerRef.Controller {
-						if currRS, ok := activeRSMap[fmt.Sprintf("%s_%s_%s", ownerRef.Name, rs.Name, rs.ResourceVersion)]; ok {
+						key := fmt.Sprintf("%s_%s_%s", ownerRef.Name, rs.Name, rs.ResourceVersion)
+						if currRS, ok := activeRSMap[key]; ok {
 							if currRS.CreationTimestamp.Time.Before(rs.CreationTimestamp.Time) {
-								activeRSMap[ownerRef.Name] = rs
+								activeRSMap[key] = rs
 							}
 						} else {
-							activeRSMap[ownerRef.Name] = rs
+							activeRSMap[key] = rs
 						}
 					}
 				}
