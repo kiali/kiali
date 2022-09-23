@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"fmt"
+
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -212,10 +214,11 @@ func (c *kialiCacheImpl) GetPods(namespace, labelSelector string) ([]core_v1.Pod
 	return retPods, nil
 }
 
-// GetReplicaSets returns the cached ReplicaSets for the namespace.  For any given Owner (i.e. Deployment),
-// only the most recent ReplicaSet will be included in the returned list. When an owning Deployment
-// is configured with revisionHistoryLimit > 0, then k8s may return multiple ReplicaSets for the
-// same Deployment (current and older revisions).
+// GetReplicaSets returns the cached ReplicaSets for the namespace.  For any given RS for a given
+// Owner (i.e. Deployment), only the most recent version of the RS will be included in the returned list.
+// When an owning Deployment is configured with revisionHistoryLimit > 0, then k8s may return multiple
+// versions of the RS for the same Deployment (current and older revisions). Note that it is still possible
+// to have multiple RS for the same owner. In which case the most recent version of each is returned.
 // see also: ../kubernetes.go
 func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
 	reps, err := c.getCacheLister(namespace).replicaSetLister.ReplicaSets(namespace).List(labels.Everything())
@@ -230,7 +233,7 @@ func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet,
 			if len(rs.OwnerReferences) > 0 {
 				for _, ownerRef := range rs.OwnerReferences {
 					if ownerRef.Controller != nil && *ownerRef.Controller {
-						if currRS, ok := activeRSMap[ownerRef.Name]; ok {
+						if currRS, ok := activeRSMap[fmt.Sprintf("%s_%s_%s", ownerRef.Name, rs.Name, rs.ResourceVersion)]; ok {
 							if currRS.CreationTimestamp.Time.Before(rs.CreationTimestamp.Time) {
 								activeRSMap[ownerRef.Name] = rs
 							}
