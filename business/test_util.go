@@ -807,7 +807,7 @@ func FakePodsFromCustomController() []core_v1.Pod {
 				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
 					Kind:       "ReplicaSet",
-					Name:       "custom-controller-123",
+					Name:       "custom-controller-RS-123",
 				}},
 				Annotations: kubetest.FakeIstioAnnotations(),
 			},
@@ -838,7 +838,7 @@ func FakeCustomControllerRSSyncedWithPods() []apps_v1.ReplicaSet {
 				Kind: "ReplicaSet",
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name:              "custom-controller-123",
+				Name:              "custom-controller-RS-123",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,

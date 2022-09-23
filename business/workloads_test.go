@@ -410,8 +410,8 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 	assert.Equal("Namespace", workloadList.Namespace.Name)
 
 	assert.Equal(1, len(workloads))
-	assert.Equal("custom-controller", workloads[0].Name)
-	assert.Equal("CustomController", workloads[0].Type)
+	assert.Equal("custom-controller-RS-123", workloads[0].Name)
+	assert.Equal("ReplicaSet", workloads[0].Type)
 	assert.Equal(true, workloads[0].AppLabel)
 	assert.Equal(true, workloads[0].VersionLabel)
 }
