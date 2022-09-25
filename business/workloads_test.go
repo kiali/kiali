@@ -526,8 +526,14 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	criteria := WorkloadCriteria{Namespace: "Namespace", WorkloadName: "custom-controller", WorkloadType: "", IncludeServices: false}
 	workload, _ := svc.GetWorkload(context.TODO(), criteria)
 
-	assert.Equal("custom-controller", workload.Name)
-	assert.Equal("CustomController", workload.Type)
+	// custom controller is not a workload type, only its replica set(s)
+	assert.Equal((*models.Workload)(nil), workload)
+
+	criteria = WorkloadCriteria{Namespace: "Namespace", WorkloadName: "custom-controller-RS-123", WorkloadType: "", IncludeServices: false}
+	workload, _ = svc.GetWorkload(context.TODO(), criteria)
+
+	assert.Equal("custom-controller-RS-123", workload.Name)
+	assert.Equal("ReplicaSet", workload.Type)
 	assert.Equal(true, workload.AppLabel)
 	assert.Equal(true, workload.VersionLabel)
 	assert.Equal(0, len(workload.Runtimes))
@@ -1009,9 +1015,12 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	workload, _ := svc.GetWorkload(context.TODO(), criteria)
 
 	assert.Equal(len(workloads), 1)
-	assert.NotNil(workload)
+	assert.Nil(workload)
 
-	assert.Equal(len(pods), len(workload.Pods))
+	criteria.WorkloadName = workloads[0].Name
+	workload, _ = svc.GetWorkload(context.TODO(), criteria)
+
+	assert.NotNil(workload)
 }
 
 func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
