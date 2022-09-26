@@ -179,7 +179,8 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
       isHash = pattern.test(window.location.hash);
     }
 
-    if ((authenticationConfig.strategy === AuthStrategy.openshift || authenticationConfig.strategy === AuthStrategy.openid) && !isHash && this.props.status === LoginStatus.loggedOut) {
+    if ((authenticationConfig.strategy === AuthStrategy.openshift|| authenticationConfig.strategy === AuthStrategy.openid)
+      && !isHash && this.props.status === LoginStatus.loggedOut && messages.length === 0 && (this.props.message ?? '').length === 0) {
       window.location.href = authenticationConfig.authorizationEndpoint!;
     }
 
