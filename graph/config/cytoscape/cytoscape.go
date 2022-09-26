@@ -288,24 +288,34 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		}
 
 		// node may represent an Istio Ingress Gateway
-		if gateways, ok := n.Metadata[graph.IsIngressGateway]; ok {
+		if ingGateways, ok := n.Metadata[graph.IsIngressGateway]; ok {
 			var configuredHostnames []string
-			for _, hosts := range gateways.(graph.GatewaysMetadata) {
+			for _, hosts := range ingGateways.(graph.GatewaysMetadata) {
 				configuredHostnames = append(configuredHostnames, hosts...)
 			}
 
 			nd.IsGateway = &GWInfo{
 				IngressInfo: GWInfoIngress{Hostnames: configuredHostnames},
 			}
-		} else if gateways, ok := n.Metadata[graph.IsEgressGateway]; ok {
+		} else if egrGateways, ok := n.Metadata[graph.IsEgressGateway]; ok {
 			// node may represent an Istio Egress Gateway
 			var configuredHostnames []string
-			for _, hosts := range gateways.(graph.GatewaysMetadata) {
+			for _, hosts := range egrGateways.(graph.GatewaysMetadata) {
 				configuredHostnames = append(configuredHostnames, hosts...)
 			}
 
 			nd.IsGateway = &GWInfo{
 				EgressInfo: GWInfoIngress{Hostnames: configuredHostnames},
+			}
+		} else if apiGateways, ok := n.Metadata[graph.IsGatewayAPI]; ok {
+			// node may represent a Gateway API
+			var configuredHostnames []string
+			for _, hosts := range apiGateways.(graph.GatewaysMetadata) {
+				configuredHostnames = append(configuredHostnames, hosts...)
+			}
+
+			nd.IsGateway = &GWInfo{
+				IngressInfo: GWInfoIngress{Hostnames: configuredHostnames},
 			}
 		}
 
