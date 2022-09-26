@@ -410,8 +410,8 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 	assert.Equal("Namespace", workloadList.Namespace.Name)
 
 	assert.Equal(1, len(workloads))
-	assert.Equal("custom-controller", workloads[0].Name)
-	assert.Equal("CustomController", workloads[0].Type)
+	assert.Equal("custom-controller-RS-123", workloads[0].Name)
+	assert.Equal("ReplicaSet", workloads[0].Type)
 	assert.Equal(true, workloads[0].AppLabel)
 	assert.Equal(true, workloads[0].VersionLabel)
 }
@@ -526,8 +526,14 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	criteria := WorkloadCriteria{Namespace: "Namespace", WorkloadName: "custom-controller", WorkloadType: "", IncludeServices: false}
 	workload, _ := svc.GetWorkload(context.TODO(), criteria)
 
-	assert.Equal("custom-controller", workload.Name)
-	assert.Equal("CustomController", workload.Type)
+	// custom controller is not a workload type, only its replica set(s)
+	assert.Equal((*models.Workload)(nil), workload)
+
+	criteria = WorkloadCriteria{Namespace: "Namespace", WorkloadName: "custom-controller-RS-123", WorkloadType: "", IncludeServices: false}
+	workload, _ = svc.GetWorkload(context.TODO(), criteria)
+
+	assert.Equal("custom-controller-RS-123", workload.Name)
+	assert.Equal("ReplicaSet", workload.Type)
 	assert.Equal(true, workload.AppLabel)
 	assert.Equal(true, workload.VersionLabel)
 	assert.Equal(0, len(workload.Runtimes))
@@ -1009,9 +1015,12 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	workload, _ := svc.GetWorkload(context.TODO(), criteria)
 
 	assert.Equal(len(workloads), 1)
-	assert.NotNil(workload)
+	assert.Nil(workload)
 
-	assert.Equal(len(pods), len(workload.Pods))
+	criteria.WorkloadName = workloads[0].Name
+	workload, _ = svc.GetWorkload(context.TODO(), criteria)
+
+	assert.NotNil(workload)
 }
 
 func TestGetPodLogsWithoutAccessLogs(t *testing.T) {

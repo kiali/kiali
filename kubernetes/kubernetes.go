@@ -320,11 +320,12 @@ func (in *K8SClient) GetDeploymentConfigs(namespace string) ([]osapps_v1.Deploym
 	return result.Items, nil
 }
 
-// GetReplicaSets returns the ReplicaSets for the namespace.  For any given Owner (i.e. Deployment),
-// only the most recent ReplicaSet will be included in the returned list. When an owning Deployment
-// is configured with revisionHistoryLimit > 0, then k8s may return multiple ReplicaSets for the
-// same Deployment (current and older revisions).
-// see also: ./cache/kubernetes.go
+// GetReplicaSets returns the cached ReplicaSets for the namespace.  For any given RS for a given
+// Owner (i.e. Deployment), only the most recent version of the RS will be included in the returned list.
+// When an owning Deployment is configured with revisionHistoryLimit > 0, then k8s may return multiple
+// versions of the RS for the same Deployment (current and older revisions). Note that it is still possible
+// to have multiple RS for the same owner. In which case the most recent version of each is returned.
+// see also: ../kubernetes.go
 func (in *K8SClient) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
 	if rsList, err := in.k8s.AppsV1().ReplicaSets(namespace).List(in.ctx, emptyListOptions); err == nil {
 		activeRSMap := map[string]apps_v1.ReplicaSet{}
@@ -332,12 +333,13 @@ func (in *K8SClient) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, err
 			if len(rs.OwnerReferences) > 0 {
 				for _, ownerRef := range rs.OwnerReferences {
 					if ownerRef.Controller != nil && *ownerRef.Controller {
-						if currRS, ok := activeRSMap[ownerRef.Name]; ok {
+						key := fmt.Sprintf("%s_%s_%s", ownerRef.Name, rs.Name, rs.ResourceVersion)
+						if currRS, ok := activeRSMap[key]; ok {
 							if currRS.CreationTimestamp.Time.Before(rs.CreationTimestamp.Time) {
-								activeRSMap[ownerRef.Name] = rs
+								activeRSMap[key] = rs
 							}
 						} else {
-							activeRSMap[ownerRef.Name] = rs
+							activeRSMap[key] = rs
 						}
 					}
 				}
