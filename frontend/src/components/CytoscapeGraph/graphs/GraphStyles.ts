@@ -270,6 +270,9 @@ export class GraphStyles {
         if (node.isGateway?.ingressInfo?.hostnames?.length !== undefined) {
           badges = `<span class="${NodeIconGateway} ${badgeMargin(badges)}"></span> ${badges}`;
         }
+        if (node.isGateway?.gatewayAPIInfo?.hostnames?.length !== undefined) {
+          badges = `<span class="${NodeIconGateway} ${badgeMargin(badges)}"></span> ${badges}`;
+        }
         badges = `<span class="${NodeIconRoot} ${badgeMargin(badges)}"></span> ${badges}`;
       } else {
         if (node.isGateway?.egressInfo?.hostnames?.length !== undefined) {
@@ -420,6 +423,7 @@ export class GraphStyles {
     node.hasVS?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
     node.isGateway?.ingressInfo?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
     node.isGateway?.egressInfo?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
+    node.isGateway?.gatewayAPIInfo?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
 
     let htmlHosts = '';
     if (hosts.length !== 0) {
