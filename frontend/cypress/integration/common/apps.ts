@@ -44,8 +44,7 @@ And('user sees span details', () => {
     .eq(1) // take 1st  row
     .find('td')
     .eq(4) // take 5th cell (kebab)
-    .click({ scrollBehavior: false });
-  cy.get('ul.pf-c-dropdown__menu').should('be.visible').contains('Inbound Metrics');
+    .should('be.visible')
 });
 
 When('I fetch the list of applications', function () {
