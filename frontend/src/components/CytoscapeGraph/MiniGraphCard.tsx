@@ -31,7 +31,6 @@ import { WizardAction, WizardMode } from "../IstioWizards/WizardActions";
 import { TimeDurationModal } from "../Time/TimeDurationModal";
 import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton";
 import { KioskElement } from "../Kiosk/KioskElement";
-import {isKioskMode} from "../../utils/SearchParamUtils";
 
 const initGraphContainerStyle = style({ width: '100%', height: '100%' });
 
@@ -77,9 +76,6 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
   }
 
   private refresh = () => {
-    if (isKioskMode()) {
-      this.props.dataSource.graphDuration = store.getState().userSettings.timeRange.rangeDuration!;
-    }
     this.setState({ graphData: this.props.dataSource.graphData });
   };
 
@@ -123,7 +119,7 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
             <CardActions>
               <KioskElement>
                 <ToolbarItem>
-                  <TimeDurationIndicatorButton onClick={this.toggleTimeOptionsVisibility} />
+                  <TimeDurationIndicatorButton onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
                 </ToolbarItem>
               </KioskElement>
               <Dropdown
@@ -181,7 +177,7 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
           </CardBody>
         </Card>
         <TimeDurationModal
-          customDuration={true}
+          customDuration={false}
           isOpen={this.state.isTimeOptionsOpen}
           onConfirm={this.toggleTimeOptionsVisibility}
           onCancel={this.toggleTimeOptionsVisibility} />
