@@ -1,6 +1,6 @@
 import {store} from "../../store/ConfigStore";
 import {Show} from "../../pages/Overview/OverviewPage";
-import {DurationInSeconds, IntervalInMilliseconds} from "../../types/Common";
+import {DurationInSeconds, IntervalInMilliseconds, TimeRange} from "../../types/Common";
 import {HEALTHY} from "../../types/Health";
 
 // Specific actions that should be communicated to the parent of the Kiosk
@@ -55,6 +55,11 @@ export const kioskOverviewAction = (showType: Show, namespace: string, duration:
 
 export const kioskDurationAction = (duration: DurationInSeconds) => {
   const showInParent = 'duration=' + duration;
+  sendParentMessage(showInParent);
+}
+
+export const kioskTimeRangeAction = (timeRange: TimeRange) => {
+  const showInParent = 'timeRange=' + timeRange;
   sendParentMessage(showInParent);
 }
 
