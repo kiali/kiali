@@ -603,13 +603,13 @@ func (p *openidFlowHelper) checkOpenIdAuthorizationCodeFlowParams() *openidFlowH
 	if p.Error != nil {
 		return p
 	}
-
 	if p.NonceHash == nil {
 		p.Error = &badOidcRequest{Detail: "no nonce code present - login window may have timed out"}
 	}
 	if p.State == "" {
 		p.Error = &badOidcRequest{Detail: "state parameter is empty or invalid"}
 	}
+
 	if p.Code == "" {
 		p.Error = &badOidcRequest{Detail: "no authorization code is present"}
 	}

@@ -176,6 +176,17 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     const messages = this.getHelperMessage();
     const isLoggingIn = this.props.isPostLoginPerforming || this.props.status === LoginStatus.logging;
     const isLoginButtonDisabled = isLoggingIn || this.props.status === LoginStatus.loggedIn;
+    let isHash = false;
+    // Same conditions as in AuthenticationController
+    if (isAuthStrategyOAuth()) {
+      const pattern = /[#&](access_token|id_token)=/;
+      isHash = pattern.test(window.location.hash);
+    }
+
+    if ((authenticationConfig.strategy === AuthStrategy.openshift|| authenticationConfig.strategy === AuthStrategy.openid)
+      && !isHash && this.props.status === LoginStatus.loggedOut && messages.length === 0 && (this.props.message ?? '').length === 0) {
+      window.location.href = authenticationConfig.authorizationEndpoint!;
+    }
 
     const listItem = (
       <>
