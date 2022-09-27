@@ -36,7 +36,7 @@ import { Dashboard } from 'components/Charts/Dashboard';
 import { refreshIntervalSelector, timeRangeSelector } from 'store/Selectors';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
-import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton";
+import TimeDurationIndicatorContainer from "../Time/TimeDurationIndicatorComponent";
 
 type MetricsState = {
   crippledFeatures?: KialiCrippledFeatures;
@@ -394,7 +394,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
             </ToolbarItem>
             <KioskElement>
               <ToolbarItem>
-                <TimeDurationIndicatorButton onClick={this.toggleTimeOptionsVisibility} />
+                <TimeDurationIndicatorContainer onClick={this.toggleTimeOptionsVisibility} />
               </ToolbarItem>
             </KioskElement>
           </ToolbarGroup>

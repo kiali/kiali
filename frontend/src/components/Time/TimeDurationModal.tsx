@@ -46,10 +46,7 @@ export function TimeDurationModal(props: Props) {
       kioskDurationAction(duration);
     } else {
       dispatch(UserSettingsActions.setTimeRange(timeRange));
-      if (timeRange.rangeDuration !== undefined) {
-        dispatch(UserSettingsActions.setDuration(timeRange.rangeDuration));
-        kioskTimeRangeAction(timeRange);
-      }
+      kioskTimeRangeAction(timeRange);
     }
 
     if (props.onConfirm) {

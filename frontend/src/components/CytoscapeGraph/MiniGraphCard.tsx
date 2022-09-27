@@ -29,7 +29,7 @@ import { LoadingWizardActionsDropdownGroup } from "../IstioWizards/LoadingWizard
 import ServiceWizardActionsDropdownGroup from "../IstioWizards/ServiceWizardActionsDropdownGroup";
 import { WizardAction, WizardMode } from "../IstioWizards/WizardActions";
 import { TimeDurationModal } from "../Time/TimeDurationModal";
-import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton";
+import TimeDurationIndicatorContainer from "../Time/TimeDurationIndicatorComponent";
 import { KioskElement } from "../Kiosk/KioskElement";
 
 const initGraphContainerStyle = style({ width: '100%', height: '100%' });
@@ -119,7 +119,7 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
             <CardActions>
               <KioskElement>
                 <ToolbarItem>
-                  <TimeDurationIndicatorButton onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
+                  <TimeDurationIndicatorContainer onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
                 </ToolbarItem>
               </KioskElement>
               <Dropdown

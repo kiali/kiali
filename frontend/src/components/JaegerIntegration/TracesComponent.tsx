@@ -21,7 +21,7 @@ import { TracesDisplayOptions, QuerySettings, DisplaySettings, percentilesOption
 import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
-import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton";
+import TimeDurationIndicatorContainer from "../Time/TimeDurationIndicatorComponent";
 
 /*
     timeRange: timeRangeSelector(state),
@@ -271,7 +271,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                   )}
                   <KioskElement>
                     <ToolbarItem>
-                      <TimeDurationIndicatorButton onClick={this.toggleTimeOptionsVisibility} />
+                      <TimeDurationIndicatorContainer onClick={this.toggleTimeOptionsVisibility} />
                     </ToolbarItem>
                   </KioskElement>
                 </ToolbarGroup>
