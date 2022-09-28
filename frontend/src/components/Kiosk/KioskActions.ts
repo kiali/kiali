@@ -59,7 +59,7 @@ export const kioskDurationAction = (duration: DurationInSeconds) => {
 }
 
 export const kioskTimeRangeAction = (timeRange: TimeRange) => {
-  const showInParent = 'timeRange=' + timeRange;
+  const showInParent = 'timeRange=' + JSON.stringify(timeRange);
   sendParentMessage(showInParent);
 }
 

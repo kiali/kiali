@@ -3,15 +3,15 @@ import { style } from "typestyle";
 import { Button, Tooltip } from "@patternfly/react-core";
 import { config } from "../../config";
 import { KialiIcon } from "../../config/KialiIcon";
-import {DurationInSeconds, guardTimeRange, TimeRange} from "../../types/Common";
+import { DurationInSeconds, guardTimeRange, TimeRange } from "../../types/Common";
 import { getName, getRefreshIntervalName } from "../../utils/RateIntervals";
-import {KialiAppState} from "../../store/Store";
-import {durationSelector, refreshIntervalSelector, timeRangeSelector} from "../../store/Selectors";
-import {connect} from "react-redux";
-import history, {HistoryManager, URLParam} from "../../app/History";
-import {KialiDispatch} from "../../types/Redux";
-import {bindActionCreators} from "redux";
-import {UserSettingsActions} from "../../actions/UserSettingsActions";
+import { KialiAppState } from "../../store/Store";
+import { durationSelector, refreshIntervalSelector, timeRangeSelector } from "../../store/Selectors";
+import { connect } from "react-redux";
+import history, { HistoryManager } from "../../app/History";
+import { KialiDispatch } from "../../types/Redux";
+import { bindActionCreators } from "redux";
+import { UserSettingsActions } from "../../actions/UserSettingsActions";
 
 interface Props {
   isDuration?: boolean;
@@ -30,12 +30,15 @@ const infoStyle = style({
 export class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
   constructor(props: Props) {
     super(props);
+
+    // This is needed to initialise the component using the parameters in the URL.
+    // If we don't set the state, we lost the value if we click in other tabs and go back
     const urlParams = new URLSearchParams(history.location.search);
     const urlDuration = HistoryManager.getDuration(urlParams);
+
     if (urlDuration !== undefined && urlDuration !== props.duration) {
       props.setDuration(urlDuration);
     }
-    HistoryManager.setParam(URLParam.DURATION, String(this.props.duration));
   }
 
   timeDurationIndicator() {

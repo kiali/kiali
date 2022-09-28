@@ -1,7 +1,7 @@
 import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
 import { serverConfig, humanDurations } from '../../config/ServerConfig';
 import * as React from 'react';
-import {DurationInSeconds, TimeRange} from '../../types/Common';
+import { DurationInSeconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
 import { KialiDispatch } from 'types/Redux';
@@ -11,14 +11,12 @@ import { connect } from 'react-redux';
 import { HistoryManager, URLParam } from '../../app/History';
 import history from '../../app/History';
 import { TooltipPosition } from '@patternfly/react-core';
-import {isKioskMode} from "../../utils/SearchParamUtils";
-import {kioskDurationAction} from "../Kiosk/KioskActions";
+import { isKioskMode } from "../../utils/SearchParamUtils";
+import { kioskDurationAction } from "../Kiosk/KioskActions";
 
 type ReduxProps = {
   duration: DurationInSeconds;
   setDuration: (duration: DurationInSeconds) => void;
-  timeRange?: TimeRange;
-  setTimeRange?: (timeRange: TimeRange) => void;
 };
 
 type DurationDropdownProps = ReduxProps & {
@@ -99,8 +97,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
-    setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch),
-    setTimeRange: bindActionCreators(UserSettingsActions.setTimeRange, dispatch)
+    setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch)
   };
 };
 export const DurationDropdownComponent = withDurations(DurationDropdown);
