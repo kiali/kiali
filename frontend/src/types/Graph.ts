@@ -390,6 +390,9 @@ export interface GraphNodeData {
     egressInfo?: {
       hostnames?: string[];
     };
+    gatewayAPIInfo?: {
+      hostnames?: string[];
+    };
   };
   isMisconfigured?: string;
   isOutside?: boolean;

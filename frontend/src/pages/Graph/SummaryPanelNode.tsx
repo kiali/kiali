@@ -231,6 +231,10 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       return this.renderHostnamesSection(nodeData.isGateway?.egressInfo?.hostnames);
     }
 
+    if (nodeData.isGateway?.gatewayAPIInfo?.hostnames && nodeData.isGateway?.gatewayAPIInfo?.hostnames.length > 0) {
+      return this.renderHostnamesSection(nodeData.isGateway?.gatewayAPIInfo?.hostnames);
+    }
+
     return null;
   };
 
@@ -314,7 +318,8 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     const shouldRenderGatewayHostnames =
       (nodeData.isGateway?.ingressInfo?.hostnames !== undefined &&
         nodeData.isGateway.ingressInfo.hostnames.length !== 0) ||
-      (nodeData.isGateway?.egressInfo?.hostnames !== undefined && nodeData.isGateway.egressInfo.hostnames.length !== 0);
+      (nodeData.isGateway?.egressInfo?.hostnames !== undefined && nodeData.isGateway.egressInfo.hostnames.length !== 0) ||
+      (nodeData.isGateway?.gatewayAPIInfo?.hostnames !== undefined && nodeData.isGateway.gatewayAPIInfo.hostnames.length !== 0);
     const shouldRenderVsHostnames = nodeData.hasVS?.hostnames !== undefined && nodeData.hasVS?.hostnames.length !== 0;
     const shouldRenderRank = this.props.showRank;
     return (
