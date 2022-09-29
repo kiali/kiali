@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ inputs.build_branch }}
-          
+
       - name: Setup node
         uses: actions/setup-node@v3
         with:

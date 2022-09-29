@@ -57,7 +57,7 @@ jobs:
             minor = 0
             patch = 0
         elif release_type == 'minor':
-            minor = minor + 1 
+            minor = minor + 1
             patch = 0
         elif release_type == 'patch':
             patch = patch + 1
@@ -67,7 +67,7 @@ jobs:
         cat <<-EOF > minor.py
         import datetime
 
-        base = int(datetime.datetime.strptime("24/04/2022", "%d/%m/%Y").timestamp())        
+        base = int(datetime.datetime.strptime("24/04/2022", "%d/%m/%Y").timestamp())
         now = int(datetime.datetime.now().timestamp())
 
         diff = now - base
@@ -127,7 +127,7 @@ jobs:
         then
             NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
         elif [[ $RELEASE_TYPE == "minor" ]]
-        then 
+        then
             NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
         fi
 
@@ -153,11 +153,11 @@ jobs:
         else
           QUAY_REPO="${{ github.event.inputs.quay_repository }}"
         fi
-        
+
         QUAY_TAG="$QUAY_REPO:$RELEASE_VERSION $QUAY_REPO:$BRANCH_VERSION"
-        
+
         echo "::set-output name=quay_tag::$QUAY_TAG"
-    
+
     - name: Cleanup
       run: rm bump.py minor.py
 
@@ -213,11 +213,11 @@ jobs:
     if: ${{ needs.initialize.outputs.release_type != 'skip' && ((github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule') }}
     runs-on: ubuntu-20.04
     needs: [initialize, build_backend, build_frontend, integration_tests_backend, integration_tests_frontend]
-    env:  
+    env:
       RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
       BRANCH_VERSION: ${{ needs.initialize.outputs.branch_version }}
       NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
-      RELEASE_BRANCH: ${{ github.event.inputs.release_branch || github.ref_name }} 
+      RELEASE_BRANCH: ${{ github.event.inputs.release_branch || github.ref_name }}
       QUAY_TAG: ${{ needs.initialize.outputs.quay_tag }}
     steps:
     - name: Checkout code
@@ -255,7 +255,7 @@ jobs:
       with:
         name: build
         path: frontend/build
-    
+
     - name: Build and push image
       run: |
         docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io

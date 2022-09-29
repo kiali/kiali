@@ -39,7 +39,7 @@ jobs:
         else
           QUAY_REPO="${{ github.event.inputs.quay_repository }}"
         fi
-        
+
         QUAY_TAG="$QUAY_REPO:latest"
 
         echo "::set-output name=quay_tag::$QUAY_TAG"
@@ -99,10 +99,9 @@ jobs:
       with:
         name: build
         path: frontend/build
-    
+
     - name: Build and push image
       run: |
         docker login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_PASSWORD }} quay.io
 
         make -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch container-multi-arch-all-push-kiali-quay
-        
