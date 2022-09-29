@@ -117,3 +117,11 @@ container-multi-arch-push-kiali-operator-quay: .ensure-operator-repo-exists .ens
 container-multi-arch-push-kiali-quay: .ensure-buildx-builder .prepare-kiali-image-files
 	@echo Pushing Kiali multi-arch image to ${QUAY_TAG} using docker buildx
 	docker buildx build --push --pull --no-cache --builder=kiali-builder $(foreach arch,${TARGET_ARCHS},--platform=linux/${arch}) $(foreach tag,${QUAY_TAG},--tag=${tag}) -f ${OUTDIR}/docker/Dockerfile-multi-arch ${OUTDIR}/docker
+
+## container-multi-arch-distroless-push-kiali-quay: Pushes the Kiali multi-arch distroless image to quay.
+container-multi-arch-distroless-push-kiali-quay: .ensure-buildx-builder .prepare-kiali-image-files
+	@echo Pushing Kiali multi-arch distroless image to ${QUAY_TAG}-distroless using docker buildx
+	docker buildx build --push --pull --no-cache --builder=kiali-builder $(foreach arch,${TARGET_ARCHS},--platform=linux/${arch}) $(foreach tag,${QUAY_TAG},--tag=${tag}-distroless) -f ${OUTDIR}/docker/Dockerfile-multi-arch-distroless ${OUTDIR}/docker
+
+## container-multi-arch-all-push-kiali-quay: Pushes the Kiali all multi-arch images to quay.
+container-multi-arch-all-push-kiali-quay: container-multi-arch-push-kiali-quay container-multi-arch-distroless-push-kiali-quay
