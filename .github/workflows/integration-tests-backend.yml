@@ -9,7 +9,7 @@ on:
       build_branch:
         required: true
         type: string
-        
+
 env:
   TARGET_BRANCH: ${{ inputs.target_branch }}
 
