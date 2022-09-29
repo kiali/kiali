@@ -1,25 +1,15 @@
-# source https://github.com/istio/istio/blob/master/docker/Dockerfile.distroless
-FROM gcr.io/distroless/static-debian11:latest-${TARGETARCH:-amd64} AS distroless_source
+FROM registry.access.redhat.com/ubi9-micro AS base-amd64
+FROM registry.access.redhat.com/ubi9-micro AS base-arm64
+FROM registry.access.redhat.com/ubi9-micro AS base-s390x
+FROM registry.access.redhat.com/ubi9-micro AS base-ppc64le
+
+FROM base-${TARGETARCH}
 
 LABEL maintainer="kiali-dev@googlegroups.com"
 
-# prepare a base dev to modify file contents
-FROM ubuntu:focal as ubuntu_source
-
 # Modify contents of container
-COPY --from=distroless_source /etc/ /home/etc
-COPY --from=distroless_source /home/nonroot /home/nonroot
-RUN echo kiali:x:1000: >> /home/etc/group
-RUN echo kiali:x:1000:1000:/home/kiali:/sbin/nologin >> /home/etc/passwd
-
-# Customize distroless with the following:
-# - password file
-# - groups file
-# - /home/nonroot directory
-FROM distroless_source
-COPY --from=ubuntu_source /home/etc/passwd /etc/passwd
-COPY --from=ubuntu_source /home/etc/group /etc/group
-COPY --from=ubuntu_source /home/nonroot /home/nonroot
+RUN echo kiali:x:1000: >> /etc/group
+RUN echo kiali:x:1000:1000:/home/kiali:/sbin/nologin >> /etc/passwd
 
 ENV KIALI_HOME=/opt/kiali \
     PATH=$KIALI_HOME:$PATH
@@ -27,9 +17,9 @@ ENV KIALI_HOME=/opt/kiali \
 WORKDIR $KIALI_HOME
 
 ARG TARGETARCH
-COPY kiali-${TARGETARCH} $KIALI_HOME/kiali
+COPY --chown=1000:1000 kiali-${TARGETARCH} $KIALI_HOME/kiali
 
-COPY --chown=kiali:kiali console/ $KIALI_HOME/console/
+COPY --chown=1000:1000 console/ $KIALI_HOME/console/
 
 USER 1000
 
