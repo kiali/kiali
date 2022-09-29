@@ -7,7 +7,7 @@ OUTDIR=${ROOTDIR}/_output
 OPERATOR_DIR=${ROOTDIR}/operator
 
 # list for multi-arch image publishing
-TARGET_ARCHS ?= amd64 arm64 s390x ppc64le
+TARGET_ARCHS ?= amd64 arm64 ppc64le
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
