@@ -266,11 +266,11 @@ export class GraphStyles {
       if (node.hasWorkloadEntry) {
         badges = `<span class="${NodeIconWorkloadEntry} ${badgeMargin(badges)}"></span> ${badges}`;
       }
-      if (node.isGateway?.gatewayAPIInfo?.hostnames?.length !== undefined) {
-        badges = `<span class="${NodeIconGateway} ${badgeMargin(badges)}"></span> ${badges}`;
-      }
       if (node.isRoot) {
-        if (node.isGateway?.ingressInfo?.hostnames?.length !== undefined) {
+        if (
+          node.isGateway?.ingressInfo?.hostnames?.length !== undefined ||
+          node.isGateway?.gatewayAPIInfo?.hostnames?.length !== undefined
+        ) {
           badges = `<span class="${NodeIconGateway} ${badgeMargin(badges)}"></span> ${badges}`;
         }
         badges = `<span class="${NodeIconRoot} ${badgeMargin(badges)}"></span> ${badges}`;
