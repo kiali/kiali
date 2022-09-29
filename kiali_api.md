@@ -6965,6 +6965,7 @@ The exact format is defined in sigs.k8s.io/structured-merge-diff
 |------|------|---------|:--------:| ------- |-------------|---------|
 | egressInfo | [GWInfoIngress](#g-w-info-ingress)| `GWInfoIngress` |  | |  |  |
 | ingressInfo | [GWInfoIngress](#g-w-info-ingress)| `GWInfoIngress` |  | |  |  |
+| gatewayAPIInfo | [GWInfoIngress](#g-w-info-ingress)| `GWInfoIngress` |  | |  |  |
 
 
 
