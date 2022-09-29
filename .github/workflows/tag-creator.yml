@@ -2,7 +2,7 @@ name: Tag Creator
 
 on:
   workflow_dispatch:
-    inputs:      
+    inputs:
       tag_branch:
         description: Branch to tag, (Separate branches by commas. Ex v1.36,v1.48)
         required: true
@@ -14,7 +14,7 @@ jobs:
     name: Initialize
     runs-on: ubuntu-20.04
     outputs:
-      branches: ${{ steps.branches.outputs.branches }}        
+      branches: ${{ steps.branches.outputs.branches }}
     steps:
       - name: Prepare script to var
         id: script_convert
@@ -22,7 +22,7 @@ jobs:
           cat <<-EOF > conversor.py
           import sys, json
 
-          branch_arg = sys.argv[1]        
+          branch_arg = sys.argv[1]
           branches = branch_arg.split(',')
 
           print(json.dumps(branches))
@@ -34,16 +34,16 @@ jobs:
           TAG_BRANCHES: ${{ github.event.inputs.tag_branch }}
         run: |
           BRANCHES=$(python conversor.py $TAG_BRANCHES)
-          echo "::set-output name=branches::$BRANCHES"          
-  create_tag:      
+          echo "::set-output name=branches::$BRANCHES"
+  create_tag:
     needs: [ initialize ]
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        branch: ${{fromJson(needs.initialize.outputs.branches)}}          
+        branch: ${{fromJson(needs.initialize.outputs.branches)}}
     steps:
       - name: Checkout Backend
-        uses: actions/checkout@v3        
+        uses: actions/checkout@v3
         with:
           ref: ${{matrix.branch}}
       - name: Prepare scripts
@@ -61,63 +61,63 @@ jobs:
               minor = 0
               patch = 0
           elif release_type == 'minor':
-              minor = minor + 1 
+              minor = minor + 1
               patch = 0
           elif release_type == 'patch':
               patch = patch + 1
           print('.'.join(['v' + str(major), str(minor), str(patch)]))
           EOF
-          
+
       - name: Configure git backend
         run: |
           git config user.email 'kiali-dev@googlegroups.com'
 
-          git config user.name 'kiali-bot'    
+          git config user.name 'kiali-bot'
       - name: Create Tag in kiali/kiali
         id: tag_kiali
         env:
             BRANCH: ${{matrix.branch}}
         run: |
           RAW_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
-          
+
           # Remove any pre release identifier (ie: "-SNAPSHOT")
           RELEASE_VERSION=${RAW_VERSION%-*}
           RELEASE_VERSION=$(python bump.py patch $RELEASE_VERSION)
-         
+
           echo "::set-output name=release_version::$RELEASE_VERSION"
 
           sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
 
           if [[ $BRANCH != "v1.36" && $BRANCH != "v1.24" ]]; then
-            sed -i -r 's/"version": (.*)/"version": "'${RELEASE_VERSION:1}'",/' frontend/package.json              
-            git add frontend/package.json              
+            sed -i -r 's/"version": (.*)/"version": "'${RELEASE_VERSION:1}'",/' frontend/package.json
+            git add frontend/package.json
           fi
 
           git add Makefile
           git commit -m "Release $RELEASE_VERSION"
           git push origin && git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION
-          
+
       # Check if version requested have the UI in our kiali/kiali-ui repo
       - name: Checkout UI
         if: ${{ matrix.branch == 'v1.24' || matrix.branch == 'v1.36'}}
-        uses: actions/checkout@v3        
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.KIALI_TOKEN || github.token}}
           repository: kiali/kiali-ui
-          ref: ${{matrix.branch}}  
+          ref: ${{matrix.branch}}
       - name: Configure git UI
         if: ${{ matrix.branch == 'v1.24' || matrix.branch == 'v1.36'}}
         run: |
           git config user.email 'kiali-dev@googlegroups.com'
 
-          git config user.name 'kiali-bot'    
+          git config user.name 'kiali-bot'
       - name: Check if need old UI
         id: check_ui_tag
         env:
             RELEASE_VERSION: ${{ steps.tag_kiali.outputs.release_version }}
         if: ${{ matrix.branch == 'v1.24' || matrix.branch == 'v1.36'}}
         run: |
-          sed -i -r 's/"version": (.*)/"version": "'${RELEASE_VERSION:1}'",/' package.json      
+          sed -i -r 's/"version": (.*)/"version": "'${RELEASE_VERSION:1}'",/' package.json
           git add package.json
           git commit -m "Release $RELEASE_VERSION"
           git push origin && git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION
