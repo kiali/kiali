@@ -37,7 +37,7 @@ import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { timeRangeSelector } from '../../store/Selectors';
-import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton";
+import TimeDurationIndicatorContainer from "../Time/TimeDurationIndicatorComponent";
 
 type MetricsState = {
   dashboard?: DashboardModel;
@@ -324,7 +324,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
             </ToolbarItem>
             <KioskElement>
               <ToolbarItem style={{ marginLeft: 'auto' }}>
-                <TimeDurationIndicatorButton onClick={this.toggleTimeOptionsVisibility} />
+                <TimeDurationIndicatorContainer onClick={this.toggleTimeOptionsVisibility} />
               </ToolbarItem>
             </KioskElement>
           </ToolbarGroup>

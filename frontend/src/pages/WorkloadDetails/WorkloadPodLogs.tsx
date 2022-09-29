@@ -51,7 +51,7 @@ import { isValid } from 'utils/Common';
 import {isKiosk} from "../../components/Kiosk/KioskActions";
 import { KioskElement } from "../../components/Kiosk/KioskElement";
 import { TimeDurationModal } from "../../components/Time/TimeDurationModal";
-import { TimeDurationIndicatorButton } from "../../components/Time/TimeDurationIndicatorButton";
+import TimeDurationIndicatorContainer from "../../components/Time/TimeDurationIndicatorComponent";
 
 const appContainerColors = [PFColors.White, PFColors.LightGreen400, PFColors.Purple100, PFColors.LightBlue400];
 const proxyContainerColor = PFColors.Gold400;
@@ -387,7 +387,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                           </ToolbarItem>
                           <KioskElement>
                             <ToolbarItem>
-                              <TimeDurationIndicatorButton onClick={this.toggleTimeOptionsVisibility} />
+                              <TimeDurationIndicatorContainer onClick={this.toggleTimeOptionsVisibility} />
                             </ToolbarItem>
                           </KioskElement>
                         </ToolbarGroup>

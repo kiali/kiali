@@ -7,6 +7,7 @@ import { DurationInSeconds, IntervalInMilliseconds, TimeRange } from "../../type
 import { DurationDropdownComponent } from "../DurationDropdown/DurationDropdown";
 import { Refresh } from "../Refresh/Refresh";
 import { TimeRangeComponent } from "./TimeRangeComponent";
+import {kioskDurationAction, kioskTimeRangeAction} from "../Kiosk/KioskActions";
 
 interface Props {
   customDuration: boolean;
@@ -42,8 +43,10 @@ export function TimeDurationModal(props: Props) {
     dispatch(UserSettingsActions.setRefreshInterval(refreshInterval));
     if (!props.customDuration) {
       dispatch(UserSettingsActions.setDuration(duration));
+      kioskDurationAction(duration);
     } else {
       dispatch(UserSettingsActions.setTimeRange(timeRange));
+      kioskTimeRangeAction(timeRange);
     }
 
     if (props.onConfirm) {
