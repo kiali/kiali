@@ -23,7 +23,7 @@ import { HealthAnnotationType } from '../../types/HealthAnnotation';
 import TrafficListComponentContainer from "components/TrafficList/TrafficListComponent";
 import { KioskElement } from "../Kiosk/KioskElement";
 import { TimeDurationModal } from "../Time/TimeDurationModal";
-import { TimeDurationIndicatorButton } from "../Time/TimeDurationIndicatorButton";
+import TimeDurationIndicatorContainer from "../Time/TimeDurationIndicatorComponent";
 
 export interface AppNode {
   id: string;
@@ -128,7 +128,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
                     <ToolbarGroup>
                       <KioskElement>
                         <ToolbarItem style={{ marginLeft: 'auto' }}>
-                          <TimeDurationIndicatorButton isDuration={true} onClick={this.toggleTimeOptionsVisibility} />
+                          <TimeDurationIndicatorContainer isDuration={true} onClick={this.toggleTimeOptionsVisibility} />
                         </ToolbarItem>
                       </KioskElement>
                     </ToolbarGroup>

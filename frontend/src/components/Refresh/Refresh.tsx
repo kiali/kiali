@@ -11,6 +11,8 @@ import RefreshButtonContainer from './RefreshButton';
 import { HistoryManager, URLParam } from 'app/History';
 import { TooltipPosition } from '@patternfly/react-core';
 import { triggerRefresh } from "../../hooks/refresh";
+import {isKioskMode} from "../../utils/SearchParamUtils";
+import {kioskRefreshAction} from "../Kiosk/KioskActions";
 
 type ReduxProps = {
   refreshInterval: IntervalInMilliseconds;
@@ -80,6 +82,9 @@ export class Refresh extends React.PureComponent<Props> {
 
   private updateRefreshInterval = (refreshInterval: IntervalInMilliseconds) => {
     this.props.setRefreshInterval(refreshInterval); // notify redux of the change
+    if (isKioskMode() ) {
+      kioskRefreshAction(refreshInterval);
+    }
   };
 }
 
