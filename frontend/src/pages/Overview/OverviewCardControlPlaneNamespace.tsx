@@ -94,7 +94,7 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
                                     direction={{ md: 'column' }}
                                     spaceItems={{ md: 'spaceItemsNone' }}
                                     justifyContent={{ md: 'justifyContentCenter' }}
-                                    style={{ textAlign: "right" }}
+                                    style={{ textAlign: "right", paddingRight: 30 }}
                                 >
                                     <FlexItem>
                                         <b>Memory</b>
@@ -133,7 +133,7 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
                                     direction={{ md: 'column' }}
                                     spaceItems={{ md: 'spaceItemsNone' }}
                                     justifyContent={{ md: 'justifyContentCenter' }}
-                                    style={{ textAlign: "right" }}
+                                    style={{ textAlign: "right", paddingRight: 30 }}
                                 >
                                     <FlexItem>
                                         <b>CPU</b>
