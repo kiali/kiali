@@ -7,7 +7,7 @@ OUTDIR=${ROOTDIR}/_output
 OPERATOR_DIR=${ROOTDIR}/operator
 
 # list for multi-arch image publishing
-TARGET_ARCHS ?= amd64 arm64 ppc64le
+TARGET_ARCHS ?= amd64 arm64 s390x ppc64le
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
@@ -71,7 +71,7 @@ GO_BUILD_ENVVARS = \
 GO_BUILD_FLAGS ?= 
 
 # Determine which Dockerfile is used to build the server container
-KIALI_DOCKER_FILE ?= Dockerfile-ubi8-minimal
+KIALI_DOCKER_FILE ?= Dockerfile-distroless
 
 # Determine if we should use Docker OR Podman - value must be one of "docker" or "podman"
 DORP ?= docker
