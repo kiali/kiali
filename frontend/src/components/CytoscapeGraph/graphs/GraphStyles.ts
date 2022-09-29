@@ -267,7 +267,10 @@ export class GraphStyles {
         badges = `<span class="${NodeIconWorkloadEntry} ${badgeMargin(badges)}"></span> ${badges}`;
       }
       if (node.isRoot) {
-        if (node.isGateway?.ingressInfo?.hostnames?.length !== undefined) {
+        if (
+          node.isGateway?.ingressInfo?.hostnames?.length !== undefined ||
+          node.isGateway?.gatewayAPIInfo?.hostnames?.length !== undefined
+        ) {
           badges = `<span class="${NodeIconGateway} ${badgeMargin(badges)}"></span> ${badges}`;
         }
         badges = `<span class="${NodeIconRoot} ${badgeMargin(badges)}"></span> ${badges}`;
@@ -420,6 +423,7 @@ export class GraphStyles {
     node.hasVS?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
     node.isGateway?.ingressInfo?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
     node.isGateway?.egressInfo?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
+    node.isGateway?.gatewayAPIInfo?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
 
     let htmlHosts = '';
     if (hosts.length !== 0) {
