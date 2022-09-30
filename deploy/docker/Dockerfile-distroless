@@ -1,9 +1,4 @@
-FROM registry.access.redhat.com/ubi8-micro AS base-amd64
-FROM registry.access.redhat.com/ubi8-micro AS base-arm64
-FROM registry.access.redhat.com/ubi8-micro AS base-s390x
-FROM registry.access.redhat.com/ubi8-micro AS base-ppc64le
-
-FROM base-${TARGETARCH}
+FROM registry.access.redhat.com/ubi8-micro
 
 LABEL maintainer="kiali-dev@googlegroups.com"
 
@@ -16,8 +11,7 @@ ENV KIALI_HOME=/opt/kiali \
 
 WORKDIR $KIALI_HOME
 
-ARG TARGETARCH
-COPY --chown=1000:1000 kiali-${TARGETARCH} $KIALI_HOME/kiali
+COPY --chown=1000:1000 kiali $KIALI_HOME/
 
 COPY --chown=1000:1000 console/ $KIALI_HOME/console/
 

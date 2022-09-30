@@ -71,7 +71,7 @@ GO_BUILD_ENVVARS = \
 GO_BUILD_FLAGS ?= 
 
 # Determine which Dockerfile is used to build the server container
-KIALI_DOCKER_FILE ?= Dockerfile-ubi8-minimal
+KIALI_DOCKER_FILE ?= Dockerfile-distroless
 
 # Determine if we should use Docker OR Podman - value must be one of "docker" or "podman"
 DORP ?= docker
