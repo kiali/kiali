@@ -139,10 +139,6 @@ if [ "${IS_OPENSHIFT}" == "true" ]; then
 fi
 
 
-if [ "${IS_MAISTRA}" == "true" ]; then
-  prepare_maistra "${NAMESPACE_ALPHA}"
-  prepare_maistra "${NAMESPACE_BETA}"
-fi
 
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   if [ "${IS_MAISTRA}" != "true" ]; then
@@ -179,3 +175,9 @@ fi
 # Deploy the demo
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/error-rates/alpha.yaml") -n ${NAMESPACE_ALPHA}
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/error-rates/beta.yaml") -n ${NAMESPACE_BETA}
+
+# we need to update deployment annotations after we create it
+if [ "${IS_MAISTRA}" == "true" ]; then
+  prepare_maistra "${NAMESPACE_ALPHA}"
+  prepare_maistra "${NAMESPACE_BETA}"
+fi
