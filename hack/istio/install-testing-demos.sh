@@ -139,7 +139,7 @@ IS_OPENSHIFT="false"
 IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
-  IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
+  IS_MAISTRA=$([ "$(${CLIENT_EXE} get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 echo "CLIENT_EXE=${CLIENT_EXE}"
@@ -191,7 +191,9 @@ else
 
   echo "Deleting the 'sleep' app in the 'sleep' namespace..."
   ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
-  ${CLIENT_EXE} delete smm default -n "sleep" --ignore-not-found=true
+  if [ "${IS_MAISTRA}" == "true" ]; then
+    ${CLIENT_EXE} delete smm default -n "sleep" --ignore-not-found=true
+  fi
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     ${CLIENT_EXE} delete network-attachment-definition istio-cni -n sleep
     ${CLIENT_EXE} delete scc sleep-scc
