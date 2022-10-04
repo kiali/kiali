@@ -52,6 +52,7 @@ type PublicConfig struct {
 	ClusterInfo         ClusterInfo                 `json:"clusterInfo,omitempty"`
 	Clusters            map[string]business.Cluster `json:"clusters,omitempty"`
 	Deployment          DeploymentConfig            `json:"deployment,omitempty"`
+	GatewayAPIEnabled   bool                        `json:"gatewayAPIEnabled,omitempty"`
 	HealthConfig        config.HealthConfig         `json:"healthConfig,omitempty"`
 	InstallationTag     string                      `json:"installationTag,omitempty"`
 	IstioAnnotations    IstioAnnotations            `json:"istioAnnotations,omitempty"`
@@ -138,6 +139,12 @@ func Config(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		log.Warningf("Failed to fetch Kiali token when resolving cluster info: %s", getTokenErr.Error())
+	}
+
+	// Get business layer
+	bLayer, err := getBusiness(r)
+	if err == nil {
+		publicConfig.GatewayAPIEnabled = bLayer.IstioConfig.IsGatewayAPI()
 	}
 
 	RespondWithJSONIndent(w, http.StatusOK, publicConfig)

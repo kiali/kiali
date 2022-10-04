@@ -34,6 +34,7 @@ import { serverConfig } from '../../config';
 import { GatewaySelectorState } from './GatewaySelector';
 import { ConsistentHashType, MUTUAL, TrafficPolicyState, UNSET } from './TrafficPolicy';
 import { GatewayState } from '../../pages/IstioConfigNew/GatewayForm';
+import { K8sGatewayState } from '../../pages/IstioConfigNew/K8sGatewayForm';
 import { SidecarState } from '../../pages/IstioConfigNew/SidecarForm';
 import { ALLOW, AuthorizationPolicyState } from '../../pages/IstioConfigNew/AuthorizationPolicyForm';
 import { PeerAuthenticationState } from '../../pages/IstioConfigNew/PeerAuthenticationForm';
@@ -1322,6 +1323,40 @@ export const buildGateway = (name: string, namespace: string, state: GatewayStat
       namespace: namespace,
       labels: {
         [KIALI_WIZARD_LABEL]: 'Gateway'
+      }
+    },
+    spec: {
+      // Default for istio scenarios, user may change it editing YAML
+      selector: {},
+      servers: state.gatewayServers.map(s => ({
+        port: s.port,
+        hosts: s.hosts,
+        tls: s.tls || {}
+      }))
+    }
+  };
+  state.workloadSelectorLabels
+    .trim()
+    .split(',')
+    .forEach(split => {
+      const labels = split.trim().split('=');
+      // It should be already validated with workloadSelectorValid, but just to add extra safe check
+      if (gw.spec.selector && labels.length === 2) {
+        gw.spec.selector[labels[0].trim()] = labels[1].trim();
+      }
+    });
+  return gw;
+};
+
+export const buildK8sGateway = (name: string, namespace: string, state: K8sGatewayState): Gateway => {
+  const gw: Gateway = {
+    kind: 'Gateway',
+    apiVersion: ISTIO_NETWORKING_VERSION,
+    metadata: {
+      name: name,
+      namespace: namespace,
+      labels: {
+        [KIALI_WIZARD_LABEL]: 'K8sGateway'
       }
     },
     spec: {

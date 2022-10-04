@@ -7,6 +7,7 @@ import { ActionGroup, Button, ButtonVariant, Form, FormGroup, TextInput } from '
 import { RenderContent } from '../../components/Nav/Page';
 import { style } from 'typestyle';
 import GatewayForm, { GATEWAY, GATEWAYS, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
+import K8sGatewayForm, { K8SGATEWAY, K8SGATEWAYS, K8sGatewayState, initK8sGateway, isK8sGatewayStateValid } from './K8sGatewayForm';
 import SidecarForm, { initSidecar, isSidecarStateValid, SIDECAR, SIDECARS, SidecarState } from './SidecarForm';
 import { Paths, serverConfig } from '../../config';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -17,6 +18,7 @@ import history from '../../app/History';
 import {
   buildAuthorizationPolicy,
   buildGateway,
+  buildK8sGateway,
   buildPeerAuthentication,
   buildRequestAuthentication,
   buildServiceEntry,
@@ -73,6 +75,7 @@ type State = {
   istioPermissions: IstioPermissions;
   authorizationPolicy: AuthorizationPolicyState;
   gateway: GatewayState;
+  k8sGateway: K8sGatewayState;
   peerAuthentication: PeerAuthenticationState;
   requestAuthentication: RequestAuthenticationState;
   serviceEntry: ServiceEntryState;
@@ -91,6 +94,7 @@ const warningStyle = style({
 const DIC = {
   AuthorizationPolicy: AUTHORIZATION_POLICIES,
   Gateway: GATEWAYS,
+  K8sGateway: K8SGATEWAYS,
   PeerAuthentication: PEER_AUTHENTICATIONS,
   RequestAuthentication: REQUEST_AUTHENTICATIONS,
   ServiceEntry: SERVICE_ENTRIES,
@@ -101,6 +105,7 @@ const DIC = {
 export const NEW_ISTIO_RESOURCE = [
   { value: AUTHORIZACION_POLICY, label: AUTHORIZACION_POLICY, disabled: false },
   { value: GATEWAY, label: GATEWAY, disabled: false },
+  { value: K8SGATEWAY, label: K8SGATEWAY, disabled: false },
   { value: PEER_AUTHENTICATION, label: PEER_AUTHENTICATION, disabled: false },
   { value: REQUEST_AUTHENTICATION, label: REQUEST_AUTHENTICATION, disabled: false },
   { value: SERVICE_ENTRY, label: SERVICE_ENTRY, disabled: false },
@@ -114,6 +119,7 @@ const initState = (): State => ({
   itemsPreview: [],
   authorizationPolicy: initAuthorizationPolicy(),
   gateway: initGateway(),
+  k8sGateway: initK8sGateway(),
   peerAuthentication: initPeerAuthentication(),
   requestAuthentication: initRequestAuthentication(),
   serviceEntry: initServiceEntry(),
@@ -230,6 +236,13 @@ class IstioConfigNewPage extends React.Component<Props, State> {
             items: [buildGateway(this.state.name, ns.name, this.state.gateway)]
           });
           break;
+        case K8SGATEWAY:
+          items.push({
+            title: 'K8sGateway',
+            type: 'k8sGateway',
+            items: [buildK8sGateway(this.state.name, ns.name, this.state.k8sGateway)]
+          });
+          break;
         case PEER_AUTHENTICATION:
           items.push({
             title: 'Peer Authentication',
@@ -277,6 +290,8 @@ class IstioConfigNewPage extends React.Component<Props, State> {
         return isAuthorizationPolicyStateValid(this.state.authorizationPolicy);
       case GATEWAY:
         return isGatewayStateValid(this.state.gateway);
+      case K8SGATEWAY:
+        return isK8sGatewayStateValid(this.state.k8sGateway);
       case PEER_AUTHENTICATION:
         return isPeerAuthenticationStateValid(this.state.peerAuthentication);
       case REQUEST_AUTHENTICATION:
@@ -306,6 +321,15 @@ class IstioConfigNewPage extends React.Component<Props, State> {
       Object.keys(prevState.gateway).forEach(key => (prevState.gateway[key] = gateway[key]));
       return {
         gateway: prevState.gateway
+      };
+    });
+  };
+
+  onChangeK8sGateway = (k8sGateway: K8sGatewayState) => {
+    this.setState(prevState => {
+      Object.keys(prevState.k8sGateway).forEach(key => (prevState.k8sGateway[key] = k8sGateway[key]));
+      return {
+        k8sGateway: prevState.k8sGateway
       };
     });
   };
@@ -388,6 +412,9 @@ class IstioConfigNewPage extends React.Component<Props, State> {
             )}
             {this.props.match.params.objectType === GATEWAY && (
               <GatewayForm gateway={this.state.gateway} onChange={this.onChangeGateway} />
+            )}
+            {this.props.match.params.objectType === K8SGATEWAY && (
+              <K8sGatewayForm k8sGateway={this.state.k8sGateway} onChange={this.onChangeK8sGateway} />
             )}
             {this.props.match.params.objectType === PEER_AUTHENTICATION && (
               <PeerAuthenticationForm
