@@ -9,6 +9,33 @@
 
 set -eu
   
+# Given a namepace, prepare it for inclusion in Maistra's control plane
+# This means:
+# 1. Create a SMM
+# 2. Annotate all of the namespace's Deployments with the sidecar injection annotation if enabled
+prepare_maistra() {
+  local ns="${1}"
+
+  cat <<EOM | ${CLIENT_EXE} apply -f -
+apiVersion: maistra.io/v1
+kind: ServiceMeshMember
+metadata:
+  name: default
+  namespace: ${ns}
+spec:
+  controlPlaneRef:
+    namespace: ${ISTIO_NAMESPACE}
+    name: "$(${CLIENT_EXE} get smcp -n ${ISTIO_NAMESPACE} -o jsonpath='{.items[0].metadata.name}' )"
+EOM
+
+  # enable sidecar injection
+  for d in $(${CLIENT_EXE} get deployments -n ${ns} -o name)
+  do
+    echo "Enabling sidecar injection for deployment: ${d}"
+    ${CLIENT_EXE} patch ${d} -n ${ns} -p '{"spec":{"template":{"metadata":{"annotations":{"sidecar.istio.io/inject": "true"}}}}}' --type=merge
+  done
+}
+
 install_sleep_app() {
 
   if [ "${ISTIO_DIR}" == "" ]; then
@@ -54,6 +81,9 @@ SCC
 
   ${CLIENT_EXE} apply -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
 
+  if [ "${IS_MAISTRA}" == "true" ]; then
+    prepare_maistra "sleep"
+  fi
 }
 
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
@@ -66,6 +96,7 @@ MINIKUBE_PROFILE="minikube"
 
 : ${CLIENT_EXE:=oc}
 : ${DELETE_DEMOS:=false}
+ISTIO_NAMESPACE="istio-system"
 
 while [ $# -gt 0 ]; do
   key="$1"
@@ -82,12 +113,17 @@ while [ $# -gt 0 ]; do
       MINIKUBE_PROFILE="$2"
       shift;shift
       ;;
+    -in|--istio-namespace)
+      ISTIO_NAMESPACE="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
   -mp|--minikube-profile <name>: If using minikube, this is the minikube profile name (default: minikube).
+  -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -h|--help: this text
 HELPMSG
       exit 1
@@ -100,12 +136,15 @@ HELPMSG
 done
 
 IS_OPENSHIFT="false"
+IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
+  IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
 fi
 
 echo "CLIENT_EXE=${CLIENT_EXE}"
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
+echo "IS_MAISTRA=${IS_MAISTRA}"
 
 # Waits for workloads in the specified namespace to be ready
 wait_for_workloads () {
@@ -124,14 +163,14 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
   # Only the args passed to the scripts differ from each other.
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     echo "Deploying bookinfo demo ..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -tg
+    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -tg -in ${ISTIO_NAMESPACE}
     echo "Deploying error rates demo ..."
-    "${SCRIPT_DIR}/install-error-rates-demo.sh"
+    "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE}
   else
     echo "Deploying bookinfo demo..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg
+    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg -in ${ISTIO_NAMESPACE}
     echo "Deploying error rates demo..."
-    "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl
+    "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE}
   fi
 
   echo "Installing the 'sleep' app in the 'sleep' namespace..."
@@ -152,6 +191,7 @@ else
 
   echo "Deleting the 'sleep' app in the 'sleep' namespace..."
   ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
+  ${CLIENT_EXE} delete smm default -n "sleep" --ignore-not-found=true
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     ${CLIENT_EXE} delete network-attachment-definition istio-cni -n sleep
     ${CLIENT_EXE} delete scc sleep-scc
