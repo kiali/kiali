@@ -104,6 +104,11 @@ var newNetworkingConfigTypes = []string{
 	kubernetes.ServiceEntries,
 }
 
+// gateway.networking.k8s.io
+var newK8sNetworkingConfigTypes = []string{
+	kubernetes.K8sGateways,
+}
+
 // security.istio.io
 var newSecurityConfigTypes = []string{
 	kubernetes.AuthorizationPolicies,
@@ -1113,6 +1118,10 @@ func (in *IstioConfigService) CreateIstioConfigDetail(namespace, resourceType st
 	return istioConfigDetail, err
 }
 
+func (in *IstioConfigService) IsGatewayAPI() bool {
+	return in.k8s.IsGatewayAPI()
+}
+
 func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, namespaces []string) models.IstioConfigPermissions {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioConfigPermissions",
@@ -1125,15 +1134,18 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 
 	if len(namespaces) > 0 {
 		networkingPermissions := make(models.IstioConfigPermissions, len(namespaces))
+		k8sNetworkingPermissions := make(models.IstioConfigPermissions, len(namespaces))
 		securityPermissions := make(models.IstioConfigPermissions, len(namespaces))
 
 		wg := sync.WaitGroup{}
 		// We will query 2 times per namespace (networking.istio.io and security.istio.io)
-		wg.Add(len(namespaces) * 2)
+		wg.Add(len(namespaces) * 3)
 		for _, ns := range namespaces {
 			networkingRP := make(models.ResourcesPermissions, len(newNetworkingConfigTypes))
+			k8sNetworkingRP := make(models.ResourcesPermissions, len(newK8sNetworkingConfigTypes))
 			securityRP := make(models.ResourcesPermissions, len(newSecurityConfigTypes))
 			networkingPermissions[ns] = &networkingRP
+			k8sNetworkingPermissions[ns] = &k8sNetworkingRP
 			securityPermissions[ns] = &securityRP
 			/*
 				We can optimize this logic.
@@ -1155,6 +1167,18 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 				}
 			}(ctx, ns, &wg, &networkingRP)
 
+			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, k8sNetworkingPermissions *models.ResourcesPermissions) {
+				defer wg.Done()
+				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, in.k8s, namespace, kubernetes.K8sNetworkingGroupVersionV1Beta1.Group, allResources)
+				for _, rs := range newK8sNetworkingConfigTypes {
+					k8sNetworkingRP[rs] = &models.ResourcePermissions{
+						Create: canCreate && in.k8s.IsGatewayAPI(),
+						Update: canUpdate && in.k8s.IsGatewayAPI(),
+						Delete: canDelete && in.k8s.IsGatewayAPI(),
+					}
+				}
+			}(ctx, ns, &wg, &k8sNetworkingRP)
+
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, securityPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
 				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, in.k8s, namespace, kubernetes.SecurityGroupVersion.Group, allResources)
@@ -1174,6 +1198,9 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 			allRP := make(models.ResourcesPermissions, len(newNetworkingConfigTypes)+len(newSecurityConfigTypes))
 			istioConfigPermissions[ns] = &allRP
 			for resource, permissions := range *networkingPermissions[ns] {
+				(*istioConfigPermissions[ns])[resource] = permissions
+			}
+			for resource, permissions := range *k8sNetworkingPermissions[ns] {
 				(*istioConfigPermissions[ns])[resource] = permissions
 			}
 			for resource, permissions := range *securityPermissions[ns] {

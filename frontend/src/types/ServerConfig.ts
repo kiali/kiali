@@ -112,6 +112,7 @@ export interface ServerConfig {
   clusterInfo?: ClusterInfo;
   clusters: { [key: string]: MeshCluster };
   deployment: DeploymentConfig;
+  gatewayAPIEnabled: boolean;
   healthConfig: HealthConfig;
   installationTag?: string;
   istioAnnotations: IstioAnnotations;
