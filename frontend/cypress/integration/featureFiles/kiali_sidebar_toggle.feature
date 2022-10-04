@@ -6,13 +6,13 @@ User opens the Overview page and toggles the main sidebar.
     Given user is at administrator perspective
     And user is at the "overview" page
 
-  @sidebar-toggle
+  @smoke  @sidebar-toggle
   Scenario: Close the sidebar
     When the sidebar is open
     And user presses the navigation toggle button
     Then user cannot see the sidebar
 
-  @sidebar-toggle
+  @smoke  @sidebar-toggle
   Scenario: Open the sidebar
     When the sidebar is closed
     And user presses the navigation toggle button

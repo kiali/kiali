@@ -1,7 +1,8 @@
 Feature: Kiali login
 
   User wants to login to Kiali and see landing page
-  
+
+  @smoke  
   Scenario: Open Kaili home page
     Given user opens base url
     And user clicks Log In With OpenShift
