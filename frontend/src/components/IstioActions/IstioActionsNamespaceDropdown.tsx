@@ -45,7 +45,7 @@ class IstioActionsNamespaceDropdown extends React.Component<Props, State> {
       (r): ActionItem => ({
         name: r.value,
         action: (
-          <DropdownItem key={'createIstioConfig_' + r.value} isDisabled={r.value == K8SGATEWAY ? !serverConfig.gatewayAPIEnabled : r.disabled} onClick={() => this.onClickCreate(r.value)}>
+          <DropdownItem key={'createIstioConfig_' + r.value} isDisabled={r.value === K8SGATEWAY ? !serverConfig.gatewayAPIEnabled : r.disabled} onClick={() => this.onClickCreate(r.value)}>
             {r.label}
           </DropdownItem>
         )
