@@ -6,10 +6,12 @@ Feature: Kiali login cookie
   Background: 
     Given user is at administrator perspective
   
+  @smoke  
   Scenario: Open Kaili home page
     And user visits base url
     Then user see console in URL
-
+  
+  @smoke
   Scenario: Open Kaili home page2
     And user visits base url
     Then user see console in URL
