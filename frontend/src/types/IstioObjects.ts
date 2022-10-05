@@ -708,6 +708,7 @@ export interface Listener {
   hostname: string;
   port: number;
   protocol: string;
+  tls?: ServerTLSSettings;
 }
 
 export interface ParentRef {
