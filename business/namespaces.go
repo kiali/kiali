@@ -280,8 +280,10 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 // The returned results will be guaranteed to include the namespaces found in the given seed list.
 // There will be no duplicate namespaces in the returned list.
 func (in *NamespaceService) addIncludedNamespaces(all []models.Namespace, seed []models.Namespace) []models.Namespace {
+	var controlPlaneNamespace models.Namespace
 	hasNamespace := make(map[string]bool, len(seed))
 	results := make([]models.Namespace, 0, len(seed))
+	configObject := config.Get()
 
 	// seed with the initial set of namespaces - this ensures there are no duplicates in the seed list
 	for _, ns := range seed {
@@ -292,7 +294,8 @@ func (in *NamespaceService) addIncludedNamespaces(all []models.Namespace, seed [
 	}
 
 	// go through the list of all namespaces and add to the results list those that match a regex found in the Include list
-	includes := config.Get().API.Namespaces.Include
+	includes := configObject.API.Namespaces.Include
+NAMESPACES:
 	for _, ns := range all {
 		if _, exists := hasNamespace[ns.Name]; exists {
 			continue
@@ -301,10 +304,23 @@ func (in *NamespaceService) addIncludedNamespaces(all []models.Namespace, seed [
 			if match, _ := regexp.MatchString(includePattern, ns.Name); match {
 				hasNamespace[ns.Name] = true
 				results = append(results, ns)
+				continue NAMESPACES
 			}
+		}
+		if ns.Name == configObject.IstioNamespace {
+			controlPlaneNamespace = ns // squirrel away the control plane namepace in case we need to add it
 		}
 	}
 
+	// Kiali needs the control plane namespace, so it should always be included.
+	// If the user did not configure the include list to explicitly include the control plane namespace, then we need to include it now.
+	if _, exists := hasNamespace[configObject.IstioNamespace]; !exists {
+		if controlPlaneNamespace.Name != "" {
+			results = append(results, controlPlaneNamespace)
+		} else {
+			log.Errorf("Kiali needs to include the control plane namespace. Make sure you configured Kiali so it can access and include the namespace [%s].", configObject.IstioNamespace)
+		}
+	}
 	return results
 }
 
@@ -336,7 +352,12 @@ func (in *NamespaceService) isIncludedNamespace(namespace string) bool {
 		return true // Include list is ignored if accessible namespaces is not **; for our purposes, when ignored we assume the Include list includes all.
 	}
 
-	includes := config.Get().API.Namespaces.Include
+	configObject := config.Get()
+	if namespace == configObject.IstioNamespace {
+		return true // the control plane namespace is always included
+	}
+
+	includes := configObject.API.Namespaces.Include
 	if len(includes) == 0 {
 		return true // if no Include list is specified, all namespaces are included
 	}
