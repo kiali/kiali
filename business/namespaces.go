@@ -111,6 +111,8 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	// The server helm chart will not assume they did it correctly. The user therefore normally should not set LabelSelectorInclude
 	// if they also set AN to something not ["**"]. This is one reason why we recommend using the Kiali operator, and why we say
 	// the server helm chart is only provided as a convenience.)
+	// (Side note 3: The control plane namespace is always included via api.namespaces.include and
+	// never excluded via api.namespaces.exclude or api.namespaces.label_selector_exclude.)
 
 	labelSelectorInclude := configObject.API.Namespaces.LabelSelectorInclude
 
@@ -248,21 +250,24 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	// exclude namespaces that are:
 	// 1. to be filtered out via the exclude list
 	// 2. to be filtered out via the label selector
+	// Note that the control plane namespace is never excluded
 	excludes := configObject.API.Namespaces.Exclude
 	if len(excludes) > 0 || labelSelectorExclude != "" {
 		result = []models.Namespace{}
 	NAMESPACES:
 		for _, namespace := range namespaces {
-			if len(excludes) > 0 {
-				for _, excludePattern := range excludes {
-					if match, _ := regexp.MatchString(excludePattern, namespace.Name); match {
-						continue NAMESPACES
+			if namespace.Name != configObject.IstioNamespace {
+				if len(excludes) > 0 {
+					for _, excludePattern := range excludes {
+						if match, _ := regexp.MatchString(excludePattern, namespace.Name); match {
+							continue NAMESPACES
+						}
 					}
 				}
-			}
-			if labelSelectorExclude != "" {
-				if namespace.Labels[labelSelectorExcludeName] == labelSelectorExcludeValue {
-					continue NAMESPACES
+				if labelSelectorExclude != "" {
+					if namespace.Labels[labelSelectorExcludeName] == labelSelectorExcludeValue {
+						continue NAMESPACES
+					}
 				}
 			}
 			result = append(result, namespace)
@@ -334,9 +339,13 @@ func (in *NamespaceService) isAccessibleNamespace(namespace string) bool {
 }
 
 func (in *NamespaceService) isExcludedNamespace(namespace string) bool {
-	excludes := config.Get().API.Namespaces.Exclude
+	configObject := config.Get()
+	excludes := configObject.API.Namespaces.Exclude
 	if len(excludes) == 0 {
 		return false
+	}
+	if namespace == configObject.IstioNamespace {
+		return false // the control plane namespace is never excluded
 	}
 	for _, excludePattern := range excludes {
 		if match, _ := regexp.MatchString(excludePattern, namespace); match {
