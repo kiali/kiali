@@ -4,7 +4,7 @@ import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import { appLabelFilter, versionLabelFilter } from '../../pages/WorkloadList/FiltersAndSorts';
 import MissingSidecar from '../MissingSidecar/MissingSidecar';
-import { hasMissingSidecar, IstioTypes, Renderer, Resource, SortResource, TResource } from './Config';
+import { hasMissingAmbient, hasMissingSidecar, IstioTypes, Renderer, Resource, SortResource, TResource } from './Config';
 import { HealthIndicator } from '../Health/HealthIndicator';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
 import { ValidationServiceSummary } from '../Validations/ValidationServiceSummary';
@@ -34,6 +34,7 @@ import Label from 'components/Label/Label';
 import { serverConfig } from 'config/ServerConfig';
 import ControlPlaneBadge from 'pages/Overview/ControlPlaneBadge';
 import NamespaceStatuses from 'pages/Overview/NamespaceStatuses';
+import AmbientLabel from "../Ambient/AmbientLabel";
 
 // Links
 
@@ -62,6 +63,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   item: AppListItem | WorkloadListItem | ServiceListItem
 ) => {
   const hasMissingSC = hasMissingSidecar(item);
+  const hasMissingA = hasMissingAmbient(item);
   const isWorkload = 'appLabel' in item;
   const hasMissingApp = isWorkload && !item['appLabel'];
   const hasMissingVersion = isWorkload && !item['versionLabel'];
@@ -81,9 +83,14 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
             <MissingAuthPolicy namespace={item.namespace} />
           </li>
         )}
-        {hasMissingSC && (
+        {(hasMissingSC && hasMissingA) && (
           <li>
             <MissingSidecar namespace={item.namespace} />
+          </li>
+        )}
+        {!hasMissingA && (
+          <li>
+            <AmbientLabel tooltip={true} />
           </li>
         )}
         {isWorkload && (hasMissingApp || hasMissingVersion) && (
@@ -150,8 +157,8 @@ export const status: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
         className="pf-m-center"
         style={{ verticalAlign: 'middle' }}
       >
-        { ns.status && 
-          <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={OverviewToolbar.currentOverviewType()} /> 
+        { ns.status &&
+          <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={OverviewToolbar.currentOverviewType()} />
         }
         <OverviewCardSparklineCharts
           key={ns.name}
@@ -174,7 +181,7 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Reso
       <PFBadge badge={badge} />
       {ns.name}
       {ns.name === serverConfig.istioNamespace &&
-        <ControlPlaneBadge />                         
+        <ControlPlaneBadge />
       }
     </td>
   );

@@ -100,6 +100,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
       return data.services.map(service => ({
         name: service.name,
         istioSidecar: service.istioSidecar,
+        istioAmbient: service.istioAmbient,
         namespace: data.namespace.name,
         health: ServiceHealth.fromJson(data.namespace.name, service.name, service.health, {
           rateInterval: rateInterval,

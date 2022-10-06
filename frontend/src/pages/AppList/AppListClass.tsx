@@ -8,6 +8,7 @@ export const getAppItems = (data: AppList, rateInterval: number): AppListItem[] 
       namespace: data.namespace.name,
       name: app.name,
       istioSidecar: app.istioSidecar,
+      istioAmbient: app.istioAmbient,
       health: AppHealth.fromJson(data.namespace.name, app.name, app.health, {
         rateInterval: rateInterval,
         hasSidecar: app.istioSidecar

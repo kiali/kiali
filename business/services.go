@@ -232,6 +232,7 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 		mPods := models.Pods{}
 		mPods.Parse(sPods)
 		hasSidecar := mPods.HasAnyIstioSidecar()
+		hasAmbient := mPods.HasAnyAmbient()
 		svcVirtualServices := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, item.Namespace, item.Name)
 		svcDestinationRules := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, item.Namespace, item.Name)
 		svcGateways := kubernetes.FilterGatewaysByVirtualServices(istioConfigList.Gateways, svcVirtualServices)
@@ -262,6 +263,7 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 			Name:                   item.Name,
 			Namespace:              item.Namespace,
 			IstioSidecar:           hasSidecar,
+			IstioAmbient:           hasAmbient,
 			AppLabel:               appLabel,
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(conf, item.ObjectMeta.Annotations),
 			Health:                 models.EmptyServiceHealth(),

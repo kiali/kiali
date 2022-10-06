@@ -174,6 +174,11 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				break
 			}
 		}
+		for _, w := range valueApp.Workloads {
+			if appItem.IstioAmbient = w.HasIstioAmbient(); !appItem.IstioAmbient {
+				break
+			}
+		}
 		if criteria.IncludeHealth {
 			appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, appItem.Name, criteria.RateInterval, criteria.QueryTime, valueApp)
 			if err != nil {

@@ -147,6 +147,7 @@ install_addons() {
 
 install_metallb() {
   printf "\nInstall load balancer \n"
+  ${CLIENT_EXE} config use-context kind-ambient
   ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
   subnet=$(docker network inspect -f '{{.IPAM.Config}}' kind)
   subnet_trimmed=($(echo ${subnet} | grep -oE '((1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])'))

@@ -59,6 +59,11 @@ type WorkloadListItem struct {
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
 
+	// Define if Pods related to this Workload has an IstioAmbient deployed
+	// required: true
+	// example: true
+	IstioAmbient bool `json:"istioAmbient"`
+
 	// Additional item sample, such as type of api being served (graphql, grpc, rest)
 	// example: rest
 	// required: false
@@ -148,6 +153,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.CreatedAt = w.CreatedAt
 	workload.ResourceVersion = w.ResourceVersion
 	workload.IstioSidecar = w.HasIstioSidecar()
+	workload.IstioAmbient = w.HasIstioAmbient()
 	workload.Labels = w.Labels
 	workload.PodCount = len(w.Pods)
 	workload.ServiceAccountNames = w.Pods.ServiceAccounts()
@@ -399,6 +405,20 @@ func (workload *Workload) HasIstioSidecar() bool {
 	}
 	// Need to check each pod
 	return workload.Pods.HasIstioSidecar()
+}
+
+// HasIstioSidecar return true if is part of Ambient mesh
+func (workload *Workload) HasIstioAmbient() bool {
+	// if no pods we can't prove there is no ambient, so return true
+	if len(workload.Pods) == 0 {
+		return true
+	}
+	// All pods in a deployment should be the same
+	if workload.Type == "Deployment" {
+		return workload.Pods[0].HasAmbient()
+	}
+	// Need to check each pod
+	return workload.Pods.HasAnyAmbient()
 }
 
 // HasIstioSidecar returns true if there is at least one workload which has a sidecar

@@ -23,6 +23,11 @@ type AppListItem struct {
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
 
+	// Define if all Pods related to the Workloads of this app has an istioAmbient labeled
+	// required: true
+	// example: true
+	IstioAmbient bool `json:"istioAmbient"`
+
 	// Labels for App
 	Labels map[string]string `json:"labels"`
 
@@ -43,6 +48,11 @@ type WorkloadItem struct {
 	// required: true
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
+
+	// Define if all Pods related to the Workload has an IstioAmbient deployed
+	// required: true
+	// example: true
+	IstioAmbient bool `json:"istioAmbient"`
 
 	// List of service accounts involved in this application
 	// required: true

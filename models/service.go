@@ -20,6 +20,10 @@ type ServiceOverview struct {
 	// required: true
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
+	// Check if it has Ambient enabled
+	// required: true
+	// example: true
+	IstioAmbient bool `json:"istioAmbient"`
 	// Has label app
 	// required: true
 	// example: true

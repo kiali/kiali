@@ -12,6 +12,7 @@ export interface ServiceList {
 export interface ServiceOverview {
   name: string;
   istioSidecar: boolean;
+  istioAmbient: boolean;
   additionalDetailSample?: AdditionalItem;
   labels: { [key: string]: string };
   istioReferences: ObjectReference[];
