@@ -1,6 +1,6 @@
 import * as React from 'react';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
-import { FormGroup } from '@patternfly/react-core';
+import { FormGroup, TextInputBase as TextInput } from '@patternfly/react-core';
 import ListenerBuilder from "./GatewayForm/ListenerBuilder";
 import { Listener } from '../../types/IstioObjects';
 import { isValid } from 'utils/Common';
@@ -31,7 +31,8 @@ export const initK8sGateway = (): K8sGatewayState => ({
     hostname: '',
     port: 80,
     name: 'default',
-    protocol: 'HTTP'
+    protocol: 'HTTP',
+    allowedRoutes: {namespaces: {from: "Same"}}
   },
   validHosts: false
 });
@@ -100,7 +101,8 @@ class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
             hostname: '',
             port: 80,
             name: 'http',
-            protocol: 'HTTP'
+            protocol: 'HTTP',
+            allowedRoutes: {namespaces: {from: "Same"}}
           }
         };
       },
@@ -130,6 +132,13 @@ class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
           helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
           validated={isValid(this.state.workloadSelectorValid)}
         >
+          <TextInput
+            id="gwLabels"
+            name="gwLabels"
+            value={this.state.workloadSelectorLabels}
+            onChange={this.addWorkloadLabels}
+            validated={isValid(this.state.workloadSelectorValid)}
+          />
         </FormGroup>
         <ListenerBuilder
           onAddListener={listener => {

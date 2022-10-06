@@ -1368,7 +1368,11 @@ export const buildK8sGateway = (name: string, namespace: string, state: K8sGatew
         port: s.port,
         protocol: s.protocol,
         hostname: s.hostname,
-        tls: s.tls || {}
+        allowedRoutes: {
+          namespaces: {
+            from: s.allowedRoutes.namespaces.from
+          }
+        }
       }))
     }
   };

@@ -18,8 +18,13 @@ const noListenerStyle = style({
 
 const headerCells: ICell[] = [
   {
-    title: 'Listener Name',
-    transforms: [cellWidth(100) as any],
+    title: 'Name',
+    transforms: [cellWidth(20) as any],
+    props: {}
+  },
+  {
+    title: 'Hostname',
+    transforms: [cellWidth(40) as any],
     props: {}
   },
   {
@@ -28,14 +33,10 @@ const headerCells: ICell[] = [
     props: {}
   },
   {
-    title: 'TLS',
-    transforms: [cellWidth(100) as any],
+    title: 'From Namespaces',
+    transforms: [cellWidth(40) as any],
     props: {}
   },
-  {
-    title: '',
-    props: {}
-  }
 ];
 
 class ListenerList extends React.Component<Props> {
@@ -49,27 +50,15 @@ class ListenerList extends React.Component<Props> {
           </>,
           <>
             <div>{listener.hostname}</div>
+          </>,
+          <>
             <div>
               [{listener.port}, {listener.protocol}]
             </div>
           </>,
           <>
-            {listener.tls ? (
-              <>
-                <div>{listener.tls.mode}</div>
-                {listener.tls.serverCertificate && listener.tls.serverCertificate.length > 0 ? (
-                  <div>[{listener.tls.serverCertificate}]</div>
-                ) : undefined}
-                {listener.tls.privateKey && listener.tls.privateKey.length > 0 ? (
-                  <div>[{listener.tls.privateKey}]</div>
-                ) : undefined}
-                {listener.tls.caCertificates && listener.tls.caCertificates.length > 0 ? (
-                  <div>[{listener.tls.caCertificates}]</div>
-                ) : undefined}
-              </>
-            ) : undefined}
+            <div>{listener.allowedRoutes.namespaces.from}</div>
           </>,
-          <></>
         ]
       };
     });
@@ -91,7 +80,7 @@ class ListenerList extends React.Component<Props> {
     return (
       <>
         <Table
-          aria-label="Server List"
+          aria-label="Listener List"
           cells={headerCells}
           rows={this.rows()}
           // @ts-ignore

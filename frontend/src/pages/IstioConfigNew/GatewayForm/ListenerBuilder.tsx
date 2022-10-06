@@ -19,10 +19,7 @@ type State = {
   newPort: string;
   newName: string;
   newProtocol: string;
-  newTlsMode: string;
-  newTlsServerCertificate: string;
-  newTlsPrivateKey: string;
-  newTlsCaCertificate: string;
+  newFrom: string;
 };
 
 const warningStyle = style({
@@ -56,14 +53,19 @@ const listenerHeader: ICell[] = [
     title: 'Protocol',
     transforms: [cellWidth(20) as any],
     props: {}
+  },
+  {
+    title: 'From Namespaces',
+    transforms: [cellWidth(20) as any],
+    props: {}
   }
 ];
 
-const protocols = ['HTTP', 'HTTPS', 'GRPC', 'HTTP2', 'MONGO', 'TCP', 'TLS'];
+// Only HTTPRoute is supported in Istio
+const protocols = ['HTTP'];
 
-//const allowedRoutes = ['All', 'Same', 'Selector'];
+const allowedRoutes = ['All', 'Selector', 'Same'];
 
-const tlsModes = ['PASSTHROUGH', 'SIMPLE', 'MUTUAL', 'AUTO_PASSTHROUGH', 'ISTIO_MUTUAL'];
 
 class ListenerBuilder extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -74,10 +76,7 @@ class ListenerBuilder extends React.Component<Props, State> {
       newPort: '',
       newName: '',
       newProtocol: protocols[0],
-      newTlsMode: tlsModes[1], // SIMPLE
-      newTlsServerCertificate: '',
-      newTlsPrivateKey: '',
-      newTlsCaCertificate: ''
+      newFrom: allowedRoutes[2],
     };
   }
 
@@ -85,15 +84,7 @@ class ListenerBuilder extends React.Component<Props, State> {
     const hostValid = this.state.isHostValid;
     const portNumberValid = this.state.newPort.length > 0 && !isNaN(Number(this.state.newPort));
     const portNameValid = this.state.newName.length > 0;
-    const tlsRequired = this.state.newProtocol === 'HTTPS' || this.state.newProtocol === 'TLS';
-    const tlsCertsValid = tlsRequired
-      ? this.state.newTlsMode === 'SIMPLE' || this.state.newTlsMode === 'MUTUAL'
-        ? this.state.newTlsServerCertificate.length > 0 && this.state.newTlsPrivateKey.length > 0
-        : true
-      : true;
-    const tlsCaValid =
-      tlsRequired && this.state.newTlsMode === 'MUTUAL' ? this.state.newTlsCaCertificate.length > 0 : true;
-    return hostValid && portNumberValid && portNameValid && tlsCertsValid && tlsCaValid;
+    return hostValid && portNumberValid && portNameValid;
   };
 
   isValidHost = (host: string): boolean => {
@@ -121,7 +112,13 @@ class ListenerBuilder extends React.Component<Props, State> {
 
   onAddProtocol = (value: string, _) => {
     this.setState({
-      newPort: value
+      newProtocol: value
+    });
+  };
+
+  onAddFrom = (value: string, _) => {
+    this.setState({
+      newFrom: value
     });
   };
 
@@ -130,20 +127,9 @@ class ListenerBuilder extends React.Component<Props, State> {
       hostname: this.state.newHostname,
       port: +this.state.newPort,
       name: this.state.newName,
-      protocol: this.state.newProtocol
+      protocol: this.state.newProtocol,
+      allowedRoutes: {namespaces: {from: this.state.newFrom}}
     };
-    if (this.state.newProtocol === 'HTTPS' || this.state.newProtocol === 'TLS') {
-      newListener.tls = {
-        mode: this.state.newTlsMode
-      };
-      if (this.state.newTlsMode === 'SIMPLE' || this.state.newTlsMode === 'MUTUAL') {
-        newListener.tls.privateKey = this.state.newTlsPrivateKey;
-        newListener.tls.serverCertificate = this.state.newTlsServerCertificate;
-      }
-      if (this.state.newTlsMode === 'MUTUAL') {
-        newListener.tls.caCertificates = this.state.newTlsCaCertificate;
-      }
-    }
     this.setState(
       {
         newHostname: '',
@@ -151,37 +137,10 @@ class ListenerBuilder extends React.Component<Props, State> {
         newPort: '',
         newName: '',
         newProtocol: protocols[0],
-        newTlsMode: tlsModes[1], // SIMPLE
-        newTlsServerCertificate: '',
-        newTlsPrivateKey: '',
-        newTlsCaCertificate: ''
+        newFrom: allowedRoutes[2],
       },
       () => this.props.onAddListener(newListener)
     );
-  };
-
-  onAddTlsMode = (value: string, _) => {
-    this.setState({
-      newTlsMode: value
-    });
-  };
-
-  onAddTlsServerCertificate = (value: string, _) => {
-    this.setState({
-      newTlsServerCertificate: value
-    });
-  };
-
-  onAddTlsPrivateKey = (value: string, _) => {
-    this.setState({
-      newTlsPrivateKey: value
-    });
-  };
-
-  onAddTlsCaCertificate = (value: string, _) => {
-    this.setState({
-      newTlsCaCertificate: value
-    });
   };
 
   portRows() {
@@ -233,6 +192,18 @@ class ListenerBuilder extends React.Component<Props, State> {
                 <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
               ))}
             </FormSelect>
+          </>,
+          <>
+            <FormSelect
+              value={this.state.newFrom}
+              id="addFrom"
+              name="addFrom"
+              onChange={this.onAddFrom}
+            >
+              {allowedRoutes.map((option, index) => (
+                <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+              ))}
+            </FormSelect>
           </>
         ]
       }
@@ -240,7 +211,6 @@ class ListenerBuilder extends React.Component<Props, State> {
   }
 
   render() {
-    const showTls = this.state.newProtocol === 'HTTPS' || this.state.newProtocol === 'TLS';
     return (
       <>
         <FormGroup label="Listener" isRequired={true} fieldId="listener-port">
@@ -249,77 +219,6 @@ class ListenerBuilder extends React.Component<Props, State> {
             <TableBody />
           </Table>
         </FormGroup>
-        {showTls && (
-          <FormGroup label="TLS Mode" isRequired={true} fieldId="addTlsMode">
-            <FormSelect value={this.state.newTlsMode} id="addTlsMode" name="addTlsMode" onChange={this.onAddTlsMode}>
-              {tlsModes.map((option, index) => (
-                <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
-              ))}
-            </FormSelect>
-          </FormGroup>
-        )}
-        {showTls && (this.state.newTlsMode === 'SIMPLE' || this.state.newTlsMode === 'MUTUAL') && (
-          <>
-            <FormGroup
-              label="Server Certificate"
-              isRequired={true}
-              fieldId="server-certificate"
-              validated={isValid(this.state.newTlsServerCertificate.length > 0)}
-              helperTextInvalid={'The path to the file holding the listener-side TLS certificate to use.'}
-            >
-              <TextInput
-                value={this.state.newTlsServerCertificate}
-                isRequired={true}
-                type="text"
-                id="server-certificate"
-                aria-describedby="server-certificate"
-                name="server-certificate"
-                onChange={this.onAddTlsServerCertificate}
-                validated={isValid(this.state.newTlsServerCertificate.length > 0)}
-              />
-            </FormGroup>
-            <FormGroup
-              label="Private Key"
-              isRequired={true}
-              fieldId="private-key"
-              validated={isValid(this.state.newTlsPrivateKey.length > 0)}
-              helperTextInvalid={'The path to the file holding the listener’s private key.'}
-            >
-              <TextInput
-                value={this.state.newTlsPrivateKey}
-                isRequired={true}
-                type="text"
-                id="private-key"
-                aria-describedby="private-key"
-                name="private-key"
-                onChange={this.onAddTlsPrivateKey}
-                validated={isValid(this.state.newTlsPrivateKey.length > 0)}
-              />
-            </FormGroup>
-          </>
-        )}
-        {showTls && this.state.newTlsMode === 'MUTUAL' && (
-          <FormGroup
-            label="CA Certificate"
-            isRequired={true}
-            fieldId="ca-certificate"
-            validated={isValid(this.state.newTlsCaCertificate.length > 0)}
-            helperTextInvalid={
-              'The path to a file containing certificate authority certificates to use in verifying a presented client side certificate.'
-            }
-          >
-            <TextInput
-              value={this.state.newTlsCaCertificate}
-              isRequired={true}
-              type="text"
-              id="ca-certificate"
-              aria-describedby="ca-certificate"
-              name="ca-certificate"
-              onChange={this.onAddTlsCaCertificate}
-              validated={isValid(this.state.newTlsCaCertificate.length > 0)}
-            />
-          </FormGroup>
-        )}
         <FormGroup fieldId="addRule">
           <Button
             variant={ButtonVariant.link}

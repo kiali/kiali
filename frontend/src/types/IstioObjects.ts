@@ -708,7 +708,15 @@ export interface Listener {
   hostname: string;
   port: number;
   protocol: string;
-  tls?: ServerTLSSettings;
+  allowedRoutes: AllowedRoutes;
+}
+
+export interface AllowedRoutes {
+  namespaces: FromNamespaces;
+}
+
+export interface FromNamespaces {
+  from: string;
 }
 
 export interface ParentRef {
