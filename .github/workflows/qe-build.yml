@@ -15,11 +15,9 @@ jobs:
     runs-on: ubuntu-20.04  
     steps:
       - name: Checkout Backend
-        env:
-            QE_BRANCH: ${{ github.event.inputs.qe_branch }}
         uses: actions/checkout@v3        
         with:
-          ref: $QE_BRANCH
+          ref: ${{ github.event.inputs.qe_branch }}
       - name: Configure git backend
         run: |
           git config user.email 'kiali-dev@googlegroups.com'
