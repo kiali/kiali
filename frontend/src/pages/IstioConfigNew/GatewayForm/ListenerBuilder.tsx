@@ -20,6 +20,8 @@ type State = {
   newName: string;
   newProtocol: string;
   newFrom: string;
+  isLabelSelectorValid: boolean;
+  newSelectorLabels: string;
 };
 
 const warningStyle = style({
@@ -77,6 +79,8 @@ class ListenerBuilder extends React.Component<Props, State> {
       newName: '',
       newProtocol: protocols[0],
       newFrom: allowedRoutes[2],
+      newSelectorLabels: '',
+      isLabelSelectorValid: false,
     };
   }
 
@@ -122,13 +126,19 @@ class ListenerBuilder extends React.Component<Props, State> {
     });
   };
 
+  onAddSelectorLabels = (value: string, _) => {
+    this.setState({
+      newSelectorLabels: value
+    });
+  };
+
   onAddListener = () => {
     const newListener: Listener = {
       hostname: this.state.newHostname,
       port: +this.state.newPort,
       name: this.state.newName,
       protocol: this.state.newProtocol,
-      allowedRoutes: {namespaces: {from: this.state.newFrom}}
+      allowedRoutes: {namespaces: {from: this.state.newFrom, selector: {matchLabels: this.getLabelsMap(this.state.newSelectorLabels)}}}
     };
     this.setState(
       {
@@ -138,8 +148,62 @@ class ListenerBuilder extends React.Component<Props, State> {
         newName: '',
         newProtocol: protocols[0],
         newFrom: allowedRoutes[2],
+        newSelectorLabels: '',
+        isLabelSelectorValid: false,
       },
       () => this.props.onAddListener(newListener)
+    );
+  };
+
+  getLabelsMap = (value: string) => {
+    const valuesMap = {}
+    value
+      .trim()
+      .split(',')
+      .forEach(split => {
+        const labels = split.trim().split('=');
+        if (labels.length === 2) {
+            valuesMap[labels[0].trim()] = labels[1].trim();
+        }
+      });
+    return valuesMap;
+  }
+
+  addSelectorLabels = (value: string, _) => {
+    if (value.length === 0) {
+      this.setState(
+        {
+          isLabelSelectorValid: false,
+          newSelectorLabels: ''
+        },
+      );
+      return;
+    }
+    value = value.trim();
+    const labels: string[] = value.split(',');
+    let isValid = true;
+    // Some smoke validation rules for the labels
+    for (let i = 0; i < labels.length; i++) {
+      const label = labels[i];
+      if (label.indexOf('=') < 0) {
+        isValid = false;
+        break;
+      }
+      const splitLabel: string[] = label.split('=');
+      if (splitLabel.length !== 2) {
+        isValid = false;
+        break;
+      }
+      if (splitLabel[0].trim().length === 0 || splitLabel[1].trim().length === 0) {
+        isValid = false;
+        break;
+      }
+    }
+    this.setState(
+      {
+        isLabelSelectorValid: isValid,
+        newSelectorLabels: value
+      },
     );
   };
 
@@ -167,7 +231,7 @@ class ListenerBuilder extends React.Component<Props, State> {
               aria-describedby="add hostname"
               name="addHostname"
               onChange={this.onAddHostname}
-              validated={isValid(this.state.newHostname.length > 0)}
+              validated={isValid(this.state.isHostValid)}
             />
           </>,
           <>
@@ -211,6 +275,7 @@ class ListenerBuilder extends React.Component<Props, State> {
   }
 
   render() {
+    const showSelector = this.state.newFrom === 'Selector';
     return (
       <>
         <FormGroup label="Listener" isRequired={true} fieldId="listener-port">
@@ -219,6 +284,22 @@ class ListenerBuilder extends React.Component<Props, State> {
             <TableBody />
           </Table>
         </FormGroup>
+        {showSelector && (
+          <FormGroup
+            fieldId="selectorLabels"
+            label="Labels"
+            helperText="One or more labels to select a workload where the Gateway is applied."
+            helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
+            validated={isValid(this.state.isLabelSelectorValid)}
+          >
+            <TextInput
+              id="gwHosts"
+              name="gwHosts"
+              onChange={this.addSelectorLabels}
+              validated={isValid(this.state.isLabelSelectorValid)}
+            />
+          </FormGroup>
+        )}
         <FormGroup fieldId="addRule">
           <Button
             variant={ButtonVariant.link}

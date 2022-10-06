@@ -1370,8 +1370,11 @@ export const buildK8sGateway = (name: string, namespace: string, state: K8sGatew
         hostname: s.hostname,
         allowedRoutes: {
           namespaces: {
-            from: s.allowedRoutes.namespaces.from
-          }
+            from: s.allowedRoutes.namespaces.from,
+            selector: {
+              matchLabels: s.allowedRoutes.namespaces.selector?.matchLabels
+            }
+          },
         }
       }))
     }

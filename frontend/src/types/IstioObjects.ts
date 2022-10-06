@@ -715,8 +715,13 @@ export interface AllowedRoutes {
   namespaces: FromNamespaces;
 }
 
+export interface LabelSelector {
+  matchLabels?: { [key: string]: string };
+}
+
 export interface FromNamespaces {
   from: string;
+  selector?: LabelSelector;
 }
 
 export interface ParentRef {
