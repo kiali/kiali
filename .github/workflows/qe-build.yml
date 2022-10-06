@@ -1,0 +1,28 @@
+name: QE Build
+
+jobs:
+  rebase_and_tag:
+    name: Rebase
+    runs-on: ubuntu-20.04  
+    steps:
+      - name: Checkout Backend
+        uses: actions/checkout@v3        
+        with:
+          ref: 'ossm-latest'
+      - name: Configure git backend
+        run: |
+          git config user.email 'kiali-dev@googlegroups.com'
+
+          git config user.name 'kiali-bot'      
+      - name: Rebase Branch
+        id: branches
+        run: |
+          git rebase master
+          RAW_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
+          
+          DATE=$(date +%d%m%y)
+
+          # Remove any pre release identifier (ie: "-SNAPSHOT") and add date
+          RELEASE_VERSION=${RAW_VERSION%-*}_${DATE}
+
+          git push origin && git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION
