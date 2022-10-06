@@ -88,7 +88,9 @@ func istiodTestServer(t *testing.T) *httptest.Server {
 			t.Fatalf("Unexpected request path: %s", r.URL.Path)
 			return
 		}
-		w.Write(readFile(t, file))
+		if _, err := w.Write(readFile(t, file)); err != nil {
+			t.Fatalf("Error writing response: %s", err)
+		}
 	}))
 	t.Cleanup(testServer.Close)
 	return testServer
