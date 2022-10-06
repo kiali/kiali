@@ -1,14 +1,25 @@
 name: QE Build
 
+on:
+  workflow_dispatch:
+    inputs:      
+      qe_branch:
+        description: QE Branch to reabse with master and tag
+        required: true
+        default: ossm-latest
+        type: string
+
 jobs:
   rebase_and_tag:
     name: Rebase
     runs-on: ubuntu-20.04  
     steps:
       - name: Checkout Backend
+        env:
+            QE_BRANCH: ${{ github.event.inputs.qe_branch }}
         uses: actions/checkout@v3        
         with:
-          ref: 'ossm-latest'
+          ref: $QE_BRANCH
       - name: Configure git backend
         run: |
           git config user.email 'kiali-dev@googlegroups.com'
