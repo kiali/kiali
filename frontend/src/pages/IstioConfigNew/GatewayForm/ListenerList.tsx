@@ -68,7 +68,7 @@ class ListenerList extends React.Component<Props> {
   // @ts-ignore
   actionResolver = (rowData, { rowIndex }) => {
     const removeAction = {
-      title: 'Remove Rule',
+      title: 'Remove Listener',
       // @ts-ignore
       onClick: (event, rowIndex, rowData, extraData) => {
         this.props.onRemoveListener(rowIndex);

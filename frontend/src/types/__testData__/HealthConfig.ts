@@ -2,6 +2,7 @@ import { getExpr } from '../../config/HealthConfig';
 
 export const healthConfig = {
   clusters: {},
+  gatewayAPIEnabled: false,
   kialiFeatureFlags: {
     certificatesInformationIndicators: {
       enabled: true
