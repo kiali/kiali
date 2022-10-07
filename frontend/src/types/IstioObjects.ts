@@ -716,12 +716,12 @@ export interface AllowedRoutes {
 }
 
 export interface LabelSelector {
-  matchLabels?: { [key: string]: string };
+  matchLabels: { [key: string]: string };
 }
 
 export interface FromNamespaces {
   from: string;
-  selector?: LabelSelector;
+  selector: LabelSelector;
 }
 
 export interface ParentRef {

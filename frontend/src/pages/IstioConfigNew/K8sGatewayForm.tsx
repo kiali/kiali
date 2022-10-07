@@ -32,7 +32,7 @@ export const initK8sGateway = (): K8sGatewayState => ({
     port: 80,
     name: 'default',
     protocol: 'HTTP',
-    allowedRoutes: {namespaces: {from: "Same"}}
+    allowedRoutes: {namespaces: {from: "Same", selector: {matchLabels: {}}}}
   },
   validHosts: false
 });
@@ -102,7 +102,7 @@ class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
             port: 80,
             name: 'http',
             protocol: 'HTTP',
-            allowedRoutes: {namespaces: {from: "Same"}}
+            allowedRoutes: {namespaces: {from: "Same", selector: {matchLabels: {}}}}
           }
         };
       },

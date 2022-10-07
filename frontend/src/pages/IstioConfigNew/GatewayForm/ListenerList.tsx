@@ -58,6 +58,7 @@ class ListenerList extends React.Component<Props> {
           </>,
           <>
             <div>{listener.allowedRoutes.namespaces.from}</div>
+            <div>{Object.keys(listener.allowedRoutes.namespaces.selector?.matchLabels).length != 0 ? JSON.stringify(listener.allowedRoutes.namespaces.selector.matchLabels) : ''}</div>
           </>,
         ]
       };
