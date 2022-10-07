@@ -295,10 +295,12 @@ type ApiConfig struct {
 	Namespaces ApiNamespacesConfig
 }
 
-// ApiNamespacesConfig provides a list of regex strings defining namespaces to blacklist.
+// ApiNamespacesConfig provides a list of regex strings defining namespaces to include or exclude.
 type ApiNamespacesConfig struct {
-	Exclude       []string
-	LabelSelector string `yaml:"label_selector,omitempty" json:"labelSelector"`
+	Exclude              []string `yaml:"exclude,omitempty" json:"exclude"`
+	Include              []string `yaml:"include,omitempty" json:"include"`
+	LabelSelectorExclude string   `yaml:"label_selector_exclude,omitempty" json:"labelSelectorExclude"`
+	LabelSelectorInclude string   `yaml:"label_selector_include,omitempty" json:"labelSelectorInclude"`
 }
 
 // AuthConfig provides details on how users are to authenticate
@@ -504,12 +506,14 @@ func NewConfig() (c *Config) {
 		API: ApiConfig{
 			Namespaces: ApiNamespacesConfig{
 				Exclude: []string{
-					"istio-operator",
-					"kube.*",
-					"openshift.*",
-					"ibm.*",
-					"kial-operator",
+					"^istio-operator",
+					"^kube-.*",
+					"^openshift.*",
+					"^ibm.*",
+					"^kial-operator",
 				},
+				Include:              []string{},
+				LabelSelectorExclude: "",
 			},
 		},
 		Auth: AuthConfig{
