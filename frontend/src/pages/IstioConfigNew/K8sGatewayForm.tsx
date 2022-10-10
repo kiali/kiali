@@ -2,9 +2,11 @@ import * as React from 'react';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import { FormGroup, TextInputBase as TextInput } from '@patternfly/react-core';
 import ListenerBuilder from "./GatewayForm/ListenerBuilder";
-import { Listener } from '../../types/IstioObjects';
-import { isValid } from 'utils/Common';
+import AddressBuilder from "./GatewayForm/AddressBuilder";
 import ListenerList from "./GatewayForm/ListenerList";
+import AddressList from "./GatewayForm/AddressList";
+import {Address, Listener} from '../../types/IstioObjects';
+import { isValid } from 'utils/Common';
 
 export const K8SGATEWAY = 'K8sGateway';
 export const K8SGATEWAYS = 'k8sgateways';
@@ -19,7 +21,9 @@ export type K8sGatewayState = {
   workloadSelectorValid: boolean;
   workloadSelectorLabels: string;
   listeners: Listener[];
+  addresses: Address[];
   addListener: Listener;
+  addAddress: Address;
   validHosts: boolean;
 };
 
@@ -27,12 +31,17 @@ export const initK8sGateway = (): K8sGatewayState => ({
   workloadSelectorLabels: 'app=gatewayapi',
   workloadSelectorValid: true,
   listeners: [],
+  addresses: [],
   addListener: {
     hostname: '',
     port: 80,
     name: 'default',
     protocol: 'HTTP',
     allowedRoutes: {namespaces: {from: "Same", selector: {matchLabels: {}}}}
+  },
+  addAddress: {
+    type: 'IPAddress',
+    value: '',
   },
   validHosts: false
 });
@@ -122,6 +131,34 @@ class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
     );
   };
 
+  onAddAddress = () => {
+    this.setState(
+      prevState => {
+        prevState.addresses.push(prevState.addAddress);
+        return {
+          addresses: prevState.addresses,
+          addAddress: {
+            type: 'IPAddress',
+            value: '',
+          }
+        };
+      },
+      () => this.props.onChange(this.state)
+    );
+  };
+
+  onRemoveAddress = (index: number) => {
+    this.setState(
+      prevState => {
+        prevState.addresses.splice(index, 1);
+        return {
+          addresses: prevState.addresses
+        };
+      },
+      () => this.props.onChange(this.state)
+    );
+  };
+
   render() {
     return (
       <>
@@ -152,6 +189,19 @@ class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
         />
         <FormGroup label="Listener List" fieldId="gwListenerList">
           <ListenerList listenerList={this.state.listeners} onRemoveListener={this.onRemoveListener} />
+        </FormGroup>
+        <AddressBuilder
+          onAddAddress={address => {
+            this.setState(
+              {
+                addAddress: address
+              },
+              () => this.onAddAddress()
+            );
+          }}
+        />
+        <FormGroup label="Address List" fieldId="gwAddressList">
+          <AddressList addressList={this.state.addresses} onRemoveAddress={this.onRemoveAddress} />
         </FormGroup>
       </>
     );

@@ -711,6 +711,11 @@ export interface Listener {
   allowedRoutes: AllowedRoutes;
 }
 
+export interface Address {
+  type: string;
+  value: string;
+}
+
 export interface AllowedRoutes {
   namespaces: FromNamespaces;
 }
@@ -731,6 +736,7 @@ export interface ParentRef {
 
 export interface K8sGatewaySpec {
   listeners?: Listener[];
+  addresses?: Address[];
   gatewayClassName: string;
 }
 

@@ -1376,7 +1376,11 @@ export const buildK8sGateway = (name: string, namespace: string, state: K8sGatew
             }
           },
         }
-      }))
+      })),
+      addresses: state.addresses.map(s => ({
+        type: s.type,
+        value: s.value
+      })),
     }
   };
   state.workloadSelectorLabels

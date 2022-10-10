@@ -207,7 +207,7 @@ class ListenerBuilder extends React.Component<Props, State> {
     );
   };
 
-  portRows() {
+  listenerRows() {
     return [
       {
         keys: 'gatewayListenerNew',
@@ -278,8 +278,8 @@ class ListenerBuilder extends React.Component<Props, State> {
     const showSelector = this.state.newFrom === 'Selector';
     return (
       <>
-        <FormGroup label="Listener" isRequired={true} fieldId="listener-port">
-          <Table aria-label="Port Level MTLS" cells={listenerHeader} rows={this.portRows()}>
+        <FormGroup label="Listener" isRequired={true} fieldId="listener">
+          <Table aria-label="Listener Rows" cells={listenerHeader} rows={this.listenerRows()}>
             <TableHeader />
             <TableBody />
           </Table>
