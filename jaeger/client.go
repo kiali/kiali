@@ -262,7 +262,7 @@ func readSpansStream(stream SpansStreamer) (map[jaegerModel.TraceID]*jaegerModel
 
 func buildJaegerServiceName(namespace, app string) string {
 	conf := config.Get()
-	if conf.ExternalServices.Tracing.NamespaceSelector && namespace != conf.IstioNamespace {
+	if conf.ExternalServices.Tracing.NamespaceSelector {
 		return app + "." + namespace
 	}
 	return app
