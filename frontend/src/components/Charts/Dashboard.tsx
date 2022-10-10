@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Grid, GridItem } from '@patternfly/react-core';
-import { ChartThemeColor, ChartThemeVariant, getTheme } from '@patternfly/react-charts';
+import { ChartThemeColor, getTheme } from '@patternfly/react-charts';
 
 import { AllPromLabelsValues } from 'types/Metrics';
 import { ChartModel, DashboardModel } from 'types/Dashboards';
@@ -75,7 +75,7 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
   };
 
   private renderChart(chart: ChartModel) {
-    let colorScale = this.props.colors || getTheme(ChartThemeColor.multi, ChartThemeVariant.default).chart!.colorScale!;
+    let colorScale = this.props.colors || getTheme(ChartThemeColor.multi).chart!.colorScale!;
     if (!isArray(colorScale)) {
       colorScale = [colorScale];
     }

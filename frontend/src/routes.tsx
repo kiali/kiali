@@ -13,6 +13,7 @@ import { WorkloadDetailsRoute } from 'routes/WorkloadDetailsRoute';
 import { AppDetailsRoute } from 'routes/AppDetailsRoute';
 import { IstioConfigDetailsRoute } from 'routes/IstioConfigDetailsRoute';
 import { IstioConfigNewRoute } from 'routes/IstioConfigNewRoute';
+import GraphPagePFContainer from 'pages/GraphPF/GraphPagePF';
 
 /**
  * Return array of objects that describe vertical menu
@@ -28,6 +29,11 @@ const navMenuItems: MenuItem[] = [
     title: 'Graph',
     to: '/graph/namespaces/',
     pathsActive: [/^\/graph\/(.*)/]
+  },
+  {
+    title: 'PF Graph',
+    to: '/pfgraph/namespaces/',
+    pathsActive: [/^\/pfgraph\/(.*)/]
   },
   {
     title: 'Applications',
@@ -89,6 +95,10 @@ const pathRoutes: Path[] = [
   {
     path: '/graph/namespaces',
     component: GraphPage
+  },
+  {
+    path: '/pfgraph/namespaces',
+    component: GraphPagePFContainer
   },
   {
     path: '/namespaces/:namespace/' + Paths.SERVICES + '/:service',
