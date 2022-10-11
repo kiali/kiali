@@ -239,19 +239,11 @@ func CheckVersionCompatibility() {
 // istioVersion returns the current istio version information
 // add warnings when mesh version is incompatible with kiali
 func istioVersion() (*ExternalServiceInfo, error) {
-	istioConfig := config.Get().ExternalServices.Istio
-	body, code, _, err := httputil.HttpGet(istioConfig.UrlServiceVersion, nil, 10*time.Second, nil, nil)
 
-	configWarnings := "failed to get mesh version, please check if url_service_version is configured correctly."
-
+	rawVersion, err := getIstioRawVersion()
 	if err != nil {
-		AddWarningMessages(configWarnings)
-		return nil, fmt.Errorf(configWarnings)
+		return nil, fmt.Errorf(err.Error())
 	}
-	if code >= 400 {
-		return nil, fmt.Errorf("getting istio version returned error code [%d]", code)
-	}
-	rawVersion := string(body)
 
 	istioInfo := parseIstioRawVersion(rawVersion)
 	meshName, meshVersion := istioInfo.Name, istioInfo.Version
@@ -271,6 +263,24 @@ func istioVersion() (*ExternalServiceInfo, error) {
 	}
 
 	return istioInfo, nil
+}
+
+func getIstioRawVersion() (string, error) {
+	istioConfig := config.Get().ExternalServices.Istio
+	body, code, _, err := httputil.HttpGet(istioConfig.UrlServiceVersion, nil, 10*time.Second, nil, nil)
+
+	configWarnings := "failed to get mesh version, please check if url_service_version is configured correctly."
+
+	if err != nil {
+		AddWarningMessages(configWarnings)
+		return "", fmt.Errorf(configWarnings)
+	}
+	if code >= 400 {
+		return "", fmt.Errorf("getting istio version returned error code [%d]", code)
+	}
+	rawVersion := string(body)
+
+	return rawVersion, nil
 }
 
 func parseIstioRawVersion(rawVersion string) *ExternalServiceInfo {
@@ -471,6 +481,19 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 
 func isMaistraExternalService(esi *ExternalServiceInfo) bool {
 	return esi.Name == istioProductNameOSSM || esi.Name == istioProductNameMaistra || esi.Name == istioProductNameMaistraProject
+}
+
+func isAmbient() bool {
+	rawVersion, err := getIstioRawVersion()
+	if err != nil {
+		log.Errorf(err.Error())
+		return false
+	}
+	// This may change
+	if strings.Contains(rawVersion, "ambient") {
+		return true
+	}
+	return true
 }
 
 // trimV will trim the (optional) "v" character found at the beginning of the given version string.

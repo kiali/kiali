@@ -213,6 +213,7 @@ type IstioConfig struct {
 	IstioCanaryRevision               IstioCanaryRevision `yaml:"istio_canary_revision,omitempty"`
 	IstioIdentityDomain               string              `yaml:"istio_identity_domain,omitempty"`
 	IstioInjectionAnnotation          string              `yaml:"istio_injection_annotation,omitempty"`
+	IstioAmbient                      bool                `yaml:"istio_ambient,omitempty"`
 	IstioSidecarInjectorConfigMapName string              `yaml:"istio_sidecar_injector_config_map_name,omitempty"`
 	IstioSidecarAnnotation            string              `yaml:"istio_sidecar_annotation,omitempty"`
 	IstiodDeploymentName              string              `yaml:"istiod_deployment_name,omitempty"`
@@ -600,6 +601,7 @@ func NewConfig() (c *Config) {
 				EnvoyAdminLocalPort:               15000,
 				IstioIdentityDomain:               "svc.cluster.local",
 				IstioInjectionAnnotation:          "sidecar.istio.io/inject",
+				IstioAmbient:                      false,
 				IstioSidecarInjectorConfigMapName: "istio-sidecar-injector",
 				IstioSidecarAnnotation:            "sidecar.istio.io/status",
 				IstiodDeploymentName:              "istiod",

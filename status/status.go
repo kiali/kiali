@@ -28,6 +28,10 @@ type IstioEnvironment struct {
 	//
 	// required: true
 	IsMaistra bool `json:"isMaistra"`
+	// If true, the Istio is installed with Ambient profile
+	//
+	// required: true
+	IsAmbient bool `json:"isAmbient"`
 }
 
 // StatusInfo statusInfo
@@ -139,6 +143,7 @@ func Get() (status StatusInfo) {
 	// we only need to get the IstioEnvironment one time - its content is static and will never change
 	if info.IstioEnvironment == nil {
 		isMaistra := false
+		isAmbient := isAmbient()
 		for _, esi := range info.ExternalServices {
 			if isMaistraExternalService(&esi) {
 				isMaistra = true
@@ -147,6 +152,7 @@ func Get() (status StatusInfo) {
 		}
 		info.IstioEnvironment = &IstioEnvironment{
 			IsMaistra: isMaistra,
+			IsAmbient: isAmbient,
 		}
 	}
 

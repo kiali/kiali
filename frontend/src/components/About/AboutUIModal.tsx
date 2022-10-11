@@ -10,10 +10,11 @@ import {
   ButtonVariant,
   Alert
 } from '@patternfly/react-core';
-import { ExternalServiceInfo, Status, StatusKey } from '../../types/StatusState';
+import { ExternalServiceInfo, Status, StatusKey, IstioEnvironment } from '../../types/StatusState';
 import { config, kialiLogo } from '../../config';
 import { style } from 'typestyle';
 import { KialiIcon } from 'config/KialiIcon';
+import { PFBadge } from 'components/Pf/PfBadges';
 
 type AboutUIModalState = {
   showModal: boolean;
@@ -23,6 +24,7 @@ type AboutUIModalProps = {
   status: Status;
   externalServices: ExternalServiceInfo[];
   warningMessages: string[];
+  istioEnvironment: IstioEnvironment;
 };
 
 const iconStyle = style({
@@ -52,7 +54,6 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
     const containerVersion = this.props.status[StatusKey.KIALI_CONTAINER_VERSION];
     const meshVersion = this.props.status[StatusKey.MESH_NAME] ? `${this.props.status[StatusKey.MESH_NAME]} ${this.props.status[StatusKey.MESH_VERSION] || ''}` : 'Unknown';
 
-
     return (
       <AboutModal
         isOpen={this.state.showModal}
@@ -80,7 +81,9 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
               Service Mesh
             </TextListItem>
             <TextListItem key={'service-mesh-version'} component="dd">
-              {meshVersion!}
+              {meshVersion!} {this.props.istioEnvironment.isAmbient && (
+               <PFBadge badge={{ badge: "IstioAmbient" }} isRead={true} style={{ marginRight: '0px' }} />
+              )}
             </TextListItem>
           </TextList>
         </TextContent>

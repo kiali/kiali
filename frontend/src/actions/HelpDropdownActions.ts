@@ -7,7 +7,8 @@ export const HelpDropdownActions = {
     resolve({
       status: status.status,
       externalServices: status.externalServices,
-      warningMessages: status.warningMessages
+      warningMessages: status.warningMessages,
+      istioEnvironment: status.istioEnvironment,
     })
   )
 };

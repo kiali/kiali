@@ -18,6 +18,7 @@ export interface ExternalServiceInfo {
 
 export interface IstioEnvironment {
   isMaistra: boolean;
+  isAmbient: boolean;
 }
 
 export interface StatusState {
