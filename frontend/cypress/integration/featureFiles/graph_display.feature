@@ -7,7 +7,7 @@ Feature: Kiali Graph page - Display menu
 
 # NOTE: Graph Find/Hide (compressOnHide) has its own test script
 # NOTE: Operation nodes has its own test script
-# NOTE: Traffic animation, missing sidecars, virtual service options are nominally tested
+# NOTE: Traffic animation, missing sidecars, virtual service, and idle edge options are nominally tested
 
 @graph-page-display
 Scenario: Graph no namespaces
