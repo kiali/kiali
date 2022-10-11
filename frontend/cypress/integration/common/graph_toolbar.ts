@@ -1,4 +1,4 @@
-import { Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { CytoscapeGlobalScratchData, CytoscapeGlobalScratchNamespace } from '../../../src/types/Graph';
 
 const url = '/console';
@@ -131,18 +131,36 @@ Then(`user does not see any traffic`, () => {
 Then('user sees graph duration menu', () => {
   cy.get('button#time_range_duration-toggle').invoke('attr', 'aria-expanded').should('eq', 'true');
   cy.get('ul#time_range_duration').within(() => {
-    cy.get('li').should('have.length', 11);
-    cy.get('li#60').should('exist');
-    cy.get('li#120').should('exist');
-    cy.get('li#300').should('exist');
-    cy.get('li#600').should('exist');
-    cy.get('li#1800').should('exist');
-    cy.get('li#3600').should('exist');
-    cy.get('li#10800').should('exist');
-    cy.get('li#21600').should('exist');
-    cy.get('li#43200').should('exist');
-    cy.get('li#86400').should('exist');
-    cy.get('li#604800').should('exist');
+    cy.request('GET', '/api/config').should(response => {
+      expect(response.status).to.equal(200);
+      const scrapeInterval = response.body.prometheus.globalScrapeInterval;
+      const retention = response.body.prometheus.storageTsdbRetention;
+      expect(scrapeInterval).within(15, 60);
+      expect(retention).gte(21600);
+
+      cy.get('li').should('have.length.within', 7, 11);
+      if (scrapeInterval < 60) {
+        cy.get('li#60').should('exist');
+      } else {
+        cy.get('li#60').should('not.exist');
+      }
+      cy.get('li#120').should('exist');
+      cy.get('li#300').should('exist');
+      cy.get('li#600').should('exist');
+      cy.get('li#1800').should('exist');
+      cy.get('li#3600').should('exist');
+      cy.get('li#10800').should('exist');
+      cy.get('li#21600').should('exist');
+      if (retention > 21600) {
+        cy.get('li#43200').should('exist');
+        cy.get('li#86400').should('exist');
+        cy.get('li#604800').should('exist');
+      } else {
+        cy.get('li#43200').should('not.exist');
+        cy.get('li#86400').should('not.exist');
+        cy.get('li#604800').should('not.exist');
+      }
+    });
   });
 });
 
