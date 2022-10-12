@@ -71,8 +71,7 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         const jsonInjectionPatch = buildWorkloadInjectionPatch(
           this.props.workload.type,
           enable,
-          remove,
-          this.props.statusState
+          remove
         );
         API.updateWorkload(this.props.namespace, this.props.workload.name, this.props.workload.type, jsonInjectionPatch)
           .then(_ => {

@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/status"
 )
 
 type WorkloadList struct {
@@ -177,12 +176,11 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 		annotations = tplMeta.Annotations
 	}
 
-	// check for automatic sidecar injection - can be defined via label or annotation
+	// check for automatic sidecar injection at the workload level - can be defined via label or annotation
 	// if both are defined, either one set to false will disable injection
-	// NOTE: the label (regardless of value) is meaningless in Maistra environments.
 	labelExplicitlyFalse := false // true means the label is defined and explicitly set to false
 	label, exist := workload.Labels[conf.ExternalServices.Istio.IstioInjectionAnnotation]
-	if exist && !status.IsMaistra() {
+	if exist {
 		if value, err := strconv.ParseBool(label); err == nil {
 			workload.IstioInjectionAnnotation = &value
 			labelExplicitlyFalse = !value
@@ -190,12 +188,11 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 	}
 
 	// do not bother to check the annotation if the label is explicitly false since we know in that case injection is disabled
-	// NOTE: today, if the annotation value is set to "true", that is meaningless for non-Maistra environments.
 	if !labelExplicitlyFalse {
 		annotation, exist := annotations[conf.ExternalServices.Istio.IstioInjectionAnnotation]
 		if exist {
 			if value, err := strconv.ParseBool(annotation); err == nil {
-				if !value || status.IsMaistra() {
+				if !value {
 					workload.IstioInjectionAnnotation = &value
 				}
 			}
