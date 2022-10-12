@@ -57,16 +57,6 @@ type fakePortForwarder struct{}
 func (f *fakePortForwarder) Start() error { return nil }
 func (f *fakePortForwarder) Stop()        {}
 
-// readFile reads a file's contents and calls t.Fatal if any error occurs.
-func readFile(t *testing.T, path string) []byte {
-	t.Helper()
-	contents, err := ioutil.ReadFile(path)
-	if err != nil {
-		t.Fatalf("Error while reading file: %s. Err: %s", path, err)
-	}
-	return contents
-}
-
 func istiodTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +78,7 @@ func istiodTestServer(t *testing.T) *httptest.Server {
 			t.Fatalf("Unexpected request path: %s", r.URL.Path)
 			return
 		}
-		if _, err := w.Write(readFile(t, file)); err != nil {
+		if _, err := w.Write(ReadFile(t, file)); err != nil {
 			t.Fatalf("Error writing response: %s", err)
 		}
 	}))

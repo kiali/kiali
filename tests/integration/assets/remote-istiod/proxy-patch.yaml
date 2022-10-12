@@ -1,0 +1,22 @@
+spec:
+  template:
+    spec:
+      containers:
+        - command:
+            - /bin/bash
+            - -c
+            - |
+              cat <<EOF > /etc/nginx/nginx.conf
+              events { }
+              http {
+                server {
+                  listen 9240;
+                  location / {
+                    proxy_pass http://localhost:15014;
+                  }
+                }
+              }
+              EOF
+              nginx -g "daemon off;"
+          image: nginx:stable
+          name: nginx
