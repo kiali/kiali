@@ -1,4 +1,3 @@
-import { StatusState } from '../../types/StatusState';
 import { TLSStatus } from '../../types/TLSStatus';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { WorkloadWeight } from './TrafficShifting';
@@ -63,7 +62,12 @@ export const SERVICE_WIZARD_ACTIONS = [
   WIZARD_REQUEST_TIMEOUTS
 ];
 
-export type WizardAction = 'request_routing' | 'fault_injection' | 'traffic_shifting' | 'tcp_traffic_shifting' | 'request_timeouts';
+export type WizardAction =
+  | 'request_routing'
+  | 'fault_injection'
+  | 'traffic_shifting'
+  | 'tcp_traffic_shifting'
+  | 'request_timeouts';
 export type WizardMode = 'create' | 'update';
 
 export const WIZARD_TITLES = {
@@ -1504,44 +1508,22 @@ export const buildNamespaceInjectionPatch = (enable: boolean, remove: boolean, r
   return JSON.stringify(patch);
 };
 
-export const buildWorkloadInjectionPatch = (
-  workloadType: string,
-  enable: boolean,
-  remove: boolean,
-  statusState: StatusState
-): string => {
+export const buildWorkloadInjectionPatch = (workloadType: string, enable: boolean, remove: boolean): string => {
   const patch = {};
 
-  if (statusState.istioEnvironment.isMaistra) {
-    // Maistra only supports pod annotations
-    const annotations = {};
-    annotations[serverConfig.istioAnnotations.istioInjectionAnnotation] = remove ? null : enable ? 'true' : 'false';
-    if (workloadType === 'Pod') {
-      patch['annotations'] = annotations;
-    } else {
-      patch['spec'] = {
-        template: {
-          metadata: {
-            annotations: annotations
-          }
-        }
-      };
-    }
+  // environments prefer to use the pod label over the annotation
+  const labels = {};
+  labels[serverConfig.istioAnnotations.istioInjectionAnnotation] = remove ? null : enable ? 'true' : 'false';
+  if (workloadType === 'Pod') {
+    patch['labels'] = labels;
   } else {
-    // supported non-Maistra environments prefer to use the pod label over the annotation
-    const labels = {};
-    labels[serverConfig.istioAnnotations.istioInjectionAnnotation] = remove ? null : enable ? 'true' : 'false';
-    if (workloadType === 'Pod') {
-      patch['labels'] = labels;
-    } else {
-      patch['spec'] = {
-        template: {
-          metadata: {
-            labels: labels
-          }
+    patch['spec'] = {
+      template: {
+        metadata: {
+          labels: labels
         }
-      };
-    }
+      }
+    };
   }
   return JSON.stringify(patch);
 };
