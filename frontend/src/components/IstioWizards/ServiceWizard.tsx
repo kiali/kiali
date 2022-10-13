@@ -19,12 +19,14 @@ import {
   fqdnServiceName,
   getInitGateway,
   getInitHosts,
+  getInitK8sGateway,
   getInitLoadBalancer,
   getInitPeerAuthentication,
   getInitRules,
   getInitTlsMode,
   getInitWeights,
   hasGateway,
+  hasK8sGateway,
   WIZARD_REQUEST_ROUTING,
   WIZARD_FAULT_INJECTION,
   WIZARD_TITLES,
@@ -108,6 +110,7 @@ const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState =>
     },
     advancedOptionsValid: true,
     vsHosts: [fqdnServiceName],
+    k8sRouteHosts: [],
     trafficPolicy: {
       tlsModified: false,
       mtlsMode: UNSET,
@@ -223,20 +226,31 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       };
       const gateway: GatewaySelectorState = {
         addGateway: false,
+        selectGateway: false,
+        selectK8sGateway: false,
         gwHosts: '',
         gwHostsValid: false,
         newGateway: false,
+        newK8sGateway: false,
         selectedGateway: '',
+        selectedK8sGateway: '',
         addMesh: false,
         port: 80
       };
       if (hasGateway(this.props.virtualServices)) {
         const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
         gateway.addGateway = true;
+        gateway.selectGateway = true;
         gateway.selectedGateway = gatewaySelected;
         gateway.addMesh = isMesh;
       }
-
+      if (hasK8sGateway(this.props.k8sHTTPRoutes)) {
+        const gatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes);
+        gateway.addGateway = true;
+        gateway.selectK8sGateway = true;
+        gateway.selectedK8sGateway = gatewaySelected;
+        gateway.addMesh = false;
+      }
       this.setState({
         showWizard: this.props.show,
         showPreview: false,
@@ -289,10 +303,14 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         const dr = this.state.previews!.dr;
         const vs = this.state.previews!.vs;
         const gw = this.state.previews!.gw;
+        const k8sgw = this.state.previews!.k8sgw;
         const pa = this.state.previews!.pa;
         // Gateway is only created when user has explicit selected this option
         if (gw) {
           promises.push(API.createIstioConfigDetail(this.props.namespace, 'gateways', JSON.stringify(gw)));
+        }
+        if (k8sgw) {
+          promises.push(API.createIstioConfigDetail(this.props.namespace, 'k8sgateways', JSON.stringify(k8sgw)));
         }
 
         if (this.props.update) {
@@ -429,6 +447,20 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
     });
   };
 
+  onK8sGateway = (valid: boolean, gateway: GatewaySelectorState) => {
+    this.setState(prevState => {
+      prevState.valid.gateway = valid;
+      return {
+        valid: prevState.valid,
+        gateway: gateway,
+        k8sRouteHosts:
+          gateway.addGateway && gateway.newK8sGateway && gateway.gwHosts.length > 0
+            ? gateway.gwHosts.split(',')
+            : prevState.k8sRouteHosts
+      };
+    });
+  };
+
   onWeightsChange = (valid: boolean, workloads: WorkloadWeight[]) => {
     this.setState(prevState => {
       prevState.valid.mainWizard = valid;
@@ -532,6 +564,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
 
   render() {
     const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
+    const k8sGatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes);
     const titleAction =
       this.props.type.length > 0
         ? this.props.update
@@ -681,11 +714,16 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
                     <GatewaySelector
                       serviceName={this.props.serviceName}
                       hasGateway={hasGateway(this.props.virtualServices)}
+                      hasK8sGateway={hasK8sGateway(this.props.k8sHTTPRoutes)}
                       gateway={gatewaySelected}
+                      k8sGateway={k8sGatewaySelected}
                       isMesh={isMesh}
                       gateways={this.props.gateways}
+                      k8sGateways={this.props.k8sGateways}
                       vsHosts={this.state.vsHosts}
+                      k8sRouteHosts={this.state.k8sRouteHosts}
                       onGatewayChange={this.onGateway}
+                      onK8sGatewayChange={this.onK8sGateway}
                     />
                   </div>
                 </Tab>

@@ -1,7 +1,7 @@
 import { DEGRADED, FAILURE, HEALTHY, NA, ServiceHealth, Status } from './Health';
 import {
   DestinationRule,
-  getVirtualServiceUpdateLabel,
+  getVirtualServiceUpdateLabel, K8sHTTPRoute,
   ObjectCheck,
   ObjectValidation,
   ServiceEntry,
@@ -62,6 +62,7 @@ export interface ServiceDetailsInfo {
   endpoints?: Endpoints[];
   istioSidecar: boolean;
   virtualServices: VirtualService[];
+  k8sHTTPRoutes: K8sHTTPRoute[];
   destinationRules: DestinationRule[];
   serviceEntries: ServiceEntry[];
   istioPermissions: ResourcePermissions;

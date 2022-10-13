@@ -165,6 +165,7 @@ type WizardsData = {
 
   // Data (payload) sent to the wizard or the confirm delete dialog
   gateways: string[];
+  k8sGateways: string[];
   peerAuthentications: PeerAuthentication[];
   namespace: string;
   serviceDetails?: ServiceDetailsInfo;
@@ -332,6 +333,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
         wizardType: '',
         updateMode: false,
         gateways: [],
+        k8sGateways: [],
         peerAuthentications: [],
         namespace: ''
       },
@@ -539,6 +541,8 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
           virtualServices={this.state.wizardsData.serviceDetails?.virtualServices || []}
           destinationRules={this.state.wizardsData.serviceDetails?.destinationRules || []}
           gateways={this.state.wizardsData.gateways || []}
+          k8sGateways={this.state.wizardsData.k8sGateways || []}
+          k8sHTTPRoutes={this.state.wizardsData.serviceDetails?.k8sHTTPRoutes || []}
           peerAuthentications={this.state.wizardsData.peerAuthentications || []}
           tlsStatus={this.state.wizardsData.serviceDetails?.namespaceMTLS}
           onClose={this.handleWizardClose}

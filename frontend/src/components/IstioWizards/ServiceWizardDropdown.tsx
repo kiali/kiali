@@ -11,6 +11,7 @@ import {
   DestinationRule,
   DestinationRuleC,
   getVirtualServiceUpdateLabel,
+  K8sHTTPRoute,
   PeerAuthentication,
   VirtualService
 } from '../../types/IstioObjects';
@@ -39,6 +40,8 @@ type Props = {
   destinationRules: DestinationRule[];
   istioPermissions: ResourcePermissions;
   gateways: string[];
+  k8sGateways: string[];
+  k8sHTTPRoutes: K8sHTTPRoute[];
   peerAuthentications: PeerAuthentication[];
   tlsStatus?: TLSStatus;
   onChange: () => void;
@@ -218,6 +221,8 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
           virtualServices={this.props.virtualServices}
           destinationRules={this.props.destinationRules}
           gateways={this.props.gateways}
+          k8sGateways={this.props.k8sGateways}
+          k8sHTTPRoutes={this.props.k8sHTTPRoutes}
           peerAuthentications={this.props.peerAuthentications}
           tlsStatus={this.props.tlsStatus}
           onClose={this.onClose}

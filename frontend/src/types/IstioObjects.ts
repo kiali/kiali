@@ -701,6 +701,14 @@ export function getGatewaysAsList(gws: Gateway[]): string[] {
   return gws.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort();
 }
 
+export function getK8sGatewaysAsList(k8sGws: K8sGateway[]): string[] {
+  if (k8sGws) {
+    return k8sGws.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort();
+  } else {
+    return []
+  }
+}
+
 // K8s Gateway API https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/
 
 export interface Listener {

@@ -12,7 +12,9 @@ import {
   Gateway,
   HTTPMatchRequest,
   HTTPRoute,
-  HTTPRouteDestination, K8sGateway,
+  HTTPRouteDestination,
+  K8sGateway,
+  K8sHTTPRoute,
   LoadBalancerSettings,
   Operation,
   OutlierDetection,
@@ -91,6 +93,8 @@ export type ServiceWizardProps = {
   virtualServices: VirtualService[];
   destinationRules: DestinationRule[];
   gateways: string[];
+  k8sGateways: string[];
+  k8sHTTPRoutes: K8sHTTPRoute[],
   peerAuthentications: PeerAuthentication[];
   onClose: (changed: boolean) => void;
 };
@@ -109,6 +113,7 @@ export type WizardPreviews = {
   dr: DestinationRule;
   vs: VirtualService;
   gw?: Gateway;
+  k8sgw?: K8sGateway;
   pa?: PeerAuthentication;
 };
 
@@ -126,6 +131,7 @@ export type ServiceWizardState = {
   valid: ServiceWizardValid;
   advancedOptionsValid: boolean;
   vsHosts: string[];
+  k8sRouteHosts: string[];
   trafficPolicy: TrafficPolicyState;
   gateway?: GatewaySelectorState;
 };
@@ -324,8 +330,8 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
 
   let wizardPA: PeerAuthentication | undefined = undefined;
 
-  // Wizard is optional, only when user has explicitly selected "Create a Gateway"
-  const fullNewGatewayName = getGatewayName(wProps.namespace, wProps.serviceName, wProps.gateways);
+  // Wizard is optional, only when user has explicitly selected "Create a Gateway or K8s API Gateway"
+  const fullNewGatewayName = getGatewayName(wProps.namespace, wProps.serviceName, wProps.gateways.concat(wProps.k8sGateways));
   const wizardGW: Gateway | undefined =
     wState.gateway && wState.gateway.addGateway && wState.gateway.newGateway
       ? {
@@ -354,6 +360,42 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
             ]
           }
         }
+      : undefined;
+  const wizardK8sGW: K8sGateway | undefined =
+    wState.gateway && wState.gateway.addGateway && wState.gateway.newK8sGateway
+      ? {
+        kind: 'Gateway',
+        apiVersion: GATEWAY_NETWORKING_VERSION,
+        metadata: {
+          namespace: wProps.namespace,
+          name: fullNewGatewayName.substr(wProps.namespace.length + 1),
+          labels: {
+            [KIALI_WIZARD_LABEL]: wProps.type,
+            app: fullNewGatewayName.substr(wProps.namespace.length + 1),
+          }
+        },
+        spec: {
+          gatewayClassName: 'istio',
+          listeners: [
+            {
+              name: 'default',
+              // here gwHosts for K8s API Gateway contains single host
+              hostname: wState.gateway.gwHosts,
+              port: wState.gateway.port,
+              protocol: 'HTTP',
+              allowedRoutes: {
+                namespaces: {
+                  from: 'All',
+                  selector: {
+                    matchLabels: {
+                    }
+                  }
+                }
+              }
+            }
+          ],
+        }
+      }
       : undefined;
 
   switch (wProps.type) {
@@ -674,7 +716,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
   } else {
     wizardVS.spec.gateways = null;
   }
-  return { dr: wizardDR, vs: wizardVS, gw: wizardGW, pa: wizardPA };
+  return { dr: wizardDR, vs: wizardVS, gw: wizardGW, k8sgw: wizardK8sGW, pa: wizardPA };
 };
 
 const getWorkloadsByVersion = (
@@ -1030,6 +1072,20 @@ export const hasGateway = (virtualServices: VirtualService[]): boolean => {
   return false;
 };
 
+export const hasK8sGateway = (k8sHTTPRoutes: K8sHTTPRoute[]): boolean => {
+  // We need to if sentence, otherwise a potential undefined is not well handled
+  if (
+    k8sHTTPRoutes &&
+    k8sHTTPRoutes.length === 1 &&
+    k8sHTTPRoutes[0] &&
+    k8sHTTPRoutes[0].spec.parentRefs &&
+    k8sHTTPRoutes[0].spec.parentRefs.length > 0
+  ) {
+    return true;
+  }
+  return false;
+};
+
 export const getInitHosts = (virtualServices: VirtualService[]): string[] => {
   if (virtualServices.length === 1 && virtualServices[0] && virtualServices[0].spec.hosts) {
     return virtualServices[0].spec.hosts;
@@ -1059,6 +1115,22 @@ export const getInitGateway = (virtualServices: VirtualService[]): [string, bool
     return [selectedGateway, meshPresent];
   }
   return ['', false];
+};
+
+// HTTPRoutes added from the Kiali Wizard only support to add a single K8s API gateway
+// mesh gateway is not supported yet.
+// This method returns a gateway selected by the user
+export const getInitK8sGateway = (k8sHTTPRoutes: K8sHTTPRoute[]): string => {
+  if (
+    k8sHTTPRoutes &&
+    k8sHTTPRoutes.length === 1 &&
+    k8sHTTPRoutes[0] &&
+    k8sHTTPRoutes[0].spec.parentRefs &&
+    k8sHTTPRoutes[0].spec.parentRefs.length > 0
+  ) {
+    return k8sHTTPRoutes[0].spec.parentRefs[0].name[0];
+  }
+  return '';
 };
 
 export const buildAuthorizationPolicy = (

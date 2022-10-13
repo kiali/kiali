@@ -8,7 +8,7 @@ import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import {
   DestinationRuleC,
   Gateway,
-  getGatewaysAsList,
+  getGatewaysAsList, getK8sGatewaysAsList, K8sGateway,
   ObjectValidation,
   PeerAuthentication,
   Validations
@@ -44,6 +44,7 @@ interface Props extends ServiceId {
   mtlsEnabled: boolean;
   serviceDetails?: ServiceDetailsInfo;
   gateways: Gateway[];
+  k8sGateways: K8sGateway[];
   peerAuthentications: PeerAuthentication[];
   validations: Validations;
 }
@@ -225,6 +226,8 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
           virtualServices={this.props.serviceDetails?.virtualServices || []}
           destinationRules={this.props.serviceDetails?.destinationRules || []}
           gateways={getGatewaysAsList(this.props.gateways)}
+          k8sGateways={getK8sGatewaysAsList(this.props.k8sGateways)}
+          k8sHTTPRoutes={this.props.serviceDetails?.k8sHTTPRoutes || []}
           peerAuthentications={this.props.peerAuthentications}
           tlsStatus={this.props.serviceDetails?.namespaceMTLS}
           onClose={this.handleWizardClose}
