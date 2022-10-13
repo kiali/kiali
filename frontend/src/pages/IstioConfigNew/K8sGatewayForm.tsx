@@ -177,30 +177,30 @@ class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
             validated={isValid(this.state.workloadSelectorValid)}
           />
         </FormGroup>
-        <ListenerBuilder
-          onAddListener={listener => {
-            this.setState(
-              {
-                addListener: listener
-              },
-              () => this.onAddListener()
-            );
-          }}
-        />
-        <FormGroup label="Listener List" fieldId="gwListenerList">
+        <FormGroup label="Listeners" fieldId="listener" isRequired={true}>
+          <ListenerBuilder
+            onAddListener={listener => {
+              this.setState(
+                {
+                  addListener: listener
+                },
+                () => this.onAddListener()
+              );
+            }}
+          />
           <ListenerList listenerList={this.state.listeners} onRemoveListener={this.onRemoveListener} />
         </FormGroup>
-        <AddressBuilder
-          onAddAddress={address => {
-            this.setState(
-              {
-                addAddress: address
-              },
-              () => this.onAddAddress()
-            );
-          }}
-        />
-        <FormGroup label="Address List" fieldId="gwAddressList">
+        <FormGroup label="Addresses" fieldId="gwAddressList">
+          <AddressBuilder
+            onAddAddress={address => {
+              this.setState(
+                {
+                  addAddress: address
+                },
+                () => this.onAddAddress()
+              );
+            }}
+          />
           <AddressList addressList={this.state.addresses} onRemoveAddress={this.onRemoveAddress} />
         </FormGroup>
       </>

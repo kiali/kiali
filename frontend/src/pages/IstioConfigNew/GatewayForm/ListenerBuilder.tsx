@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
+import { Button, ButtonVariant, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { style } from 'typestyle';
@@ -48,17 +48,22 @@ const listenerHeader: ICell[] = [
   },
   {
     title: 'Port',
-    transforms: [cellWidth(20) as any],
+    transforms: [cellWidth(10) as any],
     props: {}
   },
   {
     title: 'Protocol',
-    transforms: [cellWidth(20) as any],
+    transforms: [cellWidth(10) as any],
     props: {}
   },
   {
     title: 'From Namespaces',
-    transforms: [cellWidth(20) as any],
+    transforms: [cellWidth(10) as any],
+    props: {}
+  },
+  {
+    title: 'Labels',
+    transforms: [cellWidth(25) as any],
     props: {}
   }
 ];
@@ -208,6 +213,7 @@ class ListenerBuilder extends React.Component<Props, State> {
   };
 
   listenerRows() {
+    const showSelector = this.state.newFrom === 'Selector';
     return [
       {
         keys: 'gatewayListenerNew',
@@ -268,6 +274,16 @@ class ListenerBuilder extends React.Component<Props, State> {
                 <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
               ))}
             </FormSelect>
+          </>,
+          <>
+            <TextInput
+              id="addSelectorLabels"
+              name="addSelectorLabels"
+              value={this.state.newSelectorLabels}
+              onChange={this.addSelectorLabels}
+              isDisabled={!showSelector}
+              validated={isValid(!showSelector || this.state.isLabelSelectorValid)}
+            />
           </>
         ]
       }
@@ -275,43 +291,22 @@ class ListenerBuilder extends React.Component<Props, State> {
   }
 
   render() {
-    const showSelector = this.state.newFrom === 'Selector';
     return (
       <>
-        <FormGroup label="Listener" isRequired={true} fieldId="listener">
-          <Table aria-label="Listener Rows" cells={listenerHeader} rows={this.listenerRows()}>
-            <TableHeader />
-            <TableBody />
-          </Table>
-        </FormGroup>
-        {showSelector && (
-          <FormGroup
-            fieldId="selectorLabels"
-            label="Labels"
-            helperText="One or more labels to select a workload where the Gateway is applied."
-            helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
-            validated={isValid(this.state.isLabelSelectorValid)}
-          >
-            <TextInput
-              id="gwHosts"
-              name="gwHosts"
-              onChange={this.addSelectorLabels}
-              validated={isValid(this.state.isLabelSelectorValid)}
-            />
-          </FormGroup>
-        )}
-        <FormGroup fieldId="addRule">
-          <Button
-            variant={ButtonVariant.link}
-            icon={<PlusCircleIcon />}
-            onClick={this.onAddListener}
-            isDisabled={!this.canAddListener()}
-            className={addListenerStyle}
-          >
-            Add Listener to Listener List
-          </Button>
-          {!this.canAddListener() && <span className={warningStyle}>A Listener needs Hostname and Port sections defined</span>}
-        </FormGroup>
+        <Table aria-label="Listener Rows" cells={listenerHeader} rows={this.listenerRows()}>
+          <TableHeader />
+          <TableBody />
+        </Table>
+        <Button
+          variant={ButtonVariant.link}
+          icon={<PlusCircleIcon />}
+          onClick={this.onAddListener}
+          isDisabled={!this.canAddListener()}
+          className={addListenerStyle}
+        >
+          Add Listener to Listener List
+        </Button>
+        {!this.canAddListener() && <span className={warningStyle}>A Listener needs Hostname and Port sections defined</span>}
       </>
     );
   }

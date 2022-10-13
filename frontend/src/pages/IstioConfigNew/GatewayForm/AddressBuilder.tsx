@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
+import { Button, ButtonVariant, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { style } from 'typestyle';
@@ -134,24 +134,20 @@ class AddressBuilder extends React.Component<Props, State> {
   render() {
     return (
       <>
-        <FormGroup label="Address" isRequired={false} fieldId="address">
-          <Table aria-label="Address Rows" cells={addressHeader} rows={this.addressRows()}>
-            <TableHeader />
-            <TableBody />
-          </Table>
-        </FormGroup>
-        <FormGroup fieldId="addAddress">
-          <Button
-            variant={ButtonVariant.link}
-            icon={<PlusCircleIcon />}
-            onClick={this.onAddAddress}
-            isDisabled={!this.canAddAddress()}
-            className={addAddressStyle}
-          >
-            Add Address to Address List
-          </Button>
-          {!this.canAddAddress() && <span className={warningStyle}>A Address needs Type and Value sections defined</span>}
-        </FormGroup>
+        <Table aria-label="Address Rows" cells={addressHeader} rows={this.addressRows()}>
+          <TableHeader />
+          <TableBody />
+        </Table>
+        <Button
+          variant={ButtonVariant.link}
+          icon={<PlusCircleIcon />}
+          onClick={this.onAddAddress}
+          isDisabled={!this.canAddAddress()}
+          className={addAddressStyle}
+        >
+          Add Address to Address List
+        </Button>
+        {!this.canAddAddress() && <span className={warningStyle}>A Address needs Type and Value sections defined</span>}
       </>
     );
   }

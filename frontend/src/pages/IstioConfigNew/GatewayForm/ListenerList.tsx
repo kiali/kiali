@@ -18,23 +18,33 @@ const noListenerStyle = style({
 
 const headerCells: ICell[] = [
   {
-    title: 'Name',
+    title: '',
     transforms: [cellWidth(20) as any],
     props: {}
   },
   {
-    title: 'Hostname',
-    transforms: [cellWidth(40) as any],
-    props: {}
-  },
-  {
-    title: 'Port',
+    title: '',
     transforms: [cellWidth(20) as any],
     props: {}
   },
   {
-    title: 'From Namespaces',
-    transforms: [cellWidth(40) as any],
+    title: '',
+    transforms: [cellWidth(10) as any],
+    props: {}
+  },
+  {
+    title: '',
+    transforms: [cellWidth(10) as any],
+    props: {}
+  },
+  {
+    title: '',
+    transforms: [cellWidth(10) as any],
+    props: {}
+  },
+  {
+    title: '',
+    transforms: [cellWidth(25) as any],
     props: {}
   },
 ];
@@ -53,11 +63,18 @@ class ListenerList extends React.Component<Props> {
           </>,
           <>
             <div>
-              [{listener.port}, {listener.protocol}]
+              {listener.port}
+            </div>
+          </>,
+          <>
+            <div>
+              {listener.protocol}
             </div>
           </>,
           <>
             <div>{listener.allowedRoutes.namespaces.from}</div>
+          </>,
+          <>
             <div>{Object.keys(listener.allowedRoutes.namespaces.selector?.matchLabels).length !== 0 ? JSON.stringify(listener.allowedRoutes.namespaces.selector.matchLabels) : ''}</div>
           </>,
         ]

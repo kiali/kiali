@@ -18,12 +18,12 @@ const noAddressStyle = style({
 
 const headerCells: ICell[] = [
   {
-    title: 'Type',
+    title: '',
     transforms: [cellWidth(40) as any],
     props: {}
   },
   {
-    title: 'Value',
+    title: '',
     transforms: [cellWidth(60) as any],
     props: {}
   },
