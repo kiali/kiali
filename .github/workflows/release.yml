@@ -31,11 +31,11 @@ jobs:
     runs-on: ubuntu-20.04
     outputs:
       target_branch: ${{ github.ref_name }}
-      release_type: ${{ steps.release_type.outputs.release_type }}
-      release_version: ${{ steps.release_version.outputs.release_version }}
-      branch_version: ${{ steps.branch_version.outputs.branch_version }}
-      next_version: ${{ steps.next_version.outputs.next_version }}
-      quay_tag: ${{ steps.quay_tag.outputs.quay_tag }}
+      release_type: ${{ env.release_type }}
+      release_version: ${{ env.release_version }}
+      branch_version: ${{ env.branch_version }}
+      next_version: ${{ env.next_version }}
+      quay_tag: ${{ env.quay_tag }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -87,18 +87,18 @@ jobs:
           DO_RELEASE=$(python minor.py)
           if [[ $DO_RELEASE == "1" ]]
           then
-            echo "::set-output name=release_type::minor"
+            echo "release_type=minor" >> $GITHUB_ENV 
           else
-            echo "::set-output name=release_type::skip"
+            echo "release_type=skip" >> $GITHUB_ENV 
           fi
         else
-          echo "::set-output name=release_type::${{ github.event.inputs.release_type }}"
+          echo "release_type=${{ github.event.inputs.release_type }}" >> $GITHUB_ENV 
         fi
 
     - name: Determine release version
-      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
+      if: ${{ env.release_type != 'skip' }}
       env:
-        RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
+        RELEASE_TYPE: ${{ env.release_type }}
       id: release_version
       run: |
         RAW_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
@@ -113,15 +113,15 @@ jobs:
         then
           RELEASE_VERSION=$RELEASE_VERSION
         fi
-
-        echo "::set-output name=release_version::$RELEASE_VERSION"
+        
+        echo "release_version=$RELEASE_VERSION" >> $GITHUB_ENV 
 
     - name: Determine next version
       env:
-        RELEASE_TYPE: ${{ steps.release_type.outputs.release_type }}
-        RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
+        RELEASE_TYPE: ${{ env.release_type }}
+        RELEASE_VERSION: ${{ env.release_version }}
       id: next_version
-      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
+      if: ${{ env.release_type != 'skip' }}
       run: |
         if [[ $RELEASE_TYPE == "patch" ]]
         then
@@ -131,20 +131,20 @@ jobs:
             NEXT_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
         fi
 
-        echo "::set-output name=next_version::$NEXT_VERSION"
+        echo "next_version=$NEXT_VERSION" >> $GITHUB_ENV        
 
     - name: Determine branch version
-      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
+      if: ${{ env.release_type != 'skip' }}
       env:
-        RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
+        RELEASE_VERSION: ${{ env.release_version }}
       id: branch_version
-      run: echo "::set-output name=branch_version::$(echo $RELEASE_VERSION | sed 's/\.[0-9]*\+$//')"
+      run: echo "branch_version=$(echo $RELEASE_VERSION | sed 's/\.[0-9]*\+$//')" >> $GITHUB_ENV
 
     - name: Determine Quay tag
-      if: ${{ steps.release_type.outputs.release_type != 'skip' }}
+      if: ${{ env.release_type != 'skip' }}
       env:
-        RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
-        BRANCH_VERSION: ${{ steps.branch_version.outputs.branch_version }}
+        RELEASE_VERSION: ${{ env.release_version }}
+        BRANCH_VERSION: ${{ env.branch_version }}
       id: quay_tag
       run: |
         if [ -z ${{ github.event.inputs.quay_repository }} ];
@@ -156,22 +156,22 @@ jobs:
 
         QUAY_TAG="$QUAY_REPO:$RELEASE_VERSION $QUAY_REPO:$BRANCH_VERSION"
 
-        echo "::set-output name=quay_tag::$QUAY_TAG"
+        echo "quay_tag=$QUAY_TAG" >> $GITHUB_ENV
 
     - name: Cleanup
       run: rm bump.py minor.py
 
     - name: Log information
       run: |
-        echo "Release type: ${{ steps.release_type.outputs.release_type }}"
+        echo "Release type: ${{ env.release_type }}"
 
-        echo "Release version: ${{ steps.release_version.outputs.release_version }}"
+        echo "Release version: ${{ env.release_version }}"
 
-        echo "Next version: ${{ steps.next_version.outputs.next_version }}"
+        echo "Next version: ${{ env.next_version }}"
 
-        echo "Branch version: ${{ steps.branch_version.outputs.branch_version }}"
+        echo "Branch version: ${{ env.branch_version }}"
 
-        echo "Quay tag": ${{ steps.quay_tag.outputs.quay_tag }}
+        echo "Quay tag": ${{ env.quay_tag }}
 
   build_backend:
     name: Build backend

@@ -24,11 +24,11 @@ jobs:
         run: |
           CORE_VERSION=$(grep '^VERSION ?=' ./Makefile | sed -e "s/^VERSION\s?=\sv//" -e "s/-SNAPSHOT//")
           PACKAGE_VERSION=$(grep '"version":' ./frontend/package.json | sed -e "s/\s*\"version\":\s\"//" -e "s/\",//")
-          echo "::set-output name=CORE_VERSION::$CORE_VERSION"
-          echo "::set-output name=PACKAGE_VERSION::$PACKAGE_VERSION"
+          echo "CORE_VERSION=$CORE_VERSION" >> $GITHUB_ENV 
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV 
       - name: verify version
         if: ${{ steps.version_info.outputs.CORE_VERSION != steps.version_info.outputs.PACKAGE_VERSION }}
         run: |
-          echo "Versions in Makefile ( ${{ steps.version_info.outputs.CORE_VERSION }} ) and frontend/package.json ( ${{ steps.version_info.outputs.PACKAGE_VERSION }} ) are not aligned"
+          echo "Versions in Makefile ( ${{ env.CORE_VERSION }} ) and frontend/package.json ( ${{ env.PACKAGE_VERSION }} ) are not aligned"
           exit 1
 

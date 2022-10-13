@@ -25,7 +25,7 @@ jobs:
       # to use the branch we are running against: GITHUB_BASE_REF. When run
       # as a release, we want to use the current branch ref: GITHUB_REF_NAME.
       target-branch: ${{ github.base_ref || github.ref_name }}
-      build-branch: ${{ steps.branch-master.outputs.branch-master || steps.branch-pr.outputs.branch-pr }}
+      build-branch: ${{ env.branch-master || env.branch-pr }}
     steps:
       # The initialize job gathers variables for later use in jobs.
       # We are using this technique rather environment variables because at the moment, they won't work with reusable jobs.
@@ -33,12 +33,12 @@ jobs:
       - run: echo "target-branch -> ${{ github.base_ref || github.ref_name }}"
       # For the building branch, if we are running agains a PR, we need to indicate in the branch that is coming from a PR
       - run: |
-          echo "::set-output name=branch-version::${{ github.ref_name }}"
+          echo "branch-version=${{ github.ref_name }}" >> $GITHUB_ENV
           echo "build-branch -> ${{ github.ref_name }}"
         id: branch-master
         if: ${{ !github.base_ref }}
       - run: |
-          echo "::set-output name=branch-pr::refs/pull/${{ github.ref_name }}"
+          echo "branch-pr=refs/pull/${{ github.ref_name }}" >> $GITHUB_ENV
           echo "build-branch -> ${{ github.base_ref }}"
         id: branch-pr
         if: ${{ github.base_ref }}
