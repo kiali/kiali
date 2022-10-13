@@ -1,4 +1,4 @@
-import { InputGroup, TextInput } from '@patternfly/react-core';
+import { Bullseye, Spinner } from '@patternfly/react-core';
 import { CogIcon, ExportIcon } from '@patternfly/react-icons';
 import {
   createTopologyControlButtons,
@@ -20,7 +20,6 @@ import {
   VisualizationProvider,
   VisualizationSurface
 } from '@patternfly/react-topology';
-import _ from 'lodash';
 import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
 import { BoxByType, DecoratedGraphNodeData, NodeType, UNKNOWN } from 'types/Graph';
@@ -51,7 +50,7 @@ export interface TopologyOptions {
 }
 
 export const DefaultOptions: TopologyOptions = {
-  layout: LayoutName.ColaNoForce
+  layout: LayoutName.Dagre
 };
 
 export const TopologyContent: React.FC<{
@@ -198,14 +197,29 @@ export const TopologyContent: React.FC<{
       return group;
     }
 
-    function addNode(id: string, label: string, data: any): NodeModel {
+    const getNodeShape = (data: DecoratedGraphNodeData): NodeShape => {
+      switch (data.nodeType) {
+        case NodeType.AGGREGATE:
+          return NodeShape.hexagon;
+        case NodeType.APP:
+          return NodeShape.rect;
+        case NodeType.SERVICE:
+          return data.isServiceEntry ? NodeShape.trapezoid : NodeShape.rhombus;
+        case NodeType.WORKLOAD:
+          return NodeShape.circle;
+        default:
+          return NodeShape.ellipse;
+      }
+    };
+
+    function addNode(id: string, label: string, data: DecoratedGraphNodeData): NodeModel {
       const node: NodeModel = {
         id: id,
         type: 'node',
         label: label,
         width: DEFAULT_NODE_SIZE,
         height: DEFAULT_NODE_SIZE,
-        shape: NodeShape.ellipse,
+        shape: getNodeShape(data),
         status: NodeStatus.default,
         style: { padding: 20 },
         data: data
@@ -352,8 +366,8 @@ export const TopologyContent: React.FC<{
         />
       }
     >
-      <VisualizationSurface data-test="visualization-surface" state={{}} />
-      <div id="topology-search-container" data-test="topology-search-container">
+      <VisualizationSurface data-test="visualization-surface" state={{}} />      
+      {/* <div id="topology-search-container" data-test="topology-search-container">
         <InputGroup>
           <TextInput
             data-test="search-topology-element-input"
@@ -369,7 +383,7 @@ export const TopologyContent: React.FC<{
             //validated={searchValidated}
           />
         </InputGroup>
-      </div>
+      </div> */}
     </TopologyView>
   );
 };
@@ -379,14 +393,27 @@ export const GraphPF: React.FC<{
 }> = ({ graphData }) => {
   //create controller on startup and register factories
   const [controller, setController] = React.useState<Visualization>();
+
   React.useEffect(() => {
     const c = new Visualization();
+    console.log('REGISTER!!!');
     c.registerLayoutFactory(layoutFactory);
     c.registerComponentFactory(componentFactory);
     c.registerComponentFactory(stylesComponentFactory);
     setController(c);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  console.log('Render!');
+
+  if (!controller || !graphData || graphData.isLoading) {
+    return (
+      <Bullseye data-test="loading-contents">
+        <Spinner size="xl" />
+      </Bullseye>
+    );
+  }
+
   return (
     <VisualizationProvider data-test="visualization-provider" controller={controller}>
       <TopologyContent graphData={graphData} options={DefaultOptions} />
