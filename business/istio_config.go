@@ -1195,7 +1195,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 
 		// Join networking and security permissions into a single result
 		for _, ns := range namespaces {
-			allRP := make(models.ResourcesPermissions, len(newNetworkingConfigTypes)+len(newSecurityConfigTypes))
+			allRP := make(models.ResourcesPermissions, len(newNetworkingConfigTypes)+len(newSecurityConfigTypes)+len(newK8sNetworkingConfigTypes))
 			istioConfigPermissions[ns] = &allRP
 			for resource, permissions := range *networkingPermissions[ns] {
 				(*istioConfigPermissions[ns])[resource] = permissions
