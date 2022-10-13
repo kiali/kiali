@@ -104,7 +104,8 @@ class ServiceListPageComponent extends FilterComponent.Component<
         namespace: data.namespace.name,
         health: ServiceHealth.fromJson(data.namespace.name, service.name, service.health, {
           rateInterval: rateInterval,
-          hasSidecar: service.istioSidecar
+          hasSidecar: service.istioSidecar,
+          hasAmbient: service.istioAmbient
         }),
         validation: this.getServiceValidation(service.name, data.namespace.name, data.validations),
         additionalDetailSample: service.additionalDetailSample,

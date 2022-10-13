@@ -107,7 +107,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
             this.props.match.params.namespace,
             this.props.match.params.workload,
             details.data.health,
-            { rateInterval: this.props.duration, hasSidecar: details.data.istioSidecar }
+            { rateInterval: this.props.duration, hasSidecar: details.data.istioSidecar, hasAmbient: details.data.istioAmbient }
           )
         });
       })

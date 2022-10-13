@@ -105,7 +105,8 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         additionalDetailSample: deployment.additionalDetailSample,
         health: WorkloadHealth.fromJson(data.namespace.name, deployment.name, deployment.health, {
           rateInterval: this.props.duration,
-          hasSidecar: deployment.istioSidecar
+          hasSidecar: deployment.istioSidecar,
+          hasAmbient: deployment.istioAmbient,
         }),
         labels: deployment.labels,
         istioReferences: sortIstioReferences(deployment.istioReferences, true),

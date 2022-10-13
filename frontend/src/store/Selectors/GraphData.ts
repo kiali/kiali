@@ -160,19 +160,22 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
           } else if (decoratedNode.data.healthData.workloadStatus) {
             decoratedNode.data.health = WorkloadHealth.fromJson(decoratedNode.data.namespace, decoratedNode.data.workload, decoratedNode.data.healthData, {
               rateInterval: duration,
-              hasSidecar: true
+              hasSidecar: true,
+              hasAmbient: false,
             })
             decoratedNode.data.healthStatus = decoratedNode.data.health.getGlobalStatus().name;
           } else if (decoratedNode.data.healthData.workloadStatuses) {
             decoratedNode.data.health = AppHealth.fromJson(decoratedNode.data.namespace, decoratedNode.data.app, decoratedNode.data.healthData, {
               rateInterval: duration,
-              hasSidecar: true
+              hasSidecar: true,
+              hasAmbient: false,
             })
             decoratedNode.data.healthStatus = decoratedNode.data.health.getGlobalStatus().name;
           } else {
             decoratedNode.data.health = ServiceHealth.fromJson(decoratedNode.data.namespace, decoratedNode.data.service, decoratedNode.data.healthData, {
               rateInterval: duration,
-              hasSidecar: true
+              hasSidecar: true,
+              hasAmbient: false
             });
             decoratedNode.data.healthStatus = decoratedNode.data.health.getGlobalStatus().name;
           }

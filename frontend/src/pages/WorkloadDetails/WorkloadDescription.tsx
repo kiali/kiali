@@ -139,7 +139,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
             <span className={healthIconStyle}>
               <HealthIndicator id={workload.name} health={this.props.health} />
             </span>
-            {this.props.workload && !this.props.workload.istioSidecar && (
+            {this.props.workload && !this.props.workload.istioSidecar && !this.props.workload.istioAmbient && (
               <MissingSidecar
                 data-test={`missing-sidecar-badge-for-${workload.name}-workload-in-${this.props.namespace}-namespace`}
                 namespace={this.props.namespace}

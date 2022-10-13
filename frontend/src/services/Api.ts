@@ -319,7 +319,7 @@ export const getNamespaceAppHealth = (
   return newRequest<NamespaceAppHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(response => {
     const ret: NamespaceAppHealth = {};
     Object.keys(response.data).forEach(k => {
-      ret[k] = AppHealth.fromJson(namespace, k, response.data[k], { rateInterval: duration, hasSidecar: true });
+      ret[k] = AppHealth.fromJson(namespace, k, response.data[k], { rateInterval: duration, hasSidecar: true, hasAmbient: false });
     });
     return ret;
   });
@@ -345,7 +345,8 @@ export const getNamespaceServiceHealth = (
       Object.keys(response.data).forEach(k => {
         ret[k] = ServiceHealth.fromJson(namespace, k, response.data[k], {
           rateInterval: duration,
-          hasSidecar: true
+          hasSidecar: true,
+          hasAmbient: false,
         });
       });
       return ret;
@@ -373,7 +374,8 @@ export const getNamespaceWorkloadHealth = (
       Object.keys(response.data).forEach(k => {
         ret[k] = WorkloadHealth.fromJson(namespace, k, response.data[k], {
           rateInterval: duration,
-          hasSidecar: true
+          hasSidecar: true,
+          hasAmbient: false,
         });
       });
       return ret;
@@ -485,7 +487,8 @@ export const getServiceDetail = (
       // Default rate interval in backend = 600s
       info.health = ServiceHealth.fromJson(namespace, service, info.health, {
         rateInterval: rateInterval || 600,
-        hasSidecar: info.istioSidecar
+        hasSidecar: info.istioSidecar,
+        hasAmbient: info.istioAmbient
       });
     }
     return info;

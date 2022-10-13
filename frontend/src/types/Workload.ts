@@ -14,6 +14,7 @@ export interface Workload {
   resourceVersion: string;
   istioInjectionAnnotation?: boolean;
   istioSidecar: boolean;
+  istioAmbient: boolean;
   labels: { [key: string]: string };
   appLabel: boolean;
   versionLabel: boolean;
@@ -33,6 +34,7 @@ export const emptyWorkload: Workload = {
   createdAt: '',
   resourceVersion: '',
   istioSidecar: true, // true until proven otherwise
+  istioAmbient: false,
   labels: {},
   appLabel: false,
   versionLabel: false,
