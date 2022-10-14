@@ -14,7 +14,7 @@ jobs:
     name: Initialize
     runs-on: ubuntu-20.04
     outputs:
-      branches: ${{ steps.branches.outputs.branches }}
+      branches: ${{ env.branches }}
     steps:
       - name: Prepare script to var
         id: script_convert
@@ -34,7 +34,7 @@ jobs:
           TAG_BRANCHES: ${{ github.event.inputs.tag_branch }}
         run: |
           BRANCHES=$(python conversor.py $TAG_BRANCHES)
-          echo "::set-output name=branches::$BRANCHES"
+          echo "branches=$BRANCHES" >> $GITHUB_ENV 
   create_tag:
     needs: [ initialize ]
     runs-on: ubuntu-20.04
@@ -84,7 +84,7 @@ jobs:
           RELEASE_VERSION=${RAW_VERSION%-*}
           RELEASE_VERSION=$(python bump.py patch $RELEASE_VERSION)
 
-          echo "::set-output name=release_version::$RELEASE_VERSION"
+          echo "release_version=$RELEASE_VERSION" >> $GITHUB_ENV 
 
           sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
 
@@ -114,7 +114,7 @@ jobs:
       - name: Check if need old UI
         id: check_ui_tag
         env:
-            RELEASE_VERSION: ${{ steps.tag_kiali.outputs.release_version }}
+            RELEASE_VERSION: ${{ env.release_version }}
         if: ${{ matrix.branch == 'v1.24' || matrix.branch == 'v1.36'}}
         run: |
           sed -i -r 's/"version": (.*)/"version": "'${RELEASE_VERSION:1}'",/' package.json

@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-20.04
     outputs:
       target_branch: ${{ github.ref_name }}
-      quay_tag: ${{ steps.quay_tag.outputs.quay_tag }}
+      quay_tag: ${{ env.quay_tag }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -41,14 +41,14 @@ jobs:
         fi
 
         QUAY_TAG="$QUAY_REPO:latest"
-
-        echo "::set-output name=quay_tag::$QUAY_TAG"
+        
+        echo "quay_tag=$QUAY_TAG" >> $GITHUB_ENV
 
     - name: Log information
       run: |
         echo "Release type: latest"
 
-        echo "Quay tag": ${{ steps.quay_tag.outputs.quay_tag }}
+        echo "Quay tag": ${{ env.quay_tag }}
 
   build_backend:
     name: Build backend
