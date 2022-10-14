@@ -52,6 +52,7 @@ const computeValidDurations = (cfg: ComputedServerConfig) => {
 const defaultServerConfig: ComputedServerConfig = {
   clusters: {},
   durations: {},
+  gatewayAPIEnabled: false,
   healthConfig: {
     rate: []
   },
