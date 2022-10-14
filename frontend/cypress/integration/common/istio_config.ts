@@ -314,6 +314,27 @@ Then('the user can create a {string} Istio object', (object: string) => {
   cy.url().should('include', page);
 });
 
+Then('the user can create a {string} K8s Istio object', (object: string) => {
+  cy.request('GET', '/api/config').should(response => {
+    expect(response.status).to.equal(200);
+    const gatewayAPIEnabled = response.body.gatewayAPIEnabled;
+
+    if (gatewayAPIEnabled) {
+      cy.getBySel('actions-dropdown').click();
+      cy.getBySel('actions-dropdown').within(() => {
+        cy.contains(object).click();
+      });
+      const page = `/istio/new/${object}`;
+      cy.url().should('include', page);
+    } else {
+      cy.getBySel('actions-dropdown').click();
+      cy.getBySel('actions-dropdown').within(() => {
+        cy.get(object).should('not.exist');
+      });
+    }
+  });
+});
+
 Then('the AuthorizationPolicy should have a {string}', function(healthStatus: string) {
   cy.get(`[data-test=VirtualItem_Ns${this.targetNamespace}_authorizationpolicy_${this.targetAuthorizationPolicy}] svg`)
       .invoke('attr', 'style')

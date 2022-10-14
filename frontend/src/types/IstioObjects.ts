@@ -708,6 +708,25 @@ export interface Listener {
   hostname: string;
   port: number;
   protocol: string;
+  allowedRoutes: AllowedRoutes;
+}
+
+export interface Address {
+  type: string;
+  value: string;
+}
+
+export interface AllowedRoutes {
+  namespaces: FromNamespaces;
+}
+
+export interface LabelSelector {
+  matchLabels: { [key: string]: string };
+}
+
+export interface FromNamespaces {
+  from: string;
+  selector: LabelSelector;
 }
 
 export interface ParentRef {
@@ -717,6 +736,7 @@ export interface ParentRef {
 
 export interface K8sGatewaySpec {
   listeners?: Listener[];
+  addresses?: Address[];
   gatewayClassName: string;
 }
 

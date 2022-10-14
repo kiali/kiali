@@ -1,7 +1,9 @@
 import * as React from 'react';
 import { Dropdown, DropdownGroup, DropdownItem, DropdownPosition, DropdownToggle } from '@patternfly/react-core';
 import history from '../../app/History';
+import { serverConfig } from '../../config';
 import { NEW_ISTIO_RESOURCE } from '../../pages/IstioConfigNew/IstioConfigNewPage';
+import {K8SGATEWAY} from "../../pages/IstioConfigNew/K8sGatewayForm";
 
 type Props = {};
 
@@ -43,7 +45,7 @@ class IstioActionsNamespaceDropdown extends React.Component<Props, State> {
       (r): ActionItem => ({
         name: r.value,
         action: (
-          <DropdownItem key={'createIstioConfig_' + r.value} onClick={() => this.onClickCreate(r.value)}>
+          <DropdownItem key={'createIstioConfig_' + r.value} isDisabled={r.value === K8SGATEWAY ? !serverConfig.gatewayAPIEnabled : r.disabled} onClick={() => this.onClickCreate(r.value)}>
             {r.label}
           </DropdownItem>
         )

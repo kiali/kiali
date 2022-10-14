@@ -12,7 +12,7 @@ import {
   Gateway,
   HTTPMatchRequest,
   HTTPRoute,
-  HTTPRouteDestination,
+  HTTPRouteDestination, K8sGateway,
   LoadBalancerSettings,
   Operation,
   OutlierDetection,
@@ -34,6 +34,7 @@ import { serverConfig } from '../../config';
 import { GatewaySelectorState } from './GatewaySelector';
 import { ConsistentHashType, MUTUAL, TrafficPolicyState, UNSET } from './TrafficPolicy';
 import { GatewayState } from '../../pages/IstioConfigNew/GatewayForm';
+import { K8sGatewayState } from '../../pages/IstioConfigNew/K8sGatewayForm';
 import { SidecarState } from '../../pages/IstioConfigNew/SidecarForm';
 import { ALLOW, AuthorizationPolicyState } from '../../pages/IstioConfigNew/AuthorizationPolicyForm';
 import { PeerAuthenticationState } from '../../pages/IstioConfigNew/PeerAuthenticationForm';
@@ -150,6 +151,7 @@ export const KIALI_RELATED_LABEL = 'kiali_wizard_related';
 // Wizard don't operate with EnvoyFilters so they can use the v1beta1 version
 export const ISTIO_NETWORKING_VERSION = 'networking.istio.io/v1beta1';
 export const ISTIO_SECURITY_VERSION = 'security.istio.io/v1beta1';
+export const GATEWAY_NETWORKING_VERSION = 'gateway.networking.k8s.io/v1alpha2';
 
 export const fqdnServiceName = (serviceName: string, namespace: string): string => {
   return serviceName + '.' + namespace + '.' + serverConfig.istioIdentityDomain;
@@ -1342,6 +1344,55 @@ export const buildGateway = (name: string, namespace: string, state: GatewayStat
       // It should be already validated with workloadSelectorValid, but just to add extra safe check
       if (gw.spec.selector && labels.length === 2) {
         gw.spec.selector[labels[0].trim()] = labels[1].trim();
+      }
+    });
+  return gw;
+};
+
+export const buildK8sGateway = (name: string, namespace: string, state: K8sGatewayState): K8sGateway => {
+  const gw: K8sGateway = {
+    kind: 'Gateway',
+    apiVersion: GATEWAY_NETWORKING_VERSION,
+    metadata: {
+      name: name,
+      namespace: namespace,
+      labels: {
+        [KIALI_WIZARD_LABEL]: 'K8sGateway'
+      }
+    },
+    spec: {
+      // Default for istio scenarios, user may change it editing YAML
+      gatewayClassName: 'istio',
+      listeners: state.listeners.map(s => ({
+        name: s.name,
+        port: s.port,
+        protocol: s.protocol,
+        hostname: s.hostname,
+        allowedRoutes: {
+          namespaces: {
+            from: s.allowedRoutes.namespaces.from,
+            selector: {
+              matchLabels: s.allowedRoutes.namespaces.selector?.matchLabels
+            }
+          },
+        }
+      })),
+      addresses: state.addresses.map(s => ({
+        type: s.type,
+        value: s.value
+      })),
+    }
+  };
+  state.workloadSelectorLabels
+    .trim()
+    .split(',')
+    .forEach(split => {
+      const labels = split.trim().split('=');
+      // It should be already validated with workloadSelectorValid, but just to add extra safe check
+      if (labels.length === 2) {
+        if (gw.metadata.labels) {
+          gw.metadata.labels[labels[0].trim()] = labels[1].trim();
+        }
       }
     });
   return gw;
