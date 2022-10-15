@@ -76,6 +76,9 @@ Given('a workload without a sidecar', function () {
                 metadata: {
                     labels: {
                         "sidecar.istio.io/inject": null
+                    },
+                    annotations: {
+                        "sidecar.istio.io/inject": null
                     }
                 }
             }
@@ -98,7 +101,7 @@ Given('a workload with a sidecar', function () {
     this.workloadHasSidecar = true;
     this.workloadHasAutoInjectionOverride = false;
 
-    // Make sure that injection in the namespace is turned off
+    // Make sure that injection in the namespace is turned on
     cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
         metadata: {
             labels: {
@@ -109,11 +112,19 @@ Given('a workload with a sidecar', function () {
     });
 
     // Make sure that the workload does not have override configuration
+    //
+    // TODO: The namespace injection label doesn't work with OSSM.
+    // Need some kind of tag to exclude certain tests based on the
+    // platform or environment. The sidecar label really shouldn't be
+    // present here for istio.
     cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
         spec: {
             template: {
                 metadata: {
                     labels: {
+                        "sidecar.istio.io/inject": "true"
+                    },
+                    annotations: {
                         "sidecar.istio.io/inject": null
                     }
                 }
@@ -163,6 +174,9 @@ Given('the workload does not have override configuration for automatic sidecar i
                     metadata: {
                         labels: {
                             "sidecar.istio.io/inject": null
+                        },
+                        annotations: {
+                            "sidecar.istio.io/inject": null
                         }
                     }
                 }
@@ -186,6 +200,9 @@ Given('the workload has override configuration for automatic sidecar injection',
                     metadata: {
                         labels: {
                             "sidecar.istio.io/inject": this.workloadHasSidecar ? 'true' : 'false'
+                        },
+                        annotations: {
+                            "sidecar.istio.io/inject": null
                         }
                     }
                 }
@@ -206,6 +223,9 @@ Given('a workload with override configuration for automatic sidecar injection', 
                 metadata: {
                     labels: {
                         "sidecar.istio.io/inject": 'true'
+                    },
+                    annotations: {
+                        "sidecar.istio.io/inject": null
                     }
                 }
             }
