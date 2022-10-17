@@ -1,8 +1,6 @@
 package serviceentries
 
 import (
-	"fmt"
-
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -50,8 +48,7 @@ func (in HasMatchingWorkloadEntryAddress) Check() ([]*models.IstioCheck, bool) {
 	for _, weAddress := range targetAddresses {
 		if _, found := seAddresses[weAddress]; !found {
 			// Add validation: WorkloadEntry.Address should be part of the Service Entry Addresses list
-			validation := models.Build("serviceentries.workloadentries.addressmatch",
-				fmt.Sprint("spec/addresses"))
+			validation := models.Build("serviceentries.workloadentries.addressmatch", "spec/addresses")
 			validations = append(validations, &validation)
 		}
 	}

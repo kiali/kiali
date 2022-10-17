@@ -280,14 +280,15 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 // The only way to identify it is to check that the service has an address in the current cluster.
 // To avoid side effects, Kiali will process only services that belongs to the current cluster.
 // This should be revisited on more multi-cluster deployments scenarios.
-//     "hostname": "test-svc.evil.svc.cluster.local",
-//    "clusterVIPs": {
-//      "Addresses": {
-//        "istio-west": [
-//          "0.0.0.0"
-//        ]
-//      }
-//    },
+//
+//	 "hostname": "test-svc.evil.svc.cluster.local",
+//	"clusterVIPs": {
+//	  "Addresses": {
+//	    "istio-west": [
+//	      "0.0.0.0"
+//	    ]
+//	  }
+//	},
 func (in *SvcService) getClusterId() string {
 	// By default Istio uses "Kubernetes" as clusterId for single control planes scenarios.
 	// This clusterId is propagated into the Istio Registry and we need it to filter services in multi-cluster scenarios.

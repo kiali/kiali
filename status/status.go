@@ -31,7 +31,7 @@ type IstioEnvironment struct {
 
 // StatusInfo statusInfo
 //
-// This is used for returning a response of Kiali Status
+// # This is used for returning a response of Kiali Status
 //
 // swagger:model StatusInfo
 type StatusInfo struct {
@@ -63,7 +63,7 @@ var rw sync.RWMutex
 
 // Status response model
 //
-// This is used for returning a response of Kiali Status
+// # This is used for returning a response of Kiali Status
 //
 // swagger:model externalServiceInfo
 type ExternalServiceInfo struct {

@@ -238,6 +238,7 @@ func (in *DashboardsService) GetDashboard(authInfo *api.AuthInfo, params models.
 }
 
 // SearchExplicitDashboards will check annotations of all supplied pods to extract a unique list of dashboards
+//
 //	Accepted annotations are "kiali.io/runtimes" and "kiali.io/dashboards"
 func (in *DashboardsService) SearchExplicitDashboards(pods []models.Pod) []models.Runtime {
 	uniqueRefsList := extractUniqueDashboards(pods)
