@@ -188,6 +188,8 @@ send_traffic() {
 }
 
 install_waypoint() {
+
+  ${CLIENT_EXE} config use-context kind-ambient
   # GW API
   ${CLIENT_EXE} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v0.5.1/standard-install.yaml
 
@@ -195,7 +197,7 @@ install_waypoint() {
   docker exec ambient-worker sysctl "fs.inotify.max_user_instances=1024"
   docker exec ambient-worker2 sysctl "fs.inotify.max_user_instances=1024"
 
-  # Create waypoint proxy for the productpage service
+  # Create waypoint proxy for the productpage SA
 kubectl apply -f - <<EOF
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: Gateway
@@ -208,6 +210,64 @@ spec:
  listeners:
  - name: default
    port: 80
+   protocol: HTTP
+   allowedRoutes:
+     namespaces:
+       from: All
+EOF
+
+  # Create a waypoint proxy per SA or application
+kubectl apply -f - <<EOF
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: Gateway
+metadata:
+ name: reviews
+ annotations:
+   istio.io/service-account: bookinfo-reviews
+spec:
+ gatewayClassName: istio-mesh
+ listeners:
+ - name: default
+   hostname: reviews
+   port: 9080
+   protocol: HTTP
+   allowedRoutes:
+     namespaces:
+       from: All
+EOF
+
+kubectl apply -f - <<EOF
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: Gateway
+metadata:
+ name: ratings
+ annotations:
+   istio.io/service-account: bookinfo-ratings
+spec:
+ gatewayClassName: istio-mesh
+ listeners:
+ - name: default
+   hostname: ratings
+   port: 9080
+   protocol: HTTP
+   allowedRoutes:
+     namespaces:
+       from: All
+EOF
+
+kubectl apply -f - <<EOF
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: Gateway
+metadata:
+ name: details
+ annotations:
+   istio.io/service-account: bookinfo-details
+spec:
+ gatewayClassName: istio-mesh
+ listeners:
+ - name: default
+   hostname: details
+   port: 9080
    protocol: HTTP
    allowedRoutes:
      namespaces:
