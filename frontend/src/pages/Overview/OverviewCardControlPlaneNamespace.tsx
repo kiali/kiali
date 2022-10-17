@@ -87,84 +87,86 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
             >
                 <Card isPlain>
                     <CardBody>
-                        <Grid style={{ marginBottom: 20 }} hasGutter>
-                            <GridItem md={2}>
-                                <Flex
-                                    className="pf-u-h-100-on-md"
-                                    direction={{ md: 'column' }}
-                                    spaceItems={{ md: 'spaceItemsNone' }}
-                                    justifyContent={{ md: 'justifyContentCenter' }}
-                                    style={{ textAlign: "right", paddingRight: 30 }}
-                                >
-                                    <FlexItem>
-                                        <b>Memory</b>
-                                    </FlexItem>
-                                    <FlexItem>
-                                        {getName(this.props.duration).toLowerCase()}
-                                        <Tooltip
-                                            position={TooltipPosition.right}
-                                            content={<div style={{ textAlign: 'left' }}>This values represents the memory of the istiod process</div>}
-                                        >
-                                            <KialiIcon.Info className={infoStyle} />
-                                        </Tooltip>
-                                    </FlexItem>
-                                </Flex>
-                            </GridItem>
-                            <GridItem md={10}>
-
-                                {memorySeries.length && <SparklineChart
-                                    ariaTitle='Memory'
-                                    name={'memory'}
-                                    height={65}
-                                    showLegend={false}
-                                    showYAxis={true}
-                                    padding={{ top: 10, left: 40, right: 10, bottom: 0 }}
-                                    tooltipFormat={dp => `${(dp.x as Date).toLocaleTimeString()}\n${dp.y.toFixed(2)} ${dp.name}`}
-                                    series={memorySeries}
-                                    labelName="mb"
-                                    thresholds={memoryThresholds}
-                                />}
-                            </GridItem>
-                        </Grid>
-                        <Grid hasGutter>
-                            <GridItem md={2}>
-                                <Flex
-                                    className="pf-u-h-100-on-md"
-                                    direction={{ md: 'column' }}
-                                    spaceItems={{ md: 'spaceItemsNone' }}
-                                    justifyContent={{ md: 'justifyContentCenter' }}
-                                    style={{ textAlign: "right", paddingRight: 30 }}
-                                >
-                                    <FlexItem>
-                                        <b>CPU</b>
-                                    </FlexItem>
-                                    <FlexItem>
-                                        {getName(this.props.duration).toLowerCase()}
-                                        <Tooltip
-                                            position={TooltipPosition.right}
-                                            content={<div style={{ textAlign: 'left' }}>This values represents cpu of the istiod process</div>}
-                                        >
-                                            <KialiIcon.Info className={infoStyle} />
-                                        </Tooltip>
-                                    </FlexItem>
-                                </Flex>
-                            </GridItem>
-                            <GridItem md={10}>
-                                {cpuSeries.length && <SparklineChart
-                                    name={'cpu'}
-                                    height={65}
-                                    showLegend={false}
-                                    showYAxis={true}
-                                    showXAxisValues={true}
-                                    padding={{ top: 10, left: 40, right: 10, bottom: 0 }}
-                                    tooltipFormat={dp => `${(dp.x as Date).toLocaleTimeString()}\n${dp.y.toFixed(2)} ${dp.name}`}
-                                    series={cpuSeries}
-                                    labelName="cores"
-                                    thresholds={cpuThresholds}
-                                />}
-                            </GridItem>
-                        </Grid>
-
+                        {showMetrics(this.props.istiodMemory) && 
+                            <Grid style={{ marginBottom: 20 }} hasGutter>
+                                <GridItem md={2}>
+                                    <Flex
+                                        className="pf-u-h-100-on-md"
+                                        direction={{ md: 'column' }}
+                                        spaceItems={{ md: 'spaceItemsNone' }}
+                                        justifyContent={{ md: 'justifyContentCenter' }}
+                                        style={{ textAlign: "right", paddingRight: 30 }}
+                                    >
+                                        <FlexItem>
+                                            <b>Memory</b>
+                                        </FlexItem>
+                                        <FlexItem>
+                                            {getName(this.props.duration).toLowerCase()}
+                                            <Tooltip
+                                                position={TooltipPosition.right}
+                                                content={<div style={{ textAlign: 'left' }}>This values represents the memory of the istiod process</div>}
+                                            >
+                                                <KialiIcon.Info className={infoStyle} />
+                                            </Tooltip>
+                                        </FlexItem>
+                                    </Flex>
+                                </GridItem>
+                                <GridItem md={10}>
+                                    <SparklineChart
+                                        ariaTitle='Memory'
+                                        name={'memory'}
+                                        height={65}
+                                        showLegend={false}
+                                        showYAxis={true}
+                                        padding={{ top: 10, left: 40, right: 10, bottom: 0 }}
+                                        tooltipFormat={dp => `${(dp.x as Date).toLocaleTimeString()}\n${dp.y.toFixed(2)} ${dp.name}`}
+                                        series={memorySeries}
+                                        labelName="mb"
+                                        thresholds={memoryThresholds}
+                                    />
+                                </GridItem>
+                            </Grid>
+                        }
+                        {showMetrics(this.props.istiodCpu) && 
+                            <Grid hasGutter>
+                                <GridItem md={2}>
+                                    <Flex
+                                        className="pf-u-h-100-on-md"
+                                        direction={{ md: 'column' }}
+                                        spaceItems={{ md: 'spaceItemsNone' }}
+                                        justifyContent={{ md: 'justifyContentCenter' }}
+                                        style={{ textAlign: "right", paddingRight: 30 }}
+                                    >
+                                        <FlexItem>
+                                            <b>CPU</b>
+                                        </FlexItem>
+                                        <FlexItem>
+                                            {getName(this.props.duration).toLowerCase()}
+                                            <Tooltip
+                                                position={TooltipPosition.right}
+                                                content={<div style={{ textAlign: 'left' }}>This values represents cpu of the istiod process</div>}
+                                            >
+                                                <KialiIcon.Info className={infoStyle} />
+                                            </Tooltip>
+                                        </FlexItem>
+                                    </Flex>
+                                </GridItem>
+                                <GridItem md={10}>
+                                    <SparklineChart
+                                        name={'cpu'}
+                                        height={65}
+                                        showLegend={false}
+                                        showYAxis={true}
+                                        showXAxisValues={true}
+                                        padding={{ top: 10, left: 40, right: 10, bottom: 0 }}
+                                        tooltipFormat={dp => `${(dp.x as Date).toLocaleTimeString()}\n${dp.y.toFixed(2)} ${dp.name}`}
+                                        series={cpuSeries}
+                                        labelName="cores"
+                                        thresholds={cpuThresholds}
+                                    />
+                                </GridItem>
+                            </Grid>
+                        }
                     </CardBody>
                 </Card>
             </div>
