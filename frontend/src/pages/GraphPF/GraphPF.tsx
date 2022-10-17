@@ -181,7 +181,7 @@ export const TopologyContent: React.FC<{
     const edges: EdgeModel[] = [];
     // const opts = { ...DefaultOptions, ...options };
 
-    function addGroup(id: string, label: string, data: any): NodeModel {
+    function addGroup(id: string, label: string, data: DecoratedGraphNodeData): NodeModel {
       const group: NodeModel = {
         id: id,
         children: [],
@@ -197,21 +197,8 @@ export const TopologyContent: React.FC<{
       return group;
     }
 
-    const getNodeShape = (data: DecoratedGraphNodeData): NodeShape => {
-      switch (data.nodeType) {
-        case NodeType.AGGREGATE:
-          return NodeShape.hexagon;
-        case NodeType.APP:
-          return NodeShape.rect;
-        case NodeType.SERVICE:
-          return data.isServiceEntry ? NodeShape.trapezoid : NodeShape.rhombus;
-        case NodeType.WORKLOAD:
-          return NodeShape.circle;
-        default:
-          return NodeShape.ellipse;
-      }
-    };
 
+  
     function addNode(id: string, label: string, data: DecoratedGraphNodeData): NodeModel {
       const node: NodeModel = {
         id: id,
@@ -231,7 +218,7 @@ export const TopologyContent: React.FC<{
 
     function addEdge(id: string, sourceId: string, targetId: string, data: any) {
       const edge = {
-        id: id,
+        id: id,        
         type: 'edge',
         source: sourceId,
         target: targetId,
