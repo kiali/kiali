@@ -17,13 +17,6 @@ Given('user opens base url', () => {
     });
 });
 
-And('user clicks Log In With OpenShift', () => {
-    if (auth_strategy === 'openshift') {
-        cy.get('button[type="submit"]').should('be.visible');
-        cy.get('button[type="submit"]').click();
-    }
-});
-
 And('user clicks my_htpasswd_provider', () => {
     if (auth_strategy === 'openshift') {
         cy.log('Log in using auth provider: ' + KUBEADMIN_IDP);
