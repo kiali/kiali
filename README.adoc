@@ -62,7 +62,7 @@ cd $KIALI_SOURCES/kiali
 make build test
 
 # You can pass go test flags through the GO_TEST_FLAGS env var
-# GO_TEST_FLAGS="-race -v -run=\"TestCanConnectToIstiodReachable\"" make test
+# make -e GO_TEST_FLAGS="-race -v -run=\"TestCanConnectToIstiodReachable\"" test
 
 # Build the front-end and run the tests
 make build-ui-test
