@@ -143,6 +143,8 @@ install_addons() {
       sleep 10
     done
   done
+
+  wait_for_workloads "istio-system"
 }
 
 install_metallb() {
@@ -167,6 +169,8 @@ data:
       protocol: layer2
       addresses: ['${first_ip}-${last_ip}']
 LBCONFIGMAP
+
+wait_for_workloads "metallb-system"
 }
 
 install_bookinfo() {
@@ -174,6 +178,8 @@ install_bookinfo() {
   ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo.yaml
   ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/linsun/sample-apps/main/sleep/sleep.yaml
   ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/linsun/sample-apps/main/sleep/notsleep.yaml
+
+ wait_for_workloads "default"
 
   printf "\nApply gateway and label dataplane mode\n"
   ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/bookinfo/networking/bookinfo-gateway.yaml
@@ -197,6 +203,8 @@ install_waypoint() {
   docker exec ambient-worker sysctl "fs.inotify.max_user_instances=1024"
   docker exec ambient-worker2 sysctl "fs.inotify.max_user_instances=1024"
 
+  ${CLIENT_EXE} config use-context kind-ambient
+  
   # Create waypoint proxy for the productpage SA
 kubectl apply -f - <<EOF
 apiVersion: gateway.networking.k8s.io/v1alpha2
@@ -274,6 +282,16 @@ spec:
        from: All
 EOF
 
+}
+
+wait_for_workloads () {
+  local namespace=$1
+  local workloads=$(${CLIENT_EXE} get deployments -n $namespace -o jsonpath='{.items[*].metadata.name}')
+  for workload in ${workloads}
+  do
+    echo "Waiting for workload: '${workload}' to be ready"
+    ${CLIENT_EXE} rollout status deployment "${workload}" -n "${namespace}"
+  done
 }
 
 if [ ! -f "${ISTIOCTL}" ]; then
