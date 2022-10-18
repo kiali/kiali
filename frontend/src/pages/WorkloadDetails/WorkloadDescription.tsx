@@ -16,6 +16,7 @@ import MissingLabel from '../../components/MissingLabel/MissingLabel';
 import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import DetailDescriptionContainer from "../../components/Details/DetailDescription";
+import AmbientLabel from "../../components/Ambient/AmbientLabel";
 
 type WorkloadDescriptionProps = {
   workload?: Workload;
@@ -148,6 +149,9 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
                 text={''}
               />
             )}
+            {this.props.workload && this.props.workload.istioAmbient && (
+              <AmbientLabel tooltip={true} />
+              )}
             {this.props.workload && hasMissingAuthPolicy(this.props.workload.name, this.props.workload.validations) && (
               <MissingAuthPolicy
                 namespace={this.props.namespace}

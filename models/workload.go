@@ -387,6 +387,7 @@ func (workload *Workload) ParsePods(controllerName string, controllerType string
 func (workload *Workload) SetPods(pods []core_v1.Pod) {
 	workload.Pods.Parse(pods)
 	workload.IstioSidecar = workload.HasIstioSidecar()
+	workload.IstioAmbient = workload.HasIstioAmbient()
 }
 
 func (workload *Workload) SetServices(svcs *ServiceList) {
