@@ -47,7 +47,7 @@ jobs:
           CGO_ENABLED: ${{ github.base_ref && '1' }}
 
       - name: Test backend
-        run: make test-race
+        run: GO_TEST_FLAGS="-race" make test
 
       - name: Upload go binary
         uses: actions/upload-artifact@v3
