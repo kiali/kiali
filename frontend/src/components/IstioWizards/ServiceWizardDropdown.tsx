@@ -23,7 +23,8 @@ import {
   WIZARD_FAULT_INJECTION,
   WIZARD_TRAFFIC_SHIFTING,
   WIZARD_REQUEST_TIMEOUTS,
-  WIZARD_TCP_TRAFFIC_SHIFTING
+  WIZARD_TCP_TRAFFIC_SHIFTING,
+  WIZARD_K8S_TRAFFIC_SHIFTING
 } from './WizardActions';
 import ServiceWizard from './ServiceWizard';
 import { canCreate, canUpdate, ResourcePermissions } from '../../types/Permissions';
@@ -108,6 +109,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
       case WIZARD_FAULT_INJECTION:
       case WIZARD_TRAFFIC_SHIFTING:
       case WIZARD_TCP_TRAFFIC_SHIFTING:
+      case WIZARD_K8S_TRAFFIC_SHIFTING:
       case WIZARD_REQUEST_TIMEOUTS: {
         this.setState({ showWizard: true, wizardType: key, updateWizard: key === updateLabel });
         break;

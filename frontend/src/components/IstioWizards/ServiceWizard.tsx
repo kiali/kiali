@@ -1,48 +1,50 @@
 import * as React from 'react';
-import { Button, ButtonVariant, ExpandableSection, Modal, ModalVariant, Tab, Tabs } from '@patternfly/react-core';
-import { WorkloadOverview } from '../../types/ServiceInfo';
+import {Button, ButtonVariant, ExpandableSection, Modal, ModalVariant, Tab, Tabs} from '@patternfly/react-core';
+import {WorkloadOverview} from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
-import { Response } from '../../services/Api';
+import {Response} from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import RequestRouting from './RequestRouting';
-import TrafficShifting, { WorkloadWeight } from './TrafficShifting';
+import TrafficShifting, {WorkloadWeight} from './TrafficShifting';
 import TrafficPolicyContainer, {
   ConsistentHashType,
   TrafficPolicyState,
   UNSET
 } from '../../components/IstioWizards/TrafficPolicy';
-import { ROUND_ROBIN } from './TrafficPolicy';
-import FaultInjection, { FaultInjectionRoute } from './FaultInjection';
-import { Rule } from './RequestRouting/Rules';
+import {ROUND_ROBIN} from './TrafficPolicy';
+import FaultInjection, {FaultInjectionRoute} from './FaultInjection';
+import {Rule} from './RequestRouting/Rules';
 import {
   buildIstioConfig,
   fqdnServiceName,
+  getInitConnectionPool,
+  getInitFaultInjectionRoute,
   getInitGateway,
   getInitHosts,
   getInitK8sGateway,
   getInitLoadBalancer,
+  getInitOutlierDetection,
   getInitPeerAuthentication,
   getInitRules,
+  getInitTimeoutRetryRoute,
   getInitTlsMode,
   getInitWeights,
   hasGateway,
   hasK8sGateway,
-  WIZARD_REQUEST_ROUTING,
-  WIZARD_FAULT_INJECTION,
-  WIZARD_TITLES,
-  WIZARD_TRAFFIC_SHIFTING,
   ServiceWizardProps,
   ServiceWizardState,
-  getInitFaultInjectionRoute,
+  WIZARD_FAULT_INJECTION,
+  WIZARD_K8S_TRAFFIC_SHIFTING,
+  WIZARD_REQUEST_ROUTING,
   WIZARD_REQUEST_TIMEOUTS,
-  getInitTimeoutRetryRoute,
-  getInitConnectionPool,
-  getInitOutlierDetection,
   WIZARD_TCP_TRAFFIC_SHIFTING,
+  WIZARD_TITLES,
+  WIZARD_TRAFFIC_SHIFTING,
   WizardPreviews
 } from './WizardActions';
-import { MessageType } from '../../types/MessageCenter';
-import GatewaySelector, { GatewaySelectorState } from './GatewaySelector';
+import {MessageType} from '../../types/MessageCenter';
+import GatewaySelector, {GatewaySelectorState} from './GatewaySelector';
+import K8sGatewaySelector, {K8sGatewaySelectorState} from './K8sGatewaySelector';
 import VirtualServiceHosts from './VirtualServiceHosts';
 import {
   DestinationRule,
@@ -51,11 +53,11 @@ import {
   PeerAuthenticationMutualTLSMode,
   VirtualService
 } from '../../types/IstioObjects';
-import { style } from 'typestyle';
-import RequestTimeouts, { TimeoutRetryRoute } from './RequestTimeouts';
-import CircuitBreaker, { CircuitBreakerState } from './CircuitBreaker';
+import {style} from 'typestyle';
+import RequestTimeouts, {TimeoutRetryRoute} from './RequestTimeouts';
+import CircuitBreaker, {CircuitBreakerState} from './CircuitBreaker';
 import _ from 'lodash';
-import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
+import {ConfigPreviewItem, IstioConfigPreview} from 'components/IstioConfigPreview/IstioConfigPreview';
 
 const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState => {
   return {
@@ -155,6 +157,9 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         case WIZARD_TRAFFIC_SHIFTING:
           isMainWizardValid = true;
           break;
+        case WIZARD_K8S_TRAFFIC_SHIFTING:
+          isMainWizardValid = true;
+          break;
         // By default no rules is a no valid scenario
         case WIZARD_REQUEST_ROUTING:
           isMainWizardValid = false;
@@ -226,30 +231,32 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       };
       const gateway: GatewaySelectorState = {
         addGateway: false,
-        selectGateway: false,
-        selectK8sGateway: false,
         gwHosts: '',
         gwHostsValid: false,
         newGateway: false,
-        newK8sGateway: false,
         selectedGateway: '',
-        selectedK8sGateway: '',
         addMesh: false,
+        port: 80
+      };
+      const k8sGateway: K8sGatewaySelectorState = {
+        addGateway: false,
+        gwHosts: '',
+        gwHostsValid: false,
+        newK8sGateway: false,
+        selectedK8sGateway: '',
         port: 80
       };
       if (hasGateway(this.props.virtualServices)) {
         const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
         gateway.addGateway = true;
-        gateway.selectGateway = true;
         gateway.selectedGateway = gatewaySelected;
         gateway.addMesh = isMesh;
       }
       if (hasK8sGateway(this.props.k8sHTTPRoutes)) {
         const gatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes);
-        gateway.addGateway = true;
-        gateway.selectK8sGateway = true;
-        gateway.selectedK8sGateway = gatewaySelected;
-        gateway.addMesh = false;
+        k8sGateway.addGateway = true;
+        k8sGateway.selectK8sGateway = true;
+        k8sGateway.selectedK8sGateway = gatewaySelected;
       }
       this.setState({
         showWizard: this.props.show,
@@ -297,6 +304,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
     switch (this.props.type) {
       case WIZARD_TRAFFIC_SHIFTING:
       case WIZARD_TCP_TRAFFIC_SHIFTING:
+      case WIZARD_K8S_TRAFFIC_SHIFTING:
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
       case WIZARD_REQUEST_TIMEOUTS:
@@ -447,7 +455,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
     });
   };
 
-  onK8sGateway = (valid: boolean, gateway: GatewaySelectorState) => {
+  onK8sGateway = (valid: boolean, gateway: K8sGatewaySelectorState) => {
     this.setState(prevState => {
       prevState.valid.gateway = valid;
       return {
@@ -673,6 +681,19 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
               onChange={this.onWeightsChange}
             />
           )}
+          {(this.props.type === WIZARD_K8S_TRAFFIC_SHIFTING) && (
+            <TrafficShifting
+              showValid={true}
+              workloads={this.props.workloads}
+              initWeights={getInitWeights(
+                this.props.workloads,
+                this.props.virtualServices,
+                this.props.destinationRules
+              )}
+              showMirror={this.props.type === WIZARD_K8S_TRAFFIC_SHIFTING}
+              onChange={this.onWeightsChange}
+            />
+          )}
           {this.props.type === WIZARD_REQUEST_TIMEOUTS && (
             <RequestTimeouts
               initTimeoutRetry={getInitTimeoutRetryRoute(
@@ -686,6 +707,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           {(this.props.type === WIZARD_REQUEST_ROUTING ||
             this.props.type === WIZARD_FAULT_INJECTION ||
             this.props.type === WIZARD_TRAFFIC_SHIFTING ||
+            this.props.type === WIZARD_K8S_TRAFFIC_SHIFTING ||
             this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING ||
             this.props.type === WIZARD_REQUEST_TIMEOUTS) && (
             <ExpandableSection
@@ -711,20 +733,27 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
                 </Tab>
                 <Tab eventKey={1} title={'Gateways'} data-test={'Gateways'}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                    <GatewaySelector
-                      serviceName={this.props.serviceName}
-                      hasGateway={hasGateway(this.props.virtualServices)}
-                      hasK8sGateway={hasK8sGateway(this.props.k8sHTTPRoutes)}
-                      gateway={gatewaySelected}
-                      k8sGateway={k8sGatewaySelected}
-                      isMesh={isMesh}
-                      gateways={this.props.gateways}
-                      k8sGateways={this.props.k8sGateways}
-                      vsHosts={this.state.vsHosts}
-                      k8sRouteHosts={this.state.k8sRouteHosts}
-                      onGatewayChange={this.onGateway}
-                      onK8sGatewayChange={this.onK8sGateway}
-                    />
+                    {this.props.type === WIZARD_K8S_TRAFFIC_SHIFTING && (
+                      <K8sGatewaySelector
+                        serviceName={this.props.serviceName}
+                        hasK8sGateway={hasK8sGateway(this.props.k8sHTTPRoutes)}
+                        k8sGateway={k8sGatewaySelected}
+                        k8sGateways={this.props.k8sGateways}
+                        k8sRouteHosts={this.state.k8sRouteHosts}
+                        onK8sGatewayChange={this.onK8sGateway}
+                      />
+                    )}
+                    {this.props.type !== WIZARD_K8S_TRAFFIC_SHIFTING && (
+                      <GatewaySelector
+                        serviceName={this.props.serviceName}
+                        hasGateway={hasGateway(this.props.virtualServices)}
+                        gateway={gatewaySelected}
+                        isMesh={isMesh}
+                        gateways={this.props.gateways}
+                        vsHosts={this.state.vsHosts}
+                        onGatewayChange={this.onGateway}
+                      />
+                    )}
                   </div>
                 </Tab>
                 <Tab eventKey={2} title={'Traffic Policy'}>
