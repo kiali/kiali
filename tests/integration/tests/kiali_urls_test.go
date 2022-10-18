@@ -26,8 +26,6 @@ func TestKialiConfig(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(200, statusCode)
 	assert.NotEmpty(response)
-	assert.NotEmpty(response.ClusterInfo)
-	assert.NotEmpty(response.ClusterInfo.Name)
 }
 
 func TestIstioPermissions(t *testing.T) {
