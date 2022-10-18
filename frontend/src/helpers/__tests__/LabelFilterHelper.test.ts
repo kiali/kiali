@@ -12,20 +12,20 @@ const emptyAppHealth = new AppHealth(
   '',
   [],
   { inbound: {}, outbound: {}, healthAnnotations: {} },
-  { rateInterval: 20, hasSidecar: true }
+  { rateInterval: 20, hasSidecar: true, hasAmbient: false }
 );
 const emptyWorkHealth = new WorkloadHealth(
   '',
   '',
   { desiredReplicas: 0, currentReplicas: 0, availableReplicas: 0, name: '', syncedProxies: 0 },
   { inbound: {}, outbound: {}, healthAnnotations: {} },
-  { rateInterval: 20, hasSidecar: true }
+  { rateInterval: 20, hasSidecar: true, hasAmbient: false }
 );
 const emptySvcHealth = new ServiceHealth(
   '',
   '',
   { inbound: {}, outbound: {}, healthAnnotations: {} },
-  { rateInterval: 20, hasSidecar: true }
+  { rateInterval: 20, hasSidecar: true, hasAmbient: false }
 );
 const appList: AppListItem[] = [
   {

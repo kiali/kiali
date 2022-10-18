@@ -16,7 +16,7 @@ describe('HealthDetails', () => {
       'bookinfo',
       'reviews',
       { inbound: {}, outbound: {}, healthAnnotations: {} },
-      { rateInterval: 60, hasSidecar: true }
+      { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
 
     const wrapper = shallow(<HealthDetails health={health} />);
@@ -28,7 +28,7 @@ describe('HealthDetails', () => {
       'bookinfo',
       'reviews',
       { inbound: {}, outbound: {}, healthAnnotations: {} },
-      { rateInterval: 60, hasSidecar: true }
+      { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
 
     const wrapper = shallow(<HealthDetails health={health} />);
