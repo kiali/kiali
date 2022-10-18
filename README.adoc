@@ -61,6 +61,9 @@ ln -s $KIALI_SOURCES/kiali-operator kiali/operator
 cd $KIALI_SOURCES/kiali
 make build test
 
+# You can pass go test flags through the GO_TEST_FLAGS env var
+# make -e GO_TEST_FLAGS="-race -v -run=\"TestCanConnectToIstiodReachable\"" test
+
 # Build the front-end and run the tests
 make build-ui-test
 ----

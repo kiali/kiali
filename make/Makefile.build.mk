@@ -70,17 +70,7 @@ build-system-test:
 ## test: Run tests, excluding third party tests under vendor and frontend. Runs `go test` internally
 test:
 	@echo Running tests, excluding third party tests under vendor
-	${GO} test $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration/)
-
-## test-debug: Run tests in debug mode, excluding third party tests under vendor and frontend. Runs `go test -v`
-test-debug:
-	@echo Running tests in debug mode, excluding third party tests under vendor
-	${GO} test -v $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration/)
-
-## test-race: Run tests with race detection, excluding third party tests under vendor and frontend. Runs `go test -race`
-test-race:
-	@echo Running tests with race detection, excluding third party tests under vendor
-	${GO} test -race $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration/)
+	${GO} test ${GO_TEST_FLAGS} $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration/)
 
 ## test-integration-setup: Setup go library for converting test result into junit xml
 test-integration-setup:
@@ -90,7 +80,7 @@ test-integration-setup:
 ## test-integration: Run Integration test suite
 test-integration: test-integration-setup
 	@echo Running Integration tests
-	cd tests/integration/tests && ${GO} test -v 2>&1 | go-junit-report > ../junit-rest-report.xml
+	cd tests/integration/tests && ${GO} test ${GO_TEST_FLAGS} -v 2>&1 | go-junit-report > ../junit-rest-report.xml
 	@echo Test results can be found here: $$(ls -1 ${ROOTDIR}/tests/integration/junit-rest-report.xml)
 
 #

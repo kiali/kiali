@@ -30,6 +30,7 @@ VERSION_LABEL ?= ${VERSION}
 GO ?= go
 GOFMT ?= $(shell ${GO} env GOROOT)/bin/gofmt
 GO_VERSION_KIALI = 1.17.10
+GO_TEST_FLAGS ?=
 
 # Identifies the Kiali container image that will be built.
 IMAGE_ORG ?= kiali
