@@ -22,6 +22,8 @@ spec:
 EOM
 
   if [ "${ENABLE_INJECTION}" == "true" ]; then
+    # let's wait for smmr to be Ready before enabling sidecar injection
+    ${CLIENT_EXE} wait --for condition=Ready -n ${ISTIO_NAMESPACE} smmr/default --timeout 300s
     for d in $(${CLIENT_EXE} get deployments -n ${ns} -o name)
     do
       echo "Enabling sidecar injection for deployment: ${d}"
