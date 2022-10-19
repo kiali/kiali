@@ -135,7 +135,8 @@ const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState =>
       addOutlierDetection: false,
       outlierDetection: {}
     },
-    gateway: undefined
+    gateway: undefined,
+    k8sGateway: undefined
   };
 };
 
@@ -242,8 +243,9 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         addGateway: false,
         gwHosts: '',
         gwHostsValid: false,
-        newK8sGateway: false,
-        selectedK8sGateway: '',
+        newGateway: false,
+        selectedGateway: '',
+        addMesh: false,
         port: 80
       };
       if (hasGateway(this.props.virtualServices)) {
@@ -255,8 +257,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       if (hasK8sGateway(this.props.k8sHTTPRoutes)) {
         const gatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes);
         k8sGateway.addGateway = true;
-        k8sGateway.selectK8sGateway = true;
-        k8sGateway.selectedK8sGateway = gatewaySelected;
+        k8sGateway.selectedGateway = gatewaySelected;
       }
       this.setState({
         showWizard: this.props.show,
@@ -277,7 +278,8 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             ? initVsHosts
             : [fqdnServiceName(this.props.serviceName, this.props.namespace)],
         trafficPolicy: trafficPolicy,
-        gateway: gateway
+        gateway: gateway,
+        k8sGateway: k8sGateway
       });
     }
   }
@@ -462,7 +464,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         valid: prevState.valid,
         gateway: gateway,
         k8sRouteHosts:
-          gateway.addGateway && gateway.newK8sGateway && gateway.gwHosts.length > 0
+          gateway.addGateway && gateway.newGateway && gateway.gwHosts.length > 0
             ? gateway.gwHosts.split(',')
             : prevState.k8sRouteHosts
       };
@@ -736,11 +738,11 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
                     {this.props.type === WIZARD_K8S_TRAFFIC_SHIFTING && (
                       <K8sGatewaySelector
                         serviceName={this.props.serviceName}
-                        hasK8sGateway={hasK8sGateway(this.props.k8sHTTPRoutes)}
-                        k8sGateway={k8sGatewaySelected}
-                        k8sGateways={this.props.k8sGateways}
+                        hasGateway={hasK8sGateway(this.props.k8sHTTPRoutes)}
+                        gateway={k8sGatewaySelected}
+                        gateways={this.props.k8sGateways}
                         k8sRouteHosts={this.state.k8sRouteHosts}
-                        onK8sGatewayChange={this.onK8sGateway}
+                        onGatewayChange={this.onK8sGateway}
                       />
                     )}
                     {this.props.type !== WIZARD_K8S_TRAFFIC_SHIFTING && (

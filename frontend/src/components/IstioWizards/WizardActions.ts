@@ -34,6 +34,7 @@ import {
 } from '../../types/IstioObjects';
 import { serverConfig } from '../../config';
 import { GatewaySelectorState } from './GatewaySelector';
+import { K8sGatewaySelectorState } from './K8sGatewaySelector';
 import { ConsistentHashType, MUTUAL, TrafficPolicyState, UNSET } from './TrafficPolicy';
 import { GatewayState } from '../../pages/IstioConfigNew/GatewayForm';
 import { K8sGatewayState } from '../../pages/IstioConfigNew/K8sGatewayForm';
@@ -138,6 +139,7 @@ export type ServiceWizardState = {
   k8sRouteHosts: string[];
   trafficPolicy: TrafficPolicyState;
   gateway?: GatewaySelectorState;
+  k8sGateway?: K8sGatewaySelectorState;
 };
 
 export type WorkloadWizardValid = {};
@@ -366,7 +368,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
         }
       : undefined;
   const wizardK8sGW: K8sGateway | undefined =
-    wState.gateway && wState.gateway.addGateway && wState.gateway.newK8sGateway
+    wState.k8sGateway && wState.k8sGateway.addGateway && wState.k8sGateway.newGateway
       ? {
         kind: 'Gateway',
         apiVersion: GATEWAY_NETWORKING_VERSION,
@@ -384,8 +386,8 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
             {
               name: 'default',
               // here gwHosts for K8s API Gateway contains single host
-              hostname: wState.gateway.gwHosts,
-              port: wState.gateway.port,
+              hostname: wState.k8sGateway.gwHosts,
+              port: wState.k8sGateway.port,
               protocol: 'HTTP',
               allowedRoutes: {
                 namespaces: {
