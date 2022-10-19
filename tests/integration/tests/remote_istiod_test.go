@@ -82,7 +82,6 @@ func TestRemoteIstiod(t *testing.T) {
 	kialiName := kialiCRs.Items[0].GetName()
 	kialiNamespace := kialiCRs.Items[0].GetNamespace()
 
-
 	// Register clean up before creating resources in case of failure.
 	t.Cleanup(func() {
 		log.Debug("Cleaning up resources from RemoteIstiod test")
