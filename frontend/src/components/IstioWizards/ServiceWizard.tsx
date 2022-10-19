@@ -34,7 +34,7 @@ import {
   ServiceWizardProps,
   ServiceWizardState,
   WIZARD_FAULT_INJECTION,
-  WIZARD_K8S_TRAFFIC_SHIFTING,
+  WIZARD_K8S_REQUEST_ROUTING,
   WIZARD_REQUEST_ROUTING,
   WIZARD_REQUEST_TIMEOUTS,
   WIZARD_TCP_TRAFFIC_SHIFTING,
@@ -46,6 +46,7 @@ import {MessageType} from '../../types/MessageCenter';
 import GatewaySelector, {GatewaySelectorState} from './GatewaySelector';
 import K8sGatewaySelector, {K8sGatewaySelectorState} from './K8sGatewaySelector';
 import VirtualServiceHosts from './VirtualServiceHosts';
+import K8sRouteHosts from './K8sRouteHosts';
 import {
   DestinationRule,
   Gateway,
@@ -158,7 +159,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         case WIZARD_TRAFFIC_SHIFTING:
           isMainWizardValid = true;
           break;
-        case WIZARD_K8S_TRAFFIC_SHIFTING:
+        case WIZARD_K8S_REQUEST_ROUTING:
           isMainWizardValid = true;
           break;
         // By default no rules is a no valid scenario
@@ -306,7 +307,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
     switch (this.props.type) {
       case WIZARD_TRAFFIC_SHIFTING:
       case WIZARD_TCP_TRAFFIC_SHIFTING:
-      case WIZARD_K8S_TRAFFIC_SHIFTING:
+      case WIZARD_K8S_REQUEST_ROUTING:
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
       case WIZARD_REQUEST_TIMEOUTS:
@@ -411,6 +412,19 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       return {
         valid: prevState.valid,
         vsHosts: vsHosts
+      };
+    });
+  };
+
+  onK8sRouteHosts = (valid: boolean, k8sRouteHosts: string[]) => {
+    this.setState(prevState => {
+      prevState.valid.vsHosts = valid;
+      if (prevState.k8sGateway && prevState.k8sGateway.addGateway && prevState.k8sGateway.newGateway) {
+        prevState.k8sGateway.gwHosts = k8sRouteHosts.join(',');
+      }
+      return {
+        valid: prevState.valid,
+        k8sRouteHosts: k8sRouteHosts
       };
     });
   };
@@ -660,6 +674,14 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
               onChange={this.onRulesChange}
             />
           )}
+          {(this.props.type === WIZARD_K8S_REQUEST_ROUTING) && (
+            <RequestRouting
+              serviceName={this.props.serviceName}
+              workloads={this.props.workloads}
+              initRules={getInitRules(this.props.workloads, this.props.virtualServices, this.props.destinationRules)}
+              onChange={this.onRulesChange}
+            />
+          )}
           {this.props.type === WIZARD_FAULT_INJECTION && (
             <FaultInjection
               initFaultInjectionRoute={getInitFaultInjectionRoute(
@@ -683,19 +705,6 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
               onChange={this.onWeightsChange}
             />
           )}
-          {(this.props.type === WIZARD_K8S_TRAFFIC_SHIFTING) && (
-            <TrafficShifting
-              showValid={true}
-              workloads={this.props.workloads}
-              initWeights={getInitWeights(
-                this.props.workloads,
-                this.props.virtualServices,
-                this.props.destinationRules
-              )}
-              showMirror={this.props.type === WIZARD_K8S_TRAFFIC_SHIFTING}
-              onChange={this.onWeightsChange}
-            />
-          )}
           {this.props.type === WIZARD_REQUEST_TIMEOUTS && (
             <RequestTimeouts
               initTimeoutRetry={getInitTimeoutRetryRoute(
@@ -709,7 +718,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           {(this.props.type === WIZARD_REQUEST_ROUTING ||
             this.props.type === WIZARD_FAULT_INJECTION ||
             this.props.type === WIZARD_TRAFFIC_SHIFTING ||
-            this.props.type === WIZARD_K8S_TRAFFIC_SHIFTING ||
+            this.props.type === WIZARD_K8S_REQUEST_ROUTING ||
             this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING ||
             this.props.type === WIZARD_REQUEST_TIMEOUTS) && (
             <ExpandableSection
@@ -726,16 +735,25 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
               <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
                 <Tab eventKey={0} title={'Destination Hosts'}>
                   <div style={{ marginTop: '20px' }}>
-                    <VirtualServiceHosts
-                      vsHosts={this.state.vsHosts}
-                      gateway={this.state.gateway}
-                      onVsHostsChange={this.onVsHosts}
-                    />
+                    {this.props.type !== WIZARD_K8S_REQUEST_ROUTING && (
+                      <VirtualServiceHosts
+                        vsHosts={this.state.vsHosts}
+                        gateway={this.state.gateway}
+                        onVsHostsChange={this.onVsHosts}
+                      />
+                    )}
+                    {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
+                      <K8sRouteHosts
+                        k8sRouteHosts={this.state.k8sRouteHosts}
+                        gateway={this.state.gateway}
+                        onK8sRouteHostsChange={this.onK8sRouteHosts}
+                      />
+                    )}
                   </div>
                 </Tab>
                 <Tab eventKey={1} title={'Gateways'} data-test={'Gateways'}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                    {this.props.type === WIZARD_K8S_TRAFFIC_SHIFTING && (
+                    {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
                       <K8sGatewaySelector
                         serviceName={this.props.serviceName}
                         hasGateway={hasK8sGateway(this.props.k8sHTTPRoutes)}
@@ -745,7 +763,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
                         onGatewayChange={this.onK8sGateway}
                       />
                     )}
-                    {this.props.type !== WIZARD_K8S_TRAFFIC_SHIFTING && (
+                    {this.props.type !== WIZARD_K8S_REQUEST_ROUTING && (
                       <GatewaySelector
                         serviceName={this.props.serviceName}
                         hasGateway={hasGateway(this.props.virtualServices)}
