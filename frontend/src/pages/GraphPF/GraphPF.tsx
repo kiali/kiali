@@ -10,7 +10,6 @@ import {
   Model,
   Node,
   NodeModel,
-  NodeShape,
   NodeStatus,
   TopologyControlBar,
   TopologyView,
@@ -22,17 +21,17 @@ import {
 } from '@patternfly/react-topology';
 import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
-import { BoxByType, DecoratedGraphNodeData, NodeType, UNKNOWN } from 'types/Graph';
 import componentFactory from './componentFactories/componentFactory';
 import stylesComponentFactory from './componentFactories/stylesComponentFactory';
+import { getNodeShape, GraphPFSettings, NodeData, setNodeLabel } from './GraphPFElems';
 import layoutFactory from './layouts/layoutFactory';
 
 export const HOVER_EVENT = 'hover';
 
 let requestFit = false;
 
-const DEFAULT_NODE_SIZE = 75;
-const FIT_PADDING = 80;
+const DEFAULT_NODE_SIZE = 50;
+const FIT_PADDING = 50;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
 
@@ -55,8 +54,9 @@ export const DefaultOptions: TopologyOptions = {
 
 export const TopologyContent: React.FC<{
   graphData: GraphData;
+  graphSettings: GraphPFSettings;
   options: TopologyOptions;
-}> = ({ graphData, options }) => {
+}> = ({ graphData, graphSettings, options }) => {
   const controller = useVisualizationController();
 
   const [hoveredId, setHoveredId] = React.useState<string>('');
@@ -148,7 +148,7 @@ export const TopologyContent: React.FC<{
     //    highlightedId = selectedIds[0];
     //  }
 
-    const updatedModel = generateDataModel(graphData, hoveredId);
+    const updatedModel = generateDataModel(graphData, graphSettings, hoveredId);
     const allIds = [...(updatedModel.nodes || []), ...(updatedModel.edges || [])].map(item => item.id);
     controller.getElements().forEach(e => {
       if (e.getType() !== 'graph') {
@@ -174,51 +174,49 @@ export const TopologyContent: React.FC<{
       }
     });
     controller.fromModel(updatedModel);
-  }, [controller, graphData, hoveredId]);
+  }, [controller, graphData, graphSettings, hoveredId]);
 
-  const generateDataModel = (graphData: GraphData, _hoveredId: string): Model => {
-    let nodes: NodeModel[] = [];
+  const generateDataModel = (graphData: GraphData, graphSettings: GraphPFSettings, _hoveredId: string): Model => {
+    let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
     const edges: EdgeModel[] = [];
     // const opts = { ...DefaultOptions, ...options };
 
-    function addGroup(id: string, label: string, data: DecoratedGraphNodeData): NodeModel {
+    function addGroup(data: NodeData): NodeModel {
       const group: NodeModel = {
-        id: id,
         children: [],
-        type: 'group',
+        collapsed: false,
+        data: data,
         group: true,
-        collapsed: false, // options.startCollapsed,
-        label: label,
+        id: data.id,
         style: { padding: 10 },
-        data: data
+        type: 'group'
       };
-      nodes.push(group);
+      setNodeLabel(group, nodeMap, graphSettings);
+      nodeMap.set(data.id, group);
 
       return group;
     }
 
-
-  
-    function addNode(id: string, label: string, data: DecoratedGraphNodeData): NodeModel {
+    function addNode(data: NodeData): NodeModel {
       const node: NodeModel = {
-        id: id,
-        type: 'node',
-        label: label,
-        width: DEFAULT_NODE_SIZE,
+        data: data,
         height: DEFAULT_NODE_SIZE,
+        id: data.id,
         shape: getNodeShape(data),
         status: NodeStatus.default,
         style: { padding: 20 },
-        data: data
+        type: 'node',
+        width: DEFAULT_NODE_SIZE
       };
-      nodes.push(node);
+      setNodeLabel(node, nodeMap, graphSettings);
+      nodeMap.set(data.id, node);
 
       return node;
     }
 
     function addEdge(id: string, sourceId: string, targetId: string, data: any) {
       const edge = {
-        id: id,        
+        id: id,
         type: 'edge',
         source: sourceId,
         target: targetId,
@@ -231,35 +229,9 @@ export const TopologyContent: React.FC<{
       return edge;
     }
 
-    function boxLabel(nd: DecoratedGraphNodeData): string {
-      switch (nd.isBox!) {
-        case BoxByType.CLUSTER:
-          return nd.cluster;
-        case BoxByType.NAMESPACE:
-          return nd.namespace;
-        default:
-          return nd.app!;
-      }
-    }
-
-    function nodeLabel(nd: DecoratedGraphNodeData): string {
-      switch (nd.nodeType) {
-        case NodeType.APP:
-          return nd.app!;
-        case NodeType.SERVICE:
-          return nd.service!;
-        case NodeType.WORKLOAD:
-          return nd.workload!;
-        case NodeType.UNKNOWN:
-          return UNKNOWN;
-        default:
-          return nd.workload!;
-      }
-    }
-
     function addChild(node: NodeModel): void {
-      const parentId = (node.data as DecoratedGraphNodeData).parent!;
-      const parent = nodes.find(n => (n.data as DecoratedGraphNodeData).id === parentId);
+      const parentId = (node.data as NodeData).parent!;
+      const parent = nodeMap.get(parentId);
       if (parent) {
         parent.children?.push(node.id);
       } else {
@@ -271,9 +243,9 @@ export const TopologyContent: React.FC<{
       const nd = n.data;
       let newNode: NodeModel;
       if (nd.isBox) {
-        newNode = addGroup(nd.id, boxLabel(nd), nd);
+        newNode = addGroup(nd);
       } else {
-        newNode = addNode(nd.id, nodeLabel(nd), nd);
+        newNode = addNode(nd);
       }
       if (nd.parent) {
         addChild(newNode);
@@ -285,7 +257,8 @@ export const TopologyContent: React.FC<{
       addEdge(ed.id, ed.source, ed.target, ed);
     });
 
-    return { nodes, edges };
+    const nodes = Array.from(nodeMap.values());
+    return { nodes: nodes, edges: edges };
   };
 
   //update model on layout / metrics / filters change
@@ -353,7 +326,7 @@ export const TopologyContent: React.FC<{
         />
       }
     >
-      <VisualizationSurface data-test="visualization-surface" state={{}} />      
+      <VisualizationSurface data-test="visualization-surface" state={{}} />
       {/* <div id="topology-search-container" data-test="topology-search-container">
         <InputGroup>
           <TextInput
@@ -377,7 +350,8 @@ export const TopologyContent: React.FC<{
 
 export const GraphPF: React.FC<{
   graphData: GraphData;
-}> = ({ graphData }) => {
+  graphSettings: GraphPFSettings;
+}> = ({ graphData, graphSettings }) => {
   //create controller on startup and register factories
   const [controller, setController] = React.useState<Visualization>();
 
@@ -403,7 +377,7 @@ export const GraphPF: React.FC<{
 
   return (
     <VisualizationProvider data-test="visualization-provider" controller={controller}>
-      <TopologyContent graphData={graphData} options={DefaultOptions} />
+      <TopologyContent graphData={graphData} graphSettings={graphSettings} options={DefaultOptions} />
     </VisualizationProvider>
   );
 };
