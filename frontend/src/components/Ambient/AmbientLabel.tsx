@@ -25,12 +25,12 @@ class AmbientLabel extends React.Component<AmbientLabelProps, {}> {
     );
     const iconComponent = (
       <span style={this.props.style}>
-        <PFBadge badge={{ badge: "L4" }} isRead={true} style={{ marginRight: '0px', marginLeft: '5px' }} />
+        <PFBadge badge={{ badge: "ztunnel" }} isRead={true} style={{ marginRight: '0px', marginLeft: '5px' }} />
         {!this.props.tooltip && (
           <span style={{ marginLeft: '8px' }}>
             { msg }
             <Tooltip key={`tooltip_ambient_label`} position={TooltipPosition.top} content={tooltipContent}>
-              <PFBadge badge={{ badge: "L4" }} isRead={true} style={{ marginRight: '0px' }} />
+              <PFBadge badge={{ badge: "ztunnel" }} isRead={true} style={{ marginRight: '0px' }} />
             </Tooltip>
           </span>
         )}
