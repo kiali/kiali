@@ -107,6 +107,7 @@ export type ServiceWizardProps = {
 export type ServiceWizardValid = {
   mainWizard: boolean;
   vsHosts: boolean;
+  k8sRouteHosts: boolean;
   tls: boolean;
   lb: boolean;
   gateway: boolean;

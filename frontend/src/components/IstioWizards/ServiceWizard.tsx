@@ -5,6 +5,7 @@ import * as API from '../../services/Api';
 import {Response} from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import RequestRouting from './RequestRouting';
+import K8sRequestRouting from './K8sRequestRouting';
 import TrafficShifting, {WorkloadWeight} from './TrafficShifting';
 import TrafficPolicyContainer, {
   ConsistentHashType,
@@ -105,6 +106,7 @@ const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState =>
     valid: {
       mainWizard: true,
       vsHosts: true,
+      k8sRouteHosts: true,
       tls: true,
       lb: true,
       gateway: true,
@@ -268,6 +270,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         valid: {
           mainWizard: isMainWizardValid,
           vsHosts: true,
+          k8sRouteHosts: true,
           tls: true,
           lb: true,
           gateway: true,
@@ -418,7 +421,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
 
   onK8sRouteHosts = (valid: boolean, k8sRouteHosts: string[]) => {
     this.setState(prevState => {
-      prevState.valid.vsHosts = valid;
+      prevState.valid.k8sRouteHosts = valid;
       if (prevState.k8sGateway && prevState.k8sGateway.addGateway && prevState.k8sGateway.newGateway) {
         prevState.k8sGateway.gwHosts = k8sRouteHosts.join(',');
       }
@@ -537,6 +540,14 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
     );
   };
 
+  isK8sAPIValid = (state: ServiceWizardState): boolean => {
+    return (
+      state.valid.mainWizard &&
+      state.valid.k8sRouteHosts &&
+      state.valid.gateway
+    );
+  };
+
   advancedHandleTabClick = (_event, tabIndex) => {
     this.setState({
       advancedTabKey: tabIndex
@@ -641,7 +652,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           }}
           actions={[
             <Button
-              isDisabled={!this.isValid(this.state)}
+              isDisabled={!(this.isValid(this.state) || this.isK8sAPIValid(this.state))}
               key="confirm"
               variant={ButtonVariant.primary}
               onClick={this.onPreview}
@@ -675,7 +686,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             />
           )}
           {(this.props.type === WIZARD_K8S_REQUEST_ROUTING) && (
-            <RequestRouting
+            <K8sRequestRouting
               serviceName={this.props.serviceName}
               workloads={this.props.workloads}
               initRules={getInitRules(this.props.workloads, this.props.virtualServices, this.props.destinationRules)}
@@ -718,7 +729,6 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           {(this.props.type === WIZARD_REQUEST_ROUTING ||
             this.props.type === WIZARD_FAULT_INJECTION ||
             this.props.type === WIZARD_TRAFFIC_SHIFTING ||
-            this.props.type === WIZARD_K8S_REQUEST_ROUTING ||
             this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING ||
             this.props.type === WIZARD_REQUEST_TIMEOUTS) && (
             <ExpandableSection
@@ -735,45 +745,24 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
               <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
                 <Tab eventKey={0} title={'Destination Hosts'}>
                   <div style={{ marginTop: '20px' }}>
-                    {this.props.type !== WIZARD_K8S_REQUEST_ROUTING && (
-                      <VirtualServiceHosts
-                        vsHosts={this.state.vsHosts}
-                        gateway={this.state.gateway}
-                        onVsHostsChange={this.onVsHosts}
-                      />
-                    )}
-                    {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
-                      <K8sRouteHosts
-                        k8sRouteHosts={this.state.k8sRouteHosts}
-                        gateway={this.state.gateway}
-                        onK8sRouteHostsChange={this.onK8sRouteHosts}
-                      />
-                    )}
+                    <VirtualServiceHosts
+                      vsHosts={this.state.vsHosts}
+                      gateway={this.state.gateway}
+                      onVsHostsChange={this.onVsHosts}
+                    />
                   </div>
                 </Tab>
                 <Tab eventKey={1} title={'Gateways'} data-test={'Gateways'}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                    {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
-                      <K8sGatewaySelector
-                        serviceName={this.props.serviceName}
-                        hasGateway={hasK8sGateway(this.props.k8sHTTPRoutes)}
-                        gateway={k8sGatewaySelected}
-                        gateways={this.props.k8sGateways}
-                        k8sRouteHosts={this.state.k8sRouteHosts}
-                        onGatewayChange={this.onK8sGateway}
-                      />
-                    )}
-                    {this.props.type !== WIZARD_K8S_REQUEST_ROUTING && (
-                      <GatewaySelector
-                        serviceName={this.props.serviceName}
-                        hasGateway={hasGateway(this.props.virtualServices)}
-                        gateway={gatewaySelected}
-                        isMesh={isMesh}
-                        gateways={this.props.gateways}
-                        vsHosts={this.state.vsHosts}
-                        onGatewayChange={this.onGateway}
-                      />
-                    )}
+                    <GatewaySelector
+                      serviceName={this.props.serviceName}
+                      hasGateway={hasGateway(this.props.virtualServices)}
+                      gateway={gatewaySelected}
+                      isMesh={isMesh}
+                      gateways={this.props.gateways}
+                      vsHosts={this.state.vsHosts}
+                      onGatewayChange={this.onGateway}
+                    />
                   </div>
                 </Tab>
                 <Tab eventKey={2} title={'Traffic Policy'}>
@@ -809,6 +798,43 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
                     </div>
                   </Tab>
                 )}
+              </Tabs>
+            </ExpandableSection>
+          )}
+          {(this.props.type === WIZARD_K8S_REQUEST_ROUTING) && (
+            <ExpandableSection
+              className={advancedOptionsStyle}
+              isExpanded={this.state.showAdvanced}
+              toggleText={(this.state.showAdvanced ? 'Hide' : 'Show') + ' Advanced Options'}
+              contentId={(this.state.showAdvanced ? 'hide' : 'show') + '_advanced_options'}
+              onToggle={() => {
+                this.setState({
+                  showAdvanced: !this.state.showAdvanced
+                });
+              }}
+            >
+              <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
+                <Tab eventKey={0} title={'Route Hosts'}>
+                  <div style={{ marginTop: '20px' }}>
+                    <K8sRouteHosts
+                      k8sRouteHosts={this.state.k8sRouteHosts}
+                      gateway={this.state.gateway}
+                      onK8sRouteHostsChange={this.onK8sRouteHosts}
+                    />
+                  </div>
+                </Tab>
+                <Tab eventKey={1} title={'Gateways'} data-test={'Gateways'}>
+                  <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                    <K8sGatewaySelector
+                      serviceName={this.props.serviceName}
+                      hasGateway={hasK8sGateway(this.props.k8sHTTPRoutes)}
+                      gateway={k8sGatewaySelected}
+                      gateways={this.props.k8sGateways}
+                      k8sRouteHosts={this.state.k8sRouteHosts}
+                      onGatewayChange={this.onK8sGateway}
+                    />
+                  </div>
+                </Tab>
               </Tabs>
             </ExpandableSection>
           )}
