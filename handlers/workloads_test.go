@@ -40,7 +40,7 @@ func setupWorkloadList() (*httptest.Server, *kubetest.K8SClientMock, *prometheus
 
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := context.WithValue(r.Context(), ContextKeyAuthInfo, &api.AuthInfo{Token: "test"})
 			WorkloadList(w, r.WithContext(context))
 		}))
 
@@ -326,7 +326,7 @@ func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheuste
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/metrics", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := context.WithValue(r.Context(), ContextKeyAuthInfo, &api.AuthInfo{Token: "test"})
 			getWorkloadMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
 				return prom, nil
 			})

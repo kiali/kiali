@@ -110,6 +110,14 @@ type Options struct {
 	TelemetryOptions
 }
 
+type contextKey string
+
+func (c contextKey) String() string {
+	return string(c)
+}
+
+var ContextKeyAuthInfo contextKey = "authInfo"
+
 func NewOptions(r *net_http.Request) Options {
 	// path variables (0 or more will be set)
 	vars := mux.Vars(r)
@@ -228,7 +236,8 @@ func NewOptions(r *net_http.Request) Options {
 	// Process namespaces options:
 	namespaceMap := NewNamespaceInfoMap()
 
-	authInfoContext := r.Context().Value("authInfo")
+	authInfoContext := r.Context().Value(ContextKeyAuthInfo)
+	log.Errorf("%+v", r.Context())
 	var authInfo *api.AuthInfo
 	if authInfoContext != nil {
 		if authInfoCheck, ok := authInfoContext.(*api.AuthInfo); !ok {

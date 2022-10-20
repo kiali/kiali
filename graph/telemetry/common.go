@@ -14,8 +14,8 @@ import (
 // duplicate prefer an instance from the namespace being merged-in because it is guaranteed
 // to have all appender information applied (i.e. not an outsider). We also need to avoid duplicate
 // edges, it can happen when a terminal node of one namespace is a root node of another:
-//   ns1 graph: unknown -> ns1:A -> ns2:B
-//   ns2 graph:   ns1:A -> ns2:B -> ns2:C
+// - ns1 graph: unknown -> ns1:A -> ns2:B
+// - ns2 graph:   ns1:A -> ns2:B -> ns2:C
 func MergeTrafficMaps(trafficMap graph.TrafficMap, ns string, nsTrafficMap graph.TrafficMap) {
 	for nsID, nsNode := range nsTrafficMap {
 		if node, isDup := trafficMap[nsID]; isDup {

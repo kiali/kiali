@@ -75,7 +75,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 				log.Errorf("No authInfo: %v", http.StatusBadRequest)
 			}
-			ctx := context.WithValue(r.Context(), "authInfo", authInfo)
+			ctx := context.WithValue(r.Context(), ContextKeyAuthInfo, authInfo)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		case http.StatusUnauthorized:
 			err := authentication.GetAuthController().TerminateSession(r, w)
@@ -92,7 +92,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 
 func (aHandler AuthenticationHandler) HandleUnauthenticated(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: ""})
+		ctx := context.WithValue(r.Context(), ContextKeyAuthInfo, &api.AuthInfo{Token: ""})
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

@@ -17,6 +17,10 @@ type promClientSupplier func() (*prometheus.Client, error)
 
 var defaultPromClientSupplier = prometheus.NewClient
 
+type contextKey string
+
+var ContextKeyAuthInfo contextKey = "authInfo"
+
 func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService, namespace string) (*models.Namespace, error) {
 	if nsInfo, err := nsServ.GetNamespace(ctx, namespace); err != nil {
 		return nil, err
@@ -66,7 +70,7 @@ func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, p
 
 // getAuthInfo retrieves the token from the request's context
 func getAuthInfo(r *http.Request) (*api.AuthInfo, error) {
-	authInfoContext := r.Context().Value("authInfo")
+	authInfoContext := r.Context().Value(ContextKeyAuthInfo)
 	if authInfoContext != nil {
 		if authInfo, ok := authInfoContext.(*api.AuthInfo); ok {
 			return authInfo, nil

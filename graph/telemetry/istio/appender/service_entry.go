@@ -16,19 +16,20 @@ const ServiceEntryAppenderName = "serviceEntry"
 // a serviceEntry. A single serviceEntry can define multiple hosts and as such multiple service nodes may
 // map to different hosts of a single serviceEntry. We'll call these "se-service" nodes.  The appender
 // handles this in the following way:
-//   For Each "se-service" node
-//      if necessary, create an aggregate serviceEntry node ("se-aggregate")
-//        -- an "se-aggregate" is a service node with isServiceEntry set in the metadata
-//        -- an "se-aggregate" is namespace-specific and so one service entry definition can result in multiple
-//           service entry nodes in the graph. An Istio service entry is defined in a particular namespace, but
-//           it can be "exported" to many (all namespaces by default).  So, think as if the service entry
-//           definition is duplicated in each exported namespace, and therefore you can get an se-aggregate in each.
-//      aggregate the "se-service" node into the "se-aggregate" node
-//        -- incoming edges
-//        -- outgoing edges (unusual but can have outgoing edge to egress gateway)
-//        -- per-host traffic (in the metadata)
-//      remove the "se-service" node from the trafficMap
-//      add any new "se-aggregate" node to the trafficMap
+//
+//	For Each "se-service" node
+//	   if necessary, create an aggregate serviceEntry node ("se-aggregate")
+//	     -- an "se-aggregate" is a service node with isServiceEntry set in the metadata
+//	     -- an "se-aggregate" is namespace-specific and so one service entry definition can result in multiple
+//	        service entry nodes in the graph. An Istio service entry is defined in a particular namespace, but
+//	        it can be "exported" to many (all namespaces by default).  So, think as if the service entry
+//	        definition is duplicated in each exported namespace, and therefore you can get an se-aggregate in each.
+//	   aggregate the "se-service" node into the "se-aggregate" node
+//	     -- incoming edges
+//	     -- outgoing edges (unusual but can have outgoing edge to egress gateway)
+//	     -- per-host traffic (in the metadata)
+//	   remove the "se-service" node from the trafficMap
+//	   add any new "se-aggregate" node to the trafficMap
 //
 // Doc Links
 // - https://istio.io/docs/reference/config/networking/v1alpha3/service-entry/#ServiceEntry
@@ -38,7 +39,6 @@ const ServiceEntryAppenderName = "serviceEntry"
 // many different service requests may be handled by the same service entry definition.  For example,
 // host = *.wikipedia.com would match requests for en.wikipedia.com and de.wikipedia.com. The Istio
 // telemetry produces only one "se-service" node with the wilcard host as the destination_service_name.
-//
 type ServiceEntryAppender struct {
 	AccessibleNamespaces map[string]time.Time
 	GraphType            string // This appender does not operate on service graphs because it adds workload nodes.

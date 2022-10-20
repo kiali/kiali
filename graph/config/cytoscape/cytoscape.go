@@ -1,17 +1,19 @@
-// Package cytoscape provides conversion from our graph to the CystoscapeJS
-// configuration json model.
-//
-// The following links are useful for understanding CytoscapeJS and it's configuration:
-//
-// Main page:   http://js.cytoscape.org/
-// JSON config: http://js.cytoscape.org/#notation/elements-json
-// Demos:       http://js.cytoscape.org/#demos
-//
-// Algorithm: Process the graph structure adding nodes and edges, decorating each
-//            with information provided.  An optional second pass generates compound
-//            nodes for requested boxing.
-//
-// The package provides the Cytoscape implementation of graph/ConfigVendor.
+/*
+Package cytoscape provides conversion from our graph to the CystoscapeJS
+configuration json model.
+
+The following links are useful for understanding CytoscapeJS and it's configuration:
+
+Main page:   http://js.cytoscape.org/
+JSON config: http://js.cytoscape.org/#notation/elements-json
+Demos:       http://js.cytoscape.org/#demos
+
+Algorithm: Process the graph structure adding nodes and edges, decorating each
+with information provided.  An optional second pass generates compound
+nodes for requested boxing.
+
+The package provides the Cytoscape implementation of graph/ConfigVendor.
+*/
 package cytoscape
 
 import (
@@ -25,17 +27,19 @@ import (
 
 // ResponseFlags is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:
 // "200" : {
-//    "-"     : "80.0",
-//    "DC"    : "10.0",
-//    "FI,FD" : "10.0"
+//	"-"     : "80.0",
+//	"DC"    : "10.0",
+//	"FI,FD" : "10.0"
 // }, ...
+
 type ResponseFlags map[string]string
 
 // ResponseHosts is a map of maps. Each response host is broken down by responseFlags:percentageOfTraffic, e.g.:
-// "200" : {
-//    "www.google.com" : "80.0",
-//    "www.yahoo.com"  : "20.0"
-// }, ...
+//
+//	"200" : {
+//	   "www.google.com" : "80.0",
+//	   "www.yahoo.com"  : "20.0"
+//	}, ...
 type ResponseHosts map[string]string
 
 // ResponseDetail holds information broken down by response code.
@@ -251,13 +255,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 		addNodeTelemetry(n, nd)
 
-		// set annotations, if available
-		if val, ok := n.Metadata[graph.HealthData]; ok {
-			nd.HealthData = val.(interface{})
-		}
-		if val, ok := n.Metadata[graph.HealthDataApp]; ok {
-			nd.HealthDataApp = val.(interface{})
-		}
+		// HealthData && HealthDataApp S1040: type assertion to the same type: val already has type interface{}
 
 		// set k8s labels, if any
 		if val, ok := n.Metadata[graph.Labels]; ok {

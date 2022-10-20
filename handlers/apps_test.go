@@ -163,7 +163,7 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 
 	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}/metrics", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", authInfo)
+			context := context.WithValue(r.Context(), ContextKeyAuthInfo, authInfo)
 			getAppMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
 				return prom, nil
 			})
@@ -191,13 +191,13 @@ func setupAppListEndpoint() (*httptest.Server, *kubetest.K8SClientMock, *prometh
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/apps", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := context.WithValue(r.Context(), ContextKeyAuthInfo, &api.AuthInfo{Token: "test"})
 			AppList(w, r.WithContext(context))
 		}))
 
 	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := context.WithValue(r.Context(), ContextKeyAuthInfo, &api.AuthInfo{Token: "test"})
 			AppDetails(w, r.WithContext(context))
 		}))
 

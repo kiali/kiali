@@ -326,7 +326,7 @@ func setupAggregateMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+			context := context.WithValue(r.Context(), ContextKeyAuthInfo, &api.AuthInfo{Token: "test"})
 			getAggregateMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
 				return prom, nil
 			})
@@ -345,7 +345,7 @@ func TestPrepareStatsQueriesPartialError(t *testing.T) {
 	prom, _, _ := utilSetupMocks(t)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "authInfo", &api.AuthInfo{Token: "test"}))
+	req = req.WithContext(context.WithValue(req.Context(), ContextKeyAuthInfo, &api.AuthInfo{Token: "test"}))
 	w := httptest.NewRecorder()
 	queryTime := time.Date(2020, 10, 22, 0, 0, 0, 0, time.UTC).Unix()
 
@@ -425,7 +425,7 @@ func TestPrepareStatsQueriesNoErrorIntervalAdjusted(t *testing.T) {
 	k8s.On("GetNamespace", "ns3").Return(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns3", CreationTimestamp: creation}}, nil)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "authInfo", &api.AuthInfo{Token: "test"}))
+	req = req.WithContext(context.WithValue(req.Context(), ContextKeyAuthInfo, &api.AuthInfo{Token: "test"}))
 	w := httptest.NewRecorder()
 
 	rawQ := []models.MetricsStatsQuery{{
@@ -457,7 +457,7 @@ func TestValidateBadRequest(t *testing.T) {
 	queryTime := time.Date(2020, 10, 22, 0, 0, 0, 0, time.UTC)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "authInfo", &api.AuthInfo{Token: "test"}))
+	req = req.WithContext(context.WithValue(req.Context(), ContextKeyAuthInfo, &api.AuthInfo{Token: "test"}))
 	w := httptest.NewRecorder()
 
 	rawQ := []models.MetricsStatsQuery{{

@@ -38,9 +38,9 @@ type Protocol struct {
 // Each supported protocol is defined below.  Each rate provided as node or edge metadata must be defined.
 // Each method below should have a section handling each supported protocol.
 
-//
-// GRPC Protocol
-//
+/*
+GRPC Protocol
+*/
 const (
 	grpc             = "grpc"
 	grpcNoResponse   = "grpcNoResponse" //typically a client termination (envoy flag=DC)
@@ -75,9 +75,9 @@ var GRPC = Protocol{
 	UnitShort: rps,
 }
 
-//
-// HTTP Protocol
-//
+/*
+HTTP Protocol
+*/
 const (
 	http             = "http"
 	httpNoResponse   = "httpNoResponse" // typically a client termination (envoy flag=DC)
@@ -120,9 +120,9 @@ var HTTP = Protocol{
 	UnitShort: rps,
 }
 
-//
-// TCP Protocol
-//
+/*
+TCP Protocol
+*/
 const (
 	tcp            = "tcp"
 	tcpResponses   = "tcpResponses"

@@ -910,7 +910,8 @@ func promQuery(query string, queryTime time.Time, api prom_v1.API) model.Vector 
 
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Graph-Generation")
 	value, warnings, err := api.Query(ctx, query, queryTime)
-	if warnings != nil && len(warnings) > 0 {
+	// Any slice that has a len greater than zero is a non-nil slice
+	if warnings != nil {
 		log.Warningf("promQuery. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	graph.CheckUnavailable(err)

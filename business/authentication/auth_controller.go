@@ -48,9 +48,7 @@ type AuthController interface {
 }
 
 // UserSessionData userSessionData
-//
 // This is used for returning the token
-//
 // swagger:model UserSessionData
 type UserSessionData struct {
 	// The expired time for the token

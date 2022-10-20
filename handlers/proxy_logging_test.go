@@ -25,7 +25,7 @@ func setupTestLoggingServer(t *testing.T, namespace, pod string) *httptest.Serve
 	mr := mux.NewRouter()
 	path := "/api/namespaces/{namespace}/pods/{pod}/logging"
 	mr.HandleFunc(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
+		ctx := context.WithValue(r.Context(), ContextKeyAuthInfo, &api.AuthInfo{Token: "test"})
 		LoggingUpdate(w, r.Clone(ctx))
 	}))
 
