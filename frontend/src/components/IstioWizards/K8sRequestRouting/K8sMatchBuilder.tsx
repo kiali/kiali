@@ -13,10 +13,12 @@ type Props = {
   category: string;
   operator: string;
   headerName: string;
+  queryParamName: string;
   matchValue: string;
   isValid: boolean;
   onSelectCategory: (category: string) => void;
   onHeaderNameChange: (headerName: string) => void;
+  onQueryParamNameChange: (queryParamName: string) => void;
   onSelectOperator: (operator: string) => void;
   onMatchValueChange: (matchValue: string) => void;
   onAddMatch: () => void;
@@ -27,30 +29,31 @@ type State = {
   isOperatorDropdown: boolean;
 };
 
+export const PATH = 'path';
 export const HEADERS = 'headers';
-export const URI = 'uri';
-export const SCHEME = 'scheme';
+export const QUERY_PARAMS = 'queryParams';
 export const METHOD = 'method';
-export const AUTHORITY = 'authority';
 
-const matchOptions: string[] = [HEADERS, URI, SCHEME, METHOD, AUTHORITY];
+const matchOptions: string[] = [PATH, HEADERS, QUERY_PARAMS, METHOD];
 
-export const EXACT = 'exact';
-export const PREFIX = 'prefix';
-export const REGEX = 'regex';
+export const ANYWHERE = '/';
 
-// Pseudo operator
-export const PRESENCE = 'is present';
-export const ANYTHING = '^.*$';
+export const EXACT = 'Exact';
+export const PREFIX = 'PathPrefix';
+export const REGEX = 'RegularExpression';
 
-const opOptions: string[] = [EXACT, PREFIX, REGEX];
+const allOptions = {
+  [PATH]: [EXACT, PREFIX, REGEX],
+  [HEADERS]: [EXACT, REGEX],
+  [QUERY_PARAMS]: [EXACT, REGEX],
+  [METHOD]: ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"]
+};
 
 const placeholderText = {
+  [PATH]: 'Path value...',
   [HEADERS]: 'Header value...',
-  [URI]: 'Uri value...',
-  [SCHEME]: 'Scheme value...',
-  [METHOD]: 'Method value...',
-  [AUTHORITY]: 'Authority value...'
+  [QUERY_PARAMS]: 'Query param value...',
+  [METHOD]: 'Method value...'
 };
 
 class K8sMatchBuilder extends React.Component<Props, State> {
@@ -75,7 +78,7 @@ class K8sMatchBuilder extends React.Component<Props, State> {
   };
 
   render() {
-    const renderOpOptions: string[] = this.props.category === HEADERS ? [PRESENCE, ...opOptions] : opOptions;
+    const renderOpOptions: string[] = allOptions[this.props.category]
     return (
       <InputGroup>
         <Dropdown
@@ -108,6 +111,14 @@ class K8sMatchBuilder extends React.Component<Props, State> {
             placeholder="Header name..."
           />
         )}
+        {this.props.category === QUERY_PARAMS && (
+          <TextInput
+            id="query-param-id"
+            value={this.props.queryParamName}
+            onChange={this.props.onQueryParamNameChange}
+            placeholder="Query param name..."
+          />
+        )}
         <Dropdown
           toggle={
             <DropdownToggle onToggle={this.onOperatorToggle} data-test={'requestmatching-match-toggle'}>
@@ -130,7 +141,7 @@ class K8sMatchBuilder extends React.Component<Props, State> {
             </DropdownItem>
           ))}
         />
-        {this.props.operator !== PRESENCE && (
+        {this.props.operator !== METHOD && (
           <TextInput
             id="match-value-id"
             value={this.props.matchValue}

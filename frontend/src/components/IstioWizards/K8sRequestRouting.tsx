@@ -2,7 +2,7 @@ import * as React from 'react';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import K8sRules, { MOVE_TYPE, Rule } from './K8sRequestRouting/K8sRules';
 import K8sRuleBuilder from './K8sRequestRouting/K8sRuleBuilder';
-import { ANYTHING, EXACT, HEADERS, PRESENCE, REGEX } from './RequestRouting/MatchBuilder';
+import { EXACT, PATH, PREFIX, ANYWHERE, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
 import { MSG_WEIGHTS_NOT_VALID, WorkloadWeight } from './TrafficShifting';
 import { getDefaultWeights } from './WizardActions';
 import { FaultInjectionRoute } from './FaultInjection';
@@ -21,6 +21,7 @@ type State = {
   workloadWeights: WorkloadWeight[];
   matches: string[];
   headerName: string;
+  queryParamName: string;
   matchValue: string;
   faultInjectionRoute: FaultInjectionRoute;
   timeoutRetryRoute: TimeoutRetryRoute;
@@ -31,13 +32,15 @@ type State = {
 const MSG_SAME_MATCHING = 'A Rule with same matching criteria is already added.';
 const MSG_HEADER_NAME_NON_EMPTY = 'Header name must be non empty';
 const MSG_HEADER_VALUE_NON_EMPTY = 'Header value must be non empty';
+const MSG_QUERY_NAME_NON_EMPTY = 'Query name must be non empty';
+const MSG_QUERY_VALUE_NON_EMPTY = 'Query value must be non empty';
 
 class K8sRequestRouting extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      category: HEADERS,
-      operator: PRESENCE,
+      category: PATH,
+      operator: EXACT,
       workloadWeights: getDefaultWeights(this.props.workloads),
       faultInjectionRoute: {
         workloads: [],
@@ -73,6 +76,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
       },
       matches: [],
       headerName: '',
+      queryParamName: '',
       matchValue: '',
       rules: this.props.initRules,
       validationMsg: ''
@@ -121,7 +125,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
           ' ' +
           prevState.matchValue;
       } else {
-        newMatch = prevState.category + ' [' + prevState.headerName + '] ' + REGEX + ' ' + ANYTHING;
+        newMatch = prevState.category + ' [' + prevState.headerName + '] ' + PREFIX + ' ' + ANYWHERE;
       }
       if (!prevState.matches.includes(newMatch)) {
         prevState.matches.push(newMatch);
@@ -217,11 +221,25 @@ class K8sRequestRouting extends React.Component<Props, State> {
     if (this.state.matchValue !== '' && headerName === '') {
       validationMsg = MSG_HEADER_NAME_NON_EMPTY;
     }
-    if (this.state.matchValue === '' && headerName !== '' && this.state.operator !== PRESENCE) {
+    if (this.state.matchValue === '' && headerName !== '') {
       validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
     }
     this.setState({
       headerName: headerName,
+      validationMsg: validationMsg
+    });
+  };
+
+  onQueryParamNameChange = (queryParamName: string) => {
+    let validationMsg = '';
+    if (this.state.matchValue !== '' && queryParamName === '') {
+      validationMsg = MSG_QUERY_NAME_NON_EMPTY;
+    }
+    if (this.state.matchValue === '' && queryParamName !== '') {
+      validationMsg = MSG_QUERY_VALUE_NON_EMPTY;
+    }
+    this.setState({
+      headerName: queryParamName,
       validationMsg: validationMsg
     });
   };
@@ -234,6 +252,14 @@ class K8sRequestRouting extends React.Component<Props, State> {
       }
       if (this.state.headerName !== '' && matchValue === '') {
         validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+      }
+    }
+    if (this.state.category === QUERY_PARAMS) {
+      if (this.state.headerName === '' && matchValue !== '') {
+        validationMsg = MSG_QUERY_NAME_NON_EMPTY;
+      }
+      if (this.state.headerName !== '' && matchValue === '') {
+        validationMsg = MSG_QUERY_VALUE_NON_EMPTY;
       }
     }
     if (matchValue === '') {
@@ -298,18 +324,19 @@ class K8sRequestRouting extends React.Component<Props, State> {
           category={this.state.category}
           operator={this.state.operator}
           headerName={this.state.headerName}
+          queryParamName={this.state.queryParamName}
           matchValue={this.state.matchValue}
           isValid={this.state.validationMsg === ''}
           onSelectCategory={(category: string) => {
             this.setState(prevState => {
-              // PRESENCE operator only applies to HEADERS
               return {
                 category: category,
-                operator: prevState.operator === PRESENCE && category !== HEADERS ? EXACT : prevState.operator
+                operator: prevState.operator === EXACT && category !== PATH ? EXACT : prevState.operator
               };
             });
           }}
           onHeaderNameChange={this.onHeaderNameChange}
+          onQueryParamNameChange={this.onQueryParamNameChange}
           onSelectOperator={(operator: string) => this.setState({ operator: operator })}
           onMatchValueChange={this.onMatchValueChange}
           onAddMatch={this.onAddMatch}

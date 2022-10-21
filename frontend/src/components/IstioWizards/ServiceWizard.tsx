@@ -22,7 +22,7 @@ import {
   getInitFaultInjectionRoute,
   getInitGateway,
   getInitHosts,
-  getInitK8sGateway,
+  getInitK8sGateway, getInitK8sHosts,
   getInitLoadBalancer,
   getInitOutlierDetection,
   getInitPeerAuthentication,
@@ -115,7 +115,7 @@ const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState =>
     },
     advancedOptionsValid: true,
     vsHosts: [fqdnServiceName],
-    k8sRouteHosts: [],
+    k8sRouteHosts: [fqdnServiceName],
     trafficPolicy: {
       tlsModified: false,
       mtlsMode: UNSET,
@@ -162,7 +162,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           isMainWizardValid = true;
           break;
         case WIZARD_K8S_REQUEST_ROUTING:
-          isMainWizardValid = true;
+          isMainWizardValid = false;
           break;
         // By default no rules is a no valid scenario
         case WIZARD_REQUEST_ROUTING:
@@ -175,6 +175,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           break;
       }
       const initVsHosts = getInitHosts(this.props.virtualServices);
+      const initK8sRoutes = getInitK8sHosts(this.props.k8sHTTPRoutes);
       const [initMtlsMode, initClientCertificate, initPrivateKey, initCaCertificates] = getInitTlsMode(
         this.props.destinationRules
       );
@@ -281,6 +282,9 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           initVsHosts.length > 1 || (initVsHosts.length === 1 && initVsHosts[0].length > 0)
             ? initVsHosts
             : [fqdnServiceName(this.props.serviceName, this.props.namespace)],
+        k8sRouteHosts: initK8sRoutes.length > 1 || (initK8sRoutes.length === 1 && initK8sRoutes[0].length > 0)
+          ? initK8sRoutes
+          : [fqdnServiceName(this.props.serviceName, this.props.namespace)],
         trafficPolicy: trafficPolicy,
         gateway: gateway,
         k8sGateway: k8sGateway

@@ -1100,6 +1100,19 @@ export const getInitHosts = (virtualServices: VirtualService[]): string[] => {
   return [];
 };
 
+export const getInitK8sHosts = (k8sHTTPRoutes: K8sHTTPRoute[]): string[] => {
+  if (
+    k8sHTTPRoutes &&
+    k8sHTTPRoutes.length === 1 &&
+    k8sHTTPRoutes[0] &&
+    k8sHTTPRoutes[0].spec.hostnames &&
+    k8sHTTPRoutes[0].spec.hostnames.length > 0
+  ) {
+    return k8sHTTPRoutes[0].spec.hostnames;
+  }
+  return [];
+};
+
 // VirtualServices added from the Kiali Wizard only support to add a single gateway
 // and optionally a mesh gateway.
 // This method returns a gateway selected by the user and if mesh is present

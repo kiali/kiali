@@ -12,10 +12,12 @@ type Props = {
   category: string;
   operator: string;
   headerName: string;
+  queryParamName: string;
   matchValue: string;
   isValid: boolean;
   onSelectCategory: (category: string) => void;
   onHeaderNameChange: (headerName: string) => void;
+  onQueryParamNameChange: (matchValue: string) => void;
   onSelectOperator: (operator: string) => void;
   onMatchValueChange: (matchValue: string) => void;
   onAddMatch: () => void;

@@ -25,10 +25,10 @@ class K8sRouteHosts extends React.Component<Props> {
     return (
       <Form isHorizontal={true}>
         <FormGroup
-          label="K8s Gateway API Route Hosts"
+          label="K8s Route Hosts"
           fieldId="advanced-k8sRouteHosts"
           validated={isValid(this.isK8sRouteHostsValid(this.props.k8sRouteHosts))}
-          helperText="The destination hosts to which traffic is being sent. Enter one or multiple hosts separated by comma."
+          helperText="The route hosts to which traffic is being sent. Enter one or multiple hosts separated by comma."
           helperTextInvalid={"IPs are not allowed. A hostname may be prefixed with a wildcard label (*.)"}
         >
           <TextInput
