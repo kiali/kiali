@@ -22,6 +22,10 @@ type certConfig struct {
 	DNSNames   []string `yaml:"dnsNames"`
 }
 
+type mtlsMinV struct {
+	MTLSMinVersion string `yaml:"minProtocolVersion"`
+}
+
 type istioConfig struct {
 	Certificates []certConfig `yaml:"certificates"`
 }
@@ -152,4 +156,21 @@ func (ics *IstioCertsService) getChironCertificates(certsConfig []certConfig) ([
 	})
 
 	return certs, nil
+}
+
+func (ics *IstioCertsService) GetTlsMinVersion() (string, error) {
+	cfg := config.Get()
+
+	istioConfigMap, err := ics.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+	if err != nil {
+		return "UNK", err
+	}
+
+	mtlsMinV := mtlsMinV{}
+	err = yaml.Unmarshal([]byte(istioConfigMap.Data["mesh"]), &mtlsMinV)
+	if err != nil {
+		return "UNK", err
+	}
+
+	return mtlsMinV.MTLSMinVersion, nil
 }

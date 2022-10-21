@@ -19,6 +19,7 @@ const (
 	ClusterMTLS      = "Istio mTLS"
 	StateRunning     = "running"
 	DisabledFeatures = "Disabled features"
+	MTLSVersion      = "mTLS Version"
 )
 
 // IstioEnvironment describes the Istio implementation environment
