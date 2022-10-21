@@ -59,6 +59,7 @@ interface State {
   items: ConfigPreviewItem[];
   newIstioPage: boolean;
   mainTab: string;
+  modalOpen: boolean;
 }
 
 const separator = '\n---\n\n';
@@ -70,11 +71,12 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     this.state = {
       mainTab: this.props.items.length > 0 ? this.props.items[0].title.toLocaleLowerCase().replace(/\s/g, '') : '',
       newIstioPage: newIstioPage,
-      items: cloneDeep(this.props.items)
+      items: cloneDeep(this.props.items),
+      modalOpen: this.props.isOpen
     };
   }
   componentDidUpdate(prevProps: Props) {
-    if (!_.isEqual(prevProps.items, this.props.items)) {
+    if (!_.isEqual(prevProps.items, this.props.items) || prevProps.isOpen !== this.props.isOpen) {
       this.setStateValues(this.props.items);
     }
   }
@@ -82,7 +84,8 @@ export class IstioConfigPreview extends React.Component<Props, State> {
   setStateValues = (items: ConfigPreviewItem[]) => {
     this.setState({
       mainTab: items.length > 0 ? items[0].title.toLocaleLowerCase().replace(/\s/g, '') : '',
-      items: cloneDeep(items)
+      items: cloneDeep(items),
+      modalOpen: this.props.isOpen
     });
   };
 
@@ -171,7 +174,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
       <Modal
         width={'75%'}
         title={this.props.title ? this.props.title : 'Preview Traffic Policies '}
-        isOpen={this.props.isOpen}
+        isOpen={this.state.modalOpen}
         onClose={this.props.onClose}
         onKeyPress={e => (this.props.onKeyPress ? this.props.onKeyPress(e) : {})}
         actions={
