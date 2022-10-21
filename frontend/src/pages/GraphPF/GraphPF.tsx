@@ -30,8 +30,8 @@ export const HOVER_EVENT = 'hover';
 
 let requestFit = false;
 
-const DEFAULT_NODE_SIZE = 50;
-const FIT_PADDING = 50;
+const DEFAULT_NODE_SIZE = 75;
+const FIT_PADDING = 80;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
 

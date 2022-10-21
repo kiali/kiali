@@ -30,6 +30,8 @@ export type NodeData = DecoratedGraphNodeData & {
   dimmed?: boolean;
   highlighted?: boolean;
   hover?: boolean;
+  component?: React.ReactNode;
+  icon?: React.ReactNode;
   labelIcon?: React.ReactNode;
   labelIconClass?: string;
   labelPosition?: LabelPosition;
@@ -173,6 +175,7 @@ export const setNodeLabel = (node: NodeModel, nodeMap: NodeMap, settings: GraphP
   if (badges.length > 0) {
     data.labelIcon = <span className={`${badges[0]}`}></span>;
   }
+  data.component = <span className={`${badges[0]}`}></span>;
 
   // Content portion of label (i.e. the text)...
   const content: string[] = [];

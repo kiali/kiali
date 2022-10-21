@@ -1,17 +1,5 @@
 import { Flex, FlexItem, Popover } from '@patternfly/react-core';
-import {
-  CubeIcon,
-  CubesIcon,
-  LevelDownAltIcon,
-  FilterIcon,
-  InfoCircleIcon,
-  OutlinedHddIcon,
-  QuestionCircleIcon,
-  ServiceIcon,
-  ThumbtackIcon,
-  TimesIcon,
-  UsersIcon
-} from '@patternfly/react-icons';
+import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
 import {
   Decorator,
   DEFAULT_DECORATOR_RADIUS,
@@ -48,61 +36,32 @@ type StyleNodeProps = {
 } & WithDragNodeProps &
   WithSelectionProps;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getTypeIcon = (dataType?: string): React.ComponentClass<any, any> => {
-  /*TODO: try using console ResourceIcon when available
-   * https://issues.redhat.com/browse/CONSOLE-3140
-   */
-  switch (dataType) {
-    case 'Service':
-      return ServiceIcon;
-    case 'Pod':
-      return CubeIcon;
-    case 'Namespace':
-      return UsersIcon;
-    case 'Node':
-      return OutlinedHddIcon;
-    case 'CatalogSource':
-    case 'DaemonSet':
-    case 'Deployment':
-    case 'StatefulSet':
-    case 'Job':
-      return CubesIcon;
-    default:
-      return QuestionCircleIcon;
+const renderIcon = (element: Node): React.ReactNode => {
+  let Component: React.ComponentClass<React.ComponentProps<any>> | undefined;
+  const data = element.getData();
+  const isInaccessible = data.isInaccessible;
+  const isServiceEntry = data.isServiceEntry;
+  const isBox = data.isBox;
+  if (isInaccessible && !isServiceEntry && !isBox) {
+    Component = KeyIcon;
   }
-};
-
-const getTypeIconColor = (dataType?: string): string => {
-  switch (dataType) {
-    case 'Service':
-    case 'Pod':
-    case 'Namespace':
-    case 'Node':
-    case 'CatalogSource':
-    case 'DaemonSet':
-    case 'Deployment':
-    case 'StatefulSet':
-    case 'Job':
-      return '#393F44';
-    default:
-      return '#c9190b';
+  const isOutside = data.isOutside;
+  if (isOutside && !isBox) {
+    Component = TopologyIcon;
   }
-};
 
-const renderIcon = (data: { type?: string }, element: Node): React.ReactNode => {
   const { width, height } = element.getDimensions();
   const shape = element.getNodeShape();
   const iconSize =
     (shape === NodeShape.trapezoid ? width : Math.min(width, height)) -
     (shape === NodeShape.stadium ? 5 : ICON_PADDING) * 2;
-  const Component = getTypeIcon(data.type);
-  const color = getTypeIconColor(data.type);
 
-  return (
+  return Component ? (
     <g transform={`translate(${(width - iconSize) / 2}, ${(height - iconSize) / 2})`}>
-      <Component style={{ color }} width={iconSize} height={iconSize} />
+      <Component width={iconSize} height={iconSize} />
     </g>
+  ) : (
+    <></>
   );
 };
 
@@ -246,7 +205,7 @@ const renderDecorators = (
   isPinned: boolean,
   setPinned: (v: boolean) => void,
   isFiltered: boolean,
-  setFiltered: (v: boolean) => void,
+  setFiltered: (v: boolean) => void
   // getShapeDecoratorCenter?: (
   //   quadrant: TopologyQuadrant,
   //   node: Node,
@@ -306,7 +265,7 @@ const renderDecorators = (
           // t,
           element,
           TopologyQuadrant.upperLeft,
-          <LevelDownAltIcon />,
+          <KeyIcon />, //TODO, replace with actual attachment
           false,
           onStepIntoClick //,
           //getShapeDecoratorCenter
@@ -316,7 +275,7 @@ const renderDecorators = (
           // t,
           element,
           TopologyQuadrant.lowerLeft,
-          isFiltered ? <TimesIcon /> : <FilterIcon />,
+          <KeyIcon />, //TODO, replace with actual attachment
           false,
           onFilterClick //,
           //getShapeDecoratorCenter
@@ -325,7 +284,7 @@ const renderDecorators = (
         // t,
         element,
         TopologyQuadrant.upperRight,
-        <ThumbtackIcon />,
+        <KeyIcon />, //TODO, replace with actual attachment
         isPinned,
         onPinClick //,
         // getShapeDecoratorCenter
@@ -334,7 +293,7 @@ const renderDecorators = (
         // t,
         element,
         TopologyQuadrant.lowerRight,
-        <InfoCircleIcon />,
+        <KeyIcon />, //TODO, replace with actual attachment
         data //,
         // getShapeDecoratorCenter
       )}
@@ -393,7 +352,7 @@ const StyleNode: React.FC<StyleNodeProps> = ({ element, showLabel, dragging, reg
         ) // , rest.getShapeDecoratorCenter)
       }
     >
-      {renderIcon(passedData, element)}
+      {renderIcon(element)}
     </BaseNode>
   );
 };
