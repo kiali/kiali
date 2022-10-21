@@ -1,4 +1,4 @@
-import { BadgeLocation, LabelPosition, NodeModel, NodeShape } from '@patternfly/react-topology';
+import { BadgeLocation, LabelPosition, NodeModel, NodeShape, NodeStatus } from '@patternfly/react-topology';
 import { PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
 import { icons } from 'config';
 import {
@@ -10,6 +10,7 @@ import {
   TrafficRate,
   UNKNOWN
 } from 'types/Graph';
+import { DEGRADED, FAILURE } from 'types/Health';
 import Namespace from 'types/Namespace';
 
 // Utilities for working with PF Topology
@@ -41,7 +42,6 @@ export type NodeData = DecoratedGraphNodeData & {
   selected?: boolean;
   setLocation?: boolean;
   showContextMenu?: boolean;
-  showDecorators?: boolean;
   showStatusDecorator?: boolean;
   statusDecoratorTooltip?: React.ReactNode;
   x?: number;
@@ -72,6 +72,21 @@ const badgeMap = new Map<string, string>()
   .set('RT', icons.istio.requestTimeout.className) // clock
   .set('TS', icons.istio.trafficShifting.className) // share-alt
   .set('WE', icons.istio.workloadEntry.className); // pf-icon-virtual-machine
+
+export const getNodeStatus = (data: NodeData): NodeStatus => {
+  if (data.isBox || data.isIdle) {
+    return NodeStatus.default;
+  }
+
+  switch (data.healthStatus) {
+    case DEGRADED.name:
+      return NodeStatus.warning;
+    case FAILURE.name:
+      return NodeStatus.danger;
+    default:
+      return NodeStatus.success;
+  }
+};
 
 export const getNodeShape = (data: NodeData): NodeShape => {
   switch (data.nodeType) {
@@ -269,32 +284,9 @@ export const setNodeLabel = (node: NodeModel, nodeMap: NodeMap, settings: GraphP
     node.label = content.shift();
     if (content.length > 0) {
       data.secondaryLabel = content.join(':');
-      return;
     }
+    return;
   }
-
-  // TODO fix hosts stuff, maybe as a nodule?
-  /*
-  let hosts: string[] = [];
-  data.hasVS?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
-  data.isGateway?.ingressInfo?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
-  data.isGateway?.egressInfo?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
-  data.isGateway?.gatewayAPIInfo?.hostnames?.forEach(h => hosts.push(h === '*' ? '* (all hosts)' : h));
-
-  let htmlHosts = '';
-  if (hosts.length !== 0) {
-    let hostsToShow = hosts;
-    if (hostsToShow.length > config.graph.maxHosts) {
-      hostsToShow = hosts.slice(0, config.graph.maxHosts);
-      hostsToShow.push(
-        hosts.length - config.graph.maxHosts === 1
-          ? '1 more host...'
-          : `${hosts.length - config.graph.maxHosts} more hosts...`
-      );
-    }
-    htmlHosts = hostsToShow.join('\n');
-  }
-  */
 
   node.label = content.shift();
   if (content.length > 0) {

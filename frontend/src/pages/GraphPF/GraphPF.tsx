@@ -10,7 +10,6 @@ import {
   Model,
   Node,
   NodeModel,
-  NodeStatus,
   TopologyControlBar,
   TopologyView,
   useEventListener,
@@ -23,7 +22,7 @@ import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
 import componentFactory from './componentFactories/componentFactory';
 import stylesComponentFactory from './componentFactories/stylesComponentFactory';
-import { getNodeShape, GraphPFSettings, NodeData, setNodeLabel } from './GraphPFElems';
+import { getNodeShape, getNodeStatus, GraphPFSettings, NodeData, setNodeLabel } from './GraphPFElems';
 import layoutFactory from './layouts/layoutFactory';
 
 export const HOVER_EVENT = 'hover';
@@ -203,8 +202,8 @@ export const TopologyContent: React.FC<{
         height: DEFAULT_NODE_SIZE,
         id: data.id,
         shape: getNodeShape(data),
-        status: NodeStatus.default,
-        style: { padding: 20 },
+        status: getNodeStatus(data),
+        // style: { padding: 20 },
         type: 'node',
         width: DEFAULT_NODE_SIZE
       };
