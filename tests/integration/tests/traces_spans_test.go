@@ -99,7 +99,7 @@ func assertTraces(traces *jaeger.JaegerResponse, statusCode int, err error, asse
 			}
 		}
 	} else {
-		assert.Fail(fmt.Sprintf("Status code should be '200' but was: %d and error: %s", statusCode, err.Error()))
+		assert.Fail(fmt.Sprintf("Status code should be '200' but was: %d and error: %s", statusCode, err))
 	}
 }
 
@@ -114,6 +114,6 @@ func assertSpans(spans []jaeger.JaegerSpan, statusCode int, err error, assert *a
 			assert.Equal(spans[0].TraceID, spans[0].References[0].TraceID)
 		}
 	} else {
-		assert.Fail(fmt.Sprintf("Status code should be '200' but was: %d and error: %s", statusCode, err.Error()))
+		assert.Fail(fmt.Sprintf("Status code should be '200' but was: %d and error: %s", statusCode, err))
 	}
 }

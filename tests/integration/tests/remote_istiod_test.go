@@ -202,8 +202,8 @@ func TestRemoteIstiod(t *testing.T) {
 		cm, err := kubeClient.CoreV1().ConfigMaps(kialiDeploymentNamespace).Get(ctx, kialiName, metav1.GetOptions{})
 		require.NoError(err)
 
-		var currentConfig config.Config
-		require.NoError(yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &currentConfig))
+		currentConfig := config.NewConfig()
+		require.NoError(yaml.Unmarshal([]byte(cm.Data["config.yaml"]), currentConfig))
 		currentConfig.ExternalServices.Istio.Registry = &config.RegistryConfig{
 			IstiodURL: "http://istiod-debug.istio-system:9240",
 		}
