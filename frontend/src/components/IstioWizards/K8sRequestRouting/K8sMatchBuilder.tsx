@@ -36,24 +36,22 @@ export const METHOD = 'method';
 
 const matchOptions: string[] = [PATH, HEADERS, QUERY_PARAMS, METHOD];
 
-export const ANYWHERE = '/';
-
 export const EXACT = 'Exact';
 export const PREFIX = 'PathPrefix';
 export const REGEX = 'RegularExpression';
+export const GET = 'GET';
 
 const allOptions = {
   [PATH]: [EXACT, PREFIX, REGEX],
   [HEADERS]: [EXACT, REGEX],
   [QUERY_PARAMS]: [EXACT, REGEX],
-  [METHOD]: ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"]
+  [METHOD]: ["CONNECT", "DELETE", GET, "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"]
 };
 
 const placeholderText = {
   [PATH]: 'Path value...',
   [HEADERS]: 'Header value...',
   [QUERY_PARAMS]: 'Query param value...',
-  [METHOD]: 'Method value...'
 };
 
 class K8sMatchBuilder extends React.Component<Props, State> {
@@ -141,14 +139,13 @@ class K8sMatchBuilder extends React.Component<Props, State> {
             </DropdownItem>
           ))}
         />
-        {this.props.operator !== METHOD && (
-          <TextInput
-            id="match-value-id"
-            value={this.props.matchValue}
-            onChange={this.props.onMatchValueChange}
-            placeholder={placeholderText[this.props.category]}
-          />
-        )}
+        <TextInput
+          id="match-value-id"
+          value={this.props.matchValue}
+          onChange={this.props.onMatchValueChange}
+          placeholder={placeholderText[this.props.category]}
+          isDisabled={this.props.category === METHOD}
+        />
         <Button
           variant={ButtonVariant.secondary}
           disabled={!this.props.isValid}

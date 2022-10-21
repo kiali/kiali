@@ -2,7 +2,7 @@ import * as React from 'react';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import K8sRules, { MOVE_TYPE, Rule } from './K8sRequestRouting/K8sRules';
 import K8sRuleBuilder from './K8sRequestRouting/K8sRuleBuilder';
-import { EXACT, PATH, PREFIX, ANYWHERE, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
+import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
 import { MSG_WEIGHTS_NOT_VALID, WorkloadWeight } from './TrafficShifting';
 import { getDefaultWeights } from './WizardActions';
 import { FaultInjectionRoute } from './FaultInjection';
@@ -117,15 +117,14 @@ class K8sRequestRouting extends React.Component<Props, State> {
   onAddMatch = () => {
     this.setState(prevState => {
       let newMatch: string;
-      if (this.state.matchValue !== '') {
-        newMatch =
-          prevState.category +
-          (prevState.category === HEADERS ? ' [' + prevState.headerName + '] ' : ' ') +
-          prevState.operator +
-          ' ' +
-          prevState.matchValue;
+      if (prevState.category === PATH) {
+        newMatch = prevState.category + ' ' + prevState.operator + ' ' + prevState.matchValue;
+      } else if (prevState.category === HEADERS) {
+        newMatch = prevState.category + ' [' + prevState.headerName + '] ' + prevState.operator + ' ' + prevState.matchValue;
+      } else if (prevState.category === QUERY_PARAMS) {
+        newMatch = prevState.category + ' [' + prevState.queryParamName + '] ' + prevState.operator + ' ' + prevState.matchValue;
       } else {
-        newMatch = prevState.category + ' [' + prevState.headerName + '] ' + PREFIX + ' ' + ANYWHERE;
+        newMatch = prevState.category + ' [' + prevState.operator + ']';
       }
       if (!prevState.matches.includes(newMatch)) {
         prevState.matches.push(newMatch);
@@ -328,10 +327,10 @@ class K8sRequestRouting extends React.Component<Props, State> {
           matchValue={this.state.matchValue}
           isValid={this.state.validationMsg === ''}
           onSelectCategory={(category: string) => {
-            this.setState(prevState => {
+            this.setState(_ => {
               return {
                 category: category,
-                operator: prevState.operator === EXACT && category !== PATH ? EXACT : prevState.operator
+                operator: category === METHOD ? GET : EXACT
               };
             });
           }}
