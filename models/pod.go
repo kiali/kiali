@@ -145,14 +145,10 @@ func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.C
 }
 
 func isIstioAmbient(pod *core_v1.Pod, container *core_v1.Container, conf *config.Config) bool {
-	if isIstioProxy(pod, container, conf) {
-		for _, c := range container.Env {
-			if c.Name == "ISTIO_META_AMBIENT_TYPE" && c.Value == "ztunnel" {
-				return true
-			}
-
+	for label, _ := range pod.ObjectMeta.Labels {
+		if label == "ambient-type" {
+			return true
 		}
-		return false
 	}
 	return false
 }
