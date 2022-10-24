@@ -493,7 +493,7 @@ func isAmbient() bool {
 	if strings.Contains(rawVersion, "ambient") {
 		return true
 	}
-	return true
+	return false
 }
 
 // trimV will trim the (optional) "v" character found at the beginning of the given version string.
