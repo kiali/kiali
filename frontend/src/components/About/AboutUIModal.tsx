@@ -82,7 +82,7 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
             </TextListItem>
             <TextListItem key={'service-mesh-version'} component="dd">
               {meshVersion!} {this.props.istioEnvironment.isAmbient && (
-               <PFBadge badge={{ badge: "IstioAmbient" }} isRead={true} style={{ marginRight: '0px' }} />
+               <PFBadge badge={{ badge: "Ambient" }} isRead={true} style={{ marginRight: '0px' }} />
               )}
             </TextListItem>
           </TextList>
