@@ -198,6 +198,13 @@ type TracingConfig struct {
 	WhiteListIstioSystem []string          `yaml:"whitelist_istio_system"`
 }
 
+// RegistryConfig contains configuration for connecting to an external istiod.
+// This is used when Kiali should connect to the istiod via a url instead of port forwarding.
+type RegistryConfig struct {
+	IstiodURL string `yaml:"istiod_url"`
+	// TODO: Support auth options
+}
+
 // IstioConfig describes configuration used for istio links
 type IstioConfig struct {
 	ComponentStatuses                 ComponentStatuses   `yaml:"component_status,omitempty"`
@@ -210,6 +217,7 @@ type IstioConfig struct {
 	IstioSidecarAnnotation            string              `yaml:"istio_sidecar_annotation,omitempty"`
 	IstiodDeploymentName              string              `yaml:"istiod_deployment_name,omitempty"`
 	IstiodPodMonitoringPort           int                 `yaml:"istiod_pod_monitoring_port,omitempty"`
+	Registry                          *RegistryConfig     `yaml:"registry,omitempty"`
 	RootNamespace                     string              `yaml:"root_namespace,omitempty"`
 	UrlServiceVersion                 string              `yaml:"url_service_version"`
 }

@@ -22,9 +22,12 @@ func NewExecCommand() string {
 func ApplyFile(yamlFile, namespace string) bool {
 	cmd := exec.Command(ocCommand, "apply", "-n="+namespace, "-f="+yamlFile)
 	stdout, err := cmd.Output()
-
 	if err != nil {
-		log.Errorf(err.Error())
+		var stderr string
+		if e, ok := err.(*exec.ExitError); ok {
+			stderr = string(e.Stderr)
+		}
+		log.Errorf("Err: '%s'. stderr: '%s'.", err.Error(), stderr)
 		return false
 	}
 	log.Debugf(string(stdout))
@@ -34,7 +37,6 @@ func ApplyFile(yamlFile, namespace string) bool {
 func DeleteFile(yamlFile, namespace string) bool {
 	cmd := exec.Command(ocCommand, "delete", "-n="+namespace, "-f="+yamlFile)
 	stdout, err := cmd.Output()
-
 	if err != nil {
 		log.Errorf(err.Error())
 		return false

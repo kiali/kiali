@@ -42,6 +42,11 @@ func (o *K8SClientMock) GatewayAPI() gatewayapiclient.Interface {
 	return o.gatewayapiClientSet
 }
 
+func (o *K8SClientMock) CanConnectToIstiod() (kubernetes.IstioComponentStatus, error) {
+	args := o.Called()
+	return args.Get(0).(kubernetes.IstioComponentStatus), args.Error(1)
+}
+
 func (o *K8SClientMock) GetProxyStatus() ([]*kubernetes.ProxyStatus, error) {
 	args := o.Called()
 	return args.Get(0).([]*kubernetes.ProxyStatus), args.Error(1)
