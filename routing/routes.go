@@ -1063,26 +1063,6 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioCerts,
 			true,
 		},
-		// swagger:route GET /istio/certs certs istioCerts
-		// ---
-		// Get certificates (internal) information used by Istio
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      200: certsInfoResponse
-		//      500: internalError
-		//
-		{
-			"IstioMTLS",
-			"GET",
-			"/api/istio/mtls",
-			handlers.IstioMTLS,
-			true,
-		},
 		// swagger:route GET /namespaces/graph graphs graphNamespaces
 		// ---
 		// The backing JSON for a namespaces graph.
