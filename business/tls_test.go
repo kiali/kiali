@@ -37,7 +37,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	k8s.On("GetToken").Return("token")
-	k8s.On("GetConfigMap").Return("istio-system", "istio")
+	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
@@ -62,6 +62,7 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
+	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
 
 	TLSService := getTLSService(k8s, true, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
@@ -87,6 +88,7 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
+	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
@@ -113,6 +115,7 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
+	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
@@ -139,6 +142,7 @@ func TestMeshStatusDisabled(t *testing.T) {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
+	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
@@ -162,7 +166,8 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
-
+	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
+	
 	TLSService := getTLSService(k8s, true, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
 
