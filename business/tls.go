@@ -59,7 +59,7 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, namespaces []strin
 	minTLS, err := in.businessLayer.IstioCerts.GetTlsMinVersion()
 
 	if err != nil {
-		log.Errorf("Error getting TLM min version: %V ", err)
+		log.Errorf("Error getting TLM min version: %s ", err)
 	}
 
 	return models.MTLSStatus{
