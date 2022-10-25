@@ -37,7 +37,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	k8s.On("GetToken").Return("token")
-	k8s.On("GetTlsMinVersion").Return("")
+	k8s.On("GetConfigMap").Return("istio-system", "istio")
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
