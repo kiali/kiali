@@ -1,4 +1,4 @@
-import {Tooltip, TooltipPosition} from '@patternfly/react-core';
+import {Label, Tooltip, TooltipPosition} from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import * as React from 'react';
 import {style} from "typestyle";
@@ -6,7 +6,6 @@ import {KialiAppState} from "../../store/Store";
 import {istioCertsInfoSelector} from "../../store/Selectors";
 import {CertsInfo} from "../../types/CertsInfo";
 import {connect} from "react-redux";
-
 
 type Props = {
   mTLS: boolean,
@@ -53,10 +52,7 @@ function LockIcon(props) {
       position={TooltipPosition.top}
       content={showCerts(props.certsInfo)}
     >
-      <>
-        {props.mTLS && (<KialiIcon.MtlsLock className={lockIconStyle}/>)}
-        {!props.mTLS && (<KialiIcon.MtlsUnlock className={lockIconStyle}/>)}
-      </>
+        {props.mTLS ? (<KialiIcon.MtlsLock className={lockIconStyle}/>) : (<KialiIcon.MtlsUnlock className={lockIconStyle}/>)}
     </Tooltip>
   );
 };
@@ -68,7 +64,9 @@ class TLSInfo extends React.Component<Props> {
       <div style={{ textAlign: 'left' }}>
           <div>
             <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>Min TLS Version</div>
-            {this.props.version} <LockIcon mTLS={this.props.mTLS} certsInfo={this.props.certsInfo}></LockIcon>
+            <Label isCompact color="blue">
+              {this.props.version} <LockIcon mTLS={this.props.mTLS} certsInfo={this.props.certsInfo}></LockIcon>
+            </Label>
           </div>
       </div>
     );
