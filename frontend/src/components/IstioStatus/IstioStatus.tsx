@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { SVGIconProps } from "@patternfly/react-icons/dist/esm/createIcon";
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { TimeInMilliseconds } from '../../types/Common';
@@ -26,8 +27,16 @@ type ReduxProps = {
   status: ComponentStatus[];
 };
 
+type StatusIcons = {
+  ErrorIcon?: React.ComponentClass<SVGIconProps>,
+  WarningIcon?: React.ComponentClass<SVGIconProps>,
+  InfoIcon?: React.ComponentClass<SVGIconProps>,
+  HealthyIcon?: React.ComponentClass<SVGIconProps>
+};
+
 type Props = ReduxProps & {
   lastRefreshAt: TimeInMilliseconds;
+  icons?: StatusIcons
 };
 
 const ValidToColor = {
@@ -40,6 +49,13 @@ const ValidToColor = {
   'false-false-true': PFColors.Info,
   'false-false-false': PFColors.Success
 };
+
+const defaultIcons = {
+  ErrorIcon: ResourcesFullIcon,
+  WarningIcon: ResourcesFullIcon,
+  InfoIcon: ResourcesFullIcon,
+  HealthyIcon: ResourcesFullIcon
+}
 
 export class IstioStatus extends React.Component<Props> {
   componentDidMount() {
@@ -103,9 +119,23 @@ export class IstioStatus extends React.Component<Props> {
 
   render() {
     if (!this.healthyComponents()) {
+      const icons = this.props.icons ? { ...defaultIcons, ...this.props.icons } : defaultIcons;
+      const iconColor = this.tooltipColor();
+      let Icon: React.ComponentClass<SVGIconProps> = ResourcesFullIcon;
+
+      if (iconColor === PFColors.Danger) {
+        Icon = icons.ErrorIcon;
+      } else if (iconColor === PFColors.Warning) {
+        Icon = icons.WarningIcon;
+      } else if (iconColor === PFColors.Info) {
+        Icon = icons.InfoIcon;
+      } else if (iconColor === PFColors.Success) {
+        Icon = icons.HealthyIcon;
+      }
+
       return (
         <Tooltip position={TooltipPosition.left} enableFlip={true} content={this.tooltipContent()} maxWidth={'25rem'}>
-          <ResourcesFullIcon color={this.tooltipColor()} style={{ verticalAlign: '-0.2em', marginRight: -8 }} />
+          <Icon color={iconColor} style={{ verticalAlign: '-0.2em', marginRight: -8 }} />
         </Tooltip>
       );
     }
