@@ -167,7 +167,6 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
-	
 	TLSService := getTLSService(k8s, true, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
 
