@@ -167,14 +167,17 @@ func (ics *IstioCertsService) GetTlsMinVersion() (string, error) {
 
 	istioConfigMap, err := ics.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
 	if err != nil {
-		return "UNK", err
+		return "N/A", err
 	}
 
 	mtlsMinV := meshMTLS{}
 	err = yaml.Unmarshal([]byte(istioConfigMap.Data["mesh"]), &mtlsMinV)
 	if err != nil {
-		return "UNK", err
+		return "N/A", err
 	}
 
+	if mtlsMinV.MeshMTLS.MTLSMinVersion == "" {
+		return "N/A", nil
+	}
 	return mtlsMinV.MeshMTLS.MTLSMinVersion, nil
 }
