@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"github.com/kiali/kiali/log"
 
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -56,6 +57,10 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, namespaces []strin
 	}
 
 	minTLS, err := in.businessLayer.IstioCerts.GetTlsMinVersion()
+
+	if err != nil {
+		log.Errorf("Error getting TLM min version: %V ", err)
+	}
 
 	return models.MTLSStatus{
 		Status:          mtlsStatus.MeshMtlsStatus().OverallStatus,

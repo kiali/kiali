@@ -63,10 +63,6 @@ function LockIcon(props) {
 
 class TLSInfo extends React.Component<Props> {
 
-  constructor(props: Props) {
-    super(props)
-  }
-
   render() {
     return (
       <div style={{ textAlign: 'left' }}>
