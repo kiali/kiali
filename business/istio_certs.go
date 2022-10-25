@@ -26,6 +26,10 @@ type mtlsMinV struct {
 	MTLSMinVersion string `yaml:"minProtocolVersion"`
 }
 
+type meshMTLS struct {
+	MeshMTLS mtlsMinV `yaml:"meshMTLS"`
+}
+
 type istioConfig struct {
 	Certificates []certConfig `yaml:"certificates"`
 }
@@ -166,11 +170,11 @@ func (ics *IstioCertsService) GetTlsMinVersion() (string, error) {
 		return "UNK", err
 	}
 
-	mtlsMinV := mtlsMinV{}
+	mtlsMinV := meshMTLS{}
 	err = yaml.Unmarshal([]byte(istioConfigMap.Data["mesh"]), &mtlsMinV)
 	if err != nil {
 		return "UNK", err
 	}
 
-	return mtlsMinV.MTLSMinVersion, nil
+	return mtlsMinV.MeshMTLS.MTLSMinVersion, nil
 }

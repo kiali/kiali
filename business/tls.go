@@ -55,9 +55,12 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, namespaces []strin
 		AllowPermissive:     false,
 	}
 
+	minTLS, err := in.businessLayer.IstioCerts.GetTlsMinVersion()
+
 	return models.MTLSStatus{
 		Status:          mtlsStatus.MeshMtlsStatus().OverallStatus,
 		AutoMTLSEnabled: *in.enabledAutoMtls,
+		MinTLS:          minTLS,
 	}, nil
 }
 

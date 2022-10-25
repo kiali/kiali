@@ -11,6 +11,7 @@ export enum MTLSStatuses {
 export interface TLSStatus {
   status: string;
   autoMTLSEnabled: boolean;
+  minTLS: string;
 }
 
 export const nsWideMTLSStatus = (nsStatus: string, meshStatus: string): string => {

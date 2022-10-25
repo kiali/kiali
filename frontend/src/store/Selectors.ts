@@ -78,6 +78,10 @@ const meshwideMTLSStatus = (state: KialiAppState) => state.meshTLSStatus.status;
 
 export const meshWideMTLSStatusSelector = createIdentitySelector(meshwideMTLSStatus);
 
+const minTLSVersion = (state: KialiAppState) => state.meshTLSStatus.minTLS;
+
+export const minTLSVersionSelector = createIdentitySelector(minTLSVersion);
+
 const meshwideMTLSEnabled = (state: KialiAppState) => state.meshTLSStatus.autoMTLSEnabled;
 
 export const meshWideMTLSEnabledSelector = createIdentitySelector(meshwideMTLSEnabled);

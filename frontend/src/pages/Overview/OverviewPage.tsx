@@ -43,7 +43,12 @@ import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import { KialiAppState} from '../../store/Store';
 import { connect } from 'react-redux';
-import { durationSelector, meshWideMTLSStatusSelector, refreshIntervalSelector } from '../../store/Selectors';
+import {
+  durationSelector,
+  meshWideMTLSStatusSelector,
+  minTLSVersionSelector,
+  refreshIntervalSelector
+} from '../../store/Selectors';
 import { nsWideMTLSStatus } from '../../types/TLSStatus';
 import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
@@ -68,7 +73,6 @@ import OverviewStatusContainer from './OverviewStatus';
 import ControlPlaneNamespaceStatus from './ControlPlaneNamespaceStatus';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
 import TlsInfo from 'components/Overview/TlsInfo';
-import {StatusState} from "../../types/StatusState";
 
 const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
@@ -150,7 +154,7 @@ type ReduxProps = {
   meshStatus: string;
   navCollapse: boolean;
   refreshInterval: IntervalInMilliseconds;
-  statusState: StatusState;
+  minTLS: string;
 };
 
 type OverviewProps = ReduxProps & {};
@@ -463,7 +467,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         results.forEach(result => {
           result.nsInfo.tlsStatus = {
             status: nsWideMTLSStatus(result.status.status, this.props.meshStatus),
-            autoMTLSEnabled: result.status.autoMTLSEnabled
+            autoMTLSEnabled: result.status.autoMTLSEnabled,
+            minTLS: result.status.minTLS
           };
         });
       })
@@ -809,7 +814,6 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   };
 
   render() {
-    console.log(this.props.meshStatus)
     const sm = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 6;
     const md = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 4;
     const lg = 12;
@@ -891,7 +895,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 </div>
                                 { ns.status && <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />}
                                 { this.state.displayMode === OverviewDisplayMode.EXPAND && <ControlPlaneNamespaceStatus outboundTrafficPolicy={this.state.outboundPolicyMode} namespace={ns}></ControlPlaneNamespaceStatus>}
-                                <TlsInfo mTLS={true} version={this.props.statusState.status["Kiali version"]}></TlsInfo>
+                                <TlsInfo mTLS={true} version={this.props.minTLS}></TlsInfo>
                               </GridItem>
                               {ns.name === serverConfig.istioNamespace &&
                                 <GridItem md={9}>
@@ -1118,7 +1122,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   meshStatus: meshWideMTLSStatusSelector(state),
   navCollapse: state.userSettings.interface.navCollapse,
   refreshInterval: refreshIntervalSelector(state),
-  statusState: state.statusState
+  minTLS: minTLSVersionSelector(state),
 });
 
 const OverviewPageContainer = connect(mapStateToProps)(OverviewPage);
