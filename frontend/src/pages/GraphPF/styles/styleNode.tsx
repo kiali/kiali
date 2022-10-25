@@ -2,6 +2,7 @@ import { Popover } from '@patternfly/react-core';
 import { KeyIcon, GlobeIcon, TopologyIcon } from '@patternfly/react-icons';
 import {
   Decorator,
+  DefaultNode,
   DEFAULT_DECORATOR_RADIUS,
   getDefaultShapeDecoratorCenter,
   Node,
@@ -13,7 +14,7 @@ import {
   WithDragNodeProps,
   WithSelectionProps
 } from '@patternfly/react-topology';
-import BaseNode from '../components/node';
+// import BaseNode from '../components/node';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
 import * as React from 'react';
 import { NodeData } from '../GraphPFElems';
@@ -223,7 +224,7 @@ const StyleNode: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   //   }
   // }
   return (
-    <BaseNode
+    <DefaultNode
       element={element}
       {...updatedRest}
       {...passedData}
@@ -235,7 +236,7 @@ const StyleNode: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
       attachments={detailsLevel === ScaleDetailsLevel.high && renderDecorators(element)}
     >
       {renderIcon(element)}
-    </BaseNode>
+    </DefaultNode>
   );
 };
 

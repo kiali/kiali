@@ -22,7 +22,15 @@ import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
 import componentFactory from './componentFactories/componentFactory';
 import stylesComponentFactory from './componentFactories/stylesComponentFactory';
-import { getNodeShape, getNodeStatus, GraphPFSettings, NodeData, setNodeLabel } from './GraphPFElems';
+import {
+  EdgeData,
+  getNodeShape,
+  getNodeStatus,
+  GraphPFSettings,
+  NodeData,
+  setEdgeOptions,
+  setNodeLabel
+} from './GraphPFElems';
 import layoutFactory from './layouts/layoutFactory';
 
 export const HOVER_EVENT = 'hover';
@@ -58,10 +66,11 @@ export const TopologyContent: React.FC<{
 }> = ({ graphData, graphSettings, options }) => {
   const controller = useVisualizationController();
 
+  // update hover as the mouse moves
   const [hoveredId, setHoveredId] = React.useState<string>('');
   const onHover = React.useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (data: any) => {
+    (data: NodeData) => {
       setHoveredId(data.isHovered ? data.id : '');
     },
     []
@@ -76,6 +85,7 @@ export const TopologyContent: React.FC<{
     }
   }, [controller]);
 
+  //TODO: Find a way to block all animation and just have this called on final layout
   const onLayoutEnd = React.useCallback(() => {
     //fit view to new loaded elements
     if (requestFit) {
@@ -147,7 +157,7 @@ export const TopologyContent: React.FC<{
     //    highlightedId = selectedIds[0];
     //  }
 
-    const updatedModel = generateDataModel(graphData, graphSettings, hoveredId);
+    const updatedModel = generateDataModel(graphData, graphSettings);
     const allIds = [...(updatedModel.nodes || []), ...(updatedModel.edges || [])].map(item => item.id);
     controller.getElements().forEach(e => {
       if (e.getType() !== 'graph') {
@@ -173,9 +183,9 @@ export const TopologyContent: React.FC<{
       }
     });
     controller.fromModel(updatedModel);
-  }, [controller, graphData, graphSettings, hoveredId]);
+  }, [controller, graphData, graphSettings]);
 
-  const generateDataModel = (graphData: GraphData, graphSettings: GraphPFSettings, _hoveredId: string): Model => {
+  const generateDataModel = (graphData: GraphData, graphSettings: GraphPFSettings): Model => {
     let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
     const edges: EdgeModel[] = [];
     // const opts = { ...DefaultOptions, ...options };
@@ -208,21 +218,26 @@ export const TopologyContent: React.FC<{
         width: DEFAULT_NODE_SIZE
       };
       setNodeLabel(node, nodeMap, graphSettings);
+      // TODO, do we actually need to do anything with this?
+      if (hoveredId === data.id) {
+        console.log(`Hovering over ${hoveredId} `);
+      }
       nodeMap.set(data.id, node);
 
       return node;
     }
 
-    function addEdge(id: string, sourceId: string, targetId: string, data: any) {
-      const edge = {
-        id: id,
-        type: 'edge',
-        source: sourceId,
-        target: targetId,
+    function addEdge(data: EdgeData): EdgeModel {
+      const edge: EdgeModel = {
+        data: data,
         edgeStyle: EdgeStyle.solid,
+        id: data.id,
+        source: data.source,
+        target: data.target,
+        type: 'edge'
         //animationSpeed: getAnimationSpeed(count, options.maxEdgeValue),
-        data: data
       };
+      setEdgeOptions(edge, nodeMap, graphSettings);
       edges.push(edge);
 
       return edge;
@@ -242,9 +257,9 @@ export const TopologyContent: React.FC<{
       const nd = n.data;
       let newNode: NodeModel;
       if (nd.isBox) {
-        newNode = addGroup(nd);
+        newNode = addGroup(nd as NodeData);
       } else {
-        newNode = addNode(nd);
+        newNode = addNode(nd as NodeData);
       }
       if (nd.parent) {
         addChild(newNode);
@@ -253,7 +268,7 @@ export const TopologyContent: React.FC<{
 
     graphData.elements.edges?.forEach(e => {
       const ed = e.data;
-      addEdge(ed.id, ed.source, ed.target, ed);
+      addEdge(ed as EdgeData);
     });
 
     const nodes = Array.from(nodeMap.values());

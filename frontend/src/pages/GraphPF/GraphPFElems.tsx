@@ -1,17 +1,30 @@
-import { BadgeLocation, LabelPosition, NodeModel, NodeShape, NodeStatus } from '@patternfly/react-topology';
+import {
+  BadgeLocation,
+  EdgeModel,
+  EdgeTerminalType,
+  LabelPosition,
+  NodeModel,
+  NodeShape,
+  NodeStatus
+} from '@patternfly/react-topology';
 import { PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
 import { icons } from 'config';
 import {
   BoxByType,
+  DecoratedGraphEdgeData,
   DecoratedGraphNodeData,
   EdgeLabelMode,
   GraphType,
   NodeType,
+  numLabels,
+  Protocol,
   TrafficRate,
   UNKNOWN
 } from 'types/Graph';
 import { DEGRADED, FAILURE } from 'types/Health';
 import Namespace from 'types/Namespace';
+import _ from 'lodash';
+import { PFColors } from 'components/Pf/PfColors';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
@@ -28,18 +41,19 @@ export type NodeData = DecoratedGraphNodeData & {
   badgeLocation?: BadgeLocation;
   badgeTextColor?: string;
   column?: number;
-  dimmed?: boolean;
-  highlighted?: boolean;
-  hover?: boolean;
   component?: React.ReactNode;
   icon?: React.ReactNode;
+  isDimmed?: boolean;
+  isHidden?: boolean;
+  isHighlighted?: boolean;
+  isHovered?: boolean;
+  isSelected?: boolean;
   labelIcon?: React.ReactNode;
   labelIconClass?: string;
   labelPosition?: LabelPosition;
   marginX?: number;
   row?: number;
   secondaryLabel?: string;
-  selected?: boolean;
   setLocation?: boolean;
   showContextMenu?: boolean;
   showStatusDecorator?: boolean;
@@ -47,6 +61,14 @@ export type NodeData = DecoratedGraphNodeData & {
   x?: number;
   y?: number;
   truncateLength?: number;
+};
+
+export type EdgeData = DecoratedGraphEdgeData & {
+  endTerminalType: EdgeTerminalType;
+  isSelected?: boolean;
+  pathStyle?: React.CSSProperties;
+  tag?: string;
+  tagStatus?: NodeStatus;
 };
 
 export type GraphPFSettings = {
@@ -72,6 +94,12 @@ const badgeMap = new Map<string, string>()
   .set('RT', icons.istio.requestTimeout.className) // clock
   .set('TS', icons.istio.trafficShifting.className) // share-alt
   .set('WE', icons.istio.workloadEntry.className); // pf-icon-virtual-machine
+
+const EdgeColor = PFColors.Success;
+const EdgeColorDead = PFColors.Black500;
+const EdgeColorDegraded = PFColors.Warning;
+const EdgeColorFailure = PFColors.Danger;
+const EdgeColorTCPWithTraffic = PFColors.Blue600;
 
 export const getNodeStatus = (data: NodeData): NodeStatus => {
   if (data.isBox || data.isIdle) {
@@ -294,4 +322,214 @@ export const setNodeLabel = (node: NodeModel, nodeMap: NodeMap, settings: GraphP
   }
 
   return;
+};
+
+const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettings): string => {
+  const data = edge.data as EdgeData;
+  const edgeLabels = settings.edgeLabels;
+  const isVerbose = data.isSelected;
+  const includeUnits = isVerbose || numLabels(edgeLabels) > 1;
+  let labels = [] as string[];
+
+  if (edgeLabels.includes(EdgeLabelMode.TRAFFIC_RATE)) {
+    let rate = 0;
+    let pErr = 0;
+    if (data.http > 0) {
+      rate = data.http;
+      pErr = data.httpPercentErr > 0 ? data.httpPercentErr : 0;
+    } else if (data.grpc > 0) {
+      rate = data.grpc;
+      pErr = data.grpcPercentErr > 0 ? data.grpcPercentErr : 0;
+    } else if (data.tcp > 0) {
+      rate = data.tcp;
+    }
+
+    if (rate > 0) {
+      if (pErr > 0) {
+        labels.push(`${toFixedRequestRate(rate, includeUnits)}\n${toFixedErrRate(pErr)}`);
+      } else {
+        switch (data.protocol) {
+          case Protocol.GRPC:
+            if (settings.trafficRates.includes(TrafficRate.GRPC_REQUEST)) {
+              labels.push(toFixedRequestRate(rate, includeUnits));
+            } else {
+              labels.push(toFixedRequestRate(rate, includeUnits, 'mps'));
+            }
+            break;
+          case Protocol.TCP:
+            labels.push(toFixedByteRate(rate, includeUnits));
+            break;
+          default:
+            labels.push(toFixedRequestRate(rate, includeUnits));
+            break;
+        }
+      }
+    }
+  }
+
+  if (edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP)) {
+    let responseTime = data.responseTime;
+
+    if (responseTime > 0) {
+      labels.push(toFixedDuration(responseTime));
+    }
+  }
+
+  if (edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP)) {
+    let rate = data.throughput;
+
+    if (rate > 0) {
+      labels.push(toFixedByteRate(rate, includeUnits));
+    }
+  }
+
+  if (edgeLabels.includes(EdgeLabelMode.TRAFFIC_DISTRIBUTION)) {
+    let pReq;
+    if (data.httpPercentReq > 0) {
+      pReq = data.httpPercentReq;
+    } else if (data.grpcPercentReq > 0) {
+      pReq = data.grpcPercentReq;
+    }
+    if (pReq > 0 && pReq < 100) {
+      labels.push(toFixedPercent(pReq));
+    }
+  }
+
+  let label = labels.join('\n');
+
+  if (isVerbose) {
+    const protocol = data.protocol;
+    label = protocol ? `${protocol}\n${label}` : label;
+  }
+
+  const mtlsPercentage = data.isMTLS;
+  let lockIcon = false;
+  if (settings.showSecurity && data.hasTraffic) {
+    if (mtlsPercentage && mtlsPercentage > 0) {
+      lockIcon = true;
+      label = `${icons.istio.mtls.ascii}\n${label}`;
+    }
+  }
+
+  if (data.hasTraffic && data.responses) {
+    if (nodeMap.get(edge.target!)?.data?.hasCB) {
+      const responses = data.responses;
+      for (let code of _.keys(responses)) {
+        // TODO: Not 100% sure we want "UH" code here ("no healthy upstream hosts") but based on timing I have
+        // seen this code returned and not "UO". "UO" is returned only when the circuit breaker is caught open.
+        // But if open CB is responsible for removing possible destinations the "UH" code seems preferred.
+        if (responses[code]['UO'] || responses[code]['UH']) {
+          label = lockIcon
+            ? `$icons.istio.circuitBreaker.className} ${label}`
+            : `${icons.istio.circuitBreaker.className}\n${label}`;
+          break;
+        }
+      }
+    }
+  }
+
+  return label;
+};
+
+const trimFixed = (fixed: string): string => {
+  if (!fixed.includes('.')) {
+    return fixed;
+  }
+  while (fixed.endsWith('0')) {
+    fixed = fixed.slice(0, -1);
+  }
+  return fixed.endsWith('.') ? (fixed = fixed.slice(0, -1)) : fixed;
+};
+
+const toFixedRequestRate = (num: number, includeUnits: boolean, units?: string): string => {
+  num = safeNum(num);
+  const rate = trimFixed(num.toFixed(2));
+  return includeUnits ? `${rate} ${units || 'rps'}` : rate;
+};
+
+const toFixedErrRate = (num: number): string => {
+  num = safeNum(num);
+  return `${trimFixed(num.toFixed(num < 1 ? 1 : 0))}% err`;
+};
+
+const toFixedByteRate = (num: number, includeUnits: boolean): string => {
+  num = safeNum(num);
+  if (num < 1024.0) {
+    const rate = num < 1.0 ? trimFixed(num.toFixed(2)) : num.toFixed(0);
+    return includeUnits ? `${rate} bps` : rate;
+  }
+  const rate = trimFixed((num / 1024.0).toFixed(2));
+  return includeUnits ? `${rate} kps` : rate;
+};
+
+const toFixedPercent = (num: number): string => {
+  num = safeNum(num);
+  return `${trimFixed(num.toFixed(1))}%`;
+};
+
+const toFixedDuration = (num: number): string => {
+  num = safeNum(num);
+  if (num < 1000) {
+    return `${num.toFixed(0)}ms`;
+  }
+  return `${trimFixed((num / 1000.0).toFixed(2))}s`;
+};
+
+// This is due to us never having figured out why a tiny fraction of what-we-expect-to-be-numbers
+// are in fact strings.  We don't know if our conversion in GraphData.ts has a flaw, or whether
+// something else happens post-conversion.
+const safeNum = (num: any): number => {
+  if (Number.isFinite(num)) {
+    return num;
+  }
+  if (typeof num === 'string' || num instanceof String) {
+    console.log(`Expected number but received string: |${num}|`);
+  }
+  // this will return NaN if the string is 'NaN' or any other non-number
+  return Number(num);
+};
+
+const getEdgeStatus = (data: EdgeData): NodeStatus => {
+  if (!data.hasTraffic) {
+    return NodeStatus.default;
+  }
+  if (data.protocol === 'tcp') {
+    return NodeStatus.info;
+  }
+
+  switch (data.healthStatus) {
+    case FAILURE.name:
+      return NodeStatus.danger;
+    case DEGRADED.name:
+      return NodeStatus.warning;
+    default:
+      return NodeStatus.success;
+  }
+};
+
+const getPathStyle = (data: EdgeData): React.CSSProperties => {
+  if (!data.hasTraffic) {
+    return { stroke: EdgeColorDead };
+  }
+  if (data.protocol === 'tcp') {
+    return { stroke: EdgeColorTCPWithTraffic };
+  }
+
+  switch (data.healthStatus) {
+    case FAILURE.name:
+      return { stroke: EdgeColorFailure };
+    case DEGRADED.name:
+      return { stroke: EdgeColorDegraded };
+    default:
+      return { stroke: EdgeColor };
+  }
+};
+
+export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettings): void => {
+  const data = edge.data as EdgeData;
+
+  data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.cross : EdgeTerminalType.directional;
+  data.tag = getEdgeLabel(edge, nodeMap, settings);
+  data.tagStatus = getEdgeStatus(data);
+  data.pathStyle = getPathStyle(data);
 };
