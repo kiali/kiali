@@ -368,7 +368,6 @@ for s in \
    "--set values.global.multiCluster.clusterName=${CLUSTER_NAME}" \
    "--set values.global.network=${NETWORK}" \
    "--set values.meshConfig.accessLogFile=/dev/stdout" \
-   "--set values.meshConfig.meshMTLS.minProtocolVersion=TLSV1_3" \
    "${CNI_OPTIONS}" \
    "${REDUCE_RESOURCES_OPTIONS}" \
    "${CUSTOM_INSTALL_SETTINGS}"
