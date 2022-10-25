@@ -10,27 +10,22 @@ import {
   TitleSizes,
   TooltipPosition
 } from '@patternfly/react-core';
-import { WorkloadWeight } from '../TrafficShifting';
-import { Abort, Delay, HTTPRetry } from '../../../types/IstioObjects';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ROUTE_RULES_TOOLTIP, wizardTooltip } from '../WizardHelp';
+import { K8sRouteBackendRef } from "./K8sRuleBuilder";
 
 export enum MOVE_TYPE {
   UP,
   DOWN
 }
 
-export type Rule = {
+export type K8sRule = {
   matches: string[];
-  workloadWeights: WorkloadWeight[];
-  delay?: Delay;
-  abort?: Abort;
-  timeout?: string;
-  retries?: HTTPRetry;
+  backendRefs: K8sRouteBackendRef[];
 };
 
 type Props = {
-  rules: Rule[];
+  k8sRules: K8sRule[];
   onRemoveRule: (index: number) => void;
   onMoveRule: (index: number, move: MOVE_TYPE) => void;
 };
@@ -48,11 +43,11 @@ const noRulesStyle = style({
 });
 
 class K8sRules extends React.Component<Props> {
-  matchAllIndex = (rules: Rule[]): number => {
+  matchAllIndex = (k8sRules: K8sRule[]): number => {
     let matchAll: number = -1;
-    for (let index = 0; index < rules.length; index++) {
-      const rule = rules[index];
-      if (rule.matches.length === 0) {
+    for (let index = 0; index < k8sRules.length; index++) {
+      const rule = k8sRules[index];
+      if (!rule.matches || rule.matches.length === 0) {
         matchAll = index;
         break;
       }
@@ -79,13 +74,13 @@ class K8sRules extends React.Component<Props> {
     };
 
     const actions: any[] = [];
-    if (this.props.rules.length > 0) {
+    if (this.props.k8sRules.length > 0) {
       actions.push(removeAction);
     }
     if (rowIndex > 0) {
       actions.push(moveUpAction);
     }
-    if (rowIndex + 1 < this.props.rules.length) {
+    if (rowIndex + 1 < this.props.k8sRules.length) {
       actions.push(moveDownAction);
     }
     return actions;
@@ -111,16 +106,16 @@ class K8sRules extends React.Component<Props> {
     ];
 
     let isValid: boolean = true;
-    const matchAll: number = this.matchAllIndex(this.props.rules);
+    const matchAll: number = this.matchAllIndex(this.props.k8sRules);
     const routeRules =
-      this.props.rules.length > 0
-        ? this.props.rules.map((rule, order) => {
+      this.props.k8sRules.length > 0
+        ? this.props.k8sRules.map((rule, order) => {
             isValid = matchAll === -1 || order <= matchAll;
             return {
               cells: [
                 <>{order + 1}</>,
                 <>
-                  {rule.matches.length === 0
+                  {!rule.matches || rule.matches.length === 0
                     ? 'Any request'
                     : rule.matches.map((match, i) => <div key={'match_' + i}>{match}</div>)}
                   {!isValid && (
@@ -132,52 +127,17 @@ class K8sRules extends React.Component<Props> {
                   )}
                 </>,
                 <>
-                  <div key={'ww_' + order}>
-                    {rule.workloadWeights
-                      .filter(wk => !wk.mirrored)
-                      .map((wk, i) => {
+                  <div key={'br_' + order}>
+                    {rule.backendRefs && rule.backendRefs
+                      .map((bRef, i) => {
                         return (
-                          <div key={'wk_' + order + '_' + wk.name + '_' + i}>
+                          <div key={'br_' + order + '_' + bRef.name + '_' + i}>
                             <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-                            {wk.name} ({wk.weight}% routed traffic)
-                          </div>
-                        );
-                      })}
-                    {rule.workloadWeights
-                      .filter(wk => wk.mirrored)
-                      .map((wk, i) => {
-                        return (
-                          <div key={'wk_mirrored_' + order + '_' + wk.name + '_' + i}>
-                            <PFBadge badge={PFBadges.MirroredWorkload} position={TooltipPosition.top} />
-                            {wk.name} ({wk.weight}% mirrored traffic)
+                            {bRef.name} ({bRef.weight}% routed traffic)
                           </div>
                         );
                       })}
                   </div>
-                  {rule.delay && (
-                    <div key={'delay_' + order}>
-                      <PFBadge badge={PFBadges.FaultInjectionDelay} position={TooltipPosition.top} />
-                      {rule.delay.percentage?.value}% requests delayed ({rule.delay.fixedDelay})
-                    </div>
-                  )}
-                  {rule.abort && (
-                    <div key={'abort_' + order}>
-                      <PFBadge badge={PFBadges.FaultInjectionAbort} position={TooltipPosition.top} />
-                      {rule.abort.percentage?.value}% requests aborted (HTTP Status {rule.abort.httpStatus})
-                    </div>
-                  )}
-                  {rule.timeout && (
-                    <div key={'timeout_' + order}>
-                      <PFBadge badge={PFBadges.RequestTimeout} position={TooltipPosition.top} />
-                      timeout ({rule.timeout})
-                    </div>
-                  )}
-                  {rule.retries && (
-                    <div key={'retries_' + order}>
-                      <PFBadge badge={PFBadges.RequestRetry} position={TooltipPosition.top} />
-                      {rule.retries.attempts} attempts with timeout ({rule.timeout})
-                    </div>
-                  )}
                 </>
               ]
             };

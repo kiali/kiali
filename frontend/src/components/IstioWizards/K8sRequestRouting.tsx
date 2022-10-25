@@ -1,31 +1,26 @@
 import * as React from 'react';
 import { WorkloadOverview } from '../../types/ServiceInfo';
-import K8sRules, { MOVE_TYPE, Rule } from './K8sRequestRouting/K8sRules';
-import K8sRuleBuilder from './K8sRequestRouting/K8sRuleBuilder';
+import K8sRules, {MOVE_TYPE, K8sRule} from './K8sRequestRouting/K8sRules';
+import K8sRuleBuilder, {K8sRouteBackendRef} from './K8sRequestRouting/K8sRuleBuilder';
 import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
-import { MSG_WEIGHTS_NOT_VALID, WorkloadWeight } from './TrafficShifting';
-import { getDefaultWeights } from './WizardActions';
-import { FaultInjectionRoute } from './FaultInjection';
-import { TimeoutRetryRoute } from './RequestTimeouts';
+import {getDefaultBackendRefs} from './WizardActions';
 
 type Props = {
   serviceName: string;
   workloads: WorkloadOverview[];
-  initRules: Rule[];
-  onChange: (valid: boolean, rules: Rule[]) => void;
+  initRules: K8sRule[];
+  onChange: (valid: boolean, k8sRules: K8sRule[]) => void;
 };
 
 type State = {
   category: string;
   operator: string;
-  workloadWeights: WorkloadWeight[];
+  backendRefs: K8sRouteBackendRef[];
   matches: string[];
   headerName: string;
   queryParamName: string;
   matchValue: string;
-  faultInjectionRoute: FaultInjectionRoute;
-  timeoutRetryRoute: TimeoutRetryRoute;
-  rules: Rule[];
+  k8sRules: K8sRule[];
   validationMsg: string;
 };
 
@@ -41,56 +36,24 @@ class K8sRequestRouting extends React.Component<Props, State> {
     this.state = {
       category: PATH,
       operator: EXACT,
-      workloadWeights: getDefaultWeights(this.props.workloads),
-      faultInjectionRoute: {
-        workloads: [],
-        delayed: false,
-        delay: {
-          percentage: {
-            value: 100
-          },
-          fixedDelay: '5s'
-        },
-        isValidDelay: true,
-        aborted: false,
-        abort: {
-          percentage: {
-            value: 100
-          },
-          httpStatus: 503
-        },
-        isValidAbort: true
-      },
-      timeoutRetryRoute: {
-        workloads: [],
-        isTimeout: false,
-        timeout: '2s',
-        isValidTimeout: true,
-        isRetry: false,
-        retries: {
-          attempts: 3,
-          perTryTimeout: '2s',
-          retryOn: 'gateway-error,connect-failure,refused-stream'
-        },
-        isValidRetry: true
-      },
+      backendRefs: getDefaultBackendRefs(this.props.workloads),
       matches: [],
       headerName: '',
       queryParamName: '',
       matchValue: '',
-      rules: this.props.initRules,
+      k8sRules: this.props.initRules,
       validationMsg: ''
     };
   }
 
-  isMatchesIncluded = (rules: Rule[], rule: Rule) => {
+  isMatchesIncluded = (k8sRules: K8sRule[], k8sRule: K8sRule) => {
     let found = false;
-    for (let i = 0; i < rules.length; i++) {
-      const item = rules[i];
-      if (item.matches.length !== rule.matches.length) {
+    for (let i = 0; i < k8sRules.length; i++) {
+      const item = k8sRules[i];
+      if (item.matches.length !== k8sRule.matches.length) {
         continue;
       }
-      found = item.matches.every(value => rule.matches.includes(value));
+      found = item.matches.every(value => k8sRule.matches.includes(value));
       if (found) {
         break;
       }
@@ -98,14 +61,14 @@ class K8sRequestRouting extends React.Component<Props, State> {
     return found;
   };
 
-  isValid = (rules: Rule[]): boolean => {
+  isValid = (k8sRules: K8sRule[]): boolean => {
     // Corner case, an empty rules shouldn't be a valid scenario to create a VS/DR
-    if (rules.length === 0) {
+    if (k8sRules.length === 0) {
       return false;
     }
-    const matchAll: number = this.matchAllIndex(rules);
+    const matchAll: number = this.matchAllIndex(k8sRules);
     let isValid: boolean = true;
-    for (let index = 0; index < this.state.rules.length; index++) {
+    for (let index = 0; index < this.state.k8sRules.length; index++) {
       isValid = matchAll === -1 || index <= matchAll;
       if (!isValid) {
         return isValid;
@@ -137,59 +100,40 @@ class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onAddRule = () => {
+  onAddK8sRule = () => {
     this.setState(
       prevState => {
-        const newWorkloadWeights: WorkloadWeight[] = [];
-        prevState.workloadWeights.forEach(ww =>
-          newWorkloadWeights.push({
-            name: ww.name,
-            weight: ww.weight,
-            locked: ww.locked,
-            maxWeight: ww.maxWeight,
-            mirrored: ww.mirrored
+        const newBackendRefs: K8sRouteBackendRef[] = [];
+        prevState.backendRefs.forEach(br =>
+          newBackendRefs.push({
+            name: br.name,
+            weight: br.weight
           })
         );
-        const newRule: Rule = {
+        const newRule: K8sRule = {
           matches: Object.assign([], prevState.matches),
-          workloadWeights: newWorkloadWeights
+          backendRefs: newBackendRefs
         };
-        if (prevState.faultInjectionRoute.delayed && prevState.faultInjectionRoute.isValidDelay) {
-          newRule.delay = prevState.faultInjectionRoute.delay;
-        }
-        if (prevState.faultInjectionRoute.aborted && prevState.faultInjectionRoute.isValidAbort) {
-          newRule.abort = prevState.faultInjectionRoute.abort;
-        }
-        if (prevState.timeoutRetryRoute.isTimeout && prevState.timeoutRetryRoute.isValidTimeout) {
-          newRule.timeout = prevState.timeoutRetryRoute.timeout;
-        }
-        if (prevState.timeoutRetryRoute.isRetry && prevState.timeoutRetryRoute.isValidRetry) {
-          newRule.retries = prevState.timeoutRetryRoute.retries;
-        }
-        if (!this.isMatchesIncluded(prevState.rules, newRule)) {
-          prevState.rules.push(newRule);
+        if (!this.isMatchesIncluded(prevState.k8sRules, newRule)) {
+          prevState.k8sRules.push(newRule);
           return {
             matches: prevState.matches,
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
-            rules: prevState.rules,
-            validationMsg: '',
-            faultInjectionRoute: prevState.faultInjectionRoute,
-            timeoutRetryRoute: prevState.timeoutRetryRoute
+            k8sRules: prevState.k8sRules,
+            validationMsg: ''
           };
         } else {
           return {
             matches: prevState.matches,
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
-            rules: prevState.rules,
-            validationMsg: MSG_SAME_MATCHING,
-            faultInjectionRoute: prevState.faultInjectionRoute,
-            timeoutRetryRoute: prevState.timeoutRetryRoute
+            k8sRules: prevState.k8sRules,
+            validationMsg: MSG_SAME_MATCHING
           };
         }
       },
-      () => this.props.onChange(this.isValid(this.state.rules), this.state.rules)
+      () => this.props.onChange(this.isValid(this.state.k8sRules), this.state.k8sRules)
     );
   };
 
@@ -205,13 +149,13 @@ class K8sRequestRouting extends React.Component<Props, State> {
   onRemoveRule = (index: number) => {
     this.setState(
       prevState => {
-        prevState.rules.splice(index, 1);
+        prevState.k8sRules.splice(index, 1);
         return {
-          rules: prevState.rules,
+          k8sRules: prevState.k8sRules,
           validationMsg: ''
         };
       },
-      () => this.props.onChange(this.isValid(this.state.rules), this.state.rules)
+      () => this.props.onChange(this.isValid(this.state.k8sRules), this.state.k8sRules)
     );
   };
 
@@ -270,33 +214,26 @@ class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onSelectWeights = (valid: boolean, workloads: WorkloadWeight[]) => {
-    this.setState({
-      workloadWeights: workloads,
-      validationMsg: !valid ? MSG_WEIGHTS_NOT_VALID : ''
-    });
-  };
-
   onMoveRule = (index: number, move: MOVE_TYPE) => {
     this.setState(
       prevState => {
-        const sourceRule = prevState.rules[index];
+        const sourceRule = prevState.k8sRules[index];
         const targetIndex = move === MOVE_TYPE.UP ? index - 1 : index + 1;
-        const targetRule = prevState.rules[targetIndex];
-        prevState.rules[targetIndex] = sourceRule;
-        prevState.rules[index] = targetRule;
+        const targetRule = prevState.k8sRules[targetIndex];
+        prevState.k8sRules[targetIndex] = sourceRule;
+        prevState.k8sRules[index] = targetRule;
         return {
-          rules: prevState.rules
+          k8sRules: prevState.k8sRules
         };
       },
-      () => this.props.onChange(this.isValid(this.state.rules), this.state.rules)
+      () => this.props.onChange(this.isValid(this.state.k8sRules), this.state.k8sRules)
     );
   };
 
-  matchAllIndex = (rules: Rule[]): number => {
+  matchAllIndex = (k8sRules: K8sRule[]): number => {
     let matchAll: number = -1;
-    for (let index = 0; index < rules.length; index++) {
-      const rule = rules[index];
+    for (let index = 0; index < k8sRules.length; index++) {
+      const rule = k8sRules[index];
       if (rule.matches.length === 0) {
         matchAll = index;
         break;
@@ -309,9 +246,9 @@ class K8sRequestRouting extends React.Component<Props, State> {
     if (this.props.initRules.length > 0) {
       this.setState(
         {
-          rules: this.props.initRules
+          k8sRules: this.props.initRules
         },
-        () => this.props.onChange(this.isValid(this.state.rules), this.state.rules)
+        () => this.props.onChange(this.isValid(this.state.k8sRules), this.state.k8sRules)
       );
     }
   }
@@ -342,12 +279,11 @@ class K8sRequestRouting extends React.Component<Props, State> {
           matches={this.state.matches}
           onRemoveMatch={this.onRemoveMatch}
           workloads={this.props.workloads}
-          weights={this.state.workloadWeights}
-          onSelectWeights={this.onSelectWeights}
+          backendRefs={this.state.backendRefs}
           validationMsg={this.state.validationMsg}
-          onAddRule={this.onAddRule}
+          onAddRule={this.onAddK8sRule}
         />
-        <K8sRules rules={this.state.rules} onRemoveRule={this.onRemoveRule} onMoveRule={this.onMoveRule} />
+        <K8sRules k8sRules={this.state.k8sRules} onRemoveRule={this.onRemoveRule} onMoveRule={this.onMoveRule} />
       </>
     );
   }

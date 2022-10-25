@@ -4,7 +4,6 @@ import K8sMatchBuilder from './K8sMatchBuilder';
 import K8sMatches from './K8sMatches';
 import { style } from 'typestyle';
 import { WorkloadOverview } from '../../../types/ServiceInfo';
-import { WorkloadWeight } from '../TrafficShifting';
 import { PFColors } from '../../Pf/PfColors';
 
 type Props = {
@@ -27,12 +26,17 @@ type Props = {
   onRemoveMatch: (match: string) => void;
 
   workloads: WorkloadOverview[];
-  weights: WorkloadWeight[];
-  onSelectWeights: (valid: boolean, workloads: WorkloadWeight[]) => void;
+  backendRefs: K8sRouteBackendRef[];
 
   // K8sRuleBuilder
   validationMsg: string;
   onAddRule: () => void;
+};
+
+export type K8sRouteBackendRef = {
+  name: string;
+  weight?: number;
+  port?: number;
 };
 
 type State = {

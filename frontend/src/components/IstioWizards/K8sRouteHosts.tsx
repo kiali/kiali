@@ -25,7 +25,7 @@ class K8sRouteHosts extends React.Component<Props> {
     return (
       <Form isHorizontal={true}>
         <FormGroup
-          label="K8s Route Hosts"
+          label="K8s HTTPRoute Hosts"
           fieldId="advanced-k8sRouteHosts"
           validated={isValid(this.isK8sRouteHostsValid(this.props.k8sRouteHosts))}
           helperText="The route hosts to which traffic is being sent. Enter one or multiple hosts separated by comma."

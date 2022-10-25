@@ -754,7 +754,43 @@ export interface K8sGateway extends IstioObject {
 
 export interface K8sHTTPRouteSpec {
   parentRefs?: ParentRef[];
-  hostnames: string[];
+  hostnames?: string[];
+  rules?: K8sRouteRule[];
+}
+
+export interface K8sRouteRule {
+  matches?:     K8sHTTPRouteMatch[];
+  backendRefs?: K8sRouteBackendRef[];
+}
+
+export interface K8sRouteBackendRef {
+  name:       string;
+  weight?:    number;
+  port?:      number;
+  namespace?: string;
+  filters?:   K8sHTTPRouteFilter[];
+}
+
+export interface K8sHTTPRouteFilter {
+  requestRedirect?: K8sHTTPRouteRequestRedirect;
+  type?:            string;
+}
+
+export interface K8sHTTPRouteRequestRedirect {
+  statusCode?: number;
+}
+
+export interface K8sHTTPRouteMatch {
+  path?: HTTPMatch;
+  headers?: HTTPMatch[];
+  queryParams?: HTTPMatch[];
+  method?: HTTPMatch;
+}
+
+export interface HTTPMatch {
+  type?:  string;
+  name?: string;
+  value?: string;
 }
 
 export interface K8sHTTPRoute extends IstioObject {

@@ -15,6 +15,7 @@ import TrafficPolicyContainer, {
 import {ROUND_ROBIN} from './TrafficPolicy';
 import FaultInjection, {FaultInjectionRoute} from './FaultInjection';
 import {Rule} from './RequestRouting/Rules';
+import {K8sRule} from './K8sRequestRouting/K8sRules';
 import {
   buildIstioConfig,
   fqdnServiceName,
@@ -27,6 +28,7 @@ import {
   getInitOutlierDetection,
   getInitPeerAuthentication,
   getInitRules,
+  getInitK8sRules,
   getInitTimeoutRetryRoute,
   getInitTlsMode,
   getInitWeights,
@@ -51,6 +53,8 @@ import K8sRouteHosts from './K8sRouteHosts';
 import {
   DestinationRule,
   Gateway,
+  K8sGateway,
+  K8sHTTPRoute,
   PeerAuthentication,
   PeerAuthenticationMutualTLSMode,
   VirtualService
@@ -71,6 +75,7 @@ const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState =>
     advancedTabKey: 0,
     workloads: [],
     rules: [],
+    k8sRules: [],
     faultInjectionRoute: {
       workloads: [],
       delayed: false,
@@ -268,6 +273,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         showPreview: false,
         workloads: [],
         rules: [],
+        k8sRules: [],
         valid: {
           mainWizard: isMainWizardValid,
           vsHosts: true,
@@ -322,6 +328,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         const vs = this.state.previews!.vs;
         const gw = this.state.previews!.gw;
         const k8sgw = this.state.previews!.k8sgw;
+        const k8sroute = this.state.previews!.k8sroute;
         const pa = this.state.previews!.pa;
         // Gateway is only created when user has explicit selected this option
         if (gw) {
@@ -332,18 +339,36 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         }
 
         if (this.props.update) {
-          promises.push(
-            API.updateIstioConfigDetail(this.props.namespace, 'destinationrules', dr.metadata.name, JSON.stringify(dr))
-          );
-          promises.push(
-            API.updateIstioConfigDetail(this.props.namespace, 'virtualservices', vs.metadata.name, JSON.stringify(vs))
-          );
+          if (dr) {
+            promises.push(
+              API.updateIstioConfigDetail(this.props.namespace, 'destinationrules', dr.metadata.name, JSON.stringify(dr))
+            );
+          }
+          if (vs) {
+            promises.push(
+              API.updateIstioConfigDetail(this.props.namespace, 'virtualservices', vs.metadata.name, JSON.stringify(vs))
+            );
+          }
+          if (k8sroute) {
+            promises.push(
+              API.updateIstioConfigDetail(this.props.namespace, 'k8shttproutes', k8sroute.metadata.name, JSON.stringify(k8sroute))
+            );
+          }
 
-          this.handlePeerAuthnUpdate(pa, dr, promises);
+          if (dr) {
+            this.handlePeerAuthnUpdate(pa, dr, promises);
+          }
           // Note that Gateways are not updated from the Wizard, only the VS hosts/gateways sections are updated
         } else {
-          promises.push(API.createIstioConfigDetail(this.props.namespace, 'destinationrules', JSON.stringify(dr)));
-          promises.push(API.createIstioConfigDetail(this.props.namespace, 'virtualservices', JSON.stringify(vs)));
+          if (dr) {
+            promises.push(API.createIstioConfigDetail(this.props.namespace, 'destinationrules', JSON.stringify(dr)));
+          }
+          if (vs) {
+            promises.push(API.createIstioConfigDetail(this.props.namespace, 'virtualservices', JSON.stringify(vs)));
+          }
+          if (k8sroute) {
+            promises.push(API.createIstioConfigDetail(this.props.namespace, 'k8shttproutes', JSON.stringify(k8sroute)));
+          }
 
           if (pa) {
             promises.push(API.createIstioConfigDetail(this.props.namespace, 'peerauthentications', JSON.stringify(pa)));
@@ -483,7 +508,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       prevState.valid.gateway = valid;
       return {
         valid: prevState.valid,
-        gateway: gateway,
+        k8sGateway: gateway,
         k8sRouteHosts:
           gateway.addGateway && gateway.newGateway && gateway.gwHosts.length > 0
             ? gateway.gwHosts.split(',')
@@ -508,6 +533,16 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       return {
         valid: prevState.valid,
         rules: rules
+      };
+    });
+  };
+
+  onK8sRulesChange = (valid: boolean, k8sRules: K8sRule[]) => {
+    this.setState(prevState => {
+      prevState.valid.mainWizard = valid;
+      return {
+        valid: prevState.valid,
+        k8sRules: k8sRules
       };
     });
   };
@@ -570,13 +605,17 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
   onConfirmPreview = (items: ConfigPreviewItem[]) => {
     const dr = items.filter(it => it.type === 'destinationrule')[0];
     const gw = items.filter(it => it.type === 'gateway')[0];
+    const k8sgw = items.filter(it => it.type === 'k8sgateway')[0];
     const pa = items.filter(it => it.type === 'peerauthentications')[0];
     const vs = items.filter(it => it.type === 'virtualservice')[0];
+    const k8sroute = items.filter(it => it.type === 'k8shttproute')[0];
     const previews: WizardPreviews = {
-      dr: dr.items[0] as DestinationRule,
+      dr: dr ? (dr.items[0] as DestinationRule) : undefined,
       gw: gw ? (gw.items[0] as Gateway) : undefined,
+      k8sgw: k8sgw ? (k8sgw.items[0] as K8sGateway) : undefined,
       pa: pa ? (pa.items[0] as PeerAuthentication) : undefined,
-      vs: vs.items[0] as VirtualService
+      vs: vs ? (vs.items[0] as VirtualService) : undefined,
+      k8sroute: k8sroute ? (k8sroute.items[0] as K8sHTTPRoute) : undefined
     };
     this.setState({ previews, showPreview: false, showWizard: false, confirmationModal: true });
   };
@@ -589,6 +628,12 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       }
       if (this.state.previews.gw) {
         items.push({ type: 'gateway', items: [this.state.previews.gw], title: 'Gateway' });
+      }
+      if (this.state.previews.k8sgw) {
+        items.push({ type: 'k8sgwgateway', items: [this.state.previews.k8sgw], title: 'K8s Gateway' });
+      }
+      if (this.state.previews.k8sroute) {
+        items.push({ type: 'k8sroute', items: [this.state.previews.k8sroute], title: 'K8s HTTPRoute' });
       }
       if (this.state.previews.pa) {
         items.push({ type: 'peerauthentications', items: [this.state.previews.pa], title: 'Peer Authentication' });
@@ -693,8 +738,8 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             <K8sRequestRouting
               serviceName={this.props.serviceName}
               workloads={this.props.workloads}
-              initRules={getInitRules(this.props.workloads, this.props.virtualServices, this.props.destinationRules)}
-              onChange={this.onRulesChange}
+              initRules={getInitK8sRules(this.props.k8sHTTPRoutes)}
+              onChange={this.onK8sRulesChange}
             />
           )}
           {this.props.type === WIZARD_FAULT_INJECTION && (
@@ -818,7 +863,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
               }}
             >
               <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
-                <Tab eventKey={0} title={'Route Hosts'}>
+                <Tab eventKey={0} title={'K8s HTTPRoute Hosts'}>
                   <div style={{ marginTop: '20px' }}>
                     <K8sRouteHosts
                       k8sRouteHosts={this.state.k8sRouteHosts}
@@ -827,7 +872,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
                     />
                   </div>
                 </Tab>
-                <Tab eventKey={1} title={'Gateways'} data-test={'Gateways'}>
+                <Tab eventKey={1} title={'K8s Gateways'} data-test={'K8s Gateways'}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
                     <K8sGatewaySelector
                       serviceName={this.props.serviceName}

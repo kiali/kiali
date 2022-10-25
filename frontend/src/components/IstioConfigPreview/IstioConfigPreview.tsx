@@ -15,6 +15,7 @@ import {
   DestinationRule,
   Gateway,
   K8sGateway,
+  K8sHTTPRoute,
   PeerAuthentication,
   Sidecar,
   VirtualService
@@ -36,6 +37,7 @@ export type IstioConfigItem =
   | PeerAuthentication
   | Gateway
   | K8sGateway
+  | K8sHTTPRoute
   | VirtualService;
 
 export interface ConfigPreviewItem {
