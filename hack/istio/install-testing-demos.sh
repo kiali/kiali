@@ -95,12 +95,17 @@ ISTIO_DIR=$(ls -dt1 ${SCRIPT_DIR}/../../_output/istio-* | head -n1)
 MINIKUBE_PROFILE="minikube"
 
 : ${CLIENT_EXE:=oc}
+: ${ARCH:=amd64}
 : ${DELETE_DEMOS:=false}
 ISTIO_NAMESPACE="istio-system"
 
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
+    -a|--arch)
+      ARCH="$2"
+      shift;shift
+      ;;
     -c|--client)
       CLIENT_EXE="$2"
       shift;shift
@@ -120,6 +125,7 @@ while [ $# -gt 0 ]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
   -mp|--minikube-profile <name>: If using minikube, this is the minikube profile name (default: minikube).
@@ -135,6 +141,12 @@ HELPMSG
   esac
 done
 
+# check arch values
+if [ "${ARCH}" != "ppc64le" ] && [ "${ARCH}" != "s390x" ] && [ "${ARCH}" != "amd64" ]; then
+  echo "${ARCH} is not supported. Exiting."
+  exit 1
+fi
+
 IS_OPENSHIFT="false"
 IS_MAISTRA="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
@@ -143,6 +155,7 @@ if [[ "${CLIENT_EXE}" = *"oc" ]]; then
 fi
 
 echo "CLIENT_EXE=${CLIENT_EXE}"
+echo "ARCH=${ARCH}"
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 echo "IS_MAISTRA=${IS_MAISTRA}"
 
@@ -163,14 +176,16 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
   # Only the args passed to the scripts differ from each other.
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     echo "Deploying bookinfo demo ..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -tg -in ${ISTIO_NAMESPACE}
+    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -tg -in ${ISTIO_NAMESPACE} -a ${ARCH}
     echo "Deploying error rates demo ..."
-    "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE}
+    "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH}
+
   else
     echo "Deploying bookinfo demo..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg -in ${ISTIO_NAMESPACE}
+    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg -in ${ISTIO_NAMESPACE} -a ${ARCH}
+
     echo "Deploying error rates demo..."
-    "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE}
+    "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH}
   fi
 
   echo "Installing the 'sleep' app in the 'sleep' namespace..."

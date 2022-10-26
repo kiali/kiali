@@ -31,6 +31,7 @@ EOM
 }
 
 : ${CLIENT_EXE:=oc}
+: ${ARCH:=amd64}
 : ${DELETE_DEMO:=false}
 : ${ENABLE_INJECTION:=true}
 : ${ISTIO_NAMESPACE:=istio-system}
@@ -41,6 +42,10 @@ EOM
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
+    -a|--arch)
+      ARCH="$2"
+      shift;shift
+      ;;
     -c|--client)
       CLIENT_EXE="$2"
       shift;shift
@@ -60,6 +65,7 @@ while [ $# -gt 0 ]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the demo will be deleted, not installed.
   -ei|--enable-injection: either 'true' or 'false' (default is true). If 'true' auto-inject proxies for the workloads.
@@ -82,12 +88,19 @@ done
 
 echo Will deploy Error Rates Demo using these settings:
 echo CLIENT_EXE=${CLIENT_EXE}
+echo ARCH=${ARCH}
 echo DELETE_DEMO=${DELETE_DEMO}
 echo ENABLE_INJECTION=${ENABLE_INJECTION}
 echo ISTIO_NAMESPACE=${ISTIO_NAMESPACE}
 echo NAMESPACE_ALPHA=${NAMESPACE_ALPHA}
 echo NAMESPACE_BETA=${NAMESPACE_BETA}
 echo SOURCE=${SOURCE}
+
+# check arch values
+if [ "${ARCH}" != "ppc64le" ] && [ "${ARCH}" != "s390x" ] && [ "${ARCH}" != "amd64" ]; then
+  echo "${ARCH} is not supported. Exiting."
+  exit 1
+fi
 
 IS_OPENSHIFT="false"
 IS_MAISTRA="false"
@@ -173,8 +186,22 @@ SCC
 fi
 
 # Deploy the demo
-${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/error-rates/alpha.yaml") -n ${NAMESPACE_ALPHA}
-${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/error-rates/beta.yaml") -n ${NAMESPACE_BETA}
+url_alpha="${SOURCE}/error-rates/alpha.yaml"
+url_beta="${SOURCE}/error-rates/beta.yaml"
+sed_client_p="s;kiali/demo_error_rates_client;maistra/demo_error_rates_client-p;g"
+sed_server_p="s;kiali/demo_error_rates_server;maistra/demo_error_rates_server-p;g"
+sed_client_z="s;kiali/demo_error_rates_client;maistra/demo_error_rates_client-z;g"
+sed_server_z="s;kiali/demo_error_rates_server;maistra/demo_error_rates_server-z;g"
+if [ "${ARCH}" == "ppc64le" ]; then
+  ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_ALPHA}
+  ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_p}" | sed "${sed_server_p}") -n ${NAMESPACE_BETA}
+elif [ "${ARCH}" == "s390x" ]; then
+  ${CLIENT_EXE} apply -f <(curl -L ${url_alpha} | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_ALPHA}
+  ${CLIENT_EXE} apply -f <(curl -L "${url_beta}" | sed "${sed_client_z}" | sed "${sed_server_z}") -n ${NAMESPACE_BETA}
+else
+  ${CLIENT_EXE} apply -f <(curl -L ${url_alpha}) -n ${NAMESPACE_ALPHA}
+  ${CLIENT_EXE} apply -f <(curl -L "${url_beta}") -n ${NAMESPACE_BETA}
+fi
 
 # we need to update deployment annotations after we create it
 if [ "${IS_MAISTRA}" == "true" ]; then
