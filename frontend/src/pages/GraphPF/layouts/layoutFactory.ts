@@ -10,17 +10,25 @@ import {
 } from '@patternfly/react-topology';
 
 const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout | undefined => {
-  console.log("IN IT");
   switch (type) {
     case 'Cola':
       return new ColaLayout(graph);
     case 'ColaNoForce':
-      console.log("FOUND IT");
-      return new ColaLayout(graph, { layoutOnDrag: false });
+      return new ColaLayout(graph, { layoutOnDrag: false, maxTicks: 1 }); // maxTicks=1 removes animation
     case 'Concentric':
       return new ConcentricLayout(graph);
     case 'Dagre':
-      return new DagreLayout(graph);
+      return new DagreLayout(graph, {
+        //allowDrag: true,
+        //layoutOnDrag: true,
+        marginx: undefined,
+        marginy: undefined,
+        //nodesep: undefined,
+        //edgesep: undefined,
+        ranker: 'network-simplex',
+        rankdir: 'LR'
+      });
+
     case 'Force':
       return new ForceLayout(graph);
     case 'Grid':

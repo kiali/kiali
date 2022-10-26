@@ -23,6 +23,7 @@ import * as React from 'react';
 import componentFactory from './componentFactories/componentFactory';
 import stylesComponentFactory from './componentFactories/stylesComponentFactory';
 import {
+  assignEdgeHealth,
   EdgeData,
   getNodeShape,
   getNodeStatus,
@@ -270,6 +271,9 @@ export const TopologyContent: React.FC<{
       const ed = e.data;
       addEdge(ed as EdgeData);
     });
+
+    // Compute edge healths one time for the graph
+    assignEdgeHealth(edges, nodeMap, graphSettings);
 
     const nodes = Array.from(nodeMap.values());
     return { nodes: nodes, edges: edges };

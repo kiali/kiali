@@ -25,6 +25,7 @@ import { DEGRADED, FAILURE } from 'types/Health';
 import Namespace from 'types/Namespace';
 import _ from 'lodash';
 import { PFColors } from 'components/Pf/PfColors';
+import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
@@ -533,3 +534,37 @@ export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: Grap
   data.tagStatus = getEdgeStatus(data);
   data.pathStyle = getPathStyle(data);
 };
+
+export const assignEdgeHealth = (edges: EdgeModel[], nodeMap: NodeMap, settings: GraphPFSettings) => {
+
+  edges.forEach(edge => {
+    const edgeData = edge.data as EdgeData;
+
+    if (!edgeData.hasTraffic) {
+      return;
+    }
+    if (edgeData.protocol === 'tcp') {
+      return;
+    }
+    if (edgeData.protocol === 'grpc' && !settings.trafficRates.includes(TrafficRate.GRPC_REQUEST)) {
+      return;
+    }
+
+    const sourceNodeData = nodeMap.get(edge.source!)?.data as NodeData;
+    const destNodeData = nodeMap.get(edge.target!)?.data as NodeData;
+    const statusEdge = getEdgeHealth(edgeData, sourceNodeData, destNodeData);
+
+    switch (statusEdge.status) {
+      case FAILURE:
+        edgeData.healthStatus = FAILURE.name;
+        return;
+      case DEGRADED:
+        edgeData.healthStatus = DEGRADED.name;
+        return;
+      default:
+        // unset implies healthy or n/a
+        return;
+    }
+  });
+};
+
