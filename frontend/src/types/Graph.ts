@@ -8,7 +8,7 @@ export interface Layout {
 }
 
 export const SUMMARY_PANEL_CHART_WIDTH = 250;
-export type SummaryType = 'graph' | 'node' | 'edge' | 'box';
+export type SummaryType = 'graph' | 'graphPF' | 'node' | 'edge' | 'box';
 export interface SummaryData {
   summaryType: SummaryType;
   summaryTarget: any;

@@ -168,18 +168,37 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   }
 
   render() {
-    const cy = this.props.data.summaryTarget;
-    if (!cy) {
-      return null;
+    let numSvc,
+      numWorkloads,
+      numApps,
+      numVersions,
+      numEdges,
+      grpcIn,
+      grpcOut,
+      grpcTotal,
+      httpIn,
+      httpOut,
+      httpTotal,
+      isGrpcRequests,
+      tcpIn,
+      tcpOut,
+      tcpTotal;
+
+    if (this.props.data.summaryType === 'graph') {
+      const cy = this.props.data.summaryTarget;
+      if (!cy) {
+        return null;
+      }
+
+      numSvc = cy.nodes(`[nodeType = "${NodeType.SERVICE}"]`).size();
+      numWorkloads = cy.nodes(`[nodeType = "${NodeType.WORKLOAD}"]`).size();
+      ({ numApps, numVersions } = this.countApps(cy));
+      numEdges = cy.edges().size();
+
+      ({ grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
+        this.graphTraffic || this.getGraphTraffic());
+    } else if (this.props.data.summaryType === 'graphPF') {
     }
-
-    const numSvc = cy.nodes(`[nodeType = "${NodeType.SERVICE}"]`).size();
-    const numWorkloads = cy.nodes(`[nodeType = "${NodeType.WORKLOAD}"]`).size();
-    const { numApps, numVersions } = this.countApps(cy);
-    const numEdges = cy.edges().size();
-
-    const { grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
-      this.graphTraffic || this.getGraphTraffic();
 
     const tooltipInboundRef = React.createRef();
     const tooltipOutboundRef = React.createRef();

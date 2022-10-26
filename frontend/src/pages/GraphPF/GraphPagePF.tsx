@@ -1,4 +1,3 @@
-import * as Cy from 'cytoscape';
 import * as React from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
@@ -77,6 +76,7 @@ import GraphPF from './GraphPF';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { GraphPFSettings } from './GraphPFElems';
 import { serverConfig } from 'config';
+import { Model } from '@patternfly/react-topology';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -109,7 +109,7 @@ type ReduxProps = {
   mtlsEnabled: boolean;
   node?: NodeParamsType;
   onNamespaceChange: () => void;
-  onReady: (cytoscapeRef: any) => void;
+  onReady: (graph: any) => void;
   rankBy: RankMode[];
   refreshInterval: IntervalInMilliseconds;
   replayActive: boolean;
@@ -472,7 +472,7 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
               </Chip>
             )}
             {(!this.props.replayActive || isReplayReady) && (
-              <GraphPF graphData={this.state.graphData} graphSettings={settings} />
+              <GraphPF graphData={this.state.graphData} graphSettings={settings} {...this.props} />
             )}
           </ErrorBoundary>
           {this.props.summaryData && (
@@ -862,7 +862,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   onNamespaceChange: bindActionCreators(GraphActions.onNamespaceChange, dispatch),
-  onReady: (cy: Cy.Core) => dispatch(GraphThunkActions.graphReady(cy)),
+  onReady: (controller: any) => dispatch(GraphThunkActions.graphPFReady(controller)),
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),

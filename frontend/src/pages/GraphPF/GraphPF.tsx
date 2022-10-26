@@ -63,6 +63,7 @@ export const DefaultOptions: TopologyOptions = {
 export const TopologyContent: React.FC<{
   graphData: GraphData;
   graphSettings: GraphPFSettings;
+  onReady?: (controller: any) => void;
   options: TopologyOptions;
 }> = ({ graphData, graphSettings, options }) => {
   const controller = useVisualizationController();
@@ -369,7 +370,9 @@ export const TopologyContent: React.FC<{
 export const GraphPF: React.FC<{
   graphData: GraphData;
   graphSettings: GraphPFSettings;
-}> = ({ graphData, graphSettings }) => {
+  onReady?: (controller: any) => void;
+}> = ({ graphData, graphSettings, onReady }) => {
+
   //create controller on startup and register factories
   const [controller, setController] = React.useState<Visualization>();
 
@@ -395,7 +398,7 @@ export const GraphPF: React.FC<{
 
   return (
     <VisualizationProvider data-test="visualization-provider" controller={controller}>
-      <TopologyContent graphData={graphData} graphSettings={graphSettings} options={DefaultOptions} />
+      <TopologyContent graphData={graphData} graphSettings={graphSettings} onReady={onReady} options={DefaultOptions} />
     </VisualizationProvider>
   );
 };
