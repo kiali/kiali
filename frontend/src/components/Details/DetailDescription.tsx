@@ -14,6 +14,7 @@ import {KialiAppState} from "../../store/Store";
 import {connect} from "react-redux";
 import {isParentKiosk, kioskContextMenuAction} from "../Kiosk/KioskActions";
 import AmbientLabel from "../Ambient/AmbientLabel";
+import {serverConfig} from "../../config";
 
 type ReduxProps = {
   kiosk: string;
@@ -149,7 +150,7 @@ class DetailDescription extends React.Component<Props> {
         <Tooltip position={TooltipPosition.right} content={this.renderServiceAccounts(workload)}>
           <KialiIcon.Info className={infoStyle} />
         </Tooltip>
-        {!workload.istioSidecar && !workload.istioAmbient && (
+        {((!workload.istioSidecar && !workload.istioAmbient && serverConfig.istioAmbientEnabled) || (!workload.istioSidecar && !serverConfig.istioAmbientEnabled)) && (
           <MissingSidecar namespace={this.props.namespace} tooltip={true} style={{ marginLeft: '10px' }} text={''} />
         )}
         {workload.istioAmbient && (
@@ -203,7 +204,7 @@ class DetailDescription extends React.Component<Props> {
           >
             <span style={{ marginLeft: '10px' }}>{createIcon(sub.status)}</span>
           </Tooltip>
-          {!workload.istioSidecar && !workload.istioAmbient && (
+          {((!workload.istioSidecar && !workload.istioAmbient && serverConfig.istioAmbientEnabled) || (!workload.istioSidecar && !serverConfig.istioAmbientEnabled)) && (
             <MissingSidecar namespace={this.props.namespace} tooltip={true} style={{ marginLeft: '10px' }} text={''} />
           )}
           {workload.istioAmbient && (

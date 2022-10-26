@@ -82,7 +82,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
             <MissingAuthPolicy namespace={item.namespace} />
           </li>
         )}
-        {(hasMissingSC && hasMissingA) && (
+        {((hasMissingSC && hasMissingA && serverConfig.istioAmbientEnabled) || (!serverConfig.istioAmbientEnabled && hasMissingSC)) && (
           <li>
             <MissingSidecar namespace={item.namespace} />
           </li>

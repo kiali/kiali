@@ -5,6 +5,7 @@ import { isIstioNamespace } from 'config/ServerConfig';
 import { icons } from 'config';
 import { KialiIcon } from '../../config/KialiIcon';
 import { style } from 'typestyle';
+import { serverConfig } from 'config/ServerConfig';
 
 type MissingSidecarProps = {
   "data-test"?: string;
@@ -24,9 +25,11 @@ const infoStyle = style({
 
 class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
   static defaultProps = {
-    text: 'Not in the Mesh',
+    text: serverConfig.istioAmbientEnabled ? 'Not in the Mesh' : 'Missing Sidecar',
     textTooltip:
-      'Not in the Mesh. Istio sidecar container or Ambient labels not found in Pod(s). Check if the istio-injection label/annotation is correctly set on the namespace/workload.',
+      serverConfig.istioAmbientEnabled ?
+        'Not in the Mesh. Istio sidecar container or Ambient labels not found in Pod(s). Check if the istio-injection label/annotation is correctly set on the namespace/workload.'
+        : 'Istio sidecar container not found in Pod(s). Check if the istio-injection label/annotation is correctly set on the namespace/workload.',
     tooltip: false,
     icon: icons.istio.missingSidecar.icon,
     color: icons.istio.missingSidecar.color
