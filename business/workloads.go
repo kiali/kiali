@@ -1737,6 +1737,20 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 			}
 		}
 
+		// TODO
+		// Check if there are any waypoint proxy
+		if wl.IstioAmbient {
+			// Get List of waypoint proxies from the namespace and compare the
+
+			// Get service Account name for each pod from the workload
+			if len(wl.Pods) > 0 {
+				for _, w := range wl.Pods {
+					log.Infof(w.ServiceAccountName)
+				}
+			}
+			wl.Waypoint = true
+		}
+
 		if cnFound {
 			return &w, nil
 		}

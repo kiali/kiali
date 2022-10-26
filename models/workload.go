@@ -103,6 +103,9 @@ type WorkloadListItem struct {
 
 	// Health
 	Health WorkloadHealth `json:"health,omitempty"`
+
+	// Istio Ambient
+	Waypoint bool `json:"waypoint"`
 }
 
 type WorkloadOverviews []*WorkloadListItem
@@ -142,6 +145,9 @@ type Workload struct {
 
 	// Health
 	Health WorkloadHealth `json:"health"`
+
+	// Ambient waypoint
+	Waypoint bool `json:"waypoint"`
 }
 
 type Workloads []*Workload
