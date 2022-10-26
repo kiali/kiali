@@ -9,6 +9,7 @@ import (
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	"github.com/kiali/kiali/config"
 )
@@ -489,6 +490,24 @@ func FilterVirtualServicesByService(allVs []*networking_v1beta1.VirtualService, 
 		}
 		if appendVirtualService {
 			filtered = append(filtered, vs)
+		}
+	}
+	return filtered
+}
+
+func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1alpha2.HTTPRoute, namespace string, serviceName string) []*k8s_networking_v1alpha2.HTTPRoute {
+	filtered := []*k8s_networking_v1alpha2.HTTPRoute{}
+	for _, route := range allRoutes {
+		appendRoute := serviceName == ""
+		if !appendRoute {
+			for _, hostname := range route.Spec.Hostnames {
+				if string(hostname) != "" && FilterByHost(string(hostname), route.Namespace, serviceName, namespace) {
+					appendRoute = true
+				}
+			}
+		}
+		if appendRoute {
+			filtered = append(filtered, route)
 		}
 	}
 	return filtered

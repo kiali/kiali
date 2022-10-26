@@ -11,6 +11,7 @@ import {
   ConnectionPoolSettings,
   DestinationRule,
   Gateway,
+  HTTPMatch,
   HTTPMatchRequest,
   HTTPRoute,
   HTTPRouteDestination,
@@ -48,7 +49,8 @@ import { FaultInjectionRoute } from './FaultInjection';
 import { TimeoutRetryRoute } from './RequestTimeouts';
 import { DestService, GraphDefinition, NodeType } from '../../types/Graph';
 import { ServiceEntryState } from '../../pages/IstioConfigNew/ServiceEntryForm';
-import {K8sRouteBackendRef} from "./K8sRequestRouting/K8sRuleBuilder";
+import { K8sRouteBackendRef } from "./K8sRequestRouting/K8sRuleBuilder";
+import { QUERY_PARAMS, PATH, HEADERS, METHOD } from "./K8sRequestRouting/K8sMatchBuilder";
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
@@ -122,7 +124,7 @@ export type WizardPreviews = {
   vs?: VirtualService;
   gw?: Gateway;
   k8sgw?: K8sGateway;
-  k8sroute?: K8sHTTPRoute;
+  k8shttproute?: K8sHTTPRoute;
   pa?: PeerAuthentication;
 };
 
@@ -213,6 +215,69 @@ const buildHTTPMatchRequest = (matches: string[]): HTTPMatchRequest[] => {
   return matchRequests;
 };
 
+const buildK8sHTTPMatchRequest = (matches: string[]): K8sHTTPRouteMatch[] => {
+  const matchRequests: K8sHTTPRouteMatch[] = [];
+  const matchHeaders: HTTPMatch[] = [];
+  // Headers are grouped
+  matches
+    .filter(match => match.startsWith(HEADERS))
+    .forEach(match => {
+      // match follows format:  headers [<header-name>] <op> <value>
+      const i0 = match.indexOf('[');
+      const j0 = match.indexOf(']');
+      const headerName = match.substring(i0 + 1, j0).trim();
+      const i1 = match.indexOf(' ', j0 + 1);
+      const j1 = match.indexOf(' ', i1 + 1);
+      const op = match.substring(i1 + 1, j1).trim();
+      const value = match.substring(j1 + 1).trim();
+      matchHeaders.push({
+        name: headerName,
+        type: op,
+        value: value
+      });
+    });
+  if (matchHeaders.length > 0) {
+    matchRequests.push({headers: matchHeaders});
+  }
+  // Path
+  matches
+    .filter(match => match.startsWith(PATH))
+    .forEach(match => {
+      // match follows format: <op> <value>
+      const i = match.indexOf(' ');
+      const j = match.indexOf(' ', i + 1);
+      const op = match.substring(i + 1, j).trim();
+      const value = match.substring(j + 1).trim();
+      matchRequests.push({path: {type: op, value: value}
+      });
+    });
+  // QueryParams
+  matches
+    .filter(match => match.startsWith(QUERY_PARAMS))
+    .forEach(match => {
+      // match follows format: <name> <op> <value>
+      const i = match.indexOf(' ');
+      const j = match.indexOf(' ', i + 1);
+      const k = match.indexOf(' ', j + 1);
+      const name = match.substring(i, j).trim();
+      const op = match.substring(j + 1, k).trim();
+      const value = match.substring(k + 1).trim();
+      const routeMatch: K8sHTTPRouteMatch = {queryParams: []};
+      routeMatch.queryParams?.push({name: name, type: op, value: value})
+      matchRequests.push(routeMatch);
+    });
+  // Method
+  matches
+    .filter(match => match.startsWith(METHOD))
+    .forEach(match => {
+      // match follows format: <name> <op> <value>
+      const i = match.indexOf(' ');
+      const value = match.substring(i).trim();
+      matchRequests.push({method: {value: value}});
+    });
+  return matchRequests;
+};
+
 const parseStringMatch = (value: StringMatch): string => {
   if (value.exact) {
     return 'exact ' + value.exact;
@@ -260,11 +325,11 @@ const parseK8sHTTPMatchRequest = (httpRouteMatch: K8sHTTPRouteMatch): string[] =
     });
   }
   if (httpRouteMatch.path) {
-    matches.push('path [ ' + httpRouteMatch.path?.type + ' ] ' + httpRouteMatch.path?.value);
+    matches.push('path ' + httpRouteMatch.path?.type + ' ' + httpRouteMatch.path?.value);
   }
   if (httpRouteMatch.queryParams) {
     httpRouteMatch.queryParams.forEach(qp => {
-      matches.push('queryParam ' + qp.name + ' [ ' + qp.type + ' ] ' + qp.value);
+      matches.push('queryParam ' + qp.name + ' ' + qp.type + ' ' + qp.value);
     })
   }
   if (httpRouteMatch.method) {
@@ -312,6 +377,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
   let wizardGW: Gateway | undefined
   let wizardK8sGW: K8sGateway | undefined
   let wizardPA: PeerAuthentication | undefined = undefined;
+  const fullNewGatewayName = getGatewayName(wProps.namespace, wProps.serviceName, wProps.gateways.concat(wProps.k8sGateways));
 
   if (wProps.type !== WIZARD_K8S_REQUEST_ROUTING) {
     wizardDR = {
@@ -372,7 +438,6 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
     };
 
     // Wizard is optional, only when user has explicitly selected "Create a Gateway or K8s API Gateway"
-    const fullNewGatewayName = getGatewayName(wProps.namespace, wProps.serviceName, wProps.gateways.concat(wProps.k8sGateways));
     wizardGW =
       wState.gateway && wState.gateway.addGateway && wState.gateway.newGateway
         ? {
@@ -780,42 +845,43 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
         : [wProps.serviceName];
     switch (wProps.type) {
       case WIZARD_K8S_REQUEST_ROUTING: {
-        // K8sHTTPRoute from the routes
-        wizardK8sHTTPRoute.spec = {
-          // parentRefs: wProps.k8sGateways.map(gw => {
-          //
-          // }),
-          // parentRefs: wProps.k8sHTTPRoutes.
-          // rules: wState.k8sRules.map(rule => {
-          //   const httpRoute: K8sHTTPRoute = {};
-          //   httpRoute.route = [];
-          //   rule.workloadWeights
-          //     .filter(workload => !workload.mirrored)
-          //     .forEach(workload => {
-          //       const destW: HTTPRouteDestination = {
-          //         destination: {
-          //           host: fqdnServiceName(wProps.serviceName, wProps.namespace)
-          //         },
-          //         weight: workload.weight
-          //       };
-          //       if (wkdNameVersion[workload.name]) {
-          //         destW.destination.subset = wkdNameVersion[workload.name];
-          //       }
-          //       httpRoute.route?.push(destW);
-          //     });
-          //
-          //   if (rule.matches.length > 0) {
-          //     httpRoute.match = buildHTTPMatchRequest(rule.matches);
-          //   }
-          //
-          //   return httpRoute;
-          // })
-        };
+        // parentRefs to K8sGateway
+        if (wState.k8sGateway && wState.k8sGateway.addGateway) {
+          wizardK8sHTTPRoute.spec.parentRefs = [];
+          if (wState.k8sGateway.newGateway) {
+            const namespaceAndName = fullNewGatewayName.split('/');
+            const gwNamespace = namespaceAndName[0];
+            const gwName = namespaceAndName[1];
+            wizardK8sHTTPRoute.spec.parentRefs.push({
+              name: gwName,
+              namespace: gwNamespace,
+            });
+          } else if (wState.k8sGateway.selectedGateway.length > 0) {
+            const namespaceAndName = wState.k8sGateway.selectedGateway.split('/');
+            const gwNamespace = namespaceAndName[0];
+            const gwName = namespaceAndName[1];
+            wizardK8sHTTPRoute.spec.parentRefs.push({
+              name: gwName,
+              namespace: gwNamespace});
+          }
+        }
+        if (wState.k8sRules && wState.k8sRules.length > 0) {
+          wizardK8sHTTPRoute.spec.rules = [];
+          wState.k8sRules.forEach(rule => {
+            if (rule.matches.length > 0) {
+              wizardK8sHTTPRoute!.spec!.rules!.push({
+                matches: buildK8sHTTPMatchRequest(rule.matches),
+                backendRefs: rule.backendRefs
+              });
+            }
+          });
+        }
         break;
       }
     }
   }
-  return { dr: wizardDR, vs: wizardVS, gw: wizardGW, k8sgw: wizardK8sGW, pa: wizardPA, k8sroute: wizardK8sHTTPRoute };
+  console.log('RETURN ' + JSON.stringify(wizardK8sHTTPRoute))
+  return { dr: wizardDR, vs: wizardVS, gw: wizardGW, k8sgw: wizardK8sGW, pa: wizardPA, k8shttproute: wizardK8sHTTPRoute };
 };
 
 const getWorkloadsByVersion = (

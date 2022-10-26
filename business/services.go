@@ -235,6 +235,7 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 		svcVirtualServices := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, item.Namespace, item.Name)
 		svcDestinationRules := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, item.Namespace, item.Name)
 		svcGateways := kubernetes.FilterGatewaysByVirtualServices(istioConfigList.Gateways, svcVirtualServices)
+		svcK8sHTTPRoutes := kubernetes.FilterK8sHTTPRoutesByService(istioConfigList.K8sHTTPRoutes, item.Namespace, item.Name)
 		svcReferences := make([]*models.IstioValidationKey, 0)
 		for _, vs := range svcVirtualServices {
 			ref := models.BuildKey(vs.Kind, vs.Name, vs.Namespace)
@@ -246,6 +247,10 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 		}
 		for _, gw := range svcGateways {
 			ref := models.BuildKey(gw.Kind, gw.Name, gw.Namespace)
+			svcReferences = append(svcReferences, &ref)
+		}
+		for _, route := range svcK8sHTTPRoutes {
+			ref := models.BuildKey(route.Kind, route.Name, route.Namespace)
 			svcReferences = append(svcReferences, &ref)
 		}
 		svcReferences = FilterUniqueIstioReferences(svcReferences)
@@ -512,6 +517,8 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 			IncludeDestinationRules: true,
 			// TODO the frontend is merging the Gateways per ServiceDetails but it would be a clean design to locate it here
 			IncludeGateways:        true,
+			IncludeK8sGateways:     true,
+			IncludeK8sHTTPRoutes:   true,
 			IncludeServiceEntries:  true,
 			IncludeVirtualServices: true,
 		}
@@ -565,6 +572,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 	}
 	s.VirtualServices = kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, namespace, service)
 	s.DestinationRules = kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, namespace, service)
+	s.K8sHTTPRoutes = kubernetes.FilterK8sHTTPRoutesByService(istioConfigList.K8sHTTPRoutes, namespace, service)
 	if s.Service.Type == "External" || s.Service.Type == "Federation" {
 		// On ServiceEntries cases the Service name is the hostname
 		s.ServiceEntries = kubernetes.FilterServiceEntriesByHostname(istioConfigList.ServiceEntries, s.Service.Name)

@@ -85,9 +85,9 @@ class K8sRequestRouting extends React.Component<Props, State> {
       } else if (prevState.category === HEADERS) {
         newMatch = prevState.category + ' [' + prevState.headerName + '] ' + prevState.operator + ' ' + prevState.matchValue;
       } else if (prevState.category === QUERY_PARAMS) {
-        newMatch = prevState.category + ' [' + prevState.queryParamName + '] ' + prevState.operator + ' ' + prevState.matchValue;
+        newMatch = prevState.category + ' ' + prevState.queryParamName + ' ' + prevState.operator + ' ' + prevState.matchValue;
       } else {
-        newMatch = prevState.category + ' [' + prevState.operator + ']';
+        newMatch = prevState.category + ' ' + prevState.operator;
       }
       if (!prevState.matches.includes(newMatch)) {
         prevState.matches.push(newMatch);
@@ -95,6 +95,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
       return {
         matches: prevState.matches,
         headerName: '',
+        queryParamName: '',
         matchValue: ''
       };
     });
@@ -182,7 +183,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
       validationMsg = MSG_QUERY_VALUE_NON_EMPTY;
     }
     this.setState({
-      headerName: queryParamName,
+      queryParamName: queryParamName,
       validationMsg: validationMsg
     });
   };
@@ -198,10 +199,10 @@ class K8sRequestRouting extends React.Component<Props, State> {
       }
     }
     if (this.state.category === QUERY_PARAMS) {
-      if (this.state.headerName === '' && matchValue !== '') {
+      if (this.state.queryParamName === '' && matchValue !== '') {
         validationMsg = MSG_QUERY_NAME_NON_EMPTY;
       }
-      if (this.state.headerName !== '' && matchValue === '') {
+      if (this.state.queryParamName !== '' && matchValue === '') {
         validationMsg = MSG_QUERY_VALUE_NON_EMPTY;
       }
     }

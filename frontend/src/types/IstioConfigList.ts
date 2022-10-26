@@ -347,3 +347,26 @@ export const seToIstioItems = (see: ServiceEntry[], validations: Validations): I
   });
   return istioItems;
 };
+
+export const k8sHTTPRouteToIstioItems = (routes: K8sHTTPRoute[]): IstioConfigItem[] => {
+  const istioItems: IstioConfigItem[] = [];
+
+  const typeNameProto = dicIstioType['k8shttproutes']; // ex. serviceEntries -> ServiceEntry
+  const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
+  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+
+  routes.forEach(route => {
+    const item = {
+      namespace: route.metadata.namespace || '',
+      type: typeName,
+      name: route.metadata.name,
+      creationTimestamp: route.metadata.creationTimestamp,
+      resourceVersion: route.metadata.resourceVersion,
+      // @TODO Validations
+      validation: undefined
+    };
+    item[entryName] = route;
+    istioItems.push(item);
+  });
+  return istioItems;
+};
