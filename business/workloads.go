@@ -141,7 +141,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
-		ws, err2 = fetchWorkloads(ctx, in.businessLayer, criteria.Namespace, "")
+		ws, err2 = fetchWorkloads(ctx, in.businessLayer, criteria.Namespace, "ambient-type notin (waypoint)")
 		if err2 != nil {
 			log.Errorf("Error fetching Workloads per namespace %s: %s", criteria.Namespace, err2)
 			errChan <- err2
@@ -590,9 +590,6 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 	var daeset []apps_v1.DaemonSet
 
 	ws := models.Workloads{}
-
-	excludeLabel := "ambient-type"
-	excludeValue := "waypoint"
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
@@ -1131,14 +1128,6 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 				log.Debugf("Workload %s of type %s has no ReplicaSet as a child controller (this may be ok, but is unusual)", controllerName, controllerType)
 			}
 			w.SetPods(cPods)
-		}
-
-		// Exclude Waypoint proxies from workload list
-		if excludeLabel != "" {
-			if w.WorkloadListItem.Labels[excludeLabel] == excludeValue {
-				cnFound = false
-				log.Debugf("Exclude waypoint proxy from pods list: %s ", w.Name)
-			}
 		}
 
 		// Add the Proxy Status to the workload
