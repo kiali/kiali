@@ -41,9 +41,14 @@ import OverviewCardSparklineCharts from './OverviewCardSparklineCharts';
 import OverviewTrafficPolicies from './OverviewTrafficPolicies';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { computePrometheusRateParams } from '../../services/Prometheus';
-import { KialiAppState } from '../../store/Store';
+import { KialiAppState} from '../../store/Store';
 import { connect } from 'react-redux';
-import { durationSelector, meshWideMTLSStatusSelector, refreshIntervalSelector } from '../../store/Selectors';
+import {
+  durationSelector,
+  meshWideMTLSStatusSelector,
+  minTLSVersionSelector,
+  refreshIntervalSelector
+} from '../../store/Selectors';
 import { nsWideMTLSStatus } from '../../types/TLSStatus';
 import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
@@ -67,6 +72,7 @@ import ControlPlaneBadge from './ControlPlaneBadge';
 import OverviewStatusContainer from './OverviewStatus';
 import ControlPlaneNamespaceStatus from './ControlPlaneNamespaceStatus';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
+import TLSInfo from 'components/Overview/TLSInfo';
 
 const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
@@ -148,6 +154,7 @@ type ReduxProps = {
   meshStatus: string;
   navCollapse: boolean;
   refreshInterval: IntervalInMilliseconds;
+  minTLS: string;
 };
 
 type OverviewProps = ReduxProps & {};
@@ -375,8 +382,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
 
   // fetchControlPlaneMetrics() {
   //   const duration = FilterHelper.currentDuration();
-  //   const rateParams = computePrometheusRateParams(duration, 10);    
-  //   const options: MetricsQuery = {      
+  //   const rateParams = computePrometheusRateParams(duration, 10);
+  //   const options: MetricsQuery = {
   //     duration: duration,
   //     step: rateParams.step,
   //     rateInterval: rateParams.rateInterval,
@@ -384,7 +391,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
 
   //   API.getControlPlaneMetrics(options)
   //   .then(response => {
-  //     this.setState({controlPlaneMetrics: response.data});        
+  //     this.setState({controlPlaneMetrics: response.data});
   //   })
   //   .catch(error => {
   //     AlertUtils.addError('Error fetching control plane metrics.', error, 'default', MessageType.ERROR);
@@ -460,7 +467,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         results.forEach(result => {
           result.nsInfo.tlsStatus = {
             status: nsWideMTLSStatus(result.status.status, this.props.meshStatus),
-            autoMTLSEnabled: result.status.autoMTLSEnabled
+            autoMTLSEnabled: result.status.autoMTLSEnabled,
+            minTLS: result.status.minTLS
           };
         });
       })
@@ -887,6 +895,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 </div>
                                 { ns.status && <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />}
                                 { this.state.displayMode === OverviewDisplayMode.EXPAND && <ControlPlaneNamespaceStatus outboundTrafficPolicy={this.state.outboundPolicyMode} namespace={ns}></ControlPlaneNamespaceStatus>}
+                                { this.state.displayMode === OverviewDisplayMode.EXPAND && <TLSInfo mTLS={true} version={this.props.minTLS}></TLSInfo> }
                               </GridItem>
                               {ns.name === serverConfig.istioNamespace &&
                                 <GridItem md={9}>
@@ -1112,7 +1121,8 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk,
   meshStatus: meshWideMTLSStatusSelector(state),
   navCollapse: state.userSettings.interface.navCollapse,
-  refreshInterval: refreshIntervalSelector(state)
+  refreshInterval: refreshIntervalSelector(state),
+  minTLS: minTLSVersionSelector(state),
 });
 
 const OverviewPageContainer = connect(mapStateToProps)(OverviewPage);

@@ -7,4 +7,5 @@ type MTLSStatus struct {
 	// example: MTLS_ENABLED
 	Status          string `json:"status"`
 	AutoMTLSEnabled bool   `json:"autoMTLSEnabled"`
+	MinTLS          string `json:"minTLS"`
 }

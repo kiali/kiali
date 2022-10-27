@@ -9,6 +9,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/util/mtls"
@@ -55,9 +56,16 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, namespaces []strin
 		AllowPermissive:     false,
 	}
 
+	minTLS, err := in.businessLayer.IstioCerts.GetTlsMinVersion()
+
+	if err != nil {
+		log.Errorf("Error getting TLM min version: %s ", err)
+	}
+
 	return models.MTLSStatus{
 		Status:          mtlsStatus.MeshMtlsStatus().OverallStatus,
 		AutoMTLSEnabled: *in.enabledAutoMtls,
+		MinTLS:          minTLS,
 	}, nil
 }
 
