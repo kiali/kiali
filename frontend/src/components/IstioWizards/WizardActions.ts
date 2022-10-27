@@ -320,9 +320,8 @@ const parseK8sHTTPMatchRequest = (httpRouteMatch: K8sHTTPRouteMatch): string[] =
   const matches: string[] = [];
   // Headers
   if (httpRouteMatch.headers) {
-    Object.keys(httpRouteMatch.headers).forEach(headerName => {
-      const value = httpRouteMatch.headers![headerName];
-      matches.push('headers [' + headerName + '] ' + value);
+    httpRouteMatch.headers.forEach(header => {
+      matches.push('headers [' + header.name + '] ' + header.type + ' ' + header.value);
     });
   }
   if (httpRouteMatch.path) {
@@ -1091,6 +1090,7 @@ export const getInitK8sRules = (
         httpRoute.backendRefs.forEach(bRef => {
           rule.backendRefs.push({
             name: bRef.name,
+            weight: !bRef.weight || bRef.weight === 1 ? 100 : bRef.weight
           });
         });
       }
