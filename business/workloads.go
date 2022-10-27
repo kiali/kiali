@@ -1726,18 +1726,9 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 			}
 		}
 
-		// TODO
-		// Check if there are any waypoint proxy
-		if wl.IstioAmbient {
-			// Get List of waypoint proxies from the namespace and compare the
-
-			// Get service Account name for each pod from the workload
-			if len(wl.Pods) > 0 {
-				for _, w := range wl.Pods {
-					log.Infof(w.ServiceAccountName)
-				}
-			}
-			wl.Waypoint = true
+		// Check if there are any waypoint proxy binded to this service account
+		if w.IstioAmbient {
+			w.Waypoint = listWaypoint(ctx, layer, criteria.Namespace, w)
 		}
 
 		if cnFound {
@@ -1745,6 +1736,30 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 		}
 	}
 	return wl, kubernetes.NewNotFound(criteria.WorkloadName, "Kiali", "Workload")
+}
+
+// Return the list of waypoint proxy binded to a workload service account
+func listWaypoint(ctx context.Context, layer *Layer, namespace string, w models.Workload) []string {
+	// Get List of waypoint proxies from the namespace and compare the
+	wlist, err := fetchWorkloads(ctx, layer, namespace, "ambient-type=waypoint")
+	if err != nil {
+		log.Errorf("Error fetching workloads")
+	}
+
+	var waypointlist []string
+	// Get service Account name for each pod from the workload
+	if len(w.Pods) > 0 {
+		for _, wc := range w.Pods {
+			for _, waypoint := range wlist {
+				for _, wp := range waypoint.Pods {
+					if wp.ServiceAccountName == wc.ServiceAccountName {
+						waypointlist = append(waypointlist, waypoint.Name)
+					}
+				}
+			}
+		}
+	}
+	return waypointlist
 }
 
 func updateWorkload(layer *Layer, namespace string, workloadName string, workloadType string, jsonPatch string) error {

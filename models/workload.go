@@ -147,7 +147,7 @@ type Workload struct {
 	Health WorkloadHealth `json:"health"`
 
 	// Ambient waypoint
-	Waypoint bool `json:"waypoint"`
+	Waypoint []string `json:"waypoint"`
 }
 
 type Workloads []*Workload

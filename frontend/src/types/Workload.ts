@@ -26,6 +26,7 @@ export interface Workload {
   runtimes: Runtime[];
   additionalDetails: AdditionalItem[];
   validations?: Validations;
+  waypoint: string[];
 }
 
 export const emptyWorkload: Workload = {
@@ -43,7 +44,8 @@ export const emptyWorkload: Workload = {
   pods: [],
   services: [],
   runtimes: [],
-  additionalDetails: []
+  additionalDetails: [],
+  waypoint: []
 };
 
 export const WorkloadType = {
