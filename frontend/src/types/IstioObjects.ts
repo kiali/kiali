@@ -655,6 +655,14 @@ export interface VirtualService extends IstioObject {
   spec: VirtualServiceSpec;
 }
 
+export function getWizardUpdateLabel(vs: VirtualService | VirtualService[] | null, k8sr: K8sHTTPRoute | K8sHTTPRoute[] | null) {
+  let label = getVirtualServiceUpdateLabel(vs)
+  if (label === '') {
+    label = getK8sHTTPRouteUpdateLabel(k8sr)
+  }
+  return label
+}
+
 export function getVirtualServiceUpdateLabel(vs: VirtualService | VirtualService[] | null) {
   if (!vs) {
     return '';

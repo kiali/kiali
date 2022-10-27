@@ -78,7 +78,8 @@ export type WizardAction =
   | 'fault_injection'
   | 'traffic_shifting'
   | 'tcp_traffic_shifting'
-  | 'request_timeouts';
+  | 'request_timeouts'
+  | 'k8s_request_routing';
 export type WizardMode = 'create' | 'update';
 
 export const WIZARD_TITLES = {
@@ -123,7 +124,7 @@ export type WizardPreviews = {
   dr?: DestinationRule;
   vs?: VirtualService;
   gw?: Gateway;
-  k8sgw?: K8sGateway;
+  k8sgateway?: K8sGateway;
   k8shttproute?: K8sHTTPRoute;
   pa?: PeerAuthentication;
 };
@@ -880,8 +881,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
       }
     }
   }
-  console.log('RETURN ' + JSON.stringify(wizardK8sHTTPRoute))
-  return { dr: wizardDR, vs: wizardVS, gw: wizardGW, k8sgw: wizardK8sGW, pa: wizardPA, k8shttproute: wizardK8sHTTPRoute };
+  return { dr: wizardDR, vs: wizardVS, gw: wizardGW, k8sgateway: wizardK8sGW, pa: wizardPA, k8shttproute: wizardK8sHTTPRoute };
 };
 
 const getWorkloadsByVersion = (
@@ -902,11 +902,13 @@ const getWorkloadsByVersion = (
   return wkdVersionName;
 };
 
-export const getDefaultBackendRefs = (workloads: WorkloadOverview[]): K8sRouteBackendRef[] => {
+export const getDefaultBackendRefs = (workloads: WorkloadOverview[], serviceName: string): K8sRouteBackendRef[] => {
   const wkTraffic = workloads.length < 100 ? Math.floor(100 / workloads.length) : 0;
   const remainTraffic = workloads.length < 100 ? 100 % workloads.length : 0;
-  const backendRefs: K8sRouteBackendRef[] = workloads.map(workload => ({
-    name: workload.name,
+  const backendRefs: K8sRouteBackendRef[] = workloads.map(_ => ({
+    name: serviceName,
+    // @TODO add support of services per versions
+    //name: workload.name,
     weight: wkTraffic,
   }));
   if (remainTraffic > 0) {

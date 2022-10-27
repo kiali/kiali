@@ -10,7 +10,7 @@ import { WorkloadOverview } from '../../types/ServiceInfo';
 import {
   DestinationRule,
   DestinationRuleC,
-  getVirtualServiceUpdateLabel,
+  getWizardUpdateLabel,
   K8sHTTPRoute,
   PeerAuthentication,
   VirtualService
@@ -103,7 +103,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
   };
 
   onAction = (key: string) => {
-    const updateLabel = getVirtualServiceUpdateLabel(this.props.virtualServices);
+    const updateLabel = getWizardUpdateLabel(this.props.virtualServices, this.props.k8sHTTPRoutes);
     switch (key) {
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:

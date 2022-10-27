@@ -1,7 +1,7 @@
 import { DEGRADED, FAILURE, HEALTHY, NA, ServiceHealth, Status } from './Health';
 import {
   DestinationRule,
-  getVirtualServiceUpdateLabel, K8sHTTPRoute,
+  getWizardUpdateLabel, K8sHTTPRoute,
   ObjectCheck,
   ObjectValidation,
   ServiceEntry,
@@ -74,7 +74,7 @@ export interface ServiceDetailsInfo {
 }
 
 export function getServiceDetailsUpdateLabel(serviceDetails: ServiceDetailsInfo | null) {
-  return getVirtualServiceUpdateLabel(serviceDetails?.virtualServices || null);
+  return getWizardUpdateLabel(serviceDetails?.virtualServices || null, serviceDetails?.k8sHTTPRoutes || null);
 }
 
 export function hasServiceDetailsTrafficRouting(serviceDetails: ServiceDetailsInfo | null);

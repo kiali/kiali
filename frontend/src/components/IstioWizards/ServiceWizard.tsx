@@ -327,16 +327,15 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         const dr = this.state.previews!.dr;
         const vs = this.state.previews!.vs;
         const gw = this.state.previews!.gw;
-        const k8sgw = this.state.previews!.k8sgw;
+        const k8sgateway = this.state.previews!.k8sgateway;
         const k8shttproute = this.state.previews!.k8shttproute;
         const pa = this.state.previews!.pa;
-        console.log('!!! onCreateUpdate '+JSON.stringify(this.state.previews))
         // Gateway is only created when user has explicit selected this option
         if (gw) {
           promises.push(API.createIstioConfigDetail(this.props.namespace, 'gateways', JSON.stringify(gw)));
         }
-        if (k8sgw) {
-          promises.push(API.createIstioConfigDetail(this.props.namespace, 'k8sgateways', JSON.stringify(k8sgw)));
+        if (k8sgateway) {
+          promises.push(API.createIstioConfigDetail(this.props.namespace, 'k8sgateways', JSON.stringify(k8sgateway)));
         }
 
         if (this.props.update) {
@@ -601,27 +600,24 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       },
       () => this.setState({ showPreview: true })
     );
-    console.log('!!!previews ' + this.state.previews)
   };
 
   onConfirmPreview = (items: ConfigPreviewItem[]) => {
     const dr = items.filter(it => it.type === 'destinationrule')[0];
     const gw = items.filter(it => it.type === 'gateway')[0];
-    const k8sgw = items.filter(it => it.type === 'k8sgateway')[0];
+    const k8sgateway = items.filter(it => it.type === 'k8sgateway')[0];
     const pa = items.filter(it => it.type === 'peerauthentications')[0];
     const vs = items.filter(it => it.type === 'virtualservice')[0];
     const k8shttproute = items.filter(it => it.type === 'k8shttproute')[0];
     const previews: WizardPreviews = {
       dr: dr ? (dr.items[0] as DestinationRule) : undefined,
       gw: gw ? (gw.items[0] as Gateway) : undefined,
-      k8sgw: k8sgw ? (k8sgw.items[0] as K8sGateway) : undefined,
+      k8sgateway: k8sgateway ? (k8sgateway.items[0] as K8sGateway) : undefined,
       pa: pa ? (pa.items[0] as PeerAuthentication) : undefined,
       vs: vs ? (vs.items[0] as VirtualService) : undefined,
       k8shttproute: k8shttproute ? (k8shttproute.items[0] as K8sHTTPRoute) : undefined
     };
-    console.log('!!!onConfirmPreview before ' + JSON.stringify(items))
     this.setState({ previews, showPreview: false, showWizard: false, confirmationModal: true });
-    console.log('!!!onConfirmPreview after ' + JSON.stringify(this.state.previews))
   };
 
   getItems = () => {
@@ -633,11 +629,10 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       if (this.state.previews.gw) {
         items.push({ type: 'gateway', items: [this.state.previews.gw], title: 'Gateway' });
       }
-      if (this.state.previews.k8sgw) {
-        items.push({ type: 'k8sgwgateway', items: [this.state.previews.k8sgw], title: 'K8s Gateway' });
+      if (this.state.previews.k8sgateway) {
+        items.push({ type: 'k8sgateway', items: [this.state.previews.k8sgateway], title: 'K8s Gateway' });
       }
       if (this.state.previews.k8shttproute) {
-        console.log('!!!k8shttproute' + this.state.previews.k8shttproute)
         items.push({ type: 'k8shttproute', items: [this.state.previews.k8shttproute], title: 'K8s HTTPRoute' });
       }
       if (this.state.previews.pa) {

@@ -36,7 +36,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
     this.state = {
       category: PATH,
       operator: EXACT,
-      backendRefs: getDefaultBackendRefs(this.props.workloads),
+      backendRefs: getDefaultBackendRefs(this.props.workloads, this.props.serviceName),
       matches: [],
       headerName: '',
       queryParamName: '',
@@ -279,7 +279,6 @@ class K8sRequestRouting extends React.Component<Props, State> {
           onAddMatch={this.onAddMatch}
           matches={this.state.matches}
           onRemoveMatch={this.onRemoveMatch}
-          workloads={this.props.workloads}
           backendRefs={this.state.backendRefs}
           validationMsg={this.state.validationMsg}
           onAddRule={this.onAddK8sRule}

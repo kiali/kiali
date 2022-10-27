@@ -3,8 +3,7 @@ import { DropdownGroup, DropdownItem, DropdownSeparator, Tooltip, TooltipPositio
 import {serverConfig} from "config";
 import {
   DestinationRule,
-  getK8sHTTPRouteUpdateLabel,
-  getVirtualServiceUpdateLabel,
+  getWizardUpdateLabel,
   K8sHTTPRoute,
   VirtualService
 } from "types/IstioObjects";
@@ -25,7 +24,7 @@ type Props = {
 }
 
 const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props => {
-  const updateLabel = (props.virtualServices && props.virtualServices.length > 0) ? getVirtualServiceUpdateLabel(props.virtualServices) : getK8sHTTPRouteUpdateLabel(props.k8sHTTPRoutes);
+  const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes);
 
   function hasTrafficRouting() {
     return hasServiceDetailsTrafficRouting(props.virtualServices, props.destinationRules, props.k8sHTTPRoutes);

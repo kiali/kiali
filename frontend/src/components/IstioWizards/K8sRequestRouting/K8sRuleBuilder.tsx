@@ -3,7 +3,6 @@ import { Button, Tabs, Tab, ButtonVariant } from '@patternfly/react-core';
 import K8sMatchBuilder from './K8sMatchBuilder';
 import K8sMatches from './K8sMatches';
 import { style } from 'typestyle';
-import { WorkloadOverview } from '../../../types/ServiceInfo';
 import { PFColors } from '../../Pf/PfColors';
 
 type Props = {
@@ -25,7 +24,6 @@ type Props = {
   matches: string[];
   onRemoveMatch: (match: string) => void;
 
-  workloads: WorkloadOverview[];
   backendRefs: K8sRouteBackendRef[];
 
   // K8sRuleBuilder

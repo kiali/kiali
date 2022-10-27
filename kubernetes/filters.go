@@ -500,9 +500,11 @@ func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1alpha2.HTTPRoute
 	for _, route := range allRoutes {
 		appendRoute := serviceName == ""
 		if !appendRoute {
-			for _, hostname := range route.Spec.Hostnames {
-				if string(hostname) != "" && FilterByHost(string(hostname), route.Namespace, serviceName, namespace) {
-					appendRoute = true
+			for _, rule := range route.Spec.Rules {
+				for _, backendRef := range rule.BackendRefs {
+					if string(backendRef.Name) != "" && FilterByHost(string(backendRef.Name), route.Namespace, serviceName, namespace) {
+						appendRoute = true
+					}
 				}
 			}
 		}
