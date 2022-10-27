@@ -78,10 +78,11 @@ export function getServiceDetailsUpdateLabel(serviceDetails: ServiceDetailsInfo 
 }
 
 export function hasServiceDetailsTrafficRouting(serviceDetails: ServiceDetailsInfo | null);
-export function hasServiceDetailsTrafficRouting(vsList: VirtualService[], drList: DestinationRule[]);
-export function hasServiceDetailsTrafficRouting(serviceDetailsOrVsList: ServiceDetailsInfo | VirtualService[] | null, drList?: DestinationRule[]) {
+export function hasServiceDetailsTrafficRouting(vsList: VirtualService[], drList: DestinationRule[], routeList?: K8sHTTPRoute[]);
+export function hasServiceDetailsTrafficRouting(serviceDetailsOrVsList: ServiceDetailsInfo | VirtualService[] | null, drList?: DestinationRule[], routeList?: K8sHTTPRoute[]) {
   let virtualServicesList: VirtualService[];
   let destinationRulesList: DestinationRule[];
+  let httpRoutesList: K8sHTTPRoute[];
 
   if (serviceDetailsOrVsList === null) {
     return false;
@@ -90,12 +91,15 @@ export function hasServiceDetailsTrafficRouting(serviceDetailsOrVsList: ServiceD
   if ('length' in serviceDetailsOrVsList) {
     virtualServicesList = serviceDetailsOrVsList;
     destinationRulesList = drList || [];
+    httpRoutesList = routeList || [];
   } else {
     virtualServicesList = serviceDetailsOrVsList.virtualServices;
     destinationRulesList = serviceDetailsOrVsList.destinationRules;
+    httpRoutesList = serviceDetailsOrVsList.k8sHTTPRoutes;
+
   }
 
-  return virtualServicesList.length > 0 || destinationRulesList.length > 0;
+  return virtualServicesList.length > 0 || destinationRulesList.length > 0 || httpRoutesList.length > 0;
 }
 
 const higherThan = [

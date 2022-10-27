@@ -23,7 +23,7 @@ import {
   gwToIstioItems,
   seToIstioItems,
   k8sHTTPRouteToIstioItems,
-  validationKey
+  validationKey, k8sGwToIstioItems
 } from '../../types/IstioConfigList';
 import { canCreate, canUpdate } from "../../types/Permissions";
 import { KialiAppState } from '../../store/Store';
@@ -169,6 +169,13 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
             this.props.serviceDetails.validations
           )
         : [];
+    const k8sGwIstioConfigItems =
+      this.props?.k8sGateways && this.props.serviceDetails?.k8sHTTPRoutes
+        ? k8sGwToIstioItems(
+          this.props?.k8sGateways,
+          this.props.serviceDetails.k8sHTTPRoutes
+        )
+        : [];
     const seIstioConfigItems = this.props.serviceDetails?.serviceEntries
       ? seToIstioItems(this.props.serviceDetails.serviceEntries, this.props.serviceDetails.validations)
       : [];
@@ -176,7 +183,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
       ? k8sHTTPRouteToIstioItems(this.props.serviceDetails.k8sHTTPRoutes)
       : [];
     const istioConfigItems = seIstioConfigItems.concat(
-      gwIstioConfigItems.concat(vsIstioConfigItems.concat(drIstioConfigItems.concat(k8sHTTPRouteIstioConfigItems)))
+      gwIstioConfigItems.concat(k8sGwIstioConfigItems.concat(vsIstioConfigItems.concat(drIstioConfigItems.concat(k8sHTTPRouteIstioConfigItems))))
     );
 
     // RenderComponentScroll handles height to provide an inner scroll combined with tabs

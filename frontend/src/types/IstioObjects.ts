@@ -677,6 +677,28 @@ export function getVirtualServiceUpdateLabel(vs: VirtualService | VirtualService
   }
 }
 
+export function getK8sHTTPRouteUpdateLabel(k8sr: K8sHTTPRoute | K8sHTTPRoute[] | null) {
+  if (!k8sr) {
+    return '';
+  }
+
+  let k8sHTTPRoute: K8sHTTPRoute | null = null;
+  if ('length' in k8sr) {
+    if (k8sr.length === 1) {
+      k8sHTTPRoute = k8sr[0];
+    }
+  } else {
+    k8sHTTPRoute = k8sr;
+  }
+
+  if (k8sHTTPRoute && k8sHTTPRoute.metadata.labels &&
+    k8sHTTPRoute.metadata.labels[KIALI_WIZARD_LABEL]) {
+    return k8sHTTPRoute.metadata.labels[KIALI_WIZARD_LABEL];
+  } else {
+    return '';
+  }
+}
+
 export interface K8sOwnerReference {
   apiVersion?: string;
   kind?: string;

@@ -177,6 +177,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
         isDisabled={this.state.isDeleting}
         virtualServices={this.props.virtualServices}
         destinationRules={this.props.destinationRules}
+        k8sHTTPRoutes={this.props.k8sHTTPRoutes || []}
         istioPermissions={this.props.istioPermissions}
         onAction={this.onAction}
         onDelete={this.onAction}

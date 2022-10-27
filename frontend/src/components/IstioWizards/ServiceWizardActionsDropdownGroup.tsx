@@ -1,7 +1,13 @@
 import * as React from "react";
 import { DropdownGroup, DropdownItem, DropdownSeparator, Tooltip, TooltipPosition } from "@patternfly/react-core";
 import {serverConfig} from "config";
-import { DestinationRule, getVirtualServiceUpdateLabel, VirtualService } from "types/IstioObjects";
+import {
+  DestinationRule,
+  getK8sHTTPRouteUpdateLabel,
+  getVirtualServiceUpdateLabel,
+  K8sHTTPRoute,
+  VirtualService
+} from "types/IstioObjects";
 import { canDelete, ResourcePermissions } from "types/Permissions";
 import { SERVICE_WIZARD_ACTIONS, WIZARD_TITLES, WizardAction, WizardMode } from "./WizardActions";
 import { hasServiceDetailsTrafficRouting } from "../../types/ServiceInfo";
@@ -12,16 +18,17 @@ type Props = {
   isDisabled?: boolean;
   destinationRules: DestinationRule[];
   virtualServices: VirtualService[];
+  k8sHTTPRoutes: K8sHTTPRoute[];
   istioPermissions: ResourcePermissions;
   onAction?: (key: WizardAction, mode: WizardMode) => void;
   onDelete?: (key: string) => void;
 }
 
 const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props => {
-  const updateLabel = getVirtualServiceUpdateLabel(props.virtualServices);
+  const updateLabel = (props.virtualServices && props.virtualServices.length > 0) ? getVirtualServiceUpdateLabel(props.virtualServices) : getK8sHTTPRouteUpdateLabel(props.k8sHTTPRoutes);
 
   function hasTrafficRouting() {
-    return hasServiceDetailsTrafficRouting(props.virtualServices, props.destinationRules);
+    return hasServiceDetailsTrafficRouting(props.virtualServices, props.destinationRules, props.k8sHTTPRoutes);
   }
 
   function handleActionClick(eventKey: string) {
