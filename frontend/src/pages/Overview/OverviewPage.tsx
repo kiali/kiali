@@ -41,7 +41,7 @@ import OverviewCardSparklineCharts from './OverviewCardSparklineCharts';
 import OverviewTrafficPolicies from './OverviewTrafficPolicies';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { computePrometheusRateParams } from '../../services/Prometheus';
-import { KialiAppState} from '../../store/Store';
+import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import {
   durationSelector,
@@ -62,7 +62,7 @@ import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNam
 import history, { HistoryManager, URLParam } from '../../app/History';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
-import { OutboundTrafficPolicy, ValidationStatus } from '../../types/IstioObjects';
+import { CanaryUpgradeStatus, OutboundTrafficPolicy, ValidationStatus } from '../../types/IstioObjects';
 import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
 import { ExternalLink } from '../../types/Dashboards';
 import { isParentKiosk, kioskOverviewAction } from "../../components/Kiosk/KioskActions";
@@ -73,6 +73,8 @@ import OverviewStatusContainer from './OverviewStatus';
 import ControlPlaneNamespaceStatus from './ControlPlaneNamespaceStatus';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
 import TLSInfo from 'components/Overview/TLSInfo';
+import CanaryUpgradeProgress from './CanaryUpgradeProgress';
+import ControlPlaneVersionBadge from './ControlPlaneVersionBadge';
 
 const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
@@ -146,6 +148,7 @@ type State = {
   grafanaLinks: ExternalLink[];
   istiodResourceThreholds: IstiodResourceThresholds;
   outboundPolicyMode: OutboundTrafficPolicy;
+  canaryUpgradeStatus?: CanaryUpgradeStatus;
 };
 
 type ReduxProps = {
@@ -178,8 +181,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       nsTarget: '',
       opTarget: '',
       grafanaLinks: [],
-      istiodResourceThreholds: {memory: 0, cpu: 0},
-      outboundPolicyMode: {}
+      istiodResourceThreholds: { memory: 0, cpu: 0 },
+      outboundPolicyMode: {},
+      canaryUpgradeStatus: undefined
     };
   }
 
@@ -264,11 +268,11 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             this.fetchHealth(isAscending, sortField, type);
             this.fetchTLS(isAscending, sortField);
             this.fetchOutboundTrafficPolicyMode();
+            this.fetchCanariesStatus();
             this.fetchIstiodResourceThresholds();
             this.fetchValidations(isAscending, sortField);
             if (displayMode !== OverviewDisplayMode.COMPACT) {
               this.fetchMetrics(direction);
-              //this.fetchControlPlaneMetrics();
             }
           }
         );
@@ -497,17 +501,34 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   fetchOutboundTrafficPolicyMode() {
     API.getOutboundTrafficPolicyMode()
       .then(response => {
-          this.setState({outboundPolicyMode: {mode: response.data.mode}})
+        this.setState({ outboundPolicyMode: { mode: response.data.mode } })
       })
       .catch(error => {
         AlertUtils.addError('Error fetching Mesh OutboundTrafficPolicy.Mode.', error, 'default', MessageType.ERROR);
       });
   };
 
+  fetchCanariesStatus() {
+    API.getCanaryUpgradeStatus()
+      .then(response => {
+        this.setState({
+          canaryUpgradeStatus: {
+            currentVersion: response.data.currentVersion,
+            upgradeVersion: response.data.upgradeVersion,
+            migratedNamespaces: response.data.migratedNamespaces,
+            pendingNamespaces: response.data.pendingNamespaces
+          }
+        })
+      })
+      .catch(error => {
+        AlertUtils.addError('Error fetching canary upgrade status.', error, 'default', MessageType.ERROR);
+      });
+  };
+
   fetchIstiodResourceThresholds() {
     API.getIstiodResourceThresholds()
       .then(response => {
-        this.setState({istiodResourceThreholds: response.data})
+        this.setState({ istiodResourceThreholds: response.data })
       })
       .catch(error => {
         AlertUtils.addError('Error fetching Istiod resource threholds.', error, 'default', MessageType.ERROR);
@@ -529,7 +550,6 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     if (mode === OverviewDisplayMode.EXPAND) {
       // Load metrics
       this.fetchMetrics(this.state.direction);
-      //this.fetchControlPlaneMetrics();
     }
   };
 
@@ -795,6 +815,15 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     });
   };
 
+  hasCanaryUpgradeConfigured = (): boolean => {
+    if (this.state.canaryUpgradeStatus) {
+      if (this.state.canaryUpgradeStatus.pendingNamespaces.length > 0 || this.state.canaryUpgradeStatus.migratedNamespaces.length > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   render() {
     const sm = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 6;
     const md = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 4;
@@ -855,6 +884,12 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 {ns.name === serverConfig.istioNamespace &&
                                   <ControlPlaneBadge></ControlPlaneBadge>
                                 }
+                                {ns.name !== serverConfig.istioNamespace && this.hasCanaryUpgradeConfigured() && this.state.canaryUpgradeStatus?.migratedNamespaces.includes(ns.name) &&
+                                  <ControlPlaneVersionBadge version={this.state.canaryUpgradeStatus.upgradeVersion} isCanary={true}></ControlPlaneVersionBadge>
+                                }
+                                {ns.name !== serverConfig.istioNamespace && this.hasCanaryUpgradeConfigured() && this.state.canaryUpgradeStatus?.pendingNamespaces.includes(ns.name) &&
+                                  <ControlPlaneVersionBadge version={this.state.canaryUpgradeStatus.currentVersion} isCanary={false}></ControlPlaneVersionBadge>
+                                }
                               </span>
                             </Title>
                           </CardHeaderMain>
@@ -863,11 +898,11 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                         <CardBody>
                           {ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND &&
                             <Grid>
-                              <GridItem md={3}>
+                              <GridItem md={3} >
                                 {this.renderLabels(ns)}
 
                                 <div style={{ textAlign: 'left' }}>
-                                  <div style={{ display: 'inline-block', width: '125px' }}>Istio Config</div>
+                                  <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
                                   {ns.tlsStatus && (
                                     <span>
                                       <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} />
@@ -875,13 +910,24 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                   )}
                                   {this.renderIstioConfigStatus(ns)}
                                 </div>
-                                { ns.status && <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />}
-                                { this.state.displayMode === OverviewDisplayMode.EXPAND && <ControlPlaneNamespaceStatus outboundTrafficPolicy={this.state.outboundPolicyMode} namespace={ns}></ControlPlaneNamespaceStatus>}
-                                { this.state.displayMode === OverviewDisplayMode.EXPAND && <TLSInfo certificatesInformationIndicators={serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled} version={this.props.minTLS}></TLSInfo> }
+                                {ns.status && <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />}
+                                {this.state.displayMode === OverviewDisplayMode.EXPAND && <ControlPlaneNamespaceStatus outboundTrafficPolicy={this.state.outboundPolicyMode} namespace={ns}></ControlPlaneNamespaceStatus>}
+                                {this.state.displayMode === OverviewDisplayMode.EXPAND && <TLSInfo certificatesInformationIndicators={serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled} version={this.props.minTLS}></TLSInfo> }
                               </GridItem>
                               {ns.name === serverConfig.istioNamespace &&
                                 <GridItem md={9}>
-                                  {this.renderCharts(ns)}
+                                  <Grid>
+                                    {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() &&
+                                      <GridItem md={4}>
+                                        <CanaryUpgradeProgress canaryUpgradeStatus={this.state.canaryUpgradeStatus} />
+                                      </GridItem>
+                                    }
+                                    <GridItem md={(this.hasCanaryUpgradeConfigured()) ? 8 : 12}>
+                                      {this.renderCharts(ns)}
+                                    </GridItem>
+
+                                  </Grid>
+
                                 </GridItem>
                               }
                             </Grid>
@@ -891,7 +937,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                               {this.renderLabels(ns)}
 
                               <div style={{ textAlign: 'left' }}>
-                                <div style={{ display: 'inline-block', width: '125px' }}>Istio Config</div>
+                                <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
                                 {ns.tlsStatus && (
                                   <span>
                                     <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} />
@@ -962,7 +1008,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           }
         >
           <div id="labels_info" style={{ display: 'inline' }}>
-            {labelsLength} Label{labelsLength !== '1' ? 's' : ''}
+            {labelsLength} label{labelsLength !== '1' ? 's' : ''}
           </div>
         </Tooltip>
       </div>
@@ -1031,9 +1077,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     }
     let text: string;
     if (nbItems === 1) {
-      text = switchType(this.state.type, '1 Application', '1 Service', '1 Workload');
+      text = switchType(this.state.type, '1 application', '1 service', '1 workload');
     } else {
-      text = nbItems + switchType(this.state.type, ' Applications', ' Services', ' Workloads');
+      text = nbItems + switchType(this.state.type, ' applications', ' services', ' workloads');
     }
     const mainLink = <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }} data-test={'overview-type-' + this.state.type}>{text}</div>;
     if (nbItems === ns.status?.notAvailable.length) {

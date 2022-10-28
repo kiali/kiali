@@ -43,3 +43,14 @@ func IstiodResourceThresholds(w http.ResponseWriter, r *http.Request) {
 	irt, _ := business.Mesh.IstiodResourceThresholds()
 	RespondWithJSON(w, http.StatusOK, irt)
 }
+
+func IstiodCanariesStatus(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	irt, _ := business.Mesh.CanaryUpgradeStatus()
+	RespondWithJSON(w, http.StatusOK, irt)
+}

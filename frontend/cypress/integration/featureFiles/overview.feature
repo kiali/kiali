@@ -43,12 +43,6 @@ Feature: Kiali Overview page
     Then user sees the "alpha" namespace card
     And user doesn't see the "beta" namespace card
 
-  @overview-page
-  Scenario: Filter by health
-    When user filters "Failure" health
-    Then user sees the "alpha" namespace card
-    And user sees the "beta" namespace card
-    And user doesn't see the "default" namespace card
 
   @overview-page
   Scenario: Sort by name
@@ -116,3 +110,7 @@ Feature: Kiali Overview page
     When user hovers over the MinTLS locker
     Then the user sees the certificates information
     And the minimum TLS version
+
+  @overview-page
+  Scenario: The canary upgrade information is not present when there is no canary configured
+    Then the user sees no information related to canary upgrades

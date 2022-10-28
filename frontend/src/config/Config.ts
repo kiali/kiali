@@ -115,6 +115,7 @@ const conf = {
       appMetrics: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/metrics`,
       appDashboard: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/dashboard`,
       appSpans: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/spans`,
+      canaryUpgradeStatus: () => 'api/mesh/canaries/status',
       clusters: 'api/clusters',
       crippledFeatures: 'api/crippled',
       serviceSpans: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}/spans`,

@@ -1257,3 +1257,10 @@ export interface APIKey {
   header?: string;
   cookie?: string;
 }
+
+export interface CanaryUpgradeStatus { 
+  currentVersion: string;
+  upgradeVersion: string;
+  migratedNamespaces: string[];
+  pendingNamespaces: string[];
+}
