@@ -134,7 +134,7 @@ endif
 	@echo "Ensure the CRDs exist"; ${OC} apply -f ${HELM_CHARTS_REPO}/kiali-operator/crds/crds.yaml
 	@echo "Create a dummy Kiali CR"; ${OC} apply -f ${ROOTDIR}/operator/dev-playbook-config/dev-kiali-cr.yaml
 	ansible-galaxy collection install operator_sdk.util community.kubernetes
-	ALLOW_AD_HOC_KIALI_NAMESPACE=true ALLOW_AD_HOC_KIALI_IMAGE=true ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ${ANSIBLE_CALLBACK_WHITELIST_ARG} ansible-playbook -vvv ${ANSIBLE_PYTHON_INTERPRETER} -i ${ROOTDIR}/operator/dev-playbook-config/dev-hosts.yaml ${ROOTDIR}/operator/dev-playbook-config/dev-playbook.yaml
+	ALLOW_AD_HOC_KIALI_NAMESPACE=true ALLOW_AD_HOC_KIALI_IMAGE=true ALLOW_ALL_ACCESSIBLE_NAMESPACES=true ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ${ANSIBLE_CALLBACK_WHITELIST_ARG} ansible-playbook -vvv ${ANSIBLE_PYTHON_INTERPRETER} -i ${ROOTDIR}/operator/dev-playbook-config/dev-hosts.yaml ${ROOTDIR}/operator/dev-playbook-config/dev-playbook.yaml
 	@echo "Remove the dummy Kiali CR"; ${OC} delete -f ${ROOTDIR}/operator/dev-playbook-config/dev-kiali-cr.yaml
 
 # Set an operator environment variable to configure features inside the operator.
@@ -254,6 +254,7 @@ run-operator: get-ansible-operator crd-create .wait-for-kiali-crd
 	ANSIBLE_ROLES_PATH="${OPERATOR_DIR}/roles" \
 	ALLOW_AD_HOC_KIALI_NAMESPACE="true" \
 	ALLOW_AD_HOC_KIALI_IMAGE="true" \
+	ALLOW_ALL_ACCESSIBLE_NAMESPACES="true" \
 	ANSIBLE_VERBOSITY_KIALI_KIALI_IO="1" \
 	ANSIBLE_DEBUG_LOGS="True" \
 	PROFILE_TASKS_TASK_OUTPUT_LIMIT="100" \
