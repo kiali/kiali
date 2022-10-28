@@ -56,7 +56,8 @@ const paramToTab: { [key: string]: number } = {
   logs: 2,
   in_metrics: 3,
   out_metrics: 4,
-  traces: 5
+  traces: 5,
+  waypoint: 7
 };
 var nextTabIndex = 6;
 
@@ -225,14 +226,15 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       tabsArray.push(envoyTab);
       paramToTab['envoy'] = 10;
     }
-    if (this.state.workload && this.state.workload.waypoint.length > 0) {
+    if (this.state.workload && this.state.workload.waypoint && this.state.workload.waypoint.length > 0) {
       const waypointTab = (
         <Tab title="Waypoint" eventKey={10} key={'Waypoint'}>
           {this.state.workload && (
             <WaypointDetailsContainer
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.match.params.namespace}
-              workload={this.state.workload} />
+              workloadName={this.state.workload.waypoint[0]}
+              duration={this.props.duration} />
           )}
         </Tab>
       );
