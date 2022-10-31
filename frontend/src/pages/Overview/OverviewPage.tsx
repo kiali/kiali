@@ -380,24 +380,6 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       .catch(err => this.handleAxiosError('Could not fetch health', err));
   }
 
-  // fetchControlPlaneMetrics() {
-  //   const duration = FilterHelper.currentDuration();
-  //   const rateParams = computePrometheusRateParams(duration, 10);
-  //   const options: MetricsQuery = {
-  //     duration: duration,
-  //     step: rateParams.step,
-  //     rateInterval: rateParams.rateInterval,
-  //   };
-
-  //   API.getControlPlaneMetrics(options)
-  //   .then(response => {
-  //     this.setState({controlPlaneMetrics: response.data});
-  //   })
-  //   .catch(error => {
-  //     AlertUtils.addError('Error fetching control plane metrics.', error, 'default', MessageType.ERROR);
-  //   });
-  // }
-
   fetchMetrics(direction: DirectionType) {
     const duration = FilterHelper.currentDuration();
     // debounce async for back-pressure, ten by ten
