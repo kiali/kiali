@@ -13,6 +13,7 @@
 : ${SMESH:=scale-mesh}
 : ${BASE_URL:=https://raw.githubusercontent.com/kiali/demos/master}
 : ${NUM_NS:=1}
+: ${NUM_WORKLOADS:=50}
 
 apply_network_attachment() {
   NAME=$1
@@ -45,15 +46,15 @@ install_scale_mesh_demo() {
   do
     if [ "${IS_OPENSHIFT}" == "true" ]; then
       ${CLIENT_EXE} new-project depth-${x}
+      apply_network_attachment depth-${x}
     else
       ${CLIENT_EXE} create ns depth-${x}
     fi
     ${CLIENT_EXE} label namespace  depth-${x} istio-injection=enabled --overwrite=true
-    apply_network_attachment depth-${x}
     x=$(( $x + 1 ))
   done
 
-  bash <(curl -L ${BASE_URL}/scale-mesh/scale-mesh.sh) install --mesh-type depth --versions 3
+  bash <(curl -L ${BASE_URL}/scale-mesh/scale-mesh.sh) install --mesh-type depth --versions 3 --apps ${NUM_WORKLOADS} --services ${NUM_WORKLOADS} -tgr 50
 }
 
 while [ $# -gt 0 ]; do
@@ -63,11 +64,15 @@ while [ $# -gt 0 ]; do
       CLIENT_EXE="$2"
       shift;shift
       ;;
-    -n|-namespaces)
+    -n|--namespaces)
       NUM_NS="$2"
       shift;shift
       ;;
-    -d|-delete)
+    -wk|--workloads)
+      NUM_WORKLOADS="$2"
+      shift;shift
+      ;;
+    -d|--delete)
       DELETE_DEMOS="$2"
       shift;shift
       ;;
@@ -77,6 +82,7 @@ Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
   -n|--namespaces: Number of namespaces. Default: 1
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
+  -wk|--workloads: Number of workloads. Default: 50
   -h|--help: this text
 HELPMSG
       exit 1
