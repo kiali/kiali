@@ -900,9 +900,6 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 { ns.status && <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />}
                                 { this.state.displayMode === OverviewDisplayMode.EXPAND && <ControlPlaneNamespaceStatus outboundTrafficPolicy={this.state.outboundPolicyMode} namespace={ns}></ControlPlaneNamespaceStatus>}
                                 { this.state.displayMode === OverviewDisplayMode.EXPAND && <TLSInfo mTLS={true} version={this.props.minTLS}></TLSInfo> }
-                                { this.state.displayMode === OverviewDisplayMode.EXPAND &&
-                                  <ControlPlaneNamespaceStatus outboundTrafficPolicy={this.state.outboundPolicyMode} namespace={ns}></ControlPlaneNamespaceStatus>
-                                }
                               </GridItem>
                               {ns.name === serverConfig.istioNamespace &&
                                 <GridItem md={9}>
