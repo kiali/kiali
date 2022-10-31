@@ -145,7 +145,7 @@ func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.C
 }
 
 func isIstioAmbient(pod *core_v1.Pod, container *core_v1.Container, conf *config.Config) bool {
-	for label, _ := range pod.ObjectMeta.Labels {
+	for label := range pod.ObjectMeta.Labels {
 		if label == "ambient-type" {
 			return true
 		}

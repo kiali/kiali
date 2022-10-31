@@ -14,6 +14,7 @@ import { FilterType, ActiveFiltersInfo } from 'types/Filters';
 import { healthFilter } from 'components/Filters/CommonFilters';
 import { nameFilter } from '../Filters';
 import { DEFAULT_LABEL_OPERATION } from '../../../types/Filters';
+import {IstioEnvironment} from "../../../types/StatusState";
 
 const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -100,8 +101,9 @@ describe('Overview page', () => {
   });
 
   it('renders initial layout', () => {
+    const istioEnv:IstioEnvironment = {isMaistra:false, isAmbient:false}
     const wrapper = shallow(
-      <OverviewPage meshStatus={MTLSStatuses.NOT_ENABLED} navCollapse={false} duration={600} refreshInterval={10000} kiosk={''} minTLS={''}/>
+      <OverviewPage meshStatus={MTLSStatuses.NOT_ENABLED} navCollapse={false} duration={600} refreshInterval={10000} kiosk={''} minTLS={''} istioEnvironment={istioEnv}/>
     );
     expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
