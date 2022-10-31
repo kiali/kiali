@@ -247,6 +247,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
           <ConfirmDeleteTrafficRoutingModal
             destinationRules={DestinationRuleC.fromDrArray(this.props.serviceDetails!.destinationRules)}
             virtualServices={this.props.serviceDetails!.virtualServices}
+            k8sHTTPRoutes={this.props.serviceDetails!.k8sHTTPRoutes}
             isOpen={true}
             onCancel={() => this.setState({showConfirmDeleteTrafficRouting: false})}
             onConfirm={this.handleConfirmDeleteServiceTrafficRouting}

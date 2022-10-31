@@ -8,7 +8,13 @@ import {
   VirtualService
 } from "types/IstioObjects";
 import { canDelete, ResourcePermissions } from "types/Permissions";
-import { SERVICE_WIZARD_ACTIONS, WIZARD_TITLES, WizardAction, WizardMode } from "./WizardActions";
+import {
+  SERVICE_WIZARD_ACTIONS,
+  WIZARD_K8S_REQUEST_ROUTING,
+  WIZARD_TITLES,
+  WizardAction,
+  WizardMode
+} from "./WizardActions";
 import { hasServiceDetailsTrafficRouting } from "../../types/ServiceInfo";
 
 export const DELETE_TRAFFIC_ROUTING = 'delete_traffic_routing';
@@ -47,8 +53,8 @@ const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props 
   }
 
   const actionItems = SERVICE_WIZARD_ACTIONS.map(eventKey => {
-    const disabled = (eventKey.includes('k8s') ? !serverConfig.gatewayAPIEnabled : props.isDisabled);
-    const enabledItem = disabled || !hasTrafficRouting() || (hasTrafficRouting() && updateLabel === eventKey);
+    const disabled = (eventKey === WIZARD_K8S_REQUEST_ROUTING ? !serverConfig.gatewayAPIEnabled : props.isDisabled);
+    const enabledItem = !disabled && (!hasTrafficRouting() || (hasTrafficRouting() && updateLabel === eventKey));
     const wizardItem = (
       <DropdownItem key={eventKey} component="button" isDisabled={!enabledItem} onClick={() => handleActionClick(eventKey)} data-test={eventKey}>
         {WIZARD_TITLES[eventKey]}

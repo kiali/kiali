@@ -642,7 +642,6 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         items.push({ type: 'virtualservice', items: [this.state.previews.vs], title: 'VirtualService' });
       }
     }
-
     return items;
   };
 
@@ -878,7 +877,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
                       serviceName={this.props.serviceName}
                       hasGateway={hasK8sGateway(this.props.k8sHTTPRoutes)}
                       gateway={k8sGatewaySelected}
-                      gateways={this.props.k8sGateways}
+                      k8sGateways={this.props.k8sGateways}
                       k8sRouteHosts={this.state.k8sRouteHosts}
                       onGatewayChange={this.onK8sGateway}
                     />

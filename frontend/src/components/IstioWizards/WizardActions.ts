@@ -318,14 +318,14 @@ const parseHttpMatchRequest = (httpMatchRequest: HTTPMatchRequest): string[] => 
 
 const parseK8sHTTPMatchRequest = (httpRouteMatch: K8sHTTPRouteMatch): string[] => {
   const matches: string[] = [];
+  if (httpRouteMatch.path) {
+    matches.push('path ' + httpRouteMatch.path?.type + ' ' + httpRouteMatch.path?.value);
+  }
   // Headers
   if (httpRouteMatch.headers) {
     httpRouteMatch.headers.forEach(header => {
       matches.push('headers [' + header.name + '] ' + header.type + ' ' + header.value);
     });
-  }
-  if (httpRouteMatch.path) {
-    matches.push('path ' + httpRouteMatch.path?.type + ' ' + httpRouteMatch.path?.value);
   }
   if (httpRouteMatch.queryParams) {
     httpRouteMatch.queryParams.forEach(qp => {
@@ -464,41 +464,6 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
                 hosts: wState.gateway.gwHosts.split(',')
               }
             ]
-          }
-        }
-        : undefined;
-    wizardK8sGW =
-      wState.k8sGateway && wState.k8sGateway.addGateway && wState.k8sGateway.newGateway
-        ? {
-          kind: 'Gateway',
-          apiVersion: GATEWAY_NETWORKING_VERSION,
-          metadata: {
-            namespace: wProps.namespace,
-            name: fullNewGatewayName.substr(wProps.namespace.length + 1),
-            labels: {
-              [KIALI_WIZARD_LABEL]: wProps.type,
-              app: fullNewGatewayName.substr(wProps.namespace.length + 1),
-            }
-          },
-          spec: {
-            gatewayClassName: 'istio',
-            listeners: [
-              {
-                name: 'default',
-                // here gwHosts for K8s API Gateway contains single host
-                hostname: wState.k8sGateway.gwHosts,
-                port: wState.k8sGateway.port,
-                protocol: 'HTTP',
-                allowedRoutes: {
-                  namespaces: {
-                    from: 'All',
-                    selector: {
-                      matchLabels: {}
-                    }
-                  }
-                }
-              }
-            ],
           }
         }
         : undefined;
@@ -827,6 +792,43 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
     if (wProps.k8sHTTPRoutes && wProps.k8sHTTPRoutes.length === 1 && wProps.k8sHTTPRoutes[0].metadata.name !== k8sRouteName) {
       k8sRouteName = wProps.k8sHTTPRoutes[0].metadata.name;
     }
+
+    wizardK8sGW =
+      wState.k8sGateway && wState.k8sGateway.addGateway && wState.k8sGateway.newGateway
+        ? {
+          kind: 'Gateway',
+          apiVersion: GATEWAY_NETWORKING_VERSION,
+          metadata: {
+            namespace: wProps.namespace,
+            name: fullNewGatewayName.substr(wProps.namespace.length + 1),
+            labels: {
+              [KIALI_WIZARD_LABEL]: wProps.type,
+              app: fullNewGatewayName.substr(wProps.namespace.length + 1),
+            }
+          },
+          spec: {
+            gatewayClassName: 'istio',
+            listeners: [
+              {
+                name: 'default',
+                // here gwHosts for K8s API Gateway contains single host
+                hostname: wState.k8sGateway.gwHosts,
+                port: wState.k8sGateway.port,
+                protocol: 'HTTP',
+                allowedRoutes: {
+                  namespaces: {
+                    from: 'All',
+                    selector: {
+                      matchLabels: {}
+                    }
+                  }
+                }
+              }
+            ],
+          }
+        }
+        : undefined;
+
     wizardK8sHTTPRoute = {
       kind: 'HTTPRoute',
       apiVersion: GATEWAY_NETWORKING_VERSION,
@@ -1351,7 +1353,9 @@ export const getInitK8sGateway = (k8sHTTPRoutes: K8sHTTPRoute[]): string => {
     k8sHTTPRoutes[0].spec.parentRefs &&
     k8sHTTPRoutes[0].spec.parentRefs.length > 0
   ) {
-    return k8sHTTPRoutes[0].spec.parentRefs[0].name[0];
+    const name = k8sHTTPRoutes[0].spec.parentRefs[0].name
+    const namespace = k8sHTTPRoutes[0].spec.parentRefs[0].namespace
+    return (namespace !== '' ? namespace+'/' : '') + name;
   }
   return '';
 };
@@ -1645,7 +1649,7 @@ export const buildGateway = (name: string, namespace: string, state: GatewayStat
 };
 
 export const buildK8sGateway = (name: string, namespace: string, state: K8sGatewayState): K8sGateway => {
-  const gw: K8sGateway = {
+  const k8sGateway: K8sGateway = {
     kind: 'Gateway',
     apiVersion: GATEWAY_NETWORKING_VERSION,
     metadata: {
@@ -1685,12 +1689,12 @@ export const buildK8sGateway = (name: string, namespace: string, state: K8sGatew
       const labels = split.trim().split('=');
       // It should be already validated with workloadSelectorValid, but just to add extra safe check
       if (labels.length === 2) {
-        if (gw.metadata.labels) {
-          gw.metadata.labels[labels[0].trim()] = labels[1].trim();
+        if (k8sGateway.metadata.labels) {
+          k8sGateway.metadata.labels[labels[0].trim()] = labels[1].trim();
         }
       }
     });
-  return gw;
+  return k8sGateway;
 };
 
 export const buildPeerAuthentication = (

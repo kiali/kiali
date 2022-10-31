@@ -150,6 +150,8 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 			Namespace:               criteria.Namespace,
 			IncludeDestinationRules: true,
 			IncludeGateways:         true,
+			IncludeK8sGateways:      true,
+			IncludeK8sHTTPRoutes:    true,
 			IncludeServiceEntries:   true,
 			IncludeVirtualServices:  true,
 		}
@@ -236,6 +238,7 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 		svcDestinationRules := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, item.Namespace, item.Name)
 		svcGateways := kubernetes.FilterGatewaysByVirtualServices(istioConfigList.Gateways, svcVirtualServices)
 		svcK8sHTTPRoutes := kubernetes.FilterK8sHTTPRoutesByService(istioConfigList.K8sHTTPRoutes, item.Namespace, item.Name)
+		svcK8sGateways := kubernetes.FilterK8sGatewaysByHTTPRoutes(istioConfigList.K8sGateways, svcK8sHTTPRoutes)
 		svcReferences := make([]*models.IstioValidationKey, 0)
 		for _, vs := range svcVirtualServices {
 			ref := models.BuildKey(vs.Kind, vs.Name, vs.Namespace)
@@ -246,6 +249,10 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 			svcReferences = append(svcReferences, &ref)
 		}
 		for _, gw := range svcGateways {
+			ref := models.BuildKey(gw.Kind, gw.Name, gw.Namespace)
+			svcReferences = append(svcReferences, &ref)
+		}
+		for _, gw := range svcK8sGateways {
 			ref := models.BuildKey(gw.Kind, gw.Name, gw.Namespace)
 			svcReferences = append(svcReferences, &ref)
 		}

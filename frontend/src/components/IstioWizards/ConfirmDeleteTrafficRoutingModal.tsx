@@ -1,10 +1,11 @@
 import React from 'react';
 import { Button, ButtonVariant, Modal, ModalVariant } from '@patternfly/react-core';
-import { DestinationRuleC, VirtualService } from '../../types/IstioObjects';
+import {DestinationRuleC, K8sHTTPRoute, VirtualService} from '../../types/IstioObjects';
 
 type Props = {
   destinationRules: DestinationRuleC[];
   virtualServices: VirtualService[];
+  k8sHTTPRoutes: K8sHTTPRoute[];
   isOpen: boolean;
   onCancel: () => void;
   onConfirm: () => void;
@@ -43,6 +44,14 @@ const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = props =
           )}'`
         : '';
     deleteItems.push(<div key={`delete_item_${++i}`}>{paMessage}</div>);
+
+    let k8sHTTPRouteMessage =
+      props.k8sHTTPRoutes.length > 0
+        ? `K8s HTTPRoute${props.k8sHTTPRoutes.length > 1 ? 's' : ''}: '${props.k8sHTTPRoutes.map(
+          k8sr => k8sr.metadata.name
+        )}'`
+        : '';
+    deleteItems.push(<div key={`delete_item_${++i}`}>{k8sHTTPRouteMessage}</div>);
 
     return (
       <>

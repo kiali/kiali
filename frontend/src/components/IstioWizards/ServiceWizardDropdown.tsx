@@ -147,7 +147,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
       isDeleting: true
     });
     this.hideConfirmDelete();
-    deleteServiceTrafficRouting(this.props.virtualServices, DestinationRuleC.fromDrArray(this.props.destinationRules))
+    deleteServiceTrafficRouting(this.props.virtualServices, DestinationRuleC.fromDrArray(this.props.destinationRules), this.props.k8sHTTPRoutes)
       .then(_results => {
         this.setState({
           isDeleting: false
@@ -233,6 +233,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
         <ConfirmDeleteTrafficRoutingModal
           destinationRules={DestinationRuleC.fromDrArray(this.props.destinationRules)}
           virtualServices={this.props.virtualServices}
+          k8sHTTPRoutes={this.props.k8sHTTPRoutes}
           isOpen={this.state.showConfirmDelete}
           onCancel={this.hideConfirmDelete}
           onConfirm={this.onDelete}

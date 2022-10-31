@@ -15,7 +15,7 @@ type Props = {
   serviceName: string;
   hasGateway: boolean;
   gateway: string;
-  gateways: string[];
+  k8sGateways: string[];
   k8sRouteHosts: string[];
   onGatewayChange: (valid: boolean, gateway: K8sGatewaySelectorState) => void;
 };
@@ -44,10 +44,10 @@ class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelectorState>
     super(props);
     this.state = {
       addGateway: props.hasGateway,
-      gwHosts: '*',
+      gwHosts: props.k8sRouteHosts.join(','),
       gwHostsValid: true,
-      newGateway: props.gateways.length === 0,
-      selectedGateway: props.gateways.length > 0 ? (props.gateway !== '' ? props.gateway : props.gateways[0]) : '',
+      newGateway: props.k8sGateways.length === 0,
+      selectedGateway: props.k8sGateways.length > 0 ? (props.gateway !== '' ? props.gateway : props.k8sGateways[0]) : '',
       addMesh: false,
       port: 80
     };
@@ -141,7 +141,7 @@ class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelectorState>
                 id="existingGateway"
                 name="selectGateway"
                 label="Select K8s API Gateway"
-                isDisabled={!this.state.addGateway || this.props.gateways.length === 0}
+                isDisabled={!this.state.addGateway || this.props.k8sGateways.length === 0}
                 isChecked={!this.state.newGateway}
                 onChange={() => this.onFormChange(K8sGatewayForm.SELECT, 'false')}
               />
@@ -156,19 +156,19 @@ class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelectorState>
             </FormGroup>
             {!this.state.newGateway && (
               <FormGroup fieldId="selectGateway" label="K8sGateway">
-                {this.props.gateways.length > 0 && (
+                {this.props.k8sGateways.length > 0 && (
                   <FormSelect
                     id="selectGateway"
                     value={this.state.selectedGateway}
-                    isDisabled={!this.state.addGateway || this.state.newGateway || this.props.gateways.length === 0}
-                    onChange={(gw: string) => this.onFormChange(K8sGatewayForm.GATEWAY_SELECTED, gw)}
+                    isDisabled={!this.state.addGateway || this.state.newGateway || this.props.k8sGateways.length === 0}
+                    onChange={(k8sGateway: string) => this.onFormChange(K8sGatewayForm.GATEWAY_SELECTED, k8sGateway)}
                   >
-                    {this.props.gateways.map(gw => (
-                      <FormSelectOption key={gw} value={gw} label={gw} />
+                    {this.props.k8sGateways.map(k8sGateway => (
+                      <FormSelectOption key={k8sGateway} value={k8sGateway} label={k8sGateway} />
                     ))}
                   </FormSelect>
                 )}
-                {this.props.gateways.length === 0 && <>There are no K8s API gateways to select.</>}
+                {this.props.k8sGateways.length === 0 && <>There are no K8s API gateways to select.</>}
               </FormGroup>
             )}
             {this.state.newGateway && (
@@ -187,7 +187,7 @@ class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelectorState>
                   fieldId="gwHosts"
                   label="K8s API Gateway Hosts"
                   helperText="One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma."
-                  helperTextInvalid="K8s API Gateway hosts should be specified using FQDN format or '*' wildcard."
+                  helperTextInvalid="K8s API Gateway hosts should be specified using FQDN format or '*.' format."
                   validated={isValid(this.state.gwHostsValid)}
                 >
                   <TextInput

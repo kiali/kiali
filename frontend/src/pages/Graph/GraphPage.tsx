@@ -552,6 +552,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
             isOpen={true}
             destinationRules={DestinationRuleC.fromDrArray(this.state.wizardsData.serviceDetails!.destinationRules)}
             virtualServices={this.state.wizardsData.serviceDetails!.virtualServices}
+            k8sHTTPRoutes={this.state.wizardsData.serviceDetails!.k8sHTTPRoutes}
             onCancel={() => this.setState({showConfirmDeleteTrafficRouting: false})}
             onConfirm={this.handleConfirmDeleteServiceTrafficRouting} />
         )}
