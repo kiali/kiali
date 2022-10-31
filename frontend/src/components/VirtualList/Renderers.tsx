@@ -34,7 +34,6 @@ import Label from 'components/Label/Label';
 import { serverConfig } from 'config/ServerConfig';
 import ControlPlaneBadge from 'pages/Overview/ControlPlaneBadge';
 import NamespaceStatuses from 'pages/Overview/NamespaceStatuses';
-import AmbientLabel from "../Ambient/AmbientLabel";
 
 // Links
 
@@ -86,11 +85,6 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
         {(hasMissingSC && hasMissingA) && (
           <li>
             <MissingSidecar namespace={item.namespace} />
-          </li>
-        )}
-        {!hasMissingA && (
-          <li>
-            <AmbientLabel tooltip={true} />
           </li>
         )}
         {isWorkload && (hasMissingApp || hasMissingVersion) && (

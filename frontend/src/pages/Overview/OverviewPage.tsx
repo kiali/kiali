@@ -73,6 +73,8 @@ import OverviewStatusContainer from './OverviewStatus';
 import ControlPlaneNamespaceStatus from './ControlPlaneNamespaceStatus';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
 import TLSInfo from 'components/Overview/TLSInfo';
+import AmbientBadge from "../../components/Ambient/AmbientBadge";
+import {IstioEnvironment} from "../../types/StatusState";
 
 const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
@@ -155,6 +157,7 @@ type ReduxProps = {
   navCollapse: boolean;
   refreshInterval: IntervalInMilliseconds;
   minTLS: string;
+  istioEnvironment: IstioEnvironment;
 };
 
 type OverviewProps = ReduxProps & {};
@@ -873,6 +876,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 {ns.name === serverConfig.istioNamespace &&
                                   <ControlPlaneBadge></ControlPlaneBadge>
                                 }
+                                {ns.name === serverConfig.istioNamespace && this.props.istioEnvironment && <AmbientBadge tooltip={true}></AmbientBadge>}
                               </span>
                             </Title>
                           </CardHeaderMain>
@@ -896,6 +900,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 { ns.status && <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />}
                                 { this.state.displayMode === OverviewDisplayMode.EXPAND && <ControlPlaneNamespaceStatus outboundTrafficPolicy={this.state.outboundPolicyMode} namespace={ns}></ControlPlaneNamespaceStatus>}
                                 { this.state.displayMode === OverviewDisplayMode.EXPAND && <TLSInfo mTLS={true} version={this.props.minTLS}></TLSInfo> }
+                                { this.state.displayMode === OverviewDisplayMode.EXPAND &&
+                                  <ControlPlaneNamespaceStatus outboundTrafficPolicy={this.state.outboundPolicyMode} namespace={ns}></ControlPlaneNamespaceStatus>
+                                }
                               </GridItem>
                               {ns.name === serverConfig.istioNamespace &&
                                 <GridItem md={9}>
@@ -1123,6 +1130,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   navCollapse: state.userSettings.interface.navCollapse,
   refreshInterval: refreshIntervalSelector(state),
   minTLS: minTLSVersionSelector(state),
+  istioEnvironment: state.statusState.istioEnvironment
 });
 
 const OverviewPageContainer = connect(mapStateToProps)(OverviewPage);
