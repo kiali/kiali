@@ -158,9 +158,12 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	// Check the Istio config map to see if Istio Ambient is enabled
 	clientFactory, err := kubernetes.GetClientFactory()
 	if err != nil {
-
+		log.Errorf("Error getting k8s client factory, %s ", err)
 	}
 	k8s, err := clientFactory.GetClient(&api.AuthInfo{Token: token})
+	if err != nil {
+		log.Errorf("Error getting k8s client, %s ", err)
+	}
 
 	ambientMesh := ambientM{}
 	istioConfigMap, err := k8s.GetConfigMap(config.IstioNamespace, "istio")

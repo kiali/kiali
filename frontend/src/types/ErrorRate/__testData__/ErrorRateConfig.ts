@@ -136,6 +136,7 @@ export const serverRateConfig = {
     ]
   },
   installationTag: 'Kiali Console',
+  istioAmbientEnabled: false,
   istioAnnotations: {
     istioInjectionAnnotation: ''
   },

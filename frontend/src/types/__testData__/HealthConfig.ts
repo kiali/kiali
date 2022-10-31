@@ -56,6 +56,7 @@ export const healthConfig = {
     ]
   },
   installationTag: 'Kiali Console',
+  istioAmbientEnabled: false,
   istioAnnotations: {
     istioInjectionAnnotation: ''
   },
