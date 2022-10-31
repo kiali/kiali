@@ -115,6 +115,7 @@ export interface ServerConfig {
   gatewayAPIEnabled: boolean;
   healthConfig: HealthConfig;
   installationTag?: string;
+  istioAmbientEnabled: boolean;
   istioAnnotations: IstioAnnotations;
   istioCanaryRevision: IstioCanaryRevision;
   istioIdentityDomain: string;

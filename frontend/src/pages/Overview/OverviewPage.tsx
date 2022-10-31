@@ -876,7 +876,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 {ns.name === serverConfig.istioNamespace &&
                                   <ControlPlaneBadge></ControlPlaneBadge>
                                 }
-                                {ns.name === serverConfig.istioNamespace && this.props.istioEnvironment.isAmbient && <AmbientBadge tooltip={true}></AmbientBadge>}
+                                {ns.name === serverConfig.istioNamespace && serverConfig.istioAmbientEnabled && <AmbientBadge tooltip={true}></AmbientBadge>}
                               </span>
                             </Title>
                           </CardHeaderMain>

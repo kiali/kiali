@@ -60,6 +60,7 @@ const defaultServerConfig: ComputedServerConfig = {
     viewOnlyMode: false
   },
   installationTag: 'Kiali Console',
+  istioAmbientEnabled: false,
   istioAnnotations: {
     istioInjectionAnnotation: 'sidecar.istio.io/inject'
   },

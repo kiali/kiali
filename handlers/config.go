@@ -46,6 +46,14 @@ type DeploymentConfig struct {
 	ViewOnlyMode bool `json:"viewOnlyMode,omitempty"`
 }
 
+type mode struct {
+	Mode string `yaml:"mode"`
+}
+
+type ambientM struct {
+	AmbientMesh mode `yaml:"ambientMesh"`
+}
+
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
@@ -55,6 +63,7 @@ type PublicConfig struct {
 	GatewayAPIEnabled   bool                        `json:"gatewayAPIEnabled,omitempty"`
 	HealthConfig        config.HealthConfig         `json:"healthConfig,omitempty"`
 	InstallationTag     string                      `json:"installationTag,omitempty"`
+	IstioAmbientEnabled bool                        `json:"istioAmbientEnabled,omitempty"`
 	IstioAnnotations    IstioAnnotations            `json:"istioAnnotations,omitempty"`
 	IstioCanaryRevision IstioCanaryRevision         `json:"istioCanaryRevision,omitempty"`
 	IstioStatusEnabled  bool                        `json:"istioStatusEnabled,omitempty"`
@@ -145,6 +154,25 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	bLayer, err := getBusiness(r)
 	if err == nil {
 		publicConfig.GatewayAPIEnabled = bLayer.IstioConfig.IsGatewayAPI()
+	}
+	// Check the Istio config map to see if Istio Ambient is enabled
+	clientFactory, err := kubernetes.GetClientFactory()
+	if err != nil {
+
+	}
+	k8s, err := clientFactory.GetClient(&api.AuthInfo{Token: token})
+
+	ambientMesh := ambientM{}
+	istioConfigMap, err := k8s.GetConfigMap(config.IstioNamespace, "istio")
+	if err != nil {
+		log.Errorf("Error getting Istio configmap: %s ", err.Error())
+	}
+	err = yaml.Unmarshal([]byte(istioConfigMap.Data["mesh"]), &ambientMesh)
+	if err != nil {
+		log.Errorf("Error reading Istio configmap: %s ", err.Error())
+	}
+	if ambientMesh.AmbientMesh.Mode == "DEFAULT" {
+		publicConfig.IstioAmbientEnabled = true
 	}
 
 	RespondWithJSONIndent(w, http.StatusOK, publicConfig)
