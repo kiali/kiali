@@ -90,46 +90,37 @@ const Messages = (
             return message.content === content;
           });
 
+          // remove the old message from the list
+          const filteredArray = _.filter(group.messages, message => {
+            return message.content !== content;
+          });
+
           let newMessage: NotificationMessage;
+          let count = 1;
+          let firstTriggered: Date | undefined = undefined;
 
           if (existingMessage) {
             // it is in the list already
-            const firstTriggered = existingMessage.firstTriggered
+            firstTriggered = existingMessage.firstTriggered
               ? existingMessage.firstTriggered
               : existingMessage.created;
 
-            newMessage = createMessage(
-              state.nextId,
-              existingMessage.content,
-              existingMessage.detail,
-              messageType,
-              existingMessage.count + 1,
-              existingMessage.show_notification,
-              new Date(),
-              existingMessage.showDetail,
-              firstTriggered
-            );
-
-            // remove the old message from the list
-            const filteredArray = _.remove(group.messages, message => {
-              return message.content !== content;
-            });
-
-            group = { ...group, messages: filteredArray.concat(newMessage) };
-          } else {
-            newMessage = createMessage(
-              state.nextId,
-              content,
-              detail,
-              messageType,
-              1,
-              showNotification,
-              new Date(),
-              false,
-              undefined
-            );
-            group = { ...group, messages: group.messages.concat(newMessage) };
+            count += existingMessage.count
           }
+
+          newMessage = createMessage(
+            state.nextId,
+            content,
+            detail,
+            messageType,
+            count,
+            showNotification,
+            new Date(),
+            false,
+            firstTriggered
+          );
+
+          group = { ...group, messages: filteredArray.concat(newMessage) };
 
           return group;
         }
