@@ -3,10 +3,8 @@ import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
 import { ChartScatter } from '@patternfly/react-charts';
 import { Title, EmptyState, EmptyStateVariant, EmptyStateBody, TitleSizes } from '@patternfly/react-core';
-
 import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
 import { PFColors } from '../Pf/PfColors';
-
 import { evalTimeRange } from 'types/Common';
 import { KialiAppState } from 'store/Store';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
@@ -15,17 +13,20 @@ import ChartWithLegend from 'components/Charts/ChartWithLegend';
 import { durationSelector } from '../../store/Selectors';
 import { TraceTooltip } from './TraceTooltip';
 import { isErrorTag } from 'utils/tracing/TracingHelper';
-import { averageSpanDuration } from 'utils/tracing/TraceStats';
+import { averageSpanDuration, buildQueriesFromSpans } from 'utils/tracing/TraceStats';
 import { style } from 'typestyle';
+import { MetricsStatsQuery } from 'types/MetricsOptions';
+import MetricsStatsThunkActions from 'actions/MetricsStatsThunkActions';
 
 interface JaegerScatterProps {
   duration: number;
-  traces: JaegerTrace[];
-  showSpansAverage: boolean;
-  errorTraces?: boolean;
   errorFetchTraces?: JaegerError[];
-  setTraceId: (traceId?: string) => void;
+  errorTraces?: boolean;
+  loadMetricsStats: (queries: MetricsStatsQuery[]) => Promise<any>;
   selectedTrace?: JaegerTrace;
+  setTraceId: (traceId?: string) => void;
+  showSpansAverage: boolean;
+  traces: JaegerTrace[];
 }
 
 const ONE_MILLISECOND = 1000000;
@@ -53,7 +54,10 @@ const emptyStyle = style({
 });
 
 class JaegerScatter extends React.Component<JaegerScatterProps> {
-  renderFetchEmtpy = (title, msg) => {
+  isLoading = false;
+  nextToLoad?: JaegerTrace = undefined;
+
+  renderFetchEmpty = (title, msg) => {
     return (
       <div className={emptyStyle}>
         <EmptyState variant={EmptyStateVariant.small}>
@@ -118,7 +122,7 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
     };
 
     return this.props.errorFetchTraces && this.props.errorFetchTraces.length > 0 ? (
-      this.renderFetchEmtpy('Error fetching traces', this.props.errorFetchTraces![0].msg)
+      this.renderFetchEmpty('Error fetching traces', this.props.errorFetchTraces![0].msg)
     ) : this.props.traces.length > 0 ? (
       <div data-test="jaeger-scatterplot" className={jaegerChartStyle}>
         <div style={{ marginTop: 20 }}>
@@ -128,15 +132,56 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
             unit="seconds"
             seriesComponent={<ChartScatter />}
             onClick={dp => this.props.setTraceId(dp.trace.traceID)}
+            onTooltipClose={dp => this.onTooltipClose(dp.trace)}
+            onTooltipOpen={dp => this.onTooltipOpen(dp.trace)}
             labelComponent={<TraceTooltip />}
             pointer={true}
           />
         </div>
       </div>
     ) : (
-      this.renderFetchEmtpy('No traces', 'No trace results. Try another query.')
+      this.renderFetchEmpty('No traces', 'No trace results. Try another query.')
     );
   }
+
+  private onTooltipClose = (trace?: JaegerTrace) => {
+    // cancel loading the stats if we've moused out of the trace before we started loading
+    if (trace === this.nextToLoad) {
+      this.nextToLoad = undefined;
+    }
+  };
+
+  private loadTraceMetrics(trace: JaegerTrace) {
+    this.isLoading = true;
+    const queries = buildQueriesFromSpans(trace.spans);
+
+    this.props
+      .loadMetricsStats(queries)
+      .then(_response => {
+        if (this.nextToLoad) {
+          const nextTrace = this.nextToLoad;
+          this.nextToLoad = undefined;
+          this.loadTraceMetrics(nextTrace);
+        } else {
+          this.isLoading = false;
+        }
+      })
+      .catch(_err => {
+        this.isLoading = false;
+      });
+  }
+
+  private onTooltipOpen = (trace?: JaegerTrace) => {
+    if (!trace) {
+      return;
+    }
+    if (this.isLoading) {
+      // replace any pending load with a load for the currently hovered trace
+      this.nextToLoad = trace;
+    } else {
+      this.loadTraceMetrics(trace);
+    }
+  };
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
@@ -145,6 +190,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+  loadMetricsStats: (queries: MetricsStatsQuery[]) => dispatch(MetricsStatsThunkActions.load(queries)),
   setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId))
 });
 
