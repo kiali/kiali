@@ -814,7 +814,7 @@ export interface K8sHTTPRouteMatch {
   path?: HTTPMatch;
   headers?: HTTPMatch[];
   queryParams?: HTTPMatch[];
-  method?: HTTPMatch;
+  method?: string;
 }
 
 export interface HTTPMatch {

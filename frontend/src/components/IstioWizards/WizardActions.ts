@@ -274,7 +274,7 @@ const buildK8sHTTPMatchRequest = (matches: string[]): K8sHTTPRouteMatch[] => {
       // match follows format: <name> <op> <value>
       const i = match.indexOf(' ');
       const value = match.substring(i).trim();
-      matchRequests.push({method: {value: value}});
+      matchRequests.push({method: value});
     });
   return matchRequests;
 };
@@ -333,7 +333,7 @@ const parseK8sHTTPMatchRequest = (httpRouteMatch: K8sHTTPRouteMatch): string[] =
     })
   }
   if (httpRouteMatch.method) {
-    matches.push('method ' + httpRouteMatch.method.value);
+    matches.push('method ' + httpRouteMatch.method);
   }
 
   return matches;
