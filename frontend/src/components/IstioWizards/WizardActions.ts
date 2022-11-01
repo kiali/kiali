@@ -216,10 +216,13 @@ const buildHTTPMatchRequest = (matches: string[]): HTTPMatchRequest[] => {
   return matchRequests;
 };
 
-const buildK8sHTTPMatchRequest = (matches: string[]): K8sHTTPRouteMatch[] => {
-  const matchRequests: K8sHTTPRouteMatch[] = [];
+const buildK8sHTTPRouteMatch = (matches: string[]): K8sHTTPRouteMatch => {
+  const matchRoute: K8sHTTPRouteMatch = {};
   const matchHeaders: HTTPMatch[] = [];
-  // Headers are grouped
+  const matchQueries: HTTPMatch[] = [];
+  let matchPath = {};
+  let matchMethod = "";
+
   matches
     .filter(match => match.startsWith(HEADERS))
     .forEach(match => {
@@ -237,9 +240,6 @@ const buildK8sHTTPMatchRequest = (matches: string[]): K8sHTTPRouteMatch[] => {
         value: value
       });
     });
-  if (matchHeaders.length > 0) {
-    matchRequests.push({headers: matchHeaders});
-  }
   // Path
   matches
     .filter(match => match.startsWith(PATH))
@@ -249,8 +249,8 @@ const buildK8sHTTPMatchRequest = (matches: string[]): K8sHTTPRouteMatch[] => {
       const j = match.indexOf(' ', i + 1);
       const op = match.substring(i + 1, j).trim();
       const value = match.substring(j + 1).trim();
-      matchRequests.push({path: {type: op, value: value}
-      });
+      // Only one Path per Match
+      matchPath = {type: op, value: value}
     });
   // QueryParams
   matches
@@ -263,9 +263,7 @@ const buildK8sHTTPMatchRequest = (matches: string[]): K8sHTTPRouteMatch[] => {
       const name = match.substring(i, j).trim();
       const op = match.substring(j + 1, k).trim();
       const value = match.substring(k + 1).trim();
-      const routeMatch: K8sHTTPRouteMatch = {queryParams: []};
-      routeMatch.queryParams?.push({name: name, type: op, value: value})
-      matchRequests.push(routeMatch);
+      matchQueries.push({name: name, type: op, value: value})
     });
   // Method
   matches
@@ -274,9 +272,22 @@ const buildK8sHTTPMatchRequest = (matches: string[]): K8sHTTPRouteMatch[] => {
       // match follows format: <name> <op> <value>
       const i = match.indexOf(' ');
       const value = match.substring(i).trim();
-      matchRequests.push({method: value});
+      // Only one method per Match
+      matchMethod = value;
     });
-  return matchRequests;
+  if (matchHeaders.length > 0) {
+    matchRoute.headers = matchHeaders
+  }
+  if (matchQueries.length > 0) {
+    matchRoute.queryParams = matchQueries
+  }
+  if (matchPath) {
+    matchRoute.path = matchPath
+  }
+  if (matchMethod) {
+    matchRoute.method = matchMethod;
+  }
+  return matchRoute;
 };
 
 const parseStringMatch = (value: StringMatch): string => {
@@ -872,7 +883,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
           wState.k8sRules.forEach(rule => {
             if (rule.matches.length > 0) {
               wizardK8sHTTPRoute!.spec!.rules!.push({
-                matches: buildK8sHTTPMatchRequest(rule.matches),
+                matches: [buildK8sHTTPRouteMatch(rule.matches)],
                 backendRefs: rule.backendRefs
               });
             }
