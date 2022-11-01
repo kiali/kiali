@@ -77,6 +77,9 @@ func (fn FeatureName) IsValid() error {
 var configuration Config
 var rwMutex sync.RWMutex
 
+// Defines where the files are located that contain the secrets content
+var overrideSecretsDir = "/kiali-override-secrets"
+
 // Metrics provides metrics configuration for the Kiali server.
 type Metrics struct {
 	Enabled bool `yaml:"enabled,omitempty"`
@@ -911,7 +914,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	}
 
 	for _, override := range overrides {
-		fullFileName := "/kiali-override-secrets/" + override.fileName + "/value.txt"
+		fullFileName := overrideSecretsDir + "/" + override.fileName + "/value.txt"
 		b, err := os.ReadFile(fullFileName)
 		if err == nil {
 			fileContents := string(b)

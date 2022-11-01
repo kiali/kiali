@@ -10,6 +10,9 @@ import (
 )
 
 func TestSecretFileOverrides(t *testing.T) {
+	// create a mock volume mount directory where the test secret content will go
+	overrideSecretsDir = t.TempDir()
+
 	conf := NewConfig()
 	conf.ExternalServices.Grafana.Auth.Password = "grafanapassword"
 	conf.ExternalServices.Grafana.Auth.Token = "grafanatoken"
@@ -31,6 +34,42 @@ func TestSecretFileOverrides(t *testing.T) {
 	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, "tracingpassword")
 	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, "tracingtoken")
 	assert.Equal(t, conf.LoginToken.SigningKey, "signingkey")
+
+	// mock some secrets bound to volume mounts
+	createTestSecretFile(t, overrideSecretsDir, SecretFileGrafanaPassword, "grafanapasswordENV")
+	createTestSecretFile(t, overrideSecretsDir, SecretFileGrafanaToken, "grafanatokenENV")
+	createTestSecretFile(t, overrideSecretsDir, SecretFilePrometheusPassword, "prometheuspasswordENV")
+	createTestSecretFile(t, overrideSecretsDir, SecretFilePrometheusToken, "prometheustokenENV")
+	createTestSecretFile(t, overrideSecretsDir, SecretFileTracingPassword, "tracingpasswordENV")
+	createTestSecretFile(t, overrideSecretsDir, SecretFileTracingToken, "tracingtokenENV")
+	createTestSecretFile(t, overrideSecretsDir, SecretFileLoginTokenSigningKey, "signingkeyENV")
+
+	conf, _ = Unmarshal(yamlString)
+
+	// credentials are now set- values should be overridden
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, "grafanapasswordENV")
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, "grafanatokenENV")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, "prometheuspasswordENV")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, "prometheustokenENV")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, "tracingpasswordENV")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, "tracingtokenENV")
+	assert.Equal(t, conf.LoginToken.SigningKey, "signingkeyENV")
+}
+
+func createTestSecretFile(t *testing.T, parentDir string, name string, content string) {
+	childDir := fmt.Sprintf("%s/%s", parentDir, name)
+	filename := fmt.Sprintf("%s/value.txt", childDir)
+	if err := os.MkdirAll(childDir, 0777); err != nil {
+		t.Fatalf("Failed to create tmp secret dir [%v]: %v", childDir, err)
+	}
+	f, err := os.Create(filename)
+	if err != nil {
+		t.Fatalf("Failed to create tmp secret file [%v]: %v", filename, err)
+	}
+	defer f.Close()
+	if _, err2 := f.WriteString(content); err2 != nil {
+		t.Fatalf("Failed to write tmp secret file [%v]: %v", filename, err2)
+	}
 }
 
 func TestSensitiveDataObfuscation(t *testing.T) {
