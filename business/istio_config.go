@@ -176,7 +176,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 			istioConfigList.Gateways = kubernetes.FilterSupportedGateways(registryConfiguration.Gateways)
 		}
 		if criteria.Include(kubernetes.K8sGateways) {
-			istioConfigList.K8sGateways = registryConfiguration.K8sGateways
+			istioConfigList.K8sGateways = kubernetes.FilterSupportedK8sGateways(registryConfiguration.K8sGateways)
 		}
 		if criteria.Include(kubernetes.K8sHTTPRoutes) {
 			istioConfigList.K8sHTTPRoutes = registryConfiguration.K8sHTTPRoutes

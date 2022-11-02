@@ -9,6 +9,7 @@ import (
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	"github.com/kiali/kiali/config"
 )
@@ -153,6 +154,20 @@ func FilterSupportedGateways(gateways []*networking_v1beta1.Gateway) []*networki
 	filtered := []*networking_v1beta1.Gateway{}
 	for _, gw := range gateways {
 		if gw.APIVersion == ApiNetworkingVersionV1Beta1 || gw.APIVersion == ApiNetworkingVersionV1Alpha3 {
+			filtered = append(filtered, gw)
+		}
+	}
+	return filtered
+}
+
+func FilterSupportedK8sGateways(gateways []*k8s_networking_v1alpha2.Gateway) []*k8s_networking_v1alpha2.Gateway {
+	var gatewayAPIClassName = config.Get().ExternalServices.Istio.GatewayAPIClassName
+	if gatewayAPIClassName == "" {
+		gatewayAPIClassName = "istio"
+	}
+	filtered := []*k8s_networking_v1alpha2.Gateway{}
+	for _, gw := range gateways {
+		if string(gw.Spec.GatewayClassName) == gatewayAPIClassName {
 			filtered = append(filtered, gw)
 		}
 	}

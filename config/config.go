@@ -220,6 +220,7 @@ type IstioConfig struct {
 	Registry                          *RegistryConfig     `yaml:"registry,omitempty"`
 	RootNamespace                     string              `yaml:"root_namespace,omitempty"`
 	UrlServiceVersion                 string              `yaml:"url_service_version"`
+	GatewayAPIClassName               string              `yaml:"gateway_api_class_name,omitempty"`
 }
 
 type IstioCanaryRevision struct {
@@ -606,6 +607,7 @@ func NewConfig() (c *Config) {
 				IstiodPodMonitoringPort:           15014,
 				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "http://istiod.istio-system:15014/version",
+				GatewayAPIClassName:               "istio",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
