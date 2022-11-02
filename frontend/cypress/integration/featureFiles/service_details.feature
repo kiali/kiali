@@ -59,3 +59,9 @@ Feature: Kiali Service Details page
     And user sees trace information
     When user selects a trace
     Then user sees span details
+
+  @service-details-page
+  Scenario: Verify that the Graph type dropdown is disabled when changing to Show node graph
+    When user sees a minigraph
+    And user chooses the "Show node graph" option
+    Then the graph type is disabled

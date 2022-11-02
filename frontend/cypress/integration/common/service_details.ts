@@ -1,4 +1,4 @@
-import { Then } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, And } from '@badeball/cypress-cucumber-preprocessor';
 
 function openTab(tab: string) {
   cy.get('.pf-c-tabs__list').should('be.visible').contains(tab).click();
@@ -70,4 +70,15 @@ Then('sd::user does not see No data message in the {string} graph', (graph: stri
     .children()
     .contains(graph)
     .should('not.contain', 'No data available');
+});
+
+And('user chooses the {string} option', (title: string) => {
+  cy.wait('@waitForCall');
+  cy.get('button[aria-label="Actions"]').click();
+  cy.contains(title).should('be.visible');
+  cy.contains(title).click();
+});
+
+Then('the graph type is disabled', () => {
+  cy.get('button[aria-label="Options menu"]').should('be.disabled');
 });
