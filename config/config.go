@@ -210,6 +210,7 @@ type IstioConfig struct {
 	ComponentStatuses                 ComponentStatuses   `yaml:"component_status,omitempty"`
 	ConfigMapName                     string              `yaml:"config_map_name,omitempty"`
 	EnvoyAdminLocalPort               int                 `yaml:"envoy_admin_local_port,omitempty"`
+	GatewayAPIClassName               string              `yaml:"gateway_api_class_name,omitempty"`
 	IstioCanaryRevision               IstioCanaryRevision `yaml:"istio_canary_revision,omitempty"`
 	IstioIdentityDomain               string              `yaml:"istio_identity_domain,omitempty"`
 	IstioInjectionAnnotation          string              `yaml:"istio_injection_annotation,omitempty"`
@@ -220,7 +221,6 @@ type IstioConfig struct {
 	Registry                          *RegistryConfig     `yaml:"registry,omitempty"`
 	RootNamespace                     string              `yaml:"root_namespace,omitempty"`
 	UrlServiceVersion                 string              `yaml:"url_service_version"`
-	GatewayAPIClassName               string              `yaml:"gateway_api_class_name,omitempty"`
 }
 
 type IstioCanaryRevision struct {
