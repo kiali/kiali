@@ -2,6 +2,7 @@ package config
 
 import (
 	"embed"
+	"errors"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
@@ -17,18 +18,18 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-// Environment variables that can override the ConfigMap yaml values
+// Files found in /kiali-override-secrets that override the ConfigMap yaml values
 const (
 	// External services auth
-	EnvGrafanaPassword    = "GRAFANA_PASSWORD"
-	EnvGrafanaToken       = "GRAFANA_TOKEN"
-	EnvPrometheusPassword = "PROMETHEUS_PASSWORD"
-	EnvPrometheusToken    = "PROMETHEUS_TOKEN"
-	EnvTracingPassword    = "TRACING_PASSWORD"
-	EnvTracingToken       = "TRACING_TOKEN"
+	SecretFileGrafanaPassword    = "grafana-password"
+	SecretFileGrafanaToken       = "grafana-token"
+	SecretFilePrometheusPassword = "prometheus-password"
+	SecretFilePrometheusToken    = "prometheus-token"
+	SecretFileTracingPassword    = "tracing-password"
+	SecretFileTracingToken       = "tracing-token"
 
 	// Login Token signing key used to prepare the token for user login
-	EnvLoginTokenSigningKey = "LOGIN_TOKEN_SIGNING_KEY"
+	SecretFileLoginTokenSigningKey = "login-token-signing-key"
 )
 
 // The valid auth strategies and values for cookie handling
@@ -75,6 +76,9 @@ func (fn FeatureName) IsValid() error {
 // Global configuration for the application.
 var configuration Config
 var rwMutex sync.RWMutex
+
+// Defines where the files are located that contain the secrets content
+var overrideSecretsDir = "/kiali-override-secrets"
 
 // Metrics provides metrics configuration for the Kiali server.
 type Metrics struct {
@@ -859,49 +863,57 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	conf.prepareDashboards()
 
 	// Some config settings (such as sensitive settings like passwords) are overrideable
-	// via environment variables. This allows a user to store sensitive values in secrets
-	// and mount those secrets to environment variables rather than storing them directly
-	// in the config map itself.
+	// via secrets mounted on the file system rather than storing them directly in the config map itself.
+	// The names of the files in /kiali-override-secrets denote which credentials they are.
 	type overridesType struct {
 		configValue *string
-		envVarName  string
+		fileName    string
 	}
 
 	overrides := []overridesType{
 		{
 			configValue: &conf.ExternalServices.Grafana.Auth.Password,
-			envVarName:  EnvGrafanaPassword,
+			fileName:    SecretFileGrafanaPassword,
 		},
 		{
 			configValue: &conf.ExternalServices.Grafana.Auth.Token,
-			envVarName:  EnvGrafanaToken,
+			fileName:    SecretFileGrafanaToken,
 		},
 		{
 			configValue: &conf.ExternalServices.Prometheus.Auth.Password,
-			envVarName:  EnvPrometheusPassword,
+			fileName:    SecretFilePrometheusPassword,
 		},
 		{
 			configValue: &conf.ExternalServices.Prometheus.Auth.Token,
-			envVarName:  EnvPrometheusToken,
+			fileName:    SecretFilePrometheusToken,
 		},
 		{
 			configValue: &conf.ExternalServices.Tracing.Auth.Password,
-			envVarName:  EnvTracingPassword,
+			fileName:    SecretFileTracingPassword,
 		},
 		{
 			configValue: &conf.ExternalServices.Tracing.Auth.Token,
-			envVarName:  EnvTracingToken,
+			fileName:    SecretFileTracingToken,
 		},
 		{
 			configValue: &conf.LoginToken.SigningKey,
-			envVarName:  EnvLoginTokenSigningKey,
+			fileName:    SecretFileLoginTokenSigningKey,
 		},
 	}
 
 	for _, override := range overrides {
-		envVarValue := os.Getenv(override.envVarName)
-		if envVarValue != "" {
-			*override.configValue = envVarValue
+		fullFileName := overrideSecretsDir + "/" + override.fileName + "/value.txt"
+		b, err := os.ReadFile(fullFileName)
+		if err == nil {
+			fileContents := string(b)
+			if fileContents != "" {
+				*override.configValue = fileContents
+				log.Debugf("Credentials loaded from secret file [%s]", fullFileName)
+			} else {
+				log.Errorf("The credentials were empty in secret file [%s]", fullFileName)
+			}
+		} else if !errors.Is(err, os.ErrNotExist) {
+			log.Errorf("Failed reading secret file [%s]: %v", fullFileName, err)
 		}
 	}
 
