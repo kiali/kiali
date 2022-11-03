@@ -71,7 +71,7 @@ class TLSInfo extends React.Component<Props> {
                 {this.props.version} <LockIcon certificatesInformationIndicators={this.props.certificatesInformationIndicators} certsInfo={this.props.certsInfo}></LockIcon>
                 <Tooltip
                   position={TooltipPosition.right}
-                  content={<div style={{ textAlign: 'left' }}>The meshConfig.meshMTL.minProtocolVersion field specifies the minimum TLS version for the TLS connections among Istio workloads. N/A if it was not set.</div>}
+                  content={<div style={{ textAlign: 'left' }}>The meshConfig.meshMTLS.minProtocolVersion field specifies the minimum TLS version for the TLS connections among Istio workloads. N/A if it was not set.</div>}
                 >
                   <KialiIcon.Info className={infoStyle} />
                 </Tooltip>
