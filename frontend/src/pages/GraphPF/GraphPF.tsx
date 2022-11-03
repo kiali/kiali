@@ -63,9 +63,9 @@ export const DefaultOptions: TopologyOptions = {
 export const TopologyContent: React.FC<{
   graphData: GraphData;
   graphSettings: GraphPFSettings;
-  onReady?: (controller: any) => void;
+  onReady: (controller: any) => void;
   options: TopologyOptions;
-}> = ({ graphData, graphSettings, options }) => {
+}> = ({ graphData, graphSettings, options, onReady }) => {
   const controller = useVisualizationController();
 
   // update hover as the mouse moves
@@ -160,6 +160,7 @@ export const TopologyContent: React.FC<{
     //  }
 
     const updatedModel = generateDataModel(graphData, graphSettings);
+    
     const allIds = [...(updatedModel.nodes || []), ...(updatedModel.edges || [])].map(item => item.id);
     controller.getElements().forEach(e => {
       if (e.getType() !== 'graph') {
@@ -184,8 +185,14 @@ export const TopologyContent: React.FC<{
         }
       }
     });
+    
+    const initialModel = controller.hasGraph();
     controller.fromModel(updatedModel);
-  }, [controller, graphData, graphSettings]);
+    if (initialModel) {
+      onReady(controller);
+      console.log("On Ready");
+    }
+  }, [controller, graphData, graphSettings, onReady]);
 
   const generateDataModel = (graphData: GraphData, graphSettings: GraphPFSettings): Model => {
     let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
@@ -370,7 +377,7 @@ export const TopologyContent: React.FC<{
 export const GraphPF: React.FC<{
   graphData: GraphData;
   graphSettings: GraphPFSettings;
-  onReady?: (controller: any) => void;
+  onReady: (controller: any) => void;
 }> = ({ graphData, graphSettings, onReady }) => {
 
   //create controller on startup and register factories
@@ -386,8 +393,6 @@ export const GraphPF: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  console.log('Render!');
-
   if (!controller || !graphData || graphData.isLoading) {
     return (
       <Bullseye data-test="loading-contents">
@@ -395,6 +400,8 @@ export const GraphPF: React.FC<{
       </Bullseye>
     );
   }
+
+  console.log('Render!');
 
   return (
     <VisualizationProvider data-test="visualization-provider" controller={controller}>

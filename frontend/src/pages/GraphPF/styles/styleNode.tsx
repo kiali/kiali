@@ -176,8 +176,8 @@ const renderDecorators = (element: Node): React.ReactNode => {
     }
     htmlHosts = (
       <div className={hostsList}>
-        {hostsToShow.map(h => (
-          <div>{h}</div>
+        {hostsToShow.map((h, i) => (
+          <div key={`host-${i}`}>{h}</div>
         ))}
       </div>
     );

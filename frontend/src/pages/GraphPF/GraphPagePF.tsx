@@ -76,7 +76,6 @@ import GraphPF from './GraphPF';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { GraphPFSettings } from './GraphPFElems';
 import { serverConfig } from 'config';
-import { Model } from '@patternfly/react-topology';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -417,6 +416,7 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
   }
 
   render() {
+    console.log(`SummaryData: ${this.props.summaryData?.summaryType}`);
     let conStyle = containerStyle;
     if (isKioskMode()) {
       conStyle = kioskContainerStyle;

@@ -1,8 +1,11 @@
 import {
   BadgeLocation,
+  Edge,
   EdgeModel,
   EdgeTerminalType,
+  GraphElement,
   LabelPosition,
+  Node,
   NodeModel,
   NodeShape,
   NodeStatus
@@ -536,7 +539,6 @@ export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: Grap
 };
 
 export const assignEdgeHealth = (edges: EdgeModel[], nodeMap: NodeMap, settings: GraphPFSettings) => {
-
   edges.forEach(edge => {
     const edgeData = edge.data as EdgeData;
 
@@ -568,3 +570,25 @@ export const assignEdgeHealth = (edges: EdgeModel[], nodeMap: NodeMap, settings:
   });
 };
 
+///// Selector helpers
+
+export type SelectOp = '=' | '!=' | 'falsy';
+
+export const select = (elems: GraphElement[], prop: string, val: any, op: SelectOp = '='): GraphElement[] => {
+  return elems.filter(e => {
+    switch (op) {
+      case '!=':
+        return e[prop] !== val;
+      case 'falsy':
+        return !e[prop];
+      default:
+        return e[prop] === val;
+    }
+  });
+};
+
+export const edgesOut = (nodes: Node[]): Edge[] => {
+  const result = [] as Edge[];
+  nodes.forEach(n => result.push(...n.getTargetEdges()));
+  return result;
+};
