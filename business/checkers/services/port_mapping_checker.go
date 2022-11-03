@@ -28,7 +28,7 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 	// Check Port naming for services in the service mesh
 	if p.hasMatchingPodsWithSidecar(p.Service) {
 		for portIndex, sp := range p.Service.Spec.Ports {
-			if strings.ToLower(string(sp.Protocol)) == "udp" {
+			if _, ok := p.Service.Labels["kiali_wizard"]; ok || strings.ToLower(string(sp.Protocol)) == "udp" {
 				continue
 			} else if sp.AppProtocol != nil {
 				if !kubernetes.MatchPortAppProtocolWithValidProtocols(sp.AppProtocol) {

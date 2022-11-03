@@ -12,6 +12,7 @@ import {
 import { TLSStatus } from './TLSStatus';
 import { AdditionalItem } from './Workload';
 import { ResourcePermissions } from './Permissions';
+import {KIALI_WIZARD_LABEL} from "../components/IstioWizards/WizardActions";
 
 export interface ServicePort {
   name: string;
@@ -161,3 +162,12 @@ export const checkForPath = (object: ObjectValidation | undefined, path: string)
 export const globalChecks = (object: ObjectValidation): ObjectCheck[] => {
   return checkForPath(object, '');
 };
+
+export function getServiceWizardLabel(serviceDetails: Service): string {
+  if (serviceDetails && serviceDetails.labels &&
+    serviceDetails.labels[KIALI_WIZARD_LABEL]) {
+    return serviceDetails.labels[KIALI_WIZARD_LABEL];
+  } else {
+    return '';
+  }
+}

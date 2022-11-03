@@ -36,6 +36,7 @@ type Props = {
   namespace: string;
   serviceName: string;
   show: boolean;
+  readOnly: boolean;
   workloads: WorkloadOverview[];
   virtualServices: VirtualService[];
   destinationRules: DestinationRule[];
@@ -174,7 +175,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
     return [
       <ServiceWizardActionsDropdownGroup
         key="service_wizard_actions_dropdown_group"
-        isDisabled={this.state.isDeleting}
+        isDisabled={this.state.isDeleting || this.props.readOnly}
         virtualServices={this.props.virtualServices}
         destinationRules={this.props.destinationRules}
         k8sHTTPRoutes={this.props.k8sHTTPRoutes || []}

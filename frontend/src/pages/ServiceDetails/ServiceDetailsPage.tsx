@@ -16,14 +16,14 @@ import TrafficDetails from 'components/TrafficList/TrafficDetails';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import { ServiceDetailsInfo } from '../../types/ServiceInfo';
+import {getServiceWizardLabel, ServiceDetailsInfo} from '../../types/ServiceInfo';
 import {
   Gateway,
   K8sGateway,
   getGatewaysAsList,
   PeerAuthentication,
   Validations,
-  getK8sGatewaysAsList
+  getK8sGatewaysAsList,
 } from '../../types/IstioObjects';
 import ServiceWizardDropdown from '../../components/IstioWizards/ServiceWizardDropdown';
 import TimeControl from '../../components/Time/TimeControl';
@@ -208,6 +208,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         namespace={this.props.match.params.namespace}
         serviceName={this.state.serviceDetails.service.name}
         show={false}
+        readOnly={getServiceWizardLabel(this.state.serviceDetails.service) !== ''}
         workloads={this.state.serviceDetails.workloads || []}
         virtualServices={this.state.serviceDetails.virtualServices}
         k8sHTTPRoutes={this.state.serviceDetails.k8sHTTPRoutes}

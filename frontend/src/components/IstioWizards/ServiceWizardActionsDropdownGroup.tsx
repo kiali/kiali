@@ -53,8 +53,8 @@ const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props 
   }
 
   const actionItems = SERVICE_WIZARD_ACTIONS.map(eventKey => {
-    const disabled = (eventKey === WIZARD_K8S_REQUEST_ROUTING ? !serverConfig.gatewayAPIEnabled : props.isDisabled);
-    const enabledItem = !disabled && (!hasTrafficRouting() || (hasTrafficRouting() && updateLabel === eventKey));
+    const enabled = (eventKey === WIZARD_K8S_REQUEST_ROUTING ? serverConfig.gatewayAPIEnabled && !props.isDisabled : !props.isDisabled);
+    const enabledItem = enabled && (!hasTrafficRouting() || (hasTrafficRouting() && updateLabel === eventKey));
     const wizardItem = (
       <DropdownItem key={eventKey} component="button" isDisabled={!enabledItem} onClick={() => handleActionClick(eventKey)} data-test={eventKey}>
         {WIZARD_TITLES[eventKey]}
