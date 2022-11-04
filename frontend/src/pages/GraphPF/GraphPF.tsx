@@ -20,6 +20,7 @@ import {
 } from '@patternfly/react-topology';
 import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
+import { GraphEvent } from 'types/Graph';
 import componentFactory from './componentFactories/componentFactory';
 import stylesComponentFactory from './componentFactories/stylesComponentFactory';
 import {
@@ -36,7 +37,7 @@ import layoutFactory from './layouts/layoutFactory';
 
 export const HOVER_EVENT = 'hover';
 
-let requestFit = false;
+let requestFit = true;
 
 const DEFAULT_NODE_SIZE = 75;
 const FIT_PADDING = 80;
@@ -65,7 +66,8 @@ export const TopologyContent: React.FC<{
   graphSettings: GraphPFSettings;
   onReady: (controller: any) => void;
   options: TopologyOptions;
-}> = ({ graphData, graphSettings, options, onReady }) => {
+  updateSummary?: (event: GraphEvent) => void;
+}> = ({ graphData, graphSettings, options, onReady, updateSummary }) => {
   const controller = useVisualizationController();
 
   // update hover as the mouse moves
@@ -115,6 +117,7 @@ export const TopologyContent: React.FC<{
 
   //update graph details level
   const setDetailsLevel = React.useCallback(() => {
+    console.log('SetDetailsLevel');
     if (controller && controller.hasGraph()) {
       controller.getGraph().setDetailsLevelThresholds({
         low: 0.3,
@@ -125,6 +128,7 @@ export const TopologyContent: React.FC<{
 
   //reset graph and model
   const resetGraph = React.useCallback(() => {
+    console.log('Reset');
     if (controller) {
       const model: Model = {
         graph: {
@@ -145,6 +149,7 @@ export const TopologyContent: React.FC<{
 
   //update model merging existing nodes / edges
   const updateModel = React.useCallback(() => {
+    console.log('updateModel');
     if (!controller) {
       return;
     } else if (!controller.hasGraph()) {
@@ -160,7 +165,7 @@ export const TopologyContent: React.FC<{
     //  }
 
     const updatedModel = generateDataModel(graphData, graphSettings);
-    
+
     const allIds = [...(updatedModel.nodes || []), ...(updatedModel.edges || [])].map(item => item.id);
     controller.getElements().forEach(e => {
       if (e.getType() !== 'graph') {
@@ -185,14 +190,9 @@ export const TopologyContent: React.FC<{
         }
       }
     });
-    
-    const initialModel = controller.hasGraph();
+
     controller.fromModel(updatedModel);
-    if (initialModel) {
-      onReady(controller);
-      console.log("On Ready");
-    }
-  }, [controller, graphData, graphSettings, onReady]);
+  }, [controller, graphData, graphSettings]);
 
   const generateDataModel = (graphData: GraphData, graphSettings: GraphPFSettings): Model => {
     let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
@@ -292,11 +292,22 @@ export const TopologyContent: React.FC<{
     //update graph
     if (!controller.hasGraph()) {
       resetGraph();
+      onReady(controller);
     }
 
     //then update model
     updateModel();
-  }, [controller, resetGraph, updateModel]);
+  }, [controller, onReady, resetGraph, updateModel, updateSummary]);
+
+  React.useEffect(() => {
+    return () => {
+      console.log('Cleanup');
+      if (updateSummary) {
+        console.log('Clear Summary');
+        updateSummary({ summaryType: 'graphPF', summaryTarget: undefined });
+      }
+    };
+  }, []);
 
   useEventListener(HOVER_EVENT, onHover);
   useEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
@@ -378,8 +389,8 @@ export const GraphPF: React.FC<{
   graphData: GraphData;
   graphSettings: GraphPFSettings;
   onReady: (controller: any) => void;
-}> = ({ graphData, graphSettings, onReady }) => {
-
+  updateSummary: (graphEvent: GraphEvent) => void;
+}> = ({ graphData, graphSettings, onReady, updateSummary }) => {
   //create controller on startup and register factories
   const [controller, setController] = React.useState<Visualization>();
 
@@ -405,7 +416,13 @@ export const GraphPF: React.FC<{
 
   return (
     <VisualizationProvider data-test="visualization-provider" controller={controller}>
-      <TopologyContent graphData={graphData} graphSettings={graphSettings} onReady={onReady} options={DefaultOptions} />
+      <TopologyContent
+        graphData={graphData}
+        graphSettings={graphSettings}
+        onReady={onReady}
+        options={DefaultOptions}
+        updateSummary={updateSummary}
+      />
     </VisualizationProvider>
   );
 };

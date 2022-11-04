@@ -7,7 +7,7 @@ import { style } from 'typestyle';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 import {
-  CytoscapeEvent,
+  GraphEvent,
   DecoratedGraphElements,
   EdgeLabelMode,
   GraphDefinition,
@@ -135,7 +135,7 @@ type ReduxProps = {
   trafficRates: TrafficRate[];
   toggleIdleNodes: () => void;
   toggleLegend: () => void;
-  updateSummary: (event: CytoscapeEvent) => void;
+  updateSummary: (event: GraphEvent) => void;
 };
 
 export type GraphPagePFProps = RouteComponentProps<Partial<GraphURLPathProps>> &
@@ -872,7 +872,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   startTour: bindActionCreators(TourActions.startTour, dispatch),
   toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),
   toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch),
-  updateSummary: (event: CytoscapeEvent) => dispatch(GraphActions.updateSummary(event))
+  updateSummary: (event: GraphEvent) => dispatch(GraphActions.updateSummary(event))
 });
 
 const GraphPagePFContainer = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(GraphPagePF));

@@ -227,7 +227,7 @@ export interface CytoscapeBaseEvent {
   summaryTarget: any; // the cytoscape element that was the target of the event
 }
 
-export interface CytoscapeEvent extends CytoscapeBaseEvent {}
+export interface GraphEvent extends CytoscapeBaseEvent {}
 
 // Graph Structures
 

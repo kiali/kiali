@@ -572,23 +572,41 @@ export const assignEdgeHealth = (edges: EdgeModel[], nodeMap: NodeMap, settings:
 
 ///// Selector helpers
 
-export type SelectOp = '=' | '!=' | 'falsy';
+export type SelectOp = '=' | '!=' | 'falsey' | 'truthy';
 
 export const select = (elems: GraphElement[], prop: string, val: any, op: SelectOp = '='): GraphElement[] => {
   return elems.filter(e => {
     switch (op) {
       case '!=':
         return e[prop] !== val;
-      case 'falsy':
+      case 'falsey':
         return !e[prop];
+      case 'truthy':
+        return !!e[prop];
       default:
         return e[prop] === val;
     }
   });
 };
 
+export const edgesIn = (nodes: Node[]): Edge[] => {
+  const result = [] as Edge[];
+  nodes.forEach(n => result.push(...n.getSourceEdges()));
+  return result;
+};
+
 export const edgesOut = (nodes: Node[]): Edge[] => {
   const result = [] as Edge[];
   nodes.forEach(n => result.push(...n.getTargetEdges()));
   return result;
+};
+
+export const edgesInOut = (nodes: Node[]): Edge[] => {
+  const result = edgesIn(nodes);
+  result.push(...edgesOut(nodes));
+  return result;
+};
+
+export const leafNodes = (nodes: Node[]): Node[] => {
+  return nodes.filter(n => n.getTargetEdges().length === 0);
 };
