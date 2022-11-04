@@ -52,7 +52,7 @@ function LockIcon(props) {
       position={TooltipPosition.top}
       content={showCerts(props.certsInfo)}
     >
-        {props.mTLS ? (<KialiIcon.MtlsLock className={lockIconStyle}/>) : (<KialiIcon.MtlsUnlock className={lockIconStyle}/>)}
+      {props.mTLS ? (<div data-test={"lockerCA"}><KialiIcon.MtlsLock className={lockIconStyle} /></div>) : (<KialiIcon.MtlsUnlock className={lockIconStyle}/>)}
     </Tooltip>
   );
 };
@@ -64,7 +64,7 @@ class TLSInfo extends React.Component<Props> {
       <div style={{ textAlign: 'left' }}>
           <div>
             <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>Min TLS Version</div>
-            <Label isCompact color="blue">
+            <Label isCompact color="blue" data-test={"label-TLS"}>
               {this.props.version} <LockIcon mTLS={this.props.mTLS} certsInfo={this.props.certsInfo}></LockIcon>
             </Label>
           </div>

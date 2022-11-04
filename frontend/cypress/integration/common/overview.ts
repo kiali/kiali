@@ -183,3 +183,23 @@ Then('the {string} application indicator should list the application', function 
     `[aria-label='Overview status'][class*=health_indicator] [data-test=${this.targetNamespace}-${healthIndicatorStatusKey}-${this.targetApp}]`
   ).should('contain.text', this.targetApp);
 });
+
+// New CP Card validations
+When('user hovers over the MinTLS locker', view => {
+  cy.get('[data-test="lockerCA"]')
+      .should('exist');
+});
+
+Then('the user sees the certificates information', view => {
+  cy.get('[data-test="lockerCA"]')
+      .trigger('mouseenter')
+      .get('[role="tooltip"]')
+      .contains('Valid From');
+});
+
+// We will suppose that the min TLS Version was not set
+// So we verify the default
+Then("the minimum TLS version", view => {
+  cy.get('[data-test="label-TLS"]')
+      .contains('N/A');
+});
