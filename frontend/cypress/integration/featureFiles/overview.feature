@@ -110,3 +110,9 @@ Feature: Kiali Overview page
     When I fetch the overview of the cluster
     Then there should be a "degraded" application indicator in the namespace
     And the "degraded" application indicator should list the application
+
+  @overview-page
+  Scenario: The minimum TLS version is visible in the control plane
+    When user hovers over the MinTLS locker
+    Then the user sees the certificates information
+    And the minimum TLS version
