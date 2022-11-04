@@ -42,19 +42,21 @@ const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props 
     }
   }
 
-  function getDropdownItemTooltipMessage(): string {
+  function getDropdownItemTooltipMessage(isGatewayAPI: boolean): string {
     if (serverConfig.deployment.viewOnlyMode) {
       return 'User does not have permission';
     } else if (hasTrafficRouting()) {
       return 'Traffic routing already exists for this service';
+    } else if (isGatewayAPI) {
+      return "K8s Gateway API is not enabled";
     } else {
       return "Traffic routing doesn't exists for this service";
     }
   }
 
   const actionItems = SERVICE_WIZARD_ACTIONS.map(eventKey => {
-    const enabled = (eventKey === WIZARD_K8S_REQUEST_ROUTING ? serverConfig.gatewayAPIEnabled && !props.isDisabled : !props.isDisabled);
-    const enabledItem = enabled && (!hasTrafficRouting() || (hasTrafficRouting() && updateLabel === eventKey));
+    const isGatewayAPIEnabled = (eventKey === WIZARD_K8S_REQUEST_ROUTING ? serverConfig.gatewayAPIEnabled : true)
+    const enabledItem = isGatewayAPIEnabled && !props.isDisabled && (!hasTrafficRouting() || (hasTrafficRouting() && updateLabel === eventKey));
     const wizardItem = (
       <DropdownItem key={eventKey} component="button" isDisabled={!enabledItem} onClick={() => handleActionClick(eventKey)} data-test={eventKey}>
         {WIZARD_TITLES[eventKey]}
@@ -67,7 +69,7 @@ const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props 
     // Otherwise, the item should be disabled
     if (!enabledItem) {
       return (
-        <Tooltip key={'tooltip_' + eventKey} position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage()}</>}>
+        <Tooltip key={'tooltip_' + eventKey} position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage(!isGatewayAPIEnabled)}</>}>
           <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{wizardItem}</div>
         </Tooltip>
       )
@@ -93,7 +95,7 @@ const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props 
 
   if (deleteDisabled) {
     deleteDropdownItem = (
-      <Tooltip key={'tooltip_' + DELETE_TRAFFIC_ROUTING} position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage()}</>}>
+      <Tooltip key={'tooltip_' + DELETE_TRAFFIC_ROUTING} position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage(false)}</>}>
         <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{deleteDropdownItem}</div>
       </Tooltip>
     );
