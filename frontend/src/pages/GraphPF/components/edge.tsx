@@ -26,8 +26,9 @@ import { EdgeData } from '../GraphPFElems';
 
 // This is a copy of PFT DefaultEdge (v4.68.3), then slightly modified.  I don't see a better way to really
 // do this because DefaultEdge doesn't really seem itself extensible and to add certain behavior you have
-// to reimplement the rendered element.  This supports the follwoing customizations:
+// to reimplement the rendered element.  This supports the following customizations:
 //   [Edge] element.data.pathStyle?: React.CSSProperties // additional CSS stylings for the edge/path (not the endpoint).
+//   [Edge] element.data.useBendpoints?: boolean         // if true use bendpoints, otherwise a straight edge
 
 type BaseEdgeProps = {
   children?: React.ReactNode;
@@ -95,11 +96,18 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
     selected && !dragging && 'pf-m-selected'
   );
 
+  const data = element.getData() as EdgeData;
   const edgeAnimationDuration = animationDuration ?? getEdgeAnimationDuration(element.getEdgeAnimationSpeed());
   const linkClassName = css(styles.topologyEdgeLink, getEdgeStyleClassModifier(element.getEdgeStyle()));
-  const pathStyle: React.CSSProperties = (element.getData() as EdgeData).pathStyle || {};
+  const pathStyle: React.CSSProperties = data.pathStyle || {};
 
-  const bendpoints = element.getBendpoints();
+  // TODO: Currently I don't know how to get straight lines to line up with the arrow terminators. It seems
+  // the terminators are generated before the edges, and the bendpoints ensure a proper connection.  Until
+  // I can solve that problem we'll either use all bendpoints or just the final one to ensure alignment.
+  let bendpoints = element.getBendpoints();
+  if (!data.useBendpoints && bendpoints.length > 0) {
+    bendpoints = [bendpoints.pop()] as Point[];
+  }
 
   const d = `M${startPoint.x} ${startPoint.y} ${bendpoints.map((b: Point) => `L${b.x} ${b.y} `).join('')}L${
     endPoint.x

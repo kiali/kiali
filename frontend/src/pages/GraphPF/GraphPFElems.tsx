@@ -76,6 +76,7 @@ export type EdgeData = DecoratedGraphEdgeData & {
   pathStyle?: React.CSSProperties;
   tag?: string;
   tagStatus?: NodeStatus;
+  useBendpoints?: boolean;
 };
 
 export type GraphPFSettings = {
