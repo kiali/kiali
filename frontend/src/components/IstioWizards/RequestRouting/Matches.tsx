@@ -13,10 +13,14 @@ const labelContainerStyle = style({
   height: 40
 });
 
+const remove = style({
+  cursor: "not-allowed"
+});
+
 class Matches extends React.Component<Props> {
   render() {
     const matches: any[] = this.props.matches.map((match, index) => (
-      <span key={match + '-' + index} data-test={match}>
+      <span key={match + '-' + index} data-test={match} className={remove}>
         <Chip onClick={() => this.props.onRemoveMatch(match)} isOverflowChip={true}>
           {match}
         </Chip>{' '}
