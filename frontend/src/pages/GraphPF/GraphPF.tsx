@@ -37,7 +37,7 @@ import layoutFactory from './layouts/layoutFactory';
 
 export const HOVER_EVENT = 'hover';
 
-let requestFit = true;
+let requestFit = false;
 
 const DEFAULT_NODE_SIZE = 75;
 const FIT_PADDING = 80;
@@ -139,6 +139,7 @@ export const TopologyContent: React.FC<{
       };
       controller.fromModel(model, false);
       setDetailsLevel();
+      requestFit = true;
     }
   }, [controller, options.layout, setDetailsLevel]);
 

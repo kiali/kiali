@@ -218,7 +218,7 @@ const GraphErrorBoundaryFallback = () => {
 
 export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFState> {
   private readonly errorBoundaryRef: any;
-  private cytoscapeGraphRef: any;
+  // private cytoscapeGraphRef: any;
   private focusSelector?: string;
   private graphDataSource: GraphDataSource;
 
@@ -294,7 +294,7 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
   constructor(props: GraphPageProps) {
     super(props);
     this.errorBoundaryRef = React.createRef();
-    this.cytoscapeGraphRef = React.createRef();
+    // this.cytoscapeGraphRef = React.createRef();
     this.focusSelector = getFocusSelector();
 
     this.graphDataSource = new GraphDataSource();
@@ -416,7 +416,6 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
   }
 
   render() {
-    console.log(`SummaryData: ${this.props.summaryData?.summaryType}`);
     let conStyle = containerStyle;
     if (isKioskMode()) {
       conStyle = kioskContainerStyle;
@@ -426,7 +425,7 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
     );
     const isReady = !(isEmpty || this.state.graphData.isError);
     const isReplayReady = this.props.replayActive && !!this.props.replayQueryTime;
-    const cy = this.cytoscapeGraphRef && this.cytoscapeGraphRef.current ? this.cytoscapeGraphRef.current.getCy() : null;
+    // const cy = this.cytoscapeGraphRef && this.cytoscapeGraphRef.current ? this.cytoscapeGraphRef.current.getCy() : null;
     const settings: GraphPFSettings = {
       activeNamespaces: this.state.graphData.fetchParams.namespaces,
       edgeLabels: this.props.edgeLabels,
@@ -442,7 +441,7 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
         <FlexView className={conStyle} column={true}>
           <div>
             <GraphToolbarContainer
-              cy={cy}
+              cy={undefined}
               disabled={this.state.graphData.isLoading}
               elementsChanged={this.state.graphData.elementsChanged}
               onToggleHelp={this.toggleHelp}
@@ -473,7 +472,21 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
                 </Chip>
               )}
               {(!this.props.replayActive || isReplayReady) && (
-                <GraphPF graphData={this.state.graphData} graphSettings={settings} {...this.props} />
+                <div id="cytoscape-graph" className={graphContainerStyle}>
+                  <EmptyGraphLayout
+                    action={this.handleEmptyGraphAction}
+                    elements={this.state.graphData.elements}
+                    error={this.state.graphData.errorMessage}
+                    isLoading={this.state.graphData.isLoading}
+                    isError={!!this.state.graphData.isError}
+                    isMiniGraph={false}
+                    namespaces={this.state.graphData.fetchParams.namespaces}
+                    showIdleNodes={this.props.showIdleNodes}
+                    toggleIdleNodes={this.props.toggleIdleNodes}
+                  >
+                    <GraphPF graphData={this.state.graphData} graphSettings={settings} {...this.props} />
+                  </EmptyGraphLayout>
+                </div>
               )}
             </ErrorBoundary>
             {this.props.summaryData && (
@@ -524,9 +537,9 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
     );
   }
 
-  // private handleEmptyGraphAction = () => {
-  //   this.loadGraphDataFromBackend();
-  // };
+  private handleEmptyGraphAction = () => {
+    this.loadGraphDataFromBackend();
+  };
 
   private handleGraphDataSourceSuccess = (
     graphTimestamp: TimeInSeconds,
