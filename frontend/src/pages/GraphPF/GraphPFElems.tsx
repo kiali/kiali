@@ -1,9 +1,12 @@
 import {
   BadgeLocation,
+  Controller,
   Edge,
   EdgeModel,
   EdgeTerminalType,
   GraphElement,
+  isEdge,
+  isNode,
   LabelPosition,
   Node,
   NodeModel,
@@ -574,30 +577,39 @@ export const assignEdgeHealth = (edges: EdgeModel[], nodeMap: NodeMap, settings:
 
 export type SelectOp = '=' | '!=' | 'falsey' | 'truthy';
 
+export const elems = (c: Controller): { nodes: Node[]; edges: Edge[] } => {
+  const elems = c.getElements();
+  return {
+    nodes: elems.filter(e => isNode(e)) as Node[],
+    edges: elems.filter(e => isEdge(e)) as Edge[]
+  };
+};
+
 export const select = (elems: GraphElement[], prop: string, val: any, op: SelectOp = '='): GraphElement[] => {
   return elems.filter(e => {
+    const d = e.getData();
     switch (op) {
       case '!=':
-        return e[prop] !== val;
+        return d[prop] !== val;
       case 'falsey':
-        return !e[prop];
+        return !d[prop];
       case 'truthy':
-        return !!e[prop];
+        return !!d[prop];
       default:
-        return e[prop] === val;
+        return d[prop] === val;
     }
   });
 };
 
 export const edgesIn = (nodes: Node[]): Edge[] => {
   const result = [] as Edge[];
-  nodes.forEach(n => result.push(...n.getSourceEdges()));
+  nodes.forEach(n => result.push(...n.getTargetEdges()));
   return result;
 };
 
 export const edgesOut = (nodes: Node[]): Edge[] => {
   const result = [] as Edge[];
-  nodes.forEach(n => result.push(...n.getTargetEdges()));
+  nodes.forEach(n => result.push(...n.getSourceEdges()));
   return result;
 };
 
@@ -608,5 +620,5 @@ export const edgesInOut = (nodes: Node[]): Edge[] => {
 };
 
 export const leafNodes = (nodes: Node[]): Node[] => {
-  return nodes.filter(n => n.getTargetEdges().length === 0);
+  return nodes.filter(n => n.getSourceEdges().length === 0);
 };

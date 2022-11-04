@@ -53,7 +53,7 @@ import { arrayEquals } from 'utils/Common';
 import { isKioskMode, getFocusSelector, unsetFocusSelector, getTraceId } from 'utils/SearchParamUtils';
 import { Badge, Chip } from '@patternfly/react-core';
 import { toRangeString } from 'components/Time/Utils';
-//import { replayBorder } from 'components/Time/Replay';
+import { replayBorder } from 'components/Time/Replay';
 import GraphDataSource, { FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import GraphThunkActions from '../../actions/GraphThunkActions';
@@ -176,7 +176,7 @@ const kioskContainerStyle = style({
 });
 
 const graphContainerStyle = style({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
-// const cytoscapeGraphWrapperDivStyle = style({ position: 'relative', backgroundColor: PFColors.Black200 });
+const graphWrapperDivStyle = style({ position: 'relative', backgroundColor: PFColors.Black200 });
 
 const graphTimeRange = style({
   position: 'absolute',
@@ -448,48 +448,50 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
               onToggleHelp={this.toggleHelp}
             />
           </div>
-          <ErrorBoundary
-            ref={this.errorBoundaryRef}
-            onError={this.notifyError}
-            fallBackComponent={<GraphErrorBoundaryFallback />}
-          >
-            {this.props.showLegend && false && (
-              <GraphLegend
-                className={graphLegendStyle}
-                isMTLSEnabled={this.props.mtlsEnabled}
-                closeLegend={this.props.toggleLegend}
+          <FlexView grow={true} className={`${graphWrapperDivStyle} ${this.props.replayActive && replayBorder}`}>
+            <ErrorBoundary
+              ref={this.errorBoundaryRef}
+              onError={this.notifyError}
+              fallBackComponent={<GraphErrorBoundaryFallback />}
+            >
+              {this.props.showLegend && false && (
+                <GraphLegend
+                  className={graphLegendStyle}
+                  isMTLSEnabled={this.props.mtlsEnabled}
+                  closeLegend={this.props.toggleLegend}
+                />
+              )}
+              {isReady && (
+                <Chip
+                  className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : whiteBackground}`}
+                  isReadOnly={true}
+                >
+                  {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}
+                  {!isReplayReady && this.props.replayActive && `click Play to start`}
+                  {!isReplayReady && !this.props.replayActive && `${this.displayTimeRange()}`}
+                  {isReplayReady && `${this.displayTimeRange()}`}
+                </Chip>
+              )}
+              {(!this.props.replayActive || isReplayReady) && (
+                <GraphPF graphData={this.state.graphData} graphSettings={settings} {...this.props} />
+              )}
+            </ErrorBoundary>
+            {this.props.summaryData && (
+              <SummaryPanel
+                data={this.props.summaryData}
+                duration={this.state.graphData.fetchParams.duration}
+                graphType={this.props.graphType}
+                injectServiceNodes={this.props.showServiceNodes}
+                isPageVisible={this.props.isPageVisible}
+                namespaces={this.props.activeNamespaces}
+                onLaunchWizard={this.handleLaunchWizard}
+                onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
+                queryTime={this.state.graphData.timestamp / 1000}
+                trafficRates={this.props.trafficRates}
+                {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
               />
             )}
-            {isReady && (
-              <Chip
-                className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : whiteBackground}`}
-                isReadOnly={true}
-              >
-                {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}
-                {!isReplayReady && this.props.replayActive && `click Play to start`}
-                {!isReplayReady && !this.props.replayActive && `${this.displayTimeRange()}`}
-                {isReplayReady && `${this.displayTimeRange()}`}
-              </Chip>
-            )}
-            {(!this.props.replayActive || isReplayReady) && (
-              <GraphPF graphData={this.state.graphData} graphSettings={settings} {...this.props} />
-            )}
-          </ErrorBoundary>
-          {this.props.summaryData && (
-            <SummaryPanel
-              data={this.props.summaryData}
-              duration={this.state.graphData.fetchParams.duration}
-              graphType={this.props.graphType}
-              injectServiceNodes={this.props.showServiceNodes}
-              isPageVisible={this.props.isPageVisible}
-              namespaces={this.props.activeNamespaces}
-              onLaunchWizard={this.handleLaunchWizard}
-              onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
-              queryTime={this.state.graphData.timestamp / 1000}
-              trafficRates={this.props.trafficRates}
-              {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
-            />
-          )}
+          </FlexView>
         </FlexView>
         <ServiceWizard
           show={this.state.wizardsData.showWizard}

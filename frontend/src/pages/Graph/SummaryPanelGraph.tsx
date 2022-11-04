@@ -39,7 +39,7 @@ import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { PFColors } from '../../components/Pf/PfColors';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { edgesIn, edgesOut, leafNodes, NodeData, select } from 'pages/GraphPF/GraphPFElems';
+import { edgesIn, edgesOut, elems, leafNodes, NodeData, select } from 'pages/GraphPF/GraphPFElems';
 
 type SummaryPanelGraphMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -195,12 +195,12 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
       if (!controller) {
         return null;
       }
-      const graphPF = controller.getGraph();
+      const { nodes, edges } = elems(controller);
 
-      numSvc = select(graphPF.getNodes(), CyNode.nodeType, NodeType.SERVICE).length;
-      numWorkloads = select(graphPF.getNodes(), CyNode.nodeType, NodeType.WORKLOAD).length;
+      numSvc = select(nodes, CyNode.nodeType, NodeType.SERVICE).length;
+      numWorkloads = select(nodes, CyNode.nodeType, NodeType.WORKLOAD).length;
       ({ numApps, numVersions } = this.countApps());
-      numEdges = graphPF.getEdges().length;
+      numEdges = edges.length;
 
       ({ grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
         this.graphTraffic || this.getGraphTraffic());
@@ -382,14 +382,14 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
   private getGraphTrafficPF = (): SummaryPanelGraphTraffic => {
     const controller = this.props.data.summaryTarget as Visualization;
-    const graphPF = controller.getGraph();
+    const { nodes } = elems(controller);
+
     // when getting total traffic rates don't count requests from injected service nodes
-    const allNodes = graphPF.getNodes();
-    const nonServiceNodes = select(allNodes, CyNode.nodeType, NodeType.SERVICE, '!=');
+    const nonServiceNodes = select(nodes, CyNode.nodeType, NodeType.SERVICE, '!=');
     const nonBoxNodes = select(nonServiceNodes, CyNode.isBox, '', 'falsey');
     const totalEdges = edgesOut(nonBoxNodes as Node[]).length;
-    const inboundEdges = edgesOut(select(allNodes, CyNode.isBox, '', 'truthy') as Node[]);
-    const allLeafNodes = leafNodes(allNodes) as Node[];
+    const inboundEdges = edgesOut(select(nodes, CyNode.isRoot, '', 'truthy') as Node[]);
+    const allLeafNodes = leafNodes(nodes) as Node[];
     const outboundEdges = edgesIn(
       _.union(
         select(allLeafNodes, CyNode.isOutside, '', 'truthy'),
@@ -437,17 +437,17 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
   private countAppsPF = (): { numApps: number; numVersions: number } => {
     const controller = this.props.data.summaryTarget as Visualization;
-    const graphPF = controller.getGraph();
+    const { nodes } = elems(controller);
 
     const appVersions: { [key: string]: Set<string> } = {};
 
-    select(graphPF.getNodes(), CyNode.nodeType, NodeType.APP).forEach(node => {
-      const app = node.getData[CyNode.app];
-      const nodeData = node.getData() as NodeData;
+    select(nodes, CyNode.nodeType, NodeType.APP).forEach(appNode => {
+      const d = appNode.getData() as NodeData;
+      const app = d[CyNode.app];
       if (appVersions[app] === undefined) {
         appVersions[app] = new Set();
       }
-      appVersions[app].add(nodeData[CyNode.version]);
+      appVersions[app].add(d[CyNode.version]);
     });
 
     return {
