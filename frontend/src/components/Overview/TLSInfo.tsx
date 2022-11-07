@@ -54,7 +54,9 @@ function LockIcon(props) {
         position={TooltipPosition.top}
         content={showCerts(props.certsInfo)}
       >
+        <div data-test={"lockerCA"}>
           <KialiIcon.MtlsLock className={lockIconStyle}/>
+        </div>
       </Tooltip>)
       : (<KialiIcon.MtlsLock className={lockIconStyle}/>)
   );
