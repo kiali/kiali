@@ -197,8 +197,8 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
       }
       const { nodes, edges } = elems(controller);
 
-      numSvc = select(nodes, CyNode.nodeType, NodeType.SERVICE).length;
-      numWorkloads = select(nodes, CyNode.nodeType, NodeType.WORKLOAD).length;
+      numSvc = select(nodes, { prop: CyNode.nodeType, val: NodeType.SERVICE }).length;
+      numWorkloads = select(nodes, { prop: CyNode.nodeType, val: NodeType.WORKLOAD }).length;
       ({ numApps, numVersions } = this.countApps());
       numEdges = edges.length;
 
@@ -385,15 +385,15 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     const { nodes } = elems(controller);
 
     // when getting total traffic rates don't count requests from injected service nodes
-    const nonServiceNodes = select(nodes, CyNode.nodeType, NodeType.SERVICE, '!=');
-    const nonBoxNodes = select(nonServiceNodes, CyNode.isBox, '', 'falsey');
+    const nonServiceNodes = select(nodes, { prop: CyNode.nodeType, val: NodeType.SERVICE, op: '!=' });
+    const nonBoxNodes = select(nonServiceNodes, { prop: CyNode.isBox, op: 'falsey' });
     const totalEdges = edgesOut(nonBoxNodes as Node[]).length;
-    const inboundEdges = edgesOut(select(nodes, CyNode.isRoot, '', 'truthy') as Node[]);
+    const inboundEdges = edgesOut(select(nodes, { prop: CyNode.isRoot, op: 'truthy' }) as Node[]);
     const allLeafNodes = leafNodes(nodes) as Node[];
     const outboundEdges = edgesIn(
       _.union(
-        select(allLeafNodes, CyNode.isOutside, '', 'truthy'),
-        select(allLeafNodes, CyNode.isServiceEntry, '', 'truthy')
+        select(allLeafNodes, { prop: CyNode.isOutside, op: 'truthy' }),
+        select(allLeafNodes, { prop: CyNode.isServiceEntry, op: 'truthy' })
       ) as Node[]
     );
 
@@ -441,7 +441,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
     const appVersions: { [key: string]: Set<string> } = {};
 
-    select(nodes, CyNode.nodeType, NodeType.APP).forEach(appNode => {
+    select(nodes, { prop: CyNode.nodeType, val: NodeType.APP }).forEach(appNode => {
       const d = appNode.getData() as NodeData;
       const app = d[CyNode.app];
       if (appVersions[app] === undefined) {

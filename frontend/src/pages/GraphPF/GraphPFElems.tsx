@@ -574,9 +574,7 @@ export const assignEdgeHealth = (edges: EdgeModel[], nodeMap: NodeMap, settings:
   });
 };
 
-///// Selector helpers
-
-export type SelectOp = '=' | '!=' | 'falsey' | 'truthy';
+///// PFT helpers
 
 export const elems = (c: Controller): { nodes: Node[]; edges: Edge[] } => {
   const elems = c.getElements();
@@ -586,18 +584,46 @@ export const elems = (c: Controller): { nodes: Node[]; edges: Edge[] } => {
   };
 };
 
-export const select = (elems: GraphElement[], prop: string, val: any, op: SelectOp = '='): GraphElement[] => {
+export type SelectOp = '=' | '!=' | '>' | '<' | 'falsey' | 'truthy';
+export type SelectExp = {
+  prop: string;
+  val?: any;
+  op?: SelectOp;
+};
+export type SelectAnd = SelectExp[];
+export type SelectOr = SelectAnd[];
+
+export const selectOr = (elems: GraphElement[], ors: SelectOr): GraphElement[] => {
+  let result = [] as GraphElement[];
+  ors.forEach(ands => {
+    const andResult = selectAnd(elems, ands);
+    result = Array.from(new Set([...result, ...andResult]));
+  });
+  return result;
+};
+
+export const selectAnd = (elems: GraphElement[], ands: SelectAnd): GraphElement[] => {
+  let result = elems;
+  ands.forEach(exp => (result = select(result, exp)));
+  return result;
+};
+
+export const select = (elems: GraphElement[], exp: SelectExp): GraphElement[] => {
   return elems.filter(e => {
     const d = e.getData();
-    switch (op) {
+    switch (exp.op) {
       case '!=':
-        return d[prop] !== val;
+        return d[exp.prop] !== exp.val;
+      case '<':
+        return d[exp.prop] < exp.val;
+      case '>':
+        return d[exp.prop] > exp.val;
       case 'falsey':
-        return !d[prop];
+        return !d[exp.prop];
       case 'truthy':
-        return !!d[prop];
+        return !!d[exp.prop];
       default:
-        return d[prop] === val;
+        return d[exp.prop] === exp.val;
     }
   });
 };

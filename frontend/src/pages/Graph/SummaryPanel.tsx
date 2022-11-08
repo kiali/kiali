@@ -138,17 +138,19 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
   }
 
   private getSummaryPanel = (summary: SummaryData): React.ReactFragment => {
+    const isPF = !!summary.isPF;
     const summaryType = summary.summaryType as string;
 
     switch (summaryType) {
       case 'box': {
-        const boxType: BoxByType | undefined =
-          summaryType === 'box' ? this.props.data.summaryTarget.data(CyNode.isBox) : undefined;
+        const boxType: BoxByType = isPF
+          ? summary.summaryTarget.getData()[CyNode.isBox]
+          : summary.summaryTarget.data(CyNode.isBox);
         switch (boxType) {
           case 'app':
             return (
               <SummaryPanelAppBox
-                data={this.props.data}
+                data={summary}
                 duration={this.props.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
@@ -163,7 +165,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
           case 'cluster':
             return (
               <SummaryPanelClusterBox
-                data={this.props.data}
+                data={summary}
                 duration={this.props.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
@@ -178,7 +180,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
           case 'namespace':
             return (
               <SummaryPanelNamespaceBox
-                data={this.props.data}
+                data={summary}
                 duration={this.props.duration}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
