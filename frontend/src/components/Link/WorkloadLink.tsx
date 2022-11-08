@@ -3,12 +3,22 @@ import { Paths } from '../../config';
 import { Link } from 'react-router-dom';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { TooltipPosition } from '@patternfly/react-core';
+import { KialiAppState } from "../../store/Store";
+import { connect } from "react-redux";
+import { isParentKiosk, kioskContextMenuAction } from "../Kiosk/KioskActions";
 
-interface Props {
+type ReduxProps = {
+  kiosk: string;
+}
+
+type Props = {
   name: string;
   namespace: string;
   query?: string;
 }
+
+type WorkloadProps = ReduxProps & Props & {
+};
 
 export const getWorkloadLink = (name: string, namespace: string, query?: string): string => {
   let to = '/namespaces/' + namespace + '/' + Paths.WORKLOADS;
@@ -29,12 +39,34 @@ export class WorkloadLink extends React.Component<Props> {
     return (
       <>
         <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-        <Link to={getWorkloadLink(name, namespace, query)} data-test={'workload-' + namespace + '-' + name}>
-          {namespace}/{name}
-        </Link>
+        <WorkloadLinkContainer namespace={namespace} name={name} query={query} />
       </>
     );
   }
 }
 
-export default WorkloadLink;
+class WorkloadLinkItem extends React.Component<WorkloadProps> {
+  render() {
+    const { name, namespace, query } = this.props;
+    const href = getWorkloadLink(name, namespace, query);
+    return isParentKiosk(this.props.kiosk) ? (
+      <Link
+        to={''}
+        onClick={() => {
+          kioskContextMenuAction(href);
+        }}
+      >{namespace}/{name}</Link>
+    ) : (
+      <Link to={href} data-test={'workload-' + namespace + '-' + name}>
+        {namespace}/{name}
+      </Link>
+    );
+  }
+}
+
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
+  kiosk: state.globalState.kiosk,
+});
+
+const WorkloadLinkContainer = connect(mapStateToProps)(WorkloadLinkItem);
+export default WorkloadLinkContainer;
