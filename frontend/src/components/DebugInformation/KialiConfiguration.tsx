@@ -50,7 +50,7 @@ const copyToClipboardOptions = {
   message: 'We failed to automatically copy the text, please use: #{key}, Enter\t'
 };
 
-export class DebugInformation extends React.PureComponent<DebugInformationProps, DebugInformationState> {
+export class KialiConfiguration extends React.PureComponent<DebugInformationProps, DebugInformationState> {
   aceEditorRef: React.RefObject<AceEditor>;
 
   constructor(props: DebugInformationProps) {
@@ -135,7 +135,7 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
         variant={ModalVariant.small}
         isOpen={this.state.show}
         onClose={this.close}
-        title="Debug information"
+        title="Kiali Configuration"
         actions={[
           <Button onClick={this.close}>Close</Button>,
           <CopyToClipboard onCopy={this.copyCallback} text={renderDebugInformation()} options={copyToClipboardOptions}>
@@ -175,7 +175,7 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
             setOptions={aceOptions || { foldStyle: 'markbegin' }}
             value={renderDebugInformation()}
           />
-          </CopyToClipboard>
+        </CopyToClipboard>
       </Modal>
     );
   }
@@ -185,6 +185,6 @@ const mapStateToProps = (state: KialiAppState) => ({
   appState: state
 });
 
-const DebugInformationContainer = connect(mapStateToProps, null, null, { forwardRef: true })(DebugInformation);
+const KialiConfigurationContainer = connect(mapStateToProps, null, null, { forwardRef: true })(KialiConfiguration);
 
-export default DebugInformationContainer;
+export default KialiConfigurationContainer;

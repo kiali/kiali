@@ -9,6 +9,7 @@ import { isUpstream } from '../../UpstreamDetector/UpstreamDetector';
 import { Status, ExternalServiceInfo, StatusKey } from '../../../types/StatusState';
 import { config, serverConfig } from '../../../config';
 import IstioCertsInfoConnected from 'components/IstioCertsInfo/IstioCertsInfo';
+import KialiConfigurationContainer from "../../DebugInformation/KialiConfiguration";
 
 type HelpDropdownProps = {
   status: Status;
@@ -24,6 +25,7 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
   about: React.RefObject<AboutUIModal>;
   debugInformation: React.RefObject<any>;
   certsInformation: React.RefObject<any>;
+  configuration: React.RefObject<any>;
 
   constructor(props: HelpDropdownProps) {
     super(props);
@@ -31,6 +33,7 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
     this.about = React.createRef<AboutUIModal>();
     this.debugInformation = React.createRef();
     this.certsInformation = React.createRef();
+    this.configuration = React.createRef();
   }
 
   openAbout = () => {
@@ -44,6 +47,10 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
 
   openCertsInformation = () => {
     this.certsInformation.current!.open();
+  };
+
+  openConfig = () => {
+    this.configuration.current!.open();
   };
 
   onDropdownToggle = isDropdownOpen => {
@@ -108,6 +115,12 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
     }
 
     items.push(
+      <DropdownItem component={'span'} key={'kiali_config'} onClick={this.openConfig}>
+        Configuration
+      </DropdownItem>
+    );
+
+    items.push(
       <DropdownItem component={'span'} key={'view_about_info'} onClick={this.openAbout}>
         About
       </DropdownItem>
@@ -124,6 +137,7 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
         {serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled && (
           <IstioCertsInfoConnected ref={this.certsInformation} />
         )}
+        <KialiConfigurationContainer ref={this.configuration} />
         <Dropdown
           data-test="about-help-button"
           isPlain={true}
