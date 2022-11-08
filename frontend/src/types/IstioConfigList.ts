@@ -324,6 +324,42 @@ export const gwToIstioItems = (gws: Gateway[], vss: VirtualService[], validation
   return istioItems;
 };
 
+export const k8sGwToIstioItems = (gws: K8sGateway[], k8srs: K8sHTTPRoute[]): IstioConfigItem[] => {
+  const istioItems: IstioConfigItem[] = [];
+  const k8sGateways = new Set();
+
+  const typeNameProto = dicIstioType['k8sgateways']; // ex. serviceEntries -> ServiceEntry
+  const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
+  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+
+  k8srs.forEach(k8sr => {
+    k8sr.spec.parentRefs?.forEach(parentRef => {
+      if (!parentRef.namespace) {
+        k8sGateways.add(k8sr.metadata.namespace + '/' + parentRef.name);
+      } else {
+        k8sGateways.add(parentRef.namespace + '/' + parentRef.name);
+      }
+    });
+  });
+
+  gws.forEach(gw => {
+    if (k8sGateways.has(gw.metadata.namespace + '/' + gw.metadata.name)) {
+      const item = {
+        namespace: gw.metadata.namespace || '',
+        type: typeName,
+        name: gw.metadata.name,
+        creationTimestamp: gw.metadata.creationTimestamp,
+        resourceVersion: gw.metadata.resourceVersion,
+        // @TODO Validations
+        validation: undefined
+      };
+      item[entryName] = gw;
+      istioItems.push(item);
+    }
+  });
+  return istioItems;
+};
+
 export const seToIstioItems = (see: ServiceEntry[], validations: Validations): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
   const hasValidations = (vKey: string) => validations.serviceentry && validations.serviceentry[vKey];
@@ -343,6 +379,29 @@ export const seToIstioItems = (see: ServiceEntry[], validations: Validations): I
       validation: hasValidations(vKey) ? validations.serviceentry[vKey] : undefined
     };
     item[entryName] = se;
+    istioItems.push(item);
+  });
+  return istioItems;
+};
+
+export const k8sHTTPRouteToIstioItems = (routes: K8sHTTPRoute[]): IstioConfigItem[] => {
+  const istioItems: IstioConfigItem[] = [];
+
+  const typeNameProto = dicIstioType['k8shttproutes']; // ex. serviceEntries -> ServiceEntry
+  const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
+  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+
+  routes.forEach(route => {
+    const item = {
+      namespace: route.metadata.namespace || '',
+      type: typeName,
+      name: route.metadata.name,
+      creationTimestamp: route.metadata.creationTimestamp,
+      resourceVersion: route.metadata.resourceVersion,
+      // @TODO Validations
+      validation: undefined
+    };
+    item[entryName] = route;
     istioItems.push(item);
   });
   return istioItems;

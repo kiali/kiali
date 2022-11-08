@@ -79,6 +79,7 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
       }
     }
   ],
+  k8sHTTPRoutes: [],
   destinationRules: [
     {
       metadata: {

@@ -219,6 +219,27 @@ func FilterGatewaysByVirtualServices(allGws []*networking_v1beta1.Gateway, allVs
 	return gateways
 }
 
+func FilterK8sGatewaysByHTTPRoutes(allGws []*k8s_networking_v1alpha2.Gateway, allRoutes []*k8s_networking_v1alpha2.HTTPRoute) []*k8s_networking_v1alpha2.Gateway {
+	var empty struct{}
+	gateways := []*k8s_networking_v1alpha2.Gateway{}
+	gatewayNames := make(map[string]struct{})
+	for _, route := range allRoutes {
+		for _, pRef := range route.Spec.ParentRefs {
+			if *pRef.Namespace != "" {
+				gatewayNames[fmt.Sprintf("%s/%s", *pRef.Namespace, pRef.Name)] = empty
+			} else {
+				gatewayNames[fmt.Sprintf("%s/%s", route.Namespace, pRef.Name)] = empty
+			}
+		}
+	}
+	for _, gw := range allGws {
+		if _, ok := gatewayNames[gw.Namespace+"/"+gw.Name]; ok {
+			gateways = append(gateways, gw)
+		}
+	}
+	return gateways
+}
+
 func FilterPodsByController(controllerName string, controllerType string, allPods []core_v1.Pod) []core_v1.Pod {
 	var pods []core_v1.Pod
 	for _, pod := range allPods {
@@ -504,6 +525,26 @@ func FilterVirtualServicesByService(allVs []*networking_v1beta1.VirtualService, 
 		}
 		if appendVirtualService {
 			filtered = append(filtered, vs)
+		}
+	}
+	return filtered
+}
+
+func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1alpha2.HTTPRoute, namespace string, serviceName string) []*k8s_networking_v1alpha2.HTTPRoute {
+	filtered := []*k8s_networking_v1alpha2.HTTPRoute{}
+	for _, route := range allRoutes {
+		appendRoute := serviceName == ""
+		if !appendRoute {
+			for _, rule := range route.Spec.Rules {
+				for _, backendRef := range rule.BackendRefs {
+					if string(backendRef.Name) != "" && FilterByHost(string(backendRef.Name), route.Namespace, serviceName, namespace) {
+						appendRoute = true
+					}
+				}
+			}
+		}
+		if appendRoute {
+			filtered = append(filtered, route)
 		}
 	}
 	return filtered

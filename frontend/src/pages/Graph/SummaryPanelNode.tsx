@@ -143,6 +143,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
           <ServiceWizardActionsDropdownGroup
             virtualServices={this.props.serviceDetails.virtualServices || []}
             destinationRules={this.props.serviceDetails.destinationRules || []}
+            k8sHTTPRoutes={this.props.serviceDetails.k8sHTTPRoutes || []}
             istioPermissions={this.props.serviceDetails.istioPermissions}
             onAction={this.handleLaunchWizard}
             onDelete={this.handleDeleteTrafficRouting} />

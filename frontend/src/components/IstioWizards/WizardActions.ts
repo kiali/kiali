@@ -2,6 +2,7 @@ import { TLSStatus } from '../../types/TLSStatus';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { WorkloadWeight } from './TrafficShifting';
 import { Rule } from './RequestRouting/Rules';
+import { K8sRule } from './K8sRequestRouting/K8sRules';
 import {
   AuthorizationPolicy,
   AuthorizationPolicyRule,
@@ -10,9 +11,12 @@ import {
   ConnectionPoolSettings,
   DestinationRule,
   Gateway,
+  HTTPMatch,
   HTTPMatchRequest,
   HTTPRoute,
-  HTTPRouteDestination, K8sGateway,
+  HTTPRouteDestination,
+  K8sGateway,
+  K8sHTTPRoute, K8sHTTPRouteMatch,
   LoadBalancerSettings,
   Operation,
   OutlierDetection,
@@ -32,6 +36,7 @@ import {
 } from '../../types/IstioObjects';
 import { serverConfig } from '../../config';
 import { GatewaySelectorState } from './GatewaySelector';
+import { K8sGatewaySelectorState } from './K8sGatewaySelector';
 import { ConsistentHashType, MUTUAL, TrafficPolicyState, UNSET } from './TrafficPolicy';
 import { GatewayState } from '../../pages/IstioConfigNew/GatewayForm';
 import { K8sGatewayState } from '../../pages/IstioConfigNew/K8sGatewayForm';
@@ -44,12 +49,16 @@ import { FaultInjectionRoute } from './FaultInjection';
 import { TimeoutRetryRoute } from './RequestTimeouts';
 import { DestService, GraphDefinition, NodeType } from '../../types/Graph';
 import { ServiceEntryState } from '../../pages/IstioConfigNew/ServiceEntryForm';
+import { K8sRouteBackendRef } from "./K8sRequestRouting/K8sRuleBuilder";
+import { QUERY_PARAMS, PATH, HEADERS, METHOD } from "./K8sRequestRouting/K8sMatchBuilder";
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
 export const WIZARD_REQUEST_ROUTING = 'request_routing';
 export const WIZARD_FAULT_INJECTION = 'fault_injection';
 export const WIZARD_REQUEST_TIMEOUTS = 'request_timeouts';
+
+export const WIZARD_K8S_REQUEST_ROUTING = 'k8s_request_routing';
 
 export const WIZARD_ENABLE_AUTO_INJECTION = 'enable_auto_injection';
 export const WIZARD_DISABLE_AUTO_INJECTION = 'disable_auto_injection';
@@ -60,7 +69,8 @@ export const SERVICE_WIZARD_ACTIONS = [
   WIZARD_FAULT_INJECTION,
   WIZARD_TRAFFIC_SHIFTING,
   WIZARD_TCP_TRAFFIC_SHIFTING,
-  WIZARD_REQUEST_TIMEOUTS
+  WIZARD_REQUEST_TIMEOUTS,
+  WIZARD_K8S_REQUEST_ROUTING
 ];
 
 export type WizardAction =
@@ -68,7 +78,8 @@ export type WizardAction =
   | 'fault_injection'
   | 'traffic_shifting'
   | 'tcp_traffic_shifting'
-  | 'request_timeouts';
+  | 'request_timeouts'
+  | 'k8s_request_routing';
 export type WizardMode = 'create' | 'update';
 
 export const WIZARD_TITLES = {
@@ -76,7 +87,8 @@ export const WIZARD_TITLES = {
   [WIZARD_FAULT_INJECTION]: 'Fault Injection',
   [WIZARD_TRAFFIC_SHIFTING]: 'Traffic Shifting',
   [WIZARD_TCP_TRAFFIC_SHIFTING]: 'TCP Traffic Shifting',
-  [WIZARD_REQUEST_TIMEOUTS]: 'Request Timeouts'
+  [WIZARD_REQUEST_TIMEOUTS]: 'Request Timeouts',
+  [WIZARD_K8S_REQUEST_ROUTING]: 'K8s Gateway API Routing',
 };
 
 export type ServiceWizardProps = {
@@ -91,6 +103,8 @@ export type ServiceWizardProps = {
   virtualServices: VirtualService[];
   destinationRules: DestinationRule[];
   gateways: string[];
+  k8sGateways: string[];
+  k8sHTTPRoutes: K8sHTTPRoute[],
   peerAuthentications: PeerAuthentication[];
   onClose: (changed: boolean) => void;
 };
@@ -98,6 +112,7 @@ export type ServiceWizardProps = {
 export type ServiceWizardValid = {
   mainWizard: boolean;
   vsHosts: boolean;
+  k8sRouteHosts: boolean;
   tls: boolean;
   lb: boolean;
   gateway: boolean;
@@ -106,9 +121,11 @@ export type ServiceWizardValid = {
 };
 
 export type WizardPreviews = {
-  dr: DestinationRule;
-  vs: VirtualService;
+  dr?: DestinationRule;
+  vs?: VirtualService;
   gw?: Gateway;
+  k8sgateway?: K8sGateway;
+  k8shttproute?: K8sHTTPRoute;
   pa?: PeerAuthentication;
 };
 
@@ -121,13 +138,16 @@ export type ServiceWizardState = {
   advancedTabKey: number;
   workloads: WorkloadWeight[];
   rules: Rule[];
+  k8sRules: K8sRule[];
   faultInjectionRoute: FaultInjectionRoute;
   timeoutRetryRoute: TimeoutRetryRoute;
   valid: ServiceWizardValid;
   advancedOptionsValid: boolean;
   vsHosts: string[];
+  k8sRouteHosts: string[];
   trafficPolicy: TrafficPolicyState;
   gateway?: GatewaySelectorState;
+  k8sGateway?: K8sGatewaySelectorState;
 };
 
 export type WorkloadWizardValid = {};
@@ -196,6 +216,80 @@ const buildHTTPMatchRequest = (matches: string[]): HTTPMatchRequest[] => {
   return matchRequests;
 };
 
+const buildK8sHTTPRouteMatch = (matches: string[]): K8sHTTPRouteMatch => {
+  const matchRoute: K8sHTTPRouteMatch = {};
+  const matchHeaders: HTTPMatch[] = [];
+  const matchQueries: HTTPMatch[] = [];
+  let matchPath = {};
+  let matchMethod = "";
+
+  matches
+    .filter(match => match.startsWith(HEADERS))
+    .forEach(match => {
+      // match follows format:  headers [<header-name>] <op> <value>
+      const i0 = match.indexOf('[');
+      const j0 = match.indexOf(']');
+      const headerName = match.substring(i0 + 1, j0).trim();
+      const i1 = match.indexOf(' ', j0 + 1);
+      const j1 = match.indexOf(' ', i1 + 1);
+      const op = match.substring(i1 + 1, j1).trim();
+      const value = match.substring(j1 + 1).trim();
+      matchHeaders.push({
+        name: headerName,
+        type: op,
+        value: value
+      });
+    });
+  // Path
+  matches
+    .filter(match => match.startsWith(PATH))
+    .forEach(match => {
+      // match follows format: <op> <value>
+      const i = match.indexOf(' ');
+      const j = match.indexOf(' ', i + 1);
+      const op = match.substring(i + 1, j).trim();
+      const value = match.substring(j + 1).trim();
+      // Only one Path per Match
+      matchPath = {type: op, value: value}
+    });
+  // QueryParams
+  matches
+    .filter(match => match.startsWith(QUERY_PARAMS))
+    .forEach(match => {
+      // match follows format: <name> <op> <value>
+      const i = match.indexOf(' ');
+      const j = match.indexOf(' ', i + 1);
+      const k = match.indexOf(' ', j + 1);
+      const name = match.substring(i, j).trim();
+      const op = match.substring(j + 1, k).trim();
+      const value = match.substring(k + 1).trim();
+      matchQueries.push({name: name, type: op, value: value})
+    });
+  // Method
+  matches
+    .filter(match => match.startsWith(METHOD))
+    .forEach(match => {
+      // match follows format: <name> <op> <value>
+      const i = match.indexOf(' ');
+      const value = match.substring(i).trim();
+      // Only one method per Match
+      matchMethod = value;
+    });
+  if (matchHeaders.length > 0) {
+    matchRoute.headers = matchHeaders
+  }
+  if (matchQueries.length > 0) {
+    matchRoute.queryParams = matchQueries
+  }
+  if (matchPath) {
+    matchRoute.path = matchPath
+  }
+  if (matchMethod) {
+    matchRoute.method = matchMethod;
+  }
+  return matchRoute;
+};
+
 const parseStringMatch = (value: StringMatch): string => {
   if (value.exact) {
     return 'exact ' + value.exact;
@@ -233,6 +327,29 @@ const parseHttpMatchRequest = (httpMatchRequest: HTTPMatchRequest): string[] => 
   return matches;
 };
 
+const parseK8sHTTPMatchRequest = (httpRouteMatch: K8sHTTPRouteMatch): string[] => {
+  const matches: string[] = [];
+  if (httpRouteMatch.path) {
+    matches.push('path ' + httpRouteMatch.path?.type + ' ' + httpRouteMatch.path?.value);
+  }
+  // Headers
+  if (httpRouteMatch.headers) {
+    httpRouteMatch.headers.forEach(header => {
+      matches.push('headers [' + header.name + '] ' + header.type + ' ' + header.value);
+    });
+  }
+  if (httpRouteMatch.queryParams) {
+    httpRouteMatch.queryParams.forEach(qp => {
+      matches.push('queryParam ' + qp.name + ' ' + qp.type + ' ' + qp.value);
+    })
+  }
+  if (httpRouteMatch.method) {
+    matches.push('method ' + httpRouteMatch.method);
+  }
+
+  return matches;
+};
+
 export const getGatewayName = (namespace: string, serviceName: string, gatewayNames: string[]): string => {
   let gatewayName = namespace + '/' + serviceName + '-gateway';
   if (gatewayNames.length === 0) {
@@ -265,70 +382,76 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
   if (wProps.destinationRules.length === 1 && wProps.destinationRules[0].metadata.name !== drName) {
     drName = wProps.destinationRules[0].metadata.name;
   }
-  const wizardDR: DestinationRule = {
-    kind: 'DestinationRule',
-    apiVersion: ISTIO_NETWORKING_VERSION,
-    metadata: {
-      namespace: wProps.namespace,
-      name: drName,
-      labels: {
-        [KIALI_WIZARD_LABEL]: wProps.type
-      }
-    },
-    spec: {
-      host: fqdnServiceName(wProps.serviceName, wProps.namespace)
-    }
-  };
-
-  const subsets = wProps.workloads
-    .filter(workload => {
-      // Filter out workloads without version label
-      const versionLabelName = serverConfig.istioLabels.versionLabelName;
-      return workload.labels![versionLabelName];
-    })
-    .map(workload => {
-      // Using version
-      const versionLabelName = serverConfig.istioLabels.versionLabelName;
-      const versionValue = workload.labels![versionLabelName];
-      const labels: { [key: string]: string } = {};
-      labels[versionLabelName] = versionValue;
-      // Populate helper table workloadName -> version
-      wkdNameVersion[workload.name] = versionValue;
-      return {
-        name: versionValue,
-        labels: labels
-      };
-    });
-
-  if (subsets.length > 0) {
-    wizardDR.spec.subsets = subsets;
-  }
-
-  // In some limited scenarios VS may be created externally to Kiali (i.e. extensions)
-  let vsName = wProps.serviceName;
-  if (wProps.virtualServices.length === 1 && wProps.virtualServices[0].metadata.name !== vsName) {
-    vsName = wProps.virtualServices[0].metadata.name;
-  }
-  const wizardVS: VirtualService = {
-    kind: 'VirtualService',
-    apiVersion: ISTIO_NETWORKING_VERSION,
-    metadata: {
-      namespace: wProps.namespace,
-      name: vsName,
-      labels: {
-        [KIALI_WIZARD_LABEL]: wProps.type
-      }
-    },
-    spec: {}
-  };
-
+  let wizardK8sHTTPRoute: K8sHTTPRoute | undefined = undefined;
+  let wizardDR: DestinationRule | undefined = undefined;
+  let wizardVS: VirtualService | undefined = undefined;
+  let wizardGW: Gateway | undefined
+  let wizardK8sGW: K8sGateway | undefined
   let wizardPA: PeerAuthentication | undefined = undefined;
+  const fullNewGatewayName = getGatewayName(wProps.namespace, wProps.serviceName, wProps.gateways.concat(wProps.k8sGateways));
 
-  // Wizard is optional, only when user has explicitly selected "Create a Gateway"
-  const fullNewGatewayName = getGatewayName(wProps.namespace, wProps.serviceName, wProps.gateways);
-  const wizardGW: Gateway | undefined =
-    wState.gateway && wState.gateway.addGateway && wState.gateway.newGateway
-      ? {
+  if (wProps.type !== WIZARD_K8S_REQUEST_ROUTING) {
+    wizardDR = {
+      kind: 'DestinationRule',
+      apiVersion: ISTIO_NETWORKING_VERSION,
+      metadata: {
+        namespace: wProps.namespace,
+        name: drName,
+        labels: {
+          [KIALI_WIZARD_LABEL]: wProps.type
+        }
+      },
+      spec: {
+        host: fqdnServiceName(wProps.serviceName, wProps.namespace)
+      }
+    };
+
+    const subsets = wProps.workloads
+      .filter(workload => {
+        // Filter out workloads without version label
+        const versionLabelName = serverConfig.istioLabels.versionLabelName;
+        return workload.labels![versionLabelName];
+      })
+      .map(workload => {
+        // Using version
+        const versionLabelName = serverConfig.istioLabels.versionLabelName;
+        const versionValue = workload.labels![versionLabelName];
+        const labels: { [key: string]: string } = {};
+        labels[versionLabelName] = versionValue;
+        // Populate helper table workloadName -> version
+        wkdNameVersion[workload.name] = versionValue;
+        return {
+          name: versionValue,
+          labels: labels
+        };
+      });
+
+    if (subsets.length > 0) {
+      wizardDR.spec.subsets = subsets;
+    }
+
+    // In some limited scenarios VS may be created externally to Kiali (i.e. extensions)
+    let vsName = wProps.serviceName;
+    if (wProps.virtualServices.length === 1 && wProps.virtualServices[0].metadata.name !== vsName) {
+      vsName = wProps.virtualServices[0].metadata.name;
+    }
+    wizardVS = {
+      kind: 'VirtualService',
+      apiVersion: ISTIO_NETWORKING_VERSION,
+      metadata: {
+        namespace: wProps.namespace,
+        name: vsName,
+        labels: {
+          [KIALI_WIZARD_LABEL]: wProps.type
+        }
+      },
+      spec: {}
+    };
+
+    // Wizard is optional, only when user has explicitly selected "Create a Gateway or K8s API Gateway"
+    wizardGW =
+      wState.gateway && wState.gateway.addGateway && wState.gateway.newGateway
+        ? {
           kind: 'Gateway',
           apiVersion: ISTIO_NETWORKING_VERSION,
           metadata: {
@@ -354,17 +477,132 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
             ]
           }
         }
-      : undefined;
+        : undefined;
 
-  switch (wProps.type) {
-    case WIZARD_TRAFFIC_SHIFTING: {
-      // VirtualService from the weights
-      wizardVS.spec = {
-        http: [
-          {
-            route: wState.workloads
+    switch (wProps.type) {
+      case WIZARD_TRAFFIC_SHIFTING: {
+        // VirtualService from the weights
+        wizardVS.spec = {
+          http: [
+            {
+              route: wState.workloads
+                .filter(workload => !workload.mirrored)
+                .map(workload => {
+                  const httpRouteDestination: HTTPRouteDestination = {
+                    destination: {
+                      host: fqdnServiceName(wProps.serviceName, wProps.namespace)
+                    },
+                    weight: workload.weight
+                  };
+                  if (wkdNameVersion[workload.name]) {
+                    httpRouteDestination.destination.subset = wkdNameVersion[workload.name];
+                  }
+                  return httpRouteDestination;
+                })
+            }
+          ]
+        };
+        // Update HTTP Route with mirror destination + percentage
+        const mirrorWorkload = wState.workloads.filter(workload => workload.mirrored).pop();
+        if (mirrorWorkload && wizardVS?.spec?.http?.length === 1) {
+          wizardVS.spec.http[0].mirror = {
+            host: fqdnServiceName(wProps.serviceName, wProps.namespace)
+          };
+          if (wkdNameVersion[mirrorWorkload.name]) {
+            wizardVS.spec.http[0].mirror.subset = wkdNameVersion[mirrorWorkload.name];
+          }
+          wizardVS.spec.http[0].mirrorPercentage = {
+            value: mirrorWorkload.weight
+          };
+        }
+        break;
+      }
+      case WIZARD_TCP_TRAFFIC_SHIFTING: {
+        // VirtualService from the weights
+        wizardVS.spec = {
+          tcp: [
+            {
+              route: wState.workloads.map(workload => {
+                const routeDestination: RouteDestination = {
+                  destination: {
+                    host: fqdnServiceName(wProps.serviceName, wProps.namespace)
+                  },
+                  weight: workload.weight
+                };
+                if (wkdNameVersion[workload.name]) {
+                  routeDestination.destination.subset = wkdNameVersion[workload.name];
+                }
+                return routeDestination;
+              })
+            }
+          ]
+        };
+        break;
+      }
+      case WIZARD_REQUEST_ROUTING: {
+        // VirtualService from the routes
+        wizardVS.spec = {
+          http: wState.rules.map(rule => {
+            const httpRoute: HTTPRoute = {};
+            httpRoute.route = [];
+            rule.workloadWeights
               .filter(workload => !workload.mirrored)
-              .map(workload => {
+              .forEach(workload => {
+                const destW: HTTPRouteDestination = {
+                  destination: {
+                    host: fqdnServiceName(wProps.serviceName, wProps.namespace)
+                  },
+                  weight: workload.weight
+                };
+                if (wkdNameVersion[workload.name]) {
+                  destW.destination.subset = wkdNameVersion[workload.name];
+                }
+                httpRoute.route?.push(destW);
+              });
+
+            const mirrorWorkload = rule.workloadWeights.filter(workload => workload.mirrored).pop();
+            if (mirrorWorkload) {
+              httpRoute.mirror = {
+                host: fqdnServiceName(wProps.serviceName, wProps.namespace)
+              };
+              if (wkdNameVersion[mirrorWorkload.name]) {
+                httpRoute.mirror.subset = wkdNameVersion[mirrorWorkload.name];
+              }
+              httpRoute.mirrorPercentage = {
+                value: mirrorWorkload.weight
+              };
+            }
+
+            if (rule.matches.length > 0) {
+              httpRoute.match = buildHTTPMatchRequest(rule.matches);
+            }
+
+            if (rule.delay || rule.abort) {
+              httpRoute.fault = {};
+              if (rule.delay) {
+                httpRoute.fault.delay = rule.delay;
+              }
+              if (rule.abort) {
+                httpRoute.fault.abort = rule.abort;
+              }
+            }
+            if (rule.timeout) {
+              httpRoute.timeout = rule.timeout;
+            }
+            if (rule.retries) {
+              httpRoute.retries = rule.retries;
+            }
+            return httpRoute;
+          })
+        };
+        break;
+      }
+      case WIZARD_FAULT_INJECTION: {
+        // VirtualService from the weights mapped in the FaultInjectionRoute
+        wizardVS.spec = {
+          http: [
+            {
+              route: wState.faultInjectionRoute.workloads.map(workload => {
                 const httpRouteDestination: HTTPRouteDestination = {
                   destination: {
                     host: fqdnServiceName(wProps.serviceName, wProps.namespace)
@@ -376,305 +614,286 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
                 }
                 return httpRouteDestination;
               })
-          }
-        ]
-      };
-      // Update HTTP Route with mirror destination + percentage
-      const mirrorWorkload = wState.workloads.filter(workload => workload.mirrored).pop();
-      if (mirrorWorkload && wizardVS?.spec?.http?.length === 1) {
-        wizardVS.spec.http[0].mirror = {
-          host: fqdnServiceName(wProps.serviceName, wProps.namespace)
+            }
+          ]
         };
-        if (wkdNameVersion[mirrorWorkload.name]) {
-          wizardVS.spec.http[0].mirror.subset = wkdNameVersion[mirrorWorkload.name];
+        if (wizardVS.spec.http && wizardVS.spec.http[0]) {
+          if (wState.faultInjectionRoute.delayed || wState.faultInjectionRoute.aborted) {
+            wizardVS.spec.http[0].fault = {};
+            if (wState.faultInjectionRoute.delayed) {
+              wizardVS.spec.http[0].fault.delay = wState.faultInjectionRoute.delay;
+            }
+            if (wState.faultInjectionRoute.aborted) {
+              wizardVS.spec.http[0].fault.abort = wState.faultInjectionRoute.abort;
+            }
+          }
         }
-        wizardVS.spec.http[0].mirrorPercentage = {
-          value: mirrorWorkload.weight
+        break;
+      }
+      case WIZARD_REQUEST_TIMEOUTS: {
+        // VirtualService from the weights mapped in the TimeoutRetryRoute
+        wizardVS.spec = {
+          http: [
+            {
+              route: wState.timeoutRetryRoute.workloads.map(workload => {
+                const httpRouteDestination: HTTPRouteDestination = {
+                  destination: {
+                    host: fqdnServiceName(wProps.serviceName, wProps.namespace),
+                    subset: wkdNameVersion[workload.name]
+                  },
+                  weight: workload.weight
+                };
+                if (wkdNameVersion[workload.name]) {
+                  httpRouteDestination.destination.subset = wkdNameVersion[workload.name];
+                }
+                return httpRouteDestination;
+              })
+            }
+          ]
         };
+        if (wizardVS.spec.http && wizardVS.spec.http[0]) {
+          if (wState.timeoutRetryRoute.isTimeout) {
+            wizardVS.spec.http[0].timeout = wState.timeoutRetryRoute.timeout;
+          }
+          if (wState.timeoutRetryRoute.isRetry) {
+            wizardVS.spec.http[0].retries = wState.timeoutRetryRoute.retries;
+          }
+        }
+        break;
       }
-      break;
+      default:
+        console.log('Unrecognized type');
     }
-    case WIZARD_TCP_TRAFFIC_SHIFTING: {
-      // VirtualService from the weights
-      wizardVS.spec = {
-        tcp: [
-          {
-            route: wState.workloads.map(workload => {
-              const routeDestination: RouteDestination = {
-                destination: {
-                  host: fqdnServiceName(wProps.serviceName, wProps.namespace)
-                },
-                weight: workload.weight
-              };
-              if (wkdNameVersion[workload.name]) {
-                routeDestination.destination.subset = wkdNameVersion[workload.name];
-              }
-              return routeDestination;
-            })
-          }
-        ]
+
+    wizardVS.spec.hosts =
+      wState.vsHosts.length > 1 || (wState.vsHosts.length === 1 && wState.vsHosts[0].length > 0)
+        ? wState.vsHosts
+        : [wProps.serviceName];
+
+    if (wState.trafficPolicy.tlsModified && wState.trafficPolicy.mtlsMode !== UNSET) {
+      wizardDR.spec.trafficPolicy = {};
+      wizardDR.spec.trafficPolicy.tls = {
+        mode: wState.trafficPolicy.mtlsMode,
+        clientCertificate: null,
+        privateKey: null,
+        caCertificates: null
       };
-      break;
+      if (wState.trafficPolicy.mtlsMode === MUTUAL) {
+        wizardDR.spec.trafficPolicy.tls.clientCertificate = wState.trafficPolicy.clientCertificate;
+        wizardDR.spec.trafficPolicy.tls.privateKey = wState.trafficPolicy.privateKey;
+        wizardDR.spec.trafficPolicy.tls.caCertificates = wState.trafficPolicy.caCertificates;
+      }
     }
-    case WIZARD_REQUEST_ROUTING: {
-      // VirtualService from the routes
-      wizardVS.spec = {
-        http: wState.rules.map(rule => {
-          const httpRoute: HTTPRoute = {};
-          httpRoute.route = [];
-          rule.workloadWeights
-            .filter(workload => !workload.mirrored)
-            .forEach(workload => {
-              const destW: HTTPRouteDestination = {
-                destination: {
-                  host: fqdnServiceName(wProps.serviceName, wProps.namespace)
-                },
-                weight: workload.weight
-              };
-              if (wkdNameVersion[workload.name]) {
-                destW.destination.subset = wkdNameVersion[workload.name];
-              }
-              httpRoute.route?.push(destW);
-            });
 
-          const mirrorWorkload = rule.workloadWeights.filter(workload => workload.mirrored).pop();
-          if (mirrorWorkload) {
-            httpRoute.mirror = {
-              host: fqdnServiceName(wProps.serviceName, wProps.namespace)
-            };
-            if (wkdNameVersion[mirrorWorkload.name]) {
-              httpRoute.mirror.subset = wkdNameVersion[mirrorWorkload.name];
-            }
-            httpRoute.mirrorPercentage = {
-              value: mirrorWorkload.weight
-            };
-          }
+    if (wState.trafficPolicy.peerAuthnSelector.addPeerAuthentication) {
+      const peerAuthnLabels: { [key: string]: string } = {};
+      peerAuthnLabels[serverConfig.istioLabels.appLabelName] = wProps.workloads[0].labels![
+        serverConfig.istioLabels.appLabelName
+        ];
 
-          if (rule.matches.length > 0) {
-            httpRoute.match = buildHTTPMatchRequest(rule.matches);
+      wizardPA = {
+        apiVersion: ISTIO_SECURITY_VERSION,
+        kind: 'PeerAuthentication',
+        metadata: {
+          namespace: wProps.namespace,
+          name: wProps.serviceName,
+          labels: {
+            [KIALI_WIZARD_LABEL]: wProps.type
           }
-
-          if (rule.delay || rule.abort) {
-            httpRoute.fault = {};
-            if (rule.delay) {
-              httpRoute.fault.delay = rule.delay;
-            }
-            if (rule.abort) {
-              httpRoute.fault.abort = rule.abort;
-            }
+        },
+        spec: {
+          selector: {
+            matchLabels: peerAuthnLabels
+          },
+          mtls: {
+            mode: wState.trafficPolicy.peerAuthnSelector.mode
           }
-          if (rule.timeout) {
-            httpRoute.timeout = rule.timeout;
-          }
-          if (rule.retries) {
-            httpRoute.retries = rule.retries;
-          }
-          return httpRoute;
-        })
+        }
       };
-      break;
+
+      wizardDR.metadata.annotations = {};
+      wizardDR.metadata.annotations[KIALI_RELATED_LABEL] = 'PeerAuthentication/' + wProps.serviceName;
     }
-    case WIZARD_FAULT_INJECTION: {
-      // VirtualService from the weights mapped in the FaultInjectionRoute
-      wizardVS.spec = {
-        http: [
-          {
-            route: wState.faultInjectionRoute.workloads.map(workload => {
-              const httpRouteDestination: HTTPRouteDestination = {
-                destination: {
-                  host: fqdnServiceName(wProps.serviceName, wProps.namespace)
-                },
-                weight: workload.weight
-              };
-              if (wkdNameVersion[workload.name]) {
-                httpRouteDestination.destination.subset = wkdNameVersion[workload.name];
-              }
-              return httpRouteDestination;
-            })
-          }
-        ]
-      };
-      if (wizardVS.spec.http && wizardVS.spec.http[0]) {
-        if (wState.faultInjectionRoute.delayed || wState.faultInjectionRoute.aborted) {
-          wizardVS.spec.http[0].fault = {};
-          if (wState.faultInjectionRoute.delayed) {
-            wizardVS.spec.http[0].fault.delay = wState.faultInjectionRoute.delay;
-          }
-          if (wState.faultInjectionRoute.aborted) {
-            wizardVS.spec.http[0].fault.abort = wState.faultInjectionRoute.abort;
+
+    if (wState.trafficPolicy.addLoadBalancer) {
+      if (!wizardDR.spec.trafficPolicy) {
+        wizardDR.spec.trafficPolicy = {};
+      }
+
+      if (wState.trafficPolicy.simpleLB) {
+        // Remember to put a null fields that need to be deleted on a JSON merge patch
+        wizardDR.spec.trafficPolicy.loadBalancer = {
+          simple: wState.trafficPolicy.loadBalancer.simple,
+          consistentHash: null
+        };
+      } else {
+        wizardDR.spec.trafficPolicy.loadBalancer = {
+          simple: null,
+          consistentHash: {}
+        };
+        wizardDR.spec.trafficPolicy.loadBalancer.consistentHash = {
+          httpHeaderName: null,
+          httpCookie: null,
+          useSourceIp: null
+        };
+        if (wState.trafficPolicy.loadBalancer.consistentHash) {
+          const consistentHash = wState.trafficPolicy.loadBalancer.consistentHash;
+          switch (wState.trafficPolicy.consistentHashType) {
+            case ConsistentHashType.HTTP_HEADER_NAME:
+              wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.httpHeaderName = consistentHash.httpHeaderName;
+              break;
+            case ConsistentHashType.HTTP_COOKIE:
+              wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.httpCookie = consistentHash.httpCookie;
+              break;
+            case ConsistentHashType.USE_SOURCE_IP:
+              wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.useSourceIp = true;
+              break;
+            default:
+            /// No default action
           }
         }
       }
-      break;
     }
-    case WIZARD_REQUEST_TIMEOUTS: {
-      // VirtualService from the weights mapped in the TimeoutRetryRoute
-      wizardVS.spec = {
-        http: [
-          {
-            route: wState.timeoutRetryRoute.workloads.map(workload => {
-              const httpRouteDestination: HTTPRouteDestination = {
-                destination: {
-                  host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-                  subset: wkdNameVersion[workload.name]
-                },
-                weight: workload.weight
-              };
-              if (wkdNameVersion[workload.name]) {
-                httpRouteDestination.destination.subset = wkdNameVersion[workload.name];
-              }
-              return httpRouteDestination;
-            })
-          }
-        ]
-      };
-      if (wizardVS.spec.http && wizardVS.spec.http[0]) {
-        if (wState.timeoutRetryRoute.isTimeout) {
-          wizardVS.spec.http[0].timeout = wState.timeoutRetryRoute.timeout;
-        }
-        if (wState.timeoutRetryRoute.isRetry) {
-          wizardVS.spec.http[0].retries = wState.timeoutRetryRoute.retries;
-        }
+
+    if (wState.trafficPolicy.addConnectionPool) {
+      if (!wizardDR.spec.trafficPolicy) {
+        wizardDR.spec.trafficPolicy = {};
       }
-      break;
+      wizardDR.spec.trafficPolicy.connectionPool = wState.trafficPolicy.connectionPool;
     }
-    default:
-      console.log('Unrecognized type');
-  }
 
-  wizardVS.spec.hosts =
-    wState.vsHosts.length > 1 || (wState.vsHosts.length === 1 && wState.vsHosts[0].length > 0)
-      ? wState.vsHosts
-      : [wProps.serviceName];
+    if (wState.trafficPolicy.addOutlierDetection) {
+      if (!wizardDR.spec.trafficPolicy) {
+        wizardDR.spec.trafficPolicy = {};
+      }
+      wizardDR.spec.trafficPolicy.outlierDetection = wState.trafficPolicy.outlierDetection;
+    }
 
-  if (wState.trafficPolicy.tlsModified && wState.trafficPolicy.mtlsMode !== UNSET) {
-    wizardDR.spec.trafficPolicy = {};
-    wizardDR.spec.trafficPolicy.tls = {
-      mode: wState.trafficPolicy.mtlsMode,
-      clientCertificate: null,
-      privateKey: null,
-      caCertificates: null
-    };
-    if (wState.trafficPolicy.mtlsMode === MUTUAL) {
-      wizardDR.spec.trafficPolicy.tls.clientCertificate = wState.trafficPolicy.clientCertificate;
-      wizardDR.spec.trafficPolicy.tls.privateKey = wState.trafficPolicy.privateKey;
-      wizardDR.spec.trafficPolicy.tls.caCertificates = wState.trafficPolicy.caCertificates;
+    // If traffic policy has empty objects, it will be invalidated because galleys expects at least one non-empty field.
+    if (!wizardDR.spec.trafficPolicy) {
+      wizardDR.spec.trafficPolicy = null;
+    }
+
+    // If there isn't any PeerAuthn created/updated, remove the DR annotation
+    if (!wizardPA) {
+      // @ts-ignore
+      wizardDR.metadata.annotations = null;
+    }
+
+    if (wState.gateway && wState.gateway.addGateway) {
+      wizardVS.spec.gateways = [];
+      if (wState.gateway.newGateway) {
+        wizardVS.spec.gateways.push(fullNewGatewayName);
+      } else if (wState.gateway.selectedGateway.length > 0) {
+        wizardVS.spec.gateways.push(wState.gateway.selectedGateway);
+      }
+      if (wState.gateway.addMesh && !wizardVS.spec.gateways.includes('mesh')) {
+        wizardVS.spec.gateways.push('mesh');
+      }
+      // Don't leave empty gateways
+      if (wizardVS.spec.gateways.length === 0) {
+        wizardVS.spec.gateways = null;
+      }
+    } else {
+      wizardVS.spec.gateways = null;
     }
   }
+  if (wProps.type === WIZARD_K8S_REQUEST_ROUTING) {
+    let k8sRouteName = wProps.serviceName;
+    if (wProps.k8sHTTPRoutes && wProps.k8sHTTPRoutes.length === 1 && wProps.k8sHTTPRoutes[0].metadata.name !== k8sRouteName) {
+      k8sRouteName = wProps.k8sHTTPRoutes[0].metadata.name;
+    }
 
-  if (wState.trafficPolicy.peerAuthnSelector.addPeerAuthentication) {
-    const peerAuthnLabels: { [key: string]: string } = {};
-    peerAuthnLabels[serverConfig.istioLabels.appLabelName] = wProps.workloads[0].labels![
-      serverConfig.istioLabels.appLabelName
-    ];
+    wizardK8sGW =
+      wState.k8sGateway && wState.k8sGateway.addGateway && wState.k8sGateway.newGateway
+        ? {
+          kind: 'Gateway',
+          apiVersion: GATEWAY_NETWORKING_VERSION,
+          metadata: {
+            namespace: wProps.namespace,
+            name: fullNewGatewayName.substr(wProps.namespace.length + 1),
+            labels: {
+              [KIALI_WIZARD_LABEL]: wProps.type,
+              app: fullNewGatewayName.substr(wProps.namespace.length + 1),
+            }
+          },
+          spec: {
+            gatewayClassName: 'istio',
+            listeners: [
+              {
+                name: 'default',
+                // here gwHosts for K8s API Gateway contains single host
+                hostname: wState.k8sGateway.gwHosts,
+                port: wState.k8sGateway.port,
+                protocol: 'HTTP',
+                allowedRoutes: {
+                  namespaces: {
+                    from: 'All',
+                    selector: {
+                      matchLabels: {}
+                    }
+                  }
+                }
+              }
+            ],
+          }
+        }
+        : undefined;
 
-    wizardPA = {
-      apiVersion: ISTIO_SECURITY_VERSION,
-      kind: 'PeerAuthentication',
+    wizardK8sHTTPRoute = {
+      kind: 'HTTPRoute',
+      apiVersion: GATEWAY_NETWORKING_VERSION,
       metadata: {
         namespace: wProps.namespace,
-        name: wProps.serviceName,
+        name: k8sRouteName,
         labels: {
           [KIALI_WIZARD_LABEL]: wProps.type
         }
       },
-      spec: {
-        selector: {
-          matchLabels: peerAuthnLabels
-        },
-        mtls: {
-          mode: wState.trafficPolicy.peerAuthnSelector.mode
-        }
-      }
+      spec: {}
     };
-
-    wizardDR.metadata.annotations = {};
-    wizardDR.metadata.annotations[KIALI_RELATED_LABEL] = 'PeerAuthentication/' + wProps.serviceName;
-  }
-
-  if (wState.trafficPolicy.addLoadBalancer) {
-    if (!wizardDR.spec.trafficPolicy) {
-      wizardDR.spec.trafficPolicy = {};
-    }
-
-    if (wState.trafficPolicy.simpleLB) {
-      // Remember to put a null fields that need to be deleted on a JSON merge patch
-      wizardDR.spec.trafficPolicy.loadBalancer = {
-        simple: wState.trafficPolicy.loadBalancer.simple,
-        consistentHash: null
-      };
-    } else {
-      wizardDR.spec.trafficPolicy.loadBalancer = {
-        simple: null,
-        consistentHash: {}
-      };
-      wizardDR.spec.trafficPolicy.loadBalancer.consistentHash = {
-        httpHeaderName: null,
-        httpCookie: null,
-        useSourceIp: null
-      };
-      if (wState.trafficPolicy.loadBalancer.consistentHash) {
-        const consistentHash = wState.trafficPolicy.loadBalancer.consistentHash;
-        switch (wState.trafficPolicy.consistentHashType) {
-          case ConsistentHashType.HTTP_HEADER_NAME:
-            wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.httpHeaderName = consistentHash.httpHeaderName;
-            break;
-          case ConsistentHashType.HTTP_COOKIE:
-            wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.httpCookie = consistentHash.httpCookie;
-            break;
-          case ConsistentHashType.USE_SOURCE_IP:
-            wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.useSourceIp = true;
-            break;
-          default:
-          /// No default action
+    wizardK8sHTTPRoute.spec.hostnames =
+      wState.k8sRouteHosts.length > 1 || (wState.k8sRouteHosts.length === 1 && wState.k8sRouteHosts[0].length > 0)
+        ? wState.k8sRouteHosts
+        : [wProps.serviceName];
+    switch (wProps.type) {
+      case WIZARD_K8S_REQUEST_ROUTING: {
+        // parentRefs to K8sGateway
+        if (wState.k8sGateway && wState.k8sGateway.addGateway) {
+          wizardK8sHTTPRoute.spec.parentRefs = [];
+          if (wState.k8sGateway.newGateway) {
+            const namespaceAndName = fullNewGatewayName.split('/');
+            const gwNamespace = namespaceAndName[0];
+            const gwName = namespaceAndName[1];
+            wizardK8sHTTPRoute.spec.parentRefs.push({
+              name: gwName,
+              namespace: gwNamespace,
+            });
+          } else if (wState.k8sGateway.selectedGateway.length > 0) {
+            const namespaceAndName = wState.k8sGateway.selectedGateway.split('/');
+            const gwNamespace = namespaceAndName[0];
+            const gwName = namespaceAndName[1];
+            wizardK8sHTTPRoute.spec.parentRefs.push({
+              name: gwName,
+              namespace: gwNamespace});
+          }
         }
+        if (wState.k8sRules && wState.k8sRules.length > 0) {
+          wizardK8sHTTPRoute.spec.rules = [];
+          wState.k8sRules.forEach(rule => {
+            if (rule.matches.length > 0) {
+              wizardK8sHTTPRoute!.spec!.rules!.push({
+                matches: [buildK8sHTTPRouteMatch(rule.matches)],
+                backendRefs: rule.backendRefs
+              });
+            }
+          });
+        }
+        break;
       }
     }
   }
-
-  if (wState.trafficPolicy.addConnectionPool) {
-    if (!wizardDR.spec.trafficPolicy) {
-      wizardDR.spec.trafficPolicy = {};
-    }
-    wizardDR.spec.trafficPolicy.connectionPool = wState.trafficPolicy.connectionPool;
-  }
-
-  if (wState.trafficPolicy.addOutlierDetection) {
-    if (!wizardDR.spec.trafficPolicy) {
-      wizardDR.spec.trafficPolicy = {};
-    }
-    wizardDR.spec.trafficPolicy.outlierDetection = wState.trafficPolicy.outlierDetection;
-  }
-
-  // If traffic policy has empty objects, it will be invalidated because galleys expects at least one non-empty field.
-  if (!wizardDR.spec.trafficPolicy) {
-    wizardDR.spec.trafficPolicy = null;
-  }
-
-  // If there isn't any PeerAuthn created/updated, remove the DR annotation
-  if (!wizardPA) {
-    // @ts-ignore
-    wizardDR.metadata.annotations = null;
-  }
-
-  if (wState.gateway && wState.gateway.addGateway) {
-    wizardVS.spec.gateways = [];
-    if (wState.gateway.newGateway) {
-      wizardVS.spec.gateways.push(fullNewGatewayName);
-    } else if (wState.gateway.selectedGateway.length > 0) {
-      wizardVS.spec.gateways.push(wState.gateway.selectedGateway);
-    }
-    if (wState.gateway.addMesh && !wizardVS.spec.gateways.includes('mesh')) {
-      wizardVS.spec.gateways.push('mesh');
-    }
-    // Don't leave empty gateways
-    if (wizardVS.spec.gateways.length === 0) {
-      wizardVS.spec.gateways = null;
-    }
-  } else {
-    wizardVS.spec.gateways = null;
-  }
-  return { dr: wizardDR, vs: wizardVS, gw: wizardGW, pa: wizardPA };
+  return { dr: wizardDR, vs: wizardVS, gw: wizardGW, k8sgateway: wizardK8sGW, pa: wizardPA, k8shttproute: wizardK8sHTTPRoute };
 };
 
 const getWorkloadsByVersion = (
@@ -693,6 +912,21 @@ const getWorkloadsByVersion = (
     });
   }
   return wkdVersionName;
+};
+
+export const getDefaultBackendRefs = (workloads: WorkloadOverview[], serviceName: string): K8sRouteBackendRef[] => {
+  const wkTraffic = workloads.length < 100 ? Math.floor(100 / workloads.length) : 0;
+  const remainTraffic = workloads.length < 100 ? 100 % workloads.length : 0;
+  const backendRefs: K8sRouteBackendRef[] = workloads.map(_ => ({
+    name: serviceName,
+    // @TODO add support of services per versions
+    //name: workload.name,
+    weight: wkTraffic,
+  }));
+  if (remainTraffic > 0) {
+    backendRefs[backendRefs.length - 1].weight = backendRefs[backendRefs.length - 1].weight ? backendRefs[backendRefs.length - 1].weight : 0 + remainTraffic;
+  }
+  return backendRefs;
 };
 
 export const getDefaultWeights = (workloads: WorkloadOverview[]): WorkloadWeight[] => {
@@ -845,6 +1079,37 @@ export const getInitRules = (
       }
       // Not adding a rule if it has empty routes, probably this means that an existing workload was removed
       if (rule.workloadWeights.length > 0) {
+        rules.push(rule);
+      }
+    });
+  }
+  return rules;
+};
+
+export const getInitK8sRules = (
+  httpRoutes: K8sHTTPRoute[]
+): K8sRule[] => {
+  const rules: K8sRule[] = [];
+  if (httpRoutes && httpRoutes.length === 1 && httpRoutes[0].spec.rules) {
+    httpRoutes[0].spec.rules.forEach(httpRoute => {
+      const rule: K8sRule = {
+        matches: [],
+        backendRefs: []
+      };
+      if (httpRoute.matches) {
+        httpRoute.matches.forEach(m => (rule.matches = rule.matches.concat(parseK8sHTTPMatchRequest(m))));
+      }
+      if (httpRoute.backendRefs) {
+        httpRoute.backendRefs.forEach(bRef => {
+          rule.backendRefs.push({
+            name: bRef.name,
+            weight: !bRef.weight || bRef.weight === 1 ? 100 : bRef.weight
+          });
+        });
+      }
+
+      // Not adding a rule if it has empty routes, probably this means that an existing service was removed
+      if (rule.backendRefs && rule.backendRefs.length > 0) {
         rules.push(rule);
       }
     });
@@ -1030,9 +1295,36 @@ export const hasGateway = (virtualServices: VirtualService[]): boolean => {
   return false;
 };
 
+export const hasK8sGateway = (k8sHTTPRoutes: K8sHTTPRoute[]): boolean => {
+  // We need to if sentence, otherwise a potential undefined is not well handled
+  if (
+    k8sHTTPRoutes &&
+    k8sHTTPRoutes.length === 1 &&
+    k8sHTTPRoutes[0] &&
+    k8sHTTPRoutes[0].spec.parentRefs &&
+    k8sHTTPRoutes[0].spec.parentRefs.length > 0
+  ) {
+    return true;
+  }
+  return false;
+};
+
 export const getInitHosts = (virtualServices: VirtualService[]): string[] => {
   if (virtualServices.length === 1 && virtualServices[0] && virtualServices[0].spec.hosts) {
     return virtualServices[0].spec.hosts;
+  }
+  return [];
+};
+
+export const getInitK8sHosts = (k8sHTTPRoutes: K8sHTTPRoute[]): string[] => {
+  if (
+    k8sHTTPRoutes &&
+    k8sHTTPRoutes.length === 1 &&
+    k8sHTTPRoutes[0] &&
+    k8sHTTPRoutes[0].spec.hostnames &&
+    k8sHTTPRoutes[0].spec.hostnames.length > 0
+  ) {
+    return k8sHTTPRoutes[0].spec.hostnames;
   }
   return [];
 };
@@ -1059,6 +1351,24 @@ export const getInitGateway = (virtualServices: VirtualService[]): [string, bool
     return [selectedGateway, meshPresent];
   }
   return ['', false];
+};
+
+// HTTPRoutes added from the Kiali Wizard only support to add a single K8s API gateway
+// mesh gateway is not supported yet.
+// This method returns a gateway selected by the user
+export const getInitK8sGateway = (k8sHTTPRoutes: K8sHTTPRoute[]): string => {
+  if (
+    k8sHTTPRoutes &&
+    k8sHTTPRoutes.length === 1 &&
+    k8sHTTPRoutes[0] &&
+    k8sHTTPRoutes[0].spec.parentRefs &&
+    k8sHTTPRoutes[0].spec.parentRefs.length > 0
+  ) {
+    const name = k8sHTTPRoutes[0].spec.parentRefs[0].name
+    const namespace = k8sHTTPRoutes[0].spec.parentRefs[0].namespace
+    return (namespace !== '' ? namespace+'/' : '') + name;
+  }
+  return '';
 };
 
 export const buildAuthorizationPolicy = (
@@ -1350,7 +1660,7 @@ export const buildGateway = (name: string, namespace: string, state: GatewayStat
 };
 
 export const buildK8sGateway = (name: string, namespace: string, state: K8sGatewayState): K8sGateway => {
-  const gw: K8sGateway = {
+  const k8sGateway: K8sGateway = {
     kind: 'Gateway',
     apiVersion: GATEWAY_NETWORKING_VERSION,
     metadata: {
@@ -1390,12 +1700,12 @@ export const buildK8sGateway = (name: string, namespace: string, state: K8sGatew
       const labels = split.trim().split('=');
       // It should be already validated with workloadSelectorValid, but just to add extra safe check
       if (labels.length === 2) {
-        if (gw.metadata.labels) {
-          gw.metadata.labels[labels[0].trim()] = labels[1].trim();
+        if (k8sGateway.metadata.labels) {
+          k8sGateway.metadata.labels[labels[0].trim()] = labels[1].trim();
         }
       }
     });
-  return gw;
+  return k8sGateway;
 };
 
 export const buildPeerAuthentication = (

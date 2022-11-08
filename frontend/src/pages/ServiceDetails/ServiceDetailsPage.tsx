@@ -16,8 +16,15 @@ import TrafficDetails from 'components/TrafficList/TrafficDetails';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import { ServiceDetailsInfo } from '../../types/ServiceInfo';
-import { Gateway, getGatewaysAsList, PeerAuthentication, Validations } from '../../types/IstioObjects';
+import {getServiceWizardLabel, ServiceDetailsInfo} from '../../types/ServiceInfo';
+import {
+  Gateway,
+  K8sGateway,
+  getGatewaysAsList,
+  PeerAuthentication,
+  Validations,
+  getK8sGatewaysAsList,
+} from '../../types/IstioObjects';
 import ServiceWizardDropdown from '../../components/IstioWizards/ServiceWizardDropdown';
 import TimeControl from '../../components/Time/TimeControl';
 import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
@@ -28,6 +35,7 @@ import connectRefresh from "../../components/Refresh/connectRefresh";
 type ServiceDetailsState = {
   currentTab: string;
   gateways: Gateway[];
+  k8sGateways: K8sGateway[];
   serviceDetails?: ServiceDetailsInfo;
   peerAuthentications: PeerAuthentication[];
   validations: Validations;
@@ -59,6 +67,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     this.state = {
       currentTab: activeTab(tabName, defaultTab),
       gateways: [],
+      k8sGateways: [],
       validations: {},
       peerAuthentications: []
     };
@@ -88,13 +97,16 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   private fetchService = () => {
     this.promises.cancelAll();
     this.promises
-      .register('gateways', API.getAllIstioConfigs([], ['gateways'], false, '', ''))
+      .register('gateways', API.getAllIstioConfigs([], ['gateways', 'k8sgateways'], false, '', ''))
       .then(response => {
         const gws: Gateway[] = [];
+        const k8sGws: K8sGateway[] = [];
         Object.values(response.data).forEach(item => {
           gws.push(...item.gateways);
+          k8sGws.push(...item.k8sGateways);
         });
         this.setState({ gateways: gws });
+        this.setState({ k8sGateways: k8sGws });
       })
       .catch(gwError => {
         AlertUtils.addError('Could not fetch Gateways list.', gwError);
@@ -132,6 +144,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           service={this.props.match.params.service}
           serviceDetails={this.state.serviceDetails}
           gateways={this.state.gateways}
+          k8sGateways={this.state.k8sGateways}
           peerAuthentications={this.state.peerAuthentications}
           validations={this.state.validations}
         />
@@ -195,11 +208,14 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         namespace={this.props.match.params.namespace}
         serviceName={this.state.serviceDetails.service.name}
         show={false}
+        readOnly={getServiceWizardLabel(this.state.serviceDetails.service) !== ''}
         workloads={this.state.serviceDetails.workloads || []}
         virtualServices={this.state.serviceDetails.virtualServices}
+        k8sHTTPRoutes={this.state.serviceDetails.k8sHTTPRoutes}
         destinationRules={this.state.serviceDetails.destinationRules}
         istioPermissions={this.state.serviceDetails.istioPermissions}
         gateways={getGatewaysAsList(this.state.gateways)}
+        k8sGateways={getK8sGatewaysAsList(this.state.k8sGateways)}
         peerAuthentications={this.state.peerAuthentications}
         tlsStatus={this.state.serviceDetails.namespaceMTLS}
         onChange={this.fetchService}

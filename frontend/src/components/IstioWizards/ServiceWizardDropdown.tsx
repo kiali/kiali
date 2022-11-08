@@ -10,7 +10,8 @@ import { WorkloadOverview } from '../../types/ServiceInfo';
 import {
   DestinationRule,
   DestinationRuleC,
-  getVirtualServiceUpdateLabel,
+  getWizardUpdateLabel,
+  K8sHTTPRoute,
   PeerAuthentication,
   VirtualService
 } from '../../types/IstioObjects';
@@ -22,7 +23,8 @@ import {
   WIZARD_FAULT_INJECTION,
   WIZARD_TRAFFIC_SHIFTING,
   WIZARD_REQUEST_TIMEOUTS,
-  WIZARD_TCP_TRAFFIC_SHIFTING
+  WIZARD_TCP_TRAFFIC_SHIFTING,
+  WIZARD_K8S_REQUEST_ROUTING
 } from './WizardActions';
 import ServiceWizard from './ServiceWizard';
 import { canCreate, canUpdate, ResourcePermissions } from '../../types/Permissions';
@@ -34,11 +36,14 @@ type Props = {
   namespace: string;
   serviceName: string;
   show: boolean;
+  readOnly: boolean;
   workloads: WorkloadOverview[];
   virtualServices: VirtualService[];
   destinationRules: DestinationRule[];
   istioPermissions: ResourcePermissions;
   gateways: string[];
+  k8sGateways: string[];
+  k8sHTTPRoutes: K8sHTTPRoute[];
   peerAuthentications: PeerAuthentication[];
   tlsStatus?: TLSStatus;
   onChange: () => void;
@@ -99,12 +104,13 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
   };
 
   onAction = (key: string) => {
-    const updateLabel = getVirtualServiceUpdateLabel(this.props.virtualServices);
+    const updateLabel = getWizardUpdateLabel(this.props.virtualServices, this.props.k8sHTTPRoutes);
     switch (key) {
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
       case WIZARD_TRAFFIC_SHIFTING:
       case WIZARD_TCP_TRAFFIC_SHIFTING:
+      case WIZARD_K8S_REQUEST_ROUTING:
       case WIZARD_REQUEST_TIMEOUTS: {
         this.setState({ showWizard: true, wizardType: key, updateWizard: key === updateLabel });
         break;
@@ -142,7 +148,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
       isDeleting: true
     });
     this.hideConfirmDelete();
-    deleteServiceTrafficRouting(this.props.virtualServices, DestinationRuleC.fromDrArray(this.props.destinationRules))
+    deleteServiceTrafficRouting(this.props.virtualServices, DestinationRuleC.fromDrArray(this.props.destinationRules), this.props.k8sHTTPRoutes)
       .then(_results => {
         this.setState({
           isDeleting: false
@@ -169,9 +175,10 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
     return [
       <ServiceWizardActionsDropdownGroup
         key="service_wizard_actions_dropdown_group"
-        isDisabled={this.state.isDeleting}
+        isDisabled={this.state.isDeleting || this.props.readOnly}
         virtualServices={this.props.virtualServices}
         destinationRules={this.props.destinationRules}
+        k8sHTTPRoutes={this.props.k8sHTTPRoutes || []}
         istioPermissions={this.props.istioPermissions}
         onAction={this.onAction}
         onDelete={this.onAction}
@@ -218,6 +225,8 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
           virtualServices={this.props.virtualServices}
           destinationRules={this.props.destinationRules}
           gateways={this.props.gateways}
+          k8sGateways={this.props.k8sGateways}
+          k8sHTTPRoutes={this.props.k8sHTTPRoutes}
           peerAuthentications={this.props.peerAuthentications}
           tlsStatus={this.props.tlsStatus}
           onClose={this.onClose}
@@ -225,6 +234,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
         <ConfirmDeleteTrafficRoutingModal
           destinationRules={DestinationRuleC.fromDrArray(this.props.destinationRules)}
           virtualServices={this.props.virtualServices}
+          k8sHTTPRoutes={this.props.k8sHTTPRoutes}
           isOpen={this.state.showConfirmDelete}
           onCancel={this.hideConfirmDelete}
           onConfirm={this.onDelete}

@@ -8,7 +8,7 @@ import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import {
   DestinationRuleC,
   Gateway,
-  getGatewaysAsList,
+  getGatewaysAsList, getK8sGatewaysAsList, K8sGateway,
   ObjectValidation,
   PeerAuthentication,
   Validations
@@ -22,7 +22,8 @@ import {
   vsToIstioItems,
   gwToIstioItems,
   seToIstioItems,
-  validationKey
+  k8sHTTPRouteToIstioItems,
+  validationKey, k8sGwToIstioItems
 } from '../../types/IstioConfigList';
 import { canCreate, canUpdate } from "../../types/Permissions";
 import { KialiAppState } from '../../store/Store';
@@ -44,6 +45,7 @@ interface Props extends ServiceId {
   mtlsEnabled: boolean;
   serviceDetails?: ServiceDetailsInfo;
   gateways: Gateway[];
+  k8sGateways: K8sGateway[];
   peerAuthentications: PeerAuthentication[];
   validations: Validations;
 }
@@ -167,11 +169,21 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
             this.props.serviceDetails.validations
           )
         : [];
+    const k8sGwIstioConfigItems =
+      this.props?.k8sGateways && this.props.serviceDetails?.k8sHTTPRoutes
+        ? k8sGwToIstioItems(
+          this.props?.k8sGateways,
+          this.props.serviceDetails.k8sHTTPRoutes
+        )
+        : [];
     const seIstioConfigItems = this.props.serviceDetails?.serviceEntries
       ? seToIstioItems(this.props.serviceDetails.serviceEntries, this.props.serviceDetails.validations)
       : [];
+    const k8sHTTPRouteIstioConfigItems = this.props.serviceDetails?.k8sHTTPRoutes
+      ? k8sHTTPRouteToIstioItems(this.props.serviceDetails.k8sHTTPRoutes)
+      : [];
     const istioConfigItems = seIstioConfigItems.concat(
-      gwIstioConfigItems.concat(vsIstioConfigItems.concat(drIstioConfigItems))
+      gwIstioConfigItems.concat(k8sGwIstioConfigItems.concat(vsIstioConfigItems.concat(drIstioConfigItems.concat(k8sHTTPRouteIstioConfigItems))))
     );
 
     // RenderComponentScroll handles height to provide an inner scroll combined with tabs
@@ -225,6 +237,8 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
           virtualServices={this.props.serviceDetails?.virtualServices || []}
           destinationRules={this.props.serviceDetails?.destinationRules || []}
           gateways={getGatewaysAsList(this.props.gateways)}
+          k8sGateways={getK8sGatewaysAsList(this.props.k8sGateways)}
+          k8sHTTPRoutes={this.props.serviceDetails?.k8sHTTPRoutes || []}
           peerAuthentications={this.props.peerAuthentications}
           tlsStatus={this.props.serviceDetails?.namespaceMTLS}
           onClose={this.handleWizardClose}
@@ -233,6 +247,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
           <ConfirmDeleteTrafficRoutingModal
             destinationRules={DestinationRuleC.fromDrArray(this.props.serviceDetails!.destinationRules)}
             virtualServices={this.props.serviceDetails!.virtualServices}
+            k8sHTTPRoutes={this.props.serviceDetails!.k8sHTTPRoutes}
             isOpen={true}
             onCancel={() => this.setState({showConfirmDeleteTrafficRouting: false})}
             onConfirm={this.handleConfirmDeleteServiceTrafficRouting}

@@ -25,7 +25,7 @@ import {
   EnvoyProxyDump,
   VirtualService,
   DestinationRuleC,
-  OutboundTrafficPolicy
+  OutboundTrafficPolicy, K8sHTTPRoute
 } from '../types/IstioObjects';
 import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
 import { JaegerInfo, JaegerResponse, JaegerSingleResponse } from '../types/JaegerInfo';
@@ -611,27 +611,36 @@ export const getClusters = () => {
 
 export function deleteServiceTrafficRouting(
   virtualServices: VirtualService[],
-  destinationRules: DestinationRuleC[]
+  destinationRules: DestinationRuleC[],
+  k8sHTTPRouteList: K8sHTTPRoute[]
 ): Promise<any>;
 export function deleteServiceTrafficRouting(serviceDetail: ServiceDetailsInfo): Promise<any>;
 export function deleteServiceTrafficRouting(
   vsOrSvc: VirtualService[] | ServiceDetailsInfo,
-  destinationRules?: DestinationRuleC[]
+  destinationRules?: DestinationRuleC[],
+  k8sHTTPRouteList?: K8sHTTPRoute[]
 ): Promise<any> {
   let vsList: VirtualService[];
   let drList: DestinationRuleC[];
+  let routeList: K8sHTTPRoute[];
   const deletePromises: Promise<any>[] = [];
 
   if ('virtualServices' in vsOrSvc) {
     vsList = vsOrSvc.virtualServices;
     drList = DestinationRuleC.fromDrArray(vsOrSvc.destinationRules);
+    routeList = vsOrSvc.k8sHTTPRoutes || [];
   } else {
     vsList = vsOrSvc;
     drList = destinationRules || [];
+    routeList = k8sHTTPRouteList || [];
   }
 
   vsList.forEach(vs => {
     deletePromises.push(deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name));
+  });
+
+  routeList.forEach(k8sr => {
+    deletePromises.push(deleteIstioConfigDetail(k8sr.metadata.namespace || '', 'k8shttproutes', k8sr.metadata.name));
   });
 
   drList.forEach(dr => {

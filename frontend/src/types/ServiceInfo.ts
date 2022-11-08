@@ -1,7 +1,7 @@
 import { DEGRADED, FAILURE, HEALTHY, NA, ServiceHealth, Status } from './Health';
 import {
   DestinationRule,
-  getVirtualServiceUpdateLabel,
+  getWizardUpdateLabel, K8sHTTPRoute,
   ObjectCheck,
   ObjectValidation,
   ServiceEntry,
@@ -12,6 +12,7 @@ import {
 import { TLSStatus } from './TLSStatus';
 import { AdditionalItem } from './Workload';
 import { ResourcePermissions } from './Permissions';
+import {KIALI_WIZARD_LABEL} from "../components/IstioWizards/WizardActions";
 
 export interface ServicePort {
   name: string;
@@ -62,6 +63,7 @@ export interface ServiceDetailsInfo {
   endpoints?: Endpoints[];
   istioSidecar: boolean;
   virtualServices: VirtualService[];
+  k8sHTTPRoutes: K8sHTTPRoute[];
   destinationRules: DestinationRule[];
   serviceEntries: ServiceEntry[];
   istioPermissions: ResourcePermissions;
@@ -73,14 +75,15 @@ export interface ServiceDetailsInfo {
 }
 
 export function getServiceDetailsUpdateLabel(serviceDetails: ServiceDetailsInfo | null) {
-  return getVirtualServiceUpdateLabel(serviceDetails?.virtualServices || null);
+  return getWizardUpdateLabel(serviceDetails?.virtualServices || null, serviceDetails?.k8sHTTPRoutes || null);
 }
 
 export function hasServiceDetailsTrafficRouting(serviceDetails: ServiceDetailsInfo | null);
-export function hasServiceDetailsTrafficRouting(vsList: VirtualService[], drList: DestinationRule[]);
-export function hasServiceDetailsTrafficRouting(serviceDetailsOrVsList: ServiceDetailsInfo | VirtualService[] | null, drList?: DestinationRule[]) {
+export function hasServiceDetailsTrafficRouting(vsList: VirtualService[], drList: DestinationRule[], routeList?: K8sHTTPRoute[]);
+export function hasServiceDetailsTrafficRouting(serviceDetailsOrVsList: ServiceDetailsInfo | VirtualService[] | null, drList?: DestinationRule[], routeList?: K8sHTTPRoute[]) {
   let virtualServicesList: VirtualService[];
   let destinationRulesList: DestinationRule[];
+  let httpRoutesList: K8sHTTPRoute[];
 
   if (serviceDetailsOrVsList === null) {
     return false;
@@ -89,12 +92,15 @@ export function hasServiceDetailsTrafficRouting(serviceDetailsOrVsList: ServiceD
   if ('length' in serviceDetailsOrVsList) {
     virtualServicesList = serviceDetailsOrVsList;
     destinationRulesList = drList || [];
+    httpRoutesList = routeList || [];
   } else {
     virtualServicesList = serviceDetailsOrVsList.virtualServices;
     destinationRulesList = serviceDetailsOrVsList.destinationRules;
+    httpRoutesList = serviceDetailsOrVsList.k8sHTTPRoutes;
+
   }
 
-  return virtualServicesList.length > 0 || destinationRulesList.length > 0;
+  return virtualServicesList.length > 0 || destinationRulesList.length > 0 || httpRoutesList.length > 0;
 }
 
 const higherThan = [
@@ -156,3 +162,12 @@ export const checkForPath = (object: ObjectValidation | undefined, path: string)
 export const globalChecks = (object: ObjectValidation): ObjectCheck[] => {
   return checkForPath(object, '');
 };
+
+export function getServiceWizardLabel(serviceDetails: Service): string {
+  if (serviceDetails && serviceDetails.labels &&
+    serviceDetails.labels[KIALI_WIZARD_LABEL]) {
+    return serviceDetails.labels[KIALI_WIZARD_LABEL];
+  } else {
+    return '';
+  }
+}

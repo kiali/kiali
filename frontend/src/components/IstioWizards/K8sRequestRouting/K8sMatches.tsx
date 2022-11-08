@@ -17,7 +17,7 @@ const remove = style({
   cursor: "not-allowed"
 });
 
-class Matches extends React.Component<Props> {
+class K8sMatches extends React.Component<Props> {
   render() {
     const matches: any[] = this.props.matches.map((match, index) => (
       <span key={match + '-' + index} data-test={match} className={remove}>
@@ -42,4 +42,4 @@ class Matches extends React.Component<Props> {
   }
 }
 
-export default Matches;
+export default K8sMatches;

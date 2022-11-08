@@ -655,6 +655,14 @@ export interface VirtualService extends IstioObject {
   spec: VirtualServiceSpec;
 }
 
+export function getWizardUpdateLabel(vs: VirtualService | VirtualService[] | null, k8sr: K8sHTTPRoute | K8sHTTPRoute[] | null) {
+  let label = getVirtualServiceUpdateLabel(vs)
+  if (label === '') {
+    label = getK8sHTTPRouteUpdateLabel(k8sr)
+  }
+  return label
+}
+
 export function getVirtualServiceUpdateLabel(vs: VirtualService | VirtualService[] | null) {
   if (!vs) {
     return '';
@@ -672,6 +680,28 @@ export function getVirtualServiceUpdateLabel(vs: VirtualService | VirtualService
   if (virtualService && virtualService.metadata.labels &&
     virtualService.metadata.labels[KIALI_WIZARD_LABEL]) {
     return virtualService.metadata.labels[KIALI_WIZARD_LABEL];
+  } else {
+    return '';
+  }
+}
+
+export function getK8sHTTPRouteUpdateLabel(k8sr: K8sHTTPRoute | K8sHTTPRoute[] | null) {
+  if (!k8sr) {
+    return '';
+  }
+
+  let k8sHTTPRoute: K8sHTTPRoute | null = null;
+  if ('length' in k8sr) {
+    if (k8sr.length === 1) {
+      k8sHTTPRoute = k8sr[0];
+    }
+  } else {
+    k8sHTTPRoute = k8sr;
+  }
+
+  if (k8sHTTPRoute && k8sHTTPRoute.metadata.labels &&
+    k8sHTTPRoute.metadata.labels[KIALI_WIZARD_LABEL]) {
+    return k8sHTTPRoute.metadata.labels[KIALI_WIZARD_LABEL];
   } else {
     return '';
   }
@@ -699,6 +729,14 @@ export interface Gateway extends IstioObject {
 
 export function getGatewaysAsList(gws: Gateway[]): string[] {
   return gws.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort();
+}
+
+export function getK8sGatewaysAsList(k8sGws: K8sGateway[]): string[] {
+  if (k8sGws) {
+    return k8sGws.map(gateway => gateway.metadata.namespace + '/' + gateway.metadata.name).sort();
+  } else {
+    return []
+  }
 }
 
 // K8s Gateway API https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/
@@ -746,7 +784,43 @@ export interface K8sGateway extends IstioObject {
 
 export interface K8sHTTPRouteSpec {
   parentRefs?: ParentRef[];
-  hostnames: string[];
+  hostnames?: string[];
+  rules?: K8sRouteRule[];
+}
+
+export interface K8sRouteRule {
+  matches?:     K8sHTTPRouteMatch[];
+  backendRefs?: K8sRouteBackendRef[];
+}
+
+export interface K8sRouteBackendRef {
+  name:       string;
+  weight?:    number;
+  port?:      number;
+  namespace?: string;
+  filters?:   K8sHTTPRouteFilter[];
+}
+
+export interface K8sHTTPRouteFilter {
+  requestRedirect?: K8sHTTPRouteRequestRedirect;
+  type?:            string;
+}
+
+export interface K8sHTTPRouteRequestRedirect {
+  statusCode?: number;
+}
+
+export interface K8sHTTPRouteMatch {
+  path?: HTTPMatch;
+  headers?: HTTPMatch[];
+  queryParams?: HTTPMatch[];
+  method?: string;
+}
+
+export interface HTTPMatch {
+  type?:  string;
+  name?: string;
+  value?: string;
 }
 
 export interface K8sHTTPRoute extends IstioObject {
