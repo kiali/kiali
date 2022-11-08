@@ -487,9 +487,11 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
               </>
             )}
           </div>
-          <DrawerActions>
-            <DrawerCloseButton onClick={this.onDrawerClose} />
-          </DrawerActions>
+          {!isParentKiosk(this.props.kiosk) && (
+            <DrawerActions>
+              <DrawerCloseButton onClick={this.onDrawerClose} />
+            </DrawerActions>
+          )}
         </DrawerHead>
       </DrawerPanelContent>
     );
@@ -501,7 +503,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
           mode="yaml"
           theme="eclipse"
           onChange={this.onEditorChange}
-          height={'var(--kiali-yaml-editor-height)'}
+          height={`calc(var(--kiali-yaml-editor-height) + ${isParentKiosk(this.props.kiosk) ? '100px' : '0px'})`}
           width={'100%'}
           className={'istio-ace-editor'}
           wrapEnabled={true}
