@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { NodeType, GraphNodeData, DestService, BoxByType, CLUSTER_DEFAULT } from '../../types/Graph';
-import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
+import { NodeType, GraphNodeData, DestService, BoxByType, CLUSTER_DEFAULT, DecoratedGraphNodeData } from '../../types/Graph';
 import { KialiIcon } from 'config/KialiIcon';
 import { Badge, PopoverPosition } from '@patternfly/react-core';
 import { Health } from 'types/Health';
@@ -214,9 +213,8 @@ export const renderHealth = (health?: Health) => {
   );
 };
 
-export const renderDestServicesLinks = (node: any) => {
-  const nodeData = decoratedNodeData(node);
-  const destServices: DestService[] = node.data(CyNode.destServices);
+export const renderDestServicesLinks = (nodeData: DecoratedGraphNodeData) => {
+  const destServices: DestService[] | undefined = nodeData.destServices;
 
   const links: any[] = [];
   if (!destServices) {

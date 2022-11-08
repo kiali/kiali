@@ -27,6 +27,7 @@ export interface TrafficRateGrpc {
 }
 
 const data = (elem: any, prop: string, isPF: boolean) => {
+  console.log(`isPF4=${isPF}`);
   return isPF ? elem.getData()[prop] : elem.data(prop);
 };
 
@@ -92,6 +93,7 @@ export const getTrafficRateHttp = (
   isPF: boolean = false,
   trafficType: TRAFFIC_HTTP = NODE_HTTP_IN
 ): TrafficRateHttp => {
+  console.log(`isPF3=${isPF}`);
   return {
     rate: safeRate(data(element, trafficType.RATE, isPF)),
     rate3xx: safeRate(data(element, trafficType.RATE3XX, isPF)),

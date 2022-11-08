@@ -32,6 +32,7 @@ import { Response } from '../../services/Api';
 import { Reporter } from '../../types/MetricsOptions';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
+import { edgesOut } from 'pages/GraphPF/GraphPFElems';
 
 type SummaryPanelNodeMetricsState = {
   grpcRequestCountIn: Datapoint[];
@@ -121,8 +122,9 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
   }
 
   updateCharts(props: SummaryPanelNodeProps) {
-    const target = props.data.summaryTarget;
-    const nodeData = decoratedNodeData(target);
+    const isPF = !!props.data.isPF;
+    const node = props.data.summaryTarget;
+    const nodeData = isPF ? node.getData() : decoratedNodeData(node);
     const nodeMetricType = getNodeMetricType(nodeData);
     const isGrpcRequests = this.isGrpcRequests();
 
@@ -167,7 +169,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
         }
         promiseRps = getNodeMetrics(
           nodeMetricType,
-          target,
+          nodeData,
           props,
           filtersRps,
           'inbound',
@@ -194,7 +196,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           }
           promiseStream = getNodeMetrics(
             nodeMetricType,
-            target,
+            nodeData,
             props,
             filtersStream,
             'inbound',
@@ -237,7 +239,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           : ['request_protocol'];
         promiseOut = getNodeMetrics(
           nodeMetricType,
-          target,
+          nodeData,
           props,
           filters,
           'outbound',
@@ -343,9 +345,11 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     return false;
   };
 
-  render() {
+  render() {    
+    const isPF = !!this.props.data.isPF;
+    console.log(`isPF1=${isPF}`);
     const node = this.props.data.summaryTarget;
-    const nodeData = decoratedNodeData(node);
+    const nodeData = isPF ? node.getData() : decoratedNodeData(node);
     const hasGrpc = this.hasGrpcTraffic(nodeData);
     const hasGrpcIn = hasGrpc && this.hasGrpcIn(nodeData);
     const hasGrpcOut = hasGrpc && this.hasGrpcOut(nodeData);
@@ -360,18 +364,18 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
       <>
         {hasGrpc && this.isGrpcRequests() && (
           <>
-            {this.renderGrpcRates(node)}
+            {this.renderGrpcRates(node, isPF)}
             {hr()}
           </>
         )}
         {hasHttp && (
           <>
-            {this.renderHttpRates(node)}
+            {this.renderHttpRates(node, isPF)}
             {hr()}
           </>
         )}
         <div>
-          {this.renderSparklines(node)}
+          {this.renderSparklines(node, isPF)}
           {hr()}
         </div>
         {hasGrpc && !hasGrpcIn && renderNoTraffic('gRPC inbound')}
@@ -387,9 +391,10 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     );
   }
 
-  private renderGrpcRates = node => {
-    const inbound = getTrafficRateGrpc(node);
-    const outbound = getAccumulatedTrafficRateGrpc(this.props.data.summaryTarget.edgesTo('*'));
+  private renderGrpcRates = (node, isPF: boolean) => {
+    const inbound = getTrafficRateGrpc(node, isPF);
+    const outboundEdges = isPF ? edgesOut([node]) : node.edgesTo('*');
+    const outbound = getAccumulatedTrafficRateGrpc(outboundEdges);
 
     return (
       <>
@@ -406,9 +411,11 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     );
   };
 
-  private renderHttpRates = node => {
-    const inbound = getTrafficRateHttp(node);
-    const outbound = getAccumulatedTrafficRateHttp(this.props.data.summaryTarget.edgesTo('*'));
+  private renderHttpRates = (node, isPF: boolean) => {
+    console.log(`isPF2=${isPF}`);
+    const inbound = getTrafficRateHttp(node, isPF);
+    const outboundEdges = isPF ? edgesOut([node]) : node.edgesTo('*');
+    const outbound = getAccumulatedTrafficRateHttp(outboundEdges, isPF);
 
     return (
       <>
@@ -429,8 +436,8 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     );
   };
 
-  private renderSparklines = node => {
-    const nodeData = decoratedNodeData(node);
+  private renderSparklines = (node, isPF: boolean) => {
+    const nodeData = isPF ? node.getData() : decoratedNodeData(node);
 
     if (NodeType.UNKNOWN === nodeData.nodeType) {
       return (
@@ -511,7 +518,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
                 dataErrors={this.state.grpcErrorCountOut}
                 hide={isInOutSameNode}
               />
-              {this.isIstioOutboundCornerCase(node) && (
+              {!isPF && this.isIstioOutboundCornerCase(node) && (
                 <>
                   <div>
                     <KialiIcon.Info /> Traffic to Istio namespaces not included. Use edge for details.
@@ -571,7 +578,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
                 dataErrors={this.state.httpErrorCountOut}
                 hide={isInOutSameNode}
               />
-              {this.isIstioOutboundCornerCase(node) && (
+              {!isPF && this.isIstioOutboundCornerCase(node) && (
                 <>
                   <div>
                     <KialiIcon.Info />" Traffic to Istio namespaces not included. Use edge for details.
@@ -629,6 +636,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
 
   // We need to handle the special case of a non-istio, non-unknown node with outbound traffic to istio.
   // The traffic is lost because it is dest-only and we use source-reporting.
+  // TODO: Currently not called for PFT
   private isIstioOutboundCornerCase = (node): boolean => {
     const nodeData = decoratedNodeData(node);
     if (nodeData.nodeType === NodeType.UNKNOWN || nodeData.isIstio) {

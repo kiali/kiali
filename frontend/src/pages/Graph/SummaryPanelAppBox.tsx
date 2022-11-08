@@ -238,7 +238,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
       promiseInRps = getNodeMetrics(
         nodeMetricType,
-        appBox,
+        nodeData,
         props,
         filtersRps,
         'inbound',
@@ -263,7 +263,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
         promiseInStream = getNodeMetrics(
           nodeMetricType,
-          appBox,
+          nodeData,
           props,
           filtersStream,
           'inbound',
@@ -301,7 +301,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
           : ['request_protocol'];
         promiseOut = getNodeMetrics(
           nodeMetricType,
-          appBox,
+          nodeData,
           props,
           filters,
           'outbound',

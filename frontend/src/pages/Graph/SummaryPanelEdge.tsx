@@ -370,7 +370,6 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const isSourceAggregate = sourceData.nodeType === NodeType.AGGREGATE;
     const isDestServiceEntry = !!destData.isServiceEntry;
     const useDestMetrics = isDestServiceEntry || isSourceAggregate ? false : true;
-    const metricsNode = useDestMetrics ? edge.target() : edge.source();
     const metricsNodeData = useDestMetrics ? destData : sourceData;
     const direction: Direction = useDestMetrics || isSourceAggregate ? 'inbound' : 'outbound';
     const metricType = useDestMetrics ? destMetricType : sourceMetricType;
@@ -392,7 +391,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       const filtersRps = ['request_count', 'request_duration_millis', 'request_error_count'];
       promiseRequests = getNodeMetrics(
         metricType,
-        metricsNode,
+        metricsNodeData,
         props,
         filtersRps,
         direction,
@@ -410,7 +409,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       const filters = ['grpc_sent', 'grpc_received'];
       promiseStream = getNodeMetrics(
         metricType,
-        metricsNode,
+        metricsNodeData,
         props,
         filters,
         direction,
@@ -428,7 +427,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       const filtersTCP = ['tcp_sent', 'tcp_received'];
       promiseStream = getNodeMetrics(
         metricType,
-        metricsNode,
+        metricsNodeData,
         props,
         filtersTCP,
         direction,

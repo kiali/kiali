@@ -8,8 +8,10 @@ import {
   GRAPH_LAYOUT_END_EVENT,
   GRAPH_POSITION_CHANGE_EVENT,
   Model,
+  ModelKind,
   Node,
   NodeModel,
+  SELECTION_EVENT,
   TopologyControlBar,
   TopologyView,
   useEventListener,
@@ -66,7 +68,7 @@ export const TopologyContent: React.FC<{
   graphSettings: GraphPFSettings;
   onReady: (controller: any) => void;
   options: TopologyOptions;
-  updateSummary?: (event: GraphEvent) => void;
+  updateSummary: (event: GraphEvent) => void;
 }> = ({ graphData, graphSettings, options, onReady, updateSummary }) => {
   const controller = useVisualizationController();
 
@@ -75,9 +77,31 @@ export const TopologyContent: React.FC<{
   const onHover = React.useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (data: NodeData) => {
+      console.log('onHover');
       setHoveredId(data.isHovered ? data.id : '');
     },
     []
+  );
+
+  const onSelect = React.useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (data: any) => {
+      const elem = controller.getElementById(data);
+      switch (elem?.getKind()) {
+        case ModelKind.edge: {
+          updateSummary({ isPF: true, summaryType: 'edge', summaryTarget: elem } as GraphEvent);
+          return;
+        }
+        case ModelKind.node: {
+          const isBox = (elem.getData() as NodeData).isBox;
+          updateSummary({ isPF: true, summaryType: isBox ? 'box' : 'node', summaryTarget: elem } as GraphEvent);
+          return;
+        }
+        default:
+          updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
+      }
+    },
+    [controller, updateSummary]
   );
 
   //fit view to elements
@@ -305,12 +329,13 @@ export const TopologyContent: React.FC<{
       console.log('Cleanup');
       if (updateSummary) {
         console.log('Clear Summary');
-        updateSummary({ summaryType: 'graphPF', summaryTarget: undefined });
+        updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: undefined });
       }
     };
   }, []);
 
   useEventListener(HOVER_EVENT, onHover);
+  useEventListener(SELECTION_EVENT, onSelect);
   useEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
   useEventListener(GRAPH_POSITION_CHANGE_EVENT, onLayoutPositionChange);
 

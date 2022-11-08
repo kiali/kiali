@@ -30,13 +30,14 @@ export const stylesComponentFactory: ComponentFactory = (
   switch (type) {
     case 'node':
       // @ts-ignore
-      return withDragNode(nodeDragSourceSpec('node', true, true))(withSelection()(StyleNode));
+      return withDragNode(nodeDragSourceSpec('node', true, true))(withSelection({ multiSelect: false, controlled: false })(StyleNode)
+      );
     case 'group':
       // @ts-ignore
-      return withDndDrop(groupDropTargetSpec)(withSelection()(StyleGroup));
+      return withDndDrop(groupDropTargetSpec)(withSelection({ multiSelect: false, controlled: false })(StyleGroup));
     case 'edge':
       // @ts-ignore
-      return withSelection()(StyleEdge);
+      return withSelection({ multiSelect: false, controlled: false })(StyleEdge);
     default:
       return undefined;
   }

@@ -5,7 +5,6 @@ import { IstioMetricsOptions, Reporter, Direction } from '../../types/MetricsOpt
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import { Response } from '../../services/Api';
-import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 
@@ -92,7 +91,7 @@ export const getNodeMetricType = (nodeData: DecoratedGraphNodeData): NodeMetricT
 
 export const getNodeMetrics = (
   nodeMetricType: NodeMetricType,
-  node: any,
+  nodeData: DecoratedGraphNodeData,
   props: SummaryPanelPropType,
   filters: Array<string>,
   direction: Direction,
@@ -101,7 +100,6 @@ export const getNodeMetrics = (
   quantiles?: Array<string>,
   byLabels?: Array<string>
 ): Promise<Response<M.IstioMetricsMap>> => {
-  const nodeData = decoratedNodeData(node);
   const options: IstioMetricsOptions = {
     queryTime: props.queryTime,
     duration: props.duration,

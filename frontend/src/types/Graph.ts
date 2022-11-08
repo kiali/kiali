@@ -8,8 +8,9 @@ export interface Layout {
 }
 
 export const SUMMARY_PANEL_CHART_WIDTH = 250;
-export type SummaryType = 'graph' | 'graphPF' | 'node' | 'edge' | 'box';
+export type SummaryType = 'graph' | 'node' | 'edge' | 'box';
 export interface SummaryData {
+  isPF?: boolean;
   summaryType: SummaryType;
   summaryTarget: any;
 }
@@ -227,7 +228,9 @@ export interface CytoscapeBaseEvent {
   summaryTarget: any; // the cytoscape element that was the target of the event
 }
 
-export interface GraphEvent extends CytoscapeBaseEvent {}
+export interface GraphEvent extends CytoscapeBaseEvent {
+  isPF?: boolean;
+}
 
 // Graph Structures
 

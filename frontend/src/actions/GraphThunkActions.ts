@@ -16,7 +16,8 @@ export const GraphThunkActions = {
     return (dispatch: KialiDispatch) => {
       dispatch(
         GraphActions.updateSummary({
-          summaryType: 'graphPF',
+          isPF: true,
+          summaryType: 'graph',
           summaryTarget: controller
         })
       );

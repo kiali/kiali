@@ -197,7 +197,6 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
       case 'edge':
         return <SummaryPanelEdge {...this.props} />;
       case 'graph':
-      case 'graphPF':
         return (
           <SummaryPanelGraph
             data={summary}

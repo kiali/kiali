@@ -111,9 +111,9 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
   render() {
     const node = this.props.data.summaryTarget;
-    const nodeData = decoratedNodeData(node);
+    const nodeData = this.props.data.isPF ? node.getData() : decoratedNodeData(node);
     const { nodeType, app, service, workload, isServiceEntry } = nodeData;
-    const servicesList = nodeType !== NodeType.SERVICE && renderDestServicesLinks(node);
+    const servicesList = nodeType !== NodeType.SERVICE && renderDestServicesLinks(nodeData);
     const destsList = nodeType === NodeType.SERVICE && isServiceEntry && this.renderDestServices(nodeData);
 
     const shouldRenderDestsList = destsList && destsList.length > 0;
@@ -442,7 +442,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     this.onToggleActions(false);
     if (this.props.onLaunchWizard) {
       const node = this.props.data.summaryTarget;
-      const nodeData = decoratedNodeData(node);
+      const nodeData = this.props.data.isPF ? node.getData() : decoratedNodeData(node);
       this.props.onLaunchWizard(
         key,
         mode,
@@ -472,7 +472,7 @@ export function SummaryPanelNode(props: SummaryPanelNodeProps) {
   const [isKebabOpen, setIsKebabOpen] = React.useState<boolean>(false);
 
   const node = props.data.summaryTarget;
-  const nodeData = decoratedNodeData(node);
+  const nodeData = props.data.isPF ? node.getData() : decoratedNodeData(node);
   const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(
     nodeData,
     isKebabOpen,
