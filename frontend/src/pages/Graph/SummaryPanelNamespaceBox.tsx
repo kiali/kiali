@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Tab, Tooltip } from '@patternfly/react-core';
+import { Node } from '@patternfly/react-topology';
 import { style } from 'typestyle';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from '../../components/SummaryPanel/RateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
@@ -36,6 +37,7 @@ import { PFColors } from '../../components/Pf/PfColors';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { descendents, edgesIn, edgesInOut, edgesOut, elems, select, selectOr } from 'pages/GraphPF/GraphPFElems';
 
 type SummaryPanelNamespaceBoxMetricsState = {
   grpcRequestIn: Datapoint[];
@@ -137,15 +139,15 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
 
   componentDidMount() {
     this.boxTraffic = this.getBoxTraffic();
-    this.updateCharts();
-    this.updateValidation();
+    this.updateCharts(!!this.props.data.isPF);
+    this.updateValidation(!!this.props.data.isPF);
   }
 
   componentDidUpdate(prevProps: SummaryPanelPropType) {
     if (shouldRefreshData(prevProps, this.props)) {
       this.boxTraffic = this.getBoxTraffic();
-      this.updateCharts();
-      this.updateValidation();
+      this.updateCharts(!!this.props.data.isPF);
+      this.updateValidation(!!this.props.data.isPF);
     }
   }
 
@@ -159,17 +161,28 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   }
 
   render() {
+    const isPF = !!this.props.data.isPF;
     const namespaceBox = this.props.data.summaryTarget;
-    const boxed = namespaceBox.descendants();
-    const namespace = namespaceBox.data(CyNode.namespace);
+    const data = isPF ? namespaceBox.getData() : namespaceBox.data();
+    const boxed = isPF ? descendents(namespaceBox) : namespaceBox.descendants();
+    const namespace = data[CyNode.namespace];
 
-    const numSvc = boxed.filter(`node[nodeType = "${NodeType.SERVICE}"]`).size();
-    const numWorkloads = boxed.filter(`node[nodeType = "${NodeType.WORKLOAD}"]`).size();
-    const { numApps, numVersions } = this.countApps(boxed);
-    const numEdges = boxed.connectedEdges().size();
-
+    let numSvc;
+    let numWorkloads;
+    let numEdges;
+    const { numApps, numVersions } = this.countApps(boxed, isPF);
     const { grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
       this.boxTraffic || this.getBoxTraffic();
+
+    if (isPF) {
+      numSvc = select(boxed, { prop: CyNode.nodeType, val: NodeType.SERVICE }).length;
+      numWorkloads = select(boxed, { prop: CyNode.nodeType, val: NodeType.WORKLOAD }).length;
+      numEdges = edgesInOut(boxed).length;
+    } else {
+      numSvc = boxed.filter(`node[nodeType = "${NodeType.SERVICE}"]`).size();
+      numWorkloads = boxed.filter(`node[nodeType = "${NodeType.WORKLOAD}"]`).size();
+      numEdges = boxed.connectedEdges().size();
+    }
 
     const tooltipInboundRef = React.createRef();
     const tooltipOutboundRef = React.createRef();
@@ -295,7 +308,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
                 {tcpTotal.rate > 0 && <RateTableTcp rate={tcpTotal.rate} />}
                 <div>
                   {hr()}
-                  {this.renderCharts()}
+                  {this.renderCharts(isPF)}
                 </div>
               </div>
             </Tab>
@@ -306,36 +319,61 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   }
 
   private getBoxTraffic = (): SummaryPanelNamespaceBoxTraffic => {
+    const isPF = !!this.props.data.isPF;
     const namespaceBox = this.props.data.summaryTarget;
-    const boxed = namespaceBox.descendants();
-    const namespace = namespaceBox.data(CyNode.namespace);
-    const cluster = namespaceBox.data(CyNode.cluster);
+    const data = isPF ? namespaceBox.getData() : namespaceBox.data();
+    const boxed = isPF ? descendents(namespaceBox) : namespaceBox.descendants();
+    const namespace = data[CyNode.namespace];
+    const cluster = data[CyNode.cluster];
 
-    // inbound edges are from a different namespace or a different cluster
-    const inboundEdges = namespaceBox
-      .cy()
-      .nodes(`[${CyNode.namespace} != "${namespace}"],[${CyNode.cluster} != "${cluster}"]`)
-      .edgesTo(boxed);
-    // outbound edges are to a different namespace or a different cluster
-    const outboundEdges = boxed.edgesTo(`[${CyNode.namespace} != "${namespace}"],[${CyNode.cluster} != "${cluster}"]`);
-    // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
-    const totalEdges = inboundEdges.add(boxed.filter(`[?${CyNode.workload}]`).edgesTo('*'));
+    let inboundEdges;
+    let outboundEdges;
+    let totalEdges;
+    if (isPF) {
+      const controller = (namespaceBox as Node).getController();
+      const { nodes } = elems(controller);
+      const outsideNodes = selectOr(nodes, [
+        [{ prop: CyNode.namespace, op: '!=', val: namespace }],
+        [{ prop: CyNode.cluster, op: '!=', val: cluster }]
+      ]) as Node[];
+      // inbound edges are from a different namespace or a different cluster
+      inboundEdges = edgesOut(outsideNodes, boxed);
+      // outbound edges are to a different namespace or a different cluster
+      outboundEdges = edgesIn(outsideNodes, boxed);
+      // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
+      totalEdges = [...inboundEdges];
+      totalEdges.push(...edgesOut(select(boxed, { prop: CyNode.workload, op: 'truthy' }) as Node[]));
+    } else {
+      // inbound edges are from a different namespace or a different cluster
+      inboundEdges = namespaceBox
+        .cy()
+        .nodes(`[${CyNode.namespace} != "${namespace}"],[${CyNode.cluster} != "${cluster}"]`)
+        .edgesTo(boxed);
+      // outbound edges are to a different namespace or a different cluster
+      outboundEdges = boxed.edgesTo(`[${CyNode.namespace} != "${namespace}"],[${CyNode.cluster} != "${cluster}"]`);
+      // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
+      totalEdges = inboundEdges.add(boxed.filter(`[?${CyNode.workload}]`).edgesTo('*'));
+    }
 
     return {
-      grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges),
-      grpcOut: getAccumulatedTrafficRateGrpc(outboundEdges),
-      grpcTotal: getAccumulatedTrafficRateGrpc(totalEdges),
-      httpIn: getAccumulatedTrafficRateHttp(inboundEdges),
-      httpOut: getAccumulatedTrafficRateHttp(outboundEdges),
-      httpTotal: getAccumulatedTrafficRateHttp(totalEdges),
+      grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges, isPF),
+      grpcOut: getAccumulatedTrafficRateGrpc(outboundEdges, isPF),
+      grpcTotal: getAccumulatedTrafficRateGrpc(totalEdges, isPF),
+      httpIn: getAccumulatedTrafficRateHttp(inboundEdges, isPF),
+      httpOut: getAccumulatedTrafficRateHttp(outboundEdges, isPF),
+      httpTotal: getAccumulatedTrafficRateHttp(totalEdges, isPF),
       isGrpcRequests: this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST),
-      tcpIn: getAccumulatedTrafficRateTcp(inboundEdges),
-      tcpOut: getAccumulatedTrafficRateTcp(outboundEdges),
-      tcpTotal: getAccumulatedTrafficRateTcp(totalEdges)
+      tcpIn: getAccumulatedTrafficRateTcp(inboundEdges, isPF),
+      tcpOut: getAccumulatedTrafficRateTcp(outboundEdges, isPF),
+      tcpTotal: getAccumulatedTrafficRateTcp(totalEdges, isPF)
     };
   };
 
-  private countApps = (boxed): { numApps: number; numVersions: number } => {
+  private countApps = (boxed, isPF: boolean): { numApps: number; numVersions: number } => {
+    if (isPF) {
+      return this.countAppsPF(boxed);
+    }
+
     const appVersions: { [key: string]: Set<string> } = {};
 
     boxed.filter(`node[nodeType = "${NodeType.APP}"]`).forEach(node => {
@@ -344,6 +382,26 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
         appVersions[app] = new Set();
       }
       appVersions[app].add(node.data(CyNode.version));
+    });
+
+    return {
+      numApps: Object.getOwnPropertyNames(appVersions).length,
+      numVersions: Object.getOwnPropertyNames(appVersions).reduce((totalCount: number, version: string) => {
+        return totalCount + appVersions[version].size;
+      }, 0)
+    };
+  };
+
+  private countAppsPF = (boxed: Node[]): { numApps: number; numVersions: number } => {
+    const appVersions: { [key: string]: Set<string> } = {};
+
+    select(boxed, { prop: CyNode.nodeType, val: NodeType.APP }).forEach(node => {
+      const data = node.getData();
+      const app = data[CyNode.app];
+      if (appVersions[app] === undefined) {
+        appVersions[app] = new Set();
+      }
+      appVersions[app].add(data[CyNode.version]);
     });
 
     return {
@@ -422,9 +480,11 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     </>
   );
 
-  private renderCharts = () => {
+  private renderCharts = (isPF: boolean) => {
     const props: SummaryPanelPropType = this.props;
-    const namespace = props.data.summaryTarget.data(CyNode.namespace);
+    const namespace = isPF
+      ? props.data.summaryTarget.getData()[CyNode.namespace]
+      : props.data.summaryTarget.data(CyNode.namespace);
 
     if (this.state.loading) {
       return <strong>Loading chart...</strong>;
@@ -511,10 +571,14 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     );
   };
 
-  private updateCharts = () => {
+  private updateCharts = (isPF: boolean) => {
     const props: SummaryPanelPropType = this.props;
-    const namespace = props.data.summaryTarget.data(CyNode.namespace);
-    const cluster = props.data.summaryTarget.data(CyNode.cluster);
+    const cluster = isPF
+      ? props.data.summaryTarget.getData()[CyNode.cluster]
+      : props.data.summaryTarget.data(CyNode.cluster);
+    const namespace = isPF
+      ? props.data.summaryTarget.getData()[CyNode.namespace]
+      : props.data.summaryTarget.data(CyNode.namespace);
 
     if (namespace === UNKNOWN) {
       this.setState({
@@ -551,25 +615,25 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     if (filters.length > 0) {
       promiseIn = API.getNamespaceMetrics(namespace, {
         byLabels: ['request_protocol'], // ignored by prom if it doesn't exist
+        cluster: cluster,
         direction: 'inbound',
         duration: props.duration,
         filters: filters,
         queryTime: props.queryTime,
         rateInterval: props.rateInterval,
         reporter: 'destination',
-        step: props.step,
-        cluster: cluster
+        step: props.step
       } as IstioMetricsOptions);
       promiseOut = API.getNamespaceMetrics(namespace, {
         byLabels: ['request_protocol'], // ignored by prom if it doesn't exist
+        cluster: cluster,
         direction: 'outbound',
         duration: props.duration,
         filters: filters,
         queryTime: props.queryTime,
         rateInterval: props.rateInterval,
         reporter: 'source',
-        step: props.step,
-        cluster: cluster
+        step: props.step
       } as IstioMetricsOptions);
     }
 
@@ -619,8 +683,11 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     this.setState({ loading: true, metricsLoadError: null });
   };
 
-  private updateValidation = () => {
-    const namespace = this.props.data.summaryTarget.data(CyNode.namespace);
+  private updateValidation = (isPF: boolean) => {
+    const namespace = isPF
+      ? this.props.data.summaryTarget.getData()[CyNode.namespace]
+      : this.props.data.summaryTarget.data(CyNode.namespace);
+
     this.validationPromise = makeCancelablePromise(API.getNamespaceValidations(namespace));
     this.validationPromise.promise
       .then(rs => {

@@ -584,6 +584,25 @@ export const elems = (c: Controller): { nodes: Node[]; edges: Edge[] } => {
   };
 };
 
+// TODO: When it is fixed this can be replaced with a straight call to node.getAllNodeChildren();
+// https://github.com/patternfly/patternfly-react/issues/8350
+
+export const descendents = (node: Node): Node[] => {
+  const result: Node[] = [];
+  if (!node.isGroup()) {
+    return result;
+  }
+
+  const children = node.getChildren().filter(e => isNode(e)) as Node[];
+  result.push(...children.filter(child => !child.isGroup()));
+  children.forEach(child => {
+    if (child.isGroup()) {
+      result.push(...descendents(child));
+    }
+  });
+  return result;
+};
+
 export type SelectOp = '=' | '!=' | '>' | '<' | 'falsey' | 'truthy';
 export type SelectExp = {
   prop: string;
@@ -628,15 +647,15 @@ export const select = (elems: GraphElement[], exp: SelectExp): GraphElement[] =>
   });
 };
 
-export const edgesIn = (nodes: Node[]): Edge[] => {
+export const edgesIn = (nodes: Node[], sourceNodes: Node[] = []): Edge[] => {
   const result = [] as Edge[];
-  nodes.forEach(n => result.push(...n.getTargetEdges()));
+  nodes.forEach(n => result.push(...n.getTargetEdges().filter(e => sourceNodes.includes(e.getSource()))));
   return result;
 };
 
-export const edgesOut = (nodes: Node[]): Edge[] => {
+export const edgesOut = (nodes: Node[], destNodes: Node[] = []): Edge[] => {
   const result = [] as Edge[];
-  nodes.forEach(n => result.push(...n.getSourceEdges()));
+  nodes.forEach(n => result.push(...n.getSourceEdges().filter(e => destNodes.includes(e.getTarget()))));
   return result;
 };
 
