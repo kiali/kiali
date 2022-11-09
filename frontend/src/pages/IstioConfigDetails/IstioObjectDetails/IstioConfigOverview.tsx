@@ -1,4 +1,12 @@
-import { Stack, StackItem, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import {
+  Label,
+  Stack,
+  StackItem,
+  Title,
+  TitleSizes,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 import Labels from 'components/Label/Labels';
 import { PFBadge } from 'components/Pf/PfBadges';
 import LocalTime from 'components/Time/LocalTime';
@@ -22,6 +30,9 @@ import IstioConfigHelp from './IstioConfigHelp';
 import IstioConfigReferences from './IstioConfigReferences';
 import IstioConfigValidationReferences from './IstioConfigValidationReferences';
 import IstioStatusMessageList from './IstioStatusMessageList';
+import {isKioskMode} from "../../../utils/SearchParamUtils";
+import {PFColors} from "../../../components/Pf/PfColors";
+import {GetIstioObjectUrl} from "../../../components/Link/IstioObjectLink";
 
 interface IstioConfigOverviewProps {
   istioObjectDetails: IstioConfigDetails;
@@ -94,6 +105,11 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
       </div>
     );
 
+    let url = "";
+    if (istioObject !== undefined && istioObject.metadata.namespace !== undefined && istioObject.kind !== undefined) {
+      url = GetIstioObjectUrl(istioObject.metadata.name, istioObject.metadata.namespace , istioObject.kind.toLowerCase() );
+    }
+
     return (
       <Stack hasGutter={true}>
         <StackItem>
@@ -165,6 +181,14 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
               helpMessages={this.props.helpMessages}
               selectedLine={this.props.selectedLine}
             ></IstioConfigHelp>
+          </StackItem>
+        )}
+        {isKioskMode() && (
+          <StackItem>
+            <Tooltip content={"This is a Read only view of the YAML including Validations. It is possible to edit directly in Kiali "} position={TooltipPosition.top}>
+              <Label color="green" isCompact>Read only mode</Label>
+            </Tooltip>
+            <a href={url} style={{marginLeft: '5px', fontSize: '85%', color: PFColors.ActiveText}} target="_blank">Edit in Kiali</a>
           </StackItem>
         )}
       </Stack>
