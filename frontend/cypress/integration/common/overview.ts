@@ -1,4 +1,5 @@
-import { Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Before, Given, Then, When, And } from '@badeball/cypress-cucumber-preprocessor';
+import { ensureKialiFinishedLoading } from './transition';
 
 Before(() => {
   // Focing to not stop cypress on unexpected errors not related to the tests.
@@ -187,7 +188,12 @@ Then('the {string} application indicator should list the application', function 
 // New CP Card validations
 When('user hovers over the MinTLS locker', view => {
   cy.get('[data-test="lockerCA"]')
-      .should('exist');
+  .should('exist');
+});
+
+When ('user clicks the toggle on the right side of the {string} namespace card', (ns:string) => {
+  ensureKialiFinishedLoading(); 
+  cy.get('article[data-test^="' + ns + '"]').find('button').click();
 });
 
 Then('the user sees the certificates information', view => {
@@ -199,7 +205,7 @@ Then('the user sees the certificates information', view => {
 
 // We will suppose that the min TLS Version was not set
 // So we verify the default
-Then("the minimum TLS version", view => {
+Then('the minimum TLS version', view => {
   cy.get('[data-test="label-TLS"]')
       .contains('N/A');
 });
@@ -212,4 +218,24 @@ Then("the user sees no information related to canary upgrades", view => {
 Then("the user sees information related to canary upgrades", view => {
   cy.get('[data-test="canary-upgrade"]')
       .should('exist');
+});
+
+Then('user can see links to external services',() =>{
+  cy.get('article[data-test^="istio-system"]').as("plane").within(() => {
+    cy.request('GET', '/api/grafana').should(response => {
+      expect(response.status).to.equal(200);
+      response.body.externalLinks.forEach(elem => {
+        if (elem.name != 'Istio Service Dashboard' && elem.name != 'Istio Workload Dashboard'){
+          cy.get('@plane').find('a').contains(elem.name);
+        }
+      });
+    });
+  });
+});
+
+And('user sees the {string} label in the {string} namespace card', (label: string, ns: string) => {
+  cy.log(label);
+  cy.get('article[data-test^="' + ns + '"]')
+    .contains(label)
+    .should('be.visible');
 });
