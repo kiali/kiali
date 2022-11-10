@@ -105,9 +105,9 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
       </div>
     );
 
-    let url = "";
+    let urlInKiali = "";
     if (istioObject !== undefined && istioObject.metadata.namespace !== undefined && istioObject.kind !== undefined) {
-      url = GetIstioObjectUrl(istioObject.metadata.name, istioObject.metadata.namespace , istioObject.kind.toLowerCase() );
+      urlInKiali = GetIstioObjectUrl(istioObject.metadata.name, istioObject.metadata.namespace , istioObject.kind.toLowerCase() );
     }
 
     return (
@@ -188,7 +188,7 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
             <Tooltip content={"This is a Read only view of the YAML including Validations. It is possible to edit directly in Kiali "} position={TooltipPosition.top}>
               <Label color="green" isCompact>Read only mode</Label>
             </Tooltip>
-            <a href={url} style={{marginLeft: '5px', fontSize: '85%', color: PFColors.ActiveText}} target="_blank">Edit in Kiali</a>
+            <a href={urlInKiali} style={{marginLeft: '5px', fontSize: '85%', color: PFColors.ActiveText}} target="_blank" rel="noreferrer">Edit in Kiali</a>
           </StackItem>
         )}
       </Stack>

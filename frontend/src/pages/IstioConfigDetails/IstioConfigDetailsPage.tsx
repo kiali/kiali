@@ -595,7 +595,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
           mountOnEnter={false}
           unmountOnExit={true}
         >
-          <Tab key="istio-yaml" title={`YAML ${this.state.isModified ? ' * ' : ''}`} eventKey={0}>
+          <Tab key="istio-yaml" title={`${!isParentKiosk(this.props.kiosk) ? 'YAML' : 'Validations'} ${this.state.isModified ? ' * ' : ''}`} eventKey={0}>
             <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>
           </Tab>
         </ParameterizedTabs>
