@@ -647,22 +647,24 @@ export const select = (elems: GraphElement[], exp: SelectExp): GraphElement[] =>
   });
 };
 
-export const edgesIn = (nodes: Node[], sourceNodes: Node[] = []): Edge[] => {
+export const edgesIn = (nodes: Node[], sourceNodes?: Node[]): Edge[] => {
   const result = [] as Edge[];
-  nodes.forEach(n => result.push(...n.getTargetEdges().filter(e => sourceNodes.includes(e.getSource()))));
+  nodes.forEach(n =>
+    result.push(...n.getTargetEdges().filter(e => !sourceNodes || sourceNodes.includes(e.getSource())))
+  );
   return result;
 };
 
-export const edgesOut = (nodes: Node[], destNodes: Node[] = []): Edge[] => {
+export const edgesOut = (nodes: Node[], destNodes?: Node[]): Edge[] => {
   const result = [] as Edge[];
-  nodes.forEach(n => result.push(...n.getSourceEdges().filter(e => destNodes.includes(e.getTarget()))));
+  nodes.forEach(n => result.push(...n.getSourceEdges().filter(e => !destNodes || destNodes.includes(e.getTarget()))));
   return result;
 };
 
 export const edgesInOut = (nodes: Node[]): Edge[] => {
   const result = edgesIn(nodes);
   result.push(...edgesOut(nodes));
-  return result;
+  return Array.from(new Set(result));
 };
 
 export const leafNodes = (nodes: Node[]): Node[] => {
