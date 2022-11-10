@@ -133,7 +133,6 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     super(props);
 
     this.isPF = !!props.data.isPF;
-    console.log(`IsPF=${this.isPF}`);
     this.state = { ...defaultState };
   }
 

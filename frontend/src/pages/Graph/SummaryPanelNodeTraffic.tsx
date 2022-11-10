@@ -347,7 +347,6 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
 
   render() {    
     const isPF = !!this.props.data.isPF;
-    console.log(`isPF1=${isPF}`);
     const node = this.props.data.summaryTarget;
     const nodeData = isPF ? node.getData() : decoratedNodeData(node);
     const hasGrpc = this.hasGrpcTraffic(nodeData);
@@ -412,7 +411,6 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
   };
 
   private renderHttpRates = (node, isPF: boolean) => {
-    console.log(`isPF2=${isPF}`);
     const inbound = getTrafficRateHttp(node, isPF);
     const outboundEdges = isPF ? edgesOut([node]) : node.edgesTo('*');
     const outbound = getAccumulatedTrafficRateHttp(outboundEdges, isPF);

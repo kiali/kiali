@@ -593,7 +593,7 @@ func boxByCluster(nodes *[]*NodeWrapper) {
 			box[k] = append(box[k], nw.Data)
 		}
 	}
-	if len(box) > 1 {
+	if len(box) >= 1 {
 		generateBoxCompoundNodes(box, nodes, graph.BoxByCluster)
 	}
 }
