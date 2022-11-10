@@ -667,6 +667,18 @@ export const edgesInOut = (nodes: Node[]): Edge[] => {
   return Array.from(new Set(result));
 };
 
+export const nodesIn = (nodes: Node[]): Node[] => {
+  const result = [] as Node[];
+  edgesIn(nodes).forEach(e => result.push(e.getSource()));
+  return Array.from(new Set(result));
+};
+
+export const nodesOut = (nodes: Node[]): Node[] => {
+  const result = [] as Node[];
+  edgesOut(nodes).forEach(e => result.push(e.getTarget()));
+  return Array.from(new Set(result));
+};
+
 export const leafNodes = (nodes: Node[]): Node[] => {
   return nodes.filter(n => n.getSourceEdges().length === 0);
 };

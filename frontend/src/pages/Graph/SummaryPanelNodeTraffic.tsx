@@ -32,7 +32,7 @@ import { Response } from '../../services/Api';
 import { Reporter } from '../../types/MetricsOptions';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { edgesOut } from 'pages/GraphPF/GraphPFElems';
+import { edgesOut, nodesIn, select } from 'pages/GraphPF/GraphPFElems';
 
 type SummaryPanelNodeMetricsState = {
   grpcRequestCountIn: Datapoint[];
@@ -345,7 +345,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     return false;
   };
 
-  render() {    
+  render() {
     const isPF = !!this.props.data.isPF;
     const node = this.props.data.summaryTarget;
     const nodeData = isPF ? node.getData() : decoratedNodeData(node);
@@ -478,13 +478,9 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     const isInOutSameNode = isServiceNode || nodeData.nodeType === NodeType.AGGREGATE;
     let serviceWithUnknownSource: boolean = false;
     if (isServiceNode) {
-      node.incomers().forEach(n => {
-        if (NodeType.UNKNOWN === n.data(CyNode.nodeType)) {
-          serviceWithUnknownSource = true;
-          return false; // Equivalent of break for cytoscapejs forEach API
-        }
-        return undefined; // Every code paths needs to return something to avoid the wrath of the linter.
-      });
+      serviceWithUnknownSource = isPF
+        ? select(nodesIn([node]), { prop: CyNode.nodeType, val: NodeType.UNKNOWN }).length > 0
+        : (serviceWithUnknownSource = node.incomers(`node[${CyNode.nodeType} = "${NodeType.UNKNOWN}"]`).size() > 0);
     }
 
     let grpcCharts, httpCharts, tcpCharts;
