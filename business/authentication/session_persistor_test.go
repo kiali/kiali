@@ -2,6 +2,7 @@ package authentication
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -55,8 +56,13 @@ func TestCreateSessionNoChunks(t *testing.T) {
 	// is to check that the returned cookie won't have a plain text payload on it (which is the "Foo" text).
 	decodedB64Cookie, err := base64.StdEncoding.DecodeString(response.Cookies()[0].Value)
 	assert.Nil(t, err)
-	assert.NotContains(t, cookie.Value, "Foo")
-	assert.NotContains(t, string(decodedB64Cookie), "Foo")
+	payloadJson, err1 := json.Marshal(payload)
+	assert.Nil(t, err1)
+	// sometimes (randomly) the result of "nonce" encrypted data can contain the plain text, so avoiding "NotContains" direct assertion here and checking the JSON
+	assert.NotEqual(t, cookie.Value, "Foo")
+	assert.NotEqual(t, string(decodedB64Cookie), "Foo")
+	assert.NotContains(t, string(decodedB64Cookie), string(payloadJson))
+	assert.NotContains(t, cookie.Value, string(payloadJson))
 }
 
 // TestCreateSessionWithChunks tests that the CookieSessionPersistor correctly
