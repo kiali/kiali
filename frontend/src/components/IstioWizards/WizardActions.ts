@@ -922,6 +922,8 @@ export const getDefaultBackendRefs = (workloads: WorkloadOverview[], serviceName
     // @TODO add support of services per versions
     //name: workload.name,
     weight: wkTraffic,
+    locked: false,
+    maxWeight: 100,
   }));
   if (remainTraffic > 0) {
     backendRefs[backendRefs.length - 1].weight = backendRefs[backendRefs.length - 1].weight ? backendRefs[backendRefs.length - 1].weight : 0 + remainTraffic;

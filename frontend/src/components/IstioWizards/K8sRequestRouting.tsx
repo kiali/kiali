@@ -4,6 +4,7 @@ import K8sRules, {MOVE_TYPE, K8sRule} from './K8sRequestRouting/K8sRules';
 import K8sRuleBuilder, {K8sRouteBackendRef} from './K8sRequestRouting/K8sRuleBuilder';
 import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
 import {getDefaultBackendRefs} from './WizardActions';
+import { MSG_WEIGHTS_NOT_VALID } from "./TrafficShifting";
 
 type Props = {
   serviceName: string;
@@ -108,7 +109,9 @@ class K8sRequestRouting extends React.Component<Props, State> {
         prevState.backendRefs.forEach(br =>
           newBackendRefs.push({
             name: br.name,
-            weight: br.weight
+            weight: br.weight,
+            locked: br.locked,
+            maxWeight: br.maxWeight
           })
         );
         const newRule: K8sRule = {
@@ -215,6 +218,13 @@ class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
+  onSelectWeights = (valid: boolean, backendRefs: K8sRouteBackendRef[]) => {
+    this.setState({
+      backendRefs: backendRefs,
+      validationMsg: !valid ? MSG_WEIGHTS_NOT_VALID : ''
+    });
+  };
+
   onMoveRule = (index: number, move: MOVE_TYPE) => {
     this.setState(
       prevState => {
@@ -279,6 +289,8 @@ class K8sRequestRouting extends React.Component<Props, State> {
           onAddMatch={this.onAddMatch}
           matches={this.state.matches}
           onRemoveMatch={this.onRemoveMatch}
+          workloads={this.props.workloads}
+          onSelectWeights={this.onSelectWeights}
           backendRefs={this.state.backendRefs}
           validationMsg={this.state.validationMsg}
           onAddRule={this.onAddK8sRule}

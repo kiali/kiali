@@ -4,6 +4,8 @@ import K8sMatchBuilder from './K8sMatchBuilder';
 import K8sMatches from './K8sMatches';
 import { style } from 'typestyle';
 import { PFColors } from '../../Pf/PfColors';
+import TrafficShifting, {WorkloadWeight} from "../TrafficShifting";
+import {WorkloadOverview} from "../../../types/ServiceInfo";
 
 type Props = {
   // K8sMatchBuilder props
@@ -24,17 +26,14 @@ type Props = {
   matches: string[];
   onRemoveMatch: (match: string) => void;
 
+  workloads: WorkloadOverview[];
+  onSelectWeights: (valid: boolean, workloads: WorkloadWeight[]) => void;
+
   backendRefs: K8sRouteBackendRef[];
 
   // K8sRuleBuilder
   validationMsg: string;
   onAddRule: () => void;
-};
-
-export type K8sRouteBackendRef = {
-  name: string;
-  weight?: number;
-  port?: number;
 };
 
 type State = {
@@ -82,6 +81,21 @@ class K8sRuleBuilder extends React.Component<Props, State> {
             <div style={{ marginTop: '20px' }}>
               <K8sMatchBuilder {...this.props} />
               <K8sMatches {...this.props} />
+            </div>
+          </Tab>
+          <Tab eventKey={1} title={'Route To'} data-test={'Route To'}>
+            <div
+              style={{
+                marginBottom: '10px'
+              }}
+            >
+              <TrafficShifting
+                showValid={false}
+                workloads={this.props.workloads}
+                initWeights={this.props.weights}
+                showMirror={true}
+                onChange={this.props.onSelectWeights}
+              />
             </div>
           </Tab>
         </Tabs>
