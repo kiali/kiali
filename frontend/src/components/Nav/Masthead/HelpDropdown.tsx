@@ -9,7 +9,7 @@ import { isUpstream } from '../../UpstreamDetector/UpstreamDetector';
 import { Status, ExternalServiceInfo, StatusKey } from '../../../types/StatusState';
 import { config, serverConfig } from '../../../config';
 import IstioCertsInfoConnected from 'components/IstioCertsInfo/IstioCertsInfo';
-import KialiConfigurationContainer from "../../DebugInformation/KialiConfiguration";
+import KialiConfigurationContainer from "../../KialiConfiguration/KialiConfiguration";
 
 type HelpDropdownProps = {
   status: Status;
@@ -116,7 +116,7 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
 
     items.push(
       <DropdownItem component={'span'} key={'kiali_config'} onClick={this.openConfig}>
-        Configuration
+        Kiali Config
       </DropdownItem>
     );
 

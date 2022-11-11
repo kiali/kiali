@@ -109,6 +109,8 @@ export interface ToleranceConfig {
 */
 
 export interface ServerConfig {
+  accesibleNamespaces: [];
+  authStrategy: string;
   clusterInfo?: ClusterInfo;
   clusters: { [key: string]: MeshCluster };
   deployment: DeploymentConfig;
@@ -121,6 +123,7 @@ export interface ServerConfig {
   istioNamespace: string;
   istioLabels: { [key in IstioLabelKey]: string };
   kialiFeatureFlags: KialiFeatureFlags;
+  logLevel: string,
   prometheus: {
     globalScrapeInterval?: DurationInSeconds;
     storageTsdbRetention?: DurationInSeconds;

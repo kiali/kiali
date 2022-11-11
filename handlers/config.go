@@ -49,6 +49,8 @@ type DeploymentConfig struct {
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
+	AccesibleNamespaces []string                    `json:"accesibleNamespaces,omitempty"`
+	AuthStrategy        string                      `json:"authStrategy,omitempty"`
 	ClusterInfo         ClusterInfo                 `json:"clusterInfo,omitempty"`
 	Clusters            map[string]business.Cluster `json:"clusters,omitempty"`
 	Deployment          DeploymentConfig            `json:"deployment,omitempty"`
@@ -63,6 +65,7 @@ type PublicConfig struct {
 	IstioLabels         config.IstioLabels          `json:"istioLabels,omitempty"`
 	IstioConfigMap      string                      `json:"istioConfigMap"`
 	KialiFeatureFlags   config.KialiFeatureFlags    `json:"kialiFeatureFlags,omitempty"`
+	LogLevel            string                      `json:"logLevel,omitempty"`
 	Prometheus          PrometheusConfig            `json:"prometheus,omitempty"`
 }
 
@@ -75,7 +78,9 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	promConfig := getPrometheusConfig()
 	config := config.Get()
 	publicConfig := PublicConfig{
-		Clusters: make(map[string]business.Cluster),
+		AccesibleNamespaces: config.Deployment.AccessibleNamespaces,
+		AuthStrategy:        config.Auth.Strategy,
+		Clusters:            make(map[string]business.Cluster),
 		Deployment: DeploymentConfig{
 			ViewOnlyMode: config.Deployment.ViewOnlyMode,
 		},
@@ -98,6 +103,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 			GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
 			StorageTsdbRetention: promConfig.StorageTsdbRetention,
 		},
+		LogLevel: log.GetLogLevel().String(),
 	}
 
 	// The following code fetches the cluster info. Cluster info is not critical.

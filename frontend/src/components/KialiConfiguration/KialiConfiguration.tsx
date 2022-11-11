@@ -27,7 +27,7 @@ const copyToClipboardOptions = {
   message: 'We failed to automatically copy the text, please use: #{key}, Enter\t'
 };
 
-const propsToShow = ["clusters", "gatewayAPIEnabled", "istioConfigMap", "istioIdentityDomain"];
+const propsToShow = ["accesibleNamespaces", "authStrategy", "clusters", "gatewayAPIEnabled", "istioConfigMap", "istioIdentityDomain", "istioNamespace", "istioStatusEnabled", "logLevel"];
 
 type Props = {
   ref: React.RefObject<any>;
@@ -38,14 +38,14 @@ export class KialiConfiguration extends React.Component<Props, DebugInformationS
   constructor(props: Props) {
     super(props);
 
-    let showConfig = [];
+    let showConfig = Array<string>();
 
     for (const key in serverConfig) {
       if (propsToShow.includes(key)) {
-        // @ts-ignore
         showConfig.push(key)
       }
     }
+    showConfig = showConfig.sort();
 
     this.state = {
       show: false,

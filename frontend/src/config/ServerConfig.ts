@@ -50,6 +50,8 @@ const computeValidDurations = (cfg: ComputedServerConfig) => {
 // Set some reasonable defaults. Initial values should be valid for fields
 // than may not be providedby/set on the server.
 const defaultServerConfig: ComputedServerConfig = {
+  accesibleNamespaces: [],
+  authStrategy: '',
   clusters: {},
   durations: {},
   gatewayAPIEnabled: false,
@@ -99,6 +101,7 @@ const defaultServerConfig: ComputedServerConfig = {
       }
     }
   },
+  logLevel: '',
   prometheus: {
     globalScrapeInterval: 15,
     storageTsdbRetention: 21600
