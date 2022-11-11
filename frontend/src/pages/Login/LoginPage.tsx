@@ -135,20 +135,19 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     const urlParams = new URLSearchParams(pageParams);
 
     // When using OpenId auth, the IdP can redirect back with `error` and `error_description`
-    // as url parameters. If these params are set, show them as errors.
+    // as url parameters. If these params are set, we cannot assume they are not spoofed, so we only
+    // log the errors but do not show them in the UI. We only show a generic error message.
     // Reference: https://openid.net/specs/openid-connect-core-1_0-final.html#AuthError
     if (urlParams.get('error')) {
       if (urlParams.get('error_description')) {
+        console.warn(`Authentication error_description: ${urlParams.get('error_description')}`)
         messages.push(
-          this.renderMessage(`Authentication error: ${urlParams.get('error_description')}`, 'danger', 'idp-err')
+          this.renderMessage(`Authentication failed!`, 'danger', 'idp-err')
         );
       } else {
+        console.warn(`Authentication error: ${urlParams.get('error')}`)
         messages.push(
-          this.renderMessage(
-            `The OpenID provider returned the following error code: ${urlParams.get('error')}`,
-            'danger',
-            'idp-err'
-          )
+          this.renderMessage(`Authentication failed.`, 'danger', 'idp-err')
         );
       }
     }
@@ -156,9 +155,11 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     // Also, when using OpenId auth, the IdP can return with success. However, in the "authorization code" flow,
     // the Kiali backend still needs to do some extra negotiation with the IdP, which can fail.
     // The backend will set an "openid_error" url parameter when there is some failure.
+    // Only log the openid_error since we cannot guarantee it is not spoofed. We only show a generic error message in the UI.
     if (urlParams.get('openid_error')) {
+      console.warn(`Authentication openid_error: ${urlParams.get('openid_error')}`)
       messages.push(
-        this.renderMessage(`Authentication failed: ${urlParams.get('openid_error')}`, 'danger', 'openid-err')
+        this.renderMessage(`OpenID authentication failed.`, 'danger', 'idp-err')
       );
     }
 
