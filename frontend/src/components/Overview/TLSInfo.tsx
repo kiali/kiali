@@ -19,7 +19,7 @@ const lockIconStyle = style({ marginLeft: '5px' });
 function showCerts(certs) {
   if (certs) {
     let rows = certs.map(function(item) {
-      return (<div>
+      return (<div key={"showCerts"}>
         <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>From {item.issuer}</div>
         <div>
           <div>Issuer: </div>
