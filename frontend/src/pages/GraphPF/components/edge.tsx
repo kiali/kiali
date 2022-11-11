@@ -17,18 +17,17 @@ import {
   Point,
   Layer,
   TOP_LAYER,
-  observer
+  observer,
+  DefaultConnectorTerminal
 } from '@patternfly/react-topology';
 import DefaultConnectorTag from '@patternfly/react-topology/dist/esm/components/edges/DefaultConnectorTag';
 import { getConnectorStartPoint } from '@patternfly/react-topology/dist/esm/components/edges/terminals/terminalUtils';
 import { EdgeData } from '../GraphPFElems';
-import BaseConnectorTerminal from './connectorTerminal';
 
 // This is a copy of PFT DefaultEdge (v4.68.3), then slightly modified.  I don't see a better way to really
 // do this because DefaultEdge doesn't really seem itself extensible and to add certain behavior you have
 // to reimplement the rendered element.  This supports the following customizations:
 //   [Edge] element.data.pathStyle?: React.CSSProperties // additional CSS stylings for the edge/path (not the endpoint).
-//   [Edge] element.data.useBendpoints?: boolean         // if true use bendpoints, otherwise a straight edge
 
 type BaseEdgeProps = {
   children?: React.ReactNode;
@@ -103,17 +102,6 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
   const linkClassName = css(styles.topologyEdgeLink, getEdgeStyleClassModifier(element.getEdgeStyle()));
   const pathStyle: React.CSSProperties = data.pathStyle || {};
 
-  // TODO: Currently I don't know how to get straight lines to line up with the arrow terminators. It seems
-  // the terminators are generated before the edges, and the bendpoints ensure a proper connection.  Until
-  // I can solve that problem we'll either use all bendpoints or just the final one to ensure alignment.
-  //if (!data.useBendpoints) {
-  //  element.bendpoints = [];
-  //}
-  //const bendpoints = !!data.useBendpoints ? element.getBendpoints() : [];
-  //if (!data.useBendpoints && bendpoints.length > 0) {
-  //  bendpoints = [bendpoints.pop()] as Point[];
-  //}
-
   const d = `M${startPoint.x} ${startPoint.y} ${bendpoints.map((b: Point) => `L${b.x} ${b.y} `).join('')}L${
     endPoint.x
   } ${endPoint.y}`;
@@ -159,7 +147,7 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
             status={tagStatus}
           />
         )}
-        <BaseConnectorTerminal
+        <DefaultConnectorTerminal
           className={startTerminalClass}
           isTarget={false}
           edge={element}
@@ -168,9 +156,8 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
           terminalType={startTerminalType}
           status={startTerminalStatus}
           highlight={dragging || hover}
-          useBendpoints={data.useBendpoints}
         />
-        <BaseConnectorTerminal
+        <DefaultConnectorTerminal
           className={endTerminalClass}
           isTarget
           dragRef={targetDragRef}
@@ -179,7 +166,6 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
           terminalType={endTerminalType}
           status={endTerminalStatus}
           highlight={dragging || hover}
-          useBendpoints={data.useBendpoints}
         />
         {children}
       </g>

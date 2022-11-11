@@ -23,8 +23,8 @@ import {
 import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
 import { GraphEvent } from 'types/Graph';
-import componentFactory from './componentFactories/componentFactory';
-import stylesComponentFactory from './componentFactories/stylesComponentFactory';
+import stylesComponentFactory from './components/stylesComponentFactory';
+import elementFactory from './elements/elementFactory';
 import {
   assignEdgeHealth,
   EdgeData,
@@ -423,8 +423,8 @@ export const GraphPF: React.FC<{
   React.useEffect(() => {
     const c = new Visualization();
     console.log('REGISTER!!!');
+    c.registerElementFactory(elementFactory);
     c.registerLayoutFactory(layoutFactory);
-    c.registerComponentFactory(componentFactory);
     c.registerComponentFactory(stylesComponentFactory);
     setController(c);
     // eslint-disable-next-line react-hooks/exhaustive-deps
