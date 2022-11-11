@@ -6,7 +6,7 @@ class ControlPlaneBadge extends React.Component<{}> {
     render() {
         return (
             <>
-              <Label style={{ marginLeft: 5 }} color="green" isCompact>Control Plane</Label>
+              <Label style={{ marginLeft: 5 }} color="green" isCompact>Control plane</Label>
               {' '} <IstioStatusInline />
             </>
         );

@@ -25,9 +25,9 @@ class NamespaceStatuses extends React.Component<Props> {
       status.inNotReady.length;
     let text: string;
     if (nbItems === 1) {
-      text = switchType(this.props.type, '1 Application', '1 Service', '1 Workload');
+      text = switchType(this.props.type, '1 application', '1 service', '1 workload');
     } else {
-      text = nbItems + switchType(this.props.type, ' Applications', ' Services', ' Workloads');
+      text = nbItems + switchType(this.props.type, ' applications', ' services', ' workloads');
     }
     return (
       <>

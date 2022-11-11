@@ -642,3 +642,50 @@ func (in *MeshService) IstiodResourceThresholds() (*models.IstiodThresholds, err
 
 	return &thresholds, nil
 }
+
+func (in *MeshService) CanaryUpgradeStatus() (*models.CanaryUpgradeStatus, error) {
+	conf := config.Get()
+	upgrade := conf.ExternalServices.Istio.IstioCanaryRevision.Upgrade
+	current := conf.ExternalServices.Istio.IstioCanaryRevision.Current
+	migratedNsList := []string{}
+	pendingNsList := []string{}
+
+	// If there is no canary configured, return empty lists
+	if upgrade == "" {
+		return &models.CanaryUpgradeStatus{MigratedNamespaces: migratedNsList, PendingNamespaces: pendingNsList}, nil
+	}
+
+	// Get migrated and pending namespaces
+	migratedNss, err := in.k8s.GetNamespaces(fmt.Sprintf("istio.io/rev=%s", upgrade))
+	if err != nil {
+		return nil, err
+	}
+	for _, ns := range migratedNss {
+		migratedNsList = append(migratedNsList, ns.Name)
+	}
+
+	pendingNss, err := in.k8s.GetNamespaces("istio-injection=enabled")
+	if err != nil {
+		return nil, err
+	}
+	for _, ns := range pendingNss {
+		pendingNsList = append(pendingNsList, ns.Name)
+	}
+
+	pendingNss, err = in.k8s.GetNamespaces(fmt.Sprintf("istio.io/rev=%s", current))
+	if err != nil {
+		return nil, err
+	}
+	for _, ns := range pendingNss {
+		pendingNsList = append(pendingNsList, ns.Name)
+	}
+
+	status := &models.CanaryUpgradeStatus{
+		CurrentVersion:     current,
+		UpgradeVersion:     upgrade,
+		MigratedNamespaces: migratedNsList,
+		PendingNamespaces:  pendingNsList,
+	}
+
+	return status, nil
+}

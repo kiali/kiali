@@ -68,7 +68,7 @@ class TLSInfo extends React.Component<Props> {
     return (
       <div style={{ textAlign: 'left' }}>
           <div>
-            <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>Min TLS Version</div>
+            <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>Min TLS version</div>
               <Label isCompact color="blue" data-test={"label-TLS"}>
                 {this.props.version} <LockIcon certificatesInformationIndicators={this.props.certificatesInformationIndicators} certsInfo={this.props.certsInfo}></LockIcon>
                 <Tooltip

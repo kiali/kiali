@@ -203,3 +203,13 @@ Then("the minimum TLS version", view => {
   cy.get('[data-test="label-TLS"]')
       .contains('N/A');
 });
+
+Then("the user sees no information related to canary upgrades", view => {
+  cy.get('[data-test="canary-upgrade"]')
+      .should('not.exist');
+});
+
+Then("the user sees information related to canary upgrades", view => {
+  cy.get('[data-test="canary-upgrade"]')
+      .should('exist');
+});

@@ -1438,6 +1438,24 @@ func NewRoutes() (r *Routes) {
 			handlers.IstiodResourceThresholds,
 			true,
 		},
+		// swagger:route GET /api/mesh/canaries/status
+		// ---
+		// Endpoint to get the IstiodCanariesStatus.
+		//              Produces:
+		//              - application/json
+		//
+		//              Schemes: http, https
+		//
+		// responses:
+		//              500: internalError
+		//              200: istiodCanariesStatus
+		{
+			"IstiodCanariesStatus",
+			"GET",
+			"/api/mesh/canaries/status",
+			handlers.IstiodCanariesStatus,
+			true,
+		},
 	}
 
 	return
