@@ -1,13 +1,12 @@
 import * as React from 'react';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import K8sRules, {MOVE_TYPE, K8sRule} from './K8sRequestRouting/K8sRules';
-import K8sRuleBuilder, {K8sRouteBackendRef} from './K8sRequestRouting/K8sRuleBuilder';
+import K8sRuleBuilder from './K8sRequestRouting/K8sRuleBuilder';
+import {K8sRouteBackendRef} from './K8sTrafficShifting';
 import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
 import {getDefaultBackendRefs} from './WizardActions';
-import { MSG_WEIGHTS_NOT_VALID } from "./TrafficShifting";
 
 type Props = {
-  serviceName: string;
   workloads: WorkloadOverview[];
   initRules: K8sRule[];
   onChange: (valid: boolean, k8sRules: K8sRule[]) => void;
@@ -37,7 +36,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
     this.state = {
       category: PATH,
       operator: EXACT,
-      backendRefs: getDefaultBackendRefs(this.props.workloads, this.props.serviceName),
+      backendRefs: getDefaultBackendRefs(this.props.workloads),
       matches: [],
       headerName: '',
       queryParamName: '',
@@ -110,8 +109,6 @@ class K8sRequestRouting extends React.Component<Props, State> {
           newBackendRefs.push({
             name: br.name,
             weight: br.weight,
-            locked: br.locked,
-            maxWeight: br.maxWeight
           })
         );
         const newRule: K8sRule = {
@@ -218,10 +215,10 @@ class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onSelectWeights = (valid: boolean, backendRefs: K8sRouteBackendRef[]) => {
+  onSelectWeights = (backendRefs: K8sRouteBackendRef[]) => {
     this.setState({
       backendRefs: backendRefs,
-      validationMsg: !valid ? MSG_WEIGHTS_NOT_VALID : ''
+      validationMsg: ''
     });
   };
 

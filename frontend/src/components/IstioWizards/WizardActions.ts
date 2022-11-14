@@ -49,7 +49,7 @@ import { FaultInjectionRoute } from './FaultInjection';
 import { TimeoutRetryRoute } from './RequestTimeouts';
 import { DestService, GraphDefinition, NodeType } from '../../types/Graph';
 import { ServiceEntryState } from '../../pages/IstioConfigNew/ServiceEntryForm';
-import { K8sRouteBackendRef } from "./K8sRequestRouting/K8sRuleBuilder";
+import {K8sRouteBackendRef} from './K8sTrafficShifting';
 import { QUERY_PARAMS, PATH, HEADERS, METHOD } from "./K8sRequestRouting/K8sMatchBuilder";
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
@@ -287,6 +287,7 @@ const buildK8sHTTPRouteMatch = (matches: string[]): K8sHTTPRouteMatch => {
   if (matchMethod) {
     matchRoute.method = matchMethod;
   }
+  console.log("matchRoute " + JSON.stringify(matchRoute))
   return matchRoute;
 };
 
@@ -346,7 +347,7 @@ const parseK8sHTTPMatchRequest = (httpRouteMatch: K8sHTTPRouteMatch): string[] =
   if (httpRouteMatch.method) {
     matches.push('method ' + httpRouteMatch.method);
   }
-
+  console.log("matches " + JSON.stringify(matches))
   return matches;
 };
 
@@ -893,6 +894,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
       }
     }
   }
+  console.log("wizardK8sHTTPRoute " + JSON.stringify(wizardK8sHTTPRoute));
   return { dr: wizardDR, vs: wizardVS, gw: wizardGW, k8sgateway: wizardK8sGW, pa: wizardPA, k8shttproute: wizardK8sHTTPRoute };
 };
 
@@ -914,16 +916,15 @@ const getWorkloadsByVersion = (
   return wkdVersionName;
 };
 
-export const getDefaultBackendRefs = (workloads: WorkloadOverview[], serviceName: string): K8sRouteBackendRef[] => {
+export const getDefaultBackendRefs = (workloads: WorkloadOverview[]): K8sRouteBackendRef[] => {
   const wkTraffic = workloads.length < 100 ? Math.floor(100 / workloads.length) : 0;
   const remainTraffic = workloads.length < 100 ? 100 % workloads.length : 0;
-  const backendRefs: K8sRouteBackendRef[] = workloads.map(_ => ({
-    name: serviceName,
-    // @TODO add support of services per versions
-    //name: workload.name,
+  const backendRefs: K8sRouteBackendRef[] = workloads.map(workload => ({
+    name: workload.name,
     weight: wkTraffic,
     locked: false,
     maxWeight: 100,
+    mirrored: false
   }));
   if (remainTraffic > 0) {
     backendRefs[backendRefs.length - 1].weight = backendRefs[backendRefs.length - 1].weight ? backendRefs[backendRefs.length - 1].weight : 0 + remainTraffic;
@@ -1105,7 +1106,7 @@ export const getInitK8sRules = (
         httpRoute.backendRefs.forEach(bRef => {
           rule.backendRefs.push({
             name: bRef.name,
-            weight: !bRef.weight || bRef.weight === 1 ? 100 : bRef.weight
+            weight: !bRef.weight || bRef.weight === 1 ? 100 : bRef.weight,
           });
         });
       }

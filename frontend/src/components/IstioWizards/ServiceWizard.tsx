@@ -642,6 +642,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         items.push({ type: 'virtualservice', items: [this.state.previews.vs], title: 'VirtualService' });
       }
     }
+    console.log("ITEMS " + JSON.stringify(items))
     return items;
   };
 
@@ -735,7 +736,6 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           )}
           {(this.props.type === WIZARD_K8S_REQUEST_ROUTING) && (
             <K8sRequestRouting
-              serviceName={this.props.serviceName}
               workloads={this.props.workloads}
               initRules={getInitK8sRules(this.props.k8sHTTPRoutes)}
               onChange={this.onK8sRulesChange}

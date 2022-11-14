@@ -3,51 +3,38 @@ import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/rea
 import Slider from './Slider/Slider';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { style } from 'typestyle';
-import { PFColors } from '../Pf/PfColors';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
 import { EqualizerIcon } from '@patternfly/react-icons';
-import { getDefaultWeights } from './WizardActions';
+import {getDefaultBackendRefs} from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 type Props = {
   workloads: WorkloadOverview[];
-  initWeights: WorkloadWeight[];
-  onChange: (valid: boolean, workloads: WorkloadWeight[], reset: boolean) => void;
+  initRefs: K8sRouteBackendRef[];
+  onChange: (backendRefs: K8sRouteBackendRef[], reset: boolean) => void;
   showValid: boolean;
   showMirror: boolean;
 };
 
-
 export type K8sRouteBackendRef = {
   name: string;
-  weight?: number;
-  locked: boolean;
-  maxWeight: number;
-  mirrored?: boolean;
+  weight: number;
 };
 
 type State = {
-  workloads: WorkloadWeight[];
+  backendRefs: K8sRouteBackendRef[];
 };
-
-const validationStyle = style({
-  marginBottom: 10,
-  color: PFColors.Red100,
-  textAlign: 'right'
-});
 
 const evenlyButtonStyle = style({
   width: '100%',
   textAlign: 'right'
 });
 
-export const MSG_WEIGHTS_NOT_VALID = 'The sum of all non-mirrored weights must be 100 %';
-
 class K8sTrafficShifting extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      workloads: []
+      backendRefs: []
     };
   }
 
@@ -62,13 +49,13 @@ class K8sTrafficShifting extends React.Component<Props, State> {
     this.setState(
       prevState => {
         return {
-          workloads:
-            prevState.workloads.length === 0 && this.props.initWeights.length > 0
-              ? this.props.initWeights
-              : getDefaultWeights(this.props.workloads)
+          backendRefs:
+            prevState.backendRefs.length === 0 && this.props.initRefs.length > 0
+              ? this.props.initRefs
+              : getDefaultBackendRefs(this.props.workloads)
         };
       },
-      () => this.props.onChange(this.checkTotalWeight(), this.state.workloads, true)
+      () => this.props.onChange(this.state.backendRefs, true)
     );
   };
 
@@ -78,131 +65,42 @@ class K8sTrafficShifting extends React.Component<Props, State> {
         const nodeId: number[] = [];
         let maxWeight = 100;
 
-        // Calculate maxWeight from locked nodes
-        for (let i = 0; i < prevState.workloads.length; i++) {
-          if (prevState.workloads[i].locked) {
-            maxWeight -= prevState.workloads[i].weight;
-          }
-        }
-
         // Set new weight; remember rest of the nodes
-        for (let i = 0; i < prevState.workloads.length; i++) {
-          if (prevState.workloads[i].name === workloadName) {
-            prevState.workloads[i].weight = newWeight;
-            // Don't update maxWeight if node is mirrored
-            if (!prevState.workloads[i].mirrored) {
-              maxWeight -= newWeight;
-            }
-          } else if (!prevState.workloads[i].locked && !prevState.workloads[i].mirrored) {
-            // Only adjust those nodes that are not locked
-            nodeId.push(i);
+        for (let i = 0; i < prevState.backendRefs.length; i++) {
+          if (prevState.backendRefs[i].name === workloadName) {
+            prevState.backendRefs[i].weight = newWeight;
+            maxWeight -= newWeight;
           }
         }
 
         // Distribute pending weights
         let sumWeights = 0;
         for (let j = 0; j < nodeId.length; j++) {
-          if (sumWeights + prevState.workloads[nodeId[j]].weight > maxWeight) {
-            prevState.workloads[nodeId[j]].weight = maxWeight - sumWeights;
+          if (sumWeights + prevState.backendRefs[nodeId[j]].weight > maxWeight) {
+            prevState.backendRefs[nodeId[j]].weight = maxWeight - sumWeights;
           }
-          sumWeights += prevState.workloads[nodeId[j]].weight;
+          sumWeights += prevState.backendRefs[nodeId[j]].weight;
         }
 
         // Adjust last element
         if (nodeId.length > 0 && sumWeights < maxWeight) {
-          prevState.workloads[nodeId[nodeId.length - 1]].weight += maxWeight - sumWeights;
+          prevState.backendRefs[nodeId[nodeId.length - 1]].weight += maxWeight - sumWeights;
         }
 
         return {
-          workloads: prevState.workloads
+          backendRefs: prevState.backendRefs
         };
       },
-      () => this.props.onChange(this.checkTotalWeight(), this.state.workloads, false)
-    );
-  };
-
-  onLock = (workloadName: string, locked: boolean) => {
-    this.setState(prevState => {
-      let maxWeights = 100;
-      for (let i = 0; i < prevState.workloads.length; i++) {
-        if (prevState.workloads[i].name === workloadName) {
-          prevState.workloads[i].locked = locked;
-        }
-        // Calculate maxWeights from locked nodes
-        if (prevState.workloads[i].locked) {
-          maxWeights -= prevState.workloads[i].weight;
-        }
-      }
-      // Update non locked nodes maxWeight
-      for (let i = 0; i < prevState.workloads.length; i++) {
-        if (!prevState.workloads[i].locked && !prevState.workloads[i].mirrored) {
-          prevState.workloads[i].maxWeight = maxWeights;
-        }
-      }
-      return {
-        workloads: prevState.workloads
-      };
-    });
-  };
-
-  onMirror = (workloadName: string, mirrored: boolean) => {
-    this.setState(
-      prevState => {
-        const nodeId: number[] = [];
-        let maxWeight = 100;
-
-        // Reset all mirrored workload but selected one.
-        for (let i = 0; i < prevState.workloads.length; i++) {
-          prevState.workloads[i].mirrored = false;
-          prevState.workloads[i].locked = false;
-          if (mirrored && prevState.workloads[i].name === workloadName) {
-            prevState.workloads[i].mirrored = mirrored;
-            prevState.workloads[i].locked = false;
-          }
-          if (!prevState.workloads[i].mirrored) {
-            nodeId.push(i);
-          }
-        }
-
-        // Distribute pending weights
-        let sumWeights = 0;
-        for (let j = 0; j < nodeId.length; j++) {
-          if (sumWeights + prevState.workloads[nodeId[j]].weight > maxWeight) {
-            prevState.workloads[nodeId[j]].weight = maxWeight - sumWeights;
-          }
-          sumWeights += prevState.workloads[nodeId[j]].weight;
-        }
-
-        // Adjust last element
-        if (nodeId.length > 0 && sumWeights < maxWeight) {
-          prevState.workloads[nodeId[nodeId.length - 1]].weight += maxWeight - sumWeights;
-        }
-
-        return {
-          workloads: prevState.workloads
-        };
-      },
-      () => this.props.onChange(this.checkTotalWeight(), this.state.workloads, false)
-    );
-  };
-
-  checkTotalWeight = (): boolean => {
-    // Check all weights are equal to 100
-    return (
-      this.state.workloads
-        .filter(w => !w.mirrored)
-        .map(w => w.weight)
-        .reduce((a, b) => a + b, 0) === 100
+      () => this.props.onChange(this.state.backendRefs, false)
     );
   };
 
   render() {
-    const isValid = this.checkTotalWeight();
     // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
     // https://github.com/patternfly/patternfly-next/issues/2373
     const workloadCells: ICell[] = [
       {
-        title: 'Destination Workload',
+        title: 'Destination Service',
         transforms: [cellWidth(30) as any],
         props: {}
       },
@@ -212,8 +110,7 @@ class K8sTrafficShifting extends React.Component<Props, State> {
         props: {}
       }
     ];
-    const workloadsRows = this.state.workloads
-      .filter(workload => !workload.mirrored)
+    const workloadsRows = this.state.backendRefs
       .map(workload => {
         return {
           cells: [
@@ -233,7 +130,7 @@ class K8sTrafficShifting extends React.Component<Props, State> {
                 inputFormat="%"
                 value={workload.weight}
                 min={0}
-                max={workload.maxWeight}
+                max={100}
                 maxLimit={100}
                 onSlide={value => {
                   this.onWeight(workload.name, value as number);
@@ -241,64 +138,10 @@ class K8sTrafficShifting extends React.Component<Props, State> {
                 onSlideStop={value => {
                   this.onWeight(workload.name, value as number);
                 }}
-                locked={this.state.workloads.length > 1 ? workload.locked : true}
-                showLock={this.state.workloads.length > 2}
-                onLock={locked => this.onLock(workload.name, locked)}
-                mirrored={workload.mirrored}
-                showMirror={this.props.showMirror && this.state.workloads.length > 1}
-                onMirror={mirrored => this.onMirror(workload.name, mirrored)}
-              />
-            </>
-          ]
-        };
-      });
-    const mirrorCells: ICell[] = [
-      {
-        title: 'Mirrored Workload',
-        transforms: [cellWidth(30) as any],
-        props: {}
-      },
-      {
-        title: 'Mirror Percentage',
-        transforms: [cellWidth(70) as any],
-        props: {}
-      }
-    ];
-    const mirrorRows = this.state.workloads
-      .filter(workload => workload.mirrored)
-      .map(workload => {
-        return {
-          cells: [
-            <>
-              <div>
-                <PFBadge badge={PFBadges.MirroredWorkload} position={TooltipPosition.top} />
-                {workload.name}
-              </div>
-            </>,
-            // This <> wrapper is needed by Slider
-            <>
-              <Slider
-                id={'slider-' + workload.name}
-                key={'slider-' + workload.name}
-                tooltip={true}
-                input={true}
-                inputFormat="%"
-                value={workload.weight}
-                min={0}
-                max={workload.maxWeight}
-                maxLimit={100}
-                onSlide={value => {
-                  this.onWeight(workload.name, value as number);
-                }}
-                onSlideStop={value => {
-                  this.onWeight(workload.name, value as number);
-                }}
-                locked={this.state.workloads.length > 1 ? workload.locked : true}
-                showLock={this.state.workloads.length > 2}
-                onLock={locked => this.onLock(workload.name, locked)}
-                mirrored={workload.mirrored}
-                showMirror={this.props.showMirror}
-                onMirror={mirrored => this.onMirror(workload.name, mirrored)}
+                locked={false}
+                showLock={false}
+                showMirror={false}
+                mirrored={false}
               />
             </>
           ]
@@ -310,12 +153,6 @@ class K8sTrafficShifting extends React.Component<Props, State> {
           <TableHeader />
           <TableBody />
         </Table>
-        {mirrorRows.length > 0 && (
-          <Table cells={mirrorCells} rows={mirrorRows} aria-label="mirrors">
-            <TableHeader />
-            <TableBody />
-          </Table>
-        )}
         {this.props.workloads.length > 1 && (
           <div className={evenlyButtonStyle}>
             <Button variant={ButtonVariant.link} icon={<EqualizerIcon />} onClick={() => this.resetState()}>
@@ -323,7 +160,6 @@ class K8sTrafficShifting extends React.Component<Props, State> {
             </Button>{' '}
           </div>
         )}
-        {this.props.showValid && !isValid && <div className={validationStyle}>{MSG_WEIGHTS_NOT_VALID}</div>}
       </>
     );
   }

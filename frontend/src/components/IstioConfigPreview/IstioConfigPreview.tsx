@@ -91,6 +91,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
       items: cloneDeep(items),
       modalOpen: this.props.isOpen
     });
+    console.log("STATE " + JSON.stringify(this.state));
   };
 
   trafficToText = () => {
