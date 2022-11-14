@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -347,7 +346,7 @@ func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustes
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/metrics", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), ContextKeyAuthInfo, &api.AuthInfo{Token: "test"})
+			context := config.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			getServiceMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
 				return prom, nil
 			})

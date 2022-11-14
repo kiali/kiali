@@ -8,6 +8,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
@@ -16,10 +17,6 @@ import (
 type promClientSupplier func() (*prometheus.Client, error)
 
 var defaultPromClientSupplier = prometheus.NewClient
-
-type contextKey string
-
-var ContextKeyAuthInfo contextKey = "authInfo"
 
 func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService, namespace string) (*models.Namespace, error) {
 	if nsInfo, err := nsServ.GetNamespace(ctx, namespace); err != nil {
@@ -70,7 +67,7 @@ func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, p
 
 // getAuthInfo retrieves the token from the request's context
 func getAuthInfo(r *http.Request) (*api.AuthInfo, error) {
-	authInfoContext := r.Context().Value(ContextKeyAuthInfo)
+	authInfoContext := config.GetAuthInfoContext(r.Context())
 	if authInfoContext != nil {
 		if authInfo, ok := authInfoContext.(*api.AuthInfo); ok {
 			return authInfo, nil

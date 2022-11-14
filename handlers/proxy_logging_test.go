@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -25,7 +24,7 @@ func setupTestLoggingServer(t *testing.T, namespace, pod string) *httptest.Serve
 	mr := mux.NewRouter()
 	path := "/api/namespaces/{namespace}/pods/{pod}/logging"
 	mr.HandleFunc(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), ContextKeyAuthInfo, &api.AuthInfo{Token: "test"})
+		ctx := config.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 		LoggingUpdate(w, r.Clone(ctx))
 	}))
 

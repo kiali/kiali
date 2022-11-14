@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -69,7 +68,7 @@ func setupNamespaceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8S
 
 	mr.HandleFunc("/api/namespaces/{namespace}/health", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), ContextKeyAuthInfo, &api.AuthInfo{Token: "test"})
+			context := config.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			NamespaceHealth(w, r.WithContext(context))
 		}))
 

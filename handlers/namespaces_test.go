@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -150,7 +149,7 @@ func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/metrics", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), ContextKeyAuthInfo, &api.AuthInfo{Token: "test"})
+			context := config.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			getNamespaceMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
 				return client, nil
 			})

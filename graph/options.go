@@ -110,14 +110,6 @@ type Options struct {
 	TelemetryOptions
 }
 
-type contextKey string
-
-func (c contextKey) String() string {
-	return string(c)
-}
-
-var ContextKeyAuthInfo contextKey = "authInfo"
-
 func NewOptions(r *net_http.Request) Options {
 	// path variables (0 or more will be set)
 	vars := mux.Vars(r)
@@ -236,17 +228,13 @@ func NewOptions(r *net_http.Request) Options {
 	// Process namespaces options:
 	namespaceMap := NewNamespaceInfoMap()
 
-	authInfoContext := r.Context().Value(ContextKeyAuthInfo)
-	log.Errorf("%+v", r.Context())
+	authInfoCheck, ok := config.GetAuthInfoContext(r.Context()).(*api.AuthInfo)
+
 	var authInfo *api.AuthInfo
-	if authInfoContext != nil {
-		if authInfoCheck, ok := authInfoContext.(*api.AuthInfo); !ok {
-			Error("authInfo is not of type *api.AuthInfo")
-		} else {
-			authInfo = authInfoCheck
-		}
+	if ok {
+		authInfo = authInfoCheck
 	} else {
-		Error("token missing in request context")
+		Error("token missing in request context or authInfo is not of type *api.AuthInfo")
 	}
 
 	accessibleNamespaces := getAccessibleNamespaces(authInfo)
