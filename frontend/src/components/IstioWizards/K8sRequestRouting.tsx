@@ -108,7 +108,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
         prevState.backendRefs.forEach(br =>
           newBackendRefs.push({
             name: br.name,
-            weight: br.weight,
+            weight: br.weight
           })
         );
         const newRule: K8sRule = {

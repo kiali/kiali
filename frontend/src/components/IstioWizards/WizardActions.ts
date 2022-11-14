@@ -287,7 +287,6 @@ const buildK8sHTTPRouteMatch = (matches: string[]): K8sHTTPRouteMatch => {
   if (matchMethod) {
     matchRoute.method = matchMethod;
   }
-  console.log("matchRoute " + JSON.stringify(matchRoute))
   return matchRoute;
 };
 
@@ -347,7 +346,7 @@ const parseK8sHTTPMatchRequest = (httpRouteMatch: K8sHTTPRouteMatch): string[] =
   if (httpRouteMatch.method) {
     matches.push('method ' + httpRouteMatch.method);
   }
-  console.log("matches " + JSON.stringify(matches))
+
   return matches;
 };
 
@@ -894,7 +893,6 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
       }
     }
   }
-  console.log("wizardK8sHTTPRoute " + JSON.stringify(wizardK8sHTTPRoute));
   return { dr: wizardDR, vs: wizardVS, gw: wizardGW, k8sgateway: wizardK8sGW, pa: wizardPA, k8shttproute: wizardK8sHTTPRoute };
 };
 

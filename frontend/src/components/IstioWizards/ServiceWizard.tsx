@@ -642,7 +642,6 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         items.push({ type: 'virtualservice', items: [this.state.previews.vs], title: 'VirtualService' });
       }
     }
-    console.log("ITEMS " + JSON.stringify(items))
     return items;
   };
 
