@@ -1,9 +1,9 @@
 package kubernetes
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -247,7 +247,7 @@ func TestParseRegistryConfig(t *testing.T) {
 	assert := assert.New(t)
 
 	configz := "../tests/data/registry/registry-configz.json"
-	bRegistryz, err := ioutil.ReadFile(configz)
+	bRegistryz, err := os.ReadFile(configz)
 	assert.NoError(err)
 
 	rConfig := map[string][]byte{
@@ -270,7 +270,7 @@ func TestParseRegistryEndpoints(t *testing.T) {
 	assert := assert.New(t)
 
 	endpointz := "../tests/data/registry/registry-endpointz.json"
-	bEndpointz, err := ioutil.ReadFile(endpointz)
+	bEndpointz, err := os.ReadFile(endpointz)
 	assert.NoError(err)
 
 	rEndpoints := map[string][]byte{
@@ -289,7 +289,7 @@ func TestRegistryServices(t *testing.T) {
 	assert := assert.New(t)
 
 	registryz := "../tests/data/registry/registry-registryz.json"
-	bRegistryz, err := ioutil.ReadFile(registryz)
+	bRegistryz, err := os.ReadFile(registryz)
 	assert.NoError(err)
 
 	rRegistry := map[string][]byte{

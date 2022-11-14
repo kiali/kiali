@@ -1,7 +1,7 @@
 package kubernetes
 
 import (
-	"io/ioutil"
+	"os"
 	"time"
 )
 
@@ -19,7 +19,7 @@ func GetKialiToken() (string, error) {
 		if remoteSecret, err := GetRemoteSecret(RemoteSecretData); err == nil {
 			KialiToken = remoteSecret.Users[0].User.Token
 		} else {
-			token, err := ioutil.ReadFile(DefaultServiceAccountPath)
+			token, err := os.ReadFile(DefaultServiceAccountPath)
 			if err != nil {
 				return "", err
 			}

@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -179,7 +179,7 @@ func TestAggregateMetricsDefault(t *testing.T) {
 	}
 
 	// default has direction=outbound
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 	assert.Equal(t, 400, resp.StatusCode)
 	assert.Contains(t, string(actual), "'direction' must be 'inbound'")
 }
@@ -236,7 +236,7 @@ func TestAggregateMetricsWithParams(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
@@ -281,7 +281,7 @@ func TestAggregateMetricsBadDirection(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, 400, resp.StatusCode)
 	assert.Contains(t, string(actual), "'direction' must be 'inbound'")
@@ -306,7 +306,7 @@ func TestAggregateMetricsBadReporter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, 400, resp.StatusCode)
 	assert.Contains(t, string(actual), "'reporter' must be 'destination'")

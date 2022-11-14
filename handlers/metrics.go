@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -324,7 +324,7 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQu
 
 // MetricsStats is the API handler to compute some stats based on metrics
 func MetricsStats(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return

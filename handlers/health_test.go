@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -44,7 +44,7 @@ func TestNamespaceAppHealth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, _ := ioutil.ReadAll(resp.Body)
+	actual, _ := io.ReadAll(resp.Body)
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))

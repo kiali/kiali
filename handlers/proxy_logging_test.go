@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -58,7 +58,7 @@ func TestProxyLoggingSucceeds(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	assert.Equalf(200, resp.StatusCode, "response text: %s", string(body))
 }
 
@@ -77,7 +77,7 @@ func TestMissingQueryParamFails(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	assert.Equalf(400, resp.StatusCode, "response text: %s", string(body))
 }
 
@@ -96,6 +96,6 @@ func TestIncorrectQueryParamFails(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	assert.Equalf(400, resp.StatusCode, "response text: %s", string(body))
 }
