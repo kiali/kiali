@@ -67,8 +67,11 @@ export const generateRequestHealth = (
 };
 
 export const serverRateConfig = {
+  accesibleNamespaces: [],
+  authStrategy: '',
   clusters: {},
   gatewayAPIEnabled: false,
+  logLevel: '',
   kialiFeatureFlags: {
     certificatesInformationIndicators: {
       enabled: true
