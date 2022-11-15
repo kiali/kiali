@@ -97,6 +97,7 @@ export type ServiceWizardProps = {
   update: boolean;
   namespace: string;
   serviceName: string;
+  servicePort?: number;
   tlsStatus?: TLSStatus;
   createOrUpdate: boolean;
   workloads: WorkloadOverview[];
@@ -886,6 +887,10 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
                 matches: [buildK8sHTTPRouteMatch(rule.matches)],
                 backendRefs: rule.backendRefs
               });
+            } else {
+              wizardK8sHTTPRoute!.spec!.rules!.push({
+                backendRefs: rule.backendRefs
+              });
             }
           });
         }
@@ -919,10 +924,7 @@ export const getDefaultBackendRefs = (workloads: WorkloadOverview[]): K8sRouteBa
   const remainTraffic = workloads.length < 100 ? 100 % workloads.length : 0;
   const backendRefs: K8sRouteBackendRef[] = workloads.map(workload => ({
     name: workload.name,
-    weight: wkTraffic,
-    locked: false,
-    maxWeight: 100,
-    mirrored: false
+    weight: wkTraffic
   }));
   if (remainTraffic > 0) {
     backendRefs[backendRefs.length - 1].weight = backendRefs[backendRefs.length - 1].weight ? backendRefs[backendRefs.length - 1].weight : 0 + remainTraffic;

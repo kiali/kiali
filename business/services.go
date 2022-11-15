@@ -253,11 +253,13 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 			svcReferences = append(svcReferences, &ref)
 		}
 		for _, gw := range svcK8sGateways {
-			ref := models.BuildKey(gw.Kind, gw.Name, gw.Namespace)
+			// Should be K8s type to generate correct link
+			ref := models.BuildKey(kubernetes.K8sGatewayType, gw.Name, gw.Namespace)
 			svcReferences = append(svcReferences, &ref)
 		}
 		for _, route := range svcK8sHTTPRoutes {
-			ref := models.BuildKey(route.Kind, route.Name, route.Namespace)
+			// Should be K8s type to generate correct link
+			ref := models.BuildKey(kubernetes.K8sHTTPRouteType, route.Name, route.Namespace)
 			svcReferences = append(svcReferences, &ref)
 		}
 		svcReferences = FilterUniqueIstioReferences(svcReferences)

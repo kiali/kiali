@@ -735,6 +735,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           )}
           {(this.props.type === WIZARD_K8S_REQUEST_ROUTING) && (
             <K8sRequestRouting
+              servicePort={this.props.servicePort}
               workloads={this.props.workloads}
               initRules={getInitK8sRules(this.props.k8sHTTPRoutes)}
               onChange={this.onK8sRulesChange}

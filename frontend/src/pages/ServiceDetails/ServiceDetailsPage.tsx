@@ -16,7 +16,7 @@ import TrafficDetails from 'components/TrafficList/TrafficDetails';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import {getServiceWizardLabel, ServiceDetailsInfo} from '../../types/ServiceInfo';
+import {getServicePort, getServiceWizardLabel, ServiceDetailsInfo} from '../../types/ServiceInfo';
 import {
   Gateway,
   K8sGateway,
@@ -207,6 +207,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       <ServiceWizardDropdown
         namespace={this.props.match.params.namespace}
         serviceName={this.state.serviceDetails.service.name}
+        servicePort={getServicePort(this.state.serviceDetails.service)}
         show={false}
         readOnly={getServiceWizardLabel(this.state.serviceDetails.service) !== ''}
         workloads={this.state.serviceDetails.workloads || []}

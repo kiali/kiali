@@ -107,6 +107,7 @@ class K8sRules extends React.Component<Props> {
 
     let isValid: boolean = true;
     const matchAll: number = this.matchAllIndex(this.props.k8sRules);
+    console.log("this.props.k8sRules" + JSON.stringify(this.props.k8sRules))
     const routeRules =
       this.props.k8sRules.length > 0
         ? this.props.k8sRules.map((rule, order) => {

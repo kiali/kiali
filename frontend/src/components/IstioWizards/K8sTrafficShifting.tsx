@@ -19,6 +19,7 @@ type Props = {
 export type K8sRouteBackendRef = {
   name: string;
   weight: number;
+  port?: number;
 };
 
 type State = {

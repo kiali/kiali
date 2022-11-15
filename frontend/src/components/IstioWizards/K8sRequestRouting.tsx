@@ -7,6 +7,7 @@ import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRou
 import {getDefaultBackendRefs} from './WizardActions';
 
 type Props = {
+  servicePort?: number;
   workloads: WorkloadOverview[];
   initRules: K8sRule[];
   onChange: (valid: boolean, k8sRules: K8sRule[]) => void;
@@ -108,7 +109,8 @@ class K8sRequestRouting extends React.Component<Props, State> {
         prevState.backendRefs.forEach(br =>
           newBackendRefs.push({
             name: br.name,
-            weight: br.weight
+            weight: br.weight,
+            port: this.props.servicePort ? this.props.servicePort : 80,
           })
         );
         const newRule: K8sRule = {

@@ -35,6 +35,7 @@ import { deleteServiceTrafficRouting } from "services/Api";
 type Props = {
   namespace: string;
   serviceName: string;
+  servicePort?: number;
   show: boolean;
   readOnly: boolean;
   workloads: WorkloadOverview[];
@@ -220,6 +221,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
           update={this.state.updateWizard}
           namespace={this.props.namespace}
           serviceName={this.props.serviceName}
+          servicePort={this.props.servicePort}
           workloads={validWorkloads}
           createOrUpdate={canCreate(this.props.istioPermissions) || canUpdate(this.props.istioPermissions)}
           virtualServices={this.props.virtualServices}

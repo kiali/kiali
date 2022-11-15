@@ -171,3 +171,15 @@ export function getServiceWizardLabel(serviceDetails: Service): string {
     return '';
   }
 }
+
+export function getServicePort(serviceDetails: Service): number {
+  let port = 0;
+  if (serviceDetails && serviceDetails.ports) {
+    serviceDetails.ports.forEach(p => {
+      if (p.port) {
+        port = p.port;
+      }
+    });
+  }
+  return port;
+}

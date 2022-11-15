@@ -82,6 +82,7 @@ class IstioObjectLink extends React.Component<IstioObjectProps> {
   render() {
     const { name, namespace, type, query } = this.props;
     const href = GetIstioObjectUrl(name, namespace, type, query);
+    console.log("href " + href + " " + type)
     return isParentKiosk(this.props.kiosk) ? (
       <Link
         to={''}
