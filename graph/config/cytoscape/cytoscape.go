@@ -256,6 +256,12 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		addNodeTelemetry(n, nd)
 
 		// HealthData && HealthDataApp S1040: type assertion to the same type: val already has type interface{}
+		if val, ok := n.Metadata[graph.HealthData]; ok {
+			nd.HealthData = val
+		}
+		if val, ok := n.Metadata[graph.HealthDataApp]; ok {
+			nd.HealthDataApp = val
+		}
 
 		// set k8s labels, if any
 		if val, ok := n.Metadata[graph.Labels]; ok {
