@@ -1,19 +1,18 @@
-/*
-Package cytoscape provides conversion from our graph to the CystoscapeJS
-configuration json model.
+// Package cytoscape provides conversion from our graph to the CystoscapeJS
+// configuration json model.
+//
+// The following links are useful for understanding CytoscapeJS and it's configuration:
+//
+// Main page:   http://js.cytoscape.org/
+// JSON config: http://js.cytoscape.org/#notation/elements-json
+// Demos:       http://js.cytoscape.org/#demos
+//
+// Algorithm: Process the graph structure adding nodes and edges, decorating each
+//            with information provided.  An optional second pass generates compound
+//            nodes for requested boxing.
+//
+// The package provides the Cytoscape implementation of graph/ConfigVendor.
 
-The following links are useful for understanding CytoscapeJS and it's configuration:
-
-Main page:   http://js.cytoscape.org/
-JSON config: http://js.cytoscape.org/#notation/elements-json
-Demos:       http://js.cytoscape.org/#demos
-
-Algorithm: Process the graph structure adding nodes and edges, decorating each
-with information provided.  An optional second pass generates compound
-nodes for requested boxing.
-
-The package provides the Cytoscape implementation of graph/ConfigVendor.
-*/
 package cytoscape
 
 import (
@@ -255,7 +254,6 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 		addNodeTelemetry(n, nd)
 
-		// HealthData && HealthDataApp S1040: type assertion to the same type: val already has type interface{}
 		if val, ok := n.Metadata[graph.HealthData]; ok {
 			nd.HealthData = val
 		}

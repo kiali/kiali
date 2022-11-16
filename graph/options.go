@@ -228,13 +228,17 @@ func NewOptions(r *net_http.Request) Options {
 	// Process namespaces options:
 	namespaceMap := NewNamespaceInfoMap()
 
-	authInfoCheck, ok := config.GetAuthInfoContext(r.Context()).(*api.AuthInfo)
+	authInfoContext := config.GetAuthInfoContext(r.Context())
 
 	var authInfo *api.AuthInfo
-	if ok {
-		authInfo = authInfoCheck
+	if authInfoContext != nil {
+		if authInfoCheck, ok := authInfoContext.(*api.AuthInfo); !ok {
+			Error("authInfo is not of type *api.AuthInfo")
+		} else {
+			authInfo = authInfoCheck
+		}
 	} else {
-		Error("token missing in request context or authInfo is not of type *api.AuthInfo")
+		Error("token missing in request context")
 	}
 
 	accessibleNamespaces := getAccessibleNamespaces(authInfo)

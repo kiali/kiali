@@ -176,7 +176,7 @@ func aggregate(sample *model.Sample, requests map[string]map[string]float64) {
 	if _, ok := requests[protocol]; !ok {
 		requests[protocol] = make(map[string]float64)
 	}
-	// S1036: When accessing a map key that doesn't exist yet, one receives a zero value. Often, the zero value is a suitable value, for example when using append or doing integer math.
+
 	requests[protocol][code] += float64(sample.Value)
 }
 
