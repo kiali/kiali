@@ -30,7 +30,7 @@ import IstioConfigHelp from './IstioConfigHelp';
 import IstioConfigReferences from './IstioConfigReferences';
 import IstioConfigValidationReferences from './IstioConfigValidationReferences';
 import IstioStatusMessageList from './IstioStatusMessageList';
-import {isKioskMode} from "../../../utils/SearchParamUtils";
+import { KioskElement } from "../../../components/Kiosk/KioskElement";
 import {PFColors} from "../../../components/Pf/PfColors";
 import {GetIstioObjectUrl} from "../../../components/Link/IstioObjectLink";
 
@@ -183,14 +183,14 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
             ></IstioConfigHelp>
           </StackItem>
         )}
-        {isKioskMode() && (
+        <KioskElement>
           <StackItem>
             <Tooltip content={"This is a Read only view of the YAML including Validations. It is possible to edit directly in Kiali "} position={TooltipPosition.top}>
               <Label color="green" isCompact>Read only mode</Label>
             </Tooltip>
             <a href={urlInKiali} style={{marginLeft: '5px', fontSize: '85%', color: PFColors.ActiveText}} target="_blank" rel="noreferrer">Edit in Kiali</a>
           </StackItem>
-        )}
+        </KioskElement>
       </Stack>
     );
   }

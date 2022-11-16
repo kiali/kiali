@@ -582,7 +582,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         {this.state.error && (
           <ErrorSection error={this.state.error} />
         )}
-        {!this.state.error && (
+        {!this.state.error && !isParentKiosk(this.props.kiosk) && (
         <ParameterizedTabs
           id="basic-tabs"
           onSelect={tabValue => {
@@ -595,11 +595,14 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
           mountOnEnter={false}
           unmountOnExit={true}
         >
-          <Tab key="istio-yaml" title={`${!isParentKiosk(this.props.kiosk) ? 'YAML' : 'Validations'} ${this.state.isModified ? ' * ' : ''}`} eventKey={0}>
+          <Tab key="istio-yaml" title={`YAML ${this.state.isModified ? ' * ' : ''}`} eventKey={0}>
             <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>
           </Tab>
         </ParameterizedTabs>
           )}
+        {!this.state.error && isParentKiosk(this.props.kiosk) && (
+          <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>
+        )}
         <Prompt
           message={location => {
             if (this.state.isModified) {
