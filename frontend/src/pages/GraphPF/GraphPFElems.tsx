@@ -32,6 +32,7 @@ import Namespace from 'types/Namespace';
 import _ from 'lodash';
 import { PFColors } from 'components/Pf/PfColors';
 import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
+import { Span } from 'types/JaegerInfo';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
@@ -72,11 +73,14 @@ export type NodeData = DecoratedGraphNodeData & {
 
 export type EdgeData = DecoratedGraphEdgeData & {
   endTerminalType: EdgeTerminalType;
+  hasSpans?: Span[];
+  isFind?: boolean;
+  isHighlighted?: boolean;
   isSelected?: boolean;
+  isUnhighlighted?: boolean;
   pathStyle?: React.CSSProperties;
   tag?: string;
   tagStatus?: NodeStatus;
-  useBendpoints?: boolean;
 };
 
 export type GraphPFSettings = {
@@ -515,31 +519,37 @@ const getEdgeStatus = (data: EdgeData): NodeStatus => {
   }
 };
 
-const getPathStyle = (data: EdgeData): React.CSSProperties => {
+const getPathStyleStroke = (data: EdgeData): PFColors => {
   if (!data.hasTraffic) {
-    return { stroke: EdgeColorDead };
+    return EdgeColorDead;
   }
   if (data.protocol === 'tcp') {
-    return { stroke: EdgeColorTCPWithTraffic };
+    return EdgeColorTCPWithTraffic;
   }
-
   switch (data.healthStatus) {
     case FAILURE.name:
-      return { stroke: EdgeColorFailure };
+      return EdgeColorFailure;
     case DEGRADED.name:
-      return { stroke: EdgeColorDegraded };
+      return EdgeColorDegraded;
     default:
-      return { stroke: EdgeColor };
+      return EdgeColor;
   }
+};
+
+const getPathStyle = (data: EdgeData): React.CSSProperties => {
+  return {
+    stroke: getPathStyleStroke(data),
+    strokeWidth: 5
+  } as React.CSSProperties;
 };
 
 export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettings): void => {
   const data = edge.data as EdgeData;
 
   data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.cross : EdgeTerminalType.directional;
+  data.pathStyle = getPathStyle(data);
   data.tag = getEdgeLabel(edge, nodeMap, settings);
   data.tagStatus = getEdgeStatus(data);
-  data.pathStyle = getPathStyle(data);
 };
 
 export const assignEdgeHealth = (edges: EdgeModel[], nodeMap: NodeMap, settings: GraphPFSettings) => {

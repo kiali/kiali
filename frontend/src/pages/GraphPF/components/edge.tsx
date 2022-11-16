@@ -23,11 +23,16 @@ import {
 import DefaultConnectorTag from '@patternfly/react-topology/dist/esm/components/edges/DefaultConnectorTag';
 import { getConnectorStartPoint } from '@patternfly/react-topology/dist/esm/components/edges/terminals/terminalUtils';
 import { EdgeData } from '../GraphPFElems';
+import { PFColors } from 'components/Pf/PfColors';
 
-// This is a copy of PFT DefaultEdge (v4.68.3), then slightly modified.  I don't see a better way to really
+// This is a copy of PFT DefaultEdge (v4.68.3), then modified.  I don't see a better way to really
 // do this because DefaultEdge doesn't really seem itself extensible and to add certain behavior you have
 // to reimplement the rendered element.  This supports the following customizations:
 //   [Edge] element.data.pathStyle?: React.CSSProperties // additional CSS stylings for the edge/path (not the endpoint).
+//   [Edge] element.data.isFind?: boolean                // adds graph-find overlay
+//   [Edge] element.data.isHighlighted?: boolean         // adds highlight effects
+//   [Edge] element.data.isUnhighlighted?: boolean       // adds unhighlight effects
+//   [Edge] element.data.hasSpans?: Span[]               // adds trace overlay
 
 type BaseEdgeProps = {
   children?: React.ReactNode;
@@ -49,6 +54,15 @@ type BaseEdgeProps = {
 } & Partial<
   WithRemoveConnectorProps & WithSourceDragProps & WithTargetDragProps & WithSelectionProps & WithContextMenuProps
 >;
+
+const ColorFind = PFColors.Gold400;
+const ColorSpan = PFColors.Purple200;
+const OverlayOpacity = 0.3;
+const OverlayWidth = 40;
+//const OpacityUnhighlightLeast = 0.5;
+//const OpacityUnhighlightMedium = 0.3;
+//const OpacityUnhighlightMost = 0.1;
+//const OpacityUnhighlightLabel = 0.3;
 
 const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
   element,
@@ -76,8 +90,6 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
   onContextMenu
 }) => {
   const [hover, hoverRef] = useHover();
-  const startPoint = element.getStartPoint();
-  const endPoint = element.getEndPoint();
 
   React.useLayoutEffect(() => {
     if (hover && !dragging) {
@@ -95,16 +107,18 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
     selected && !dragging && 'pf-m-selected'
   );
 
-  const data = element.getData() as EdgeData;
-  const bendpoints = !!data.useBendpoints ? element.getBendpoints() : ([] as Point[]);
-
+  const startPoint = element.getStartPoint();
+  const endPoint = element.getEndPoint();
   const edgeAnimationDuration = animationDuration ?? getEdgeAnimationDuration(element.getEdgeAnimationSpeed());
   const linkClassName = css(styles.topologyEdgeLink, getEdgeStyleClassModifier(element.getEdgeStyle()));
-  const pathStyle: React.CSSProperties = data.pathStyle || {};
 
+  const bendpoints = element.getBendpoints();
   const d = `M${startPoint.x} ${startPoint.y} ${bendpoints.map((b: Point) => `L${b.x} ${b.y} `).join('')}L${
     endPoint.x
   } ${endPoint.y}`;
+
+  const data = element.getData() as EdgeData;
+  const pathStyle: React.CSSProperties = data.pathStyle || {};
 
   const bgStartPoint =
     !startTerminalType || startTerminalType === EdgeTerminalType.none
@@ -138,6 +152,12 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
           d={d}
           style={{ animationDuration: `${edgeAnimationDuration}s`, ...pathStyle }}
         />
+        {!!data.hasSpans && (
+          <path d={d} style={{ strokeWidth: OverlayWidth, stroke: ColorSpan, strokeOpacity: OverlayOpacity }} />
+        )}
+        {!!data.isFind && (
+          <path d={d} style={{ strokeWidth: OverlayWidth, stroke: ColorFind, strokeOpacity: OverlayOpacity }} />
+        )}
         {tag && (
           <DefaultConnectorTag
             className={tagClass}

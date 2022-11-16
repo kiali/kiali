@@ -3,6 +3,8 @@ import BaseEdge from '../components/edge';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
 import * as React from 'react';
 
+// This is the registered Edge component override that utilizes our customized Edge.tsx component.
+
 type StyleEdgeProps = {
   element: Edge;
 } & WithSelectionProps;

@@ -23,6 +23,7 @@ import {
 import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
 import { GraphEvent } from 'types/Graph';
+import { JaegerTrace } from 'types/JaegerInfo';
 import stylesComponentFactory from './components/stylesComponentFactory';
 import elementFactory from './elements/elementFactory';
 import {
@@ -36,6 +37,7 @@ import {
   setNodeLabel
 } from './GraphPFElems';
 import layoutFactory from './layouts/layoutFactory';
+import { hideTrace, showTrace } from './TracePF';
 
 export const HOVER_EVENT = 'hover';
 
@@ -68,8 +70,9 @@ export const TopologyContent: React.FC<{
   graphSettings: GraphPFSettings;
   onReady: (controller: any) => void;
   options: TopologyOptions;
+  trace?: JaegerTrace;
   updateSummary: (event: GraphEvent) => void;
-}> = ({ graphData, graphSettings, options, onReady, updateSummary }) => {
+}> = ({ graphData, graphSettings, onReady, options, trace, updateSummary }) => {
   const controller = useVisualizationController();
 
   // update hover as the mouse moves
@@ -113,7 +116,6 @@ export const TopologyContent: React.FC<{
     }
   }, [controller]);
 
-  //TODO: Find a way to block all animation and just have this called on final layout
   const onLayoutEnd = React.useCallback(() => {
     //fit view to new loaded elements
     if (requestFit) {
@@ -166,6 +168,23 @@ export const TopologyContent: React.FC<{
       requestFit = true;
     }
   }, [controller, options.layout, setDetailsLevel]);
+
+  //fit view to elements
+  React.useEffect(() => {
+    if (!controller || !controller.hasGraph()) {
+      console.error('fitView called before controller graph');
+      return undefined;
+    }
+
+    if (trace) {
+      showTrace(controller, graphData.fetchParams.graphType, trace);
+      return () => {
+        hideTrace(controller);
+      };
+    }
+
+    return undefined;
+  }, [controller, graphData, trace]);
 
   //update details on low / med scale change
   React.useEffect(() => {
@@ -415,8 +434,9 @@ export const GraphPF: React.FC<{
   graphData: GraphData;
   graphSettings: GraphPFSettings;
   onReady: (controller: any) => void;
+  trace?: JaegerTrace;
   updateSummary: (graphEvent: GraphEvent) => void;
-}> = ({ graphData, graphSettings, onReady, updateSummary }) => {
+}> = ({ graphData, graphSettings, onReady, trace, updateSummary }) => {
   //create controller on startup and register factories
   const [controller, setController] = React.useState<Visualization>();
 
@@ -447,6 +467,7 @@ export const GraphPF: React.FC<{
         graphSettings={graphSettings}
         onReady={onReady}
         options={DefaultOptions}
+        trace={trace}
         updateSummary={updateSummary}
       />
     </VisualizationProvider>
