@@ -192,6 +192,7 @@ func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, 
 		}
 	}
 	if !istiodReachable {
+		// TODO !istiod
 		return nil, fmt.Errorf("unable to proxy Istiod pods. " +
 			"Make sure your Kubernetes API server has access to the Istio control plane through 8080 port")
 	}
@@ -222,6 +223,7 @@ func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, 
 			} else {
 				syncChan <- map[string][]byte{name: res}
 			}
+
 		}(istiod.Name, istiod.Namespace)
 	}
 

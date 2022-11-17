@@ -100,9 +100,10 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 			ServiceSelector: criteria.ServiceSelector,
 		}
 		rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
+		// TODO !Istiod
 		if err2 != nil {
 			log.Errorf("Error fetching Registry Services per namespace %s: %s", criteria.Namespace, err2)
-			errChan <- err2
+			//errChan <- err2
 		}
 	}()
 
