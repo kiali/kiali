@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
@@ -24,7 +25,7 @@ func setupTestLoggingServer(t *testing.T, namespace, pod string) *httptest.Serve
 	mr := mux.NewRouter()
 	path := "/api/namespaces/{namespace}/pods/{pod}/logging"
 	mr.HandleFunc(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := config.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
+		ctx := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 		LoggingUpdate(w, r.Clone(ctx))
 	}))
 
