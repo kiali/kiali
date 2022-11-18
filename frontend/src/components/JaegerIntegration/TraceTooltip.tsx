@@ -4,7 +4,7 @@ import { pluralize } from '@patternfly/react-core';
 import { ChartCursorFlyout, ChartLabelProps } from '@patternfly/react-charts';
 import { style } from 'typestyle';
 import { KialiAppState } from 'store/Store';
-import { averageSpanDuration, allStatsIntervals, reduceMetricsStats, StatsMatrix } from 'utils/tracing/TraceStats';
+import { averageSpanDuration, reduceMetricsStats, StatsMatrix } from 'utils/tracing/TraceStats';
 import { JaegerLineInfo } from './JaegerScatter';
 import { JaegerTrace } from 'types/JaegerInfo';
 import { renderTraceHeatMap } from './JaegerResults/StatsComparison';
@@ -51,9 +51,7 @@ class TraceLabel extends React.Component<LabelProps> {
           <div className={titleStyle}>{this.props.trace.traceName || '(Missing root span)'}</div>
           <br />
           <div className={contentStyle}>
-            <div className={leftStyle}>
-              {hasStats ? renderTraceHeatMap(this.props.statsMatrix!, allStatsIntervals, true) : 'n/a'}
-            </div>
+            <div className={leftStyle}>{hasStats ? renderTraceHeatMap(this.props.statsMatrix!, true) : 'n/a'}</div>
             <div>
               {formatDuration(this.props.trace.duration)}
               <br />
@@ -69,7 +67,7 @@ class TraceLabel extends React.Component<LabelProps> {
 }
 
 const mapStateToProps = (state: KialiAppState, props: any) => {
-  const { matrix, isComplete } = reduceMetricsStats(props.trace, allStatsIntervals, state.metricsStats.data);
+  const { matrix, isComplete } = reduceMetricsStats(props.trace, state.metricsStats.data, true);
   return {
     statsMatrix: matrix,
     isStatsMatrixComplete: isComplete

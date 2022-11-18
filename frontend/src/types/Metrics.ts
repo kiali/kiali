@@ -12,7 +12,7 @@ export type ControlPlaneMetricsMap = {
   istiod_proxy_time?: Metric[];
   istiod_cpu?: Metric[];
   istiod_mem?: Metric[];
-}
+};
 
 export type IstioMetricsMap = {
   grpc_received?: Metric[];
@@ -48,6 +48,7 @@ export interface MetricsStatsResult {
 export type MetricsStatsMap = { [key: string]: MetricsStats };
 
 export interface MetricsStats {
+  isCompact: boolean;
   responseTimes: Stat[];
 }
 

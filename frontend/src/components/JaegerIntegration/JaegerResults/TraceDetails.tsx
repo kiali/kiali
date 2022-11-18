@@ -4,7 +4,6 @@ import { KialiDispatch } from 'types/Redux';
 import _round from 'lodash/round';
 import { Button, ButtonVariant, Card, CardBody, Grid, GridItem, Tooltip } from '@patternfly/react-core';
 import { InfoAltIcon, WarningTriangleIcon } from '@patternfly/react-icons';
-
 import { JaegerTrace, RichSpanData } from 'types/JaegerInfo';
 import JaegerTraceTitleContainer from './JaegerTraceTitle';
 import { CytoscapeGraphSelectorBuilder } from 'components/CytoscapeGraph/CytoscapeGraphSelector';
@@ -31,23 +30,22 @@ import { HeatMap } from 'components/HeatMap/HeatMap';
 import { formatDuration, sameSpans } from 'utils/tracing/TracingHelper';
 
 type ReduxProps = {
-  loadMetricsStats: (queries: MetricsStatsQuery[]) => void;
+  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => void;
   setTraceId: (traceId?: string) => void;
 };
 
 type Props = ReduxProps & {
-  otherTraces: JaegerTrace[];
+  isStatsMatrixComplete: boolean;
   jaegerURL: string;
   namespace: string;
+  otherTraces: JaegerTrace[];
+  statsMatrix?: StatsMatrix;
   target: string;
   targetKind: TargetKind;
   trace?: JaegerTrace;
-  statsMatrix?: StatsMatrix;
-  isStatsMatrixComplete: boolean;
-}
+};
 
 interface State {}
-export const heatmapIntervals = ['10m', '60m', '6h'];
 
 class TraceDetails extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -75,8 +73,8 @@ class TraceDetails extends React.Component<Props, State> {
   }
 
   private fetchComparisonMetrics(spans: RichSpanData[]) {
-    const queries = buildQueriesFromSpans(spans);
-    this.props.loadMetricsStats(queries);
+    const queries = buildQueriesFromSpans(spans, false);
+    this.props.loadMetricsStats(queries, false);
   }
 
   private getGraphURL = (traceID: string) => {
@@ -223,7 +221,7 @@ class TraceDetails extends React.Component<Props, State> {
               {this.props.statsMatrix && (
                 <>
                   <strong>Compared with metrics: </strong>
-                  {renderTraceHeatMap(this.props.statsMatrix, heatmapIntervals, false)}
+                  {renderTraceHeatMap(this.props.statsMatrix, false)}
                   {!this.props.isStatsMatrixComplete && (
                     <>
                       <WarningTriangleIcon /> Incomplete data, check Span Details
@@ -252,11 +250,7 @@ class TraceDetails extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState) => {
   if (state.jaegerState.selectedTrace) {
-    const { matrix, isComplete } = reduceMetricsStats(
-      state.jaegerState.selectedTrace,
-      heatmapIntervals,
-      state.metricsStats.data
-    );
+    const { matrix, isComplete } = reduceMetricsStats(state.jaegerState.selectedTrace, state.metricsStats.data, false);
     return {
       trace: state.jaegerState.selectedTrace,
       statsMatrix: matrix,
@@ -271,7 +265,8 @@ const mapStateToProps = (state: KialiAppState) => {
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId)),
-  loadMetricsStats: (queries: MetricsStatsQuery[]) => dispatch(MetricsStatsThunkActions.load(queries))
+  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
+    dispatch(MetricsStatsThunkActions.load(queries, isCompact))
 });
 
 const TraceDetailsContainer = connect(mapStateToProps, mapDispatchToProps)(TraceDetails);

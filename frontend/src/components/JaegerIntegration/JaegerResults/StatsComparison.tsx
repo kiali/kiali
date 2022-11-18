@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { InfoAltIcon } from '@patternfly/react-icons';
 import _round from 'lodash/round';
-
 import { HeatMap } from 'components/HeatMap/HeatMap';
 import { MetricsStats } from 'types/Metrics';
 import { PFColors } from 'components/Pf/PfColors';
@@ -9,14 +8,15 @@ import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import { EnvoySpanInfo, RichSpanData } from 'types/JaegerInfo';
 import {
   compactStatsIntervals,
-  allStatsIntervals,
+  statsIntervals,
   getSpanStats,
-  statsAvgWithQuantiles,
+  statsQuantilesWithAvg,
   StatsMatrix,
   statsToMatrix,
   StatsWithIntervalIndex,
   statsPerPeer,
-  statsCompareKind
+  statsCompareKind,
+  compactStatsQuantilesWithAvg
 } from 'utils/tracing/TraceStats';
 
 const statToText = {
@@ -29,20 +29,18 @@ const statToText = {
   '0.999': { short: 'p99.9', long: '99.9th percentile' }
 };
 
-const renderHeatMap = (
-  item: RichSpanData,
-  stats: StatsWithIntervalIndex[],
-  intervals: string[],
-  compactMode: boolean
-) => {
+const renderHeatMap = (item: RichSpanData, stats: StatsWithIntervalIndex[], isCompact: boolean) => {
   const key = `${item.spanID}-hm`;
+  const intervals = isCompact ? compactStatsIntervals : statsIntervals;
+  const quantilesWithAvg = isCompact ? compactStatsQuantilesWithAvg : statsQuantilesWithAvg;
+
   return (
     <HeatMap
       key={key}
-      xLabels={statsAvgWithQuantiles.map(s => statToText[s]?.short || s)}
+      xLabels={quantilesWithAvg.map(s => statToText[s]?.short || s)}
       yLabels={intervals}
       data={statsToMatrix(stats, intervals)}
-      displayMode={compactMode ? 'compact' : 'normal'}
+      displayMode={isCompact ? 'compact' : 'normal'}
       colorMap={HeatMap.HealthColorMap}
       dataRange={{ from: -10, to: 10 }}
       colorUndefined={PFColors.Black200}
@@ -50,7 +48,7 @@ const renderHeatMap = (
       tooltip={(x, y, v) => {
         // Build explanation tooltip
         const slowOrFast = v > 0 ? 'slower' : 'faster';
-        const stat = statToText[statsAvgWithQuantiles[x]]?.long || statsAvgWithQuantiles[x];
+        const stat = statToText[quantilesWithAvg[x]]?.long || quantilesWithAvg[x];
         const interval = intervals[y];
         const info = item.info as EnvoySpanInfo;
         let dir = 'from',
@@ -71,17 +69,16 @@ const renderHeatMap = (
 
 export const renderMetricsComparison = (
   item: RichSpanData,
-  compactMode: boolean,
+  isCompact: boolean,
   metricsStats: Map<string, MetricsStats>,
   load: () => void
 ) => {
-  const intervals = compactMode ? compactStatsIntervals : allStatsIntervals;
-  const itemStats = getSpanStats(item, intervals, metricsStats);
+  const itemStats = getSpanStats(item, metricsStats, isCompact);
   const key = `${item.spanID}-metcomp`;
   if (itemStats.length > 0) {
     return (
       <React.Fragment key={key}>
-        {!compactMode && (
+        {!isCompact && (
           <Tooltip
             key={`${key}-tt`}
             content="This heatmap is a comparison matrix of this request duration against duration statistics aggregated over time. Move the pointer over cells to get more details."
@@ -91,7 +88,7 @@ export const renderMetricsComparison = (
             </>
           </Tooltip>
         )}
-        {renderHeatMap(item, itemStats, intervals, compactMode)}
+        {renderHeatMap(item, itemStats, isCompact)}
       </React.Fragment>
     );
   }
@@ -104,13 +101,15 @@ export const renderMetricsComparison = (
   );
 };
 
-export const renderTraceHeatMap = (matrix: StatsMatrix, intervals: string[], compactMode: boolean) => {
+export const renderTraceHeatMap = (matrix: StatsMatrix, isCompact: boolean) => {
+  const intervals = isCompact ? compactStatsIntervals : statsIntervals;
+  const quantilesWithAvg = isCompact ? compactStatsQuantilesWithAvg : statsQuantilesWithAvg;
   return (
     <HeatMap
-      xLabels={statsAvgWithQuantiles.map(s => statToText[s]?.short || s)}
+      xLabels={quantilesWithAvg.map(s => statToText[s]?.short || s)}
       yLabels={intervals}
       data={matrix}
-      displayMode={compactMode ? 'compact' : 'normal'}
+      displayMode={isCompact ? 'compact' : 'normal'}
       colorMap={HeatMap.HealthColorMap}
       dataRange={{ from: -10, to: 10 }}
       colorUndefined={PFColors.Black200}
@@ -118,7 +117,7 @@ export const renderTraceHeatMap = (matrix: StatsMatrix, intervals: string[], com
       tooltip={(x, y, v) => {
         // Build explanation tooltip
         const slowOrFast = v > 0 ? 'slower' : 'faster';
-        const stat = statToText[statsAvgWithQuantiles[x]]?.long || statsAvgWithQuantiles[x];
+        const stat = statToText[quantilesWithAvg[x]]?.long || quantilesWithAvg[x];
         const interval = intervals[y];
         return `Trace requests have been, in average, ${_round(
           Math.abs(v),

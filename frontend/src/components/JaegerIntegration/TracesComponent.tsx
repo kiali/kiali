@@ -2,12 +2,11 @@ import * as React from 'react';
 import { Card, CardBody, Tab, Tabs, Toolbar, ToolbarGroup, ToolbarItem, Tooltip } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
-
 import * as API from 'services/Api';
 import * as AlertUtils from 'utils/AlertUtils';
 import { RenderComponentScroll } from '../Nav/Page';
-import { KioskElement } from "../Kiosk/KioskElement";
-import { TimeDurationModal } from "../Time/TimeDurationModal";
+import { KioskElement } from '../Kiosk/KioskElement';
+import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { KialiAppState } from 'store/Store';
 import { JaegerError, JaegerTrace } from 'types/JaegerInfo';
 import TraceDetails from './JaegerResults/TraceDetails';
@@ -21,15 +20,7 @@ import { TracesDisplayOptions, QuerySettings, DisplaySettings, percentilesOption
 import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
-import TimeDurationIndicatorContainer from "../Time/TimeDurationIndicatorComponent";
-
-/*
-    timeRange: timeRangeSelector(state),
-    urlJaeger: state.jaegerState.info ? state.jaegerState.info.url : '',
-    namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true,
-    selectedTrace: state.jaegerState.selectedTrace,
-    lastRefreshAt: state.globalState.lastRefreshAt
- */
+import TimeDurationIndicatorContainer from '../Time/TimeDurationIndicatorComponent';
 
 type ReduxProps = {
   namespaceSelector: boolean;
@@ -43,7 +34,7 @@ type TracesProps = ReduxProps & {
   namespace: string;
   target: string;
   targetKind: TargetKind;
-}
+};
 
 interface TracesState {
   isTimeOptionsOpen: boolean;
@@ -91,6 +82,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
         this.setState({ jaegerErrors: errors, toolbarDisabled: true });
       }
     });
+    // This establishes the percentile-based filtering levels
     this.percentilesPromise = this.fetchPercentiles();
   }
 
@@ -132,9 +124,9 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
       spanLimit: this.state.querySettings.limit,
       tags: this.getTags()
     };
+    // If percentil filter is set fetch only traces above the specified percentile
+    // Percentiles (99th, 90th, 75th) are pre-computed from metrics bound to this app/workload/service object.
     if (this.state.querySettings.percentile && this.state.querySettings.percentile !== 'all') {
-      // Fetching traces above a percentile
-      // Percentiles (99th, 90th, 75th) are pre-computed from metrics bound to this app/workload/service object.
       try {
         const percentiles = await this.percentilesPromise;
         options.minDuration = percentiles.get(this.state.querySettings.percentile);
@@ -142,9 +134,10 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
           AlertUtils.addWarning('Cannot perform query above the requested percentile (value unknown).');
         }
       } catch (err) {
-        AlertUtils.addError('Could not fetch percentiles.', err);
+        AlertUtils.addError(`Could not fetch percentiles: ${err}`);
       }
     }
+
     this.fetcher.fetch(options, this.state.traces);
   };
 
@@ -237,8 +230,8 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
   };
 
   private toggleTimeOptionsVisibility = () => {
-    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }) );
-  }
+    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
+  };
 
   render() {
     const jaegerURL = this.getJaegerUrl();
@@ -262,11 +255,11 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                   </ToolbarItem>
                   {jaegerURL && (
                     <ToolbarItem>
-                        <Tooltip content={<>Open Chart in Jaeger UI</>}>
-                          <a href={jaegerURL} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '10px' }}>
-                            View in Tracing <ExternalLinkAltIcon />
-                          </a>
-                        </Tooltip>
+                      <Tooltip content={<>Open Chart in Jaeger UI</>}>
+                        <a href={jaegerURL} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '10px' }}>
+                          View in Tracing <ExternalLinkAltIcon />
+                        </a>
+                      </Tooltip>
                     </ToolbarItem>
                   )}
                   <KioskElement>
@@ -321,7 +314,8 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
           customDuration={true}
           isOpen={this.state.isTimeOptionsOpen}
           onConfirm={this.toggleTimeOptionsVisibility}
-          onCancel={this.toggleTimeOptionsVisibility} />
+          onCancel={this.toggleTimeOptionsVisibility}
+        />
       </>
     );
   }
@@ -332,7 +326,7 @@ const mapStateToProps = (state: KialiAppState) => {
     timeRange: timeRangeSelector(state),
     urlJaeger: state.jaegerState.info ? state.jaegerState.info.url : '',
     namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true,
-    selectedTrace: state.jaegerState.selectedTrace,
+    selectedTrace: state.jaegerState.selectedTrace
   };
 };
 
