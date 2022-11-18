@@ -295,8 +295,7 @@ func (in *Client) GetMetricsForLabels(metricNames []string, labelQueryString str
 	startT := time.Now()
 	queryString := fmt.Sprintf("count(%v) by (__name__)", labelQueryString)
 	results, warnings, err := in.api.Query(in.ctx, queryString, time.Now())
-	// Any slice that has a len greater than zero is a non-nil slice
-	if warnings != nil {
+	if len(warnings) > 0 {
 		log.Warningf("GetMetricsForLabels. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {
@@ -329,8 +328,7 @@ func (in *Client) GetExistingMetricNames(metricNames []string) ([]string, error)
 	log.Tracef("[Prom] GetExistingMetricNames: metricNames=[%v]", metricNames)
 	startT := time.Now()
 	results, warnings, err := in.api.LabelValues(in.ctx, "__name__", []string{}, time.Unix(0, 0), time.Now())
-	// Any slice that has a len greater than zero is a non-nil slice
-	if warnings != nil {
+	if len(warnings) > 0 {
 		log.Warningf("GetExistingMetricNames. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {

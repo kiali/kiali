@@ -52,7 +52,6 @@ func fetchHistogramValues(ctx context.Context, api prom_v1.API, metricName, labe
 	for k, query := range queries {
 		log.Tracef("[Prom] fetchHistogramValues: %s", query)
 		result, warnings, err := api.Query(ctx, query, queryTime)
-
 		if len(warnings) > 0 {
 			log.Warningf("fetchHistogramValues. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 		}
@@ -95,8 +94,7 @@ func buildHistogramQueries(metricName, labels, grouping, rateInterval string, av
 func fetchRange(ctx context.Context, api prom_v1.API, query string, bounds prom_v1.Range) Metric {
 	log.Tracef("[Prom] fetchRange: %s", query)
 	result, warnings, err := api.QueryRange(ctx, query, bounds)
-	// Any slice that has a len greater than zero is a non-nil slice
-	if warnings != nil {
+	if len(warnings) > 0 {
 		log.Warningf("fetchRange. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {
