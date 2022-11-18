@@ -176,7 +176,7 @@ func getRequestRatesForLabel(ctx context.Context, api prom_v1.API, time time.Tim
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Metrics-GetRequestRates")
 	result, warnings, err := api.Query(ctx, query, time)
 	if len(warnings) > 0 {
-		log.Warningf("fetchHistogramValues. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+		log.Warningf("getRequestRatesForLabel. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {
 		return model.Vector{}, errors.NewServiceUnavailable(err.Error())
