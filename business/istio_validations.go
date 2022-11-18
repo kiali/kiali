@@ -78,9 +78,14 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
 
-	wg.Add(4) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
-	if service != "" {
-		wg.Add(1)
+	var istioAccess = in.k8s.IstioAccess()
+
+	wg.Add(2) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
+	if istioAccess {
+		wg.Add(2)
+		if service != "" {
+			wg.Add(1)
+		}
 	}
 
 	// We fetch without target service as some validations will require full-namespace details
@@ -92,11 +97,14 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 	} else {
 		go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &namespaces, errChan, &wg)
 	}
-	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
-	if service != "" {
-		go in.fetchServices(ctx, &services, namespace, errChan, &wg)
+
+	if istioAccess {
+		go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
+		if service != "" {
+			go in.fetchServices(ctx, &services, namespace, errChan, &wg)
+		}
+		go in.fetchRegistryServices(&registryServices, errChan, &wg)
 	}
-	go in.fetchRegistryServices(&registryServices, errChan, &wg)
 
 	wg.Wait()
 	close(errChan)

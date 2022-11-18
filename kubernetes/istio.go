@@ -91,6 +91,7 @@ type IstioClientInterface interface {
 	GetRegistryConfiguration() (*RegistryConfiguration, error)
 	GetRegistryEndpoints() ([]*RegistryEndpoint, error)
 	GetRegistryServices() ([]*RegistryService, error)
+	IstioAccess() bool
 }
 
 func (in *K8SClient) Istio() istio.Interface {
@@ -175,7 +176,30 @@ func (in *K8SClient) CanConnectToIstiod() (IstioComponentStatus, error) {
 	return ics, nil
 }
 
+func (in *K8SClient) IstioAccess() bool {
+	const configzPath = "/debug/configz"
+
+	if externalConf := config.Get().ExternalServices.Istio.Registry; externalConf != nil {
+		url := joinURL(externalConf.IstiodURL, configzPath)
+		_, err := getRequest(url)
+		if err != nil {
+			log.Errorf("Failed to get Istiod info from remote endpoint %s error: %s", configzPath, err)
+			return false
+		}
+	} else {
+		_, err := in.getIstiodDebugStatus(configzPath)
+		if err != nil {
+			log.Errorf("Failed to call Istiod endpoint %s error: %s", configzPath, err)
+			return false
+		}
+	}
+	return true
+}
+
 func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, error) {
+	if !in.HasIstioAccess {
+		return nil, errors.New("No istiod access")
+	}
 	c := config.Get()
 	// Check if the kube-api has proxy access to pods in the istio-system
 	// https://github.com/kiali/kiali/issues/3494#issuecomment-772486224
@@ -254,6 +278,10 @@ func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, 
 }
 
 func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
+	if !in.HasIstioAccess {
+		return nil, errors.New("No istiod access")
+	}
+
 	const synczPath = "/debug/syncz"
 	var result map[string][]byte
 
@@ -277,6 +305,10 @@ func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
 }
 
 func (in *K8SClient) GetRegistryServices() ([]*RegistryService, error) {
+	if !in.HasIstioAccess {
+		return nil, errors.New("No istiod access")
+	}
+
 	const registryzPath = "/debug/registryz"
 	var result map[string][]byte
 
@@ -300,6 +332,10 @@ func (in *K8SClient) GetRegistryServices() ([]*RegistryService, error) {
 }
 
 func (in *K8SClient) GetRegistryEndpoints() ([]*RegistryEndpoint, error) {
+	if !in.HasIstioAccess {
+		return nil, errors.New("No istiod access")
+	}
+
 	const endpointzPath = "/debug/endpointz"
 	var result map[string][]byte
 
@@ -323,6 +359,10 @@ func (in *K8SClient) GetRegistryEndpoints() ([]*RegistryEndpoint, error) {
 }
 
 func (in *K8SClient) GetRegistryConfiguration() (*RegistryConfiguration, error) {
+	if !in.HasIstioAccess {
+		return nil, errors.New("No istiod access")
+	}
+
 	const configzPath = "/debug/configz"
 	var result map[string][]byte
 

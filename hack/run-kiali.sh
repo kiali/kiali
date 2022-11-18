@@ -650,7 +650,7 @@ start_port_forward_component() {
       infomsg "${COMPONENT_NAME} port-forward started (pid=${childpid}, job=${!PORT_FORWARD_JOB_VARNAME})"
       if ! curl ${EXPECTED_URL} > /dev/null 2>&1; then
         errormsg "Cannot port-forward to the ${COMPONENT_NAME} component. You must expose it and specify its URL via ${CMDLINE_OPT}"
-        cleanup_and_exit 1
+        #cleanup_and_exit 1
       fi
     fi
   else
