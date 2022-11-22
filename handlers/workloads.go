@@ -90,9 +90,9 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 
 	includeValidations := false
 
-	//if p.Validate {
-	//	includeValidations = true
-	//}
+	if p.Validate {
+		includeValidations = true
+	}
 
 	var istioConfigValidations = models.IstioValidations{}
 	var errValidations error
