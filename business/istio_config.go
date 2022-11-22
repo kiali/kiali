@@ -150,6 +150,10 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		RequestAuthentications: []*security_v1beta1.RequestAuthentication{},
 	}
 
+	if !in.businessLayer.k8s.IstioAccess() {
+		return istioConfigList, nil
+	}
+
 	// Use the Istio Registry when AllNamespaces is present
 	if criteria.AllNamespaces {
 		registryCriteria := RegistryCriteria{
@@ -158,7 +162,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		registryConfiguration, err := in.businessLayer.RegistryStatus.GetRegistryConfiguration(registryCriteria)
 		if err != nil {
 			log.Warningf("RegistryConfiguration is nil. This is an unexpected case. Is the Kiali cache disabled ?")
-			//return istioConfigList, err
+			return istioConfigList, err
 		}
 		if registryConfiguration == nil {
 			log.Warningf("RegistryConfiguration is nil. This is an unexpected case. Is the Kiali cache disabled ?")
