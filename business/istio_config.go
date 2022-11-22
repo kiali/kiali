@@ -161,7 +161,6 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		}
 		registryConfiguration, err := in.businessLayer.RegistryStatus.GetRegistryConfiguration(registryCriteria)
 		if err != nil {
-			log.Warningf("RegistryConfiguration is nil. This is an unexpected case. Is the Kiali cache disabled ?")
 			return istioConfigList, err
 		}
 		if registryConfiguration == nil {
