@@ -494,7 +494,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 		}
 		if err2 != nil && !errors.IsNotFound(err2) {
 			log.Errorf("Error fetching Endpoints namespace %s and service %s: %s", namespace, service, err2)
-			errChan <- err2
+			//errChan <- err2
 		}
 	}(ctx)
 
@@ -503,7 +503,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 		var err2 error
 		hth, err2 = in.businessLayer.Health.GetServiceHealth(ctx, namespace, service, interval, queryTime, &svc)
 		if err2 != nil {
-			errChan <- err2
+			//errChan <- err2
 		}
 	}(ctx)
 
@@ -512,7 +512,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 		var err2 error
 		nsmtls, err2 = in.businessLayer.TLS.NamespaceWidemTLSStatus(ctx, namespace)
 		if err2 != nil {
-			errChan <- err2
+			//errChan <- err2
 		}
 	}(ctx)
 
@@ -551,8 +551,9 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 
 	wg.Wait()
 	if len(errChan) != 0 {
-		err = <-errChan
-		return nil, err
+		log.Errorf("Error in errChan ")
+		//err = <-errChan
+		//return nil, err
 	}
 
 	wo := models.WorkloadOverviews{}

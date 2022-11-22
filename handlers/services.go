@@ -82,10 +82,10 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		rateInterval = defaultHealthRateInterval
 	}
 
-	//includeValidations := false
-	//if _, found := queryParams["validate"]; found {
-	//	includeValidations = true
-	//}
+	includeValidations := false
+	if _, found := queryParams["validate"]; found {
+		includeValidations = true
+	}
 
 	params := mux.Vars(r)
 	namespace := params["namespace"]
@@ -97,29 +97,29 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//var istioConfigValidations = models.IstioValidations{}
-	//var errValidations error
+	var istioConfigValidations = models.IstioValidations{}
+	var errValidations error
 
-	//wg := sync.WaitGroup{}
-	//if includeValidations {
-	//	wg.Add(1)
-	//	go func() {
-	//		defer wg.Done()
-	//		istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), namespace, service, "")
-	//	}()
-	//}
+	wg := sync.WaitGroup{}
+	if includeValidations {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), namespace, service, "")
+		}()
+	}
 
 	serviceDetails, err := business.Svc.GetServiceDetails(r.Context(), namespace, service, rateInterval, queryTime)
-	//if includeValidations && err == nil {
-	//	wg.Wait()
-	//	serviceDetails.Validations = istioConfigValidations
-	//	err = errValidations
-	//}
+	if includeValidations && err == nil {
+		wg.Wait()
+		serviceDetails.Validations = istioConfigValidations
+		err = errValidations
+	}
 
-	//if err != nil && serviceDetails == nil {
-	//	handleErrorResponse(w, err)
-	//	return
-	//}
+	if err != nil && serviceDetails == nil {
+		handleErrorResponse(w, err)
+		return
+	}
 
 	RespondWithJSON(w, http.StatusOK, serviceDetails)
 }
