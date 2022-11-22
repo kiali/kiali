@@ -39,9 +39,9 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	includeValidations := false
-	//if _, found := query["validate"]; found {
-	//	includeValidations = true
-	//}
+	if _, found := query["validate"]; found {
+		includeValidations = true
+	}
 
 	labelSelector := ""
 	if _, found := query["labelSelector"]; found {
