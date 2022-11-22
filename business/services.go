@@ -433,6 +433,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 	var hth models.ServiceHealth
 	var istioConfigList models.IstioConfigList
 	var ws models.Workloads
+	var rSvcs []*kubernetes.RegistryService
 	var nsmtls models.MTLSStatus
 
 	wg := sync.WaitGroup{}
@@ -442,7 +443,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 	labelsSelector := labels.Set(svc.Selectors).String()
 	// If service doesn't have any selector, we can't know which are the pods and workloads applying.
 	if labelsSelector != "" {
-		wg.Add(2)
+		wg.Add(3)
 
 		go func() {
 			defer wg.Done()
@@ -465,6 +466,20 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 			ws, err2 = fetchWorkloads(ctx, in.businessLayer, namespace, labelsSelector)
 			if err2 != nil {
 				log.Errorf("Error fetching Workloads per namespace %s and service %s: %s", namespace, service, err2)
+				errChan <- err2
+			}
+		}(ctx)
+
+		go func(ctx context.Context) {
+			defer wg.Done()
+			var err2 error
+			registryCriteria := RegistryCriteria{
+				Namespace:       namespace,
+				ServiceSelector: labelsSelector,
+			}
+			rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
+			if err2 != nil {
+				log.Errorf("Error fetching Registry Services per namespace %s: %s", criteria.Namespace, err2)
 				errChan <- err2
 			}
 		}(ctx)
@@ -562,6 +577,13 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 	for _, w := range ws {
 		wi := &models.WorkloadListItem{}
 		wi.ParseWorkload(w)
+		wo = append(wo, wi)
+	}
+
+	sos := []*models.ServiceOverview{}
+	for _, s := range rSvcs {
+		so := &models.ServiceOverview{}
+		s.ParseToService(s)
 		wo = append(wo, wi)
 	}
 

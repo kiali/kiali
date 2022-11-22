@@ -70,6 +70,7 @@ type ServiceDetails struct {
 	ServiceEntries   []*networking_v1beta1.ServiceEntry    `json:"serviceEntries"`
 	IstioPermissions ResourcePermissions                   `json:"istioPermissions"`
 	Workloads        WorkloadOverviews                     `json:"workloads"`
+	SubServices      []*ServiceOverview                    `json:"subServices"`
 	Health           ServiceHealth                         `json:"health"`
 	Validations      IstioValidations                      `json:"validations"`
 	NamespaceMTLS    MTLSStatus                            `json:"namespaceMTLS"`
