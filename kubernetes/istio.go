@@ -177,21 +177,12 @@ func (in *K8SClient) CanConnectToIstiod() (IstioComponentStatus, error) {
 }
 
 func (in *K8SClient) IstioAccess() bool {
-	const configzPath = "/debug/configz"
-
-	if externalConf := config.Get().ExternalServices.Istio.Registry; externalConf != nil {
-		url := joinURL(externalConf.IstiodURL, configzPath)
-		_, err := getRequest(url)
-		if err != nil {
-			log.Errorf("Failed to get Istiod info from remote endpoint %s error: %s", configzPath, err)
-			return false
-		}
-	} else {
-		_, err := in.getIstiodDebugStatus(configzPath)
-		if err != nil {
-			log.Errorf("Failed to call Istiod endpoint %s error: %s", configzPath, err)
-			return false
-		}
+	componentStatus, err := in.CanConnectToIstiod()
+	if err != nil {
+		return false
+	}
+	if len(componentStatus) == 0 {
+		return false
 	}
 	return true
 }
