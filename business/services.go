@@ -99,11 +99,12 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 			Namespace:       criteria.Namespace,
 			ServiceSelector: criteria.ServiceSelector,
 		}
-		rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
-		// TODO !Istiod
-		if err2 != nil {
-			log.Errorf("Error fetching Registry Services per namespace %s: %s", criteria.Namespace, err2)
-			//errChan <- err2
+		if in.businessLayer.k8s.IstioAccess() {
+			rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
+			if err2 != nil {
+				log.Errorf("Error fetching Registry Services per namespace %s: %s", criteria.Namespace, err2)
+				errChan <- err2
+			}
 		}
 	}()
 
@@ -474,11 +475,14 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 			Namespace:   namespace,
 			ServiceName: service,
 		}
-		rEps, err2 = in.businessLayer.RegistryStatus.GetRegistryEndpoints(criteria)
-		if err2 != nil {
-			log.Errorf("Error fetching Registry Endpoints namespace %s and service %s: %s", namespace, service, err2)
-			errChan <- err2
+		if in.businessLayer.k8s.IstioAccess() {
+			rEps, err2 = in.businessLayer.RegistryStatus.GetRegistryEndpoints(criteria)
+			if err2 != nil {
+				log.Errorf("Error fetching Registry Endpoints namespace %s and service %s: %s", namespace, service, err2)
+				errChan <- err2
+			}
 		}
+
 	}()
 
 	go func(ctx context.Context) {
@@ -494,7 +498,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 		}
 		if err2 != nil && !errors.IsNotFound(err2) {
 			log.Errorf("Error fetching Endpoints namespace %s and service %s: %s", namespace, service, err2)
-			//errChan <- err2
+			errChan <- err2
 		}
 	}(ctx)
 
@@ -503,7 +507,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 		var err2 error
 		hth, err2 = in.businessLayer.Health.GetServiceHealth(ctx, namespace, service, interval, queryTime, &svc)
 		if err2 != nil {
-			//errChan <- err2
+			errChan <- err2
 		}
 	}(ctx)
 
@@ -512,7 +516,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 		var err2 error
 		nsmtls, err2 = in.businessLayer.TLS.NamespaceWidemTLSStatus(ctx, namespace)
 		if err2 != nil {
-			//errChan <- err2
+			errChan <- err2
 		}
 	}(ctx)
 
@@ -551,9 +555,8 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 
 	wg.Wait()
 	if len(errChan) != 0 {
-		log.Errorf("Error in errChan ")
-		//err = <-errChan
-		//return nil, err
+		err = <-errChan
+		return nil, err
 	}
 
 	wo := models.WorkloadOverviews{}
