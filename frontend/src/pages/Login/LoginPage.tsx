@@ -159,7 +159,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     if (urlParams.get('openid_error')) {
       console.warn(`Authentication openid_error: ${urlParams.get('openid_error')}`)
       messages.push(
-        this.renderMessage(`OpenID authentication failed.`, 'danger', 'idp-err')
+        this.renderMessage(`OpenID authentication failed.`, 'danger', 'openid-err')
       );
     }
 
