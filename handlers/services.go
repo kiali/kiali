@@ -116,7 +116,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		err = errValidations
 	}
 
-	if err != nil && serviceDetails == nil {
+	if err != nil {
 		handleErrorResponse(w, err)
 		return
 	}
