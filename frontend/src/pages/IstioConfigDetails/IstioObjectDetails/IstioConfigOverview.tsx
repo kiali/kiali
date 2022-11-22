@@ -107,7 +107,8 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
 
     let urlInKiali = "";
     if (istioObject !== undefined && istioObject.metadata.namespace !== undefined && istioObject.kind !== undefined) {
-      urlInKiali = GetIstioObjectUrl(istioObject.metadata.name, istioObject.metadata.namespace , istioObject.kind.toLowerCase() );
+      // here a "/console" is required as external link is used
+      urlInKiali = "/console" + GetIstioObjectUrl(istioObject.metadata.name, istioObject.metadata.namespace , istioObject.kind.toLowerCase() );
     }
 
     return (
