@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { Paths } from '../../config';
-import { Link } from 'react-router-dom';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { TooltipPosition } from '@patternfly/react-core';
+import {KioskLink} from "./KioskLink";
 
-interface Props {
+type Props = {
   name: string;
   namespace: string;
   query?: string;
@@ -29,12 +29,16 @@ export class ServiceLink extends React.Component<Props> {
     return (
       <>
         <PFBadge badge={PFBadges.Service} position={TooltipPosition.top} />
-        <Link to={getServiceURL(name, namespace, query)} data-test={'service-' + namespace + '-' + name}>
-          {namespace}/{name}
-        </Link>
+        <ServiceLinkItem name={name} namespace={namespace} query={query} />
       </>
     );
   }
 }
 
-export default ServiceLink;
+class ServiceLinkItem extends React.Component<Props> {
+  render() {
+    const { name, namespace, query } = this.props;
+    const href = getServiceURL(name, namespace, query);
+    return (<KioskLink linkName={namespace + '/' + name} dataTest={'service-' + namespace + '-' + name} href={href}></KioskLink>)
+  }
+}

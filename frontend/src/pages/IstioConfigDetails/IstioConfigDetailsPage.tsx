@@ -57,6 +57,9 @@ import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
 import {ErrorMsg} from "../../types/ErrorMsg";
 import ErrorSection from "../../components/ErrorSection/ErrorSection";
 import RefreshNotifier from "../../components/Refresh/RefreshNotifier";
+import {isParentKiosk} from "../../components/Kiosk/KioskActions";
+import {KialiAppState} from "../../store/Store";
+import {connect} from "react-redux";
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -89,13 +92,17 @@ const paramToTab: { [key: string]: number } = {
   yaml: 0
 };
 
-class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioConfigId>, IstioConfigDetailsState> {
+interface IstioConfigDetailsProps extends RouteComponentProps<IstioConfigId> {
+  kiosk: string;
+}
+
+class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetailsProps, IstioConfigDetailsState> {
   aceEditorRef: React.RefObject<AceEditor>;
-  drawerRef: React.RefObject<IstioConfigDetailsPage>;
+  drawerRef: React.RefObject<IstioConfigDetails>;
   promptTo: string;
   timerId: number;
 
-  constructor(props: RouteComponentProps<IstioConfigId>) {
+  constructor(props: IstioConfigDetailsProps) {
     super(props);
     this.state = {
       isModified: false,
@@ -480,9 +487,11 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
               </>
             )}
           </div>
-          <DrawerActions>
-            <DrawerCloseButton onClick={this.onDrawerClose} />
-          </DrawerActions>
+          {!isParentKiosk(this.props.kiosk) && (
+            <DrawerActions>
+              <DrawerCloseButton onClick={this.onDrawerClose} />
+            </DrawerActions>
+          )}
         </DrawerHead>
       </DrawerPanelContent>
     );
@@ -494,11 +503,11 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           mode="yaml"
           theme="eclipse"
           onChange={this.onEditorChange}
-          height={'var(--kiali-yaml-editor-height)'}
+          height={`calc(var(--kiali-yaml-editor-height) + ${isParentKiosk(this.props.kiosk) ? '100px' : '0px'})`}
           width={'100%'}
           className={'istio-ace-editor'}
           wrapEnabled={true}
-          readOnly={!this.canUpdate()}
+          readOnly={!this.canUpdate() || isParentKiosk(this.props.kiosk)}
           setOptions={aceOptions}
           value={this.state.istioObjectDetails ? yamlSource : undefined}
           annotations={editorValidations.annotations}
@@ -527,7 +536,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   renderActionButtons = (showOverview: boolean) => {
     // User won't save if file has yaml errors
     const yamlErrors = !!(this.state.yamlValidations && this.state.yamlValidations.markers.length > 0);
-    return (
+    return !isParentKiosk(this.props.kiosk) ? (
       <IstioActionButtonsContainer
         objectName={this.props.match.params.object}
         readOnly={!this.canUpdate()}
@@ -539,7 +548,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         overview={this.state.isExpanded}
         onOverview={this.onDrawerToggle}
       />
-    );
+    ) : ('');
   };
 
   renderActions = () => {
@@ -573,7 +582,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         {this.state.error && (
           <ErrorSection error={this.state.error} />
         )}
-        {!this.state.error && (
+        {!this.state.error && !isParentKiosk(this.props.kiosk) && (
         <ParameterizedTabs
           id="basic-tabs"
           onSelect={tabValue => {
@@ -591,6 +600,9 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           </Tab>
         </ParameterizedTabs>
           )}
+        {!this.state.error && isParentKiosk(this.props.kiosk) && (
+          <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>
+        )}
         <Prompt
           message={location => {
             if (this.state.isModified) {
@@ -609,4 +621,9 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   }
 }
 
+const mapStateToProps = (state: KialiAppState) => ({
+  kiosk: state.globalState.kiosk,
+});
+
+const IstioConfigDetailsPage = connect(mapStateToProps, null)(IstioConfigDetailsPageComponent);
 export default IstioConfigDetailsPage;
