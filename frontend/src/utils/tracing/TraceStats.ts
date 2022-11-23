@@ -58,18 +58,20 @@ const distanceScore = (n1: number, n2: number): number => {
   return Math.abs(n1 - n2) / Math.max(1, Math.max(n1, n2));
 };
 const statsQuantiles = ['0.5', '0.9', '0.99'];
-export const statsAvgWithQuantiles = ['avg', ...statsQuantiles];
-export const allStatsIntervals = ['10m', '60m', '6h'];
-export const compactStatsIntervals = ['60m', '6h'];
+const compactStatsQuantiles = ['0.5', '0.9'];
+export const statsQuantilesWithAvg = ['avg', ...statsQuantiles];
+export const statsIntervals = ['10m', '60m', '3h'];
+export const compactStatsQuantilesWithAvg = ['avg', ...compactStatsQuantiles];
+export const compactStatsIntervals = ['60m', '3h'];
 export const statsPerPeer = false;
 export let statsCompareKind: 'app' | 'workload' = 'workload';
 
-export const buildQueriesFromSpans = (items: RichSpanData[]) => {
+export const buildQueriesFromSpans = (items: RichSpanData[], isCompact: boolean) => {
   const queryTime = Math.floor(Date.now() / 1000);
-  // Load stats for first 10 spans, to avoid heavy loading. More stats can be loaded individually.
+  // Load stats for up to 8 spans to limit the heavy loading. More stats can be loaded individually.
   const queries = items
     .filter(s => s.type === 'envoy')
-    .slice(0, 10)
+    .slice(0, 8)
     .flatMap(item => {
       const info = item.info as EnvoySpanInfo;
       if (!info.direction) {
@@ -86,19 +88,19 @@ export const buildQueriesFromSpans = (items: RichSpanData[]) => {
         return [];
       }
       const query: MetricsStatsQuery = {
+        avg: true,
+        direction: info.direction,
+        interval: '', // placeholder
+        peerTarget: statsPerPeer ? info.peer : undefined,
+        quantiles: isCompact ? compactStatsQuantiles : statsQuantiles,
         queryTime: queryTime,
         target: {
           namespace: item.namespace,
           name: name,
           kind: statsCompareKind
-        },
-        peerTarget: statsPerPeer ? info.peer : undefined,
-        interval: '', // placeholder
-        direction: info.direction,
-        avg: true,
-        quantiles: statsQuantiles
+        }
       };
-      return allStatsIntervals.map(interval => ({ ...query, interval: interval }));
+      return (isCompact ? compactStatsIntervals : statsIntervals).map(interval => ({ ...query, interval: interval }));
     });
   return deduplicateMetricQueries(queries);
 };
@@ -118,7 +120,7 @@ const deduplicateMetricQueries = (queries: MetricsStatsQuery[]) => {
 export type StatsWithIntervalIndex = MetricsStats & { intervalIndex: number };
 export type StatsMatrix = (number | undefined)[][];
 export const initStatsMatrix = (intervals: string[]): StatsMatrix => {
-  return new Array(statsAvgWithQuantiles.length)
+  return new Array(statsQuantilesWithAvg.length)
     .fill(0)
     .map(() => new Array(intervals.length).fill(0).map(() => undefined));
 };
@@ -127,7 +129,7 @@ export const statsToMatrix = (itemStats: StatsWithIntervalIndex[], intervals: st
   const matrix = initStatsMatrix(intervals);
   itemStats.forEach(stats => {
     stats.responseTimes.forEach(stat => {
-      const x = statsAvgWithQuantiles.indexOf(stat.name);
+      const x = statsQuantilesWithAvg.indexOf(stat.name);
       if (x >= 0) {
         matrix[x][stats.intervalIndex] = stat.value;
       }
@@ -138,9 +140,11 @@ export const statsToMatrix = (itemStats: StatsWithIntervalIndex[], intervals: st
 
 export const getSpanStats = (
   item: RichSpanData,
-  intervals: string[],
-  metricsStats: Map<string, MetricsStats>
+  metricsStats: Map<string, MetricsStats>,
+  isCompact: boolean
 ): StatsWithIntervalIndex[] => {
+  const intervals = isCompact ? compactStatsIntervals : statsIntervals;
+
   return intervals.flatMap((interval, intervalIndex) => {
     const info = item.info as EnvoySpanInfo;
     const target = {
@@ -156,22 +160,25 @@ export const getSpanStats = (
         const statsDiff = stats.responseTimes.map(stat => {
           return { name: stat.name, value: baseLine - stat.value };
         });
-        return [{ responseTimes: statsDiff, intervalIndex: intervalIndex }];
+        return [{ responseTimes: statsDiff, isCompact: isCompact, intervalIndex: intervalIndex }];
       }
     }
     return [];
   });
 };
 
-export const reduceMetricsStats = (trace: JaegerTrace, intervals: string[], allStats: Map<string, MetricsStats>) => {
+export const reduceMetricsStats = (trace: JaegerTrace, allStats: Map<string, MetricsStats>, isCompact: boolean) => {
   let isComplete = true;
+  const intervals = isCompact ? compactStatsIntervals : statsIntervals;
+  const quantilesWithAvg = isCompact ? compactStatsQuantilesWithAvg : statsQuantilesWithAvg;
+
   // Aggregate all spans stats, per stat name/interval, into a temporary map
   type AggregatedStat = { name: string; intervalIndex: number; values: number[] };
   const aggregatedStats = new Map<string, AggregatedStat>();
   trace.spans
     .filter(s => s.type === 'envoy')
     .forEach(span => {
-      const spanStats = getSpanStats(span, intervals, allStats);
+      const spanStats = getSpanStats(span, allStats, isCompact);
       if (spanStats.length > 0) {
         spanStats.forEach(statsPerInterval => {
           statsPerInterval.responseTimes.forEach(stat => {
@@ -196,7 +203,7 @@ export const reduceMetricsStats = (trace: JaegerTrace, intervals: string[], allS
   const matrix = initStatsMatrix(intervals);
   aggregatedStats.forEach(aggStat => {
     // compute mean per stat
-    const x = statsAvgWithQuantiles.indexOf(aggStat.name);
+    const x = quantilesWithAvg.indexOf(aggStat.name);
     if (x >= 0) {
       const len = aggStat.values.length;
       if (len > 0) {

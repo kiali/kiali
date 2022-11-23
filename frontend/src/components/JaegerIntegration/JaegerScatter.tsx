@@ -22,7 +22,7 @@ interface JaegerScatterProps {
   duration: number;
   errorFetchTraces?: JaegerError[];
   errorTraces?: boolean;
-  loadMetricsStats: (queries: MetricsStatsQuery[]) => Promise<any>;
+  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => Promise<any>;
   selectedTrace?: JaegerTrace;
   setTraceId: (traceId?: string) => void;
   showSpansAverage: boolean;
@@ -151,17 +151,17 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
     }
   };
 
-  private loadTraceMetrics(trace: JaegerTrace) {
+  private loadTraceTooltipMetrics(trace: JaegerTrace) {
     this.isLoading = true;
-    const queries = buildQueriesFromSpans(trace.spans);
+    const queries = buildQueriesFromSpans(trace.spans, true);
 
     this.props
-      .loadMetricsStats(queries)
+      .loadMetricsStats(queries, true)
       .then(_response => {
         if (this.nextToLoad) {
           const nextTrace = this.nextToLoad;
           this.nextToLoad = undefined;
-          this.loadTraceMetrics(nextTrace);
+          this.loadTraceTooltipMetrics(nextTrace);
         } else {
           this.isLoading = false;
         }
@@ -179,7 +179,7 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
       // replace any pending load with a load for the currently hovered trace
       this.nextToLoad = trace;
     } else {
-      this.loadTraceMetrics(trace);
+      this.loadTraceTooltipMetrics(trace);
     }
   };
 }
@@ -190,7 +190,8 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  loadMetricsStats: (queries: MetricsStatsQuery[]) => dispatch(MetricsStatsThunkActions.load(queries)),
+  loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
+    dispatch(MetricsStatsThunkActions.load(queries, isCompact)),
   setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId))
 });
 

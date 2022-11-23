@@ -38,13 +38,13 @@ export interface Target {
 }
 
 export interface MetricsStatsQuery {
-  target: Target;
-  peerTarget?: Target;
-  queryTime: number;
-  interval: string;
-  direction: Direction;
   avg: boolean;
+  direction: Direction;
+  interval: string;
+  peerTarget?: Target;
   quantiles: string[];
+  queryTime: number;
+  target: Target;
 }
 
 export const statsQueryToKey = (q: MetricsStatsQuery) => genStatsKey(q.target, q.peerTarget, q.direction, q.interval);

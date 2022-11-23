@@ -67,8 +67,9 @@ const mockEnvoySpan = (op: string, duration: number, wkd: string): RichSpanData 
     workload: wkd
   } as RichSpanData;
 };
-const mockStats = (avg: number, p50: number, p90: number, p99: number) => {
+const mockStats = (avg: number, p50: number, p90: number, p99: number, isCompact = false) => {
   return {
+    isCompact: isCompact,
     responseTimes: [
       { name: 'avg', value: avg },
       { name: '0.5', value: p50 },
@@ -113,7 +114,6 @@ describe('TraceStats.isSimilarTrace', () => {
 });
 
 describe('TraceStats.reduceMetricsStats', () => {
-  const intervals = ['10m', '60m'];
   const trace = {
     spans: [mockEnvoySpan('op1', 3, 'w1'), mockEnvoySpan('op2', 3, 'w1'), mockEnvoySpan('op3', 1, 'w2')] as Span[]
   } as JaegerTrace;
@@ -126,11 +126,11 @@ describe('TraceStats.reduceMetricsStats', () => {
       ['ns:workload:w2::inbound:60m', mockStats(1, 1, 1, 1)]
     ]);
 
-    const reduced = reduceMetricsStats(trace, intervals, metricsStats);
+    const reduced = reduceMetricsStats(trace, metricsStats, false);
 
     expect(reduced.isComplete).toBe(true);
     expect(reduced.matrix).toHaveLength(4);
-    reduced.matrix.forEach(line => expect(line).toHaveLength(2));
+    reduced.matrix.forEach(line => expect(line).toHaveLength(3));  // because there are 3 intervals, only 2 of which are filled
     // For each matrix cell (stat_x_duration), the reduced matrix contains
     // the average of "span duration - corresponding metric stat" for all 3 spans
     expect(reduced.matrix[0][0]).toBeCloseTo(0, 5); // 10m avg => average of [3-3, 3-3, 1-1]
@@ -149,11 +149,11 @@ describe('TraceStats.reduceMetricsStats', () => {
       ['ns:workload:w1::inbound:60m', mockStats(2, 2, 6, 10)]
     ]);
 
-    const reduced = reduceMetricsStats(trace, intervals, metricsStats);
+    const reduced = reduceMetricsStats(trace, metricsStats, false);
 
     expect(reduced.isComplete).toBe(false);
     expect(reduced.matrix).toHaveLength(4);
-    reduced.matrix.forEach(line => expect(line).toHaveLength(2));
+    reduced.matrix.forEach(line => expect(line).toHaveLength(3)); // because there are 3 intervals, only 2 of which are filled
     expect(reduced.matrix[0][0]).toBeCloseTo(0, 5); // 10m avg => average of [3-3, 3-3]
     expect(reduced.matrix[0][1]).toBeCloseTo(1, 5); // 60m avg => average of [3-2, 3-2]
     expect(reduced.matrix[1][0]).toBeCloseTo(1, 5); // 10m p50 => average of [3-2, 3-2]
@@ -173,24 +173,24 @@ describe('TraceStats.buildQueriesFromSpans', () => {
   ] as RichSpanData[];
 
   it('should build one query per workload and time interval', () => {
-    const queries = buildQueriesFromSpans(spans);
+    const queries = buildQueriesFromSpans(spans, false);
     expect(queries).toHaveLength(6);
     expect(queries.map(q => statsQueryToKey(q))).toEqual([
       'ns:workload:w1::inbound:10m',
       'ns:workload:w1::inbound:60m',
-      'ns:workload:w1::inbound:6h',
+      'ns:workload:w1::inbound:3h',
       'ns:workload:w2::inbound:10m',
       'ns:workload:w2::inbound:60m',
-      'ns:workload:w2::inbound:6h'
+      'ns:workload:w2::inbound:3h'
     ]);
   });
 
-  it('should cap to ten spans', () => {
+  it('should cap to eight spans', () => {
     const spans = new Array(20).fill(0).map((_, idx) => {
       return mockEnvoySpan('operation', 1, 'worload-' + idx);
     });
     expect(spans).toHaveLength(20);
-    const queries = buildQueriesFromSpans(spans);
-    expect(queries).toHaveLength(10 * 3); // three intervals x 10-capped number of spans/workloads
+    const queries = buildQueriesFromSpans(spans, false);
+    expect(queries).toHaveLength(8 * 3); // three intervals x 8-capped number of spans/workloads
   });
 });
