@@ -27,10 +27,14 @@ import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { ComponentStatus, Status } from "../../types/IstioStatus";
+import { PFColors } from "../../components/Pf/PfColors";
+import { WarningTriangleIcon } from "@patternfly/react-icons";
 
 interface IstioConfigListPageState extends FilterComponent.State<IstioConfigItem> {}
 interface IstioConfigListPageProps extends FilterComponent.Props<IstioConfigItem> {
   activeNamespaces: Namespace[];
+  istioStatus: ComponentStatus[];
 }
 
 class IstioConfigListPageComponent extends FilterComponent.Component<
@@ -151,29 +155,47 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
   }
 
   render() {
+    const isHealthy = this.props.istioStatus.find(e => e.name ===  "istiod" && e.status !== Status.Healthy)
+
     return (
       <>
-        <div style={{ backgroundColor: '#fff' }}>
-          <DefaultSecondaryMasthead
-            rightToolbar={<RefreshButtonContainer key={'Refresh'} handleRefresh={this.updateListItems} />}
-            actionsToolbar={<IstioActionsNamespaceDropdown />}
-          />
-        </div>
-        <RenderContent>
-          <VirtualList rows={this.state.listItems}>
-            <StatefulFilters
-              initialFilters={IstioConfigListFilters.availableFilters}
-              onFilterChange={this.onFilterChange}
+        {isHealthy === undefined && (
+          <>
+          <div style={{ backgroundColor: '#fff' }}>
+            <DefaultSecondaryMasthead
+              rightToolbar={<RefreshButtonContainer key={'Refresh'} handleRefresh={this.updateListItems} />}
+              actionsToolbar={<IstioActionsNamespaceDropdown />}
             />
-          </VirtualList>
-        </RenderContent>
+          </div>
+          <RenderContent>
+            <VirtualList rows={this.state.listItems}>
+              <StatefulFilters
+                initialFilters={IstioConfigListFilters.availableFilters}
+                onFilterChange={this.onFilterChange}
+              />
+            </VirtualList>
+          </RenderContent>
+          </>)}
+        {isHealthy !== undefined && (
+          <>
+            <div style={{ backgroundColor: '#fff' }}>
+              <DefaultSecondaryMasthead
+              />
+            </div>
+            <RenderContent>
+              <div style={{ padding: '10px' }}>
+                <WarningTriangleIcon color={PFColors.Warning} style={{marginRight: '5px'}} /> Istiod Component is {isHealthy.status} and Istio Config is not available.
+              </div>
+            </RenderContent>
+          </>)}
       </>
     );
   }
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  activeNamespaces: activeNamespacesSelector(state)
+  activeNamespaces: activeNamespacesSelector(state),
+  istioStatus: state.istioStatus
 });
 
 const IstioConfigListPage = connect(mapStateToProps, null)(IstioConfigListPageComponent);
