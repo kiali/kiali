@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
@@ -948,7 +947,7 @@ func Marshal(conf *Config) (yamlString string, err error) {
 // LoadFromFile reads the YAML from the given file, parses the content, and returns its Config object representation.
 func LoadFromFile(filename string) (conf *Config, err error) {
 	log.Debugf("Reading YAML config from [%s]", filename)
-	fileContent, err := ioutil.ReadFile(filename)
+	fileContent, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config file [%v]. error=%v", filename, err)
 	}
@@ -959,7 +958,7 @@ func LoadFromFile(filename string) (conf *Config, err error) {
 	}
 
 	// Read OIDC secret, if present
-	if oidcSecret, oidcErr := ioutil.ReadFile(OidcClientSecretFile); oidcErr == nil {
+	if oidcSecret, oidcErr := os.ReadFile(OidcClientSecretFile); oidcErr == nil {
 		conf.Auth.OpenId.ClientSecret = string(oidcSecret)
 	} else {
 		if !os.IsNotExist(oidcErr) {
@@ -980,7 +979,7 @@ func SaveToFile(filename string, conf *Config) (err error) {
 	}
 
 	log.Debugf("Writing YAML config to [%s]", filename)
-	err = ioutil.WriteFile(filename, []byte(fileContent), 0o640)
+	err = os.WriteFile(filename, []byte(fileContent), 0o640)
 	return
 }
 

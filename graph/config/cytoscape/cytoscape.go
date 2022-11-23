@@ -12,6 +12,7 @@
 //            nodes for requested boxing.
 //
 // The package provides the Cytoscape implementation of graph/ConfigVendor.
+
 package cytoscape
 
 import (
@@ -25,17 +26,19 @@ import (
 
 // ResponseFlags is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:
 // "200" : {
-//    "-"     : "80.0",
-//    "DC"    : "10.0",
-//    "FI,FD" : "10.0"
+//	"-"     : "80.0",
+//	"DC"    : "10.0",
+//	"FI,FD" : "10.0"
 // }, ...
+
 type ResponseFlags map[string]string
 
 // ResponseHosts is a map of maps. Each response host is broken down by responseFlags:percentageOfTraffic, e.g.:
-// "200" : {
-//    "www.google.com" : "80.0",
-//    "www.yahoo.com"  : "20.0"
-// }, ...
+//
+//	"200" : {
+//	   "www.google.com" : "80.0",
+//	   "www.yahoo.com"  : "20.0"
+//	}, ...
 type ResponseHosts map[string]string
 
 // ResponseDetail holds information broken down by response code.
@@ -251,12 +254,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 		addNodeTelemetry(n, nd)
 
-		// set annotations, if available
 		if val, ok := n.Metadata[graph.HealthData]; ok {
-			nd.HealthData = val.(interface{})
+			nd.HealthData = val
 		}
 		if val, ok := n.Metadata[graph.HealthDataApp]; ok {
-			nd.HealthDataApp = val.(interface{})
+			nd.HealthDataApp = val
 		}
 
 		// set k8s labels, if any

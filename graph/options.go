@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
@@ -228,7 +229,8 @@ func NewOptions(r *net_http.Request) Options {
 	// Process namespaces options:
 	namespaceMap := NewNamespaceInfoMap()
 
-	authInfoContext := r.Context().Value("authInfo")
+	authInfoContext := authentication.GetAuthInfoContext(r.Context())
+
 	var authInfo *api.AuthInfo
 	if authInfoContext != nil {
 		if authInfoCheck, ok := authInfoContext.(*api.AuthInfo); !ok {

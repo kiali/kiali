@@ -126,27 +126,29 @@ var Metrics = MetricsType{
 // SuccessOrFailureMetricType let's you capture metrics for both successes and failures,
 // where successes are tracked using a duration histogram and failures are tracked with a counter.
 // Typical usage is:
-// func SomeFunction(...) (..., err error) {
-//     sof := GetSuccessOrFailureMetricTypeObject()
-//     defer sof.ObserveNow(&err)
-//     ... do the work of SomeFunction here...
-// }
+//
+//	func SomeFunction(...) (..., err error) {
+//		sof := GetSuccessOrFailureMetricTypeObject()
+//		defer sof.ObserveNow(&err)
+//		... do the work of SomeFunction here...
+//	}
 //
 // If a function doesn't support returning an error, then call ObserveDuration directly:
 //
-// func SomeFunction(...) (...) {
-//     sof := GetSuccessOrFailureMetricTypeObject()
-//     defer sof.ObserveDuration()
-//     ... do the work of SomeFunction here...
+//	func SomeFunction(...) (...) {
+//		sof := GetSuccessOrFailureMetricTypeObject()
+//		defer sof.ObserveDuration()
+//		... do the work of SomeFunction here...
+//	}
 //
 // If a function doesn't support returning an error, but you still need to report a failure,
 // call Inc() directly to increment the failure counter:
 //
-// func SomeFunction(...) (...) {
-//     sof := GetSuccessOrFailureMetricTypeObject()
-//     defer func() { if (somethingBadHappened) { sof.Inc() } else { sof.ObserveDuration() }}()
-//     ... do the work of SomeFunction here...
-// }
+//	func SomeFunction(...) (...) {
+//		sof := GetSuccessOrFailureMetricTypeObject()
+//		defer func() { if (somethingBadHappened) { sof.Inc() } else { sof.ObserveDuration() }}()
+//		... do the work of SomeFunction here...
+//	}
 type SuccessOrFailureMetricType struct {
 	*prometheus.Timer
 	prometheus.Counter
@@ -200,8 +202,9 @@ func SetGraphNodes(graphKind string, graphType string, withServiceNodes bool, no
 // a value for the graph generation time metric. The timer is ticking immediately
 // when this function returns.
 // Typical usage is as follows:
-//    promtimer := GetGraphGenerationTimePrometheusTimer(...)
-//    defer promtimer.ObserveDuration()
+//
+//	promtimer := GetGraphGenerationTimePrometheusTimer(...)
+//	defer promtimer.ObserveDuration()
 func GetGraphGenerationTimePrometheusTimer(graphKind string, graphType string, withServiceNodes bool) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.GraphGenerationTime.With(prometheus.Labels{
 		labelGraphKind:        graphKind,
@@ -215,9 +218,10 @@ func GetGraphGenerationTimePrometheusTimer(graphKind string, graphType string, w
 // a value for the graph appender time metric. The timer is ticking immediately
 // when this function returns.
 // Typical usage is as follows:
-//    promtimer := GetGraphAppenderTimePrometheusTimer(...)
-//    ... run the appender ...
-//    promtimer.ObserveDuration()
+//
+//	promtimer := GetGraphAppenderTimePrometheusTimer(...)
+//	... run the appender ...
+//	promtimer.ObserveDuration()
 func GetGraphAppenderTimePrometheusTimer(appenderName string) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.GraphAppenderTime.With(prometheus.Labels{
 		labelAppender: appenderName,
@@ -229,8 +233,9 @@ func GetGraphAppenderTimePrometheusTimer(appenderName string) *prometheus.Timer 
 // a value for the graph marshal time metric. The timer is ticking immediately
 // when this function returns.
 // Typical usage is as follows:
-//    promtimer := GetGraphMarshalTimePrometheusTimer(...)
-//    defer promtimer.ObserveDuration()
+//
+//	promtimer := GetGraphMarshalTimePrometheusTimer(...)
+//	defer promtimer.ObserveDuration()
 func GetGraphMarshalTimePrometheusTimer(graphKind string, graphType string, withServiceNodes bool) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.GraphMarshalTime.With(prometheus.Labels{
 		labelGraphKind:        graphKind,
@@ -244,8 +249,9 @@ func GetGraphMarshalTimePrometheusTimer(graphKind string, graphType string, with
 // a value for the API processing time metric. The timer is ticking immediately
 // when this function returns.
 // Typical usage is as follows:
-//    promtimer := GetAPIProcessingTimePrometheusTimer(...)
-//    defer promtimer.ObserveDuration()
+//
+//	promtimer := GetAPIProcessingTimePrometheusTimer(...)
+//	defer promtimer.ObserveDuration()
 func GetAPIProcessingTimePrometheusTimer(apiRouteName string) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.APIProcessingTime.With(prometheus.Labels{
 		labelRoute: apiRouteName,
@@ -266,9 +272,10 @@ func GetAPIProcessingTimePrometheusTimer(apiRouteName string) *prometheus.Timer 
 // by passing in a queryGroup of "Graph-Generation".
 //
 // Typical usage is as follows:
-//    promtimer := GetPrometheusProcessingTimePrometheusTimer(...)
-//    ... execute the query ...
-//    promtimer.ObserveDuration()
+//
+//	promtimer := GetPrometheusProcessingTimePrometheusTimer(...)
+//	... execute the query ...
+//	promtimer.ObserveDuration()
 func GetPrometheusProcessingTimePrometheusTimer(queryGroup string) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.PrometheusProcessingTime.With(prometheus.Labels{
 		labelQueryGroup: queryGroup,
@@ -281,9 +288,10 @@ func GetPrometheusProcessingTimePrometheusTimer(queryGroup string) *prometheus.T
 // when this function returns.
 //
 // Typical usage is as follows:
-//    promtimer := GetCheckerProcessingTimePrometheusTimer(...)
-//    ... execute the validation check ...
-//    promtimer.ObserveDuration()
+//
+//	promtimer := GetCheckerProcessingTimePrometheusTimer(...)
+//	... execute the validation check ...
+//	promtimer.ObserveDuration()
 func GetCheckerProcessingTimePrometheusTimer(checkerName string) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.CheckerProcessingTime.With(prometheus.Labels{
 		labelCheckerName: checkerName,
@@ -299,9 +307,10 @@ func GetCheckerProcessingTimePrometheusTimer(checkerName string) *prometheus.Tim
 // all services within the namespace.
 //
 // Typical usage is as follows:
-//    promtimer := GetValidationProcessingTimePrometheusTimer(...)
-//    ... execute the validation checks ...
-//    promtimer.ObserveDuration()
+//
+//	promtimer := GetValidationProcessingTimePrometheusTimer(...)
+//	... execute the validation checks ...
+//	promtimer.ObserveDuration()
 func GetValidationProcessingTimePrometheusTimer(namespace string, service string) *prometheus.Timer {
 	var labels prometheus.Labels
 	if service != "" {
@@ -329,9 +338,10 @@ func GetValidationProcessingTimePrometheusTimer(namespace string, service string
 // Istio object in a specific namespace. The timer is ticking immediately when this function returns.
 //
 // Typical usage is as follows:
-//    promtimer := GetSingleValidationProcessingTimePrometheusTimer(...)
-//    ... execute the validation check ...
-//    promtimer.ObserveDuration()
+//
+//	promtimer := GetSingleValidationProcessingTimePrometheusTimer(...)
+//	... execute the validation check ...
+//	promtimer.ObserveDuration()
 func GetSingleValidationProcessingTimePrometheusTimer(namespace string, objectType string, objectName string) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.SingleValidationProcessingTime.With(prometheus.Labels{
 		labelNamespace: namespace,

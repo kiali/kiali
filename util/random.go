@@ -9,7 +9,7 @@ import (
 // rand.Seed() to initialize the default source.
 //
 // Found at https://ispycode.com/Blog/golang/2016-10/How-to-generate-a-random-string-of-a-fixed-length
-//  - Adapted for more characters
+// - Adapted for more characters
 func RandomString(n int) string {
 	var letterRunes = []rune("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-!@#$%^&*()")
 

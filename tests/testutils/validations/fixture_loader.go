@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v2"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -33,7 +33,7 @@ type YamlFixtureLoader struct {
 }
 
 func (l *YamlFixtureLoader) Load() error {
-	yamlFile, err := ioutil.ReadFile(l.Filename)
+	yamlFile, err := os.ReadFile(l.Filename)
 	l.istioConfigList = models.IstioConfigList{}
 	if err != nil {
 		log.Errorf("Error loading test file: #%v ", err)

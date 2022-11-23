@@ -8,6 +8,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
@@ -66,7 +67,7 @@ func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, p
 
 // getAuthInfo retrieves the token from the request's context
 func getAuthInfo(r *http.Request) (*api.AuthInfo, error) {
-	authInfoContext := r.Context().Value("authInfo")
+	authInfoContext := authentication.GetAuthInfoContext(r.Context())
 	if authInfoContext != nil {
 		if authInfo, ok := authInfoContext.(*api.AuthInfo); ok {
 			return authInfo, nil

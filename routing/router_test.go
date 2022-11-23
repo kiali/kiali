@@ -1,7 +1,7 @@
 package routing
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -80,7 +80,7 @@ func TestSimpleRoute(t *testing.T) {
 	}
 	assert.Equal(t, 200, resp.StatusCode, "Response should be ok")
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	assert.Equal(t, "", string(body), "Response should be empty")
 }
 
@@ -112,14 +112,14 @@ func TestRedirectWithSetWebRootKeepsParams(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	assert.Equal(t, 200, resp.StatusCode, "Response should not redirect")
 
 	resp, err = client.Get(ts.URL + "/test/")
 	if err != nil {
 		t.Fatal(err)
 	}
-	body2, _ := ioutil.ReadAll(resp.Body)
+	body2, _ := io.ReadAll(resp.Body)
 	assert.Equal(t, 200, resp.StatusCode, string(body2))
 
 	assert.Equal(t, string(body), string(body2), "Response with and without the trailing slash on the webroot are not the same")

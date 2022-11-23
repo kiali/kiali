@@ -6,6 +6,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/util/httputil"
@@ -27,7 +28,7 @@ func (c perRPCCredentials) RequireTransportSecurity() bool {
 
 func GetAuthDialOptions(tls bool, auth *config.Auth) ([]grpc.DialOption, error) {
 	if auth == nil {
-		return []grpc.DialOption{grpc.WithInsecure()}, nil
+		return []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}, nil
 	}
 	var opts []grpc.DialOption
 	if tls {
@@ -46,7 +47,7 @@ func GetAuthDialOptions(tls bool, auth *config.Auth) ([]grpc.DialOption, error) 
 		opts = append(opts, grpc.WithPerRPCCredentials(perRPCCredentials{auth: "Bearer " + auth.Token, requireSecurity: !auth.InsecureSkipVerify}))
 	}
 	if len(opts) == 0 {
-		opts = append(opts, grpc.WithInsecure())
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 	return opts, nil
 }
