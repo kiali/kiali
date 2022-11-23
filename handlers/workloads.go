@@ -89,7 +89,6 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	includeValidations := false
-
 	if p.Validate {
 		includeValidations = true
 	}
