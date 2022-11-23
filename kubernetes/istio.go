@@ -188,7 +188,6 @@ func (in *K8SClient) IstioAccess() bool {
 }
 
 func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, error) {
-
 	c := config.Get()
 	// Check if the kube-api has proxy access to pods in the istio-system
 	// https://github.com/kiali/kiali/issues/3494#issuecomment-772486224
@@ -205,7 +204,6 @@ func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, 
 		}
 	}
 	if !istiodReachable {
-		// TODO !istiod
 		return nil, fmt.Errorf("unable to proxy Istiod pods. " +
 			"Make sure your Kubernetes API server has access to the Istio control plane through 8080 port")
 	}
@@ -236,7 +234,6 @@ func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, 
 			} else {
 				syncChan <- map[string][]byte{name: res}
 			}
-
 		}(istiod.Name, istiod.Namespace)
 	}
 
@@ -267,7 +264,6 @@ func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, 
 }
 
 func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
-
 	const synczPath = "/debug/syncz"
 	var result map[string][]byte
 
@@ -291,7 +287,6 @@ func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
 }
 
 func (in *K8SClient) GetRegistryServices() ([]*RegistryService, error) {
-
 	const registryzPath = "/debug/registryz"
 	var result map[string][]byte
 
@@ -315,7 +310,6 @@ func (in *K8SClient) GetRegistryServices() ([]*RegistryService, error) {
 }
 
 func (in *K8SClient) GetRegistryEndpoints() ([]*RegistryEndpoint, error) {
-
 	const endpointzPath = "/debug/endpointz"
 	var result map[string][]byte
 
@@ -339,7 +333,6 @@ func (in *K8SClient) GetRegistryEndpoints() ([]*RegistryEndpoint, error) {
 }
 
 func (in *K8SClient) GetRegistryConfiguration() (*RegistryConfiguration, error) {
-
 	const configzPath = "/debug/configz"
 	var result map[string][]byte
 

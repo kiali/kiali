@@ -22,6 +22,7 @@ func GetKialiToken() (string, error) {
 		} else {
 			token, err := ioutil.ReadFile(DefaultServiceAccountPath)
 			if err != nil {
+				// return "", err
 				// TODO This is a change for a local setup. REMOVE
 				cmd, err2 := exec.Command("kubectl", "exec", "deploy/kiali", "-n", "istio-system", "--", "cat", DefaultServiceAccountPath).Output()
 				if err2 != nil {
