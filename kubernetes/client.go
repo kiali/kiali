@@ -62,7 +62,6 @@ type K8SClient struct {
 	isGatewayAPI *bool
 	gatewayapi   gatewayapiclient.Interface
 
-	HasIstioAccess bool
 	// Separated out for testing purposes
 	getPodPortForwarderFunc func(namespace, name, portMap string) (httputil.PortForwarder, error)
 }
@@ -174,7 +173,6 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 
 	client.ctx = context.Background()
 
-	client.HasIstioAccess = client.IstioAccess()
 	return &client, nil
 }
 
