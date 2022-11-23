@@ -1,5 +1,5 @@
 import { TLSStatus } from '../../types/TLSStatus';
-import { WorkloadOverview } from '../../types/ServiceInfo';
+import {getServicePort, WorkloadOverview} from '../../types/ServiceInfo';
 import { WorkloadWeight } from './TrafficShifting';
 import { Rule } from './RequestRouting/Rules';
 import { K8sRule } from './K8sRequestRouting/K8sRules';
@@ -51,6 +51,7 @@ import { DestService, GraphDefinition, NodeType } from '../../types/Graph';
 import { ServiceEntryState } from '../../pages/IstioConfigNew/ServiceEntryForm';
 import {K8sRouteBackendRef} from './K8sTrafficShifting';
 import { QUERY_PARAMS, PATH, HEADERS, METHOD } from "./K8sRequestRouting/K8sMatchBuilder";
+import {ServiceOverview} from "../../types/ServiceList";
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
@@ -101,6 +102,7 @@ export type ServiceWizardProps = {
   tlsStatus?: TLSStatus;
   createOrUpdate: boolean;
   workloads: WorkloadOverview[];
+  subServices: ServiceOverview[];
   virtualServices: VirtualService[];
   destinationRules: DestinationRule[];
   gateways: string[];
@@ -919,12 +921,13 @@ const getWorkloadsByVersion = (
   return wkdVersionName;
 };
 
-export const getDefaultBackendRefs = (workloads: WorkloadOverview[]): K8sRouteBackendRef[] => {
-  const wkTraffic = workloads.length < 100 ? Math.floor(100 / workloads.length) : 0;
-  const remainTraffic = workloads.length < 100 ? 100 % workloads.length : 0;
-  const backendRefs: K8sRouteBackendRef[] = workloads.map(workload => ({
-    name: workload.name,
-    weight: wkTraffic
+export const getDefaultBackendRefs = (subServices: ServiceOverview[]): K8sRouteBackendRef[] => {
+  const sTraffic = subServices.length < 100 ? Math.floor(100 / subServices.length) : 0;
+  const remainTraffic = subServices.length < 100 ? 100 % subServices.length : 0;
+  const backendRefs: K8sRouteBackendRef[] = subServices.map(s => ({
+    name: s.name,
+    weight: sTraffic,
+    port: getServicePort(s.ports)
   }));
   if (remainTraffic > 0) {
     backendRefs[backendRefs.length - 1].weight = backendRefs[backendRefs.length - 1].weight ? backendRefs[backendRefs.length - 1].weight : 0 + remainTraffic;

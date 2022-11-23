@@ -13,6 +13,7 @@ import { TLSStatus } from './TLSStatus';
 import { AdditionalItem } from './Workload';
 import { ResourcePermissions } from './Permissions';
 import {KIALI_WIZARD_LABEL} from "../components/IstioWizards/WizardActions";
+import {ServiceOverview} from "./ServiceList";
 
 export interface ServicePort {
   name: string;
@@ -69,6 +70,7 @@ export interface ServiceDetailsInfo {
   istioPermissions: ResourcePermissions;
   health?: ServiceHealth;
   workloads?: WorkloadOverview[];
+  subServices?: ServiceOverview[];
   namespaceMTLS?: TLSStatus;
   validations: Validations;
   additionalDetails: AdditionalItem[];
@@ -172,14 +174,10 @@ export function getServiceWizardLabel(serviceDetails: Service): string {
   }
 }
 
-export function getServicePort(serviceDetails: Service): number {
+export function getServicePort(ports: { [key: string]: number }): number {
   let port = 0;
-  if (serviceDetails && serviceDetails.ports) {
-    serviceDetails.ports.forEach(p => {
-      if (p.port) {
-        port = p.port;
-      }
-    });
+  if (ports) {
+    port = Object.values(ports)[0]
   }
   return port;
 }

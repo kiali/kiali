@@ -1,15 +1,15 @@
 import * as React from 'react';
 import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
 import Slider from './Slider/Slider';
-import { WorkloadOverview } from '../../types/ServiceInfo';
 import { style } from 'typestyle';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
 import { EqualizerIcon } from '@patternfly/react-icons';
 import {getDefaultBackendRefs} from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import {ServiceOverview} from "../../types/ServiceList";
 
 type Props = {
-  workloads: WorkloadOverview[];
+  subServices: ServiceOverview[];
   initRefs: K8sRouteBackendRef[];
   onChange: (backendRefs: K8sRouteBackendRef[], reset: boolean) => void;
   showValid: boolean;
@@ -44,7 +44,7 @@ class K8sTrafficShifting extends React.Component<Props, State> {
   }
 
   resetState = () => {
-    if (this.props.workloads.length === 0) {
+    if (this.props.subServices.length === 0) {
       return;
     }
     this.setState(
@@ -53,14 +53,14 @@ class K8sTrafficShifting extends React.Component<Props, State> {
           backendRefs:
             prevState.backendRefs.length === 0 && this.props.initRefs.length > 0
               ? this.props.initRefs
-              : getDefaultBackendRefs(this.props.workloads)
+              : getDefaultBackendRefs(this.props.subServices)
         };
       },
       () => this.props.onChange(this.state.backendRefs, true)
     );
   };
 
-  onWeight = (workloadName: string, newWeight: number) => {
+  onWeight = (serviceName: string, newWeight: number) => {
     this.setState(
       prevState => {
         const nodeId: number[] = [];
@@ -68,7 +68,7 @@ class K8sTrafficShifting extends React.Component<Props, State> {
 
         // Set new weight; remember rest of the nodes
         for (let i = 0; i < prevState.backendRefs.length; i++) {
-          if (prevState.backendRefs[i].name === workloadName) {
+          if (prevState.backendRefs[i].name === serviceName) {
             prevState.backendRefs[i].weight = newWeight;
             maxWeight -= newWeight;
           }
@@ -99,7 +99,7 @@ class K8sTrafficShifting extends React.Component<Props, State> {
   render() {
     // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
     // https://github.com/patternfly/patternfly-next/issues/2373
-    const workloadCells: ICell[] = [
+    const serviceCells: ICell[] = [
       {
         title: 'Destination Service',
         transforms: [cellWidth(30) as any],
@@ -111,33 +111,33 @@ class K8sTrafficShifting extends React.Component<Props, State> {
         props: {}
       }
     ];
-    const workloadsRows = this.state.backendRefs
-      .map(workload => {
+    const servicesRows = this.state.backendRefs
+      .map(service => {
         return {
           cells: [
             <>
               <div>
                 <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-                {workload.name}
+                {service.name}
               </div>
             </>,
             // This <> wrapper is needed by Slider
             <>
               <Slider
-                id={'slider-' + workload.name}
-                key={'slider-' + workload.name}
+                id={'slider-' + service.name}
+                key={'slider-' + service.name}
                 tooltip={true}
                 input={true}
                 inputFormat="%"
-                value={workload.weight}
+                value={service.weight}
                 min={0}
                 max={100}
                 maxLimit={100}
                 onSlide={value => {
-                  this.onWeight(workload.name, value as number);
+                  this.onWeight(service.name, value as number);
                 }}
                 onSlideStop={value => {
-                  this.onWeight(workload.name, value as number);
+                  this.onWeight(service.name, value as number);
                 }}
                 locked={false}
                 showLock={false}
@@ -150,11 +150,11 @@ class K8sTrafficShifting extends React.Component<Props, State> {
       });
     return (
       <>
-        <Table cells={workloadCells} rows={workloadsRows} aria-label="weighted routing">
+        <Table cells={serviceCells} rows={servicesRows} aria-label="weighted routing">
           <TableHeader />
           <TableBody />
         </Table>
-        {this.props.workloads.length > 1 && (
+        {this.props.subServices.length > 1 && (
           <div className={evenlyButtonStyle}>
             <Button variant={ButtonVariant.link} icon={<EqualizerIcon />} onClick={() => this.resetState()}>
               Evenly distribute traffic

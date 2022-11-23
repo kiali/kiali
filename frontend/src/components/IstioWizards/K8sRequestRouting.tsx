@@ -1,14 +1,13 @@
 import * as React from 'react';
-import { WorkloadOverview } from '../../types/ServiceInfo';
 import K8sRules, {MOVE_TYPE, K8sRule} from './K8sRequestRouting/K8sRules';
 import K8sRuleBuilder from './K8sRequestRouting/K8sRuleBuilder';
 import {K8sRouteBackendRef} from './K8sTrafficShifting';
 import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
 import {getDefaultBackendRefs} from './WizardActions';
+import {ServiceOverview} from "../../types/ServiceList";
 
 type Props = {
-  servicePort?: number;
-  workloads: WorkloadOverview[];
+  subServices: ServiceOverview[];
   initRules: K8sRule[];
   onChange: (valid: boolean, k8sRules: K8sRule[]) => void;
 };
@@ -37,7 +36,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
     this.state = {
       category: PATH,
       operator: EXACT,
-      backendRefs: getDefaultBackendRefs(this.props.workloads),
+      backendRefs: getDefaultBackendRefs(this.props.subServices),
       matches: [],
       headerName: '',
       queryParamName: '',
@@ -110,7 +109,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
           newBackendRefs.push({
             name: br.name,
             weight: br.weight,
-            port: this.props.servicePort ? this.props.servicePort : 80,
+            port: br.port ? br.port : 80,
           })
         );
         const newRule: K8sRule = {
@@ -288,7 +287,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
           onAddMatch={this.onAddMatch}
           matches={this.state.matches}
           onRemoveMatch={this.onRemoveMatch}
-          workloads={this.props.workloads}
+          subServices={this.props.subServices}
           onSelectWeights={this.onSelectWeights}
           backendRefs={this.state.backendRefs}
           validationMsg={this.state.validationMsg}

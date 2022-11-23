@@ -5,7 +5,7 @@ import K8sMatches from './K8sMatches';
 import { style } from 'typestyle';
 import { PFColors } from '../../Pf/PfColors';
 import K8sTrafficShifting, { K8sRouteBackendRef } from '../K8sTrafficShifting';
-import {WorkloadOverview} from "../../../types/ServiceInfo";
+import {ServiceOverview} from "../../../types/ServiceList";
 
 type Props = {
   // K8sMatchBuilder props
@@ -26,8 +26,8 @@ type Props = {
   matches: string[];
   onRemoveMatch: (match: string) => void;
 
-  workloads: WorkloadOverview[];
-  onSelectWeights: (workloads: K8sRouteBackendRef[]) => void;
+  subServices: ServiceOverview[];
+  onSelectWeights: (backendRefs: K8sRouteBackendRef[]) => void;
 
   backendRefs: K8sRouteBackendRef[];
 
@@ -91,7 +91,7 @@ class K8sRuleBuilder extends React.Component<Props, State> {
             >
               <K8sTrafficShifting
                 showValid={false}
-                workloads={this.props.workloads}
+                subServices={this.props.subServices}
                 initRefs={this.props.backendRefs}
                 showMirror={true}
                 onChange={this.props.onSelectWeights}

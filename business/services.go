@@ -474,12 +474,11 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 			defer wg.Done()
 			var err2 error
 			registryCriteria := RegistryCriteria{
-				Namespace:       namespace,
-				ServiceSelector: labelsSelector,
+				Namespace: namespace,
 			}
 			rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
 			if err2 != nil {
-				log.Errorf("Error fetching Registry Services per namespace %s: %s", criteria.Namespace, err2)
+				log.Errorf("Error fetching Registry Services per namespace %s: %s", registryCriteria.Namespace, err2)
 				errChan <- err2
 			}
 		}(ctx)
@@ -580,14 +579,25 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 		wo = append(wo, wi)
 	}
 
-	sos := []*models.ServiceOverview{}
-	for _, s := range rSvcs {
-		so := &models.ServiceOverview{}
-		s.ParseToService(s)
-		wo = append(wo, wi)
+	serviceOverviews := make([]*models.ServiceOverview, 0)
+	// Convert filtered k8s services into ServiceOverview, only several attributes are needed
+	for _, item := range rSvcs {
+		// app label selector of services should match, loading all versions
+		if selector, err3 := labels.ConvertSelectorToLabelsMap(labelsSelector); err3 == nil {
+			if appSelector, ok := item.Attributes.LabelSelectors["app"]; ok && selector.Has("app") && appSelector == selector.Get("app") {
+				ports := map[string]int{}
+				for _, port := range item.Ports {
+					ports[port.Name] = port.Port
+				}
+				serviceOverviews = append(serviceOverviews, &models.ServiceOverview{
+					Name:  item.Attributes.Name,
+					Ports: ports,
+				})
+			}
+		}
 	}
 
-	s := models.ServiceDetails{Workloads: wo, Health: hth, NamespaceMTLS: nsmtls}
+	s := models.ServiceDetails{Workloads: wo, Health: hth, NamespaceMTLS: nsmtls, SubServices: serviceOverviews}
 	s.Service = svc
 	s.SetPods(kubernetes.FilterPodsByEndpoints(eps, pods))
 	// ServiceDetail will consider if the Service is a External/Federation entry

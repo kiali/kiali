@@ -537,6 +537,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
           namespace={this.state.wizardsData.namespace}
           serviceName={this.state.wizardsData.serviceDetails?.service?.name || ''}
           workloads={this.state.wizardsData.serviceDetails?.workloads || []}
+          subServices={this.state.wizardsData.serviceDetails?.subServices || []}
           createOrUpdate={canCreate(this.state.wizardsData.serviceDetails?.istioPermissions) || canUpdate(this.state.wizardsData.serviceDetails?.istioPermissions)}
           virtualServices={this.state.wizardsData.serviceDetails?.virtualServices || []}
           destinationRules={this.state.wizardsData.serviceDetails?.destinationRules || []}
