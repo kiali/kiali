@@ -289,7 +289,7 @@ prepare_test() {
     # if running the non-OpenShift openid-test or header-auth-test, create a rolebinding so the test can log in
     header-auth-test|openid-test)
       if [ "${CLUSTER_TYPE}" != "openshift" ]; then
-        ${TEST_CLIENT_EXE:-kubectl} create rolebinding openid-rolebinding-istio-system --clusterrole=kiali --user=admin@example.com --namespace=istio-system >> ${TEST_LOGS_DIR}/${1}.log 2>&1
+        ${TEST_CLIENT_EXE:-kubectl} create rolebinding openid-rolebinding-istio-system --clusterrole=kiali-viewer --user=admin@example.com --namespace=istio-system >> ${TEST_LOGS_DIR}/${1}.log 2>&1
       fi
       ;;
 
