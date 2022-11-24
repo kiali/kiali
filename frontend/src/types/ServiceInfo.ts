@@ -175,7 +175,7 @@ export function getServiceWizardLabel(serviceDetails: Service): string {
 }
 
 export function getServicePort(ports: { [key: string]: number }): number {
-  let port = 0;
+  let port = 80;
   if (ports) {
     port = Object.values(ports)[0]
   }

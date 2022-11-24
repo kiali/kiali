@@ -1110,6 +1110,7 @@ export const getInitK8sRules = (
           rule.backendRefs.push({
             name: bRef.name,
             weight: !bRef.weight || bRef.weight === 1 ? 100 : bRef.weight,
+            port: !bRef.port ? 80 : bRef.port
           });
         });
       }
