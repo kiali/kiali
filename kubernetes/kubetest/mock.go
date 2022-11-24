@@ -152,6 +152,10 @@ func (o *K8SClientMock) MockServices(namespace string, names []string) {
 	o.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 }
 
+func (o *K8SClientMock) IstioAccess() bool {
+	return true
+}
+
 func fakeService(namespace, name string) core_v1.Service {
 	return core_v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
