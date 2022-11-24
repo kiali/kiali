@@ -585,16 +585,29 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 		// app label selector of services should match, loading all versions
 		if selector, err3 := labels.ConvertSelectorToLabelsMap(labelsSelector); err3 == nil {
 			if appSelector, ok := item.Attributes.LabelSelectors["app"]; ok && selector.Has("app") && appSelector == selector.Get("app") {
-				ports := map[string]int{}
-				for _, port := range item.Ports {
-					ports[port.Name] = port.Port
+				if _, ok1 := item.Attributes.LabelSelectors["version"]; ok1 {
+					ports := map[string]int{}
+					for _, port := range item.Ports {
+						ports[port.Name] = port.Port
+					}
+					serviceOverviews = append(serviceOverviews, &models.ServiceOverview{
+						Name:  item.Attributes.Name,
+						Ports: ports,
+					})
 				}
-				serviceOverviews = append(serviceOverviews, &models.ServiceOverview{
-					Name:  item.Attributes.Name,
-					Ports: ports,
-				})
 			}
 		}
+	}
+	// loading the single service if no versions
+	if len(serviceOverviews) == 0 {
+		ports := map[string]int{}
+		for _, port := range svc.Ports {
+			ports[port.Name] = int(port.Port)
+		}
+		serviceOverviews = append(serviceOverviews, &models.ServiceOverview{
+			Name:  svc.Name,
+			Ports: ports,
+		})
 	}
 
 	s := models.ServiceDetails{Workloads: wo, Health: hth, NamespaceMTLS: nsmtls, SubServices: serviceOverviews}
