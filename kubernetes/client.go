@@ -53,7 +53,8 @@ type K8SClient struct {
 	k8s            kube.Interface
 	istioClientset istio.Interface
 	// Used in REST queries after bump to client-go v0.20.x
-	ctx context.Context
+	ctx         context.Context
+	istioAccess bool
 	// isOpenShift private variable will check if kiali is deployed under an OpenShift cluster or not
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsOpenShift() for more details.
@@ -172,6 +173,8 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 	}
 
 	client.ctx = context.Background()
+	client.istioAccess = client.HasIstioAccess()
+
 	return &client, nil
 }
 
