@@ -156,6 +156,10 @@ func (o *K8SClientMock) IstioAccess() bool {
 	return true
 }
 
+func (o *K8SClientMock) HasIstioAccess() bool {
+	return true
+}
+
 func fakeService(namespace, name string) core_v1.Service {
 	return core_v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
