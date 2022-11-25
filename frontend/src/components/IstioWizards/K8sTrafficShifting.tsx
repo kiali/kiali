@@ -128,7 +128,7 @@ class K8sTrafficShifting extends React.Component<Props, State> {
                 key={'slider-' + service.name}
                 tooltip={true}
                 input={true}
-                inputFormat="%"
+                inputFormat=""
                 value={service.weight}
                 min={0}
                 max={100}
