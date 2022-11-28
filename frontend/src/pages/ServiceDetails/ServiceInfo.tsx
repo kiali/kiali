@@ -233,6 +233,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
           namespace={this.props.namespace}
           serviceName={this.props.serviceDetails?.service?.name || ''}
           workloads={this.props.serviceDetails?.workloads || []}
+          subServices={this.props.serviceDetails?.subServices || []}
           createOrUpdate={canCreate(this.props.serviceDetails?.istioPermissions) || canUpdate(this.props.serviceDetails?.istioPermissions)}
           virtualServices={this.props.serviceDetails?.virtualServices || []}
           destinationRules={this.props.serviceDetails?.destinationRules || []}

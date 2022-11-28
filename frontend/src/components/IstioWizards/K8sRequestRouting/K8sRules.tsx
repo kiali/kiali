@@ -12,7 +12,7 @@ import {
 } from '@patternfly/react-core';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ROUTE_RULES_TOOLTIP, wizardTooltip } from '../WizardHelp';
-import { K8sRouteBackendRef } from "./K8sRuleBuilder";
+import {K8sRouteBackendRef} from '../K8sTrafficShifting';
 
 export enum MOVE_TYPE {
   UP,

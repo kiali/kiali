@@ -543,6 +543,13 @@ func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1alpha2.HTTPRoute
 				}
 			}
 		}
+		if !appendRoute {
+			for _, hostname := range route.Spec.Hostnames {
+				if FilterByHost(string(hostname), route.Namespace, serviceName, namespace) {
+					appendRoute = true
+				}
+			}
+		}
 		if appendRoute {
 			filtered = append(filtered, route)
 		}

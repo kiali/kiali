@@ -14,6 +14,7 @@ export interface ServiceOverview {
   istioSidecar: boolean;
   additionalDetailSample?: AdditionalItem;
   labels: { [key: string]: string };
+  ports: { [key: string]: number };
   istioReferences: ObjectReference[];
   kialiWizard: string;
   serviceRegistry: string;

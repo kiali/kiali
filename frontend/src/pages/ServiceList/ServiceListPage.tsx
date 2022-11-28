@@ -108,9 +108,10 @@ class ServiceListPageComponent extends FilterComponent.Component<
         validation: this.getServiceValidation(service.name, data.namespace.name, data.validations),
         additionalDetailSample: service.additionalDetailSample,
         labels: service.labels || {},
+        ports: service.ports || {},
         istioReferences: sortIstioReferences(service.istioReferences, true),
         kialiWizard: service.kialiWizard,
-        serviceRegistry: service.serviceRegistry
+        serviceRegistry: service.serviceRegistry,
       }));
     }
     return [];

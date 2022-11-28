@@ -31,6 +31,7 @@ import { canCreate, canUpdate, ResourcePermissions } from '../../types/Permissio
 import ServiceWizardActionsDropdownGroup, {DELETE_TRAFFIC_ROUTING} from "./ServiceWizardActionsDropdownGroup";
 import ConfirmDeleteTrafficRoutingModal from "./ConfirmDeleteTrafficRoutingModal";
 import { deleteServiceTrafficRouting } from "services/Api";
+import {ServiceOverview} from "../../types/ServiceList";
 
 type Props = {
   namespace: string;
@@ -38,6 +39,7 @@ type Props = {
   show: boolean;
   readOnly: boolean;
   workloads: WorkloadOverview[];
+  subServices: ServiceOverview[];
   virtualServices: VirtualService[];
   destinationRules: DestinationRule[];
   istioPermissions: ResourcePermissions;
@@ -221,6 +223,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
           namespace={this.props.namespace}
           serviceName={this.props.serviceName}
           workloads={validWorkloads}
+          subServices={this.props.subServices}
           createOrUpdate={canCreate(this.props.istioPermissions) || canUpdate(this.props.istioPermissions)}
           virtualServices={this.props.virtualServices}
           destinationRules={this.props.destinationRules}

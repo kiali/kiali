@@ -31,6 +31,8 @@ type ServiceOverview struct {
 	AdditionalDetailSample *AdditionalItem `json:"additionalDetailSample"`
 	// Annotations of the service
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
+	// Names and Ports of Service
+	Ports map[string]int `json:"ports"`
 	// Labels for Service
 	Labels map[string]string `json:"labels"`
 	// Selector for Service
@@ -70,9 +72,11 @@ type ServiceDetails struct {
 	ServiceEntries   []*networking_v1beta1.ServiceEntry    `json:"serviceEntries"`
 	IstioPermissions ResourcePermissions                   `json:"istioPermissions"`
 	Workloads        WorkloadOverviews                     `json:"workloads"`
-	Health           ServiceHealth                         `json:"health"`
-	Validations      IstioValidations                      `json:"validations"`
-	NamespaceMTLS    MTLSStatus                            `json:"namespaceMTLS"`
+	// Services with same app labels (different versions or a single version)
+	SubServices   []*ServiceOverview `json:"subServices"`
+	Health        ServiceHealth      `json:"health"`
+	Validations   IstioValidations   `json:"validations"`
+	NamespaceMTLS MTLSStatus         `json:"namespaceMTLS"`
 }
 
 type Services []*Service
