@@ -470,7 +470,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 			}
 		}(ctx)
 
-		go func(ctx context.Context) {
+		go func() {
 			defer wg.Done()
 			var err2 error
 			registryCriteria := RegistryCriteria{
@@ -481,7 +481,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 				log.Errorf("Error fetching Registry Services per namespace %s: %s", registryCriteria.Namespace, err2)
 				errChan <- err2
 			}
-		}(ctx)
+		}()
 	}
 
 	go func() {

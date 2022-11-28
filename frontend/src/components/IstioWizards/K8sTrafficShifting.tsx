@@ -13,7 +13,6 @@ type Props = {
   initRefs: K8sRouteBackendRef[];
   onChange: (backendRefs: K8sRouteBackendRef[], reset: boolean) => void;
   showValid: boolean;
-  showMirror: boolean;
 };
 
 export type K8sRouteBackendRef = {
@@ -63,29 +62,11 @@ class K8sTrafficShifting extends React.Component<Props, State> {
   onWeight = (serviceName: string, newWeight: number) => {
     this.setState(
       prevState => {
-        const nodeId: number[] = [];
-        let maxWeight = 100;
-
-        // Set new weight; remember rest of the nodes
+         // Set new weight; remember rest of the nodes
         for (let i = 0; i < prevState.backendRefs.length; i++) {
           if (prevState.backendRefs[i].name === serviceName) {
             prevState.backendRefs[i].weight = newWeight;
-            maxWeight -= newWeight;
           }
-        }
-
-        // Distribute pending weights
-        let sumWeights = 0;
-        for (let j = 0; j < nodeId.length; j++) {
-          if (sumWeights + prevState.backendRefs[nodeId[j]].weight > maxWeight) {
-            prevState.backendRefs[nodeId[j]].weight = maxWeight - sumWeights;
-          }
-          sumWeights += prevState.backendRefs[nodeId[j]].weight;
-        }
-
-        // Adjust last element
-        if (nodeId.length > 0 && sumWeights < maxWeight) {
-          prevState.backendRefs[nodeId[nodeId.length - 1]].weight += maxWeight - sumWeights;
         }
 
         return {
@@ -141,7 +122,6 @@ class K8sTrafficShifting extends React.Component<Props, State> {
                 }}
                 locked={false}
                 showLock={false}
-                showMirror={false}
                 mirrored={false}
               />
             </>

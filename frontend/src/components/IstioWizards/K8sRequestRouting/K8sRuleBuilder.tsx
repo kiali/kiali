@@ -93,7 +93,6 @@ class K8sRuleBuilder extends React.Component<Props, State> {
                 showValid={false}
                 subServices={this.props.subServices}
                 initRefs={this.props.backendRefs}
-                showMirror={true}
                 onChange={this.props.onSelectWeights}
               />
             </div>
