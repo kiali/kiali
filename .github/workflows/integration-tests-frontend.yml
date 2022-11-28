@@ -60,7 +60,7 @@ jobs:
         id: set-kiali-url
 
       - name: Run cypress integration tests
-        uses: cypress-io/github-action@v2
+        uses: cypress-io/github-action@v4
         with:
           working-directory: frontend
           command: yarn run cypress:run
