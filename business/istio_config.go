@@ -155,7 +155,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 	}
 
 	// Use the Istio Registry when AllNamespaces is present
-	if criteria.AllNamespaces {
+	if criteria.AllNamespaces && in.businessLayer.k8s.IstioAccess() {
 		registryCriteria := RegistryCriteria{
 			AllNamespaces: true,
 		}
@@ -218,11 +218,19 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 
 		return istioConfigList, nil
 	}
-
-	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
-	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespace(ctx, criteria.Namespace); err != nil {
-		return models.IstioConfigList{}, err
+	nss := []string{}
+	if criteria.AllNamespaces {
+		allNamespaces, _ := in.businessLayer.Namespace.GetNamespaces(r.Context())
+		for _, ns := range allNamespaces {
+			nss = append(nss, ns.Name)
+		}
+	} else {
+		// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+		// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+		if _, err := in.businessLayer.Namespace.GetNamespace(ctx, criteria.Namespace); err != nil {
+			return models.IstioConfigList{}, err
+		}
+		nss = append(nss, criteria.Namespace)
 	}
 
 	isWorkloadSelector := criteria.WorkloadSelector != ""
@@ -241,17 +249,19 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 	go func(ctx context.Context, errChan chan error) {
 		defer wg.Done()
 		if criteria.Include(kubernetes.DestinationRules) {
-			var err error
-			// Check if namespace is cached
-			if IsResourceCached(criteria.Namespace, kubernetes.DestinationRules) {
-				istioConfigList.DestinationRules, err = kialiCache.GetDestinationRules(criteria.Namespace, criteria.LabelSelector)
-			} else {
-				drl, e := in.k8s.Istio().NetworkingV1beta1().DestinationRules(criteria.Namespace).List(ctx, listOpts)
-				istioConfigList.DestinationRules = drl.Items
-				err = e
-			}
-			if err != nil {
-				errChan <- err
+			for _, ns := range nss {
+				var err error
+				// Check if namespace is cached
+				if IsResourceCached(ns, kubernetes.DestinationRules) {
+					istioConfigList.DestinationRules, err = kialiCache.GetDestinationRules(ns, criteria.LabelSelector)
+				} else {
+					drl, e := in.k8s.Istio().NetworkingV1beta1().DestinationRules(ns).List(ctx, listOpts)
+					istioConfigList.DestinationRules = append(istioConfigList.DestinationRules, drl.Items...)
+					err = e
+				}
+				if err != nil {
+					errChan <- err
+				}
 			}
 		}
 	}(ctx, errChan)
