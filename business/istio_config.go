@@ -150,7 +150,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		RequestAuthentications: []*security_v1beta1.RequestAuthentication{},
 	}
 
-	if config.Get().IstioApiEnabled == false {
+	if !config.Get().IstioApiEnabled {
 		return istioConfigList, nil
 	}
 
