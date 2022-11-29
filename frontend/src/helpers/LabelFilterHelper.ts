@@ -100,5 +100,5 @@ const getKeyAndValues = (filters: string[]): { keys: string[]; keyValues: string
 };
 
 export const isIngressGateway = (labels: { [key: string]: string }): boolean => {
-  return 'istio' in labels && labels['istio'] === 'ingressgateway'
+  return labels && 'istio' in labels && labels['istio'] === 'ingressgateway'
 };
