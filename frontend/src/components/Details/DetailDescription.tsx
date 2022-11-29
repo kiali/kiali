@@ -13,6 +13,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 import {KialiAppState} from "../../store/Store";
 import {connect} from "react-redux";
 import {isParentKiosk, kioskContextMenuAction} from "../Kiosk/KioskActions";
+import { isIngressGateway } from "../../helpers/LabelFilterHelper";
 
 type ReduxProps = {
   kiosk: string;
@@ -149,7 +150,7 @@ class DetailDescription extends React.Component<Props> {
           <KialiIcon.Info className={infoStyle} />
         </Tooltip>
         {!workload.istioSidecar && (
-          <MissingSidecar namespace={this.props.namespace} tooltip={true} style={{ marginLeft: '10px' }} text={''} />
+          <MissingSidecar namespace={this.props.namespace} isIngressGateway={isIngressGateway(workload.labels)} tooltip={true} style={{ marginLeft: '10px' }} text={''} />
         )}
       </span>
     );
@@ -200,7 +201,7 @@ class DetailDescription extends React.Component<Props> {
             <span style={{ marginLeft: '10px' }}>{createIcon(sub.status)}</span>
           </Tooltip>
           {!workload.istioSidecar && (
-            <MissingSidecar namespace={this.props.namespace} tooltip={true} style={{ marginLeft: '10px' }} text={''} />
+            <MissingSidecar namespace={this.props.namespace} isIngressGateway={isIngressGateway(workload.labels)} tooltip={true} style={{ marginLeft: '10px' }} text={''} />
           )}
         </span>
       );

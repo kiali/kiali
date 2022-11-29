@@ -1,4 +1,4 @@
-import { filterByLabel } from '../LabelFilterHelper';
+import { filterByLabel, isIngressGateway } from '../LabelFilterHelper';
 import { AppListItem } from '../../types/AppList';
 import { AppHealth, WorkloadHealth, ServiceHealth } from '../../types/Health';
 import { WorkloadListItem } from '../../types/Workload';
@@ -290,5 +290,15 @@ describe('LabelFilter', () => {
         serviceRegistry: 'Kubernetes'
       }
     ]);
+  });
+
+  it('check is IngressGateway when false', () => {
+    const result = isIngressGateway({'istio': 'wrong'});
+    expect(result).toBeFalsy();
+  });
+
+  it('check is IngressGateway when true', () => {
+    const result = isIngressGateway({'istio': 'ingressgateway'});
+    expect(result).toBeTruthy();
   });
 });

@@ -16,6 +16,7 @@ import MissingLabel from '../../components/MissingLabel/MissingLabel';
 import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import DetailDescriptionContainer from "../../components/Details/DetailDescription";
+import { isIngressGateway } from "../../helpers/LabelFilterHelper";
 
 type WorkloadDescriptionProps = {
   workload?: Workload;
@@ -146,6 +147,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
                 tooltip={true}
                 style={{ marginLeft: '10px' }}
                 text={''}
+                isIngressGateway={isIngressGateway(workload.labels)}
               />
             )}
             {this.props.workload && hasMissingAuthPolicy(this.props.workload.name, this.props.workload.validations) && (

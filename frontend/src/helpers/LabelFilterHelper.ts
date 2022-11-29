@@ -98,3 +98,7 @@ const getKeyAndValues = (filters: string[]): { keys: string[]; keyValues: string
   const keyValues = filters.filter(f => f.includes('='));
   return { keys, keyValues };
 };
+
+export const isIngressGateway = (labels: { [key: string]: string }): boolean => {
+  return 'istio' in labels && labels['istio'] === 'ingressgateway'
+};
