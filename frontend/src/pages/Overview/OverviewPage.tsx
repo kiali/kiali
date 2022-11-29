@@ -779,8 +779,10 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         action: (ns: string) =>
           this.setState({ opTarget: 'delete', nsTarget: ns, showTrafficPoliciesModal: true, kind: 'policy' })
       };
-      namespaceActions.push(addAuthorizationAction);
-      if (aps.length > 0) {
+      if (this.props.istioApiEnabled) {
+        namespaceActions.push(addAuthorizationAction);
+      }
+      if (aps.length > 0 && this.props.istioApiEnabled) {
         namespaceActions.push(removeAuthorizationAction);
       }
     } else if (this.state.grafanaLinks.length > 0) {
