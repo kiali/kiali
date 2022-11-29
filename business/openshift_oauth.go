@@ -208,6 +208,7 @@ func request(method string, serverPrefix string, url string, auth *string, useSy
 	if defaultAuthRequestTimeout == (0 * time.Second) {
 		config := config.Get().Auth.OpenShift
 		defaultAuthRequestTimeout = time.Duration(config.AuthTimeout) * time.Second
+		log.Tracef("OpenShift auth timeout is set to [%v]", defaultAuthRequestTimeout)
 	}
 	return requestWithTimeout(method, serverPrefix, url, auth, time.Duration(defaultAuthRequestTimeout), useSystemCA, customCA)
 }
