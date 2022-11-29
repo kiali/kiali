@@ -1,9 +1,8 @@
-import { Given } from '@badeball/cypress-cucumber-preprocessor';
-import { Then } from '@badeball/cypress-cucumber-preprocessor';
+import { Given, And, Then } from '@badeball/cypress-cucumber-preprocessor';
 
 const url = '/';
 
-Given('I open Kiali URL', () => {
+And('I open Kiali URL', () => {
   cy.visit(url);
 });
 
