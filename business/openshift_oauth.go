@@ -58,7 +58,7 @@ type OAuthRouteTLSSpec struct {
 	Termination string `json:"termination"`
 }
 
-const defaultRequestTimeout = 10 * time.Second
+var defaultAuthRequestTimeout = 0 * time.Second // will be determined by config first time it is needed
 
 var kialiNamespace string
 
@@ -204,7 +204,12 @@ func (in *OpenshiftOAuthService) Logout(token string) error {
 }
 
 func request(method string, serverPrefix string, url string, auth *string, useSystemCA bool, customCA string) ([]byte, error) {
-	return requestWithTimeout(method, serverPrefix, url, auth, time.Duration(defaultRequestTimeout), useSystemCA, customCA)
+	if defaultAuthRequestTimeout == (0 * time.Second) {
+		config := config.Get().Auth.OpenShift
+		defaultAuthRequestTimeout = time.Duration(config.AuthTimeout) * time.Second
+		log.Tracef("OpenShift auth timeout is set to [%v]", defaultAuthRequestTimeout)
+	}
+	return requestWithTimeout(method, serverPrefix, url, auth, time.Duration(defaultAuthRequestTimeout), useSystemCA, customCA)
 }
 
 func requestWithTimeout(method string, serverPrefix string, url string, auth *string, timeout time.Duration, useSystemCA bool, customCA string) ([]byte, error) {
