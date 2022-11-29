@@ -78,10 +78,10 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
 
-	var istioAccess = in.k8s.IstioAccess()
+	var istioApiEnabled = config.Get().IstioApiEnabled
 
 	wg.Add(2) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
-	if istioAccess {
+	if istioApiEnabled {
 		wg.Add(2)
 		if service != "" {
 			wg.Add(1)
@@ -98,7 +98,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 		go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &namespaces, errChan, &wg)
 	}
 
-	if istioAccess {
+	if istioApiEnabled {
 		go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
 		if service != "" {
 			go in.fetchServices(ctx, &services, namespace, errChan, &wg)

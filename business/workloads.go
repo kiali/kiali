@@ -1132,7 +1132,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 
 		// Add the Proxy Status to the workload
 		for _, pod := range w.Pods {
-			if pod.HasIstioSidecar() && layer.k8s.IstioAccess() {
+			if pod.HasIstioSidecar() && config.Get().IstioApiEnabled {
 				ps, err := layer.ProxyStatus.GetPodProxyStatus(namespace, pod.Name)
 				if err != nil {
 					log.Warningf("GetPodProxyStatus is failing for [namespace: %s] [pod: %s]: %s ", namespace, pod.Name, err.Error())
@@ -1718,7 +1718,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 		// Add the Proxy Status to the workload
 		for _, pod := range w.Pods {
 			if pod.HasIstioSidecar() {
-				if layer.k8s.IstioAccess() {
+				if config.Get().IstioApiEnabled {
 					ps, err := layer.ProxyStatus.GetPodProxyStatus(criteria.Namespace, pod.Name)
 					if err != nil {
 						log.Warningf("GetPodProxyStatus is failing for [namespace: %s] [pod: %s]: %s ", criteria.Namespace, pod.Name, err.Error())
