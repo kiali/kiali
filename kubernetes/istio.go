@@ -91,8 +91,6 @@ type IstioClientInterface interface {
 	GetRegistryConfiguration() (*RegistryConfiguration, error)
 	GetRegistryEndpoints() ([]*RegistryEndpoint, error)
 	GetRegistryServices() ([]*RegistryService, error)
-	IstioAccess() bool
-	HasIstioAccess() bool
 }
 
 func (in *K8SClient) Istio() istio.Interface {
@@ -175,21 +173,6 @@ func (in *K8SClient) CanConnectToIstiod() (IstioComponentStatus, error) {
 	}
 
 	return ics, nil
-}
-
-func (in *K8SClient) HasIstioAccess() bool {
-	componentStatus, err := in.CanConnectToIstiod()
-	if err != nil {
-		return false
-	}
-	if len(componentStatus) == 0 {
-		return false
-	}
-	return true
-}
-
-func (in *K8SClient) IstioAccess() bool {
-	return in.istioAccess
 }
 
 func (in *K8SClient) getIstiodDebugStatus(debugPath string) (map[string][]byte, error) {

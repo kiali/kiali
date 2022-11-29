@@ -505,6 +505,7 @@ type Config struct {
 	InCluster                bool                                `yaml:"in_cluster,omitempty"`
 	InstallationTag          string                              `yaml:"installation_tag,omitempty"`
 	IstioLabels              IstioLabels                         `yaml:"istio_labels,omitempty"`
+	IstioApiEnabled          bool                                `yaml:"istio_api_enabled,omitempty"`
 	IstioNamespace           string                              `yaml:"istio_namespace,omitempty"` // default component namespace
 	KialiFeatureFlags        KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
 	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
@@ -515,8 +516,9 @@ type Config struct {
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = &Config{
-		InCluster:      true,
-		IstioNamespace: "istio-system",
+		InCluster:       true,
+		IstioApiEnabled: true,
+		IstioNamespace:  "istio-system",
 		API: ApiConfig{
 			Namespaces: ApiNamespacesConfig{
 				Exclude: []string{
