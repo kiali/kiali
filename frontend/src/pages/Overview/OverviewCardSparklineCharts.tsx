@@ -15,13 +15,14 @@ type Props = {
   errorMetrics?: Metric[];
   controlPlaneMetrics?: ControlPlaneMetricsMap;
   istiodResourceThreholds?: IstiodResourceThresholds;
+  istioApiEnabled?: boolean;
 };
 
 class OverviewCardSparklineCharts extends React.Component<Props> {
   render() {
     return (
       <>
-        {this.props.name !== serverConfig.istioNamespace &&
+        {(this.props.name !== serverConfig.istioNamespace || !this.props.istioApiEnabled) &&
           <OverviewCardDataPlaneNamespace
             metrics={this.props.metrics}
             errorMetrics={this.props.errorMetrics}
@@ -29,7 +30,7 @@ class OverviewCardSparklineCharts extends React.Component<Props> {
             direction={this.props.direction}
           />
         }
-        {this.props.name === serverConfig.istioNamespace &&
+        {(this.props.name === serverConfig.istioNamespace && this.props.istioApiEnabled) &&
           <OverviewCardControlPlaneNamespace
             pilotLatency={this.props.controlPlaneMetrics?.istiod_proxy_time}
             istiodMemory={this.props.controlPlaneMetrics?.istiod_mem}
