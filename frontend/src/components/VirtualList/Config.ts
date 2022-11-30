@@ -12,7 +12,7 @@ import NamespaceInfo from '../../pages/Overview/NamespaceInfo';
 import * as React from 'react';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import { PFBadges, PFBadgeType } from '../../components/Pf/PfBadges';
-import { isIngressGateway } from "../../helpers/LabelFilterHelper";
+import { isGateway } from "../../helpers/LabelFilterHelper";
 
 export type SortResource = AppListItem | WorkloadListItem | ServiceListItem;
 export type TResource = SortResource | IstioConfigItem;
@@ -31,7 +31,7 @@ export function hasHealth(r: RenderResource): r is SortResource {
 }
 
 export const hasMissingSidecar = (r: SortResource): boolean => {
-  return !isIstioNamespace(r.namespace) && !r.istioSidecar && !isIngressGateway(r.labels);
+  return !isIstioNamespace(r.namespace) && !r.istioSidecar && !isGateway(r.labels);
 };
 
 type ResourceType<R extends RenderResource> = {

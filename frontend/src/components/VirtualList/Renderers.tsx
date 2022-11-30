@@ -34,7 +34,7 @@ import Label from 'components/Label/Label';
 import { serverConfig } from 'config/ServerConfig';
 import ControlPlaneBadge from 'pages/Overview/ControlPlaneBadge';
 import NamespaceStatuses from 'pages/Overview/NamespaceStatuses';
-import { isIngressGateway } from "../../helpers/LabelFilterHelper";
+import { isGateway } from "../../helpers/LabelFilterHelper";
 
 // Links
 
@@ -84,7 +84,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
         )}
         {hasMissingSC && (
           <li>
-            <MissingSidecar namespace={item.namespace} isIngressGateway={isIngressGateway(item.labels)}/>
+            <MissingSidecar namespace={item.namespace} isGateway={isGateway(item.labels)}/>
           </li>
         )}
         {isWorkload && (hasMissingApp || hasMissingVersion) && (

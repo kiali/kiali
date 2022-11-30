@@ -99,6 +99,6 @@ const getKeyAndValues = (filters: string[]): { keys: string[]; keyValues: string
   return { keys, keyValues };
 };
 
-export const isIngressGateway = (labels: { [key: string]: string }): boolean => {
-  return labels && 'istio' in labels && labels['istio'] === 'ingressgateway'
+export const isGateway = (labels: { [key: string]: string }): boolean => {
+  return labels && 'istio' in labels && (labels['istio'] === 'ingressgateway' || labels['istio'] === 'egressgateway')
 };
