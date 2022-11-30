@@ -172,5 +172,6 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 	}
 
 	client.ctx = context.Background()
+
 	return &client, nil
 }

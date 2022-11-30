@@ -99,10 +99,12 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 			Namespace:       criteria.Namespace,
 			ServiceSelector: criteria.ServiceSelector,
 		}
-		rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
-		if err2 != nil {
-			log.Errorf("Error fetching Registry Services per namespace %s: %s", criteria.Namespace, err2)
-			errChan <- err2
+		if config.Get().IstioApiEnabled {
+			rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
+			if err2 != nil {
+				log.Errorf("Error fetching Registry Services per namespace %s: %s", criteria.Namespace, err2)
+				errChan <- err2
+			}
 		}
 	}()
 
@@ -491,11 +493,14 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 			Namespace:   namespace,
 			ServiceName: service,
 		}
-		rEps, err2 = in.businessLayer.RegistryStatus.GetRegistryEndpoints(criteria)
-		if err2 != nil {
-			log.Errorf("Error fetching Registry Endpoints namespace %s and service %s: %s", namespace, service, err2)
-			errChan <- err2
+		if config.Get().IstioApiEnabled {
+			rEps, err2 = in.businessLayer.RegistryStatus.GetRegistryEndpoints(criteria)
+			if err2 != nil {
+				log.Errorf("Error fetching Registry Endpoints namespace %s and service %s: %s", namespace, service, err2)
+				errChan <- err2
+			}
 		}
+
 	}()
 
 	go func(ctx context.Context) {

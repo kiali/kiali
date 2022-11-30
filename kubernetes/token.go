@@ -22,6 +22,7 @@ func GetKialiToken() (string, error) {
 			token, err := os.ReadFile(DefaultServiceAccountPath)
 			if err != nil {
 				return "", err
+
 			}
 			KialiToken = string(token)
 		}

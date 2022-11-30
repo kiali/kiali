@@ -28,6 +28,8 @@ type IstioEnvironment struct {
 	//
 	// required: true
 	IsMaistra bool `json:"isMaistra"`
+	// Is api enabled
+	IstioApiEnabled bool `json:"istioApiEnabled"`
 }
 
 // StatusInfo statusInfo
@@ -142,7 +144,8 @@ func Get() (status StatusInfo) {
 			}
 		}
 		info.IstioEnvironment = &IstioEnvironment{
-			IsMaistra: isMaistra,
+			IsMaistra:       isMaistra,
+			IstioApiEnabled: cfg.IstioApiEnabled,
 		}
 	}
 

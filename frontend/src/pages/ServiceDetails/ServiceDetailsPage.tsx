@@ -16,7 +16,7 @@ import TrafficDetails from 'components/TrafficList/TrafficDetails';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import {getServiceWizardLabel, ServiceDetailsInfo} from '../../types/ServiceInfo';
+import { getServiceWizardLabel, ServiceDetailsInfo } from '../../types/ServiceInfo';
 import {
   Gateway,
   K8sGateway,
@@ -46,6 +46,7 @@ interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
   duration: DurationInSeconds;
   jaegerInfo?: JaegerInfo;
   lastRefreshAt: TimeInMilliseconds;
+  istioApiEnabled: boolean;
 }
 
 const tabName = 'tab';
@@ -203,7 +204,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         useCustomTime = true;
         break;
     }
-    const actionsToolbar = this.state.serviceDetails ? (
+    const actionsToolbar = this.state.serviceDetails && this.props.istioApiEnabled ? (
       <ServiceWizardDropdown
         namespace={this.props.match.params.namespace}
         serviceName={this.state.serviceDetails.service.name}
@@ -256,6 +257,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
 const mapStateToProps = (state: KialiAppState) => ({
   jaegerInfo: state.jaegerState.info,
+  istioApiEnabled: state.statusState.istioEnvironment.istioApiEnabled
 });
 
 const ServiceDetailsPageContainer = connectRefresh( connect(mapStateToProps)(ServiceDetails));
