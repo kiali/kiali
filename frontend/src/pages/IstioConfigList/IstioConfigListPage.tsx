@@ -181,8 +181,14 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
             </div>
             <RenderContent>
               <div style={{ padding: '10px' }}>
-                <WarningTriangleIcon color={PFColors.Warning} style={{marginRight: '5px'}} /> Istio API is disabled and Istio Config is not available.
+                <WarningTriangleIcon color={PFColors.Warning} style={{marginRight: '5px'}} /> Istio API is disabled and Istio Config is read only.
               </div>
+              <VirtualList rows={this.state.listItems}>
+                <StatefulFilters
+                  initialFilters={IstioConfigListFilters.availableFilters}
+                  onFilterChange={this.onFilterChange}
+                />
+              </VirtualList>
             </RenderContent>
           </>)}
       </>
