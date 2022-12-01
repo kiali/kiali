@@ -99,7 +99,7 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 			Namespace:       criteria.Namespace,
 			ServiceSelector: criteria.ServiceSelector,
 		}
-		if config.Get().IstioApiEnabled {
+		if config.Get().ExternalServices.Istio.IstioApiEnabled {
 			rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
 			if err2 != nil {
 				log.Errorf("Error fetching Registry Services per namespace %s: %s", criteria.Namespace, err2)
@@ -493,7 +493,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 			Namespace:   namespace,
 			ServiceName: service,
 		}
-		if config.Get().IstioApiEnabled {
+		if config.Get().ExternalServices.Istio.IstioApiEnabled {
 			rEps, err2 = in.businessLayer.RegistryStatus.GetRegistryEndpoints(criteria)
 			if err2 != nil {
 				log.Errorf("Error fetching Registry Endpoints namespace %s and service %s: %s", namespace, service, err2)

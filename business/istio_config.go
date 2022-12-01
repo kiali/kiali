@@ -151,7 +151,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 	}
 
 	// Use the Istio Registry when AllNamespaces is present
-	if criteria.AllNamespaces && config.Get().IstioApiEnabled {
+	if criteria.AllNamespaces && config.Get().ExternalServices.Istio.IstioApiEnabled {
 		registryCriteria := RegistryCriteria{
 			AllNamespaces: true,
 		}

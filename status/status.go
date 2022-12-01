@@ -145,7 +145,7 @@ func Get() (status StatusInfo) {
 		}
 		info.IstioEnvironment = &IstioEnvironment{
 			IsMaistra:       isMaistra,
-			IstioApiEnabled: cfg.IstioApiEnabled,
+			IstioApiEnabled: cfg.ExternalServices.Istio.IstioApiEnabled,
 		}
 	}
 

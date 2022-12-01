@@ -214,6 +214,7 @@ type IstioConfig struct {
 	ConfigMapName                     string              `yaml:"config_map_name,omitempty"`
 	EnvoyAdminLocalPort               int                 `yaml:"envoy_admin_local_port,omitempty"`
 	GatewayAPIClassName               string              `yaml:"gateway_api_class_name,omitempty"`
+	IstioApiEnabled                   bool                `yaml:"istio_api_enabled,omitempty"`
 	IstioCanaryRevision               IstioCanaryRevision `yaml:"istio_canary_revision,omitempty"`
 	IstioIdentityDomain               string              `yaml:"istio_identity_domain,omitempty"`
 	IstioInjectionAnnotation          string              `yaml:"istio_injection_annotation,omitempty"`
@@ -505,7 +506,6 @@ type Config struct {
 	InCluster                bool                                `yaml:"in_cluster,omitempty"`
 	InstallationTag          string                              `yaml:"installation_tag,omitempty"`
 	IstioLabels              IstioLabels                         `yaml:"istio_labels,omitempty"`
-	IstioApiEnabled          bool                                `yaml:"istio_api_enabled,omitempty"`
 	IstioNamespace           string                              `yaml:"istio_namespace,omitempty"` // default component namespace
 	KialiFeatureFlags        KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
 	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
@@ -516,9 +516,8 @@ type Config struct {
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = &Config{
-		InCluster:       true,
-		IstioApiEnabled: true,
-		IstioNamespace:  "istio-system",
+		InCluster:      true,
+		IstioNamespace: "istio-system",
 		API: ApiConfig{
 			Namespaces: ApiNamespacesConfig{
 				Exclude: []string{
@@ -607,6 +606,7 @@ func NewConfig() (c *Config) {
 				},
 				ConfigMapName:                     "istio",
 				EnvoyAdminLocalPort:               15000,
+				IstioApiEnabled:                   true,
 				IstioIdentityDomain:               "svc.cluster.local",
 				IstioInjectionAnnotation:          "sidecar.istio.io/inject",
 				IstioSidecarInjectorConfigMapName: "istio-sidecar-injector",

@@ -78,7 +78,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
 
-	var istioApiEnabled = config.Get().IstioApiEnabled
+	var istioApiEnabled = config.Get().ExternalServices.Istio.IstioApiEnabled
 
 	wg.Add(2) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 	if istioApiEnabled {
