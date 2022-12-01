@@ -11,6 +11,7 @@ export interface AppWorkload {
   workloadName: string;
   istioSidecar: boolean;
   serviceAccountNames: string[];
+  labels: { [key: string]: string };
 }
 
 export interface App {
