@@ -868,8 +868,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                   const isLongNs = ns.name.length > NS_LONG;
                   return (
                         <GridItem
-                          sm={(ns.name === serverConfig.istioNamespace && this.props.istioApiEnabled && this.state.displayMode === OverviewDisplayMode.EXPAND) ? lg : sm}
-                          md={(ns.name === serverConfig.istioNamespace && this.props.istioApiEnabled && this.state.displayMode === OverviewDisplayMode.EXPAND) ? lg : md}
+                          sm={(ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND) ? lg : sm}
+                          md={(ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND) ? lg : md}
                           key={'CardItem_' + ns.name}
                           style={{margin: '0px 5px 0 5px'}}>
                           <Card
@@ -885,7 +885,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 title={ns.name}
                               >
                                 {ns.name}
-                                {ns.name === serverConfig.istioNamespace && this.props.istioApiEnabled &&
+                                {ns.name === serverConfig.istioNamespace &&
                                   <ControlPlaneBadge></ControlPlaneBadge>
                                 }
                                 {ns.name !== serverConfig.istioNamespace && this.hasCanaryUpgradeConfigured() && this.state.canaryUpgradeStatus?.migratedNamespaces.includes(ns.name) &&
@@ -902,7 +902,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                               <CardActions>{namespaceActions[i]}</CardActions>
                             </CardHeader>
                             <CardBody>
-                              {ns.name === serverConfig.istioNamespace && this.props.istioApiEnabled && this.state.displayMode === OverviewDisplayMode.EXPAND &&
+                              {ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND &&
                                 <Grid>
                                   <GridItem md={3}>
                                     {this.renderLabels(ns)}
@@ -934,17 +934,16 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                               canaryUpgradeStatus={this.state.canaryUpgradeStatus}/>
                                           </GridItem>
                                         }
-                                        <GridItem md={(this.hasCanaryUpgradeConfigured()) ? 8 : 12}>
-                                          {this.renderCharts(ns)}
-                                        </GridItem>
-
+                                        {this.props.istioApiEnabled === true &&
+                                          <GridItem md={(this.hasCanaryUpgradeConfigured()) ? 8 : 12}>
+                                            {this.renderCharts(ns)}
+                                          </GridItem>}
                                       </Grid>
-
                                     </GridItem>
                                   }
                                 </Grid>
                               }
-                              {(((ns.name !== serverConfig.istioNamespace || !this.props.istioApiEnabled) && this.state.displayMode === OverviewDisplayMode.EXPAND) || this.state.displayMode === OverviewDisplayMode.COMPACT) &&
+                              {(((ns.name !== serverConfig.istioNamespace) && this.state.displayMode === OverviewDisplayMode.EXPAND) || this.state.displayMode === OverviewDisplayMode.COMPACT) &&
                                 <div>
                                   {this.renderLabels(ns)}
 
