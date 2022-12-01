@@ -15,6 +15,7 @@ type MissingSidecarProps = {
   color: string;
   namespace: string;
   style?: React.CSSProperties;
+  isGateway?: boolean;
 };
 
 const infoStyle = style({
@@ -53,7 +54,7 @@ class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
       </span>
     );
 
-    if (isIstioNamespace(namespace)) {
+    if (isIstioNamespace(namespace) || this.props.isGateway) {
       return <></>;
     }
 
