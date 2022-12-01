@@ -478,10 +478,12 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 			registryCriteria := RegistryCriteria{
 				Namespace: namespace,
 			}
-			rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
-			if err2 != nil {
-				log.Errorf("Error fetching Registry Services per namespace %s: %s", registryCriteria.Namespace, err2)
-				errChan <- err2
+			if config.Get().ExternalServices.Istio.IstioApiEnabled {
+				rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
+				if err2 != nil {
+					log.Errorf("Error fetching Registry Services per namespace %s: %s", registryCriteria.Namespace, err2)
+					errChan <- err2
+				}
 			}
 		}()
 	}
