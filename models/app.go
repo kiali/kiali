@@ -44,6 +44,9 @@ type WorkloadItem struct {
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
 
+	// Labels for Workload
+	Labels map[string]string `json:"labels"`
+
 	// List of service accounts involved in this application
 	// required: true
 	ServiceAccountNames []string `json:"serviceAccountNames"`
