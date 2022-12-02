@@ -3,11 +3,11 @@ Feature: Kiali Overview page
   User opens the Overview page and see the demo "error-rates" namespaces.
 
   Health indicators in overview page
-    Kiali is capable of calculating the health of services in the mesh/cluster
-    using several data sources like workload availability and errors in traffic.
-    Kiali offers health status at different levels of granularity: from namespace
-    level, to the individual pod. In the overview page, health indicators have
-    namespace level and app level granularity.
+  Kiali is capable of calculating the health of services in the mesh/cluster
+  using several data sources like workload availability and errors in traffic.
+  Kiali offers health status at different levels of granularity: from namespace
+  level, to the individual pod. In the overview page, health indicators have
+  namespace level and app level granularity.
 
   Background:
     Given user is at administrator perspective
@@ -114,3 +114,11 @@ Feature: Kiali Overview page
   @overview-page
   Scenario: The canary upgrade information is not present when there is no canary configured
     Then the user sees no information related to canary upgrades
+
+  @overview-page
+  Scenario: The Istio panel should be visible in the control panel
+    Then user sees the "istio-system" namespace card
+    And user sees the "Control plane" label in the "istio-system" namespace card
+    And user sees the "Outbound policy" label in the "istio-system" namespace card
+    When user clicks the toggle on the right side of the "istio-system" namespace card
+    Then user can see links to external services
