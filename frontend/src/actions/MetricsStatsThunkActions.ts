@@ -1,6 +1,6 @@
 import { KialiAppState } from '../store/Store';
 import * as API from '../services/Api';
-import { KialiDispatch } from "../types/Redux";
+import { KialiDispatch } from '../types/Redux';
 import { MetricsStatsActions } from './MetricsStatsActions';
 import { MetricsStatsQuery, statsQueryToKey } from 'types/MetricsOptions';
 import { addError, addInfo } from 'utils/AlertUtils';
@@ -18,7 +18,7 @@ const MetricsStatsThunkActions = {
       const newStats = new Map(Array.from(oldStats).filter(([_, v]) => now - v.timestamp < expiry));
       const filtered = queries.filter(q => !newStats.has(statsQueryToKey(q)));
       if (filtered.length > 0) {
-        API.getMetricsStats(filtered)
+        return API.getMetricsStats(filtered)
           .then(res => {
             // Merge result
             Object.entries(res.data.stats).forEach(e => newStats.set(e[0], { ...e[1], timestamp: now }));
@@ -30,6 +30,8 @@ const MetricsStatsThunkActions = {
           .catch(err => {
             addError('Could not fetch metrics stats.', err);
           });
+      } else {
+        return Promise.resolve();
       }
     };
   }

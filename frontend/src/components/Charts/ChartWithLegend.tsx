@@ -40,6 +40,8 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
   sizeRatio?: number;
   moreChartProps?: ChartProps;
   onClick?: (datum: RawOrBucket<O>) => void;
+  onTooltipClose?: (datum: RawOrBucket<O>) => void;
+  onTooltipOpen?: (datum: RawOrBucket<O>) => void;
   brushHandlers?: BrushHandlers;
   overlay?: Overlay<O>;
   timeWindow?: [Date, Date];
@@ -115,16 +117,22 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
     window.removeEventListener('resize', this.handleResize);
   }
 
+  private onTooltipClose = () => {
+    if (this.props.onTooltipClose) {
+      this.props.onTooltipClose(this.hoveredItem as RawOrBucket<O>);
+    }
+    this.hoveredItem = undefined;
+  };
+
   private onTooltipOpen = (points?: VCDataPoint[]) => {
     if (points && points.length > 0) {
       this.hoveredItem = points[0];
     } else {
       this.hoveredItem = undefined;
     }
-  };
-
-  private onTooltipClose = () => {
-    this.hoveredItem = undefined;
+    if (this.props.onTooltipOpen) {
+      this.props.onTooltipOpen(this.hoveredItem as RawOrBucket<O>);
+    }
   };
 
   private onShowMoreLegend = () => {
