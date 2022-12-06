@@ -5,6 +5,7 @@ import {K8sRouteBackendRef} from './K8sTrafficShifting';
 import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
 import {getDefaultBackendRefs} from './WizardActions';
 import {ServiceOverview} from "../../types/ServiceList";
+import {REQ_MOD} from "./K8sRequestRouting/K8sFilterBuilder";
 
 type Props = {
   subServices: ServiceOverview[];
@@ -22,6 +23,11 @@ type State = {
   matchValue: string;
   k8sRules: K8sRule[];
   validationMsg: string;
+  headerType: string;
+  headerValue: string;
+  filterType: string;
+  filterValue: string;
+  filters: string[];
 };
 
 const MSG_SAME_MATCHING = 'A Rule with same matching criteria is already added.';
@@ -42,7 +48,12 @@ class K8sRequestRouting extends React.Component<Props, State> {
       queryParamName: '',
       matchValue: '',
       k8sRules: this.props.initRules,
-      validationMsg: ''
+      validationMsg: '',
+      filterValue: '',
+      filters: [],
+      headerType: '',
+      headerValue: '',
+      filterType: REQ_MOD
     };
   }
 
@@ -262,6 +273,30 @@ class K8sRequestRouting extends React.Component<Props, State> {
     }
   }
 
+  onAddFilter = () => {
+
+  }
+
+  onHeaderValueChange = () => {
+
+  }
+
+  onFilterValueChange = () => {
+
+  }
+
+  onSelectFilterType = () => {
+
+  }
+
+  onSelectHeaderType = () => {
+
+  }
+
+  onRemoveFilter = () => {
+
+  }
+
   render() {
     return (
       <>
@@ -292,6 +327,17 @@ class K8sRequestRouting extends React.Component<Props, State> {
           backendRefs={this.state.backendRefs}
           validationMsg={this.state.validationMsg}
           onAddRule={this.onAddK8sRule}
+          onAddFilter={this.onAddFilter}
+          onFilterValueChange={this.onFilterValueChange}
+          onRemoveFilter={this.onRemoveFilter}
+          filters={this.state.filters}
+          filterValue={this.state.filterValue}
+          onHeaderValueChange={this.onHeaderValueChange}
+          headerType={this.state.headerType}
+          filterType={this.state.filterType}
+          headerValue={this.state.headerValue}
+          onSelectFilterType={this.onSelectFilterType}
+          onSelectHeaderType={this.onSelectHeaderType}
         />
         <K8sRules k8sRules={this.state.k8sRules} onRemoveRule={this.onRemoveRule} onMoveRule={this.onMoveRule} />
       </>
