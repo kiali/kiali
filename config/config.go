@@ -284,6 +284,7 @@ type KubernetesConfig struct {
 	// Cache uses watchers to sync with the backend, after a CacheDuration watchers are closed and re-opened
 	CacheDuration int `yaml:"cache_duration,omitempty"`
 	// Enable cache for kubernetes and istio resources
+	// TODO: Remove once all services are migrated to use the cache.
 	CacheEnabled bool `yaml:"cache_enabled,omitempty"`
 	// Kiali can cache VirtualService,DestinationRule,Gateway and ServiceEntry Istio resources if they are present
 	// on this list of Istio types. Other Istio types are not yet supported.
