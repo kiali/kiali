@@ -11,7 +11,6 @@ import {
 
 type Props = {
   filterType: string;
-  filterValue: string;
   headerType: string;
   headerName: string;
   headerValue: string;
@@ -25,15 +24,15 @@ type Props = {
 
 type State = {
   isFilterDropdown: boolean;
-  isOperatorDropdown: boolean;
+  isHeaderDropdown: boolean;
 };
 
-export const REQ_MOD = 'RequestHeaderModifier';
-export const RESP_MOD = 'ResponseHeaderModifier';
-export const REQ_MIR = 'RequestMirror';
-export const REQ_RED = 'RequestRedirect';
+export const REQ_MOD = 'requestHeaderModifier';
+export const RESP_MOD = 'responseHeaderModifier';
+export const REQ_MIR = 'requestMirror';
+export const REQ_RED = 'requestRedirect';
 export const URL_REW = 'URLRewrite';
-export const EXT_REF = 'ExtensionRef';
+export const EXT_REF = 'extensionRef';
 
 const filterOptions: string[] = [REQ_MOD, RESP_MOD];
 
@@ -51,7 +50,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
     super(props);
     this.state = {
       isFilterDropdown: false,
-      isOperatorDropdown: false
+      isHeaderDropdown: false
     };
   }
 
@@ -63,13 +62,12 @@ class K8sFilterBuilder extends React.Component<Props, State> {
 
   onHeaderTypeToggle = () => {
     this.setState({
-      isOperatorDropdown: !this.state.isOperatorDropdown
+      isHeaderDropdown: !this.state.isHeaderDropdown
     });
   };
 
   render() {
     const renderFilterOptions: string[] = allOptions[this.props.filterType]
-    console.log("renderFilterOptions " + renderFilterOptions)
     return (
       <InputGroup>
         <Dropdown
@@ -100,6 +98,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
               {this.props.headerType}
             </DropdownToggle>
           }
+          isOpen={this.state.isHeaderDropdown}
           dropdownItems={renderFilterOptions.map((op, index) => (
             <DropdownItem
               key={op + '_' + index}

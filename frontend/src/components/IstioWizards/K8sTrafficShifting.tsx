@@ -21,6 +21,23 @@ export type K8sRouteBackendRef = {
   port?: number;
 };
 
+export type K8sRouteFilter = {
+  type: string;
+  requestHeaderModifier?: K8sHeaderFilter;
+  responseHeaderModifier?: K8sHeaderFilter;
+};
+
+export type K8sHeaderFilter = {
+  set?: K8sHeader[];
+  add?: K8sHeader[];
+  remove?: string[];
+};
+
+export type K8sHeader = {
+  name: string;
+  value: string;
+};
+
 type State = {
   backendRefs: K8sRouteBackendRef[];
 };

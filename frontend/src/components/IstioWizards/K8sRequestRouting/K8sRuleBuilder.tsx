@@ -37,7 +37,6 @@ type Props = {
   onSelectFilterType: (filterType: string) => void;
   onHeaderValueChange: (headerValue: string) => void;
   onSelectHeaderType: (headerType: string) => void;
-  onFilterValueChange: (filterValue: string) => void;
   onRemoveFilter: (filter: string) => void;
   onAddFilter: () => void;
 

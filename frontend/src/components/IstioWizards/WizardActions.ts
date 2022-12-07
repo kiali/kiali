@@ -1100,6 +1100,7 @@ export const getInitK8sRules = (
     httpRoutes[0].spec.rules.forEach(httpRoute => {
       const rule: K8sRule = {
         matches: [],
+        filters: [],
         backendRefs: []
       };
       if (httpRoute.matches) {
