@@ -36,7 +36,7 @@ class K8sFilters extends React.Component<Props> {
           Filtering selected
           {wizardTooltip(FILTERING_SELECTED_TOOLTIP)}
         </span>
-        {filters.length > 0 ? filters : <b>Filter any request</b>}
+        {filters.length > 0 ? filters : <b>No Request Filter</b>}
       </div>
     );
   }

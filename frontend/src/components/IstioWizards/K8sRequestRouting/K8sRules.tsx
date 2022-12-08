@@ -12,7 +12,7 @@ import {
 } from '@patternfly/react-core';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ROUTE_RULES_TOOLTIP, wizardTooltip } from '../WizardHelp';
-import {K8sRouteBackendRef, K8sRouteFilter} from '../K8sTrafficShifting';
+import {K8sRouteBackendRef} from '../K8sTrafficShifting';
 
 export enum MOVE_TYPE {
   UP,
@@ -21,7 +21,7 @@ export enum MOVE_TYPE {
 
 export type K8sRule = {
   matches: string[];
-  filters: K8sRouteFilter[];
+  filters: string[];
   backendRefs: K8sRouteBackendRef[];
 };
 
@@ -101,6 +101,10 @@ class K8sRules extends React.Component<Props> {
         props: {}
       },
       {
+        title: 'Route Filtering',
+        props: {}
+      },
+      {
         title: 'Route To',
         props: {}
       }
@@ -126,6 +130,11 @@ class K8sRules extends React.Component<Props> {
                       This rule is not accessible.
                     </div>
                   )}
+                </>,
+                <>
+                  {!rule.filters || rule.filters.length === 0
+                    ? 'No Request Filter'
+                    : rule.filters.map((filter, i) => <div key={'filter_' + i}>{filter}</div>)}
                 </>,
                 <>
                   <div key={'br_' + order}>

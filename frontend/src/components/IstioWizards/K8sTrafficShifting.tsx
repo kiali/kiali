@@ -24,7 +24,6 @@ export type K8sRouteBackendRef = {
 export type K8sRouteFilter = {
   type: string;
   requestHeaderModifier?: K8sHeaderFilter;
-  responseHeaderModifier?: K8sHeaderFilter;
 };
 
 export type K8sHeaderFilter = {

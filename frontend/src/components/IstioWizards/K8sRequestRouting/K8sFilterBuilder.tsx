@@ -11,14 +11,14 @@ import {
 
 type Props = {
   filterType: string;
-  headerType: string;
+  headerOp: string;
   headerName: string;
   headerValue: string;
   isValid: boolean;
   onSelectFilterType: (filterType: string) => void;
   onHeaderNameChange: (headerName: string) => void;
   onHeaderValueChange: (headerValue: string) => void;
-  onSelectHeaderType: (headerType: string) => void;
+  onSelectHeaderOp: (headerOp: string) => void;
   onAddFilter: () => void;
 };
 
@@ -34,7 +34,7 @@ export const REQ_RED = 'requestRedirect';
 export const URL_REW = 'URLRewrite';
 export const EXT_REF = 'extensionRef';
 
-const filterOptions: string[] = [REQ_MOD, RESP_MOD];
+const filterOptions: string[] = [REQ_MOD];
 
 export const SET = 'set';
 export const ADD = 'add';
@@ -60,7 +60,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
     });
   };
 
-  onHeaderTypeToggle = () => {
+  onHeaderOpToggle = () => {
     this.setState({
       isHeaderDropdown: !this.state.isHeaderDropdown
     });
@@ -94,8 +94,8 @@ class K8sFilterBuilder extends React.Component<Props, State> {
         />
         <Dropdown
           toggle={
-            <DropdownToggle onToggle={this.onHeaderTypeToggle} data-test={'header-type-toggle'}>
-              {this.props.headerType}
+            <DropdownToggle onToggle={this.onHeaderOpToggle} data-test={'header-type-toggle'}>
+              {this.props.headerOp}
             </DropdownToggle>
           }
           isOpen={this.state.isHeaderDropdown}
@@ -105,8 +105,8 @@ class K8sFilterBuilder extends React.Component<Props, State> {
               value={op}
               component="button"
               onClick={() => {
-                this.props.onSelectHeaderType(op);
-                this.onHeaderTypeToggle();
+                this.props.onSelectHeaderOp(op);
+                this.onHeaderOpToggle();
               }}
               data-test={'header-type-' + op}
             >
@@ -122,7 +122,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
             placeholder="Header name..."
           />
         )}
-        {(this.props.filterType === REQ_MOD || this.props.filterType === RESP_MOD) && this.props.headerType !== REMOVE && (
+        {(this.props.filterType === REQ_MOD || this.props.filterType === RESP_MOD) && this.props.headerOp !== REMOVE && (
           <TextInput
             id="header-value-id"
             value={this.props.headerValue}

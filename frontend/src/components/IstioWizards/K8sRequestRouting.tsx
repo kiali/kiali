@@ -23,7 +23,7 @@ type State = {
   matchValue: string;
   k8sRules: K8sRule[];
   validationMsg: string;
-  headerType: string;
+  headerOp: string;
   headerValue: string;
   filterType: string;
   filterValue: string;
@@ -51,7 +51,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
       validationMsg: '',
       filterValue: '',
       filters: [],
-      headerType: SET,
+      headerOp: SET,
       headerValue: '',
       filterType: REQ_MOD
     };
@@ -132,6 +132,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
           prevState.k8sRules.push(newRule);
           return {
             matches: prevState.matches,
+            filters: prevState.filters,
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
             k8sRules: prevState.k8sRules,
@@ -140,6 +141,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
         } else {
           return {
             matches: prevState.matches,
+            filters: prevState.filters,
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
             k8sRules: prevState.k8sRules,
@@ -175,10 +177,10 @@ class K8sRequestRouting extends React.Component<Props, State> {
 
   onHeaderNameChange = (headerName: string) => {
     let validationMsg = '';
-    if ((this.state.matchValue !== '' || this.state.headerType === REMOVE) && headerName === '') {
+    if ((this.state.matchValue !== '' || this.state.headerOp === REMOVE) && headerName === '') {
       validationMsg = MSG_HEADER_NAME_NON_EMPTY;
     }
-    if (this.state.matchValue === '' && headerName !== '' && this.state.headerType !== REMOVE) {
+    if (this.state.matchValue === '' && headerName !== '' && this.state.headerOp !== REMOVE) {
       validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
     }
     this.setState({
@@ -278,10 +280,10 @@ class K8sRequestRouting extends React.Component<Props, State> {
     this.setState(prevState => {
       let newFilter: string;
       if (this.state.filterType === REQ_MOD || this.state.filterType === RESP_MOD) {
-        if (this.state.headerType !== REMOVE) {
-          newFilter = prevState.filterType + ' [' + prevState.headerName + '] ' + prevState.headerType + ' ' + prevState.headerValue;
+        if (this.state.headerOp !== REMOVE) {
+          newFilter = prevState.filterType + ' [' + prevState.headerName + '] ' + prevState.headerOp + ' ' + prevState.headerValue;
         } else {
-          newFilter = prevState.filterType + ' [' + prevState.headerName + '] ' + prevState.headerType;
+          newFilter = prevState.filterType + ' [' + prevState.headerName + '] ' + prevState.headerOp;
         }
         if (!prevState.filters.includes(newFilter)) {
           prevState.filters.push(newFilter);
@@ -299,10 +301,10 @@ class K8sRequestRouting extends React.Component<Props, State> {
   onHeaderValueChange = (headerValue: string) => {
     let validationMsg = '';
     if (this.state.filterType === REQ_MOD || this.state.filterType === RESP_MOD) {
-      if (this.state.headerName === '' && (headerValue !== '' || this.state.headerType === REMOVE)) {
+      if (this.state.headerName === '' && (headerValue !== '' || this.state.headerOp === REMOVE)) {
         validationMsg = MSG_HEADER_NAME_NON_EMPTY;
       }
-      if (this.state.headerName !== '' && headerValue === '' && this.state.headerType !== REMOVE) {
+      if (this.state.headerName !== '' && headerValue === '' && this.state.headerOp !== REMOVE) {
         validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
       }
     }
@@ -359,11 +361,11 @@ class K8sRequestRouting extends React.Component<Props, State> {
           filters={this.state.filters}
           filterValue={this.state.filterValue}
           onHeaderValueChange={this.onHeaderValueChange}
-          headerType={this.state.headerType}
+          headerOp={this.state.headerOp}
           filterType={this.state.filterType}
           headerValue={this.state.headerValue}
           onSelectFilterType={(filterType: string) => this.setState({ filterType: filterType })}
-          onSelectHeaderType={(headerType: string) => this.setState({ headerType: headerType })}
+          onSelectHeaderOp={(headerOp: string) => this.setState({ headerOp: headerOp })}
         />
         <K8sRules k8sRules={this.state.k8sRules} onRemoveRule={this.onRemoveRule} onMoveRule={this.onMoveRule} />
       </>

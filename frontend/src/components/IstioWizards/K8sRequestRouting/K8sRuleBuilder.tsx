@@ -31,12 +31,12 @@ type Props = {
   // K8sFilters props
   filterType: string;
   filterValue: string;
-  headerType: string;
+  headerOp: string;
   headerValue: string;
   filters: string[];
   onSelectFilterType: (filterType: string) => void;
   onHeaderValueChange: (headerValue: string) => void;
-  onSelectHeaderType: (headerType: string) => void;
+  onSelectHeaderOp: (headerOp: string) => void;
   onRemoveFilter: (filter: string) => void;
   onAddFilter: () => void;
 
