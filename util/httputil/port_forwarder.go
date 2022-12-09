@@ -50,11 +50,11 @@ func (f forwarder) Stop() {
 	Pool.FreePort(f.localPort)
 }
 
-func NewPortForwarder(client *rest.Interface, clientConfig *rest.Config, namespace, pod, address, portMap string, writer io.Writer) (PortForwarder, error) {
+func NewPortForwarder(client rest.Interface, clientConfig *rest.Config, namespace, pod, address, portMap string, writer io.Writer) (PortForwarder, error) {
 	stopCh := make(chan struct{})
 	readyCh := make(chan struct{})
 
-	forwarderUrl := (*client).Post().
+	forwarderUrl := client.Post().
 		Namespace(namespace).
 		Resource("pods").
 		Name(pod).

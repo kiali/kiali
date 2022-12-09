@@ -147,13 +147,19 @@ func (c *kialiCacheImpl) GetDestinationRule(namespace, name string) (*networking
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.DestinationRuleType)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	dr, err := c.getCacheLister(namespace).destinationRuleLister.DestinationRules(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	dr.Kind = kubernetes.DestinationRuleType
-	return dr, nil
+	// Do not modify what is returned by the lister since that is shared and will cause data races.
+	retDR := dr.DeepCopy()
+	retDR.Kind = kubernetes.DestinationRuleType
+	return retDR, nil
 }
 
 func (c *kialiCacheImpl) GetDestinationRules(namespace, labelSelector string) ([]*networking_v1beta1.DestinationRule, error) {
@@ -165,6 +171,10 @@ func (c *kialiCacheImpl) GetDestinationRules(namespace, labelSelector string) ([
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	drs, err := c.getCacheLister(namespace).destinationRuleLister.DestinationRules(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -176,10 +186,14 @@ func (c *kialiCacheImpl) GetDestinationRules(namespace, labelSelector string) ([
 		return []*networking_v1beta1.DestinationRule{}, nil
 	}
 
+	// Do not modify what is returned by the lister since that is shared and will cause data races.
+	var retDRs []*networking_v1beta1.DestinationRule
 	for _, dr := range drs {
-		dr.Kind = kubernetes.DestinationRuleType
+		d := dr.DeepCopy()
+		d.Kind = kubernetes.DestinationRuleType
+		retDRs = append(retDRs, d)
 	}
-	return drs, nil
+	return retDRs, nil
 }
 
 func (c *kialiCacheImpl) GetEnvoyFilter(namespace, name string) (*networking_v1alpha3.EnvoyFilter, error) {
@@ -187,13 +201,19 @@ func (c *kialiCacheImpl) GetEnvoyFilter(namespace, name string) (*networking_v1a
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.EnvoyFilterType)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	ef, err := c.getCacheLister(namespace).envoyFilterLister.EnvoyFilters(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	ef.Kind = kubernetes.EnvoyFilterType
-	return ef, nil
+	// Do not modify what is returned by the lister since that is shared and will cause data races.
+	retEF := ef.DeepCopy()
+	retEF.Kind = kubernetes.EnvoyFilterType
+	return retEF, nil
 }
 
 func (c *kialiCacheImpl) GetEnvoyFilters(namespace, labelSelector string) ([]*networking_v1alpha3.EnvoyFilter, error) {
@@ -205,6 +225,10 @@ func (c *kialiCacheImpl) GetEnvoyFilters(namespace, labelSelector string) ([]*ne
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	efs, err := c.getCacheLister(namespace).envoyFilterLister.EnvoyFilters(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -216,10 +240,13 @@ func (c *kialiCacheImpl) GetEnvoyFilters(namespace, labelSelector string) ([]*ne
 		return []*networking_v1alpha3.EnvoyFilter{}, nil
 	}
 
+	var retEFs []*networking_v1alpha3.EnvoyFilter
 	for _, ef := range efs {
-		ef.Kind = kubernetes.EnvoyFilterType
+		e := ef.DeepCopy()
+		e.Kind = kubernetes.EnvoyFilterType
+		retEFs = append(retEFs, e)
 	}
-	return efs, nil
+	return retEFs, nil
 }
 
 func (c *kialiCacheImpl) GetGateway(namespace, name string) (*networking_v1beta1.Gateway, error) {
@@ -227,13 +254,18 @@ func (c *kialiCacheImpl) GetGateway(namespace, name string) (*networking_v1beta1
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.GatewayType)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	gw, err := c.getCacheLister(namespace).gatewayLister.Gateways(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	gw.Kind = kubernetes.GatewayType
-	return gw, nil
+	retGW := gw.DeepCopy()
+	retGW.Kind = kubernetes.GatewayType
+	return retGW, nil
 }
 
 func (c *kialiCacheImpl) GetGateways(namespace, labelSelector string) ([]*networking_v1beta1.Gateway, error) {
@@ -245,6 +277,10 @@ func (c *kialiCacheImpl) GetGateways(namespace, labelSelector string) ([]*networ
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	gateways, err := c.getCacheLister(namespace).gatewayLister.Gateways(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -256,10 +292,13 @@ func (c *kialiCacheImpl) GetGateways(namespace, labelSelector string) ([]*networ
 		return []*networking_v1beta1.Gateway{}, nil
 	}
 
+	var retGateways []*networking_v1beta1.Gateway
 	for _, gw := range gateways {
-		gw.Kind = kubernetes.GatewayType
+		g := gw.DeepCopy()
+		g.Kind = kubernetes.GatewayType
+		retGateways = append(retGateways, g)
 	}
-	return gateways, nil
+	return retGateways, nil
 }
 
 func (c *kialiCacheImpl) GetServiceEntry(namespace, name string) (*networking_v1beta1.ServiceEntry, error) {
@@ -267,13 +306,18 @@ func (c *kialiCacheImpl) GetServiceEntry(namespace, name string) (*networking_v1
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.ServiceEntryType)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	se, err := c.getCacheLister(namespace).serviceEntryLister.ServiceEntries(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	se.Kind = kubernetes.ServiceEntryType
-	return se, nil
+	retSE := se.DeepCopy()
+	retSE.Kind = kubernetes.ServiceEntryType
+	return retSE, nil
 }
 
 func (c *kialiCacheImpl) GetServiceEntries(namespace, labelSelector string) ([]*networking_v1beta1.ServiceEntry, error) {
@@ -285,6 +329,10 @@ func (c *kialiCacheImpl) GetServiceEntries(namespace, labelSelector string) ([]*
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	ses, err := c.getCacheLister(namespace).serviceEntryLister.ServiceEntries(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -296,10 +344,13 @@ func (c *kialiCacheImpl) GetServiceEntries(namespace, labelSelector string) ([]*
 		return []*networking_v1beta1.ServiceEntry{}, nil
 	}
 
+	var retSEs []*networking_v1beta1.ServiceEntry
 	for _, se := range ses {
-		se.Kind = kubernetes.ServiceEntryType
+		s := se.DeepCopy()
+		s.Kind = kubernetes.ServiceEntryType
+		retSEs = append(retSEs, s)
 	}
-	return ses, nil
+	return retSEs, nil
 }
 
 func (c *kialiCacheImpl) GetSidecar(namespace, name string) (*networking_v1beta1.Sidecar, error) {
@@ -307,13 +358,18 @@ func (c *kialiCacheImpl) GetSidecar(namespace, name string) (*networking_v1beta1
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.SidecarType)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	sc, err := c.getCacheLister(namespace).sidecarLister.Sidecars(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	sc.Kind = kubernetes.SidecarType
-	return sc, nil
+	retSC := sc.DeepCopy()
+	retSC.Kind = kubernetes.SidecarType
+	return retSC, nil
 }
 
 func (c *kialiCacheImpl) GetSidecars(namespace, labelSelector string) ([]*networking_v1beta1.Sidecar, error) {
@@ -325,6 +381,10 @@ func (c *kialiCacheImpl) GetSidecars(namespace, labelSelector string) ([]*networ
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	sidecars, err := c.getCacheLister(namespace).sidecarLister.Sidecars(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -336,10 +396,13 @@ func (c *kialiCacheImpl) GetSidecars(namespace, labelSelector string) ([]*networ
 		return []*networking_v1beta1.Sidecar{}, nil
 	}
 
+	var retSC []*networking_v1beta1.Sidecar
 	for _, sc := range sidecars {
-		sc.Kind = kubernetes.SidecarType
+		s := sc.DeepCopy()
+		s.Kind = kubernetes.SidecarType
+		retSC = append(retSC, s)
 	}
-	return sidecars, nil
+	return retSC, nil
 }
 
 func (c *kialiCacheImpl) GetVirtualService(namespace, name string) (*networking_v1beta1.VirtualService, error) {
@@ -347,13 +410,18 @@ func (c *kialiCacheImpl) GetVirtualService(namespace, name string) (*networking_
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.VirtualServiceType)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	vs, err := c.getCacheLister(namespace).virtualServiceLister.VirtualServices(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	vs.Kind = kubernetes.VirtualServiceType
-	return vs, nil
+	retVS := vs.DeepCopy()
+	retVS.Kind = kubernetes.VirtualServiceType
+	return retVS, nil
 }
 
 func (c *kialiCacheImpl) GetVirtualServices(namespace, labelSelector string) ([]*networking_v1beta1.VirtualService, error) {
@@ -365,6 +433,10 @@ func (c *kialiCacheImpl) GetVirtualServices(namespace, labelSelector string) ([]
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	vs, err := c.getCacheLister(namespace).virtualServiceLister.VirtualServices(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -376,10 +448,13 @@ func (c *kialiCacheImpl) GetVirtualServices(namespace, labelSelector string) ([]
 		return []*networking_v1beta1.VirtualService{}, nil
 	}
 
+	var retVS []*networking_v1beta1.VirtualService
 	for _, v := range vs {
-		v.Kind = kubernetes.VirtualServiceType
+		vv := v.DeepCopy()
+		vv.Kind = kubernetes.VirtualServiceType
+		retVS = append(retVS, vv)
 	}
-	return vs, nil
+	return retVS, nil
 }
 
 func (c *kialiCacheImpl) GetWorkloadEntry(namespace, name string) (*networking_v1beta1.WorkloadEntry, error) {
@@ -387,13 +462,18 @@ func (c *kialiCacheImpl) GetWorkloadEntry(namespace, name string) (*networking_v
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadEntryType)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	we, err := c.getCacheLister(namespace).workloadEntryLister.WorkloadEntries(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	we.Kind = kubernetes.WorkloadEntryType
-	return we, nil
+	retWE := we.DeepCopy()
+	retWE.Kind = kubernetes.WorkloadEntryType
+	return retWE, nil
 }
 
 func (c *kialiCacheImpl) GetWorkloadEntries(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadEntry, error) {
@@ -406,6 +486,10 @@ func (c *kialiCacheImpl) GetWorkloadEntries(namespace, labelSelector string) ([]
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	we, err := c.getCacheLister(namespace).workloadEntryLister.WorkloadEntries(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -417,10 +501,13 @@ func (c *kialiCacheImpl) GetWorkloadEntries(namespace, labelSelector string) ([]
 		return []*networking_v1beta1.WorkloadEntry{}, nil
 	}
 
+	var retWE []*networking_v1beta1.WorkloadEntry
 	for _, w := range we {
-		w.Kind = kubernetes.WorkloadEntryType
+		ww := w.DeepCopy()
+		ww.Kind = kubernetes.WorkloadEntryType
+		retWE = append(retWE, ww)
 	}
-	return we, nil
+	return retWE, nil
 }
 
 func (c *kialiCacheImpl) GetWorkloadGroup(namespace, name string) (*networking_v1beta1.WorkloadGroup, error) {
@@ -428,13 +515,18 @@ func (c *kialiCacheImpl) GetWorkloadGroup(namespace, name string) (*networking_v
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WorkloadGroupType)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	wg, err := c.getCacheLister(namespace).workloadGroupLister.WorkloadGroups(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	wg.Kind = kubernetes.WorkloadGroupType
-	return wg, nil
+	retWG := wg.DeepCopy()
+	retWG.Kind = kubernetes.WorkloadGroupType
+	return retWG, nil
 }
 
 func (c *kialiCacheImpl) GetWorkloadGroups(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadGroup, error) {
@@ -446,6 +538,10 @@ func (c *kialiCacheImpl) GetWorkloadGroups(namespace, labelSelector string) ([]*
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	wg, err := c.getCacheLister(namespace).workloadGroupLister.WorkloadGroups(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -457,10 +553,13 @@ func (c *kialiCacheImpl) GetWorkloadGroups(namespace, labelSelector string) ([]*
 		return []*networking_v1beta1.WorkloadGroup{}, nil
 	}
 
+	var retWG []*networking_v1beta1.WorkloadGroup
 	for _, w := range wg {
-		w.Kind = kubernetes.WorkloadGroupType
+		ww := w.DeepCopy()
+		ww.Kind = kubernetes.WorkloadGroupType
+		retWG = append(retWG, ww)
 	}
-	return wg, nil
+	return retWG, nil
 }
 
 func (c *kialiCacheImpl) GetWasmPlugin(namespace, name string) (*extentions_v1alpha1.WasmPlugin, error) {
@@ -468,13 +567,18 @@ func (c *kialiCacheImpl) GetWasmPlugin(namespace, name string) (*extentions_v1al
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.WasmPluginType)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	wp, err := c.getCacheLister(namespace).wasmPluginLister.WasmPlugins(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	wp.Kind = kubernetes.WasmPluginType
-	return wp, nil
+	retWP := wp.DeepCopy()
+	retWP.Kind = kubernetes.WasmPluginType
+	return retWP, nil
 }
 
 func (c *kialiCacheImpl) GetWasmPlugins(namespace, labelSelector string) ([]*extentions_v1alpha1.WasmPlugin, error) {
@@ -487,6 +591,10 @@ func (c *kialiCacheImpl) GetWasmPlugins(namespace, labelSelector string) ([]*ext
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	wp, err := c.getCacheLister(namespace).wasmPluginLister.WasmPlugins(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -498,10 +606,13 @@ func (c *kialiCacheImpl) GetWasmPlugins(namespace, labelSelector string) ([]*ext
 		return []*extentions_v1alpha1.WasmPlugin{}, nil
 	}
 
+	var retWP []*extentions_v1alpha1.WasmPlugin
 	for _, w := range wp {
-		w.Kind = kubernetes.WasmPluginType
+		ww := w.DeepCopy()
+		ww.Kind = kubernetes.WasmPluginType
+		retWP = append(retWP, ww)
 	}
-	return wp, nil
+	return retWP, nil
 }
 
 func (c *kialiCacheImpl) GetTelemetry(namespace, name string) (*v1alpha1.Telemetry, error) {
@@ -509,13 +620,18 @@ func (c *kialiCacheImpl) GetTelemetry(namespace, name string) (*v1alpha1.Telemet
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.TelemetryType)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	t, err := c.getCacheLister(namespace).telemetryLister.Telemetries(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	t.Kind = kubernetes.TelemetryType
-	return t, nil
+	retT := t.DeepCopy()
+	retT.Kind = kubernetes.TelemetryType
+	return retT, nil
 }
 
 func (c *kialiCacheImpl) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1.Telemetry, error) {
@@ -528,6 +644,10 @@ func (c *kialiCacheImpl) GetTelemetries(namespace, labelSelector string) ([]*v1a
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	t, err := c.getCacheLister(namespace).telemetryLister.Telemetries(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -539,11 +659,14 @@ func (c *kialiCacheImpl) GetTelemetries(namespace, labelSelector string) ([]*v1a
 		return []*v1alpha1.Telemetry{}, nil
 	}
 
+	var retT []*v1alpha1.Telemetry
 	for _, w := range t {
-		w.Kind = kubernetes.TelemetryType
+		tt := w.DeepCopy()
+		tt.Kind = kubernetes.TelemetryType
+		retT = append(retT, tt)
 	}
 
-	return t, nil
+	return retT, nil
 }
 
 func (c *kialiCacheImpl) GetK8sGateway(namespace, name string) (*gatewayapi.Gateway, error) {
@@ -551,13 +674,18 @@ func (c *kialiCacheImpl) GetK8sGateway(namespace, name string) (*gatewayapi.Gate
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.K8sGatewayType)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	g, err := c.getCacheLister(namespace).k8sgatewayLister.Gateways(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	g.Kind = kubernetes.K8sGatewayType
-	return g, nil
+	retG := g.DeepCopy()
+	retG.Kind = kubernetes.K8sGatewayType
+	return retG, nil
 }
 
 func (c *kialiCacheImpl) GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi.Gateway, error) {
@@ -570,6 +698,10 @@ func (c *kialiCacheImpl) GetK8sGateways(namespace, labelSelector string) ([]*gat
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	g, err := c.getCacheLister(namespace).k8sgatewayLister.Gateways(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -581,11 +713,14 @@ func (c *kialiCacheImpl) GetK8sGateways(namespace, labelSelector string) ([]*gat
 		return []*gatewayapi.Gateway{}, nil
 	}
 
+	var retG []*gatewayapi.Gateway
 	for _, w := range g {
-		w.Kind = kubernetes.K8sGatewayType
+		gg := w.DeepCopy()
+		gg.Kind = kubernetes.K8sGatewayType
+		retG = append(retG, gg)
 	}
 
-	return g, nil
+	return retG, nil
 }
 
 func (c *kialiCacheImpl) GetK8sHTTPRoute(namespace, name string) (*gatewayapi.HTTPRoute, error) {
@@ -593,13 +728,18 @@ func (c *kialiCacheImpl) GetK8sHTTPRoute(namespace, name string) (*gatewayapi.HT
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.K8sHTTPRouteType)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	g, err := c.getCacheLister(namespace).k8shttprouteLister.HTTPRoutes(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	g.Kind = kubernetes.K8sHTTPRouteType
-	return g, nil
+	retG := g.DeepCopy()
+	retG.Kind = kubernetes.K8sHTTPRouteType
+	return retG, nil
 }
 
 func (c *kialiCacheImpl) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi.HTTPRoute, error) {
@@ -612,6 +752,10 @@ func (c *kialiCacheImpl) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*g
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	r, err := c.getCacheLister(namespace).k8shttprouteLister.HTTPRoutes(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -623,11 +767,14 @@ func (c *kialiCacheImpl) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*g
 		return []*gatewayapi.HTTPRoute{}, nil
 	}
 
+	var retRoutes []*gatewayapi.HTTPRoute
 	for _, w := range r {
-		w.Kind = kubernetes.K8sHTTPRouteType
+		ww := w.DeepCopy()
+		ww.Kind = kubernetes.K8sHTTPRouteType
+		retRoutes = append(retRoutes, ww)
 	}
 
-	return r, nil
+	return retRoutes, nil
 }
 
 func (c *kialiCacheImpl) GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error) {
@@ -635,13 +782,18 @@ func (c *kialiCacheImpl) GetAuthorizationPolicy(namespace, name string) (*securi
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.AuthorizationPoliciesType)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	ap, err := c.getCacheLister(namespace).authzLister.AuthorizationPolicies(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	ap.Kind = kubernetes.AuthorizationPoliciesType
-	return ap, nil
+	retAP := ap.DeepCopy()
+	retAP.Kind = kubernetes.AuthorizationPoliciesType
+	return retAP, nil
 }
 
 func (c *kialiCacheImpl) GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1beta1.AuthorizationPolicy, error) {
@@ -653,6 +805,10 @@ func (c *kialiCacheImpl) GetAuthorizationPolicies(namespace, labelSelector strin
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	authPolicies, err := c.getCacheLister(namespace).authzLister.AuthorizationPolicies(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -664,10 +820,13 @@ func (c *kialiCacheImpl) GetAuthorizationPolicies(namespace, labelSelector strin
 		return []*security_v1beta1.AuthorizationPolicy{}, nil
 	}
 
+	var retAPs []*security_v1beta1.AuthorizationPolicy
 	for _, ap := range authPolicies {
-		ap.Kind = kubernetes.AuthorizationPoliciesType
+		a := ap.DeepCopy()
+		a.Kind = kubernetes.AuthorizationPoliciesType
+		retAPs = append(retAPs, a)
 	}
-	return authPolicies, nil
+	return retAPs, nil
 }
 
 func (c *kialiCacheImpl) GetPeerAuthentication(namespace, name string) (*security_v1beta1.PeerAuthentication, error) {
@@ -675,13 +834,18 @@ func (c *kialiCacheImpl) GetPeerAuthentication(namespace, name string) (*securit
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.PeerAuthenticationsType)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	pa, err := c.getCacheLister(namespace).peerAuthnLister.PeerAuthentications(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	pa.Kind = kubernetes.PeerAuthenticationsType
-	return pa, nil
+	retPA := pa.DeepCopy()
+	retPA.Kind = kubernetes.PeerAuthenticationsType
+	return retPA, nil
 }
 
 func (c *kialiCacheImpl) GetPeerAuthentications(namespace, labelSelector string) ([]*security_v1beta1.PeerAuthentication, error) {
@@ -694,6 +858,10 @@ func (c *kialiCacheImpl) GetPeerAuthentications(namespace, labelSelector string)
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	peerAuths, err := c.getCacheLister(namespace).peerAuthnLister.PeerAuthentications(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -705,10 +873,13 @@ func (c *kialiCacheImpl) GetPeerAuthentications(namespace, labelSelector string)
 		return []*security_v1beta1.PeerAuthentication{}, nil
 	}
 
+	var retPAs []*security_v1beta1.PeerAuthentication
 	for _, pa := range peerAuths {
-		pa.Kind = kubernetes.PeerAuthenticationsType
+		p := pa.DeepCopy()
+		p.Kind = kubernetes.PeerAuthenticationsType
+		retPAs = append(retPAs, p)
 	}
-	return peerAuths, nil
+	return retPAs, nil
 }
 
 func (c *kialiCacheImpl) GetRequestAuthentication(namespace, name string) (*security_v1beta1.RequestAuthentication, error) {
@@ -716,24 +887,34 @@ func (c *kialiCacheImpl) GetRequestAuthentication(namespace, name string) (*secu
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.RequestAuthentications)
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	ra, err := c.getCacheLister(namespace).requestAuthnLister.RequestAuthentications(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	ra.Kind = kubernetes.RequestAuthenticationsType
-	return ra, nil
+	retRA := ra.DeepCopy()
+	retRA.Kind = kubernetes.RequestAuthenticationsType
+	return retRA, nil
 }
 
 func (c *kialiCacheImpl) GetRequestAuthentications(namespace, labelSelector string) ([]*security_v1beta1.RequestAuthentication, error) {
 	if !c.CheckIstioResource(kubernetes.RequestAuthentications) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.RequestAuthenticationsType)
 	}
+
 	selector, err := labels.Parse(labelSelector)
 	if err != nil {
 		return nil, err
 	}
 
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	reqAuths, err := c.getCacheLister(namespace).requestAuthnLister.RequestAuthentications(namespace).List(selector)
 	if err != nil {
 		return nil, err
@@ -745,8 +926,11 @@ func (c *kialiCacheImpl) GetRequestAuthentications(namespace, labelSelector stri
 		return []*security_v1beta1.RequestAuthentication{}, nil
 	}
 
+	var retRAs []*security_v1beta1.RequestAuthentication
 	for _, ra := range reqAuths {
-		ra.Kind = kubernetes.RequestAuthenticationsType
+		r := ra.DeepCopy()
+		r.Kind = kubernetes.RequestAuthenticationsType
+		retRAs = append(retRAs, r)
 	}
-	return reqAuths, nil
+	return retRAs, nil
 }

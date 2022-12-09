@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kubescheme "k8s.io/client-go/kubernetes/scheme"
+	gatewayapi "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 	gatewayapifake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 	gatewayapischeme "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/scheme"
 
@@ -122,6 +123,8 @@ type FakeK8sClient struct {
 	KubeClientset kubernetes.Interface
 	// Underlying istio clientset.
 	IstioClientset istio.Interface
+	// Underlying gateway api clientset.
+	GatewayAPIClientset gatewayapi.Interface
 }
 
 func (c *FakeK8sClient) IsOpenShift() bool  { return c.OpenShift }

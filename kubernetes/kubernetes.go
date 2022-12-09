@@ -442,7 +442,7 @@ func (in *K8SClient) getPodPortForwarder(namespace, name, portMap string) (httpu
 
 	// Create a Port Forwarder
 	restInterface := in.k8s.CoreV1().RESTClient()
-	return httputil.NewPortForwarder(&restInterface, clientConfig,
+	return httputil.NewPortForwarder(restInterface, clientConfig,
 		namespace, name, "localhost", portMap, writer)
 }
 

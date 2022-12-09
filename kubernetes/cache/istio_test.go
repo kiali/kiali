@@ -8,10 +8,10 @@ import (
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	istiofake "istio.io/client-go/pkg/clientset/versioned/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
 func TestGetSidecar(t *testing.T) {
@@ -107,7 +107,7 @@ func TestGetNonCachedResource(t *testing.T) {
 			Name: "sidecar", Namespace: "test", Labels: map[string]string{"app": "bookinfo", "version": "v1"},
 		},
 	}
-	kialiCache := newTestKialiCache(nil, []runtime.Object{sidecar}, nil)
+	kialiCache := newTestKialiCache(kubetest.NewFakeK8sClient(sidecar))
 	kialiCache.cacheIstioTypes = nil
 	_, err := kialiCache.GetVirtualServices("testing-ns", "app=bookinfo")
 	assert.Error(err)
@@ -122,7 +122,7 @@ func TestGetAndListReturnKindInfo(t *testing.T) {
 			Name: "vs", Namespace: "test",
 		},
 	}
-	kialiCache := newTestKialiCache(nil, []runtime.Object{vs}, nil)
+	kialiCache := newTestKialiCache(kubetest.NewFakeK8sClient(vs))
 	kialiCache.cacheIstioTypes = map[string]bool{
 		kubernetes.PluralType[kubernetes.VirtualServices]: true,
 	}
