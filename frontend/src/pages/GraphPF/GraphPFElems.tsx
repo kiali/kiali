@@ -18,6 +18,7 @@ import { icons } from 'config';
 import {
   BoxByType,
   DecoratedGraphEdgeData,
+  DecoratedGraphEdgeWrapper,
   DecoratedGraphNodeData,
   EdgeLabelMode,
   GraphType,
@@ -552,8 +553,8 @@ export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: Grap
   data.tagStatus = getEdgeStatus(data);
 };
 
-export const assignEdgeHealth = (edges: EdgeModel[], nodeMap: NodeMap, settings: GraphPFSettings) => {
-  edges.forEach(edge => {
+export const assignEdgeHealth = (edges: DecoratedGraphEdgeWrapper[], nodeMap: NodeMap, settings: GraphPFSettings) => {
+  edges?.forEach(edge => {
     const edgeData = edge.data as EdgeData;
 
     if (!edgeData.hasTraffic) {
@@ -566,8 +567,8 @@ export const assignEdgeHealth = (edges: EdgeModel[], nodeMap: NodeMap, settings:
       return;
     }
 
-    const sourceNodeData = nodeMap.get(edge.source!)?.data as NodeData;
-    const destNodeData = nodeMap.get(edge.target!)?.data as NodeData;
+    const sourceNodeData = nodeMap.get(edgeData.source!)?.data as NodeData;
+    const destNodeData = nodeMap.get(edgeData.target!)?.data as NodeData;
     const statusEdge = getEdgeHealth(edgeData, sourceNodeData, destNodeData);
 
     switch (statusEdge.status) {

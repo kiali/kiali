@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { observer } from 'mobx-react';
 import { css } from '@patternfly/react-styles';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import CheckCircleIcon from '@patternfly/react-icons/dist/esm/icons/check-circle-icon';
@@ -6,36 +7,44 @@ import ExclamationCircleIcon from '@patternfly/react-icons/dist/esm/icons/exclam
 import ExclamationTriangleIcon from '@patternfly/react-icons/dist/esm/icons/exclamation-triangle-icon';
 import styles from '@patternfly/react-styles/css/components/Topology/topology-components';
 import {
-  TopologyQuadrant,
-  NodeStatus,
-  LabelPosition,
-  BadgeLocation,
-  GraphElement,
-  ShapeProps,
-  WithSelectionProps,
-  WithDragNodeProps,
-  WithDndDragProps,
-  WithDndDropProps,
-  WithCreateConnectorProps,
-  WithContextMenuProps,
-  useHover,
+  NodeShadows,
   DEFAULT_DECORATOR_RADIUS,
   getDefaultShapeDecoratorCenter,
-  Decorator,
   getShapeComponent,
-  StatusModifier,
-  createSvgIdUrl,
-  Node,
-  NodeShadows,
+  ShapeProps,
   NodeLabel,
-  observer,
-  Layer,
-  TOP_LAYER
+  createSvgIdUrl,
+  StatusModifier,
+  useCombineRefs,
+  useHover,
+  Decorator,
+  WithContextMenuProps,
+  WithCreateConnectorProps,
+  WithDndDragProps,
+  WithDndDropProps,
+  WithDragNodeProps,
+  WithSelectionProps,
+  BadgeLocation,
+  GraphElement,
+  LabelPosition,
+  Node,
+  NodeStatus,
+  TopologyQuadrant
 } from '@patternfly/react-topology';
 import {
   NODE_SHADOW_FILTER_ID_DANGER,
   NODE_SHADOW_FILTER_ID_HOVER
 } from '@patternfly/react-topology/dist/esm/components/nodes/NodeShadows';
+import { PFColors } from 'components/Pf/PfColors';
+import { style } from 'typestyle';
+
+// This is a copy of PFT DefaultNode (v4.68.3), then modified.  I don't see a better way to really
+// do this because DefaultNode doesn't really seem itself extensible and to add certain behavior you have
+// to reimplement the rendered element.  This supports the following customizations:
+//   [Node] element.data.isFind?: boolean                // adds graph-find overlay
+//   [Node] element.data.isHighlighted?: boolean         // adds highlight effects
+//   [Node] element.data.isUnhighlighted?: boolean       // adds unhighlight effects
+//   [Node] element.data.hasSpans?: Span[]               // adds trace overlay
 
 const StatusQuadrant = TopologyQuadrant.upperLeft;
 
@@ -62,11 +71,12 @@ type BaseNodeProps = {
   dragging?: boolean;
   edgeDragging?: boolean;
   dropTarget?: boolean;
-  shadowed?: boolean;
-  highlighted?: boolean;
+  scaleNode?: boolean; // Whether or not to scale the node, best on hover of node at lowest scale level
   label?: string; // Defaults to element.getLabel()
   secondaryLabel?: string;
   showLabel?: boolean; // Defaults to true
+  labelClassName?: string;
+  scaleLabel?: boolean; // Whether or not to scale the label, best at lower scale levels
   labelPosition?: LabelPosition; // Defaults to element.getLabelPosition()
   truncateLength?: number; // Defaults to 13
   labelIconClass?: string; // Icon to show in label
@@ -79,11 +89,12 @@ type BaseNodeProps = {
   badgeClassName?: string;
   badgeLocation?: BadgeLocation;
   attachments?: React.ReactNode; // ie. decorators
+  nodeStatus?: NodeStatus; // Defaults to element.getNodeStatus()
   showStatusBackground?: boolean;
   showStatusDecorator?: boolean;
   statusDecoratorTooltip?: React.ReactNode;
   onStatusDecoratorClick?: (event: React.MouseEvent<SVGGElement, MouseEvent>, element: GraphElement) => void;
-  getCustomShape?: (node: Node) => React.FC<ShapeProps>;
+  getCustomShape?: (node: Node) => React.FunctionComponent<ShapeProps>;
   getShapeDecoratorCenter?: (quadrant: TopologyQuadrant, node: Node) => { x: number; y: number };
 } & Partial<
   WithSelectionProps &
@@ -94,24 +105,25 @@ type BaseNodeProps = {
     WithContextMenuProps
 >;
 
-// BaseNode: slightly modified from @patternfly/react-topology/src/components/nodes/DefaultNode.tsx
-// to support shadow / hover behaviors
+const SCALE_UP_TIME = 200;
 
-const BaseNode: React.FC<BaseNodeProps> = ({
+const BaseNode: React.FunctionComponent<BaseNodeProps> = ({
   className,
   element,
   selected,
   hover,
+  scaleNode,
   showLabel = true,
   label,
-  shadowed,
-  highlighted,
   secondaryLabel,
+  labelClassName,
   labelPosition,
+  scaleLabel,
   truncateLength,
   labelIconClass,
   labelIcon,
   labelIconPadding,
+  nodeStatus,
   showStatusBackground,
   showStatusDecorator = false,
   statusDecoratorTooltip,
@@ -139,9 +151,11 @@ const BaseNode: React.FC<BaseNodeProps> = ({
   contextMenuOpen
 }) => {
   const [hovered, hoverRef] = useHover();
-  const status = element.getNodeStatus();
+  const status = nodeStatus || element.getNodeStatus();
+  const refs = useCombineRefs<SVGEllipseElement>(hoverRef as any, dragNodeRef as any);
   const { width, height } = element.getDimensions();
-  const isHover = hovered || hover;
+  const isHover = hover !== undefined ? hover : hovered;
+  const [nodeScale, setNodeScale] = React.useState<number>(1);
 
   const statusDecorator = React.useMemo(() => {
     if (!status || !showStatusDecorator) {
@@ -185,12 +199,7 @@ const BaseNode: React.FC<BaseNodeProps> = ({
     } else {
       onHideCreateConnector && onHideCreateConnector();
     }
-    //element.getController().fireEvent(HOVER_EVENT, {
-    //  ...element.getData(),
-    //  id: element.getId(),
-    //  isHovered: isHover
-    //});
-  }, [isHover, onShowCreateConnector, onHideCreateConnector, element]);
+  }, [isHover, onShowCreateConnector, onHideCreateConnector]);
 
   const ShapeComponent = (getCustomShape && getCustomShape(element)) || getShapeComponent(element);
 
@@ -202,10 +211,7 @@ const BaseNode: React.FC<BaseNodeProps> = ({
     canDrop && 'pf-m-highlight',
     canDrop && dropTarget && 'pf-m-drop-target',
     selected && 'pf-m-selected',
-    StatusModifier[status],
-    'topology',
-    shadowed && 'shadowed',
-    highlighted && 'node-highlighted'
+    StatusModifier[status]
   );
 
   const backgroundClassName = css(
@@ -222,27 +228,103 @@ const BaseNode: React.FC<BaseNodeProps> = ({
   }
 
   const nodeLabelPosition = labelPosition || element.getLabelPosition();
+  const scale = element.getGraph().getScale();
 
+  const animationRef = React.useRef<number>();
+  const scaleGoal = React.useRef<number>(1);
+  const nodeScaled = React.useRef<boolean>(false);
+
+  React.useEffect(() => {
+    if (!scaleNode || scale >= 1) {
+      setNodeScale(1);
+      nodeScaled.current = false;
+      if (animationRef.current) {
+        window.cancelAnimationFrame(animationRef.current);
+        animationRef.current = 0;
+      }
+    } else {
+      scaleGoal.current = 1 / scale;
+      const scaleDelta = scaleGoal.current - scale;
+      const initTime = performance.now();
+
+      const bumpScale = (bumpTime: number) => {
+        const scalePercent = (bumpTime - initTime) / SCALE_UP_TIME;
+        const nextScale = Math.min(scale + scaleDelta * scalePercent, scaleGoal.current);
+        setNodeScale(nextScale);
+        if (nextScale < scaleGoal.current) {
+          animationRef.current = window.requestAnimationFrame(bumpScale);
+        } else {
+          nodeScaled.current = true;
+          animationRef.current = 0;
+        }
+      };
+
+      if (nodeScaled.current) {
+        setNodeScale(scaleGoal.current);
+      } else if (!animationRef.current) {
+        animationRef.current = window.requestAnimationFrame(bumpScale);
+      }
+    }
+    return () => {
+      if (animationRef.current) {
+        window.cancelAnimationFrame(animationRef.current);
+        animationRef.current = 0;
+      }
+    };
+  }, [scale, scaleNode]);
+
+  const labelScale = scaleLabel && !scaleNode ? Math.max(1, 1 / scale) : 1;
+  const labelPositionScale = scaleLabel && !scaleNode ? Math.min(1, scale) : 1;
+
+  const { translateX, translateY } = React.useMemo(() => {
+    if (!scaleNode) {
+      return { translateX: 0, translateY: 0 };
+    }
+    const bounds = element.getBounds();
+    const translateX = bounds.width / 2 - (bounds.width / 2) * nodeScale;
+    const translateY = bounds.height / 2 - (bounds.height / 2) * nodeScale;
+
+    return { translateX, translateY };
+  }, [element, nodeScale, scaleNode]);
+
+  const ColorSpan = PFColors.Purple200;
+  const OverlayOpacity = 0.3;
+  const OverlayWidth = 40;
+
+  const traceOverlayStyle = style({
+    strokeWidth: OverlayWidth,
+    stroke: ColorSpan,
+    strokeOpacity: OverlayOpacity
+  });
+
+  // console.log(`Render node ${!!element.getData().hasSpans ? 'with' : 'without'} spans`);
+  
   return (
-    <Layer id={dragging || isHover || highlighted ? TOP_LAYER : undefined}>
-      <g ref={hoverRef as React.LegacyRef<SVGGElement> | undefined} className={groupClassName}>
-        <NodeShadows />
-        <g ref={dragNodeRef} onClick={onSelect} onContextMenu={onContextMenu}>
-          {ShapeComponent && (
-            <ShapeComponent
-              className={backgroundClassName}
-              element={element}
-              width={width}
-              height={height}
-              dndDropRef={dndDropRef}
-              filter={filter}
-            />
-          )}
-          {showLabel && (label || element.getLabel()) && (
+    <g
+      className={groupClassName}
+      transform={`${scaleNode ? `translate(${translateX}, ${translateY})` : ''} scale(${nodeScale})`}
+    >
+      <NodeShadows />
+      <g ref={refs} onClick={onSelect} onContextMenu={onContextMenu}>
+        {ShapeComponent && !!element.getData().hasSpans && (
+          <ShapeComponent className={traceOverlayStyle} element={element} width={width} height={height} />
+        )}
+        {ShapeComponent && (
+          <ShapeComponent
+            className={backgroundClassName}
+            element={element}
+            width={width}
+            height={height}
+            dndDropRef={dndDropRef}
+            filter={filter}
+          />
+        )}
+        {showLabel && (label || element.getLabel()) && (
+          <g transform={`scale(${labelScale})`}>
             <NodeLabel
-              className={css(styles.topologyNodeLabel)}
-              x={nodeLabelPosition === LabelPosition.right ? width + 8 : width / 2}
-              y={nodeLabelPosition === LabelPosition.right ? height / 2 : height + 6}
+              className={css(styles.topologyNodeLabel, labelClassName)}
+              x={(nodeLabelPosition === LabelPosition.right ? width + 8 : width / 2) * labelPositionScale}
+              y={(nodeLabelPosition === LabelPosition.right ? height / 2 : height + 6) * labelPositionScale}
               position={nodeLabelPosition}
               paddingX={8}
               paddingY={4}
@@ -255,8 +337,8 @@ const BaseNode: React.FC<BaseNodeProps> = ({
               badgeBorderColor={badgeBorderColor}
               badgeClassName={badgeClassName}
               badgeLocation={badgeLocation}
-              onContextMenu={onContextMenu as never}
-              contextMenuOpen={contextMenuOpen ? true : false}
+              onContextMenu={onContextMenu}
+              contextMenuOpen={contextMenuOpen}
               hover={isHover}
               labelIconClass={labelIconClass}
               labelIcon={labelIcon}
@@ -264,13 +346,13 @@ const BaseNode: React.FC<BaseNodeProps> = ({
             >
               {label || element.getLabel()}
             </NodeLabel>
-          )}
-          {children}
-        </g>
-        {statusDecorator}
-        {isHover && attachments}
+          </g>
+        )}
+        {children}
       </g>
-    </Layer>
+      {statusDecorator}
+      {attachments}
+    </g>
   );
 };
 

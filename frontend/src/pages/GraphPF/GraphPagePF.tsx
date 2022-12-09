@@ -72,7 +72,7 @@ import { canCreate, canUpdate } from '../../types/Permissions';
 import connectRefresh from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
 import { GraphData, GraphPageProps } from 'pages/Graph/GraphPage';
-import GraphPF from './GraphPF';
+import GraphPF, { FocusNode } from './GraphPF';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { GraphPFSettings } from './GraphPFElems';
 import { serverConfig } from 'config';
@@ -138,9 +138,10 @@ type ReduxProps = {
   updateSummary: (event: GraphEvent) => void;
 };
 
-export type GraphPagePFProps = RouteComponentProps<Partial<GraphURLPathProps>> &
+export type GraphPagePropsPF = RouteComponentProps<Partial<GraphURLPathProps>> &
   ReduxProps & {
     lastRefreshAt: TimeInMilliseconds;
+    setSelectedIds: (selectedIds: string[]) => void;
   };
 
 type WizardsData = {
@@ -151,15 +152,16 @@ type WizardsData = {
 
   // Data (payload) sent to the wizard or the confirm delete dialog
   gateways: string[];
+  k8sGateways: string[];
   peerAuthentications: PeerAuthentication[];
   namespace: string;
   serviceDetails?: ServiceDetailsInfo;
 };
 
-type GraphPagePFState = {
+type GraphPageStatePF = {
   graphData: GraphData;
-  wizardsData: WizardsData;
   showConfirmDeleteTrafficRouting: boolean;
+  wizardsData: WizardsData;
 };
 
 const NUMBER_OF_DATAPOINTS = 30;
@@ -216,10 +218,10 @@ const GraphErrorBoundaryFallback = () => {
   );
 };
 
-export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFState> {
+export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStatePF> {
   private readonly errorBoundaryRef: any;
   // private cytoscapeGraphRef: any;
-  private focusSelector?: string;
+  private focusNode?: FocusNode;
   private graphDataSource: GraphDataSource;
 
   static getNodeParamsFromProps(props: RouteComponentProps<Partial<GraphURLPathProps>>): NodeParamsType | undefined {
@@ -291,12 +293,12 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
     return false;
   }
 
-  constructor(props: GraphPageProps) {
+  constructor(props: GraphPagePropsPF) {
     super(props);
     this.errorBoundaryRef = React.createRef();
     // this.cytoscapeGraphRef = React.createRef();
-    this.focusSelector = getFocusSelector();
-
+    const focusNodeId = getFocusSelector();
+    this.focusNode = focusNodeId ? { id: focusNodeId, isSelected: true } : undefined;
     this.graphDataSource = new GraphDataSource();
 
     this.state = {
@@ -312,6 +314,7 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
         wizardType: '',
         updateMode: false,
         gateways: [],
+        k8sGateways: [],
         peerAuthentications: [],
         namespace: ''
       },
@@ -389,8 +392,8 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
       this.loadGraphDataFromBackend();
     }
 
-    if (!!this.focusSelector) {
-      this.focusSelector = undefined;
+    if (!!this.focusNode) {
+      this.focusNode = undefined;
       unsetFocusSelector();
     }
 
@@ -484,7 +487,12 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
                     showIdleNodes={this.props.showIdleNodes}
                     toggleIdleNodes={this.props.toggleIdleNodes}
                   >
-                    <GraphPF graphData={this.state.graphData} graphSettings={settings} {...this.props} />
+                    <GraphPF
+                      focusNode={this.focusNode}
+                      graphData={this.state.graphData}
+                      graphSettings={settings}
+                      {...this.props}
+                    />
                   </EmptyGraphLayout>
                 </div>
               )}
@@ -497,9 +505,11 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
                 injectServiceNodes={this.props.showServiceNodes}
                 isPageVisible={this.props.isPageVisible}
                 namespaces={this.props.activeNamespaces}
+                onFocus={this.onFocus}
                 onLaunchWizard={this.handleLaunchWizard}
                 onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
                 queryTime={this.state.graphData.timestamp / 1000}
+                setSelectedIdsPF={this.props.setSelectedIds}
                 trafficRates={this.props.trafficRates}
                 {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
               />
@@ -513,6 +523,7 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
           namespace={this.state.wizardsData.namespace}
           serviceName={this.state.wizardsData.serviceDetails?.service?.name || ''}
           workloads={this.state.wizardsData.serviceDetails?.workloads || []}
+          subServices={this.state.wizardsData.serviceDetails?.subServices || []}
           createOrUpdate={
             canCreate(this.state.wizardsData.serviceDetails?.istioPermissions) ||
             canUpdate(this.state.wizardsData.serviceDetails?.istioPermissions)
@@ -520,6 +531,8 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
           virtualServices={this.state.wizardsData.serviceDetails?.virtualServices || []}
           destinationRules={this.state.wizardsData.serviceDetails?.destinationRules || []}
           gateways={this.state.wizardsData.gateways || []}
+          k8sGateways={this.state.wizardsData.k8sGateways || []}
+          k8sHTTPRoutes={this.state.wizardsData.serviceDetails?.k8sHTTPRoutes || []}
           peerAuthentications={this.state.wizardsData.peerAuthentications || []}
           tlsStatus={this.state.wizardsData.serviceDetails?.namespaceMTLS}
           onClose={this.handleWizardClose}
@@ -529,6 +542,7 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
             isOpen={true}
             destinationRules={DestinationRuleC.fromDrArray(this.state.wizardsData.serviceDetails!.destinationRules)}
             virtualServices={this.state.wizardsData.serviceDetails!.virtualServices}
+            k8sHTTPRoutes={this.state.wizardsData.serviceDetails!.k8sHTTPRoutes}
             onCancel={() => this.setState({ showConfirmDeleteTrafficRouting: false })}
             onConfirm={this.handleConfirmDeleteServiceTrafficRouting}
           />
@@ -536,6 +550,10 @@ export class GraphPagePF extends React.Component<GraphPagePFProps, GraphPagePFSt
       </>
     );
   }
+
+  private onFocus = (focusNode: FocusNode) => {
+    console.log(`onFocus(${focusNode})`);
+  };
 
   private handleEmptyGraphAction = () => {
     this.loadGraphDataFromBackend();

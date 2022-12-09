@@ -11,6 +11,7 @@ import { edgesOut, elems, select, SelectAnd, selectAnd } from './GraphPFElems';
 import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 
 export const showTrace = (controller: Controller, graphType: GraphType, trace: JaegerTrace) => {
+  // console.log('ShowTracePF');
   if (!controller.hasGraph()) {
     return;
   }
@@ -22,6 +23,7 @@ export const showTrace = (controller: Controller, graphType: GraphType, trace: J
 const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Span) => {
   const split = span.process.serviceName.split('.');
   const app = split[0];
+  // console.log(`ShowSpanSubtrace ${app}`);
 
   // From upstream to downstream: Parent app or workload, Inbound Service Entry, Service, App or Workload, Outbound Service Entry
   let lastSelection: Node[] | undefined = undefined;
@@ -139,11 +141,14 @@ const addSpan = (ele: Node | Edge | undefined, span: Span): void => {
     return;
   }
   const data = ele.getData();
-  if (!!data['hasSpans']) {
-    data['hasSpans'].push(span);
+  let hasSpans = data['hasSpans'];
+  if (!!hasSpans) {
+    hasSpans.push(span);
   } else {
-    data['hasSpans'] = [span];
+    hasSpans = [span];
   }
+  // must reset Data to get the element to re-render
+  ele.setData({ ...data, hasSpans: hasSpans });
 };
 
 export const hideTrace = (controller: Controller) => {
@@ -152,8 +157,8 @@ export const hideTrace = (controller: Controller) => {
   }
   // unhighlight old span-hits
   const { nodes, edges } = elems(controller);
-  select(edges, { prop: 'hasSpans', op: 'truthy' }).forEach(e => (e.getData()['hasSpans'] = undefined));
-  select(nodes, { prop: 'hasSpans', op: 'truthy' }).forEach(e => (e.getData()['hasSpans'] = undefined));
+  select(edges, { prop: 'hasSpans', op: 'truthy' }).forEach(e => e.setData({ ...e.getData(), hasSpans: undefined }));
+  select(nodes, { prop: 'hasSpans', op: 'truthy' }).forEach(e => e.setData({ ...e.getData(), hasSpans: undefined }));
 };
 
 const getOutboundServiceEntry = (span: Span, nodes: Node[]): Node[] | undefined => {

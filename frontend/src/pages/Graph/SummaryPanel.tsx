@@ -19,6 +19,7 @@ import { summaryPanelWidth } from './SummaryPanelCommon';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { PeerAuthentication } from '../../types/IstioObjects';
+import { FocusNode } from 'pages/GraphPF/GraphPF';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -29,6 +30,7 @@ type MainSummaryPanelPropType = SummaryPanelPropType & {
   jaegerState: JaegerState;
   kiosk: string;
   onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
+  onFocus?: (focusNode: FocusNode) => void;
   onLaunchWizard?: (
     key: WizardAction,
     mode: WizardMode,
@@ -124,10 +126,12 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
             <div className={`panel panel-default ${summaryPanelBottomSplit}`}>
               <div className="panel-body">
                 <SummaryPanelTraceDetails
-                  trace={this.props.jaegerState.selectedTrace}
                   data={this.props.data}
                   graphType={this.props.graphType}
                   jaegerURL={this.props.jaegerState.info?.url}
+                  onFocus={this.props.onFocus}
+                  setSelectedIdsPF={this.props.setSelectedIdsPF}
+                  trace={this.props.jaegerState.selectedTrace}
                 />
               </div>
             </div>

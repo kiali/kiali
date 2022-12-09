@@ -6,16 +6,18 @@ import {
   EdgeModel,
   EdgeStyle,
   GRAPH_LAYOUT_END_EVENT,
-  GRAPH_POSITION_CHANGE_EVENT,
+  // GRAPH_POSITION_CHANGE_EVENT,
   Model,
   ModelKind,
   Node,
   NodeModel,
-  SELECTION_EVENT,
+  //SELECTION_EVENT,
+  SELECTION_STATE,
   TopologyControlBar,
   TopologyView,
   useEventListener,
   useVisualizationController,
+  useVisualizationState,
   Visualization,
   VisualizationProvider,
   VisualizationSurface
@@ -39,7 +41,7 @@ import {
 import layoutFactory from './layouts/layoutFactory';
 import { hideTrace, showTrace } from './TracePF';
 
-export const HOVER_EVENT = 'hover';
+// export const HOVER_EVENT = 'hover';
 
 let requestFit = false;
 
@@ -61,6 +63,11 @@ export interface TopologyOptions {
   layout: LayoutName;
 }
 
+export interface FocusNode {
+  id: string;
+  isSelected?: boolean;
+}
+
 export const DefaultOptions: TopologyOptions = {
   layout: LayoutName.Dagre
 };
@@ -75,21 +82,28 @@ export const TopologyContent: React.FC<{
 }> = ({ graphData, graphSettings, onReady, options, trace, updateSummary }) => {
   const controller = useVisualizationController();
 
-  // update hover as the mouse moves
+  // TODO: Hover actions
+  // HoveredId State
+  //
+  /*
   const [hoveredId, setHoveredId] = React.useState<string>('');
   const onHover = React.useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (data: NodeData) => {
-      console.log('onHover');
+      console.log(`onHover ${data.id} ${data.isHovered}`);
       setHoveredId(data.isHovered ? data.id : '');
     },
     []
   );
+  */
 
-  const onSelect = React.useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (data: any) => {
-      const elem = controller.getElementById(data);
+  //
+  // SelectedIds State
+  //
+  const [selectedIds] = useVisualizationState<string[]>(SELECTION_STATE, []);
+  React.useEffect(() => {
+    if (selectedIds.length > 0) {
+      const elem = controller.getElementById(selectedIds[0]);
       switch (elem?.getKind()) {
         case ModelKind.edge: {
           updateSummary({ isPF: true, summaryType: 'edge', summaryTarget: elem } as GraphEvent);
@@ -103,11 +117,32 @@ export const TopologyContent: React.FC<{
         default:
           updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
       }
-    },
-    [controller, updateSummary]
-  );
+    } else {
+      updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
+    }
+  }, [controller, updateSummary, selectedIds]);
 
-  //fit view to elements
+  //
+  // TraceOverlay State
+  //
+  React.useEffect(() => {
+    if (!controller || !controller.hasGraph()) {
+      return undefined;
+    }
+
+    if (!!trace) {
+      showTrace(controller, graphData.fetchParams.graphType, trace);
+    }
+
+    return () => {
+      console.log('Hide Trace Overlay');
+      hideTrace(controller);
+    };
+  }, [controller, graphData.fetchParams.graphType, trace]);
+
+  //
+  // fitView handling
+  //
   const fitView = React.useCallback(() => {
     if (controller && controller.hasGraph()) {
       controller.getGraph().fit(FIT_PADDING);
@@ -116,6 +151,9 @@ export const TopologyContent: React.FC<{
     }
   }, [controller]);
 
+  //
+  // layoutEnd handling
+  //
   const onLayoutEnd = React.useCallback(() => {
     //fit view to new loaded elements
     if (requestFit) {
@@ -131,6 +169,11 @@ export const TopologyContent: React.FC<{
     }
   }, [fitView, options.layout]);
 
+  //
+  // TODO: Maybe add this back if we have popovers that behave badly
+  // layoutPosition Change  handling
+  //
+  /*
   const onLayoutPositionChange = React.useCallback(() => {
     if (controller && controller.hasGraph()) {
       //hide popovers on pan / zoom
@@ -140,8 +183,11 @@ export const TopologyContent: React.FC<{
       }
     }
   }, [controller]);
+  */
 
-  //update graph details level
+  //
+  // Set detail levels for graph (control zoom-sensitive labels)
+  //
   const setDetailsLevel = React.useCallback(() => {
     console.log('SetDetailsLevel');
     if (controller && controller.hasGraph()) {
@@ -152,7 +198,9 @@ export const TopologyContent: React.FC<{
     }
   }, [controller]);
 
-  //reset graph and model
+  //
+  // Reset [new] graph with initial model
+  //
   const resetGraph = React.useCallback(() => {
     console.log('Reset');
     if (controller) {
@@ -169,76 +217,17 @@ export const TopologyContent: React.FC<{
     }
   }, [controller, options.layout, setDetailsLevel]);
 
-  //fit view to elements
-  React.useEffect(() => {
-    if (!controller || !controller.hasGraph()) {
-      console.error('fitView called before controller graph');
-      return undefined;
-    }
-
-    if (trace) {
-      showTrace(controller, graphData.fetchParams.graphType, trace);
-      return () => {
-        hideTrace(controller);
-      };
-    }
-
-    return undefined;
-  }, [controller, graphData, trace]);
-
+  /* Is this necessary? We already set the thresholds in the reset
   //update details on low / med scale change
   React.useEffect(() => {
     setDetailsLevel();
   }, [controller, setDetailsLevel]);
+  */
 
-  //update model merging existing nodes / edges
-  const updateModel = React.useCallback(() => {
-    console.log('updateModel');
-    if (!controller) {
-      return;
-    } else if (!controller.hasGraph()) {
-      console.error('updateModel called while controller has no graph');
-      //    } else if (waitForMetrics && prevMetrics === metrics) {
-      //      return;
-    }
-
-    //highlight either hoveredId or selected id
-    //  let highlightedId = hoveredId;
-    //  if (!highlightedId && selectedIds.length === 1) {
-    //    highlightedId = selectedIds[0];
-    //  }
-
-    const updatedModel = generateDataModel(graphData, graphSettings);
-
-    const allIds = [...(updatedModel.nodes || []), ...(updatedModel.edges || [])].map(item => item.id);
-    controller.getElements().forEach(e => {
-      if (e.getType() !== 'graph') {
-        if (allIds.includes(e.getId())) {
-          //keep previous data
-          switch (e.getType()) {
-            case 'node':
-              const updatedNode = updatedModel.nodes?.find(n => n.id === e.getId());
-              if (updatedNode) {
-                updatedNode.data = { ...e.getData(), ...updatedNode.data };
-              }
-              break;
-            case 'group':
-              const updatedGroup = updatedModel.nodes?.find(n => n.id === e.getId());
-              if (updatedGroup) {
-                updatedGroup.collapsed = (e as Node).isCollapsed();
-              }
-              break;
-          }
-        } else {
-          controller.removeElement(e);
-        }
-      }
-    });
-
-    controller.fromModel(updatedModel);
-  }, [controller, graphData, graphSettings]);
-
-  const generateDataModel = (graphData: GraphData, graphSettings: GraphPFSettings): Model => {
+  //
+  // Manage the GraphData / DataModel
+  //
+  const generateDataModel = React.useCallback(() => {
     let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
     const edges: EdgeModel[] = [];
     // const opts = { ...DefaultOptions, ...options };
@@ -271,10 +260,6 @@ export const TopologyContent: React.FC<{
         width: DEFAULT_NODE_SIZE
       };
       setNodeLabel(node, nodeMap, graphSettings);
-      // TODO, do we actually need to do anything with this?
-      if (hoveredId === data.id) {
-        console.log(`Hovering over ${hoveredId} `);
-      }
       nodeMap.set(data.id, node);
 
       return node;
@@ -319,30 +304,74 @@ export const TopologyContent: React.FC<{
       }
     });
 
+    // Compute edge healths one time for the graph
+    assignEdgeHealth(graphData.elements.edges || [], nodeMap, graphSettings);
+
     graphData.elements.edges?.forEach(e => {
       const ed = e.data;
       addEdge(ed as EdgeData);
     });
 
-    // Compute edge healths one time for the graph
-    assignEdgeHealth(edges, nodeMap, graphSettings);
-
     const nodes = Array.from(nodeMap.values());
     return { nodes: nodes, edges: edges };
-  };
+  }, [graphData, graphSettings]);
 
-  //update model on layout / metrics / filters change
-  React.useEffect(() => {
-    //update graph
-    if (!controller.hasGraph()) {
-      resetGraph();
-      onReady(controller);
+  //
+  // update model merging existing nodes / edges
+  //
+  const updateModel = React.useCallback(() => {
+    if (!controller) {
+      return;
+    } else if (!controller.hasGraph()) {
+      console.error('updateModel called while controller has no graph');
     }
 
-    //then update model
-    updateModel();
-  }, [controller, onReady, resetGraph, updateModel, updateSummary]);
+    console.log('updateModel');
 
+    const updatedModel = generateDataModel();
+
+    const allIds = [...(updatedModel.nodes || []), ...(updatedModel.edges || [])].map(item => item.id);
+    controller.getElements().forEach(e => {
+      if (e.getType() !== 'graph') {
+        if (allIds.includes(e.getId())) {
+          //keep previous data
+          switch (e.getType()) {
+            case 'node':
+              const updatedNode = updatedModel.nodes?.find(n => n.id === e.getId());
+              if (updatedNode) {
+                updatedNode.data = { ...e.getData(), ...updatedNode.data };
+              }
+              break;
+            case 'group':
+              const updatedGroup = updatedModel.nodes?.find(n => n.id === e.getId());
+              if (updatedGroup) {
+                updatedGroup.collapsed = (e as Node).isCollapsed();
+              }
+              break;
+          }
+        } else {
+          controller.removeElement(e);
+        }
+      }
+    });
+
+    controller.fromModel(updatedModel);
+  }, [controller, generateDataModel]);
+
+  //
+  // update model on layout / metrics / filters change (TODO, may need to add logic to handle these change scenarios)
+  //
+  React.useEffect(() => {
+    if (!controller.hasGraph()) {
+      resetGraph();
+      updateModel();
+      onReady(controller);
+    }
+  }, [controller, onReady, resetGraph, updateModel]);
+
+  //
+  // Final Cleanup (at unmount-time, not every post-render)
+  //
   React.useEffect(() => {
     return () => {
       console.log('Cleanup');
@@ -351,13 +380,14 @@ export const TopologyContent: React.FC<{
         updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: undefined });
       }
     };
-  }, []);
+  }, [updateSummary]);
 
-  useEventListener(HOVER_EVENT, onHover);
-  useEventListener(SELECTION_EVENT, onSelect);
+  // useEventListener(HOVER_EVENT, onHover);
+  //useEventListener(SELECTION_EVENT, onSelect);
   useEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
-  useEventListener(GRAPH_POSITION_CHANGE_EVENT, onLayoutPositionChange);
+  // useEventListener(GRAPH_POSITION_CHANGE_EVENT, onLayoutPositionChange);
 
+  console.log('Render TV');
   return (
     <TopologyView
       data-test="topology-view"
@@ -409,23 +439,6 @@ export const TopologyContent: React.FC<{
       }
     >
       <VisualizationSurface data-test="visualization-surface" state={{}} />
-      {/* <div id="topology-search-container" data-test="topology-search-container">
-        <InputGroup>
-          <TextInput
-            data-test="search-topology-element-input"
-            id="search-topology-element-input"
-            className={'search'}
-            placeholder="Find in view"
-            autoFocus
-            // type={searchValidated !== ValidatedOptions.default ? 'text' : 'search'}
-            aria-label="search"
-            //onKeyPress={e => e.key === 'Enter' && onSearch(searchValue)}
-            //onChange={onChangeSearch}
-            //value={searchValue}
-            //validated={searchValidated}
-          />
-        </InputGroup>
-      </div> */}
     </TopologyView>
   );
 };
@@ -433,6 +446,7 @@ export const TopologyContent: React.FC<{
 export const GraphPF: React.FC<{
   graphData: GraphData;
   graphSettings: GraphPFSettings;
+  focusNode?: FocusNode;
   onReady: (controller: any) => void;
   trace?: JaegerTrace;
   updateSummary: (graphEvent: GraphEvent) => void;
@@ -459,7 +473,6 @@ export const GraphPF: React.FC<{
   }
 
   console.log('Render!');
-
   return (
     <VisualizationProvider data-test="visualization-provider" controller={controller}>
       <TopologyContent
