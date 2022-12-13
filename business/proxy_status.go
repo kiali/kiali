@@ -3,8 +3,6 @@ package business
 import (
 	"context"
 
-	"k8s.io/client-go/tools/clientcmd/api"
-
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -14,45 +12,12 @@ type ProxyStatusService struct {
 	businessLayer *Layer
 }
 
-func (in *ProxyStatusService) GetPodProxyStatus(ns, pod string) (*kubernetes.ProxyStatus, error) {
+func (in *ProxyStatusService) GetPodProxyStatus(ns, pod string) *models.ProxyStatus {
 	if kialiCache == nil {
-		return nil, nil
+		return nil
 	}
 
-	if kialiCache.CheckProxyStatus() {
-		return kialiCache.GetPodProxyStatus(ns, pod), nil
-	}
-
-	var proxyStatus []*kubernetes.ProxyStatus
-	var err error
-
-	if proxyStatus, err = in.k8s.GetProxyStatus(); err != nil {
-		if proxyStatus, err = in.getProxyStatusUsingKialiSA(); err != nil {
-			return nil, err
-		}
-	}
-
-	kialiCache.SetProxyStatus(proxyStatus)
-	return kialiCache.GetPodProxyStatus(ns, pod), nil
-}
-
-func (in *ProxyStatusService) getProxyStatusUsingKialiSA() ([]*kubernetes.ProxyStatus, error) {
-	clientFactory, err := kubernetes.GetClientFactory()
-	if err != nil {
-		return nil, err
-	}
-
-	kialiToken, err := kubernetes.GetKialiToken()
-	if err != nil {
-		return nil, err
-	}
-
-	k8s, err := clientFactory.GetClient(&api.AuthInfo{Token: kialiToken})
-	if err != nil {
-		return nil, err
-	}
-
-	return k8s.GetProxyStatus()
+	return castProxyStatus(kialiCache.GetPodProxyStatus(ns, pod))
 }
 
 func castProxyStatus(ps *kubernetes.ProxyStatus) *models.ProxyStatus {

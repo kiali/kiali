@@ -48,8 +48,8 @@ type (
 		KubernetesCache
 		IstioCache
 		NamespacesCache
-		ProxyStatusCache
 		RegistryStatusCache
+		ProxyStatusCache
 	}
 
 	namespaceCache struct {
@@ -112,7 +112,6 @@ type (
 		tokenNamespaces        map[string]namespaceCache
 		tokenNamespaceDuration time.Duration
 		proxyStatusLock        sync.RWMutex
-		proxyStatusCreated     *time.Time
 		proxyStatusNamespaces  map[string]map[string]podProxyStatus
 		registryRefreshHandler RegistryRefreshHandler
 		registryStatusLock     sync.RWMutex
@@ -194,6 +193,10 @@ func NewKialiCache(namespaceSeedList ...string) (KialiCache, error) {
 
 	// Update SA Token
 	kialiCacheImpl.stopCacheChan = kialiCacheImpl.refreshCache(istioConfig)
+
+	// Populate cache from Istiod in the background. This routine gets stopped when the cache is stopped.
+	kialiCacheImpl.pollIstiodForProxyStatus()
+
 	kialiCacheImpl.registryRefreshHandler = NewRegistryHandler(kialiCacheImpl.RefreshRegistryStatus)
 
 	if kialiCacheImpl.clusterScoped {
