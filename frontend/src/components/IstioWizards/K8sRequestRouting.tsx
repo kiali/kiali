@@ -177,7 +177,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
 
   onHeaderNameChange = (headerName: string) => {
     let validationMsg = '';
-    if ((this.state.matchValue !== '' || this.state.headerOp === REMOVE) && headerName === '') {
+    if (!headerName && (!!this.state.matchValue || this.state.headerOp === REMOVE)) {
       validationMsg = MSG_HEADER_NAME_NON_EMPTY;
     }
     if (this.state.matchValue === '' && headerName !== '' && this.state.headerOp !== REMOVE) {
