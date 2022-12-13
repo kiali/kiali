@@ -614,7 +614,21 @@ export const descendents = (node: Node): Node[] => {
   return result;
 };
 
-export type SelectOp = '=' | '!=' | '>' | '<' | 'falsey' | 'truthy';
+export type SelectOp =
+  | '='
+  | '!='
+  | '>'
+  | '<'
+  | '>='
+  | '<='
+  | '!*='
+  | '!$='
+  | '!^='
+  | '*='
+  | '$='
+  | '^='
+  | 'falsy'
+  | 'truthy';
 export type SelectExp = {
   prop: string;
   val?: any;
@@ -648,7 +662,23 @@ export const select = (elems: GraphElement[], exp: SelectExp): GraphElement[] =>
         return d[exp.prop] < exp.val;
       case '>':
         return d[exp.prop] > exp.val;
-      case 'falsey':
+      case '>=':
+        return d[exp.prop] >= exp.val;
+      case '<=':
+        return d[exp.prop] <= exp.val;
+      case '!*=':
+        return !(d[exp.prop] as string).includes(exp.val as string);
+      case '!$=':
+        return !(d[exp.prop] as string).endsWith(exp.val as string);
+      case '!^=':
+        return !(d[exp.prop] as string).startsWith(exp.val as string);
+      case '*=':
+        return (d[exp.prop] as string).includes(exp.val as string);
+      case '$=':
+        return (d[exp.prop] as string).endsWith(exp.val as string);
+      case '^=':
+        return (d[exp.prop] as string).startsWith(exp.val as string);
+      case 'falsy':
         return !d[exp.prop];
       case 'truthy':
         return !!d[exp.prop];
