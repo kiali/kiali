@@ -80,12 +80,13 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 
 	var istioApiEnabled = config.Get().ExternalServices.Istio.IstioApiEnabled
 
-	wg.Add(2) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
+	wg.Add(3) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
+	if service != "" {
+		wg.Add(1)
+	}
+
 	if istioApiEnabled {
-		wg.Add(2)
-		if service != "" {
-			wg.Add(1)
-		}
+		wg.Add(1)
 	}
 
 	// We fetch without target service as some validations will require full-namespace details
@@ -98,11 +99,12 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 		go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &namespaces, errChan, &wg)
 	}
 
+	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
+	if service != "" {
+		go in.fetchServices(ctx, &services, namespace, errChan, &wg)
+	}
+
 	if istioApiEnabled {
-		go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
-		if service != "" {
-			go in.fetchServices(ctx, &services, namespace, errChan, &wg)
-		}
 		go in.fetchRegistryServices(&registryServices, errChan, &wg)
 	}
 
