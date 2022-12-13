@@ -815,6 +815,9 @@ export interface K8sHTTPHeaderFilter {
 }
 
 export interface K8sHTTPRouteRequestRedirect {
+  scheme?: string;
+  hostname?: string;
+  port?: number;
   statusCode?: number;
 }
 

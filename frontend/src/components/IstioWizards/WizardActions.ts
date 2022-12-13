@@ -16,7 +16,7 @@ import {
   HTTPRoute,
   HTTPRouteDestination,
   K8sGateway, K8sHTTPHeaderFilter,
-  K8sHTTPRoute, K8sHTTPRouteFilter, K8sHTTPRouteMatch,
+  K8sHTTPRoute, K8sHTTPRouteFilter, K8sHTTPRouteMatch, K8sHTTPRouteRequestRedirect,
   LoadBalancerSettings,
   Operation,
   OutlierDetection,
@@ -52,7 +52,7 @@ import { ServiceEntryState } from '../../pages/IstioConfigNew/ServiceEntryForm';
 import {K8sRouteBackendRef} from './K8sTrafficShifting';
 import { QUERY_PARAMS, PATH, HEADERS, METHOD } from "./K8sRequestRouting/K8sMatchBuilder";
 import {ServiceOverview} from "../../types/ServiceList";
-import {ADD, SET, REQ_MOD} from "./K8sRequestRouting/K8sFilterBuilder";
+import {ADD, SET, REQ_MOD, REQ_RED} from "./K8sRequestRouting/K8sFilterBuilder";
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
@@ -296,11 +296,11 @@ const buildK8sHTTPRouteMatch = (matches: string[]): K8sHTTPRouteMatch => {
 
 const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
   const routeFilter: K8sHTTPRouteFilter[] = [];
-  const requestHeaderModifier: K8sHTTPHeaderFilter = {};
 
   filters
     .filter(filter => filter.startsWith(REQ_MOD))
     .forEach(filter => {
+      const requestHeaderModifier: K8sHTTPHeaderFilter = {};
       // match follows format:  requestHeaderModifier [<header-name>] <add/set/remove> <value/null>
       const i0 = filter.indexOf('[');
       const j0 = filter.indexOf(']');
@@ -329,8 +329,29 @@ const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
           requestHeaderModifier.remove.push(removeHeader)
         }
       }
+      routeFilter.push({type: "RequestHeaderModifier", requestHeaderModifier: requestHeaderModifier})
     });
-  routeFilter.push({type: "RequestHeaderModifier", requestHeaderModifier: requestHeaderModifier})
+
+  filters
+    .filter(filter => filter.startsWith(REQ_RED))
+    .forEach(filter => {
+      const requestRedirect: K8sHTTPRouteRequestRedirect = {};
+      // match follows format:  requestRedirect protocol://hostname:port returnCode>
+      const i0 = filter.indexOf(' ');
+      const j0 = filter.indexOf(':');
+      const protocol = filter.substring(i0 + 1, j0).trim();
+      const j1 = filter.indexOf(':', j0 + 1);
+      const hostname = filter.substring(j0 + 3, j1).trim();
+      const j2 = filter.indexOf(' ', j1);
+      const port = parseInt(filter.substring(j1 + 1, j2).trim());
+      const code = parseInt(filter.substring(j2 + 1).trim());
+      requestRedirect.scheme = protocol;
+      requestRedirect.hostname = hostname;
+      requestRedirect.port = port;
+      requestRedirect.statusCode = code;
+      routeFilter.push({type: "RequestRedirect", requestRedirect: requestRedirect})
+    });
+
   return routeFilter;
 };
 
@@ -399,7 +420,9 @@ const parseK8sHTTPRouteFilter = (httpRouteFilter: K8sHTTPRouteFilter): string[] 
   if (httpRouteFilter.requestHeaderModifier) {
     matches = matches.concat(parseK8sHTTPHeaderFilter("requestHeaderModifier", httpRouteFilter.requestHeaderModifier));
   }
-
+  if (httpRouteFilter.requestRedirect) {
+    matches = matches.concat(parseK8sHTTPRouteRequestRedirect(httpRouteFilter.requestRedirect));
+  }
   return matches;
 };
 
@@ -421,6 +444,10 @@ const parseK8sHTTPHeaderFilter = (filterType: string, httpHeaderFilter: K8sHTTPH
     });
   }
   return filters;
+};
+
+const parseK8sHTTPRouteRequestRedirect = (requestRedirect: K8sHTTPRouteRequestRedirect): string => {
+  return `${REQ_RED} ${requestRedirect.scheme}://${requestRedirect.hostname}:${requestRedirect.port} ${requestRedirect.statusCode}`;
 };
 
 export const getGatewayName = (namespace: string, serviceName: string, gatewayNames: string[]): string => {
