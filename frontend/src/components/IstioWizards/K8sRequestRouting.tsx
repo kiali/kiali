@@ -281,7 +281,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
       let newFilter: string;
       if (this.state.filterType === REQ_MOD || this.state.filterType === RESP_MOD) {
         if (this.state.headerOp !== REMOVE) {
-          newFilter = prevState.filterType + ' [' + prevState.headerName + '] ' + prevState.headerOp + ' ' + prevState.headerValue;
+          newFilter = `${prevState.filterType} [${prevState.headerName}] ${prevState.headerOp} ${prevState.headerValue}`;
         } else {
           newFilter = prevState.filterType + ' [' + prevState.headerName + '] ' + prevState.headerOp;
         }
