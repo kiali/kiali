@@ -113,6 +113,26 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     return <Alert key={key} variant={variant} isInline={true} isPlain={true} title={message} />;
   };
 
+  extractOAuthErrorMessages = (urlParams: URLSearchParams, messagesArray: any[]) => {
+    // When using OpenId auth, the IdP can redirect back with `error` and `error_description`
+    // as url parameters. If these params are set, we cannot assume they are not spoofed, so we only
+    // log the errors but do not show them in the UI. We only show a generic error message.
+    // Reference: https://openid.net/specs/openid-connect-core-1_0-final.html#AuthError
+    if (urlParams.get('error')) {
+      if (urlParams.get('error_description')) {
+        console.warn(`Authentication error_description: ${urlParams.get('error_description')}`)
+        messagesArray.push(
+          this.renderMessage(`Authentication failed!`, 'danger', 'idp-err')
+        );
+      } else {
+        console.warn(`Authentication error: ${urlParams.get('error')}`)
+        messagesArray.push(
+          this.renderMessage(`Authentication failed.`, 'danger', 'idp-err')
+        );
+      }
+    }
+  };
+
   getHelperMessage = () => {
     const messages: any[] = [];
     if (this.state.showHelperText) {
@@ -130,27 +150,16 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
       messages.push(this.renderMessage(this.props.postLoginErrorMsg, undefined, 'postLoginError'));
     }
 
-    // Get error messages passed on the URL
+    // Get error messages passed on the URL (authorization code flow of OAuth/OpenId)
     const pageParams = window.location.search;
     const urlParams = new URLSearchParams(pageParams);
+    this.extractOAuthErrorMessages(urlParams, messages);
 
-    // When using OpenId auth, the IdP can redirect back with `error` and `error_description`
-    // as url parameters. If these params are set, we cannot assume they are not spoofed, so we only
-    // log the errors but do not show them in the UI. We only show a generic error message.
-    // Reference: https://openid.net/specs/openid-connect-core-1_0-final.html#AuthError
-    if (urlParams.get('error')) {
-      if (urlParams.get('error_description')) {
-        console.warn(`Authentication error_description: ${urlParams.get('error_description')}`)
-        messages.push(
-          this.renderMessage(`Authentication failed!`, 'danger', 'idp-err')
-        );
-      } else {
-        console.warn(`Authentication error: ${urlParams.get('error')}`)
-        messages.push(
-          this.renderMessage(`Authentication failed.`, 'danger', 'idp-err')
-        );
-      }
-    }
+    // The implicit flow of OAuth/OpenId passes errors as hash parameters which aren't accessible
+    // to the back-end. So, here we catch them and show error messages, if needed.
+    const hashParamsString = window.location.hash;
+    const hashParams = new URLSearchParams(hashParamsString.substring(1));
+    this.extractOAuthErrorMessages(hashParams, messages);
 
     // Also, when using OpenId auth, the IdP can return with success. However, in the "authorization code" flow,
     // the Kiali backend still needs to do some extra negotiation with the IdP, which can fail.
