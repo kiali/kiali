@@ -187,7 +187,6 @@ class K8sRequestRouting extends React.Component<Props, State> {
   };
 
   onMatchHeaderNameChange = (headerName: string) => {
-    console.log("headerName " + headerName)
     let validationMsg = '';
     if (!headerName && !!this.state.matchValue) {
       validationMsg = MSG_HEADER_NAME_NON_EMPTY;
@@ -202,8 +201,6 @@ class K8sRequestRouting extends React.Component<Props, State> {
   };
 
   onHeaderNameChange = (headerName: string) => {
-    console.log("headerName " + headerName)
-    console.log("headerValue " + this.state.headerValue)
     let validationMsg = '';
     if (!headerName) {
       validationMsg = MSG_HEADER_NAME_NON_EMPTY;
@@ -218,8 +215,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
   };
 
   onQueryParamNameChange = (queryParamName: string) => {
-    console.log("queryParamName " + queryParamName)
-    let validationMsg = '';
+      let validationMsg = '';
     if (this.state.matchValue !== '' && queryParamName === '') {
       validationMsg = MSG_QUERY_NAME_NON_EMPTY;
     }
@@ -233,7 +229,6 @@ class K8sRequestRouting extends React.Component<Props, State> {
   };
 
   onMatchValueChange = (matchValue: string) => {
-    console.log("matchValue " + matchValue)
     let validationMsg = '';
     if (this.state.category === HEADERS) {
       if (this.state.headerName === '' && matchValue !== '') {
@@ -328,7 +323,6 @@ class K8sRequestRouting extends React.Component<Props, State> {
   };
 
   onHeaderValueChange = (headerValue: string) => {
-    console.log("headerValue " + headerValue)
     let validationMsg = '';
     if ((this.state.filterType === REQ_MOD || this.state.filterType === RESP_MOD) && this.state.headerOp !== REMOVE) {
       if (!this.state.headerName) {
@@ -345,7 +339,6 @@ class K8sRequestRouting extends React.Component<Props, State> {
   }
 
   onHostNameChange = (hostName: string) => {
-    console.log("hostName " + hostName)
     let validationMsg = '';
     if (!hostName || !isServerHostValid(hostName, false) ) {
       validationMsg = MSG_HOSTNAME_NON_EMPTY;
@@ -357,7 +350,6 @@ class K8sRequestRouting extends React.Component<Props, State> {
   }
 
   onPortValueChange = (portValue: string) => {
-    console.log("portValue " + portValue)
     let validationMsg = '';
     if (!portValue || isNaN(Number(portValue))) {
       validationMsg = MSG_PORT_NON_EMPTY;

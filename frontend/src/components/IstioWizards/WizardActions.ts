@@ -296,7 +296,6 @@ const buildK8sHTTPRouteMatch = (matches: string[]): K8sHTTPRouteMatch => {
 
 const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
   const routeFilter: K8sHTTPRouteFilter[] = [];
-  console.log("filters " + filters)
   filters
     .filter(filter => filter.startsWith(REQ_MOD))
     .forEach(filter => {
@@ -398,7 +397,6 @@ const parseHttpMatchRequest = (httpMatchRequest: HTTPMatchRequest): string[] => 
 };
 
 const parseK8sHTTPMatchRequest = (httpRouteMatch: K8sHTTPRouteMatch): string[] => {
-  console.log("httpRouteMatch " + JSON.stringify(httpRouteMatch))
   const matches: string[] = [];
   if (httpRouteMatch.path) {
     matches.push('path ' + httpRouteMatch.path?.type + ' ' + httpRouteMatch.path?.value);
@@ -422,7 +420,6 @@ const parseK8sHTTPMatchRequest = (httpRouteMatch: K8sHTTPRouteMatch): string[] =
 };
 
 const parseK8sHTTPRouteFilter = (httpRouteFilter: K8sHTTPRouteFilter): string[] => {
-  console.log("httpRouteFilter " + JSON.stringify(httpRouteFilter))
   let matches: string[] = [];
   if (httpRouteFilter.requestHeaderModifier) {
     matches = matches.concat(parseK8sHTTPHeaderFilter("requestHeaderModifier", httpRouteFilter.requestHeaderModifier));
@@ -435,7 +432,6 @@ const parseK8sHTTPRouteFilter = (httpRouteFilter: K8sHTTPRouteFilter): string[] 
 
 const parseK8sHTTPHeaderFilter = (filterType: string, httpHeaderFilter: K8sHTTPHeaderFilter): string[] => {
   const filters: string[] = [];
-  console.log("httpHeaderFilter " + JSON.stringify(httpHeaderFilter))
   if (httpHeaderFilter.set) {
     httpHeaderFilter.set.forEach(set => {
       filters.push(filterType + ' [' + set.name + '] set ' + set.value);

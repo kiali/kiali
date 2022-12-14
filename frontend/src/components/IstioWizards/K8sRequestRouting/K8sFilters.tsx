@@ -19,7 +19,6 @@ const remove = style({
 
 class K8sFilters extends React.Component<Props> {
   render() {
-    console.log("this.props.filters " + JSON.stringify(this.props.filters))
     const filters: any[] = this.props.filters.map((filter, index) => (
       <span key={filter + '-' + index} data-test={filter} className={remove}>
         <Chip onClick={() => this.props.onRemoveFilter(filter)} isOverflowChip={true}>
