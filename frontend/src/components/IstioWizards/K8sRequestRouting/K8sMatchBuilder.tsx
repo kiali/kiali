@@ -17,7 +17,7 @@ type Props = {
   matchValue: string;
   isValid: boolean;
   onSelectCategory: (category: string) => void;
-  onHeaderNameChange: (headerName: string) => void;
+  onMatchHeaderNameChange: (headerName: string) => void;
   onQueryParamNameChange: (queryParamName: string) => void;
   onSelectOperator: (operator: string) => void;
   onMatchValueChange: (matchValue: string) => void;
@@ -105,7 +105,7 @@ class K8sMatchBuilder extends React.Component<Props, State> {
           <TextInput
             id="header-name-id"
             value={this.props.headerName}
-            onChange={this.props.onHeaderNameChange}
+            onChange={this.props.onMatchHeaderNameChange}
             placeholder="Header name..."
           />
         )}

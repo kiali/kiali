@@ -296,7 +296,7 @@ const buildK8sHTTPRouteMatch = (matches: string[]): K8sHTTPRouteMatch => {
 
 const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
   const routeFilter: K8sHTTPRouteFilter[] = [];
-
+  console.log("filters " + filters)
   filters
     .filter(filter => filter.startsWith(REQ_MOD))
     .forEach(filter => {
@@ -311,7 +311,7 @@ const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
       const op = filter.substring(i1 + 1, j1).trim();
       const value = filter.substring(j1 + 1).trim();
       let removeHeader: string = headerName;
-      if (filterType === REQ_MOD) {
+      if (filterType === REQ_MOD && ((headerName && value) || removeHeader)) {
         if (op === ADD) {
           if (!requestHeaderModifier.add) {
             requestHeaderModifier.add = []
@@ -329,6 +329,7 @@ const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
           requestHeaderModifier.remove.push(removeHeader)
         }
       }
+
       routeFilter.push({type: "RequestHeaderModifier", requestHeaderModifier: requestHeaderModifier})
     });
 
@@ -343,11 +344,15 @@ const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
       const j1 = filter.indexOf(':', j0 + 1);
       const hostname = filter.substring(j0 + 3, j1).trim();
       const j2 = filter.indexOf(' ', j1);
-      const port = parseInt(filter.substring(j1 + 1, j2).trim());
+      const port = filter.substring(j1 + 1, j2).trim();
       const code = parseInt(filter.substring(j2 + 1).trim());
       requestRedirect.scheme = protocol;
-      requestRedirect.hostname = hostname;
-      requestRedirect.port = port;
+      if (hostname) {
+        requestRedirect.hostname = hostname;
+      }
+      if (port) {
+        requestRedirect.port = parseInt(port);
+      }
       requestRedirect.statusCode = code;
       routeFilter.push({type: "RequestRedirect", requestRedirect: requestRedirect})
     });
@@ -393,6 +398,7 @@ const parseHttpMatchRequest = (httpMatchRequest: HTTPMatchRequest): string[] => 
 };
 
 const parseK8sHTTPMatchRequest = (httpRouteMatch: K8sHTTPRouteMatch): string[] => {
+  console.log("httpRouteMatch " + JSON.stringify(httpRouteMatch))
   const matches: string[] = [];
   if (httpRouteMatch.path) {
     matches.push('path ' + httpRouteMatch.path?.type + ' ' + httpRouteMatch.path?.value);
@@ -416,6 +422,7 @@ const parseK8sHTTPMatchRequest = (httpRouteMatch: K8sHTTPRouteMatch): string[] =
 };
 
 const parseK8sHTTPRouteFilter = (httpRouteFilter: K8sHTTPRouteFilter): string[] => {
+  console.log("httpRouteFilter " + JSON.stringify(httpRouteFilter))
   let matches: string[] = [];
   if (httpRouteFilter.requestHeaderModifier) {
     matches = matches.concat(parseK8sHTTPHeaderFilter("requestHeaderModifier", httpRouteFilter.requestHeaderModifier));
@@ -428,6 +435,7 @@ const parseK8sHTTPRouteFilter = (httpRouteFilter: K8sHTTPRouteFilter): string[] 
 
 const parseK8sHTTPHeaderFilter = (filterType: string, httpHeaderFilter: K8sHTTPHeaderFilter): string[] => {
   const filters: string[] = [];
+  console.log("httpHeaderFilter " + JSON.stringify(httpHeaderFilter))
   if (httpHeaderFilter.set) {
     httpHeaderFilter.set.forEach(set => {
       filters.push(filterType + ' [' + set.name + '] set ' + set.value);
@@ -447,7 +455,7 @@ const parseK8sHTTPHeaderFilter = (filterType: string, httpHeaderFilter: K8sHTTPH
 };
 
 const parseK8sHTTPRouteRequestRedirect = (requestRedirect: K8sHTTPRouteRequestRedirect): string => {
-  return `${REQ_RED} ${requestRedirect.scheme}://${requestRedirect.hostname}:${requestRedirect.port} ${requestRedirect.statusCode}`;
+  return `${REQ_RED} ${requestRedirect.scheme}://${requestRedirect.hostname ? requestRedirect.hostname : ''}:${requestRedirect.port ? requestRedirect.port : ''} ${requestRedirect.statusCode}`;
 };
 
 export const getGatewayName = (namespace: string, serviceName: string, gatewayNames: string[]): string => {

@@ -70,7 +70,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
       isFilterDropdown: false,
       isHeaderDropdown: false,
       isSchemeDropdown: false,
-      isStatusCodeDropdown: false
+      isStatusCodeDropdown: false,
     };
   }
 
@@ -230,7 +230,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
         )}
         <Button
           variant={ButtonVariant.secondary}
-          disabled={!this.props.isValid}
+          isDisabled={!this.props.isValid}
           onClick={this.props.onAddFilter}
           data-test="add-Filter"
         >

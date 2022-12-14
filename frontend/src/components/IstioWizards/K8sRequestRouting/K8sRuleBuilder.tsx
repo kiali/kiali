@@ -19,6 +19,7 @@ type Props = {
   isValid: boolean;
   onSelectCategory: (category: string) => void;
   onHeaderNameChange: (headerName: string) => void;
+  onMatchHeaderNameChange: (headerName: string) => void;
   onQueryParamNameChange: (matchValue: string) => void;
   onSelectOperator: (operator: string) => void;
   onMatchValueChange: (matchValue: string) => void;
@@ -131,7 +132,6 @@ class K8sRuleBuilder extends React.Component<Props, State> {
             {this.props.validationMsg.length > 0 && <div className={validationStyle}>{this.props.validationMsg}</div>}
             <Button
               variant={ButtonVariant.secondary}
-              isDisabled={!this.props.isValid}
               onClick={this.props.onAddRule}
               data-test="add-route"
             >
