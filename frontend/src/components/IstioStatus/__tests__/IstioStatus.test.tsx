@@ -13,7 +13,7 @@ const mockIcon = (componentList: ComponentStatus[]) => {
       namespaces={[{ name: 'bookinfo' }, { name: 'istio-system' }]}
       setIstioStatus={jest.fn()}
       refreshNamespaces={jest.fn()}
-      istioApiEnabled={true}
+      istioAPIEnabled={true}
     />
   );
 };

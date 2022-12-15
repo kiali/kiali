@@ -25,7 +25,7 @@ type ReduxProps = {
   refreshNamespaces: () => void;
   namespaces: Namespace[] | undefined;
   status: ComponentStatus[];
-  istioApiEnabled: boolean;
+  istioAPIEnabled: boolean;
 };
 
 type StatusIcons = {
@@ -88,7 +88,7 @@ export class IstioStatus extends React.Component<Props> {
 
   tooltipContent = () => {
 
-    if (this.props.istioApiEnabled === false) {
+    if (this.props.istioAPIEnabled === false) {
       return "Istio API is not Enabled"
     }
 
@@ -100,7 +100,7 @@ export class IstioStatus extends React.Component<Props> {
     let addonUnhealthy: boolean = false;
     let notReady: boolean = false;
 
-    if (this.props.istioApiEnabled === false) {
+    if (this.props.istioAPIEnabled === false) {
       return PFColors.Warning
     }
 
@@ -128,12 +128,12 @@ export class IstioStatus extends React.Component<Props> {
   };
 
   render() {
-    if (!this.healthyComponents() || (this.props.istioApiEnabled === false)) {
+    if (!this.healthyComponents() || (this.props.istioAPIEnabled === false)) {
       const icons = this.props.icons ? { ...defaultIcons, ...this.props.icons } : defaultIcons;
       const iconColor = this.tooltipColor();
       let Icon: React.ComponentClass<SVGIconProps> = ResourcesFullIcon;
 
-      if (this.props.istioApiEnabled === false) {
+      if (this.props.istioAPIEnabled === false) {
         Icon = icons.WarningIcon;
       } else if (iconColor === PFColors.Danger) {
         Icon = icons.ErrorIcon;
@@ -159,7 +159,7 @@ export class IstioStatus extends React.Component<Props> {
 const mapStateToProps = (state: KialiAppState) => ({
   status: istioStatusSelector(state),
   namespaces: namespaceItemsSelector(state),
-  istioApiEnabled: state.statusState.istioEnvironment.istioApiEnabled
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

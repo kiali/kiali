@@ -158,7 +158,7 @@ type ReduxProps = {
   navCollapse: boolean;
   refreshInterval: IntervalInMilliseconds;
   minTLS: string;
-  istioApiEnabled: boolean;
+  istioAPIEnabled: boolean;
 };
 
 type OverviewProps = ReduxProps & {};
@@ -779,10 +779,10 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         action: (ns: string) =>
           this.setState({ opTarget: 'delete', nsTarget: ns, showTrafficPoliciesModal: true, kind: 'policy' })
       };
-      if (this.props.istioApiEnabled) {
+      if (this.props.istioAPIEnabled) {
         namespaceActions.push(addAuthorizationAction);
       }
-      if (aps.length > 0 && this.props.istioApiEnabled) {
+      if (aps.length > 0 && this.props.istioAPIEnabled) {
         namespaceActions.push(removeAuthorizationAction);
       }
     } else if (this.state.grafanaLinks.length > 0) {
@@ -934,7 +934,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                               canaryUpgradeStatus={this.state.canaryUpgradeStatus}/>
                                           </GridItem>
                                         }
-                                        {this.props.istioApiEnabled === true &&
+                                        {this.props.istioAPIEnabled === true &&
                                           <GridItem md={(this.hasCanaryUpgradeConfigured()) ? 8 : 12}>
                                             {this.renderCharts(ns)}
                                           </GridItem>}
@@ -1042,7 +1042,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           errorMetrics={ns.errorMetrics}
           controlPlaneMetrics={ns.controlPlaneMetrics}
           istiodResourceThreholds={this.state.istiodResourceThreholds}
-          istioApiEnabled={this.props.istioApiEnabled}
+          istioAPIEnabled={this.props.istioAPIEnabled}
         />
       );
     }
@@ -1161,7 +1161,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   navCollapse: state.userSettings.interface.navCollapse,
   refreshInterval: refreshIntervalSelector(state),
   minTLS: minTLSVersionSelector(state),
-  istioApiEnabled: state.statusState.istioEnvironment.istioApiEnabled,
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
 });
 
 const OverviewPageContainer = connect(mapStateToProps)(OverviewPage);

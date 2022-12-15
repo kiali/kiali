@@ -33,7 +33,7 @@ import { WarningTriangleIcon } from "@patternfly/react-icons";
 interface IstioConfigListPageState extends FilterComponent.State<IstioConfigItem> {}
 interface IstioConfigListPageProps extends FilterComponent.Props<IstioConfigItem> {
   activeNamespaces: Namespace[];
-  istioApiEnabled: boolean;
+  istioAPIEnabled: boolean;
 }
 
 class IstioConfigListPageComponent extends FilterComponent.Component<
@@ -156,7 +156,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
   render() {
     return (
       <>
-        {this.props.istioApiEnabled === true && (
+        {this.props.istioAPIEnabled === true && (
           <>
           <div style={{ backgroundColor: '#fff' }}>
             <DefaultSecondaryMasthead
@@ -173,7 +173,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
             </VirtualList>
           </RenderContent>
           </>)}
-        {this.props.istioApiEnabled === false && (
+        {this.props.istioAPIEnabled === false && (
           <>
             <div style={{ backgroundColor: '#fff' }}>
               <DefaultSecondaryMasthead
@@ -198,7 +198,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
-  istioApiEnabled: state.statusState.istioEnvironment.istioApiEnabled
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
 const IstioConfigListPage = connect(mapStateToProps, null)(IstioConfigListPageComponent);

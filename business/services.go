@@ -63,7 +63,7 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 	if criteria.IncludeIstioResources {
 		nFetches = 5
 	}
-	if !config.Get().ExternalServices.Istio.IstioApiEnabled {
+	if !config.Get().ExternalServices.Istio.IstioAPIEnabled {
 		nFetches--
 	}
 
@@ -95,7 +95,7 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 		}
 	}()
 
-	if config.Get().ExternalServices.Istio.IstioApiEnabled {
+	if config.Get().ExternalServices.Istio.IstioAPIEnabled {
 		go func() {
 			defer wg.Done()
 			var err2 error
@@ -443,7 +443,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 
 	wg := sync.WaitGroup{}
 	nwg := 6
-	if !config.Get().ExternalServices.Istio.IstioApiEnabled {
+	if !config.Get().ExternalServices.Istio.IstioAPIEnabled {
 		nwg = 4
 	}
 	wg.Add(nwg)
@@ -479,7 +479,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 			}
 		}(ctx)
 
-		if config.Get().ExternalServices.Istio.IstioApiEnabled {
+		if config.Get().ExternalServices.Istio.IstioAPIEnabled {
 			go func() {
 				defer wg.Done()
 				var err2 error
@@ -495,7 +495,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 		}
 	}
 
-	if config.Get().ExternalServices.Istio.IstioApiEnabled {
+	if config.Get().ExternalServices.Istio.IstioAPIEnabled {
 		go func() {
 			defer wg.Done()
 			var err2 error

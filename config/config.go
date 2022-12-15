@@ -214,7 +214,7 @@ type IstioConfig struct {
 	ConfigMapName                     string              `yaml:"config_map_name,omitempty"`
 	EnvoyAdminLocalPort               int                 `yaml:"envoy_admin_local_port,omitempty"`
 	GatewayAPIClassName               string              `yaml:"gateway_api_class_name,omitempty"`
-	IstioApiEnabled                   bool                `yaml:"istio_api_enabled,omitempty"`
+	IstioAPIEnabled                   bool                `yaml:"istio_api_enabled,omitempty"`
 	IstioCanaryRevision               IstioCanaryRevision `yaml:"istio_canary_revision,omitempty"`
 	IstioIdentityDomain               string              `yaml:"istio_identity_domain,omitempty"`
 	IstioInjectionAnnotation          string              `yaml:"istio_injection_annotation,omitempty"`
@@ -606,7 +606,7 @@ func NewConfig() (c *Config) {
 				},
 				ConfigMapName:                     "istio",
 				EnvoyAdminLocalPort:               15000,
-				IstioApiEnabled:                   true,
+				IstioAPIEnabled:                   true,
 				IstioIdentityDomain:               "svc.cluster.local",
 				IstioInjectionAnnotation:          "sidecar.istio.io/inject",
 				IstioSidecarInjectorConfigMapName: "istio-sidecar-injector",
