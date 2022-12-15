@@ -20,13 +20,9 @@ Given('user opens base url', () => {
 And('user clicks my_htpasswd_provider', () => {
     if (auth_strategy === 'openshift') {
         cy.log('Log in using auth provider: ' + KUBEADMIN_IDP);
-        cy.get('body').then(($body) => {
-            if ($body.text().includes(KUBEADMIN_IDP)) {
-                cy.contains(KUBEADMIN_IDP)
+        cy.contains(KUBEADMIN_IDP)
                     .should('be.visible')
                     .click();
-            }
-        });
     }
 })
 
@@ -39,9 +35,42 @@ And('user fill in username and password', () => {
     }
 })
 
+And('user does not fill in username and password', () => {
+    if (auth_strategy === 'openshift') {
+        cy.log('Log in with empty credentials')
+        cy.get('button[type="submit"]').click()
+    }
+})
+
+And('user fills in an invalid username', () => {
+    if (auth_strategy === 'openshift') {
+        var invalid:string = "foobar";
+        cy.log('Log in with invalid username: ' + invalid)
+        cy.log('The real username should be: ' + USERNAME)
+        cy.get('#inputUsername').clear().type('' || invalid);
+        cy.get('#inputPassword').type('' || PASSWD);
+        cy.get('button[type="submit"]').click()
+    }
+})
+
+And('user fills in an invalid password', () => {
+    if (auth_strategy === 'openshift') {
+        cy.log('Log in as user with wrong password: ' + USERNAME)
+        cy.get('#inputUsername').clear().type('' || USERNAME);
+        cy.get('#inputPassword').type('' || PASSWD.toLowerCase()+'123456');
+        cy.get('button[type="submit"]').click()
+    }
+})
+
 Then('user see console in URL', () => {
     if (auth_strategy === 'openshift') {
         cy.url().should('include', 'console')
     }
 })
 
+Then("user sees the {string} phrase displayed", (phrase:string) => {
+    if (auth_strategy === 'openshift') {
+        cy.contains(phrase).should('be.visible')
+        cy.url().should('include', 'login')
+    }
+})
