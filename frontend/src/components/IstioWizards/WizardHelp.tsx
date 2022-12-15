@@ -73,6 +73,15 @@ export const MATCHING_SELECTED_TOOLTIP = (
   </>
 );
 
+export const FILTERING_SELECTED_TOOLTIP = (
+  <>
+    <div style={{ marginBottom: 5 }}>Filters applies for the requests being forwarded by rules defined here.</div>
+    <div>
+      Kiali Wizard will create all conditions with an <span className={importantTooltip}>OR</span> semantic.
+    </div>
+  </>
+);
+
 export const OUTLIER_DETECTION_TOOLTIP = (
   <>
     <div style={{ marginBottom: 5 }}>

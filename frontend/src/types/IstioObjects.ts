@@ -790,6 +790,7 @@ export interface K8sHTTPRouteSpec {
 
 export interface K8sRouteRule {
   matches?:     K8sHTTPRouteMatch[];
+  filters?:     K8sHTTPRouteFilter[];
   backendRefs?: K8sRouteBackendRef[];
 }
 
@@ -803,10 +804,20 @@ export interface K8sRouteBackendRef {
 
 export interface K8sHTTPRouteFilter {
   requestRedirect?: K8sHTTPRouteRequestRedirect;
+  requestHeaderModifier?: K8sHTTPHeaderFilter;
   type?:            string;
 }
 
+export interface K8sHTTPHeaderFilter {
+  set?: HTTPHeader[];
+  add?: HTTPHeader[];
+  remove?: string[];
+}
+
 export interface K8sHTTPRouteRequestRedirect {
+  scheme?: string;
+  hostname?: string;
+  port?: number;
   statusCode?: number;
 }
 
@@ -1258,7 +1269,7 @@ export interface APIKey {
   cookie?: string;
 }
 
-export interface CanaryUpgradeStatus { 
+export interface CanaryUpgradeStatus {
   currentVersion: string;
   upgradeVersion: string;
   migratedNamespaces: string[];

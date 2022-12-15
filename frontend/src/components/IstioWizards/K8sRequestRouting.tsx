@@ -5,6 +5,8 @@ import {K8sRouteBackendRef} from './K8sTrafficShifting';
 import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
 import {getDefaultBackendRefs} from './WizardActions';
 import {ServiceOverview} from "../../types/ServiceList";
+import {REMOVE, REQ_MOD, RESP_MOD, SET, HTTP, SC301, REQ_RED} from "./K8sRequestRouting/K8sFilterBuilder";
+import {isServerHostValid} from "../../utils/IstioConfigUtils";
 
 type Props = {
   subServices: ServiceOverview[];
@@ -13,20 +15,31 @@ type Props = {
 };
 
 type State = {
-  category: string;
-  operator: string;
   backendRefs: K8sRouteBackendRef[];
-  matches: string[];
+  category: string;
+  filterType: string;
+  filterValue: string;
+  filters: string[];
   headerName: string;
-  queryParamName: string;
-  matchValue: string;
+  headerOp: string;
+  headerValue: string;
+  hostName: string;
   k8sRules: K8sRule[];
+  matches: string[];
+  matchValue: string;
+  operator: string;
+  portValue: string;
+  queryParamName: string;
+  schemeOp: string;
+  statusCodeOp: string;
   validationMsg: string;
 };
 
 const MSG_SAME_MATCHING = 'A Rule with same matching criteria is already added.';
 const MSG_HEADER_NAME_NON_EMPTY = 'Header name must be non empty';
 const MSG_HEADER_VALUE_NON_EMPTY = 'Header value must be non empty';
+const MSG_HOSTNAME_NON_EMPTY = 'Hostname is incorrect';
+const MSG_PORT_NON_EMPTY = 'Port is incorrect';
 const MSG_QUERY_NAME_NON_EMPTY = 'Query name must be non empty';
 const MSG_QUERY_VALUE_NON_EMPTY = 'Query value must be non empty';
 
@@ -42,7 +55,16 @@ class K8sRequestRouting extends React.Component<Props, State> {
       queryParamName: '',
       matchValue: '',
       k8sRules: this.props.initRules,
-      validationMsg: ''
+      validationMsg: '',
+      filterValue: '',
+      filters: [],
+      headerOp: SET,
+      schemeOp: HTTP,
+      statusCodeOp: SC301,
+      headerValue: '',
+      hostName: '',
+      portValue: '',
+      filterType: REQ_MOD
     };
   }
 
@@ -114,12 +136,14 @@ class K8sRequestRouting extends React.Component<Props, State> {
         );
         const newRule: K8sRule = {
           matches: Object.assign([], prevState.matches),
+          filters: Object.assign([], prevState.filters),
           backendRefs: newBackendRefs
         };
         if (!this.isMatchesIncluded(prevState.k8sRules, newRule)) {
           prevState.k8sRules.push(newRule);
           return {
             matches: prevState.matches,
+            filters: prevState.filters,
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
             k8sRules: prevState.k8sRules,
@@ -128,6 +152,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
         } else {
           return {
             matches: prevState.matches,
+            filters: prevState.filters,
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
             k8sRules: prevState.k8sRules,
@@ -161,12 +186,26 @@ class K8sRequestRouting extends React.Component<Props, State> {
     );
   };
 
-  onHeaderNameChange = (headerName: string) => {
+  onMatchHeaderNameChange = (headerName: string) => {
     let validationMsg = '';
-    if (this.state.matchValue !== '' && headerName === '') {
+    if (!headerName && !!this.state.matchValue) {
       validationMsg = MSG_HEADER_NAME_NON_EMPTY;
     }
-    if (this.state.matchValue === '' && headerName !== '') {
+    if (!this.state.matchValue && !!headerName) {
+      validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+    }
+    this.setState({
+      headerName: headerName,
+      validationMsg: validationMsg
+    });
+  };
+
+  onHeaderNameChange = (headerName: string) => {
+    let validationMsg = '';
+    if (!headerName) {
+      validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+    }
+    if (!this.state.headerValue && this.state.headerOp !== REMOVE) {
       validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
     }
     this.setState({
@@ -176,7 +215,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
   };
 
   onQueryParamNameChange = (queryParamName: string) => {
-    let validationMsg = '';
+      let validationMsg = '';
     if (this.state.matchValue !== '' && queryParamName === '') {
       validationMsg = MSG_QUERY_NAME_NON_EMPTY;
     }
@@ -207,9 +246,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
         validationMsg = MSG_QUERY_VALUE_NON_EMPTY;
       }
     }
-    if (matchValue === '') {
-      validationMsg = '';
-    }
+
     this.setState({
       matchValue: matchValue,
       validationMsg: validationMsg
@@ -262,6 +299,76 @@ class K8sRequestRouting extends React.Component<Props, State> {
     }
   }
 
+  onAddFilter = () => {
+    this.setState(prevState => {
+      let newFilter = '';
+      if (this.state.filterType === REQ_MOD || this.state.filterType === RESP_MOD) {
+        if (this.state.headerOp !== REMOVE) {
+          newFilter = `${prevState.filterType} [${prevState.headerName}] ${prevState.headerOp} ${prevState.headerValue}`;
+        } else {
+          newFilter = `${prevState.filterType} [${prevState.headerName}] ${prevState.headerOp}`;
+        }
+      } else if (this.state.filterType === REQ_RED) {
+        newFilter = `${prevState.filterType} ${prevState.schemeOp}://${prevState.hostName}:${prevState.portValue} ${prevState.statusCodeOp}`;
+      }
+      if (newFilter && !prevState.filters.includes(newFilter)) {
+        prevState.filters.push(newFilter);
+      }
+      return {
+        filters: prevState.filters,
+        headerName: '',
+        headerValue: ''
+      };
+    });
+  };
+
+  onHeaderValueChange = (headerValue: string) => {
+    let validationMsg = '';
+    if ((this.state.filterType === REQ_MOD || this.state.filterType === RESP_MOD) && this.state.headerOp !== REMOVE) {
+      if (!this.state.headerName) {
+        validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+      }
+      if (!headerValue) {
+        validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+      }
+    }
+    this.setState({
+      headerValue: headerValue,
+      validationMsg: validationMsg
+    });
+  }
+
+  onHostNameChange = (hostName: string) => {
+    let validationMsg = '';
+    if (!hostName || !isServerHostValid(hostName, false) ) {
+      validationMsg = MSG_HOSTNAME_NON_EMPTY;
+    }
+    this.setState({
+      hostName: hostName,
+      validationMsg: validationMsg
+    });
+  }
+
+  onPortValueChange = (portValue: string) => {
+    let validationMsg = '';
+    if (!portValue || isNaN(Number(portValue))) {
+      validationMsg = MSG_PORT_NON_EMPTY;
+    }
+    this.setState({
+      portValue: portValue,
+      validationMsg: validationMsg
+    });
+  }
+
+  onRemoveFilter = (filterToRemove: string) => {
+    this.setState(prevState => {
+      return {
+        filters: prevState.filters.filter(m => filterToRemove !== m),
+        validationMsg: prevState.validationMsg === MSG_SAME_MATCHING ? '' : prevState.validationMsg
+      };
+    });
+  };
+
   render() {
     return (
       <>
@@ -281,6 +388,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
             });
           }}
           onHeaderNameChange={this.onHeaderNameChange}
+          onMatchHeaderNameChange={this.onMatchHeaderNameChange}
           onQueryParamNameChange={this.onQueryParamNameChange}
           onSelectOperator={(operator: string) => this.setState({ operator: operator })}
           onMatchValueChange={this.onMatchValueChange}
@@ -292,6 +400,24 @@ class K8sRequestRouting extends React.Component<Props, State> {
           backendRefs={this.state.backendRefs}
           validationMsg={this.state.validationMsg}
           onAddRule={this.onAddK8sRule}
+          onAddFilter={this.onAddFilter}
+          onRemoveFilter={this.onRemoveFilter}
+          filters={this.state.filters}
+          filterValue={this.state.filterValue}
+          onHeaderValueChange={this.onHeaderValueChange}
+          onHostNameChange={this.onHostNameChange}
+          onPortValueChange={this.onPortValueChange}
+          onSelectStatusCodeOp={(statusCodeOp: string) => this.setState({ statusCodeOp: statusCodeOp })}
+          headerOp={this.state.headerOp}
+          schemeOp={this.state.schemeOp}
+          statusCodeOp={this.state.statusCodeOp}
+          hostName={this.state.hostName}
+          portValue={this.state.portValue}
+          filterType={this.state.filterType}
+          headerValue={this.state.headerValue}
+          onSelectFilterType={(filterType: string) => this.setState({ filterType: filterType })}
+          onSelectHeaderOp={(headerOp: string) => this.setState({ headerOp: headerOp })}
+          onSelectSchemeOp={(schemeOp: string) => this.setState({ schemeOp: schemeOp })}
         />
         <K8sRules k8sRules={this.state.k8sRules} onRemoveRule={this.onRemoveRule} onMoveRule={this.onMoveRule} />
       </>

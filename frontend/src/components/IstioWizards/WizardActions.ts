@@ -15,8 +15,8 @@ import {
   HTTPMatchRequest,
   HTTPRoute,
   HTTPRouteDestination,
-  K8sGateway,
-  K8sHTTPRoute, K8sHTTPRouteMatch,
+  K8sGateway, K8sHTTPHeaderFilter,
+  K8sHTTPRoute, K8sHTTPRouteFilter, K8sHTTPRouteMatch, K8sHTTPRouteRequestRedirect,
   LoadBalancerSettings,
   Operation,
   OutlierDetection,
@@ -52,6 +52,7 @@ import { ServiceEntryState } from '../../pages/IstioConfigNew/ServiceEntryForm';
 import {K8sRouteBackendRef} from './K8sTrafficShifting';
 import { QUERY_PARAMS, PATH, HEADERS, METHOD } from "./K8sRequestRouting/K8sMatchBuilder";
 import {ServiceOverview} from "../../types/ServiceList";
+import {ADD, SET, REQ_MOD, REQ_RED} from "./K8sRequestRouting/K8sFilterBuilder";
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
@@ -293,6 +294,71 @@ const buildK8sHTTPRouteMatch = (matches: string[]): K8sHTTPRouteMatch => {
   return matchRoute;
 };
 
+const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
+  const routeFilter: K8sHTTPRouteFilter[] = [];
+  filters
+    .filter(filter => filter.startsWith(REQ_MOD))
+    .forEach(filter => {
+      const requestHeaderModifier: K8sHTTPHeaderFilter = {};
+      // match follows format:  requestHeaderModifier [<header-name>] <add/set/remove> <value/null>
+      const i0 = filter.indexOf('[');
+      const j0 = filter.indexOf(']');
+      const filterType = filter.substring(0, i0 - 1).trim();
+      const headerName = filter.substring(i0 + 1, j0).trim();
+      const i1 = filter.indexOf(' ', j0 + 1);
+      const j1 = filter.indexOf(' ', i1 + 1);
+      const op = filter.substring(i1 + 1, j1).trim();
+      const value = filter.substring(j1 + 1).trim();
+      let removeHeader: string = headerName;
+      if (filterType === REQ_MOD && ((headerName && value) || removeHeader)) {
+        if (op === ADD) {
+          if (!requestHeaderModifier.add) {
+            requestHeaderModifier.add = []
+          }
+          requestHeaderModifier.add.push({name: headerName, value: value})
+        } else if (op === SET) {
+          if (!requestHeaderModifier.set) {
+            requestHeaderModifier.set = []
+          }
+          requestHeaderModifier.set.push({name: headerName, value: value})
+        } else {
+          if (!requestHeaderModifier.remove) {
+            requestHeaderModifier.remove = []
+          }
+          requestHeaderModifier.remove.push(removeHeader)
+        }
+      }
+
+      routeFilter.push({type: "RequestHeaderModifier", requestHeaderModifier: requestHeaderModifier})
+    });
+
+  filters
+    .filter(filter => filter.startsWith(REQ_RED))
+    .forEach(filter => {
+      const requestRedirect: K8sHTTPRouteRequestRedirect = {};
+      // match follows format:  requestRedirect protocol://hostname:port returnCode>
+      const i0 = filter.indexOf(' ');
+      const j0 = filter.indexOf(':');
+      const protocol = filter.substring(i0 + 1, j0).trim();
+      const j1 = filter.indexOf(':', j0 + 1);
+      const hostname = filter.substring(j0 + 3, j1).trim();
+      const j2 = filter.indexOf(' ', j1);
+      const port = filter.substring(j1 + 1, j2).trim();
+      const code = parseInt(filter.substring(j2 + 1).trim());
+      requestRedirect.scheme = protocol;
+      if (hostname) {
+        requestRedirect.hostname = hostname;
+      }
+      if (port) {
+        requestRedirect.port = parseInt(port);
+      }
+      requestRedirect.statusCode = code;
+      routeFilter.push({type: "RequestRedirect", requestRedirect: requestRedirect})
+    });
+
+  return routeFilter;
+};
+
 const parseStringMatch = (value: StringMatch): string => {
   if (value.exact) {
     return 'exact ' + value.exact;
@@ -351,6 +417,41 @@ const parseK8sHTTPMatchRequest = (httpRouteMatch: K8sHTTPRouteMatch): string[] =
   }
 
   return matches;
+};
+
+const parseK8sHTTPRouteFilter = (httpRouteFilter: K8sHTTPRouteFilter): string[] => {
+  let matches: string[] = [];
+  if (httpRouteFilter.requestHeaderModifier) {
+    matches = matches.concat(parseK8sHTTPHeaderFilter("requestHeaderModifier", httpRouteFilter.requestHeaderModifier));
+  }
+  if (httpRouteFilter.requestRedirect) {
+    matches = matches.concat(parseK8sHTTPRouteRequestRedirect(httpRouteFilter.requestRedirect));
+  }
+  return matches;
+};
+
+const parseK8sHTTPHeaderFilter = (filterType: string, httpHeaderFilter: K8sHTTPHeaderFilter): string[] => {
+  const filters: string[] = [];
+  if (httpHeaderFilter.set) {
+    httpHeaderFilter.set.forEach(set => {
+      filters.push(filterType + ' [' + set.name + '] set ' + set.value);
+    });
+  }
+  if (httpHeaderFilter.add) {
+    httpHeaderFilter.add.forEach(add => {
+      filters.push(filterType + ' [' + add.name + '] add ' + add.value);
+    });
+  }
+  if (httpHeaderFilter.remove) {
+    httpHeaderFilter.remove.forEach(rm => {
+      filters.push(filterType + ' [' + rm + '] remove');
+    });
+  }
+  return filters;
+};
+
+const parseK8sHTTPRouteRequestRedirect = (requestRedirect: K8sHTTPRouteRequestRedirect): string => {
+  return `${REQ_RED} ${requestRedirect.scheme}://${requestRedirect.hostname ? requestRedirect.hostname : ''}:${requestRedirect.port ? requestRedirect.port : ''} ${requestRedirect.statusCode}`;
 };
 
 export const getGatewayName = (namespace: string, serviceName: string, gatewayNames: string[]): string => {
@@ -884,9 +985,10 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
         if (wState.k8sRules && wState.k8sRules.length > 0) {
           wizardK8sHTTPRoute.spec.rules = [];
           wState.k8sRules.forEach(rule => {
-            if (rule.matches.length > 0) {
+            if (rule.matches.length > 0 || rule.filters.length > 0) {
               wizardK8sHTTPRoute!.spec!.rules!.push({
                 matches: [buildK8sHTTPRouteMatch(rule.matches)],
+                filters: buildK8sHTTPRouteFilter(rule.filters),
                 backendRefs: rule.backendRefs
               });
             } else {
@@ -1100,10 +1202,14 @@ export const getInitK8sRules = (
     httpRoutes[0].spec.rules.forEach(httpRoute => {
       const rule: K8sRule = {
         matches: [],
+        filters: [],
         backendRefs: []
       };
       if (httpRoute.matches) {
         httpRoute.matches.forEach(m => (rule.matches = rule.matches.concat(parseK8sHTTPMatchRequest(m))));
+      }
+      if (httpRoute.filters) {
+        httpRoute.filters.forEach(f => (rule.filters = rule.filters.concat(parseK8sHTTPRouteFilter(f))));
       }
       if (httpRoute.backendRefs) {
         httpRoute.backendRefs.forEach(bRef => {

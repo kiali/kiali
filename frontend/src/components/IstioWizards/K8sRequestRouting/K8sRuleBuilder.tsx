@@ -6,6 +6,8 @@ import { style } from 'typestyle';
 import { PFColors } from '../../Pf/PfColors';
 import K8sTrafficShifting, { K8sRouteBackendRef } from '../K8sTrafficShifting';
 import {ServiceOverview} from "../../../types/ServiceList";
+import K8sFilterBuilder from "./K8sFilterBuilder";
+import K8sFilters from "./K8sFilters";
 
 type Props = {
   // K8sMatchBuilder props
@@ -17,6 +19,7 @@ type Props = {
   isValid: boolean;
   onSelectCategory: (category: string) => void;
   onHeaderNameChange: (headerName: string) => void;
+  onMatchHeaderNameChange: (headerName: string) => void;
   onQueryParamNameChange: (matchValue: string) => void;
   onSelectOperator: (operator: string) => void;
   onMatchValueChange: (matchValue: string) => void;
@@ -25,6 +28,26 @@ type Props = {
   // K8sMatches props
   matches: string[];
   onRemoveMatch: (match: string) => void;
+
+  // K8sFilters props
+  filterType: string;
+  filterValue: string;
+  headerOp: string;
+  schemeOp: string;
+  headerValue: string;
+  hostName: string;
+  portValue: string;
+  statusCodeOp: string;
+  filters: string[];
+  onSelectFilterType: (filterType: string) => void;
+  onHeaderValueChange: (headerValue: string) => void;
+  onHostNameChange: (hostName: string) => void;
+  onPortValueChange: (portValue: string) => void;
+  onSelectStatusCodeOp: (statusCodeOp: string) => void;
+  onSelectHeaderOp: (headerOp: string) => void;
+  onSelectSchemeOp: (schemeOp: string) => void;
+  onRemoveFilter: (filter: string) => void;
+  onAddFilter: () => void;
 
   subServices: ServiceOverview[];
   onSelectWeights: (backendRefs: K8sRouteBackendRef[]) => void;
@@ -97,13 +120,18 @@ class K8sRuleBuilder extends React.Component<Props, State> {
               />
             </div>
           </Tab>
+          <Tab eventKey={2} title={'Route Filtering'} data-test={'Route Filtering'}>
+            <div style={{ marginTop: '20px' }}>
+              <K8sFilterBuilder {...this.props} />
+              <K8sFilters {...this.props} />
+            </div>
+          </Tab>
         </Tabs>
         <div className={addRuleStyle}>
           <span>
             {this.props.validationMsg.length > 0 && <div className={validationStyle}>{this.props.validationMsg}</div>}
             <Button
               variant={ButtonVariant.secondary}
-              isDisabled={!this.props.isValid}
               onClick={this.props.onAddRule}
               data-test="add-route"
             >
