@@ -483,6 +483,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
                     workloadReferences={workloadReferences}
                     helpMessages={helpMessages}
                     selectedLine={this.state.selectedEditorLine}
+                    istioAPIEnabled={this.props.istioApiEnabled}
+                    kiosk={this.props.kiosk}
                   />
                 )}
               </>

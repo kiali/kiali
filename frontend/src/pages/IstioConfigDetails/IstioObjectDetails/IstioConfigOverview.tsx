@@ -33,8 +33,10 @@ import IstioStatusMessageList from './IstioStatusMessageList';
 import { KioskElement } from "../../../components/Kiosk/KioskElement";
 import {PFColors} from "../../../components/Pf/PfColors";
 import {GetIstioObjectUrl} from "../../../components/Link/IstioObjectLink";
+import {isParentKiosk} from "../../../components/Kiosk/KioskActions";
 
 interface IstioConfigOverviewProps {
+  istioAPIEnabled: boolean;
   istioObjectDetails: IstioConfigDetails;
   istioValidations?: ObjectValidation;
   namespace: string;
@@ -44,6 +46,7 @@ interface IstioConfigOverviewProps {
   workloadReferences: WorkloadReference[];
   helpMessages?: HelpMessage[];
   selectedLine?: string;
+  kiosk: string;
 }
 
 const iconStyle = style({
@@ -182,6 +185,13 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
               helpMessages={this.props.helpMessages}
               selectedLine={this.props.selectedLine}
             ></IstioConfigHelp>
+          </StackItem>
+        )}
+        {!this.props.istioAPIEnabled && !isParentKiosk(this.props.kiosk) &&  (
+          <StackItem>
+            <Tooltip content={"This is a Read only view of the YAML including Validations."} position={TooltipPosition.top}>
+              <Label color="green" isCompact>Read only mode</Label>
+            </Tooltip>
           </StackItem>
         )}
         <KioskElement>
