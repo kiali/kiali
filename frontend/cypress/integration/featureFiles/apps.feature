@@ -32,6 +32,11 @@ Feature: Kiali Apps List page
     And user sees "kiali-traffic-generator"
 
   @apps-page
+  Scenario: Filter workloads table by Istio Sidecar not being present
+    When the user filters by "Istio Sidecar" for "Not Present"
+    Then user cannot see any apps in the table
+
+  @apps-page
   Scenario: Filter Apps by Istio Type
     When the user filters by "Istio Type" for "VirtualService"
     Then user only sees "productpage"
