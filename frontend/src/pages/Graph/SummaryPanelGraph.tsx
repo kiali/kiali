@@ -385,7 +385,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
     // when getting total traffic rates don't count requests from injected service nodes
     const nonServiceNodes = select(nodes, { prop: CyNode.nodeType, val: NodeType.SERVICE, op: '!=' });
-    const nonBoxNodes = select(nonServiceNodes, { prop: CyNode.isBox, op: 'falsey' });
+    const nonBoxNodes = select(nonServiceNodes, { prop: CyNode.isBox, op: 'falsy' });
     const totalEdges = edgesOut(nonBoxNodes as Node[]).length;
     const inboundEdges = edgesOut(select(nodes, { prop: CyNode.isRoot, op: 'truthy' }) as Node[]);
     const allLeafNodes = leafNodes(nodes) as Node[];

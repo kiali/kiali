@@ -34,7 +34,7 @@ const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Sp
     const sourceAppNs = searchParentApp(span);
     if (sourceAppNs) {
       let parent = selectAnd(nodes, [
-        { prop: CyNode.isBox, op: 'falsey' },
+        { prop: CyNode.isBox, op: 'falsy' },
         { prop: CyNode.nodeType, val: NodeType.SERVICE },
         { prop: CyNode.app, val: sourceAppNs.app },
         { prop: CyNode.namespace, val: sourceAppNs.namespace }

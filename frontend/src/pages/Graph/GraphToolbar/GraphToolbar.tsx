@@ -37,6 +37,7 @@ import { GraphSecondaryMasthead } from './GraphSecondaryMasthead';
 import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { INITIAL_USER_SETTINGS_STATE } from 'reducers/UserSettingsState';
 import { GraphReset } from './GraphReset';
+import GraphFindPFContainer from './GraphFindPF';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -61,7 +62,7 @@ type ReduxProps = {
 
 type GraphToolbarProps = ReduxProps & {
   controller?: any;
-  cy: any;
+  cy?: any;
   disabled: boolean;
   elementsChanged: boolean;
   isPF?: boolean;
@@ -203,9 +204,15 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
               </TourStop>
             </ToolbarItem>
 
-            <ToolbarItem>
-              <GraphFind cy={this.props.cy} elementsChanged={this.props.elementsChanged} />
-            </ToolbarItem>
+            {this.props.isPF ? (
+              <ToolbarItem>
+                <GraphFindPFContainer controller={this.props.controller} elementsChanged={this.props.elementsChanged} />
+              </ToolbarItem>
+            ) : (
+              <ToolbarItem>
+                <GraphFind cy={this.props.cy} elementsChanged={this.props.elementsChanged} />
+              </ToolbarItem>
+            )}
 
             <ToolbarItem style={{ marginLeft: 'auto' }}>
               <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Shortcuts and tips...">

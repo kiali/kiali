@@ -22,7 +22,7 @@ import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
 import history, { HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
-import { SelectExp, SelectOr } from 'pages/GraphPF/GraphPFElems';
+import { descendents, elems, SelectExp, selectOr, SelectOr } from 'pages/GraphPF/GraphPFElems';
 
 type ReduxProps = {
   compressOnHide: boolean;
@@ -133,7 +133,7 @@ const operands: string[] = [
   'workloadentry'
 ];
 
-export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
+export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState> {
   static contextTypes = {
     router: () => null
   };
@@ -214,7 +214,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
   componentDidUpdate(prevProps: GraphFindProps) {
     if (!this.props.controller) {
       this.hiddenElements = undefined;
-      this.removedElements = undefined;
+      // this.removedElements = undefined;
       return;
     }
 
@@ -475,16 +475,17 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
 
   private handleHide = (
     controller: Controller,
-    hideChanged: boolean,
+    _hideChanged: boolean,
     graphChanged: boolean,
-    graphElementsChanged: boolean,
-    edgeModeChanged: boolean,
-    compressOnHideChanged: boolean
+    _graphElementsChanged: boolean,
+    _edgeModeChanged: boolean,
+    _compressOnHideChanged: boolean
   ) => {
     const selector = this.parseValue(this.props.hideValue, false);
-    const checkRemovals = selector || this.props.edgeMode !== EdgeMode.ALL;
+    const checkRemovals = selector.nodeSelector || selector.edgeSelector || this.props.edgeMode !== EdgeMode.ALL;
 
-    console.debug(`Hide selector=[${selector}]`);
+    // TODO - Change back to debug level
+    console.info(`Hide selector=[${JSON.stringify(selector)}]`);
 
     //controller.startBatch();
 
@@ -502,38 +503,72 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
 
     // select the new hide-hits
     if (checkRemovals) {
-      let hiddenElements = [];
+      let hiddenNodes = [] as GraphElement[];
+      let hiddenEdges = [] as GraphElement[];
+      const { nodes, edges } = elems(controller);
 
-      if (selector) {
-        // add elements described by the hide expression
-        hiddenElements = controller.$(selector);
-
-        // add nodes with only hidden edges (keep idle nodes as that is an explicit option)
-        const visibleElements = hiddenElements.absoluteComplement();
-        const nodesWithVisibleEdges = visibleElements.edges().connectedNodes();
-        const nodesWithOnlyHiddenEdges = visibleElements.nodes(`[^${CyNode.isIdle}]`).subtract(nodesWithVisibleEdges);
-        hiddenElements = hiddenElements.add(nodesWithOnlyHiddenEdges);
-
-        // add the edges connected to hidden nodes
-        hiddenElements = hiddenElements.add(hiddenElements.connectedEdges());
-
-        // subtract any appbox hits, we only hide empty appboxes
-        hiddenElements = hiddenElements.subtract(hiddenElements.filter('$node[isBox]'));
+      // add elements described by the hide expression
+      if (selector.nodeSelector) {
+        hiddenNodes = selectOr(nodes, selector.nodeSelector);
+        hiddenNodes.forEach(n => n.setVisible(false));
+      }
+      if (selector.edgeSelector) {
+        hiddenEdges = selectOr(edges, selector.edgeSelector);
+        hiddenEdges.forEach(e => e.setVisible(false));
+      }
+      if (hiddenEdges.length > 0) {
+        // also hide nodes with only hidden edges (keep idle nodes as that is an explicit option)
+        nodes.forEach(n => {
+          if (n.isVisible()) {
+            const nodeData = n.getData();
+            const nodeEdges = n.getSourceEdges().concat(n.getTargetEdges());
+            if (!nodeData.isIdle && nodeEdges.length > 0 && nodeEdges.every(e => !e.isVisible())) {
+              n.setVisible(false);
+            }
+          }
+        });
       }
 
+      // also hide edges connected to hidden nodes
+      edges.forEach(e => {
+        if (e.isVisible() && !(e.getSource().isVisible() && e.getTarget().isVisible())) {
+          e.setVisible(false);
+        }
+      });
+
+      // unhide any box hits, we only hide empty boxes
+      nodes.filter(n => n.isGroup() && !n.isVisible()).forEach(g => g.setVisible(true));
+
+      // Handle EdgeMode as part of Hide, just edges, leave remaining visible nodes
       if (this.props.edgeMode !== EdgeMode.ALL) {
-        // remove other unwanted edges, don't touch the remaining nodes
-        const visibleElements = hiddenElements.absoluteComplement();
         switch (this.props.edgeMode) {
           case EdgeMode.NONE:
-            hiddenElements = hiddenElements.add(visibleElements.edges());
+            edges.forEach(e => e.setVisible(false));
             break;
           case EdgeMode.UNHEALTHY:
-            hiddenElements = hiddenElements.add(visibleElements.edges(`[^${CyEdge.healthStatus}]`));
+            edges.forEach(e => {
+              if (e.isVisible() && e.getData()[CyNode.healthStatus]) {
+                e.setVisible(false);
+              }
+            });
             break;
         }
       }
 
+      // now hide any appboxes that don't have any visible children
+      nodes
+        .filter(n => n.isGroup())
+        .forEach(g => {
+          if (descendents(g).every(d => !d.isVisible())) {
+            g.setVisible(false);
+          }
+        });
+
+      this.hiddenElements = (nodes.filter(n => !n.isVisible()) as GraphElement[]).concat(
+        edges.filter(e => !e.isVisible())
+      );
+
+      /*
       if (this.props.compressOnHide) {
         this.removedElements = controller.remove(hiddenElements);
         // now subtract any appboxes that don't have any visible children
@@ -548,21 +583,23 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
         hiddenAppBoxes.style({ visibility: 'hidden' });
         this.hiddenElements = this.hiddenElements.add(hiddenAppBoxes);
       }
-    }
+      */
 
-    controller.endBatch();
-
-    const hasRemovedElements: boolean = !!this.removedElements && this.removedElements.length > 0;
+      // controller.endBatch();
+      /*
+    const hasRemovedElements: boolean = !!this.hiddenElements && this.hiddenElements.length > 0;
     if (
       hideChanged ||
       (compressOnHideChanged && checkRemovals) ||
       (hasRemovedElements && graphElementsChanged) ||
       edgeModeChanged
     ) {
-      controller.emit('kiali-zoomignore', [true]);
-      CytoscapeGraphUtils.runLayout(controller, this.props.layout, this.props.namespaceLayout).then(() => {
+      //controller.emit('kiali-zoomignore', [true]);
+      //CytoscapeGraphUtils.runLayout(controller, this.props.layout, this.props.namespaceLayout).then(() => {
         // do nothing, defer to CytoscapeGraph.tsx 'onlayout' event handler
       });
+    }
+    */
     }
   };
 
@@ -603,6 +640,8 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     // generate separate selectors for each disjunctive clause and then stitch them together. This
     // lets us mix node and edge criteria.
     const orClauses = preparedVal.split(' OR ');
+    let orNodeSelector;
+    let orEdgeSelector;
 
     for (const clause of orClauses) {
       const expressions = clause.split(' AND ');
@@ -629,12 +668,14 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
           edgeSelector = this.appendSelector(edgeSelector, parsedExpression);
         }
       }
+
       // parsed successfully, clear any previous error message
       this.setError(undefined, isFind);
-      orSelector = !orSelector ? selector : `${orSelector},${selector}`;
+      orNodeSelector = !orNodeSelector ? nodeSelector : `${orNodeSelector},${nodeSelector}`;
+      orEdgeSelector = !orEdgeSelector ? edgeSelector : `${orEdgeSelector},${edgeSelector}`;
     }
 
-    return orSelector;
+    return { nodeSelector: orNodeSelector, edgeSelector: orEdgeSelector };
   };
 
   private prepareValue = (val: string): string => {
@@ -1061,6 +1102,6 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const GraphFindContainer = connect(mapStateToProps, mapDispatchToProps)(GraphFind);
+const GraphFindPFContainer = connect(mapStateToProps, mapDispatchToProps)(GraphFindPF);
 
-export default GraphFindContainer;
+export default GraphFindPFContainer;

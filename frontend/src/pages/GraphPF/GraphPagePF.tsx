@@ -76,6 +76,7 @@ import GraphPF, { FocusNode } from './GraphPF';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { GraphPFSettings } from './GraphPFElems';
 import { serverConfig } from 'config';
+import { Controller } from '@patternfly/react-topology';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -219,6 +220,7 @@ const GraphErrorBoundaryFallback = () => {
 };
 
 export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStatePF> {
+  private controller?: Controller;
   private readonly errorBoundaryRef: any;
   // private cytoscapeGraphRef: any;
   private focusNode?: FocusNode;
@@ -295,6 +297,7 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
 
   constructor(props: GraphPagePropsPF) {
     super(props);
+    this.controller = undefined;
     this.errorBoundaryRef = React.createRef();
     // this.cytoscapeGraphRef = React.createRef();
     const focusNodeId = getFocusSelector();
@@ -355,6 +358,10 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
     // the toolbar can render and ensure all redux props are updated with URL
     // settings. That in turn ensures the initial fetchParams are correct.
     const isInitialLoad = !this.state.graphData.timestamp;
+
+    if (curr.summaryData?.summaryType === 'graph') {
+      this.controller = curr.summaryData.summaryTarget;
+    }
 
     const activeNamespacesChanged = !arrayEquals(
       prev.activeNamespaces,
@@ -444,9 +451,10 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
         <FlexView className={conStyle} column={true}>
           <div>
             <GraphToolbarContainer
-              cy={undefined}
+              controller={this.controller}
               disabled={this.state.graphData.isLoading}
               elementsChanged={this.state.graphData.elementsChanged}
+              isPF={true}
               onToggleHelp={this.toggleHelp}
             />
           </div>
