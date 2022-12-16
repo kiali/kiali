@@ -287,9 +287,16 @@ const BaseNode: React.FunctionComponent<BaseNodeProps> = ({
     return { translateX, translateY };
   }, [element, nodeScale, scaleNode]);
 
+  const ColorFind = PFColors.Gold400;
   const ColorSpan = PFColors.Purple200;
   const OverlayOpacity = 0.3;
   const OverlayWidth = 40;
+
+  const findOverlayStyle = style({
+    strokeWidth: OverlayWidth,
+    stroke: ColorFind,
+    strokeOpacity: OverlayOpacity
+  });
 
   const traceOverlayStyle = style({
     strokeWidth: OverlayWidth,
@@ -308,6 +315,9 @@ const BaseNode: React.FunctionComponent<BaseNodeProps> = ({
       <g ref={refs} onClick={onSelect} onContextMenu={onContextMenu}>
         {ShapeComponent && !!element.getData().hasSpans && (
           <ShapeComponent className={traceOverlayStyle} element={element} width={width} height={height} />
+        )}
+        {ShapeComponent && !!element.getData().isFind && (
+          <ShapeComponent className={findOverlayStyle} element={element} width={width} height={height} />
         )}
         {ShapeComponent && (
           <ShapeComponent

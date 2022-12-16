@@ -22,10 +22,17 @@ import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
 import history, { HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
-import { descendents, elems, SelectExp, selectOr, SelectOr } from 'pages/GraphPF/GraphPFElems';
+import {
+  descendents,
+  EdgeData,
+  elems,
+  NodeData,
+  SelectExp,
+  selectOr,
+  SelectOr
+} from 'pages/GraphPF/GraphPFElems';
 
 type ReduxProps = {
-  compressOnHide: boolean;
   edgeLabels: EdgeLabelMode[];
   edgeMode: EdgeMode;
   findValue: string;
@@ -140,10 +147,10 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
 
   private findAutoComplete: AutoComplete;
   private findInputRef;
+  private findElements: GraphElement[] | undefined;
   private hiddenElements: GraphElement[] | undefined;
   private hideAutoComplete: AutoComplete;
   private hideInputRef;
-  //private removedElements: GraphElement[] | undefined;
 
   constructor(props: GraphFindProps) {
     super(props);
@@ -182,8 +189,8 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
     }
   }
 
-  // We only update on a change to the find/hide/compress values, or a graph change.  Although we use other props
-  // in processing (compressOnHide, layout, etc), a change to those settings will generate a graph change, so we
+  // We only update on a change to the find/hide values, or a graph change.  Although we use other props
+  // in processing (layout, etc), a change to those settings will generate a graph change, so we
   // wait for the graph change to do the update.
   shouldComponentUpdate(nextProps: GraphFindProps, nextState: GraphFindState) {
     const controllerChanged = this.props.controller !== nextProps.controller;
@@ -213,8 +220,8 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
   // find/hide processing will be initiated externally (CytoscapeGraph:processgraphUpdate) when the graph is ready.
   componentDidUpdate(prevProps: GraphFindProps) {
     if (!this.props.controller) {
+      this.findElements = undefined;
       this.hiddenElements = undefined;
-      // this.removedElements = undefined;
       return;
     }
 
@@ -222,7 +229,6 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
     const findChanged = this.props.findValue !== prevProps.findValue;
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
     const graphChanged = this.props.updateTime !== prevProps.updateTime;
-    const graphElementsChanged = graphChanged && this.props.elementsChanged;
 
     // ensure redux state and URL are aligned
     if (findChanged) {
@@ -261,15 +267,7 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
         this.setHide(this.props.hideValue);
       }
 
-      const compressOnHideChanged = this.props.compressOnHide !== prevProps.compressOnHide;
-      this.handleHide(
-        this.props.controller,
-        hideChanged,
-        graphChanged,
-        graphElementsChanged,
-        edgeModeChanged,
-        compressOnHideChanged
-      );
+      this.handleHide(this.props.controller, hideChanged);
     }
   }
 
@@ -473,33 +471,18 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
     this.props.setHideValue(val);
   };
 
-  private handleHide = (
-    controller: Controller,
-    _hideChanged: boolean,
-    graphChanged: boolean,
-    _graphElementsChanged: boolean,
-    _edgeModeChanged: boolean,
-    _compressOnHideChanged: boolean
-  ) => {
+  private handleHide = (controller: Controller, graphChanged: boolean) => {
     const selector = this.parseValue(this.props.hideValue, false);
     const checkRemovals = selector.nodeSelector || selector.edgeSelector || this.props.edgeMode !== EdgeMode.ALL;
 
     // TODO - Change back to debug level
     console.info(`Hide selector=[${JSON.stringify(selector)}]`);
 
-    //controller.startBatch();
-
     // unhide hidden elements when we are dealing with the same graph. Either way,release for garbage collection
     if (!!this.hiddenElements && !graphChanged) {
       this.hiddenElements.forEach(e => e.setVisible(true));
     }
     this.hiddenElements = undefined;
-
-    // restore removed elements when we are working with the same graph. Either way,release for garbage collection.
-    //if (!!this.removedElements && !graphChanged) {
-    //  this.removedElements.restore();
-    //}
-    //this.removedElements = undefined;
 
     // select the new hide-hits
     if (checkRemovals) {
@@ -567,54 +550,38 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
       this.hiddenElements = (nodes.filter(n => !n.isVisible()) as GraphElement[]).concat(
         edges.filter(e => !e.isVisible())
       );
-
-      /*
-      if (this.props.compressOnHide) {
-        this.removedElements = controller.remove(hiddenElements);
-        // now subtract any appboxes that don't have any visible children
-        const hiddenAppBoxes = controller.$('$node[isBox]').subtract(controller.$('$node[isBox] > :inside'));
-        this.removedElements = this.removedElements.add(controller.remove(hiddenAppBoxes));
-      } else {
-        // set the remaining hide-hits hidden
-        this.hiddenElements = hiddenElements;
-        this.hiddenElements.style({ visibility: 'hidden' });
-        // now subtract any appboxes that don't have any visible children
-        const hiddenAppBoxes = controller.$('$node[isBox]').subtract(controller.$('$node[isBox] > :visible'));
-        hiddenAppBoxes.style({ visibility: 'hidden' });
-        this.hiddenElements = this.hiddenElements.add(hiddenAppBoxes);
-      }
-      */
-
-      // controller.endBatch();
-      /*
-    const hasRemovedElements: boolean = !!this.hiddenElements && this.hiddenElements.length > 0;
-    if (
-      hideChanged ||
-      (compressOnHideChanged && checkRemovals) ||
-      (hasRemovedElements && graphElementsChanged) ||
-      edgeModeChanged
-    ) {
-      //controller.emit('kiali-zoomignore', [true]);
-      //CytoscapeGraphUtils.runLayout(controller, this.props.layout, this.props.namespaceLayout).then(() => {
-        // do nothing, defer to CytoscapeGraph.tsx 'onlayout' event handler
-      });
-    }
-    */
     }
   };
 
-  private handleFind = (cy: any) => {
+  private handleFind = (controller: Controller) => {
     const selector = this.parseValue(this.props.findValue, true);
-    console.debug(`Find selector=[${selector}]`);
+    // TODO: Change back to debug
+    console.info(`Find selector=[${JSON.stringify(selector)}]`);
 
-    cy.startBatch();
     // unhighlight old find-hits
-    cy.elements('*.find').removeClass('find');
-    if (selector) {
-      // add new find-hits
-      cy.elements(selector).addClass('find');
+    this.findElements?.forEach(e => {
+      const data = e.getData() as NodeData | EdgeData;
+      e.setData({ ...data, isFind: false });
+    });
+    this.findElements = undefined;
+
+    // add new find-hits
+    if (!!selector.nodeSelector || !!selector.edgeSelector) {
+      const { nodes, edges } = elems(controller);
+      let findNodes = [] as GraphElement[];
+      let findEdges = [] as GraphElement[];
+      if (selector.nodeSelector) {
+        findNodes = selectOr(nodes, selector.nodeSelector);
+      }
+      if (selector.edgeSelector) {
+        findEdges = selectOr(edges, selector.edgeSelector);
+      }
+      this.findElements = findNodes.concat(findEdges);
+      this.findElements.forEach(e => {
+        const data = e.getData() as NodeData | EdgeData;
+        e.setData({ ...data, isFind: true });
+      });
     }
-    cy.endBatch();
   };
 
   private setError(error: string | undefined, isFind: boolean): undefined {
@@ -1076,7 +1043,6 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  compressOnHide: state.graph.toolbarState.compressOnHide,
   edgeLabels: edgeLabelsSelector(state),
   edgeMode: edgeModeSelector(state),
   findValue: findValueSelector(state),

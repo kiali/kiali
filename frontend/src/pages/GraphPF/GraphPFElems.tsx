@@ -52,11 +52,11 @@ export type NodeData = DecoratedGraphNodeData & {
   column?: number;
   component?: React.ReactNode;
   icon?: React.ReactNode;
-  isDimmed?: boolean;
-  isHidden?: boolean;
+  isFind?: boolean;
   isHighlighted?: boolean;
   isHovered?: boolean;
   isSelected?: boolean;
+  isUnhighlighted?: boolean;
   labelIcon?: React.ReactNode;
   labelIconClass?: string;
   labelPosition?: LabelPosition;
