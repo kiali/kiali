@@ -1681,8 +1681,6 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 						log.Warningf("GetPodProxyStatus is failing for [namespace: %s] [pod: %s]: %s ", criteria.Namespace, pod.Name, err.Error())
 					}
 					pod.ProxyStatus = castProxyStatus(ps)
-				} else {
-					pod.ProxyStatus = &models.ProxyStatus{}
 				}
 			}
 		}

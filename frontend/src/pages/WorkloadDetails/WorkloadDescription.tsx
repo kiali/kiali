@@ -22,6 +22,7 @@ type WorkloadDescriptionProps = {
   workload?: Workload;
   health?: H.Health;
   namespace: string;
+  istioAPIEnabled: boolean;
 };
 
 const resourceListStyle = style({
@@ -140,6 +141,14 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
             <span className={healthIconStyle}>
               <HealthIndicator id={workload.name} health={this.props.health} />
             </span>
+            {this.props.workload && this.props.workload.istioSidecar && !this.props.istioAPIEnabled && (
+              <Tooltip
+                position={TooltipPosition.right}
+                content={<div style={{ textAlign: 'left' }}>Proxy Status not available</div>}
+              >
+                <KialiIcon.Unknown className={infoStyle} />
+              </Tooltip>
+            )}
             {this.props.workload && !this.props.workload.istioSidecar && (
               <MissingSidecar
                 data-test={`missing-sidecar-badge-for-${workload.name}-workload-in-${this.props.namespace}-namespace`}
