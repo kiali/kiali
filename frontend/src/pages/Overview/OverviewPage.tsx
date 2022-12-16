@@ -9,7 +9,7 @@ import {
   EmptyStateBody,
   EmptyStateVariant,
   Grid,
-  GridItem,
+  GridItem, Label,
   Title,
   TitleSizes,
   Tooltip,
@@ -895,6 +895,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                 {ns.name !== serverConfig.istioNamespace && this.hasCanaryUpgradeConfigured() && this.state.canaryUpgradeStatus?.pendingNamespaces.includes(ns.name) &&
                                   <ControlPlaneVersionBadge version={this.state.canaryUpgradeStatus.currentVersion}
                                                             isCanary={false}></ControlPlaneVersionBadge>
+                                }
+                                {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled &&
+                                  <Label style={{ marginLeft: 5 }} color={"orange"} isCompact>Istio API disabled</Label>
                                 }
                               </span>
                                 </Title>
