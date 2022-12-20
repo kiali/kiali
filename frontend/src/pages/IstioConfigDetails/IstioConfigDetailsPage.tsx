@@ -94,7 +94,6 @@ const paramToTab: { [key: string]: number } = {
 
 interface IstioConfigDetailsProps extends RouteComponentProps<IstioConfigId> {
   kiosk: string;
-  istioAPIEnabled: boolean;
 }
 
 class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetailsProps, IstioConfigDetailsState> {
@@ -483,7 +482,6 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
                     workloadReferences={workloadReferences}
                     helpMessages={helpMessages}
                     selectedLine={this.state.selectedEditorLine}
-                    istioAPIEnabled={this.props.istioAPIEnabled}
                     kiosk={this.props.kiosk}
                   />
                 )}
@@ -510,7 +508,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
           width={'100%'}
           className={'istio-ace-editor'}
           wrapEnabled={true}
-          readOnly={!this.canUpdate() || isParentKiosk(this.props.kiosk) || this.props.istioAPIEnabled === false}
+          readOnly={!this.canUpdate() || isParentKiosk(this.props.kiosk)}
           setOptions={aceOptions}
           value={this.state.istioObjectDetails ? yamlSource : undefined}
           annotations={editorValidations.annotations}
@@ -542,7 +540,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     return !isParentKiosk(this.props.kiosk) ? (
       <IstioActionButtonsContainer
         objectName={this.props.match.params.object}
-        readOnly={!this.canUpdate() &&  this.props.istioAPIEnabled === false}
+        readOnly={!this.canUpdate()}
         canUpdate={this.canUpdate() && this.state.isModified && !this.state.isRemoved && !yamlErrors}
         onCancel={this.onCancel}
         onUpdate={this.onUpdate}
@@ -556,7 +554,6 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
   renderActions = () => {
     const canDelete =
-      this.props.istioAPIEnabled === true &&
       this.state.istioObjectDetails !== undefined &&
       this.state.istioObjectDetails.permissions.delete &&
       !this.state.isRemoved;
@@ -627,7 +624,6 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
 const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk,
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
 });
 
 const IstioConfigDetailsPage = connect(mapStateToProps, null)(IstioConfigDetailsPageComponent);

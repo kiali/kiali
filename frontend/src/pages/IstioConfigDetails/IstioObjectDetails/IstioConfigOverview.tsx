@@ -36,7 +36,6 @@ import {GetIstioObjectUrl} from "../../../components/Link/IstioObjectLink";
 import {isParentKiosk} from "../../../components/Kiosk/KioskActions";
 
 interface IstioConfigOverviewProps {
-  istioAPIEnabled: boolean;
   istioObjectDetails: IstioConfigDetails;
   istioValidations?: ObjectValidation;
   namespace: string;
@@ -187,7 +186,7 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
             ></IstioConfigHelp>
           </StackItem>
         )}
-        {!this.props.istioAPIEnabled && !isParentKiosk(this.props.kiosk) &&  (
+        {!isParentKiosk(this.props.kiosk) &&  (
           <StackItem>
             <Tooltip content={"This is a Read only view of the YAML including Validations."} position={TooltipPosition.top}>
               <Label color="green" isCompact>Read only mode</Label>

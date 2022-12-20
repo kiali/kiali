@@ -46,7 +46,6 @@ interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
   duration: DurationInSeconds;
   jaegerInfo?: JaegerInfo;
   lastRefreshAt: TimeInMilliseconds;
-  istioAPIEnabled: boolean;
 }
 
 const tabName = 'tab';
@@ -204,7 +203,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         useCustomTime = true;
         break;
     }
-    const actionsToolbar = this.state.serviceDetails && this.props.istioAPIEnabled ? (
+    const actionsToolbar = this.state.serviceDetails ? (
       <ServiceWizardDropdown
         namespace={this.props.match.params.namespace}
         serviceName={this.state.serviceDetails.service.name}
@@ -257,7 +256,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
 const mapStateToProps = (state: KialiAppState) => ({
   jaegerInfo: state.jaegerState.info,
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
 const ServiceDetailsPageContainer = connectRefresh( connect(mapStateToProps)(ServiceDetails));
