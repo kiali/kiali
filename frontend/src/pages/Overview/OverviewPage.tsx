@@ -932,7 +932,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                     <GridItem md={9}>
                                       <Grid>
                                         {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() &&
-                                          <GridItem md={4}>
+                                          <GridItem md={this.props.istioAPIEnabled ? 4 : 9}>
                                             <CanaryUpgradeProgress
                                               canaryUpgradeStatus={this.state.canaryUpgradeStatus}/>
                                           </GridItem>
