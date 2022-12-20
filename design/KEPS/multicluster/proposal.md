@@ -38,14 +38,14 @@ In a multicluster deployment, Kiali will only support the OIDC auth strategy for
 
 ## Deployment models
 
-In each of the deployment models, these are the requirements for a centralized Kiali
+In each of the [deployment models](https://istio.io/latest/docs/ops/deployment/deployment-models/), these are the requirements for a centralized Kiali
 
 1. Access to each kube API server that is part of the mesh
 2. Istiod access\*
 3. Aggregated metrics/traces
 4. OIDC auth strategy
 
-Regarding istiod access, if the istiod pods are running within the Kube clusters that are part of the multi-cluster mesh, Kiali will access these by portforwarding using the Kube API.  Kiali can support control planes outside of but some features will be lost when Kiali can not access the istiod API.
+\*Regarding istiod access, if the istiod pods are running within the Kube clusters that are part of the multi-cluster mesh, Kiali will access these by portforwarding using the Kube API. Kiali can support control planes outside of but some features will be lost when Kiali can not access the istiod API.
 
 A service account in each cluster will provide Kiali with access to that cluster's Kube API. Credentials for that service account will be stored in a secret and used by the Kiali pod to communicate with the external Kube APIs.
 
@@ -61,7 +61,7 @@ Note that a single or different network topology won't affect Kiali's configurat
 
 ## Aggregated metrics and traces
 
-Kiali MC will require metrics to be aggregated into a central, unified datastore.  It will not aggregate metrics from multiple datastores.  The same is true for trace information.  It is the user’s responsibility to ensure that metrics and traces are centralized by some means. Metrics and traces will need to include a cluster identifier as an attribute/label on each metric so that Kiali can distinguish between workloads/services running on separate clusters. [Istio standard metrics](https://istio.io/latest/docs/reference/config/metrics/#labels) includes `destination_cluster` and `source_cluster`. Kiali already uses these values for cluster boxing. Traces do not include a cluster identifier but one can be added by creating a telemetry api object.  Example:
+Kiali MC will require metrics to be aggregated into a central, unified datastore. It will not aggregate metrics from multiple datastores. The same is true for trace information. It is the user’s responsibility to ensure that metrics and traces are centralized by some means. Metrics and traces will need to include a cluster identifier as an attribute/label on each metric so that Kiali can distinguish between workloads/services running on separate clusters. [Istio standard metrics](https://istio.io/latest/docs/reference/config/metrics/#labels) includes `destination_cluster` and `source_cluster`. Kiali already uses these values for cluster boxing. Traces do not include a cluster identifier but one can be added by creating a telemetry api object. Example:
 
 ```
 apiVersion: telemetry.istio.io/v1alpha1
@@ -97,7 +97,7 @@ The namespace service is used to determine if a user has access to resources in 
 
 ## API
 
-Kiali’s current model of a Service/Workload/App (s/w/a) uses namespace/name to uniquely identify a particular s/w/a.  For example, a “reviews” service in namespace “bookinfo” is uniquely identified as “reviews/bookinfo”. This model works fine for a single cluster deployment but does not uniquely identify a service in multi-cluster. Services and workloads can span multiple clusters.
+Kiali’s current model of a Service/Workload/App (s/w/a) uses namespace/name to uniquely identify a particular s/w/a. For example, a “reviews” service in namespace “bookinfo” is uniquely identified as “reviews/bookinfo”. This model works fine for a single cluster deployment but does not uniquely identify a service in multi-cluster. Services and workloads can span multiple clusters.
 
 With some exceptions, Istio sees two services with the same FQDN across two different clusters as the same service and will load balance traffic between the two. You can see this when verifying your [multi-cluster traffic](https://istio.io/latest/docs/setup/install/multicluster/verify/#verifying-cross-cluster-traffic) with requests being load balanced across services located in both clusters. Therefore in a multi-cluster deployment, Kiali should no longer treat namespace/name as unique and consider services and workloads with the same namespace/name _across_ clusters as the same service or workload. This adheres to [namespace sameness](https://github.com/kubernetes/community/blob/master/sig-multicluster/namespace-sameness-position-statement.md).
 
@@ -158,3 +158,4 @@ The istiods provide istio config and some information about the mesh workloads. 
 - [ ] Business services query across configured clusters for resources.
 - [ ] Investigate automated testing setup: how kiali should test multi-cluster features in CI/CD.
 - [ ] Multi-cluster demos for the different deployment models. These can also be used for testing.
+- [ ] Define UI/UX changes to support MC
