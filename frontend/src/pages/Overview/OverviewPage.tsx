@@ -897,7 +897,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                                             isCanary={false}></ControlPlaneVersionBadge>
                                 }
                                 {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled &&
-                                  <Label style={{ marginLeft: 5 }} color={"orange"} isCompact>Istio API disabled</Label>
+                                  <Label style={{ marginLeft: 10 }} color={"orange"} isCompact>Istio API disabled</Label>
                                 }
                               </span>
                                 </Title>

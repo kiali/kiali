@@ -29,7 +29,6 @@ type WorkloadInfoProps = {
   health?: WorkloadHealth;
   mtlsEnabled: boolean;
   refreshWorkload: () => void;
-  istioAPIEnabled: boolean;
 };
 
 type WorkloadInfoState = {
@@ -255,7 +254,6 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
                     workload={workload}
                     health={this.props.health}
                     namespace={this.props.namespace}
-                    istioAPIEnabled={this.props.istioAPIEnabled}
                   />
                 </StackItem>
                 <StackItem>
@@ -290,8 +288,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  mtlsEnabled: meshWideMTLSEnabledSelector(state),
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
+  mtlsEnabled: meshWideMTLSEnabledSelector(state)
 });
 
 const WorkloadInfoContainer = connect(mapStateToProps)(WorkloadInfo);
