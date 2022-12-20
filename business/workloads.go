@@ -386,7 +386,10 @@ func (in *WorkloadService) UpdateWorkload(ctx context.Context, namespace string,
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh.
 	// Refresh once after all the updates have gone through since Update Workload will update
 	// every single workload type of that matches name/namespace and we only want to refresh once.
-	in.cache.Refresh(namespace)
+	// TODO: Remove conditional once cache is mandatory
+	if in.cache != nil {
+		in.cache.Refresh(namespace)
+	}
 
 	// After the update we fetch the whole workload
 	return in.GetWorkload(ctx, WorkloadCriteria{Namespace: namespace, WorkloadName: workloadName, WorkloadType: workloadType, IncludeServices: includeServices})

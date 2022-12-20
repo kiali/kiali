@@ -179,11 +179,6 @@ func NewKialiCache(namespaceSeedList ...string) (KialiCache, error) {
 
 	cacheNamespacesRegexps := make([]regexp.Regexp, len(cacheNamespaces))
 	for i, ns := range cacheNamespaces {
-		// '**' is a special character for selecting all namespaces
-		// but needs to be converted to an actual regexp.
-		if ns == "**" {
-			ns = ".*"
-		}
 		cacheNamespacesRegexps[i] = *regexp.MustCompile(strings.TrimSpace(ns))
 	}
 
