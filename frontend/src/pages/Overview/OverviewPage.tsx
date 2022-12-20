@@ -869,7 +869,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                   return (
                         <GridItem
                           sm={(ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND) ? lg : sm}
-                          md={(ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND) ? lg : md}
+                          md={(ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND &&
+                            (this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured())) ? lg : md}
                           key={'CardItem_' + ns.name}
                           style={{margin: '0px 5px 0 5px'}}>
                           <Card
