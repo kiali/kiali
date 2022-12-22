@@ -66,6 +66,7 @@ both roles aren't mutually exclusive.
 Current list of testers (alphabetically ordered):
 
 * [FilipB](https://github.com/FilipB)
+* [matejnesuta](https://github.com/matejnesuta)
 * [mattmahoneyrh](https://github.com/mattmahoneyrh)
 * [pbajjuri20](https://github.com/pbajjuri20)
 * [prachiyadav](https://github.com/prachiyadav)
