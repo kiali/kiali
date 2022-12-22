@@ -54,13 +54,13 @@ export type NodeData = DecoratedGraphNodeData & {
   icon?: React.ReactNode;
   isFind?: boolean;
   isHighlighted?: boolean;
-  isHovered?: boolean;
   isSelected?: boolean;
   isUnhighlighted?: boolean;
   labelIcon?: React.ReactNode;
   labelIconClass?: string;
   labelPosition?: LabelPosition;
   marginX?: number;
+  onHover?: (element: GraphElement, isMouseIn: boolean) => void;
   row?: number;
   secondaryLabel?: string;
   setLocation?: boolean;
@@ -457,22 +457,22 @@ const trimFixed = (fixed: string): string => {
 const toFixedRequestRate = (num: number, includeUnits: boolean, units?: string): string => {
   num = safeNum(num);
   const rate = trimFixed(num.toFixed(2));
-  return includeUnits ? `${rate} ${units || 'rps'}` : rate;
+  return includeUnits ? `${rate}${units || 'rps'}` : rate;
 };
 
 const toFixedErrRate = (num: number): string => {
   num = safeNum(num);
-  return `${trimFixed(num.toFixed(num < 1 ? 1 : 0))}% err`;
+  return `${trimFixed(num.toFixed(num < 1 ? 1 : 0))}%err`;
 };
 
 const toFixedByteRate = (num: number, includeUnits: boolean): string => {
   num = safeNum(num);
   if (num < 1024.0) {
     const rate = num < 1.0 ? trimFixed(num.toFixed(2)) : num.toFixed(0);
-    return includeUnits ? `${rate} bps` : rate;
+    return includeUnits ? `${rate}bps` : rate;
   }
   const rate = trimFixed((num / 1024.0).toFixed(2));
-  return includeUnits ? `${rate} kps` : rate;
+  return includeUnits ? `${rate}kps` : rate;
 };
 
 const toFixedPercent = (num: number): string => {
@@ -597,7 +597,6 @@ export const elems = (c: Controller): { nodes: Node[]; edges: Edge[] } => {
 
 // TODO: When it is fixed this can be replaced with a straight call to node.getAllNodeChildren();
 // https://github.com/patternfly/patternfly-react/issues/8350
-
 export const descendents = (node: Node): Node[] => {
   const result: Node[] = [];
   if (!node.isGroup()) {
@@ -611,6 +610,17 @@ export const descendents = (node: Node): Node[] => {
       result.push(...descendents(child));
     }
   });
+  return result;
+};
+
+export const ancestors = (node: Node): GraphElement[] => {
+  console.log('ance');
+  const result: GraphElement[] = [];
+  while (node.hasParent()) {
+    const parent = node.getParent() as Node;
+    result.push(parent);
+    node = parent;
+  }
   return result;
 };
 
@@ -718,6 +728,28 @@ export const nodesOut = (nodes: Node[]): Node[] => {
   const result = [] as Node[];
   edgesOut(nodes).forEach(e => result.push(e.getTarget()));
   return Array.from(new Set(result));
+};
+
+export const predecessors = (node: Node): GraphElement[] => {
+  console.log(`pred(${node.getId()})`);
+  const result = [] as GraphElement[];
+  const targetEdges = node.getTargetEdges();
+  const sourceNodes = targetEdges.map(e => e.getSource());
+  result.concat(targetEdges);
+  result.concat(sourceNodes);
+  sourceNodes.forEach(n => result.concat(predecessors(n)));
+  return result;
+};
+
+export const successors = (node: Node): GraphElement[] => {
+  console.log(`succ(${node.getId()})`);
+  const result = [] as GraphElement[];
+  const sourceEdges = node.getSourceEdges();
+  const targetNodes = sourceEdges.map(e => e.getTarget());
+  result.concat(sourceEdges);
+  result.concat(targetNodes);
+  targetNodes.forEach(n => result.concat(successors(n)));
+  return result;
 };
 
 export const leafNodes = (nodes: Node[]): Node[] => {

@@ -299,7 +299,6 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
     super(props);
     this.controller = undefined;
     this.errorBoundaryRef = React.createRef();
-    // this.cytoscapeGraphRef = React.createRef();
     const focusNodeId = getFocusSelector();
     this.focusNode = focusNodeId ? { id: focusNodeId, isSelected: true } : undefined;
     this.graphDataSource = new GraphDataSource();

@@ -5,13 +5,13 @@ import {
   defaultControlButtonsOptions,
   EdgeModel,
   EdgeStyle,
+  GraphElement,
   GRAPH_LAYOUT_END_EVENT,
   // GRAPH_POSITION_CHANGE_EVENT,
   Model,
   ModelKind,
   Node,
   NodeModel,
-  //SELECTION_EVENT,
   SELECTION_STATE,
   TopologyControlBar,
   TopologyView,
@@ -40,8 +40,7 @@ import {
 } from './GraphPFElems';
 import layoutFactory from './layouts/layoutFactory';
 import { hideTrace, showTrace } from './TracePF';
-
-// export const HOVER_EVENT = 'hover';
+import { GraphHighlighterPF } from './GraphHighlighterPF';
 
 let requestFit = false;
 
@@ -81,27 +80,15 @@ export const TopologyContent: React.FC<{
   updateSummary: (event: GraphEvent) => void;
 }> = ({ graphData, graphSettings, onReady, options, trace, updateSummary }) => {
   const controller = useVisualizationController();
-
-  // TODO: Hover actions
-  // HoveredId State
-  //
-  /*
-  const [hoveredId, setHoveredId] = React.useState<string>('');
-  const onHover = React.useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (data: NodeData) => {
-      console.log(`onHover ${data.id} ${data.isHovered}`);
-      setHoveredId(data.isHovered ? data.id : '');
-    },
-    []
-  );
-  */
+  const highlighter = new GraphHighlighterPF(controller);
 
   //
   // SelectedIds State
   //
   const [selectedIds] = useVisualizationState<string[]>(SELECTION_STATE, []);
   React.useEffect(() => {
+    highlighter.setSelectedId(selectedIds.length > 0 ? selectedIds[0] : undefined);
+
     if (selectedIds.length > 0) {
       const elem = controller.getElementById(selectedIds[0]);
       switch (elem?.getKind()) {
@@ -217,12 +204,15 @@ export const TopologyContent: React.FC<{
     }
   }, [controller, options.layout, setDetailsLevel]);
 
-  /* Is this necessary? We already set the thresholds in the reset
-  //update details on low / med scale change
-  React.useEffect(() => {
-    setDetailsLevel();
-  }, [controller, setDetailsLevel]);
-  */
+  const onHover = (element: GraphElement, isMouseIn: boolean) => {
+    if (isMouseIn) {
+      console.log(`Hover In ${element.getId()}`);
+      highlighter.onMouseIn(element);
+    } else {
+      console.log(`Hover Out ${element.getId()}`);
+      highlighter.onMouseOut(element);
+    }
+  };
 
   //
   // Manage the GraphData / DataModel
@@ -249,6 +239,7 @@ export const TopologyContent: React.FC<{
     }
 
     function addNode(data: NodeData): NodeModel {
+      data.onHover = onHover;
       const node: NodeModel = {
         data: data,
         height: DEFAULT_NODE_SIZE,
@@ -382,8 +373,6 @@ export const TopologyContent: React.FC<{
     };
   }, [updateSummary]);
 
-  // useEventListener(HOVER_EVENT, onHover);
-  //useEventListener(SELECTION_EVENT, onSelect);
   useEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
   // useEventListener(GRAPH_POSITION_CHANGE_EVENT, onLayoutPositionChange);
 

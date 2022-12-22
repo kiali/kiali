@@ -139,6 +139,7 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
         ref={hoverRef as any}
         data-test-id="edge-handler"
         className={groupClassName}
+        style={data.isUnhighlighted ? { opacity: 0.1 } : {}}
         onClick={onSelect}
         onContextMenu={onContextMenu}
       >

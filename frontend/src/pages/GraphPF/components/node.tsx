@@ -42,8 +42,8 @@ import { style } from 'typestyle';
 // do this because DefaultNode doesn't really seem itself extensible and to add certain behavior you have
 // to reimplement the rendered element.  This supports the following customizations:
 //   [Node] element.data.isFind?: boolean                // adds graph-find overlay
-//   [Node] element.data.isHighlighted?: boolean         // adds highlight effects
-//   [Node] element.data.isUnhighlighted?: boolean       // adds unhighlight effects
+//   [Node] element.data.isHighlighted?: boolean         // adds highlight effects based on hover
+//   [Node] element.data.isUnhighlighted?: boolean       // adds unhighlight effects based on hover
 //   [Node] element.data.hasSpans?: Span[]               // adds trace overlay
 
 const StatusQuadrant = TopologyQuadrant.upperLeft;
@@ -194,12 +194,22 @@ const BaseNode: React.FunctionComponent<BaseNodeProps> = ({
   }, [showStatusDecorator, status, getShapeDecoratorCenter, element, statusDecoratorTooltip, onStatusDecoratorClick]);
 
   React.useEffect(() => {
+    if (!element.isVisible()) {
+      return;
+    }
+
     if (isHover) {
+      if (!!element.getData()?.onHover) {
+        element.getData()?.onHover(element, true);
+      }
       onShowCreateConnector && onShowCreateConnector();
     } else {
+      if (!!element.getData()?.onHover) {
+        element.getData()?.onHover(element, false);
+      }
       onHideCreateConnector && onHideCreateConnector();
     }
-  }, [isHover, onShowCreateConnector, onHideCreateConnector]);
+  }, [element, isHover, onShowCreateConnector, onHideCreateConnector]);
 
   const ShapeComponent = (getCustomShape && getCustomShape(element)) || getShapeComponent(element);
 
@@ -291,6 +301,7 @@ const BaseNode: React.FunctionComponent<BaseNodeProps> = ({
   const ColorSpan = PFColors.Purple200;
   const OverlayOpacity = 0.3;
   const OverlayWidth = 40;
+  const UnhighlightOpacity = 0.1;
 
   const findOverlayStyle = style({
     strokeWidth: OverlayWidth,
@@ -305,18 +316,20 @@ const BaseNode: React.FunctionComponent<BaseNodeProps> = ({
   });
 
   // console.log(`Render node ${!!element.getData().hasSpans ? 'with' : 'without'} spans`);
-  
+
+  const data = element.getData();
   return (
     <g
       className={groupClassName}
+      style={!!data.isUnhighlighted ? { opacity: UnhighlightOpacity } : {}}
       transform={`${scaleNode ? `translate(${translateX}, ${translateY})` : ''} scale(${nodeScale})`}
     >
       <NodeShadows />
       <g ref={refs} onClick={onSelect} onContextMenu={onContextMenu}>
-        {ShapeComponent && !!element.getData().hasSpans && (
+        {ShapeComponent && !!data.hasSpans && (
           <ShapeComponent className={traceOverlayStyle} element={element} width={width} height={height} />
         )}
-        {ShapeComponent && !!element.getData().isFind && (
+        {ShapeComponent && !!data.isFind && (
           <ShapeComponent className={findOverlayStyle} element={element} width={width} height={height} />
         )}
         {ShapeComponent && (

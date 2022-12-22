@@ -29,9 +29,10 @@ const StyleNode: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   return (
     <BaseNode
       element={element}
-      showStatusBackground={detailsLevel === ScaleDetailsLevel.low}
       {...rest}
       {...passedData}
+      showLabel={detailsLevel === ScaleDetailsLevel.high}
+      showStatusBackground={detailsLevel === ScaleDetailsLevel.low}
     />
   );
 };
