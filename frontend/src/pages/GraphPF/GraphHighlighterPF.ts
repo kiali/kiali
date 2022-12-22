@@ -84,7 +84,9 @@ export class GraphHighlighterPF {
       return;
     }
 
-    highlighted.toHighlight.forEach(e => e.setData({ ...e.getData(), isHighlighted: true }));
+    highlighted.toHighlight.forEach(e => {
+      e.setData({ ...e.getData(), isHighlighted: true });
+    });
 
     if (highlighted.unhighlightOthers) {
       this.controller.getElements().forEach(e => {
@@ -120,7 +122,6 @@ export class GraphHighlighterPF {
 
   includeAncestorNodes(nodes: GraphElement[]) {
     return nodes.reduce((all: GraphElement[], current) => {
-      console.log('redu');
       all.push(current);
       if (current.getKind() === 'node' && (current as Node).hasParent()) {
         all = all.concat(ancestors(current as Node));
@@ -139,19 +140,20 @@ export class GraphHighlighterPF {
     const source = edge.getSource();
     const target = edge.getTarget();
     let elems = [edge, source, target, ...predecessors(source), ...successors(target)];
-    return this.includeAncestorNodes(elems);
+    elems = this.includeAncestorNodes(elems);
+    return elems;
   }
 
   getBoxHighlight(box: Node): { toHighlight: GraphElement[]; unhighlightOthers: boolean } {
     // treat App boxes in a typical way, but to reduce "flashing", Namespace and Cluster
     // boxes highlight themselves and their anscestors.
     if (box.getData()[CyNode.isBox] === BoxByType.APP) {
-      const elems: GraphElement[] = [];
+      let elems: GraphElement[] = [];
       const children = box.getChildren();
-      elems.concat(children);
+      elems = elems.concat(children);
       children.forEach(n => {
-        elems.concat(predecessors(n as Node));
-        elems.concat(successors(n as Node));
+        elems = elems.concat(predecessors(n as Node));
+        elems = elems.concat(successors(n as Node));
       });
       return { toHighlight: this.includeAncestorNodes(elems), unhighlightOthers: true };
     }

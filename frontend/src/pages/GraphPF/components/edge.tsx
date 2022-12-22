@@ -93,11 +93,17 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
 
   React.useLayoutEffect(() => {
     if (hover && !dragging) {
+      if (!!element.getData()?.onHover) {
+        element.getData()?.onHover(element, true);
+      }
       onShowRemoveConnector && onShowRemoveConnector();
     } else {
+      if (!!element.getData()?.onHover) {
+        element.getData()?.onHover(element, false);
+      }
       onHideRemoveConnector && onHideRemoveConnector();
     }
-  }, [hover, dragging, onShowRemoveConnector, onHideRemoveConnector]);
+  }, [element, hover, dragging, onShowRemoveConnector, onHideRemoveConnector]);
 
   const groupClassName = css(
     styles.topologyEdge,

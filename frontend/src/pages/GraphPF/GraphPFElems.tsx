@@ -79,6 +79,7 @@ export type EdgeData = DecoratedGraphEdgeData & {
   isHighlighted?: boolean;
   isSelected?: boolean;
   isUnhighlighted?: boolean;
+  onHover?: (element: GraphElement, isMouseIn: boolean) => void;
   pathStyle?: React.CSSProperties;
   tag?: string;
   tagStatus?: NodeStatus;
@@ -614,7 +615,6 @@ export const descendents = (node: Node): Node[] => {
 };
 
 export const ancestors = (node: Node): GraphElement[] => {
-  console.log('ance');
   const result: GraphElement[] = [];
   while (node.hasParent()) {
     const parent = node.getParent() as Node;
@@ -731,24 +731,20 @@ export const nodesOut = (nodes: Node[]): Node[] => {
 };
 
 export const predecessors = (node: Node): GraphElement[] => {
-  console.log(`pred(${node.getId()})`);
-  const result = [] as GraphElement[];
+  let result = [] as GraphElement[];
   const targetEdges = node.getTargetEdges();
   const sourceNodes = targetEdges.map(e => e.getSource());
-  result.concat(targetEdges);
-  result.concat(sourceNodes);
-  sourceNodes.forEach(n => result.concat(predecessors(n)));
+  result = result.concat(targetEdges, sourceNodes);
+  sourceNodes.forEach(n => (result = result.concat(predecessors(n))));
   return result;
 };
 
 export const successors = (node: Node): GraphElement[] => {
-  console.log(`succ(${node.getId()})`);
-  const result = [] as GraphElement[];
+  let result = [] as GraphElement[];
   const sourceEdges = node.getSourceEdges();
   const targetNodes = sourceEdges.map(e => e.getTarget());
-  result.concat(sourceEdges);
-  result.concat(targetNodes);
-  targetNodes.forEach(n => result.concat(successors(n)));
+  result = result.concat(sourceEdges, targetNodes);
+  targetNodes.forEach(n => (result = result.concat(successors(n))));
   return result;
 };
 

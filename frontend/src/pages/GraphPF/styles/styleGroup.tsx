@@ -5,10 +5,11 @@ import {
   observer,
   ScaleDetailsLevel,
   ShapeProps,
+  useHover,
   WithSelectionProps
 } from '@patternfly/react-topology';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
-import * as React from 'react';
+import React from 'react';
 
 const ICON_PADDING = 20;
 
@@ -29,6 +30,21 @@ type StyleGroupProps = {
 const StyleGroup: React.FC<StyleGroupProps> = ({ element, collapsedWidth = 75, collapsedHeight = 75, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
+
+  const [hover] = useHover();
+
+  React.useLayoutEffect(() => {
+    if (hover) {
+      if (!!data?.onHover) {
+        console.log('whoopie');
+        data?.onHover(element, true);
+      }
+    } else {
+      if (!!data?.onHover) {
+        data?.onHover(element, false);
+      }
+    }
+  }, [data, element, hover]);
 
   const passedData = React.useMemo(() => {
     const newData = { ...data };

@@ -223,6 +223,7 @@ export const TopologyContent: React.FC<{
     // const opts = { ...DefaultOptions, ...options };
 
     function addGroup(data: NodeData): NodeModel {
+      data.onHover = onHover;
       const group: NodeModel = {
         children: [],
         collapsed: false,
@@ -257,6 +258,7 @@ export const TopologyContent: React.FC<{
     }
 
     function addEdge(data: EdgeData): EdgeModel {
+      data.onHover = onHover;
       const edge: EdgeModel = {
         data: data,
         edgeStyle: EdgeStyle.solid,
