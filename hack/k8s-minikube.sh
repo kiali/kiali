@@ -644,6 +644,24 @@ debug "minikube is located at $(which ${MINIKUBE_EXE})"
 
 if [ "$_CMD" = "start" ]; then
   echo 'Starting minikube...'
+
+  # Check if no-kubernetes flag is present. If so, we shouldn't try to provide a kube version,
+  # start addons, or apply additional yaml
+  if grep -q 'no-kubernetes' <<< "${MINIKUBE_START_FLAGS}"
+  then
+    ${MINIKUBE_EXEC_WITH_PROFILE} start \
+      ${MINIKUBE_START_FLAGS} \
+      ${INSECURE_REGISTRY_START_ARG} \
+      --cpus=${K8S_CPU} \
+      --memory=${K8S_MEMORY} \
+      --disk-size=${K8S_DISK} \
+      --driver=${K8S_DRIVER}
+
+    [ "$?" != "0" ] && echo "ERROR: Failed to start minikube" && exit 1
+
+    exit 0
+  fi
+
   ${MINIKUBE_EXEC_WITH_PROFILE} start \
     ${MINIKUBE_START_FLAGS} \
     ${INSECURE_REGISTRY_START_ARG} \

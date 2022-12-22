@@ -61,15 +61,19 @@ ISTIO_TAG=""
 
 # Certs directory where you want the generates cert files to be written
 CERTS_DIR="/tmp/istio-multicluster-certs"
+KEYCLOAK_CERTS_DIR=${CERTS_DIR}/keycloak
 
 # The default Mesh and Network identifiers
 MESH_ID="mesh-hack"
 NETWORK1_ID="network-east"
 NETWORK2_ID="network-west"
 
+# Deploy a single kiali or a kiali per cluster
+SINGLE_KIALI="true"
+
 # If a gateway is required to cross the networks, set this to true and one will be created
 # See: https://istio.io/latest/docs/setup/install/multicluster/multi-primary_multi-network/
-CROSSNETWORK_GATEWAY_REQUIRED="true"
+CROSSNETWORK_GATEWAY_REQUIRED="false"
 
 # Under some conditions, manually configuring the mesh network will be required.
 MANUAL_MESH_NETWORK_CONFIG=""
@@ -252,6 +256,10 @@ while [[ $# -gt 0 ]]; do
       NETWORK2_ID="$2"
       shift;shift
       ;;
+    -sk|--single-kiali)
+      SINGLE_KIALI="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -291,6 +299,7 @@ Valid command line arguments:
   -n1|--network1 <id>: When Istio is installed in cluster 1, it will be part of the network with this given name. (Default: network-default)
   -n2|--network2 <id>: When Istio is installed in cluster 2, it will be part of the network with this given name.
                        If this is left as empty string, it will be the same as --network1. (Default: "")
+  -sk|--single-kiali <bool>: If "true", a single kiali will be deployed for the whole mesh. (Default: true)
   -h|--help: this message
 HELPMSG
       exit 1
@@ -443,7 +452,8 @@ export BOOKINFO_ENABLED \
        MINIKUBE_MEMORY \
        MESH_ID \
        NETWORK1_ID \
-       NETWORK2_ID
+       NETWORK2_ID \
+       SINGLE_KIALI
 
 cat <<EOM
 === SETTINGS ===
@@ -479,6 +489,7 @@ MINIKUBE_MEMORY=$MINIKUBE_MEMORY
 MESH_ID=$MESH_ID
 NETWORK1_ID=$NETWORK1_ID
 NETWORK2_ID=$NETWORK2_ID
+SINGLE_KIALI=$SINGLE_KIALI
 === SETTINGS ===
 EOM
 
