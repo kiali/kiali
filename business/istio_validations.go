@@ -137,6 +137,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(istioConfigList models.I
 		checkers.SidecarChecker{Sidecars: istioConfigList.Sidecars, Namespaces: namespaces, WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices},
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace},
 		checkers.WorkloadChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, WorkloadsPerNamespace: workloadsPerNamespace},
+		checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, WorkloadsPerNamespace: workloadsPerNamespace},
 		checkers.WasmPluginChecker{WasmPlugins: istioConfigList.WasmPlugins, Namespaces: namespaces},
 		checkers.TelemetryChecker{Telemetries: istioConfigList.Telemetries, Namespaces: namespaces},
 		checkers.K8sHTTPRouteChecker{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways},
@@ -233,11 +234,15 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	case kubernetes.EnvoyFilters:
 		// Validation on EnvoyFilters are not yet in place
 	case kubernetes.WasmPlugins:
-		// TODO
+		// Validation on WasmPlugins is not expected
 	case kubernetes.Telemetries:
-		// TODO
+		// Validation on Telemetries is not expected
 	case kubernetes.K8sGateways:
-		// TODO
+		// Validations on K8sGateways
+		objectCheckers = []ObjectChecker{
+			checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, WorkloadsPerNamespace: workloadsPerNamespace},
+		}
+		referenceChecker = references.GatewayReferences{Gateways: istioConfigList.Gateways, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.K8sHTTPRoutes:
 		httpRouteChecker := checkers.K8sHTTPRouteChecker{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways}
 		objectCheckers = []ObjectChecker{noServiceChecker, httpRouteChecker}
@@ -412,6 +417,9 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 
 	// All WorkloadEntries
 	rValue.WorkloadEntries = append(rValue.WorkloadEntries, istioConfigList.WorkloadEntries...)
+
+	// All K8sGateways
+	rValue.K8sGateways = append(rValue.K8sGateways, istioConfigList.K8sGateways...)
 
 	in.filterPeerAuths(namespace, mtlsDetails, istioConfigList.PeerAuthentications)
 
