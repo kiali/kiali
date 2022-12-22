@@ -21,12 +21,14 @@ type Props = {
   onHeaderValueChange: (headerValue: string) => void;
   onHostNameChange: (hostName: string) => void;
   onPortValueChange: (portValue: string) => void;
+  onSelectServiceOp: (serviceOp: string) => void;
   onSelectStatusCodeOp: (statusCodeOp: string) => void;
   onSelectHeaderOp: (headerOp: string) => void;
   onSelectSchemeOp: (schemeOp: string) => void;
   onAddFilter: () => void;
   portValue: string;
   schemeOp: string;
+  serviceOp: string;
   statusCodeOp: string;
 };
 
@@ -35,6 +37,7 @@ type State = {
   isHeaderDropdown: boolean;
   isSchemeDropdown: boolean;
   isStatusCodeDropdown: boolean;
+  isServiceDropdown: boolean;
 };
 
 export const REQ_MOD = 'requestHeaderModifier';
@@ -50,9 +53,10 @@ export const HTTPS = 'https';
 export const SC301 = '301';
 export const SC302 = '302';
 
-const filterOptions: string[] = [REQ_MOD, REQ_RED];
+const filterOptions: string[] = [REQ_MOD, REQ_RED, REQ_MIR];
 const schemeOptions: string[] = [HTTP, HTTPS];
 const statusOptions: string[] = [SC301, SC302];
+const serviceOptions: string[] = ['details:8080'];
 
 export const SET = 'set';
 export const ADD = 'add';
@@ -71,6 +75,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
       isHeaderDropdown: false,
       isSchemeDropdown: false,
       isStatusCodeDropdown: false,
+      isServiceDropdown: false,
     };
   }
 
@@ -95,6 +100,12 @@ class K8sFilterBuilder extends React.Component<Props, State> {
   onStatusCodeOpToggle = () => {
     this.setState({
       isStatusCodeDropdown: !this.state.isStatusCodeDropdown
+    });
+  };
+
+  onServiceOpToggle = () => {
+    this.setState({
+      isServiceDropdown: !this.state.isServiceDropdown
     });
   };
 
@@ -222,6 +233,30 @@ class K8sFilterBuilder extends React.Component<Props, State> {
                   this.onStatusCodeOpToggle();
                 }}
                 data-test={'status-code-' + op}
+              >
+                {op}
+              </DropdownItem>
+            ))}
+          />
+        )}
+        {(this.props.filterType === REQ_MIR) && (
+          <Dropdown
+            toggle={
+              <DropdownToggle onToggle={this.onServiceOpToggle} data-test={'service'}>
+                {this.props.serviceOp}
+              </DropdownToggle>
+            }
+            isOpen={this.state.isServiceDropdown}
+            dropdownItems={serviceOptions.map((op, index) => (
+              <DropdownItem
+                key={op + '_' + index}
+                value={op}
+                component="button"
+                onClick={() => {
+                  this.props.onSelectServiceOp(op);
+                  this.onServiceOpToggle();
+                }}
+                data-test={'service-' + op}
               >
                 {op}
               </DropdownItem>

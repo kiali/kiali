@@ -15,7 +15,7 @@ import {
   HTTPMatchRequest,
   HTTPRoute,
   HTTPRouteDestination,
-  K8sGateway, K8sHTTPHeaderFilter,
+  K8sGateway, K8sHTTPHeaderFilter, K8sHTTPRequestMirrorFilter,
   K8sHTTPRoute, K8sHTTPRouteFilter, K8sHTTPRouteMatch, K8sHTTPRouteRequestRedirect,
   LoadBalancerSettings,
   Operation,
@@ -52,7 +52,7 @@ import { ServiceEntryState } from '../../pages/IstioConfigNew/ServiceEntryForm';
 import {K8sRouteBackendRef} from './K8sTrafficShifting';
 import { QUERY_PARAMS, PATH, HEADERS, METHOD } from "./K8sRequestRouting/K8sMatchBuilder";
 import {ServiceOverview} from "../../types/ServiceList";
-import {ADD, SET, REQ_MOD, REQ_RED} from "./K8sRequestRouting/K8sFilterBuilder";
+import {ADD, SET, REQ_MOD, REQ_RED, REQ_MIR} from "./K8sRequestRouting/K8sFilterBuilder";
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
@@ -354,6 +354,21 @@ const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
       }
       requestRedirect.statusCode = code;
       routeFilter.push({type: "RequestRedirect", requestRedirect: requestRedirect})
+    });
+
+  filters
+    .filter(filter => filter.startsWith(REQ_MIR))
+    .forEach(filter => {
+      const requestMirror: K8sHTTPRequestMirrorFilter = {};
+      // match follows format:  requestMirror service:port
+      const i0 = filter.indexOf(' ');
+      const j0 = filter.indexOf(':');
+      const service = filter.substring(i0 + 1, j0).trim();
+      const port = filter.substring(j0 + 1).trim();
+      if (service && port) {
+        requestMirror.backendRef = {name: service, port: parseInt(port)};
+      }
+      routeFilter.push({type: "RequestMirror", requestMirror: requestMirror})
     });
 
   return routeFilter;

@@ -805,7 +805,12 @@ export interface K8sRouteBackendRef {
 export interface K8sHTTPRouteFilter {
   requestRedirect?: K8sHTTPRouteRequestRedirect;
   requestHeaderModifier?: K8sHTTPHeaderFilter;
+  requestMirror?: K8sHTTPRequestMirrorFilter;
   type?:            string;
+}
+
+export interface K8sHTTPRequestMirrorFilter {
+  backendRef?: K8sRouteBackendRef;
 }
 
 export interface K8sHTTPHeaderFilter {

@@ -5,7 +5,7 @@ import {K8sRouteBackendRef} from './K8sTrafficShifting';
 import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
 import {getDefaultBackendRefs} from './WizardActions';
 import {ServiceOverview} from "../../types/ServiceList";
-import {REMOVE, REQ_MOD, RESP_MOD, SET, HTTP, SC301, REQ_RED} from "./K8sRequestRouting/K8sFilterBuilder";
+import {REMOVE, REQ_MOD, RESP_MOD, SET, HTTP, SC301, REQ_RED, REQ_MIR} from "./K8sRequestRouting/K8sFilterBuilder";
 import {isServerHostValid} from "../../utils/IstioConfigUtils";
 
 type Props = {
@@ -32,6 +32,7 @@ type State = {
   queryParamName: string;
   schemeOp: string;
   statusCodeOp: string;
+  serviceOp: string;
   validationMsg: string;
 };
 
@@ -61,6 +62,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
       headerOp: SET,
       schemeOp: HTTP,
       statusCodeOp: SC301,
+      serviceOp: '',
       headerValue: '',
       hostName: '',
       portValue: '',
@@ -310,6 +312,8 @@ class K8sRequestRouting extends React.Component<Props, State> {
         }
       } else if (this.state.filterType === REQ_RED) {
         newFilter = `${prevState.filterType} ${prevState.schemeOp}://${prevState.hostName}:${prevState.portValue} ${prevState.statusCodeOp}`;
+      } else if (this.state.filterType === REQ_MIR) {
+        newFilter = `${prevState.filterType} ${prevState.serviceOp}`;
       }
       if (newFilter && !prevState.filters.includes(newFilter)) {
         prevState.filters.push(newFilter);
@@ -408,9 +412,11 @@ class K8sRequestRouting extends React.Component<Props, State> {
           onHostNameChange={this.onHostNameChange}
           onPortValueChange={this.onPortValueChange}
           onSelectStatusCodeOp={(statusCodeOp: string) => this.setState({ statusCodeOp: statusCodeOp })}
+          onSelectServiceOp={(serviceOp: string) => this.setState({ serviceOp: serviceOp })}
           headerOp={this.state.headerOp}
           schemeOp={this.state.schemeOp}
           statusCodeOp={this.state.statusCodeOp}
+          serviceOp={this.state.serviceOp}
           hostName={this.state.hostName}
           portValue={this.state.portValue}
           filterType={this.state.filterType}
