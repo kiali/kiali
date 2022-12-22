@@ -118,7 +118,7 @@ type (
 		registryStatusLock     sync.RWMutex
 		registryStatusCreated  *time.Time
 		registryStatus         *kubernetes.RegistryStatus
-		// Stops the background goroutines which refreshe the cache's
+		// Stops the background goroutines which refresh the cache's
 		// service account token and poll for istiod's proxy status.
 		stopPolling context.CancelFunc
 
