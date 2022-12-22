@@ -8,6 +8,8 @@ import {
   TextInput,
   ButtonVariant
 } from '@patternfly/react-core';
+import {ServiceOverview} from "../../../types/ServiceList";
+import {getServicePort} from "../../../types/ServiceInfo";
 
 type Props = {
   filterType: string;
@@ -30,6 +32,7 @@ type Props = {
   schemeOp: string;
   serviceOp: string;
   statusCodeOp: string;
+  subServices: ServiceOverview[];
 };
 
 type State = {
@@ -56,7 +59,6 @@ export const SC302 = '302';
 const filterOptions: string[] = [REQ_MOD, REQ_RED, REQ_MIR];
 const schemeOptions: string[] = [HTTP, HTTPS];
 const statusOptions: string[] = [SC301, SC302];
-const serviceOptions: string[] = ['details:8080'];
 
 export const SET = 'set';
 export const ADD = 'add';
@@ -247,18 +249,18 @@ class K8sFilterBuilder extends React.Component<Props, State> {
               </DropdownToggle>
             }
             isOpen={this.state.isServiceDropdown}
-            dropdownItems={serviceOptions.map((op, index) => (
+            dropdownItems={this.props.subServices.map((so, index) => (
               <DropdownItem
-                key={op + '_' + index}
-                value={op}
+                key={so.name + '_' + index}
+                value={so.name + ':' + getServicePort(so.ports)}
                 component="button"
                 onClick={() => {
-                  this.props.onSelectServiceOp(op);
+                  this.props.onSelectServiceOp(so.name + ':' + getServicePort(so.ports));
                   this.onServiceOpToggle();
                 }}
-                data-test={'service-' + op}
+                data-test={'service-' + so.name}
               >
-                {op}
+                {so.name + ':' + getServicePort(so.ports)}
               </DropdownItem>
             ))}
           />

@@ -442,6 +442,9 @@ const parseK8sHTTPRouteFilter = (httpRouteFilter: K8sHTTPRouteFilter): string[] 
   if (httpRouteFilter.requestRedirect) {
     matches = matches.concat(parseK8sHTTPRouteRequestRedirect(httpRouteFilter.requestRedirect));
   }
+  if (httpRouteFilter.requestMirror) {
+    matches = matches.concat(parseK8sHTTPRouteRequestMirror(httpRouteFilter.requestMirror));
+  }
   return matches;
 };
 
@@ -467,6 +470,10 @@ const parseK8sHTTPHeaderFilter = (filterType: string, httpHeaderFilter: K8sHTTPH
 
 const parseK8sHTTPRouteRequestRedirect = (requestRedirect: K8sHTTPRouteRequestRedirect): string => {
   return `${REQ_RED} ${requestRedirect.scheme}://${requestRedirect.hostname ? requestRedirect.hostname : ''}:${requestRedirect.port ? requestRedirect.port : ''} ${requestRedirect.statusCode}`;
+};
+
+const parseK8sHTTPRouteRequestMirror = (requestMirror: K8sHTTPRequestMirrorFilter): string => {
+  return `${REQ_MIR} ${requestMirror.backendRef ? requestMirror.backendRef.name + ':' + requestMirror.backendRef.port : ''}`;
 };
 
 export const getGatewayName = (namespace: string, serviceName: string, gatewayNames: string[]): string => {
