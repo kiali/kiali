@@ -17,18 +17,19 @@ type ProxyStatusCache interface {
 
 // pollIstiodForProxyStatus is a long running goroutine that will periodically poll istiod for proxy status.
 // Polling stops when the stopCacheChan is closed.
-func (c *kialiCacheImpl) pollIstiodForProxyStatus() {
-	log.Debug("[Kiali Cache] Scraping istiod for proxy status")
+func (c *kialiCacheImpl) pollIstiodForProxyStatus(ctx context.Context) {
+	log.Debug("[Kiali Cache] Starting polling istiod for proxy status")
 	go func() {
 		for {
 			select {
-			case <-c.stopCacheChan:
+			case <-ctx.Done():
+				log.Debug("[Kiali Cache] Stopping polling for istiod proxy status")
 				return
 			case <-time.After(c.tokenNamespaceDuration):
 				// Get the proxy status from istiod with some retries.
 				// Wrapping this so we can defer cancel.
 				func() {
-					ctx, cancel := context.WithTimeout(context.Background(), c.tokenNamespaceDuration)
+					ctx, cancel := context.WithTimeout(ctx, c.tokenNamespaceDuration)
 					defer cancel()
 
 					var (
@@ -36,7 +37,8 @@ func (c *kialiCacheImpl) pollIstiodForProxyStatus() {
 						err         error
 					)
 
-					retryErr := wait.PollImmediateUntilWithContext(ctx, time.Second*4, func(ctx context.Context) (bool, error) {
+					interval := c.tokenNamespaceDuration / 2
+					retryErr := wait.PollImmediateUntilWithContext(ctx, interval, func(ctx context.Context) (bool, error) {
 						log.Trace("Getting proxy status from istiod")
 						proxyStatus, err = c.istioClient.GetProxyStatus()
 						if err != nil {
@@ -47,7 +49,7 @@ func (c *kialiCacheImpl) pollIstiodForProxyStatus() {
 						return true, nil
 					})
 					if retryErr != nil {
-						log.Errorf("Error getting proxy status from istiod: %v", err)
+						log.Warningf("Error getting proxy status from istiod. Proxy status may be stale. Err: %v", err)
 						return
 					}
 
