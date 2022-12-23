@@ -141,6 +141,7 @@ type ReduxProps = {
   toggleIdleNodes: () => void;
   toggleLegend: () => void;
   updateSummary: (event: CytoscapeEvent) => void;
+  istioAPIEnabled: boolean;
 };
 
 export type GraphPageProps = RouteComponentProps<Partial<GraphURLPathProps>> & ReduxProps & {
@@ -547,6 +548,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
           peerAuthentications={this.state.wizardsData.peerAuthentications || []}
           tlsStatus={this.state.wizardsData.serviceDetails?.namespaceMTLS}
           onClose={this.handleWizardClose}
+          istioAPIEnabled={this.props.istioAPIEnabled}
         />
         {this.state.showConfirmDeleteTrafficRouting && (
           <ConfirmDeleteTrafficRoutingModal
@@ -888,7 +890,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   showVirtualServices: state.graph.toolbarState.showVirtualServices,
   summaryData: state.graph.summaryData,
   trace: state.jaegerState?.selectedTrace,
-  trafficRates: trafficRatesSelector(state)
+  trafficRates: trafficRatesSelector(state),
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

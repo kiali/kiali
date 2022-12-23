@@ -32,8 +32,14 @@ import ServiceWizardActionsDropdownGroup, {DELETE_TRAFFIC_ROUTING} from "./Servi
 import ConfirmDeleteTrafficRoutingModal from "./ConfirmDeleteTrafficRoutingModal";
 import { deleteServiceTrafficRouting } from "services/Api";
 import {ServiceOverview} from "../../types/ServiceList";
+import {KialiAppState} from "../../store/Store";
+import {connect} from "react-redux";
 
-type Props = {
+type ReduxProps = {
+  istioAPIEnabled: boolean;
+};
+
+type Props = ReduxProps & {
   namespace: string;
   serviceName: string;
   show: boolean;
@@ -61,7 +67,7 @@ type State = {
   isActionsOpen: boolean;
 };
 
-class ServiceWizardDropdown extends React.Component<Props, State> {
+class ServiceWizardDropdownComponent extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -233,6 +239,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
           peerAuthentications={this.props.peerAuthentications}
           tlsStatus={this.props.tlsStatus}
           onClose={this.onClose}
+          istioAPIEnabled={this.props.istioAPIEnabled}
         />
         <ConfirmDeleteTrafficRoutingModal
           destinationRules={DestinationRuleC.fromDrArray(this.props.destinationRules)}
@@ -247,4 +254,9 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
   }
 }
 
+const mapStateToProps = (state: KialiAppState) => ({
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
+});
+
+const ServiceWizardDropdown = connect(mapStateToProps)(ServiceWizardDropdownComponent);
 export default ServiceWizardDropdown;

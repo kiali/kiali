@@ -2,10 +2,17 @@ import React from 'react';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import NamespaceDropdownContainer from '../NamespaceDropdown';
 import { style } from 'typestyle';
+import { KialiIcon } from "../../config/KialiIcon";
+import {KialiAppState} from "../../store/Store";
+import {connect} from "react-redux";
 
 const titles = ['applications', 'istio', 'istio/new', 'mesh', 'services', 'workloads'];
 
-type Props = {
+type ReduxProps = {
+  istioAPIEnabled: boolean;
+};
+
+type Props = ReduxProps & {
   actionsToolbar?: JSX.Element;
   hideNamespaceSelector?: boolean;
   rightToolbar?: JSX.Element;
@@ -29,7 +36,7 @@ const actionsToolbarStyle = style({
   paddingTop: '17px'
 });
 
-export default class DefaultSecondaryMasthead extends React.Component<Props> {
+class DefaultSecondaryMastheadComponent extends React.Component<Props> {
   showTitle() {
     let path = window.location.pathname;
     path = path.substr(path.lastIndexOf('/console') + '/console'.length + 1);
@@ -47,9 +54,16 @@ export default class DefaultSecondaryMasthead extends React.Component<Props> {
       }
       return {
         title: (
+          <>
           <Title headingLevel="h1" size={TitleSizes['3xl']} style={{ margin: '15px 0 11px' }}>
             {title}
           </Title>
+            {!this.props.istioAPIEnabled && path.startsWith('istio/new/') &&
+              (<div>
+                <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when creating the configuration as may not be compliant (The validations are disabled)
+              </div>)
+            }
+          </>
         ),
         disabled: disabled
       };
@@ -76,3 +90,10 @@ export default class DefaultSecondaryMasthead extends React.Component<Props> {
     );
   }
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
+});
+
+const DefaultSecondaryMasthead = connect(mapStateToProps)(DefaultSecondaryMastheadComponent);
+export default DefaultSecondaryMasthead;
