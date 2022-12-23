@@ -89,10 +89,6 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
     if (this.props.appState !== prevProps.appState && this.state.copyStatus === CopyStatus.COPIED) {
       this.setState({ copyStatus: CopyStatus.OLD_COPY });
     }
-    const currentTab = activeTab(tabName, defaultTab);
-    if (currentTab !== this.state.currentTab) {
-      this.setState({ currentTab: currentTab });
-    }
   }
 
   parseConfig = (key: string, value: any) => {
@@ -126,8 +122,9 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
         arr.push(this.renderHealthConfig(v) as never);
       }
       return arr;
-      let result = {};
-      for (let [key, value] of Object.entries(config)) {
+    }
+    let result = {};
+    for (let [key, value] of Object.entries(config)) {
 
         if ((value as Object).constructor.toString().includes('RegExp')) {
           result[key] = (value as RegExp).toString();
@@ -140,7 +137,6 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
 
         }
         return result;
-      }
     }
   }
 
@@ -152,7 +148,6 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
     2);
 
 private renderTabs() {
-
 
   const kialiConfig = (
       <Tab eventKey={0} title="Kiali Config" key="kialiConfig">
@@ -213,7 +208,7 @@ private renderTabs() {
         title="Debug information"
         actions={[
           <Button onClick={this.close}>Close</Button>,
-          <CopyToClipboard onCopy={this.copyCallback} text={this.state.currentTab == "kialiConfig" ? this.healthConfig : this.renderDebugInformation()} options={copyToClipboardOptions}>
+          <CopyToClipboard onCopy={this.copyCallback} text={this.state.currentTab === "kialiConfig" ? this.healthConfig : this.renderDebugInformation()} options={copyToClipboardOptions}>
             <Button variant={ButtonVariant.primary}>Copy</Button>
           </CopyToClipboard>
         ]}
@@ -240,6 +235,7 @@ private renderTabs() {
           id="basic-tabs"
           onSelect={tabValue => {
             this.setState({ currentTab: tabValue });
+            this.hideAlert()
           }}
           tabMap={tabIndex}
           tabName={tabName}
