@@ -3,11 +3,8 @@ import { connect } from 'react-redux';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import _ from 'lodash';
 import beautify from 'json-beautify';
-
-import authenticationConfig from '../../config/AuthenticationConfig';
 import { serverConfig } from '../../config';
 import { ComputedServerConfig } from '../../config/ServerConfig';
-import { AuthConfig } from '../../types/Auth';
 import { KialiAppState } from '../../store/Store';
 import {
   Alert,
@@ -21,6 +18,7 @@ import {
 import {aceOptions} from "../../types/IstioConfigDetails";
 import AceEditor from "react-ace";
 import ParameterizedTabs, {activeTab} from "../Tab/Tabs";
+import {ICell, Table, TableVariant, TableBody, TableHeader} from "@patternfly/react-table";
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -37,11 +35,11 @@ type DebugInformationState = {
   currentTab: string;
   show: boolean;
   copyStatus: CopyStatus;
+  config: Array<string>;
 };
 
 type DebugInformationData = {
   backendConfigs: {
-    authenticationConfig: AuthConfig;
     computedServerConfig: ComputedServerConfig;
   };
   currentURL: string;
@@ -51,6 +49,8 @@ type DebugInformationData = {
 const copyToClipboardOptions = {
   message: 'We failed to automatically copy the text, please use: #{key}, Enter\t'
 };
+
+const propsToShow = ["accesibleNamespaces", "authStrategy", "clusters", "gatewayAPIEnabled", "istioConfigMap", "istioIdentityDomain", "istioNamespace", "istioStatusEnabled", "logLevel"];
 
 const tabName = 'tab';
 const defaultTab = 'kialiConfig';
@@ -62,11 +62,19 @@ const tabIndex: { [tab: string]: number } = {
 
 export class DebugInformation extends React.PureComponent<DebugInformationProps, DebugInformationState> {
   aceEditorRef: React.RefObject<AceEditor>;
+  showConfig = Array<string>();
 
   constructor(props: DebugInformationProps) {
     super(props);
     this.aceEditorRef = React.createRef();
-    this.state = { show: false, copyStatus: CopyStatus.NOT_COPIED, currentTab: activeTab(tabName, defaultTab) };
+
+    for (const key in serverConfig) {
+      if (propsToShow.includes(key)) {
+        this.showConfig.push(key)
+      }
+    }
+    this.showConfig = this.showConfig.sort();
+    this.state = { show: false, copyStatus: CopyStatus.NOT_COPIED, currentTab: activeTab(tabName, defaultTab), config: this.showConfig };
   }
 
   open = () => {
@@ -96,56 +104,34 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
     if (['cyRef', 'summaryTarget', 'token', 'username'].includes(key)) {
       return null;
     }
-    if ('healthConfig' === key) {
-      return this.renderHealthConfig(value);
-    }
     return value;
   };
 
   renderDebugInformation = _.memoize(() => {
     const debugInformation: DebugInformationData = {
       backendConfigs: {
-        authenticationConfig: authenticationConfig,
         computedServerConfig: serverConfig
       },
-      currentURL: "",
+      currentURL: window.location.href,
       reduxState: this.props.appState
     };
     return beautify(debugInformation, this.parseConfig, 2);
   });
 
-  // @ts-ignore
-  renderHealthConfig = (config: Array<any> | Object | RegExp | string) => {
-    if (Array.isArray(config)) {
-      let arr = [];
-      for (let v of config) {
-        arr.push(this.renderHealthConfig(v) as never);
-      }
-      return arr;
+  private columns = (): ICell[] => {
+    return [{ title: 'Configuration' }, { title: 'Value' }];
+  };
+
+private getServerConfig() {
+  const config = this.showConfig.map((k) => {
+    if (typeof serverConfig[k] === "string") {
+      return [k, serverConfig[k]]
+    } else {
+      return [k, JSON.stringify(serverConfig[k])]
     }
-    let result = {};
-    for (let [key, value] of Object.entries(config)) {
-
-        if ((value as Object).constructor.toString().includes('RegExp')) {
-          result[key] = (value as RegExp).toString();
-
-        } else if (typeof value !== 'object') {
-          result[key] = value;
-
-        } else {
-          result[key] = this.renderHealthConfig(value);
-
-        }
-        return result;
-    }
-  }
-
- healthConfig = beautify(
-    {
-      healthConfig: serverConfig.healthConfig
-    },
-    this.parseConfig,
-    2);
+  });
+  return config;
+}
 
 private renderTabs() {
 
@@ -153,19 +139,16 @@ private renderTabs() {
       <Tab eventKey={0} title="Kiali Config" key="kialiConfig">
         <span></span>
 
-        <CopyToClipboard onCopy={this.copyCallback} text={this.renderHealthConfig} options={copyToClipboardOptions}>
-          <AceEditor
-            ref={this.aceEditorRef}
-            mode="yaml"
-            theme="eclipse"
-            width={'100%'}
-            //height={height.toString() + 'px'}
-            className={'istio-ace-editor'}
-            wrapEnabled={true}
-            readOnly={true}
-            setOptions={aceOptions || { foldStyle: 'markbegin' }}
-            value={this.healthConfig}
-          />
+        <CopyToClipboard onCopy={this.copyCallback} text={this.getServerConfig()} options={copyToClipboardOptions}>
+          <Table
+            header={<></>}
+            variant={TableVariant.compact}
+            cells={this.columns()}
+            rows={this.getServerConfig()}
+          >
+            <TableHeader />
+            <TableBody />
+          </Table>
         </CopyToClipboard>
       </Tab>
     );
@@ -179,7 +162,6 @@ private renderTabs() {
             mode="yaml"
             theme="eclipse"
             width={'100%'}
-            //height={height.toString() + 'px'}
             className={'istio-ace-editor'}
             wrapEnabled={true}
             readOnly={true}
@@ -208,7 +190,7 @@ private renderTabs() {
         title="Debug information"
         actions={[
           <Button onClick={this.close}>Close</Button>,
-          <CopyToClipboard onCopy={this.copyCallback} text={this.state.currentTab === "kialiConfig" ? this.healthConfig : this.renderDebugInformation()} options={copyToClipboardOptions}>
+          <CopyToClipboard onCopy={this.copyCallback} text={this.state.currentTab === "kialiConfig" ? this.getServerConfig() : this.renderDebugInformation()} options={copyToClipboardOptions}>
             <Button variant={ButtonVariant.primary}>Copy</Button>
           </CopyToClipboard>
         ]}
