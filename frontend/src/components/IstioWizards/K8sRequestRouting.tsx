@@ -3,7 +3,7 @@ import K8sRules, {MOVE_TYPE, K8sRule} from './K8sRequestRouting/K8sRules';
 import K8sRuleBuilder from './K8sRequestRouting/K8sRuleBuilder';
 import {K8sRouteBackendRef} from './K8sTrafficShifting';
 import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
-import {getDefaultBackendRefs} from './WizardActions';
+import {getDefaultBackendRefs, getDefaultService} from './WizardActions';
 import {ServiceOverview} from "../../types/ServiceList";
 import {REMOVE, REQ_MOD, RESP_MOD, SET, HTTP, SC301, REQ_RED, REQ_MIR} from "./K8sRequestRouting/K8sFilterBuilder";
 import {isServerHostValid} from "../../utils/IstioConfigUtils";
@@ -62,7 +62,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
       headerOp: SET,
       schemeOp: HTTP,
       statusCodeOp: SC301,
-      serviceOp: '',
+      serviceOp: getDefaultService(this.props.subServices),
       headerValue: '',
       hostName: '',
       portValue: '',

@@ -10,6 +10,7 @@ import {
 } from '@patternfly/react-core';
 import {ServiceOverview} from "../../../types/ServiceList";
 import {getServicePort} from "../../../types/ServiceInfo";
+import {style} from "typestyle";
 
 type Props = {
   filterType: string;
@@ -68,6 +69,10 @@ const allOptions = {
   [REQ_MOD]: [SET, ADD, REMOVE],
   [RESP_MOD]: [SET, ADD, REMOVE],
 };
+
+const serviceStyle = style({
+  width: '100%',
+});
 
 class K8sFilterBuilder extends React.Component<Props, State> {
   constructor(props) {
@@ -243,6 +248,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
         )}
         {(this.props.filterType === REQ_MIR) && (
           <Dropdown
+            className={serviceStyle}
             toggle={
               <DropdownToggle onToggle={this.onServiceOpToggle} data-test={'service'}>
                 {this.props.serviceOp}

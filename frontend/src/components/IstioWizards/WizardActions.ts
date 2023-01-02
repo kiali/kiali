@@ -1059,6 +1059,13 @@ export const getDefaultBackendRefs = (subServices: ServiceOverview[]): K8sRouteB
   return backendRefs;
 };
 
+export const getDefaultService = (subServices: ServiceOverview[]): string => {
+  if (subServices && subServices.length > 0) {
+    return `${subServices[0].name}:${getServicePort(subServices[0].ports)}`;
+  }
+  return ''
+};
+
 export const getDefaultWeights = (workloads: WorkloadOverview[]): WorkloadWeight[] => {
   const wkTraffic = workloads.length < 100 ? Math.floor(100 / workloads.length) : 0;
   const remainTraffic = workloads.length < 100 ? 100 % workloads.length : 0;
