@@ -136,12 +136,13 @@ export class IstioConfigPreview extends React.Component<Props, State> {
 
   addResource = (item: ConfigPreviewItem) => {
     const key = item.title.toLocaleLowerCase().replace(/\s/g, '');
-    const propItems =
+    const filterItems =
       this.props.items.length > 0
         ? (this.state.newIstioPage ? this.groupItems(this.props.items) : this.props.items).filter(
             it => it.title === item.title
-          )[0].items
+          )
         : [];
+    const  propItems = filterItems.length > 0 ? filterItems[0].items : [];
     return (
       <Tab eventKey={key} key={key + '_tab_preview'} title={item.title}>
         <EditResources
