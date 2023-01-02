@@ -118,6 +118,12 @@ func Fatalf(format string, args ...interface{}) {
 	log.Fatal().Msgf(format, args...)
 }
 
+// Return log level
+// Used to get debug info
+func GetLogLevel() string {
+	return log.Logger.GetLevel().String()
+}
+
 // Resolves the environment settings for the log level. Considers the verbose_mode from server version <=1.25.
 func resolveLogLevelFromEnv() zerolog.Level {
 	logLevel, isDefined := os.LookupEnv("LOG_LEVEL")
