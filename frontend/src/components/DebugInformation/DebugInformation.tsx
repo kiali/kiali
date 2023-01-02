@@ -13,12 +13,13 @@ import {
   Button,
   ButtonVariant,
   Modal,
-  ModalVariant, Tab
+  ModalVariant,
+  Tab
 } from '@patternfly/react-core';
-import {aceOptions} from "../../types/IstioConfigDetails";
+import { aceOptions } from "../../types/IstioConfigDetails";
 import AceEditor from "react-ace";
 import ParameterizedTabs, {activeTab} from "../Tab/Tabs";
-import {ICell, Table, TableVariant, TableBody, TableHeader} from "@patternfly/react-table";
+import { ICell, Table, TableBody, TableHeader, TableVariant } from "@patternfly/react-table";
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -35,7 +36,7 @@ type DebugInformationState = {
   currentTab: string;
   show: boolean;
   copyStatus: CopyStatus;
-  config: Array<string>;
+  config: Object;
 };
 
 type DebugInformationData = {
@@ -62,7 +63,7 @@ const tabIndex: { [tab: string]: number } = {
 
 export class DebugInformation extends React.PureComponent<DebugInformationProps, DebugInformationState> {
   aceEditorRef: React.RefObject<AceEditor>;
-  showConfig = Array<string>();
+  showConfig = {};
 
   constructor(props: DebugInformationProps) {
     super(props);
@@ -70,10 +71,13 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
 
     for (const key in serverConfig) {
       if (propsToShow.includes(key)) {
-        this.showConfig.push(key)
+          if (typeof serverConfig[key] === "string") {
+            this.showConfig[key] = serverConfig[key]
+          } else {
+            this.showConfig[key] = JSON.stringify(serverConfig[key])
+          }
       }
     }
-    this.showConfig = this.showConfig.sort();
     this.state = { show: false, copyStatus: CopyStatus.NOT_COPIED, currentTab: activeTab(tabName, defaultTab), config: this.showConfig };
   }
 
@@ -123,14 +127,16 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
   };
 
 private getServerConfig() {
-  const config = this.showConfig.map((k) => {
-    if (typeof serverConfig[k] === "string") {
-      return [k, serverConfig[k]]
+  var conf:string[][] = [];
+
+  for (const [k, v] of Object.entries(this.state.config)) {
+    if (typeof v !== "string") {
+      conf.push([k, JSON.stringify(v)]);
     } else {
-      return [k, JSON.stringify(serverConfig[k])]
+      conf.push([k, v]);
     }
-  });
-  return config;
+  }
+  return conf;
 }
 
 private renderTabs() {
@@ -190,7 +196,7 @@ private renderTabs() {
         title="Debug information"
         actions={[
           <Button onClick={this.close}>Close</Button>,
-          <CopyToClipboard onCopy={this.copyCallback} text={this.state.currentTab === "kialiConfig" ? this.getServerConfig() : this.renderDebugInformation()} options={copyToClipboardOptions}>
+          <CopyToClipboard onCopy={this.copyCallback} text={this.state.currentTab === "kialiConfig" ?  JSON.stringify(this.showConfig, null, 2) : this.renderDebugInformation()} options={copyToClipboardOptions}>
             <Button variant={ButtonVariant.primary}>Copy</Button>
           </CopyToClipboard>
         ]}
@@ -228,7 +234,6 @@ private renderTabs() {
         >
           {this.renderTabs()}
         </ParameterizedTabs>
-
       </Modal>
     );
   }
