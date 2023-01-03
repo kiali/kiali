@@ -30,6 +30,12 @@ import (
 // https://github.com/istio/istio/blob/master/mixer/adapter/kubernetesenv/cache.go
 
 type (
+	// KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
+	// It is exclusively used by the business layer where it's expected to be a singleton.
+	// This business layer cache needs access to all the kiali service account has access
+	// to so it uses the kiali service account token instead of a user token. Access to
+	// the objects returned by the cache should be filtered/restricted to the user's
+	// token access but the cache returns objects without any filtering or restrictions.
 	KialiCache interface {
 		// Control methods
 		// Check if a namespace is listed to be cached; if yes, creates a cache for that namespace
@@ -52,6 +58,7 @@ type (
 		RegistryStatusCache
 	}
 
+	// namespaceCache caches namespaces according to their token.
 	namespaceCache struct {
 		created       time.Time
 		namespaces    []models.Namespace

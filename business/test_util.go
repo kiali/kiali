@@ -28,6 +28,7 @@ func FakeDeployments() []apps_v1.Deployment {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v1",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: apps_v1.DeploymentSpec{
@@ -49,6 +50,7 @@ func FakeDeployments() []apps_v1.Deployment {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v2",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: apps_v1.DeploymentSpec{
@@ -70,6 +72,7 @@ func FakeDeployments() []apps_v1.Deployment {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v3",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: apps_v1.DeploymentSpec{
@@ -132,6 +135,7 @@ func FakeReplicaSets() []apps_v1.ReplicaSet {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v1",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: apps_v1.ReplicaSetSpec{
@@ -153,6 +157,7 @@ func FakeReplicaSets() []apps_v1.ReplicaSet {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v2",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: apps_v1.ReplicaSetSpec{
@@ -174,6 +179,7 @@ func FakeReplicaSets() []apps_v1.ReplicaSet {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v3",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: apps_v1.ReplicaSetSpec{
@@ -205,7 +211,8 @@ func FakeDuplicatedReplicaSets() []apps_v1.ReplicaSet {
 				Kind: "ReplicaSet",
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name:              "duplicated-v1-12345",
+				Name: "duplicated-v1-12345",
+
 				CreationTimestamp: meta_v1.NewTime(t1),
 				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
@@ -244,6 +251,7 @@ func FakeReplicationControllers() []core_v1.ReplicationController {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v1",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: core_v1.ReplicationControllerSpec{
@@ -265,6 +273,7 @@ func FakeReplicationControllers() []core_v1.ReplicationController {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v2",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: core_v1.ReplicationControllerSpec{
@@ -286,6 +295,7 @@ func FakeReplicationControllers() []core_v1.ReplicationController {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v3",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: core_v1.ReplicationControllerSpec{
@@ -318,6 +328,7 @@ func FakeDeploymentConfigs() []osapps_v1.DeploymentConfig {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v1",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: osapps_v1.DeploymentConfigSpec{
@@ -339,6 +350,7 @@ func FakeDeploymentConfigs() []osapps_v1.DeploymentConfig {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v2",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: osapps_v1.DeploymentConfigSpec{
@@ -360,6 +372,7 @@ func FakeDeploymentConfigs() []osapps_v1.DeploymentConfig {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v3",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: osapps_v1.DeploymentConfigSpec{
@@ -392,6 +405,7 @@ func FakeStatefulSets() []apps_v1.StatefulSet {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v1",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: apps_v1.StatefulSetSpec{
@@ -412,6 +426,7 @@ func FakeStatefulSets() []apps_v1.StatefulSet {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v2",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: apps_v1.StatefulSetSpec{
@@ -432,6 +447,7 @@ func FakeStatefulSets() []apps_v1.StatefulSet {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v3",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: apps_v1.StatefulSetSpec{
@@ -463,6 +479,7 @@ func FakeDaemonSets() []apps_v1.DaemonSet {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v1",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: apps_v1.DaemonSetSpec{
@@ -484,6 +501,7 @@ func FakeDaemonSets() []apps_v1.DaemonSet {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v2",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: apps_v1.DaemonSetSpec{
@@ -505,6 +523,7 @@ func FakeDaemonSets() []apps_v1.DaemonSet {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v3",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: apps_v1.DaemonSetSpec{
@@ -536,6 +555,7 @@ func FakeDuplicatedStatefulSets() []apps_v1.StatefulSet {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "duplicated-v1",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: apps_v1.StatefulSetSpec{
@@ -566,6 +586,7 @@ func FakeDepSyncedWithRS() []apps_v1.Deployment {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "details-v1",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
 			Spec: apps_v1.DeploymentSpec{
@@ -598,6 +619,7 @@ func FakeRSSyncedWithPods() []apps_v1.ReplicaSet {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "details-v1-3618568057",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
@@ -632,6 +654,7 @@ func FakePodsSyncedWithDeployments() []core_v1.Pod {
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "details-v1-3618568057-dnkjp",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
 				OwnerReferences: []meta_v1.OwnerReference{{
@@ -665,6 +688,7 @@ func FakePodSyncedWithDeployments() *core_v1.Pod {
 	return &core_v1.Pod{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              "details-v1-3618568057-dnkjp",
+			Namespace:         "Namespace",
 			CreationTimestamp: meta_v1.NewTime(t1),
 			Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
 			OwnerReferences: []meta_v1.OwnerReference{{
@@ -713,6 +737,7 @@ func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "duplicated-v1-3618568057-1",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				Labels:            map[string]string{appLabel: "duplicated", versionLabel: "v1"},
 				OwnerReferences: []meta_v1.OwnerReference{{
@@ -736,6 +761,7 @@ func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "duplicated-v1-3618568057-3",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				Labels:            map[string]string{appLabel: "duplicated", versionLabel: "v1"},
 				OwnerReferences: []meta_v1.OwnerReference{{
@@ -773,6 +799,7 @@ func FakePodsNoController() []core_v1.Pod {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "orphan-pod",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
 				Annotations:       kubetest.FakeIstioAnnotations(),
@@ -802,6 +829,7 @@ func FakePodsFromCustomController() []core_v1.Pod {
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "custom-controller-pod",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
 				OwnerReferences: []meta_v1.OwnerReference{{
@@ -839,6 +867,7 @@ func FakeCustomControllerRSSyncedWithPods() []apps_v1.ReplicaSet {
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "custom-controller-RS-123",
+				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
@@ -865,7 +894,7 @@ func FakeCustomControllerRSSyncedWithPods() []apps_v1.ReplicaSet {
 func FakeServices() []core_v1.Service {
 	return []core_v1.Service{
 		{
-			ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin"},
+			ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "Namespace"},
 			Spec: core_v1.ServiceSpec{
 				Selector: map[string]string{"app": "httpbin"},
 			},

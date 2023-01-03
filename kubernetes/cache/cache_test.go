@@ -6,21 +6,19 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	istiofake "istio.io/client-go/pkg/clientset/versioned/fake"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	kubefake "k8s.io/client-go/kubernetes/fake"
-	gatewayapifake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
-func newTestKialiCache(kubeObjects []runtime.Object, istioObjects []runtime.Object, gatewayObjects []runtime.Object) *kialiCacheImpl {
+// TODO: pass in interface?
+func newTestKialiCache(k8s *kubetest.FakeK8sClient) *kialiCacheImpl {
 	kialiCache := &kialiCacheImpl{
-		k8sApi:                kubefake.NewSimpleClientset(kubeObjects...),
-		istioApi:              istiofake.NewSimpleClientset(istioObjects...),
-		gatewayApi:            gatewayapifake.NewSimpleClientset(gatewayObjects...),
+		k8sApi:                k8s.KubeClientset,
+		istioApi:              k8s.IstioClientset,
+		gatewayApi:            k8s.GatewayAPIClientset,
 		clusterScoped:         false,
 		stopClusterScopedChan: make(chan struct{}),
 		stopNSChans:           make(map[string]chan struct{}),
@@ -51,7 +49,7 @@ func TestNewKialiCache_isCached(t *testing.T) {
 func TestClusterScopedCacheStopped(t *testing.T) {
 	assert := assert.New(t)
 
-	kialiCacheImpl := newTestKialiCache(nil, nil, nil)
+	kialiCacheImpl := newTestKialiCache(kubetest.NewFakeK8sClient())
 	stopCh := make(chan struct{})
 	kialiCacheImpl.stopClusterScopedChan = stopCh
 	kialiCacheImpl.clusterScoped = true
@@ -72,7 +70,7 @@ func TestNSScopedCacheStopped(t *testing.T) {
 		"ns1": make(chan struct{}),
 		"ns2": make(chan struct{}),
 	}
-	kialiCacheImpl := newTestKialiCache(nil, nil, nil)
+	kialiCacheImpl := newTestKialiCache(kubetest.NewFakeK8sClient())
 	kialiCacheImpl.stopNSChans = stopChs
 	kialiCacheImpl.clusterScoped = false
 
@@ -92,7 +90,7 @@ func TestRefreshClusterScoped(t *testing.T) {
 	assert := assert.New(t)
 
 	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "svc1", Namespace: "ns1"}}
-	kialiCache := newTestKialiCache([]runtime.Object{svc}, nil, nil)
+	kialiCache := newTestKialiCache(kubetest.NewFakeK8sClient(svc))
 	kialiCache.clusterScoped = true
 	kialiCache.clusterCacheLister = &cacheLister{}
 	oldLister := kialiCache.clusterCacheLister
@@ -103,7 +101,7 @@ func TestRefreshClusterScoped(t *testing.T) {
 func TestRefreshMultipleTimesClusterScoped(t *testing.T) {
 	assert := assert.New(t)
 
-	kialiCache := newTestKialiCache(nil, nil, nil)
+	kialiCache := newTestKialiCache(kubetest.NewFakeK8sClient())
 	kialiCache.clusterScoped = true
 	kialiCache.clusterCacheLister = &cacheLister{}
 	oldLister := kialiCache.clusterCacheLister
@@ -116,7 +114,7 @@ func TestRefreshMultipleTimesClusterScoped(t *testing.T) {
 func TestRefreshNSScoped(t *testing.T) {
 	assert := assert.New(t)
 
-	kialiCache := newTestKialiCache(nil, nil, nil)
+	kialiCache := newTestKialiCache(kubetest.NewFakeK8sClient())
 	kialiCache.clusterScoped = false
 	kialiCache.nsCacheLister = map[string]*cacheLister{}
 
@@ -128,7 +126,7 @@ func TestRefreshNSScoped(t *testing.T) {
 func TestCheckNamespaceClusterScoped(t *testing.T) {
 	assert := assert.New(t)
 
-	kialiCache := newTestKialiCache(nil, nil, nil)
+	kialiCache := newTestKialiCache(kubetest.NewFakeK8sClient())
 	kialiCache.clusterScoped = true
 
 	// Should always return true for cluster scoped cache.
@@ -138,7 +136,7 @@ func TestCheckNamespaceClusterScoped(t *testing.T) {
 func TestCheckNamespaceNotIncluded(t *testing.T) {
 	assert := assert.New(t)
 
-	kialiCache := newTestKialiCache(nil, nil, nil)
+	kialiCache := newTestKialiCache(kubetest.NewFakeK8sClient())
 	kialiCache.clusterScoped = false
 
 	assert.False(kialiCache.CheckNamespace("ns1"))
@@ -148,7 +146,7 @@ func TestCheckNamespaceIsIncluded(t *testing.T) {
 	assert := assert.New(t)
 
 	regex := regexp.MustCompile("ns.*")
-	kialiCache := newTestKialiCache(nil, nil, nil)
+	kialiCache := newTestKialiCache(kubetest.NewFakeK8sClient())
 	kialiCache.clusterScoped = false
 	kialiCache.cacheNamespacesRegexps = []regexp.Regexp{*regex}
 

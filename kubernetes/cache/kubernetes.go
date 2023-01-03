@@ -69,17 +69,27 @@ func (c *kialiCacheImpl) getCacheLister(namespace string) *cacheLister {
 }
 
 func (c *kialiCacheImpl) GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	log.Tracef("[Kiali Cache] Get [resource: ConfigMap] for [namespace: %s] [name: %s]", namespace, name)
 	cfg, err := c.getCacheLister(namespace).configMapLister.ConfigMaps(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg.Kind = kubernetes.ConfigMapType
-	return cfg, nil
+	// Do not modify what is returned by the lister since that is shared and will cause data races.
+	retCM := cfg.DeepCopy()
+	retCM.Kind = kubernetes.ConfigMapType
+	return retCM, nil
 }
 
 func (c *kialiCacheImpl) GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	daemonSets, err := c.getCacheLister(namespace).daemonSetLister.DaemonSets(namespace).List(labels.Everything())
 	if err != nil {
 		return nil, err
@@ -88,24 +98,36 @@ func (c *kialiCacheImpl) GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, e
 
 	retSets := []apps_v1.DaemonSet{}
 	for _, ds := range daemonSets {
-		ds.Kind = kubernetes.DaemonSetType
-		retSets = append(retSets, *ds)
+		// Do not modify what is returned by the lister since that is shared and will cause data races.
+		d := ds.DeepCopy()
+		d.Kind = kubernetes.DaemonSetType
+		retSets = append(retSets, *d)
 	}
 	return retSets, nil
 }
 
 func (c *kialiCacheImpl) GetDaemonSet(namespace, name string) (*apps_v1.DaemonSet, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	log.Tracef("[Kiali Cache] Get [resource: DaemonSet] for [namespace: %s] [name: %s]", namespace, name)
 	ds, err := c.getCacheLister(namespace).daemonSetLister.DaemonSets(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	ds.Kind = kubernetes.DaemonSetType
-	return c.getCacheLister(namespace).daemonSetLister.DaemonSets(namespace).Get(name)
+	// Do not modify what is returned by the lister since that is shared and will cause data races.
+	retDS := ds.DeepCopy()
+	retDS.Kind = kubernetes.DaemonSetType
+	return retDS, nil
 }
 
 func (c *kialiCacheImpl) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	deployments, err := c.getCacheLister(namespace).deploymentLister.Deployments(namespace).List(labels.Everything())
 	if err != nil {
 		return nil, err
@@ -114,35 +136,53 @@ func (c *kialiCacheImpl) GetDeployments(namespace string) ([]apps_v1.Deployment,
 
 	retDeployments := []apps_v1.Deployment{}
 	for _, deployment := range deployments {
-		deployment.Kind = kubernetes.DeploymentType
-		retDeployments = append(retDeployments, *deployment)
+		// Do not modify what is returned by the lister since that is shared and will cause data races.
+		d := deployment.DeepCopy()
+		d.Kind = kubernetes.DeploymentType
+		retDeployments = append(retDeployments, *d)
 	}
 	return retDeployments, nil
 }
 
 func (c *kialiCacheImpl) GetDeployment(namespace, name string) (*apps_v1.Deployment, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] [name: %s]", namespace, name)
 	deployment, err := c.getCacheLister(namespace).deploymentLister.Deployments(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	deployment.Kind = kubernetes.DeploymentType
-	return deployment, nil
+	// Do not modify what is returned by the lister since that is shared and will cause data races.
+	retDep := deployment.DeepCopy()
+	retDep.Kind = kubernetes.DeploymentType
+	return retDep, nil
 }
 
 func (c *kialiCacheImpl) GetEndpoints(namespace, name string) (*core_v1.Endpoints, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	log.Tracef("[Kiali Cache] Get [resource: Endpoints] for [namespace: %s] [name: %s]", namespace, name)
 	endpoints, err := c.getCacheLister(namespace).endpointLister.Endpoints(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	endpoints.Kind = kubernetes.EndpointsType
-	return endpoints, nil
+	// Do not modify what is returned by the lister since that is shared and will cause data races.
+	retEnd := endpoints.DeepCopy()
+	retEnd.Kind = kubernetes.EndpointsType
+	return retEnd, nil
 }
 
 func (c *kialiCacheImpl) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	statefulSets, err := c.getCacheLister(namespace).statefulSetLister.StatefulSets(namespace).List(labels.Everything())
 	if err != nil {
 		return nil, err
@@ -151,24 +191,36 @@ func (c *kialiCacheImpl) GetStatefulSets(namespace string) ([]apps_v1.StatefulSe
 
 	retSets := []apps_v1.StatefulSet{}
 	for _, ss := range statefulSets {
-		ss.Kind = kubernetes.StatefulSetType
-		retSets = append(retSets, *ss)
+		// Do not modify what is returned by the lister since that is shared and will cause data races.
+		s := ss.DeepCopy()
+		s.Kind = kubernetes.StatefulSetType
+		retSets = append(retSets, *s)
 	}
 	return retSets, nil
 }
 
 func (c *kialiCacheImpl) GetStatefulSet(namespace, name string) (*apps_v1.StatefulSet, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	log.Tracef("[Kiali Cache] Get [resource: StatefulSet] for [namespace: %s] [name: %s]", namespace, name)
 	statefulSet, err := c.getCacheLister(namespace).statefulSetLister.StatefulSets(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	statefulSet.Kind = kubernetes.StatefulSetType
-	return statefulSet, nil
+	// Do not modify what is returned by the lister since that is shared and will cause data races.
+	retSet := statefulSet.DeepCopy()
+	retSet.Kind = kubernetes.StatefulSetType
+	return retSet, nil
 }
 
 func (c *kialiCacheImpl) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	services, err := c.getCacheLister(namespace).serviceLister.Services(namespace).List(labels.Set(selectorLabels).AsSelector())
 	if err != nil {
 		return nil, err
@@ -177,24 +229,36 @@ func (c *kialiCacheImpl) GetServices(namespace string, selectorLabels map[string
 
 	retServices := []core_v1.Service{}
 	for _, service := range services {
-		service.Kind = kubernetes.ServiceType
-		retServices = append(retServices, *service)
+		// Do not modify what is returned by the lister since that is shared and will cause data races.
+		svc := service.DeepCopy()
+		svc.Kind = kubernetes.ServiceType
+		retServices = append(retServices, *svc)
 	}
 	return retServices, nil
 }
 
 func (c *kialiCacheImpl) GetService(namespace, name string) (*core_v1.Service, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	log.Tracef("[Kiali Cache] Get [resource: Service] for [namespace: %s] [name: %s]", namespace, name)
 	service, err := c.getCacheLister(namespace).serviceLister.Services(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
 
-	service.Kind = kubernetes.ServiceType
-	return service, nil
+	// Do not modify what is returned by the lister since that is shared and will cause data races.
+	retSvc := service.DeepCopy()
+	retSvc.Kind = kubernetes.ServiceType
+	return retSvc, nil
 }
 
 func (c *kialiCacheImpl) GetPods(namespace, labelSelector string) ([]core_v1.Pod, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	selector, err := labels.Parse(labelSelector)
 	if err != nil {
 		return nil, err
@@ -208,8 +272,10 @@ func (c *kialiCacheImpl) GetPods(namespace, labelSelector string) ([]core_v1.Pod
 
 	retPods := []core_v1.Pod{}
 	for _, pod := range pods {
-		pod.Kind = kubernetes.PodType
-		retPods = append(retPods, *pod)
+		// Do not modify what is returned by the lister since that is shared and will cause data races.
+		p := pod.DeepCopy()
+		p.Kind = kubernetes.PodType
+		retPods = append(retPods, *p)
 	}
 	return retPods, nil
 }
@@ -221,6 +287,10 @@ func (c *kialiCacheImpl) GetPods(namespace, labelSelector string) ([]core_v1.Pod
 // to have multiple RS for the same owner. In which case the most recent version of each is returned.
 // see also: ../kubernetes.go
 func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
 	reps, err := c.getCacheLister(namespace).replicaSetLister.ReplicaSets(namespace).List(labels.Everything())
 	if err != nil {
 		return nil, err
@@ -253,8 +323,10 @@ func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet,
 		result = make([]apps_v1.ReplicaSet, lenRS)
 		i := 0
 		for _, activeRS := range activeRSMap {
-			activeRS.Kind = kubernetes.ReplicaSetType
-			result[i] = *(activeRS)
+			// Do not modify what is returned by the lister since that is shared and will cause data races.
+			rs := activeRS.DeepCopy()
+			rs.Kind = kubernetes.ReplicaSetType
+			result[i] = *rs
 			i = i + 1
 		}
 		log.Tracef("[Kiali Cache] Get [resource: ReplicaSet] for [namespace: %s] = %d", namespace, lenRS)

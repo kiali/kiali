@@ -14,7 +14,9 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-// Layer is a container for fast access to inner services
+// Layer is a container for fast access to inner services.
+// A business layer is created per token/user. Any data that
+// needs to be saved across layers is saved in the Kiali Cache.
 type Layer struct {
 	App            AppService
 	Health         HealthService
@@ -55,6 +57,7 @@ func initKialiCache() {
 		}
 	}
 
+	// TODO: Remove conditonal once cache is fully mandatory.
 	if config.Get().KubernetesConfig.CacheEnabled {
 		log.Infof("Initializing Kiali Cache")
 
@@ -112,7 +115,7 @@ func IsResourceCached(namespace string, resource string) bool {
 }
 
 func Start() {
-	// Kiali Cache will be initialized once at first use of Business layer
+	// Kiali Cache will be initialized once at start up.
 	once.Do(initKialiCache)
 }
 
@@ -186,7 +189,18 @@ func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInter
 	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.TokenReview = NewTokenReview(k8s)
 	temporaryLayer.Validations = IstioValidationsService{k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.Workload = WorkloadService{k8s: k8s, prom: prom, businessLayer: temporaryLayer}
+	// TODO: Remove conditional once cache is fully mandatory.
+	if config.Get().KubernetesConfig.CacheEnabled {
+		// The caching client effectively uses two different SA account tokens.
+		// The kiali SA token is used for all cache methods. The cache methods are
+		// read-only. Methods that are not cached and methods that modify objects
+		// use the user's token through the normal client.
+		// TODO: Always pass caching client once caching is mandatory.
+		cachingClient := cache.NewCachingClient(kialiCache, k8s)
+		temporaryLayer.Workload = *NewWorkloadService(cachingClient, prom, kialiCache, temporaryLayer, config.Get())
+	} else {
+		temporaryLayer.Workload = *NewWorkloadService(k8s, prom, kialiCache, temporaryLayer, config.Get())
+	}
 
 	return temporaryLayer
 }

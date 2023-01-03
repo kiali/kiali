@@ -27,17 +27,33 @@ import (
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
 )
 
+func NewWorkloadService(k8s kubernetes.ClientInterface, prom prometheus.ClientInterface, cache cache.KialiCache, layer *Layer, config *config.Config) *WorkloadService {
+	return &WorkloadService{
+		k8s:           k8s,
+		prom:          prom,
+		cache:         cache,
+		businessLayer: layer,
+		config:        config,
+	}
+}
+
 // WorkloadService deals with fetching istio/kubernetes workloads related content and convert to kiali model
 type WorkloadService struct {
-	prom          prometheus.ClientInterface
-	k8s           kubernetes.ClientInterface
+	prom prometheus.ClientInterface
+	k8s  kubernetes.ClientInterface
+	// Careful not to call the workload service from here as that would be a infinite loop.
 	businessLayer *Layer
+	// The global kiali cache. This should be passed into the workload service rather than created inside of it.
+	cache cache.KialiCache
+	// The global kiali config.
+	config *config.Config
 }
 
 type WorkloadCriteria struct {
@@ -320,7 +336,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		conf := config.Get()
+		conf := in.config
 		app := workload.Labels[conf.IstioLabels.AppLabelName]
 		version := workload.Labels[conf.IstioLabels.VersionLabelName]
 		runtimes = NewDashboardsService(ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
@@ -362,14 +378,17 @@ func (in *WorkloadService) UpdateWorkload(ctx context.Context, namespace string,
 	defer end()
 
 	// Identify controller and apply patch to workload
-	err := updateWorkload(in.businessLayer, namespace, workloadName, workloadType, jsonPatch)
+	err := in.updateWorkload(namespace, workloadName, workloadType, jsonPatch)
 	if err != nil {
 		return nil, err
 	}
 
-	// Cache is stopped after a Create/Update/Delete operation to force a refresh
-	if kialiCache != nil && err == nil {
-		kialiCache.Refresh(namespace)
+	// Cache is stopped after a Create/Update/Delete operation to force a refresh.
+	// Refresh once after all the updates have gone through since Update Workload will update
+	// every single workload type of that matches name/namespace and we only want to refresh once.
+	// TODO: Remove conditional once cache is mandatory
+	if in.cache != nil {
+		in.cache.Refresh(namespace)
 	}
 
 	// After the update we fetch the whole workload
@@ -385,21 +404,17 @@ func (in *WorkloadService) GetPods(ctx context.Context, namespace string, labelS
 	)
 	defer end()
 
-	var err error
-	var ps []core_v1.Pod
-	// Check if namespace is cached
-	if IsNamespaceCached(namespace) {
-		// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-		if _, err = in.businessLayer.Namespace.GetNamespace(ctx, namespace); err == nil {
-			ps, err = kialiCache.GetPods(namespace, labelSelector)
-		}
-	} else {
-		ps, err = in.k8s.GetPods(namespace, labelSelector)
-	}
-
-	if err != nil {
+	// Check if user has access to the namespace
+	if _, err := in.businessLayer.Namespace.GetNamespace(ctx, namespace); err != nil {
 		return nil, err
 	}
+
+	var ps []core_v1.Pod
+	var err error
+	if ps, err = in.k8s.GetPods(namespace, labelSelector); err != nil {
+		return nil, err
+	}
+
 	pods := models.Pods{}
 	pods.Parse(ps)
 	return pods, nil
@@ -426,7 +441,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 	if duration != "" {
 		duration, err := time.ParseDuration(duration)
 		if err != nil {
-			return nil, fmt.Errorf("Invalid duration [%s]: %v", duration, err)
+			return nil, fmt.Errorf("invalid duration [%s]: %v", duration, err)
 		}
 
 		opts.Duration = &duration
@@ -437,7 +452,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 	if sinceTime != "" {
 		numTime, err := strconv.ParseInt(sinceTime, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("Invalid sinceTime [%s]: %v", sinceTime, err)
+			return nil, fmt.Errorf("invalid sinceTime [%s]: %v", sinceTime, err)
 		}
 
 		opts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
@@ -449,7 +464,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 				opts.MaxLines = &numLines
 			}
 		} else {
-			return nil, fmt.Errorf("Invalid maxLines [%s]: %v", maxLines, err)
+			return nil, fmt.Errorf("invalid maxLines [%s]: %v", maxLines, err)
 		}
 	}
 
@@ -604,15 +619,8 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 	// Pods are always fetched
 	go func() {
 		defer wg.Done()
-
-		// Check if namespace is cached
-		// Namespace access is checked in the upper caller
 		var err error
-		if IsNamespaceCached(namespace) {
-			pods, err = kialiCache.GetPods(namespace, labelSelector)
-		} else {
-			pods, err = layer.k8s.GetPods(namespace, labelSelector)
-		}
+		pods, err = layer.k8s.GetPods(namespace, labelSelector)
 		if err != nil {
 			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -622,15 +630,8 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 	// Deployments are always fetched
 	go func() {
 		defer wg.Done()
-
-		// Check if namespace is cached
-		// Namespace access is checked in the upper caller
 		var err error
-		if IsNamespaceCached(namespace) {
-			dep, err = kialiCache.GetDeployments(namespace)
-		} else {
-			dep, err = layer.k8s.GetDeployments(namespace)
-		}
+		dep, err = layer.k8s.GetDeployments(namespace)
 		if err != nil {
 			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -640,15 +641,8 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 	// ReplicaSets are always fetched
 	go func() {
 		defer wg.Done()
-
-		// Check if namespace is cached
-		// Namespace access is checked in the upper caller
 		var err error
-		if IsNamespaceCached(namespace) {
-			repset, err = kialiCache.GetReplicaSets(namespace)
-		} else {
-			repset, err = layer.k8s.GetReplicaSets(namespace)
-		}
+		repset, err = layer.k8s.GetReplicaSets(namespace)
 		if err != nil {
 			log.Errorf("Error fetching ReplicaSets per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -689,11 +683,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 
 		var err error
 		if isWorkloadIncluded(kubernetes.StatefulSetType) {
-			if IsNamespaceCached(namespace) {
-				fulset, err = kialiCache.GetStatefulSets(namespace)
-			} else {
-				fulset, err = layer.k8s.GetStatefulSets(namespace)
-			}
+			fulset, err = layer.k8s.GetStatefulSets(namespace)
 			if err != nil {
 				log.Errorf("Error fetching StatefulSets per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -735,11 +725,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 
 		var err error
 		if isWorkloadIncluded(kubernetes.DaemonSetType) {
-			if IsNamespaceCached(namespace) {
-				daeset, err = kialiCache.GetDaemonSets(namespace)
-			} else {
-				daeset, err = layer.k8s.GetDaemonSets(namespace)
-			}
+			daeset, err = layer.k8s.GetDaemonSets(namespace)
 			if err != nil {
 				log.Errorf("Error fetching DaemonSets per namespace %s: %s", namespace, err)
 			}
@@ -1185,15 +1171,8 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 	// Pods are always fetched for all workload types
 	go func() {
 		defer wg.Done()
-
-		// Check if namespace is cached
-		// Namespace access is checked in the upper call
 		var err error
-		if IsNamespaceCached(criteria.Namespace) {
-			pods, err = kialiCache.GetPods(criteria.Namespace, "")
-		} else {
-			pods, err = layer.k8s.GetPods(criteria.Namespace, "")
-		}
+		pods, err = layer.k8s.GetPods(criteria.Namespace, "")
 		if err != nil {
 			log.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err)
 			errChan <- err
@@ -1203,19 +1182,12 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 	// fetch as Deployment when workloadType is Deployment or unspecified
 	go func() {
 		defer wg.Done()
+		var err error
 
 		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.DeploymentType {
 			return
 		}
-
-		// Check if namespace is cached
-		// Namespace access is checked in the upper call
-		var err error
-		if IsNamespaceCached(criteria.Namespace) {
-			dep, err = kialiCache.GetDeployment(criteria.Namespace, criteria.WorkloadName)
-		} else {
-			dep, err = layer.k8s.GetDeployment(criteria.Namespace, criteria.WorkloadName)
-		}
+		dep, err = layer.k8s.GetDeployment(criteria.Namespace, criteria.WorkloadName)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				dep = nil
@@ -1233,15 +1205,8 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.ReplicaSetType && knownWorkloadType {
 			return
 		}
-
-		// Check if namespace is cached
-		// Namespace access is checked in the upper call
 		var err error
-		if IsNamespaceCached(criteria.Namespace) {
-			repset, err = kialiCache.GetReplicaSets(criteria.Namespace)
-		} else {
-			repset, err = layer.k8s.GetReplicaSets(criteria.Namespace)
-		}
+		repset, err = layer.k8s.GetReplicaSets(criteria.Namespace)
 		if err != nil {
 			log.Errorf("Error fetching ReplicaSets per namespace %s: %s", criteria.Namespace, err)
 			errChan <- err
@@ -1293,11 +1258,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 
 		var err error
 		if isWorkloadIncluded(kubernetes.StatefulSetType) {
-			if IsNamespaceCached(criteria.Namespace) {
-				fulset, err = kialiCache.GetStatefulSet(criteria.Namespace, criteria.WorkloadName)
-			} else {
-				fulset, err = layer.k8s.GetStatefulSet(criteria.Namespace, criteria.WorkloadName)
-			}
+			fulset, err = layer.k8s.GetStatefulSet(criteria.Namespace, criteria.WorkloadName)
 			if err != nil {
 				fulset = nil
 			}
@@ -1350,11 +1311,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 
 		var err error
 		if isWorkloadIncluded(kubernetes.DaemonSetType) {
-			if IsNamespaceCached(criteria.Namespace) {
-				ds, err = kialiCache.GetDaemonSet(criteria.Namespace, criteria.WorkloadName)
-			} else {
-				ds, err = layer.k8s.GetDaemonSet(criteria.Namespace, criteria.WorkloadName)
-			}
+			ds, err = layer.k8s.GetDaemonSet(criteria.Namespace, criteria.WorkloadName)
 			if err != nil {
 				ds = nil
 			}
@@ -1733,10 +1690,10 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 	return wl, kubernetes.NewNotFound(criteria.WorkloadName, "Kiali", "Workload")
 }
 
-func updateWorkload(layer *Layer, namespace string, workloadName string, workloadType string, jsonPatch string) error {
+func (in *WorkloadService) updateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string) error {
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := layer.Namespace.GetNamespace(context.TODO(), namespace); err != nil {
+	if _, err := in.businessLayer.Namespace.GetNamespace(context.TODO(), namespace); err != nil {
 		return err
 	}
 
@@ -1776,7 +1733,7 @@ func updateWorkload(layer *Layer, namespace string, workloadName string, workloa
 			defer wg.Done()
 			var err error
 			if isWorkloadIncluded(wkType) {
-				err = layer.k8s.UpdateWorkload(namespace, workloadName, wkType, jsonPatch)
+				err = in.k8s.UpdateWorkload(namespace, workloadName, wkType, jsonPatch)
 			}
 			if err != nil {
 				if !errors.IsNotFound(err) {
@@ -1844,7 +1801,7 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, namespace, wo
 		return "", err
 	}
 
-	appLabelName := config.Get().IstioLabels.AppLabelName
+	appLabelName := in.config.IstioLabels.AppLabelName
 	app := wkd.Labels[appLabelName]
 	return app, nil
 }
