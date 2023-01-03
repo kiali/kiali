@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
@@ -36,6 +37,8 @@ func setupTestLoggingServer(t *testing.T, namespace, pod string) *httptest.Serve
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("SetProxyLogLevel").Return(nil)
+	var fakePod *corev1.Pod
+	k8s.On("GetPod", namespace, pod).Return(fakePod, nil)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	business.SetWithBackends(mockClientFactory, nil)

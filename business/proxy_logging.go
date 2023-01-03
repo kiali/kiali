@@ -1,15 +1,11 @@
 package business
 
 import (
-	"fmt"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
-var (
-	// ValidProxyLogLevels are the application log levels supported by the envoy admin interface.
-	ValidProxyLogLevels = []string{"off", "trace", "debug", "info", "warning", "error", "critical"}
-)
+// ValidProxyLogLevels are the application log levels supported by the envoy admin interface.
+var ValidProxyLogLevels = []string{"off", "trace", "debug", "info", "warning", "error", "critical"}
 
 // IsValidLogLevel determines if the provided string is a valid proxy log level.
 // This can be called before calling SetLogLevel.
@@ -30,8 +26,9 @@ type ProxyLoggingService struct {
 
 // SetLogLevel sets the pod's proxy log level.
 func (in *ProxyLoggingService) SetLogLevel(namespace, pod, level string) error {
-	if _, err := in.proxyStatus.GetPodProxyStatus(namespace, pod); err != nil {
-		return fmt.Errorf("unable to detect proxy for Pod: %s in Namespace: %s", pod, namespace)
+	// Ensure pod exists
+	if _, err := in.k8s.GetPod(namespace, pod); err != nil {
+		return err
 	}
 	return in.k8s.SetProxyLogLevel(namespace, pod, level)
 }

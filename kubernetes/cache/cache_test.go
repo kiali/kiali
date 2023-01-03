@@ -23,7 +23,7 @@ func newTestKialiCache(k8s *kubetest.FakeK8sClient) *kialiCacheImpl {
 		stopClusterScopedChan: make(chan struct{}),
 		stopNSChans:           make(map[string]chan struct{}),
 		nsCacheLister:         make(map[string]*cacheLister),
-		stopCacheChan:         make(chan bool),
+		stopPolling:           func() {},
 	}
 	kialiCache.registryRefreshHandler = NewRegistryHandler(kialiCache.RefreshRegistryStatus)
 	return kialiCache
