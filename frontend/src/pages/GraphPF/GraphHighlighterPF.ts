@@ -107,6 +107,7 @@ export class GraphHighlighterPF {
       switch (element.getKind()) {
         case 'node':
           if ((element as Node).isGroup()) {
+            console.log(`box highlight: ${this.getBoxHighlight(element as Node).toHighlight.length} `);
             return this.getBoxHighlight(element as Node);
           }
           return { toHighlight: this.getNodeHighlight(element as Node), unhighlightOthers: true };
@@ -124,7 +125,9 @@ export class GraphHighlighterPF {
     return nodes.reduce((all: GraphElement[], current) => {
       all.push(current);
       if (current.getKind() === 'node' && (current as Node).hasParent()) {
-        all = all.concat(ancestors(current as Node));
+        all = Array.from(
+          new Set<GraphElement>([...all, ...ancestors(current as Node)])
+        );
       }
       return all;
     }, []);
@@ -148,12 +151,16 @@ export class GraphHighlighterPF {
     // treat App boxes in a typical way, but to reduce "flashing", Namespace and Cluster
     // boxes highlight themselves and their anscestors.
     if (box.getData()[CyNode.isBox] === BoxByType.APP) {
-      let elems: GraphElement[] = [];
+      let elems: GraphElement[];
       const children = box.getChildren();
-      elems = elems.concat(children);
+      elems = [...children];
       children.forEach(n => {
-        elems = elems.concat(predecessors(n as Node));
-        elems = elems.concat(successors(n as Node));
+        elems = Array.from(
+          new Set<GraphElement>([...elems, ...predecessors(n as Node)])
+        );
+        elems = Array.from(
+          new Set<GraphElement>([...elems, ...successors(n as Node)])
+        );
       });
       return { toHighlight: this.includeAncestorNodes(elems), unhighlightOthers: true };
     }

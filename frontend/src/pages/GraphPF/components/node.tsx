@@ -315,8 +315,6 @@ const BaseNode: React.FunctionComponent<BaseNodeProps> = ({
     strokeOpacity: OverlayOpacity
   });
 
-  // console.log(`Render node ${!!element.getData().hasSpans ? 'with' : 'without'} spans`);
-
   const data = element.getData();
   return (
     <g

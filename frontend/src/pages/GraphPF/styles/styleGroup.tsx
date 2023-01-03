@@ -1,15 +1,8 @@
 import { CubesIcon } from '@patternfly/react-icons';
-import {
-  DefaultGroup,
-  Node,
-  observer,
-  ScaleDetailsLevel,
-  ShapeProps,
-  useHover,
-  WithSelectionProps
-} from '@patternfly/react-topology';
+import { Node, observer, ScaleDetailsLevel, ShapeProps, WithSelectionProps } from '@patternfly/react-topology';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
 import React from 'react';
+import BaseGroup from '../components/group';
 
 const ICON_PADDING = 20;
 
@@ -30,21 +23,6 @@ type StyleGroupProps = {
 const StyleGroup: React.FC<StyleGroupProps> = ({ element, collapsedWidth = 75, collapsedHeight = 75, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
-
-  const [hover] = useHover();
-
-  React.useLayoutEffect(() => {
-    if (hover) {
-      if (!!data?.onHover) {
-        console.log('whoopie');
-        data?.onHover(element, true);
-      }
-    } else {
-      if (!!data?.onHover) {
-        data?.onHover(element, false);
-      }
-    }
-  }, [data, element, hover]);
 
   const passedData = React.useMemo(() => {
     const newData = { ...data };
@@ -69,7 +47,7 @@ const StyleGroup: React.FC<StyleGroupProps> = ({ element, collapsedWidth = 75, c
 
   return (
     <g className={`topology ${data.shadowed ? 'shadowed' : ''}`}>
-      <DefaultGroup
+      <BaseGroup
         element={element}
         collapsedWidth={collapsedWidth}
         collapsedHeight={collapsedHeight}
@@ -78,7 +56,7 @@ const StyleGroup: React.FC<StyleGroupProps> = ({ element, collapsedWidth = 75, c
         {...passedData}
       >
         {element.isCollapsed() ? renderIcon() : null}
-      </DefaultGroup>
+      </BaseGroup>
     </g>
   );
 };

@@ -138,7 +138,6 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
     .map((b: Point) => `L${b.x} ${b.y} `)
     .join('')}L${bgEndPoint[0]} ${bgEndPoint[1]}`;
 
-  // console.log(`render edge! ${data.id} with pathStyle ${JSON.stringify(pathStyle)}`);
   return (
     <Layer id={dragging || hover ? TOP_LAYER : undefined}>
       <g
