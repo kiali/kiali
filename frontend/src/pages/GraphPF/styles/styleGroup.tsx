@@ -51,7 +51,7 @@ const StyleGroup: React.FC<StyleGroupProps> = ({ element, collapsedWidth = 75, c
         element={element}
         collapsedWidth={collapsedWidth}
         collapsedHeight={collapsedHeight}
-        showLabel={[ScaleDetailsLevel.medium, ScaleDetailsLevel.high].includes(detailsLevel)}
+        showLabel={detailsLevel === ScaleDetailsLevel.high}
         {...rest}
         {...passedData}
       >
