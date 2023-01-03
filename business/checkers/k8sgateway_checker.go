@@ -30,7 +30,7 @@ func (g K8sGatewayChecker) Check() models.IstioValidations {
 }
 
 func (g K8sGatewayChecker) runSingleChecks(gw *k8s_networking_v1alpha2.Gateway) models.IstioValidations {
-	key, validations := EmptyValidValidation(gw.Name, gw.Namespace, GatewayCheckerType)
+	key, validations := EmptyValidValidation(gw.Name, gw.Namespace, K8sGatewayCheckerType)
 
 	enabledCheckers := []Checker{
 		k8sgateways.SelectorChecker{
