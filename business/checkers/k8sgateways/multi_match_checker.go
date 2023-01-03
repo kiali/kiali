@@ -41,9 +41,8 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 		gatewayRuleName := g.Name
 		gatewayNamespace := g.Namespace
 
-		//selectorString := ""
-		log.Infof("GW %s %s %s", gatewayNamespace, gatewayRuleName)
 		for _, address := range g.Spec.Addresses {
+			// TODO
 			log.Infof(address.Value)
 		}
 
@@ -64,7 +63,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 func createError(gatewayRuleName, namespace string, hostname string, port int) models.IstioValidations {
 	key := models.IstioValidationKey{Name: gatewayRuleName, Namespace: namespace, ObjectType: K8sGatewayCheckerType}
 	checks := models.Build("gateways.multimatch",
-		"spec/hostnames["+hostname+"]/port["+strconv.Itoa(port)+"]")
+		"spec/listeners/hostnames["+hostname+"]/port["+strconv.Itoa(port)+"]")
 	rrValidation := &models.IstioValidation{
 		Name:       gatewayRuleName,
 		ObjectType: K8sGatewayCheckerType,
