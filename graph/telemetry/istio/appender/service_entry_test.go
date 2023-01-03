@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
-	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/business"
@@ -20,22 +20,22 @@ import (
 
 const testCluster = "testcluster"
 
-func setupBusinessLayer(istioObjects ...runtime.Object) *business.Layer {
+func setupBusinessLayer(t *testing.T, istioObjects ...runtime.Object) *business.Layer {
 	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	k8s := kubetest.NewK8SClientMock()
-	k8s.MockIstio(istioObjects...)
+	istioObjects = append(istioObjects, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}})
+	k8s := kubetest.NewFakeK8sClient(istioObjects...)
 
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-
+	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	return businessLayer
 }
 
-func setupServiceEntries(exportTo []string) *business.Layer {
+func setupServiceEntries(t *testing.T, exportTo []string) *business.Layer {
 	externalSE := &networking_v1beta1.ServiceEntry{}
 	externalSE.Name = "externalSE"
 	externalSE.Namespace = "testNamespace"
@@ -55,7 +55,7 @@ func setupServiceEntries(exportTo []string) *business.Layer {
 	}
 	internalSE.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_INTERNAL
 
-	return setupBusinessLayer(externalSE, internalSE)
+	return setupBusinessLayer(t, externalSE, internalSE)
 }
 
 func serviceEntriesTrafficMap() map[string]*graph.Node {
@@ -129,7 +129,7 @@ func serviceEntriesTrafficMap() map[string]*graph.Node {
 func TestServiceEntry(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries(nil)
+	businessLayer := setupServiceEntries(t, nil)
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -243,7 +243,7 @@ func TestServiceEntry(t *testing.T) {
 func TestServiceEntryExportAll(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries([]string{"*"})
+	businessLayer := setupServiceEntries(t, []string{"*"})
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -351,7 +351,7 @@ func TestServiceEntryExportAll(t *testing.T) {
 func TestServiceEntryExportNamespaceFound(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries([]string{"fooNamespace", "testNamespace"})
+	businessLayer := setupServiceEntries(t, []string{"fooNamespace", "testNamespace"})
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -459,7 +459,7 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries([]string{"."})
+	businessLayer := setupServiceEntries(t, []string{"."})
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -567,7 +567,7 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries([]string{"fooNamespace", "barNamespace"})
+	businessLayer := setupServiceEntries(t, []string{"fooNamespace", "barNamespace"})
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -675,9 +675,6 @@ func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 func TestDisjointMulticlusterEntries(t *testing.T) {
 	assert := assert.New(t)
 
-	// Mock the k8s client with a "global" ServiceEntry
-	k8s := kubetest.NewK8SClientMock()
-
 	remoteSE := &networking_v1beta1.ServiceEntry{}
 	remoteSE.Name = "externalSE"
 	remoteSE.Namespace = "namespace"
@@ -685,11 +682,13 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 		"svc1.namespace.global",
 	}
 	remoteSE.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_INTERNAL
+	k8s := kubetest.NewFakeK8sClient(remoteSE, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "namespace"}})
 
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	config.Set(config.NewConfig())
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
 
-	k8s.MockIstio(remoteSE)
+	business.SetupBusinessLayer(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
@@ -747,8 +746,6 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 }
 
 func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
-	k8s := kubetest.NewK8SClientMock()
-
 	SE1 := &networking_v1beta1.ServiceEntry{}
 	SE1.Name = "SE1"
 	SE1.Namespace = "fooNamespace"
@@ -768,11 +765,18 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	}
 	SE2.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_EXTERNAL
 
-	k8s.MockIstio(SE1, SE2)
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "otherNamespace"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		SE1,
+		SE2,
+	)
 
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	config.Set(config.NewConfig())
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
 
+	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[kubernetes.HomeClusterName] = k8s
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
@@ -873,8 +877,6 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 }
 
 func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
-	k8s := kubetest.NewK8SClientMock()
-
 	SE1 := &networking_v1beta1.ServiceEntry{}
 	SE1.Name = "SE1"
 	SE1.Namespace = "otherNamespace"
@@ -894,14 +896,12 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	}
 	SE2.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_EXTERNAL
 
-	k8s.MockIstio(SE1, SE2)
-
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	config.Set(config.NewConfig())
-
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[kubernetes.HomeClusterName] = k8s
-	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	businessLayer := setupBusinessLayer(
+		t,
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "otherNamespace"}},
+		SE1,
+		SE2,
+	)
 
 	assert := assert.New(t)
 
@@ -1025,7 +1025,7 @@ func TestServiceEntryMultipleEdges(t *testing.T) {
 	}
 	internalSE.Spec.Location = api_networking_v1beta1.ServiceEntry_MESH_INTERNAL
 
-	businessLayer := setupBusinessLayer(internalSE)
+	businessLayer := setupBusinessLayer(t, internalSE)
 
 	// VersionedApp graph
 	trafficMap := make(map[string]*graph.Node)

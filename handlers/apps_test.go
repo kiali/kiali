@@ -11,19 +11,20 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	apps_v1 "k8s.io/api/apps/v1"
-	batch_v1 "k8s.io/api/batch/v1"
+	"github.com/stretchr/testify/require"
 	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -31,7 +32,6 @@ import (
 
 func TestAppMetricsDefault(t *testing.T) {
 	ts, api, _ := setupAppMetricsEndpoint(t)
-	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/ns/apps/my_app/metrics"
 	now := time.Now()
@@ -67,7 +67,6 @@ func TestAppMetricsDefault(t *testing.T) {
 
 func TestAppMetricsWithParams(t *testing.T) {
 	ts, api, _ := setupAppMetricsEndpoint(t)
-	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/apps/my-app/metrics", nil)
 	if err != nil {
@@ -126,7 +125,6 @@ func TestAppMetricsWithParams(t *testing.T) {
 
 func TestAppMetricsInaccessibleNamespace(t *testing.T) {
 	ts, _, k8s := setupAppMetricsEndpoint(t)
-	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/my_namespace/apps/my_app/metrics"
 
@@ -170,6 +168,7 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 		}))
 
 	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	business.SetWithBackends(mockClientFactory, prom)
@@ -177,15 +176,10 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 	return ts, xapi, k8s
 }
 
-func setupAppListEndpoint() (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
-	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheEnabled = false
-	config.Set(conf)
-	k8s := kubetest.NewK8SClientMock()
+func setupAppListEndpoint(t *testing.T, k8s kubernetes.ClientInterface, config config.Config) (*httptest.Server, *prometheustest.PromClientMock) {
 	prom := new(prometheustest.PromClientMock)
 
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, prom)
+	business.SetupBusinessLayer(t, k8s, config)
 	business.SetKialiControlPlaneCluster(&business.Cluster{Name: business.DefaultClusterID})
 
 	mr := mux.NewRouter()
@@ -202,29 +196,38 @@ func setupAppListEndpoint() (*httptest.Server, *kubetest.K8SClientMock, *prometh
 		}))
 
 	ts := httptest.NewServer(mr)
-	return ts, k8s, prom
+	t.Cleanup(ts.Close)
+	return ts, prom
+}
+
+func newProject() *osproject_v1.Project {
+	return &osproject_v1.Project{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "ns",
+		},
+	}
 }
 
 func TestAppsEndpoint(t *testing.T) {
-	ts, k8s, _ := setupAppListEndpoint()
-	k8s.MockIstio()
-	defer ts.Close()
+	assert := assert.New(t)
 
-	setupMockData(k8s)
+	cfg := config.NewConfig()
+	cfg.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(cfg)
 
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakeDeployments(), nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
-	k8s.On("GetDaemonSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.CronJob{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
+	mockClock()
+	proj := newProject()
+	proj.Name = "Namespace"
+	kubeObjects := []runtime.Object{proj}
+	for _, obj := range business.FakeDeployments(*cfg) {
+		o := obj
+		kubeObjects = append(kubeObjects, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
+	k8s.OpenShift = true
+	ts, _ := setupAppListEndpoint(t, k8s, *cfg)
 
-	url := ts.URL + "/api/namespaces/ns/apps"
+	url := ts.URL + "/api/namespaces/Namespace/apps"
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -232,39 +235,41 @@ func TestAppsEndpoint(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.NotEmpty(t, actual)
-	assert.Equal(t, 200, resp.StatusCode, string(actual))
-	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
-	k8s.AssertNumberOfCalls(t, "GetPods", 1)
+	assert.NotEmpty(actual)
+	assert.Equal(200, resp.StatusCode, string(actual))
 }
 
 func TestAppDetailsEndpoint(t *testing.T) {
-	ts, k8s, _ := setupAppListEndpoint()
-	defer ts.Close()
+	assert := assert.New(t)
+	require := require.New(t)
 
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakeDeployments(), nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
-	k8s.On("GetDaemonSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.CronJob{}, nil)
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(business.FakeServices(), nil)
+	cfg := config.NewConfig()
+	cfg.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(cfg)
 
-	url := ts.URL + "/api/namespaces/ns/apps/httpbin"
+	mockClock()
+	proj := newProject()
+	proj.Name = "Namespace"
+	kubeObjects := []runtime.Object{proj}
+	for _, obj := range business.FakeDeployments(*cfg) {
+		o := obj
+		kubeObjects = append(kubeObjects, &o)
+	}
+	for _, obj := range business.FakeServices() {
+		o := obj
+		kubeObjects = append(kubeObjects, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
+	k8s.OpenShift = true
+	ts, _ := setupAppListEndpoint(t, k8s, *cfg)
+
+	url := ts.URL + "/api/namespaces/Namespace/apps/httpbin"
 
 	resp, err := http.Get(url)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(err)
+
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.NotEmpty(t, actual)
-	assert.Equal(t, 200, resp.StatusCode, string(actual))
-	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
-	k8s.AssertNumberOfCalls(t, "GetPods", 1)
-	k8s.AssertNumberOfCalls(t, "GetServices", 2)
+	require.NotEmpty(actual)
+	assert.Equal(200, resp.StatusCode, string(actual))
 }

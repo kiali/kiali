@@ -15,8 +15,7 @@ import (
 
 // Consolidate fake/mock data used in tests per package
 
-func FakeDeployments() []apps_v1.Deployment {
-	conf := config.NewConfig()
+func FakeDeployments(conf config.Config) []apps_v1.Deployment {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -121,9 +120,7 @@ func FakeDuplicatedDeployments() []apps_v1.Deployment {
 	}
 }
 
-func FakeReplicaSets() []apps_v1.ReplicaSet {
-	conf := config.NewConfig()
-
+func FakeReplicaSets(conf config.Config) []apps_v1.ReplicaSet {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")

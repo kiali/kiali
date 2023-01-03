@@ -164,7 +164,7 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	// TODO: Modify the k8s argument to other services to pass the whole k8s map if needed
 	temporaryLayer.App = AppService{prom: prom, k8s: userClients[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.Health = HealthService{prom: prom, businessLayer: temporaryLayer}
-	temporaryLayer.IstioConfig = IstioConfigService{k8s: userClients[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
+	temporaryLayer.IstioConfig = IstioConfigService{k8s: userClients[kubernetes.HomeClusterName], cache: kialiCache, businessLayer: temporaryLayer}
 	temporaryLayer.IstioStatus = IstioStatusService{k8s: userClients[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.IstioCerts = IstioCertsService{k8s: userClients[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.Jaeger = JaegerService{loader: jaegerClient, businessLayer: temporaryLayer}
@@ -176,7 +176,7 @@ func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAC
 	// Out of order because it relies on ProxyStatus
 	temporaryLayer.ProxyLogging = ProxyLoggingService{k8s: userClients[kubernetes.HomeClusterName], proxyStatus: &temporaryLayer.ProxyStatus}
 	temporaryLayer.RegistryStatus = RegistryStatusService{k8s: userClients[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
-	temporaryLayer.Svc = SvcService{prom: prom, k8s: userClients[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
+	temporaryLayer.Svc = SvcService{prom: prom, k8s: userClients[kubernetes.HomeClusterName], kialiCache: kialiCache, businessLayer: temporaryLayer}
 	temporaryLayer.TLS = TLSService{k8s: userClients[kubernetes.HomeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.TokenReview = NewTokenReview(userClients[kubernetes.HomeClusterName])
 	temporaryLayer.Validations = IstioValidationsService{k8s: userClients[kubernetes.HomeClusterName], businessLayer: temporaryLayer}

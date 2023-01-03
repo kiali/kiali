@@ -20,6 +20,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
@@ -29,6 +30,7 @@ const allResources string = "*"
 
 type IstioConfigService struct {
 	k8s           kubernetes.ClientInterface
+	cache         cache.KialiCache
 	businessLayer *Layer
 }
 
@@ -241,7 +243,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 			var err error
 			// Check if namespace is cached
 			if IsResourceCached(criteria.Namespace, kubernetes.DestinationRules) {
-				istioConfigList.DestinationRules, err = kialiCache.GetDestinationRules(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.DestinationRules, err = in.cache.GetDestinationRules(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				drl, e := in.k8s.Istio().NetworkingV1beta1().DestinationRules(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.DestinationRules = drl.Items
@@ -258,7 +260,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		if criteria.Include(kubernetes.EnvoyFilters) {
 			var err error
 			if IsResourceCached(criteria.Namespace, kubernetes.EnvoyFilters) {
-				istioConfigList.EnvoyFilters, err = kialiCache.GetEnvoyFilters(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.EnvoyFilters, err = in.cache.GetEnvoyFilters(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				efl, e := in.k8s.Istio().NetworkingV1alpha3().EnvoyFilters(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.EnvoyFilters = efl.Items
@@ -280,8 +282,9 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 			var err error
 			// Check if namespace is cached
 			if IsResourceCached(criteria.Namespace, kubernetes.Gateways) {
-				istioConfigList.Gateways, err = kialiCache.GetGateways(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.Gateways, err = in.cache.GetGateways(criteria.Namespace, criteria.LabelSelector)
 			} else {
+				log.Debugf("Listing Gateways for namespace [%s] with labelSelector [%s]", criteria.Namespace, criteria.LabelSelector)
 				gwl, e := in.k8s.Istio().NetworkingV1beta1().Gateways(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.Gateways = gwl.Items
 				err = e
@@ -303,7 +306,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 			// ignore an error as system could not be configured to support K8s Gateway API
 			// Check if namespace is cached
 			if IsResourceCached(criteria.Namespace, kubernetes.K8sGateways) {
-				istioConfigList.K8sGateways, err = kialiCache.GetK8sGateways(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.K8sGateways, err = in.cache.GetK8sGateways(criteria.Namespace, criteria.LabelSelector)
 			}
 			// TODO gwl.Items, there is conflict itself in Gateway API between returned types referenced or not
 			//else {
@@ -324,7 +327,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 			// ignore an error as system could not be configured to support K8s Gateway API
 			// Check if namespace is cached
 			if IsResourceCached(criteria.Namespace, kubernetes.K8sHTTPRoutes) {
-				istioConfigList.K8sHTTPRoutes, err = kialiCache.GetK8sHTTPRoutes(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.K8sHTTPRoutes, err = in.cache.GetK8sHTTPRoutes(criteria.Namespace, criteria.LabelSelector)
 			}
 			// TODO gwl.Items, there is conflict itself in Gateway API between returned types referenced or not
 			//else {
@@ -344,7 +347,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 			var err error
 			// Check if namespace is cached
 			if IsResourceCached(criteria.Namespace, kubernetes.ServiceEntries) {
-				istioConfigList.ServiceEntries, err = kialiCache.GetServiceEntries(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.ServiceEntries, err = in.cache.GetServiceEntries(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				sel, e := in.k8s.Istio().NetworkingV1beta1().ServiceEntries(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.ServiceEntries = sel.Items
@@ -361,7 +364,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		if criteria.Include(kubernetes.Sidecars) {
 			var err error
 			if IsResourceCached(criteria.Namespace, kubernetes.Sidecars) {
-				istioConfigList.Sidecars, err = kialiCache.GetSidecars(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.Sidecars, err = in.cache.GetSidecars(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				scl, e := in.k8s.Istio().NetworkingV1beta1().Sidecars(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.Sidecars = scl.Items
@@ -383,7 +386,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 			var err error
 			// Check if namespace is cached
 			if IsResourceCached(criteria.Namespace, kubernetes.VirtualServices) {
-				istioConfigList.VirtualServices, err = kialiCache.GetVirtualServices(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.VirtualServices, err = in.cache.GetVirtualServices(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				vsl, e := in.k8s.Istio().NetworkingV1beta1().VirtualServices(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.VirtualServices = vsl.Items
@@ -400,7 +403,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		if criteria.Include(kubernetes.WorkloadEntries) {
 			var err error
 			if IsResourceCached(criteria.Namespace, kubernetes.WorkloadEntries) {
-				istioConfigList.WorkloadEntries, err = kialiCache.GetWorkloadEntries(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.WorkloadEntries, err = in.cache.GetWorkloadEntries(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				wel, e := in.k8s.Istio().NetworkingV1beta1().WorkloadEntries(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.WorkloadEntries = wel.Items
@@ -417,7 +420,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		if criteria.Include(kubernetes.WorkloadGroups) {
 			var err error
 			if IsResourceCached(criteria.Namespace, kubernetes.WorkloadGroups) {
-				istioConfigList.WorkloadGroups, err = kialiCache.GetWorkloadGroups(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.WorkloadGroups, err = in.cache.GetWorkloadGroups(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				wgl, e := in.k8s.Istio().NetworkingV1beta1().WorkloadGroups(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.WorkloadGroups = wgl.Items
@@ -434,7 +437,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		if criteria.Include(kubernetes.WasmPlugins) {
 			var err error
 			if IsResourceCached(criteria.Namespace, kubernetes.WasmPlugins) {
-				istioConfigList.WasmPlugins, err = kialiCache.GetWasmPlugins(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.WasmPlugins, err = in.cache.GetWasmPlugins(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				wgl, e := in.k8s.Istio().ExtensionsV1alpha1().WasmPlugins(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.WasmPlugins = wgl.Items
@@ -451,7 +454,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		if criteria.Include(kubernetes.Telemetries) {
 			var err error
 			if IsResourceCached(criteria.Namespace, kubernetes.Telemetries) {
-				istioConfigList.Telemetries, err = kialiCache.GetTelemetries(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.Telemetries, err = in.cache.GetTelemetries(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				wgl, e := in.k8s.Istio().TelemetryV1alpha1().Telemetries(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.Telemetries = wgl.Items
@@ -468,7 +471,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		if criteria.Include(kubernetes.AuthorizationPolicies) {
 			var err error
 			if IsResourceCached(criteria.Namespace, kubernetes.AuthorizationPolicies) {
-				istioConfigList.AuthorizationPolicies, err = kialiCache.GetAuthorizationPolicies(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.AuthorizationPolicies, err = in.cache.GetAuthorizationPolicies(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				apl, e := in.k8s.Istio().SecurityV1beta1().AuthorizationPolicies(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.AuthorizationPolicies = apl.Items
@@ -489,7 +492,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		if criteria.Include(kubernetes.PeerAuthentications) {
 			var err error
 			if IsResourceCached(criteria.Namespace, kubernetes.PeerAuthentications) {
-				istioConfigList.PeerAuthentications, err = kialiCache.GetPeerAuthentications(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.PeerAuthentications, err = in.cache.GetPeerAuthentications(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				pal, e := in.k8s.Istio().SecurityV1beta1().PeerAuthentications(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.PeerAuthentications = pal.Items
@@ -510,7 +513,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 		if criteria.Include(kubernetes.RequestAuthentications) {
 			var err error
 			if IsResourceCached(criteria.Namespace, kubernetes.RequestAuthentications) {
-				istioConfigList.RequestAuthentications, err = kialiCache.GetRequestAuthentications(criteria.Namespace, criteria.LabelSelector)
+				istioConfigList.RequestAuthentications, err = in.cache.GetRequestAuthentications(criteria.Namespace, criteria.LabelSelector)
 			} else {
 				ral, e := in.k8s.Istio().SecurityV1beta1().RequestAuthentications(criteria.Namespace).List(ctx, listOpts)
 				istioConfigList.RequestAuthentications = ral.Items
@@ -918,12 +921,14 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(namespace, resourceType, n
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
+	if err != nil {
+		return err
+	}
 
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh
-	if kialiCache != nil && err == nil {
-		kialiCache.Refresh(namespace)
-	}
-	return err
+	kialiCache.Refresh(namespace)
+
+	return nil
 }
 
 func (in *IstioConfigService) UpdateIstioConfigDetail(namespace, resourceType, name, jsonPatch string) (models.IstioConfigDetails, error) {

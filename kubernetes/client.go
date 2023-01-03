@@ -69,11 +69,6 @@ type K8SClient struct {
 	getPodPortForwarderFunc func(namespace, name, portMap string) (httputil.PortForwarder, error)
 }
 
-// GetK8sApi returns the clientset referencing all K8s rest clients
-func (client *K8SClient) GetK8sApi() kube.Interface {
-	return client.k8s
-}
-
 // GetToken returns the BearerToken used from the config
 func (client *K8SClient) GetToken() string {
 	return client.token

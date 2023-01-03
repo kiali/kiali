@@ -47,6 +47,11 @@ type KubeCache interface {
 	// Stop all caches
 	Stop()
 
+	// Client returns the underlying client for the KubeCache.
+	// This is useful for when you want to talk directly to the kube API
+	// using the Kiali Service Account client.
+	Client() kubernetes.ClientInterface
+
 	// UpdateClient will update the client used by the cache.
 	// Useful for when the token is refreshed for the client.
 	// This causes a full refresh of the cache.
@@ -211,6 +216,15 @@ func (c *kubeCache) isCached(namespace string) bool {
 		}
 	}
 	return false
+}
+
+// Client returns the underlying client for the KubeCache.
+// This is useful for when you want to talk directly to the kube API
+// using the Kiali Service Account client.
+func (c *kubeCache) Client() kubernetes.ClientInterface {
+	c.cacheLock.RLock()
+	defer c.cacheLock.RUnlock()
+	return c.client
 }
 
 // UpdateClient will update the client and refresh the cache.
