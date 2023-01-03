@@ -145,7 +145,7 @@
     "dot-prop": "4.2.1",
     "elliptic": "6.5.4",
     "follow-redirects": "1.14.8",
-    "glob-parent": "6.0.1",
+    "glob-parent": "^6.0.1",
     "handlebars": "4.7.7",
     "hoist-non-react-statics": "3.3.0",
     "hosted-git-info": "2.8.9",
