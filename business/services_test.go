@@ -21,6 +21,8 @@ func TestServiceListParsing(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.MockServices("Namespace", []string{"reviews", "httpbin"})
+	k8s.On("GetToken").Return("SomeToken")
+	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return([]core_v1.Namespace{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(kubetest.FakePodList(), nil)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
