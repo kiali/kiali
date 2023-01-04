@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"regexp"
 	"strings"
 	"sync"
@@ -48,8 +49,8 @@ type (
 		KubernetesCache
 		IstioCache
 		NamespacesCache
-		ProxyStatusCache
 		RegistryStatusCache
+		ProxyStatusCache
 	}
 
 	namespaceCache struct {
@@ -112,15 +113,14 @@ type (
 		tokenNamespaces        map[string]namespaceCache
 		tokenNamespaceDuration time.Duration
 		proxyStatusLock        sync.RWMutex
-		proxyStatusCreated     *time.Time
 		proxyStatusNamespaces  map[string]map[string]podProxyStatus
 		registryRefreshHandler RegistryRefreshHandler
 		registryStatusLock     sync.RWMutex
 		registryStatusCreated  *time.Time
 		registryStatus         *kubernetes.RegistryStatus
-		// Stops the background goroutine which refreshes the cache's
-		// service account token.
-		stopCacheChan chan bool
+		// Stops the background goroutines which refresh the cache's
+		// service account token and poll for istiod's proxy status.
+		stopPolling context.CancelFunc
 
 		clusterCacheLister *cacheLister
 		nsCacheLister      map[string]*cacheLister
@@ -192,8 +192,17 @@ func NewKialiCache(namespaceSeedList ...string) (KialiCache, error) {
 	kialiCacheImpl.istioApi = istioClient.Istio()
 	kialiCacheImpl.gatewayApi = istioClient.GatewayAPI()
 
+	// Cache launches some goroutines in the background to periodically poll some resources.
+	// These are stopped by calling cancel.
+	ctx, cancel := context.WithCancel(context.Background())
+	kialiCacheImpl.stopPolling = cancel
+
 	// Update SA Token
-	kialiCacheImpl.stopCacheChan = kialiCacheImpl.refreshCache(istioConfig)
+	kialiCacheImpl.refreshCache(ctx, istioConfig)
+
+	// Populate cache from Istiod in the background. This routine gets stopped when the cache is stopped.
+	kialiCacheImpl.pollIstiodForProxyStatus(ctx)
+
 	kialiCacheImpl.registryRefreshHandler = NewRegistryHandler(kialiCacheImpl.RefreshRegistryStatus)
 
 	if kialiCacheImpl.clusterScoped {
@@ -338,9 +347,8 @@ func (c *kialiCacheImpl) Refresh(namespace string) {
 
 // refreshCache watches for changes to the cache's service account token
 // and recreates the cache(s) when the token changes.
-func (c *kialiCacheImpl) refreshCache(istioConfig rest.Config) chan bool {
+func (c *kialiCacheImpl) refreshCache(ctx context.Context, istioConfig rest.Config) {
 	ticker := time.NewTicker(60 * time.Second)
-	quit := make(chan bool)
 	go func() {
 		for {
 			select {
@@ -377,14 +385,13 @@ func (c *kialiCacheImpl) refreshCache(istioConfig rest.Config) chan bool {
 						log.Debug("Kiali Cache: Nothing to refresh")
 					}
 				}
-			case <-quit:
+			case <-ctx.Done():
+				log.Debug("[Kiali Cache] Stopping watching for service account token changes")
 				ticker.Stop()
 				return
 			}
 		}
 	}()
-
-	return quit
 }
 
 // Stop will stop either the cluster wide cache or all of the namespace caches.
@@ -399,7 +406,7 @@ func (c *kialiCacheImpl) Stop() {
 			c.stop(namespace)
 		}
 	}
-	close(c.stopCacheChan)
+	c.stopPolling()
 }
 
 func (c *kialiCacheImpl) stop(namespace string) {
