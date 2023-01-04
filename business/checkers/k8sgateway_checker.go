@@ -38,6 +38,9 @@ func (g K8sGatewayChecker) runSingleChecks(gw *k8s_networking_v1alpha2.Gateway) 
 			WorkloadsPerNamespace: g.WorkloadsPerNamespace,
 			IsGatewayToNamespace:  g.IsGatewayToNamespace,
 		},
+		k8sgateways.StatusChecker{
+			K8sGateway: gw,
+		},
 	}
 
 	for _, checker := range enabledCheckers {
