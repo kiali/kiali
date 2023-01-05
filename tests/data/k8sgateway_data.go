@@ -36,8 +36,33 @@ func CreateEmptyK8sGateway(name, namespace string) *k8s_networking_v1alpha2.Gate
 	gw := k8s_networking_v1alpha2.Gateway{}
 	gw.Name = name
 	gw.Namespace = namespace
+
 	gw.Kind = kubernetes.K8sActualGatewayType
 	gw.APIVersion = kubernetes.K8sApiNetworkingVersionV1Alpha2
 	gw.Spec.GatewayClassName = "istio"
 	return &gw
+}
+
+func AddListenerToK8sGateway(listener k8s_networking_v1alpha2.Listener, gw *k8s_networking_v1alpha2.Gateway) *k8s_networking_v1alpha2.Gateway {
+	gw.Spec.Listeners = append(gw.Spec.Listeners, listener)
+	return gw
+}
+
+func CreateListener(name string, hostname string, port int, protocol string) k8s_networking_v1alpha2.Listener {
+	hn := k8s_networking_v1alpha2.Hostname(hostname)
+	listener := k8s_networking_v1alpha2.Listener{
+		Name:     k8s_networking_v1alpha2.SectionName(name),
+		Hostname: &hn,
+		Port:     k8s_networking_v1alpha2.PortNumber(port),
+		Protocol: k8s_networking_v1alpha2.ProtocolType(protocol),
+	}
+	return listener
+}
+
+func CreateGWAddress(addrType k8s_networking_v1alpha2.AddressType, value string) k8s_networking_v1alpha2.GatewayAddress {
+	address := k8s_networking_v1alpha2.GatewayAddress{
+		Type:  &addrType,
+		Value: value,
+	}
+	return address
 }

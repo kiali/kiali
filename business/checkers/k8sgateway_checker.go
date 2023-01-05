@@ -33,11 +33,6 @@ func (g K8sGatewayChecker) runSingleChecks(gw *k8s_networking_v1alpha2.Gateway) 
 	key, validations := EmptyValidValidation(gw.Name, gw.Namespace, K8sGatewayCheckerType)
 
 	enabledCheckers := []Checker{
-		k8sgateways.SelectorChecker{
-			K8sGateway:            gw,
-			WorkloadsPerNamespace: g.WorkloadsPerNamespace,
-			IsGatewayToNamespace:  g.IsGatewayToNamespace,
-		},
 		k8sgateways.StatusChecker{
 			K8sGateway: gw,
 		},
