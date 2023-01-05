@@ -242,7 +242,6 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		objectCheckers = []ObjectChecker{
 			checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, WorkloadsPerNamespace: workloadsPerNamespace},
 		}
-		referenceChecker = references.K8sGatewayReferences{K8sGateways: istioConfigList.K8sGateways, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.K8sHTTPRoutes:
 		httpRouteChecker := checkers.K8sHTTPRouteChecker{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways}
 		objectCheckers = []ObjectChecker{noServiceChecker, httpRouteChecker}

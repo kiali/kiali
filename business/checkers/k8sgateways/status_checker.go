@@ -15,7 +15,7 @@ type K8sGatewayStatus struct {
 	Status      string
 }
 
-const GwAPICode string = "GW001"
+const GwAPICode string = "GWAPI"
 
 // K8sGatewayConditionStatus represents the status failures for a Condition in a K8sGateway
 var K8sGatewayConditionStatus = map[string]string{
