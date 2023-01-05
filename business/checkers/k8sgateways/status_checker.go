@@ -15,7 +15,7 @@ type K8sGatewayStatus struct {
 	Status      string
 }
 
-const GwAPICode string = "GWAPI"
+const GwAPICheckerCode string = "GWAPI"
 
 // K8sGatewayConditionStatus represents the status failures for a Condition in a K8sGateway
 var K8sGatewayConditionStatus = map[string]string{
@@ -57,7 +57,7 @@ func (m StatusChecker) Check() ([]*models.IstioCheck, bool) {
 // Create checker for GW validation (Gateway status)
 func createGwChecker(msg string, path string) models.IstioCheck {
 	check := models.IstioCheck{
-		Code:     GwAPICode,
+		Code:     GwAPICheckerCode,
 		Message:  msg,
 		Severity: models.WarningSeverity,
 		Path:     path,

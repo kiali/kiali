@@ -1,6 +1,7 @@
 package data
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -48,6 +49,11 @@ func AddListenerToK8sGateway(listener k8s_networking_v1alpha2.Listener, gw *k8s_
 	return gw
 }
 
+func AddGwAddressToK8sGateway(address k8s_networking_v1alpha2.GatewayAddress, gw *k8s_networking_v1alpha2.Gateway) *k8s_networking_v1alpha2.Gateway {
+	gw.Spec.Addresses = append(gw.Spec.Addresses, address)
+	return gw
+}
+
 func CreateListener(name string, hostname string, port int, protocol string) k8s_networking_v1alpha2.Listener {
 	hn := k8s_networking_v1alpha2.Hostname(hostname)
 	listener := k8s_networking_v1alpha2.Listener{
@@ -65,4 +71,11 @@ func CreateGWAddress(addrType k8s_networking_v1alpha2.AddressType, value string)
 		Value: value,
 	}
 	return address
+}
+
+func UpdateConditionWithError(k8sgw *k8s_networking_v1alpha2.Gateway) *k8s_networking_v1alpha2.Gateway {
+	condition := metav1.Condition{Type: "Ready", Status: "false", Reason: "", Message: ""}
+	k8sgw.Status.Conditions = append(k8sgw.Status.Conditions, condition)
+
+	return k8sgw
 }
