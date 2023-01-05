@@ -790,6 +790,16 @@ func GatewayNames(gateways []*networking_v1beta1.Gateway) map[string]struct{} {
 	return names
 }
 
+// K8sGatewayNames extracts the gateway names for easier matching
+func K8sGatewayNames(gateways []*k8s_networking_v1alpha2.Gateway) map[string]struct{} {
+	var empty struct{}
+	names := make(map[string]struct{})
+	for _, gw := range gateways {
+		names[ParseHost(gw.Name, gw.Namespace).String()] = empty
+	}
+	return names
+}
+
 func PeerAuthnHasStrictMTLS(peerAuthn *security_v1beta1.PeerAuthentication) bool {
 	_, mode := PeerAuthnHasMTLSEnabled(peerAuthn)
 	return mode == "STRICT"
