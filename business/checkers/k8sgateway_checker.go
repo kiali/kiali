@@ -1,9 +1,9 @@
 package checkers
 
 import (
-	"github.com/kiali/kiali/business/checkers/k8sgateways"
 	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
+	"github.com/kiali/kiali/business/checkers/k8sgateways"
 	"github.com/kiali/kiali/models"
 )
 
