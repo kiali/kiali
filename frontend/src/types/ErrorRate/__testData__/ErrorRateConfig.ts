@@ -67,7 +67,7 @@ export const generateRequestHealth = (
 };
 
 export const serverRateConfig = {
-  accesibleNamespaces: [],
+  accessibleNamespaces: [],
   authStrategy: '',
   clusters: {},
   gatewayAPIEnabled: false,

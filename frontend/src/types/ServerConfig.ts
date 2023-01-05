@@ -109,7 +109,7 @@ export interface ToleranceConfig {
 */
 
 export interface ServerConfig {
-  accesibleNamespaces: Array<string>;
+  accessibleNamespaces: Array<string>;
   authStrategy: string;
   clusterInfo?: ClusterInfo;
   clusters: { [key: string]: MeshCluster };

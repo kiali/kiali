@@ -1,7 +1,7 @@
 import { getExpr } from '../../config/HealthConfig';
 
 export const healthConfig = {
-  accesibleNamespaces: [],
+  accessibleNamespaces: [],
   authStrategy: '',
   clusters: {},
   gatewayAPIEnabled: false,

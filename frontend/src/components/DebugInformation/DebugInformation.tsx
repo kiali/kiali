@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import _ from 'lodash';
 import beautify from 'json-beautify';
 import { serverConfig } from '../../config';
 import { ComputedServerConfig } from '../../config/ServerConfig';
@@ -55,9 +54,11 @@ const copyToClipboardOptions = {
 };
 
 // Will be shown in Kiali Config and hidden in Additional state
-const propsToShow = ["accesibleNamespaces", "authStrategy", "clusters", "gatewayAPIEnabled",
+const propsToShow = ["accessibleNamespaces", "authStrategy", "clusters", "gatewayAPIEnabled",
   "istioConfigMap", "istioIdentityDomain", "istioNamespace", "istioStatusEnabled", "logLevel",
   "istioCanaryRevision", "istioInjectionAction"];
+
+const propsToPatch = ['cyRef', 'summaryTarget', 'token', 'username'];
 
 const tabName = 'tab';
 const defaultTab = 'kialiConfig';
@@ -120,7 +121,7 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
 
   parseConfig = (key: string, value: any) => {
     // We have to patch some runtime properties  we don't want to serialize
-    if (['cyRef', 'summaryTarget', 'token', 'username'].includes(key)) {
+    if (propsToPatch.includes(key)) {
       return null;
     }
     return value;

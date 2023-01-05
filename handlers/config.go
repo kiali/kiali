@@ -49,24 +49,24 @@ type DeploymentConfig struct {
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
-	AccesibleNamespaces []string                    `json:"accesibleNamespaces,omitempty"`
-	AuthStrategy        string                      `json:"authStrategy,omitempty"`
-	ClusterInfo         ClusterInfo                 `json:"clusterInfo,omitempty"`
-	Clusters            map[string]business.Cluster `json:"clusters,omitempty"`
-	Deployment          DeploymentConfig            `json:"deployment,omitempty"`
-	GatewayAPIEnabled   bool                        `json:"gatewayAPIEnabled,omitempty"`
-	HealthConfig        config.HealthConfig         `json:"healthConfig,omitempty"`
-	InstallationTag     string                      `json:"installationTag,omitempty"`
-	IstioAnnotations    IstioAnnotations            `json:"istioAnnotations,omitempty"`
-	IstioCanaryRevision IstioCanaryRevision         `json:"istioCanaryRevision,omitempty"`
-	IstioStatusEnabled  bool                        `json:"istioStatusEnabled,omitempty"`
-	IstioIdentityDomain string                      `json:"istioIdentityDomain,omitempty"`
-	IstioNamespace      string                      `json:"istioNamespace,omitempty"`
-	IstioLabels         config.IstioLabels          `json:"istioLabels,omitempty"`
-	IstioConfigMap      string                      `json:"istioConfigMap"`
-	KialiFeatureFlags   config.KialiFeatureFlags    `json:"kialiFeatureFlags,omitempty"`
-	LogLevel            string                      `json:"logLevel,omitempty"`
-	Prometheus          PrometheusConfig            `json:"prometheus,omitempty"`
+	AccessibleNamespaces []string                    `json:"accesibleNamespaces,omitempty"`
+	AuthStrategy         string                      `json:"authStrategy,omitempty"`
+	ClusterInfo          ClusterInfo                 `json:"clusterInfo,omitempty"`
+	Clusters             map[string]business.Cluster `json:"clusters,omitempty"`
+	Deployment           DeploymentConfig            `json:"deployment,omitempty"`
+	GatewayAPIEnabled    bool                        `json:"gatewayAPIEnabled,omitempty"`
+	HealthConfig         config.HealthConfig         `json:"healthConfig,omitempty"`
+	InstallationTag      string                      `json:"installationTag,omitempty"`
+	IstioAnnotations     IstioAnnotations            `json:"istioAnnotations,omitempty"`
+	IstioCanaryRevision  IstioCanaryRevision         `json:"istioCanaryRevision,omitempty"`
+	IstioStatusEnabled   bool                        `json:"istioStatusEnabled,omitempty"`
+	IstioIdentityDomain  string                      `json:"istioIdentityDomain,omitempty"`
+	IstioNamespace       string                      `json:"istioNamespace,omitempty"`
+	IstioLabels          config.IstioLabels          `json:"istioLabels,omitempty"`
+	IstioConfigMap       string                      `json:"istioConfigMap"`
+	KialiFeatureFlags    config.KialiFeatureFlags    `json:"kialiFeatureFlags,omitempty"`
+	LogLevel             string                      `json:"logLevel,omitempty"`
+	Prometheus           PrometheusConfig            `json:"prometheus,omitempty"`
 }
 
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
@@ -78,9 +78,9 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	promConfig := getPrometheusConfig()
 	config := config.Get()
 	publicConfig := PublicConfig{
-		AccesibleNamespaces: config.Deployment.AccessibleNamespaces,
-		AuthStrategy:        config.Auth.Strategy,
-		Clusters:            make(map[string]business.Cluster),
+		AccessibleNamespaces: config.Deployment.AccessibleNamespaces,
+		AuthStrategy:         config.Auth.Strategy,
+		Clusters:             make(map[string]business.Cluster),
 		Deployment: DeploymentConfig{
 			ViewOnlyMode: config.Deployment.ViewOnlyMode,
 		},
