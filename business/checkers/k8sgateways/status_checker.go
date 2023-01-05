@@ -14,47 +14,52 @@ type K8sGatewayStatus struct {
 	Status      string
 }
 
-// K8sGatewayStatusMessages represents the status failures for a Condition in a K8sGateway
-var K8sGatewayConditionStatus = []K8sGatewayStatus{
-	{ObjectField: "Scheduled", Status: "False"},
-	{ObjectField: "Ready", Status: "False"},
+const GwAPICode string = "GW001"
+
+// K8sGatewayConditionStatus represents the status failures for a Condition in a K8sGateway
+var K8sGatewayConditionStatus = map[string]string{
+	"Scheduled": "False",
+	"Ready":     "False",
 }
 
-/*	"Conditions": {
-		{ObjectField: "Scheduled", Value: "False"},
-		{ObjectField: "Ready", Value: "False"},
-	},
-	"Listeners": {
-		{ObjectField: "Conflicted", Value: "True"},
-		{ObjectField: "Detached", Value: "True"},
-		{ObjectField: "Ready", Value: "False"},
-		{ObjectField: "ResolvedRefs", Value: "False"},
-	},
-}*/
+// K8sGatewayConditionStatus represents the status failures for a Condition in a K8sGateway
+var K8sGatewayListenersStatus = map[string]string{
+	"Conflicted":   "True",
+	"Detached":     "True",
+	"Ready":        "False",
+	"ResolvedRefs": "False",
+}
 
 // Check validates that no two gateways share the same host+port combination
 func (m StatusChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
 	for _, c := range m.K8sGateway.Status.Conditions {
-		if K8sGatewayStatusContains(K8sGatewayConditionStatus, c.Type, string(c.Status)) {
-			check := models.IstioCheck{
-				Message:  c.Message,
-				Severity: "warning",
-				Path:     "status/conditions/type/" + c.Type,
-			}
+		if K8sGatewayConditionStatus[c.Type] == string(c.Status) {
+			check := createGwChecker(c.Message, "status/conditions/type/"+c.Type)
 			validations = append(validations, &check)
+		}
+	}
+
+	for _, l := range m.K8sGateway.Status.Listeners {
+		for _, c := range l.Conditions {
+			if K8sGatewayListenersStatus[c.Type] == string(c.Status) {
+				check := createGwChecker(c.Message, "status/conditions/type/"+c.Type)
+				validations = append(validations, &check)
+			}
 		}
 	}
 
 	return validations, len(validations) == 0
 }
 
-func K8sGatewayStatusContains(status []K8sGatewayStatus, t string, c string) bool {
-	for _, st := range status {
-		if st.ObjectField == t && st.Status == c {
-			return true
-		}
+// Create checker for GW validation (Gateway status)
+func createGwChecker(msg string, path string) models.IstioCheck {
+	check := models.IstioCheck{
+		Code:     GwAPICode,
+		Message:  msg,
+		Severity: models.WarningSeverity,
+		Path:     path,
 	}
-	return false
+	return check
 }
