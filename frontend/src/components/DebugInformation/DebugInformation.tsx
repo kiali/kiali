@@ -20,6 +20,8 @@ import { aceOptions } from "../../types/IstioConfigDetails";
 import AceEditor from "react-ace";
 import ParameterizedTabs, {activeTab} from "../Tab/Tabs";
 import { ICell, Table, TableBody, TableHeader, TableVariant } from "@patternfly/react-table";
+import {AuthConfig} from "../../types/Auth";
+import authenticationConfig from "../../config/AuthenticationConfig";
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -41,6 +43,7 @@ type DebugInformationState = {
 
 type DebugInformationData = {
   backendConfigs: {
+    authenticationConfig: AuthConfig;
     computedServerConfig: ComputedServerConfig;
   };
   currentURL: string;
@@ -126,22 +129,20 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
   // Properties shown in Kiali Config are not shown again in Additional State
   filterDebugInformation = (info: any) => {
     if (info !== null ) {
-      for (const [key, value] of Object.entries(info)) {
+      for (const [key] of Object.entries(info)) {
         if (propsToShow.includes(key)) {
           delete info[key];
           continue;
-        }
-        if (typeof(value) === "object") {
-          info[key] = this.filterDebugInformation(value);
         }
       }
     }
     return info;
   };
 
-  renderDebugInformation = _.memoize(() => {
+  renderDebugInformation () {
     let debugInformation: DebugInformationData = {
       backendConfigs: {
+        authenticationConfig: authenticationConfig,
         computedServerConfig: serverConfig
       },
       currentURL: window.location.href,
@@ -149,7 +150,7 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
     };
     debugInformation = this.filterDebugInformation(debugInformation);
     return beautify(debugInformation, this.parseConfig, 2);
-  });
+  };
 
   private columns = (): ICell[] => {
     return [{ title: 'Configuration' }, { title: 'Value' }];
