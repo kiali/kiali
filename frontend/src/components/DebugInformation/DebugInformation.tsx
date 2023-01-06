@@ -17,7 +17,7 @@ import {
 } from '@patternfly/react-core';
 import { aceOptions } from "../../types/IstioConfigDetails";
 import AceEditor from "react-ace";
-import ParameterizedTabs, {activeTab} from "../Tab/Tabs";
+import ParameterizedTabs from "../Tab/Tabs";
 import { ICell, Table, TableBody, TableHeader, TableVariant } from "@patternfly/react-table";
 import {AuthConfig} from "../../types/Auth";
 import authenticationConfig from "../../config/AuthenticationConfig";
@@ -94,7 +94,7 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
       {}
     );
 
-    this.state = { show: false, copyStatus: CopyStatus.NOT_COPIED, currentTab: activeTab(tabName, defaultTab), config: this.kialiConfig };
+    this.state = { show: false, copyStatus: CopyStatus.NOT_COPIED, currentTab: tabName, config: this.kialiConfig };
   }
 
   open = () => {
@@ -262,6 +262,7 @@ private renderTabs() {
           activeTab={this.state.currentTab}
           mountOnEnter={true}
           unmountOnExit={true}
+          skipHistory={true}
         >
           {this.renderTabs()}
         </ParameterizedTabs>
