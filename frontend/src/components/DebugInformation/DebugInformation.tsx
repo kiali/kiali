@@ -1,14 +1,9 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import { style } from 'typestyle';
-import _ from 'lodash';
 import beautify from 'json-beautify';
-
-import authenticationConfig from '../../config/AuthenticationConfig';
 import { serverConfig } from '../../config';
 import { ComputedServerConfig } from '../../config/ServerConfig';
-import { AuthConfig } from '../../types/Auth';
 import { KialiAppState } from '../../store/Store';
 import {
   Alert,
@@ -17,8 +12,15 @@ import {
   Button,
   ButtonVariant,
   Modal,
-  ModalVariant
+  ModalVariant,
+  Tab
 } from '@patternfly/react-core';
+import { aceOptions } from "../../types/IstioConfigDetails";
+import AceEditor from "react-ace";
+import ParameterizedTabs from "../Tab/Tabs";
+import { ICell, Table, TableBody, TableHeader, TableVariant } from "@patternfly/react-table";
+import {AuthConfig} from "../../types/Auth";
+import authenticationConfig from "../../config/AuthenticationConfig";
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -32,16 +34,11 @@ type DebugInformationProps = {
 };
 
 type DebugInformationState = {
+  currentTab: string;
   show: boolean;
   copyStatus: CopyStatus;
+  config: Object;
 };
-
-const textAreaStyle = style({
-  width: '100%',
-  height: '200px',
-  minHeight: '200px',
-  resize: 'vertical'
-});
 
 type DebugInformationData = {
   backendConfigs: {
@@ -56,13 +53,48 @@ const copyToClipboardOptions = {
   message: 'We failed to automatically copy the text, please use: #{key}, Enter\t'
 };
 
+// Will be shown in Kiali Config and hidden in Additional state
+const propsToShow = ["accessibleNamespaces", "authStrategy", "clusters", "gatewayAPIEnabled",
+  "istioConfigMap", "istioIdentityDomain", "istioNamespace", "istioStatusEnabled", "logLevel",
+  "istioCanaryRevision", "istioInjectionAction"];
+
+const propsToPatch = ['cyRef', 'summaryTarget', 'token', 'username'];
+
+const tabName = 'tab';
+const defaultTab = 'kialiConfig';
+
+const tabIndex: { [tab: string]: number } = {
+  kialiConfig: 0,
+  additionalState: 1
+};
+
 export class DebugInformation extends React.PureComponent<DebugInformationProps, DebugInformationState> {
-  private textareaRef;
+  aceEditorRef: React.RefObject<AceEditor>;
+  kialiConfig = {};
 
   constructor(props: DebugInformationProps) {
     super(props);
-    this.textareaRef = React.createRef();
-    this.state = { show: false, copyStatus: CopyStatus.NOT_COPIED };
+    this.aceEditorRef = React.createRef();
+
+    for (const key in serverConfig) {
+      if (propsToShow.includes(key)) {
+          if (typeof serverConfig[key] === "string") {
+            this.kialiConfig[key] = serverConfig[key]
+          } else {
+            this.kialiConfig[key] = JSON.stringify(serverConfig[key])
+          }
+      }
+    }
+    // Order config items
+    this.kialiConfig = Object.keys(this.kialiConfig).sort().reduce(
+      (obj, key) => {
+        obj[key] = this.kialiConfig[key];
+        return obj;
+      },
+      {}
+    );
+
+    this.state = { show: false, copyStatus: CopyStatus.NOT_COPIED, currentTab: tabName, config: this.kialiConfig };
   }
 
   open = () => {
@@ -74,7 +106,6 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
   };
 
   copyCallback = (_text: string, result: boolean) => {
-    this.textareaRef.current.select();
     this.setState({ copyStatus: result ? CopyStatus.COPIED : CopyStatus.NOT_COPIED });
   };
 
@@ -88,56 +119,101 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
     }
   }
 
-  renderHealthConfig = (config: Array<any> | Object | RegExp | string) => {
-    if (Array.isArray(config)) {
-      let arr = [];
-      for (let v of config) {
-        arr.push(this.renderHealthConfig(v) as never);
-      }
-      return arr;
+  parseConfig = (key: string, value: any) => {
+    // We have to patch some runtime properties  we don't want to serialize
+    if (propsToPatch.includes(key)) {
+      return null;
     }
-    let result = {};
-    for (let [key, value] of Object.entries(config)) {
-      if ((value as Object).constructor.toString().includes('RegExp')) {
-        result[key] = (value as RegExp).toString();
-      } else if (typeof value !== 'object') {
-        result[key] = value;
-      } else {
-        result[key] = this.renderHealthConfig(value);
-      }
-    }
-    return result;
+    return value;
   };
 
-  render() {
-    const parseConfig = (key: string, value: any) => {
-      // We have to patch some runtime properties  we don't want to serialize
-      if (['cyRef', 'summaryTarget', 'token', 'username'].includes(key)) {
-        return null;
+  // Properties shown in Kiali Config are not shown again in Additional State
+  filterDebugInformation = (info: any) => {
+    if (info !== null ) {
+      for (const [key] of Object.entries(info)) {
+        if (propsToShow.includes(key)) {
+          delete info[key];
+          continue;
+        }
       }
-      if ('healthConfig' === key) {
-        return this.renderHealthConfig(value);
-      }
-      return value;
-    };
-    const renderHealthConfig = beautify(
-      {
-        healthConfig: serverConfig.healthConfig
+    }
+    return info;
+  };
+
+  renderDebugInformation () {
+    let debugInformation: DebugInformationData = {
+      backendConfigs: {
+        authenticationConfig: authenticationConfig,
+        computedServerConfig: serverConfig
       },
-      parseConfig,
-      2
+      currentURL: window.location.href,
+      reduxState: this.props.appState
+    };
+    debugInformation = this.filterDebugInformation(debugInformation);
+    return beautify(debugInformation, this.parseConfig, 2);
+  };
+
+  private columns = (): ICell[] => {
+    return [{ title: 'Configuration' }, { title: 'Value' }];
+  };
+
+private getRows() {
+  var conf:string[][] = [];
+
+  for (const [k, v] of Object.entries(this.state.config)) {
+    if (typeof v !== "string") {
+      conf.push([k, JSON.stringify(v)]);
+    } else {
+      conf.push([k, v]);
+    }
+  }
+  return conf;
+}
+
+private renderTabs() {
+
+  const kialiConfig = (
+      <Tab eventKey={0} title="Kiali Config" key="kialiConfig">
+        <span></span>
+
+        <CopyToClipboard onCopy={this.copyCallback} text={this.getRows()} options={copyToClipboardOptions}>
+          <Table
+            header={<></>}
+            variant={TableVariant.compact}
+            cells={this.columns()}
+            rows={this.getRows()}
+          >
+            <TableHeader />
+            <TableBody />
+          </Table>
+        </CopyToClipboard>
+      </Tab>
     );
-    const renderDebugInformation = _.memoize(() => {
-      const debugInformation: DebugInformationData = {
-        backendConfigs: {
-          authenticationConfig: authenticationConfig,
-          computedServerConfig: serverConfig
-        },
-        currentURL: window.location.href,
-        reduxState: this.props.appState
-      };
-      return beautify(debugInformation, parseConfig, 2);
-    });
+
+    const additionalState = (
+      <Tab eventKey={1} title="Additional State" key="additionalState">
+        <span>Please include this information when opening a bug:</span>
+        <CopyToClipboard onCopy={this.copyCallback} text={this.renderDebugInformation()} options={copyToClipboardOptions}>
+          <AceEditor
+            ref={this.aceEditorRef}
+            mode="yaml"
+            theme="eclipse"
+            width={'100%'}
+            className={'istio-ace-editor'}
+            wrapEnabled={true}
+            readOnly={true}
+            setOptions={aceOptions || { foldStyle: 'markbegin' }}
+            value={this.renderDebugInformation()}
+          />
+        </CopyToClipboard>
+      </Tab>
+    );
+
+    const tabsArray: JSX.Element[] = [kialiConfig, additionalState];
+    return tabsArray;
+  }
+
+  render() {
 
     if (!this.state.show) {
       return null;
@@ -151,7 +227,7 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
         title="Debug information"
         actions={[
           <Button onClick={this.close}>Close</Button>,
-          <CopyToClipboard onCopy={this.copyCallback} text={renderDebugInformation()} options={copyToClipboardOptions}>
+          <CopyToClipboard onCopy={this.copyCallback} text={this.state.currentTab === "kialiConfig" ?  JSON.stringify(this.state.config, null, 2) : this.renderDebugInformation()} options={copyToClipboardOptions}>
             <Button variant={ButtonVariant.primary}>Copy</Button>
           </CopyToClipboard>
         ]}
@@ -174,12 +250,22 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
             actionClose={<AlertActionCloseButton onClose={this.hideAlert} />}
           />
         )}
-        <span>Health Config</span>
-        <textarea className={textAreaStyle} readOnly={true} value={renderHealthConfig} />
-        <span>Please include this information when opening a bug.</span>
-        <CopyToClipboard onCopy={this.copyCallback} text={renderDebugInformation()} options={copyToClipboardOptions}>
-          <textarea ref={this.textareaRef} className={textAreaStyle} readOnly={true} value={renderDebugInformation()} />
-        </CopyToClipboard>
+        <ParameterizedTabs
+          id="basic-tabs"
+          onSelect={tabValue => {
+            this.setState({ currentTab: tabValue });
+            this.hideAlert()
+          }}
+          tabMap={tabIndex}
+          tabName={tabName}
+          defaultTab={defaultTab}
+          activeTab={this.state.currentTab}
+          mountOnEnter={true}
+          unmountOnExit={true}
+          skipHistory={true}
+        >
+          {this.renderTabs()}
+        </ParameterizedTabs>
       </Modal>
     );
   }

@@ -1,8 +1,11 @@
 import { getExpr } from '../../config/HealthConfig';
 
 export const healthConfig = {
+  accessibleNamespaces: [],
+  authStrategy: '',
   clusters: {},
   gatewayAPIEnabled: false,
+  logLevel: '',
   kialiFeatureFlags: {
     certificatesInformationIndicators: {
       enabled: true

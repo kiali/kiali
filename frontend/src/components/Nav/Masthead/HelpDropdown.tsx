@@ -94,7 +94,7 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
     );
 
     items.push(
-      <DropdownItem component={'span'} key={'view_debug_info'} onClick={this.openDebugInformation}>
+      <DropdownItem component={'span'} key={'view_debug_info'} onClick={this.openDebugInformation} style={{ cursor: 'pointer' }}>
         View Debug Info
       </DropdownItem>
     );
