@@ -1,4 +1,4 @@
-import { Node, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
+import { Node, observer, ScaleDetailsLevel, useHover, WithSelectionProps } from '@patternfly/react-topology';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
 import * as React from 'react';
 import BaseNode from '../components/node';
@@ -12,6 +12,7 @@ type StyleNodeProps = {
 const StyleNode: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
+  const [hover, hoverRef] = useHover();
 
   const passedData = React.useMemo(() => {
     const newData = { ...data };
@@ -27,13 +28,17 @@ const StyleNode: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   }, [data, detailsLevel]);
 
   return (
-    <BaseNode
-      element={element}
-      {...rest}
-      {...passedData}
-      showLabel={detailsLevel === ScaleDetailsLevel.high}
-      showStatusBackground={detailsLevel === ScaleDetailsLevel.low}
-    />
+    <g ref={hoverRef as any}>
+      <BaseNode
+        element={element}
+        {...rest}
+        {...passedData}
+        scaleLabel={hover && detailsLevel !== ScaleDetailsLevel.high}
+        // scaleNode={hover && detailsLevel === ScaleDetailsLevel.low}
+        showLabel={hover || detailsLevel === ScaleDetailsLevel.high}
+        showStatusBackground={detailsLevel === ScaleDetailsLevel.low}
+      />
+    </g>
   );
 };
 
