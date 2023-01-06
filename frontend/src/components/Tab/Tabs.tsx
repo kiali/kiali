@@ -10,9 +10,8 @@ type TabsProps = {
   onSelect: (tabName: string) => void;
   postHandler?: (tabName: string) => void;
   tabMap: { [key: string]: number };
-  tabName: string;
+  tabName?: string;
   unmountOnExit?: boolean;
-  skipHistory?: boolean;
 };
 
 export const activeTab = (tabName: string, defaultTab: string): string => {
@@ -72,7 +71,7 @@ export default class ParameterizedTabs extends React.Component<TabsProps> {
   tabSelectHandler = (tabKey: string) => {
     const urlParams = new URLSearchParams('');
 
-    if (!this.props.skipHistory) {
+    if (!!this.props.tabName) {
       urlParams.set(this.props.tabName, tabKey);
 
       history.push(history.location.pathname + '?' + urlParams.toString());
