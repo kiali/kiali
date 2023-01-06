@@ -209,11 +209,12 @@ func Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, ve
 	// handle workload graph nodes (service graphs are initially processed as workload graphs)
 	if graphType == GraphTypeWorkload || graphType == GraphTypeService {
 		// workload graph nodes are type workload or service
-		if !workloadOk && !serviceOk {
-			panic(fmt.Sprintf("Failed ID gen2: cluster=[%s] namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", cluster, namespace, workload, app, version, service, graphType))
-		}
 		if !workloadOk {
-			return fmt.Sprintf("svc_%s_%s_%s", cluster, namespace, service), NodeTypeService
+			if serviceOk {
+				return fmt.Sprintf("svc_%s_%s_%s", cluster, namespace, service), NodeTypeService
+			}
+			// We have seen cases when app is set but workload is unknown and service may be unknown or not set (See #5696)
+			return fmt.Sprintf("svc_%s_%s_%s", cluster, namespace, Unknown), NodeTypeService
 		}
 		return fmt.Sprintf("wl_%s_%s_%v", cluster, namespace, workload), NodeTypeWorkload
 	}
