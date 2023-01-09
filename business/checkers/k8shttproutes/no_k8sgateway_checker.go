@@ -34,7 +34,7 @@ func (s NoK8sGatewayChecker) ValidateHTTPRouteGateways(validations *[]*models.Is
 				if parentRef.Namespace != nil && string(*parentRef.Namespace) != "" {
 					namespace = string(*parentRef.Namespace)
 				}
-				valid = s.checkGateway(string(parentRef.Name), namespace, validations, fmt.Sprintf("spec/parentRefs[%d]", index)) && valid
+				valid = s.checkGateway(string(parentRef.Name), namespace, validations, fmt.Sprintf("spec/parentRefs[%d]/name/%s", index, string(parentRef.Name))) && valid
 			}
 		}
 	}
