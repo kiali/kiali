@@ -191,7 +191,7 @@ When('user hovers over the MinTLS locker', view => {
   .should('exist');
 });
 
-When ('user clicks the toggle on the right side of the {string} namespace card', (ns:string) => {
+Then ('the toggle on the right side of the {string} namespace card exists', (ns:string) => {
   ensureKialiFinishedLoading(); 
   cy.get('article[data-test^="' + ns + '"]')
   .should('exist');
