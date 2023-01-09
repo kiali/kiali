@@ -114,6 +114,7 @@ var ObjectTypeSingular = map[string]string{
 	"workloads":              "workload",
 	"wasmplugins":            "wasmpluin",
 	"telemetries":            "telemetry",
+	"k8shttproutes":          "k8shttproute",
 }
 
 var checkDescriptors = map[string]IstioCheck{
@@ -216,6 +217,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Code:     "KIA0004",
 		Message:  "No matching workload found for the selector in this namespace",
 		Severity: WarningSeverity,
+	},
+	"k8shttproutes.nok8sgateway": {
+		Code:     "KIA1401",
+		Message:  "HTTPRoute is pointing to a non-existent K8s gateway",
+		Severity: ErrorSeverity,
 	},
 	"peerauthentication.mtls.destinationrulemissing": {
 		Code:     "KIA0401",
