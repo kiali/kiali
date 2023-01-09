@@ -137,7 +137,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(istioConfigList models.I
 		checkers.SidecarChecker{Sidecars: istioConfigList.Sidecars, Namespaces: namespaces, WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices},
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace},
 		checkers.WorkloadChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, WorkloadsPerNamespace: workloadsPerNamespace},
-		checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, WorkloadsPerNamespace: workloadsPerNamespace},
+		checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways},
 		checkers.WasmPluginChecker{WasmPlugins: istioConfigList.WasmPlugins, Namespaces: namespaces},
 		checkers.TelemetryChecker{Telemetries: istioConfigList.Telemetries, Namespaces: namespaces},
 		checkers.K8sHTTPRouteChecker{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways},
@@ -240,7 +240,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	case kubernetes.K8sGateways:
 		// Validations on K8sGateways
 		objectCheckers = []ObjectChecker{
-			checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, WorkloadsPerNamespace: workloadsPerNamespace},
+			checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways},
 		}
 	case kubernetes.K8sHTTPRoutes:
 		httpRouteChecker := checkers.K8sHTTPRouteChecker{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways}
