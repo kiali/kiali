@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
 
@@ -43,4 +44,6 @@ func TestIncorrectK8sGatewaysStatus(t *testing.T) {
 
 	assert.False(isValid)
 	assert.NotEmpty(check)
+	assert.Equal("Fake msg", check[0].Message)
+	assert.Equal(models.WarningSeverity, check[0].Severity)
 }

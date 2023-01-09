@@ -10,9 +10,7 @@ import (
 const K8sGatewayCheckerType = "k8sgateway"
 
 type K8sGatewayChecker struct {
-	K8sGateways           []*k8s_networking_v1alpha2.Gateway
-	WorkloadsPerNamespace map[string]models.WorkloadList
-	IsGatewayToNamespace  bool
+	K8sGateways []*k8s_networking_v1alpha2.Gateway
 }
 
 // Check runs checks for the all namespaces actions as well as for the single namespace validations
