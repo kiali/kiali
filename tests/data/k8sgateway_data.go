@@ -74,7 +74,7 @@ func CreateGWAddress(addrType k8s_networking_v1alpha2.AddressType, value string)
 }
 
 func UpdateConditionWithError(k8sgw *k8s_networking_v1alpha2.Gateway) *k8s_networking_v1alpha2.Gateway {
-	condition := metav1.Condition{Type: "Ready", Status: "false", Reason: "", Message: ""}
+	condition := metav1.Condition{Type: "Ready", Status: "False", Reason: "", Message: "Fake msg"}
 	k8sgw.Status.Conditions = append(k8sgw.Status.Conditions, condition)
 
 	return k8sgw
