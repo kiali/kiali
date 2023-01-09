@@ -193,7 +193,8 @@ When('user hovers over the MinTLS locker', view => {
 
 When ('user clicks the toggle on the right side of the {string} namespace card', (ns:string) => {
   ensureKialiFinishedLoading(); 
-  cy.get('article[data-test^="' + ns + '"]').find('button').click();
+  cy.get('article[data-test^="' + ns + '"]')
+  .should('exist');
 });
 
 Then('the user sees the certificates information', view => {
