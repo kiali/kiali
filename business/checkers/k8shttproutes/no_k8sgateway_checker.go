@@ -31,7 +31,7 @@ func (s NoK8sGatewayChecker) ValidateHTTPRouteGateways(validations *[]*models.Is
 		for index, parentRef := range s.K8sHTTPRoute.Spec.ParentRefs {
 			if string(parentRef.Name) != "" && string(*parentRef.Kind) == kubernetes.K8sActualGatewayType && string(*parentRef.Group) == kubernetes.K8sNetworkingGroupVersionV1Beta1.Group {
 				namespace := s.K8sHTTPRoute.Namespace
-				if string(*parentRef.Namespace) != "" {
+				if parentRef.Namespace != nil && string(*parentRef.Namespace) != "" {
 					namespace = string(*parentRef.Namespace)
 				}
 				valid = s.checkGateway(string(parentRef.Name), namespace, validations, fmt.Sprintf("spec/parentRefs[%d]", index)) && valid
