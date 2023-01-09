@@ -3,9 +3,10 @@ package k8sgateways
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestCorrectK8sGatewaysStatus(t *testing.T) {
