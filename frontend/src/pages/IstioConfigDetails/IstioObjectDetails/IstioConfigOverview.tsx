@@ -193,7 +193,7 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
         )}
         {!this.props.istioAPIEnabled && (
           <StackItem>
-              <KialiIcon.Warning className={warnStyle} /> <b>Istio API is disabled.</b> Be careful when editing the configuration as changes may not be compliant (The validations are disabled)
+              <KialiIcon.Warning className={warnStyle} /> <b>Istio API is disabled.</b> Be careful when editing the configuration as the Istio config validations are disabled when the Istio API is disabled.
           </StackItem>
         )}
         <KioskElement>
