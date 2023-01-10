@@ -121,4 +121,3 @@ Feature: Kiali Overview page
     And user sees the "Control plane" label in the "istio-system" namespace card
     And user sees the "Outbound policy" label in the "istio-system" namespace card
     Then the toggle on the right side of the "istio-system" namespace card exists
-    
