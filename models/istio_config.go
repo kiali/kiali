@@ -159,8 +159,11 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 	"telemetries": { //TODO
 		{},
 	},
-	"k8sgateways": { //TODO
+	"k8sgateways": {
 		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. A Gateway describes how traffic can be translated to Services within the cluster."},
+		{ObjectField: "spec.GatewayClassName", Message: "Defines the name of a GatewayClass object used by this Gateway."},
+		{ObjectField: "spec.listeners", Message: "Define the hostnames, ports, protocol, termination, TLS settings and which routes can be attached to a listener."},
+		{ObjectField: "spec.addresses", Message: "Define the network addresses requested for this gateway."},
 	},
 	"k8shttproutes": { //TODO
 		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. HTTPRoute is for multiplexing HTTP or terminated HTTPS connections."},

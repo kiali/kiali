@@ -115,6 +115,7 @@ var ObjectTypeSingular = map[string]string{
 	"wasmplugins":            "wasmpluin",
 	"telemetries":            "telemetry",
 	"k8shttproutes":          "k8shttproute",
+	"k8sgateways":            "k8sgateway",
 }
 
 var checkDescriptors = map[string]IstioCheck{
@@ -311,6 +312,16 @@ var checkDescriptors = map[string]IstioCheck{
 	"workload.authorizationpolicy.needstobecovered": {
 		Code:     "KIA1301",
 		Message:  "This workload is not covered by any authorization policy",
+		Severity: WarningSeverity,
+	},
+	"k8sgateways.multimatch.listener": {
+		Code:     "KIA1501",
+		Message:  "More than one K8s Gateway for the same host port combination",
+		Severity: WarningSeverity,
+	},
+	"k8sgateways.multimatch.ip": {
+		Code:     "KIA1502",
+		Message:  "More than one K8s Gateway for the same address and type combination",
 		Severity: WarningSeverity,
 	},
 }
