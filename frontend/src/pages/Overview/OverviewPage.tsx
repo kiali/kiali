@@ -868,7 +868,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                   const isLongNs = ns.name.length > NS_LONG;
                   return (
                         <GridItem
-                          sm={(ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND) ? lg : sm}
+                          sm={(ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND &&
+                            (this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured())) ? lg : sm}
                           md={(ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND &&
                             (this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured())) ? lg : md}
                           key={'CardItem_' + ns.name}
@@ -877,6 +878,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                             isCompact={true}
                             className={(ns.name === serverConfig.istioNamespace) ? cardControlPlaneGridStyle : cardGridStyle}
                             data-test={ns.name + '-' + OverviewDisplayMode[this.state.displayMode]}
+                            style={(!this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured()) ? {height: "96%"} : {}}
                           >
                             <CardHeader>
                               <CardHeaderMain>
@@ -901,14 +903,14 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                   <Label style={{ marginLeft: 10 }} color={"orange"} isCompact>Istio API disabled</Label>
                                 }
                               </span>
-                                </Title>
-                              </CardHeaderMain>
+                                  </Title>
+                                </CardHeaderMain>
                               <CardActions>{namespaceActions[i]}</CardActions>
                             </CardHeader>
                             <CardBody>
                               {ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND &&
                                 <Grid>
-                                  <GridItem md={3}>
+                                  <GridItem md={this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured() ? 3 : 6}>
                                     {this.renderLabels(ns)}
 
                                     <div style={{textAlign: 'left'}}>
