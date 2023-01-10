@@ -89,7 +89,7 @@ func (m MultiMatchChecker) findMatchIP(address k8s_networking_v1alpha2.GatewayAd
 			continue
 		}
 		for _, a := range aa.Spec.Addresses {
-			if *a.Type == *address.Type && a.Value == address.Value {
+			if a.Type != nil && address.Type != nil && *a.Type == *address.Type && a.Value == address.Value {
 				duplicates = append(duplicates, address)
 			}
 		}
