@@ -44,6 +44,6 @@ func TestIncorrectK8sGatewaysStatus(t *testing.T) {
 
 	assert.False(isValid)
 	assert.NotEmpty(check)
-	assert.Equal("Fake msg", check[0].Message)
+	assert.Equal("Fake msg. GWAPI errors should be changed in the spec.", check[0].Message)
 	assert.Equal(models.WarningSeverity, check[0].Severity)
 }

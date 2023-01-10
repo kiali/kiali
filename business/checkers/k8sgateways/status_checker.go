@@ -39,7 +39,7 @@ func (m StatusChecker) Check() ([]*models.IstioCheck, bool) {
 
 	for i, c := range m.K8sGateway.Status.Conditions {
 		if K8sGatewayConditionStatus[c.Type] == string(c.Status) {
-			check := createGwChecker(fmt.Sprintf("%s. GWAPI errors should be changed in the spec.", c.Message), fmt.Sprintf("status/conditions[%s]/reason/%s", string(i), c.Reason))
+			check := createGwChecker(fmt.Sprintf("%s. GWAPI errors should be changed in the spec.", c.Message), fmt.Sprintf("status/conditions[%d]/reason/%s", i, c.Reason))
 			validations = append(validations, &check)
 		}
 	}
@@ -47,7 +47,7 @@ func (m StatusChecker) Check() ([]*models.IstioCheck, bool) {
 	for i, l := range m.K8sGateway.Status.Listeners {
 		for _, c := range l.Conditions {
 			if K8sGatewayListenersStatus[c.Type] == string(c.Status) {
-				check := createGwChecker(fmt.Sprintf("%s. GWAPI errors should be changed in the spec.", c.Message), fmt.Sprintf("status/conditions[%s]/type/%s", string(i), c.Reason))
+				check := createGwChecker(fmt.Sprintf("%s. GWAPI errors should be changed in the spec.", c.Message), fmt.Sprintf("status/conditions[%d]/type/%s", i, c.Reason))
 				validations = append(validations, &check)
 			}
 		}

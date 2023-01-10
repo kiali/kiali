@@ -39,7 +39,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 			duplicate, _ := m.findMatch(listener, g.Name)
 			if duplicate {
 				// The above is referenced by each one below..
-				currentHostValidation := createError(gatewayRuleName, "k8sgateways.multimatch.listener", gatewayNamespace, fmt.Sprintf("speclisteners[%s]/hostname", fmt.Sprint(index)))
+				currentHostValidation := createError(gatewayRuleName, "k8sgateways.multimatch.listener", gatewayNamespace, fmt.Sprintf("speclisteners[%d]/hostname", index))
 				validations = validations.MergeValidations(currentHostValidation)
 			}
 		}
