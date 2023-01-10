@@ -60,7 +60,7 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
           </Title>
             {!this.props.istioAPIEnabled && path.startsWith('istio/new/') &&
               (<div>
-                <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when creating the configuration as may not be compliant (The validations are disabled)
+                <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when creating the configuration as the Istio config validations are disabled when the Istio API is disabled.
               </div>)
             }
           </>
