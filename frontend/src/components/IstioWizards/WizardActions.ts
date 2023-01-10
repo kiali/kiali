@@ -15,7 +15,7 @@ import {
   HTTPMatchRequest,
   HTTPRoute,
   HTTPRouteDestination,
-  K8sGateway, K8sHTTPHeaderFilter,
+  K8sGateway, K8sHTTPHeaderFilter, K8sHTTPRequestMirrorFilter,
   K8sHTTPRoute, K8sHTTPRouteFilter, K8sHTTPRouteMatch, K8sHTTPRouteRequestRedirect,
   LoadBalancerSettings,
   Operation,
@@ -52,7 +52,7 @@ import { ServiceEntryState } from '../../pages/IstioConfigNew/ServiceEntryForm';
 import {K8sRouteBackendRef} from './K8sTrafficShifting';
 import { QUERY_PARAMS, PATH, HEADERS, METHOD } from "./K8sRequestRouting/K8sMatchBuilder";
 import {ServiceOverview} from "../../types/ServiceList";
-import {ADD, SET, REQ_MOD, REQ_RED} from "./K8sRequestRouting/K8sFilterBuilder";
+import {ADD, SET, REQ_MOD, REQ_RED, REQ_MIR} from "./K8sRequestRouting/K8sFilterBuilder";
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
@@ -356,6 +356,21 @@ const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
       routeFilter.push({type: "RequestRedirect", requestRedirect: requestRedirect})
     });
 
+  filters
+    .filter(filter => filter.startsWith(REQ_MIR))
+    .forEach(filter => {
+      const requestMirror: K8sHTTPRequestMirrorFilter = {};
+      // match follows format:  requestMirror service:port
+      const i0 = filter.indexOf(' ');
+      const j0 = filter.indexOf(':');
+      const service = filter.substring(i0 + 1, j0).trim();
+      const port = filter.substring(j0 + 1).trim();
+      if (service && port) {
+        requestMirror.backendRef = {name: service, port: parseInt(port)};
+      }
+      routeFilter.push({type: "RequestMirror", requestMirror: requestMirror})
+    });
+
   return routeFilter;
 };
 
@@ -427,6 +442,9 @@ const parseK8sHTTPRouteFilter = (httpRouteFilter: K8sHTTPRouteFilter): string[] 
   if (httpRouteFilter.requestRedirect) {
     matches = matches.concat(parseK8sHTTPRouteRequestRedirect(httpRouteFilter.requestRedirect));
   }
+  if (httpRouteFilter.requestMirror) {
+    matches = matches.concat(parseK8sHTTPRouteRequestMirror(httpRouteFilter.requestMirror));
+  }
   return matches;
 };
 
@@ -452,6 +470,10 @@ const parseK8sHTTPHeaderFilter = (filterType: string, httpHeaderFilter: K8sHTTPH
 
 const parseK8sHTTPRouteRequestRedirect = (requestRedirect: K8sHTTPRouteRequestRedirect): string => {
   return `${REQ_RED} ${requestRedirect.scheme}://${requestRedirect.hostname ? requestRedirect.hostname : ''}:${requestRedirect.port ? requestRedirect.port : ''} ${requestRedirect.statusCode}`;
+};
+
+const parseK8sHTTPRouteRequestMirror = (requestMirror: K8sHTTPRequestMirrorFilter): string => {
+  return `${REQ_MIR} ${requestMirror.backendRef ? requestMirror.backendRef.name + ':' + requestMirror.backendRef.port : ''}`;
 };
 
 export const getGatewayName = (namespace: string, serviceName: string, gatewayNames: string[]): string => {
@@ -1035,6 +1057,13 @@ export const getDefaultBackendRefs = (subServices: ServiceOverview[]): K8sRouteB
     backendRefs[backendRefs.length - 1].weight = backendRefs[backendRefs.length - 1].weight ? backendRefs[backendRefs.length - 1].weight : 0 + remainTraffic;
   }
   return backendRefs;
+};
+
+export const getDefaultService = (subServices: ServiceOverview[]): string => {
+  if (subServices && subServices.length > 0) {
+    return `${subServices[0].name}:${getServicePort(subServices[0].ports)}`;
+  }
+  return ''
 };
 
 export const getDefaultWeights = (workloads: WorkloadOverview[]): WorkloadWeight[] => {

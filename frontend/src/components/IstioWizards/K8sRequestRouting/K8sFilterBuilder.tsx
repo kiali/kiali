@@ -8,6 +8,9 @@ import {
   TextInput,
   ButtonVariant
 } from '@patternfly/react-core';
+import {ServiceOverview} from "../../../types/ServiceList";
+import {getServicePort} from "../../../types/ServiceInfo";
+import {style} from "typestyle";
 
 type Props = {
   filterType: string;
@@ -21,13 +24,16 @@ type Props = {
   onHeaderValueChange: (headerValue: string) => void;
   onHostNameChange: (hostName: string) => void;
   onPortValueChange: (portValue: string) => void;
+  onSelectServiceOp: (serviceOp: string) => void;
   onSelectStatusCodeOp: (statusCodeOp: string) => void;
   onSelectHeaderOp: (headerOp: string) => void;
   onSelectSchemeOp: (schemeOp: string) => void;
   onAddFilter: () => void;
   portValue: string;
   schemeOp: string;
+  serviceOp: string;
   statusCodeOp: string;
+  subServices: ServiceOverview[];
 };
 
 type State = {
@@ -35,6 +41,7 @@ type State = {
   isHeaderDropdown: boolean;
   isSchemeDropdown: boolean;
   isStatusCodeDropdown: boolean;
+  isServiceDropdown: boolean;
 };
 
 export const REQ_MOD = 'requestHeaderModifier';
@@ -50,7 +57,7 @@ export const HTTPS = 'https';
 export const SC301 = '301';
 export const SC302 = '302';
 
-const filterOptions: string[] = [REQ_MOD, REQ_RED];
+const filterOptions: string[] = [REQ_MOD, REQ_RED, REQ_MIR];
 const schemeOptions: string[] = [HTTP, HTTPS];
 const statusOptions: string[] = [SC301, SC302];
 
@@ -63,6 +70,10 @@ const allOptions = {
   [RESP_MOD]: [SET, ADD, REMOVE],
 };
 
+const serviceStyle = style({
+  width: '100%',
+});
+
 class K8sFilterBuilder extends React.Component<Props, State> {
   constructor(props) {
     super(props);
@@ -71,6 +82,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
       isHeaderDropdown: false,
       isSchemeDropdown: false,
       isStatusCodeDropdown: false,
+      isServiceDropdown: false,
     };
   }
 
@@ -95,6 +107,12 @@ class K8sFilterBuilder extends React.Component<Props, State> {
   onStatusCodeOpToggle = () => {
     this.setState({
       isStatusCodeDropdown: !this.state.isStatusCodeDropdown
+    });
+  };
+
+  onServiceOpToggle = () => {
+    this.setState({
+      isServiceDropdown: !this.state.isServiceDropdown
     });
   };
 
@@ -224,6 +242,31 @@ class K8sFilterBuilder extends React.Component<Props, State> {
                 data-test={'status-code-' + op}
               >
                 {op}
+              </DropdownItem>
+            ))}
+          />
+        )}
+        {(this.props.filterType === REQ_MIR) && (
+          <Dropdown
+            className={serviceStyle}
+            toggle={
+              <DropdownToggle onToggle={this.onServiceOpToggle} data-test={'service'}>
+                {this.props.serviceOp}
+              </DropdownToggle>
+            }
+            isOpen={this.state.isServiceDropdown}
+            dropdownItems={this.props.subServices.map((so, index) => (
+              <DropdownItem
+                key={so.name + '_' + index}
+                value={so.name + ':' + getServicePort(so.ports)}
+                component="button"
+                onClick={() => {
+                  this.props.onSelectServiceOp(so.name + ':' + getServicePort(so.ports));
+                  this.onServiceOpToggle();
+                }}
+                data-test={'service-' + so.name}
+              >
+                {so.name + ':' + getServicePort(so.ports)}
               </DropdownItem>
             ))}
           />

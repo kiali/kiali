@@ -37,12 +37,14 @@ type Props = {
   headerValue: string;
   hostName: string;
   portValue: string;
+  serviceOp: string;
   statusCodeOp: string;
   filters: string[];
   onSelectFilterType: (filterType: string) => void;
   onHeaderValueChange: (headerValue: string) => void;
   onHostNameChange: (hostName: string) => void;
   onPortValueChange: (portValue: string) => void;
+  onSelectServiceOp: (serviceOp: string) => void;
   onSelectStatusCodeOp: (statusCodeOp: string) => void;
   onSelectHeaderOp: (headerOp: string) => void;
   onSelectSchemeOp: (schemeOp: string) => void;
