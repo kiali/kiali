@@ -314,9 +314,14 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "This workload is not covered by any authorization policy",
 		Severity: WarningSeverity,
 	},
-	"k8sgateways.multimatch": {
+	"k8sgateways.multimatch.listener": {
 		Code:     "KIA1501",
 		Message:  "More than one K8s Gateway for the same host port combination",
+		Severity: WarningSeverity,
+	},
+	"k8sgateways.multimatch.ip": {
+		Code:     "KIA1502",
+		Message:  "More than one K8s Gateway for the same address and type combination",
 		Severity: WarningSeverity,
 	},
 }

@@ -1,6 +1,8 @@
 package k8sgateways
 
 import (
+	"fmt"
+
 	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	"github.com/kiali/kiali/models"
@@ -35,17 +37,17 @@ var K8sGatewayListenersStatus = map[string]string{
 func (m StatusChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
-	for _, c := range m.K8sGateway.Status.Conditions {
+	for i, c := range m.K8sGateway.Status.Conditions {
 		if K8sGatewayConditionStatus[c.Type] == string(c.Status) {
-			check := createGwChecker(c.Message, "status/conditions/type/"+c.Type)
+			check := createGwChecker(fmt.Sprintf("%s. GWAPI errors should be changed in the spec.", c.Message), fmt.Sprintf("status/conditions[%s]/reason/%s", string(i), c.Reason))
 			validations = append(validations, &check)
 		}
 	}
 
-	for _, l := range m.K8sGateway.Status.Listeners {
+	for i, l := range m.K8sGateway.Status.Listeners {
 		for _, c := range l.Conditions {
 			if K8sGatewayListenersStatus[c.Type] == string(c.Status) {
-				check := createGwChecker(c.Message, "status/conditions/type/"+c.Type)
+				check := createGwChecker(fmt.Sprintf("%s. GWAPI errors should be changed in the spec.", c.Message), fmt.Sprintf("status/conditions[%s]/type/%s", string(i), c.Reason))
 				validations = append(validations, &check)
 			}
 		}

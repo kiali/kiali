@@ -29,7 +29,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 			duplicate, _ := m.findMatchIP(address, g.Name)
 			if duplicate {
 				// The above is referenced by each one below..
-				currentHostValidation := createError(gatewayRuleName, gatewayNamespace, address.Value, "addresses/value")
+				currentHostValidation := createError(gatewayRuleName, "k8sgateways.multimatch.ip", gatewayNamespace, "spec/addresses/value")
 				validations = validations.MergeValidations(currentHostValidation)
 			}
 		}
@@ -39,7 +39,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 			duplicate, _ := m.findMatch(listener, g.Name)
 			if duplicate {
 				// The above is referenced by each one below..
-				currentHostValidation := createError(gatewayRuleName, gatewayNamespace, string(*listener.Hostname), fmt.Sprintf("listeners[%s]/hostname", fmt.Sprint(index)))
+				currentHostValidation := createError(gatewayRuleName, "k8sgateways.multimatch.listener", gatewayNamespace, fmt.Sprintf("speclisteners[%s]/hostname", fmt.Sprint(index)))
 				validations = validations.MergeValidations(currentHostValidation)
 			}
 		}
@@ -49,9 +49,9 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 }
 
 // Create validation error for k8sgateway object
-func createError(gatewayRuleName, namespace string, hostname string, path string) models.IstioValidations {
+func createError(gatewayRuleName string, ruleCode string, namespace string, path string) models.IstioValidations {
 	key := models.IstioValidationKey{Name: gatewayRuleName, Namespace: namespace, ObjectType: K8sGatewayCheckerType}
-	checks := models.Build("k8sgateways.multimatch", fmt.Sprintf("spec/%s", path))
+	checks := models.Build(ruleCode, path)
 	rrValidation := &models.IstioValidation{
 		Name:       gatewayRuleName,
 		ObjectType: K8sGatewayCheckerType,
@@ -72,7 +72,7 @@ func (m MultiMatchChecker) findMatch(listener k8s_networking_v1alpha2.Listener, 
 			continue
 		}
 		for _, l := range gw.Spec.Listeners {
-			if *l.Hostname == *listener.Hostname && l.Port == listener.Port && l.Protocol == listener.Protocol {
+			if l.Hostname != nil && listener.Hostname != nil && *l.Hostname == *listener.Hostname && l.Port == listener.Port && l.Protocol == listener.Protocol {
 				duplicates = append(duplicates, listener)
 			}
 		}
