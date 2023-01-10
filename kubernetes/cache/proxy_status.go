@@ -2,9 +2,10 @@ package cache
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
