@@ -1119,11 +1119,8 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 		// Add the Proxy Status to the workload
 		for _, pod := range w.Pods {
 			if pod.HasIstioSidecar() && config.Get().ExternalServices.Istio.IstioAPIEnabled {
-				ps, err := layer.ProxyStatus.GetPodProxyStatus(namespace, pod.Name)
-				if err != nil {
-					log.Warningf("GetPodProxyStatus is failing for [namespace: %s] [pod: %s]: %s ", namespace, pod.Name, err.Error())
-				}
-				pod.ProxyStatus = castProxyStatus(ps)
+				ps := layer.ProxyStatus.GetPodProxyStatus(namespace, pod.Name)
+				pod.ProxyStatus = ps
 			}
 		}
 
@@ -1676,11 +1673,8 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 		for _, pod := range w.Pods {
 			if pod.HasIstioSidecar() {
 				if config.Get().ExternalServices.Istio.IstioAPIEnabled {
-					ps, err := layer.ProxyStatus.GetPodProxyStatus(criteria.Namespace, pod.Name)
-					if err != nil {
-						log.Warningf("GetPodProxyStatus is failing for [namespace: %s] [pod: %s]: %s ", criteria.Namespace, pod.Name, err.Error())
-					}
-					pod.ProxyStatus = castProxyStatus(ps)
+					ps := layer.ProxyStatus.GetPodProxyStatus(criteria.Namespace, pod.Name)
+					pod.ProxyStatus = ps
 				}
 			}
 		}
