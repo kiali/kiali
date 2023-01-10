@@ -221,19 +221,6 @@ Then("the user sees information related to canary upgrades", view => {
       .should('exist');
 });
 
-Then('user can see links to external services',() =>{
-  cy.get('article[data-test^="istio-system"]').as("plane").within(() => {
-    cy.request('GET', '/api/grafana').should(response => {
-      expect(response.status).to.equal(200);
-      response.body.externalLinks.forEach(elem => {
-        if (elem.name != 'Istio Service Dashboard' && elem.name != 'Istio Workload Dashboard'){
-          cy.get('@plane').find('a').contains(elem.name);
-        }
-      });
-    });
-  });
-});
-
 And('user sees the {string} label in the {string} namespace card', (label: string, ns: string) => {
   cy.log(label);
   cy.get('article[data-test^="' + ns + '"]')
