@@ -32,6 +32,22 @@ func AddParentRefToHTTPRoute(name, namespace string, rt *k8s_networking_v1alpha2
 	return rt
 }
 
+func AddBackendRefToHTTPRoute(name string, rt *k8s_networking_v1alpha2.HTTPRoute) *k8s_networking_v1alpha2.HTTPRoute {
+	kind := k8s_networking_v1alpha2.Kind("Service")
+	backendRef := k8s_networking_v1alpha2.HTTPBackendRef{
+		BackendRef: k8s_networking_v1alpha2.BackendRef{
+			BackendObjectReference: k8s_networking_v1alpha2.BackendObjectReference{
+				Kind: &kind,
+				Name: k8s_networking_v1alpha2.ObjectName(name),
+			},
+		},
+	}
+	rule := k8s_networking_v1alpha2.HTTPRouteRule{}
+	rule.BackendRefs = append(rule.BackendRefs, backendRef)
+	rt.Spec.Rules = append(rt.Spec.Rules, rule)
+	return rt
+}
+
 func CreateEmptyK8sGateway(name, namespace string) *k8s_networking_v1alpha2.Gateway {
 	gw := k8s_networking_v1alpha2.Gateway{}
 	gw.Name = name
