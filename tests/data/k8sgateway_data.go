@@ -32,13 +32,18 @@ func AddParentRefToHTTPRoute(name, namespace string, rt *k8s_networking_v1alpha2
 	return rt
 }
 
-func AddBackendRefToHTTPRoute(name string, rt *k8s_networking_v1alpha2.HTTPRoute) *k8s_networking_v1alpha2.HTTPRoute {
+func AddBackendRefToHTTPRoute(name, namespace string, rt *k8s_networking_v1alpha2.HTTPRoute) *k8s_networking_v1alpha2.HTTPRoute {
 	kind := k8s_networking_v1alpha2.Kind("Service")
+	var ns k8s_networking_v1alpha2.Namespace
+	if namespace != "" {
+		ns = k8s_networking_v1alpha2.Namespace(namespace)
+	}
 	backendRef := k8s_networking_v1alpha2.HTTPBackendRef{
 		BackendRef: k8s_networking_v1alpha2.BackendRef{
 			BackendObjectReference: k8s_networking_v1alpha2.BackendObjectReference{
-				Kind: &kind,
-				Name: k8s_networking_v1alpha2.ObjectName(name),
+				Kind:      &kind,
+				Name:      k8s_networking_v1alpha2.ObjectName(name),
+				Namespace: &ns,
 			},
 		},
 	}

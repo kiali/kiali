@@ -25,6 +25,9 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 			if ref.Kind == nil || string(*ref.Kind) != "Service" {
 				continue
 			}
+			if ref.Namespace != nil && string(*ref.Namespace) != "" {
+				namespace = string(*ref.Namespace)
+			}
 			fqdn := kubernetes.GetHost(string(ref.Name), namespace, n.Namespaces.GetNames())
 			if !n.checkDestination(fqdn.String(), namespace) {
 				path := fmt.Sprintf("spec/rules[%d]/backendRefs[%d]/name", k, i)

@@ -57,8 +57,8 @@ func TestWithoutService(t *testing.T) {
 
 	vals := K8sHTTPRouteChecker{
 		K8sHTTPRoutes: []*k8s_networking_v1alpha2.HTTPRoute{
-			data.AddBackendRefToHTTPRoute("ratings", data.CreateHTTPRoute("route1", "bookinfo", "gatewayapi", []string{"bookinfo"})),
-			data.AddBackendRefToHTTPRoute("ratings", data.CreateHTTPRoute("route2", "bookinfo2", "gatewayapi2", []string{"bookinfo2"}))},
+			data.AddBackendRefToHTTPRoute("ratings", "bookinfo", data.CreateHTTPRoute("route1", "bookinfo", "gatewayapi", []string{"bookinfo"})),
+			data.AddBackendRefToHTTPRoute("ratings", "bookinfo", data.CreateHTTPRoute("route2", "bookinfo2", "gatewayapi2", []string{"bookinfo2"}))},
 		K8sGateways:      []*k8s_networking_v1alpha2.Gateway{data.CreateEmptyK8sGateway("gatewayapi", "bookinfo"), data.CreateEmptyK8sGateway("gatewayapi2", "bookinfo2")},
 		RegistryServices: append(registryService1, registryService2...),
 		Namespaces:       models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
