@@ -18,13 +18,13 @@ type NoHostChecker struct {
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 	valid := true
-	namespace := n.K8sHTTPRoute.Namespace
 
 	for k, httpRoute := range n.K8sHTTPRoute.Spec.Rules {
 		for i, ref := range httpRoute.BackendRefs {
 			if ref.Kind == nil || string(*ref.Kind) != "Service" {
 				continue
 			}
+			namespace := n.K8sHTTPRoute.Namespace
 			if ref.Namespace != nil && string(*ref.Namespace) != "" {
 				namespace = string(*ref.Namespace)
 			}
