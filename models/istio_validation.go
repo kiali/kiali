@@ -219,6 +219,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "No matching workload found for the selector in this namespace",
 		Severity: WarningSeverity,
 	},
+	"k8shttproutes.nohost.namenotfound": {
+		Code:     "KIA1402",
+		Message:  "BackendRef on rule doesn't have a valid service (host not found)",
+		Severity: ErrorSeverity,
+	},
 	"k8shttproutes.nok8sgateway": {
 		Code:     "KIA1401",
 		Message:  "HTTPRoute is pointing to a non-existent K8s gateway",

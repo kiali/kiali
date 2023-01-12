@@ -11,8 +11,10 @@ import (
 const K8sHTTPRouteCheckerType = "k8shttproute"
 
 type K8sHTTPRouteChecker struct {
-	K8sHTTPRoutes []*k8s_networking_v1alpha2.HTTPRoute
-	K8sGateways   []*k8s_networking_v1alpha2.Gateway
+	K8sHTTPRoutes    []*k8s_networking_v1alpha2.HTTPRoute
+	K8sGateways      []*k8s_networking_v1alpha2.Gateway
+	Namespaces       models.Namespaces
+	RegistryServices []*kubernetes.RegistryService
 }
 
 // Check runs checks for the all namespaces actions as well as for the single namespace validations
@@ -44,6 +46,11 @@ func (in K8sHTTPRouteChecker) runChecks(rt *k8s_networking_v1alpha2.HTTPRoute, g
 		k8shttproutes.NoK8sGatewayChecker{
 			K8sHTTPRoute: rt,
 			GatewayNames: gatewayNames,
+		},
+		k8shttproutes.NoHostChecker{
+			K8sHTTPRoute:     rt,
+			Namespaces:       in.Namespaces,
+			RegistryServices: in.RegistryServices,
 		},
 	}
 
