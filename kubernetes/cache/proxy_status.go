@@ -7,7 +7,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 )
@@ -19,50 +18,47 @@ type ProxyStatusCache interface {
 // pollIstiodForProxyStatus is a long running goroutine that will periodically poll istiod for proxy status.
 // Polling stops when the stopCacheChan is closed.
 func (c *kialiCacheImpl) pollIstiodForProxyStatus(ctx context.Context) {
-	if config.Get().ExternalServices.Istio.IstioAPIEnabled {
-		log.Debug("[Kiali Cache] Starting polling istiod for proxy status")
-		go func() {
-			for {
-				select {
-				case <-ctx.Done():
-					log.Debug("[Kiali Cache] Stopping polling for istiod proxy status")
-					return
-				case <-time.After(c.tokenNamespaceDuration):
-					// Get the proxy status from istiod with some retries.
-					// Wrapping this so we can defer cancel.
-					func() {
-						ctx, cancel := context.WithTimeout(ctx, c.tokenNamespaceDuration)
-						defer cancel()
 
-						var (
-							proxyStatus []*kubernetes.ProxyStatus
-							err         error
-						)
+	log.Debug("[Kiali Cache] Starting polling istiod for proxy status")
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				log.Debug("[Kiali Cache] Stopping polling for istiod proxy status")
+				return
+			case <-time.After(c.tokenNamespaceDuration):
+				// Get the proxy status from istiod with some retries.
+				// Wrapping this so we can defer cancel.
+				func() {
+					ctx, cancel := context.WithTimeout(ctx, c.tokenNamespaceDuration)
+					defer cancel()
 
-						interval := c.tokenNamespaceDuration / 2
-						retryErr := wait.PollImmediateUntilWithContext(ctx, interval, func(ctx context.Context) (bool, error) {
-							log.Trace("Getting proxy status from istiod")
-							proxyStatus, err = c.istioClient.GetProxyStatus()
-							if err != nil {
-								// TODO: Error checking could be done here to determine retry if GetProxyStatus provided that info.
-								return false, nil
-							}
+					var (
+						proxyStatus []*kubernetes.ProxyStatus
+						err         error
+					)
 
-							return true, nil
-						})
-						if retryErr != nil {
-							log.Warningf("Error getting proxy status from istiod. Proxy status may be stale. Err: %v", err)
-							return
+					interval := c.tokenNamespaceDuration / 2
+					retryErr := wait.PollImmediateUntilWithContext(ctx, interval, func(ctx context.Context) (bool, error) {
+						log.Trace("Getting proxy status from istiod")
+						proxyStatus, err = c.istioClient.GetProxyStatus()
+						if err != nil {
+							// TODO: Error checking could be done here to determine retry if GetProxyStatus provided that info.
+							return false, nil
 						}
 
-						c.setProxyStatus(proxyStatus)
-					}()
-				}
+						return true, nil
+					})
+					if retryErr != nil {
+						log.Warningf("Error getting proxy status from istiod. Proxy status may be stale. Err: %v", err)
+						return
+					}
+
+					c.setProxyStatus(proxyStatus)
+				}()
 			}
-		}()
-	} else {
-		log.Debug("[Kiali Cache] istiod polling disabled for proxy status")
-	}
+		}
+	}()
 
 }
 
