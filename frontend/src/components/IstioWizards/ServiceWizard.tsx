@@ -737,7 +737,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           />
           {!this.props.istioAPIEnabled &&
             (<div style={{padding: " 0 0 20px 0"}}>
-              <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when editing the configuration as changes may not be compliant (The validations are disabled)
+              <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when editing the configuration as the Istio config validations are disabled when the Istio API is disabled.
             </div>)}
           {this.props.type === WIZARD_REQUEST_ROUTING && (
             <RequestRouting
