@@ -603,12 +603,13 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       </DropdownItem>,
       <DropdownItem key="toggleTimestamps" onClick={this.toggleShowTimestamps}>
         {`${this.state.showTimestamps ? 'Remove' : 'Show'} Timestamps`}
-      </DropdownItem>,
-      <DropdownSeparator key="logLevelSeparator" />
+      </DropdownItem>
     ];
 
     if (!serverConfig.deployment.viewOnlyMode) {
-      kebabActions.push( <DropdownGroup label={dropdownGroupLabel} key="setLogLevels">
+      kebabActions.push(
+        <DropdownSeparator key="logLevelSeparator" />,
+        <DropdownGroup label={dropdownGroupLabel} key="setLogLevels">
         {hasProxyContainer && logDropDowns}
       </DropdownGroup>);
 
