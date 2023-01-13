@@ -159,6 +159,7 @@ type ReduxProps = {
   refreshInterval: IntervalInMilliseconds;
   minTLS: string;
   istioAPIEnabled: boolean;
+  isMaistra: boolean;
 };
 
 type OverviewProps = ReduxProps & {};
@@ -658,7 +659,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     // RBAC allow more fine granularity but Kiali won't check that in detail.
 
     if (serverConfig.istioNamespace !== nsInfo.name) {
-      if (serverConfig.kialiFeatureFlags.istioInjectionAction && !serverConfig.kialiFeatureFlags.istioUpgradeAction) {
+      if (!this.props.isMaistra && serverConfig.kialiFeatureFlags.istioInjectionAction && !serverConfig.kialiFeatureFlags.istioUpgradeAction) {
         namespaceActions.push({
           isGroup: false,
           isSeparator: true
@@ -1168,6 +1169,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   refreshInterval: refreshIntervalSelector(state),
   minTLS: minTLSVersionSelector(state),
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
+  isMaistra: state.statusState.istioEnvironment.isMaistra,
 });
 
 const OverviewPageContainer = connect(mapStateToProps)(OverviewPage);

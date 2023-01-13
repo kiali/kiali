@@ -267,7 +267,7 @@ func istioVersion() (*ExternalServiceInfo, error) {
 		Put(MeshVersion, meshVersion)
 		Put(MeshName, meshName)
 		AddWarningMessages(compatibleWarnings)
-		return nil, fmt.Errorf(compatibleWarnings)
+		//return nil, fmt.Errorf(compatibleWarnings)
 	}
 
 	return istioInfo, nil
