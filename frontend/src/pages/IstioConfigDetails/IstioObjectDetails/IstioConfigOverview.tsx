@@ -44,6 +44,8 @@ interface IstioConfigOverviewProps {
   workloadReferences: WorkloadReference[];
   helpMessages?: HelpMessage[];
   selectedLine?: string;
+  kiosk: string;
+  istioAPIEnabled: boolean;
 }
 
 const iconStyle = style({
@@ -56,6 +58,11 @@ const iconStyle = style({
 const infoStyle = style({
   margin: '0px 0px 2px 10px',
   verticalAlign: '-5px !important'
+});
+
+const warnStyle = style({
+  margin: '0px 0px 2px 0px',
+  verticalAlign: '-3px !important'
 });
 
 const healthIconStyle = style({
@@ -182,6 +189,11 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
               helpMessages={this.props.helpMessages}
               selectedLine={this.props.selectedLine}
             ></IstioConfigHelp>
+          </StackItem>
+        )}
+        {!this.props.istioAPIEnabled && (
+          <StackItem>
+              <KialiIcon.Warning className={warnStyle} /> <b>Istio API is disabled.</b> Be careful when editing the configuration as the Istio config validations are disabled when the Istio API is disabled.
           </StackItem>
         )}
         <KioskElement>

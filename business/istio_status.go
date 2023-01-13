@@ -29,7 +29,7 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 	)
 	defer end()
 
-	if !config.Get().ExternalServices.Istio.ComponentStatuses.Enabled {
+	if !config.Get().ExternalServices.Istio.ComponentStatuses.Enabled || !config.Get().ExternalServices.Istio.IstioAPIEnabled {
 		return kubernetes.IstioComponentStatus{}, nil
 	}
 

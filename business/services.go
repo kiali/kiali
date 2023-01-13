@@ -63,6 +63,9 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 	if criteria.IncludeIstioResources {
 		nFetches = 5
 	}
+	if !config.Get().ExternalServices.Istio.IstioAPIEnabled {
+		nFetches--
+	}
 
 	wg := sync.WaitGroup{}
 	wg.Add(nFetches)
@@ -92,19 +95,21 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 		}
 	}()
 
-	go func() {
-		defer wg.Done()
-		var err2 error
-		registryCriteria := RegistryCriteria{
-			Namespace:       criteria.Namespace,
-			ServiceSelector: criteria.ServiceSelector,
-		}
-		rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
-		if err2 != nil {
-			log.Errorf("Error fetching Registry Services per namespace %s: %s", criteria.Namespace, err2)
-			errChan <- err2
-		}
-	}()
+	if config.Get().ExternalServices.Istio.IstioAPIEnabled {
+		go func() {
+			defer wg.Done()
+			var err2 error
+			registryCriteria := RegistryCriteria{
+				Namespace:       criteria.Namespace,
+				ServiceSelector: criteria.ServiceSelector,
+			}
+			rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
+			if err2 != nil {
+				log.Errorf("Error fetching Registry Services per namespace %s: %s", criteria.Namespace, err2)
+				errChan <- err2
+			}
+		}()
+	}
 
 	go func() {
 		defer wg.Done()
@@ -437,8 +442,12 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 	var nsmtls models.MTLSStatus
 
 	wg := sync.WaitGroup{}
-	wg.Add(6)
-	errChan := make(chan error, 6)
+	nwg := 6
+	if !config.Get().ExternalServices.Istio.IstioAPIEnabled {
+		nwg = 4
+	}
+	wg.Add(nwg)
+	errChan := make(chan error, nwg)
 
 	labelsSelector := labels.Set(svc.Selectors).String()
 	// If service doesn't have any selector, we can't know which are the pods and workloads applying.
@@ -470,33 +479,37 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 			}
 		}(ctx)
 
+		if config.Get().ExternalServices.Istio.IstioAPIEnabled {
+			go func() {
+				defer wg.Done()
+				var err2 error
+				registryCriteria := RegistryCriteria{
+					Namespace: namespace,
+				}
+				rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
+				if err2 != nil {
+					log.Errorf("Error fetching Registry Services per namespace %s: %s", registryCriteria.Namespace, err2)
+					errChan <- err2
+				}
+			}()
+		}
+	}
+
+	if config.Get().ExternalServices.Istio.IstioAPIEnabled {
 		go func() {
 			defer wg.Done()
 			var err2 error
-			registryCriteria := RegistryCriteria{
-				Namespace: namespace,
+			criteria := RegistryCriteria{
+				Namespace:   namespace,
+				ServiceName: service,
 			}
-			rSvcs, err2 = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
+			rEps, err2 = in.businessLayer.RegistryStatus.GetRegistryEndpoints(criteria)
 			if err2 != nil {
-				log.Errorf("Error fetching Registry Services per namespace %s: %s", registryCriteria.Namespace, err2)
+				log.Errorf("Error fetching Registry Endpoints namespace %s and service %s: %s", namespace, service, err2)
 				errChan <- err2
 			}
 		}()
 	}
-
-	go func() {
-		defer wg.Done()
-		var err2 error
-		criteria := RegistryCriteria{
-			Namespace:   namespace,
-			ServiceName: service,
-		}
-		rEps, err2 = in.businessLayer.RegistryStatus.GetRegistryEndpoints(criteria)
-		if err2 != nil {
-			log.Errorf("Error fetching Registry Endpoints namespace %s and service %s: %s", namespace, service, err2)
-			errChan <- err2
-		}
-	}()
 
 	go func(ctx context.Context) {
 		defer wg.Done()

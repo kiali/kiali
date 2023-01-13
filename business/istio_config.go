@@ -151,7 +151,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 	}
 
 	// Use the Istio Registry when AllNamespaces is present
-	if criteria.AllNamespaces {
+	if criteria.AllNamespaces && config.Get().ExternalServices.Istio.IstioAPIEnabled {
 		registryCriteria := RegistryCriteria{
 			AllNamespaces: true,
 		}
@@ -214,11 +214,12 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, criteria I
 
 		return istioConfigList, nil
 	}
-
-	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
-	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetNamespace(ctx, criteria.Namespace); err != nil {
-		return models.IstioConfigList{}, err
+	if !criteria.AllNamespaces {
+		// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+		// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+		if _, err := in.businessLayer.Namespace.GetNamespace(ctx, criteria.Namespace); err != nil {
+			return models.IstioConfigList{}, err
+		}
 	}
 
 	isWorkloadSelector := criteria.WorkloadSelector != ""

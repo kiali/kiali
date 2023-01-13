@@ -111,6 +111,7 @@ export type ServiceWizardProps = {
   k8sHTTPRoutes: K8sHTTPRoute[],
   peerAuthentications: PeerAuthentication[];
   onClose: (changed: boolean) => void;
+  istioAPIEnabled: boolean; 
 };
 
 export type ServiceWizardValid = {

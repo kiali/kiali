@@ -1,5 +1,13 @@
 import * as React from 'react';
-import {Button, ButtonVariant, ExpandableSection, Modal, ModalVariant, Tab, Tabs} from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  ExpandableSection,
+  Modal,
+  ModalVariant,
+  Tab,
+  Tabs
+} from '@patternfly/react-core';
 import {WorkloadOverview} from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import {Response} from '../../services/Api';
@@ -64,6 +72,7 @@ import RequestTimeouts, {TimeoutRetryRoute} from './RequestTimeouts';
 import CircuitBreaker, {CircuitBreakerState} from './CircuitBreaker';
 import _ from 'lodash';
 import {ConfigPreviewItem, IstioConfigPreview} from 'components/IstioConfigPreview/IstioConfigPreview';
+import {KialiIcon} from "../../config/KialiIcon";
 
 const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState => {
   return {
@@ -713,6 +722,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             </Button>
           ]}
         >
+
           <IstioConfigPreview
             isOpen={this.state.showPreview}
             title={titleAction}
@@ -725,6 +735,10 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
               this.onConfirmPreview(items);
             }}
           />
+          {!this.props.istioAPIEnabled &&
+            (<div style={{padding: " 0 0 20px 0"}}>
+              <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when editing the configuration as the Istio config validations are disabled when the Istio API is disabled.
+            </div>)}
           {this.props.type === WIZARD_REQUEST_ROUTING && (
             <RequestRouting
               serviceName={this.props.serviceName}

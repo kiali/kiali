@@ -18,6 +18,7 @@ type ProxyStatusCache interface {
 // pollIstiodForProxyStatus is a long running goroutine that will periodically poll istiod for proxy status.
 // Polling stops when the stopCacheChan is closed.
 func (c *kialiCacheImpl) pollIstiodForProxyStatus(ctx context.Context) {
+
 	log.Debug("[Kiali Cache] Starting polling istiod for proxy status")
 	go func() {
 		for {
@@ -58,6 +59,7 @@ func (c *kialiCacheImpl) pollIstiodForProxyStatus(ctx context.Context) {
 			}
 		}
 	}()
+
 }
 
 func (c *kialiCacheImpl) GetPodProxyStatus(namespace, pod string) *kubernetes.ProxyStatus {

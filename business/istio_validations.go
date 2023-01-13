@@ -78,8 +78,14 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
 
-	wg.Add(4) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
+	var istioApiEnabled = config.Get().ExternalServices.Istio.IstioAPIEnabled
+
+	wg.Add(3) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 	if service != "" {
+		wg.Add(1)
+	}
+
+	if istioApiEnabled {
 		wg.Add(1)
 	}
 
@@ -92,11 +98,15 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 	} else {
 		go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &namespaces, errChan, &wg)
 	}
+
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
 	if service != "" {
 		go in.fetchServices(ctx, &services, namespace, errChan, &wg)
 	}
-	go in.fetchRegistryServices(&registryServices, errChan, &wg)
+
+	if istioApiEnabled {
+		go in.fetchRegistryServices(&registryServices, errChan, &wg)
+	}
 
 	wg.Wait()
 	close(errChan)
@@ -166,6 +176,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	var referenceChecker ReferenceChecker
 	istioReferences := models.IstioReferencesMap{}
 
+	var istioApiEnabled = config.Get().ExternalServices.Istio.IstioAPIEnabled
+
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if _, err = in.businessLayer.Namespace.GetNamespace(ctx, namespace); err != nil {
@@ -180,11 +192,20 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	errChan := make(chan error, 1)
 
 	// Get all the Istio objects from a Namespace and all gateways from every namespace
-	wg.Add(4)
+	wg.Add(3)
+
+	if istioApiEnabled {
+		wg.Add(1)
+	}
+
 	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, namespace, errChan, &wg)
 	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &namespaces, errChan, &wg)
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
-	go in.fetchRegistryServices(&registryServices, errChan, &wg)
+
+	if istioApiEnabled {
+		go in.fetchRegistryServices(&registryServices, errChan, &wg)
+	}
+
 	wg.Wait()
 
 	noServiceChecker := checkers.NoServiceChecker{Namespaces: namespaces, IstioConfigList: &istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: &rbacDetails, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny()}

@@ -31,6 +31,7 @@ import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/
 interface IstioConfigListPageState extends FilterComponent.State<IstioConfigItem> {}
 interface IstioConfigListPageProps extends FilterComponent.Props<IstioConfigItem> {
   activeNamespaces: Namespace[];
+  istioAPIEnabled: boolean;
 }
 
 class IstioConfigListPageComponent extends FilterComponent.Component<
@@ -139,8 +140,9 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
   // Fetch the Istio configs, apply filters and map them into flattened list items
   fetchIstioConfigs(namespaces: string[], typeFilters: string[], istioNameFilters: string[]) {
+    const validate = this.props.istioAPIEnabled ? true : false;
     // Request all configs from all namespaces, as in backend all configs are always loaded from registry
-    return this.promises.register('configs', API.getAllIstioConfigs([], typeFilters, true, '', '')).then(response => {
+    return this.promises.register('configs', API.getAllIstioConfigs([], typeFilters, validate, '', '')).then(response => {
       let istioItems: IstioConfigItem[] = [];
       // filter by selected namespaces
       namespaces.forEach(ns => {
@@ -173,7 +175,8 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  activeNamespaces: activeNamespacesSelector(state)
+  activeNamespaces: activeNamespacesSelector(state),
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
 const IstioConfigListPage = connect(mapStateToProps, null)(IstioConfigListPageComponent);

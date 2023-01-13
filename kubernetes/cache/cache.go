@@ -207,8 +207,10 @@ func NewKialiCache(namespaceSeedList ...string) (KialiCache, error) {
 	// Update SA Token
 	kialiCacheImpl.refreshCache(ctx, istioConfig)
 
-	// Populate cache from Istiod in the background. This routine gets stopped when the cache is stopped.
-	kialiCacheImpl.pollIstiodForProxyStatus(ctx)
+	if kConfig.ExternalServices.Istio.IstioAPIEnabled {
+		// Populate cache from Istiod in the background. This routine gets stopped when the cache is stopped.
+		kialiCacheImpl.pollIstiodForProxyStatus(ctx)
+	}
 
 	kialiCacheImpl.registryRefreshHandler = NewRegistryHandler(kialiCacheImpl.RefreshRegistryStatus)
 

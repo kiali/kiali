@@ -94,6 +94,7 @@ const paramToTab: { [key: string]: number } = {
 
 interface IstioConfigDetailsProps extends RouteComponentProps<IstioConfigId> {
   kiosk: string;
+  istioAPIEnabled: boolean;
 }
 
 class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetailsProps, IstioConfigDetailsState> {
@@ -142,7 +143,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   };
 
   fetchIstioObjectDetailsFromProps = (props: IstioConfigId) => {
-    const promiseConfigDetails = this.newIstioObjectPromise(props, true);
+    const validate = this.props.istioAPIEnabled ? true : false;
+    const promiseConfigDetails = this.newIstioObjectPromise(props, validate);
 
     // Note that adapters/templates are not supported yet for validations
     promiseConfigDetails
@@ -482,6 +484,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
                     workloadReferences={workloadReferences}
                     helpMessages={helpMessages}
                     selectedLine={this.state.selectedEditorLine}
+                    kiosk={this.props.kiosk}
+                    istioAPIEnabled={this.props.istioAPIEnabled}
                   />
                 )}
               </>
@@ -623,6 +627,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
 const mapStateToProps = (state: KialiAppState) => ({
   kiosk: state.globalState.kiosk,
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
 const IstioConfigDetailsPage = connect(mapStateToProps, null)(IstioConfigDetailsPageComponent);

@@ -16,7 +16,7 @@ import TrafficDetails from 'components/TrafficList/TrafficDetails';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import {getServiceWizardLabel, ServiceDetailsInfo} from '../../types/ServiceInfo';
+import { getServiceWizardLabel, ServiceDetailsInfo } from '../../types/ServiceInfo';
 import {
   Gateway,
   K8sGateway,

@@ -86,6 +86,7 @@ export class IstioStatus extends React.Component<Props> {
   };
 
   tooltipContent = () => {
+
     return <IstioStatusList status={this.props.status} />;
   };
 
@@ -146,7 +147,7 @@ export class IstioStatus extends React.Component<Props> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   status: istioStatusSelector(state),
-  namespaces: namespaceItemsSelector(state)
+  namespaces: namespaceItemsSelector(state),
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

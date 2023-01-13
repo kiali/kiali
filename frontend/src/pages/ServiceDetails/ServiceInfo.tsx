@@ -48,6 +48,7 @@ interface Props extends ServiceId {
   k8sGateways: K8sGateway[];
   peerAuthentications: PeerAuthentication[];
   validations: Validations;
+  istioAPIEnabled: boolean;
 }
 
 type ServiceInfoState = {
@@ -243,6 +244,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
           peerAuthentications={this.props.peerAuthentications}
           tlsStatus={this.props.serviceDetails?.namespaceMTLS}
           onClose={this.handleWizardClose}
+          istioAPIEnabled={this.props.istioAPIEnabled}
         />
         {this.state.showConfirmDeleteTrafficRouting && (
           <ConfirmDeleteTrafficRoutingModal
@@ -261,7 +263,8 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  mtlsEnabled: meshWideMTLSEnabledSelector(state)
+  mtlsEnabled: meshWideMTLSEnabledSelector(state),
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
 const ServiceInfoContainer = connect(mapStateToProps)(ServiceInfo);
