@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/config"
 	"net/http"
 	"strings"
 
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 )
 
 func LoggingUpdate(w http.ResponseWriter, r *http.Request) {
