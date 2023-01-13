@@ -306,6 +306,7 @@ func (c OpenIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Requ
 			if flow.ShouldTerminateSession {
 				c.SessionStore.TerminateSession(r, w)
 			}
+			log.Warningf("Authentication rejected: %s", flow.Error.Error())
 			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(flow.Error.Error())), http.StatusFound)
 		}
 		return
