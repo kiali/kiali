@@ -329,6 +329,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "More than one K8s Gateway for the same address and type combination",
 		Severity: WarningSeverity,
 	},
+	"k8sgateways.unique.listener": {
+		Code:     "KIA1503",
+		Message:  "Each listener must have a unique combination of Hostname, Port, and Protocol",
+		Severity: ErrorSeverity,
+	},
 }
 
 func Build(checkId string, path string) IstioCheck {

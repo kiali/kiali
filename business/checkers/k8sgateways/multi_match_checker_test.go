@@ -131,3 +131,51 @@ func TestDuplicateAddresssCheckOk(t *testing.T) {
 	assert.Empty(vals)
 
 }
+
+func TestUniqueListenerOk(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	k8sgwObject := data.AddListenerToK8sGateway(data.CreateListener("test", "host.es", 80, "http"),
+		data.CreateEmptyK8sGateway("validk8sgateway", "test"))
+
+	k8sgwObject = data.AddListenerToK8sGateway(data.CreateListener("test2", "host.com", 80, "http"),
+		k8sgwObject)
+
+	k8sgws := []*k8s_networking_v1alpha2.Gateway{k8sgwObject}
+
+	vals := MultiMatchChecker{
+		K8sGateways: k8sgws,
+	}.Check()
+
+	assert.Empty(vals)
+
+}
+
+func TestUniqueListenerDuplicate(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	k8sgwObject := data.AddListenerToK8sGateway(data.CreateListener("test", "host.es", 80, "http"),
+		data.CreateEmptyK8sGateway("k8sgateway", "test"))
+
+	k8sgwObject = data.AddListenerToK8sGateway(data.CreateListener("test2", "host.es", 80, "http"),
+		k8sgwObject)
+
+	k8sgws := []*k8s_networking_v1alpha2.Gateway{k8sgwObject}
+
+	vals := MultiMatchChecker{
+		K8sGateways: k8sgws,
+	}.Check()
+
+	assert.NotEmpty(vals)
+	assert.Equal(1, len(vals))
+	validation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "k8sgateway"}]
+	assert.True(ok)
+	assert.Greater(len(validation.Checks), 0)
+
+}
