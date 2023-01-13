@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/kiali/kiali/config"
 	"net/http"
 	"strings"
 
@@ -12,6 +13,11 @@ import (
 
 func LoggingUpdate(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
+
+	if config.Get().Deployment.ViewOnlyMode == true {
+		RespondWithError(w, http.StatusForbidden, "Logs cannot be edited in View only mode")
+		return
+	}
 
 	// Get business layer
 	businessLayer, err := getBusiness(r)

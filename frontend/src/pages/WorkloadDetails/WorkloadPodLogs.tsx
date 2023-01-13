@@ -52,6 +52,7 @@ import {isKiosk} from "../../components/Kiosk/KioskActions";
 import { KioskElement } from "../../components/Kiosk/KioskElement";
 import { TimeDurationModal } from "../../components/Time/TimeDurationModal";
 import TimeDurationIndicatorContainer from "../../components/Time/TimeDurationIndicatorComponent";
+import {serverConfig} from "../../config";
 
 const appContainerColors = [PFColors.White, PFColors.LightGreen400, PFColors.Purple100, PFColors.LightBlue400];
 const proxyContainerColor = PFColors.Gold400;
@@ -603,11 +604,15 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       <DropdownItem key="toggleTimestamps" onClick={this.toggleShowTimestamps}>
         {`${this.state.showTimestamps ? 'Remove' : 'Show'} Timestamps`}
       </DropdownItem>,
-      <DropdownSeparator key="logLevelSeparator" />,
-      <DropdownGroup label={dropdownGroupLabel} key="setLogLevels">
-        {hasProxyContainer && logDropDowns}
-      </DropdownGroup>
+      <DropdownSeparator key="logLevelSeparator" />
     ];
+
+    if (!serverConfig.deployment.viewOnlyMode) {
+      kebabActions.push( <DropdownGroup label={dropdownGroupLabel} key="setLogLevels">
+        {hasProxyContainer && logDropDowns}
+      </DropdownGroup>);
+
+    }
 
     const logEntries = this.state.entries ? this.filteredEntries(this.state.entries, this.state.showLogValue, this.state.hideLogValue, this.state.useRegex) : [];
     return (
