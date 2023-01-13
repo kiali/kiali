@@ -37,10 +37,18 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 		// With listeners
 		for index, listener := range g.Spec.Listeners {
 			duplicate, _ := m.findMatch(listener, g.Name)
+			// Find in a different k8s GW
 			if duplicate {
 				// The above is referenced by each one below..
-				currentHostValidation := createError(gatewayRuleName, "k8sgateways.multimatch.listener", gatewayNamespace, fmt.Sprintf("speclisteners[%d]/hostname", index))
+				currentHostValidation := createError(gatewayRuleName, "k8sgateways.multimatch.listener", gatewayNamespace, fmt.Sprintf("spec/listeners[%d]/hostname", index))
 				validations = validations.MergeValidations(currentHostValidation)
+			}
+			// Check for unique listeners in the GW
+			for i, l := range g.Spec.Listeners {
+				if listener.Name != l.Name && l.Hostname != nil && listener.Hostname != nil && *listener.Hostname == *l.Hostname && listener.Port == l.Port && listener.Protocol == l.Protocol {
+					currentHostValidation := createError(gatewayRuleName, "k8sgateways.unique.listener", gatewayNamespace, fmt.Sprintf("spec/listeners[%d]/name", i))
+					validations = validations.MergeValidations(currentHostValidation)
+				}
 			}
 		}
 	}
