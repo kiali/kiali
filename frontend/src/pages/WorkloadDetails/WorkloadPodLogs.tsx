@@ -48,11 +48,11 @@ import moment from 'moment';
 import { formatDuration } from 'utils/tracing/TracingHelper';
 import { infoStyle } from 'styles/DropdownStyles';
 import { isValid } from 'utils/Common';
-import {isKiosk} from "../../components/Kiosk/KioskActions";
+import { isKiosk } from "../../components/Kiosk/KioskActions";
 import { KioskElement } from "../../components/Kiosk/KioskElement";
 import { TimeDurationModal } from "../../components/Time/TimeDurationModal";
 import TimeDurationIndicatorContainer from "../../components/Time/TimeDurationIndicatorComponent";
-import {serverConfig} from "../../config";
+import { serverConfig } from "../../config";
 
 const appContainerColors = [PFColors.White, PFColors.LightGreen400, PFColors.Purple100, PFColors.LightBlue400];
 const proxyContainerColor = PFColors.Gold400;
@@ -566,6 +566,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           onClick={() => {
             this.setLogLevel(LogLevel[level]);
           }}
+          isDisabled={serverConfig.deployment.viewOnlyMode}
         >
           {level}
         </DropdownItem>
@@ -603,17 +604,12 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
       </DropdownItem>,
       <DropdownItem key="toggleTimestamps" onClick={this.toggleShowTimestamps}>
         {`${this.state.showTimestamps ? 'Remove' : 'Show'} Timestamps`}
-      </DropdownItem>
-    ];
-
-    if (!serverConfig.deployment.viewOnlyMode) {
-      kebabActions.push(
-        <DropdownSeparator key="logLevelSeparator" />,
-        <DropdownGroup label={dropdownGroupLabel} key="setLogLevels">
+      </DropdownItem>,
+      <DropdownSeparator key="logLevelSeparator" />,
+      <DropdownGroup label={dropdownGroupLabel} key="setLogLevels">
         {hasProxyContainer && logDropDowns}
-      </DropdownGroup>);
-
-    }
+      </DropdownGroup>
+    ];
 
     const logEntries = this.state.entries ? this.filteredEntries(this.state.entries, this.state.showLogValue, this.state.hideLogValue, this.state.useRegex) : [];
     return (
