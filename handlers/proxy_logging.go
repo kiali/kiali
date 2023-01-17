@@ -15,7 +15,7 @@ func LoggingUpdate(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	if config.Get().Deployment.ViewOnlyMode {
-		RespondWithError(w, http.StatusForbidden, "Logs cannot be edited in View only mode")
+		RespondWithError(w, http.StatusForbidden, "Log level cannot be changed in view-only mode")
 		return
 	}
 
