@@ -8,10 +8,16 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 )
 
 func LoggingUpdate(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
+
+	if config.Get().Deployment.ViewOnlyMode {
+		RespondWithError(w, http.StatusForbidden, "Log level cannot be changed in view-only mode")
+		return
+	}
 
 	// Get business layer
 	businessLayer, err := getBusiness(r)

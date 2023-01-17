@@ -48,10 +48,11 @@ import moment from 'moment';
 import { formatDuration } from 'utils/tracing/TracingHelper';
 import { infoStyle } from 'styles/DropdownStyles';
 import { isValid } from 'utils/Common';
-import {isKiosk} from "../../components/Kiosk/KioskActions";
+import { isKiosk } from "../../components/Kiosk/KioskActions";
 import { KioskElement } from "../../components/Kiosk/KioskElement";
 import { TimeDurationModal } from "../../components/Time/TimeDurationModal";
 import { TimeDurationIndicatorButton } from "../../components/Time/TimeDurationIndicatorButton";
+import { serverConfig } from "../../config";
 
 const appContainerColors = [PFColors.White, PFColors.LightGreen400, PFColors.Purple100, PFColors.LightBlue400];
 const proxyContainerColor = PFColors.Gold400;
@@ -565,6 +566,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
           onClick={() => {
             this.setLogLevel(LogLevel[level]);
           }}
+          isDisabled={serverConfig.deployment.viewOnlyMode}
         >
           {level}
         </DropdownItem>
@@ -583,7 +585,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                 the log level to 'off' disables the proxy loggers but does <b>not</b> disable access logging. To hide
                 all proxy logging from the logs view, including access logs, un-check the proxy container. <br />
                 <br />
-                This option is disabled for pods with no proxy container.
+                This option is disabled for pods with no proxy container, or in view-only mode.
               </div>
             </div>
           }
