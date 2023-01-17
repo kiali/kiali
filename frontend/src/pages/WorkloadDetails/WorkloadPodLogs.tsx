@@ -585,7 +585,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
                 the log level to 'off' disables the proxy loggers but does <b>not</b> disable access logging. To hide
                 all proxy logging from the logs view, including access logs, un-check the proxy container. <br />
                 <br />
-                This option is disabled for pods with no proxy container.
+                This option is disabled for pods with no proxy container, or in view-only mode.
               </div>
             </div>
           }
