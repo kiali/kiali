@@ -40,7 +40,7 @@ Scenario: Disable all traffic
 # todo: would be a better test if demos has tcp and/or grpc traffic
 @graph-page-toolbar
 Scenario: Enable http traffic
-  And user disables all traffic
+  When user disables all traffic
   When user enables "http" traffic
   Then user "sees" "http" traffic
   And user "does not see" "tcp" traffic

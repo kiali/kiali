@@ -140,6 +140,7 @@ And("makes them all visible", () => {
 
 When("user clicks on {string}", (label:string) => {
   cy.get('#filter-selection > :nth-child(2)').contains(label).click();
+  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 Then("he can see only {int} filters", (count:number) => {
