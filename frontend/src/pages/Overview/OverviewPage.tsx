@@ -153,13 +153,13 @@ type State = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
+  isMaistra: boolean;
+  istioAPIEnabled: boolean;
   kiosk: string;
   meshStatus: string;
+  minTLS: string;
   navCollapse: boolean;
   refreshInterval: IntervalInMilliseconds;
-  minTLS: string;
-  istioAPIEnabled: boolean;
-  isMaistra: boolean;
 };
 
 type OverviewProps = ReduxProps & {};
@@ -1163,13 +1163,13 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
+  isMaistra: state.statusState.istioEnvironment.isMaistra,
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
   kiosk: state.globalState.kiosk,
   meshStatus: meshWideMTLSStatusSelector(state),
+  minTLS: minTLSVersionSelector(state),
   navCollapse: state.userSettings.interface.navCollapse,
   refreshInterval: refreshIntervalSelector(state),
-  minTLS: minTLSVersionSelector(state),
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
-  isMaistra: state.statusState.istioEnvironment.isMaistra,
 });
 
 const OverviewPageContainer = connect(mapStateToProps)(OverviewPage);
