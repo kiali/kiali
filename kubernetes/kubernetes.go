@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -35,6 +36,8 @@ import (
 )
 
 type K8SClientInterface interface {
+	// Kube returns the underlying kubernetes client.
+	Kube() kubernetes.Interface
 	GetClusterServicesByLabels(labelsSelector string) ([]core_v1.Service, error)
 	GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
 	GetCronJobs(namespace string) ([]batch_v1.CronJob, error)
@@ -98,6 +101,10 @@ func (in *K8SClient) forwardGetRequest(namespace, podName string, destinationPor
 	}
 
 	return resp, err
+}
+
+func (in *K8SClient) Kube() kubernetes.Interface {
+	return in.k8s
 }
 
 // GetClusterServicesByLabels fetches and returns all services in the whole cluster

@@ -8,7 +8,12 @@ import (
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes"
 )
+
+func (o *K8SClientMock) Kube() kubernetes.Interface {
+	return nil
+}
 
 func (o *K8SClientMock) GetClusterServicesByLabels(labelsSelector string) ([]core_v1.Service, error) {
 	args := o.Called(labelsSelector)

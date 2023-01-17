@@ -46,6 +46,7 @@ var (
 	kialiCache       cache.KialiCache
 	once             sync.Once
 	prometheusClient prometheus.ClientInterface
+	clientManager    *kubernetes.ClusterClientManager
 )
 
 // sets the global kiali cache var.
@@ -56,6 +57,14 @@ func initKialiCache() {
 			excludedWorkloads[w] = true
 		}
 	}
+
+	cmm, err := kubernetes.NewClusterClientManager(*config.Get())
+	if err != nil {
+		log.Errorf("Failed to initialize cluster client manager. Details: %s", err)
+		return
+	}
+	// Set global var
+	clientManager = cmm
 
 	// TODO: Remove conditonal once cache is fully mandatory.
 	if config.Get().KubernetesConfig.CacheEnabled {
@@ -91,7 +100,7 @@ func initKialiCache() {
 			}
 		}
 
-		cache, err := cache.NewKialiCache(namespaceSeedList...)
+		cache, err := cache.NewKialiCache(clientManager, *config.Get(), namespaceSeedList...)
 		if err != nil {
 			log.Errorf("Error initializing Kiali Cache. Details: %s", err)
 			return
@@ -168,7 +177,8 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 	prometheusClient = prom
 }
 
-// NewWithBackends creates the business layer using the passed k8s and prom clients
+// NewWithBackends creates the business layer using the passed k8s and prom clients.
+// TODO: Pass multiple clients or the client manager.
 func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
 	temporaryLayer := &Layer{}
 	temporaryLayer.App = AppService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
@@ -189,6 +199,9 @@ func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInter
 	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.TokenReview = NewTokenReview(k8s)
 	temporaryLayer.Validations = IstioValidationsService{k8s: k8s, businessLayer: temporaryLayer}
+
+	// TODO: Use client manager or passed in clients rather than hardcoding the home cluster.
+	clusterClients := map[string]kubernetes.ClientInterface{"home": k8s}
 	// TODO: Remove conditional once cache is fully mandatory.
 	if config.Get().KubernetesConfig.CacheEnabled {
 		// The caching client effectively uses two different SA account tokens.
@@ -196,10 +209,12 @@ func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInter
 		// read-only. Methods that are not cached and methods that modify objects
 		// use the user's token through the normal client.
 		// TODO: Always pass caching client once caching is mandatory.
-		cachingClient := cache.NewCachingClient(kialiCache, k8s)
-		temporaryLayer.Workload = *NewWorkloadService(cachingClient, prom, kialiCache, temporaryLayer, config.Get())
+		for cluster, client := range clusterClients {
+			clusterClients[cluster] = cache.NewCachingClient(kialiCache, client)
+		}
+		temporaryLayer.Workload = *NewWorkloadService(clusterClients, prom, kialiCache, temporaryLayer, config.Get())
 	} else {
-		temporaryLayer.Workload = *NewWorkloadService(k8s, prom, kialiCache, temporaryLayer, config.Get())
+		temporaryLayer.Workload = *NewWorkloadService(clusterClients, prom, kialiCache, temporaryLayer, config.Get())
 	}
 
 	return temporaryLayer

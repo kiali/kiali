@@ -41,7 +41,7 @@ func (c *kialiCacheImpl) pollIstiodForProxyStatus(ctx context.Context) {
 					interval := c.tokenNamespaceDuration / 2
 					retryErr := wait.PollImmediateUntilWithContext(ctx, interval, func(ctx context.Context) (bool, error) {
 						log.Trace("Getting proxy status from istiod")
-						proxyStatus, err = c.istioClient.GetProxyStatus()
+						proxyStatus, err = c.clientManager.KialiSAHomeCluster().GetProxyStatus()
 						if err != nil {
 							// TODO: Error checking could be done here to determine retry if GetProxyStatus provided that info.
 							return false, nil

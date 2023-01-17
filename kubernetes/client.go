@@ -112,7 +112,7 @@ func UseRemoteCreds(remoteSecret *RemoteSecret) (*rest.Config, error) {
 
 // ConfigClient return a client with the correct configuration
 // Returns configuration if Kiali is in Cluster when InCluster is true
-// Returns configuration if Kiali is not int Cluster when InCluster is false
+// Returns configuration if Kiali is not in Cluster when InCluster is false
 // It returns an error on any problem
 func ConfigClient() (*rest.Config, error) {
 	if kialiConfig.Get().InCluster {

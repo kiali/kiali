@@ -6,16 +6,24 @@ import (
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 )
+
+var emptyHandler = NewRegistryHandler(func() {})
 
 // Fake KialiCache used for Gateway Scenarios
 // It populates the Namespaces, Informers and Gateway information needed
 func FakeGatewaysKialiCache(gws []*networking_v1beta1.Gateway) KialiCache {
+	cfg := config.Get()
+	cfg.Deployment.AccessibleNamespaces = []string{"bookinfo"}
+	cfg.KubernetesConfig.CacheNamespaces = []string{"test"}
 	kialiCacheImpl := kialiCacheImpl{
 		tokenNamespaces: make(map[string]namespaceCache),
 		// ~ long duration for unit testing
 		refreshDuration: time.Hour,
+		KubeCache:       NewKubeCache(kubetest.NewFakeK8sClient(), *cfg, emptyHandler),
 	}
 
 	// Populate all Gateways using the Registry
@@ -39,11 +47,17 @@ func FakeServicesKialiCache(rss []*kubernetes.RegistryService,
 	ses []*networking_v1beta1.ServiceEntry,
 	sds []*networking_v1beta1.Sidecar,
 	ras []*security_v1beta1.RequestAuthentication,
-	wes []*networking_v1beta1.WorkloadEntry) KialiCache {
+	wes []*networking_v1beta1.WorkloadEntry,
+) KialiCache {
+	// Tests that use this rely on namespaced scoped caches.
+	cfg := config.Get()
+	cfg.Deployment.AccessibleNamespaces = []string{"bookinfo"}
+	cfg.KubernetesConfig.CacheNamespaces = []string{"test"}
 	kialiCacheImpl := kialiCacheImpl{
 		tokenNamespaces: make(map[string]namespaceCache),
 		// ~ long duration for unit testing
 		refreshDuration: time.Hour,
+		KubeCache:       NewKubeCache(kubetest.NewFakeK8sClient(), *cfg, emptyHandler),
 	}
 
 	// Populate all DestinationRules using the Registry
