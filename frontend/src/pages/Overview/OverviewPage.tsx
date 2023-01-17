@@ -659,7 +659,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     // RBAC allow more fine granularity but Kiali won't check that in detail.
 
     if (serverConfig.istioNamespace !== nsInfo.name) {
-      if (!this.props.isMaistra && serverConfig.kialiFeatureFlags.istioInjectionAction && !serverConfig.kialiFeatureFlags.istioUpgradeAction) {
+      if (serverConfig.kialiFeatureFlags.istioInjectionAction && !serverConfig.kialiFeatureFlags.istioUpgradeAction) {
         namespaceActions.push({
           isGroup: false,
           isSeparator: true
@@ -688,30 +688,33 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           action: (ns: string) =>
             this.setState({ showTrafficPoliciesModal: true, nsTarget: ns, opTarget: 'remove', kind: 'injection' })
         };
-        if (
-          nsInfo.labels &&
-          ((nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
-            nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled') ||
-            nsInfo.labels[serverConfig.istioLabels.injectionLabelRev])
-        ) {
-          namespaceActions.push(disableAction);
-          namespaceActions.push(removeAction);
-        } else if (
-          nsInfo.labels &&
-          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
-          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'disabled'
-        ) {
-          namespaceActions.push(enableAction);
-          namespaceActions.push(removeAction);
-        } else {
-          namespaceActions.push(enableAction);
+        if (!this.props.isMaistra) {
+          if (
+            nsInfo.labels &&
+            ((nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
+              nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled') ||
+              nsInfo.labels[serverConfig.istioLabels.injectionLabelRev])
+          ) {
+            namespaceActions.push(disableAction);
+            namespaceActions.push(removeAction);
+          } else if (
+            nsInfo.labels &&
+            nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
+            nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'disabled'
+          ) {
+            namespaceActions.push(enableAction);
+            namespaceActions.push(removeAction);
+          } else {
+            namespaceActions.push(enableAction);
+          }
+          namespaceActions.push({
+            isGroup: false,
+            isSeparator: true,
+            isDisabled: false
+          });
         }
-        namespaceActions.push({
-          isGroup: false,
-          isSeparator: true,
-          isDisabled: false
-        });
       }
+
       if (
         serverConfig.kialiFeatureFlags.istioUpgradeAction &&
         serverConfig.istioCanaryRevision.upgrade &&
