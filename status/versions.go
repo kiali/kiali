@@ -267,6 +267,7 @@ func istioVersion() (*ExternalServiceInfo, error) {
 		Put(MeshVersion, meshVersion)
 		Put(MeshName, meshName)
 		AddWarningMessages(compatibleWarnings)
+		// if something about version compatibility checks break, consider putting this back in and fixing https://github.com/kiali/kiali/issues/5725 a different way
 		//return nil, fmt.Errorf(compatibleWarnings)
 	}
 
