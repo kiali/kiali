@@ -109,6 +109,7 @@ When("user chooses {int} type filters", (count:number) => {
     cy.get('input[placeholder="Filter by Istio Type"]').click();
     cy.get(`[data-test=istio-type-dropdown] > :nth-child(${i})`)
     .should('be.visible').click();
+    cy.get('#loading_kiali_spinner').should('not.exist');
   };
 });
 
