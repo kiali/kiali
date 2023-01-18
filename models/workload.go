@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/status"
 )
 
 type WorkloadList struct {
@@ -176,23 +177,28 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 		annotations = tplMeta.Annotations
 	}
 
-	// check for automatic sidecar injection at the workload level - can be defined via label or annotation
-	// if both are defined, either one set to false will disable injection
-	labelExplicitlyFalse := false // true means the label is defined and explicitly set to false
+	// Check for automatic sidecar injection config at the workload level. This can be defined via label or annotation.
+	// This code ignores any namespace injection label - this determines auto-injection config as defined by workload-only label or annotation.
+	// If both are defined, label always overrides annotation (see https://github.com/kiali/kiali/issues/5713)
+	// If none are defined, assume injection is disabled (again, we ignore the possibility of a namespace label enabling injection)
+	labelExplicitlySet := false // true means the label is defined
 	label, exist := workload.Labels[conf.ExternalServices.Istio.IstioInjectionAnnotation]
 	if exist {
 		if value, err := strconv.ParseBool(label); err == nil {
 			workload.IstioInjectionAnnotation = &value
-			labelExplicitlyFalse = !value
+			labelExplicitlySet = true
 		}
 	}
 
-	// do not bother to check the annotation if the label is explicitly false since we know in that case injection is disabled
-	if !labelExplicitlyFalse {
+	// do not bother to check the annotation if the label is explicitly set - label always overrides the annotation
+	if !labelExplicitlySet {
 		annotation, exist := annotations[conf.ExternalServices.Istio.IstioInjectionAnnotation]
 		if exist {
 			if value, err := strconv.ParseBool(annotation); err == nil {
 				if !value {
+					workload.IstioInjectionAnnotation = &value
+				} else if status.IsMaistra() {
+					// annotation value of true is only meaningful in a OSSM/Maistra environment
 					workload.IstioInjectionAnnotation = &value
 				}
 			}
