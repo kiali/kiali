@@ -9,7 +9,8 @@ import {
   EmptyStateBody,
   EmptyStateVariant,
   Grid,
-  GridItem, Label,
+  GridItem,
+  Label,
   Title,
   TitleSizes,
   Tooltip,
@@ -32,7 +33,12 @@ import {
 } from '../../types/Health';
 import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import OverviewToolbarContainer, { OverviewDisplayMode, OverviewToolbar, OverviewType, DirectionType } from './OverviewToolbar';
+import OverviewToolbarContainer, {
+  OverviewDisplayMode,
+  OverviewToolbar,
+  OverviewType,
+  DirectionType
+} from './OverviewToolbar';
 import NamespaceInfo, { NamespaceStatus } from './NamespaceInfo';
 import NamespaceMTLSStatusContainer from '../../components/MTls/NamespaceMTLSStatus';
 import { RenderComponentScroll } from '../../components/Nav/Page';
@@ -65,8 +71,8 @@ import { MessageType } from '../../types/MessageCenter';
 import { CanaryUpgradeStatus, OutboundTrafficPolicy, ValidationStatus } from '../../types/IstioObjects';
 import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
 import { ExternalLink } from '../../types/Dashboards';
-import { isParentKiosk, kioskOverviewAction } from "../../components/Kiosk/KioskActions";
-import ValidationSummaryLinkContainer from "../../components/Link/ValidationSummaryLink";
+import { isParentKiosk, kioskOverviewAction } from '../../components/Kiosk/KioskActions';
+import ValidationSummaryLinkContainer from '../../components/Link/ValidationSummaryLink';
 import _ from 'lodash';
 import ControlPlaneBadge from './ControlPlaneBadge';
 import OverviewStatusContainer from './OverviewStatus';
@@ -263,7 +269,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
               showTrafficPoliciesModal: prevState.showTrafficPoliciesModal,
               kind: prevState.kind,
               nsTarget: prevState.nsTarget,
-              opTarget: prevState.opTarget,
+              opTarget: prevState.opTarget
             };
           },
           () => {
@@ -408,7 +414,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       step: rateParams.step,
       rateInterval: rateParams.rateInterval,
       direction: direction,
-      reporter: direction === 'inbound' ? 'destination' : 'source',
+      reporter: direction === 'inbound' ? 'destination' : 'source'
     };
 
     return Promise.all(
@@ -421,7 +427,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
               istiod_proxy_time: rs.data.pilot_proxy_convergence_time,
               istiod_cpu: rs.data.process_cpu_seconds_total,
               istiod_mem: rs.data.process_virtual_memory_bytes
-            }
+            };
           }
           return nsInfo;
         });
@@ -485,16 +491,11 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       nss.push(ns.name);
     });
 
-    return Promise.all(
-      [
-        API.getConfigValidations(nss),
-        API.getAllIstioConfigs(nss, [], false, '', '')
-      ]
-    )
+    return Promise.all([API.getConfigValidations(nss), API.getAllIstioConfigs(nss, [], false, '', '')])
       .then(results => {
         chunk.forEach(nsInfo => {
-          nsInfo.validations = results[0].data[nsInfo.name]
-          nsInfo.istioConfig = results[1].data[nsInfo.name]
+          nsInfo.validations = results[0].data[nsInfo.name];
+          nsInfo.istioConfig = results[1].data[nsInfo.name];
         });
       })
       .catch(err => this.handleAxiosError('Could not fetch validations status', err));
@@ -503,12 +504,12 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   fetchOutboundTrafficPolicyMode() {
     API.getOutboundTrafficPolicyMode()
       .then(response => {
-        this.setState({ outboundPolicyMode: { mode: response.data.mode } })
+        this.setState({ outboundPolicyMode: { mode: response.data.mode } });
       })
       .catch(error => {
         AlertUtils.addError('Error fetching Mesh OutboundTrafficPolicy.Mode.', error, 'default', MessageType.ERROR);
       });
-  };
+  }
 
   fetchCanariesStatus() {
     API.getCanaryUpgradeStatus()
@@ -520,22 +521,22 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             migratedNamespaces: response.data.migratedNamespaces,
             pendingNamespaces: response.data.pendingNamespaces
           }
-        })
+        });
       })
       .catch(error => {
         AlertUtils.addError('Error fetching canary upgrade status.', error, 'default', MessageType.ERROR);
       });
-  };
+  }
 
   fetchIstiodResourceThresholds() {
     API.getIstiodResourceThresholds()
       .then(response => {
-        this.setState({ istiodResourceThreholds: response.data })
+        this.setState({ istiodResourceThreholds: response.data });
       })
       .catch(error => {
         AlertUtils.addError('Error fetching Istiod resource threholds.', error, 'default', MessageType.ERROR);
       });
-  };
+  }
 
   handleAxiosError(message: string, error: AxiosError) {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
@@ -559,10 +560,10 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     return (
       !!ns.status &&
       ns.status.inError.length +
-      ns.status.inSuccess.length +
-      ns.status.inWarning.length +
-      ns.status.notAvailable.length ===
-      0
+        ns.status.inSuccess.length +
+        ns.status.inWarning.length +
+        ns.status.notAvailable.length ===
+        0
     );
   };
 
@@ -593,79 +594,87 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   getNamespaceActions = (nsInfo: NamespaceInfo): OverviewNamespaceAction[] => {
     // Today actions are fixed, but soon actions may depend of the state of a namespace
     // So we keep this wrapped in a showActions function.
-    const namespaceActions: OverviewNamespaceAction[] = isParentKiosk(this.props.kiosk) ? [
-      {
-        isGroup: true,
-        isSeparator: false,
-        isDisabled: false,
-        title: 'Show',
-        children: [
+    const namespaceActions: OverviewNamespaceAction[] = isParentKiosk(this.props.kiosk)
+      ? [
           {
             isGroup: true,
             isSeparator: false,
-            title: 'Graph',
-            action: (ns: string) => kioskOverviewAction(Show.GRAPH, ns, this.props.duration, this.props.refreshInterval)
-          },
-          {
-            isGroup: true,
-            isSeparator: false,
-            title: 'Istio Config',
-            action: (ns: string) => kioskOverviewAction(Show.ISTIO_CONFIG, ns, this.props.duration, this.props.refreshInterval)
+            isDisabled: false,
+            title: 'Show',
+            children: [
+              {
+                isGroup: true,
+                isSeparator: false,
+                title: 'Graph',
+                action: (ns: string) =>
+                  kioskOverviewAction(Show.GRAPH, ns, this.props.duration, this.props.refreshInterval)
+              },
+              {
+                isGroup: true,
+                isSeparator: false,
+                title: 'Istio Config',
+                action: (ns: string) =>
+                  kioskOverviewAction(Show.ISTIO_CONFIG, ns, this.props.duration, this.props.refreshInterval)
+              }
+            ]
           }
         ]
-      }
-    ] : [
-      {
-        isGroup: true,
-        isSeparator: false,
-        isDisabled: false,
-        title: 'Show',
-        children: [
+      : [
           {
             isGroup: true,
             isSeparator: false,
-            title: 'Graph',
-            action: (ns: string) => this.show(Show.GRAPH, ns, this.state.type)
-          },
-          {
-            isGroup: true,
-            isSeparator: false,
-            title: 'Applications',
-            action: (ns: string) => this.show(Show.APPLICATIONS, ns, this.state.type)
-          },
-          {
-            isGroup: true,
-            isSeparator: false,
-            title: 'Workloads',
-            action: (ns: string) => this.show(Show.WORKLOADS, ns, this.state.type)
-          },
-          {
-            isGroup: true,
-            isSeparator: false,
-            title: 'Services',
-            action: (ns: string) => this.show(Show.SERVICES, ns, this.state.type)
-          },
-          {
-            isGroup: true,
-            isSeparator: false,
-            title: 'Istio Config',
-            action: (ns: string) => this.show(Show.ISTIO_CONFIG, ns, this.state.type)
+            isDisabled: false,
+            title: 'Show',
+            children: [
+              {
+                isGroup: true,
+                isSeparator: false,
+                title: 'Graph',
+                action: (ns: string) => this.show(Show.GRAPH, ns, this.state.type)
+              },
+              {
+                isGroup: true,
+                isSeparator: false,
+                title: 'Applications',
+                action: (ns: string) => this.show(Show.APPLICATIONS, ns, this.state.type)
+              },
+              {
+                isGroup: true,
+                isSeparator: false,
+                title: 'Workloads',
+                action: (ns: string) => this.show(Show.WORKLOADS, ns, this.state.type)
+              },
+              {
+                isGroup: true,
+                isSeparator: false,
+                title: 'Services',
+                action: (ns: string) => this.show(Show.SERVICES, ns, this.state.type)
+              },
+              {
+                isGroup: true,
+                isSeparator: false,
+                title: 'Istio Config',
+                action: (ns: string) => this.show(Show.ISTIO_CONFIG, ns, this.state.type)
+              }
+            ]
           }
-        ]
-      }
-    ];
+        ];
     // We are going to assume that if the user can create/update Istio AuthorizationPolicies in a namespace
     // then it can use the Istio Injection Actions.
     // RBAC allow more fine granularity but Kiali won't check that in detail.
 
     if (serverConfig.istioNamespace !== nsInfo.name) {
-      if (serverConfig.kialiFeatureFlags.istioInjectionAction && !serverConfig.kialiFeatureFlags.istioUpgradeAction) {
+      if (
+        !this.props.isMaistra &&
+        serverConfig.kialiFeatureFlags.istioInjectionAction &&
+        !serverConfig.kialiFeatureFlags.istioUpgradeAction
+      ) {
         namespaceActions.push({
           isGroup: false,
           isSeparator: true
         });
         const enableAction = {
-          "data-test": `enable-${nsInfo.name}-namespace-sidecar-injection`,
+          'data-test': `enable-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
           isSeparator: false,
           title: 'Enable Auto Injection',
@@ -673,7 +682,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             this.setState({ showTrafficPoliciesModal: true, nsTarget: ns, opTarget: 'enable', kind: 'injection' })
         };
         const disableAction = {
-          "data-test": `disable-${nsInfo.name}-namespace-sidecar-injection`,
+          'data-test': `disable-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
           isSeparator: false,
           title: 'Disable Auto Injection',
@@ -681,37 +690,30 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             this.setState({ showTrafficPoliciesModal: true, nsTarget: ns, opTarget: 'disable', kind: 'injection' })
         };
         const removeAction = {
-          "data-test": `remove-${nsInfo.name}-namespace-sidecar-injection`,
+          'data-test': `remove-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
           isSeparator: false,
           title: 'Remove Auto Injection',
           action: (ns: string) =>
             this.setState({ showTrafficPoliciesModal: true, nsTarget: ns, opTarget: 'remove', kind: 'injection' })
         };
-        if (!this.props.isMaistra) {
-          if (
-            nsInfo.labels &&
-            ((nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
-              nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled') ||
-              nsInfo.labels[serverConfig.istioLabels.injectionLabelRev])
-          ) {
-            namespaceActions.push(disableAction);
-            namespaceActions.push(removeAction);
-          } else if (
-            nsInfo.labels &&
-            nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
-            nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'disabled'
-          ) {
-            namespaceActions.push(enableAction);
-            namespaceActions.push(removeAction);
-          } else {
-            namespaceActions.push(enableAction);
-          }
-          namespaceActions.push({
-            isGroup: false,
-            isSeparator: true,
-            isDisabled: false
-          });
+        if (
+          nsInfo.labels &&
+          ((nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
+            nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled') ||
+            nsInfo.labels[serverConfig.istioLabels.injectionLabelRev])
+        ) {
+          namespaceActions.push(disableAction);
+          namespaceActions.push(removeAction);
+        } else if (
+          nsInfo.labels &&
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'disabled'
+        ) {
+          namespaceActions.push(enableAction);
+          namespaceActions.push(removeAction);
+        } else {
+          namespaceActions.push(enableAction);
         }
       }
 
@@ -746,22 +748,15 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
               nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled'))
         ) {
           namespaceActions.push(upgradeAction);
-          namespaceActions.push({
-            isGroup: false,
-            isSeparator: true
-          });
         } else if (
           nsInfo.labels &&
           nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] &&
           nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] === serverConfig.istioCanaryRevision.upgrade
         ) {
           namespaceActions.push(downgradeAction);
-          namespaceActions.push({
-            isGroup: false,
-            isSeparator: true
-          });
         }
       }
+
       const aps = nsInfo.istioConfig?.authorizationPolicies || [];
       const addAuthorizationAction = {
         isGroup: false,
@@ -784,10 +779,14 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           this.setState({ opTarget: 'delete', nsTarget: ns, showTrafficPoliciesModal: true, kind: 'policy' })
       };
       if (this.props.istioAPIEnabled) {
+        namespaceActions.push({
+          isGroup: false,
+          isSeparator: true
+        });
         namespaceActions.push(addAuthorizationAction);
-      }
-      if (aps.length > 0 && this.props.istioAPIEnabled) {
-        namespaceActions.push(removeAuthorizationAction);
+        if (aps.length > 0) {
+          namespaceActions.push(removeAuthorizationAction);
+        }
       }
     } else if (this.state.grafanaLinks.length > 0) {
       // Istio namespace will render external Grafana dashboards
@@ -824,12 +823,15 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
 
   hasCanaryUpgradeConfigured = (): boolean => {
     if (this.state.canaryUpgradeStatus) {
-      if (this.state.canaryUpgradeStatus.pendingNamespaces.length > 0 || this.state.canaryUpgradeStatus.migratedNamespaces.length > 0) {
+      if (
+        this.state.canaryUpgradeStatus.pendingNamespaces.length > 0 ||
+        this.state.canaryUpgradeStatus.migratedNamespaces.length > 0
+      ) {
         return true;
       }
     }
     return false;
-  }
+  };
 
   render() {
     const sm = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 6;
@@ -871,108 +873,146 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                 {filteredNamespaces.map((ns, i) => {
                   const isLongNs = ns.name.length > NS_LONG;
                   return (
-                        <GridItem
-                          sm={(ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND &&
-                            (this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured())) ? lg : sm}
-                          md={(ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND &&
-                            (this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured())) ? lg : md}
-                          key={'CardItem_' + ns.name}
-                          style={{margin: '0px 5px 0 5px'}}>
-                          <Card
-                            isCompact={true}
-                            className={(ns.name === serverConfig.istioNamespace) ? cardControlPlaneGridStyle : cardGridStyle}
-                            data-test={ns.name + '-' + OverviewDisplayMode[this.state.displayMode]}
-                            style={(!this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured()) ? {height: "96%"} : {}}
-                          >
-                            <CardHeader>
-                              <CardHeaderMain>
-                                <Title headingLevel="h5" size={TitleSizes.lg}>
+                    <GridItem
+                      sm={
+                        ns.name === serverConfig.istioNamespace &&
+                        this.state.displayMode === OverviewDisplayMode.EXPAND &&
+                        (this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured())
+                          ? lg
+                          : sm
+                      }
+                      md={
+                        ns.name === serverConfig.istioNamespace &&
+                        this.state.displayMode === OverviewDisplayMode.EXPAND &&
+                        (this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured())
+                          ? lg
+                          : md
+                      }
+                      key={'CardItem_' + ns.name}
+                      style={{ margin: '0px 5px 0 5px' }}
+                    >
+                      <Card
+                        isCompact={true}
+                        className={ns.name === serverConfig.istioNamespace ? cardControlPlaneGridStyle : cardGridStyle}
+                        data-test={ns.name + '-' + OverviewDisplayMode[this.state.displayMode]}
+                        style={
+                          !this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}
+                        }
+                      >
+                        <CardHeader>
+                          <CardHeaderMain>
+                            <Title headingLevel="h5" size={TitleSizes.lg}>
                               <span
                                 className={isLongNs ? cardNamespaceNameLongStyle : cardNamespaceNameNormalStyle}
                                 title={ns.name}
                               >
                                 {ns.name}
-                                {ns.name === serverConfig.istioNamespace &&
-                                  <ControlPlaneBadge></ControlPlaneBadge>
-                                }
-                                {ns.name !== serverConfig.istioNamespace && this.hasCanaryUpgradeConfigured() && this.state.canaryUpgradeStatus?.migratedNamespaces.includes(ns.name) &&
-                                  <ControlPlaneVersionBadge version={this.state.canaryUpgradeStatus.upgradeVersion}
-                                                            isCanary={true}></ControlPlaneVersionBadge>
-                                }
-                                {ns.name !== serverConfig.istioNamespace && this.hasCanaryUpgradeConfigured() && this.state.canaryUpgradeStatus?.pendingNamespaces.includes(ns.name) &&
-                                  <ControlPlaneVersionBadge version={this.state.canaryUpgradeStatus.currentVersion}
-                                                            isCanary={false}></ControlPlaneVersionBadge>
-                                }
-                                {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled &&
-                                  <Label style={{ marginLeft: 10 }} color={"orange"} isCompact>Istio API disabled</Label>
-                                }
+                                {ns.name === serverConfig.istioNamespace && <ControlPlaneBadge></ControlPlaneBadge>}
+                                {ns.name !== serverConfig.istioNamespace &&
+                                  this.hasCanaryUpgradeConfigured() &&
+                                  this.state.canaryUpgradeStatus?.migratedNamespaces.includes(ns.name) && (
+                                    <ControlPlaneVersionBadge
+                                      version={this.state.canaryUpgradeStatus.upgradeVersion}
+                                      isCanary={true}
+                                    ></ControlPlaneVersionBadge>
+                                  )}
+                                {ns.name !== serverConfig.istioNamespace &&
+                                  this.hasCanaryUpgradeConfigured() &&
+                                  this.state.canaryUpgradeStatus?.pendingNamespaces.includes(ns.name) && (
+                                    <ControlPlaneVersionBadge
+                                      version={this.state.canaryUpgradeStatus.currentVersion}
+                                      isCanary={false}
+                                    ></ControlPlaneVersionBadge>
+                                  )}
+                                {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled && (
+                                  <Label style={{ marginLeft: 10 }} color={'orange'} isCompact>
+                                    Istio API disabled
+                                  </Label>
+                                )}
                               </span>
-                                  </Title>
-                                </CardHeaderMain>
-                              <CardActions>{namespaceActions[i]}</CardActions>
-                            </CardHeader>
-                            <CardBody>
-                              {ns.name === serverConfig.istioNamespace && this.state.displayMode === OverviewDisplayMode.EXPAND &&
-                                <Grid>
-                                  <GridItem md={this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured() ? 3 : 6}>
-                                    {this.renderLabels(ns)}
-
-                                    <div style={{textAlign: 'left'}}>
-                                      <div style={{display: 'inline-block', width: '125px'}}>Istio config</div>
-                                      {ns.tlsStatus && (
-                                        <span>
-                                      <NamespaceMTLSStatusContainer status={ns.tlsStatus.status}/>
-                                    </span>
-                                      )}
-                                      {this.renderIstioConfigStatus(ns)}
-                                    </div>
-                                    {ns.status && <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status}
-                                                                     type={this.state.type}/>}
-                                    {this.state.displayMode === OverviewDisplayMode.EXPAND &&
-                                      <ControlPlaneNamespaceStatus outboundTrafficPolicy={this.state.outboundPolicyMode}
-                                                                   namespace={ns}></ControlPlaneNamespaceStatus>}
-                                    {this.state.displayMode === OverviewDisplayMode.EXPAND && <TLSInfo
-                                      certificatesInformationIndicators={serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled}
-                                      version={this.props.minTLS}></TLSInfo>}
-                                  </GridItem>
-                                  {ns.name === serverConfig.istioNamespace &&
-                                    <GridItem md={9}>
-                                      <Grid>
-                                        {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() &&
-                                          <GridItem md={this.props.istioAPIEnabled ? 4 : 9}>
-                                            <CanaryUpgradeProgress
-                                              canaryUpgradeStatus={this.state.canaryUpgradeStatus}/>
-                                          </GridItem>
-                                        }
-                                        {this.props.istioAPIEnabled === true &&
-                                          <GridItem md={(this.hasCanaryUpgradeConfigured()) ? 8 : 12}>
-                                            {this.renderCharts(ns)}
-                                          </GridItem>}
-                                      </Grid>
-                                    </GridItem>
-                                  }
-                                </Grid>
-                              }
-                              {(((ns.name !== serverConfig.istioNamespace) && this.state.displayMode === OverviewDisplayMode.EXPAND) || this.state.displayMode === OverviewDisplayMode.COMPACT) &&
-                                <div>
+                            </Title>
+                          </CardHeaderMain>
+                          <CardActions>{namespaceActions[i]}</CardActions>
+                        </CardHeader>
+                        <CardBody>
+                          {ns.name === serverConfig.istioNamespace &&
+                            this.state.displayMode === OverviewDisplayMode.EXPAND && (
+                              <Grid>
+                                <GridItem md={this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured() ? 3 : 6}>
                                   {this.renderLabels(ns)}
 
-                                  <div style={{textAlign: 'left'}}>
-                                    <div style={{display: 'inline-block', width: '125px'}}>Istio config</div>
+                                  <div style={{ textAlign: 'left' }}>
+                                    <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
                                     {ns.tlsStatus && (
                                       <span>
-                                    <NamespaceMTLSStatusContainer status={ns.tlsStatus.status}/>
-                                  </span>
+                                        <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} />
+                                      </span>
                                     )}
                                     {this.renderIstioConfigStatus(ns)}
                                   </div>
-                                  {this.renderStatus(ns)}
-                                  {this.state.displayMode === OverviewDisplayMode.EXPAND && this.renderCharts(ns)}
-                                </div>
-                              }
-                            </CardBody>
-                          </Card>
-                        </GridItem>
+                                  {ns.status && (
+                                    <NamespaceStatuses
+                                      key={ns.name}
+                                      name={ns.name}
+                                      status={ns.status}
+                                      type={this.state.type}
+                                    />
+                                  )}
+                                  {this.state.displayMode === OverviewDisplayMode.EXPAND && (
+                                    <ControlPlaneNamespaceStatus
+                                      outboundTrafficPolicy={this.state.outboundPolicyMode}
+                                      namespace={ns}
+                                    ></ControlPlaneNamespaceStatus>
+                                  )}
+                                  {this.state.displayMode === OverviewDisplayMode.EXPAND && (
+                                    <TLSInfo
+                                      certificatesInformationIndicators={
+                                        serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled
+                                      }
+                                      version={this.props.minTLS}
+                                    ></TLSInfo>
+                                  )}
+                                </GridItem>
+                                {ns.name === serverConfig.istioNamespace && (
+                                  <GridItem md={9}>
+                                    <Grid>
+                                      {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() && (
+                                        <GridItem md={this.props.istioAPIEnabled ? 4 : 9}>
+                                          <CanaryUpgradeProgress canaryUpgradeStatus={this.state.canaryUpgradeStatus} />
+                                        </GridItem>
+                                      )}
+                                      {this.props.istioAPIEnabled === true && (
+                                        <GridItem md={this.hasCanaryUpgradeConfigured() ? 8 : 12}>
+                                          {this.renderCharts(ns)}
+                                        </GridItem>
+                                      )}
+                                    </Grid>
+                                  </GridItem>
+                                )}
+                              </Grid>
+                            )}
+                          {((ns.name !== serverConfig.istioNamespace &&
+                            this.state.displayMode === OverviewDisplayMode.EXPAND) ||
+                            this.state.displayMode === OverviewDisplayMode.COMPACT) && (
+                            <div>
+                              {this.renderLabels(ns)}
+
+                              <div style={{ textAlign: 'left' }}>
+                                <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
+                                {ns.tlsStatus && (
+                                  <span>
+                                    <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} />
+                                  </span>
+                                )}
+                                {this.renderIstioConfigStatus(ns)}
+                              </div>
+                              {this.renderStatus(ns)}
+                              {this.state.displayMode === OverviewDisplayMode.EXPAND && this.renderCharts(ns)}
+                            </div>
+                          )}
+                        </CardBody>
+                      </Card>
+                    </GridItem>
                   );
                 })}
               </Grid>
@@ -1101,7 +1141,14 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     } else {
       text = nbItems + switchType(this.state.type, ' applications', ' services', ' workloads');
     }
-    const mainLink = <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }} data-test={'overview-type-' + this.state.type}>{text}</div>;
+    const mainLink = (
+      <div
+        style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}
+        data-test={'overview-type-' + this.state.type}
+      >
+        {text}
+      </div>
+    );
     if (nbItems === ns.status?.notAvailable.length) {
       return (
         <div style={{ textAlign: 'left' }}>
@@ -1163,7 +1210,6 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 }
 
-
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
   isMaistra: state.statusState.istioEnvironment.isMaistra,
@@ -1172,7 +1218,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   meshStatus: meshWideMTLSStatusSelector(state),
   minTLS: minTLSVersionSelector(state),
   navCollapse: state.userSettings.interface.navCollapse,
-  refreshInterval: refreshIntervalSelector(state),
+  refreshInterval: refreshIntervalSelector(state)
 });
 
 const OverviewPageContainer = connect(mapStateToProps)(OverviewPage);
