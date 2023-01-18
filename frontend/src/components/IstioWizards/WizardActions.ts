@@ -2016,18 +2016,24 @@ export const buildWorkloadInjectionPatch = (workloadType: string, enable: boolea
   const patch = {};
 
   // environments prefer to use the pod label over the annotation
+  // we will be opinionated here and always use the label and remove any annotation that may exist to avoid conflicts
   const labels = {};
   labels[serverConfig.istioAnnotations.istioInjectionAnnotation] = remove ? null : enable ? 'true' : 'false';
+  const annotations = {};
+  annotations[serverConfig.istioAnnotations.istioInjectionAnnotation] = null;
   if (workloadType === 'Pod') {
     patch['labels'] = labels;
+    patch['annotations'] = annotations;
   } else {
     patch['spec'] = {
       template: {
         metadata: {
-          labels: labels
+          labels: labels,
+          annotations: annotations
         }
       }
     };
   }
+
   return JSON.stringify(patch);
 };
