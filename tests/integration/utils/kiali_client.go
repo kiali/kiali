@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kiali/kiali/status"
 	"net/http"
 	"net/url"
 	"os"
@@ -608,6 +609,22 @@ func Grafana() (*models.GrafanaInfo, int, error) {
 		}
 	} else {
 		return nil, code, err
+	}
+}
+
+func IstioApiEnabled() (bool, error) {
+	url := fmt.Sprintf("%s/api/status", client.kialiURL)
+	body, _, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	if err == nil {
+		status := new(status.StatusInfo)
+		err = json.Unmarshal(body, &status)
+		if err == nil {
+			return status.IstioEnvironment.IstioAPIEnabled, nil
+		} else {
+			return false, err
+		}
+	} else {
+		return false, err
 	}
 }
 
