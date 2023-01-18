@@ -1,14 +1,13 @@
 package tests
 
 import (
-	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	
+
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils"
 )
@@ -27,7 +26,7 @@ func update_istio_api_enabled(value bool) {
 	cmdReplacecm := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|istio_api_enabled: " + strconv.FormatBool(original) + "|istio_api_enabled: " + strconv.FormatBool(value) + "|' | kubectl apply -f -"
 	_, err := exec.Command("bash", "-c", cmdReplacecm).Output()
 	if err != nil {
-		fmt.Sprintf("Failed to execute command: %s", cmdReplacecm)
+		log.Errorf("Failed to execute command: %s", cmdReplacecm)
 	}
 
 	// Restart kiali pod
@@ -46,8 +45,8 @@ func update_istio_api_enabled(value bool) {
 				waitCmd := ocCommand + "--for=condition=ready pod -l app=kiali -n istio-system"
 
 				output, err4 := exec.Command("bash", "-c", waitCmd).Output()
-				fmt.Sprintf("Output: %s", output)
-				//time.Sleep(10 * time.Second)
+				log.Debugf("Output: %s", output)
+
 				if err4 == nil {
 					log.Errorf("Error waiting for pod %s ", err4.Error())
 				}
@@ -69,14 +68,14 @@ func TestServicesListNoRegistryServices(t *testing.T) {
 	applySe := ocCommand + " apply -f ../assets/bookinfo-service-entry-external.yaml"
 	_, err2 := exec.Command("bash", "-c", applySe).Output()
 	if err2 != nil {
-		fmt.Sprintf("Failed to execute command: %s", applySe)
+		log.Errorf("Failed to execute command: %s", applySe)
 	}
 
 	// The service result should be the same
 	serviceList2, err3 := utils.ServicesList(utils.BOOKINFO)
 	assert.True(len(serviceList2.Services) == sl)
 	if err3 != nil {
-		fmt.Sprintf("Failed to execute command: %s", applySe)
+		log.Errorf("Failed to execute command: %s", applySe)
 	}
 
 	// Now, create a Service Entry (Part of th
@@ -87,7 +86,7 @@ func TestServicesListNoRegistryServices(t *testing.T) {
 	rmSe := ocCommand + " delete -f ./assets/bookinfo-service-entry-external.yaml"
 	_, err4 := exec.Command("bash", "-c", rmSe).Output()
 	if err4 != nil {
-		fmt.Sprintf("Failed to execute command: %s", rmSe)
+		log.Errorf("Failed to execute command: %s", rmSe)
 	}
 }
 
