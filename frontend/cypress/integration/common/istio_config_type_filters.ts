@@ -104,10 +104,12 @@ Then('the filter {string} should be visible only once', (category:string) => {
 });
 
 When("user chooses {int} type filters", (count:number) => {
+  cy.get('select[aria-label="filter_select_type"]').select('Istio Type');
   for (let i = 1; i <= count; i++) {
     cy.get('input[placeholder="Filter by Istio Type"]').click();
     cy.get(`[data-test=istio-type-dropdown] > :nth-child(${i})`)
     .should('be.visible').click();
+    cy.get('#loading_kiali_spinner').should('not.exist');
   };
 });
 
@@ -139,6 +141,7 @@ And("makes them all visible", () => {
 
 When("user clicks on {string}", (label:string) => {
   cy.get('#filter-selection > :nth-child(2)').contains(label).click();
+  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 Then("he can see only {int} filters", (count:number) => {
