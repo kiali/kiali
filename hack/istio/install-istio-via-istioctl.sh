@@ -24,6 +24,8 @@ ISTIOCTL=
 ISTIO_DIR=
 ISTIO_EGRESSGATEWAY_ENABLED="true"
 ISTIO_INGRESSGATEWAY_ENABLED="true"
+K8S_GATEWAY_API_ENABLED="false"
+K8S_GATEWAY_API_VERSION=""
 ISTIO_VERSION=""
 MESH_ID=""
 MTLS="true"
@@ -99,6 +101,19 @@ while [[ $# -gt 0 ]]; do
         echo "ERROR: The --istio-ingressgateway-enabled flag must be 'true' or 'false'"
         exit 1
       fi
+      shift;shift
+      ;;
+    -gae|--k8s-gateway-api-enabled)
+      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
+        K8S_GATEWAY_API_ENABLED="$2"
+      else
+        echo "ERROR: The --k8s-gateway-api-enabled flag must be 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
+    -gav|--k8s-gateway-api-version)
+      K8S_GATEWAY_API_VERSION="$2"
       shift;shift
       ;;
     -iv|--istio-version)
@@ -188,6 +203,11 @@ Valid command line arguments:
   -iie|--istio-ingressgateway-enabled (true|false)
        When set to true, istio-ingressgateway will be installed.
        Default: true
+  -gae|--k8s-gateway-api-enabled (true|false)
+       When set to true, K8s Gateway API will be installed.
+       Default: false
+  -gav|--k8s-gateway-api-version <version>:
+       The K8s Gateway API version to install. This is considered when --k8s-gateway-api-enabled is specified as "true".
   -ih|--image-hub <hub id>
        The hub where the Istio images will be pulled from.
        You can set this to "default" in order to use the default hub that the Istio charts use but
@@ -434,6 +454,15 @@ else
       sleep 10
     done
   done
+
+  if [ "${K8S_GATEWAY_API_ENABLED}" == "true" ]; then
+    if [ "${K8S_GATEWAY_API_VERSION}" == "" ]; then
+      echo "Gateway API Version is not specified, taking the latest released version"
+      K8S_GATEWAY_API_VERSION=`curl --head --silent "https://github.com/kubernetes-sigs/gateway-api/releases/latest" | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | cat -v | sed "s/\^M//g"`
+    fi
+    echo "Installing Gateway API version ${K8S_GATEWAY_API_VERSION}"
+    ${CLIENT_EXE} apply -k "github.com/kubernetes-sigs/gateway-api/config/crd?ref=${K8S_GATEWAY_API_VERSION}"
+  fi
 
   # Do some OpenShift specific things
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
