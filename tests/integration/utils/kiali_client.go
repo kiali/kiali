@@ -615,6 +615,7 @@ func Grafana() (*models.GrafanaInfo, int, error) {
 func IstioApiEnabled() (bool, error) {
 	url := fmt.Sprintf("%s/api/status", client.kialiURL)
 	body, _, _, err := httputil.HttpGet(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+
 	if err == nil {
 		status := new(status.StatusInfo)
 		err = json.Unmarshal(body, &status)
