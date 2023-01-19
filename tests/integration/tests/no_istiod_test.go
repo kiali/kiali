@@ -80,7 +80,7 @@ func TestServicesListNoRegistryServices(t *testing.T) {
 	assert.Equal(utils.BOOKINFO, serviceList.Namespace.Name)
 
 	// Cleanup
-	rmSe := ocCommand + " delete -f ./assets/bookinfo-service-entry-external.yaml"
+	rmSe := ocCommand + " delete -f ../assets/bookinfo-service-entry-external.yaml"
 	_, err4 := exec.Command("bash", "-c", rmSe).Output()
 	if err4 != nil {
 		log.Errorf("Failed to execute command: %s", rmSe)
