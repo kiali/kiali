@@ -99,11 +99,11 @@ export class AuthenticationController extends React.Component<
         dispatchLoginCycleOnLoad = true;
       }
 
-      // If login strategy is Openshift, OpenId, check if there is an
+      // If login strategy is Openshift, check if there is an
       // "access_token" or "id_token" hash parameter in the URL. If there is,
       // this means the IdP is calling back. Dispatch the login cycle to finish
       // the authentication.
-      if (isAuthStrategyOAuth()) {
+      if (authenticationConfig.strategy === AuthStrategy.openshift) {
         const pattern = /[#&](access_token|id_token)=/;
         dispatchLoginCycleOnLoad = pattern.test(window.location.hash);
       }
@@ -297,7 +297,7 @@ export class AuthenticationController extends React.Component<
     }
   }
 
-  // Check which clusters does not have an accessible Kiali instance.
+  // Check which clusters do not have an accessible Kiali instance.
   // Emit a warning telling that for those clusters, no cross-links will be available.
   private checkConfiguredRemoteKialis(backendConfigs: ServerConfig) {
     if (backendConfigs.clusters) {

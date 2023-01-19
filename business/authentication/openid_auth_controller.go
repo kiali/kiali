@@ -87,15 +87,12 @@ type oidcSessionPayload struct {
 	Token string `json:"token,omitempty"`
 }
 
-// badOidcRequest is an helper type implementing Go's error interface. It's used to assist in
-// error handling on the OpenId authentication flow. For the authorization code flow, this
-// indicates that the authentication is not going to be handled and the http request should be
-// handled by the next handler. In the implicit flow, the error details are returned to the user.
-//
-// The difference in behavior is because on the implicit flow the auth request is done to a dedicated
-// authentication endpoint, so it is evident that any error should be returned to the user. In contrast,
-// on the authorization code flow, the authentication is done to the Kiali's web_root, so it is hard to
-// differentiate between an auth callback versus a first user request to Kiali.
+// badOidcRequest is a helper type implementing Go's error interface. It's used to assist in
+// error handling on the OpenId authentication flow. Since authentication is initiated via
+// Kiali's web_root, it is hard to differentiate between an auth callback versus a first user
+// request to Kiali. So, if this error is raised, it indicates that the authentication
+// is not going to be handled and the http request should be passed to the next handler in
+// the chain of the web_root endpoint.
 type badOidcRequest struct {
 	// Detail contains the description of the error.
 	Detail string
@@ -107,8 +104,8 @@ func (e badOidcRequest) Error() string {
 }
 
 // OpenIdAuthController contains the backing logic to implement
-// Kiali's "openid" authentication strategy. The implicit flow and
-// the authorization code flow are implemented.
+// Kiali's "openid" authentication strategy. Only
+// the authorization code flow is implemented.
 //
 // RBAC is supported, although it requires that the cluster is configured
 // with OpenId integration. Thus, it is possible to turn off RBAC
@@ -137,41 +134,15 @@ func NewOpenIdAuthController(persistor SessionPersistor, businessInstantiator fu
 	}
 }
 
-// Authenticate is the entry point to handle OpenId authentication using the implicit flow. The HTTP request
-// should contain "id_token" and "state" as URL parameters. If RBAC is enabled, the id_token should be
-// valid to be used in the Kubernetes API (thus, privileges are verified to allow login); else, only token
-// validity is checked and users will share the same privileges.
-// An AuthenticationFailureError is returned if the authentication failed. Any
-// other kind of error means that something unexpected happened.
+// Authenticate was the entry point to handle OpenId authentication using the implicit flow. Support
+// for the implicit flow has been removed. This is left here, because the "Authenticate" function is required
+// by the AuthController interface which must be implemented by all auth controllers. So, this simply
+// returns an error.
 func (c OpenIdAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
-	flow := openidFlowHelper{businessInstantiator: c.businessInstantiator}
-	sPayload := flow.
-		extractOpenIdCallbackParams(r).
-		callbackCleanup(w).
-		checkOpenIdImplicitFlowParams().
-		validateOpenIdState().
-		parseOpenIdToken().
-		validateOpenIdNonceCode().
-		checkAllowedDomains().
-		checkUserPrivileges().
-		createSession(r, w, c.SessionStore)
-	err := flow.Error
-
-	if err != nil {
-		if flow.ShouldTerminateSession {
-			c.SessionStore.TerminateSession(r, w)
-		}
-		return nil, err
-	}
-
-	return &UserSessionData{
-		ExpiresOn: flow.ExpiresOn,
-		Username:  sPayload.Subject,
-		AuthInfo:  &api.AuthInfo{Token: sPayload.Token},
-	}, nil
+	return nil, fmt.Errorf("support for OpenID's implicit flow has been removed")
 }
 
-// GetAuthCallbackHandler returns an http handler for authentication requests done to Kiali's web_root.
+// GetAuthCallbackHandler returns a http handler for authentication requests done to Kiali's web_root.
 // This handler catches callbacks from the OpenId server. If it cannot be determined that the request
 // is a callback from the authentication server, the request is passed to the fallbackHandler.
 func (c OpenIdAuthController) GetAuthCallbackHandler(fallbackHandler http.Handler) http.Handler {
@@ -274,7 +245,7 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		token = sPayload.Token
 	} else {
 		// If RBAC is off, it's assumed that the kubernetes cluster will reject the OpenId token.
-		// Instead, we use the Kiali token an this has the side effect that all users will share the
+		// Instead, we use the Kiali token and this has the side effect that all users will share the
 		// same privileges.
 		token, err = kubernetes.GetKialiToken()
 		if err != nil {
@@ -335,6 +306,7 @@ func (c OpenIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Requ
 			if flow.ShouldTerminateSession {
 				c.SessionStore.TerminateSession(r, w)
 			}
+			log.Warningf("Authentication rejected: %s", flow.Error.Error())
 			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(flow.Error.Error())), http.StatusFound)
 		}
 		return
@@ -345,7 +317,7 @@ func (c OpenIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Requ
 }
 
 // redirectToAuthServerHandler prepares the redirection to initiate authentication with an OpenId Server.
-// It find what's the authentication endpoint of the OpenId server to redirect the user to. Then, creates
+// It finds what's the authentication endpoint of the OpenId server to redirect the user to. Then, creates
 // the "nonce" and the "state" codes and forms the final URL to reply with a "302 Found" HTTP status and
 // post the redirection in a "Location" HTTP header, with the needed parameters given the OpenId server
 // capabilities. A Cookie is set to store the source of the calculated codes and be able to verify the
@@ -358,6 +330,14 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte("OpenId strategy is not enabled"))
+		return
+	}
+
+	// Kiali only supports the authorization code flow.
+	if !isOpenIdCodeFlowPossible() {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusNotImplemented)
+		_, _ = w.Write([]byte("Cannot start authentication because it is not possible to use OpenId's authorization code flow. Check Kiali logs for more details."))
 		return
 	}
 
@@ -418,13 +398,8 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 	// the Kiali's signing key).
 	csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCode, nowTime.UTC().Format("060102150405"), config.GetSigningKey())))
 
-	// Use OpenId's "implicit flow" by default. Use "authorization code" flow if possible.
-	responseType := "id_token"
-	if isOpenIdCodeFlowPossible() {
-		responseType = "code"
-	}
-
 	// Send redirection to browser
+	responseType := "code" // Request for the "authorization code" flow
 	redirectUri := fmt.Sprintf("%s?client_id=%s&response_type=%s&redirect_uri=%s&scope=%s&nonce=%s&state=%s",
 		authorizationEndpoint,
 		url.QueryEscape(conf.Auth.OpenId.ClientId),
@@ -558,40 +533,10 @@ func (p *openidFlowHelper) extractOpenIdCallbackParams(r *http.Request) *openidF
 	} else {
 		// Read relevant form data parameters
 		p.Code = r.Form.Get("code")
-		p.IdToken = r.Form.Get("id_token")
 		p.State = r.Form.Get("state")
 	}
 
 	p.Error = err
-
-	return p
-}
-
-// checkOpenIdImplicitFlowParams verifies that the callback parameters for the implicit flow
-// are all present, as required by Kiali.
-func (p *openidFlowHelper) checkOpenIdImplicitFlowParams() *openidFlowHelper {
-	// Do nothing if there was an error in previous flow steps.
-	if p.Error != nil {
-		return p
-	}
-
-	var validationError string
-	if p.NonceHash == nil {
-		validationError = "No nonce code present. Login window timed out."
-	}
-	if p.State == "" {
-		validationError = "State parameter is empty or invalid."
-	}
-	if p.IdToken == "" {
-		validationError = "Token is empty or invalid."
-	}
-
-	if len(validationError) != 0 {
-		p.Error = &AuthenticationFailureError{
-			HttpStatus: http.StatusBadRequest,
-			Reason:     validationError,
-		}
-	}
 
 	return p
 }
@@ -646,8 +591,8 @@ func (p *openidFlowHelper) checkAllowedDomains() *openidFlowHelper {
 // depending if RBAC is enabled.
 //
 // If RBAC is enabled, either the id_token or the access_token (as specified by the api_token in
-// the config) is tested agains the cluster API to check if the user has enough privileges
-// to login to Kiali.
+// the config) is tested against the cluster API to check if the user has enough privileges
+// to log in to Kiali.
 //
 // If RBAC is disabled, then only validity of the id_token is verified (see validateOpenIdTokenInHouse).
 func (p *openidFlowHelper) checkUserPrivileges() *openidFlowHelper {
@@ -1033,6 +978,8 @@ func isOpenIdCodeFlowPossible() bool {
 			return true
 		}
 	}
+
+	log.Warning("Cannot use the authorization code flow because the OpenID provider does not support the 'code' response type")
 
 	return false
 }
