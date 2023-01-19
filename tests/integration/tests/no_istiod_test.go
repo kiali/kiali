@@ -32,17 +32,19 @@ func update_istio_api_enabled(value bool) {
 		cmdGetPodName := ocCommand + " get pods -o name -n istio-system | egrep kiali | sed 's|pod/||'"
 		kialiPodName, err2 := exec.Command("bash", "-c", cmdGetPodName).Output()
 		podName := strings.Replace(string(kialiPodName), "\n", "", -1)
+		log.Debugf("Kiali pod name: %s", podName)
 
 		if err2 == nil {
 			// Restart
 			cmd3 := ocCommand + " delete pod " + podName + " -n istio-system"
 			_, err3 := exec.Command("bash", "-c", cmd3).Output()
+			log.Debugf("Delete pod command: %s", cmd3)
 
 			if err3 == nil {
 				waitCmd := ocCommand + " wait --for=condition=ready pod -l app=kiali -n istio-system"
 				_, err4 := exec.Command("bash", "-c", waitCmd).Output()
 
-				//log.Debugf("Output: %s", output)
+				log.Debugf("Waiting for condition to met %s", waitCmd)
 
 				if err4 != nil {
 					log.Errorf("Error waiting for pod %s ", err4.Error())
