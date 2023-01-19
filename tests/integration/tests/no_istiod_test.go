@@ -18,19 +18,18 @@ func init() {
 
 var ocCommand = utils.NewExecCommand()
 
-//var ocCommand = "kubectl"
+//var ocCommand = "oc"
 
 func update_istio_api_enabled(value bool) {
 
+	exec.Command("bash", "-c", "eval $(crc oc-env)").Output()
 	original := !value
-	cmdReplacecm := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|istio_api_enabled: " + strconv.FormatBool(original) + "|istio_api_enabled: " + strconv.FormatBool(value) + "|' | kubectl apply -f -"
+	cmdReplacecm := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|istio_api_enabled: " + strconv.FormatBool(original) + "|istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
 	_, err := exec.Command("bash", "-c", cmdReplacecm).Output()
 	if err != nil {
 		log.Errorf("Failed to execute command: %s", cmdReplacecm)
-	}
-
-	// Restart kiali pod
-	if err == nil {
+	} else {
+		// Restart kiali pod
 		// Get kiali pod name
 		cmdGetPodName := ocCommand + " get pods -o name -n istio-system | egrep kiali | sed 's|pod/||'"
 		kialiPodName, err2 := exec.Command("bash", "-c", cmdGetPodName).Output()
@@ -42,12 +41,12 @@ func update_istio_api_enabled(value bool) {
 			_, err3 := exec.Command("bash", "-c", cmd3).Output()
 
 			if err3 == nil {
-				waitCmd := ocCommand + "--for=condition=ready pod -l app=kiali -n istio-system"
+				waitCmd := ocCommand + " wait --for=condition=ready pod -l app=kiali -n istio-system"
+				_, err4 := exec.Command("bash", "-c", waitCmd).Output()
 
-				output, err4 := exec.Command("bash", "-c", waitCmd).Output()
-				log.Debugf("Output: %s", output)
+				//log.Debugf("Output: %s", output)
 
-				if err4 == nil {
+				if err4 != nil {
 					log.Errorf("Error waiting for pod %s ", err4.Error())
 				}
 			}
@@ -117,7 +116,13 @@ func TestIstioStatus(t *testing.T) {
 }
 
 func TestNoValidations(t *testing.T) {
-	// TODO
+	assert := assert.New(t)
+
+	configList, err := utils.IstioConfigsList(utils.BOOKINFO)
+	assert.Nil(err)
+
+	assert.NotNil(configList.Gateways)
+	assert.Nil(configList.IstioValidations)
 
 }
 
