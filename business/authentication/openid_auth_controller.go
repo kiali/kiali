@@ -336,7 +336,7 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 	// Kiali only supports the authorization code flow.
 	if !isOpenIdCodeFlowPossible() {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusConflict)
+		w.WriteHeader(http.StatusNotImplemented)
 		_, _ = w.Write([]byte("Cannot start authentication because it is not possible to use OpenId's authorization code flow. Check Kiali logs for more details."))
 		return
 	}
