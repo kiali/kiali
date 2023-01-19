@@ -37,6 +37,7 @@ import (
 func NewWorkloadService(clients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, cache cache.KialiCache, layer *Layer, config *config.Config) *WorkloadService {
 	return &WorkloadService{
 		clients:       clients,
+		k8s:           clients["home"], // TODO: Remove this once and just use clients when multicluster is supported.
 		prom:          prom,
 		cache:         cache,
 		businessLayer: layer,
@@ -46,14 +47,15 @@ func NewWorkloadService(clients map[string]kubernetes.ClientInterface, prom prom
 
 // WorkloadService deals with fetching istio/kubernetes workloads related content and convert to kiali model
 type WorkloadService struct {
-	prom    prometheus.ClientInterface
-	clients map[string]kubernetes.ClientInterface
 	// Careful not to call the workload service from here as that would be a infinite loop.
 	businessLayer *Layer
 	// The global kiali cache. This should be passed into the workload service rather than created inside of it.
-	cache cache.KialiCache
+	cache   cache.KialiCache
+	clients map[string]kubernetes.ClientInterface
 	// The global kiali config.
 	config *config.Config
+	k8s    kubernetes.ClientInterface
+	prom   prometheus.ClientInterface
 }
 
 type WorkloadCriteria struct {
@@ -127,14 +129,6 @@ func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1bet
 }
 
 func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria WorkloadCriteria) (models.WorkloadList, error) {
-	// for cluster := range clusters {
-	// 	return in.getWorkloadList(ctx, criteria)
-	// }
-	return in.getWorkloadList(ctx, criteria)
-}
-
-// GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
-func (in *WorkloadService) getWorkloadList(ctx context.Context, criteria WorkloadCriteria) (models.WorkloadList, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadList",
 		observability.Attribute("package", "business"),
@@ -432,13 +426,8 @@ func (in *WorkloadService) GetPods(ctx context.Context, namespace string, labelS
 }
 
 func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
-	// Pick the first cluster. In actuality we need the cluster name.
-	var k8s kubernetes.ClientInterface
-	for _, k := range in.clients {
-		k8s = k
-		break
-	}
-	p, err := k8s.GetPod(namespace, name)
+	// TODO: Probably need cluster as well to differentiate between the different clients.
+	p, err := in.k8s.GetPod(namespace, name)
 	if err != nil {
 		return nil, err
 	}
@@ -1744,12 +1733,7 @@ func (in *WorkloadService) updateWorkload(namespace string, workloadName string,
 			defer wg.Done()
 			var err error
 			if isWorkloadIncluded(wkType) {
-				var k8s kubernetes.ClientInterface
-				for _, k := range in.clients {
-					k8s = k
-					break
-				}
-				err = k8s.UpdateWorkload(namespace, workloadName, wkType, jsonPatch)
+				err = in.k8s.UpdateWorkload(namespace, workloadName, wkType, jsonPatch)
 			}
 			if err != nil {
 				if !errors.IsNotFound(err) {
@@ -1831,12 +1815,7 @@ func (in *WorkloadService) streamParsedLogs(namespace, name string, opts *LogOpt
 	// discard the logs after sinceTime+duration
 	isBounded := opts.Duration != nil
 
-	var k8s kubernetes.ClientInterface
-	for _, k := range in.clients {
-		k8s = k
-		break
-	}
-	logsReader, err := k8s.StreamPodLogs(namespace, name, &k8sOpts)
+	logsReader, err := in.k8s.StreamPodLogs(namespace, name, &k8sOpts)
 	if err != nil {
 		return err
 	}

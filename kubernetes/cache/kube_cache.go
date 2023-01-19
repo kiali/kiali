@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -147,13 +148,14 @@ type kubeCache struct {
 	registryRefreshHandler RegistryRefreshHandler
 	refreshDuration        time.Duration
 	// Stops the cluster scoped informers when a refresh is necessary.
-	stopClusterScopedChan chan struct{} // Close this channel to stop the cluster-scoped informers.
+	// Close this channel to stop the cluster-scoped informers.
+	stopClusterScopedChan chan struct{}
 	// Stops the namespace scoped informers when a refresh is necessary.
 	stopNSChans map[string]chan struct{}
 }
 
 // Starts all informers. These run until context is cancelled.
-func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, refreshHandler RegistryRefreshHandler, namespaceSeedList ...string) *kubeCache {
+func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, refreshHandler RegistryRefreshHandler, namespaceSeedList ...string) (*kubeCache, error) {
 	refreshDuration := time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second
 
 	cacheNamespaces := cfg.KubernetesConfig.CacheNamespaces
@@ -183,7 +185,9 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, ref
 
 	if c.clusterScoped {
 		log.Debug("[Kiali Cache] Using 'cluster' scoped Kiali Cache")
-		c.startInformers("")
+		if err := c.startInformers(""); err != nil {
+			return nil, err
+		}
 	} else {
 		log.Debug("[Kiali Cache] Using 'namespace' scoped Kiali Cache")
 		c.nsCacheLister = make(map[string]*cacheLister)
@@ -196,7 +200,7 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, ref
 
 	log.Infof("[Kiali Cache] Kube cache is active for namespaces %v", cacheNamespaces)
 
-	return c
+	return c, nil
 }
 
 // It will indicate if a namespace should have a cache
@@ -247,9 +251,10 @@ func (c *kubeCache) CheckNamespace(namespace string) bool {
 	if !isNSCached {
 		c.cacheLock.Lock()
 		defer c.cacheLock.Unlock()
-		c.startInformers(namespace)
-		// start Informer should probably return bool?
-		return true
+		if err := c.startInformers(namespace); err != nil {
+			log.Errorf("[Kiali Cache] Error starting informers for namespace: %s. Err: %s", namespace, err)
+			return false
+		}
 	}
 
 	return true
@@ -291,13 +296,13 @@ func (c *kubeCache) Refresh(namespace string) {
 	c.refresh(namespace)
 }
 
-func (c *kubeCache) refresh(namespace string) {
+func (c *kubeCache) refresh(namespace string) error {
 	if c.clusterScoped {
 		namespace = ""
 	}
 
 	c.stop(namespace)
-	c.startInformers(namespace)
+	return c.startInformers(namespace)
 }
 
 func (c *kubeCache) CheckIstioResource(resourceType string) bool {
@@ -311,7 +316,7 @@ type starter interface {
 	Start(stopCh <-chan struct{})
 }
 
-func (c *kubeCache) startInformers(namespace string) {
+func (c *kubeCache) startInformers(namespace string) error {
 	informers := []starter{
 		c.createKubernetesInformers(namespace),
 		c.createIstioInformers(namespace),
@@ -340,11 +345,11 @@ func (c *kubeCache) startInformers(namespace string) {
 	log.Infof("[Kiali Cache] Waiting for %s cache to sync", scope)
 	if !cache.WaitForCacheSync(stop, c.getCacheLister(namespace).cachesSynced...) {
 		log.Errorf("[Kiali Cache] Failed to sync %s cache", scope)
-		// TODO: Prolly return error here? Or false?
-		return
+		return errors.New("failed to sync cache")
 	}
 
 	log.Info("[Kiali Cache] Started")
+	return nil
 }
 
 func (c *kubeCache) createIstioInformers(namespace string) istio.SharedInformerFactory {

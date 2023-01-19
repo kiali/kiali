@@ -31,6 +31,7 @@ type KialiCache interface {
 }
 
 // namespaceCache caches namespaces according to their token.
+// TODO: Support multi-cluster.
 type namespaceCache struct {
 	created       time.Time
 	namespaces    []models.Namespace
@@ -43,7 +44,6 @@ type podProxyStatus struct {
 	proxyStatus *kubernetes.ProxyStatus
 }
 
-// TODO: alphabetize things and bring polling for token changes back here.
 type kialiCacheImpl struct {
 	// Embedded for backward compatibility for business methods that just use one cluster.
 	// All business methods should eventually use the multi-cluster cache.
@@ -51,8 +51,10 @@ type kialiCacheImpl struct {
 
 	// Stops the background goroutines which refresh the cache's
 	// service account token and poll for istiod's proxy status.
-	cleanup                func()
-	clientManager          *kubernetes.ClusterClientManager
+	cleanup       func()
+	clientManager *kubernetes.ClusterClientManager
+	// Maps a cluster name to a KubeCache
+	kubeCache              map[string]KubeCache
 	refreshDuration        time.Duration
 	tokenLock              sync.RWMutex
 	tokenNamespaces        map[string]namespaceCache
@@ -62,10 +64,6 @@ type kialiCacheImpl struct {
 	registryStatusLock     sync.RWMutex
 	registryStatusCreated  *time.Time
 	registryStatus         *kubernetes.RegistryStatus
-
-	// Maps a cluster name to a KubeCache
-	// kubeCache map[string]cacheLister
-	kubeCache map[string]KubeCache
 }
 
 func NewKialiCache(clientManager *kubernetes.ClusterClientManager, cfg config.Config, namespaceSeedList ...string) (KialiCache, error) {
@@ -94,7 +92,12 @@ func NewKialiCache(clientManager *kubernetes.ClusterClientManager, cfg config.Co
 	}
 
 	for cluster, kialiClient := range clientManager.KialiSAClients() {
-		kialiCacheImpl.kubeCache[cluster] = NewKubeCache(kialiClient, cfg, NewRegistryHandler(kialiCacheImpl.RefreshRegistryStatus), namespaceSeedList...)
+		cache, err := NewKubeCache(kialiClient, cfg, NewRegistryHandler(kialiCacheImpl.RefreshRegistryStatus), namespaceSeedList...)
+		if err != nil {
+			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: %s. Err: %v", cluster, err)
+			return nil, err
+		}
+		kialiCacheImpl.kubeCache[cluster] = cache
 	}
 
 	// TODO: Treat all clusters the same way.

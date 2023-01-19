@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"fmt"
 	"time"
 
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -19,11 +20,15 @@ func FakeGatewaysKialiCache(gws []*networking_v1beta1.Gateway) KialiCache {
 	cfg := config.Get()
 	cfg.Deployment.AccessibleNamespaces = []string{"bookinfo"}
 	cfg.KubernetesConfig.CacheNamespaces = []string{"test"}
+	cache, err := NewKubeCache(kubetest.NewFakeK8sClient(), *cfg, emptyHandler)
+	if err != nil {
+		panic(fmt.Sprintf("Error creating KialiCache in testing. Err: %v", err))
+	}
 	kialiCacheImpl := kialiCacheImpl{
 		tokenNamespaces: make(map[string]namespaceCache),
 		// ~ long duration for unit testing
 		refreshDuration: time.Hour,
-		KubeCache:       NewKubeCache(kubetest.NewFakeK8sClient(), *cfg, emptyHandler),
+		KubeCache:       cache,
 	}
 
 	// Populate all Gateways using the Registry
@@ -53,11 +58,15 @@ func FakeServicesKialiCache(rss []*kubernetes.RegistryService,
 	cfg := config.Get()
 	cfg.Deployment.AccessibleNamespaces = []string{"bookinfo"}
 	cfg.KubernetesConfig.CacheNamespaces = []string{"test"}
+	cache, err := NewKubeCache(kubetest.NewFakeK8sClient(), *cfg, emptyHandler)
+	if err != nil {
+		panic(fmt.Sprintf("Error creating KialiCache in testing. Err: %v", err))
+	}
 	kialiCacheImpl := kialiCacheImpl{
 		tokenNamespaces: make(map[string]namespaceCache),
 		// ~ long duration for unit testing
 		refreshDuration: time.Hour,
-		KubeCache:       NewKubeCache(kubetest.NewFakeK8sClient(), *cfg, emptyHandler),
+		KubeCache:       cache,
 	}
 
 	// Populate all DestinationRules using the Registry
