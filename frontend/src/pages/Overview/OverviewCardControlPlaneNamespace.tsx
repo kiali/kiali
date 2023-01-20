@@ -23,7 +23,7 @@ type ControlPlaneProps = {
     istiodMemory?: Metric[];
     istiodCpu?: Metric[];
     duration: DurationInSeconds;
-    istiodResourceThreholds?: IstiodResourceThresholds;
+    istiodResourceThresholds?: IstiodResourceThresholds;
 };
 
 function showMetrics(metrics: Metric[] | undefined): boolean {
@@ -46,11 +46,11 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
             if (this.props.istiodMemory && this.props.istiodMemory?.length > 0) {
                 const data = toVCLine(this.props.istiodMemory[0].datapoints, 'Mb', PFColors.Green400);
 
-                if (this.props.istiodResourceThreholds?.memory) {
+                if (this.props.istiodResourceThresholds?.memory) {
                     const datapoint0: Datapoint = [this.props.istiodMemory[0].datapoints[0][0], this.props.istiodMemory[0].datapoints[0][1]];
-                    datapoint0[1] = this.props.istiodResourceThreholds?.memory;
+                    datapoint0[1] = this.props.istiodResourceThresholds?.memory;
                     const datapointn: Datapoint = [this.props.istiodMemory[0].datapoints[this.props.istiodMemory[0].datapoints.length - 1][0], this.props.istiodMemory[0].datapoints[this.props.istiodMemory[0].datapoints.length - 1][0]];
-                    datapointn[1] = this.props.istiodResourceThreholds?.memory;
+                    datapointn[1] = this.props.istiodResourceThresholds?.memory;
                     const dataThre = toVCLine([datapoint0, datapointn], 'Mb (Threshold)', PFColors.Green300);
                     memoryThresholds.push(dataThre);
                 }
@@ -64,11 +64,11 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
             if (this.props.istiodCpu && this.props.istiodCpu?.length > 0) {
                 const data = toVCLine(this.props.istiodCpu[0].datapoints, 'cores', PFColors.Green400);
 
-                if (this.props.istiodResourceThreholds?.cpu) {
+                if (this.props.istiodResourceThresholds?.cpu) {
                     const datapoint0: Datapoint = [this.props.istiodCpu[0].datapoints[0][0], this.props.istiodCpu[0].datapoints[0][1]];
-                    datapoint0[1] = this.props.istiodResourceThreholds?.cpu;
+                    datapoint0[1] = this.props.istiodResourceThresholds?.cpu;
                     const datapointn: Datapoint = [this.props.istiodCpu[0].datapoints[this.props.istiodCpu[0].datapoints.length - 1][0], this.props.istiodCpu[0].datapoints[this.props.istiodCpu[0].datapoints.length - 1][0]];
-                    datapointn[1] = this.props.istiodResourceThreholds?.cpu;
+                    datapointn[1] = this.props.istiodResourceThresholds?.cpu;
                     const dataThre = toVCLine([datapoint0, datapointn], 'cores', PFColors.Green300);
                     cpuThresholds.push(dataThre);
                 }

@@ -152,7 +152,7 @@ type State = {
   nsTarget: string;
   opTarget: string;
   grafanaLinks: ExternalLink[];
-  istiodResourceThreholds: IstiodResourceThresholds;
+  istiodResourceThresholds: IstiodResourceThresholds;
   outboundPolicyMode: OutboundTrafficPolicy;
   canaryUpgradeStatus?: CanaryUpgradeStatus;
 };
@@ -189,7 +189,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       nsTarget: '',
       opTarget: '',
       grafanaLinks: [],
-      istiodResourceThreholds: { memory: 0, cpu: 0 },
+      istiodResourceThresholds: { memory: 0, cpu: 0 },
       outboundPolicyMode: {},
       canaryUpgradeStatus: undefined
     };
@@ -531,10 +531,10 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   fetchIstiodResourceThresholds() {
     API.getIstiodResourceThresholds()
       .then(response => {
-        this.setState({ istiodResourceThreholds: response.data });
+        this.setState({ istiodResourceThresholds: response.data });
       })
       .catch(error => {
-        AlertUtils.addError('Error fetching Istiod resource threholds.', error, 'default', MessageType.ERROR);
+        AlertUtils.addError('Error fetching Istiod resource thresholds.', error, 'default', MessageType.ERROR);
       });
   }
 
@@ -1091,7 +1091,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           metrics={ns.metrics}
           errorMetrics={ns.errorMetrics}
           controlPlaneMetrics={ns.controlPlaneMetrics}
-          istiodResourceThreholds={this.state.istiodResourceThreholds}
+          istiodResourceThresholds={this.state.istiodResourceThresholds}
           istioAPIEnabled={this.props.istioAPIEnabled}
         />
       );
