@@ -22,15 +22,7 @@ import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
 import history, { HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
-import {
-  descendents,
-  EdgeData,
-  elems,
-  NodeData,
-  SelectExp,
-  selectOr,
-  SelectOr
-} from 'pages/GraphPF/GraphPFElems';
+import { descendents, EdgeData, elems, NodeData, SelectExp, selectOr, SelectOr } from 'pages/GraphPF/GraphPFElems';
 
 type ReduxProps = {
   edgeLabels: EdgeLabelMode[];
