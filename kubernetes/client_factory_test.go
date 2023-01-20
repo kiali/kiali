@@ -95,6 +95,7 @@ func TestConcurrentClientExpiration(t *testing.T) {
 
 // TestConcurrentClientFactory test Concurrently create ClientFactory
 func TestConcurrentClientFactory(t *testing.T) {
+	assert := assert.New(t)
 	istioConfig := rest.Config{}
 	count := 100
 
@@ -103,8 +104,9 @@ func TestConcurrentClientFactory(t *testing.T) {
 
 	for i := 0; i < count; i++ {
 		go func() {
-			newClientFactory(&istioConfig)
-			wg.Done()
+			defer wg.Done()
+			_, err := newClientFactory(&istioConfig)
+			assert.NoError(err)
 		}()
 	}
 
