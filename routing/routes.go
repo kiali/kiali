@@ -1430,7 +1430,7 @@ func NewRoutes() (r *Routes) {
 		//
 		// responses:
 		//              500: internalError
-		//              200: istiodResourceThreholds
+		//              200: istiodResourceThresholds
 		{
 			"IstiodResourceThresholds",
 			"GET",

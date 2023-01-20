@@ -14,7 +14,7 @@ type Props = {
   metrics?: Metric[];
   errorMetrics?: Metric[];
   controlPlaneMetrics?: ControlPlaneMetricsMap;
-  istiodResourceThreholds?: IstiodResourceThresholds;
+  istiodResourceThresholds?: IstiodResourceThresholds;
   istioAPIEnabled?: boolean;
 };
 
@@ -36,7 +36,7 @@ class OverviewCardSparklineCharts extends React.Component<Props> {
             istiodMemory={this.props.controlPlaneMetrics?.istiod_mem}
             istiodCpu={this.props.controlPlaneMetrics?.istiod_cpu}
             duration={this.props.duration}
-            istiodResourceThreholds={this.props.istiodResourceThreholds}
+            istiodResourceThresholds={this.props.istiodResourceThresholds}
           />
         }
       </>
