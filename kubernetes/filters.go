@@ -225,7 +225,7 @@ func FilterK8sGatewaysByHTTPRoutes(allGws []*k8s_networking_v1alpha2.Gateway, al
 	gatewayNames := make(map[string]struct{})
 	for _, route := range allRoutes {
 		for _, pRef := range route.Spec.ParentRefs {
-			if *pRef.Namespace != "" {
+			if pRef.Namespace != nil && *pRef.Namespace != "" {
 				gatewayNames[fmt.Sprintf("%s/%s", *pRef.Namespace, pRef.Name)] = empty
 			} else {
 				gatewayNames[fmt.Sprintf("%s/%s", route.Namespace, pRef.Name)] = empty
