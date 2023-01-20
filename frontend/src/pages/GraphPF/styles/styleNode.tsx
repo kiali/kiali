@@ -1,6 +1,7 @@
-import { Node, observer, ScaleDetailsLevel, useHover, WithSelectionProps } from '@patternfly/react-topology';
+import { Node, NodeShape, observer, ScaleDetailsLevel, useHover, WithSelectionProps } from '@patternfly/react-topology';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
 import * as React from 'react';
+import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
 import BaseNode from '../components/node';
 
 // This is the registered Node component override that utilizes our customized Edge.tsx component.
@@ -8,6 +9,37 @@ import BaseNode from '../components/node';
 type StyleNodeProps = {
   element: Node;
 } & WithSelectionProps;
+
+const renderIcon = (element: Node): React.ReactNode => {
+  let Component: React.ComponentClass<React.ComponentProps<any>> | undefined;
+  const data = element.getData();
+  const isInaccessible = data.isInaccessible;
+  const isServiceEntry = data.isServiceEntry;
+  const isBox = data.isBox;
+  if (isInaccessible && !isServiceEntry && !isBox) {
+    Component = KeyIcon;
+  }
+  const isOutside = data.isOutside;
+  if (isOutside && !isBox) {
+    Component = TopologyIcon;
+  }
+
+  // this blurb taken from PFT demo StyleNode.tsx, not sure if it's required
+  // vv
+  const { width, height } = element.getDimensions();
+  const shape = element.getNodeShape();
+  const iconSize =
+    (shape === NodeShape.trapezoid ? width : Math.min(width, height)) - (shape === NodeShape.stadium ? 5 : 20) * 2;
+  // ^^
+
+  return Component ? (
+    <g transform={`translate(${(width - iconSize) / 2}, ${(height - iconSize) / 2})`}>
+      <Component width={iconSize} height={iconSize} />
+    </g>
+  ) : (
+    <></>
+  );
+};
 
 const StyleNode: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   const data = element.getData();
@@ -37,7 +69,9 @@ const StyleNode: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
         // scaleNode={hover && detailsLevel === ScaleDetailsLevel.low}
         showLabel={hover || detailsLevel === ScaleDetailsLevel.high}
         showStatusBackground={detailsLevel === ScaleDetailsLevel.low}
-      />
+      >
+        {(hover || detailsLevel !== ScaleDetailsLevel.low) && renderIcon(element)}
+      </BaseNode>
     </g>
   );
 };
