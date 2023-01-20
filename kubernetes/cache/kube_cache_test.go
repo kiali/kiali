@@ -331,7 +331,8 @@ func TestUpdatingClientRefreshesCache(t *testing.T) {
 	kialiCache := newTestingKubeCache(t, cfg, ns, pod)
 	kialiCache.clusterCacheLister = &cacheLister{}
 
-	kialiCache.UpdateClient(kubetest.NewFakeK8sClient(ns, pod))
+	err := kialiCache.UpdateClient(kubetest.NewFakeK8sClient(ns, pod))
+	require.NoError(err)
 
 	assert.NotEqual(kialiCache.clusterCacheLister, &cacheLister{})
 

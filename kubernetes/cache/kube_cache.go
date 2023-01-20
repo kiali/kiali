@@ -50,7 +50,7 @@ type KubeCache interface {
 	// UpdateClient will update the client used by the cache.
 	// Useful for when the token is refreshed for the client.
 	// This causes a full refresh of the cache.
-	UpdateClient(client kubernetes.ClientInterface)
+	UpdateClient(client kubernetes.ClientInterface) error
 
 	CheckIstioResource(resourceType string) bool
 
@@ -215,19 +215,25 @@ func (c *kubeCache) isCached(namespace string) bool {
 
 // UpdateClient will update the client and refresh the cache.
 // This is used when the client is updated with a new token.
-func (c *kubeCache) UpdateClient(kialiClient kubernetes.ClientInterface) {
+func (c *kubeCache) UpdateClient(kialiClient kubernetes.ClientInterface) error {
 	log.Debug("[Kiali Cache] Updating Kiali client. Refreshing cache.")
 	c.cacheLock.Lock()
 	defer c.cacheLock.Unlock()
 
 	c.client = kialiClient
 	if c.clusterScoped {
-		c.refresh("")
+		if err := c.refresh(""); err != nil {
+			return err
+		}
 	} else {
 		for ns := range c.nsCacheLister {
-			c.refresh(ns)
+			if err := c.refresh(ns); err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
 // CheckNamespace will
@@ -293,7 +299,9 @@ func (c *kubeCache) Refresh(namespace string) {
 	c.cacheLock.Lock()
 	defer c.cacheLock.Unlock()
 
-	c.refresh(namespace)
+	if err := c.refresh(namespace); err != nil {
+		log.Errorf("[Kiali Cache] Error refreshing cache for namespace: %s. Err: %s", namespace, err)
+	}
 }
 
 func (c *kubeCache) refresh(namespace string) error {

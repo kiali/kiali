@@ -134,7 +134,13 @@ func (c *kialiCacheImpl) watchForClientChanges(ctx context.Context, token string
 			case <-ticker.C:
 				if c.clientManager.KialiSAHomeCluster().GetToken() != token {
 					log.Info("[Kiali Cache] Updating cache with new token")
-					c.KubeCache.UpdateClient(c.clientManager.KialiSAHomeCluster())
+
+					if err := c.KubeCache.UpdateClient(c.clientManager.KialiSAHomeCluster()); err != nil {
+						log.Errorf("[Kiali Cache] Error updating cache with new token. Err: %s", err)
+						// Try again on the next tick without updating the token.
+						continue
+					}
+
 					token = c.clientManager.KialiSAHomeCluster().GetToken()
 				} else {
 					log.Debug("[Kiali Cache] Nothing to refresh")
