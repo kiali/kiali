@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils"
 )
@@ -67,6 +68,7 @@ func TestNoIstiod(t *testing.T) {
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
+	t.Run("emptyValidations", emptyValidations)
 	update_istio_api_enabled(true)
 }
 
@@ -122,14 +124,27 @@ func noProxyStatus(t *testing.T) {
 	}
 }
 
+func emptyValidations(t *testing.T) {
+	name := "bookinfo-gateway"
+	assert := assert.New(t)
+
+	config, err := getConfigDetails(utils.BOOKINFO, name, kubernetes.Gateways, assert)
+
+	assert.Nil(err)
+	assert.NotNil(config)
+	assert.Equal(kubernetes.Gateways, config.ObjectType)
+	assert.Equal(utils.BOOKINFO, config.Namespace.Name)
+	assert.NotNil(config.Gateway)
+	assert.Equal(name, config.Gateway.Name)
+	assert.Equal(utils.BOOKINFO, config.Gateway.Namespace)
+	assert.Equal(len(config.IstioValidation.Checks), 0)
+	assert.Equal(len(config.IstioValidation.References), 0)
+}
+
 func istioStatus(t *testing.T) {
 	assert := assert.New(t)
 
 	isEnabled, err := utils.IstioApiEnabled()
 	assert.Nil(err)
 	assert.False(isEnabled)
-}
-
-func Cleanup() {
-	update_istio_api_enabled(true)
 }
