@@ -21,16 +21,21 @@ const defaultExpirationTime = time.Minute * 15
 // ClientFactory interface for the clientFactory object
 type ClientFactory interface {
 	GetClient(authInfo *api.AuthInfo) (ClientInterface, error)
+	GetSAClients() map[string]ClientInterface
+	GetSAHomeClusterClient() ClientInterface
 }
 
 // clientFactory used to generate per users clients
 type clientFactory struct {
 	baseIstioConfig *rest.Config
-	clientEntries   map[string]*ClientInterface
+	clientEntries   map[string]ClientInterface
 	// mutex for when modifying the stored clients
 	mutex sync.RWMutex
 	// when a client is expired, a signal with its tokenHash will be sent to recycleChan
 	recycleChan chan string
+	// maps cluster name to a kiali client for that cluster. The kiali client uses the
+	// kiali service account to access the cluster API.
+	saClientEntries map[string]ClientInterface
 }
 
 // GetClientFactory returns the client factory. Creates a new one if necessary
@@ -50,28 +55,43 @@ func GetClientFactory() (ClientFactory, error) {
 			Burst:           config.Burst,
 		}
 
-		factory = newClientFactory(&istioConfig)
+		cf, err := newClientFactory(&istioConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		factory = cf
 	}
 	return factory, nil
 }
 
 // newClientFactory allows for specifying the config and expiry duration
 // Mock friendly for testing purposes
-func newClientFactory(istioConfig *rest.Config) *clientFactory {
-	clientEntriesMap := make(map[string]*ClientInterface)
-
+func newClientFactory(istioConfig *rest.Config) (*clientFactory, error) {
 	f := &clientFactory{
 		baseIstioConfig: istioConfig,
-		clientEntries:   clientEntriesMap,
+		clientEntries:   make(map[string]ClientInterface),
 		recycleChan:     make(chan string),
+		saClientEntries: make(map[string]ClientInterface),
 	}
-
 	// after creating a client factory
 	// background goroutines will be watching the clients` expiration
 	// if a client is expired, it will be removed from clientEntries
 	go f.watchClients()
 
-	return f
+	// Create serivce account clients.
+	// TODO: Create a service account client for each cluster. Need a way to get all configured clusters.
+	// TODO: Use a real cluster name instead of "home"
+	clusters := []string{"home"}
+	for _, cluster := range clusters {
+		client, err := f.newSAClient(cluster)
+		if err != nil {
+			return nil, err
+		}
+		f.saClientEntries[cluster] = client
+	}
+
+	return f, nil
 }
 
 // newClient creates a new ClientInterface based on a users k8s token
@@ -144,22 +164,35 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 	return newClient, err
 }
 
+func (cf *clientFactory) newSAClient(cluster string) (*K8SClient, error) {
+	// TODO: Need a way to load in cluster configuration from the kube secret.
+	if kialiConfig.Get().InCluster {
+		if saToken, err := GetKialiToken(); err != nil {
+			return nil, err
+		} else {
+			cf.baseIstioConfig.BearerToken = saToken
+		}
+	}
+
+	return NewClientFromConfig(cf.baseIstioConfig)
+}
+
 // GetClient returns a client for the specified token. Creating one if necessary.
 func (cf *clientFactory) GetClient(authInfo *api.AuthInfo) (ClientInterface, error) {
 	client, err := cf.getClient(authInfo)
 	if err != nil {
 		return nil, err
 	}
-	return *client, nil
+	return client, nil
 }
 
 // getClient returns a client for the specified token. Creating one if necessary.
-func (cf *clientFactory) getClient(authInfo *api.AuthInfo) (*ClientInterface, error) {
+func (cf *clientFactory) getClient(authInfo *api.AuthInfo) (ClientInterface, error) {
 	return cf.getRecycleClient(authInfo, defaultExpirationTime)
 }
 
 // getRecycleClient returns a client for the specified token with expirationTime. Creating one if necessary.
-func (cf *clientFactory) getRecycleClient(authInfo *api.AuthInfo, expirationTime time.Duration) (*ClientInterface, error) {
+func (cf *clientFactory) getRecycleClient(authInfo *api.AuthInfo, expirationTime time.Duration) (ClientInterface, error) {
 	cf.mutex.Lock()
 	defer cf.mutex.Unlock()
 	tokenHash := getTokenHash(authInfo)
@@ -172,16 +205,16 @@ func (cf *clientFactory) getRecycleClient(authInfo *api.AuthInfo, expirationTime
 			return nil, err
 		}
 
-		cf.clientEntries[getTokenHash(authInfo)] = &client
+		cf.clientEntries[getTokenHash(authInfo)] = client
 		internalmetrics.SetKubernetesClients(len(cf.clientEntries))
-		return &client, nil
+		return client, nil
 	}
 }
 
 // hasClient check if clientFactory has a client, return the client if clientFactory has it
 // This is a helper function for testing.
 // It uses the shared lock so beware of nested locking with other methods.
-func (cf *clientFactory) hasClient(authInfo *api.AuthInfo) (*ClientInterface, bool) {
+func (cf *clientFactory) hasClient(authInfo *api.AuthInfo) (ClientInterface, bool) {
 	tokenHash := getTokenHash(authInfo)
 	cf.mutex.RLock()
 	cEntry, ok := cf.clientEntries[tokenHash]
@@ -252,4 +285,21 @@ func getTokenHash(authInfo *api.AuthInfo) string {
 		panic("md5.Write returned error.")
 	}
 	return string(h.Sum(nil))
+}
+
+// KialiSAClients returns all clients associated with the Kiali service account across clusters.
+func (cf *clientFactory) GetSAClients() map[string]ClientInterface {
+	cf.mutex.RLock()
+	defer cf.mutex.RUnlock()
+
+	return cf.saClientEntries
+}
+
+// KialiSAHomeCluster returns the Kiali service account client for the cluster where Kiali is running.
+func (cf *clientFactory) GetSAHomeClusterClient() ClientInterface {
+	cf.mutex.RLock()
+	defer cf.mutex.RUnlock()
+
+	// TODO: Use a real cluster name instead of "home"
+	return cf.saClientEntries["home"]
 }

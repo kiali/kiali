@@ -39,14 +39,12 @@ type Layer struct {
 }
 
 // Global clientfactory and prometheus clients.
-var clientFactory kubernetes.ClientFactory
-
 var (
+	clientFactory    kubernetes.ClientFactory
 	jaegerClient     jaeger.ClientInterface
 	kialiCache       cache.KialiCache
 	once             sync.Once
 	prometheusClient prometheus.ClientInterface
-	clientManager    *kubernetes.ClusterClientManager
 )
 
 // sets the global kiali cache var.
@@ -58,13 +56,12 @@ func initKialiCache() {
 		}
 	}
 
-	cmm, err := kubernetes.NewClusterClientManager(*config.Get())
+	userClient, err := kubernetes.GetClientFactory()
 	if err != nil {
-		log.Errorf("Failed to initialize cluster client manager. Details: %s", err)
+		log.Errorf("Failed to create client factory. Err: %s", err)
 		return
 	}
-	// Set global var
-	clientManager = cmm
+	clientFactory = userClient
 
 	// TODO: Remove conditonal once cache is fully mandatory.
 	if config.Get().KubernetesConfig.CacheEnabled {
@@ -100,7 +97,7 @@ func initKialiCache() {
 			}
 		}
 
-		cache, err := cache.NewKialiCache(clientManager, *config.Get(), namespaceSeedList...)
+		cache, err := cache.NewKialiCache(clientFactory, *config.Get(), namespaceSeedList...)
 		if err != nil {
 			log.Errorf("Error initializing Kiali Cache. Details: %s", err)
 			return
@@ -130,15 +127,6 @@ func Start() {
 
 // Get the business.Layer
 func Get(authInfo *api.AuthInfo) (*Layer, error) {
-	// Use an existing client factory if it exists, otherwise create and use in the future
-	if clientFactory == nil {
-		userClient, err := kubernetes.GetClientFactory()
-		if err != nil {
-			return nil, err
-		}
-		clientFactory = userClient
-	}
-
 	// Creates a new k8s client based on the current users token
 	k8s, err := clientFactory.GetClient(authInfo)
 	if err != nil {
@@ -178,7 +166,7 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 }
 
 // NewWithBackends creates the business layer using the passed k8s and prom clients.
-// TODO: Pass multiple clients or the client manager.
+// TODO: Pass multiple clients or the client factory.
 func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
 	temporaryLayer := &Layer{}
 	temporaryLayer.App = AppService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}

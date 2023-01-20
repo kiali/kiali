@@ -21,7 +21,6 @@ import (
 //// Mock for the K8SClientFactory
 
 type K8SClientFactoryMock struct {
-	mock.Mock
 	k8s kubernetes.ClientInterface
 }
 
@@ -35,6 +34,14 @@ func NewK8SClientFactoryMock(k8s kubernetes.ClientInterface) *K8SClientFactoryMo
 // Business Methods
 func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo) (kubernetes.ClientInterface, error) {
 	return o.k8s, nil
+}
+
+func (o *K8SClientFactoryMock) GetSAClients() map[string]kubernetes.ClientInterface {
+	return map[string]kubernetes.ClientInterface{"home": o.k8s}
+}
+
+func (o *K8SClientFactoryMock) GetSAHomeClusterClient() kubernetes.ClientInterface {
+	return o.k8s
 }
 
 /////

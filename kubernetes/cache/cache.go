@@ -52,7 +52,7 @@ type kialiCacheImpl struct {
 	// Stops the background goroutines which refresh the cache's
 	// service account token and poll for istiod's proxy status.
 	cleanup       func()
-	clientManager *kubernetes.ClusterClientManager
+	clientFactory kubernetes.ClientFactory
 	// Maps a cluster name to a KubeCache
 	kubeCache              map[string]KubeCache
 	refreshDuration        time.Duration
@@ -66,9 +66,9 @@ type kialiCacheImpl struct {
 	registryStatus         *kubernetes.RegistryStatus
 }
 
-func NewKialiCache(clientManager *kubernetes.ClusterClientManager, cfg config.Config, namespaceSeedList ...string) (KialiCache, error) {
+func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, namespaceSeedList ...string) (KialiCache, error) {
 	kialiCacheImpl := kialiCacheImpl{
-		clientManager:          clientManager,
+		clientFactory:          clientFactory,
 		kubeCache:              make(map[string]KubeCache),
 		proxyStatusNamespaces:  make(map[string]map[string]podProxyStatus),
 		refreshDuration:        time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
@@ -85,13 +85,13 @@ func NewKialiCache(clientManager *kubernetes.ClusterClientManager, cfg config.Co
 		kialiCacheImpl.pollIstiodForProxyStatus(ctx)
 	}
 
-	kialiCacheImpl.watchForClientChanges(ctx, clientManager.KialiSAHomeCluster().GetToken())
+	kialiCacheImpl.watchForClientChanges(ctx, clientFactory.GetSAHomeClusterClient().GetToken())
 
 	kialiCacheImpl.cleanup = func() {
 		cancel()
 	}
 
-	for cluster, kialiClient := range clientManager.KialiSAClients() {
+	for cluster, kialiClient := range clientFactory.GetSAClients() {
 		cache, err := NewKubeCache(kialiClient, cfg, NewRegistryHandler(kialiCacheImpl.RefreshRegistryStatus), namespaceSeedList...)
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: %s. Err: %v", cluster, err)
@@ -132,16 +132,16 @@ func (c *kialiCacheImpl) watchForClientChanges(ctx context.Context, token string
 		for {
 			select {
 			case <-ticker.C:
-				if c.clientManager.KialiSAHomeCluster().GetToken() != token {
+				if c.clientFactory.GetSAHomeClusterClient().GetToken() != token {
 					log.Info("[Kiali Cache] Updating cache with new token")
 
-					if err := c.KubeCache.UpdateClient(c.clientManager.KialiSAHomeCluster()); err != nil {
+					if err := c.KubeCache.UpdateClient(c.clientFactory.GetSAHomeClusterClient()); err != nil {
 						log.Errorf("[Kiali Cache] Error updating cache with new token. Err: %s", err)
 						// Try again on the next tick without updating the token.
 						continue
 					}
 
-					token = c.clientManager.KialiSAHomeCluster().GetToken()
+					token = c.clientFactory.GetSAHomeClusterClient().GetToken()
 				} else {
 					log.Debug("[Kiali Cache] Nothing to refresh")
 				}
