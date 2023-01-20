@@ -24,6 +24,7 @@ import DefaultConnectorTag from '@patternfly/react-topology/dist/esm/components/
 import { getConnectorStartPoint } from '@patternfly/react-topology/dist/esm/components/edges/terminals/terminalUtils';
 import { EdgeData } from '../GraphPFElems';
 import { PFColors } from 'components/Pf/PfColors';
+import { style } from 'typestyle';
 
 // This is a copy of PFT DefaultEdge (v4.68.3), then modified.  I don't see a better way to really
 // do this because DefaultEdge doesn't really seem itself extensible and to add certain behavior you have
@@ -78,7 +79,7 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
   startTerminalSize = 14,
   endTerminalType = EdgeTerminalType.directional,
   endTerminalClass,
-  endTerminalStatus,
+  // endTerminalStatus,
   endTerminalSize = 14,
   tag,
   tagClass,
@@ -125,6 +126,10 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
 
   const data = element.getData() as EdgeData;
   const pathStyle: React.CSSProperties = data.pathStyle || {};
+  const terminatorFill = style({
+    fill: data.pathStyle?.stroke
+  });
+  const customEndTerminalClass = css(endTerminalClass, terminatorFill);
 
   const bgStartPoint =
     !startTerminalType || startTerminalType === EdgeTerminalType.none
@@ -185,13 +190,13 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
           highlight={dragging || hover}
         />
         <DefaultConnectorTerminal
-          className={endTerminalClass}
+          className={customEndTerminalClass}
           isTarget
           dragRef={targetDragRef}
           edge={element}
           size={endTerminalSize}
           terminalType={endTerminalType}
-          status={endTerminalStatus}
+          status={NodeStatus.default} // status={endTerminalStatus}
           highlight={dragging || hover}
         />
         {children}

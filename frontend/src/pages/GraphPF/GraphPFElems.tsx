@@ -548,7 +548,7 @@ const getPathStyle = (data: EdgeData): React.CSSProperties => {
 export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettings): void => {
   const data = edge.data as EdgeData;
 
-  data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.cross : EdgeTerminalType.directional;
+  data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
   data.pathStyle = getPathStyle(data);
   data.tag = getEdgeLabel(edge, nodeMap, settings);
   data.tagStatus = getEdgeStatus(data);
