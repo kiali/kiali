@@ -61,7 +61,7 @@ const renderSparklines = (series: VCLines<RichDataPoint>, yTickFormat?: (val: nu
       width={SUMMARY_PANEL_CHART_WIDTH}
       showLegend={false}
       padding={{ top: 5 }}
-      tooltipFormat={dp => `${(dp.x as Date).toLocaleString()}\n${yFormat(dp.y)}`}
+      tooltipFormat={dp => `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${yFormat(dp.y)}`}
       series={series}
       labelName="ops"
     />

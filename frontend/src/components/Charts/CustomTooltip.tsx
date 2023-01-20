@@ -46,7 +46,7 @@ const getHeader = (activePoints?: VCDataPoint[]): string | undefined => {
     const x = activePoints[0].x;
     if (typeof x === 'object') {
       // Assume date
-      return x.toLocaleString();
+      return x.toLocaleStringWithConditionalDate();
     }
   }
   return undefined;
