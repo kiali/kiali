@@ -36,8 +36,6 @@ export class GraphHighlighterPF {
   }
 
   setSelectedId(selectedId?: string) {
-    console.log(`selectedId=${selectedId}`);
-
     // ignore clicks on the currently selected element
     if (this.selectedId === selectedId) {
       return;
@@ -107,7 +105,6 @@ export class GraphHighlighterPF {
       switch (element.getKind()) {
         case 'node':
           if ((element as Node).isGroup()) {
-            console.log(`box highlight: ${this.getBoxHighlight(element as Node).toHighlight.length} `);
             return this.getBoxHighlight(element as Node);
           }
           return { toHighlight: this.getNodeHighlight(element as Node), unhighlightOthers: true };

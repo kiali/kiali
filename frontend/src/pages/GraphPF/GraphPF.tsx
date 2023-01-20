@@ -122,7 +122,6 @@ export const TopologyContent: React.FC<{
     }
 
     return () => {
-      console.log('Hide Trace Overlay');
       hideTrace(controller);
     };
   }, [controller, graphData.fetchParams.graphType, trace]);
@@ -176,7 +175,6 @@ export const TopologyContent: React.FC<{
   // Set detail levels for graph (control zoom-sensitive labels)
   //
   const setDetailsLevel = React.useCallback(() => {
-    console.log('SetDetailsLevel');
     if (controller && controller.hasGraph()) {
       controller.getGraph().setDetailsLevelThresholds({
         low: 0.3,
@@ -189,7 +187,6 @@ export const TopologyContent: React.FC<{
   // Reset [new] graph with initial model
   //
   const resetGraph = React.useCallback(() => {
-    console.log('Reset');
     if (controller) {
       const model: Model = {
         graph: {
@@ -206,10 +203,8 @@ export const TopologyContent: React.FC<{
 
   const onHover = (element: GraphElement, isMouseIn: boolean) => {
     if (isMouseIn) {
-      console.log(`Hover In ${element.getId()}`);
       highlighter.onMouseIn(element);
     } else {
-      console.log(`Hover Out ${element.getId()}`);
       highlighter.onMouseOut(element);
     }
   };
@@ -319,8 +314,6 @@ export const TopologyContent: React.FC<{
       console.error('updateModel called while controller has no graph');
     }
 
-    console.log('updateModel');
-
     const updatedModel = generateDataModel();
 
     const allIds = [...(updatedModel.nodes || []), ...(updatedModel.edges || [])].map(item => item.id);
@@ -367,9 +360,7 @@ export const TopologyContent: React.FC<{
   //
   React.useEffect(() => {
     return () => {
-      console.log('Cleanup');
       if (updateSummary) {
-        console.log('Clear Summary');
         updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: undefined });
       }
     };
@@ -378,7 +369,6 @@ export const TopologyContent: React.FC<{
   useEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
   // useEventListener(GRAPH_POSITION_CHANGE_EVENT, onLayoutPositionChange);
 
-  console.log('Render TV');
   return (
     <TopologyView
       data-test="topology-view"
@@ -447,7 +437,6 @@ export const GraphPF: React.FC<{
 
   React.useEffect(() => {
     const c = new Visualization();
-    console.log('REGISTER!!!');
     c.registerElementFactory(elementFactory);
     c.registerLayoutFactory(layoutFactory);
     c.registerComponentFactory(stylesComponentFactory);
@@ -463,7 +452,6 @@ export const GraphPF: React.FC<{
     );
   }
 
-  console.log('Render!');
   return (
     <VisualizationProvider data-test="visualization-provider" controller={controller}>
       <TopologyContent

@@ -11,7 +11,6 @@ import { edgesOut, elems, select, SelectAnd, selectAnd } from './GraphPFElems';
 import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 
 export const showTrace = (controller: Controller, graphType: GraphType, trace: JaegerTrace) => {
-  // console.log('ShowTracePF');
   if (!controller.hasGraph()) {
     return;
   }
@@ -23,8 +22,6 @@ export const showTrace = (controller: Controller, graphType: GraphType, trace: J
 const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Span) => {
   const split = span.process.serviceName.split('.');
   const app = split[0];
-  // console.log(`ShowSpanSubtrace ${app}`);
-
   // From upstream to downstream: Parent app or workload, Inbound Service Entry, Service, App or Workload, Outbound Service Entry
   let lastSelection: Node[] | undefined = undefined;
 
