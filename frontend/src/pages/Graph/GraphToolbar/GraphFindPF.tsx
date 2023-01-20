@@ -266,8 +266,7 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
       if (this.state.hideInputValue !== this.props.hideValue) {
         this.setHide(this.props.hideValue);
       }
-
-      this.handleHide(this.props.controller, hideChanged);
+      this.handleHide(this.props.controller, graphChanged);
     }
   }
 
