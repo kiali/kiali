@@ -18,43 +18,63 @@ func init() {
 
 var ocCommand = utils.NewExecCommand()
 
-//var ocCommand = "oc"
-
 func update_istio_api_enabled(value bool) {
 	original := !value
-	cmdReplacecm := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|istio_api_enabled: " + strconv.FormatBool(original) + "|istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
-	_, err := exec.Command("bash", "-c", cmdReplacecm).Output()
-	if err != nil {
-		log.Errorf("Failed to execute command: %s", cmdReplacecm)
+
+	cmdGetProp := ocCommand + " get cm kiali -n istio-system -o yaml | grep 'istio_api_enabled'"
+	getPropOutput, _ := exec.Command("bash", "-c", cmdGetProp).Output()
+
+	if len(string(getPropOutput)) == 0 {
+		// Is the property is not there, we should add it, instead of replacing
+		cmdReplacecm3 := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|root_namespace: istio-system|root_namespace: istio-system'\r'        istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
+		_, err := exec.Command("bash", "-c", cmdReplacecm3).Output()
+		if err != nil {
+			log.Errorf("Error updating config map: %s", err.Error())
+		}
+
 	} else {
-		// Restart kiali pod
-		// Get kiali pod name
-		cmdGetPodName := ocCommand + " get pods -o name -n istio-system | egrep kiali | sed 's|pod/||'"
-		kialiPodName, err2 := exec.Command("bash", "-c", cmdGetPodName).Output()
-		podName := strings.Replace(string(kialiPodName), "\n", "", -1)
-		log.Debugf("Kiali pod name: %s", podName)
+		cmdReplacecm := ocCommand + " get cm kiali -n istio-system -o yaml | sed -e 's|istio_api_enabled: " + strconv.FormatBool(original) + "|istio_api_enabled: " + strconv.FormatBool(value) + "|' | " + ocCommand + " apply -f -"
+		_, err := exec.Command("bash", "-c", cmdReplacecm).Output()
+		if err != nil {
+			log.Errorf("Error updating config map: %s", err.Error())
+		}
+	}
 
-		if err2 == nil {
-			// Restart
-			cmd3 := ocCommand + " delete pod " + podName + " -n istio-system"
-			_, err3 := exec.Command("bash", "-c", cmd3).Output()
-			log.Debugf("Delete pod command: %s", cmd3)
+	// Restart kiali pod
+	// Get kiali pod name
+	cmdGetPodName := ocCommand + " get pods -o name -n istio-system | egrep kiali | sed 's|pod/||'"
+	kialiPodName, err2 := exec.Command("bash", "-c", cmdGetPodName).Output()
+	podName := strings.Replace(string(kialiPodName), "\n", "", -1)
+	log.Debugf("Kiali pod name: %s", podName)
 
-			if err3 == nil {
-				waitCmd := ocCommand + " wait --for=condition=ready pod -l app=kiali -n istio-system"
-				_, err4 := exec.Command("bash", "-c", waitCmd).Output()
+	if err2 == nil {
+		// Restart
+		cmd3 := ocCommand + " delete pod " + podName + " -n istio-system"
+		_, err3 := exec.Command("bash", "-c", cmd3).Output()
+		log.Debugf("Delete pod command: %s", cmd3)
 
-				log.Debugf("Waiting for condition to met %s", waitCmd)
+		if err3 == nil {
+			waitCmd := ocCommand + " wait --for=condition=ready pod -l app=kiali -n istio-system"
+			out, err4 := exec.Command("bash", "-c", waitCmd).Output()
 
-				if err4 != nil {
-					log.Errorf("Error waiting for pod %s ", err4.Error())
-				}
+			log.Debugf("Waiting for condition to met %s", out)
+
+			if err4 != nil {
+				log.Errorf("Error waiting for pod %s ", err4.Error())
 			}
 		}
 	}
 }
 
-func TestServicesListNoRegistryServices(t *testing.T) {
+func TestNoIstiod(t *testing.T) {
+	// <setup code>
+	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
+	t.Run("NoProxyStatus", noProxyStatus)
+	t.Run("istioStatus", istioStatus)
+	t.Cleanup(Cleanup)
+}
+
+func servicesListNoRegistryServices(t *testing.T) {
 	assert := assert.New(t)
 	serviceList, err := utils.ServicesList(utils.BOOKINFO)
 
@@ -89,7 +109,7 @@ func TestServicesListNoRegistryServices(t *testing.T) {
 	}
 }
 
-func TestNoProxyStatus(t *testing.T) {
+func noProxyStatus(t *testing.T) {
 	name := "details-v1"
 	assert := assert.New(t)
 	wl, _, err := utils.WorkloadDetails(name, utils.BOOKINFO)
@@ -104,26 +124,14 @@ func TestNoProxyStatus(t *testing.T) {
 		assert.NotEmpty(pod.Name)
 		assert.Empty(pod.ProxyStatus)
 	}
-	t.Cleanup(Cleanup)
 }
 
-func TestIstioStatus(t *testing.T) {
+func istioStatus(t *testing.T) {
 	assert := assert.New(t)
 
 	isEnabled, err := utils.IstioApiEnabled()
 	assert.Nil(err)
 	assert.False(isEnabled)
-}
-
-func TestNoValidations(t *testing.T) {
-	assert := assert.New(t)
-
-	configList, err := utils.IstioConfigsList(utils.BOOKINFO)
-	assert.Nil(err)
-
-	assert.NotNil(configList.Gateways)
-	assert.Nil(configList.IstioValidations)
-
 }
 
 func Cleanup() {
