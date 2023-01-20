@@ -102,6 +102,7 @@ type ReduxProps = {
   findValue: string;
   graphType: GraphType;
   hideValue: string;
+  istioAPIEnabled: boolean;
   isPageVisible: boolean;
   kiosk: string;
   layout: Layout;
@@ -543,6 +544,7 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
           peerAuthentications={this.state.wizardsData.peerAuthentications || []}
           tlsStatus={this.state.wizardsData.serviceDetails?.namespaceMTLS}
           onClose={this.handleWizardClose}
+          istioAPIEnabled={this.props.istioAPIEnabled}
         />
         {this.state.showConfirmDeleteTrafficRouting && (
           <ConfirmDeleteTrafficRoutingModal
@@ -874,6 +876,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   findValue: findValueSelector(state),
   graphType: graphTypeSelector(state),
   hideValue: hideValueSelector(state),
+  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
   isPageVisible: state.globalState.isPageVisible,
   kiosk: state.globalState.kiosk,
   layout: state.graph.layout,
