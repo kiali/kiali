@@ -12,10 +12,6 @@ import (
 	"github.com/kiali/kiali/tests/integration/utils"
 )
 
-func init() {
-	update_istio_api_enabled(false)
-}
-
 var ocCommand = utils.NewExecCommand()
 
 func update_istio_api_enabled(value bool) {
@@ -67,11 +63,11 @@ func update_istio_api_enabled(value bool) {
 }
 
 func TestNoIstiod(t *testing.T) {
-	// <setup code>
+	update_istio_api_enabled(false)
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
-	t.Cleanup(Cleanup)
+	update_istio_api_enabled(true)
 }
 
 func servicesListNoRegistryServices(t *testing.T) {
