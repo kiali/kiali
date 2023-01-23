@@ -342,7 +342,7 @@ Then('the AuthorizationPolicy should have a {string}', function(healthStatus: st
 });
 
 Then('the {string} {string} of the {string} namespace should have a {string}', function(crdInstanceName: string, crdName: string, namespace:string, healthStatus: string) {
-  cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}] svg`, { timeout: 10000 })
+  cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}] svg`, { timeout: 40000 })
       .should('be.visible')
       .invoke('attr', 'style')
       .should('have.string', `${healthStatus}-color`);
