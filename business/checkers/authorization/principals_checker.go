@@ -2,6 +2,8 @@ package authorization
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	api_security_v1beta "istio.io/api/security/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
@@ -13,6 +15,10 @@ type PrincipalsChecker struct {
 	AuthorizationPolicy *security_v1beta.AuthorizationPolicy
 	ServiceAccounts     []string
 }
+
+const (
+	wildCardMatch = "*"
+)
 
 func (pc PrincipalsChecker) Check() ([]*models.IstioCheck, bool) {
 	checks, valid := make([]*models.IstioCheck, 0), true
@@ -63,11 +69,31 @@ func (pc PrincipalsChecker) validateFromField(ruleIdx int, from []*api_security_
 }
 
 func (pc PrincipalsChecker) hasMatchingServiceAccount(principal string) bool {
+	if principal == wildCardMatch {
+		return true
+	}
 	for _, sa := range pc.ServiceAccounts {
-		if sa == principal {
+		if (strings.HasPrefix(principal, wildCardMatch) || strings.HasSuffix(principal, wildCardMatch)) && regexpFromPrincipal(principal).MatchString(sa) {
+			// Prefix match: “abc*” will match on value “abc” and “abcd”.
+			// Suffix match: “*abc” will match on value “abc” and “xabc”.
+			return true
+		} else if sa == principal {
 			return true
 		}
 	}
 
 	return false
+}
+
+func regexpFromPrincipal(principal string) *regexp.Regexp {
+	// Replace '*' from principal with regexp '.*'
+	escaped := strings.Replace(principal, "*", ".*", -1)
+
+	// We anchor the beginning and end of the string when it's
+	// to be used as a regex, so that we don't get spurious
+	// substring matches, e.g., "example.com" matching
+	// "foo.example.com".
+	anchored := strings.Join([]string{"^", escaped, "$"}, "")
+
+	return regexp.MustCompile(anchored)
 }
