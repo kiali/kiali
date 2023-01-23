@@ -1,7 +1,9 @@
 package business
 
 import (
+	"fmt"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -115,7 +117,6 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	check.True(a[0].IsKialiHome, "Kiali cluster not properly marked as such")
 	check.True(a[0].IsGatewayToNamespace, "Kiali GatewayToNamespace not properly marked as such")
 	check.Equal("http://127.0.0.2:9443", a[0].ApiEndpoint)
-	check.Len(a[0].SecretName, 0)
 	check.Equal("kialiNetwork", a[0].Network)
 
 	check.Len(a[0].KialiInstances, 1, "GetClusters didn't resolve the local Kiali instance")
@@ -127,6 +128,9 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 }
 
 func TestGetClustersResolvesRemoteClusters(t *testing.T) {
+	// create a mock volume mount directory where the test remote cluster secret content will go
+	remoteClusterSecretsDir = t.TempDir()
+
 	check := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
@@ -162,23 +166,11 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 		},
 	}
 	marshalledRemoteSecretData, _ := yaml.Marshal(remoteSecretData)
-
-	secretMock := core_v1.Secret{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "TheRemoteSecret",
-			Annotations: map[string]string{
-				"networking.istio.io/cluster": "KialiCluster",
-			},
-		},
-		Data: map[string][]byte{
-			"KialiCluster": marshalledRemoteSecretData,
-		},
-	}
+	createTestRemoteClusterSecretFile(t, remoteClusterSecretsDir, "KialiCluster", string(marshalledRemoteSecretData))
 
 	var nilDeployment *apps_v1.Deployment
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetSecrets", conf.IstioNamespace, "istio/multiCluster=true").Return([]core_v1.Secret{secretMock}, nil)
 	k8s.On("GetDeployment", conf.IstioNamespace, "istiod").Return(nilDeployment, nil)
 
 	newRemoteClient := func(config *rest.Config) (kubernetes.ClientInterface, error) {
@@ -226,7 +218,6 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	check.Equal("KialiCluster", a[0].Name, "Unexpected cluster name")
 	check.False(a[0].IsKialiHome, "Remote cluster mistakenly marked as the Kiali home")
 	check.Equal("https://192.168.144.17:123", a[0].ApiEndpoint)
-	check.Equal("TheRemoteSecret", a[0].SecretName)
 	check.Equal("TheRemoteNetwork", a[0].Network)
 
 	check.Len(a[0].KialiInstances, 1, "GetClusters didn't resolve the remote Kiali instance")
@@ -235,6 +226,22 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	check.Equal("", a[0].KialiInstances[0].Url, "GetClusters didn't set the right URL of the Kiali instance")
 	check.Equal("v1.25", a[0].KialiInstances[0].Version, "GetClusters didn't set the right version of the Kiali instance")
 	check.Equal("kiali-service", a[0].KialiInstances[0].ServiceName, "GetClusters didn't set the right service name of the Kiali instance")
+}
+
+func createTestRemoteClusterSecretFile(t *testing.T, parentDir string, name string, content string) {
+	childDir := fmt.Sprintf("%s/%s", parentDir, name)
+	filename := fmt.Sprintf("%s/%s", childDir, name)
+	if err := os.MkdirAll(childDir, 0777); err != nil {
+		t.Fatalf("Failed to create tmp remote cluster secret dir [%v]: %v", childDir, err)
+	}
+	f, err := os.Create(filename)
+	if err != nil {
+		t.Fatalf("Failed to create tmp remote cluster secret file [%v]: %v", filename, err)
+	}
+	defer f.Close()
+	if _, err2 := f.WriteString(content); err2 != nil {
+		t.Fatalf("Failed to write tmp remote cluster secret file [%v]: %v", filename, err2)
+	}
 }
 
 // TestIsMeshConfiguredIsCached verifies that IsMeshConfigured is properly caching

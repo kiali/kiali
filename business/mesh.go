@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -60,9 +61,6 @@ type Cluster struct {
 
 	// Network specifies the logical NETWORK_ID as known by the Control Plane
 	Network string `json:"network"`
-
-	// SecretName is the name of the kubernetes "remote secret" where data of this cluster was resolved
-	SecretName string `json:"secretName"`
 }
 
 // KialiInstance represents a Kiali installation. It holds some data about
@@ -293,7 +291,6 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 		KialiInstances:       kialiInstances,
 		Name:                 myClusterName,
 		Network:              kialiNetwork,
-		SecretName:           "",
 	}
 
 	return kialiControlPlaneCluster, nil
@@ -458,12 +455,13 @@ func (in *MeshService) resolveKialiNetwork() (string, error) {
 	return typedNetworkConfig, nil
 }
 
+// Defines where the files are located that contain the remote cluster secrets
+var remoteClusterSecretsDir = "/kiali-remote-cluster-secrets"
+
 // resolveRemoteClustersFromSecrets resolves the metadata about "other" clusters that are
 // visible to the adjacent mesh control plane. This assumes that the Istio namespace is
 // named the same as in Kiali's Cluster.
 func (in *MeshService) resolveRemoteClustersFromSecrets() ([]Cluster, error) {
-	conf := config.Get()
-
 	// For the ControlPlane to be able to "see" remote clusters, some "remote secrets" need to be in
 	// place. These remote secrets contain <kubeconfig files> that the ControlPlane uses to
 	// query the remote clusters. Without them, the control plane is not capable of pushing traffic
@@ -474,54 +472,68 @@ func (in *MeshService) resolveRemoteClustersFromSecrets() ([]Cluster, error) {
 	// Strictly speaking, this list may be incomplete: it's list of visible clusters for a control plane.
 	// But, for now, let's use it as the absolute "list of clusters in the mesh (excluding home cluster)".
 
-	// "Remote secrets" are created using the command `istioctl x create-remote-secret` which
-	// labels the secrets with istio/multiCluster=true. Let's use that label to fetch the secrets of interest.
-	secrets, err := in.k8s.GetSecrets(conf.IstioNamespace, "istio/multiCluster=true")
-	if err != nil {
-		if errors.IsForbidden(err) {
-			// A forbidden error means that we don't have privileges to list secrets in the Istio namespace.
-			// This may be because sysadmin may not want us to do that for security and probably
-			// because it is known that the environment is a single-cluster. So, return
-			// and empty list of clusters, avoid the warning error and use a trace log message.
-			log.Trace("Not enough privileges to list secrets with istio/multiCluster=true label.")
-			return []Cluster{}, nil
+	// Remote cluster secrets are mounted on the file system by the Kiali installer under the "/kiali-remote-cluster-secrets" directory.
+	// Each cluster has its own subdirectory, usually named the same as the cluster (though not necessarily). e.g. "/kiali-remote-cluster-secrets/<cluster name>"
+	// Cluster configs are found in a file whose name is the cluster name; e.g. "/kiali-remote-cluster-secrets/<cluster name>/<cluster name>"
+	// So walk the directory "/kiali-remote-cluster-secrets" to obtain all known remote cluster configs.
+
+	remoteClusterSecrets := make(map[string][]byte, 0)
+
+	secretDirs, err := os.ReadDir(remoteClusterSecretsDir)
+	if err == nil {
+		for _, sd := range secretDirs {
+			secretAbsDir := remoteClusterSecretsDir + "/" + sd.Name()
+			secretFiles, err := os.ReadDir(secretAbsDir)
+			if err == nil {
+				for _, sf := range secretFiles {
+					clusterName := sf.Name()
+					secretAbsFile := secretAbsDir + "/" + clusterName
+					statinfo, staterr := os.Stat(secretAbsFile)
+					if statinfo.IsDir() || staterr != nil {
+						continue // we only want to process readable files - we are not interested in other files that get mounted here
+					}
+					b, err := os.ReadFile(secretAbsFile)
+					if err == nil {
+						if len(b) > 0 {
+							remoteClusterSecrets[clusterName] = b
+							log.Debugf("Remote cluster credentials loaded from secret file [%s]", secretAbsFile)
+						} else {
+							log.Errorf("The credentials were empty in remote cluster secret file [%s]", secretAbsFile)
+						}
+					} else {
+						log.Errorf("Failed to read remote cluster secret file [%s]: %v", secretAbsFile, err)
+					}
+				}
+			} else {
+				log.Errorf("Failed to read remote cluster secret directory [%s]: %v", secretAbsDir, err)
+			}
 		}
-		return []Cluster{}, err
+	} else if !stderrors.Is(err, os.ErrNotExist) {
+		log.Errorf("Failed to read remote cluster secrets directory [%s]: %v", remoteClusterSecretsDir, err)
 	}
 
-	if len(secrets) == 0 {
+	if len(remoteClusterSecrets) == 0 {
 		return []Cluster{}, nil
 	}
 
-	clusters := make([]Cluster, 0, len(secrets))
+	clusters := make([]Cluster, 0, len(remoteClusterSecrets))
 
 	// Inspect the secret to extract the cluster_id and api_endpoint of each remote cluster.
-	for _, secret := range secrets {
-		clusterName, ok := secret.Annotations["networking.istio.io/cluster"]
-		if !ok {
-			clusterName = DefaultClusterID
-		}
-
-		kubeconfigFile, ok := secret.Data[clusterName]
-		if !ok {
-			// We are assuming that the cluster name annotation is also indicating which
-			// key of the secret should contain the kubeconfig file to access the remote cluster.
-			// If there is no such key in the secret, ignore this secret.
-			continue
-		}
+	for clusterName, kubeconfigFile := range remoteClusterSecrets {
 
 		parsedSecret, parseErr := kubernetes.ParseRemoteSecretBytes(kubeconfigFile)
 		if parseErr != nil {
+			log.Errorf("Failed to parse remote cluster secret bytes for cluster [%s]: %v", clusterName, parseErr)
 			continue
 		}
 
 		if len(parsedSecret.Clusters) != 1 {
+			log.Errorf("Parsed remote cluster secret bytes has [%v] clusters", len(parsedSecret.Clusters))
 			continue
 		}
 
 		meshCluster := Cluster{
 			Name:        clusterName,
-			SecretName:  secret.Name,
 			ApiEndpoint: parsedSecret.Clusters[0].Cluster.Server,
 		}
 
