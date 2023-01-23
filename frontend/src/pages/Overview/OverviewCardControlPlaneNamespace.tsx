@@ -123,7 +123,7 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
                                             showLegend={false}
                                             showYAxis={true}
                                             padding={{ top: 10, left: 40, right: 10, bottom: 0 }}
-                                            tooltipFormat={dp => `${(dp.x as Date).toLocaleTimeString()}\n${dp.y.toFixed(2)} ${dp.name}`}
+                                            tooltipFormat={dp => `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${dp.y.toFixed(2)} ${dp.name}`}
                                             series={memorySeries}
                                             labelName="mb"
                                             thresholds={memoryThresholds}
@@ -163,7 +163,7 @@ class OverviewCardControlPlaneNamespace extends React.Component<ControlPlaneProp
                                             showYAxis={true}
                                             showXAxisValues={true}
                                             padding={{ top: 10, left: 40, right: 10, bottom: 0 }}
-                                            tooltipFormat={dp => `${(dp.x as Date).toLocaleTimeString()}\n${dp.y.toFixed(2)} ${dp.name}`}
+                                            tooltipFormat={dp => `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${dp.y.toFixed(2)} ${dp.name}`}
                                             series={cpuSeries}
                                             labelName="cores"
                                             thresholds={cpuThresholds}
