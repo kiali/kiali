@@ -24,6 +24,38 @@ func TestPresentServiceAccount(t *testing.T) {
 	assert.Empty(validations)
 }
 
+func TestRegexPrincipalFound(t *testing.T) {
+	assert := assert.New(t)
+
+	validations, valid := PrincipalsChecker{
+		AuthorizationPolicy: authPolicyWithPrincipals([]string{"*local/ns/bookinfo/sa/default*", "*.local/ns/bookinfo/sa/test*"}),
+		ServiceAccounts:     []string{"cluster.local/ns/bookinfo/sa/default-a", "cluster.local/ns/bookinfo/sa/test-1"},
+	}.Check()
+
+	// regex matches
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
+func TestRegexPrincipalNotFound(t *testing.T) {
+	assert := assert.New(t)
+
+	vals, valid := PrincipalsChecker{
+		AuthorizationPolicy: authPolicyWithPrincipals([]string{"*wronglocal/ns/bookinfo/sa/default*", "*.local/ns/bookinfo/sa/test1*"}),
+		ServiceAccounts:     []string{"cluster.local/ns/bookinfo/sa/default-a", "cluster.local/ns/bookinfo/sa/test-1"},
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 2)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.Error(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.principalnotfound", vals[0]))
+	assert.Equal("spec/rules[0]/from[0]/source/principals[0]", vals[0].Path)
+	assert.Equal(models.ErrorSeverity, vals[1].Severity)
+	assert.Error(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.principalnotfound", vals[1]))
+	assert.Equal("spec/rules[0]/from[0]/source/principals[1]", vals[1].Path)
+}
+
 func TestEmptyPrincipals(t *testing.T) {
 	assert := assert.New(t)
 
