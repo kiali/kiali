@@ -65,7 +65,8 @@ const propsToShow = [
   'istioStatusEnabled',
   'logLevel',
   'istioCanaryRevision',
-  'istioInjectionAction'
+  'istioInjectionAction',
+  'istioAnnotationsAction'
 ];
 
 const propsToPatch = ['cyRef', 'summaryTarget', 'token', 'username'];

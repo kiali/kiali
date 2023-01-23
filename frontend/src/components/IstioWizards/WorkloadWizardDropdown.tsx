@@ -11,14 +11,17 @@ import { serverConfig } from '../../config';
 import { Workload } from '../../types/Workload';
 import {
   buildWorkloadInjectionPatch,
+  buildWorkloadAnnotationPatch,
   WIZARD_DISABLE_AUTO_INJECTION,
   WIZARD_ENABLE_AUTO_INJECTION,
-  WIZARD_REMOVE_AUTO_INJECTION
+  WIZARD_REMOVE_AUTO_INJECTION,
+  WIZARD_EDIT_ANNOTATIONS
 } from './WizardActions';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
 import { StatusState } from '../../types/StatusState';
+import WizardAnnotations from './WizardAnnotations';
 
 interface Props {
   namespace: string;
@@ -109,6 +112,29 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
     );
   };
 
+  onChangeAnnotations = (annotations: { [key: string]: string }) => {
+    const jsonInjectionPatch = buildWorkloadAnnotationPatch(annotations);
+    API.updateWorkload(this.props.namespace, this.props.workload.name, this.props.workload.type, jsonInjectionPatch)
+          .then(_ => {
+            AlertUtils.add('Workload ' + this.props.workload.name + ' updated', 'default', MessageType.SUCCESS);
+            this.setState(
+              {
+                showWizard: false
+              },
+              () => this.props.onChange()
+            );
+          })
+          .catch(error => {
+            AlertUtils.addError('Could not update workload ' + this.props.workload.name, error);
+            this.setState(
+              {
+                showWizard: false
+              },
+              () => this.props.onChange()
+            );
+    });
+  };
+
   renderDropdownItems = (): JSX.Element[] => {
     const items: JSX.Element[] = [];
     if (serverConfig.kialiFeatureFlags.istioInjectionAction) {
@@ -185,6 +211,20 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         // If sidecar is present, we offer first the disable action
         items.push(this.props.workload.istioSidecar ? disableActionWrapper : enableActionWrapper);
       }
+    }   
+    if (this.props.workload.type === 'Deployment') {
+      const annotationsAction = (
+        <DropdownItem
+          data-test={WIZARD_EDIT_ANNOTATIONS}
+          key={WIZARD_EDIT_ANNOTATIONS}
+          component="button"
+          onClick={() => this.onWizardToggle(true)}
+        >
+          {serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode ? "Edit Annotations" : "View Annotations"}
+        </DropdownItem>
+      );
+
+      items.push(annotationsAction)
     }
     return items;
   };
@@ -207,6 +247,13 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
     // TODO WorkloadWizard component contains only 3scale actions but in the future we may need to bring it back
     return (
       <>
+        <WizardAnnotations 
+          showAnotationsWizard={this.state.showWizard} 
+          onChange={(annotations) => this.onChangeAnnotations(annotations)} 
+          onClose={() => this.onWizardToggle(false)} 
+          annotations={this.props.workload.annotations} 
+          canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
+        />
         {!validActions
           ? this.renderTooltip(
               'tooltip_wizard_actions',
