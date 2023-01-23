@@ -10,8 +10,8 @@ OLM_INDEX_NAME ?= ${OLM_IMAGE_ORG}/kiali-operator-index
 # set this package name to kiali-ossm if you want to test with the OSSM metadata
 OLM_BUNDLE_PACKAGE ?= kiali
 
-OLM_INDEX_BASE_IMAGE ?= quay.io/openshift/origin-operator-registry:4.10
-OPM_VERSION ?= 1.22.1
+OLM_INDEX_BASE_IMAGE ?= quay.io/openshift/origin-operator-registry:4.11
+OPM_VERSION ?= 1.25.0
 
 # which OLM to install (for olm-install target)
 OLM_VERSION ?= latest
