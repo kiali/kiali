@@ -64,12 +64,12 @@ func update_istio_api_enabled(value bool) {
 }
 
 func TestNoIstiod(t *testing.T) {
+	defer update_istio_api_enabled(true)
 	update_istio_api_enabled(false)
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
 	t.Run("emptyValidations", emptyValidations)
-	update_istio_api_enabled(true)
 }
 
 func servicesListNoRegistryServices(t *testing.T) {
