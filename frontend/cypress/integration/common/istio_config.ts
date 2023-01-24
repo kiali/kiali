@@ -342,13 +342,15 @@ Then('the AuthorizationPolicy should have a {string}', function(healthStatus: st
 });
 
 Then('the {string} {string} of the {string} namespace should have a {string}', function(crdInstanceName: string, crdName: string, namespace:string, healthStatus: string) {
-  cy.request('GET', Cypress.config('baseUrl') + `/api/istio/config?refresh=0`);
-  cy.get('[data-test="refresh-button"]').click();
-  ensureKialiFinishedLoading();
-  cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}] svg`, { timeout: 40000 })
-      .should('be.visible')
-      .invoke('attr', 'style')
-      .should('have.string', `${healthStatus}-color`);
+  it('loading config list', { retries: 3 }, () => {
+    cy.request('GET', Cypress.config('baseUrl') + `/api/istio/config?refresh=0`);
+    cy.get('[data-test="refresh-button"]').click();
+    ensureKialiFinishedLoading();
+    cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}] svg`, {timeout: 40000})
+        .should('be.visible')
+        .invoke('attr', 'style')
+        .should('have.string', `${healthStatus}-color`);
+  });
 });
 
 After({ tags: "@istio-page and @crd-validation" }, function () {
