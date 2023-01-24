@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/kiali/kiali/config"
 )
 
 // TestClientExpiration Verify the details that clients expire are correct
@@ -111,4 +113,61 @@ func TestConcurrentClientFactory(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+func TestSAHomeClientUpdatesWhenKialiTokenChanges(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	kialiConfig := config.NewConfig()
+	config.Set(kialiConfig)
+	t.Cleanup(func() {
+		// Other tests use this global var so we need to reset it.
+		KialiToken = ""
+	})
+
+	tokenRead = time.Now()
+	KialiToken = "current-token"
+
+	restConfig := rest.Config{}
+	clientFactory, err := newClientFactory(&restConfig)
+	require.NoError(err)
+
+	currentClient := clientFactory.GetSAHomeClusterClient()
+	assert.Equal(KialiToken, currentClient.GetToken())
+	assert.Equal(currentClient, clientFactory.GetSAHomeClusterClient())
+
+	KialiToken = "new-token"
+
+	// Assert that the token has changed and the client has changed.
+	newClient := clientFactory.GetSAHomeClusterClient()
+	assert.Equal(KialiToken, newClient.GetToken())
+	assert.NotEqual(currentClient, newClient)
+}
+
+func TestSAClientsUpdateWhenKialiTokenChanges(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	kialiConfig := config.NewConfig()
+	config.Set(kialiConfig)
+	t.Cleanup(func() {
+		// Other tests use this global var so we need to reset it.
+		KialiToken = ""
+	})
+
+	tokenRead = time.Now()
+	KialiToken = "current-token"
+
+	restConfig := rest.Config{}
+	clientFactory, err := newClientFactory(&restConfig)
+	require.NoError(err)
+
+	for _, client := range clientFactory.GetSAClients() {
+		assert.Equal(KialiToken, client.GetToken())
+	}
+
+	KialiToken = "new-token"
+
+	for _, client := range clientFactory.GetSAClients() {
+		assert.Equal(KialiToken, client.GetToken())
+	}
 }

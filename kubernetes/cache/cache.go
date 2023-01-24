@@ -53,6 +53,8 @@ type kialiCacheImpl struct {
 	// service account token and poll for istiod's proxy status.
 	cleanup       func()
 	clientFactory kubernetes.ClientFactory
+	// How often the cache will check for kiali SA client changes.
+	clientRefreshPollingPeriod time.Duration
 	// Maps a cluster name to a KubeCache
 	kubeCache              map[string]KubeCache
 	refreshDuration        time.Duration
@@ -68,12 +70,13 @@ type kialiCacheImpl struct {
 
 func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, namespaceSeedList ...string) (KialiCache, error) {
 	kialiCacheImpl := kialiCacheImpl{
-		clientFactory:          clientFactory,
-		kubeCache:              make(map[string]KubeCache),
-		proxyStatusNamespaces:  make(map[string]map[string]podProxyStatus),
-		refreshDuration:        time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
-		tokenNamespaces:        make(map[string]namespaceCache),
-		tokenNamespaceDuration: time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
+		clientFactory:              clientFactory,
+		clientRefreshPollingPeriod: time.Duration(time.Second * 60),
+		kubeCache:                  make(map[string]KubeCache),
+		proxyStatusNamespaces:      make(map[string]map[string]podProxyStatus),
+		refreshDuration:            time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
+		tokenNamespaces:            make(map[string]namespaceCache),
+		tokenNamespaceDuration:     time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
 	}
 
 	// Starting background goroutines to:
@@ -127,7 +130,7 @@ func (c *kialiCacheImpl) Stop() {
 // and recreates the cache(s) when the client changes. The client is updated when
 // the token for the client changes.
 func (c *kialiCacheImpl) watchForClientChanges(ctx context.Context, token string) {
-	ticker := time.NewTicker(60 * time.Second)
+	ticker := time.NewTicker(c.clientRefreshPollingPeriod)
 	go func() {
 		for {
 			select {

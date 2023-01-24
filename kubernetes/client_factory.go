@@ -292,13 +292,43 @@ func (cf *clientFactory) GetSAClients() map[string]ClientInterface {
 	cf.mutex.RLock()
 	defer cf.mutex.RUnlock()
 
+	for cluster := range cf.saClientEntries {
+		if err := cf.refreshClientIfTokenChanged(cluster); err != nil {
+			log.Errorf("Unable to refresh Kiali SA client for cluster: %s. Err: %s", cluster, err)
+		}
+	}
+
 	return cf.saClientEntries
+}
+
+// Check for kiali token changes and refresh the client when it does.
+func (cf *clientFactory) refreshClientIfTokenChanged(cluster string) error {
+	kialiSAToken, err := GetKialiToken()
+	if err != nil {
+		return err
+	}
+
+	if cf.saClientEntries[cluster].GetToken() != kialiSAToken {
+		log.Debugf("Kiali SA token has changed, refreshing client for cluster: %s", cluster)
+		// Token has changed, so we need to refresh the client.
+		newClient, err := cf.newSAClient(cluster)
+		if err != nil {
+			return err
+		}
+		cf.saClientEntries[cluster] = newClient
+	}
+
+	return nil
 }
 
 // KialiSAHomeCluster returns the Kiali service account client for the cluster where Kiali is running.
 func (cf *clientFactory) GetSAHomeClusterClient() ClientInterface {
 	cf.mutex.RLock()
 	defer cf.mutex.RUnlock()
+
+	if err := cf.refreshClientIfTokenChanged("home"); err != nil {
+		log.Errorf("Unable to refresh Kiali SA client for home cluster. Err: %s", err)
+	}
 
 	// TODO: Use a real cluster name instead of "home"
 	return cf.saClientEntries["home"]
