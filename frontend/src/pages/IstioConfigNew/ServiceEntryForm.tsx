@@ -300,7 +300,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
                 id="addServerBtn"
                 variant={ButtonVariant.link}
                 icon={<PlusCircleIcon />}
-                style={{paddingRight: 0}}
+                style={{padding: 0}}
                 onClick={this.onAddNewPort}
               /> Add Port
             </>
@@ -343,7 +343,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
             ))}
           </FormSelect>
         </FormGroup>
-        <FormGroup label="Ports" fieldId="ports">
+        <FormGroup label="Ports" fieldId="ports" isRequired={true}>
           <Table
             aria-label="Ports"
             cells={headerCells}
