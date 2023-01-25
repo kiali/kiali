@@ -8,6 +8,7 @@ import { PlusCircleIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 import { PFColors } from '../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
+import {FormEvent} from "react";
 
 export const SERVICE_ENTRY = 'ServiceEntry';
 export const SERVICE_ENTRIES = 'serviceentries';
@@ -65,22 +66,15 @@ type Props = {
 export type ServiceEntryState = {
   serviceEntry: ServiceEntrySpec;
   validHosts: boolean;
-  addNewPortNumber: string;
-  addNewPortName: string;
-  addNewPortProtocol: string;
-  addNewTargetPort: string;
 };
 
 export const initServiceEntry = (): ServiceEntryState => ({
   serviceEntry: {
     location: location[0], // MESH_EXTERNAL
-    resolution: resolution[0] // NONE
+    resolution: resolution[0], // NONE
+    ports: []
   },
   validHosts: false,
-  addNewPortNumber: '80',
-  addNewPortName: '',
-  addNewPortProtocol: protocols[0],
-  addNewTargetPort: ''
 });
 
 export const isServiceEntryValid = (se: ServiceEntryState): boolean => {
@@ -130,15 +124,6 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
     return isValid;
   };
 
-  isValidPort = () => {
-    const validPortNumber = this.state.addNewPortNumber.length > 0 && !isNaN(Number(this.state.addNewPortNumber));
-    const validPortName = this.state.addNewPortName.length > 0;
-    const validTargetPort =
-      this.state.addNewTargetPort.length === 0 ||
-      (this.state.addNewTargetPort.length > 0 && !isNaN(Number(this.state.addNewTargetPort)));
-    return validPortNumber && validPortName && validTargetPort;
-  };
-
   onAddHosts = (value: string, _) => {
     const hosts = value.trim().length === 0 ? [] : value.split(',').map(host => host.trim());
     this.setState(
@@ -177,123 +162,147 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
     );
   };
 
-  onAddPortNumber = (value: string, _) => {
+  onAddPortNumber = (value: string, e: FormEvent) => {
+    const ps = this.state.serviceEntry;
+    const eName = e.currentTarget.getAttribute("name") !== null ? e.currentTarget.getAttribute("name") : "1"
+    // @ts-ignore
+    const i = parseInt(eName)
+    if (typeof(ps.ports) !== "undefined") {
+      ps.ports[i].number = parseInt(value);
+    }
     this.setState({
-      addNewPortNumber: value
-    });
+      serviceEntry: ps
+    }, () => this.props.onChange(this.state));
   };
 
-  onAddPortName = (value: string, _) => {
+  onAddPortName = (value: string, e: FormEvent) => {
+    const ps = this.state.serviceEntry;
+    const eName = e.currentTarget.getAttribute("name") !== null ? e.currentTarget.getAttribute("name") : "1"
+    // @ts-ignore
+    const i = parseInt(eName)
+    if (typeof(ps.ports) !== "undefined") {
+      ps.ports[i].name = value;
+    }
     this.setState({
-      addNewPortName: value
-    });
+      serviceEntry: ps
+    }, () => this.props.onChange(this.state));
   };
 
-  onAddPortProtocol = (value: string, _) => {
+  onAddPortProtocol = (value: string, e: FormEvent) => {
+    const ps = this.state.serviceEntry;
+    const eName = e.currentTarget.getAttribute("name") !== null ? e.currentTarget.getAttribute("name") : "1"
+    // @ts-ignore
+    const i = parseInt(eName)
+    if (typeof(ps.ports) !== "undefined") {
+      ps.ports[i].protocol = value;
+    }
     this.setState({
-      addNewPortProtocol: value
-    });
+      serviceEntry: ps
+    }, () => this.props.onChange(this.state));
   };
 
-  onAddTargetPort = (value: string, _) => {
+  onAddTargetPort = (value: string, e: FormEvent) => {
+    const ps = this.state.serviceEntry;
+    const eName = e.currentTarget.getAttribute("name") !== null ? e.currentTarget.getAttribute("name") : "1"
+    // @ts-ignore
+    const i = parseInt(eName)
+    if (typeof(ps.ports) !== "undefined") {
+      ps.ports[i].targetPort = parseInt(value);
+    }
     this.setState({
-      addNewTargetPort: value
-    });
+      serviceEntry: ps
+    }, () => this.props.onChange(this.state));
   };
 
   onAddNewPort = () => {
+    const newPort: Port = {
+      name: "",
+      protocol: "HTTP"
+    };
+    const newports = this.state.serviceEntry;
+    if (typeof(newports.ports) !== "undefined") {
+      newports.ports.push(newPort)
+    }
+
     // @ts-ignore
-    this.setState(
-      prevState => {
-        const newPort: Port = {
-          number: +this.state.addNewPortNumber,
-          name: this.state.addNewPortName,
-          protocol: this.state.addNewPortProtocol
-        };
-        if (this.state.addNewTargetPort.length > 0) {
-          newPort.targetPort = +this.state.addNewTargetPort;
-        }
-        if (!prevState.serviceEntry.ports) {
-          prevState.serviceEntry.ports = [];
-        }
-        prevState.serviceEntry.ports.push(newPort);
-        return {
-          serviceEntry: prevState.serviceEntry,
-          addNewPortNumber: '80',
-          addNewPortName: '',
-          addNewPortProtocol: protocols[0],
-          addNewTargetPort: ''
-        };
-      },
-      () => this.props.onChange(this.state)
-    );
+    this.setState({
+      serviceEntry: newports
+    }, () => this.props.onChange(this.state));
   };
 
   rows() {
+    // @ts-ignore
+    // @ts-ignore
     return (this.state.serviceEntry.ports || [])
       .map((p, i) => ({
-        key: 'port_' + i,
-        cells: [<>{p.number}</>, <>{p.name}</>, <>{p.protocol}</>, <>{p.targetPort}</>, '']
+        key: 'portNew',
+        cells: [
+          <>
+            <TextInput
+              value={p.number}
+              id="addPortNumber"
+              aria-describedby="add port number"
+              name={i.toString()}
+              placeholder="80"
+              onChange={this.onAddPortNumber}
+              type="number"
+              validated={isValid(typeof(this.state.serviceEntry.ports) !== "undefined" &&
+                typeof(this.state.serviceEntry.ports[i].number) !== "undefined" && !isNaN(Number(this.state.serviceEntry.ports[i].number))
+              )}
+            />
+          </>,
+          <>
+            <TextInput
+              value={p.name}
+              id="addPortName"
+              aria-describedby="add port name"
+              name={i.toString()}
+              onChange={this.onAddPortName}
+              validated={isValid(typeof(this.state.serviceEntry.ports) !== "undefined" && typeof(this.state.serviceEntry.ports[i].name) !== "undefined"
+                && this.state.serviceEntry.ports[i].name.length > 0)}
+            />
+          </>,
+          <>
+            <FormSelect
+              value={p.protocol}
+              id="addPortProtocol"
+              name={i.toString()}
+              onChange={this.onAddPortProtocol}
+            >
+              {protocols.map((option, index) => (
+                <FormSelectOption key={'p' + index} value={option} label={option} />
+              ))}
+            </FormSelect>
+          </>,
+          <>
+            <TextInput
+              value={p.targetPort}
+              id="addTargetPort"
+              aria-describedby="add target port"
+              name={i.toString()}
+              type="number"
+              onChange={this.onAddTargetPort}
+              validated={isValid(typeof(this.state.serviceEntry.ports) !== "undefined" &&
+                (typeof(this.state.serviceEntry.ports[i].targetPort) === "undefined" ||
+                  (typeof(this.state.serviceEntry.ports[i].targetPort) !== "undefined" && !isNaN(Number(this.state.serviceEntry.ports[i].targetPort))))
+
+              )}
+            />
+          </>
+          ]
       }))
       .concat([
         {
           key: 'portNew',
           cells: [
             <>
-              <TextInput
-                value={this.state.addNewPortNumber}
-                id="addPortNumber"
-                aria-describedby="add port number"
-                name="addPortNumber"
-                onChange={this.onAddPortNumber}
-                validated={isValid(
-                  this.state.addNewPortNumber.length > 0 && !isNaN(Number(this.state.addNewPortNumber))
-                )}
-              />
-            </>,
-            <>
-              <TextInput
-                value={this.state.addNewPortName}
-                id="addPortName"
-                aria-describedby="add port name"
-                name="addPortName"
-                onChange={this.onAddPortName}
-                validated={isValid(this.state.addNewPortName.length > 0)}
-              />
-            </>,
-            <>
-              <FormSelect
-                value={this.state.addNewPortProtocol}
-                id="addPortProtocol"
-                name="addPortProtocol"
-                onChange={this.onAddPortProtocol}
-              >
-                {protocols.map((option, index) => (
-                  <FormSelectOption key={'p' + index} value={option} label={option} />
-                ))}
-              </FormSelect>
-            </>,
-            <>
-              <TextInput
-                value={this.state.addNewTargetPort}
-                id="addTargetPort"
-                aria-describedby="add target port"
-                name="addTargetPort"
-                onChange={this.onAddTargetPort}
-                validated={isValid(
-                  this.state.addNewTargetPort.length === 0 ||
-                    (this.state.addNewTargetPort.length > 0 && !isNaN(Number(this.state.addNewTargetPort)))
-                )}
-              />
-            </>,
-            <>
               <Button
                 id="addServerBtn"
                 variant={ButtonVariant.link}
                 icon={<PlusCircleIcon />}
-                isDisabled={!this.isValidPort()}
+                style={{paddingRight: 0}}
                 onClick={this.onAddNewPort}
-              />
+              /> Add Port
             </>
           ]
         }
