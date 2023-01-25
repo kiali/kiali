@@ -128,6 +128,7 @@ func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1bet
 	return validations
 }
 
+// GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
 func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria WorkloadCriteria) (models.WorkloadList, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadList",
