@@ -168,7 +168,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
         )}
         {(this.props.filterType === REQ_MOD || this.props.filterType === RESP_MOD) && (
           <TextInput
-            id="header-name-id"
+            id="filter-header-name-id"
             value={this.props.headerName}
             onChange={this.props.onHeaderNameChange}
             placeholder="Header name..."
@@ -176,7 +176,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
         )}
         {(this.props.filterType === REQ_MOD || this.props.filterType === RESP_MOD) && this.props.headerOp !== REMOVE && (
           <TextInput
-            id="header-value-id"
+            id="filter-header-value-id"
             value={this.props.headerValue}
             onChange={this.props.onHeaderValueChange}
             placeholder="Header Value..."
@@ -275,7 +275,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
           variant={ButtonVariant.secondary}
           isDisabled={!this.props.isValid}
           onClick={this.props.onAddFilter}
-          data-test="add-Filter"
+          data-test="add-filter"
         >
           Add Filter
         </Button>

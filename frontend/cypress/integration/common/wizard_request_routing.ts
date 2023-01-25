@@ -32,6 +32,9 @@ When('user clicks in the {string} actions', (action) => {
         case 'Request Routing':
             actionId = 'request_routing';
             break;
+        case 'K8s Gateway API Routing':
+            actionId = 'k8s_request_routing';
+            break;
         case 'Delete Traffic Routing':
             actionId = 'delete_traffic_routing';
             break;
@@ -64,8 +67,21 @@ And('user clicks in the {string} request matching dropdown', (select) => {
         .click();
 });
 
+And('user clicks in the {string} request filtering dropdown', (select) => {
+    cy.get('button[data-test="filtering-type-toggle"]')
+        .click();
+
+    cy.get('button[data-test="filtering-type-' + select + '"]')
+        .click();
+});
+
 And('user types {string} in the matching header input', (header) => {
     cy.get('input[id="header-name-id"]')
+        .type(header);
+});
+
+And('user types {string} in the filtering header input', (header) => {
+    cy.get('input[id="filter-header-name-id"]')
         .type(header);
 });
 
@@ -84,6 +100,11 @@ And('user types {string} in the match value input', (value) => {
 
 And('user adds a match', () => {
     cy.get('button[data-test="add-match"]')
+        .click();
+});
+
+And('user adds a filter', () => {
+    cy.get('button[data-test="add-filter"]')
         .click();
 });
 
