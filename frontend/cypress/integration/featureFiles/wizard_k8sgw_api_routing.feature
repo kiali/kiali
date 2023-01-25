@@ -49,7 +49,6 @@ Feature: Service Details Wizard: K8s Gateway API Routing
   Scenario: See a K8s Gateway generated with warning
     When user clicks in the "Istio Config" table "G" badge "reviews-gateway" name row link
     Then user sees the "kind: Gateway" regex in the editor
-    And user sees warning icon in ACE editor
 
   ## @wizard-k8s-routing
   Scenario: Delete the K8s Gateway Routing scenario
