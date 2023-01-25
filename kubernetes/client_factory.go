@@ -18,6 +18,8 @@ var factory *clientFactory
 // defaultExpirationTime set the default expired time of a client
 const defaultExpirationTime = time.Minute * 15
 
+const HomeClusterName = "_kiali_home"
+
 // ClientFactory interface for the clientFactory object
 type ClientFactory interface {
 	GetClient(authInfo *api.AuthInfo) (ClientInterface, error)
@@ -82,7 +84,7 @@ func newClientFactory(istioConfig *rest.Config) (*clientFactory, error) {
 	// Create serivce account clients.
 	// TODO: Create a service account client for each cluster. Need a way to get all configured clusters.
 	// TODO: Use a real cluster name instead of "home"
-	clusters := []string{"home"}
+	clusters := []string{HomeClusterName}
 	for _, cluster := range clusters {
 		client, err := f.newSAClient(cluster)
 		if err != nil {
@@ -326,10 +328,10 @@ func (cf *clientFactory) GetSAHomeClusterClient() ClientInterface {
 	cf.mutex.RLock()
 	defer cf.mutex.RUnlock()
 
-	if err := cf.refreshClientIfTokenChanged("home"); err != nil {
+	if err := cf.refreshClientIfTokenChanged(HomeClusterName); err != nil {
 		log.Errorf("Unable to refresh Kiali SA client for home cluster. Err: %s", err)
 	}
 
 	// TODO: Use a real cluster name instead of "home"
-	return cf.saClientEntries["home"]
+	return cf.saClientEntries[HomeClusterName]
 }

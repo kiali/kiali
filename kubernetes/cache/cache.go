@@ -90,9 +90,7 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, na
 
 	kialiCacheImpl.watchForClientChanges(ctx, clientFactory.GetSAHomeClusterClient().GetToken())
 
-	kialiCacheImpl.cleanup = func() {
-		cancel()
-	}
+	kialiCacheImpl.cleanup = cancel
 
 	for cluster, kialiClient := range clientFactory.GetSAClients() {
 		cache, err := NewKubeCache(kialiClient, cfg, NewRegistryHandler(kialiCacheImpl.RefreshRegistryStatus), namespaceSeedList...)

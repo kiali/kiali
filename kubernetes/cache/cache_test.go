@@ -54,15 +54,10 @@ func TestClientUpdatedWhenSAClientChanges(t *testing.T) {
 	newClient.Token = "new-token"
 	clientFactory.SetK8s(newClient)
 
-	for {
-		select {
-		case <-time.After(100 * time.Millisecond):
-			t.Fatal("client and cache should have been updated")
-		default:
-			if kubeCache.getClient() == client {
-				continue
-			}
-		}
-		return
-	}
+	require.Eventually(
+		func() bool { return kubeCache.getClient() != client },
+		500*time.Millisecond,
+		5*time.Millisecond,
+		"client and cache should have been updated",
+	)
 }

@@ -166,6 +166,8 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 }
 
 // NewWithBackends creates the business layer using the passed k8s and prom clients.
+// Note that the client passed here should *not* be the Kiali ServiceAccount client.
+// It should be the user client based on the logged in user's token.
 // TODO: Pass multiple clients or the client factory.
 func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
 	temporaryLayer := &Layer{}
@@ -188,8 +190,10 @@ func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInter
 	temporaryLayer.TokenReview = NewTokenReview(k8s)
 	temporaryLayer.Validations = IstioValidationsService{k8s: k8s, businessLayer: temporaryLayer}
 
-	// TODO: Use client manager or passed in clients rather than hardcoding the home cluster.
-	clusterClients := map[string]kubernetes.ClientInterface{"home": k8s}
+	// TODO: Use client factory or passed in clients rather than hardcoding the home cluster or creating the clients here.
+	// This function is used in many different tests so changing the signature or setting up the global client factory var
+	// would require a large refactor.
+	clusterClients := map[string]kubernetes.ClientInterface{kubernetes.HomeClusterName: k8s}
 	// TODO: Remove conditional once cache is fully mandatory.
 	if config.Get().KubernetesConfig.CacheEnabled {
 		// The caching client effectively uses two different SA account tokens.
