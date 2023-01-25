@@ -51,7 +51,7 @@ Then('the validation filter {string} is no longer active', (category:string) => 
 });
 
 When("user chooses {int} validation filters", (count:number) => {
-  cy.get('select[aria-label="filter_select_type"]').select('Config');
+  cy.get('select[aria-label="filter_select_type"]', { timeout: 1000 }).should('be.visible').select('Config');
   for (let i = 1; i <= count; i++) {
     cy.get('select[aria-label="filter_select_value"]').select(i);
   };

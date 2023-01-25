@@ -1,16 +1,22 @@
 package tests
 
 import (
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/tests/integration/utils"
+	"github.com/kiali/kiali/tools/cmd"
 )
 
 func TestIstioConfigList(t *testing.T) {
 	assert := assert.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-k8sgateways.yaml")
+	defer utils.DeleteFile(filePath, utils.BOOKINFO)
+	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
+
 	configList, err := utils.IstioConfigsList(utils.BOOKINFO)
 
 	assert.Nil(err)
@@ -19,6 +25,9 @@ func TestIstioConfigList(t *testing.T) {
 
 func TestIstioConfigs(t *testing.T) {
 	assert := assert.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, utils.ASSETS+"/bookinfo-k8sgateways.yaml")
+	defer utils.DeleteFile(filePath, utils.BOOKINFO)
+	assert.True(utils.ApplyFile(filePath, utils.BOOKINFO))
 	configMap, err := utils.IstioConfigs()
 
 	assert.Nil(err)
@@ -63,6 +72,16 @@ func assertConfigs(configList utils.IstioConfigListJson, assert *assert.Assertio
 	}
 	assert.NotNil(configList.Gateways)
 	for _, gw := range configList.Gateways {
+		assert.True(gw.Namespace == configList.Namespace.Name)
+		assert.NotNil(gw.Name)
+	}
+	assert.NotNil(configList.K8sGateways)
+	for _, gw := range configList.K8sGateways {
+		assert.True(gw.Namespace == configList.Namespace.Name)
+		assert.NotNil(gw.Name)
+	}
+	assert.NotNil(configList.K8sHTTPRoutes)
+	for _, gw := range configList.K8sHTTPRoutes {
 		assert.True(gw.Namespace == configList.Namespace.Name)
 		assert.NotNil(gw.Name)
 	}
