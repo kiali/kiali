@@ -37,7 +37,7 @@ import (
 func NewWorkloadService(clients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, cache cache.KialiCache, layer *Layer, config *config.Config) *WorkloadService {
 	return &WorkloadService{
 		clients:       clients,
-		k8s:           clients["home"], // TODO: Remove this once and just use clients when multicluster is supported.
+		k8s:           clients[kubernetes.HomeClusterName], // TODO: Remove this once and just use clients when multicluster is supported.
 		prom:          prom,
 		cache:         cache,
 		businessLayer: layer,
