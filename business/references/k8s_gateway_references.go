@@ -31,7 +31,7 @@ func (g K8sGatewayReferences) getConfigReferences(gw *k8s_networking_v1alpha2.Ga
 	for _, rt := range g.K8sHTTPRoutes {
 		if len(rt.Spec.ParentRefs) > 0 {
 			for _, pr := range rt.Spec.ParentRefs {
-				if string(pr.Name) == gw.Name {
+				if string(pr.Name) == gw.Name && string(*pr.Kind) == kubernetes.K8sActualGatewayType && string(*pr.Group) == kubernetes.K8sNetworkingGroupVersionV1Beta1.Group {
 					ref := models.IstioReference{Name: rt.Name, Namespace: rt.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.K8sHTTPRoutes]}
 					result = append(result, ref)
 				}
