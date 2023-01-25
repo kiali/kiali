@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -79,19 +80,6 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, na
 		tokenNamespaceDuration:     time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
 	}
 
-	// Starting background goroutines to:
-	// 1. Refresh the cache's service account token
-	// 2. Poll for istiod's proxy status.
-	// These will stop when the context is cancelled.
-	ctx, cancel := context.WithCancel(context.Background())
-	if cfg.ExternalServices.Istio.IstioAPIEnabled {
-		kialiCacheImpl.pollIstiodForProxyStatus(ctx)
-	}
-
-	kialiCacheImpl.watchForClientChanges(ctx, clientFactory.GetSAHomeClusterClient().GetToken())
-
-	kialiCacheImpl.cleanup = cancel
-
 	for cluster, kialiClient := range clientFactory.GetSAClients() {
 		cache, err := NewKubeCache(kialiClient, cfg, NewRegistryHandler(kialiCacheImpl.RefreshRegistryStatus), namespaceSeedList...)
 		if err != nil {
@@ -102,7 +90,25 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, na
 	}
 
 	// TODO: Treat all clusters the same way.
-	kialiCacheImpl.KubeCache = kialiCacheImpl.kubeCache["home"]
+	homeClient, ok := kialiCacheImpl.kubeCache[kubernetes.HomeClusterName]
+	if !ok {
+		return nil, errors.New("home cluster not configured in kiali cache")
+	}
+	kialiCacheImpl.KubeCache = homeClient
+
+	// Starting background goroutines to:
+	// 1. Refresh the cache's service account token
+	// 2. Poll for istiod's proxy status.
+	// These will stop when the context is cancelled.
+	// Starting goroutines after any errors are handled so as not to leak goroutines.
+	ctx, cancel := context.WithCancel(context.Background())
+	if cfg.ExternalServices.Istio.IstioAPIEnabled {
+		kialiCacheImpl.pollIstiodForProxyStatus(ctx)
+	}
+
+	kialiCacheImpl.watchForClientChanges(ctx, clientFactory.GetSAHomeClusterClient().GetToken())
+
+	kialiCacheImpl.cleanup = cancel
 
 	return &kialiCacheImpl, nil
 }

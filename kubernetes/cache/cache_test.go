@@ -52,7 +52,7 @@ func TestClientUpdatedWhenSAClientChanges(t *testing.T) {
 	// Update the client. This should trigger a cache refresh.
 	newClient := kubetest.NewFakeK8sClient()
 	newClient.Token = "new-token"
-	clientFactory.SetK8s(newClient)
+	clientFactory.SetClients(map[string]kubernetes.ClientInterface{kubernetes.HomeClusterName: newClient})
 
 	require.Eventually(
 		func() bool { return kubeCache.getClient() != client },
@@ -60,4 +60,16 @@ func TestClientUpdatedWhenSAClientChanges(t *testing.T) {
 		5*time.Millisecond,
 		"client and cache should have been updated",
 	)
+}
+
+func TestNoHomeClusterReturnsError(t *testing.T) {
+	require := require.New(t)
+	config := config.NewConfig()
+
+	client := kubetest.NewFakeK8sClient()
+	clientFactory := kubetest.NewK8SClientFactoryMock(client)
+	clientFactory.SetClients(map[string]kubernetes.ClientInterface{"nothomecluster": client})
+
+	_, err := NewKialiCache(clientFactory, *config)
+	require.Error(err, "no home cluster should return an error")
 }
