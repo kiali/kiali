@@ -4,11 +4,11 @@ import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption } from '
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
-import { PlusCircleIcon } from '@patternfly/react-icons';
+import { PlusCircleIcon, TrashIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 import { PFColors } from '../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
-import {FormEvent} from "react";
+import { FormEvent } from "react";
 
 export const SERVICE_ENTRY = 'ServiceEntry';
 export const SERVICE_ENTRIES = 'serviceentries';
@@ -77,8 +77,14 @@ export const initServiceEntry = (): ServiceEntryState => ({
   validHosts: false,
 });
 
+const isValidPort = (p: Port[]) => {
+  return p.every(p =>
+    p.name.length > 0 && p.number !== undefined && p.protocol.length > 0)
+};
+
 export const isServiceEntryValid = (se: ServiceEntryState): boolean => {
-  return se.validHosts && se.serviceEntry.ports !== undefined && se.serviceEntry.ports.length > 0;
+  return se.validHosts && se.serviceEntry.ports !== undefined && se.serviceEntry.ports.length > 0
+    && isValidPort(se.serviceEntry.ports);
 };
 
 class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
@@ -86,29 +92,6 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
     super(props);
     this.state = initServiceEntry();
   }
-
-  // @ts-ignore
-  actionResolver = (rowData, { rowIndex }) => {
-    const removeAction = {
-      title: 'Remove Port',
-      // @ts-ignore
-      onClick: (event, rowIndex, rowData, extraData) => {
-        this.setState(
-          prevState => {
-            prevState.serviceEntry.ports?.splice(rowIndex, 1);
-            return {
-              serviceEntry: prevState.serviceEntry
-            };
-          },
-          () => this.props.onChange(this.state)
-        );
-      }
-    };
-    if (this.state.serviceEntry.ports && rowIndex < this.state.serviceEntry.ports.length) {
-      return [removeAction];
-    }
-    return [];
-  };
 
   areValidHosts = (hosts: string[]): boolean => {
     if (hosts.length === 0) {
@@ -168,7 +151,14 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
     // @ts-ignore
     const i = parseInt(eName)
     if (typeof(ps.ports) !== "undefined") {
-      ps.ports[i].number = parseInt(value);
+     if (value.match(/^(\s)*$/)) {
+        ps.ports[i].number = undefined
+      } else {
+        if (value.match(/^(\d+)$/)) {
+          ps.ports[i].number = parseInt(value);
+        }
+      }
+
     }
     this.setState({
       serviceEntry: ps
@@ -207,7 +197,13 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
     // @ts-ignore
     const i = parseInt(eName)
     if (typeof(ps.ports) !== "undefined") {
-      ps.ports[i].targetPort = parseInt(value);
+      if (value.match(/^(\s)*$/)) {
+        ps.ports[i].targetPort = undefined
+      } else {
+        if (value.match(/^(\d+)$/)) {
+          ps.ports[i].targetPort = parseInt(value);
+        }
+      }
     }
     this.setState({
       serviceEntry: ps
@@ -224,18 +220,23 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
       newports.ports.push(newPort)
     }
 
-    // @ts-ignore
     this.setState({
       serviceEntry: newports
     }, () => this.props.onChange(this.state));
   };
 
+  handleDelete = (_: any, index: number) => {
+    const state = this.state.serviceEntry
+    state.ports?.splice(index, 1);
+    this.setState({serviceEntry: state },
+               () => this.props.onChange(this.state)
+   );
+  };
+
   rows() {
-    // @ts-ignore
-    // @ts-ignore
     return (this.state.serviceEntry.ports || [])
       .map((p, i) => ({
-        key: 'portNew',
+        key: 'portNew'+i,
         cells: [
           <>
             <TextInput
@@ -245,7 +246,6 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
               name={i.toString()}
               placeholder="80"
               onChange={this.onAddPortNumber}
-              type="number"
               validated={isValid(typeof(this.state.serviceEntry.ports) !== "undefined" &&
                 typeof(this.state.serviceEntry.ports[i].number) !== "undefined" && !isNaN(Number(this.state.serviceEntry.ports[i].number))
               )}
@@ -280,13 +280,21 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
               id="addTargetPort"
               aria-describedby="add target port"
               name={i.toString()}
-              type="number"
               onChange={this.onAddTargetPort}
               validated={isValid(typeof(this.state.serviceEntry.ports) !== "undefined" &&
                 (typeof(this.state.serviceEntry.ports[i].targetPort) === "undefined" ||
                   (typeof(this.state.serviceEntry.ports[i].targetPort) !== "undefined" && !isNaN(Number(this.state.serviceEntry.ports[i].targetPort))))
 
               )}
+            />
+          </>,
+          <>
+            <Button
+              id="deleteBtn"
+              variant={ButtonVariant.link}
+              icon={<TrashIcon />}
+              style={{padding: 0}}
+              onClick={(e) => this.handleDelete(e, i)}
             />
           </>
           ]
@@ -348,8 +356,6 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
             aria-label="Ports"
             cells={headerCells}
             rows={this.rows()}
-            // @ts-ignore
-            actionResolver={this.actionResolver}
           >
             <TableHeader />
             <TableBody />
@@ -373,6 +379,8 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
       </>
     );
   }
+
+
 }
 
 export default ServiceEntryForm;
