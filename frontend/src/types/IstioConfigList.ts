@@ -324,8 +324,9 @@ export const gwToIstioItems = (gws: Gateway[], vss: VirtualService[], validation
   return istioItems;
 };
 
-export const k8sGwToIstioItems = (gws: K8sGateway[], k8srs: K8sHTTPRoute[]): IstioConfigItem[] => {
+export const k8sGwToIstioItems = (gws: K8sGateway[], k8srs: K8sHTTPRoute[], validations: Validations): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
+  const hasValidations = (vKey: string) => validations.k8sgateway && validations.k8sgateway[vKey];
   const k8sGateways = new Set();
 
   const typeNameProto = dicIstioType['k8sgateways']; // ex. serviceEntries -> ServiceEntry
@@ -344,14 +345,14 @@ export const k8sGwToIstioItems = (gws: K8sGateway[], k8srs: K8sHTTPRoute[]): Ist
 
   gws.forEach(gw => {
     if (k8sGateways.has(gw.metadata.namespace + '/' + gw.metadata.name)) {
+      const vKey = validationKey(gw.metadata.name, gw.metadata.namespace);
       const item = {
         namespace: gw.metadata.namespace || '',
         type: typeName,
         name: gw.metadata.name,
         creationTimestamp: gw.metadata.creationTimestamp,
         resourceVersion: gw.metadata.resourceVersion,
-        // @TODO Validations
-        validation: undefined
+        validation: hasValidations(vKey) ? validations.k8sgateway[vKey] : undefined
       };
       item[entryName] = gw;
       istioItems.push(item);
@@ -384,22 +385,23 @@ export const seToIstioItems = (see: ServiceEntry[], validations: Validations): I
   return istioItems;
 };
 
-export const k8sHTTPRouteToIstioItems = (routes: K8sHTTPRoute[]): IstioConfigItem[] => {
+export const k8sHTTPRouteToIstioItems = (routes: K8sHTTPRoute[], validations: Validations): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
+  const hasValidations = (vKey: string) => validations.k8shttproute && validations.k8shttproute[vKey];
 
   const typeNameProto = dicIstioType['k8shttproutes']; // ex. serviceEntries -> ServiceEntry
   const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
   const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
 
   routes.forEach(route => {
+    const vKey = validationKey(route.metadata.name, route.metadata.namespace);
     const item = {
       namespace: route.metadata.namespace || '',
       type: typeName,
       name: route.metadata.name,
       creationTimestamp: route.metadata.creationTimestamp,
       resourceVersion: route.metadata.resourceVersion,
-      // @TODO Validations
-      validation: undefined
+      validation: hasValidations(vKey) ? validations.k8shttproute[vKey] : undefined
     };
     item[entryName] = route;
     istioItems.push(item);
