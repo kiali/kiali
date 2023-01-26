@@ -16,7 +16,7 @@ const StyleEdge: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   const passedData = React.useMemo(() => {
     const newData = { ...data };
     if (detailsLevel !== ScaleDetailsLevel.high) {
-      newData.tag = undefined;
+      newData.showTag = false;
     }
     Object.keys(newData).forEach(key => {
       if (newData[key] === undefined) {

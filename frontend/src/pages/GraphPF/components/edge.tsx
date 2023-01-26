@@ -34,6 +34,7 @@ import { style } from 'typestyle';
 //   [Edge] element.data.isHighlighted?: boolean         // adds highlight effects
 //   [Edge] element.data.isUnhighlighted?: boolean       // adds unhighlight effects
 //   [Edge] element.data.hasSpans?: Span[]               // adds trace overlay
+//   add showTag prop and show scaled tag on hover (when showTag is false)
 
 type BaseEdgeProps = {
   children?: React.ReactNode;
@@ -52,6 +53,8 @@ type BaseEdgeProps = {
   tag?: string;
   tagClass?: string;
   tagStatus?: NodeStatus;
+  // custom fields
+  showTag?: boolean;
 } & Partial<
   WithRemoveConnectorProps & WithSourceDragProps & WithTargetDragProps & WithSelectionProps & WithContextMenuProps
 >;
@@ -88,7 +91,8 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
   className,
   selected,
   onSelect,
-  onContextMenu
+  onContextMenu,
+  showTag = true
 }) => {
   const [hover, hoverRef] = useHover();
 
@@ -143,6 +147,10 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
     .map((b: Point) => `L${b.x} ${b.y} `)
     .join('')}L${bgEndPoint[0]} ${bgEndPoint[1]}`;
 
+  const scale = element.getGraph().getScale();
+  const tagScale = hover && !showTag ? Math.max(1, 1 / scale) : 1;
+  const tagPositionScale = hover && !showTag ? Math.min(1, scale) : 1;
+
   return (
     <Layer id={dragging || hover ? TOP_LAYER : undefined}>
       <g
@@ -170,14 +178,16 @@ const BaseEdge: React.FunctionComponent<BaseEdgeProps> = ({
         {!!data.isFind && (
           <path d={d} style={{ strokeWidth: OverlayWidth, stroke: ColorFind, strokeOpacity: OverlayOpacity }} />
         )}
-        {tag && (
-          <DefaultConnectorTag
-            className={tagClass}
-            startPoint={element.getStartPoint()}
-            endPoint={element.getEndPoint()}
-            tag={tag}
-            status={tagStatus}
-          />
+        {tag && (showTag || hover) && (
+          <g transform={`scale(${hover ? tagScale : 1})`}>
+            <DefaultConnectorTag
+              className={tagClass}
+              startPoint={element.getStartPoint().scale(tagPositionScale)}
+              endPoint={element.getEndPoint().scale(tagPositionScale)}
+              tag={tag}
+              status={tagStatus}
+            />
+          </g>
         )}
         <DefaultConnectorTerminal
           className={startTerminalClass}

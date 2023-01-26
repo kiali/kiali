@@ -31,8 +31,9 @@ import {
 // This is a copy of PFT DefaultGroupExpanded (v4.68.3), then modified.  I don't see a better way to really
 // do this because DefaultGroupExpanded doesn't really seem itself extensible and to add certain behavior you have
 // to reimplement the rendered element.  This supports the following customizations:
-//   [Node] element.data.isHighlighted?: boolean         // adds highlight effects based on hover
-//   [Node] element.data.isUnhighlighted?: boolean       // adds unhighlight effects based on hover
+//   element.data.isHighlighted?: boolean         // adds highlight effects based on hover
+//   element.data.isUnhighlighted?: boolean       // adds unhighlight effects based on hover
+//   show scaled label on hover (when showLabel is false)
 
 type BaseGroupExpandedProps = {
   className?: string;
@@ -206,6 +207,10 @@ const BaseGroupExpanded: React.FunctionComponent<BaseGroupExpandedProps> = ({
   );
 
   const data = element.getData();
+  const scale = element.getGraph().getScale();
+  const labelScale = isHover && !showLabel ? Math.max(1, 1 / scale) : 1;
+  const labelPositionScale = isHover && !showLabel ? Math.min(1, scale) : 1;
+
   return (
     <g
       ref={labelHoverRef as any}
@@ -219,34 +224,36 @@ const BaseGroupExpanded: React.FunctionComponent<BaseGroupExpandedProps> = ({
           <path ref={outlineRef as any} className={styles.topologyGroupBackground} d={pathRef.current} />
         </g>
       </Layer>
-      {showLabel && (
-        <NodeLabel
-          className={styles.topologyGroupLabel}
-          x={labelLocation.current[0]}
-          y={labelLocation.current[1] + hullPadding(labelLocation.current) + 24}
-          paddingX={8}
-          paddingY={5}
-          dragRef={dragNodeRef ? dragLabelRef : undefined}
-          status={element.getNodeStatus()}
-          secondaryLabel={secondaryLabel}
-          truncateLength={truncateLength}
-          badge={badge}
-          badgeColor={badgeColor}
-          badgeTextColor={badgeTextColor}
-          badgeBorderColor={badgeBorderColor}
-          badgeClassName={badgeClassName}
-          badgeLocation={badgeLocation}
-          labelIconClass={labelIconClass}
-          labelIcon={labelIcon}
-          labelIconPadding={labelIconPadding}
-          onContextMenu={onContextMenu}
-          contextMenuOpen={contextMenuOpen}
-          hover={isHover || labelHover}
-          actionIcon={collapsible ? <CollapseIcon /> : undefined}
-          onActionIconClick={() => onCollapseChange!(element, true)}
-        >
-          {label || element.getLabel()}
-        </NodeLabel>
+      {(showLabel || isHover) && (
+        <g transform={`scale(${isHover ? labelScale : 1})`}>
+          <NodeLabel
+            className={styles.topologyGroupLabel}
+            x={labelLocation.current[0] * labelPositionScale}
+            y={(labelLocation.current[1] + hullPadding(labelLocation.current) + 24) * labelPositionScale}
+            paddingX={8}
+            paddingY={5}
+            dragRef={dragNodeRef ? dragLabelRef : undefined}
+            status={element.getNodeStatus()}
+            secondaryLabel={secondaryLabel}
+            truncateLength={truncateLength}
+            badge={badge}
+            badgeColor={badgeColor}
+            badgeTextColor={badgeTextColor}
+            badgeBorderColor={badgeBorderColor}
+            badgeClassName={badgeClassName}
+            badgeLocation={badgeLocation}
+            labelIconClass={labelIconClass}
+            labelIcon={labelIcon}
+            labelIconPadding={labelIconPadding}
+            onContextMenu={onContextMenu}
+            contextMenuOpen={contextMenuOpen}
+            hover={isHover || labelHover}
+            actionIcon={collapsible ? <CollapseIcon /> : undefined}
+            onActionIconClick={() => onCollapseChange!(element, true)}
+          >
+            {label || element.getLabel()}
+          </NodeLabel>
+        </g>
       )}
     </g>
   );

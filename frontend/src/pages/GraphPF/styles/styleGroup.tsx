@@ -46,7 +46,7 @@ const StyleGroup: React.FC<StyleGroupProps> = ({ element, collapsedWidth = 75, c
   };
 
   return (
-    <g className={`topology ${data.shadowed ? 'shadowed' : ''}`}>
+    <g>
       <BaseGroup
         element={element}
         collapsedWidth={collapsedWidth}

@@ -59,6 +59,7 @@ const StyleNode: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
     return newData;
   }, [data, detailsLevel]);
 
+  console.log(`nodeHover=${hover}`);
   return (
     <g ref={hoverRef as any}>
       <BaseNode
