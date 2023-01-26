@@ -28,7 +28,7 @@ func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) W
 	// config needs to be set by other services since those rely on the global.
 	config.Set(conf)
 	prom := new(prometheustest.PromClientMock)
-	return *NewWorkloadService(map[string]kubernetes.ClientInterface{kubernetes.HomeClusterName: k8s}, prom, nil, NewWithBackends(k8s, prom, nil), conf)
+	return *NewWorkloadService(k8s, prom, nil, NewWithBackends(k8s, prom, nil), conf)
 }
 
 func callStreamPodLogs(svc WorkloadService, namespace, podName string, opts *LogOptions) PodLog {

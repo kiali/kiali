@@ -34,10 +34,9 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-func NewWorkloadService(clients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, cache cache.KialiCache, layer *Layer, config *config.Config) *WorkloadService {
+func NewWorkloadService(k8s kubernetes.ClientInterface, prom prometheus.ClientInterface, cache cache.KialiCache, layer *Layer, config *config.Config) *WorkloadService {
 	return &WorkloadService{
-		clients:       clients,
-		k8s:           clients[kubernetes.HomeClusterName], // TODO: Remove this once and just use clients when multicluster is supported.
+		k8s:           k8s,
 		prom:          prom,
 		cache:         cache,
 		businessLayer: layer,
@@ -47,11 +46,10 @@ func NewWorkloadService(clients map[string]kubernetes.ClientInterface, prom prom
 
 // WorkloadService deals with fetching istio/kubernetes workloads related content and convert to kiali model
 type WorkloadService struct {
-	// Careful not to call the workload service from here as that would be a infinite loop.
+	// Careful not to call the workload service from here as that would be an infinite loop.
 	businessLayer *Layer
 	// The global kiali cache. This should be passed into the workload service rather than created inside of it.
-	cache   cache.KialiCache
-	clients map[string]kubernetes.ClientInterface
+	cache cache.KialiCache
 	// The global kiali config.
 	config *config.Config
 	k8s    kubernetes.ClientInterface
@@ -412,13 +410,9 @@ func (in *WorkloadService) GetPods(ctx context.Context, namespace string, labelS
 	}
 
 	var ps []core_v1.Pod
-	for _, k8s := range in.clients {
-		var p []core_v1.Pod
-		var err error
-		if p, err = k8s.GetPods(namespace, labelSelector); err != nil {
-			return nil, err
-		}
-		ps = append(ps, p...)
+	var err error
+	if ps, err = in.k8s.GetPods(namespace, labelSelector); err != nil {
+		return nil, err
 	}
 
 	pods := models.Pods{}
@@ -427,7 +421,6 @@ func (in *WorkloadService) GetPods(ctx context.Context, namespace string, labelS
 }
 
 func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
-	// TODO: Probably need cluster as well to differentiate between the different clients.
 	p, err := in.k8s.GetPod(namespace, name)
 	if err != nil {
 		return nil, err
