@@ -305,6 +305,9 @@ func (cf *clientFactory) GetSAClients() map[string]ClientInterface {
 
 // Check for kiali token changes and refresh the client when it does.
 func (cf *clientFactory) refreshClientIfTokenChanged(cluster string) error {
+	// TODO: This only checks that the token has changed. When the client factory supports reading
+	// the tokens from the filesystem, then this should check the client against the token on disk
+	// that is associated with the cluster.
 	kialiSAToken, err := GetKialiToken()
 	if err != nil {
 		return err

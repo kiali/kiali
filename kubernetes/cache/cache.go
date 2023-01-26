@@ -108,6 +108,9 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, na
 		kialiCacheImpl.pollIstiodForProxyStatus(ctx)
 	}
 
+	// Note that this only watches for changes to the home cluster's token since it is
+	// expected that the remote cluster tokens will not change. However, that assumption
+	// may be wrong and in the future the cache may want to watch for changes to all client tokens.
 	kialiCacheImpl.watchForClientChanges(ctx, clientFactory.GetSAHomeClusterClient().GetToken())
 
 	kialiCacheImpl.cleanup = cancel

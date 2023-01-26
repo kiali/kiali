@@ -145,7 +145,6 @@ func TestSAHomeClientUpdatesWhenKialiTokenChanges(t *testing.T) {
 }
 
 func TestSAClientsUpdateWhenKialiTokenChanges(t *testing.T) {
-	assert := assert.New(t)
 	require := require.New(t)
 	kialiConfig := config.NewConfig()
 	config.Set(kialiConfig)
@@ -161,13 +160,11 @@ func TestSAClientsUpdateWhenKialiTokenChanges(t *testing.T) {
 	clientFactory, err := newClientFactory(&restConfig)
 	require.NoError(err)
 
-	for _, client := range clientFactory.GetSAClients() {
-		assert.Equal(KialiToken, client.GetToken())
-	}
+	client := clientFactory.GetSAClients()[HomeClusterName]
+	require.Equal(KialiToken, client.GetToken())
 
 	KialiToken = "new-token"
 
-	for _, client := range clientFactory.GetSAClients() {
-		assert.Equal(KialiToken, client.GetToken())
-	}
+	client = clientFactory.GetSAClients()[HomeClusterName]
+	require.Equal(KialiToken, client.GetToken())
 }
