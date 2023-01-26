@@ -6,6 +6,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	apps_v1 "k8s.io/api/apps/v1"
+	core_v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -72,4 +75,33 @@ func TestNoHomeClusterReturnsError(t *testing.T) {
 
 	_, err := NewKialiCache(clientFactory, *config)
 	require.Error(err, "no home cluster should return an error")
+}
+
+func TestKubeCacheCreatedPerClient(t *testing.T) {
+	require := require.New(t)
+	config := config.NewConfig()
+
+	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+	deploymentCluster1 := &apps_v1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "deployment1", Namespace: "test"}}
+	deploymentCluster2 := &apps_v1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "deployment2", Namespace: "test"}}
+	client := kubetest.NewFakeK8sClient(ns, deploymentCluster1)
+	client2 := kubetest.NewFakeK8sClient(ns, deploymentCluster2)
+	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	clientFactory.SetClients(map[string]kubernetes.ClientInterface{
+		kubernetes.HomeClusterName: client,
+		"cluster2":                 client2,
+	})
+
+	kialiCache, err := NewKialiCache(clientFactory, *config)
+	require.NoError(err)
+	defer kialiCache.Stop()
+
+	caches := kialiCache.GetKubeCaches()
+	require.Equal(2, len(caches))
+
+	_, err = caches[kubernetes.HomeClusterName].GetDeployment("test", "deployment1")
+	require.NoError(err)
+
+	_, err = caches["cluster2"].GetDeployment("test", "deployment2")
+	require.NoError(err)
 }

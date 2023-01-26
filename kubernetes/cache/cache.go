@@ -23,6 +23,8 @@ import (
 // the objects returned by the cache should be filtered/restricted to the user's
 // token access but the cache returns objects without any filtering or restrictions.
 type KialiCache interface {
+	GetKubeCaches() map[string]KubeCache
+
 	// Embedded for backward compatibility for business methods that just use one cluster.
 	// All business methods should eventually use the multi-cluster cache.
 	KubeCache
@@ -111,6 +113,11 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, na
 	kialiCacheImpl.cleanup = cancel
 
 	return &kialiCacheImpl, nil
+}
+
+// GetKubeCaches returns a kube cache for every configured Kiali Service Account client keyed by cluster name.
+func (c *kialiCacheImpl) GetKubeCaches() map[string]KubeCache {
+	return c.kubeCache
 }
 
 // Stops all caches across all clusters.

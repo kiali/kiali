@@ -331,18 +331,14 @@ func (c *kubeCache) startInformers(namespace string) error {
 		c.createGatewayInformers(namespace),
 	}
 
+	var scope string
 	stop := make(chan struct{})
 	if c.clusterScoped {
+		scope = "cluster-scoped"
 		c.stopClusterScopedChan = stop
 	} else {
+		scope = fmt.Sprintf("namespace-scoped for namespace: %s", namespace)
 		c.stopNSChans[namespace] = stop
-	}
-
-	var scope string
-	if namespace == "" {
-		scope = fmt.Sprintf("namespace: %s", namespace)
-	} else {
-		scope = "cluster-scoped"
 	}
 
 	log.Debugf("[Kiali Cache] Starting %s informers", scope)
