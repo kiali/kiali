@@ -5,7 +5,7 @@ import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/compo
 import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { PlusCircleIcon, TrashIcon } from '@patternfly/react-icons';
-import { style } from 'typestyle';
+import {cssRaw, style} from 'typestyle';
 import { PFColors } from '../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
 import { FormEvent } from "react";
@@ -77,15 +77,29 @@ export const initServiceEntry = (): ServiceEntryState => ({
   validHosts: false,
 });
 
-const isValidPort = (p: Port[]) => {
-  return p.every(p =>
-    p.name.length > 0 && p.number !== undefined && p.protocol.length > 0)
+const isValidPort = (ports: Port[]) => {
+  return ports.every((p, i) =>
+    p.name.length > 0 && p.number !== undefined && p.protocol.length > 0 && noDuplicatePortNames(p.name, i, ports))
 };
+
+const noDuplicatePortNames = (name: string, index: number, ports: Port[]) => {
+  return ports.every((p, i) => i !== index ? p.name !== name : true )
+}
 
 export const isServiceEntryValid = (se: ServiceEntryState): boolean => {
   return se.validHosts && se.serviceEntry.ports !== undefined && se.serviceEntry.ports.length > 0
     && isValidPort(se.serviceEntry.ports);
 };
+
+cssRaw(`
+  .noArrows input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .noArrows input[type=number] {
+    -moz-appearance: textfield;
+  }
+`)
 
 class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
   constructor(props: Props) {
@@ -151,7 +165,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
     // @ts-ignore
     const i = parseInt(eName)
     if (typeof(ps.ports) !== "undefined") {
-     if (value.match(/^(\s)*$/)) {
+      if (value.match(/^(\s)*$/)) {
         ps.ports[i].number = undefined
       } else {
         if (value.match(/^(\d+)$/)) {
@@ -229,8 +243,8 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
     const state = this.state.serviceEntry
     state.ports?.splice(index, 1);
     this.setState({serviceEntry: state },
-               () => this.props.onChange(this.state)
-   );
+      () => this.props.onChange(this.state)
+    );
   };
 
   rows() {
@@ -245,9 +259,11 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
               aria-describedby="add port number"
               name={i.toString()}
               placeholder="80"
+              type="number"
+              className="noArrows"
               onChange={this.onAddPortNumber}
               validated={isValid(typeof(this.state.serviceEntry.ports) !== "undefined" &&
-                typeof(this.state.serviceEntry.ports[i].number) !== "undefined" && !isNaN(Number(this.state.serviceEntry.ports[i].number))
+                !isNaN(Number(this.state.serviceEntry.ports[i]?.number))
               )}
             />
           </>,
@@ -258,8 +274,9 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
               aria-describedby="add port name"
               name={i.toString()}
               onChange={this.onAddPortName}
-              validated={isValid(typeof(this.state.serviceEntry.ports) !== "undefined" && typeof(this.state.serviceEntry.ports[i].name) !== "undefined"
-                && this.state.serviceEntry.ports[i].name.length > 0)}
+              validated={isValid(typeof(this.state.serviceEntry.ports) !== "undefined"
+                && this.state.serviceEntry.ports[i]?.name.length > 0
+                && (this.state.serviceEntry.ports? noDuplicatePortNames(p.name, i,this.state.serviceEntry.ports): true) )}
             />
           </>,
           <>
@@ -281,10 +298,11 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
               aria-describedby="add target port"
               name={i.toString()}
               onChange={this.onAddTargetPort}
+              type="number"
+              className="noArrows"
               validated={isValid(typeof(this.state.serviceEntry.ports) !== "undefined" &&
                 (typeof(this.state.serviceEntry.ports[i].targetPort) === "undefined" ||
                   (typeof(this.state.serviceEntry.ports[i].targetPort) !== "undefined" && !isNaN(Number(this.state.serviceEntry.ports[i].targetPort))))
-
               )}
             />
           </>,
@@ -297,7 +315,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
               onClick={(e) => this.handleDelete(e, i)}
             />
           </>
-          ]
+        ]
       }))
       .concat([
         {
@@ -347,7 +365,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
             onChange={this.onAddLocation}
           >
             {location.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option}/>
             ))}
           </FormSelect>
         </FormGroup>
@@ -357,8 +375,8 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
             cells={headerCells}
             rows={this.rows()}
           >
-            <TableHeader />
-            <TableBody />
+            <TableHeader/>
+            <TableBody/>
           </Table>
           {(!this.state.serviceEntry.ports || this.state.serviceEntry.ports.length === 0) && (
             <div className={noPortsStyle}>ServiceEntry has no Ports defined</div>
@@ -372,15 +390,13 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
             onChange={this.onAddResolution}
           >
             {resolution.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option}/>
             ))}
           </FormSelect>
         </FormGroup>
       </>
     );
   }
-
-
 }
 
 export default ServiceEntryForm;
