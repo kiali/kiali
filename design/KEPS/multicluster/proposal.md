@@ -136,6 +136,14 @@ This process will need to be repeated for every new cluster added. Adding or rem
 
 The Kiali operator will still be used for configuring Kiali itself however, it's assumed that the operator won't have access to other kube clusters other than where Kiali is deployed and therefore configuring multicluster access for Kiali will be a manual operation. The operator will remain unchanged in a multi-cluster deployment.
 
+In order to configure the Kiali Server for multicluster access, you must manually create remote cluster secrets in the same namepace where the Kiali Server will be deployed (normally this is the control plane namespace, aka `istio-system`, but that is not required). As a convenience, you can create these remote cluster secrets by using `istioctl`. For example, suppose you have all your remote cluster credentials defined in local kube contexts (e.g. contexts named remote1 and remote2). You can create these remote cluster secrets via:
+
+`istioctl x create-remote-secret --name remote-cluster-1-name --context remote1 --namespace istio-system`
+and
+`istioctl x create-remote-secret --name remote-cluster-2-name --context remote2 --namespace istio-system`
+
+By default, the Kiali Operator will autodiscover all remote cluster secrets found in the Kiali deployment namespace and will mount them to the Kiali Server pod at install time. When the Kiali Server starts up, it will obtain all the necessary remote cluster connection information from the mounted secrets.
+
 ## Testing
 
 All automated e2e testing, API and Cypress, is currently performed against a single cluster in CI. There will be a large number of Kiali features related to multi-cluster so there needs to be a way to test multi-cluster deployments frequently and in an automated fashion. Any e2e tests that require a multi-cluster environment will need to be run separately from the rest of the suite.
