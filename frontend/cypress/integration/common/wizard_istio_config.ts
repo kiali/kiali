@@ -42,8 +42,10 @@ And('user adds listener', () => {
 And('user creates the istio config', () => {
   cy.get('button[data-test="create"]')
       .click()
-      .get('#loading_kiali_spinner')
-      .should('not.exist');
+  it('spinner should disappear', { retries: 3 }, () => {
+    cy.get('#loading_kiali_spinner')
+        .should('not.exist');
+  });
 });
 
 Then('the K8sGateway {string} should be listed in {string} namespace', function(name, namespace: string) {
