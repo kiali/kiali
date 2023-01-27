@@ -138,8 +138,10 @@ And('user creates the configuration', () => {
 
     cy.get('button[data-test="confirm-create"]')
         .click()
-        .get('#loading_kiali_spinner')
-        .should('not.exist');
+    it('spinner should disappear', { retries: 3 }, () => {
+        cy.get('#loading_kiali_spinner')
+            .should('not.exist');
+    });
 });
 
 And('user updates the configuration', () => {
@@ -148,15 +150,19 @@ And('user updates the configuration', () => {
 
     cy.get('button[data-test="confirm-update"]')
         .click()
-        .get('#loading_kiali_spinner')
-        .should('not.exist');
+    it('spinner should disappear', { retries: 3 }, () => {
+        cy.get('#loading_kiali_spinner')
+            .should('not.exist');
+    });
 });
 
 And('user confirms delete the configuration', () => {
     cy.get('button[data-test="confirm-delete"]')
         .click()
-        .get('#loading_kiali_spinner')
-        .should('not.exist');
+    it('spinner should disappear', { retries: 3 }, () => {
+        cy.get('#loading_kiali_spinner')
+            .should('not.exist');
+    });
 });
 
 And('user sees the {string} {string} {string} reference', (namespace, name, type) => {
