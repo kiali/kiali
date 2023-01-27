@@ -174,14 +174,15 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
       this.props?.k8sGateways && this.props.serviceDetails?.k8sHTTPRoutes
         ? k8sGwToIstioItems(
           this.props?.k8sGateways,
-          this.props.serviceDetails.k8sHTTPRoutes
+          this.props.serviceDetails.k8sHTTPRoutes,
+          this.props.serviceDetails.validations
         )
         : [];
     const seIstioConfigItems = this.props.serviceDetails?.serviceEntries
       ? seToIstioItems(this.props.serviceDetails.serviceEntries, this.props.serviceDetails.validations)
       : [];
     const k8sHTTPRouteIstioConfigItems = this.props.serviceDetails?.k8sHTTPRoutes
-      ? k8sHTTPRouteToIstioItems(this.props.serviceDetails.k8sHTTPRoutes)
+      ? k8sHTTPRouteToIstioItems(this.props.serviceDetails.k8sHTTPRoutes, this.props.serviceDetails.validations)
       : [];
     const istioConfigItems = seIstioConfigItems.concat(
       gwIstioConfigItems.concat(k8sGwIstioConfigItems.concat(vsIstioConfigItems.concat(drIstioConfigItems.concat(k8sHTTPRouteIstioConfigItems))))
