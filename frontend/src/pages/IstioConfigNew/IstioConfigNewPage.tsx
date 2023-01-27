@@ -435,7 +435,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
               <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
             )}
             <ActionGroup>
-              <Button variant={ButtonVariant.primary} isDisabled={!isFormValid} onClick={() => this.showPreview()}>
+              <Button variant={ButtonVariant.primary} isDisabled={!isFormValid} onClick={() => this.showPreview()} data-test={"preview"}>
                 Preview
               </Button>
               <Button variant={ButtonVariant.secondary} onClick={() => this.backToList()}>

@@ -300,6 +300,7 @@ class ListenerBuilder extends React.Component<Props, State> {
         <Button
           variant={ButtonVariant.link}
           icon={<PlusCircleIcon />}
+          data-test={"add-listener"}
           onClick={this.onAddListener}
           isDisabled={!this.canAddListener()}
           className={addListenerStyle}
