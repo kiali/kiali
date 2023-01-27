@@ -96,7 +96,7 @@ cssRaw(`
     -webkit-appearance: none;
     margin: 0;
   }
-  .noArrows input[type=number] {
+  input[type=number] {
     -moz-appearance: textfield;
   }
 `)
