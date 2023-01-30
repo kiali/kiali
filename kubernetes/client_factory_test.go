@@ -122,25 +122,25 @@ func TestSAHomeClientUpdatesWhenKialiTokenChanges(t *testing.T) {
 	config.Set(kialiConfig)
 	t.Cleanup(func() {
 		// Other tests use this global var so we need to reset it.
-		KialiToken = ""
+		KialiTokenForHomeCluster = ""
 	})
 
 	tokenRead = time.Now()
-	KialiToken = "current-token"
+	KialiTokenForHomeCluster = "current-token"
 
 	restConfig := rest.Config{}
 	clientFactory, err := newClientFactory(&restConfig)
 	require.NoError(err)
 
 	currentClient := clientFactory.GetSAHomeClusterClient()
-	assert.Equal(KialiToken, currentClient.GetToken())
+	assert.Equal(KialiTokenForHomeCluster, currentClient.GetToken())
 	assert.Equal(currentClient, clientFactory.GetSAHomeClusterClient())
 
-	KialiToken = "new-token"
+	KialiTokenForHomeCluster = "new-token"
 
 	// Assert that the token has changed and the client has changed.
 	newClient := clientFactory.GetSAHomeClusterClient()
-	assert.Equal(KialiToken, newClient.GetToken())
+	assert.Equal(KialiTokenForHomeCluster, newClient.GetToken())
 	assert.NotEqual(currentClient, newClient)
 }
 
@@ -150,21 +150,21 @@ func TestSAClientsUpdateWhenKialiTokenChanges(t *testing.T) {
 	config.Set(kialiConfig)
 	t.Cleanup(func() {
 		// Other tests use this global var so we need to reset it.
-		KialiToken = ""
+		KialiTokenForHomeCluster = ""
 	})
 
 	tokenRead = time.Now()
-	KialiToken = "current-token"
+	KialiTokenForHomeCluster = "current-token"
 
 	restConfig := rest.Config{}
 	clientFactory, err := newClientFactory(&restConfig)
 	require.NoError(err)
 
-	client := clientFactory.GetSAClients()[HomeClusterName]
-	require.Equal(KialiToken, client.GetToken())
+	client := clientFactory.GetSAClient(HomeClusterName)
+	require.Equal(KialiTokenForHomeCluster, client.GetToken())
 
-	KialiToken = "new-token"
+	KialiTokenForHomeCluster = "new-token"
 
-	client = clientFactory.GetSAClients()[HomeClusterName]
-	require.Equal(KialiToken, client.GetToken())
+	client = clientFactory.GetSAClient(HomeClusterName)
+	require.Equal(KialiTokenForHomeCluster, client.GetToken())
 }

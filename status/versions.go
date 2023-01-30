@@ -260,7 +260,7 @@ func prometheusVersion() (*ExternalServiceInfo, error) {
 	// Be sure to copy config.Auth and not modify the existing
 	auth := cfg.Auth
 	if auth.UseKialiToken {
-		token, err := kubernetes.GetKialiToken()
+		token, err := kubernetes.GetKialiTokenForHomeCluster()
 		if err != nil {
 			log.Errorf("Could not read the Kiali Service Account token: %v", err)
 			return nil, err
@@ -289,7 +289,7 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 	)
 
 	product := ExternalServiceInfo{}
-	k8sConfig, err = kubernetes.ConfigClient()
+	k8sConfig, err = kubernetes.GetConfigForLocalCluster()
 	if err == nil {
 		k8sConfig.QPS = config.Get().KubernetesConfig.QPS
 		k8sConfig.Burst = config.Get().KubernetesConfig.Burst

@@ -73,6 +73,7 @@ cd ${SCRIPT_DIR}
 DEFAULT_API_PROXY_HOST="127.0.0.1"
 DEFAULT_API_PROXY_PORT="8001"
 DEFAULT_CLIENT_EXE="kubectl"
+DEFAULT_COPY_CLUSTER_SECRETS="true"
 DEFAULT_ENABLE_SERVER="true"
 DEFAULT_ISTIO_NAMESPACE="istio-system"
 DEFAULT_ISTIOD_URL="http://127.0.0.1:15014/version"
@@ -95,6 +96,7 @@ while [[ $# -gt 0 ]]; do
     -aph|--api-proxy-host)       API_PROXY_HOST="$2";                shift;shift ;;
     -app|--api-proxy-port)       API_PROXY_PORT="$2";                shift;shift ;;
     -c|--config)                 KIALI_CONFIG_TEMPLATE_FILE="$2";    shift;shift ;;
+    -ccs|--copy-cluster-secrets) COPY_CLUSTER_SECRETS="$2";          shift;shift ;;
     -ce|--client-exe)            CLIENT_EXE="$2";                    shift;shift ;;
     -es|--enable-server)         ENABLE_SERVER="$2";                 shift;shift ;;
     -gu|--grafana-url)           GRAFANA_URL="$2";                   shift;shift ;;
@@ -136,6 +138,11 @@ Valid options:
       For details on what settings can go in this config file, see the "spec" field in the
       example Kiali CR here: https://github.com/kiali/kiali-operator/blob/master/deploy/kiali/kiali_cr.yaml
       Default: ${DEFAULT_KIALI_CONFIG_TEMPLATE_FILE}
+  -ccs|--copy-cluster-secrets
+      When true, the remote cluster secrets mounted to the Kiali pod will be copied to your
+      local file system at /kiali-remote-cluster-secrets. Obviously, Kiali must be deployed
+      in the cluster for this option to work.
+      Default: ${DEFAULT_COPY_CLUSTER_SECRETS}
   -ce|--client-exe
       Cluster client executable - must refer to 'oc' or 'kubectl'.
       Default: ${DEFAULT_CLIENT_EXE}
@@ -244,6 +251,7 @@ done
 
 API_PROXY_HOST="${API_PROXY_HOST:-${DEFAULT_API_PROXY_HOST}}"
 API_PROXY_PORT="${API_PROXY_PORT:-${DEFAULT_API_PROXY_PORT}}"
+COPY_CLUSTER_SECRETS="${COPY_CLUSTER_SECRETS:-${DEFAULT_COPY_CLUSTER_SECRETS}}"
 ENABLE_SERVER="${ENABLE_SERVER:-${DEFAULT_ENABLE_SERVER}}"
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-${DEFAULT_ISTIO_NAMESPACE}}"
 KIALI_CONFIG_TEMPLATE_FILE="${KIALI_CONFIG_TEMPLATE_FILE:-${DEFAULT_KIALI_CONFIG_TEMPLATE_FILE}}"
@@ -495,6 +503,7 @@ infomsg "===== SETTINGS ====="
 echo "API_PROXY_HOST=$API_PROXY_HOST"
 echo "API_PROXY_PORT=$API_PROXY_PORT"
 echo "CLIENT_EXE=$CLIENT_EXE"
+echo "COPY_CLUSTER_SECRETS=$COPY_CLUSTER_SECRETS"
 echo "ENABLE_SERVER=$ENABLE_SERVER"
 echo "GRAFANA_URL=$GRAFANA_URL"
 echo "ISTIO_NAMESPACE=$ISTIO_NAMESPACE"
@@ -528,6 +537,7 @@ if ! echo "${LOG_LEVEL}" | grep -qiE "^(trace|debug|info|warn|error|fatal)$"; th
 [ "${REBOOTABLE}" != "true" -a "${REBOOTABLE}" != "false" ] && errormsg "--rebootable must be 'true' or 'false'" && exit 1
 [ "${ENABLE_SERVER}" != "true" -a "${ENABLE_SERVER}" != "false" ] && errormsg "--enable-server must be 'true' or 'false'" && exit 1
 [ "${ENABLE_SERVER}" == "false" -a "${REBOOTABLE}" == "true" ] && infomsg "--enable-server was set to false - turning off rebootable flag for you" && REBOOTABLE="false"
+[ "${COPY_CLUSTER_SECRETS}" != "true" -a "${COPY_CLUSTER_SECRETS}" != "false" ] && errormsg "--copy-cluster-secrets must be 'true' or 'false'" && exit 1
 
 # Build the config file from the template
 
@@ -547,6 +557,47 @@ if [ ! -d "${TMP_DIR}/console" ]; then
   ln -s ${UI_CONSOLE_DIR} ${TMP_DIR}/console
 fi
 cd ${TMP_DIR}
+
+# If we are told to copy the remote cluster secrets, prepare the local directory
+# and pull the files down from the Kiali pod. If there is no Kiali pod deployed,
+# then spit out a warning but keep going.
+
+if [ "${COPY_CLUSTER_SECRETS}" == "true" ]; then
+  infomsg "Attempting to copy the remote cluster secrets from a Kiali pod deployed in the cluster..."
+  POD_NAME="$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get pod -l app.kubernetes.io/name=kiali -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)"
+  if [ -z "${POD_NAME}" ]; then
+    warnmsg "Cannot get the Kiali pod name. Kiali must be deployed in [${ISTIO_NAMESPACE}]. If you do not want to deploy Kiali in the cluster, set '--copy-cluster-secrets' to 'false'."
+  else
+    infomsg "Will copy remote cluster secrets from the Kiali pod [${ISTIO_NAMESPACE}/${POD_NAME}]"
+
+    # Unless this dir already exists, it will most likely fail to be created because
+    # creating a directory under the root directory usually requires sudo access.
+    REMOTE_CLUSTER_SECRETS_DIR="/kiali-remote-cluster-secrets"
+    mkdir -p ${REMOTE_CLUSTER_SECRETS_DIR}
+    if [ ! -d ${REMOTE_CLUSTER_SECRETS_DIR} ]; then
+      errormsg "You first must prepare the remote cluster secrets directory: sudo mkdir -p ${REMOTE_CLUSTER_SECRETS_DIR}; sudo chmod ugo+w ${REMOTE_CLUSTER_SECRETS_DIR}"
+      exit 1
+    fi
+    rm -rf ${REMOTE_CLUSTER_SECRETS_DIR}/*
+
+    # if the directory doesn't exist, then no remote secrets are available, so skip everything else
+    ${CLIENT_EXE} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -d ${REMOTE_CLUSTER_SECRETS_DIR} >&/dev/null
+    if [ "$?" == "0" ]; then
+      pod_remote_secrets_dirs=$(${CLIENT_EXE} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -1 ${REMOTE_CLUSTER_SECRETS_DIR} | tr -d '\r')
+      for d in $pod_remote_secrets_dirs; do
+        mkdir -p "${REMOTE_CLUSTER_SECRETS_DIR}/$d"
+        pod_remote_secrets_files=$(${CLIENT_EXE} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- ls -1 ${REMOTE_CLUSTER_SECRETS_DIR}/${d} | tr -d '\r')
+        for f in $pod_remote_secrets_files; do
+          infomsg "Copying remote cluster secret file: ${REMOTE_CLUSTER_SECRETS_DIR}/${d}/${f}"
+          secret_file_content=$(${CLIENT_EXE} exec -n ${ISTIO_NAMESPACE} --stdin --tty pod/${POD_NAME} -- cat ${REMOTE_CLUSTER_SECRETS_DIR}/${d}/${f})
+          echo "${secret_file_content}" > ${REMOTE_CLUSTER_SECRETS_DIR}/${d}/${f}
+        done
+      done
+    else
+      infomsg "There are no remote cluster secrets mounted on the Kiali pod."
+    fi
+  fi
+fi
 
 # Obtain the service account token and certificates so we can authenticate with the server
 # And then create the dev context that will be used to connect to the cluster.

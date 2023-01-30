@@ -160,7 +160,7 @@ func getKialiNamespace() (string, error) {
 }
 
 func (in *OpenshiftOAuthService) Logout(token string) error {
-	conf, err := kubernetes.ConfigClient()
+	conf, err := kubernetes.GetConfigForLocalCluster()
 
 	if err != nil {
 		log.Error(err)

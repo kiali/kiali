@@ -122,6 +122,11 @@ KIALI1_WEB_SCHEMA=""
 KIALI2_WEB_FQDN=""
 KIALI2_WEB_SCHEMA=""
 
+# Used by the Kiali deployment functions, this declares what Kiali Server Helm Charts to use.
+# The user should set this to a tarball if a different helm chart should be used.
+# e.g. /source/helm-charts/_output/charts/kiali-server-1.64.0-SNAPSHOT.tgz
+KIALI_SERVER_HELM_CHARTS="kiali-server"
+
 # process command line args
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -196,6 +201,10 @@ while [[ $# -gt 0 ]]; do
     -ke|--kiali-enabled)
       [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--kiali-enabled must be 'true' or 'false'" && exit 1
       KIALI_ENABLED="$2"
+      shift;shift
+      ;;
+    -kshc|--kiali-server-helm-charts)
+      KIALI_SERVER_HELM_CHARTS="$2"
       shift;shift
       ;;
     -kudi|--kiali-use-dev-image)
@@ -291,6 +300,8 @@ Valid command line arguments:
   -ke|--kiali-enabled <bool>: If "true" the latest release of Kiali will be installed in both clusters. If you want
                               a different version of Kiali installed, you must set this to "false" and install it yourself.
                               (Default: true)
+  -kshc|--kiali-server-helm-charts <path>: If specified, must be the path to a Kiali server helm charts tarball. If not
+                                           specified, the latest published helm charts is used. (Default: kiali-server)
   -kudi|--kiali-use-dev-image: If "true" the local dev image of Kiali will be pushed and used in the Kiali deployment.
                                The local dev image must be tagged as "quay.io/kiali/kiali:dev" prior to running this script;
                                that will be the image pushed to the clusters. You can "make container-build-kiali" to build it.

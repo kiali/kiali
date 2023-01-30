@@ -252,7 +252,7 @@ func TestStrategyHeaderOidcWithImpersonationAuthentication(t *testing.T) {
 }
 
 func mockK8s(reject bool) {
-	kubernetes.KialiToken = "notrealtoken"
+	kubernetes.KialiTokenForHomeCluster = "notrealtoken"
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
 
