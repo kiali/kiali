@@ -5,7 +5,7 @@ import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/compo
 import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { PlusCircleIcon, TrashIcon } from '@patternfly/react-icons';
-import {cssRaw, style} from 'typestyle';
+import { style} from 'typestyle';
 import { PFColors } from '../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
 import { FormEvent } from "react";
@@ -63,9 +63,17 @@ type Props = {
   onChange: (serviceEntry: ServiceEntryState) => void;
 };
 
+type FormPort = {
+  number: string;
+  name: string;
+  protocol: string;
+  targetPort: string;
+}
+
 export type ServiceEntryState = {
   serviceEntry: ServiceEntrySpec;
   validHosts: boolean;
+  formPorts: FormPort[];
 };
 
 export const initServiceEntry = (): ServiceEntryState => ({
@@ -75,31 +83,36 @@ export const initServiceEntry = (): ServiceEntryState => ({
     ports: []
   },
   validHosts: false,
+  formPorts: Array<FormPort>()
 });
 
-const isValidPort = (ports: Port[]) => {
+const isValidPort = (ports: FormPort[]) => {
+
   return ports.every((p, i) =>
-    p.name.length > 0 && p.number !== undefined && p.protocol.length > 0 && noDuplicatePortNames(p.name, i, ports))
+    isValidName(p.name) && isValidPortNumber(p.number)
+      && isValidTargetPort(p.targetPort)
+      && noDuplicatePortNames(p.name, i, ports))
 };
 
-const noDuplicatePortNames = (name: string, index: number, ports: Port[]) => {
+const noDuplicatePortNames = (name: string, index: number, ports: FormPort[]) => {
   return ports.every((p, i) => i !== index ? p.name !== name : true )
 }
 
 export const isServiceEntryValid = (se: ServiceEntryState): boolean => {
-  return se.validHosts && se.serviceEntry.ports !== undefined && se.serviceEntry.ports.length > 0
-    && isValidPort(se.serviceEntry.ports);
+  return se.validHosts && se.serviceEntry.ports !== undefined && isValidPort(se.formPorts);
 };
 
-cssRaw(`
-  .noArrows input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  input[type=number] {
-    -moz-appearance: textfield;
-  }
-`)
+const isValidName = (name: string): boolean => {
+  return name.length > 0
+}
+
+const isValidPortNumber = (portNumber: string): boolean => {
+  return portNumber.length > 0 && !isNaN(Number(portNumber))
+}
+
+const isValidTargetPort = (targetPort: string): boolean => {
+  return targetPort.length === 0 || (targetPort.length > 0 && !isNaN(Number(targetPort)))
+}
 
 class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
   constructor(props: Props) {
@@ -160,95 +173,119 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
   };
 
   onAddPortNumber = (value: string, e: FormEvent) => {
-    const ps = this.state.serviceEntry;
-    const eName = e.currentTarget.getAttribute("name") !== null ? e.currentTarget.getAttribute("name") : "1"
+    const formPorts = this.state.formPorts;
+    const eName = e.currentTarget.getAttribute("name") !== null ? e.currentTarget.getAttribute("name") : "0"
     // @ts-ignore
     const i = parseInt(eName)
-    if (typeof(ps.ports) !== "undefined") {
-      if (value.match(/^(\s)*$/)) {
-        ps.ports[i].number = undefined
-      } else {
-        if (value.match(/^(\d+)$/)) {
-          ps.ports[i].number = parseInt(value);
-        }
-      }
+    formPorts[i].number = value;
 
+    // service entry
+    const se = this.checkDefined(i);
+    if (!isNaN(parseInt(value)) && se.ports !== undefined) {
+      se.ports[i].number = parseInt(value)
     }
+
     this.setState({
-      serviceEntry: ps
+      formPorts: formPorts, serviceEntry: se
     }, () => this.props.onChange(this.state));
   };
 
   onAddPortName = (value: string, e: FormEvent) => {
-    const ps = this.state.serviceEntry;
-    const eName = e.currentTarget.getAttribute("name") !== null ? e.currentTarget.getAttribute("name") : "1"
+    const formPorts = this.state.formPorts;
+    const eName = e.currentTarget.getAttribute("name") !== null ? e.currentTarget.getAttribute("name") : "0"
     // @ts-ignore
     const i = parseInt(eName)
-    if (typeof(ps.ports) !== "undefined") {
-      ps.ports[i].name = value;
+    formPorts[i].name = value;
+
+    // service entry
+    const se = this.checkDefined(i);
+    if (se.ports !== undefined) {
+      se.ports[i].name = value
     }
+
     this.setState({
-      serviceEntry: ps
+      formPorts: formPorts, serviceEntry: se
     }, () => this.props.onChange(this.state));
   };
 
   onAddPortProtocol = (value: string, e: FormEvent) => {
-    const ps = this.state.serviceEntry;
-    const eName = e.currentTarget.getAttribute("name") !== null ? e.currentTarget.getAttribute("name") : "1"
+    const formPorts = this.state.formPorts;
+    const eName = e.currentTarget.getAttribute("name") !== null ? e.currentTarget.getAttribute("name") : "0"
     // @ts-ignore
     const i = parseInt(eName)
-    if (typeof(ps.ports) !== "undefined") {
-      ps.ports[i].protocol = value;
+    formPorts[i].protocol = value;
+
+    // service entry
+    const se = this.checkDefined(i);
+    if (se.ports !== undefined) {
+      se.ports[i].protocol = value
     }
+
     this.setState({
-      serviceEntry: ps
+      formPorts: formPorts, serviceEntry: se
     }, () => this.props.onChange(this.state));
   };
 
   onAddTargetPort = (value: string, e: FormEvent) => {
-    const ps = this.state.serviceEntry;
-    const eName = e.currentTarget.getAttribute("name") !== null ? e.currentTarget.getAttribute("name") : "1"
+    const formPorts = this.state.formPorts;
+    const eName = e.currentTarget.getAttribute("name") !== null ? e.currentTarget.getAttribute("name") : "0"
     // @ts-ignore
     const i = parseInt(eName)
-    if (typeof(ps.ports) !== "undefined") {
-      if (value.match(/^(\s)*$/)) {
-        ps.ports[i].targetPort = undefined
-      } else {
-        if (value.match(/^(\d+)$/)) {
-          ps.ports[i].targetPort = parseInt(value);
-        }
-      }
+    formPorts[i].targetPort = value;
+
+    // service entry
+    const se = this.checkDefined(i);
+    if (!isNaN(parseInt(value)) && se.ports !== undefined) {
+      se.ports[i].targetPort = parseInt(value)
     }
+
     this.setState({
-      serviceEntry: ps
+      formPorts: formPorts, serviceEntry: se
     }, () => this.props.onChange(this.state));
   };
 
-  onAddNewPort = () => {
-    const newPort: Port = {
-      name: "",
-      protocol: "HTTP"
-    };
-    const newports = this.state.serviceEntry;
-    if (typeof(newports.ports) !== "undefined") {
-      newports.ports.push(newPort)
+  checkDefined = (index: number) => {
+    const se = this.state.serviceEntry
+    if (typeof(se.ports) !== "undefined" && typeof(se.ports[index]) === "undefined") {
+      const np: Port = {
+        name: "",
+        protocol: protocols[0],
+        number: 0,
+      };
+      se.ports.splice(index, 0, np)
     }
+    return se;
+  };
+
+  onAddNewPort = () => {
+    const newPort: FormPort = {
+      name: "",
+      protocol: protocols[0],
+      number: "",
+      targetPort: ""
+    };
+    const newports = this.state.formPorts;
+    newports.push(newPort)
+
 
     this.setState({
-      serviceEntry: newports
+      formPorts: newports
     }, () => this.props.onChange(this.state));
   };
 
   handleDelete = (_: any, index: number) => {
-    const state = this.state.serviceEntry
-    state.ports?.splice(index, 1);
-    this.setState({serviceEntry: state },
+    const state = this.state.formPorts
+    state.splice(index, 1);
+    const se = this.state.serviceEntry;
+    se.ports?.splice(index, 1);
+
+    this.setState({formPorts: state, serviceEntry: se },
       () => this.props.onChange(this.state)
     );
   };
 
   rows() {
-    return (this.state.serviceEntry.ports || [])
+    return (this.state.formPorts || [])
       .map((p, i) => ({
         key: 'portNew'+i,
         cells: [
@@ -259,11 +296,8 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
               aria-describedby="add port number"
               name={i.toString()}
               placeholder="80"
-              type="number"
-              className="noArrows"
               onChange={this.onAddPortNumber}
-              validated={isValid(typeof(this.state.serviceEntry.ports) !== "undefined" &&
-                !isNaN(Number(this.state.serviceEntry.ports[i]?.number))
+              validated={isValid(isValidPortNumber(p.number)
               )}
             />
           </>,
@@ -274,9 +308,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
               aria-describedby="add port name"
               name={i.toString()}
               onChange={this.onAddPortName}
-              validated={isValid(typeof(this.state.serviceEntry.ports) !== "undefined"
-                && this.state.serviceEntry.ports[i]?.name.length > 0
-                && (this.state.serviceEntry.ports? noDuplicatePortNames(p.name, i,this.state.serviceEntry.ports): true) )}
+              validated={isValid(isValidName(p.name) && noDuplicatePortNames(p.name, i, this.state.formPorts)) }
             />
           </>,
           <>
@@ -298,12 +330,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
               aria-describedby="add target port"
               name={i.toString()}
               onChange={this.onAddTargetPort}
-              type="number"
-              className="noArrows"
-              validated={isValid(typeof(this.state.serviceEntry.ports) !== "undefined" &&
-                (typeof(this.state.serviceEntry.ports[i].targetPort) === "undefined" ||
-                  (typeof(this.state.serviceEntry.ports[i].targetPort) !== "undefined" && !isNaN(Number(this.state.serviceEntry.ports[i].targetPort))))
-              )}
+              validated={isValid(isValidTargetPort(p.targetPort))}
             />
           </>,
           <>
@@ -365,7 +392,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
             onChange={this.onAddLocation}
           >
             {location.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option}/>
+              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
             ))}
           </FormSelect>
         </FormGroup>
@@ -375,8 +402,8 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
             cells={headerCells}
             rows={this.rows()}
           >
-            <TableHeader/>
-            <TableBody/>
+            <TableHeader />
+            <TableBody />
           </Table>
           {(!this.state.serviceEntry.ports || this.state.serviceEntry.ports.length === 0) && (
             <div className={noPortsStyle}>ServiceEntry has no Ports defined</div>

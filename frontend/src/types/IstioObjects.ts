@@ -149,7 +149,7 @@ export interface ContainerInfo {
 
 // 1.6
 export interface Port {
-  number?: number;
+  number: number;
   protocol: string;
   name: string;
   targetPort?: number;
