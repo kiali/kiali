@@ -107,11 +107,11 @@ const isValidName = (name: string): boolean => {
 }
 
 const isValidPortNumber = (portNumber: string): boolean => {
-  return portNumber.length > 0 && !isNaN(Number(portNumber))
+  return portNumber.length > 0 && !isNaN(Number(portNumber)) && Number(portNumber) >= 0 && Number(portNumber) <= 65536
 }
 
 const isValidTargetPort = (targetPort: string): boolean => {
-  return targetPort.length === 0 || (targetPort.length > 0 && !isNaN(Number(targetPort)))
+  return targetPort.length === 0 || (targetPort.length > 0 && !isNaN(Number(targetPort))) && Number(targetPort) >= 0 && Number(targetPort) <= 65536
 }
 
 class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
