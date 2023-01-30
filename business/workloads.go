@@ -46,14 +46,14 @@ func NewWorkloadService(k8s kubernetes.ClientInterface, prom prometheus.ClientIn
 
 // WorkloadService deals with fetching istio/kubernetes workloads related content and convert to kiali model
 type WorkloadService struct {
-	prom prometheus.ClientInterface
-	k8s  kubernetes.ClientInterface
-	// Careful not to call the workload service from here as that would be a infinite loop.
+	// Careful not to call the workload service from here as that would be an infinite loop.
 	businessLayer *Layer
 	// The global kiali cache. This should be passed into the workload service rather than created inside of it.
 	cache cache.KialiCache
 	// The global kiali config.
 	config *config.Config
+	k8s    kubernetes.ClientInterface
+	prom   prometheus.ClientInterface
 }
 
 type WorkloadCriteria struct {

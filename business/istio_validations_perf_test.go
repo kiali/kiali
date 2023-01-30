@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -18,6 +19,7 @@ import (
 
 func TestGetValidationsPerf(t *testing.T) {
 	assert := assert.New(t)
+	require := require.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
 
@@ -48,7 +50,8 @@ func TestGetValidationsPerf(t *testing.T) {
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
 
 	now := time.Now()
-	validations, _ := vs.GetValidations(context.TODO(), "test", "", "")
+	validations, err := vs.GetValidations(context.TODO(), "test", "", "")
+	require.NoError(err)
 	log.Debugf("Validation Performance test took %f seconds for %d namespaces", time.Since(now).Seconds(), numNs)
 	assert.NotEmpty(validations)
 }

@@ -68,6 +68,6 @@ jobs:
       - name: Get debug info when integration tests fail
         if: failure()
         run: |
-          kubectl logs -l app.kubernetes.io/name=kiali -n istio-system
+          kubectl logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system
           kubectl describe nodes
           kubectl get pods -l app.kubernetes.io/name=kiali -n istio-system -o yaml

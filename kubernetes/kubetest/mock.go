@@ -1,6 +1,8 @@
 package kubetest
 
 import (
+	"sync"
+
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/mock"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -21,20 +23,41 @@ import (
 //// Mock for the K8SClientFactory
 
 type K8SClientFactoryMock struct {
-	mock.Mock
-	k8s kubernetes.ClientInterface
+	lock    sync.RWMutex
+	Clients map[string]kubernetes.ClientInterface
 }
 
 // Constructor
 func NewK8SClientFactoryMock(k8s kubernetes.ClientInterface) *K8SClientFactoryMock {
 	k8sClientFactory := new(K8SClientFactoryMock)
-	k8sClientFactory.k8s = k8s
+	k8sClientFactory.Clients = map[string]kubernetes.ClientInterface{kubernetes.HomeClusterName: k8s}
 	return k8sClientFactory
+}
+
+// Testing specific methods
+func (o *K8SClientFactoryMock) SetClients(clients map[string]kubernetes.ClientInterface) {
+	o.lock.Lock()
+	defer o.lock.Unlock()
+	o.Clients = clients
 }
 
 // Business Methods
 func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo) (kubernetes.ClientInterface, error) {
-	return o.k8s, nil
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	return o.Clients[kubernetes.HomeClusterName], nil
+}
+
+func (o *K8SClientFactoryMock) GetSAClients() map[string]kubernetes.ClientInterface {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	return o.Clients
+}
+
+func (o *K8SClientFactoryMock) GetSAHomeClusterClient() kubernetes.ClientInterface {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	return o.Clients[kubernetes.HomeClusterName]
 }
 
 /////

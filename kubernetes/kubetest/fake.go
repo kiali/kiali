@@ -125,10 +125,13 @@ type FakeK8sClient struct {
 	IstioClientset istio.Interface
 	// Underlying gateway api clientset.
 	GatewayAPIClientset gatewayapi.Interface
+	// Token is the kiali token this client uses.
+	Token string
 }
 
 func (c *FakeK8sClient) IsOpenShift() bool  { return c.OpenShift }
 func (c *FakeK8sClient) IsGatewayAPI() bool { return c.GatewayAPIEnabled }
+func (c *FakeK8sClient) GetToken() string   { return c.Token }
 
 // The openshift resources are stubbed out because Kiali talks directly to the
 // kube api for these instead of using the openshift client-go.

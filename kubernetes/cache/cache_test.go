@@ -1,154 +1,107 @@
 package cache
 
 import (
-	"regexp"
+	"context"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	corev1 "k8s.io/api/core/v1"
+	"github.com/stretchr/testify/require"
+	apps_v1 "k8s.io/api/apps/v1"
+	core_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
-// TODO: pass in interface?
-func newTestKialiCache(k8s *kubetest.FakeK8sClient) *kialiCacheImpl {
+// Need to lock the client when we go to check the value of the token
+// but only the tests need this functionality so we can use a fake
+// that has access to the kubeCache's lock and has a getClient() method
+// that returns the client after locking. Without this, the tests will
+// fail with the race detector enabled.
+type fakeKubeCache struct {
+	*kubeCache
+}
+
+func (f *fakeKubeCache) getClient() kubernetes.ClientInterface {
+	f.kubeCache.cacheLock.RLock()
+	defer f.kubeCache.cacheLock.RUnlock()
+	return f.kubeCache.client
+}
+
+func TestClientUpdatedWhenSAClientChanges(t *testing.T) {
+	require := require.New(t)
+	config := config.NewConfig()
+
+	client := kubetest.NewFakeK8sClient()
+	client.Token = "current-token"
+	clientFactory := kubetest.NewK8SClientFactoryMock(client)
+	k8sCache, err := NewKubeCache(client, *config, emptyHandler)
+	require.NoError(err)
+
+	kubeCache := &fakeKubeCache{kubeCache: k8sCache}
 	kialiCache := &kialiCacheImpl{
-		k8sApi:                k8s.KubeClientset,
-		istioApi:              k8s.IstioClientset,
-		gatewayApi:            k8s.GatewayAPIClientset,
-		clusterScoped:         false,
-		stopClusterScopedChan: make(chan struct{}),
-		stopNSChans:           make(map[string]chan struct{}),
-		nsCacheLister:         make(map[string]*cacheLister),
-		stopPolling:           func() {},
-	}
-	kialiCache.registryRefreshHandler = NewRegistryHandler(kialiCache.RefreshRegistryStatus)
-	return kialiCache
-}
-
-func TestNewKialiCache_isCached(t *testing.T) {
-	assert := assert.New(t)
-
-	kialiCacheImpl := kialiCacheImpl{
-		istioClient:            kubernetes.K8SClient{},
-		refreshDuration:        0,
-		cacheNamespacesRegexps: []regexp.Regexp{*regexp.MustCompile("bookinfo"), *regexp.MustCompile("a.*"), *regexp.MustCompile("galicia")},
+		clientRefreshPollingPeriod: time.Millisecond,
+		clientFactory:              clientFactory,
+		KubeCache:                  kubeCache,
 	}
 
-	assert.True(kialiCacheImpl.isCached("bookinfo"))
-	assert.True(kialiCacheImpl.isCached("a"))
-	assert.True(kialiCacheImpl.isCached("abcdefghi"))
-	assert.False(kialiCacheImpl.isCached("b"))
-	assert.False(kialiCacheImpl.isCached("bbcdefghi"))
-	assert.True(kialiCacheImpl.isCached("galicia"))
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	kialiCache.watchForClientChanges(ctx, client.Token)
+
+	// Update the client. This should trigger a cache refresh.
+	newClient := kubetest.NewFakeK8sClient()
+	newClient.Token = "new-token"
+	clientFactory.SetClients(map[string]kubernetes.ClientInterface{kubernetes.HomeClusterName: newClient})
+
+	require.Eventually(
+		func() bool { return kubeCache.getClient() != client },
+		500*time.Millisecond,
+		5*time.Millisecond,
+		"client and cache should have been updated",
+	)
 }
 
-func TestClusterScopedCacheStopped(t *testing.T) {
-	assert := assert.New(t)
+func TestNoHomeClusterReturnsError(t *testing.T) {
+	require := require.New(t)
+	config := config.NewConfig()
 
-	kialiCacheImpl := newTestKialiCache(kubetest.NewFakeK8sClient())
-	stopCh := make(chan struct{})
-	kialiCacheImpl.stopClusterScopedChan = stopCh
-	kialiCacheImpl.clusterScoped = true
-	kialiCacheImpl.Refresh("")
+	client := kubetest.NewFakeK8sClient()
+	clientFactory := kubetest.NewK8SClientFactoryMock(client)
+	clientFactory.SetClients(map[string]kubernetes.ClientInterface{"nothomecluster": client})
 
-	kialiCacheImpl.Stop()
-	select {
-	case <-time.After(300 * time.Millisecond):
-		assert.Fail("Cache should have been stopped")
-	case <-stopCh:
-	}
+	_, err := NewKialiCache(clientFactory, *config)
+	require.Error(err, "no home cluster should return an error")
 }
 
-func TestNSScopedCacheStopped(t *testing.T) {
-	assert := assert.New(t)
+func TestKubeCacheCreatedPerClient(t *testing.T) {
+	require := require.New(t)
+	config := config.NewConfig()
 
-	stopChs := map[string]chan struct{}{
-		"ns1": make(chan struct{}),
-		"ns2": make(chan struct{}),
-	}
-	kialiCacheImpl := newTestKialiCache(kubetest.NewFakeK8sClient())
-	kialiCacheImpl.stopNSChans = stopChs
-	kialiCacheImpl.clusterScoped = false
+	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+	deploymentCluster1 := &apps_v1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "deployment1", Namespace: "test"}}
+	deploymentCluster2 := &apps_v1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "deployment2", Namespace: "test"}}
+	client := kubetest.NewFakeK8sClient(ns, deploymentCluster1)
+	client2 := kubetest.NewFakeK8sClient(ns, deploymentCluster2)
+	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	clientFactory.SetClients(map[string]kubernetes.ClientInterface{
+		kubernetes.HomeClusterName: client,
+		"cluster2":                 client2,
+	})
 
-	kialiCacheImpl.Stop()
-	for ns, stopCh := range stopChs {
-		select {
-		case <-time.After(300 * time.Millisecond):
-			assert.Failf("Cache for namespace: %s should have been stopped", ns)
-		case <-stopCh:
-		}
-	}
+	kialiCache, err := NewKialiCache(clientFactory, *config)
+	require.NoError(err)
+	defer kialiCache.Stop()
 
-	assert.Empty(kialiCacheImpl.nsCacheLister)
-}
+	caches := kialiCache.GetKubeCaches()
+	require.Equal(2, len(caches))
 
-func TestRefreshClusterScoped(t *testing.T) {
-	assert := assert.New(t)
+	_, err = caches[kubernetes.HomeClusterName].GetDeployment("test", "deployment1")
+	require.NoError(err)
 
-	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "svc1", Namespace: "ns1"}}
-	kialiCache := newTestKialiCache(kubetest.NewFakeK8sClient(svc))
-	kialiCache.clusterScoped = true
-	kialiCache.clusterCacheLister = &cacheLister{}
-	oldLister := kialiCache.clusterCacheLister
-	kialiCache.Refresh("")
-	assert.NotEqual(kialiCache.clusterCacheLister, oldLister)
-}
-
-func TestRefreshMultipleTimesClusterScoped(t *testing.T) {
-	assert := assert.New(t)
-
-	kialiCache := newTestKialiCache(kubetest.NewFakeK8sClient())
-	kialiCache.clusterScoped = true
-	kialiCache.clusterCacheLister = &cacheLister{}
-	oldLister := kialiCache.clusterCacheLister
-
-	kialiCache.Refresh("")
-	kialiCache.Refresh("")
-	assert.NotEqual(kialiCache.clusterCacheLister, oldLister)
-}
-
-func TestRefreshNSScoped(t *testing.T) {
-	assert := assert.New(t)
-
-	kialiCache := newTestKialiCache(kubetest.NewFakeK8sClient())
-	kialiCache.clusterScoped = false
-	kialiCache.nsCacheLister = map[string]*cacheLister{}
-
-	kialiCache.Refresh("ns1")
-	assert.NotEqual(kialiCache.nsCacheLister, map[string]*cacheLister{})
-	assert.Contains(kialiCache.nsCacheLister, "ns1")
-}
-
-func TestCheckNamespaceClusterScoped(t *testing.T) {
-	assert := assert.New(t)
-
-	kialiCache := newTestKialiCache(kubetest.NewFakeK8sClient())
-	kialiCache.clusterScoped = true
-
-	// Should always return true for cluster scoped cache.
-	assert.True(kialiCache.CheckNamespace("ns1"))
-}
-
-func TestCheckNamespaceNotIncluded(t *testing.T) {
-	assert := assert.New(t)
-
-	kialiCache := newTestKialiCache(kubetest.NewFakeK8sClient())
-	kialiCache.clusterScoped = false
-
-	assert.False(kialiCache.CheckNamespace("ns1"))
-}
-
-func TestCheckNamespaceIsIncluded(t *testing.T) {
-	assert := assert.New(t)
-
-	regex := regexp.MustCompile("ns.*")
-	kialiCache := newTestKialiCache(kubetest.NewFakeK8sClient())
-	kialiCache.clusterScoped = false
-	kialiCache.cacheNamespacesRegexps = []regexp.Regexp{*regex}
-
-	assert.True(kialiCache.CheckNamespace("ns1"))
+	_, err = caches["cluster2"].GetDeployment("test", "deployment2")
+	require.NoError(err)
 }
