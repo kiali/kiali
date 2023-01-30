@@ -7,6 +7,7 @@ import (
 
 	"k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -132,13 +133,19 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 
 	switch conf.Auth.Strategy {
 	case config.AuthStrategyOpenshift:
-		business, err := getBusiness(r)
+		token, err := kubernetes.GetKialiToken()
+		if err != nil {
+			RespondWithDetailedError(w, http.StatusInternalServerError, "Error obtaining Kiali SA token", err.Error())
+			return
+		}
+
+		layer, err := business.Get(&api.AuthInfo{Token: token})
 		if err != nil {
 			RespondWithDetailedError(w, http.StatusInternalServerError, "Error authenticating (getting business layer)", err.Error())
 			return
 		}
 
-		metadata, err := business.OpenshiftOAuth.Metadata(r)
+		metadata, err := layer.OpenshiftOAuth.Metadata(r)
 		if err != nil {
 			RespondWithDetailedError(w, http.StatusInternalServerError, "Error trying to get OAuth metadata", err.Error())
 			return
