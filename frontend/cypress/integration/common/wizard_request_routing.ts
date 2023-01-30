@@ -39,12 +39,18 @@ When('user clicks in the {string} actions', (action) => {
             actionId = 'delete_traffic_routing';
             break;
     }
+    it('spinner should disappear', { retries: 3 }, () => {
+        cy.get('#loading_kiali_spinner')
+            .should('not.exist');
+    });
     cy.get('button[data-test="wizard-actions"]')
+        .should('exist')
         .click()
         .get('#loading_kiali_spinner')
         .should('not.exist');
 
     cy.get('button[data-test="' + actionId + '"]')
+        .should('exist')
         .click()
         .get('#loading_kiali_spinner')
         .should('not.exist');
