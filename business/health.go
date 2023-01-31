@@ -7,7 +7,6 @@ import (
 	"github.com/prometheus/common/model"
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
@@ -16,7 +15,6 @@ import (
 // HealthService deals with fetching health from various sources and convert to kiali model
 type HealthService struct {
 	prom          prometheus.ClientInterface
-	k8s           kubernetes.ClientInterface
 	businessLayer *Layer
 }
 

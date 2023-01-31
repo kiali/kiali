@@ -12,9 +12,9 @@ import (
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -25,21 +25,19 @@ var emptyResult = map[string]map[string]float64{}
 func TestGetServiceHealth(t *testing.T) {
 	assert := assert.New(t)
 
-	// Setup mocks
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewFakeK8sClient(
+		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
+	)
+	k8s.OpenShift = true
+
 	prom := new(prometheustest.PromClientMock)
-	conf := config.NewConfig()
-	config.Set(conf)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockServiceRequestRates("ns", "httpbin", serviceRates)
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Service{}, nil)
 
 	setupGlobalMeshConfig()
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
 	mockSvc := models.Service{}
 	mockSvc.Name = "httpbin"
@@ -64,21 +62,23 @@ func TestGetServiceHealth(t *testing.T) {
 func TestGetAppHealth(t *testing.T) {
 	assert := assert.New(t)
 
-	// Setup mocks
-	k8s := new(kubetest.K8SClientMock)
+	objects := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
+	}
+	for _, obj := range fakeDeploymentsHealthReview() {
+		o := obj
+		objects = append(objects, &o)
+	}
+	for _, obj := range fakePodsHealthReview() {
+		o := obj
+		objects = append(objects, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
 	prom := new(prometheustest.PromClientMock)
-	conf := config.NewConfig()
-	config.Set(conf)
 
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.MockEmptyWorkloads("ns")
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
-	k8s.On("GetPods", "ns", "app=reviews").Return(fakePodsHealthReview(), nil)
-	k8s.On("GetProxyStatus").Return([]*kubernetes.ProxyStatus{}, nil)
-
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
@@ -116,24 +116,23 @@ func TestGetAppHealth(t *testing.T) {
 func TestGetWorkloadHealth(t *testing.T) {
 	assert := assert.New(t)
 
-	// Setup mocks
-	k8s := new(kubetest.K8SClientMock)
+	objects := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
+		&fakeDeploymentsHealthReview()[0],
+	}
+	for _, obj := range fakePodsHealthReview() {
+		o := obj
+		objects = append(objects, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
 	prom := new(prometheustest.PromClientMock)
-	conf := config.NewConfig()
-	config.Set(conf)
-
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.MockEmptyWorkload("ns", "reviews-v1")
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetDeployment", "ns", "reviews-v1").Return(&fakeDeploymentsHealthReview()[0], nil)
-	k8s.On("GetPods", "ns", "").Return(fakePodsHealthReview(), nil)
-	k8s.On("GetProxyStatus").Return([]*kubernetes.ProxyStatus{}, nil)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockWorkloadRequestRates("ns", "reviews-v1", otherRatesIn, otherRatesOut)
 
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
 	mockWorkload := models.Workload{}
 	mockWorkload.Name = "reviews-v1"
@@ -164,23 +163,25 @@ func TestGetWorkloadHealth(t *testing.T) {
 func TestGetAppHealthWithoutIstio(t *testing.T) {
 	assert := assert.New(t)
 
-	// Setup mocks
-	k8s := new(kubetest.K8SClientMock)
+	objects := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
+	}
+	for _, obj := range fakeDeploymentsHealthReview() {
+		o := obj
+		objects = append(objects, &o)
+	}
+	for _, obj := range fakePodsHealthReviewWithoutIstio() {
+		o := obj
+		objects = append(objects, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(objects...)
 	prom := new(prometheustest.PromClientMock)
-	conf := config.NewConfig()
-	config.Set(conf)
-
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.MockEmptyWorkloads("ns")
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
-	k8s.On("GetPods", "ns", "app=reviews").Return(fakePodsHealthReviewWithoutIstio(), nil)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
 
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
 	mockApp := appDetails{}
 
@@ -194,24 +195,23 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 	assert := assert.New(t)
 
-	// Setup mocks
-	k8s := new(kubetest.K8SClientMock)
+	objects := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
+		&fakeDeploymentsHealthReview()[0],
+	}
+	for _, obj := range fakePodsHealthReviewWithoutIstio() {
+		o := obj
+		objects = append(objects, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
 	prom := new(prometheustest.PromClientMock)
-	conf := config.NewConfig()
-	config.Set(conf)
-
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.MockEmptyWorkload("ns", "reviews-v1")
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetDeployment", "ns", "reviews-v1").Return(&fakeDeploymentsHealthReview()[0], nil)
-	k8s.On("GetPods", "ns", "").Return(fakePodsHealthReviewWithoutIstio(), nil)
-	k8s.On("GetWorkload", "ns", "wk", "", false).Return(&models.Workload{}, nil)
 
 	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockWorkloadRequestRates("ns", "reviews-v1", otherRatesIn, otherRatesOut)
 
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
 	mockWorkload := models.Workload{}
 	mockWorkload.Name = "reviews-v1"
@@ -224,22 +224,27 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 }
 
 func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
-	// Setup mocks
-	k8s := new(kubetest.K8SClientMock)
-	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.MockEmptyWorkloads("ns")
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetServices", "ns", mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
-	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
-	k8s.On("GetPods", "ns", "").Return(fakePodsHealthReviewWithoutIstio(), nil)
+	objects := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
+	}
+	for _, obj := range fakeDeploymentsHealthReview() {
+		o := obj
+		objects = append(objects, &o)
+	}
+	for _, obj := range fakePodsHealthReviewWithoutIstio() {
+		o := obj
+		objects = append(objects, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
+	prom := new(prometheustest.PromClientMock)
 
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 	criteria := NamespaceHealthCriteria{Namespace: "ns", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 	_, _ = hs.GetNamespaceAppHealth(context.TODO(), criteria)
 
@@ -250,19 +255,21 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 	assert := assert.New(t)
 
-	// Setup mocks
-	k8s := new(kubetest.K8SClientMock)
+	reviews := kubetest.FakeService("tutorial", "reviews")
+	httpbin := kubetest.FakeService("tutorial", "httpbin")
+	k8s := kubetest.NewFakeK8sClient(
+		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "ns"}},
+		&reviews,
+		&httpbin,
+	)
+	k8s.OpenShift = true
 	prom := new(prometheustest.PromClientMock)
-	conf := config.NewConfig()
-	config.Set(conf)
 
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.MockServices("tutorial", []string{"reviews", "httpbin"})
 	prom.On("GetNamespaceServicesRequestRates", "tutorial", mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
 
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
+	hs := HealthService{prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
 	criteria := NamespaceHealthCriteria{Namespace: "tutorial", RateInterval: "1m", QueryTime: time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC), IncludeMetrics: true}
 	health, err := hs.GetNamespaceServiceHealth(context.TODO(), criteria)
@@ -409,6 +416,7 @@ func fakePodsHealthReview() []core_v1.Pod {
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:        "reviews-v1",
+				Namespace:   "ns",
 				Labels:      map[string]string{"app": "reviews", "version": "v1"},
 				Annotations: kubetest.FakeIstioAnnotations(),
 			},
@@ -416,6 +424,7 @@ func fakePodsHealthReview() []core_v1.Pod {
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:        "reviews-v2",
+				Namespace:   "ns",
 				Labels:      map[string]string{"app": "reviews", "version": "v2"},
 				Annotations: kubetest.FakeIstioAnnotations(),
 			},
@@ -427,14 +436,16 @@ func fakePodsHealthReviewWithoutIstio() []core_v1.Pod {
 	return []core_v1.Pod{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name:   "reviews-v1",
-				Labels: map[string]string{"app": "reviews", "version": "v1"},
+				Name:      "reviews-v1",
+				Namespace: "ns",
+				Labels:    map[string]string{"app": "reviews", "version": "v1"},
 			},
 		},
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name:   "reviews-v2",
-				Labels: map[string]string{"app": "reviews", "version": "v2"},
+				Name:      "reviews-v2",
+				Namespace: "ns",
+				Labels:    map[string]string{"app": "reviews", "version": "v2"},
 			},
 		},
 	}
@@ -444,7 +455,8 @@ func fakeDeploymentsHealthReview() []apps_v1.Deployment {
 	return []apps_v1.Deployment{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "reviews-v1",
+				Name:      "reviews-v1",
+				Namespace: "ns",
 			},
 			Status: apps_v1.DeploymentStatus{
 				Replicas:            3,
@@ -459,7 +471,8 @@ func fakeDeploymentsHealthReview() []apps_v1.Deployment {
 		},
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "reviews-v2",
+				Name:      "reviews-v2",
+				Namespace: "ns",
 			},
 			Status: apps_v1.DeploymentStatus{
 				Replicas:            2,
