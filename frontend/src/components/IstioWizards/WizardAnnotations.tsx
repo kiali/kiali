@@ -59,7 +59,7 @@ class WizardAnnotations extends React.Component<Props, State> {
     }
 
     onClear = () => {
-        this.setState({annotations: cloneDeep(this.props.annotations)});
+        this.setState({annotations: cloneDeep(this.props.annotations), newAnnotation: false, key: '', value: ''});
     }
 
     saveAnnotation = () => {
