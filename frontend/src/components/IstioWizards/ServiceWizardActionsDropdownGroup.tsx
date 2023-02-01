@@ -6,6 +6,7 @@ import { canDelete, ResourcePermissions } from 'types/Permissions';
 import {
   SERVICE_WIZARD_ACTIONS,
   WIZARD_K8S_REQUEST_ROUTING,
+  WIZARD_EDIT_ANNOTATIONS,
   WIZARD_TITLES,
   WizardAction,
   WizardMode
@@ -85,6 +86,13 @@ const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props 
       return wizardItem;
     }
   });
+
+  // Annotations
+  actionItems.push(
+    <DropdownItem key={WIZARD_EDIT_ANNOTATIONS} component="button"  onClick={() => handleActionClick(WIZARD_EDIT_ANNOTATIONS)} data-test={WIZARD_EDIT_ANNOTATIONS}>
+      {serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode ? "Edit Annotations" : "View Annotations"}
+    </DropdownItem>
+  )
 
   actionItems.push(<DropdownSeparator key="actions_separator" />);
 

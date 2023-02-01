@@ -44,6 +44,7 @@ import {
   PficonTemplateIcon,
   PlayCircleIcon,
   PlayIcon,
+  PlusCircleIcon,
   RepositoryIcon,
   ServiceIcon,
   ShareAltIcon,
@@ -72,6 +73,7 @@ interface IconProps {
 
 // keep alphabetized
 export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } = {
+  AddMore: (props: IconProps) => <PlusCircleIcon className={props.className} />,  
   AngleDoubleDown: (props: IconProps) => <AngleDoubleDownIcon className={props.className} />,
   AngleDoubleLeft: (props: IconProps) => <AngleDoubleLeftIcon className={props.className} />,
   AngleDoubleRight: (props: IconProps) => <AngleDoubleRightIcon className={props.className} />,

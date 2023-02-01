@@ -29,6 +29,9 @@ type ServiceOverview struct {
 	// example: rest
 	// required: false
 	AdditionalDetailSample *AdditionalItem `json:"additionalDetailSample"`
+	// Annotations of Deployment
+	// required: false
+	Annotations map[string]string `json:"annotations"`
 	// Annotations of the service
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
 	// Names and Ports of Service
@@ -91,6 +94,7 @@ type Service struct {
 	Ip                string            `json:"ip"`
 	Ports             Ports             `json:"ports"`
 	ExternalName      string            `json:"externalName"`
+	Annotations       map[string]string `json:"annotations"`
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
 	AdditionalDetails []AdditionalItem  `json:"additionalDetails"`
 }
@@ -127,6 +131,7 @@ func (s *Service) Parse(service *core_v1.Service) {
 		s.ExternalName = service.Spec.ExternalName
 		s.CreatedAt = formatTime(service.CreationTimestamp.Time)
 		s.ResourceVersion = service.ResourceVersion
+		s.Annotations = service.Annotations
 		s.HealthAnnotations = GetHealthAnnotation(service.Annotations, GetHealthConfigAnnotation())
 		s.AdditionalDetails = GetAdditionalDetails(config.Get(), service.ObjectMeta.Annotations)
 		(&s.Ports).Parse(service.Spec.Ports)

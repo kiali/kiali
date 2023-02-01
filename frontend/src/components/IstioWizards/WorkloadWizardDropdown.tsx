@@ -11,7 +11,7 @@ import { serverConfig } from '../../config';
 import { Workload } from '../../types/Workload';
 import {
   buildWorkloadInjectionPatch,
-  buildWorkloadAnnotationPatch,
+  buildAnnotationPatch,
   WIZARD_DISABLE_AUTO_INJECTION,
   WIZARD_ENABLE_AUTO_INJECTION,
   WIZARD_REMOVE_AUTO_INJECTION,
@@ -113,8 +113,8 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
   };
 
   onChangeAnnotations = (annotations: { [key: string]: string }) => {
-    const jsonInjectionPatch = buildWorkloadAnnotationPatch(annotations);
-    API.updateWorkload(this.props.namespace, this.props.workload.name, this.props.workload.type, jsonInjectionPatch)
+    const jsonInjectionPatch = buildAnnotationPatch(annotations);
+    API.updateWorkload(this.props.namespace, this.props.workload.name, this.props.workload.type, jsonInjectionPatch, "json")
           .then(_ => {
             AlertUtils.add('Workload ' + this.props.workload.name + ' updated', 'default', MessageType.SUCCESS);
             this.setState(

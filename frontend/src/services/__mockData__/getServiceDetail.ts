@@ -10,6 +10,7 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
     labels: {
       app: 'reviews'
     },
+    annotations: {},
     ip: '172.30.196.248',
     ports: [
       {

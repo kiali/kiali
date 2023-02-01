@@ -2052,11 +2052,11 @@ export const buildWorkloadInjectionPatch = (workloadType: string, enable: boolea
   return JSON.stringify(patch);
 };
 
-export const buildWorkloadAnnotationPatch = (annotations: { [key: string]: string }): string => {
-  const patch = {};
-  // environments prefer to use the pod label over the annotation  
-  patch['metadata'] = {
-    annotations: annotations
-  };
+export const buildAnnotationPatch = (annotations: { [key: string]: string }): string => {
+  const patch = [{
+    "op": "replace",
+    "path": "/metadata/annotations",    
+    "value": annotations
+  }];  
   return JSON.stringify(patch);
 };

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { ActionGroup, Button, Modal, ModalVariant, TextInput, Title, TitleSizes } from '@patternfly/react-core';
 import { TableComposable, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
 import { KialiIcon } from 'config/KialiIcon';
+import { cloneDeep } from 'lodash';
 
 interface Props {
     annotations: { [key: string]: string };
@@ -18,9 +19,15 @@ interface State {
 class WizardAnnotations extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
-        this.state = { annotations: this.props.annotations }
+        this.state = { annotations: cloneDeep(this.props.annotations) }
     }     
-    
+
+    componentDidUpdate(prevProps: Readonly<Props>): void {
+        if (prevProps.annotations !== this.props.annotations) {
+            this.onClear();
+        }        
+    }
+
     removeAnnotation = (key: string) => {
         const annotations = this.state.annotations;
         delete annotations[key]
@@ -40,23 +47,46 @@ class WizardAnnotations extends React.Component<Props, State> {
         this.setState({annotations});
     }
 
-    generateInput = (key: string, value: string) => {
-        return this.props.canEdit ? (
-            <Tr>
-             <Th>
-                <TextInput id={"annotationInputForKey_" + key} onChange={(value) => this.changeKeyAnnotation(key, value)} type="text" value={key}/>
-             </Th>
-             <Th>
-                <TextInput id={"annotationInputForValue_" + value} onChange={(value) => this.changeValueAnnotation(key, value)} type="text" value={value}/>
-             </Th>
-             <Th><Button variant={'plain'} icon={<KialiIcon.Delete />} onClick={() => this.removeAnnotation(key)}/></Th>
-            </Tr>
-        ) : (
-            <Tr>
-                <Th>{key}</Th>
-                <Th>{value}</Th>
-            </Tr>
-        );
+    onChange = () => {        
+        this.props.onChange(this.state.annotations);
+    }
+
+    onClose = () => {        
+        this.setState({annotations: this.props.annotations}, () => this.props.onClose())
+    }
+
+    onClear = () => {
+        this.setState({annotations: cloneDeep(this.props.annotations)});
+    }
+
+    generateInput = (): JSX.Element[] => {
+        const rows: JSX.Element[] = Object.keys(this.state.annotations).map((k) => (
+             this.props.canEdit ? (
+                <Tr key={"edit_annotation_for_" + k}>
+                 <Th>
+                    <TextInput aria-invalid={k === ""} id={"annotationInputForKey_" + k} onChange={(newKey) => this.changeKeyAnnotation(k, newKey)} placeholder={"key"} type="text" value={k}/>
+                 </Th>
+                 <Th>
+                    <TextInput aria-invalid={this.state.annotations[k] === ""} id={"annotationInputForValue_" + this.state.annotations[k]} onChange={(v) => this.changeValueAnnotation(k, v)} placeholder={"value"} type="text" value={this.state.annotations[k]}/>
+                 </Th>
+                 <Th><Button variant={'plain'} icon={<KialiIcon.Delete />} onClick={() => this.removeAnnotation(k)}/></Th>
+                </Tr>
+            ) : (
+                <Tr>
+                    <Th>{k}</Th>
+                    <Th>{this.state.annotations[k]}</Th>
+                </Tr>
+            )
+        ));   
+        return rows;      
+    }
+    
+    AddNewkeyValue = () => {
+        if(Object.values(this.state.annotations).filter(v => v.length === 0).length === 0) {
+            const annotations = this.state.annotations;
+            annotations[""] = "";
+            this.setState({annotations});
+        }
     }
 
     render() {
@@ -69,9 +99,9 @@ class WizardAnnotations extends React.Component<Props, State> {
         );
         const footer = (
             <ActionGroup>                  
-                <Button variant="primary" isDisabled={!this.props.canEdit} onClick={() => this.props.onChange(this.state.annotations)}>Save</Button>        
-                {this.props.canEdit && (<Button variant="link" onClick={() => this.setState({annotations: this.props.annotations})}>Clear</Button>)}
-                <Button variant="link" onClick={this.props.onClose}>Cancel</Button>
+                <Button variant="primary" isDisabled={!this.props.canEdit} onClick={this.onChange}>Save</Button>        
+                {this.props.canEdit && (<Button variant="link" onClick={this.onClear}>Clear</Button>)}
+                <Button variant="link" onClick={this.onClose}>Cancel</Button>
             </ActionGroup>
         );
 
@@ -95,9 +125,12 @@ class WizardAnnotations extends React.Component<Props, State> {
                         </Tr>    
                     </Thead>
                     <Tbody>
-                        {Object.entries(this.state.annotations).sort().map(([k,v]) => this.generateInput(k,v))}                        
+                        {this.generateInput()}                                         
                     </Tbody>
                    </TableComposable >
+                   <Button variant="link" icon={<KialiIcon.AddMore />} onClick={() => this.AddNewkeyValue()}>
+                        Add more
+                    </Button>
                 </Modal>
             </>
         );

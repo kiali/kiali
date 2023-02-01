@@ -649,7 +649,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, namespace, service,
 	return &s, nil
 }
 
-func (in *SvcService) UpdateService(ctx context.Context, namespace, service string, interval string, queryTime time.Time, jsonPatch string) (*models.ServiceDetails, error) {
+func (in *SvcService) UpdateService(ctx context.Context, namespace, service string, interval string, queryTime time.Time, jsonPatch string, patchType string) (*models.ServiceDetails, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "UpdateService",
 		observability.Attribute("package", "business"),
@@ -658,11 +658,12 @@ func (in *SvcService) UpdateService(ctx context.Context, namespace, service stri
 		observability.Attribute("interval", interval),
 		observability.Attribute("queryTime", queryTime),
 		observability.Attribute("jsonPatch", jsonPatch),
+		observability.Attribute("patchType", patchType),
 	)
 	defer end()
 
 	// Identify controller and apply patch to workload
-	err := updateService(in.businessLayer, namespace, service, jsonPatch)
+	err := updateService(in.businessLayer, namespace, service, jsonPatch, patchType)
 	if err != nil {
 		return nil, err
 	}
@@ -759,12 +760,12 @@ func (in *SvcService) GetServiceAppName(ctx context.Context, namespace, service 
 	return app, nil
 }
 
-func updateService(layer *Layer, namespace string, service string, jsonPatch string) error {
+func updateService(layer *Layer, namespace string, service string, jsonPatch string, patchType string) error {
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if _, err := layer.Namespace.GetNamespace(context.TODO(), namespace); err != nil {
 		return err
 	}
 
-	return layer.k8s.UpdateService(namespace, service, jsonPatch)
+	return layer.k8s.UpdateService(namespace, service, jsonPatch, patchType)
 }

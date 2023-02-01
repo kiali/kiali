@@ -210,6 +210,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       <ServiceWizardDropdown
         namespace={this.props.match.params.namespace}
         serviceName={this.state.serviceDetails.service.name}
+        annotations={this.state.serviceDetails.service.annotations}
         show={false}
         readOnly={getServiceWizardLabel(this.state.serviceDetails.service) !== ''}
         workloads={this.state.serviceDetails.workloads || []}

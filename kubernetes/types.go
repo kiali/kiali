@@ -11,6 +11,7 @@ import (
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -340,4 +341,19 @@ func (imc IstioMeshConfig) GetEnableAutoMtls() bool {
 		return true
 	}
 	return *imc.EnableAutoMtls
+}
+
+func GetPatchType(patchType string) types.PatchType {
+	switch patchType {
+	case "json":
+		return types.JSONPatchType
+	case "strategic":
+		return types.StrategicMergePatchType
+	case "apply":
+		return types.ApplyPatchType
+	case "merge":
+		return types.MergePatchType
+	default:
+		return types.MergePatchType
+	}
 }

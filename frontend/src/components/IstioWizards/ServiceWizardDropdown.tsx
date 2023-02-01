@@ -12,14 +12,19 @@ import {
 import * as AlertUtils from '../../utils/AlertUtils';
 import { serverConfig } from '../../config';
 import { TLSStatus } from '../../types/TLSStatus';
+import * as API from '../../services/Api';
 import {
+  buildAnnotationPatch,
   WIZARD_REQUEST_ROUTING,
   WIZARD_FAULT_INJECTION,
   WIZARD_TRAFFIC_SHIFTING,
   WIZARD_REQUEST_TIMEOUTS,
   WIZARD_TCP_TRAFFIC_SHIFTING,
-  WIZARD_K8S_REQUEST_ROUTING
+  WIZARD_K8S_REQUEST_ROUTING,
+  WIZARD_EDIT_ANNOTATIONS
 } from './WizardActions';
+import { MessageType } from '../../types/MessageCenter';
+import WizardAnnotations from "./WizardAnnotations";
 import ServiceWizard from './ServiceWizard';
 import { canCreate, canUpdate, ResourcePermissions } from '../../types/Permissions';
 import ServiceWizardActionsDropdownGroup, { DELETE_TRAFFIC_ROUTING } from './ServiceWizardActionsDropdownGroup';
@@ -38,6 +43,7 @@ type Props = ReduxProps & {
   serviceName: string;
   show: boolean;
   readOnly: boolean;
+  annotations: { [key: string]: string };
   workloads: WorkloadOverview[];
   subServices: ServiceOverview[];
   virtualServices: VirtualService[];
@@ -52,6 +58,7 @@ type Props = ReduxProps & {
 };
 
 type State = {
+  showAnnotationsWizard: boolean;
   showWizard: boolean;
   updateWizard: boolean;
   wizardType: string;
@@ -65,6 +72,7 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      showAnnotationsWizard: false,
       showWizard: props.show,
       wizardType: '',
       showConfirmDelete: false,
@@ -119,6 +127,10 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
       }
       case DELETE_TRAFFIC_ROUTING: {
         this.setState({ showConfirmDelete: true, deleteAction: key });
+        break;
+      }
+      case WIZARD_EDIT_ANNOTATIONS: {
+        this.setState({showAnnotationsWizard: true})
         break;
       }
       default:
@@ -192,6 +204,29 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
     ];
   };
 
+  onChangeAnnotations = (annotations: { [key: string]: string }) => {
+    const jsonInjectionPatch = buildAnnotationPatch(annotations);
+    API.updateService(this.props.namespace, this.props.serviceName, jsonInjectionPatch, "json")
+          .then(_ => {
+            AlertUtils.add('Service ' + this.props.serviceName + ' updated', 'default', MessageType.SUCCESS);
+            this.setState(
+              {
+                showAnnotationsWizard: false
+              },
+              () => this.props.onChange()
+            );
+          })
+          .catch(error => {
+            AlertUtils.addError('Could not update service ' + this.props.serviceName, error);
+            this.setState(
+              {
+                showAnnotationsWizard: false
+              },
+              () => this.props.onChange()
+            );
+    });
+  }
+
   render() {
     const hasSidecarWorkloads = this.hasSidecarWorkloads();
     const toolTipMsgActions = !hasSidecarWorkloads
@@ -220,6 +255,13 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
         {!hasSidecarWorkloads
           ? this.renderTooltip('tooltip_wizard_actions', TooltipPosition.top, toolTipMsgActions, dropdown)
           : dropdown}
+        <WizardAnnotations 
+          showAnotationsWizard={this.state.showAnnotationsWizard} 
+          onChange={(annotations) => this.onChangeAnnotations(annotations)} 
+          onClose={() => this.setState({showAnnotationsWizard: false})} 
+          annotations={this.props.annotations} 
+          canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
+        />
         <ServiceWizard
           show={this.state.showWizard}
           type={this.state.wizardType}
