@@ -48,16 +48,13 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn *security_v1beta.PeerAuth
 		enabledCheckers = append(enabledCheckers, peerauthentications.DisabledNamespaceWideChecker{PeerAuthn: peerAuthn, DestinationRules: m.MTLSDetails.DestinationRules})
 	}
 
-	// MeshWide and NamespaceWide validations are only needed with autoMtls disabled
-	if !m.MTLSDetails.EnabledAutoMtls {
-		// PeerAuthentications into  the root namespace namespace are considered Mesh-wide objects
-		if config.IsRootNamespace(peerAuthn.Namespace) {
-			enabledCheckers = append(enabledCheckers,
-				peerauthentications.MeshMtlsChecker{MeshPolicy: peerAuthn, MTLSDetails: m.MTLSDetails, IsServiceMesh: false})
-		} else {
-			enabledCheckers = append(enabledCheckers,
-				peerauthentications.NamespaceMtlsChecker{PeerAuthn: peerAuthn, MTLSDetails: m.MTLSDetails})
-		}
+	// PeerAuthentications into  the root namespace namespace are considered Mesh-wide objects
+	if config.IsRootNamespace(peerAuthn.Namespace) {
+		enabledCheckers = append(enabledCheckers,
+			peerauthentications.MeshMtlsChecker{MeshPolicy: peerAuthn, MTLSDetails: m.MTLSDetails, IsServiceMesh: false})
+	} else {
+		enabledCheckers = append(enabledCheckers,
+			peerauthentications.NamespaceMtlsChecker{PeerAuthn: peerAuthn, MTLSDetails: m.MTLSDetails})
 	}
 
 	for _, checker := range enabledCheckers {
