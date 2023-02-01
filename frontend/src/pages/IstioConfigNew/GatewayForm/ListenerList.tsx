@@ -1,11 +1,11 @@
 import * as React from 'react';
-import {cellWidth, TableComposable, Tbody, Th, Thead, Tr} from '@patternfly/react-table';
+import { cellWidth, TableComposable, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { style } from 'typestyle';
 import { PFColors } from '../../../components/Pf/PfColors';
-import {Button, ButtonVariant} from "@patternfly/react-core";
-import {PlusCircleIcon} from "@patternfly/react-icons";
+import { Button, ButtonVariant } from "@patternfly/react-core";
+import { PlusCircleIcon } from "@patternfly/react-icons";
 import { Listener } from "../../../types/IstioObjects";
-import {ListenerForm} from "../K8sGatewayForm";
+import { ListenerForm } from "../K8sGatewayForm";
 import ListenerBuilder from "./ListenerBuilder";
 
 type Props = {
@@ -96,10 +96,6 @@ type ListenerListState = {
 
 class ListenerList extends React.Component<Props, ListenerListState> {
 
-  constructor(props) {
-    super(props);
-  }
-
   onAddListener = () => {
     const newListener : ListenerForm = {
       hostname: '',
@@ -113,18 +109,34 @@ class ListenerList extends React.Component<Props, ListenerListState> {
     }
     const l = this.props.listenersForm
     l.push(newListener)
+
+    const newListenerF : Listener = {
+      hostname: '',
+      port: 70000,
+      name: '',
+      protocol: 'HTTP',
+      allowedRoutes: {namespaces: {from: "", selector: {matchLabels: {}}}}
+    }
+
+    const lf = this.props.listeners
+    lf.push(newListenerF)
+
     this.setState(
       {},
-      () => this.props.onChange(this.props.listeners, l)
+      () => this.props.onChange(lf, l)
     );
   };
 
   onRemoveListener = (index: number) => {
     const l = this.props.listenersForm
     l.splice(index,1)
+
+    const lf = this.props.listeners
+    lf.splice(index,1)
+
     this.setState(
       {},
-      () => this.props.onChange(this.props.listeners, l)
+      () => this.props.onChange(lf, l)
     );
 
   };
@@ -144,9 +156,10 @@ class ListenerList extends React.Component<Props, ListenerListState> {
 
   createNewListener = (listenerForm: ListenerForm) => {
 
-    if (isNaN(Number(listenerForm.port))) return;
-    const selector = addSelectorLabels(listenerForm.sSelectorLabels)
-    if (typeof(selector) === "undefined") return;
+    if (listenerForm.port.length === 0 || isNaN(Number(listenerForm.port))) return;
+    if (listenerForm.hostname.length === 0) return;
+
+    const selector = addSelectorLabels(listenerForm.sSelectorLabels) || {}
 
     const listener : Listener = {
       hostname: listenerForm.hostname,
@@ -179,7 +192,8 @@ class ListenerList extends React.Component<Props, ListenerListState> {
                                  onChange={this.onChange}
                 ></ListenerBuilder>
             ))}
-            <Tr key="addTable">
+            <Tr>
+              <Td>
               <Button
                 variant={ButtonVariant.link}
                 icon={<PlusCircleIcon/>}
@@ -188,6 +202,7 @@ class ListenerList extends React.Component<Props, ListenerListState> {
               >
                 Add Listener to Listener List
               </Button>
+              </Td>
             </Tr>
           </Tbody>
         </TableComposable>

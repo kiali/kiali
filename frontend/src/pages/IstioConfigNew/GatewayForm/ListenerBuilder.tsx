@@ -14,36 +14,28 @@ type Props = {
   onChange: (listenerForm: ListenerForm, i: number) => void;
 };
 
-type State = {
-  isHostValid: boolean;
-  newHostname: string;
-  newPort: string;
-  newName: string;
-  newProtocol: string;
-  newFrom: string;
-  isLabelSelectorValid: boolean;
-  newSelectorLabels: string;
-};
-
 // Only HTTPRoute is supported in Istio
 const protocols = ['HTTP'];
 const allowedRoutes = ['All', 'Selector', 'Same'];
 
+export const isValidName = (name: string) => {
+  return name !== undefined && name.length > 0
+}
 
-class ListenerBuilder extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      newHostname: '',
-      isHostValid: false,
-      newPort: '',
-      newName: '',
-      newProtocol: protocols[0],
-      newFrom: allowedRoutes[2],
-      newSelectorLabels: '',
-      isLabelSelectorValid: false,
-    };
-  }
+export const isValidHostname = (hostname: string) => {
+  return hostname !== undefined && hostname.length > 0 && isGatewayHostValid(hostname)
+}
+
+export const isValidPort = (port: string) => {
+  return port.length > 0 && !isNaN(Number(port)) && Number(port) >= 0 &&
+    Number(port) <= 65535
+}
+
+export const isValidSelector = (selector: string) => {
+  return selector.length === 0 || typeof (addSelectorLabels(selector)) !== "undefined"
+}
+
+class ListenerBuilder extends React.Component<Props> {
 
   isValidHost = (host: string): boolean => {
     return isGatewayHostValid(host);
@@ -106,7 +98,7 @@ class ListenerBuilder extends React.Component<Props, State> {
           id="addName"
           aria-describedby="add name"
           onChange={this.onAddName}
-          validated={isValid(this.props.listener.name !== undefined && this.props.listener.name.length > 0)}
+          validated={isValid(isValidName(this.props.listener.name))}
         />
       </Td>
         <Td>
@@ -117,7 +109,7 @@ class ListenerBuilder extends React.Component<Props, State> {
             aria-describedby="add hostname"
             name="addHostname"
             onChange={this.onAddHostname}
-            validated={isValid(this.props.listener.hostname !== undefined && this.props.listener.hostname.length > 0 && isGatewayHostValid(this.props.listener.hostname))}
+            validated={isValid(isValidHostname(this.props.listener.hostname))}
           />
         </Td>
         <Td>
@@ -129,8 +121,7 @@ class ListenerBuilder extends React.Component<Props, State> {
             aria-describedby="add port"
             name="addPortNumber"
             onChange={this.onAddPort}
-            validated={isValid(this.props.listener.port.length > 0 && !isNaN(Number(this.props.listener.port)) && Number(this.props.listener.port) >= 0 &&
-              Number(this.props.listener.port) <= 65535)  }
+            validated={isValid(isValidPort(this.props.listener.port)) }
           />
         </Td>
         <Td>
@@ -162,7 +153,7 @@ class ListenerBuilder extends React.Component<Props, State> {
             id="addSelectorLabels"
             name="addSelectorLabels"
             onChange={this.onAddSelectorLabels}
-            validated={isValid(this.props.listener.sSelectorLabels.length === 0 || typeof(addSelectorLabels(this.props.listener.sSelectorLabels)) !== "undefined")}
+            validated={isValid(isValidSelector(this.props.listener.sSelectorLabels))}
           />
         </Td>
         <Td>
