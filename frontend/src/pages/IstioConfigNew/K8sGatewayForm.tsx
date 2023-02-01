@@ -1,11 +1,10 @@
 import * as React from 'react';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import { FormGroup } from '@patternfly/react-core';
-import ListenerBuilder from "./GatewayForm/ListenerBuilder";
 import AddressBuilder from "./GatewayForm/AddressBuilder";
-import ListenerList from "./GatewayForm/ListenerList";
 import AddressList from "./GatewayForm/AddressList";
 import {Address, Listener} from '../../types/IstioObjects';
+import ListenerList from "./GatewayForm/ListenerList";
 
 export const K8SGATEWAY = 'K8sGateway';
 export const K8SGATEWAYS = 'k8sgateways';
@@ -19,31 +18,36 @@ type Props = {
 export type K8sGatewayState = {
   listeners: Listener[];
   addresses: Address[];
-  addListener: Listener;
   addAddress: Address;
   validHosts: boolean;
+  listenersForm: ListenerForm[];
 };
 
 export const initK8sGateway = (): K8sGatewayState => ({
   listeners: [],
   addresses: [],
-  addListener: {
-    hostname: '',
-    port: 80,
-    name: 'default',
-    protocol: 'HTTP',
-    allowedRoutes: {namespaces: {from: "Same", selector: {matchLabels: {}}}}
-  },
   addAddress: {
     type: 'IPAddress',
     value: '',
   },
-  validHosts: false
+  validHosts: false,
+  listenersForm: [],
 });
 
 export const isK8sGatewayStateValid = (g: K8sGatewayState): boolean => {
   return g.listeners.length > 0;
 };
+
+export type ListenerForm = {
+  isHostValid: boolean;
+  hostname: string;
+  port: string;
+  name: string;
+  protocol: string;
+  from: string;
+  isLabelSelectorValid: boolean;
+  sSelectorLabels: string;
+}
 
 class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
   constructor(props: Props) {
@@ -54,37 +58,6 @@ class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
   componentDidMount() {
     this.setState(this.props.k8sGateway);
   }
-
-  onAddListener = () => {
-    this.setState(
-      prevState => {
-        prevState.listeners.push(prevState.addListener);
-        return {
-          listeners: prevState.listeners,
-          addListener: {
-            hostname: '',
-            port: 80,
-            name: 'http',
-            protocol: 'HTTP',
-            allowedRoutes: {namespaces: {from: "Same", selector: {matchLabels: {}}}}
-          }
-        };
-      },
-      () => this.props.onChange(this.state)
-    );
-  };
-
-  onRemoveListener = (index: number) => {
-    this.setState(
-      prevState => {
-        prevState.listeners.splice(index, 1);
-        return {
-          listeners: prevState.listeners
-        };
-      },
-      () => this.props.onChange(this.state)
-    );
-  };
 
   onAddAddress = () => {
     this.setState(
@@ -114,21 +87,21 @@ class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
     );
   };
 
+  onChangeListener = (listeners: Listener[], listenersForm: ListenerForm[]) => {
+    this.setState(
+      { listeners: listeners, listenersForm: listenersForm}
+    );
+  }
+
   render() {
+    console.log("RENDER FROM k8s")
     return (
       <>
         <FormGroup label="Listeners" fieldId="listener" isRequired={true}>
-          <ListenerBuilder
-            onAddListener={listener => {
-              this.setState(
-                {
-                  addListener: listener
-                },
-                () => this.onAddListener()
-              );
-            }}
-          />
-          <ListenerList listenerList={this.state.listeners} onRemoveListener={this.onRemoveListener} />
+          <ListenerList  onChange={this.onChangeListener}
+                         listenersForm={this.state.listenersForm}
+                         listeners={this.state.listeners}
+                         />
         </FormGroup>
         <FormGroup label="Addresses" fieldId="gwAddressList">
           <AddressBuilder
@@ -146,6 +119,135 @@ class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
       </>
     );
   }
+
+/*  onAddListener = () => {
+    const newListener : ListenerForm = {
+      hostname: '',
+      port: '',
+      name: 'http',
+      protocol: 'HTTP',
+      isHostValid: false,
+      from: '',
+      isLabelSelectorValid: false,
+      sSelectorLabels: ''
+    }
+    const l = this.state.listenersForm
+    l.push(newListener)
+    this.setState(
+      {listenersForm: l}
+    );
+  };
+
+  onRemoveListener = (index: number) => {
+    const l = this.state.listenersForm
+    l.splice(index,1)
+    this.setState(
+      {listenersForm: l}
+    );
+
+  };
+
+  onAddName = (value: string, e: FormEvent<HTMLInputElement>) => {
+    const index = e.currentTarget.name
+    const l = this.state.listenersForm
+    l[index].name = value
+    this.setState(
+      {listenersForm: l}
+    );
+  };
+
+  rows() {
+    return (this.state.listenersForm || [])
+      .map((listener, i) => ({
+        key: 'listener'+i,
+        cells: [
+          <>
+            <TextInput
+              value={listener.name}
+              type="text"
+              id="addName"
+              aria-describedby="add name"
+              name={i.toString()}
+              onChange={this.onAddName}
+              validated={isValid(listener.name !== undefined && listener.name.length > 0)}
+            />
+          </>,
+          <>
+            <TextInput
+              value={listener.hostname}
+              type="text"
+              id="addHostname"
+              aria-describedby="add hostname"
+              name="addHostname"
+              validated={isValid(listener.hostname !== undefined && listener.hostname.length > 0 && /[.+\..+]/.test(listener.hostname))}
+            />
+          </>,
+          <>
+            <TextInput
+              value={listener.port}
+              type="text"
+              id="addPort"
+              placeholder="80"
+              aria-describedby="add port"
+              name="addPortNumber"
+            />
+          </>,
+          <>
+            <FormSelect
+              value={listener.protocol}
+              id="addPortProtocol"
+              name="addPortProtocol"
+            >
+              {protocols.map((option, index) => (
+                <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+              ))}
+            </FormSelect>
+          </>,
+          <>
+            <FormSelect
+              value={listener}
+              id="addFrom"
+              name="addFrom"
+            >
+              {allowedRoutes.map((option, index) => (
+                <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+              ))}
+            </FormSelect>
+          </>,
+          <>
+            <TextInput
+              id="addSelectorLabels"
+              name="addSelectorLabels"
+            />
+          </>,
+          <>
+            <Button
+              id="deleteBtn"
+              variant={ButtonVariant.link}
+              icon={<TrashIcon />}
+              style={{padding: 0}}
+              onClick={() => this.onRemoveListener(i)}
+            />
+          </>
+        ]
+      })).concat([{
+        key: 'newListener',
+        cells: [
+          <>
+            <Button
+              variant={ButtonVariant.link}
+              icon={<PlusCircleIcon/>}
+              onClick={this.onAddListener}
+              //className={addListenerStyle}
+            >
+              Add Listener to Listener List
+            </Button>
+          </>
+        ]
+      }]);
+  }*/
+
+
 }
 
 export default K8sGatewayForm;

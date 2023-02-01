@@ -1,16 +1,17 @@
 import * as React from 'react';
-import { Button, ButtonVariant, FormSelect, FormSelectOption } from '@patternfly/react-core';
-import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
-import { style } from 'typestyle';
-import { PFColors } from '../../../components/Pf/PfColors';
-import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isGatewayHostValid } from '../../../utils/IstioConfigUtils';
-import { Listener } from '../../../types/IstioObjects';
-import { isValid } from 'utils/Common';
+import {Button, ButtonVariant, FormSelect, FormSelectOption, TextInput} from "@patternfly/react-core";
+import {isValid} from "../../../utils/Common";
+import {TrashIcon} from "@patternfly/react-icons";
+import {ListenerForm} from "../K8sGatewayForm";
+import {Td, Tr} from '@patternfly/react-table';
+import {addSelectorLabels} from "./ListenerList";
 
 type Props = {
-  onAddListener: (listener: Listener) => void;
+  listener: ListenerForm;
+  onRemoveListener: (i: number) => void;
+  index: number;
+  onChange: (listenerForm: ListenerForm, i: number) => void;
 };
 
 type State = {
@@ -24,53 +25,8 @@ type State = {
   newSelectorLabels: string;
 };
 
-const warningStyle = style({
-  marginLeft: 25,
-  color: PFColors.Red100,
-  textAlign: 'center'
-});
-
-const addListenerStyle = style({
-  marginLeft: 0,
-  paddingLeft: 0
-});
-
-const listenerHeader: ICell[] = [
-  {
-    title: 'Name',
-    transforms: [cellWidth(20) as any],
-    props: {}
-  },
-  {
-    title: 'Hostname',
-    transforms: [cellWidth(20) as any],
-    props: {}
-  },
-  {
-    title: 'Port',
-    transforms: [cellWidth(10) as any],
-    props: {}
-  },
-  {
-    title: 'Protocol',
-    transforms: [cellWidth(10) as any],
-    props: {}
-  },
-  {
-    title: 'From Namespaces',
-    transforms: [cellWidth(10) as any],
-    props: {}
-  },
-  {
-    title: 'Labels',
-    transforms: [cellWidth(25) as any],
-    props: {}
-  }
-];
-
 // Only HTTPRoute is supported in Istio
 const protocols = ['HTTP'];
-
 const allowedRoutes = ['All', 'Selector', 'Same'];
 
 
@@ -89,18 +45,16 @@ class ListenerBuilder extends React.Component<Props, State> {
     };
   }
 
-  canAddListener = (): boolean => {
-    const hostValid = this.state.isHostValid;
-    const portNumberValid = this.state.newPort.length > 0 && !isNaN(Number(this.state.newPort));
-    const portNameValid = this.state.newName.length > 0;
-    return hostValid && portNumberValid && portNameValid;
-  };
-
   isValidHost = (host: string): boolean => {
     return isGatewayHostValid(host);
   };
 
   onAddHostname = (value: string, _) => {
+    const l = this.props.listener
+    l.hostname = value.trim()
+
+    this.props.onChange(l, this.props.index)
+
     this.setState({
       newHostname: value,
       isHostValid: this.isValidHost(value)
@@ -108,209 +62,123 @@ class ListenerBuilder extends React.Component<Props, State> {
   };
 
   onAddPort = (value: string, _) => {
-    this.setState({
-      newPort: value.trim()
-    });
+    const l = this.props.listener
+    l.port = value.trim()
+
+    this.props.onChange(l, this.props.index)
   };
 
   onAddName = (value: string, _) => {
-    this.setState({
-      newName: value.trim()
-    });
+    const l = this.props.listener
+    l.name = value.trim()
+
+    this.props.onChange(l, this.props.index)
   };
 
   onAddProtocol = (value: string, _) => {
-    this.setState({
-      newProtocol: value
-    });
+    const l = this.props.listener
+    l.protocol = value.trim()
+
+    this.props.onChange(l, this.props.index)
   };
 
   onAddFrom = (value: string, _) => {
-    this.setState({
-      newFrom: value
-    });
+    const l = this.props.listener
+    l.from = value.trim()
+
+    this.props.onChange(l, this.props.index)
   };
 
   onAddSelectorLabels = (value: string, _) => {
-    this.setState({
-      newSelectorLabels: value
-    });
+    const l = this.props.listener
+    l.sSelectorLabels = value.trim()
+
+    this.props.onChange(l, this.props.index)
   };
-
-  onAddListener = () => {
-    const newListener: Listener = {
-      hostname: this.state.newHostname,
-      port: +this.state.newPort,
-      name: this.state.newName,
-      protocol: this.state.newProtocol,
-      allowedRoutes: {namespaces: {from: this.state.newFrom, selector: {matchLabels: this.getLabelsMap(this.state.newSelectorLabels)}}}
-    };
-    this.setState(
-      {
-        newHostname: '',
-        isHostValid: false,
-        newPort: '',
-        newName: '',
-        newProtocol: protocols[0],
-        newFrom: allowedRoutes[2],
-        newSelectorLabels: '',
-        isLabelSelectorValid: false,
-      },
-      () => this.props.onAddListener(newListener)
-    );
-  };
-
-  getLabelsMap = (value: string) => {
-    const valuesMap = {}
-    value
-      .trim()
-      .split(',')
-      .forEach(split => {
-        const labels = split.trim().split('=');
-        if (labels.length === 2) {
-            valuesMap[labels[0].trim()] = labels[1].trim();
-        }
-      });
-    return valuesMap;
-  }
-
-  addSelectorLabels = (value: string, _) => {
-    if (value.length === 0) {
-      this.setState(
-        {
-          isLabelSelectorValid: false,
-          newSelectorLabels: ''
-        },
-      );
-      return;
-    }
-    value = value.trim();
-    const labels: string[] = value.split(',');
-    let isValid = true;
-    // Some smoke validation rules for the labels
-    for (let i = 0; i < labels.length; i++) {
-      const label = labels[i];
-      if (label.indexOf('=') < 0) {
-        isValid = false;
-        break;
-      }
-      const splitLabel: string[] = label.split('=');
-      if (splitLabel.length !== 2) {
-        isValid = false;
-        break;
-      }
-      if (splitLabel[0].trim().length === 0 || splitLabel[1].trim().length === 0) {
-        isValid = false;
-        break;
-      }
-    }
-    this.setState(
-      {
-        isLabelSelectorValid: isValid,
-        newSelectorLabels: value
-      },
-    );
-  };
-
-  listenerRows() {
-    const showSelector = this.state.newFrom === 'Selector';
-    return [
-      {
-        keys: 'gatewayListenerNew',
-        cells: [
-          <>
-            <TextInput
-              value={this.state.newName}
-              type="text"
-              id="addName"
-              aria-describedby="add name"
-              name="addName"
-              onChange={this.onAddName}
-              validated={isValid(this.state.newName.length > 0)}
-            />
-          </>,
-          <>
-            <TextInput
-              value={this.state.newHostname}
-              type="text"
-              id="addHostname"
-              aria-describedby="add hostname"
-              name="addHostname"
-              onChange={this.onAddHostname}
-              validated={isValid(this.state.isHostValid)}
-            />
-          </>,
-          <>
-            <TextInput
-              value={this.state.newPort}
-              type="text"
-              id="addPort"
-              aria-describedby="add port"
-              name="addPortNumber"
-              onChange={this.onAddPort}
-              validated={isValid(this.state.newPort.length > 0 && !isNaN(Number(this.state.newPort)))}
-            />
-          </>,
-          <>
-            <FormSelect
-              value={this.state.newProtocol}
-              id="addPortProtocol"
-              name="addPortProtocol"
-              onChange={this.onAddProtocol}
-            >
-              {protocols.map((option, index) => (
-                <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
-              ))}
-            </FormSelect>
-          </>,
-          <>
-            <FormSelect
-              value={this.state.newFrom}
-              id="addFrom"
-              name="addFrom"
-              onChange={this.onAddFrom}
-            >
-              {allowedRoutes.map((option, index) => (
-                <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
-              ))}
-            </FormSelect>
-          </>,
-          <>
-            <TextInput
-              id="addSelectorLabels"
-              name="addSelectorLabels"
-              value={this.state.newSelectorLabels}
-              onChange={this.addSelectorLabels}
-              isDisabled={!showSelector}
-              validated={isValid(!showSelector || this.state.isLabelSelectorValid)}
-            />
-          </>
-        ]
-      }
-    ];
-  }
 
   render() {
     return (
-      <>
-        <Table aria-label="Listener Rows" cells={listenerHeader} rows={this.listenerRows()}>
-          <TableHeader />
-          <TableBody />
-        </Table>
-        <Button
-          variant={ButtonVariant.link}
-          icon={<PlusCircleIcon />}
-          data-test={"add-listener"}
-          onClick={this.onAddListener}
-          isDisabled={!this.canAddListener()}
-          className={addListenerStyle}
-        >
-          Add Listener to Listener List
-        </Button>
-        {!this.canAddListener() && <span className={warningStyle}>A Listener needs Hostname and Port sections defined</span>}
-      </>
+      <Tr>
+      <Td>
+        <TextInput
+          value={this.props.listener.name}
+          type="text"
+          id="addName"
+          aria-describedby="add name"
+          onChange={this.onAddName}
+          validated={isValid(this.props.listener.name !== undefined && this.props.listener.name.length > 0)}
+        />
+      </Td>
+        <Td>
+          <TextInput
+            value={this.props.listener.hostname}
+            type="text"
+            id="addHostname"
+            aria-describedby="add hostname"
+            name="addHostname"
+            onChange={this.onAddHostname}
+            validated={isValid(this.props.listener.hostname !== undefined && this.props.listener.hostname.length > 0 && isGatewayHostValid(this.props.listener.hostname))}
+          />
+        </Td>
+        <Td>
+          <TextInput
+            value={this.props.listener.port}
+            type="text"
+            id="addPort"
+            placeholder="80"
+            aria-describedby="add port"
+            name="addPortNumber"
+            onChange={this.onAddPort}
+            validated={isValid(this.props.listener.port.length > 0 && !isNaN(Number(this.props.listener.port)) && Number(this.props.listener.port) >= 0 &&
+              Number(this.props.listener.port) <= 65535)  }
+          />
+        </Td>
+        <Td>
+          <FormSelect
+            value={this.props.listener.protocol}
+            id="addPortProtocol"
+            name="addPortProtocol"
+            onChange={this.onAddProtocol}
+          >
+            {protocols.map((option, index) => (
+              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+            ))}
+          </FormSelect>
+        </Td>
+        <Td>
+          <FormSelect
+            value={this.props.listener.from}
+            id="addFrom"
+            name="addFrom"
+            onChange={this.onAddFrom}
+          >
+            {allowedRoutes.map((option, index) => (
+              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+            ))}
+          </FormSelect>
+        </Td>
+        <Td>
+          <TextInput
+            id="addSelectorLabels"
+            name="addSelectorLabels"
+            onChange={this.onAddSelectorLabels}
+            validated={isValid(this.props.listener.sSelectorLabels.length === 0 || typeof(addSelectorLabels(this.props.listener.sSelectorLabels)) !== "undefined")}
+          />
+        </Td>
+        <Td>
+          <Button
+            id="deleteBtn"
+            variant={ButtonVariant.link}
+            icon={<TrashIcon />}
+            style={{padding: 0}}
+            onClick={() => this.props.onRemoveListener(this.props.index)}
+          />
+        </Td>
+      </Tr>
     );
   }
 }
 
 export default ListenerBuilder;
+
+
