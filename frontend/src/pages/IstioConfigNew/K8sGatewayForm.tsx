@@ -94,7 +94,6 @@ class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
   }
 
   render() {
-    console.log("RENDER FROM k8s")
     return (
       <>
         <FormGroup label="Listeners" fieldId="listener" isRequired={true}>

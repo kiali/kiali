@@ -70,6 +70,8 @@ export const addSelectorLabels = (value: string) => {
   }
   value = value.trim();
   const labels: string[] = value.split(',');
+
+  const selector: { [key: string]: string } = {};
   // Some smoke validation rules for the labels
   for (let i = 0; i < labels.length; i++) {
     const label = labels[i];
@@ -83,13 +85,9 @@ export const addSelectorLabels = (value: string) => {
     if (splitLabel[0].trim().length === 0 || splitLabel[1].trim().length === 0) {
       break;
     }
-    const selector: { [key: string]: string } = {};
     selector[splitLabel[0].trim()] = splitLabel[1].trim();
-
-    //const selector : LabelSelector = {matchLabels: { ['key': splitLabel[0].trim()]: splitLabel[1].trim() }};
-    return selector;
   }
-  return;
+  return selector;
 };
 
 type ListenerListState = {
