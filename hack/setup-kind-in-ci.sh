@@ -147,11 +147,16 @@ infomsg "Cloning kiali helm-charts..."
 git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git helm-charts
 make -C helm-charts build-helm-charts
 
+HELM="helm-charts/_output/helm-install/helm"
+
+infomsg "Using helm: $(ls -l ${HELM})"
+infomsg "$(${HELM} version)"
+
 infomsg "Installing kiali server via Helm"
 # The grafana and tracing urls need to be set for backend e2e tests
 # but they don't need to be accessible outside the cluster.
 # Need a single dashboard set for grafana.
-helm install \
+${HELM} install \
   --namespace istio-system \
   --set auth.strategy="${AUTH_STRATEGY}" \
   --set deployment.logger.log_level="trace" \
@@ -173,7 +178,7 @@ helm install \
 
 # Create the citest service account whose token will be used to log into Kiali
 infomsg "Installing the test ServiceAccount with read-write permissions"
-for o in role rolebinding serviceaccount; do helm template --show-only "templates/${o}.yaml" --namespace=istio-system --set deployment.instance_name=citest --set auth.strategy=anonymous kiali-server helm-charts/_output/charts/kiali-server-*-SNAPSHOT.tgz; done | kubectl apply -f -
+for o in role rolebinding serviceaccount; do ${HELM} template --show-only "templates/${o}.yaml" --namespace=istio-system --set deployment.instance_name=citest --set auth.strategy=anonymous kiali-server helm-charts/_output/charts/kiali-server-*-SNAPSHOT.tgz; done | kubectl apply -f -
 
 # Unfortunately kubectl rollout status fails if the resource does not exist yet.
 for (( i=1; i<=60; i++ ))
@@ -212,6 +217,3 @@ if [ "${TIMEOUT}" == "True" ]; then
 fi
 
 infomsg "Kiali is ready."
-
-
-
