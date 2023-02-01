@@ -15,8 +15,8 @@ type Props = {
 };
 
 // Only HTTPRoute is supported in Istio
-const protocols = ['HTTP'];
-const allowedRoutes = ['All', 'Selector', 'Same'];
+export const protocols = ['HTTP'];
+export const allowedRoutes = ['All', 'Selector', 'Same'];
 
 export const isValidName = (name: string) => {
   return name !== undefined && name.length > 0

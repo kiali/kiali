@@ -3,7 +3,6 @@ import { Button, ButtonVariant, FormSelect, FormSelectOption } from '@patternfly
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { Td, Tr} from '@patternfly/react-table';
 import { TrashIcon} from '@patternfly/react-icons';
-import {isGatewayHostValid, isValidIp} from '../../../utils/IstioConfigUtils';
 import { Address } from '../../../types/IstioObjects';
 import { isValid } from 'utils/Common';
 
@@ -31,16 +30,6 @@ class AddressBuilder extends React.Component<Props, State> {
       newValue: '',
     };
   }
-
-  isValueValid = (value: string): boolean => {
-    if (this.state.newType === addressTypes[0]) {
-      return isValidIp(value)
-    }
-    if (this.state.newType === addressTypes[1]) {
-      return isGatewayHostValid(value)
-    }
-    return false;
-  };
 
   onAddValue = (value: string) => {
     const l = this.props.address

@@ -6,7 +6,7 @@ import { Button, ButtonVariant } from "@patternfly/react-core";
 import { PlusCircleIcon } from "@patternfly/react-icons";
 import { Listener } from "../../../types/IstioObjects";
 import { ListenerForm } from "../K8sGatewayForm";
-import ListenerBuilder from "./ListenerBuilder";
+import ListenerBuilder, {allowedRoutes, protocols} from "./ListenerBuilder";
 
 type Props = {
   onChange: (listener: Listener[], listenerForm: ListenerForm[]) => void;
@@ -101,9 +101,9 @@ class ListenerList extends React.Component<Props, ListenerListState> {
       hostname: '',
       port: '',
       name: '',
-      protocol: 'HTTP',
+      protocol: protocols[0],
       isHostValid: false,
-      from: '',
+      from: allowedRoutes[0],
       isLabelSelectorValid: false,
       sSelectorLabels: ''
     }
@@ -114,8 +114,8 @@ class ListenerList extends React.Component<Props, ListenerListState> {
       hostname: '',
       port: 70000,
       name: '',
-      protocol: 'HTTP',
-      allowedRoutes: {namespaces: {from: "", selector: {matchLabels: {}}}}
+      protocol: protocols[0],
+      allowedRoutes: {namespaces: {from: allowedRoutes[0], selector: {matchLabels: {}}}}
     }
 
     const lf = this.props.listeners

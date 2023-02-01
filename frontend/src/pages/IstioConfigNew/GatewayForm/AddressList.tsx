@@ -66,7 +66,6 @@ class AddressList extends React.Component<Props> {
       {},
       () => this.props.onChange(l)
     );
-
   };
 
   onChange = (address: Address, i: number) => {
