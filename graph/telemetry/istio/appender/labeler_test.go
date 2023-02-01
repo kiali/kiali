@@ -42,6 +42,7 @@ func setupLabelerTrafficMap() (map[string]*graph.Node, string, string, string, s
 func setupLabelerK8S() *business.Layer {
 	k8s := kubetest.NewK8SClientMock()
 	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
@@ -84,7 +85,8 @@ func setupLabelerK8S() *business.Layer {
 					Labels: graph.LabelsMetadata{"app": "test", "version": "v1", "datacenter": "east"},
 				},
 				Status: core_v1.PodStatus{
-					Message: "foo"},
+					Message: "foo",
+				},
 			},
 			{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -92,7 +94,8 @@ func setupLabelerK8S() *business.Layer {
 					Labels: graph.LabelsMetadata{"app": "test", "version": "v2", "datacenter": "west"},
 				},
 				Status: core_v1.PodStatus{
-					Message: "foo"},
+					Message: "foo",
+				},
 			},
 		}, nil)
 	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
@@ -100,15 +103,14 @@ func setupLabelerK8S() *business.Layer {
 	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	k8s.On("GetDaemonSets", mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
 
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:   "test",
-			Labels: graph.LabelsMetadata{"app": "test", "datacenter": "east"},
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:   "test",
+				Labels: graph.LabelsMetadata{"app": "test", "datacenter": "east"},
+			},
 		},
-	},
 	}, nil)
-
-	config.Set(config.NewConfig())
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	return businessLayer
