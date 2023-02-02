@@ -20,7 +20,6 @@ import (
 )
 
 func TestWorkloadSidecarsPasses(t *testing.T) {
-	config.Set(config.NewConfig())
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(buildFakeWorkloadDeployments(), buildFakeWorkloadPods())
 
@@ -40,7 +39,6 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 }
 
 func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
-	config.Set(config.NewConfig())
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
 
@@ -61,7 +59,6 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 }
 
 func TestInaccessibleWorkload(t *testing.T) {
-	config.Set(config.NewConfig())
 	trafficMap := buildInaccessibleWorkloadTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
 
@@ -81,7 +78,6 @@ func TestInaccessibleWorkload(t *testing.T) {
 }
 
 func TestAppNoPodsPasses(t *testing.T) {
-	config.Set(config.NewConfig())
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, []core_v1.Pod{})
 
@@ -101,7 +97,6 @@ func TestAppNoPodsPasses(t *testing.T) {
 }
 
 func TestAppSidecarsPasses(t *testing.T) {
-	config.Set(config.NewConfig())
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, buildFakeWorkloadPods())
 
@@ -121,7 +116,6 @@ func TestAppSidecarsPasses(t *testing.T) {
 }
 
 func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
-	config.Set(config.NewConfig())
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, buildFakeWorkloadPodsNoSidecar())
 
@@ -252,7 +246,9 @@ func setupSidecarsCheckWorkloads(deployments []apps_v1.Deployment, pods []core_v
 	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
 	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	k8s.On("GetDaemonSets", mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
-	config.Set(config.NewConfig())
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
+	config.Set(conf)
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	return businessLayer
