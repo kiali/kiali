@@ -87,11 +87,6 @@ func main() {
 	status.Put(status.CoreCommitHash, commitHash)
 	status.Put(status.ContainerVersion, determineContainerVersion(version))
 
-	// CheckVersionCompatibility check kiali version compatibility with mesh.
-	// The user session is not affected no matter what this check returns, just warning logs.
-	// The complete compatible version matrix is recorded in version-compatibility-matrix.yaml
-	status.CheckVersionCompatibility()
-
 	authentication.InitializeAuthenticationController(cfg.Auth.Strategy)
 
 	// prepare our internal metrics so Prometheus can scrape them
