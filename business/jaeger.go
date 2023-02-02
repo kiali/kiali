@@ -138,6 +138,11 @@ func (in *JaegerService) GetAppTraces(ns, app string, query models.TracingQuery)
 	return r, nil
 }
 
+// GetServiceTraces returns traces involving the requested service.  Note that because the tracing API pulls traces by "App", only a
+// subset of the traces may actually involve the requested service.  Callers may need to upwardly adjust TracingQuery.Limit to get back
+// the number of desired traces.  It depends on the number of services backing the app. For example, if there are 2 services for the
+// app, if evenly distributed, a query limit of 20 may return only 10 traces.  The ratio is typically not as bad as it is with
+// GetWorkloadTraces.
 func (in *JaegerService) GetServiceTraces(ctx context.Context, ns, service string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceTraces",
@@ -155,9 +160,7 @@ func (in *JaegerService) GetServiceTraces(ctx context.Context, ns, service strin
 		// No post-filtering
 		return in.GetAppTraces(ns, app, query)
 	}
-	// Now we're in context where app != service, so we need to perform post-filtering based on operation names
-	// Artificial increase of limit (see explanation in GetWorkloadTraces)
-	query.Limit *= 2
+
 	r, err := in.GetAppTraces(ns, app, query)
 	if r != nil && err == nil {
 		// Filter out app traces based on operation name.
@@ -177,6 +180,10 @@ func (in *JaegerService) GetServiceTraces(ctx context.Context, ns, service strin
 	return r, err
 }
 
+// GetWorkloadTraces returns traces involving the requested workload.  Note that because the tracing API pulls traces by "App", only
+// a subset of the traces may actually involve the requested workload.  Callers may need to upwardly adjust TracingQuery.Limit to get back
+// the number of desired traces.  It depends on the number of workloads backing the app. For example, if there are 5 workloads for the
+// app, if evenly distributed, a query limit of 25 may return only 5 traces.
 func (in *JaegerService) GetWorkloadTraces(ctx context.Context, ns, workload string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadTraces",
@@ -190,11 +197,7 @@ func (in *JaegerService) GetWorkloadTraces(ctx context.Context, ns, workload str
 	if err != nil {
 		return nil, err
 	}
-	// Because Traces are fetched per App and not Workloads, the 'limit' query param will apply to app's traces, not workloads,
-	// so it will not be consistent with the final result. In other words, we ask for 15 traces but could very well end up with
-	// only 3 traces for the workload even if there's more.
-	// To try to attenuate this effect, we will artificially increase the limit, then cut it down after workload filtering.
-	query.Limit *= 5
+
 	r, err := in.GetAppTraces(ns, app, query)
 	// Filter out app traces based on the node_id tag, that contains workload information.
 	if r != nil && err == nil {

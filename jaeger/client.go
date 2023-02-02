@@ -103,7 +103,7 @@ func NewClient(token string) (*Client, error) {
 		} else {
 			// Legacy HTTP client
 			log.Tracef("Using legacy HTTP client for Jaeger: url=%v, auth.type=%s", u, auth.Type)
-			timeout := time.Duration(5000 * time.Millisecond)
+			timeout := time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout) * time.Second
 			transport, err := httputil.CreateTransport(&auth, &http.Transport{}, timeout, nil)
 			if err != nil {
 				return nil, err
@@ -131,7 +131,7 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*J
 			SearchDepth:  int32(q.Limit),
 		},
 	}
-	ctx, cancel := context.WithTimeout(in.ctx, 4*time.Second)
+	ctx, cancel := context.WithTimeout(in.ctx, time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout)*time.Second)
 	defer cancel()
 
 	stream, err := in.grpcClient.FindTraces(ctx, findTracesRQ)
