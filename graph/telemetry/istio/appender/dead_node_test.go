@@ -21,6 +21,7 @@ import (
 func setupWorkloads() *business.Layer {
 	k8s := kubetest.NewK8SClientMock()
 	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
@@ -86,7 +87,8 @@ func setupWorkloads() *business.Layer {
 					Labels: map[string]string{"app": "testPodsWithTraffic", "version": "v1"},
 				},
 				Status: core_v1.PodStatus{
-					Message: "foo"},
+					Message: "foo",
+				},
 			},
 			{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -94,14 +96,14 @@ func setupWorkloads() *business.Layer {
 					Labels: map[string]string{"app": "testPodsNoTraffic", "version": "v1"},
 				},
 				Status: core_v1.PodStatus{
-					Message: "foo"},
+					Message: "foo",
+				},
 			},
 		}, nil)
 	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
 	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
 	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	k8s.On("GetDaemonSets", mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
-	config.Set(config.NewConfig())
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	return businessLayer
