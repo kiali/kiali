@@ -8,6 +8,7 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
@@ -27,7 +28,10 @@ func setupAppService(k8s *kubetest.K8SClientMock) *AppService {
 
 func TestGetAppListFromDeployments(t *testing.T) {
 	assert := assert.New(t)
+	require := require.New(t)
+
 	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
 	// Setup mocks
@@ -47,10 +51,12 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
+	k8s.On("GetToken").Return("token")
 	svc := setupAppService(k8s)
 
 	criteria := AppCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
-	appList, _ := svc.GetAppList(context.TODO(), criteria)
+	appList, err := svc.GetAppList(context.TODO(), criteria)
+	require.NoError(err)
 
 	assert.Equal("Namespace", appList.Namespace.Name)
 
@@ -78,6 +84,7 @@ func TestGetAppFromDeployments(t *testing.T) {
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(FakeServices(), nil)
 
 	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
 	conf.ExternalServices.CustomDashboards.Enabled = false
 	config.Set(conf)
 	svc := setupAppService(k8s)
@@ -98,6 +105,7 @@ func TestGetAppFromDeployments(t *testing.T) {
 func TestGetAppListFromReplicaSets(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
 	// Setup mocks
@@ -147,6 +155,7 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(FakeServices(), nil)
 
 	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
 	conf.ExternalServices.CustomDashboards.Enabled = false
 	config.Set(conf)
 

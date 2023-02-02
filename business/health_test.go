@@ -228,6 +228,7 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
 	k8s.On("IsOpenShift").Return(true)

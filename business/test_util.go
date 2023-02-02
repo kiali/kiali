@@ -17,7 +17,6 @@ import (
 
 func FakeDeployments() []apps_v1.Deployment {
 	conf := config.NewConfig()
-	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -93,7 +92,7 @@ func FakeDeployments() []apps_v1.Deployment {
 
 func FakeDuplicatedDeployments() []apps_v1.Deployment {
 	conf := config.NewConfig()
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -124,7 +123,7 @@ func FakeDuplicatedDeployments() []apps_v1.Deployment {
 
 func FakeReplicaSets() []apps_v1.ReplicaSet {
 	conf := config.NewConfig()
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -200,7 +199,7 @@ func FakeReplicaSets() []apps_v1.ReplicaSet {
 
 func FakeDuplicatedReplicaSets() []apps_v1.ReplicaSet {
 	conf := config.NewConfig()
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -240,7 +239,7 @@ func FakeReplicationControllers() []core_v1.ReplicationController {
 	conf := config.NewConfig()
 	// Enable ReplicationController, those are not fetched by default
 	conf.KubernetesConfig.ExcludeWorkloads = []string{}
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -317,7 +316,7 @@ func FakeReplicationControllers() []core_v1.ReplicationController {
 func FakeDeploymentConfigs() []osapps_v1.DeploymentConfig {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ExcludeWorkloads = []string{}
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -394,7 +393,7 @@ func FakeDeploymentConfigs() []osapps_v1.DeploymentConfig {
 func FakeStatefulSets() []apps_v1.StatefulSet {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ExcludeWorkloads = []string{}
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -468,7 +467,7 @@ func FakeStatefulSets() []apps_v1.StatefulSet {
 func FakeDaemonSets() []apps_v1.DaemonSet {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ExcludeWorkloads = []string{}
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -544,7 +543,7 @@ func FakeDaemonSets() []apps_v1.DaemonSet {
 
 func FakeDuplicatedStatefulSets() []apps_v1.StatefulSet {
 	conf := config.NewConfig()
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -575,7 +574,7 @@ func FakeDuplicatedStatefulSets() []apps_v1.StatefulSet {
 
 func FakeDepSyncedWithRS() []apps_v1.Deployment {
 	conf := config.NewConfig()
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -607,7 +606,7 @@ func FakeDepSyncedWithRS() []apps_v1.Deployment {
 
 func FakeRSSyncedWithPods() []apps_v1.ReplicaSet {
 	conf := config.NewConfig()
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -645,7 +644,7 @@ func FakeRSSyncedWithPods() []apps_v1.ReplicaSet {
 
 func FakePodsSyncedWithDeployments() []core_v1.Pod {
 	conf := config.NewConfig()
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -680,7 +679,7 @@ func FakePodsSyncedWithDeployments() []core_v1.Pod {
 
 func FakePodSyncedWithDeployments() *core_v1.Pod {
 	conf := config.NewConfig()
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -728,7 +727,7 @@ func FakePodLogsProxy() *kubernetes.PodLogs {
 
 func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 	conf := config.NewConfig()
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -787,7 +786,7 @@ func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 
 func FakePodsNoController() []core_v1.Pod {
 	conf := config.NewConfig()
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -820,7 +819,7 @@ func FakePodsNoController() []core_v1.Pod {
 
 func FakePodsFromCustomController() []core_v1.Pod {
 	conf := config.NewConfig()
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
@@ -855,7 +854,7 @@ func FakePodsFromCustomController() []core_v1.Pod {
 
 func FakeCustomControllerRSSyncedWithPods() []apps_v1.ReplicaSet {
 	conf := config.NewConfig()
-	config.Set(conf)
+
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")

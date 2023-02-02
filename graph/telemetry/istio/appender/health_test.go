@@ -48,7 +48,9 @@ func TestServicesHealthConfigPasses(t *testing.T) {
 }
 
 func TestServicesHealthNoConfigPasses(t *testing.T) {
-	config.Set(config.NewConfig())
+	cfg := config.NewConfig()
+	cfg.KubernetesConfig.CacheEnabled = false
+	config.Set(cfg)
 	trafficMap := buildServiceTrafficMap()
 	businessLayer := setupHealthConfig(buildFakeServicesHealth(""), buildFakeWorkloadDeploymentsHealth(""), buildFakePodsHealth(""))
 
@@ -67,7 +69,9 @@ func TestServicesHealthNoConfigPasses(t *testing.T) {
 }
 
 func TestWorkloadHealthConfigPasses(t *testing.T) {
-	config.Set(config.NewConfig())
+	cfg := config.NewConfig()
+	cfg.KubernetesConfig.CacheEnabled = false
+	config.Set(cfg)
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupHealthConfig(buildFakeServicesHealth(rateDefinition), buildFakeWorkloadDeploymentsHealth(rateWorkloadDefinition), buildFakePodsHealth(rateWorkloadDefinition))
 
@@ -86,7 +90,9 @@ func TestWorkloadHealthConfigPasses(t *testing.T) {
 }
 
 func TestWorkloadHealthNoConfigPasses(t *testing.T) {
-	config.Set(config.NewConfig())
+	cfg := config.NewConfig()
+	cfg.KubernetesConfig.CacheEnabled = false
+	config.Set(cfg)
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupHealthConfig(buildFakeServicesHealth(""), buildFakeWorkloadDeploymentsHealth(""), buildFakePodsHealth(""))
 
@@ -107,7 +113,9 @@ func TestWorkloadHealthNoConfigPasses(t *testing.T) {
 func TestHealthDataPresent(t *testing.T) {
 	assert := assert.New(t)
 
-	config.Set(config.NewConfig())
+	cfg := config.NewConfig()
+	cfg.KubernetesConfig.CacheEnabled = false
+	config.Set(cfg)
 	svcNodes := buildServiceTrafficMap()
 	appNodes := buildAppTrafficMap()
 	wkNodes := buildWorkloadTrafficMap()
@@ -138,7 +146,6 @@ func TestHealthDataPresent(t *testing.T) {
 func TestHealthDataPresent200SvcWk(t *testing.T) {
 	assert := assert.New(t)
 
-	config.Set(config.NewConfig())
 	svcNodes := buildServiceTrafficMap()
 	appNodes := buildAppTrafficMap()
 	wkNodes := buildWorkloadTrafficMap()
@@ -454,7 +461,9 @@ func TestIdleNodesHaveHealthData(t *testing.T) {
 func TestErrorCausesPanic(t *testing.T) {
 	assert := assert.New(t)
 
-	config.Set(config.NewConfig())
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
+	config.Set(conf)
 	trafficMap := buildAppTrafficMap()
 	k8s := kubetest.NewK8SClientMock()
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
@@ -469,7 +478,6 @@ func TestErrorCausesPanic(t *testing.T) {
 	k8s.On("GetDaemonSets", mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
 	const panicErrMsg = "test error! This should cause a panic"
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{}, fmt.Errorf(panicErrMsg))
-	config.Set(config.NewConfig())
 	business.SetKialiControlPlaneCluster(&business.Cluster{
 		Name: business.DefaultClusterID,
 	})
@@ -533,7 +541,9 @@ func setupHealthConfig(services []core_v1.Service, deployments []apps_v1.Deploym
 	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	k8s.On("GetDaemonSets", mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return(services, nil)
-	config.Set(config.NewConfig())
+	cfg := config.Get()
+	cfg.KubernetesConfig.CacheEnabled = false
+	config.Set(cfg)
 	business.SetKialiControlPlaneCluster(&business.Cluster{
 		Name: business.DefaultClusterID,
 	})
