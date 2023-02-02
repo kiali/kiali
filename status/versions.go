@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-version"
 	kversion "k8s.io/apimachinery/pkg/version"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -86,158 +85,7 @@ func getVersionComponent(serviceComponent externalService) {
 	}
 }
 
-// validateVersion returns true if requiredVersion "<op> version" (e.g. ">= 0.7.1") is satisfied by installedversion
-func validateVersion(requiredVersion string, installedVersion string) bool {
-	reqWords := strings.Split(requiredVersion, " ")
-	requirementV, errReqV := version.NewVersion(reqWords[1])
-	installedV, errInsV := version.NewVersion(installedVersion)
-	if errReqV != nil || errInsV != nil {
-		return false
-	}
-	switch operator := reqWords[0]; operator {
-	case "==":
-		return installedV.Equal(requirementV)
-	case ">=":
-		return installedV.GreaterThan(requirementV) || installedV.Equal(requirementV)
-	case ">":
-		return installedV.GreaterThan(requirementV)
-	case "<=":
-		return installedV.LessThan(requirementV) || installedV.Equal(requirementV)
-	case "<":
-		return installedV.LessThan(requirementV)
-	}
-	return false
-}
-
-// CheckMeshVersion check mesh if its version is compatible with kiali
-func CheckMeshVersion(meshName string, meshVersion string, kialiVersion string) bool {
-	ok := false
-	if meshName == istioProductNameUnknown {
-		return ok
-	}
-	if strings.Contains(meshName, istioProductNameUpstream) {
-		ok = checkIstioVersion(meshVersion, kialiVersion)
-		return ok
-	} else if strings.Contains(meshName, istioProductNameOSSM) {
-		ok = checkOSSMVersion(meshVersion, kialiVersion)
-		return ok
-	}
-	return ok
-}
-
-// checkOSSMVersion check OpenShift Service Mesh if its version is compatible with kiali. There is a 1-to-1 relationship between compatible versions.
-// So there is no range checking. The kiali fixed version is checked (kiali minimum/maximum version is ignored).
-func checkOSSMVersion(ossmVersion string, kialiVersion string) bool {
-	ok := false
-	matrix, err := config.NewCompatibilityMatrix()
-
-	if err != nil {
-		return ok
-	}
-
-	// Maistra and Kiali versions should not have "v" prefixes. The compatibility matrix does not have "v" so strip them if they exist.
-	ossmVersion = trimV(ossmVersion)
-	kialiVersion = trimV(kialiVersion)
-
-	// for OSSM, the compatibility matrix only provides X.Y version details - so only check the X.Y portion of the version strings.
-	v := strings.Split(ossmVersion, ".")
-	if len(v) > 1 {
-		ossmVersion = fmt.Sprintf("%v.%v", v[0], v[1])
-	}
-	v = strings.Split(kialiVersion, ".")
-	if len(v) > 1 {
-		kialiVersion = fmt.Sprintf("%v.%v", v[0], v[1])
-	}
-
-	for _, version := range matrix {
-		if version.MeshName == istioProductNameOSSM {
-			for _, versions := range version.VersionRange {
-				if ossmVersion == strings.TrimSpace(versions.MeshVersion) {
-					for _, fixedVersion := range versions.KialiFixedVersion {
-						if kialiVersion == fixedVersion {
-							ok = true
-							break
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return ok
-}
-
-// checkIstioVersion check istio if its version is compatible with kiali
-func checkIstioVersion(istioVersion string, kialiVersion string) bool {
-	ok := false
-	matrix, err := config.NewCompatibilityMatrix()
-
-	if err != nil {
-		return ok
-	}
-
-	for _, version := range matrix {
-		if version.MeshName == istioProductNameUpstream {
-			for _, versions := range version.VersionRange {
-				if strings.Contains(istioVersion, versions.MeshVersion) {
-					minimumVersion := strings.TrimSpace(versions.KialiMinimumVersion)
-					maximumVersion := strings.TrimSpace(versions.KialiMaximumVersion)
-					if fixedVersions := versions.KialiFixedVersion; len(fixedVersions) != 0 {
-						for _, fixedVersion := range fixedVersions {
-							if ok = checkRange(minimumVersion, maximumVersion, fixedVersion, kialiVersion); ok {
-								break
-							}
-						}
-					} else {
-						if ok = checkRange(minimumVersion, maximumVersion, "", kialiVersion); ok {
-							break
-						}
-					}
-
-				}
-			}
-		}
-	}
-	return ok
-}
-
-// checkRange check if version is in target range
-func checkRange(low string, high string, fixed string, version string) bool {
-	ok := true
-	ok1 := true
-	if fixed != "" {
-		equal := "== " + fixed
-		ok = validateVersion(equal, version)
-		return ok
-	}
-
-	if low != "" {
-		low = ">= " + low
-		ok = validateVersion(low, version)
-	}
-
-	if high != "" {
-		high = "<= " + high
-		ok1 = validateVersion(high, version)
-	}
-	return ok && ok1
-}
-
-// CheckVersionCompatibility check mesh name/version compatibility with kiali
-// Only log warnings one time when starting kiali up
-func CheckVersionCompatibility() {
-	istioInfo, err := istioVersion()
-	if err != nil {
-		log.Warning(err)
-	} else if istioInfo.Name == istioProductNameUnknown {
-		log.Warning("Unknown Istio implementation version " + istioInfo.Version + " is not recognized, thus not supported.")
-	} else {
-		log.Infof("Mesh Name: [%v], Mesh Version: [%v]", istioInfo.Name, istioInfo.Version)
-	}
-}
-
 // istioVersion returns the current istio version information
-// add warnings when mesh version is incompatible with kiali
 func istioVersion() (*ExternalServiceInfo, error) {
 	istioConfig := config.Get().ExternalServices.Istio
 	body, code, _, err := httputil.HttpGet(istioConfig.UrlServiceVersion, nil, 10*time.Second, nil, nil)
@@ -255,20 +103,9 @@ func istioVersion() (*ExternalServiceInfo, error) {
 
 	istioInfo := parseIstioRawVersion(rawVersion)
 	meshName, meshVersion := istioInfo.Name, istioInfo.Version
-	kialiVersion, _ := GetStatus(CoreVersion)
 
-	compatibleWarnings := fmt.Sprintf("Kiali [%v] may not be compatible with [%v %v], and is not recommended. See kiali.io for version compatibility",
-		kialiVersion, meshName, meshVersion)
-
-	if ok := CheckMeshVersion(meshName, meshVersion, kialiVersion); ok {
-		Put(MeshVersion, meshVersion)
-		Put(MeshName, meshName)
-	} else {
-		Put(MeshVersion, meshVersion)
-		Put(MeshName, meshName)
-		AddWarningMessages(compatibleWarnings)
-		return nil, fmt.Errorf(compatibleWarnings)
-	}
+	Put(MeshVersion, meshVersion)
+	Put(MeshName, meshName)
 
 	return istioInfo, nil
 }
@@ -471,16 +308,4 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 
 func isMaistraExternalService(esi *ExternalServiceInfo) bool {
 	return esi.Name == istioProductNameOSSM || esi.Name == istioProductNameMaistra || esi.Name == istioProductNameMaistraProject
-}
-
-// trimV will trim the (optional) "v" character found at the beginning of the given version string.
-func trimV(v string) string {
-	if len(v) > 0 {
-		if v[0] == 'v' {
-			return v[1:]
-		} else {
-			return v
-		}
-	}
-	return v
 }
