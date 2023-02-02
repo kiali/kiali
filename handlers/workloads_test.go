@@ -50,6 +50,7 @@ func setupWorkloadList() (*httptest.Server, *kubetest.K8SClientMock, *prometheus
 
 func TestWorkloadsEndpoint(t *testing.T) {
 	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 	ts, k8s, _ := setupWorkloadList()
 	k8s.MockIstio()
