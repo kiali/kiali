@@ -1,10 +1,8 @@
 package config
 
 import (
-	"embed"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"sort"
 	"strings"
@@ -458,39 +456,6 @@ type Rate struct {
 // HealthConfig rates
 type HealthConfig struct {
 	Rate []Rate `yaml:"rate,omitempty" json:"rate,omitempty"`
-}
-
-//go:embed *
-var compatibilityMatrixFile embed.FS
-
-// CompatibilityMatric version ranges for compatibility details between Istio and Kiali
-type CompatibilityMatrix []struct {
-	MeshName     string `yaml:"meshName"`
-	VersionRange []struct {
-		MeshVersion         string   `yaml:"meshVersion"`
-		KialiMinimumVersion string   `yaml:"kialiMinimumVersion,omitempty"`
-		KialiMaximumVersion string   `yaml:"kialiMaximumVersion,omitempty"`
-		KialiFixedVersion   []string `yaml:"kialiFixedVersion,omitempty"`
-	} `yaml:"versionRange"`
-}
-
-// NewCompatibilityMatrix return compatible kiali versions for mesh
-func NewCompatibilityMatrix() (CompatibilityMatrix, error) {
-	in, err := fs.ReadFile(compatibilityMatrixFile, "version-compatibility-matrix.yaml")
-	if err != nil {
-		log.Warningf("Can not load compatibility matrix file. Error: %v", err)
-		return nil, err
-	}
-
-	var matrix CompatibilityMatrix
-
-	err = yaml.Unmarshal(in, &matrix)
-	if err != nil {
-		log.Warningf("Can not unmarshal compatibility matrix file. Error: %v", err)
-		return nil, err
-	}
-
-	return matrix, nil
 }
 
 // Config defines full YAML configuration.
