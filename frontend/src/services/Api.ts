@@ -514,7 +514,7 @@ export const updateWorkload = (
   if (patchType) {
     params.patchType = patchType
   }
-  return newRequest(HTTP_VERBS.PATCH, urls.workload(namespace, name), { type: type }, jsonPatch);
+  return newRequest(HTTP_VERBS.PATCH, urls.workload(namespace, name), params, jsonPatch);
 };
 
 export const updateService = (
