@@ -189,6 +189,10 @@ func TestGrafanaWorking(t *testing.T) {
 	k8s, httpServ, grafanaCalls, promCalls := mockAddOnsCalls(sampleIstioComponent())
 	defer httpServ.Close()
 
+	conf := config.Get()
+	conf.KubernetesConfig.CacheEnabled = false
+	config.Set(conf)
+
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -212,6 +216,7 @@ func TestGrafanaDisabled(t *testing.T) {
 	// Disable Grafana
 	conf := config.Get()
 	conf.ExternalServices.Grafana.Enabled = false
+	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
@@ -250,6 +255,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 
 	// Adapt the AddOns URLs to the mock Server
 	conf := addonAddMockUrls(httpServer.URL, config.NewConfig(), false)
+	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
 	iss := NewWithBackends(k8s, nil, mockJaeger).IstioStatus
@@ -275,6 +281,10 @@ func TestFailingTracingService(t *testing.T) {
 	k8s, httpServ, grafanaCalls, promCalls := mockAddOnsCalls(sampleIstioComponent())
 	defer httpServ.Close()
 
+	conf := config.Get()
+	conf.KubernetesConfig.CacheEnabled = false
+	config.Set(conf)
+
 	iss := NewWithBackends(k8s, nil, mockFailingJaeger).IstioStatus
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
@@ -291,6 +301,10 @@ func TestFailingTracingService(t *testing.T) {
 
 func TestOverriddenUrls(t *testing.T) {
 	assert := assert.New(t)
+
+	conf := config.Get()
+	conf.KubernetesConfig.CacheEnabled = false
+	config.Set(conf)
 
 	dps, ds, pods, idReachable, _ := sampleIstioComponent()
 	k8s, httpServ, grafanaCalls, promCalls := mockAddOnsCalls(dps, ds, pods, idReachable, true)
@@ -820,6 +834,7 @@ func defaultAddOnCalls(grafana, prom *int) map[string]addOnsSetup {
 }
 
 func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *config.Config {
+	conf.KubernetesConfig.CacheEnabled = false
 	conf.ExternalServices.Grafana.Enabled = true
 	conf.ExternalServices.Grafana.InClusterURL = baseUrl + "/grafana/mock"
 	conf.ExternalServices.Grafana.IsCore = false
