@@ -195,6 +195,7 @@ class ListenerList extends React.Component<Props, ListenerListState> {
             <Tr>
               <Td>
               <Button
+                name="addListener"
                 variant={ButtonVariant.link}
                 icon={<PlusCircleIcon/>}
                 onClick={this.onAddListener}

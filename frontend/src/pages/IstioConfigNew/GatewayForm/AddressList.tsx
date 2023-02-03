@@ -104,7 +104,7 @@ class AddressList extends React.Component<Props> {
                 onClick={this.onAddAddress}
                 className={addAddressStyle}
               >
-                Add Listener to Listener List
+                Add Address to Addresses List
               </Button>
               </Td>
             </Tr>
