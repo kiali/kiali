@@ -50,7 +50,7 @@ Feature: Kiali Apps List page
   Scenario: Filter Applications table by Label
     When the user filters by "Label" for "app=reviews"
     Then user sees "reviews"
-    And user only sees 1 apps
+    And user only sees the apps with the "reviews" name in the "bookinfo" namespace
 
   @apps-page
   Scenario: The healthy status of a logical mesh application is reported in the list of applications
