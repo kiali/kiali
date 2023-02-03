@@ -1,9 +1,8 @@
 import * as React from 'react';
-import { Checkbox, Dropdown, DropdownToggle, Radio, Tooltip } from '@patternfly/react-core';
-import { InfoAltIcon } from '@patternfly/react-icons';
-
-import { itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
+import { Checkbox, Dropdown, DropdownToggle, Radio, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { infoStyle, itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
 import { HistoryManager, URLParam } from 'app/History';
+import { KialiIcon } from 'config/KialiIcon';
 
 export interface QuerySettings {
   percentile?: string;
@@ -103,17 +102,26 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
   private getPopoverContent() {
     return (
       <div id="traces-display-menu" className={menuStyle}>
-        <Tooltip
-          content={`
-          These percentiles are computed from metrics. To refresh them, reload the page.
-          The filter applies on span durations.
-          Thus, the filtered traces are the ones where at least one span for the service satisfies the duration criteria.
-        `}
-        >
-          <div className={titleStyle}>
-            Filter by percentile <InfoAltIcon />
-          </div>
-        </Tooltip>
+        <div style={{ marginTop: '10px' }}>
+          <span className={titleStyle} style={{ position: 'relative', bottom: '3px', paddingRight: 0 }}>
+            Filter by percentile
+          </span>
+          <Tooltip
+            key="tooltip_filter_by_percentile"
+            position={TooltipPosition.right}
+            content={
+              <div style={{ textAlign: 'left' }}>
+                <div>
+                  These percentiles are computed from metrics. To refresh them, reload the page. The filter applies on
+                  span durations. Thus, the filtered traces are the ones where at least one span for the service
+                  satisfies the duration criteria.
+                </div>
+              </div>
+            }
+          >
+            <KialiIcon.Info className={infoStyle} />
+          </Tooltip>
+        </div>
         {percentilesOptions.map(item => {
           let label = item.labelText;
           if (this.computedPercentiles) {
@@ -150,7 +158,27 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
             />
           </label>
         </div>
-        <div className={titleStyle}>Limit per query</div>
+        <div style={{ marginTop: '10px' }}>
+          <span className={titleStyle} style={{ position: 'relative', bottom: '3px', paddingRight: 0 }}>
+            Limit per query
+          </span>
+          <Tooltip
+            key="tooltip_limit_per_query"
+            position={TooltipPosition.right}
+            content={
+              <div style={{ textAlign: 'left' }}>
+                <div>
+                  This limits the number of app-level traces that will be fetched. Because an app may be comprised of
+                  several workload versions not every trace trace may apply to a particular workload. It may be
+                  necessary to increase the limit to get the desired number of workload traces. In some cases the same
+                  can be true of service traces.
+                </div>
+              </div>
+            }
+          >
+            <KialiIcon.Info className={infoStyle} />
+          </Tooltip>
+        </div>
         {[20, 100, 500, 1000].map(limit => (
           <div key={'limit-' + limit}>
             <label key={'limit-' + limit} className={itemStyleWithoutInfo}>

@@ -194,6 +194,7 @@ type TracingConfig struct {
 	IsCore               bool              `yaml:"is_core,omitempty"`
 	NamespaceSelector    bool              `yaml:"namespace_selector"`
 	QueryScope           map[string]string `yaml:"query_scope,omitempty"`
+	QueryTimeout         int               `yaml:"query_timeout,omitempty"`
 	URL                  string            `yaml:"url"`
 	UseGRPC              bool              `yaml:"use_grpc"`
 	WhiteListIstioSystem []string          `yaml:"whitelist_istio_system"`
@@ -609,6 +610,7 @@ func NewConfig() (c *Config) {
 				IsCore:               false,
 				NamespaceSelector:    true,
 				QueryScope:           map[string]string{},
+				QueryTimeout:         5,
 				URL:                  "",
 				UseGRPC:              true,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
