@@ -36,10 +36,7 @@ func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 		destinationrules.MultiMatchChecker{Namespaces: in.Namespaces, ServiceEntries: seHosts, DestinationRules: in.DestinationRules},
 	}
 
-	// Appending validations that only applies to non-autoMTLS meshes
-	if !in.MTLSDetails.EnabledAutoMtls {
-		enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails})
-	}
+	enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails})
 
 	for _, checker := range enabledDRCheckers {
 		validations = validations.MergeValidations(checker.Check())
@@ -68,11 +65,8 @@ func (in DestinationRulesChecker) runChecks(destinationRule *networking_v1beta1.
 		common.ExportToNamespaceChecker{ExportTo: destinationRule.Spec.ExportTo, Namespaces: in.Namespaces},
 	}
 
-	// Appending validations that only applies to non-autoMTLS meshes
-	if !in.MTLSDetails.EnabledAutoMtls {
-		enabledCheckers = append(enabledCheckers, destinationrules.NamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails})
-		enabledCheckers = append(enabledCheckers, destinationrules.MeshWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails})
-	}
+	enabledCheckers = append(enabledCheckers, destinationrules.NamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails})
+	enabledCheckers = append(enabledCheckers, destinationrules.MeshWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails})
 
 	for _, checker := range enabledCheckers {
 		checks, validChecker := checker.Check()

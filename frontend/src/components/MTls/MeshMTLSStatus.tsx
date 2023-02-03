@@ -65,6 +65,14 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
       showStatus: true
     }
   ],
+  [
+    MTLSStatuses.AUTO_DEFAULT,
+    {
+      message: 'Automatic Mesh-wide mTLS is enabled',
+      icon: MTLSIconTypes.LOCK_FULL,
+      showStatus: true
+    }
+  ],
   [MTLSStatuses.NOT_ENABLED, emptyDescriptor]
 ]);
 
@@ -111,6 +119,7 @@ class MeshMTLSStatus extends React.Component<Props> {
       if (this.props.status === MTLSStatuses.PARTIALLY) {
         return MTLSStatuses.PARTIALLY_DEFAULT
       }
+      return MTLSStatuses.AUTO_DEFAULT
     }
     return this.props.status
   }
