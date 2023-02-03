@@ -5,6 +5,7 @@ import { Td, Tr} from '@patternfly/react-table';
 import { TrashIcon} from '@patternfly/react-icons';
 import { Address } from '../../../types/IstioObjects';
 import { isValid } from 'utils/Common';
+import {isGatewayHostValid, isValidIp} from "../../../utils/IstioConfigUtils";
 
 type Props = {
   address: Address;
@@ -18,6 +19,16 @@ type State = {
   newType: string;
   newValue: string;
 };
+
+export const isValidAddress = (address: Address) => {
+  if (address.type === addressTypes[0]) {
+    return isValidIp(address.value)
+  }
+  if (address.type === addressTypes[1]) {
+    return isGatewayHostValid(address.value)
+  }
+  return false;
+}
 
 export const addressTypes = ['IPAddress', 'Hostname'];
 
@@ -50,7 +61,7 @@ class AddressBuilder extends React.Component<Props, State> {
       <Tr>
         <Td>
           <FormSelect
-            value={this.state.newType}
+            value={this.props.address.type}
             id="addType"
             name="addType"
             onChange={this.onAddType}
@@ -62,13 +73,13 @@ class AddressBuilder extends React.Component<Props, State> {
         </Td>
         <Td>
           <TextInput
-            value={this.state.newValue}
+            value={this.props.address.value}
             type="text"
             id="addValue"
             aria-describedby="add value"
             name="addVale"
             onChange={this.onAddValue}
-            validated={isValid(this.state.isValueValid)}
+            validated={isValid(isValidAddress(this.props.address))}
           />
         </Td>
         <Td>
