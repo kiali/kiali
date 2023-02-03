@@ -1,12 +1,16 @@
 import * as React from 'react';
-import { Server } from '../../../types/IstioObjects';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
+import { Server, ServerForm } from '../../../types/IstioObjects';
+import { cellWidth, Tbody, Td, Th, Thead, Tr, TableComposable } from '@patternfly/react-table';
 import { style } from 'typestyle';
 import { PFColors } from '../../../components/Pf/PfColors';
+import { Button, ButtonVariant } from "@patternfly/react-core";
+import { PlusCircleIcon } from "@patternfly/react-icons";
+import ServerBuilder, {protocols} from "./ServerBuilder";
 
 type Props = {
   serverList: Server[];
-  onRemoveServer: (index: number) => void;
+  serverForm: ServerForm[];
+  onChange: (server: Server[], serverForm: ServerForm[]) => void;
 };
 
 const noServerStyle = style({
@@ -16,19 +20,9 @@ const noServerStyle = style({
   width: '100%'
 });
 
-const headerCells: ICell[] = [
+const headerCells = [
   {
-    title: 'Server Hosts',
-    transforms: [cellWidth(100) as any],
-    props: {}
-  },
-  {
-    title: 'Port',
-    transforms: [cellWidth(20) as any],
-    props: {}
-  },
-  {
-    title: 'TLS',
+    title: 'Servers',
     transforms: [cellWidth(100) as any],
     props: {}
   },
@@ -38,70 +32,123 @@ const headerCells: ICell[] = [
   }
 ];
 
+const addServerStyle = style({
+  marginLeft: 0,
+  paddingLeft: 0
+});
+
 class ServerList extends React.Component<Props> {
-  rows = () => {
-    return this.props.serverList.map((server, i) => {
-      return {
-        key: 'server_' + i,
-        cells: [
-          <>
-            {server.hosts.map(host => (
-              <div>{host}</div>
-            ))}
-          </>,
-          <>
-            <div>{server.port.name}</div>
-            <div>
-              [{server.port.number}, {server.port.protocol}]
-            </div>
-          </>,
-          <>
-            {server.tls ? (
-              <>
-                <div>{server.tls.mode}</div>
-                {server.tls.serverCertificate && server.tls.serverCertificate.length > 0 ? (
-                  <div>[{server.tls.serverCertificate}]</div>
-                ) : undefined}
-                {server.tls.privateKey && server.tls.privateKey.length > 0 ? (
-                  <div>[{server.tls.privateKey}]</div>
-                ) : undefined}
-                {server.tls.caCertificates && server.tls.caCertificates.length > 0 ? (
-                  <div>[{server.tls.caCertificates}]</div>
-                ) : undefined}
-              </>
-            ) : undefined}
-          </>,
-          <></>
-        ]
-      };
-    });
+
+  onAddServer = () => {
+    const newServerForm : ServerForm = {
+      hosts: [],
+      number: "",
+      protocol: protocols[0],
+      name: "",
+      tlsMode: "",
+      tlsServerCertificate: "",
+      tlsPrivateKey: "",
+      tlsCaCertificate: "",
+    }
+    const sf = this.props.serverForm
+    sf.push(newServerForm)
+
+    const newServer : Server = {
+      hosts: [],
+      port: {
+        number: 70000,
+        name: "",
+        protocol: "HTTP"
+      }
+    }
+    const s = this.props.serverList
+    s.push(newServer)
+
+    this.setState(
+      {},
+      () => this.props.onChange(s, sf)
+    );
   };
 
-  // @ts-ignore
-  actionResolver = (rowData, { rowIndex }) => {
-    const removeAction = {
-      title: 'Remove Rule',
-      // @ts-ignore
-      onClick: (event, rowIndex, rowData, extraData) => {
-        this.props.onRemoveServer(rowIndex);
-      }
-    };
-    return [removeAction];
+  onRemoveServer = (index: number) => {
+    const serverList = this.props.serverList
+    serverList.splice(index,1)
+
+    const serverForm = this.props.serverForm
+    serverForm.splice(index,1)
+
+    this.setState(
+      {},
+      () => this.props.onChange(serverList, serverForm)
+    );
+
   };
+
+  onChange = (serverForm: ServerForm, i: number) => {
+    const serversForm = this.props.serverForm
+    serversForm[i] = serverForm
+
+    const servers = this.props.serverList
+    const newServer = this.createNewServer(serverForm)
+    if (typeof(newServer) !== "undefined") {
+      servers[i] = newServer
+    }
+
+    this.props.onChange(servers, serversForm)
+  }
+
+  createNewServer = (serverForm: ServerForm) => {
+
+    if (serverForm.hosts.length === 0) return;
+    if (serverForm.number.length === 0|| isNaN(Number(serverForm.number))) return;
+    if (serverForm.name.length === 0) return;
+
+    const server : Server = {
+      hosts: serverForm.hosts,
+      port: {number: Number(serverForm.number),  name: serverForm.name, protocol: serverForm.protocol},
+      tls: serverForm.protocol === "HTTPS" ?
+        {mode: serverForm.tlsMode, serverCertificate: serverForm.tlsServerCertificate, privateKey: serverForm.tlsPrivateKey, caCertificates: serverForm.tlsCaCertificate}
+        : undefined
+    }
+    return server
+  }
 
   render() {
     return (
       <>
-        <Table
+        <TableComposable
           aria-label="Server List"
-          cells={headerCells}
-          rows={this.rows()}
-          // @ts-ignore
-          actionResolver={this.actionResolver}
         >
-          <TableHeader />
-          <TableBody />
-        </Table>
+          <Thead>
+            <Tr>
+              {headerCells.map((e) => (
+                <Th>{e.title}</Th>
+              ))}
+            </Tr>
+          </Thead>
+          <Tbody>
+            {this.props.serverForm.map((server, i) => (
+              <ServerBuilder server={server}
+                               onRemoveServer={this.onRemoveServer}
+                               index={i}
+                               onChange={this.onChange}
+              ></ServerBuilder>
+            ))}
+            <Tr>
+              <Td>
+                <Button
+                  name="addServer"
+                  variant={ButtonVariant.link}
+                  icon={<PlusCircleIcon/>}
+                  onClick={this.onAddServer}
+                  className={addServerStyle}
+                >
+                  Add Server to Servers List
+                </Button>
+              </Td>
+            </Tr>
+          </Tbody>
+        </TableComposable>
         {this.props.serverList.length === 0 && <div className={noServerStyle}>No Servers defined</div>}
       </>
     );
