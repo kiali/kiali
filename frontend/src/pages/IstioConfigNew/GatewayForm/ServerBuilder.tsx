@@ -1,16 +1,18 @@
 import * as React from 'react';
 import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
-import { style } from 'typestyle';
-import { PFColors } from '../../../components/Pf/PfColors';
-import { PlusCircleIcon } from '@patternfly/react-icons';
+import {cellWidth, TableComposable, Td, Th, Tr} from '@patternfly/react-table';
+import { TrashIcon} from '@patternfly/react-icons';
 import { isGatewayHostValid } from '../../../utils/IstioConfigUtils';
-import { Server } from '../../../types/IstioObjects';
+import { ServerForm} from '../../../types/IstioObjects';
 import { isValid } from 'utils/Common';
+import {isValidPort} from "./ListenerBuilder";
 
 type Props = {
-  onAddServer: (server: Server) => void;
+  server: ServerForm;
+  onRemoveServer: (i: number) => void;
+  index: number;
+  onChange: (serverform: ServerForm, i: number) => void;
 };
 
 type State = {
@@ -25,18 +27,7 @@ type State = {
   newTlsCaCertificate: string;
 };
 
-const warningStyle = style({
-  marginLeft: 25,
-  color: PFColors.Red100,
-  textAlign: 'center'
-});
-
-const addServerStyle = style({
-  marginLeft: 0,
-  paddingLeft: 0
-});
-
-const portHeader: ICell[] = [
+const portHeader = [
   {
     title: 'Port Number',
     transforms: [cellWidth(20) as any],
@@ -54,172 +45,109 @@ const portHeader: ICell[] = [
   }
 ];
 
-const protocols = ['HTTP', 'HTTPS', 'GRPC', 'HTTP2', 'MONGO', 'TCP', 'TLS'];
-
+export const protocols = ['HTTP', 'HTTPS', 'GRPC', 'HTTP2', 'MONGO', 'TCP', 'TLS'];
 const tlsModes = ['PASSTHROUGH', 'SIMPLE', 'MUTUAL', 'AUTO_PASSTHROUGH', 'ISTIO_MUTUAL'];
 
-class ServerBuilder extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      newHosts: [],
-      isHostsValid: false,
-      newPortNumber: '',
-      newPortName: '',
-      newPortProtocol: protocols[0],
-      newTlsMode: tlsModes[1], // SIMPLE
-      newTlsServerCertificate: '',
-      newTlsPrivateKey: '',
-      newTlsCaCertificate: ''
-    };
+export const areValidHosts = (hosts: string[]): boolean => {
+  if (hosts.length === 0) {
+    return false;
   }
-
-  canAddServer = (): boolean => {
-    const hostValid = this.state.isHostsValid;
-    const portNumberValid = this.state.newPortNumber.length > 0 && !isNaN(Number(this.state.newPortNumber));
-    const portNameValid = this.state.newPortName.length > 0;
-    const tlsRequired = this.state.newPortProtocol === 'HTTPS' || this.state.newPortProtocol === 'TLS';
-    const tlsCertsValid = tlsRequired
-      ? this.state.newTlsMode === 'SIMPLE' || this.state.newTlsMode === 'MUTUAL'
-        ? this.state.newTlsServerCertificate.length > 0 && this.state.newTlsPrivateKey.length > 0
-        : true
-      : true;
-    const tlsCaValid =
-      tlsRequired && this.state.newTlsMode === 'MUTUAL' ? this.state.newTlsCaCertificate.length > 0 : true;
-    return hostValid && portNumberValid && portNameValid && tlsCertsValid && tlsCaValid;
-  };
-
-  areValidHosts = (hosts: string[]): boolean => {
-    if (hosts.length === 0) {
-      return false;
+  let isValid = true;
+  for (let i = 0; i < hosts.length; i++) {
+    if (!isGatewayHostValid(hosts[i])) {
+      isValid = false;
+      break;
     }
-    let isValid = true;
-    for (let i = 0; i < hosts.length; i++) {
-      if (!isGatewayHostValid(hosts[i])) {
-        isValid = false;
-        break;
-      }
-    }
-    return isValid;
-  };
+  }
+  return isValid;
+};
+
+class ServerBuilder extends React.Component<Props, State> {
 
   onAddHosts = (value: string, _) => {
-    const hosts = value.trim().length === 0 ? [] : value.split(',').map(host => host.trim());
-    this.setState({
-      newHosts: hosts,
-      isHostsValid: this.areValidHosts(hosts)
-    });
+    const server = this.props.server
+    server.hosts = value.trim().length === 0 ? [] : value.split(',').map(host => host.trim());
+
+    this.props.onChange(server, this.props.index)
   };
 
   onAddPortNumber = (value: string, _) => {
-    this.setState({
-      newPortNumber: value.trim()
-    });
+    const server = this.props.server
+    server.number = value.trim();
+
+    this.props.onChange(server, this.props.index)
   };
 
   onAddPortName = (value: string, _) => {
-    this.setState({
-      newPortName: value.trim()
-    });
+    const server = this.props.server
+    server.name = value.trim();
+
+    this.props.onChange(server, this.props.index)
   };
 
   onAddPortProtocol = (value: string, _) => {
-    this.setState({
-      newPortProtocol: value
-    });
-  };
+    const server = this.props.server
+    server.protocol = value.trim();
 
-  onAddServer = () => {
-    const newServer: Server = {
-      hosts: this.state.newHosts,
-      port: {
-        number: +this.state.newPortNumber,
-        name: this.state.newPortName,
-        protocol: this.state.newPortProtocol
-      }
-    };
-    if (this.state.newPortProtocol === 'HTTPS' || this.state.newPortProtocol === 'TLS') {
-      newServer.tls = {
-        mode: this.state.newTlsMode
-      };
-      if (this.state.newTlsMode === 'SIMPLE' || this.state.newTlsMode === 'MUTUAL') {
-        newServer.tls.privateKey = this.state.newTlsPrivateKey;
-        newServer.tls.serverCertificate = this.state.newTlsServerCertificate;
-      }
-      if (this.state.newTlsMode === 'MUTUAL') {
-        newServer.tls.caCertificates = this.state.newTlsCaCertificate;
-      }
-    }
-    this.setState(
-      {
-        newHosts: [],
-        isHostsValid: false,
-        newPortNumber: '',
-        newPortName: '',
-        newPortProtocol: protocols[0],
-        newTlsMode: tlsModes[1], // SIMPLE
-        newTlsServerCertificate: '',
-        newTlsPrivateKey: '',
-        newTlsCaCertificate: ''
-      },
-      () => this.props.onAddServer(newServer)
-    );
+    this.props.onChange(server, this.props.index)
   };
 
   onAddTlsMode = (value: string, _) => {
-    this.setState({
-      newTlsMode: value
-    });
+    const server = this.props.server
+    server.tlsMode = value.trim();
+
+    this.props.onChange(server, this.props.index)
   };
 
   onAddTlsServerCertificate = (value: string, _) => {
-    this.setState({
-      newTlsServerCertificate: value
-    });
+    const server = this.props.server
+    server.tlsServerCertificate = value.trim();
+
+    this.props.onChange(server, this.props.index)
   };
 
   onAddTlsPrivateKey = (value: string, _) => {
-    this.setState({
-      newTlsPrivateKey: value
-    });
+    const server = this.props.server
+    server.tlsPrivateKey = value.trim();
+
+    this.props.onChange(server, this.props.index)
   };
 
   onAddTlsCaCertificate = (value: string, _) => {
-    this.setState({
-      newTlsCaCertificate: value
-    });
+    const server = this.props.server
+    server.tlsCaCertificate = value.trim();
+
+    this.props.onChange(server, this.props.index)
   };
 
   portRows() {
-    return [
-      {
-        keys: 'gatewayPortNew',
-        cells: [
-          <>
+    return (
+          <Tr>
+            <Td style={{padding: "0 10px 0 0"}}>
             <TextInput
-              value={this.state.newPortNumber}
+              value={this.props.server.number}
               type="text"
               id="addPortNumber"
               aria-describedby="add port number"
               name="addPortNumber"
               onChange={this.onAddPortNumber}
-              validated={isValid(this.state.newPortNumber.length > 0 && !isNaN(Number(this.state.newPortNumber)))}
+              validated={isValid(isValidPort(this.props.server.number))}
             />
-          </>,
-          <>
+            </Td>
+            <Td style={{padding: "0 10px 0 0"}}>
             <TextInput
-              value={this.state.newPortName}
+              value={this.props.server.name}
               type="text"
               id="addPortName"
               aria-describedby="add port name"
               name="addPortName"
               onChange={this.onAddPortName}
-              validated={isValid(this.state.newPortName.length > 0)}
+              validated={isValid(this.props.server.name.length > 0)}
             />
-          </>,
-          <>
+          </Td>
+            <Td style={{padding: "0 10px 0 0"}}>
             <FormSelect
-              value={this.state.newPortProtocol}
+              value={this.props.server.protocol}
               id="addPortProtocol"
               name="addPortProtocol"
               onChange={this.onAddPortProtocol}
@@ -228,125 +156,127 @@ class ServerBuilder extends React.Component<Props, State> {
                 <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
               ))}
             </FormSelect>
-          </>
-        ]
-      }
-    ];
+           </Td>
+       </Tr>
+    );
   }
 
   render() {
-    const showTls = this.state.newPortProtocol === 'HTTPS' || this.state.newPortProtocol === 'TLS';
+    const showTls = this.props.server.protocol === 'HTTPS' || this.props.server.protocol === 'TLS';
     return (
-      <>
+      <Tr>
+        <Td>
         <FormGroup
           label="Hosts"
           isRequired={true}
           fieldId="gateway-selector"
           helperText="One or more hosts exposed by this Gateway."
           helperTextInvalid="Invalid hosts for this Gateway. Enter one or more hosts separated by comma."
-          validated={isValid(this.state.isHostsValid)}
         >
           <TextInput
-            value={this.state.newHosts.join(',')}
+            value={this.props.server.hosts.join(',')}
             isRequired={true}
             type="text"
             id="hosts"
             aria-describedby="hosts"
             name="hosts"
             onChange={this.onAddHosts}
-            validated={isValid(this.state.isHostsValid)}
+            validated={isValid(areValidHosts(this.props.server.hosts))}
           />
         </FormGroup>
-        <FormGroup label="Port" isRequired={true} fieldId="server-port">
-          <Table aria-label="Port Level MTLS" cells={portHeader} rows={this.portRows()}>
-            <TableHeader />
-            <TableBody />
-          </Table>
+        <FormGroup label="Port" isRequired={true} fieldId="server-port" style={{padding: "10px 0"}}>
+          <TableComposable aria-label="Port Level MTLS" >
+            {portHeader.map((e) => (
+              <Th>{e.title}</Th>
+            ))}
+            {this.portRows()}
+          </TableComposable>
         </FormGroup>
         {showTls && (
-          <FormGroup label="TLS Mode" isRequired={true} fieldId="addTlsMode">
-            <FormSelect value={this.state.newTlsMode} id="addTlsMode" name="addTlsMode" onChange={this.onAddTlsMode}>
+          <FormGroup label="TLS Mode" isRequired={true} fieldId="addTlsMode" style={{margin: "10px 0"}}>
+            <FormSelect value={this.props.server.tlsMode} id="addTlsMode" name="addTlsMode" onChange={this.onAddTlsMode}>
               {tlsModes.map((option, index) => (
                 <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
               ))}
             </FormSelect>
           </FormGroup>
         )}
-        {showTls && (this.state.newTlsMode === 'SIMPLE' || this.state.newTlsMode === 'MUTUAL') && (
+        {showTls && (this.props.server.tlsMode === 'SIMPLE' || this.props.server.tlsMode === 'MUTUAL') && (
           <>
             <FormGroup
               label="Server Certificate"
+              style={{margin: "10px 0"}}
               isRequired={true}
               fieldId="server-certificate"
-              validated={isValid(this.state.newTlsServerCertificate.length > 0)}
+              validated={isValid(this.props.server.tlsServerCertificate.length > 0)}
               helperTextInvalid={'The path to the file holding the server-side TLS certificate to use.'}
             >
               <TextInput
-                value={this.state.newTlsServerCertificate}
+                value={this.props.server.tlsServerCertificate}
                 isRequired={true}
                 type="text"
                 id="server-certificate"
                 aria-describedby="server-certificate"
                 name="server-certificate"
                 onChange={this.onAddTlsServerCertificate}
-                validated={isValid(this.state.newTlsServerCertificate.length > 0)}
+                validated={isValid(this.props.server.tlsServerCertificate.length > 0)}
               />
             </FormGroup>
             <FormGroup
               label="Private Key"
               isRequired={true}
               fieldId="private-key"
-              validated={isValid(this.state.newTlsPrivateKey.length > 0)}
+              style={{margin: "10px 0"}}
+              validated={isValid(this.props.server.tlsPrivateKey.length > 0)}
               helperTextInvalid={'The path to the file holding the server’s private key.'}
             >
               <TextInput
-                value={this.state.newTlsPrivateKey}
+                value={this.props.server.tlsPrivateKey}
                 isRequired={true}
                 type="text"
                 id="private-key"
                 aria-describedby="private-key"
                 name="private-key"
                 onChange={this.onAddTlsPrivateKey}
-                validated={isValid(this.state.newTlsPrivateKey.length > 0)}
+                validated={isValid(this.props.server.tlsPrivateKey.length > 0)}
               />
             </FormGroup>
           </>
         )}
-        {showTls && this.state.newTlsMode === 'MUTUAL' && (
+        {showTls && this.props.server.tlsMode === 'MUTUAL' && (
           <FormGroup
             label="CA Certificate"
+            style={{margin: "10px 0"}}
             isRequired={true}
             fieldId="ca-certificate"
-            validated={isValid(this.state.newTlsCaCertificate.length > 0)}
+            validated={isValid(this.props.server.tlsCaCertificate.length > 0)}
             helperTextInvalid={
               'The path to a file containing certificate authority certificates to use in verifying a presented client side certificate.'
             }
           >
             <TextInput
-              value={this.state.newTlsCaCertificate}
+              value={this.props.server.tlsCaCertificate}
               isRequired={true}
               type="text"
               id="ca-certificate"
               aria-describedby="ca-certificate"
               name="ca-certificate"
               onChange={this.onAddTlsCaCertificate}
-              validated={isValid(this.state.newTlsCaCertificate.length > 0)}
+              validated={isValid(this.props.server.tlsCaCertificate.length > 0)}
             />
           </FormGroup>
         )}
-        <FormGroup fieldId="addRule">
+        </Td>
+        <Td style={{verticalAlign: "middle"}}>
           <Button
+            id="deleteBtn"
             variant={ButtonVariant.link}
-            icon={<PlusCircleIcon />}
-            onClick={this.onAddServer}
-            isDisabled={!this.canAddServer()}
-            className={addServerStyle}
-          >
-            Add Server to Server List
-          </Button>
-          {!this.canAddServer() && <span className={warningStyle}>A Server needs Hosts and Port sections defined</span>}
-        </FormGroup>
-      </>
+            icon={<TrashIcon />}
+            style={{padding: "0 40%"}}
+            onClick={() => this.props.onRemoveServer(this.props.index)}
+          />
+        </Td>
+      </Tr>
     );
   }
 }

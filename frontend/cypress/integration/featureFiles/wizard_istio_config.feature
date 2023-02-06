@@ -14,11 +14,11 @@ Feature: Kiali Istio Config page
   Scenario: Create a K8s Gateway scenario
     And user clicks in the "K8sGateway" Istio config actions
     And user sees the "Create K8sGateway" config wizard
+    And user adds listener
     And user types "k8sapigateway" in the name input
     And user types "listener" in the add listener name input
     And user types "website.com" in the add hostname input
     And user types "8080" in the add port input
-    And user adds listener
     And user previews the configuration
     And user creates the istio config
     Then the K8sGateway "k8sapigateway" should be listed in "bookinfo" namespace

@@ -1,16 +1,17 @@
 import * as React from 'react';
 import { Button, ButtonVariant, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
-import { style } from 'typestyle';
-import { PFColors } from '../../../components/Pf/PfColors';
-import { PlusCircleIcon } from '@patternfly/react-icons';
-import {isGatewayHostValid, isValidIp} from '../../../utils/IstioConfigUtils';
+import { Td, Tr} from '@patternfly/react-table';
+import { TrashIcon} from '@patternfly/react-icons';
 import { Address } from '../../../types/IstioObjects';
 import { isValid } from 'utils/Common';
+import {isGatewayHostValid, isValidIp} from "../../../utils/IstioConfigUtils";
 
 type Props = {
-  onAddAddress: (address: Address) => void;
+  address: Address;
+  onRemoveAddress: (i: number) => void;
+  onChange: (address: Address, i: number) => void;
+  index: number;
 };
 
 type State = {
@@ -19,32 +20,17 @@ type State = {
   newValue: string;
 };
 
-const warningStyle = style({
-  marginLeft: 25,
-  color: PFColors.Red100,
-  textAlign: 'center'
-});
+export const isValidAddress = (address: Address) => {
+  if (address.type === addressTypes[0]) {
+    return isValidIp(address.value)
+  }
+  if (address.type === addressTypes[1]) {
+    return isGatewayHostValid(address.value)
+  }
+  return false;
+}
 
-const addAddressStyle = style({
-  marginLeft: 0,
-  paddingLeft: 0
-});
-
-const addressHeader: ICell[] = [
-  {
-    title: 'Type',
-    transforms: [cellWidth(20) as any],
-    props: {}
-  },
-  {
-    title: 'Value',
-    transforms: [cellWidth(20) as any],
-    props: {}
-  },
-];
-
-const addressTypes = ['IPAddress', 'Hostname'];
-
+export const addressTypes = ['IPAddress', 'Hostname'];
 
 class AddressBuilder extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -56,100 +42,57 @@ class AddressBuilder extends React.Component<Props, State> {
     };
   }
 
-  canAddAddress = (): boolean => {
-    return this.state.isValueValid;
-  };
+  onAddValue = (value: string) => {
+    const l = this.props.address
+    l.value = value.trim()
 
-  isValueValid = (value: string): boolean => {
-    if (this.state.newType === addressTypes[0]) {
-      return isValidIp(value)
-    }
-    if (this.state.newType === addressTypes[1]) {
-      return isGatewayHostValid(value)
-    }
-    return false;
-  };
-
-  onAddValue = (value: string, _) => {
-    this.setState({
-      newValue: value,
-      isValueValid: this.isValueValid(value)
-    });
+    this.props.onChange(l, this.props.index)
   };
 
   onAddType = (value: string, _) => {
-    this.setState({
-      newType: value
-    });
-  };
+    const l = this.props.address
+    l.type = value.trim()
 
-  onAddAddress = () => {
-    const newAddress: Address = {
-      type: this.state.newType,
-      value: this.state.newValue,
-    };
-    this.setState(
-      {
-        isValueValid: false,
-        newType: addressTypes[0],
-        newValue: '',
-      },
-      () => this.props.onAddAddress(newAddress)
-    );
+    this.props.onChange(l, this.props.index)
   };
-
-  addressRows() {
-    return [
-      {
-        keys: 'gatewayAddressNew',
-        cells: [
-          <>
-            <FormSelect
-              value={this.state.newType}
-              id="addType"
-              name="addType"
-              onChange={this.onAddType}
-            >
-              {addressTypes.map((option, index) => (
-                <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
-              ))}
-            </FormSelect>
-          </>,
-          <>
-            <TextInput
-              value={this.state.newValue}
-              type="text"
-              id="addValue"
-              aria-describedby="add value"
-              name="addVale"
-              onChange={this.onAddValue}
-              validated={isValid(this.state.isValueValid)}
-            />
-          </>,
-        ]
-      }
-    ];
-  }
 
   render() {
     return (
-      <>
-        <Table aria-label="Address Rows" cells={addressHeader} rows={this.addressRows()}>
-          <TableHeader />
-          <TableBody />
-        </Table>
-        <Button
-          variant={ButtonVariant.link}
-          icon={<PlusCircleIcon />}
-          onClick={this.onAddAddress}
-          isDisabled={!this.canAddAddress()}
-          className={addAddressStyle}
-        >
-          Add Address to Address List
-        </Button>
-        {!this.canAddAddress() && <span className={warningStyle}>A Address needs Type and Value sections defined</span>}
-      </>
-    );
+      <Tr>
+        <Td>
+          <FormSelect
+            value={this.props.address.type}
+            id="addType"
+            name="addType"
+            onChange={this.onAddType}
+          >
+            {addressTypes.map((option, index) => (
+              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option}/>
+            ))}
+          </FormSelect>
+        </Td>
+        <Td>
+          <TextInput
+            value={this.props.address.value}
+            type="text"
+            id="addValue"
+            aria-describedby="add value"
+            name="addVale"
+            onChange={this.onAddValue}
+            validated={isValid(isValidAddress(this.props.address))}
+          />
+        </Td>
+        <Td>
+          <Button
+            id="deleteBtn"
+            variant={ButtonVariant.link}
+            icon={<TrashIcon />}
+            style={{padding: 0}}
+            onClick={() => this.props.onRemoveAddress(this.props.index)}
+          />
+        </Td>
+      </Tr>
+    )
   }
 }
 

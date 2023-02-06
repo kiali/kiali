@@ -1,11 +1,10 @@
 import * as React from 'react';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import { FormGroup, Switch, TextInputBase as TextInput } from '@patternfly/react-core';
-import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
-import ServerBuilder from './GatewayForm/ServerBuilder';
 import ServerList from './GatewayForm/ServerList';
-import { Server } from '../../types/IstioObjects';
+import {Server, ServerForm, ServerTLSSettings} from '../../types/IstioObjects';
 import { isValid } from 'utils/Common';
+import {areValidHosts} from "./GatewayForm/ServerBuilder";
 
 export const GATEWAY = 'Gateway';
 export const GATEWAYS = 'gateways';
@@ -21,8 +20,7 @@ export type GatewayState = {
   workloadSelectorValid: boolean;
   workloadSelectorLabels: string;
   gatewayServers: Server[];
-  addGatewayServer: Server;
-  validHosts: boolean;
+  serversForm: ServerForm[];
 };
 
 export const initGateway = (): GatewayState => ({
@@ -30,20 +28,34 @@ export const initGateway = (): GatewayState => ({
   workloadSelectorLabels: 'istio=ingressgateway',
   workloadSelectorValid: true,
   gatewayServers: [],
-  addGatewayServer: {
-    hosts: [],
-    port: {
-      number: 80,
-      name: 'http',
-      protocol: 'HTTP'
-    }
-  },
-  validHosts: false
+  serversForm: []
 });
 
 export const isGatewayStateValid = (g: GatewayState): boolean => {
-  return g.workloadSelectorValid && g.gatewayServers.length > 0;
+  return g.workloadSelectorValid && g.gatewayServers.length > 0 && areValidGateways(g.gatewayServers);
 };
+
+const areValidGateways = (servers: Server[]): boolean => {
+
+  return servers.every((s) => {
+    return areValidHosts(s.hosts) && s.port.name !== "" && s.port.number >= 0 && s.port.number <= 65635 && isValidTLS(s.port.protocol, s.tls)
+  })
+}
+
+const isValidTLS = (protocol: string, tls: ServerTLSSettings|undefined): boolean => {
+
+  if (tls !== undefined) {
+    const tlsRequired = protocol === 'HTTPS' || protocol === 'TLS'
+
+    const certsValid = tlsRequired ? tls.mode === 'SIMPLE' || tls.mode === 'MUTUAL'
+      ? tls.serverCertificate !== undefined && tls.serverCertificate?.length > 0 && tls.privateKey !== undefined && tls.privateKey?.length > 0 : true
+      : true;
+    const caValid = tlsRequired && tls.mode === 'MUTUAL' ? tls.caCertificates !== undefined && tls.caCertificates?.length > 0 : true;
+
+    return certsValid && caValid;
+  }
+  return true;
+}
 
 class GatewayForm extends React.Component<Props, GatewayState> {
   constructor(props: Props) {
@@ -95,51 +107,12 @@ class GatewayForm extends React.Component<Props, GatewayState> {
     );
   };
 
-  areValidHosts = (hosts: string[]): boolean => {
-    if (hosts.length === 0) {
-      return false;
-    }
-    let isValid = true;
-    for (let i = 0; i < hosts.length; i++) {
-      if (!isGatewayHostValid(hosts[i])) {
-        isValid = false;
-        break;
-      }
-    }
-    return isValid;
-  };
-
-  onAddServer = () => {
+  onChangeServer = (servers: Server[], serversForm: ServerForm[]) => {
     this.setState(
-      prevState => {
-        prevState.gatewayServers.push(prevState.addGatewayServer);
-        return {
-          gatewayServers: prevState.gatewayServers,
-          addGatewayServer: {
-            hosts: [],
-            port: {
-              number: 80,
-              name: 'http',
-              protocol: 'HTTP'
-            }
-          }
-        };
-      },
+      { gatewayServers: servers, serversForm: serversForm},
       () => this.props.onChange(this.state)
     );
-  };
-
-  onRemoveServer = (index: number) => {
-    this.setState(
-      prevState => {
-        prevState.gatewayServers.splice(index, 1);
-        return {
-          gatewayServers: prevState.gatewayServers
-        };
-      },
-      () => this.props.onChange(this.state)
-    );
-  };
+  }
 
   render() {
     return (
@@ -178,18 +151,11 @@ class GatewayForm extends React.Component<Props, GatewayState> {
             />
           </FormGroup>
         )}
-        <ServerBuilder
-          onAddServer={server => {
-            this.setState(
-              {
-                addGatewayServer: server
-              },
-              () => this.onAddServer()
-            );
-          }}
-        />
-        <FormGroup label="Server List" fieldId="gwServerList">
-          <ServerList serverList={this.state.gatewayServers} onRemoveServer={this.onRemoveServer} />
+        <FormGroup label="Server List" fieldId="gwServerList" isRequired={true}>
+          <ServerList
+            serverList={this.state.gatewayServers}
+            serverForm={this.state.serversForm}
+            onChange={this.onChangeServer} />
         </FormGroup>
       </>
     );
