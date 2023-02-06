@@ -6,6 +6,7 @@ import { TrashIcon} from '@patternfly/react-icons';
 import { isGatewayHostValid } from '../../../utils/IstioConfigUtils';
 import { ServerForm} from '../../../types/IstioObjects';
 import { isValid } from 'utils/Common';
+import {isValidPort} from "./ListenerBuilder";
 
 type Props = {
   server: ServerForm;
@@ -130,7 +131,7 @@ class ServerBuilder extends React.Component<Props, State> {
               aria-describedby="add port number"
               name="addPortNumber"
               onChange={this.onAddPortNumber}
-              validated={isValid(this.props.server.number.length > 0 && !isNaN(Number(this.props.server.number)))}
+              validated={isValid(isValidPort(this.props.server.number))}
             />
             </Td>
             <Td style={{padding: "0 10px 0 0"}}>

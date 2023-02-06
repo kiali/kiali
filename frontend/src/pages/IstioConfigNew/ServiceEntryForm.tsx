@@ -355,7 +355,8 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
                 icon={<PlusCircleIcon />}
                 style={{padding: 0}}
                 onClick={this.onAddNewPort}
-              /> Add Port
+              > Add Port
+            </Button>
             </>
           ]
         }
