@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/business/checkers/k8sgateways"
 	"github.com/kiali/kiali/models"
@@ -10,7 +10,7 @@ import (
 const K8sGatewayCheckerType = "k8sgateway"
 
 type K8sGatewayChecker struct {
-	K8sGateways []*k8s_networking_v1alpha2.Gateway
+	K8sGateways []*k8s_networking_v1beta1.Gateway
 }
 
 // Check runs checks for the all namespaces actions as well as for the single namespace validations
@@ -27,7 +27,7 @@ func (g K8sGatewayChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func (g K8sGatewayChecker) runSingleChecks(gw *k8s_networking_v1alpha2.Gateway) models.IstioValidations {
+func (g K8sGatewayChecker) runSingleChecks(gw *k8s_networking_v1beta1.Gateway) models.IstioValidations {
 	key, validations := EmptyValidValidation(gw.Name, gw.Namespace, K8sGatewayCheckerType)
 
 	enabledCheckers := []Checker{

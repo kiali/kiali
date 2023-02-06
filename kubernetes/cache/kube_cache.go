@@ -26,9 +26,9 @@ import (
 	apps_v1_listers "k8s.io/client-go/listers/apps/v1"
 	core_v1_listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
-	gatewayapi_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	gatewayapi_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	gateway "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
-	k8s_v1alpha2_listers "sigs.k8s.io/gateway-api/pkg/client/listers/apis/v1alpha2"
+	k8s_v1beta1_listers "sigs.k8s.io/gateway-api/pkg/client/listers/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -88,10 +88,10 @@ type KubeCache interface {
 	GetTelemetry(namespace, name string) (*v1alpha1.Telemetry, error)
 	GetTelemetries(namespace, labelSelector string) ([]*v1alpha1.Telemetry, error)
 
-	GetK8sGateway(namespace, name string) (*gatewayapi_v1alpha2.Gateway, error)
-	GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.Gateway, error)
-	GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1alpha2.HTTPRoute, error)
-	GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.HTTPRoute, error)
+	GetK8sGateway(namespace, name string) (*gatewayapi_v1beta1.Gateway, error)
+	GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1beta1.Gateway, error)
+	GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1beta1.HTTPRoute, error)
+	GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1beta1.HTTPRoute, error)
 
 	GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error)
 	GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1beta1.AuthorizationPolicy, error)
@@ -122,8 +122,8 @@ type cacheLister struct {
 	destinationRuleLister istionet_v1beta1_listers.DestinationRuleLister
 	envoyFilterLister     istionet_v1alpha3_listers.EnvoyFilterLister
 	gatewayLister         istionet_v1beta1_listers.GatewayLister
-	k8sgatewayLister      k8s_v1alpha2_listers.GatewayLister
-	k8shttprouteLister    k8s_v1alpha2_listers.HTTPRouteLister
+	k8sgatewayLister      k8s_v1beta1_listers.GatewayLister
+	k8shttprouteLister    k8s_v1beta1_listers.HTTPRouteLister
 	peerAuthnLister       istiosec_v1beta1_listers.PeerAuthenticationLister
 	requestAuthnLister    istiosec_v1beta1_listers.RequestAuthenticationLister
 	serviceEntryLister    istionet_v1beta1_listers.ServiceEntryLister
@@ -440,14 +440,14 @@ func (c *kubeCache) createGatewayInformers(namespace string) gateway.SharedInfor
 
 	if c.client.IsGatewayAPI() {
 		if c.CheckIstioResource(kubernetes.K8sGateways) {
-			lister.k8sgatewayLister = sharedInformers.Gateway().V1alpha2().Gateways().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1alpha2().Gateways().Informer().HasSynced)
-			sharedInformers.Gateway().V1alpha2().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
+			lister.k8sgatewayLister = sharedInformers.Gateway().V1beta1().Gateways().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().Gateways().Informer().HasSynced)
+			sharedInformers.Gateway().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
 		}
 		if c.CheckIstioResource(kubernetes.K8sHTTPRoutes) {
-			lister.k8shttprouteLister = sharedInformers.Gateway().V1alpha2().HTTPRoutes().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1alpha2().HTTPRoutes().Informer().HasSynced)
-			sharedInformers.Gateway().V1alpha2().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
+			lister.k8shttprouteLister = sharedInformers.Gateway().V1beta1().HTTPRoutes().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().HTTPRoutes().Informer().HasSynced)
+			sharedInformers.Gateway().V1beta1().Gateways().Informer().AddEventHandler(c.registryRefreshHandler)
 		}
 	}
 	return sharedInformers
@@ -1296,7 +1296,7 @@ func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1
 	return retT, nil
 }
 
-func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1alpha2.Gateway, error) {
+func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1beta1.Gateway, error) {
 	if !c.CheckIstioResource(kubernetes.K8sGateways) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.K8sGatewayType)
 	}
@@ -1315,7 +1315,7 @@ func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1alpha2.
 	return retG, nil
 }
 
-func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.Gateway, error) {
+func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1beta1.Gateway, error) {
 	if !c.CheckIstioResource(kubernetes.K8sGateways) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.K8sGateways)
 	}
@@ -1337,10 +1337,10 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 	// Lister returns nil when there are no results but callers of the cache expect an empty array
 	// so keeping the behavior the same since it matters for json marshalling.
 	if g == nil {
-		return []*gatewayapi_v1alpha2.Gateway{}, nil
+		return []*gatewayapi_v1beta1.Gateway{}, nil
 	}
 
-	var retG []*gatewayapi_v1alpha2.Gateway
+	var retG []*gatewayapi_v1beta1.Gateway
 	for _, w := range g {
 		gg := w.DeepCopy()
 		gg.Kind = kubernetes.K8sGatewayType
@@ -1350,7 +1350,7 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 	return retG, nil
 }
 
-func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1alpha2.HTTPRoute, error) {
+func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1beta1.HTTPRoute, error) {
 	if !c.CheckIstioResource(kubernetes.K8sHTTPRoutes) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.K8sHTTPRouteType)
 	}
@@ -1369,7 +1369,7 @@ func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1alpha
 	return retG, nil
 }
 
-func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.HTTPRoute, error) {
+func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1beta1.HTTPRoute, error) {
 	if !c.CheckIstioResource(kubernetes.K8sHTTPRoutes) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resourceType: %s]", kubernetes.K8sHTTPRoutes)
 	}
@@ -1391,10 +1391,10 @@ func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewa
 	// Lister returns nil when there are no results but callers of the cache expect an empty array
 	// so keeping the behavior the same since it matters for json marshalling.
 	if r == nil {
-		return []*gatewayapi_v1alpha2.HTTPRoute{}, nil
+		return []*gatewayapi_v1beta1.HTTPRoute{}, nil
 	}
 
-	var retRoutes []*gatewayapi_v1alpha2.HTTPRoute
+	var retRoutes []*gatewayapi_v1beta1.HTTPRoute
 	for _, w := range r {
 		ww := w.DeepCopy()
 		ww.Kind = kubernetes.K8sHTTPRouteType

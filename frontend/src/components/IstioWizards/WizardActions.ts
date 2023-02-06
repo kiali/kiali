@@ -176,7 +176,7 @@ export const KIALI_RELATED_LABEL = 'kiali_wizard_related';
 // Wizard don't operate with EnvoyFilters so they can use the v1beta1 version
 export const ISTIO_NETWORKING_VERSION = 'networking.istio.io/v1beta1';
 export const ISTIO_SECURITY_VERSION = 'security.istio.io/v1beta1';
-export const GATEWAY_NETWORKING_VERSION = 'gateway.networking.k8s.io/v1alpha2';
+export const GATEWAY_NETWORKING_VERSION = 'gateway.networking.k8s.io/v1beta1';
 
 export const fqdnServiceName = (serviceName: string, namespace: string): string => {
   return serviceName + '.' + namespace + '.' + serverConfig.istioIdentityDomain;

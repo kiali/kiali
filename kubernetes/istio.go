@@ -23,7 +23,7 @@ import (
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
 	"github.com/kiali/kiali/config"
@@ -456,8 +456,8 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 		Telemetries:      []*v1alpha1.Telemetry{},
 
 		// K8s Networking Gateways
-		K8sGateways:   []*k8s_networking_v1alpha2.Gateway{},
-		K8sHTTPRoutes: []*k8s_networking_v1alpha2.HTTPRoute{},
+		K8sGateways:   []*k8s_networking_v1beta1.Gateway{},
+		K8sHTTPRoutes: []*k8s_networking_v1beta1.HTTPRoute{},
 
 		AuthorizationPolicies:  []*security_v1beta1.AuthorizationPolicy{},
 		PeerAuthentications:    []*security_v1beta1.PeerAuthentication{},
@@ -507,8 +507,8 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 							registry.EnvoyFilters = append(registry.EnvoyFilters, ef)
 						case "Gateway":
 							// It needs to figure out Gateway object type by apiVersion, whether it is Gateway API of Istio Gateway
-							if mItem["apiVersion"] == K8sApiNetworkingVersionV1Beta1 || mItem["apiVersion"] == K8sApiNetworkingVersionV1Alpha2 {
-								var gw k8s_networking_v1alpha2.Gateway
+							if mItem["apiVersion"] == K8sApiNetworkingVersionV1Beta1 {
+								var gw k8s_networking_v1beta1.Gateway
 								err := bDec.Decode(&gw)
 								if err != nil {
 									log.Errorf("Error parsing RegistryConfig results for K8sGateways: %s", err)
@@ -523,7 +523,7 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 								registry.Gateways = append(registry.Gateways, &gw)
 							}
 						case "HTTPRoute":
-							var route *k8s_networking_v1alpha2.HTTPRoute
+							var route *k8s_networking_v1beta1.HTTPRoute
 							err := bDec.Decode(&route)
 							if err != nil {
 								log.Errorf("Error parsing RegistryConfig results for K8sHTTPRoutes: %s", err)
@@ -791,7 +791,7 @@ func GatewayNames(gateways []*networking_v1beta1.Gateway) map[string]struct{} {
 }
 
 // K8sGatewayNames extracts the gateway names for easier matching
-func K8sGatewayNames(gateways []*k8s_networking_v1alpha2.Gateway) map[string]struct{} {
+func K8sGatewayNames(gateways []*k8s_networking_v1beta1.Gateway) map[string]struct{} {
 	var empty struct{}
 	names := make(map[string]struct{})
 	for _, gw := range gateways {
