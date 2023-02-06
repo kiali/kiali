@@ -106,7 +106,7 @@ class ServerList extends React.Component<Props> {
     const server : Server = {
       hosts: serverForm.hosts,
       port: {number: Number(serverForm.number),  name: serverForm.name, protocol: serverForm.protocol},
-      tls: serverForm.protocol === "HTTPS" ?
+      tls: serverForm.protocol === "HTTPS" || serverForm.protocol === "TLS" ?
         {mode: serverForm.tlsMode, serverCertificate: serverForm.tlsServerCertificate, privateKey: serverForm.tlsPrivateKey, caCertificates: serverForm.tlsCaCertificate}
         : undefined
     }
