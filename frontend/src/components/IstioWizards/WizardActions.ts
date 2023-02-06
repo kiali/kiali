@@ -1836,18 +1836,6 @@ export const buildK8sGateway = (name: string, namespace: string, state: K8sGatew
       })),
     }
   };
-  state.workloadSelectorLabels
-    .trim()
-    .split(',')
-    .forEach(split => {
-      const labels = split.trim().split('=');
-      // It should be already validated with workloadSelectorValid, but just to add extra safe check
-      if (labels.length === 2) {
-        if (k8sGateway.metadata.labels) {
-          k8sGateway.metadata.labels[labels[0].trim()] = labels[1].trim();
-        }
-      }
-    });
   return k8sGateway;
 };
 
