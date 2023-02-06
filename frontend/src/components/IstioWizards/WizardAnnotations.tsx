@@ -78,10 +78,10 @@ class WizardAnnotations extends React.Component<Props, State> {
         const rows: JSX.Element[] = Object.keys(this.state.annotations).map((k) => (
              this.props.canEdit ? (
                 <Tr key={"edit_annotation_for_" + k}>
-                 <Th>
+                 <Th width={40}>
                     <TextInput aria-invalid={k === ""} id={"annotationInputForKey_" + k} onChange={(newKey) => this.changeKeyAnnotation(k, newKey)} placeholder={"key"} type="text" value={k}/>
                  </Th>
-                 <Th>
+                 <Th width={40}>
                     <TextInput aria-invalid={this.state.annotations[k] === ""} id={"annotationInputForValue_" + this.state.annotations[k]} onChange={(v) => this.changeValueAnnotation(k, v)} placeholder={"value"} type="text" value={this.state.annotations[k]}/>
                  </Th>
                  <Th><Button variant={'plain'} icon={<KialiIcon.Delete />} onClick={() => this.removeAnnotation(k)}/></Th>
@@ -96,10 +96,10 @@ class WizardAnnotations extends React.Component<Props, State> {
         if (this.state.newAnnotation) {
             rows.push(
                 <Tr key={"edit_annotation_for_new_annotation"}>
-                 <Th>
+                 <Th width={40}>
                     <TextInput aria-invalid={this.state.key === "" || Object.keys(this.state.annotations).indexOf(this.state.key) > -1} id={"annotationInputForNewKey"} onChange={(key) => this.setState({key})} placeholder={"key"} type="text" value={this.state.key}/>
                  </Th>
-                 <Th>
+                 <Th width={40}>
                     <TextInput aria-invalid={this.state.value === ""} id={"annotationInputForNewValue"} onChange={(value) => this.setState({value})} placeholder={"value"} type="text" value={this.state.value}/>
                  </Th>
                  <Th><Button variant={'plain'} icon={<KialiIcon.Save />} onClick={() => this.saveAnnotation()}/><Button variant={'plain'} icon={<KialiIcon.Delete />} onClick={() => this.clearAnnotation()}/></Th>
