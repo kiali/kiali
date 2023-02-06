@@ -16,7 +16,7 @@ We gratefully welcome improvements to documentation as well as to code.
 
 Before you make a change, please:
 
-* Open an discussion or an issue describing the motivation of work (especially for large changes).
+* Open a [discussion](https://github.com/kiali/kiali/discussions) or an [issue](https://github.com/kiali/kiali/issues) describing the motivation of work (especially for large changes). Regardless of the repo where the work should be done (server, UI, operator, or helm charts), all discussions and issues should be submitted to the main kiali/kiali repo using those links provided.
 * Let other maintainers to comment/review the proposal or validate if the work is not being addressed by other contributor.
 * When the design/approach/discussion is ready, prepare a Pull Request with the changes.
 
