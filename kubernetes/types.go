@@ -92,6 +92,12 @@ var (
 	}
 	ApiNetworkingVersionV1Alpha3 = NetworkingGroupVersionV1Alpha3.Group + "/" + NetworkingGroupVersionV1Alpha3.Version
 
+	K8sNetworkingGroupVersionV1Alpha2 = schema.GroupVersion{
+		Group:   "gateway.networking.k8s.io",
+		Version: "v1alpha2",
+	}
+	K8sApiNetworkingVersionV1Alpha2 = K8sNetworkingGroupVersionV1Alpha2.Group + "/" + K8sNetworkingGroupVersionV1Alpha2.Version
+
 	K8sNetworkingGroupVersionV1Beta1 = schema.GroupVersion{
 		Group:   "gateway.networking.k8s.io",
 		Version: "v1beta1",

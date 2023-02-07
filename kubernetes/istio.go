@@ -507,7 +507,7 @@ func ParseRegistryConfig(config map[string][]byte) (*RegistryConfiguration, erro
 							registry.EnvoyFilters = append(registry.EnvoyFilters, ef)
 						case "Gateway":
 							// It needs to figure out Gateway object type by apiVersion, whether it is Gateway API of Istio Gateway
-							if mItem["apiVersion"] == K8sApiNetworkingVersionV1Beta1 {
+							if mItem["apiVersion"] == K8sApiNetworkingVersionV1Beta1 || mItem["apiVersion"] == K8sApiNetworkingVersionV1Alpha2 {
 								var gw k8s_networking_v1beta1.Gateway
 								err := bDec.Decode(&gw)
 								if err != nil {
