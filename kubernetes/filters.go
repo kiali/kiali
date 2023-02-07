@@ -9,7 +9,7 @@ import (
 	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
 )
@@ -160,12 +160,12 @@ func FilterSupportedGateways(gateways []*networking_v1beta1.Gateway) []*networki
 	return filtered
 }
 
-func FilterSupportedK8sGateways(gateways []*k8s_networking_v1alpha2.Gateway) []*k8s_networking_v1alpha2.Gateway {
+func FilterSupportedK8sGateways(gateways []*k8s_networking_v1beta1.Gateway) []*k8s_networking_v1beta1.Gateway {
 	var gatewayAPIClassName = config.Get().ExternalServices.Istio.GatewayAPIClassName
 	if gatewayAPIClassName == "" {
 		gatewayAPIClassName = "istio"
 	}
-	filtered := []*k8s_networking_v1alpha2.Gateway{}
+	filtered := []*k8s_networking_v1beta1.Gateway{}
 	for _, gw := range gateways {
 		if string(gw.Spec.GatewayClassName) == gatewayAPIClassName {
 			filtered = append(filtered, gw)
@@ -219,9 +219,9 @@ func FilterGatewaysByVirtualServices(allGws []*networking_v1beta1.Gateway, allVs
 	return gateways
 }
 
-func FilterK8sGatewaysByHTTPRoutes(allGws []*k8s_networking_v1alpha2.Gateway, allRoutes []*k8s_networking_v1alpha2.HTTPRoute) []*k8s_networking_v1alpha2.Gateway {
+func FilterK8sGatewaysByHTTPRoutes(allGws []*k8s_networking_v1beta1.Gateway, allRoutes []*k8s_networking_v1beta1.HTTPRoute) []*k8s_networking_v1beta1.Gateway {
 	var empty struct{}
-	gateways := []*k8s_networking_v1alpha2.Gateway{}
+	gateways := []*k8s_networking_v1beta1.Gateway{}
 	gatewayNames := make(map[string]struct{})
 	for _, route := range allRoutes {
 		for _, pRef := range route.Spec.ParentRefs {
@@ -530,8 +530,8 @@ func FilterVirtualServicesByService(allVs []*networking_v1beta1.VirtualService, 
 	return filtered
 }
 
-func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1alpha2.HTTPRoute, namespace string, serviceName string) []*k8s_networking_v1alpha2.HTTPRoute {
-	filtered := []*k8s_networking_v1alpha2.HTTPRoute{}
+func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1beta1.HTTPRoute, namespace string, serviceName string) []*k8s_networking_v1beta1.HTTPRoute {
+	filtered := []*k8s_networking_v1beta1.HTTPRoute{}
 	for _, route := range allRoutes {
 		appendRoute := serviceName == ""
 		if !appendRoute {

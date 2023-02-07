@@ -907,6 +907,17 @@ export interface Server {
   tls?: ServerTLSSettings;
 }
 
+export interface ServerForm {
+  number: string;
+  protocol: string;
+  name: string;
+  hosts: string[];
+  tlsMode: string;
+  tlsServerCertificate: string;
+  tlsPrivateKey: string;
+  tlsCaCertificate: string;
+}
+
 // 1.6
 export interface ServerPort {
   number: number;

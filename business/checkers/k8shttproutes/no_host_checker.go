@@ -3,7 +3,7 @@ package k8shttproutes
 import (
 	"fmt"
 
-	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -11,7 +11,7 @@ import (
 
 type NoHostChecker struct {
 	Namespaces       models.Namespaces
-	K8sHTTPRoute     *k8s_networking_v1alpha2.HTTPRoute
+	K8sHTTPRoute     *k8s_networking_v1beta1.HTTPRoute
 	RegistryServices []*kubernetes.RegistryService
 }
 

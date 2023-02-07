@@ -1,15 +1,15 @@
 package references
 
 import (
-	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type K8sGatewayReferences struct {
-	K8sGateways   []*k8s_networking_v1alpha2.Gateway
-	K8sHTTPRoutes []*k8s_networking_v1alpha2.HTTPRoute
+	K8sGateways   []*k8s_networking_v1beta1.Gateway
+	K8sHTTPRoutes []*k8s_networking_v1beta1.HTTPRoute
 }
 
 func (g K8sGatewayReferences) References() models.IstioReferencesMap {
@@ -25,7 +25,7 @@ func (g K8sGatewayReferences) References() models.IstioReferencesMap {
 	return result
 }
 
-func (g K8sGatewayReferences) getConfigReferences(gw *k8s_networking_v1alpha2.Gateway) []models.IstioReference {
+func (g K8sGatewayReferences) getConfigReferences(gw *k8s_networking_v1beta1.Gateway) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 
 	for _, rt := range g.K8sHTTPRoutes {

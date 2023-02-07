@@ -18,6 +18,10 @@ And('user sees the {string} config wizard', (title) => {
   cy.get('h1').should('contain.text', title);
 });
 
+And('user adds listener', () => {
+  cy.get('button[name="addListener"]').click()
+});
+
 And('user types {string} in the name input', (name) => {
   cy.get('input[id="name"]').type(name);
 });
@@ -32,11 +36,6 @@ And('user types {string} in the add hostname input', (host) => {
 
 And('user types {string} in the add port input', (port) => {
   cy.get('input[id="addPort"]').type(port);
-});
-
-And('user adds listener', () => {
-  cy.get('button[data-test="add-listener"]').click();
-  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 And('user creates the istio config', () => {
