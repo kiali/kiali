@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
@@ -19,7 +19,7 @@ func TestCorrectK8sGateways(t *testing.T) {
 
 	k8sgwObject := data.CreateEmptyK8sGateway("validk8sgateway", "test")
 
-	k8sgws := []*k8s_networking_v1alpha2.Gateway{k8sgwObject}
+	k8sgws := []*k8s_networking_v1beta1.Gateway{k8sgwObject}
 
 	vals := MultiMatchChecker{
 		K8sGateways: k8sgws,
@@ -42,7 +42,7 @@ func TestDuplicateListenersCheckError(t *testing.T) {
 	k8sgwObject2 := data.AddListenerToK8sGateway(data.CreateListener("test", "host.com", 80, "http"),
 		data.CreateEmptyK8sGateway("validk8sgateway2", "test"))
 
-	k8sgws := []*k8s_networking_v1alpha2.Gateway{k8sgwObject, k8sgwObject2}
+	k8sgws := []*k8s_networking_v1beta1.Gateway{k8sgwObject, k8sgwObject2}
 
 	vals := MultiMatchChecker{
 		K8sGateways: k8sgws,
@@ -69,7 +69,7 @@ func TestDuplicateListenersCheckOk(t *testing.T) {
 	k8sgwObject2 := data.AddListenerToK8sGateway(data.CreateListener("test", "host.com", 80, "http"),
 		data.CreateEmptyK8sGateway("validk8sgateway2", "test"))
 
-	k8sgws := []*k8s_networking_v1alpha2.Gateway{k8sgwObject, k8sgwObject2}
+	k8sgws := []*k8s_networking_v1beta1.Gateway{k8sgwObject, k8sgwObject2}
 
 	vals := MultiMatchChecker{
 		K8sGateways: k8sgws,
@@ -92,7 +92,7 @@ func TestDuplicateAddresssCheckError(t *testing.T) {
 	k8sgwObject2 := data.AddGwAddressToK8sGateway(gwAddress,
 		data.CreateEmptyK8sGateway("validk8sgateway2", "test"))
 
-	k8sgws := []*k8s_networking_v1alpha2.Gateway{k8sgwObject, k8sgwObject2}
+	k8sgws := []*k8s_networking_v1beta1.Gateway{k8sgwObject, k8sgwObject2}
 
 	vals := MultiMatchChecker{
 		K8sGateways: k8sgws,
@@ -122,7 +122,7 @@ func TestDuplicateAddresssCheckOk(t *testing.T) {
 	k8sgwObject2 := data.AddGwAddressToK8sGateway(gwAddress2,
 		data.CreateEmptyK8sGateway("validk8sgateway2", "test"))
 
-	k8sgws := []*k8s_networking_v1alpha2.Gateway{k8sgwObject, k8sgwObject2}
+	k8sgws := []*k8s_networking_v1beta1.Gateway{k8sgwObject, k8sgwObject2}
 
 	vals := MultiMatchChecker{
 		K8sGateways: k8sgws,
@@ -144,7 +144,7 @@ func TestUniqueListenerOk(t *testing.T) {
 	k8sgwObject = data.AddListenerToK8sGateway(data.CreateListener("test2", "host.com", 80, "http"),
 		k8sgwObject)
 
-	k8sgws := []*k8s_networking_v1alpha2.Gateway{k8sgwObject}
+	k8sgws := []*k8s_networking_v1beta1.Gateway{k8sgwObject}
 
 	vals := MultiMatchChecker{
 		K8sGateways: k8sgws,
@@ -166,7 +166,7 @@ func TestUniqueListenerDuplicate(t *testing.T) {
 	k8sgwObject = data.AddListenerToK8sGateway(data.CreateListener("test2", "host.es", 80, "http"),
 		k8sgwObject)
 
-	k8sgws := []*k8s_networking_v1alpha2.Gateway{k8sgwObject}
+	k8sgws := []*k8s_networking_v1beta1.Gateway{k8sgwObject}
 
 	vals := MultiMatchChecker{
 		K8sGateways: k8sgws,

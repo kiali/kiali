@@ -1,7 +1,7 @@
 package references
 
 import (
-	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -9,7 +9,7 @@ import (
 
 type K8sHTTPRouteReferences struct {
 	Namespaces    models.Namespaces
-	K8sHTTPRoutes []*k8s_networking_v1alpha2.HTTPRoute
+	K8sHTTPRoutes []*k8s_networking_v1beta1.HTTPRoute
 }
 
 func (n K8sHTTPRouteReferences) References() models.IstioReferencesMap {
@@ -26,7 +26,7 @@ func (n K8sHTTPRouteReferences) References() models.IstioReferencesMap {
 	return result
 }
 
-func (n K8sHTTPRouteReferences) getServiceReferences(rt *k8s_networking_v1alpha2.HTTPRoute) []models.ServiceReference {
+func (n K8sHTTPRouteReferences) getServiceReferences(rt *k8s_networking_v1beta1.HTTPRoute) []models.ServiceReference {
 	keys := make(map[string]bool)
 	allServices := make([]models.ServiceReference, 0)
 	result := make([]models.ServiceReference, 0)
@@ -57,7 +57,7 @@ func (n K8sHTTPRouteReferences) getServiceReferences(rt *k8s_networking_v1alpha2
 	return result
 }
 
-func (n K8sHTTPRouteReferences) getConfigReferences(rt *k8s_networking_v1alpha2.HTTPRoute) []models.IstioReference {
+func (n K8sHTTPRouteReferences) getConfigReferences(rt *k8s_networking_v1beta1.HTTPRoute) []models.IstioReference {
 	keys := make(map[string]bool)
 	result := make([]models.IstioReference, 0)
 	allGateways := getAllK8sGateways(rt)
@@ -71,7 +71,7 @@ func (n K8sHTTPRouteReferences) getConfigReferences(rt *k8s_networking_v1alpha2.
 	return result
 }
 
-func getAllK8sGateways(rt *k8s_networking_v1alpha2.HTTPRoute) []models.IstioReference {
+func getAllK8sGateways(rt *k8s_networking_v1beta1.HTTPRoute) []models.IstioReference {
 	allGateways := make([]models.IstioReference, 0)
 
 	if len(rt.Spec.ParentRefs) > 0 {
