@@ -47,9 +47,7 @@ describe('renderBadgedLink', () => {
 
     const wrapper = mount(
       <Provider store={store}>
-        <MemoryRouter>
-          {renderBadgedLink(node, undefined, undefined, () => linkInfo)}
-        </MemoryRouter>
+        <MemoryRouter>{renderBadgedLink(node, undefined, undefined, () => linkInfo)}</MemoryRouter>
       </Provider>
     );
     const linkNode = wrapper.find('a').filter(`[href="${linkInfo.link}"]`);

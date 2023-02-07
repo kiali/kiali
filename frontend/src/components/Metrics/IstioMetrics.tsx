@@ -7,22 +7,16 @@ import { Card, CardBody, Checkbox, Toolbar, ToolbarGroup, ToolbarItem } from '@p
 import { style } from 'typestyle';
 import * as API from 'services/Api';
 import { KialiAppState } from 'store/Store';
-import {
-  TimeRange,
-  evalTimeRange,
-  TimeInMilliseconds,
-  isEqualTimeRange,
-  IntervalInMilliseconds
-} from 'types/Common';
+import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, IntervalInMilliseconds } from 'types/Common';
 import { Direction, IstioMetricsOptions, Reporter } from 'types/MetricsOptions';
 import * as AlertUtils from 'utils/AlertUtils';
 import { RenderComponentScroll } from 'components/Nav/Page';
 import * as MetricsHelper from './Helper';
-import { KioskElement } from "../Kiosk/KioskElement";
+import { KioskElement } from '../Kiosk/KioskElement';
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import MetricsReporter from '../MetricsOptions/MetricsReporter';
-import { TimeDurationModal } from "../Time/TimeDurationModal";
+import { TimeDurationModal } from '../Time/TimeDurationModal';
 import history, { URLParam } from 'app/History';
 import { MetricsObjectTypes } from 'types/Metrics';
 import { GrafanaInfo } from 'types/GrafanaInfo';
@@ -36,7 +30,7 @@ import { Dashboard } from 'components/Charts/Dashboard';
 import { refreshIntervalSelector, timeRangeSelector } from 'store/Selectors';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
-import TimeDurationIndicatorContainer from "../Time/TimeDurationIndicatorComponent";
+import TimeDurationIndicatorContainer from '../Time/TimeDurationIndicatorComponent';
 
 type MetricsState = {
   crippledFeatures?: KialiCrippledFeatures;
@@ -60,7 +54,7 @@ type IstioMetricsProps = ObjectId &
     objectType: MetricsObjectTypes;
     direction: Direction;
   } & {
-  lastRefreshAt: TimeInMilliseconds;
+    lastRefreshAt: TimeInMilliseconds;
   };
 
 type ReduxProps = {
@@ -309,7 +303,8 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
           customDuration={true}
           isOpen={this.state.isTimeOptionsOpen}
           onConfirm={this.toggleTimeOptionsVisibility}
-          onCancel={this.toggleTimeOptionsVisibility} />
+          onCancel={this.toggleTimeOptionsVisibility}
+        />
       </>
     );
   }
@@ -329,8 +324,8 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   };
 
   private toggleTimeOptionsVisibility = () => {
-    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }) );
-  }
+    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
+  };
 
   private renderOptionsBar() {
     const hasHistogramsAverage =
@@ -342,7 +337,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
       !this.state.crippledFeatures?.responseSizePercentiles ||
       !this.state.crippledFeatures?.responseTimePercentiles;
 
-      return (
+    return (
       <div ref={this.toolbarRef}>
         <Toolbar style={{ padding: 0, marginBottom: '20px' }}>
           <ToolbarGroup>

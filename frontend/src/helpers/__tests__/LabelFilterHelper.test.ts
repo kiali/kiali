@@ -293,17 +293,17 @@ describe('LabelFilter', () => {
   });
 
   it('check is Ingress/Egress Gateway when false', () => {
-    const result = isGateway({'istio': 'wrong'});
+    const result = isGateway({ istio: 'wrong' });
     expect(result).toBeFalsy();
   });
 
   it('check is Ingress Gateway when true', () => {
-    const result = isGateway({'istio': 'ingressgateway'});
+    const result = isGateway({ istio: 'ingressgateway' });
     expect(result).toBeTruthy();
   });
 
   it('check is Egress Gateway when true', () => {
-    const result = isGateway({'istio': 'egressgateway'});
+    const result = isGateway({ istio: 'egressgateway' });
     expect(result).toBeTruthy();
   });
 });

@@ -1,15 +1,20 @@
-import * as React from "react";
-import { CancelablePromise } from "../utils/CancelablePromises";
-import * as API from "../services/Api";
-import { DurationInSeconds, TimeInMilliseconds } from "../types/Common";
-import { ServiceDetailsInfo } from "../types/ServiceInfo";
-import { getGatewaysAsList, PeerAuthentication } from "../types/IstioObjects";
-import { AxiosError } from "axios";
-import { DecoratedGraphNodeData, NodeType } from "../types/Graph";
-import * as AlertUtils from "../utils/AlertUtils";
-import { useState } from "react";
+import * as React from 'react';
+import { CancelablePromise } from '../utils/CancelablePromises';
+import * as API from '../services/Api';
+import { DurationInSeconds, TimeInMilliseconds } from '../types/Common';
+import { ServiceDetailsInfo } from '../types/ServiceInfo';
+import { getGatewaysAsList, PeerAuthentication } from '../types/IstioObjects';
+import { AxiosError } from 'axios';
+import { DecoratedGraphNodeData, NodeType } from '../types/Graph';
+import * as AlertUtils from '../utils/AlertUtils';
+import { useState } from 'react';
 
-export function useServiceDetail(namespace: string, serviceName: string, duration?: DurationInSeconds, updateTime?: TimeInMilliseconds) {
+export function useServiceDetail(
+  namespace: string,
+  serviceName: string,
+  duration?: DurationInSeconds,
+  updateTime?: TimeInMilliseconds
+) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [fetchError, setFetchError] = React.useState<AxiosError | null>(null);
 
@@ -31,7 +36,12 @@ export function useServiceDetail(namespace: string, serviceName: string, duratio
     allPromise.promise
       .then(results => {
         setServiceDetails(results[0]);
-        setGateways(Object.values(results[1].data).map(nsCfg => getGatewaysAsList(nsCfg.gateways)).flat().sort());
+        setGateways(
+          Object.values(results[1].data)
+            .map(nsCfg => getGatewaysAsList(nsCfg.gateways))
+            .flat()
+            .sort()
+        );
         setPeerAuthentications(results[2].data.peerAuthentications);
         setFetchError(null);
         setIsLoading(false);
@@ -54,24 +64,29 @@ export function useServiceDetail(namespace: string, serviceName: string, duratio
       setServiceDetails(null);
       setGateways(null);
       setPeerAuthentications(null);
-    }
+    };
   }, [namespace, serviceName, duration, updateTime]);
 
   return [serviceDetails, gateways, peerAuthentications, isLoading, fetchError] as const;
 }
 
-export function useServiceDetailForGraphNode(node: DecoratedGraphNodeData, loadFlag: boolean, duration?: DurationInSeconds, updateTime?: TimeInMilliseconds) {
+export function useServiceDetailForGraphNode(
+  node: DecoratedGraphNodeData,
+  loadFlag: boolean,
+  duration?: DurationInSeconds,
+  updateTime?: TimeInMilliseconds
+) {
   const [nodeNamespace, setNodeNamespace] = useState<string>('');
   const [nodeSvcName, setNodeSvcName] = useState<string>('');
   const [usedDuration, setUsedDuration] = useState<DurationInSeconds | undefined>(undefined);
-  const [usedUpdateTime, setUsedUpdateTime] = useState<TimeInMilliseconds|undefined>(undefined);
+  const [usedUpdateTime, setUsedUpdateTime] = useState<TimeInMilliseconds | undefined>(undefined);
 
   React.useEffect(() => {
     if (!loadFlag) {
       return;
     }
 
-    const localSvc = (node.nodeType === NodeType.SERVICE && node.service && !node.isServiceEntry) ? node.service : '';
+    const localSvc = node.nodeType === NodeType.SERVICE && node.service && !node.isServiceEntry ? node.service : '';
 
     setNodeNamespace(node.namespace);
     setNodeSvcName(localSvc);

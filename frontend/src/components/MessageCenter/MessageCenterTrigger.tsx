@@ -16,9 +16,9 @@ type PropsType = {
   toggleSystemErrorsCenter: () => void;
 };
 
-const systemErrorCountStyle = style ({
-  marginRight: "0.3em",
-  paddingTop: "0.1em"
+const systemErrorCountStyle = style({
+  marginRight: '0.3em',
+  paddingTop: '0.1em'
 });
 
 export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
@@ -59,7 +59,7 @@ export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
     const count = style({
       position: 'relative',
       top: '2px',
-      verticalAlign: "0.125em"
+      verticalAlign: '0.125em'
     });
 
     return (

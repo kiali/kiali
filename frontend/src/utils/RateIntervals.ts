@@ -1,6 +1,6 @@
-import { config } from "../config";
+import { config } from '../config';
 import { serverConfig } from '../config/ServerConfig';
-import { IntervalInMilliseconds } from "../types/Common";
+import { IntervalInMilliseconds } from '../types/Common';
 
 export const getName = (durationSeconds: number): string => {
   const name = serverConfig.durations[durationSeconds];
@@ -12,5 +12,5 @@ export const getName = (durationSeconds: number): string => {
 
 export const getRefreshIntervalName = (refreshInterval: IntervalInMilliseconds): string => {
   const refreshIntervalOption = config.toolbar.refreshInterval[refreshInterval];
-  return refreshIntervalOption.replace("Every ", "");
-}
+  return refreshIntervalOption.replace('Every ', '');
+};

@@ -34,7 +34,7 @@ import Label from 'components/Label/Label';
 import { serverConfig } from 'config/ServerConfig';
 import ControlPlaneBadge from 'pages/Overview/ControlPlaneBadge';
 import NamespaceStatuses from 'pages/Overview/NamespaceStatuses';
-import { isGateway } from "../../helpers/LabelFilterHelper";
+import { isGateway } from '../../helpers/LabelFilterHelper';
 
 // Links
 
@@ -84,7 +84,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
         )}
         {hasMissingSC && (
           <li>
-            <MissingSidecar namespace={item.namespace} isGateway={isGateway(item.labels)}/>
+            <MissingSidecar namespace={item.namespace} isGateway={isGateway(item.labels)} />
           </li>
         )}
         {isWorkload && (hasMissingApp || hasMissingVersion) && (
@@ -151,9 +151,14 @@ export const status: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
         className="pf-m-center"
         style={{ verticalAlign: 'middle' }}
       >
-        { ns.status &&
-          <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={OverviewToolbar.currentOverviewType()} />
-        }
+        {ns.status && (
+          <NamespaceStatuses
+            key={ns.name}
+            name={ns.name}
+            status={ns.status}
+            type={OverviewToolbar.currentOverviewType()}
+          />
+        )}
         <OverviewCardSparklineCharts
           key={ns.name}
           name={ns.name}
@@ -174,9 +179,7 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Reso
     <td role="gridcell" key={'VirtuaItem_NamespaceItem_' + ns.name} style={{ verticalAlign: 'middle' }}>
       <PFBadge badge={badge} />
       {ns.name}
-      {ns.name === serverConfig.istioNamespace &&
-        <ControlPlaneBadge />
-      }
+      {ns.name === serverConfig.istioNamespace && <ControlPlaneBadge />}
     </td>
   );
 };

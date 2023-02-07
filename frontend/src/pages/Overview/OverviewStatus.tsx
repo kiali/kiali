@@ -9,17 +9,17 @@ import { FilterSelected } from '../../components/Filters/StatefulFilters';
 import { createIcon } from '../../components/Health/Helper';
 
 import '../../components/Health/Health.css';
-import {KialiAppState} from "../../store/Store";
-import {connect} from "react-redux";
-import {isParentKiosk, kioskGraphAction} from "../../components/Kiosk/KioskActions";
-import {durationSelector, refreshIntervalSelector} from "../../store/Selectors";
-import {DurationInSeconds, IntervalInMilliseconds} from "../../types/Common";
+import { KialiAppState } from '../../store/Store';
+import { connect } from 'react-redux';
+import { isParentKiosk, kioskGraphAction } from '../../components/Kiosk/KioskActions';
+import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
+import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
 
 type ReduxProps = {
   duration: DurationInSeconds;
   kiosk: string;
   refreshInterval: IntervalInMilliseconds;
-}
+};
 
 type Props = ReduxProps & {
   id: string;
@@ -44,11 +44,17 @@ class OverviewStatus extends React.Component<Props, {}> {
     // Kiosk actions are used when the kiosk specifies a parent,
     // otherwise the kiosk=true will keep the links inside Kiali
     if (isParentKiosk(this.props.kiosk)) {
-      kioskGraphAction(this.props.namespace, this.props.status.name, this.props.duration, this.props.refreshInterval, this.props.targetPage)
+      kioskGraphAction(
+        this.props.namespace,
+        this.props.status.name,
+        this.props.duration,
+        this.props.refreshInterval,
+        this.props.targetPage
+      );
     } else {
-      this.setFilters()
+      this.setFilters();
     }
-  }
+  };
 
   render() {
     const length = this.props.items.length;
@@ -91,8 +97,8 @@ class OverviewStatus extends React.Component<Props, {}> {
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   kiosk: state.globalState.kiosk,
-  refreshInterval: refreshIntervalSelector(state),
+  refreshInterval: refreshIntervalSelector(state)
 });
 
-const OverviewStatusContainer = connect(mapStateToProps)(OverviewStatus)
+const OverviewStatusContainer = connect(mapStateToProps)(OverviewStatus);
 export default OverviewStatusContainer;

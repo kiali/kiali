@@ -1,13 +1,19 @@
-import {store} from "../../store/ConfigStore";
-import {Show} from "../../pages/Overview/OverviewPage";
-import {DurationInSeconds, IntervalInMilliseconds, TimeRange} from "../../types/Common";
-import {HEALTHY} from "../../types/Health";
+import { store } from '../../store/ConfigStore';
+import { Show } from '../../pages/Overview/OverviewPage';
+import { DurationInSeconds, IntervalInMilliseconds, TimeRange } from '../../types/Common';
+import { HEALTHY } from '../../types/Health';
 
 // Specific actions that should be communicated to the parent of the Kiosk
 // These actions have Kiali semantic, the parent of the Kiosk should translate them to their specific domain
 // No parent kiosk domain logic should be added here
 
-export const kioskGraphAction = (namespace: string, healthStatus: string, duration: DurationInSeconds, refreshInterval: IntervalInMilliseconds, targetPage: string) => {
+export const kioskGraphAction = (
+  namespace: string,
+  healthStatus: string,
+  duration: DurationInSeconds,
+  refreshInterval: IntervalInMilliseconds,
+  targetPage: string
+) => {
   let showInParent = '/graph/namespaces?namespaces=' + namespace;
   if (healthStatus === HEALTHY.name) {
     showInParent += '&graphFind=healthy';
@@ -27,7 +33,7 @@ export const kioskGraphAction = (namespace: string, healthStatus: string, durati
       break;
   }
   sendParentMessage(showInParent);
-}
+};
 
 export const kioskContextMenuAction = (href: string) => {
   const showInParent = href;
@@ -37,9 +43,14 @@ export const kioskContextMenuAction = (href: string) => {
 export const kioskIstioConfigAction = (namespace: string) => {
   const showInParent = '/istio?namespaces=' + namespace;
   sendParentMessage(showInParent);
-}
+};
 
-export const kioskOverviewAction = (showType: Show, namespace: string, duration: DurationInSeconds, refreshInterval: IntervalInMilliseconds) => {
+export const kioskOverviewAction = (
+  showType: Show,
+  namespace: string,
+  duration: DurationInSeconds,
+  refreshInterval: IntervalInMilliseconds
+) => {
   let showInParent = 'overview';
   switch (showType) {
     case Show.GRAPH:
@@ -56,25 +67,25 @@ export const kioskOverviewAction = (showType: Show, namespace: string, duration:
 export const kioskDurationAction = (duration: DurationInSeconds) => {
   const showInParent = 'duration=' + duration;
   sendParentMessage(showInParent);
-}
+};
 
 export const kioskTimeRangeAction = (timeRange: TimeRange) => {
   const showInParent = 'timeRange=' + JSON.stringify(timeRange);
   sendParentMessage(showInParent);
-}
+};
 
 export const kioskRefreshAction = (refreshInterval: IntervalInMilliseconds) => {
   const showInParent = 'refresh=' + refreshInterval;
   sendParentMessage(showInParent);
-}
+};
 
 export const isKiosk = (kiosk: string): boolean => {
   return kiosk.length > 0;
-}
+};
 
 export const isParentKiosk = (kiosk: string): boolean => {
   return kiosk.length > 0 && kiosk !== 'true';
-}
+};
 
 // Message has no format, parent should parse it for its needs
 const sendParentMessage = (msg: string): void => {
@@ -82,4 +93,4 @@ const sendParentMessage = (msg: string): void => {
   // this will enable iframe -> parent communication
   const targetOrigin = store.getState().globalState.kiosk;
   window.top.postMessage(msg, targetOrigin);
-}
+};

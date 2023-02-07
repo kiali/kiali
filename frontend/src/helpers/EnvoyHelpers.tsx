@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { EnvoySummary, Host } from '../types/IstioObjects';
 import { ActiveFilter, ActiveFiltersInfo } from '../types/Filters';
 import { FilterSelected } from '../components/Filters/StatefulFilters';
-import {kioskContextMenuAction} from "../components/Kiosk/KioskActions";
+import { kioskContextMenuAction } from '../components/Kiosk/KioskActions';
 
 export type FilterMethodMap = { [id: string]: (value, filter) => boolean };
 
@@ -28,7 +28,7 @@ export const routeLink = (
   route: string,
   namespace: string,
   workload: string | undefined,
-  handler: () => void,
+  handler: () => void
 ): JSX.Element | string => {
   let re = /Route: ([a-z-.:\d]*)/;
 
@@ -53,7 +53,7 @@ export const serviceLink = (
   namespaces: Namespace[] | undefined,
   podNamespace: string,
   simpleSvc: boolean = false,
-  isParentKiosk: boolean,
+  isParentKiosk: boolean
 ): JSX.Element | string => {
   let to: string = '/namespaces/';
   let linkText: string = host.service;
@@ -84,7 +84,9 @@ export const serviceLink = (
             onClick={() => {
               kioskContextMenuAction(to);
             }}
-          >{linkText}</Link>
+          >
+            {linkText}
+          </Link>
         ) : (
           <Link to={to}>{linkText}</Link>
         )}

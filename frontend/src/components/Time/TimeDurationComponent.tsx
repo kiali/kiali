@@ -52,12 +52,7 @@ export class TimeDurationComponent extends React.PureComponent<TimeControlsProps
           tooltipPosition={TooltipPosition.left}
         />
         {!(this.props.supportsReplay && this.props.replayActive) && (
-          <RefreshContainer
-            id="time_range_refresh"
-            disabled={this.props.disabled}
-            hideLabel={true}
-            manageURL={true}
-          />
+          <RefreshContainer id="time_range_refresh" disabled={this.props.disabled} hideLabel={true} manageURL={true} />
         )}
         {this.props.supportsReplay && this.props.replayActive && (
           <Button

@@ -15,7 +15,7 @@ import { style } from 'typestyle';
 import TourStopContainer from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { TimeInMilliseconds } from 'types/Common';
-import { KialiDispatch } from "types/Redux";
+import { KialiDispatch } from 'types/Redux';
 import { AutoComplete } from 'utils/AutoComplete';
 import { DEGRADED, FAILURE, HEALTHY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
@@ -78,7 +78,7 @@ const buttonClearStyle = style({
   width: '20px',
   paddingLeft: '5px',
   paddingRight: '5px',
-  bottom:  '0.5px'
+  bottom: '0.5px'
 });
 
 const operands: string[] = [
@@ -294,11 +294,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
             <GraphFindOptions kind="find" onSelect={this.updateFindOption} />
             {this.props.findValue && (
               <Tooltip key="ot_clear_find" position="top" content="Clear Find...">
-                <Button
-                  className={buttonClearStyle}
-                  variant={ButtonVariant.control}
-                  onClick={() => this.setFind('')}
-                >
+                <Button className={buttonClearStyle} variant={ButtonVariant.control} onClick={() => this.setFind('')}>
                   <KialiIcon.Close />
                 </Button>
               </Tooltip>
@@ -321,11 +317,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
             <GraphFindOptions kind="hide" onSelect={this.updateHideOption} />
             {this.props.hideValue && (
               <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
-                <Button
-                  className={buttonClearStyle}
-                  variant={ButtonVariant.control}
-                  onClick={() => this.setHide('')}
-                >
+                <Button className={buttonClearStyle} variant={ButtonVariant.control} onClick={() => this.setHide('')}>
                   <KialiIcon.Close />
                 </Button>
               </Tooltip>

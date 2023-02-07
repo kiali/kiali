@@ -12,7 +12,7 @@ import {
 } from '@patternfly/react-core';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ROUTE_RULES_TOOLTIP, wizardTooltip } from '../WizardHelp';
-import {K8sRouteBackendRef} from '../K8sTrafficShifting';
+import { K8sRouteBackendRef } from '../K8sTrafficShifting';
 
 export enum MOVE_TYPE {
   UP,
@@ -138,8 +138,8 @@ class K8sRules extends React.Component<Props> {
                 </>,
                 <>
                   <div key={'br_' + order}>
-                    {rule.backendRefs && rule.backendRefs
-                      .map((bRef, i) => {
+                    {rule.backendRefs &&
+                      rule.backendRefs.map((bRef, i) => {
                         return (
                           <div key={'br_' + order + '_' + bRef.name + '_' + i}>
                             <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />

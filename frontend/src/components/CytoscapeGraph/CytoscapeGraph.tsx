@@ -25,7 +25,7 @@ import { JaegerTrace } from 'types/JaegerInfo';
 import Namespace from '../../types/Namespace';
 import { addInfo } from 'utils/AlertUtils';
 import { angleBetweenVectors, squaredDistance, normalize } from '../../utils/MathUtils';
-import { WizardAction, WizardMode } from "../IstioWizards/WizardActions";
+import { WizardAction, WizardMode } from '../IstioWizards/WizardActions';
 import {
   CytoscapeContextMenuWrapper,
   NodeContextMenuComponentType,
@@ -43,8 +43,8 @@ import { serverConfig } from 'config';
 import { decoratedNodeData } from './CytoscapeGraphUtils';
 import { scoreNodes, ScoringCriteria } from './GraphScore';
 import { assignEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
-import { PeerAuthentication } from "types/IstioObjects";
-import { ServiceDetailsInfo } from "types/ServiceInfo";
+import { PeerAuthentication } from 'types/IstioObjects';
+import { ServiceDetailsInfo } from 'types/ServiceInfo';
 
 type CytoscapeGraphProps = {
   compressOnHide: boolean;
@@ -63,7 +63,14 @@ type CytoscapeGraphProps = {
   onNodeDoubleTap?: (e: GraphNodeDoubleTapEvent) => void;
   onEdgeTap?: (e: GraphEdgeTapEvent) => void;
   onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
-  onLaunchWizard?: (key: WizardAction, mode: WizardMode, namespace: string, serviceDetails: ServiceDetailsInfo, gateways: string[], peerAuths: PeerAuthentication[]) => void;
+  onLaunchWizard?: (
+    key: WizardAction,
+    mode: WizardMode,
+    namespace: string,
+    serviceDetails: ServiceDetailsInfo,
+    gateways: string[],
+    peerAuths: PeerAuthentication[]
+  ) => void;
   onNodeTap?: (e: GraphNodeTapEvent) => void;
   onReady?: (cytoscapeRef: any) => void;
   rankBy: RankMode[];

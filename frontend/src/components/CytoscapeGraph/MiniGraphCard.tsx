@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { connect } from "react-redux";
+import { connect } from 'react-redux';
 import {
   Card,
   CardActions,
@@ -21,22 +21,22 @@ import { store } from 'store/ConfigStore';
 import { style } from 'typestyle';
 import { toRangeString } from '../Time/Utils';
 import { TimeInMilliseconds } from '../../types/Common';
-import { ServiceDetailsInfo } from "../../types/ServiceInfo";
+import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { KialiDagreGraph } from './graphs/KialiDagreGraph';
-import {KialiAppState} from "../../store/Store";
-import { isParentKiosk, kioskContextMenuAction } from "../Kiosk/KioskActions";
-import { LoadingWizardActionsDropdownGroup } from "../IstioWizards/LoadingWizardActionsDropdownGroup";
-import ServiceWizardActionsDropdownGroup from "../IstioWizards/ServiceWizardActionsDropdownGroup";
-import { WizardAction, WizardMode } from "../IstioWizards/WizardActions";
-import { TimeDurationModal } from "../Time/TimeDurationModal";
-import TimeDurationIndicatorContainer from "../Time/TimeDurationIndicatorComponent";
-import { KioskElement } from "../Kiosk/KioskElement";
+import { KialiAppState } from '../../store/Store';
+import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
+import { LoadingWizardActionsDropdownGroup } from '../IstioWizards/LoadingWizardActionsDropdownGroup';
+import ServiceWizardActionsDropdownGroup from '../IstioWizards/ServiceWizardActionsDropdownGroup';
+import { WizardAction, WizardMode } from '../IstioWizards/WizardActions';
+import { TimeDurationModal } from '../Time/TimeDurationModal';
+import TimeDurationIndicatorContainer from '../Time/TimeDurationIndicatorComponent';
+import { KioskElement } from '../Kiosk/KioskElement';
 
 const initGraphContainerStyle = style({ width: '100%', height: '100%' });
 
 type ReduxProps = {
   kiosk: string;
-}
+};
 
 type MiniGraphCardProps = ReduxProps & {
   dataSource: GraphDataSource;
@@ -83,7 +83,7 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
     const graphCardActions = [
       <DropdownItem key="viewFullGraph" onClick={this.onViewFullGraph}>
         Show full graph
-      </DropdownItem>,
+      </DropdownItem>
     ];
     if (isParentKiosk(this.props.kiosk)) {
       if (this.props.serviceDetails === undefined) {
@@ -96,7 +96,8 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
             k8sHTTPRoutes={this.props.serviceDetails.k8sHTTPRoutes || []}
             istioPermissions={this.props.serviceDetails.istioPermissions}
             onAction={this.handleLaunchWizard}
-            onDelete={this.handleDeleteTrafficRouting} />
+            onDelete={this.handleDeleteTrafficRouting}
+          />
         );
       }
     } else {
@@ -106,7 +107,6 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
         </DropdownItem>
       );
     }
-
 
     const rangeEnd: TimeInMilliseconds = this.props.dataSource.graphTimestamp * 1000;
     const rangeStart: TimeInMilliseconds = rangeEnd - this.props.dataSource.graphDuration * 1000;
@@ -181,7 +181,8 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
           customDuration={false}
           isOpen={this.state.isTimeOptionsOpen}
           onConfirm={this.toggleTimeOptionsVisibility}
-          onCancel={this.toggleTimeOptionsVisibility} />
+          onCancel={this.toggleTimeOptionsVisibility}
+        />
       </>
     );
   }
@@ -195,14 +196,14 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
     if (this.props.onLaunchWizard) {
       this.props.onLaunchWizard(key, mode);
     }
-  }
+  };
 
   private handleDeleteTrafficRouting = (key: string) => {
     this.onGraphActionsToggle(false);
     if (this.props.onDeleteTrafficRouting) {
       this.props.onDeleteTrafficRouting(key);
     }
-  }
+  };
 
   private handleNodeTap = (e: GraphNodeTapEvent) => {
     // Do nothing on inaccessible nodes or service entry nodes
@@ -233,7 +234,7 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
     let resource = e[eNodeType];
     let resourceType: string = eNodeType === NodeType.APP ? 'application' : eNodeType;
 
-    const href= `/namespaces/${e.namespace}/${resourceType}s/${resource}`;
+    const href = `/namespaces/${e.namespace}/${resourceType}s/${resource}`;
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(href);
     } else {
@@ -324,13 +325,13 @@ class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardSta
   };
 
   private toggleTimeOptionsVisibility = () => {
-    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }) );
-  }
+    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
+  };
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  kiosk: state.globalState.kiosk,
+  kiosk: state.globalState.kiosk
 });
 
 const MiniGraphCardContainer = connect(mapStateToProps)(MiniGraphCard);
-export default MiniGraphCardContainer
+export default MiniGraphCardContainer;

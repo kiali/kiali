@@ -124,7 +124,13 @@ describe('Metrics for a service', () => {
     new MounterMocker()
       .addMock('getServiceDashboard', dashboard)
       .mountWithStore(
-        <IstioMetrics namespace="ns" object="svc" objectType={MetricsObjectTypes.SERVICE} direction={'inbound'} lastRefreshAt={Date.now()} />
+        <IstioMetrics
+          namespace="ns"
+          object="svc"
+          objectType={MetricsObjectTypes.SERVICE}
+          direction={'inbound'}
+          lastRefreshAt={Date.now()}
+        />
       )
       .run(done, wrapper => {
         expect(wrapper.find('Chart')).toHaveLength(0);
@@ -147,7 +153,13 @@ describe('Metrics for a service', () => {
     new MounterMocker()
       .addMock('getServiceDashboard', dashboard)
       .mountWithStore(
-        <IstioMetrics namespace="ns" object="svc" objectType={MetricsObjectTypes.SERVICE} direction={'inbound'} lastRefreshAt={Date.now()} />
+        <IstioMetrics
+          namespace="ns"
+          object="svc"
+          objectType={MetricsObjectTypes.SERVICE}
+          direction={'inbound'}
+          lastRefreshAt={Date.now()}
+        />
       )
       .run(done, wrapper => {
         expect(wrapper.find('Chart')).toHaveLength(4);
@@ -199,7 +211,13 @@ describe('Inbound Metrics for a workload', () => {
     new MounterMocker()
       .addMock('getWorkloadDashboard', dashboard)
       .mountWithStore(
-        <IstioMetrics namespace="ns" object="wkd" objectType={MetricsObjectTypes.WORKLOAD} direction={'inbound'} lastRefreshAt={Date.now()} />
+        <IstioMetrics
+          namespace="ns"
+          object="wkd"
+          objectType={MetricsObjectTypes.WORKLOAD}
+          direction={'inbound'}
+          lastRefreshAt={Date.now()}
+        />
       )
       .run(done, wrapper => {
         expect(wrapper.find('Chart')).toHaveLength(0);
@@ -222,7 +240,13 @@ describe('Inbound Metrics for a workload', () => {
     new MounterMocker()
       .addMock('getWorkloadDashboard', dashboard)
       .mountWithStore(
-        <IstioMetrics namespace="ns" object="wkd" objectType={MetricsObjectTypes.WORKLOAD} direction={'inbound'} lastRefreshAt={Date.now()} />
+        <IstioMetrics
+          namespace="ns"
+          object="wkd"
+          objectType={MetricsObjectTypes.WORKLOAD}
+          direction={'inbound'}
+          lastRefreshAt={Date.now()}
+        />
       )
       .run(done, wrapper => {
         expect(wrapper.find('Chart')).toHaveLength(4);

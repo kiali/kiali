@@ -1,29 +1,21 @@
 import * as React from 'react';
-import {
-  Button,
-  ButtonVariant,
-  ExpandableSection,
-  Modal,
-  ModalVariant,
-  Tab,
-  Tabs
-} from '@patternfly/react-core';
-import {WorkloadOverview} from '../../types/ServiceInfo';
+import { Button, ButtonVariant, ExpandableSection, Modal, ModalVariant, Tab, Tabs } from '@patternfly/react-core';
+import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
-import {Response} from '../../services/Api';
+import { Response } from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import RequestRouting from './RequestRouting';
 import K8sRequestRouting from './K8sRequestRouting';
-import TrafficShifting, {WorkloadWeight} from './TrafficShifting';
+import TrafficShifting, { WorkloadWeight } from './TrafficShifting';
 import TrafficPolicyContainer, {
   ConsistentHashType,
   TrafficPolicyState,
   UNSET
 } from '../../components/IstioWizards/TrafficPolicy';
-import {ROUND_ROBIN} from './TrafficPolicy';
-import FaultInjection, {FaultInjectionRoute} from './FaultInjection';
-import {Rule} from './RequestRouting/Rules';
-import {K8sRule} from './K8sRequestRouting/K8sRules';
+import { ROUND_ROBIN } from './TrafficPolicy';
+import FaultInjection, { FaultInjectionRoute } from './FaultInjection';
+import { Rule } from './RequestRouting/Rules';
+import { K8sRule } from './K8sRequestRouting/K8sRules';
 import {
   buildIstioConfig,
   fqdnServiceName,
@@ -31,7 +23,8 @@ import {
   getInitFaultInjectionRoute,
   getInitGateway,
   getInitHosts,
-  getInitK8sGateway, getInitK8sHosts,
+  getInitK8sGateway,
+  getInitK8sHosts,
   getInitLoadBalancer,
   getInitOutlierDetection,
   getInitPeerAuthentication,
@@ -53,9 +46,9 @@ import {
   WIZARD_TRAFFIC_SHIFTING,
   WizardPreviews
 } from './WizardActions';
-import {MessageType} from '../../types/MessageCenter';
-import GatewaySelector, {GatewaySelectorState} from './GatewaySelector';
-import K8sGatewaySelector, {K8sGatewaySelectorState} from './K8sGatewaySelector';
+import { MessageType } from '../../types/MessageCenter';
+import GatewaySelector, { GatewaySelectorState } from './GatewaySelector';
+import K8sGatewaySelector, { K8sGatewaySelectorState } from './K8sGatewaySelector';
 import VirtualServiceHosts from './VirtualServiceHosts';
 import K8sRouteHosts from './K8sRouteHosts';
 import {
@@ -67,12 +60,12 @@ import {
   PeerAuthenticationMutualTLSMode,
   VirtualService
 } from '../../types/IstioObjects';
-import {style} from 'typestyle';
-import RequestTimeouts, {TimeoutRetryRoute} from './RequestTimeouts';
-import CircuitBreaker, {CircuitBreakerState} from './CircuitBreaker';
+import { style } from 'typestyle';
+import RequestTimeouts, { TimeoutRetryRoute } from './RequestTimeouts';
+import CircuitBreaker, { CircuitBreakerState } from './CircuitBreaker';
 import _ from 'lodash';
-import {ConfigPreviewItem, IstioConfigPreview} from 'components/IstioConfigPreview/IstioConfigPreview';
-import {KialiIcon} from "../../config/KialiIcon";
+import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
+import { KialiIcon } from '../../config/KialiIcon';
 
 const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState => {
   return {
@@ -297,9 +290,10 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           initVsHosts.length > 1 || (initVsHosts.length === 1 && initVsHosts[0].length > 0)
             ? initVsHosts
             : [fqdnServiceName(this.props.serviceName, this.props.namespace)],
-        k8sRouteHosts: initK8sRoutes.length > 1 || (initK8sRoutes.length === 1 && initK8sRoutes[0].length > 0)
-          ? initK8sRoutes
-          : [fqdnServiceName(this.props.serviceName, this.props.namespace)],
+        k8sRouteHosts:
+          initK8sRoutes.length > 1 || (initK8sRoutes.length === 1 && initK8sRoutes[0].length > 0)
+            ? initK8sRoutes
+            : [fqdnServiceName(this.props.serviceName, this.props.namespace)],
         trafficPolicy: trafficPolicy,
         gateway: gateway,
         k8sGateway: k8sGateway
@@ -350,7 +344,12 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         if (this.props.update) {
           if (dr) {
             promises.push(
-              API.updateIstioConfigDetail(this.props.namespace, 'destinationrules', dr.metadata.name, JSON.stringify(dr))
+              API.updateIstioConfigDetail(
+                this.props.namespace,
+                'destinationrules',
+                dr.metadata.name,
+                JSON.stringify(dr)
+              )
             );
           }
           if (vs) {
@@ -360,7 +359,12 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           }
           if (k8shttproute) {
             promises.push(
-              API.updateIstioConfigDetail(this.props.namespace, 'k8shttproutes', k8shttproute.metadata.name, JSON.stringify(k8shttproute))
+              API.updateIstioConfigDetail(
+                this.props.namespace,
+                'k8shttproutes',
+                k8shttproute.metadata.name,
+                JSON.stringify(k8shttproute)
+              )
             );
           }
 
@@ -376,7 +380,9 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             promises.push(API.createIstioConfigDetail(this.props.namespace, 'virtualservices', JSON.stringify(vs)));
           }
           if (k8shttproute) {
-            promises.push(API.createIstioConfigDetail(this.props.namespace, 'k8shttproutes', JSON.stringify(k8shttproute)));
+            promises.push(
+              API.createIstioConfigDetail(this.props.namespace, 'k8shttproutes', JSON.stringify(k8shttproute))
+            );
           }
 
           if (pa) {
@@ -589,11 +595,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
   };
 
   isK8sAPIValid = (state: ServiceWizardState): boolean => {
-    return (
-      state.valid.mainWizard &&
-      state.valid.k8sRouteHosts &&
-      state.valid.gateway
-    );
+    return state.valid.mainWizard && state.valid.k8sRouteHosts && state.valid.gateway;
   };
 
   advancedHandleTabClick = (_event, tabIndex) => {
@@ -722,7 +724,6 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             </Button>
           ]}
         >
-
           <IstioConfigPreview
             isOpen={this.state.showPreview}
             title={titleAction}
@@ -735,10 +736,12 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
               this.onConfirmPreview(items);
             }}
           />
-          {!this.props.istioAPIEnabled &&
-            (<div style={{padding: " 0 0 20px 0"}}>
-              <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when editing the configuration as the Istio config validations are disabled when the Istio API is disabled.
-            </div>)}
+          {!this.props.istioAPIEnabled && (
+            <div style={{ padding: ' 0 0 20px 0' }}>
+              <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when editing the configuration as the Istio
+              config validations are disabled when the Istio API is disabled.
+            </div>
+          )}
           {this.props.type === WIZARD_REQUEST_ROUTING && (
             <RequestRouting
               serviceName={this.props.serviceName}
@@ -747,7 +750,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
               onChange={this.onRulesChange}
             />
           )}
-          {(this.props.type === WIZARD_K8S_REQUEST_ROUTING) && (
+          {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
             <K8sRequestRouting
               subServices={this.props.subServices}
               initRules={getInitK8sRules(this.props.k8sHTTPRoutes)}
@@ -862,7 +865,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
               </Tabs>
             </ExpandableSection>
           )}
-          {(this.props.type === WIZARD_K8S_REQUEST_ROUTING) && (
+          {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
             <ExpandableSection
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}

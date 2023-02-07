@@ -2,9 +2,9 @@ import React from 'react';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import NamespaceDropdownContainer from '../NamespaceDropdown';
 import { style } from 'typestyle';
-import { KialiIcon } from "../../config/KialiIcon";
-import {KialiAppState} from "../../store/Store";
-import {connect} from "react-redux";
+import { KialiIcon } from '../../config/KialiIcon';
+import { KialiAppState } from '../../store/Store';
+import { connect } from 'react-redux';
 
 const titles = ['applications', 'istio', 'istio/new', 'mesh', 'services', 'workloads'];
 
@@ -55,14 +55,15 @@ class DefaultSecondaryMastheadComponent extends React.Component<Props> {
       return {
         title: (
           <>
-          <Title headingLevel="h1" size={TitleSizes['3xl']} style={{ margin: '15px 0 11px' }}>
-            {title}
-          </Title>
-            {!this.props.istioAPIEnabled && path.startsWith('istio/new/') &&
-              (<div>
-                <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when creating the configuration as the Istio config validations are disabled when the Istio API is disabled.
-              </div>)
-            }
+            <Title headingLevel="h1" size={TitleSizes['3xl']} style={{ margin: '15px 0 11px' }}>
+              {title}
+            </Title>
+            {!this.props.istioAPIEnabled && path.startsWith('istio/new/') && (
+              <div>
+                <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when creating the configuration as the
+                Istio config validations are disabled when the Istio API is disabled.
+              </div>
+            )}
           </>
         ),
         disabled: disabled

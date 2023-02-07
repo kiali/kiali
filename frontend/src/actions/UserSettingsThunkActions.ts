@@ -1,4 +1,4 @@
-import { KialiDispatch } from "../types/Redux";
+import { KialiDispatch } from '../types/Redux';
 import { UserSettingsActions } from './UserSettingsActions';
 
 const UserSettingsThunkActions = {

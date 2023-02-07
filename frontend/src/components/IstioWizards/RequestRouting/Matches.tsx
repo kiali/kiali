@@ -14,7 +14,7 @@ const labelContainerStyle = style({
 });
 
 const remove = style({
-  cursor: "not-allowed"
+  cursor: 'not-allowed'
 });
 
 class Matches extends React.Component<Props> {

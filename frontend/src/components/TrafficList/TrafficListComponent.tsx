@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Title, TitleSizes, Tooltip, TooltipPosition} from '@patternfly/react-core';
+import { Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { IRow, sortable, SortByDirection, Table, TableBody, TableHeader, cellWidth } from '@patternfly/react-table';
 import { Link } from 'react-router-dom';
@@ -14,9 +14,9 @@ import { sortFields } from './FiltersAndSorts';
 import { SortField } from 'types/SortFilters';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { createTooltipIcon, KialiIcon } from 'config/KialiIcon';
-import {KialiAppState} from "../../store/Store";
-import {connect} from "react-redux";
-import {isParentKiosk, kioskContextMenuAction} from "../Kiosk/KioskActions";
+import { KialiAppState } from '../../store/Store';
+import { connect } from 'react-redux';
+import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 
 export interface TrafficListItem {
   direction: TrafficDirection;
@@ -31,11 +31,12 @@ export interface TrafficListItem {
 
 type ReduxProps = {
   kiosk: string;
-}
-
-type TrafficListComponentProps = ReduxProps & FilterComponent.Props<TrafficListItem> & {
-  trafficItems: TrafficItem[];
 };
+
+type TrafficListComponentProps = ReduxProps &
+  FilterComponent.Props<TrafficListItem> & {
+    trafficItems: TrafficItem[];
+  };
 
 type TrafficListComponentState = FilterComponent.State<TrafficListItem>;
 
@@ -66,19 +67,16 @@ const columns = [
 ];
 
 function LockIcon(props) {
-  const msg = props.mTLS ? props.mTLS + " % of mTLS traffic" : "mTLS is disabled";
+  const msg = props.mTLS ? props.mTLS + ' % of mTLS traffic' : 'mTLS is disabled';
   return (
-    <Tooltip
-      position={TooltipPosition.top}
-      content={msg}
-    >
+    <Tooltip position={TooltipPosition.top} content={msg}>
       <>
-      {props.mTLS && (<KialiIcon.MtlsLock className={lockIconStyle}/>)}
-      {!props.mTLS && (<KialiIcon.MtlsUnlock className={lockIconStyle}/>)}
+        {props.mTLS && <KialiIcon.MtlsLock className={lockIconStyle} />}
+        {!props.mTLS && <KialiIcon.MtlsUnlock className={lockIconStyle} />}
       </>
     </Tooltip>
   );
-};
+}
 
 // Style constants
 const containerPadding = style({ padding: '20px' });
@@ -259,29 +257,39 @@ class TrafficListComponent extends FilterComponent.Component<
             </>,
             <>
               <PFBadge badge={item.badge} position={TooltipPosition.top} keyValue={`tt_badge_${i}`} />
-              {!!links.detail ? (parentKiosk ? (
-                <Link
-                  key={`link_d_${item.badge}_${name}`}
-                  to={''}
-                  onClick={() => {
-                    kioskContextMenuAction(links.detail);
-                  }}
-                  className={'virtualitem_definition_link'}>
-                  {name}
-                </Link>
-              ) :(
-                <Link key={`link_d_${item.badge}_${name}`} to={links.detail} className={'virtualitem_definition_link'}>
-                  {name}
-                </Link>
-              )) : (
+              {!!links.detail ? (
+                parentKiosk ? (
+                  <Link
+                    key={`link_d_${item.badge}_${name}`}
+                    to={''}
+                    onClick={() => {
+                      kioskContextMenuAction(links.detail);
+                    }}
+                    className={'virtualitem_definition_link'}
+                  >
+                    {name}
+                  </Link>
+                ) : (
+                  <Link
+                    key={`link_d_${item.badge}_${name}`}
+                    to={links.detail}
+                    className={'virtualitem_definition_link'}
+                  >
+                    {name}
+                  </Link>
+                )
+              ) : (
                 name
               )}
             </>,
             <>{item.trafficRate}</>,
             <>{item.trafficPercentSuccess}</>,
-            <>{item.protocol}<LockIcon mTLS={item.mTLS}></LockIcon></>,
             <>
-              {!!links.metrics && (
+              {item.protocol}
+              <LockIcon mTLS={item.mTLS}></LockIcon>
+            </>,
+            <>
+              {!!links.metrics &&
                 (parentKiosk ? (
                   <Link
                     key={`link_m_${item.badge}_${name}`}
@@ -294,11 +302,14 @@ class TrafficListComponent extends FilterComponent.Component<
                     View metrics
                   </Link>
                 ) : (
-                    <Link key={`link_m_${item.badge}_${name}`} to={links.metrics} className={'virtualitem_definition_link'}>
-                      View metrics
-                    </Link>
-                  ))
-              )}
+                  <Link
+                    key={`link_m_${item.badge}_${name}`}
+                    to={links.metrics}
+                    className={'virtualitem_definition_link'}
+                  >
+                    View metrics
+                  </Link>
+                ))}
             </>
           ]
         };
@@ -371,9 +382,9 @@ class TrafficListComponent extends FilterComponent.Component<
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    kiosk: state.globalState.kiosk,
+    kiosk: state.globalState.kiosk
   };
 };
 
-const TrafficListComponentContainer = connect(mapStateToProps)(TrafficListComponent)
+const TrafficListComponentContainer = connect(mapStateToProps)(TrafficListComponent);
 export default TrafficListComponentContainer;

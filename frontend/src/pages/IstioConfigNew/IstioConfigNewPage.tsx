@@ -7,7 +7,13 @@ import { ActionGroup, Button, ButtonVariant, Form, FormGroup, TextInput } from '
 import { RenderContent } from '../../components/Nav/Page';
 import { style } from 'typestyle';
 import GatewayForm, { GATEWAY, GATEWAYS, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
-import K8sGatewayForm, { K8SGATEWAY, K8SGATEWAYS, K8sGatewayState, initK8sGateway, isK8sGatewayStateValid } from './K8sGatewayForm';
+import K8sGatewayForm, {
+  K8SGATEWAY,
+  K8SGATEWAYS,
+  K8sGatewayState,
+  initK8sGateway,
+  isK8sGatewayStateValid
+} from './K8sGatewayForm';
 import SidecarForm, { initSidecar, isSidecarStateValid, SIDECAR, SIDECARS, SidecarState } from './SidecarForm';
 import { Paths, serverConfig } from '../../config';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -435,7 +441,12 @@ class IstioConfigNewPage extends React.Component<Props, State> {
               <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
             )}
             <ActionGroup>
-              <Button variant={ButtonVariant.primary} isDisabled={!isFormValid} onClick={() => this.showPreview()} data-test={"preview"}>
+              <Button
+                variant={ButtonVariant.primary}
+                isDisabled={!isFormValid}
+                onClick={() => this.showPreview()}
+                data-test={'preview'}
+              >
                 Preview
               </Button>
               <Button variant={ButtonVariant.secondary} onClick={() => this.backToList()}>

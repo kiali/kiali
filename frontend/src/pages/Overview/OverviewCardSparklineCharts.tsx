@@ -10,7 +10,7 @@ import { IstiodResourceThresholds } from 'types/IstioStatus';
 type Props = {
   name: string;
   duration: DurationInSeconds;
-  direction: DirectionType
+  direction: DirectionType;
   metrics?: Metric[];
   errorMetrics?: Metric[];
   controlPlaneMetrics?: ControlPlaneMetricsMap;
@@ -22,15 +22,15 @@ class OverviewCardSparklineCharts extends React.Component<Props> {
   render() {
     return (
       <>
-        {(this.props.name !== serverConfig.istioNamespace || !this.props.istioAPIEnabled) &&
+        {(this.props.name !== serverConfig.istioNamespace || !this.props.istioAPIEnabled) && (
           <OverviewCardDataPlaneNamespace
             metrics={this.props.metrics}
             errorMetrics={this.props.errorMetrics}
             duration={this.props.duration}
             direction={this.props.direction}
           />
-        }
-        {(this.props.name === serverConfig.istioNamespace && this.props.istioAPIEnabled) &&
+        )}
+        {this.props.name === serverConfig.istioNamespace && this.props.istioAPIEnabled && (
           <OverviewCardControlPlaneNamespace
             pilotLatency={this.props.controlPlaneMetrics?.istiod_proxy_time}
             istiodMemory={this.props.controlPlaneMetrics?.istiod_mem}
@@ -38,7 +38,7 @@ class OverviewCardSparklineCharts extends React.Component<Props> {
             duration={this.props.duration}
             istiodResourceThresholds={this.props.istiodResourceThresholds}
           />
-        }
+        )}
       </>
     );
   }

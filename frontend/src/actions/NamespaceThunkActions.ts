@@ -1,6 +1,6 @@
 import { KialiAppState } from '../store/Store';
 import * as Api from '../services/Api';
-import { KialiDispatch } from "../types/Redux";
+import { KialiDispatch } from '../types/Redux';
 import { NamespaceActions } from './NamespaceAction';
 
 const shouldFetchNamespaces = (state: KialiAppState) => {

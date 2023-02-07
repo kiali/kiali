@@ -1,11 +1,10 @@
-import { serverConfig } from "../config";
+import { serverConfig } from '../config';
 
 export interface ResourcePermissions {
   create: boolean;
   update: boolean;
   delete: boolean;
 }
-
 
 export function canCreate(privs?: ResourcePermissions) {
   return privs !== undefined && privs.create && !serverConfig.deployment.viewOnlyMode;

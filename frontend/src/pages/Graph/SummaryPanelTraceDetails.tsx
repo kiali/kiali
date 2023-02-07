@@ -25,10 +25,10 @@ import { FormattedTraceInfo, shortIDStyle } from 'components/JaegerIntegration/J
 import SimplerSelect from 'components/SimplerSelect';
 import { summaryFont, summaryTitle } from './SummaryPanelCommon';
 import { NodeParamsType, GraphType } from 'types/Graph';
-import { KialiDispatch } from "types/Redux";
+import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import responseFlags from 'utils/ResponseFlags';
-import {isParentKiosk, kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
+import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
 
 type ReduxProps = {
   close: () => void;
@@ -143,7 +143,8 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
                     kioskContextMenuAction(tracesDetailsURL);
                   }
                 }}
-              >{title}
+              >
+                {title}
               </Link>
             </Tooltip>
           ) : (
@@ -243,7 +244,9 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
                   kioskContextMenuAction(spanURL);
                 }
               }}
-            >Show span</Link>
+            >
+              Show span
+            </Link>
           </div>
         )}
       </>
@@ -358,7 +361,7 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  kiosk: state.globalState.kiosk,
+  kiosk: state.globalState.kiosk
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

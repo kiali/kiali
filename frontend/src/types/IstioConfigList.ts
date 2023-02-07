@@ -216,7 +216,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
     }
 
     if (!entries) {
-      return
+      return;
     }
 
     entries.forEach(entry => {
@@ -324,7 +324,11 @@ export const gwToIstioItems = (gws: Gateway[], vss: VirtualService[], validation
   return istioItems;
 };
 
-export const k8sGwToIstioItems = (gws: K8sGateway[], k8srs: K8sHTTPRoute[], validations: Validations): IstioConfigItem[] => {
+export const k8sGwToIstioItems = (
+  gws: K8sGateway[],
+  k8srs: K8sHTTPRoute[],
+  validations: Validations
+): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
   const hasValidations = (vKey: string) => validations.k8sgateway && validations.k8sgateway[vKey];
   const k8sGateways = new Set();

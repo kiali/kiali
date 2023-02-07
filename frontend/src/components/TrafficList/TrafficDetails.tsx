@@ -20,10 +20,10 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { durationSelector } from '../../store/Selectors';
 import { HealthAnnotationType } from '../../types/HealthAnnotation';
-import TrafficListComponentContainer from "components/TrafficList/TrafficListComponent";
-import { KioskElement } from "../Kiosk/KioskElement";
-import { TimeDurationModal } from "../Time/TimeDurationModal";
-import TimeDurationIndicatorContainer from "../Time/TimeDurationIndicatorComponent";
+import TrafficListComponentContainer from 'components/TrafficList/TrafficListComponent';
+import { KioskElement } from '../Kiosk/KioskElement';
+import { TimeDurationModal } from '../Time/TimeDurationModal';
+import TimeDurationIndicatorContainer from '../Time/TimeDurationIndicatorComponent';
 
 export interface AppNode {
   id: string;
@@ -68,7 +68,7 @@ export interface TrafficItem {
 
 type ReduxProps = {
   duration: DurationInSeconds;
-}
+};
 
 type TrafficDetailsProps = ReduxProps & {
   itemName: string;
@@ -128,7 +128,10 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
                     <ToolbarGroup>
                       <KioskElement>
                         <ToolbarItem style={{ marginLeft: 'auto' }}>
-                          <TimeDurationIndicatorContainer isDuration={true} onClick={this.toggleTimeOptionsVisibility} />
+                          <TimeDurationIndicatorContainer
+                            isDuration={true}
+                            onClick={this.toggleTimeOptionsVisibility}
+                          />
                         </ToolbarItem>
                       </KioskElement>
                     </ToolbarGroup>
@@ -147,7 +150,8 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           customDuration={false}
           isOpen={this.state.isTimeOptionsOpen}
           onConfirm={this.toggleTimeOptionsVisibility}
-          onCancel={this.toggleTimeOptionsVisibility} />
+          onCancel={this.toggleTimeOptionsVisibility}
+        />
       </>
     );
   }
@@ -326,13 +330,13 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
   };
 
   private toggleTimeOptionsVisibility = () => {
-    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }) );
-  }
+    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
+  };
 }
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    duration: durationSelector(state),
+    duration: durationSelector(state)
   };
 };
 

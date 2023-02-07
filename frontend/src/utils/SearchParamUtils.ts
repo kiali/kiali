@@ -7,7 +7,7 @@ export const getKioskMode = () => {
     return kioskParam;
   }
   return '';
-}
+};
 
 export const isKioskMode = () => {
   return getKioskMode() !== '';

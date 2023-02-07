@@ -73,9 +73,7 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
                 label={this.props.pod}
                 options={this.props.pods.sort()}
               />
-              <div className={style({position: 'fixed', right: '60px'})}>
-               {this.props.writer.tooltip()}
-              </div>
+              <div className={style({ position: 'fixed', right: '60px' })}>{this.props.writer.tooltip()}</div>
             </>
           </StatefulFilters>
           <Table
@@ -102,7 +100,7 @@ export const SummaryTableBuilder = (
   namespace: string,
   routeLinkHandler: () => void,
   kiosk: string,
-  workload?: string,
+  workload?: string
 ) => {
   let writerComp, writerProps;
 
@@ -119,7 +117,7 @@ export const SummaryTableBuilder = (
         namespaces,
         namespace,
         workload,
-        routeLinkHandler,
+        routeLinkHandler
       );
       break;
     case 'routes':

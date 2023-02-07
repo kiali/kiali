@@ -6,7 +6,7 @@ import { MeshTlsActions } from '../actions/MeshTlsActions';
 export const INITIAL_MESH_TLS_STATE: TLSStatus = {
   status: '',
   autoMTLSEnabled: false,
-  minTLS: '',
+  minTLS: ''
 };
 
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store

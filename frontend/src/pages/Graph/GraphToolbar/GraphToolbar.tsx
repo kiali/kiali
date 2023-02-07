@@ -25,7 +25,7 @@ import GraphFindContainer from './GraphFind';
 import GraphSettingsContainer from './GraphSettings';
 import history, { HistoryManager, URLParam } from '../../../app/History';
 import Namespace, { namespacesFromString, namespacesToString } from '../../../types/Namespace';
-import { KialiDispatch } from "../../../types/Redux";
+import { KialiDispatch } from '../../../types/Redux';
 import { NamespaceActions } from '../../../actions/NamespaceAction';
 import { GraphActions } from '../../../actions/GraphActions';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
@@ -184,7 +184,7 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
           onGraphTypeChange={this.props.setGraphType}
         />
         <Toolbar style={{ width: '100%' }}>
-          <ToolbarGroup aria-label="graph settings" style={{ margin: 0, alignItems: "flex-start"}}>
+          <ToolbarGroup aria-label="graph settings" style={{ margin: 0, alignItems: 'flex-start' }}>
             {this.props.node && (
               <ToolbarItem style={{ margin: 0 }}>
                 <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content={'Back to full graph'}>

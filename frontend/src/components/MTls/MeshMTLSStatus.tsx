@@ -4,11 +4,7 @@ import { KialiAppState } from '../../store/Store';
 import { MTLSIconTypes } from './MTLSIcon';
 import { default as MTLSStatus, emptyDescriptor, StatusDescriptor } from './MTLSStatus';
 import { style } from 'typestyle';
-import {
-  meshWideMTLSEnabledSelector,
-  meshWideMTLSStatusSelector,
-  namespaceItemsSelector
-} from '../../store/Selectors';
+import { meshWideMTLSEnabledSelector, meshWideMTLSStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { MTLSStatuses, TLSStatus } from '../../types/TLSStatus';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -19,7 +15,7 @@ import { bindActionCreators } from 'redux';
 import { MeshTlsActions } from '../../actions/MeshTlsActions';
 import { TimeInMilliseconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
-import connectRefresh from "../Refresh/connectRefresh";
+import connectRefresh from '../Refresh/connectRefresh';
 
 type ReduxProps = {
   setMeshTlsStatus: (meshStatus: TLSStatus) => void;
@@ -114,18 +110,20 @@ class MeshMTLSStatus extends React.Component<Props> {
   finalStatus() {
     if (this.props.autoMTLSEnabled) {
       if (this.props.status === MTLSStatuses.ENABLED) {
-        return MTLSStatuses.ENABLED_DEFAULT
+        return MTLSStatuses.ENABLED_DEFAULT;
       }
       if (this.props.status === MTLSStatuses.PARTIALLY) {
-        return MTLSStatuses.PARTIALLY_DEFAULT
+        return MTLSStatuses.PARTIALLY_DEFAULT;
       }
-      return MTLSStatuses.AUTO_DEFAULT
+      return MTLSStatuses.AUTO_DEFAULT;
     }
-    return this.props.status
+    return this.props.status;
   }
 
   render() {
-    return <MTLSStatus className={this.iconStyle()} status={this.finalStatus()} statusDescriptors={statusDescriptors} />;
+    return (
+      <MTLSStatus className={this.iconStyle()} status={this.finalStatus()} statusDescriptors={statusDescriptors} />
+    );
   }
 }
 

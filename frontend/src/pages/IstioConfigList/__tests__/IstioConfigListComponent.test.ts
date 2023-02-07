@@ -23,7 +23,7 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     validations: {},
     permissions: {},
     wasmPlugins: [],
-    telemetries: [],
+    telemetries: []
   };
   names.forEach(name => {
     testData.authorizationPolicies.push({ metadata: { name: name + '0' }, spec: {} });

@@ -6,9 +6,9 @@ import { PFBadge } from 'components/Pf/PfBadges';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import { style } from 'typestyle';
-import {KialiAppState} from "../../store/Store";
-import {connect} from "react-redux";
-import {isParentKiosk, kioskContextMenuAction} from "../Kiosk/KioskActions";
+import { KialiAppState } from '../../store/Store';
+import { connect } from 'react-redux';
+import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 
 export const infoStyle = style({
   margin: '0px 0px -2px 3px'
@@ -16,7 +16,7 @@ export const infoStyle = style({
 
 type ReduxProps = {
   kiosk: string;
-}
+};
 
 type ReferenceIstioObjectProps = {
   name: string;
@@ -24,11 +24,12 @@ type ReferenceIstioObjectProps = {
   type: string;
   subType?: string;
   query?: string;
-}
-
-type IstioObjectProps = ReduxProps & ReferenceIstioObjectProps & {
-  children: React.ReactNode;
 };
+
+type IstioObjectProps = ReduxProps &
+  ReferenceIstioObjectProps & {
+    children: React.ReactNode;
+  };
 
 export const GetIstioObjectUrl = (name: string, namespace: string, type: string, query?: string): string => {
   const istioType = IstioTypes[type];
@@ -88,15 +89,19 @@ class IstioObjectLink extends React.Component<IstioObjectProps> {
         onClick={() => {
           kioskContextMenuAction(href);
         }}
-      >{this.props.children}</Link>
+      >
+        {this.props.children}
+      </Link>
     ) : (
-      <Link to={href} data-test={type + '-' + namespace + '-' + name}>{this.props.children}</Link>
+      <Link to={href} data-test={type + '-' + namespace + '-' + name}>
+        {this.props.children}
+      </Link>
     );
   }
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  kiosk: state.globalState.kiosk,
+  kiosk: state.globalState.kiosk
 });
 
 const IstioObjectLinkContainer = connect(mapStateToProps)(IstioObjectLink);

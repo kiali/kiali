@@ -142,14 +142,16 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
   fetchIstioConfigs(namespaces: string[], typeFilters: string[], istioNameFilters: string[]) {
     const validate = this.props.istioAPIEnabled ? true : false;
     // Request all configs from all namespaces, as in backend all configs are always loaded from registry
-    return this.promises.register('configs', API.getAllIstioConfigs([], typeFilters, validate, '', '')).then(response => {
-      let istioItems: IstioConfigItem[] = [];
-      // filter by selected namespaces
-      namespaces.forEach(ns => {
-        istioItems = istioItems.concat(toIstioItems(filterByName(response.data[ns], istioNameFilters)));
+    return this.promises
+      .register('configs', API.getAllIstioConfigs([], typeFilters, validate, '', ''))
+      .then(response => {
+        let istioItems: IstioConfigItem[] = [];
+        // filter by selected namespaces
+        namespaces.forEach(ns => {
+          istioItems = istioItems.concat(toIstioItems(filterByName(response.data[ns], istioNameFilters)));
+        });
+        return istioItems;
       });
-      return istioItems;
-    });
   }
 
   render() {

@@ -27,7 +27,9 @@ export const toVCDatapoints = (dps: Datapoint[], name: string): VCDataPoint[] =>
 };
 
 export const toVCSinglePoint = (dps: Datapoint[], name: string): VCDataPoint[] => {
-  const last = dps.filter(dp => !isNaN(dp[1]) && (dp[2] === undefined || !isNaN(dp[2]))).reduce((p, c) => (c[0] > p[0] ? c : p));
+  const last = dps
+    .filter(dp => !isNaN(dp[1]) && (dp[2] === undefined || !isNaN(dp[2])))
+    .reduce((p, c) => (c[0] > p[0] ? c : p));
   if (last) {
     return [
       {
@@ -69,8 +71,11 @@ export const toVCLines = (
     metrics.forEach(metric => {
       let reporter = metric.labels.reporter;
       let labelsNoReporter = { ...metric.labels };
-      delete labelsNoReporter.reporter
-      let labelsStr = Object.keys(labelsNoReporter).map(k => `${k}=${labelsNoReporter[k]}`).sort().join(',');
+      delete labelsNoReporter.reporter;
+      let labelsStr = Object.keys(labelsNoReporter)
+        .map(k => `${k}=${labelsNoReporter[k]}`)
+        .sort()
+        .join(',');
       labelsStr = `name=${metric.name},stat=${metric.stat}%` + labelsStr;
 
       if (!pairedMetrics[labelsStr]) {
@@ -87,8 +92,10 @@ export const toVCLines = (
       let name: string = '';
       if (twoLines[0] !== undefined && twoLines[1] !== undefined) {
         name = twoLines[0].name;
-        const minDatapointsLength = twoLines[0].datapoints.length < twoLines[1].datapoints.length ?
-          twoLines[0].datapoints.length : twoLines[1].datapoints.length;
+        const minDatapointsLength =
+          twoLines[0].datapoints.length < twoLines[1].datapoints.length
+            ? twoLines[0].datapoints.length
+            : twoLines[1].datapoints.length;
 
         for (let j = 0, sourceIdx = 0, destIdx = 0; j < minDatapointsLength; j++) {
           if (twoLines[0].datapoints[sourceIdx][0] !== twoLines[1].datapoints[destIdx][0]) {
@@ -106,7 +113,7 @@ export const toVCLines = (
           datapoints.push([
             twoLines[0].datapoints[sourceIdx][0],
             twoLines[0].datapoints[sourceIdx][1],
-            twoLines[1].datapoints[destIdx][1],
+            twoLines[1].datapoints[destIdx][1]
           ]);
           sourceIdx++;
           destIdx++;
@@ -114,23 +121,22 @@ export const toVCLines = (
       } else if (twoLines[0] !== undefined) {
         // Assign zero value to "y0" to denote "no data" for the destination reporter
         name = twoLines[0].name;
-        datapoints = twoLines[0].datapoints.map(d => ([d[0], d[1], 0]));
+        datapoints = twoLines[0].datapoints.map(d => [d[0], d[1], 0]);
       } else if (twoLines[1] !== undefined) {
         // Assign zero value to "y" to denote "no data" for the source reporter
         name = twoLines[1].name;
-        datapoints = twoLines[1].datapoints.map(d => ([d[0], 0, d[1]]));
+        datapoints = twoLines[1].datapoints.map(d => [d[0], 0, d[1]]);
       }
 
-      const dps =
-        xAxis === 'time' ? toVCDatapoints(datapoints, name) : toVCSinglePoint(datapoints, name);
-      return buildVCLine(dps, {name: name, unit: unit, color: color});
+      const dps = xAxis === 'time' ? toVCDatapoints(datapoints, name) : toVCSinglePoint(datapoints, name);
+      return buildVCLine(dps, { name: name, unit: unit, color: color });
     });
   } else {
     return metrics.map((line, i) => {
       const color = colors[i % colors.length];
       const dps =
         xAxis === 'time' ? toVCDatapoints(line.datapoints, line.name) : toVCSinglePoint(line.datapoints, line.name);
-      return buildVCLine(dps, {name: line.name, unit: unit, color: color});
+      return buildVCLine(dps, { name: line.name, unit: unit, color: color });
     });
   }
 };

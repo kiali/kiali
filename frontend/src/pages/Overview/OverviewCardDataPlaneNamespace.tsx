@@ -9,7 +9,7 @@ import { toVCLine } from 'utils/VictoryChartsUtils';
 
 import 'components/Charts/Charts.css';
 import { RichDataPoint, VCLine } from 'types/VictoryChartInfo';
-import { DirectionType } from "./OverviewToolbar";
+import { DirectionType } from './OverviewToolbar';
 
 type Props = {
   metrics?: Metric[];
@@ -45,18 +45,28 @@ class OverviewCardDataPlaneNamespace extends React.Component<Props, {}> {
 
     return (
       <div
-          style={{
-            width: '100%',
-            height: 130,
-            verticalAlign: 'top'
-          }}
-        >
+        style={{
+          width: '100%',
+          height: 130,
+          verticalAlign: 'top'
+        }}
+      >
         <div>
           <></>
         </div>
-        {series.length > 0 &&
+        {series.length > 0 && (
           <>
-            <div style={{ paddingTop: 10 }} data-test={'sparkline-' + this.props.direction.toLowerCase() + '-duration-' + getName(this.props.duration).toLowerCase()}>{this.props.direction + ' traffic, ' + getName(this.props.duration).toLowerCase()}</div>
+            <div
+              style={{ paddingTop: 10 }}
+              data-test={
+                'sparkline-' +
+                this.props.direction.toLowerCase() +
+                '-duration-' +
+                getName(this.props.duration).toLowerCase()
+              }
+            >
+              {this.props.direction + ' traffic, ' + getName(this.props.duration).toLowerCase()}
+            </div>
             <SparklineChart
               name={'traffics'}
               height={85}
@@ -64,17 +74,17 @@ class OverviewCardDataPlaneNamespace extends React.Component<Props, {}> {
               showYAxis={true}
               showXAxisValues={true}
               padding={{ top: 10, left: 30, right: 30, bottom: 30 }}
-              tooltipFormat={dp => `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${dp.y.toFixed(2)} ${dp.name}`}
+              tooltipFormat={dp =>
+                `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${dp.y.toFixed(2)} ${dp.name}`
+              }
               series={series}
               labelName="ops"
             />
           </>
-        }
-        {series.length === 0 &&
-          <div style={{ paddingTop: '40px' }}>
-            No {this.props.direction.toLowerCase()} traffic
-          </div>
-        }
+        )}
+        {series.length === 0 && (
+          <div style={{ paddingTop: '40px' }}>No {this.props.direction.toLowerCase()} traffic</div>
+        )}
       </div>
     );
   }

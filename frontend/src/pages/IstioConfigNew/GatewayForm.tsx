@@ -2,9 +2,9 @@ import * as React from 'react';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import { FormGroup, Switch, TextInputBase as TextInput } from '@patternfly/react-core';
 import ServerList from './GatewayForm/ServerList';
-import {Server, ServerForm, ServerTLSSettings} from '../../types/IstioObjects';
+import { Server, ServerForm, ServerTLSSettings } from '../../types/IstioObjects';
 import { isValid } from 'utils/Common';
-import {areValidHosts} from "./GatewayForm/ServerBuilder";
+import { areValidHosts } from './GatewayForm/ServerBuilder';
 
 export const GATEWAY = 'Gateway';
 export const GATEWAYS = 'gateways';
@@ -36,26 +36,36 @@ export const isGatewayStateValid = (g: GatewayState): boolean => {
 };
 
 const areValidGateways = (servers: Server[]): boolean => {
+  return servers.every(s => {
+    return (
+      areValidHosts(s.hosts) &&
+      s.port.name !== '' &&
+      s.port.number >= 0 &&
+      s.port.number <= 65635 &&
+      isValidTLS(s.port.protocol, s.tls)
+    );
+  });
+};
 
-  return servers.every((s) => {
-    return areValidHosts(s.hosts) && s.port.name !== "" && s.port.number >= 0 && s.port.number <= 65635 && isValidTLS(s.port.protocol, s.tls)
-  })
-}
-
-const isValidTLS = (protocol: string, tls: ServerTLSSettings|undefined): boolean => {
-
+const isValidTLS = (protocol: string, tls: ServerTLSSettings | undefined): boolean => {
   if (tls !== undefined) {
-    const tlsRequired = protocol === 'HTTPS' || protocol === 'TLS'
+    const tlsRequired = protocol === 'HTTPS' || protocol === 'TLS';
 
-    const certsValid = tlsRequired ? tls.mode === 'SIMPLE' || tls.mode === 'MUTUAL'
-      ? tls.serverCertificate !== undefined && tls.serverCertificate?.length > 0 && tls.privateKey !== undefined && tls.privateKey?.length > 0 : true
+    const certsValid = tlsRequired
+      ? tls.mode === 'SIMPLE' || tls.mode === 'MUTUAL'
+        ? tls.serverCertificate !== undefined &&
+          tls.serverCertificate?.length > 0 &&
+          tls.privateKey !== undefined &&
+          tls.privateKey?.length > 0
+        : true
       : true;
-    const caValid = tlsRequired && tls.mode === 'MUTUAL' ? tls.caCertificates !== undefined && tls.caCertificates?.length > 0 : true;
+    const caValid =
+      tlsRequired && tls.mode === 'MUTUAL' ? tls.caCertificates !== undefined && tls.caCertificates?.length > 0 : true;
 
     return certsValid && caValid;
   }
   return true;
-}
+};
 
 class GatewayForm extends React.Component<Props, GatewayState> {
   constructor(props: Props) {
@@ -108,11 +118,8 @@ class GatewayForm extends React.Component<Props, GatewayState> {
   };
 
   onChangeServer = (servers: Server[], serversForm: ServerForm[]) => {
-    this.setState(
-      { gatewayServers: servers, serversForm: serversForm},
-      () => this.props.onChange(this.state)
-    );
-  }
+    this.setState({ gatewayServers: servers, serversForm: serversForm }, () => this.props.onChange(this.state));
+  };
 
   render() {
     return (
@@ -155,7 +162,8 @@ class GatewayForm extends React.Component<Props, GatewayState> {
           <ServerList
             serverList={this.state.gatewayServers}
             serverForm={this.state.serversForm}
-            onChange={this.onChangeServer} />
+            onChange={this.onChangeServer}
+          />
         </FormGroup>
       </>
     );

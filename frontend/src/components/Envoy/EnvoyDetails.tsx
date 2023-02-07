@@ -35,8 +35,11 @@ import CustomMetricsContainer from 'components/Metrics/CustomMetrics';
 import { serverConfig } from 'config';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import history from '../../app/History';
-import {tabName as workloadTabName, defaultTab as workloadDefaultTab} from '../../pages/WorkloadDetails/WorkloadDetailsPage';
-import { TimeInMilliseconds } from "../../types/Common";
+import {
+  tabName as workloadTabName,
+  defaultTab as workloadDefaultTab
+} from '../../pages/WorkloadDetails/WorkloadDetailsPage';
+import { TimeInMilliseconds } from '../../types/Common';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -49,8 +52,8 @@ const iconStyle = style({
 });
 
 const envoyTabs = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
-const tabName = 'envoyTab'
-const defaultTab = 'clusters'
+const tabName = 'envoyTab';
+const defaultTab = 'clusters';
 
 export type ResourceSorts = { [resource: string]: ISortBy };
 
@@ -135,7 +138,7 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
         resource: targetResource,
         activeKey: tabIndex
       });
-      const mainTab = new URLSearchParams(history.location.search).get(workloadTabName) || workloadDefaultTab
+      const mainTab = new URLSearchParams(history.location.search).get(workloadTabName) || workloadDefaultTab;
       const urlParams = new URLSearchParams('');
       urlParams.set(tabName, targetResource);
       urlParams.set(workloadTabName, mainTab);
@@ -272,8 +275,7 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
     if (!envoyMetricsDashboardRef) {
       filteredEnvoyTabs = envoyTabs.slice(0, envoyTabs.length - 1);
     }
-    const tabs = filteredEnvoyTabs.map((value, index) =>
-    {
+    const tabs = filteredEnvoyTabs.map((value, index) => {
       const title = value.charAt(0).toUpperCase() + value.slice(1);
       return (
         <Tab style={{ backgroundColor: 'white' }} key={'tab_' + value} eventKey={index} title={title}>
@@ -343,9 +345,8 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
             </CardBody>
           </Card>
         </Tab>
-      )
-    }
-    );
+      );
+    });
 
     return (
       <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>

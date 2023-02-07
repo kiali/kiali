@@ -18,7 +18,7 @@ const dropdown = style({
   width: '20px',
   paddingLeft: '5px',
   paddingRight: 0,
-  bottom:  '0.5px'
+  bottom: '0.5px'
 });
 
 export class GraphFindOptions extends React.PureComponent<GraphFindOptionsProps, GraphFindOptionsState> {

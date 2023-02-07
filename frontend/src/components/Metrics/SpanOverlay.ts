@@ -78,7 +78,11 @@ export class SpanOverlay {
           symbol: 'circle',
           size: 10
         },
-        dataStyle: { fill: ({ datum }) => (datum.error ? PFColors.Danger : PFColors.Cyan300), fillOpacity: 0.6, cursor: 'pointer' },
+        dataStyle: {
+          fill: ({ datum }) => (datum.error ? PFColors.Danger : PFColors.Cyan300),
+          fillOpacity: 0.6,
+          cursor: 'pointer'
+        },
         buckets: this.spans.length > 1000 ? 15 : 0
       };
       const dps = this.spans.map(span => {

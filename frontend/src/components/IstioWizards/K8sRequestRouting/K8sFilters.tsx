@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Chip } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import {FILTERING_SELECTED_TOOLTIP, wizardTooltip} from '../WizardHelp';
+import { FILTERING_SELECTED_TOOLTIP, wizardTooltip } from '../WizardHelp';
 
 type Props = {
   filters: string[];
@@ -14,7 +14,7 @@ const labelContainerStyle = style({
 });
 
 const remove = style({
-  cursor: "not-allowed"
+  cursor: 'not-allowed'
 });
 
 class K8sFilters extends React.Component<Props> {

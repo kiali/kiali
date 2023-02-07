@@ -1,13 +1,5 @@
 import * as React from 'react';
-import {
-  Form,
-  FormGroup,
-  FormSelect,
-  FormSelectOption,
-  Radio,
-  Switch,
-  TextInput
-} from '@patternfly/react-core';
+import { Form, FormGroup, FormSelect, FormSelectOption, Radio, Switch, TextInput } from '@patternfly/react-core';
 import { GATEWAY_TOOLTIP, wizardTooltip } from './WizardHelp';
 import { isValid } from 'utils/Common';
 
@@ -47,7 +39,8 @@ class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelectorState>
       gwHosts: props.k8sRouteHosts.join(','),
       gwHostsValid: true,
       newGateway: props.k8sGateways.length === 0,
-      selectedGateway: props.k8sGateways.length > 0 ? (props.gateway !== '' ? props.gateway : props.k8sGateways[0]) : '',
+      selectedGateway:
+        props.k8sGateways.length > 0 ? (props.gateway !== '' ? props.gateway : props.k8sGateways[0]) : '',
       addMesh: false,
       port: 80
     };

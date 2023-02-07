@@ -1,6 +1,6 @@
 import { MessageCenterActions } from './MessageCenterActions';
 import { KialiAppState } from '../store/Store';
-import { KialiDispatch } from "../types/Redux";
+import { KialiDispatch } from '../types/Redux';
 
 const MessageCenterThunkActions = {
   toggleMessageCenter: () => {

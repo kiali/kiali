@@ -9,7 +9,7 @@ import { Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { style } from 'typestyle';
-import {isParentKiosk} from "../../Kiosk/KioskActions";
+import { isParentKiosk } from '../../Kiosk/KioskActions';
 
 export class RouteTable implements SummaryTable {
   summaries: RouteSummary[];
@@ -49,10 +49,10 @@ export class RouteTable implements SummaryTable {
 
   filterMethods = (): { [filter_id: string]: (ClusterSummary, ActiveFilter) => boolean } => {
     return {
-      "Name": (entry: RouteSummary, filter: ActiveFilter): boolean => {
+      Name: (entry: RouteSummary, filter: ActiveFilter): boolean => {
         return entry.name.toString().includes(filter.value);
       },
-      "Domains": (entry: RouteSummary, filter: ActiveFilter): boolean => {
+      Domains: (entry: RouteSummary, filter: ActiveFilter): boolean => {
         return [entry.domains.service, entry.domains.namespace, entry.domains.cluster].join('.').includes(filter.value);
       }
     };
@@ -104,12 +104,32 @@ export class RouteTable implements SummaryTable {
   head(): ICell[] {
     return [
       { title: 'Name', transforms: [sortable] },
-      { title: 'Domains', transforms: [sortable] , header: {info: { tooltip:
-        <div className={style({textAlign: 'left'})}>Envoy will be matched this domain to this virtual host.</div>
-        }}},
-      { title: 'Match', transforms: [sortable], header: {info: { tooltip:
-        <div className={style({textAlign: 'left'})}>The match tree to use when resolving route actions for incoming requests</div>
-        }} },
+      {
+        title: 'Domains',
+        transforms: [sortable],
+        header: {
+          info: {
+            tooltip: (
+              <div className={style({ textAlign: 'left' })}>
+                Envoy will be matched this domain to this virtual host.
+              </div>
+            )
+          }
+        }
+      },
+      {
+        title: 'Match',
+        transforms: [sortable],
+        header: {
+          info: {
+            tooltip: (
+              <div className={style({ textAlign: 'left' })}>
+                The match tree to use when resolving route actions for incoming requests
+              </div>
+            )
+          }
+        }
+      },
       { title: 'Virtual Service', transforms: [sortable] }
     ];
   }
@@ -130,11 +150,17 @@ export class RouteTable implements SummaryTable {
 
   tooltip = (): React.ReactNode => {
     return (
-      <Tooltip content={<div className={style({textAlign: 'left'})}>Network connection between source a destination that is configured in envoy</div>}>
-          <KialiIcon.Help className={style({width: '14px', height: '14px', color: PFColors.Blue400})}/>
+      <Tooltip
+        content={
+          <div className={style({ textAlign: 'left' })}>
+            Network connection between source a destination that is configured in envoy
+          </div>
+        }
+      >
+        <KialiIcon.Help className={style({ width: '14px', height: '14px', color: PFColors.Blue400 })} />
       </Tooltip>
     );
-  }
+  };
 
   rows(): (string | number | JSX.Element)[][] {
     const parentKiosk = isParentKiosk(this.kiosk);

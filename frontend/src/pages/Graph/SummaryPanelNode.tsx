@@ -28,13 +28,13 @@ import SimpleTabs from 'components/Tab/SimpleTabs';
 import { JaegerState } from 'reducers/JaegerState';
 import { classes, style } from 'typestyle';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { ServiceDetailsInfo } from "types/ServiceInfo";
-import { LoadingWizardActionsDropdownGroup } from "components/IstioWizards/LoadingWizardActionsDropdownGroup";
-import { WizardAction, WizardMode } from "components/IstioWizards/WizardActions";
-import ServiceWizardActionsDropdownGroup from "components/IstioWizards/ServiceWizardActionsDropdownGroup";
-import { PeerAuthentication } from "../../types/IstioObjects";
-import { useServiceDetailForGraphNode } from "../../hooks/services";
-import { useKialiSelector } from "../../hooks/redux";
+import { ServiceDetailsInfo } from 'types/ServiceInfo';
+import { LoadingWizardActionsDropdownGroup } from 'components/IstioWizards/LoadingWizardActionsDropdownGroup';
+import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
+import ServiceWizardActionsDropdownGroup from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
+import { PeerAuthentication } from '../../types/IstioObjects';
+import { useServiceDetailForGraphNode } from '../../hooks/services';
+import { useKialiSelector } from '../../hooks/redux';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -53,15 +53,23 @@ type ReduxProps = {
 
 export type SummaryPanelNodeHocProps = Omit<SummaryPanelPropType, 'kiosk'> & {
   onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
-  onLaunchWizard?: (key: WizardAction, mode: WizardMode, namespace: string, serviceDetails: ServiceDetailsInfo, gateways: string[], peerAuths: PeerAuthentication[]) => void;
+  onLaunchWizard?: (
+    key: WizardAction,
+    mode: WizardMode,
+    namespace: string,
+    serviceDetails: ServiceDetailsInfo,
+    gateways: string[],
+    peerAuths: PeerAuthentication[]
+  ) => void;
 };
 
-export type SummaryPanelNodeProps = ReduxProps & SummaryPanelNodeHocProps & {
-  gateways: string[] | null;
-  onKebabToggled?: (isOpen: boolean) => void;
-  peerAuthentications: PeerAuthentication[] | null;
-  serviceDetails: ServiceDetailsInfo | null | undefined;
-};
+export type SummaryPanelNodeProps = ReduxProps &
+  SummaryPanelNodeHocProps & {
+    gateways: string[] | null;
+    onKebabToggled?: (isOpen: boolean) => void;
+    peerAuthentications: PeerAuthentication[] | null;
+    serviceDetails: ServiceDetailsInfo | null | undefined;
+  };
 
 const expandableSectionStyle = style({
   fontSize: 'var(--graph-side-panel--font-size)',
@@ -135,9 +143,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
 
     if (nodeType === NodeType.SERVICE) {
       if (this.props.serviceDetails === undefined) {
-        items.push(
-          <LoadingWizardActionsDropdownGroup />
-        );
+        items.push(<LoadingWizardActionsDropdownGroup />);
       } else if (this.props.serviceDetails !== null) {
         items.push(
           <ServiceWizardActionsDropdownGroup
@@ -146,7 +152,8 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
             k8sHTTPRoutes={this.props.serviceDetails.k8sHTTPRoutes || []}
             istioPermissions={this.props.serviceDetails.istioPermissions}
             onAction={this.handleLaunchWizard}
-            onDelete={this.handleDeleteTrafficRouting} />
+            onDelete={this.handleDeleteTrafficRouting}
+          />
         );
       }
     }
@@ -319,8 +326,10 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     const shouldRenderGatewayHostnames =
       (nodeData.isGateway?.ingressInfo?.hostnames !== undefined &&
         nodeData.isGateway.ingressInfo.hostnames.length !== 0) ||
-      (nodeData.isGateway?.egressInfo?.hostnames !== undefined && nodeData.isGateway.egressInfo.hostnames.length !== 0) ||
-      (nodeData.isGateway?.gatewayAPIInfo?.hostnames !== undefined && nodeData.isGateway.gatewayAPIInfo.hostnames.length !== 0);
+      (nodeData.isGateway?.egressInfo?.hostnames !== undefined &&
+        nodeData.isGateway.egressInfo.hostnames.length !== 0) ||
+      (nodeData.isGateway?.gatewayAPIInfo?.hostnames !== undefined &&
+        nodeData.isGateway.gatewayAPIInfo.hostnames.length !== 0);
     const shouldRenderVsHostnames = nodeData.hasVS?.hostnames !== undefined && nodeData.hasVS?.hostnames.length !== 0;
     const shouldRenderRank = this.props.showRank;
     return (
@@ -434,7 +443,14 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     if (this.props.onLaunchWizard) {
       const node = this.props.data.summaryTarget;
       const nodeData = decoratedNodeData(node);
-      this.props.onLaunchWizard(key, mode, nodeData.namespace, this.props.serviceDetails!, this.props.gateways!, this.props.peerAuthentications!);
+      this.props.onLaunchWizard(
+        key,
+        mode,
+        nodeData.namespace,
+        this.props.serviceDetails!,
+        this.props.gateways!,
+        this.props.peerAuthentications!
+      );
     }
   };
 
@@ -443,7 +459,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     if (this.props.onDeleteTrafficRouting) {
       this.props.onDeleteTrafficRouting(key, this.props.serviceDetails!);
     }
-  }
+  };
 }
 
 export default function SummaryPanelNodeHOC(props: SummaryPanelNodeHocProps) {
@@ -457,7 +473,12 @@ export default function SummaryPanelNodeHOC(props: SummaryPanelNodeHocProps) {
 
   const node = props.data.summaryTarget;
   const nodeData = decoratedNodeData(node);
-  const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(nodeData, isKebabOpen, props.duration, updateTime);
+  const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(
+    nodeData,
+    isKebabOpen,
+    props.duration,
+    updateTime
+  );
 
   function handleKebabToggled(isOpen: boolean) {
     setIsKebabOpen(isOpen);
@@ -473,7 +494,7 @@ export default function SummaryPanelNodeHOC(props: SummaryPanelNodeHocProps) {
       gateways={gateways}
       peerAuthentications={peerAuthentications}
       onKebabToggled={handleKebabToggled}
-      {...props} />
+      {...props}
+    />
   );
 }
-

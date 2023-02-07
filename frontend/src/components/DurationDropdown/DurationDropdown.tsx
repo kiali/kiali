@@ -11,8 +11,8 @@ import { connect } from 'react-redux';
 import { HistoryManager, URLParam } from '../../app/History';
 import history from '../../app/History';
 import { TooltipPosition } from '@patternfly/react-core';
-import { isKioskMode } from "../../utils/SearchParamUtils";
-import { kioskDurationAction } from "../Kiosk/KioskActions";
+import { isKioskMode } from '../../utils/SearchParamUtils';
+import { kioskDurationAction } from '../Kiosk/KioskActions';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -31,7 +31,6 @@ type DurationDropdownProps = ReduxProps & {
 };
 
 export class DurationDropdown extends React.Component<DurationDropdownProps> {
-
   render() {
     const durations = humanDurations(serverConfig, this.props.prefix, this.props.suffix);
 
@@ -54,11 +53,10 @@ export class DurationDropdown extends React.Component<DurationDropdownProps> {
   private updateDurationInterval = (duration: number) => {
     this.props.setDuration(duration); // notify redux of the change
 
-    if (isKioskMode() ) {
+    if (isKioskMode()) {
       kioskDurationAction(duration);
     }
   };
-
 }
 
 const withDurations = DurationDropdownComponent => {

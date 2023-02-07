@@ -9,7 +9,9 @@ import {
   CardBody,
   Checkbox,
   EmptyState,
-  EmptyStateVariant, Title, TitleSizes
+  EmptyStateVariant,
+  Title,
+  TitleSizes
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { serverConfig } from '../../config/ServerConfig';
@@ -20,11 +22,11 @@ import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '
 import * as AlertUtils from '../../utils/AlertUtils';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import * as MetricsHelper from './Helper';
-import { KioskElement } from "../Kiosk/KioskElement";
+import { KioskElement } from '../Kiosk/KioskElement';
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
-import { TimeDurationModal } from "../Time/TimeDurationModal";
+import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { GrafanaLinks } from './GrafanaLinks';
 import { MetricsObjectTypes } from 'types/Metrics';
 import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
@@ -37,7 +39,7 @@ import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { timeRangeSelector } from '../../store/Selectors';
-import TimeDurationIndicatorContainer from "../Time/TimeDurationIndicatorComponent";
+import TimeDurationIndicatorContainer from '../Time/TimeDurationIndicatorComponent';
 
 type MetricsState = {
   dashboard?: DashboardModel;
@@ -217,7 +219,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     }
   }
 
-  renderFetchMetrics = (title) => {
+  renderFetchMetrics = title => {
     return (
       <div className={emptyStyle}>
         <EmptyState variant={EmptyStateVariant.small}>
@@ -276,7 +278,8 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
           customDuration={true}
           isOpen={this.state.isTimeOptionsOpen}
           onConfirm={this.toggleTimeOptionsVisibility}
-          onCancel={this.toggleTimeOptionsVisibility} />
+          onCancel={this.toggleTimeOptionsVisibility}
+        />
       </>
     );
   }
@@ -352,7 +355,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
   };
 
   private toggleTimeOptionsVisibility = () => {
-    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }) );
+    this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
   };
 }
 

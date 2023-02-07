@@ -97,9 +97,7 @@ export class HeatMap extends React.Component<Props> {
         {this.props.yLabels.map((yLabel, y) => {
           return (
             <React.Fragment key={`ylabel_${y}`}>
-              <div className={labelStyle}>
-                {isCompact ? '' : yLabel}
-              </div>
+              <div className={labelStyle}>{isCompact ? '' : yLabel}</div>
               {this.props.xLabels.map((_, x) => {
                 const value = this.props.data[x][y];
                 if (value) {

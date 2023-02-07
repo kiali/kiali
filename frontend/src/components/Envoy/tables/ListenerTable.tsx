@@ -10,7 +10,6 @@ import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { style } from 'typestyle';
 
-
 export class ListenerTable implements SummaryTable {
   summaries: ListenerSummary[];
   sortingIndex: number;
@@ -26,7 +25,7 @@ export class ListenerTable implements SummaryTable {
     namespaces: Namespace[],
     namespace: string,
     workload: string | undefined,
-    routeLinkHandler: () => void,
+    routeLinkHandler: () => void
   ) {
     this.summaries = summaries;
     this.sortingIndex = sortBy.index || 0;
@@ -72,16 +71,16 @@ export class ListenerTable implements SummaryTable {
 
   filterMethods = (): { [filter_id: string]: (summary, activeFilter) => boolean } => {
     return {
-      "Address": (entry: ListenerSummary, filter: ActiveFilter): boolean => {
+      Address: (entry: ListenerSummary, filter: ActiveFilter): boolean => {
         return entry.address.includes(filter.value);
       },
-      "Port": (entry: ListenerSummary, filter: ActiveFilter): boolean => {
+      Port: (entry: ListenerSummary, filter: ActiveFilter): boolean => {
         return entry.port.toString().includes(filter.value);
       },
-      "Match": (entry: ListenerSummary, filter: ActiveFilter): boolean => {
+      Match: (entry: ListenerSummary, filter: ActiveFilter): boolean => {
         return entry.match.includes(filter.value);
       },
-      "Destination": (entry: ListenerSummary, filter: ActiveFilter): boolean => {
+      Destination: (entry: ListenerSummary, filter: ActiveFilter): boolean => {
         return entry.destination.includes(filter.value);
       }
     };
@@ -130,13 +129,37 @@ export class ListenerTable implements SummaryTable {
 
   head = (): ICell[] => {
     return [
-      { title: 'Address', transforms: [sortable], header: {info: { tooltip:
-        <div className={style({textAlign: 'left'})}>The address that the listener should listen on. In general, the address must be unique, though that is governed by the bind rules of the OS</div>}} },
+      {
+        title: 'Address',
+        transforms: [sortable],
+        header: {
+          info: {
+            tooltip: (
+              <div className={style({ textAlign: 'left' })}>
+                The address that the listener should listen on. In general, the address must be unique, though that is
+                governed by the bind rules of the OS
+              </div>
+            )
+          }
+        }
+      },
       { title: 'Port', transforms: [sortable] },
       { title: 'Match', transforms: [sortable] },
-      { title: 'Destination', transforms: [sortable], header: {info: { tooltip:
-        <div className={style({textAlign: 'left'})}>Original destination listener filter reads the SO_ORIGINAL_DST socket option set when a connection has been redirected by an iptables REDIRECT target, or by an iptables TPROXY target in combination with setting the listener’s transparent option</div>
-        }} }
+      {
+        title: 'Destination',
+        transforms: [sortable],
+        header: {
+          info: {
+            tooltip: (
+              <div className={style({ textAlign: 'left' })}>
+                Original destination listener filter reads the SO_ORIGINAL_DST socket option set when a connection has
+                been redirected by an iptables REDIRECT target, or by an iptables TPROXY target in combination with
+                setting the listener’s transparent option
+              </div>
+            )
+          }
+        }
+      }
     ];
   };
 
@@ -156,11 +179,18 @@ export class ListenerTable implements SummaryTable {
 
   tooltip = (): React.ReactNode => {
     return (
-      <Tooltip content={<div className={style({textAlign: 'left'})}>Network location that can be connected to by downstream clients (Incomming to envoy). List of endpoints:ports that envoy lets traffic</div>}>
-          <KialiIcon.Help className={style({width: '14px', height: '14px', color: PFColors.Blue400})}/>
+      <Tooltip
+        content={
+          <div className={style({ textAlign: 'left' })}>
+            Network location that can be connected to by downstream clients (Incomming to envoy). List of
+            endpoints:ports that envoy lets traffic
+          </div>
+        }
+      >
+        <KialiIcon.Help className={style({ width: '14px', height: '14px', color: PFColors.Blue400 })} />
       </Tooltip>
     );
-  }
+  };
 
   rows(): (string | number | JSX.Element)[][] {
     return this.summaries

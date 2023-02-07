@@ -2,7 +2,7 @@ import { Layout, EdgeLabelMode, NodeType, NodeParamsType, GraphType, TrafficRate
 import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 import { URLParam } from '../../app/History';
-import {getKioskMode, isKioskMode} from '../../utils/SearchParamUtils';
+import { getKioskMode, isKioskMode } from '../../utils/SearchParamUtils';
 
 export type GraphUrlParams = {
   activeNamespaces: Namespace[];

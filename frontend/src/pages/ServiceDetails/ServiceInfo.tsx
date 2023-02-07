@@ -8,7 +8,9 @@ import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import {
   DestinationRuleC,
   Gateway,
-  getGatewaysAsList, getK8sGatewaysAsList, K8sGateway,
+  getGatewaysAsList,
+  getK8sGatewaysAsList,
+  K8sGateway,
   ObjectValidation,
   PeerAuthentication,
   Validations
@@ -23,22 +25,23 @@ import {
   gwToIstioItems,
   seToIstioItems,
   k8sHTTPRouteToIstioItems,
-  validationKey, k8sGwToIstioItems
+  validationKey,
+  k8sGwToIstioItems
 } from '../../types/IstioConfigList';
-import { canCreate, canUpdate } from "../../types/Permissions";
+import { canCreate, canUpdate } from '../../types/Permissions';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, meshWideMTLSEnabledSelector } from '../../store/Selectors';
 import ServiceNetwork from './ServiceNetwork';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import history, { URLParam } from '../../app/History';
-import MiniGraphCardContainer from "../../components/CytoscapeGraph/MiniGraphCard";
-import IstioConfigCard from "../../components/IstioConfigCard/IstioConfigCard";
-import ServiceWizard from "../../components/IstioWizards/ServiceWizard";
-import ConfirmDeleteTrafficRoutingModal from "../../components/IstioWizards/ConfirmDeleteTrafficRoutingModal";
-import { WizardAction, WizardMode } from "../../components/IstioWizards/WizardActions";
-import { deleteServiceTrafficRouting } from "../../services/Api";
-import * as AlertUtils from "../../utils/AlertUtils";
-import { triggerRefresh } from "../../hooks/refresh";
+import MiniGraphCardContainer from '../../components/CytoscapeGraph/MiniGraphCard';
+import IstioConfigCard from '../../components/IstioConfigCard/IstioConfigCard';
+import ServiceWizard from '../../components/IstioWizards/ServiceWizard';
+import ConfirmDeleteTrafficRoutingModal from '../../components/IstioWizards/ConfirmDeleteTrafficRoutingModal';
+import { WizardAction, WizardMode } from '../../components/IstioWizards/WizardActions';
+import { deleteServiceTrafficRouting } from '../../services/Api';
+import * as AlertUtils from '../../utils/AlertUtils';
+import { triggerRefresh } from '../../hooks/refresh';
 
 interface Props extends ServiceId {
   duration: DurationInSeconds;
@@ -127,11 +130,11 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     if (changed) {
       triggerRefresh();
     }
-  }
+  };
 
   private handleConfirmDeleteServiceTrafficRouting = () => {
     this.setState({
-      showConfirmDeleteTrafficRouting:false
+      showConfirmDeleteTrafficRouting: false
     });
 
     deleteServiceTrafficRouting(this.props.serviceDetails!)
@@ -151,7 +154,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     this.setState({
       showWizard: true,
       wizardType: action,
-      updateMode: mode === "update",
+      updateMode: mode === 'update'
     });
   };
 
@@ -173,10 +176,10 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     const k8sGwIstioConfigItems =
       this.props?.k8sGateways && this.props.serviceDetails?.k8sHTTPRoutes
         ? k8sGwToIstioItems(
-          this.props?.k8sGateways,
-          this.props.serviceDetails.k8sHTTPRoutes,
-          this.props.serviceDetails.validations
-        )
+            this.props?.k8sGateways,
+            this.props.serviceDetails.k8sHTTPRoutes,
+            this.props.serviceDetails.validations
+          )
         : [];
     const seIstioConfigItems = this.props.serviceDetails?.serviceEntries
       ? seToIstioItems(this.props.serviceDetails.serviceEntries, this.props.serviceDetails.validations)
@@ -185,7 +188,9 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
       ? k8sHTTPRouteToIstioItems(this.props.serviceDetails.k8sHTTPRoutes, this.props.serviceDetails.validations)
       : [];
     const istioConfigItems = seIstioConfigItems.concat(
-      gwIstioConfigItems.concat(k8sGwIstioConfigItems.concat(vsIstioConfigItems.concat(drIstioConfigItems.concat(k8sHTTPRouteIstioConfigItems))))
+      gwIstioConfigItems.concat(
+        k8sGwIstioConfigItems.concat(vsIstioConfigItems.concat(drIstioConfigItems.concat(k8sHTTPRouteIstioConfigItems)))
+      )
     );
 
     // RenderComponentScroll handles height to provide an inner scroll combined with tabs
@@ -236,7 +241,10 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
           serviceName={this.props.serviceDetails?.service?.name || ''}
           workloads={this.props.serviceDetails?.workloads || []}
           subServices={this.props.serviceDetails?.subServices || []}
-          createOrUpdate={canCreate(this.props.serviceDetails?.istioPermissions) || canUpdate(this.props.serviceDetails?.istioPermissions)}
+          createOrUpdate={
+            canCreate(this.props.serviceDetails?.istioPermissions) ||
+            canUpdate(this.props.serviceDetails?.istioPermissions)
+          }
           virtualServices={this.props.serviceDetails?.virtualServices || []}
           destinationRules={this.props.serviceDetails?.destinationRules || []}
           gateways={getGatewaysAsList(this.props.gateways)}
@@ -253,7 +261,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
             virtualServices={this.props.serviceDetails!.virtualServices}
             k8sHTTPRoutes={this.props.serviceDetails!.k8sHTTPRoutes}
             isOpen={true}
-            onCancel={() => this.setState({showConfirmDeleteTrafficRouting: false})}
+            onCancel={() => this.setState({ showConfirmDeleteTrafficRouting: false })}
             onConfirm={this.handleConfirmDeleteServiceTrafficRouting}
           />
         )}

@@ -130,7 +130,7 @@ describe('TraceStats.reduceMetricsStats', () => {
 
     expect(reduced.isComplete).toBe(true);
     expect(reduced.matrix).toHaveLength(4);
-    reduced.matrix.forEach(line => expect(line).toHaveLength(3));  // because there are 3 intervals, only 2 of which are filled
+    reduced.matrix.forEach(line => expect(line).toHaveLength(3)); // because there are 3 intervals, only 2 of which are filled
     // For each matrix cell (stat_x_duration), the reduced matrix contains
     // the average of "span duration - corresponding metric stat" for all 3 spans
     expect(reduced.matrix[0][0]).toBeCloseTo(0, 5); // 10m avg => average of [3-3, 3-3, 1-1]

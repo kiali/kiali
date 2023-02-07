@@ -1,4 +1,10 @@
-import { ActiveFiltersInfo, FILTER_ACTION_APPEND, AllFilterTypes, RunnableFilter, FilterValue } from '../../types/Filters';
+import {
+  ActiveFiltersInfo,
+  FILTER_ACTION_APPEND,
+  AllFilterTypes,
+  RunnableFilter,
+  FilterValue
+} from '../../types/Filters';
 import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from '../../types/Health';
 import { NamespaceInfo } from './NamespaceInfo';
 import { MTLSStatuses } from '../../types/TLSStatus';

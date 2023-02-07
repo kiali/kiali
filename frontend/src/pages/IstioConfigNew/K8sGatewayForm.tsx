@@ -1,11 +1,11 @@
 import * as React from 'react';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import { FormGroup } from '@patternfly/react-core';
-import AddressList from "./GatewayForm/AddressList";
+import AddressList from './GatewayForm/AddressList';
 import { Address, Listener } from '../../types/IstioObjects';
-import ListenerList from "./GatewayForm/ListenerList";
-import { isValidHostname, isValidName } from "./GatewayForm/ListenerBuilder";
-import { isValidAddress } from "./GatewayForm/AddressBuilder";
+import ListenerList from './GatewayForm/ListenerList';
+import { isValidHostname, isValidName } from './GatewayForm/ListenerBuilder';
+import { isValidAddress } from './GatewayForm/AddressBuilder';
 
 export const K8SGATEWAY = 'K8sGateway';
 export const K8SGATEWAYS = 'k8sgateways';
@@ -27,12 +27,13 @@ export const initK8sGateway = (): K8sGatewayState => ({
   listeners: [],
   addresses: [],
   validHosts: false,
-  listenersForm: [],
+  listenersForm: []
 });
 
 export const isK8sGatewayStateValid = (g: K8sGatewayState): boolean => {
-  return g.listeners.length > 0 && validListeners(g.listeners) &&
-    (g.addresses.length === 0 || validAddresses(g.addresses));
+  return (
+    g.listeners.length > 0 && validListeners(g.listeners) && (g.addresses.length === 0 || validAddresses(g.addresses))
+  );
 };
 
 export type ListenerForm = {
@@ -44,19 +45,25 @@ export type ListenerForm = {
   from: string;
   isLabelSelectorValid: boolean;
   sSelectorLabels: string;
-}
+};
 
 const validListeners = (listeners: Listener[]) => {
   return listeners.every((e, _) => {
-    return isValidName(e.name) && typeof(e.port) !== "undefined" && e.port >= 0 && e.port <= 65535 && isValidHostname(e.hostname)
-  })
-}
+    return (
+      isValidName(e.name) &&
+      typeof e.port !== 'undefined' &&
+      e.port >= 0 &&
+      e.port <= 65535 &&
+      isValidHostname(e.hostname)
+    );
+  });
+};
 
 const validAddresses = (address: Address[]) => {
   return address.every((a, _) => {
-    return (isValidAddress(a))
-  })
-}
+    return isValidAddress(a);
+  });
+};
 
 class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
   constructor(props: Props) {
@@ -69,32 +76,25 @@ class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
   }
 
   onChangeListener = (listeners: Listener[], listenersForm: ListenerForm[]) => {
-    this.setState(
-      { listeners: listeners, listenersForm: listenersForm},
-      () => this.props.onChange(this.state)
-    );
-  }
+    this.setState({ listeners: listeners, listenersForm: listenersForm }, () => this.props.onChange(this.state));
+  };
 
   onChangeAddress = (addresses: Address[]) => {
-    this.setState(
-      { addresses: addresses},
-      () => this.props.onChange(this.state)
-    );
-  }
+    this.setState({ addresses: addresses }, () => this.props.onChange(this.state));
+  };
 
   render() {
     return (
       <>
         <FormGroup label="Listeners" fieldId="listener" isRequired={true}>
-          <ListenerList  onChange={this.onChangeListener}
-                         listenersForm={this.state.listenersForm}
-                         listeners={this.state.listeners}
-                         />
+          <ListenerList
+            onChange={this.onChangeListener}
+            listenersForm={this.state.listenersForm}
+            listeners={this.state.listeners}
+          />
         </FormGroup>
         <FormGroup label="Addresses" fieldId="gwAddressList">
-          <AddressList
-            onChange={this.onChangeAddress}
-            addressList={this.state.addresses}  />
+          <AddressList onChange={this.onChangeAddress} addressList={this.state.addresses} />
         </FormGroup>
       </>
     );

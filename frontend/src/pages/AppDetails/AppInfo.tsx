@@ -12,7 +12,7 @@ import { meshWideMTLSEnabledSelector } from '../../store/Selectors';
 import { style } from 'typestyle';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import history, { URLParam } from '../../app/History';
-import MiniGraphCardContainer from "../../components/CytoscapeGraph/MiniGraphCard";
+import MiniGraphCardContainer from '../../components/CytoscapeGraph/MiniGraphCard';
 
 type AppInfoProps = {
   app?: App;

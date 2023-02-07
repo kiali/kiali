@@ -1,7 +1,8 @@
 import { DEGRADED, FAILURE, HEALTHY, NA, ServiceHealth, Status } from './Health';
 import {
   DestinationRule,
-  getWizardUpdateLabel, K8sHTTPRoute,
+  getWizardUpdateLabel,
+  K8sHTTPRoute,
   ObjectCheck,
   ObjectValidation,
   ServiceEntry,
@@ -12,8 +13,8 @@ import {
 import { TLSStatus } from './TLSStatus';
 import { AdditionalItem } from './Workload';
 import { ResourcePermissions } from './Permissions';
-import {KIALI_WIZARD_LABEL} from "../components/IstioWizards/WizardActions";
-import {ServiceOverview} from "./ServiceList";
+import { KIALI_WIZARD_LABEL } from '../components/IstioWizards/WizardActions';
+import { ServiceOverview } from './ServiceList';
 
 export interface ServicePort {
   name: string;
@@ -81,8 +82,16 @@ export function getServiceDetailsUpdateLabel(serviceDetails: ServiceDetailsInfo 
 }
 
 export function hasServiceDetailsTrafficRouting(serviceDetails: ServiceDetailsInfo | null);
-export function hasServiceDetailsTrafficRouting(vsList: VirtualService[], drList: DestinationRule[], routeList?: K8sHTTPRoute[]);
-export function hasServiceDetailsTrafficRouting(serviceDetailsOrVsList: ServiceDetailsInfo | VirtualService[] | null, drList?: DestinationRule[], routeList?: K8sHTTPRoute[]) {
+export function hasServiceDetailsTrafficRouting(
+  vsList: VirtualService[],
+  drList: DestinationRule[],
+  routeList?: K8sHTTPRoute[]
+);
+export function hasServiceDetailsTrafficRouting(
+  serviceDetailsOrVsList: ServiceDetailsInfo | VirtualService[] | null,
+  drList?: DestinationRule[],
+  routeList?: K8sHTTPRoute[]
+) {
   let virtualServicesList: VirtualService[];
   let destinationRulesList: DestinationRule[];
   let httpRoutesList: K8sHTTPRoute[];
@@ -99,7 +108,6 @@ export function hasServiceDetailsTrafficRouting(serviceDetailsOrVsList: ServiceD
     virtualServicesList = serviceDetailsOrVsList.virtualServices;
     destinationRulesList = serviceDetailsOrVsList.destinationRules;
     httpRoutesList = serviceDetailsOrVsList.k8sHTTPRoutes;
-
   }
 
   return virtualServicesList.length > 0 || destinationRulesList.length > 0 || httpRoutesList.length > 0;
@@ -166,8 +174,7 @@ export const globalChecks = (object: ObjectValidation): ObjectCheck[] => {
 };
 
 export function getServiceWizardLabel(serviceDetails: Service): string {
-  if (serviceDetails && serviceDetails.labels &&
-    serviceDetails.labels[KIALI_WIZARD_LABEL]) {
+  if (serviceDetails && serviceDetails.labels && serviceDetails.labels[KIALI_WIZARD_LABEL]) {
     return serviceDetails.labels[KIALI_WIZARD_LABEL];
   } else {
     return '';
@@ -177,7 +184,7 @@ export function getServiceWizardLabel(serviceDetails: Service): string {
 export function getServicePort(ports: { [key: string]: number }): number {
   let port = 80;
   if (ports) {
-    port = Object.values(ports)[0]
+    port = Object.values(ports)[0];
   }
   return port;
 }

@@ -101,11 +101,9 @@ const Messages = (
 
           if (existingMessage) {
             // it is in the list already
-            firstTriggered = existingMessage.firstTriggered
-              ? existingMessage.firstTriggered
-              : existingMessage.created;
+            firstTriggered = existingMessage.firstTriggered ? existingMessage.firstTriggered : existingMessage.created;
 
-            count += existingMessage.count
+            count += existingMessage.count;
           }
 
           newMessage = createMessage(
