@@ -1,12 +1,12 @@
 import * as React from 'react';
-import K8sRules, {MOVE_TYPE, K8sRule} from './K8sRequestRouting/K8sRules';
+import K8sRules, { MOVE_TYPE, K8sRule } from './K8sRequestRouting/K8sRules';
 import K8sRuleBuilder from './K8sRequestRouting/K8sRuleBuilder';
-import {K8sRouteBackendRef} from './K8sTrafficShifting';
+import { K8sRouteBackendRef } from './K8sTrafficShifting';
 import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
-import {getDefaultBackendRefs, getDefaultService} from './WizardActions';
-import {ServiceOverview} from "../../types/ServiceList";
-import {REMOVE, REQ_MOD, RESP_MOD, SET, HTTP, SC301, REQ_RED, REQ_MIR} from "./K8sRequestRouting/K8sFilterBuilder";
-import {isServerHostValid} from "../../utils/IstioConfigUtils";
+import { getDefaultBackendRefs, getDefaultService } from './WizardActions';
+import { ServiceOverview } from '../../types/ServiceList';
+import { REMOVE, REQ_MOD, RESP_MOD, SET, HTTP, SC301, REQ_RED, REQ_MIR } from './K8sRequestRouting/K8sFilterBuilder';
+import { isServerHostValid } from '../../utils/IstioConfigUtils';
 
 type Props = {
   subServices: ServiceOverview[];
@@ -107,9 +107,11 @@ class K8sRequestRouting extends React.Component<Props, State> {
       if (prevState.category === PATH) {
         newMatch = prevState.category + ' ' + prevState.operator + ' ' + prevState.matchValue;
       } else if (prevState.category === HEADERS) {
-        newMatch = prevState.category + ' [' + prevState.headerName + '] ' + prevState.operator + ' ' + prevState.matchValue;
+        newMatch =
+          prevState.category + ' [' + prevState.headerName + '] ' + prevState.operator + ' ' + prevState.matchValue;
       } else if (prevState.category === QUERY_PARAMS) {
-        newMatch = prevState.category + ' ' + prevState.queryParamName + ' ' + prevState.operator + ' ' + prevState.matchValue;
+        newMatch =
+          prevState.category + ' ' + prevState.queryParamName + ' ' + prevState.operator + ' ' + prevState.matchValue;
       } else {
         newMatch = prevState.category + ' ' + prevState.operator;
       }
@@ -133,7 +135,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
           newBackendRefs.push({
             name: br.name,
             weight: br.weight,
-            port: br.port ? br.port : 80,
+            port: br.port ? br.port : 80
           })
         );
         const newRule: K8sRule = {
@@ -217,7 +219,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
   };
 
   onQueryParamNameChange = (queryParamName: string) => {
-      let validationMsg = '';
+    let validationMsg = '';
     if (this.state.matchValue !== '' && queryParamName === '') {
       validationMsg = MSG_QUERY_NAME_NON_EMPTY;
     }
@@ -340,18 +342,18 @@ class K8sRequestRouting extends React.Component<Props, State> {
       headerValue: headerValue,
       validationMsg: validationMsg
     });
-  }
+  };
 
   onHostNameChange = (hostName: string) => {
     let validationMsg = '';
-    if (!hostName || !isServerHostValid(hostName, false) ) {
+    if (!hostName || !isServerHostValid(hostName, false)) {
       validationMsg = MSG_HOSTNAME_NON_EMPTY;
     }
     this.setState({
       hostName: hostName,
       validationMsg: validationMsg
     });
-  }
+  };
 
   onPortValueChange = (portValue: string) => {
     let validationMsg = '';
@@ -362,7 +364,7 @@ class K8sRequestRouting extends React.Component<Props, State> {
       portValue: portValue,
       validationMsg: validationMsg
     });
-  }
+  };
 
   onRemoveFilter = (filterToRemove: string) => {
     this.setState(prevState => {

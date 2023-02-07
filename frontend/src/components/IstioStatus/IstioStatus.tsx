@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { SVGIconProps } from "@patternfly/react-icons/dist/esm/createIcon";
+import { SVGIconProps } from '@patternfly/react-icons/dist/esm/createIcon';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { TimeInMilliseconds } from '../../types/Common';
@@ -18,7 +18,7 @@ import './IstioStatus.css';
 import { ResourcesFullIcon } from '@patternfly/react-icons';
 import { KialiDispatch } from 'types/Redux';
 import NamespaceThunkActions from '../../actions/NamespaceThunkActions';
-import connectRefresh from "../Refresh/connectRefresh";
+import connectRefresh from '../Refresh/connectRefresh';
 
 type ReduxProps = {
   setIstioStatus: (istioStatus: ComponentStatus[]) => void;
@@ -28,15 +28,15 @@ type ReduxProps = {
 };
 
 type StatusIcons = {
-  ErrorIcon?: React.ComponentClass<SVGIconProps>,
-  WarningIcon?: React.ComponentClass<SVGIconProps>,
-  InfoIcon?: React.ComponentClass<SVGIconProps>,
-  HealthyIcon?: React.ComponentClass<SVGIconProps>
+  ErrorIcon?: React.ComponentClass<SVGIconProps>;
+  WarningIcon?: React.ComponentClass<SVGIconProps>;
+  InfoIcon?: React.ComponentClass<SVGIconProps>;
+  HealthyIcon?: React.ComponentClass<SVGIconProps>;
 };
 
 type Props = ReduxProps & {
   lastRefreshAt: TimeInMilliseconds;
-  icons?: StatusIcons
+  icons?: StatusIcons;
 };
 
 const ValidToColor = {
@@ -55,7 +55,7 @@ const defaultIcons = {
   WarningIcon: ResourcesFullIcon,
   InfoIcon: ResourcesFullIcon,
   HealthyIcon: ResourcesFullIcon
-}
+};
 
 export class IstioStatus extends React.Component<Props> {
   componentDidMount() {
@@ -86,7 +86,6 @@ export class IstioStatus extends React.Component<Props> {
   };
 
   tooltipContent = () => {
-
     return <IstioStatusList status={this.props.status} />;
   };
 
@@ -147,7 +146,7 @@ export class IstioStatus extends React.Component<Props> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   status: istioStatusSelector(state),
-  namespaces: namespaceItemsSelector(state),
+  namespaces: namespaceItemsSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({

@@ -8,10 +8,8 @@ import {
   ChartArea,
   ChartLabel,
   ChartLegend,
-  ChartThreshold,
-
+  ChartThreshold
 } from '@patternfly/react-charts';
-
 
 import { VCLines, VCDataPoint, RichDataPoint } from 'types/VictoryChartInfo';
 import { CustomTooltip } from './CustomTooltip';
@@ -136,13 +134,15 @@ export class SparklineChart extends React.Component<Props, State> {
         // Hack: 1 pxl on Y domain padding to prevent harsh clipping (https://github.com/kiali/kiali/issues/2069)
         domainPadding={{ y: 1 }}
       >
-        {this.props.showXAxisValues ?
-          <ChartAxis 
+        {this.props.showXAxisValues ? (
+          <ChartAxis
             tickValues={this.props.series[0].datapoints.map(dp => dp.x)}
-            tickFormat={(x => (x as Date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))}
-            tickCount={2} /> :
+            tickFormat={x => (x as Date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            tickCount={2}
+          />
+        ) : (
           <ChartAxis tickCount={15} style={hiddenAxisStyle} />
-        }
+        )}
         {this.props.showYAxis ? (
           <ChartAxis
             label={this.props.labelName}
@@ -203,19 +203,20 @@ export class SparklineChart extends React.Component<Props, State> {
           />
         )}
 
-        {this.props.thresholds && this.props.thresholds.map((serie, idx) => {
-          if (this.state.hiddenSeries.has(idx)) {
-            return undefined;
-          }
-          return (
-            <ChartThreshold
-              data={serie.datapoints}
-              style={{
-                data: { stroke: serie.color }
-              }}
-            />
-          );
-        })}
+        {this.props.thresholds &&
+          this.props.thresholds.map((serie, idx) => {
+            if (this.state.hiddenSeries.has(idx)) {
+              return undefined;
+            }
+            return (
+              <ChartThreshold
+                data={serie.datapoints}
+                style={{
+                  data: { stroke: serie.color }
+                }}
+              />
+            );
+          })}
       </Chart>
     );
   }

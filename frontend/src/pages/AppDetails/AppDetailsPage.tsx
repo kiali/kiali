@@ -20,10 +20,10 @@ import TracesComponent from '../../components/JaegerIntegration/TracesComponent'
 import TrafficDetails from 'components/TrafficList/TrafficDetails';
 import TimeControl from '../../components/Time/TimeControl';
 import { AppHealth } from 'types/Health';
-import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
-import {ErrorMsg} from "../../types/ErrorMsg";
-import ErrorSection from "../../components/ErrorSection/ErrorSection";
-import connectRefresh from "../../components/Refresh/connectRefresh";
+import RenderHeaderContainer from '../../components/Nav/Page/RenderHeader';
+import { ErrorMsg } from '../../types/ErrorMsg';
+import ErrorSection from '../../components/ErrorSection/ErrorSection';
+import connectRefresh from '../../components/Refresh/connectRefresh';
 
 type AppDetailsState = {
   app?: App;
@@ -40,9 +40,10 @@ type ReduxProps = {
   timeRange: TimeRange;
 };
 
-type AppDetailsProps = RouteComponentProps<AppId> & ReduxProps & {
-  lastRefreshAt: TimeInMilliseconds;
-};
+type AppDetailsProps = RouteComponentProps<AppId> &
+  ReduxProps & {
+    lastRefreshAt: TimeInMilliseconds;
+  };
 
 const tabName = 'tab';
 const defaultTab = 'info';
@@ -99,9 +100,12 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         });
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch App Details.', error)
-        const msg : ErrorMsg = {title: 'No App is selected', description: this.props.match.params.app +" is not found in the mesh"};
-        this.setState({error: msg});
+        AlertUtils.addError('Could not fetch App Details.', error);
+        const msg: ErrorMsg = {
+          title: 'No App is selected',
+          description: this.props.match.params.app + ' is not found in the mesh'
+        };
+        this.setState({ error: msg });
       });
   };
 
@@ -239,10 +243,11 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     }
     return (
       <>
-        <RenderHeaderContainer location={this.props.location} rightToolbar={<TimeControl customDuration={useCustomTime} />} />
-        {this.state.error && (
-          <ErrorSection error={this.state.error} />
-        )}
+        <RenderHeaderContainer
+          location={this.props.location}
+          rightToolbar={<TimeControl customDuration={useCustomTime} />}
+        />
+        {this.state.error && <ErrorSection error={this.state.error} />}
         {this.state.app && (
           <ParameterizedTabs
             id="basic-tabs"

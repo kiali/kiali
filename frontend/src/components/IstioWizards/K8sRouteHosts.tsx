@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Form, FormGroup, TextInput } from '@patternfly/react-core';
 import { K8sGatewaySelectorState } from './K8sGatewaySelector';
 import { isValid } from 'utils/Common';
-import {isGatewayHostValid} from "../../utils/IstioConfigUtils";
+import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
 type Props = {
   k8sRouteHosts: string[];
   gateway?: K8sGatewaySelectorState;
@@ -16,7 +16,7 @@ class K8sRouteHosts extends React.Component<Props> {
         return false;
       }
       return true;
-    })
+    });
     return true;
   };
 
@@ -29,7 +29,7 @@ class K8sRouteHosts extends React.Component<Props> {
           fieldId="advanced-k8sRouteHosts"
           validated={isValid(this.isK8sRouteHostsValid(this.props.k8sRouteHosts))}
           helperText="The route hosts to which traffic is being sent. Enter one or multiple hosts separated by comma."
-          helperTextInvalid={"IPs are not allowed. A hostname may be prefixed with a wildcard label (*.)"}
+          helperTextInvalid={'IPs are not allowed. A hostname may be prefixed with a wildcard label (*.)'}
         >
           <TextInput
             value={k8sRouteHosts}

@@ -15,8 +15,8 @@ import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import MissingLabel from '../../components/MissingLabel/MissingLabel';
 import MissingAuthPolicy from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
-import DetailDescriptionContainer from "../../components/Details/DetailDescription";
-import { isGateway } from "../../helpers/LabelFilterHelper";
+import DetailDescriptionContainer from '../../components/Details/DetailDescription';
+import { isGateway } from '../../helpers/LabelFilterHelper';
 
 type WorkloadDescriptionProps = {
   workload?: Workload;

@@ -50,8 +50,9 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
         ? this.props.status[StatusKey.KIALI_CORE_VERSION]
         : `${this.props.status[StatusKey.KIALI_CORE_VERSION]} (${this.props.status[StatusKey.KIALI_CORE_COMMIT_HASH]})`;
     const containerVersion = this.props.status[StatusKey.KIALI_CONTAINER_VERSION];
-    const meshVersion = this.props.status[StatusKey.MESH_NAME] ? `${this.props.status[StatusKey.MESH_NAME]} ${this.props.status[StatusKey.MESH_VERSION] || ''}` : 'Unknown';
-
+    const meshVersion = this.props.status[StatusKey.MESH_NAME]
+      ? `${this.props.status[StatusKey.MESH_NAME]} ${this.props.status[StatusKey.MESH_VERSION] || ''}`
+      : 'Unknown';
 
     return (
       <AboutModal
@@ -85,7 +86,7 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
           </TextList>
         </TextContent>
         {this.props.warningMessages.length > 0 && (
-          <Alert variant="warning" title={this.props.warningMessages[0]} style={{marginTop: '1em'}} />
+          <Alert variant="warning" title={this.props.warningMessages[0]} style={{ marginTop: '1em' }} />
         )}
         <TextContent>
           <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '20px 0px 20px' }}>

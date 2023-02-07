@@ -101,7 +101,16 @@ describe('Overview page', () => {
 
   it('renders initial layout', () => {
     const wrapper = shallow(
-      <OverviewPage meshStatus={MTLSStatuses.NOT_ENABLED} navCollapse={false} duration={600} refreshInterval={10000} kiosk={''} minTLS={''} istioAPIEnabled={false} isMaistra={false}/>
+      <OverviewPage
+        meshStatus={MTLSStatuses.NOT_ENABLED}
+        navCollapse={false}
+        duration={600}
+        refreshInterval={10000}
+        kiosk={''}
+        minTLS={''}
+        istioAPIEnabled={false}
+        isMaistra={false}
+      />
     );
     expect(shallowToJson(wrapper)).toMatchSnapshot();
   });

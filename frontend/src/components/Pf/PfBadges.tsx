@@ -121,13 +121,7 @@ export class PFBadge extends React.PureComponent<PFBadgeProps> {
     const className = this.props.size === 'sm' ? kialiBadgeSmall : kialiBadge;
 
     const badge = (
-      <Badge
-        className={className}
-        id={key}
-        isRead={this.props.isRead || false}
-        key={key}
-        style={style}
-      >
+      <Badge className={className} id={key} isRead={this.props.isRead || false} key={key} style={style}>
         {this.props.badge.badge}
       </Badge>
     );

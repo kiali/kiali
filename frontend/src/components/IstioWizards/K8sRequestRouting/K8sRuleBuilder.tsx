@@ -5,9 +5,9 @@ import K8sMatches from './K8sMatches';
 import { style } from 'typestyle';
 import { PFColors } from '../../Pf/PfColors';
 import K8sTrafficShifting, { K8sRouteBackendRef } from '../K8sTrafficShifting';
-import {ServiceOverview} from "../../../types/ServiceList";
-import K8sFilterBuilder from "./K8sFilterBuilder";
-import K8sFilters from "./K8sFilters";
+import { ServiceOverview } from '../../../types/ServiceList';
+import K8sFilterBuilder from './K8sFilterBuilder';
+import K8sFilters from './K8sFilters';
 
 type Props = {
   // K8sMatchBuilder props
@@ -132,11 +132,7 @@ class K8sRuleBuilder extends React.Component<Props, State> {
         <div className={addRuleStyle}>
           <span>
             {this.props.validationMsg.length > 0 && <div className={validationStyle}>{this.props.validationMsg}</div>}
-            <Button
-              variant={ButtonVariant.secondary}
-              onClick={this.props.onAddRule}
-              data-test="add-route"
-            >
+            <Button variant={ButtonVariant.secondary} onClick={this.props.onAddRule} data-test="add-route">
               Add Route Rule
             </Button>
           </span>

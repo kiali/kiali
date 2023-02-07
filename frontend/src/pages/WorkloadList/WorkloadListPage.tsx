@@ -21,7 +21,7 @@ import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import { WorkloadHealth } from '../../types/Health';
-import RefreshNotifier from "../../components/Refresh/RefreshNotifier";
+import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
 
 type WorkloadListPageState = FilterComponent.State<WorkloadListItem>;
 
@@ -147,11 +147,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         <div style={{ backgroundColor: '#fff' }}>
           <DefaultSecondaryMasthead
             rightToolbar={
-              <TimeDurationContainer
-                key={'DurationDropdown'}
-                id="workload-list-duration-dropdown"
-                disabled={false}
-              />
+              <TimeDurationContainer key={'DurationDropdown'} id="workload-list-duration-dropdown" disabled={false} />
             }
           />
         </div>

@@ -22,7 +22,7 @@ import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { validationKey } from '../../types/IstioConfigList';
 import { ServiceHealth } from '../../types/Health';
-import RefreshNotifier from "../../components/Refresh/RefreshNotifier";
+import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
 
 type ServiceListPageState = FilterComponent.State<ServiceListItem>;
 
@@ -111,7 +111,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
         ports: service.ports || {},
         istioReferences: sortIstioReferences(service.istioReferences, true),
         kialiWizard: service.kialiWizard,
-        serviceRegistry: service.serviceRegistry,
+        serviceRegistry: service.serviceRegistry
       }));
     }
     return [];
@@ -159,11 +159,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
         <div style={{ backgroundColor: '#fff' }}>
           <DefaultSecondaryMasthead
             rightToolbar={
-              <TimeDurationContainer
-                key={'DurationDropdown'}
-                id="service-list-duration-dropdown"
-                disabled={false}
-              />
+              <TimeDurationContainer key={'DurationDropdown'} id="service-list-duration-dropdown" disabled={false} />
             }
           />
         </div>

@@ -2,34 +2,39 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { serverConfig } from '../../config';
-import {KialiAppState} from "../../store/Store";
-import {connect} from "react-redux";
-import {isParentKiosk, kioskContextMenuAction} from "../Kiosk/KioskActions";
+import { KialiAppState } from '../../store/Store';
+import { connect } from 'react-redux';
+import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 
 type ReduxProps = {
-    kiosk: string;
-}
+  kiosk: string;
+};
 
 type KialiPageLinkProps = ReduxProps & {
   children: React.ReactNode;
   cluster?: string;
   href: string;
-}
+};
 
 class KialiPageLink extends React.Component<KialiPageLinkProps> {
-
   render() {
     // Without a cluster, simply render a local link
     // If cluster is specified, and it's the home cluster, render a local link.
-    if (!this.props.cluster || !serverConfig.clusterInfo?.name || this.props.cluster === serverConfig.clusterInfo.name) {
+    if (
+      !this.props.cluster ||
+      !serverConfig.clusterInfo?.name ||
+      this.props.cluster === serverConfig.clusterInfo.name
+    ) {
       if (isParentKiosk(this.props.kiosk)) {
-        return <Link
+        return (
+          <Link
             to={''}
-            onClick={()=> {
+            onClick={() => {
               kioskContextMenuAction(this.props.href);
             }}
             children={this.props.children}
-          />;
+          />
+        );
       } else {
         return <Link to={this.props.href}>{this.props.children}</Link>;
       }
@@ -46,16 +51,15 @@ class KialiPageLink extends React.Component<KialiPageLinkProps> {
       const href = kialiInstance.url.replace(/\/$/g, '') + '/console' + this.props.href;
       return (
         <a href={href} rel="noreferrer noopener" target="_blank">
-          {this.props.children} <ExternalLinkAltIcon/>
+          {this.props.children} <ExternalLinkAltIcon />
         </a>
       );
     }
   }
-
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  kiosk: state.globalState.kiosk,
+  kiosk: state.globalState.kiosk
 });
 
 const KialiPageLinkContainer = connect(mapStateToProps)(KialiPageLink);

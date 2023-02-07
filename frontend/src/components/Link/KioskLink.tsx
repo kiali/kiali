@@ -1,18 +1,18 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { isParentKiosk, kioskContextMenuAction } from "../Kiosk/KioskActions";
-import {KialiAppState} from "../../store/Store";
-import {connect} from "react-redux";
+import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
+import { KialiAppState } from '../../store/Store';
+import { connect } from 'react-redux';
 
 type ReduxProps = {
   kiosk: string;
-}
+};
 
 type Props = {
   linkName: string;
   href: string;
   dataTest: string;
-}
+};
 
 type KioskProps = ReduxProps & Props;
 
@@ -36,7 +36,9 @@ class KioskLinkItem extends React.Component<KioskProps> {
         onClick={() => {
           kioskContextMenuAction(this.props.href);
         }}
-      >{this.props.linkName}</Link>
+      >
+        {this.props.linkName}
+      </Link>
     ) : (
       <Link to={this.props.href} data-test={this.props.dataTest}>
         {this.props.linkName}
@@ -46,7 +48,7 @@ class KioskLinkItem extends React.Component<KioskProps> {
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  kiosk: state.globalState.kiosk,
+  kiosk: state.globalState.kiosk
 });
 
 const KioskLinkContainer = connect(mapStateToProps)(KioskLinkItem);

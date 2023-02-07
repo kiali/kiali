@@ -12,7 +12,7 @@ declare global {
 
 // eslint-disable-next-line no-extend-native
 Date.prototype.toLocaleStringWithConditionalDate = function () {
-  const nowDate = (new Date()).toLocaleDateString();
+  const nowDate = new Date().toLocaleDateString();
   const thisDate = this.toLocaleDateString();
 
   return nowDate === thisDate ? this.toLocaleTimeString() : this.toLocaleString();

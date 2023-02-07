@@ -23,11 +23,10 @@ import TimeControl from '../../components/Time/TimeControl';
 import EnvoyDetailsContainer from 'components/Envoy/EnvoyDetails';
 import { StatusState } from '../../types/StatusState';
 import { WorkloadHealth } from 'types/Health';
-import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
-import ErrorSection from "../../components/ErrorSection/ErrorSection";
-import {ErrorMsg} from "../../types/ErrorMsg";
-import connectRefresh from "../../components/Refresh/connectRefresh";
-
+import RenderHeaderContainer from '../../components/Nav/Page/RenderHeader';
+import ErrorSection from '../../components/ErrorSection/ErrorSection';
+import { ErrorMsg } from '../../types/ErrorMsg';
+import connectRefresh from '../../components/Refresh/connectRefresh';
 
 type WorkloadDetailsState = {
   workload?: Workload;
@@ -42,9 +41,10 @@ type ReduxProps = {
   statusState: StatusState;
 };
 
-type WorkloadDetailsPageProps = ReduxProps & RouteComponentProps<WorkloadId> & {
-  lastRefreshAt: TimeInMilliseconds;
-};
+type WorkloadDetailsPageProps = ReduxProps &
+  RouteComponentProps<WorkloadId> & {
+    lastRefreshAt: TimeInMilliseconds;
+  };
 
 export const tabName = 'tab';
 export const defaultTab = 'info';
@@ -80,16 +80,15 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     ) {
       if (currentTab === 'info' || currentTab === 'logs' || currentTab === 'envoy') {
         this.fetchWorkload().then(() => {
-            if (currentTab !== this.state.currentTab) {
-              this.setState({ currentTab: currentTab });
-            }
+          if (currentTab !== this.state.currentTab) {
+            this.setState({ currentTab: currentTab });
+          }
         });
       } else {
         if (currentTab !== this.state.currentTab) {
           this.setState({ currentTab: currentTab });
         }
       }
-
     }
   }
 
@@ -113,8 +112,11 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       })
       .catch(error => {
         AlertUtils.addError('Could not fetch Workload.', error);
-        const msg : ErrorMsg = {title: 'No Workload is selected', description: this.props.match.params.workload +" is not found in the mesh"};
-        this.setState({error: msg});
+        const msg: ErrorMsg = {
+          title: 'No Workload is selected',
+          description: this.props.match.params.workload + ' is not found in the mesh'
+        };
+        this.setState({ error: msg });
       });
   };
 
@@ -149,7 +151,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
     if (!serverConfig.kialiFeatureFlags.disabledFeatures?.includes('logs-tab')) {
       const logTab = (
-        <Tab title="Logs" eventKey={2} key={'Logs'} data-test={"workload-details-logs-tab"}>
+        <Tab title="Logs" eventKey={2} key={'Logs'} data-test={'workload-details-logs-tab'}>
           {hasPods ? (
             <WorkloadPodLogs
               lastRefreshAt={this.props.lastRefreshAt}
@@ -217,7 +219,8 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
             <EnvoyDetailsContainer
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.match.params.namespace}
-              workload={this.state.workload} />
+              workload={this.state.workload}
+            />
           )}
         </Tab>
       );
@@ -291,7 +294,6 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
   }
 
   render() {
-
     // set default to true: all dynamic tabs (unlisted below) are for runtimes dashboards, which uses custom time
     let useCustomTime = true;
     switch (this.state.currentTab) {
@@ -322,9 +324,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           rightToolbar={<TimeControl customDuration={useCustomTime} />}
           actionsToolbar={actionsToolbar}
         />
-        {this.state.error && (
-          <ErrorSection error={this.state.error} />
-          )}
+        {this.state.error && <ErrorSection error={this.state.error} />}
         {this.state.workload && (
           <ParameterizedTabs
             id="basic-tabs"
@@ -349,7 +349,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   jaegerInfo: state.jaegerState.info,
-  statusState: state.statusState,
+  statusState: state.statusState
 });
 
 const WorkloadDetailsContainer = connectRefresh(connect(mapStateToProps)(WorkloadDetails));

@@ -65,22 +65,22 @@ import GraphDataSource, { FetchParams, EMPTY_GRAPH_DATA } from '../../services/G
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import GraphThunkActions from '../../actions/GraphThunkActions';
 import { JaegerTrace } from 'types/JaegerInfo';
-import { KialiDispatch } from "types/Redux";
+import { KialiDispatch } from 'types/Redux';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import GraphTour from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 import { EdgeContextMenu } from 'components/CytoscapeGraph/ContextMenu/EdgeContextMenu';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import { isParentKiosk, kioskContextMenuAction } from "../../components/Kiosk/KioskActions";
-import ServiceWizard from "components/IstioWizards/ServiceWizard";
-import { ServiceDetailsInfo } from "types/ServiceInfo";
-import { DestinationRuleC, PeerAuthentication } from "types/IstioObjects";
-import { WizardAction, WizardMode } from "components/IstioWizards/WizardActions";
-import ConfirmDeleteTrafficRoutingModal from "components/IstioWizards/ConfirmDeleteTrafficRoutingModal";
-import { deleteServiceTrafficRouting } from "services/Api";
-import { canCreate, canUpdate } from "../../types/Permissions";
-import connectRefresh from "../../components/Refresh/connectRefresh";
-import { triggerRefresh } from "../../hooks/refresh";
+import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
+import ServiceWizard from 'components/IstioWizards/ServiceWizard';
+import { ServiceDetailsInfo } from 'types/ServiceInfo';
+import { DestinationRuleC, PeerAuthentication } from 'types/IstioObjects';
+import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
+import ConfirmDeleteTrafficRoutingModal from 'components/IstioWizards/ConfirmDeleteTrafficRoutingModal';
+import { deleteServiceTrafficRouting } from 'services/Api';
+import { canCreate, canUpdate } from '../../types/Permissions';
+import connectRefresh from '../../components/Refresh/connectRefresh';
+import { triggerRefresh } from '../../hooks/refresh';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -144,9 +144,10 @@ type ReduxProps = {
   istioAPIEnabled: boolean;
 };
 
-export type GraphPageProps = RouteComponentProps<Partial<GraphURLPathProps>> & ReduxProps & {
-  lastRefreshAt: TimeInMilliseconds;
-};
+export type GraphPageProps = RouteComponentProps<Partial<GraphURLPathProps>> &
+  ReduxProps & {
+    lastRefreshAt: TimeInMilliseconds;
+  };
 
 export type GraphData = {
   elements: DecoratedGraphElements;
@@ -170,7 +171,7 @@ type WizardsData = {
   peerAuthentications: PeerAuthentication[];
   namespace: string;
   serviceDetails?: ServiceDetailsInfo;
-}
+};
 
 type GraphPageState = {
   graphData: GraphData;
@@ -478,9 +479,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
               )}
               {isReady && (
                 <Chip
-                  className={`${graphTimeRange} ${
-                    this.props.replayActive ? replayBackground : whiteBackground
-                  }`}
+                  className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : whiteBackground}`}
                   isReadOnly={true}
                 >
                   {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}
@@ -539,7 +538,10 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
           serviceName={this.state.wizardsData.serviceDetails?.service?.name || ''}
           workloads={this.state.wizardsData.serviceDetails?.workloads || []}
           subServices={this.state.wizardsData.serviceDetails?.subServices || []}
-          createOrUpdate={canCreate(this.state.wizardsData.serviceDetails?.istioPermissions) || canUpdate(this.state.wizardsData.serviceDetails?.istioPermissions)}
+          createOrUpdate={
+            canCreate(this.state.wizardsData.serviceDetails?.istioPermissions) ||
+            canUpdate(this.state.wizardsData.serviceDetails?.istioPermissions)
+          }
           virtualServices={this.state.wizardsData.serviceDetails?.virtualServices || []}
           destinationRules={this.state.wizardsData.serviceDetails?.destinationRules || []}
           gateways={this.state.wizardsData.gateways || []}
@@ -556,8 +558,9 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
             destinationRules={DestinationRuleC.fromDrArray(this.state.wizardsData.serviceDetails!.destinationRules)}
             virtualServices={this.state.wizardsData.serviceDetails!.virtualServices}
             k8sHTTPRoutes={this.state.wizardsData.serviceDetails!.k8sHTTPRoutes}
-            onCancel={() => this.setState({showConfirmDeleteTrafficRouting: false})}
-            onConfirm={this.handleConfirmDeleteServiceTrafficRouting} />
+            onCancel={() => this.setState({ showConfirmDeleteTrafficRouting: false })}
+            onConfirm={this.handleConfirmDeleteServiceTrafficRouting}
+          />
         )}
       </>
     );
@@ -745,13 +748,20 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
     return;
   };
 
-  private handleLaunchWizard = (action: WizardAction, mode: WizardMode, namespace: string, serviceDetails: ServiceDetailsInfo, gateways: string[], peerAuths: PeerAuthentication[]) => {
+  private handleLaunchWizard = (
+    action: WizardAction,
+    mode: WizardMode,
+    namespace: string,
+    serviceDetails: ServiceDetailsInfo,
+    gateways: string[],
+    peerAuths: PeerAuthentication[]
+  ) => {
     this.setState(prevState => ({
       wizardsData: {
         ...prevState.wizardsData,
         showWizard: true,
         wizardType: action,
-        updateMode: mode === "update",
+        updateMode: mode === 'update',
         namespace: namespace,
         serviceDetails: serviceDetails,
         gateways: gateways,
@@ -777,7 +787,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
         }
       }));
     }
-  }
+  };
 
   private handleDeleteTrafficRouting = (_key: string, serviceDetail: ServiceDetailsInfo) => {
     this.setState(prevState => ({
@@ -791,7 +801,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
 
   private handleConfirmDeleteServiceTrafficRouting = () => {
     this.setState({
-      showConfirmDeleteTrafficRouting:false
+      showConfirmDeleteTrafficRouting: false
     });
 
     deleteServiceTrafficRouting(this.state.wizardsData!.serviceDetails!)

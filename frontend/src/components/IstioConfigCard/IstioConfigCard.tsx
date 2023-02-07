@@ -16,12 +16,12 @@ import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary'
 import { IstioTypes } from '../VirtualList/Config';
 import { style } from 'typestyle';
 import { PFBadge } from '../Pf/PfBadges';
-import IstioObjectLinkContainer from "../Link/IstioObjectLink";
+import IstioObjectLinkContainer from '../Link/IstioObjectLink';
 
 type Props = {
   name: string;
   items: IstioConfigItem[];
-}
+};
 
 const emtpytStyle = style({
   padding: '0 0 0 0',
@@ -40,7 +40,9 @@ export default class IstioConfigCard extends React.Component<Props> {
           {
             title: (
               <EmptyState variant={EmptyStateVariant.small} className={emtpytStyle}>
-                <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">No Istio Config found for {this.props.name}</EmptyStateBody>
+                <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">
+                  No Istio Config found for {this.props.name}
+                </EmptyStateBody>
               </EmptyState>
             ),
             props: { colSpan: 2 }

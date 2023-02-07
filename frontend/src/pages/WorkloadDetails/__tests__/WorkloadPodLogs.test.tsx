@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { Provider } from "react-redux";
+import { Provider } from 'react-redux';
 import { mount, shallow } from 'enzyme';
 import screenfull, { Screenfull } from 'screenfull';
 import { WorkloadPodLogs } from '../WorkloadPodLogs';
 import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core';
-import { store } from "../../../store/ConfigStore";
+import { store } from '../../../store/ConfigStore';
 
 const defaultProps = () => ({
   kiosk: '',
@@ -59,10 +59,7 @@ describe('WorkloadPodLogs', () => {
         <WorkloadPodLogs {...defaultProps()} />
       </Provider>
     );
-    wrapper
-      .find(KebabToggle)
-      .find('button')
-      .simulate('click');
+    wrapper.find(KebabToggle).find('button').simulate('click');
     expect(
       wrapper
         .find(DropdownItem)
@@ -79,10 +76,7 @@ describe('WorkloadPodLogs', () => {
         <WorkloadPodLogs {...props} />
       </Provider>
     );
-    wrapper
-      .find(KebabToggle)
-      .find('button')
-      .simulate('click');
+    wrapper.find(KebabToggle).find('button').simulate('click');
     expect(
       wrapper
         .find(DropdownItem)
@@ -100,10 +94,7 @@ describe('WorkloadPodLogs', () => {
         <WorkloadPodLogs {...defaultProps()} />
       </Provider>
     );
-    wrapper
-      .find(KebabToggle)
-      .find('button')
-      .simulate('click');
+    wrapper.find(KebabToggle).find('button').simulate('click');
     wrapper
       .find(DropdownItem)
       .findWhere(n => n.key() === 'setLogLevelDebug')

@@ -948,7 +948,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                         <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} />
                                       </span>
                                     )}
-                                    {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(ns) : "N/A"}
+                                    {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(ns) : 'N/A'}
                                   </div>
                                   {ns.status && (
                                     <NamespaceStatuses
@@ -1004,7 +1004,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                                     <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} />
                                   </span>
                                 )}
-                                {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(ns) : "N/A"}
+                                {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(ns) : 'N/A'}
                               </div>
                               {this.renderStatus(ns)}
                               {this.state.displayMode === OverviewDisplayMode.EXPAND && this.renderCharts(ns)}

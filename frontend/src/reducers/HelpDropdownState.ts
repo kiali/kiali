@@ -9,7 +9,7 @@ export const INITIAL_STATUS_STATE: StatusState = {
   warningMessages: [],
   istioEnvironment: {
     isMaistra: false,
-    istioAPIEnabled: true,
+    istioAPIEnabled: true
   }
 };
 
@@ -21,7 +21,7 @@ const HelpDropdownState = (state: StatusState = INITIAL_STATUS_STATE, action: Ki
         status: action.payload.status,
         externalServices: action.payload.externalServices,
         warningMessages: action.payload.warningMessages,
-        istioEnvironment: action.payload.istioEnvironment,
+        istioEnvironment: action.payload.istioEnvironment
       };
     default:
       return state;

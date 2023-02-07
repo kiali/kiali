@@ -120,15 +120,11 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     // Reference: https://openid.net/specs/openid-connect-core-1_0-final.html#AuthError
     if (urlParams.get('error')) {
       if (urlParams.get('error_description')) {
-        console.warn(`Authentication error_description: ${urlParams.get('error_description')}`)
-        messagesArray.push(
-          this.renderMessage(`Authentication failed!`, 'danger', 'idp-err')
-        );
+        console.warn(`Authentication error_description: ${urlParams.get('error_description')}`);
+        messagesArray.push(this.renderMessage(`Authentication failed!`, 'danger', 'idp-err'));
       } else {
-        console.warn(`Authentication error: ${urlParams.get('error')}`)
-        messagesArray.push(
-          this.renderMessage(`Authentication failed.`, 'danger', 'idp-err')
-        );
+        console.warn(`Authentication error: ${urlParams.get('error')}`);
+        messagesArray.push(this.renderMessage(`Authentication failed.`, 'danger', 'idp-err'));
       }
     }
   };
@@ -166,10 +162,8 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     // The backend will set an "openid_error" url parameter when there is some failure.
     // Only log the openid_error since we cannot guarantee it is not spoofed. We only show a generic error message in the UI.
     if (urlParams.get('openid_error')) {
-      console.warn(`Authentication openid_error: ${urlParams.get('openid_error')}`)
-      messages.push(
-        this.renderMessage(`OpenID authentication failed.`, 'danger', 'openid-err')
-      );
+      console.warn(`Authentication openid_error: ${urlParams.get('openid_error')}`);
+      messages.push(this.renderMessage(`OpenID authentication failed.`, 'danger', 'openid-err'));
     }
 
     return messages;
@@ -193,8 +187,14 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
       isHash = pattern.test(window.location.hash);
     }
 
-    if ((authenticationConfig.strategy === AuthStrategy.openshift|| authenticationConfig.strategy === AuthStrategy.openid)
-      && !isHash && this.props.status === LoginStatus.loggedOut && messages.length === 0 && (this.props.message ?? '').length === 0) {
+    if (
+      (authenticationConfig.strategy === AuthStrategy.openshift ||
+        authenticationConfig.strategy === AuthStrategy.openid) &&
+      !isHash &&
+      this.props.status === LoginStatus.loggedOut &&
+      messages.length === 0 &&
+      (this.props.message ?? '').length === 0
+    ) {
       window.location.href = authenticationConfig.authorizationEndpoint!;
     }
 

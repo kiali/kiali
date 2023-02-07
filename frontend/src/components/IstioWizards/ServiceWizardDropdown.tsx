@@ -1,11 +1,5 @@
 import * as React from 'react';
-import {
-  Dropdown,
-  DropdownPosition,
-  DropdownToggle,
-  Tooltip,
-  TooltipPosition
-} from '@patternfly/react-core';
+import { Dropdown, DropdownPosition, DropdownToggle, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import {
   DestinationRule,
@@ -28,12 +22,12 @@ import {
 } from './WizardActions';
 import ServiceWizard from './ServiceWizard';
 import { canCreate, canUpdate, ResourcePermissions } from '../../types/Permissions';
-import ServiceWizardActionsDropdownGroup, {DELETE_TRAFFIC_ROUTING} from "./ServiceWizardActionsDropdownGroup";
-import ConfirmDeleteTrafficRoutingModal from "./ConfirmDeleteTrafficRoutingModal";
-import { deleteServiceTrafficRouting } from "services/Api";
-import {ServiceOverview} from "../../types/ServiceList";
-import {KialiAppState} from "../../store/Store";
-import {connect} from "react-redux";
+import ServiceWizardActionsDropdownGroup, { DELETE_TRAFFIC_ROUTING } from './ServiceWizardActionsDropdownGroup';
+import ConfirmDeleteTrafficRoutingModal from './ConfirmDeleteTrafficRoutingModal';
+import { deleteServiceTrafficRouting } from 'services/Api';
+import { ServiceOverview } from '../../types/ServiceList';
+import { KialiAppState } from '../../store/Store';
+import { connect } from 'react-redux';
 
 type ReduxProps = {
   istioAPIEnabled: boolean;
@@ -156,7 +150,11 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
       isDeleting: true
     });
     this.hideConfirmDelete();
-    deleteServiceTrafficRouting(this.props.virtualServices, DestinationRuleC.fromDrArray(this.props.destinationRules), this.props.k8sHTTPRoutes)
+    deleteServiceTrafficRouting(
+      this.props.virtualServices,
+      DestinationRuleC.fromDrArray(this.props.destinationRules),
+      this.props.k8sHTTPRoutes
+    )
       .then(_results => {
         this.setState({
           isDeleting: false

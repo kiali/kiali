@@ -75,11 +75,7 @@ export default class GraphSecondaryMasthead extends React.PureComponent<GraphSec
           </TourStopContainer>
           <div className={rightToolbarStyle}>
             <TourStopContainer info={GraphTourStops.TimeRange}>
-              <TimeDurationContainer
-                id="graph_time_range"
-                disabled={this.props.disabled}
-                supportsReplay={true}
-              />
+              <TimeDurationContainer id="graph_time_range" disabled={this.props.disabled} supportsReplay={true} />
             </TourStopContainer>
           </div>
         </div>

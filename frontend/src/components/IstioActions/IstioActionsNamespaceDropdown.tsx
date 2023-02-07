@@ -3,7 +3,7 @@ import { Dropdown, DropdownGroup, DropdownItem, DropdownPosition, DropdownToggle
 import history from '../../app/History';
 import { serverConfig } from '../../config';
 import { NEW_ISTIO_RESOURCE } from '../../pages/IstioConfigNew/IstioConfigNewPage';
-import {K8SGATEWAY} from "../../pages/IstioConfigNew/K8sGatewayForm";
+import { K8SGATEWAY } from '../../pages/IstioConfigNew/K8sGatewayForm';
 
 type Props = {};
 
@@ -45,7 +45,12 @@ class IstioActionsNamespaceDropdown extends React.Component<Props, State> {
       (r): ActionItem => ({
         name: r.value,
         action: (
-          <DropdownItem key={'createIstioConfig_' + r.value} isDisabled={r.value === K8SGATEWAY ? !serverConfig.gatewayAPIEnabled : r.disabled} onClick={() => this.onClickCreate(r.value)} data-test={'create_' + r.label}>
+          <DropdownItem
+            key={'createIstioConfig_' + r.value}
+            isDisabled={r.value === K8SGATEWAY ? !serverConfig.gatewayAPIEnabled : r.disabled}
+            onClick={() => this.onClickCreate(r.value)}
+            data-test={'create_' + r.label}
+          >
             {r.label}
           </DropdownItem>
         )
@@ -64,7 +69,11 @@ class IstioActionsNamespaceDropdown extends React.Component<Props, State> {
       <Dropdown
         data-test="actions-dropdown"
         id="actions"
-        toggle={<DropdownToggle onToggle={this.onToggle} data-test="config-actions-dropdown">Actions</DropdownToggle>}
+        toggle={
+          <DropdownToggle onToggle={this.onToggle} data-test="config-actions-dropdown">
+            Actions
+          </DropdownToggle>
+        }
         onSelect={this.onSelect}
         position={DropdownPosition.right}
         isOpen={this.state.dropdownOpen}

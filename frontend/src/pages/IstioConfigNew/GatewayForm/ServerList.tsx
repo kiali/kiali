@@ -3,9 +3,9 @@ import { Server, ServerForm } from '../../../types/IstioObjects';
 import { cellWidth, Tbody, Td, Th, Thead, Tr, TableComposable } from '@patternfly/react-table';
 import { style } from 'typestyle';
 import { PFColors } from '../../../components/Pf/PfColors';
-import { Button, ButtonVariant } from "@patternfly/react-core";
-import { PlusCircleIcon } from "@patternfly/react-icons";
-import ServerBuilder, {protocols} from "./ServerBuilder";
+import { Button, ButtonVariant } from '@patternfly/react-core';
+import { PlusCircleIcon } from '@patternfly/react-icons';
+import ServerBuilder, { protocols } from './ServerBuilder';
 
 type Props = {
   serverList: Server[];
@@ -38,100 +38,96 @@ const addServerStyle = style({
 });
 
 class ServerList extends React.Component<Props> {
-
   onAddServer = () => {
-    const newServerForm : ServerForm = {
+    const newServerForm: ServerForm = {
       hosts: [],
-      number: "",
+      number: '',
       protocol: protocols[0],
-      name: "",
-      tlsMode: "",
-      tlsServerCertificate: "",
-      tlsPrivateKey: "",
-      tlsCaCertificate: "",
-    }
-    const sf = this.props.serverForm
-    sf.push(newServerForm)
+      name: '',
+      tlsMode: '',
+      tlsServerCertificate: '',
+      tlsPrivateKey: '',
+      tlsCaCertificate: ''
+    };
+    const sf = this.props.serverForm;
+    sf.push(newServerForm);
 
-    const newServer : Server = {
+    const newServer: Server = {
       hosts: [],
       port: {
         number: 70000,
-        name: "",
-        protocol: "HTTP"
+        name: '',
+        protocol: 'HTTP'
       }
-    }
-    const s = this.props.serverList
-    s.push(newServer)
+    };
+    const s = this.props.serverList;
+    s.push(newServer);
 
-    this.setState(
-      {},
-      () => this.props.onChange(s, sf)
-    );
+    this.setState({}, () => this.props.onChange(s, sf));
   };
 
   onRemoveServer = (index: number) => {
-    const serverList = this.props.serverList
-    serverList.splice(index,1)
+    const serverList = this.props.serverList;
+    serverList.splice(index, 1);
 
-    const serverForm = this.props.serverForm
-    serverForm.splice(index,1)
+    const serverForm = this.props.serverForm;
+    serverForm.splice(index, 1);
 
-    this.setState(
-      {},
-      () => this.props.onChange(serverList, serverForm)
-    );
-
+    this.setState({}, () => this.props.onChange(serverList, serverForm));
   };
 
   onChange = (serverForm: ServerForm, i: number) => {
-    const serversForm = this.props.serverForm
-    serversForm[i] = serverForm
+    const serversForm = this.props.serverForm;
+    serversForm[i] = serverForm;
 
-    const servers = this.props.serverList
-    const newServer = this.createNewServer(serverForm)
-    if (typeof(newServer) !== "undefined") {
-      servers[i] = newServer
+    const servers = this.props.serverList;
+    const newServer = this.createNewServer(serverForm);
+    if (typeof newServer !== 'undefined') {
+      servers[i] = newServer;
     }
 
-    this.props.onChange(servers, serversForm)
-  }
+    this.props.onChange(servers, serversForm);
+  };
 
   createNewServer = (serverForm: ServerForm) => {
-
     if (serverForm.hosts.length === 0) return;
-    if (serverForm.number.length === 0|| isNaN(Number(serverForm.number))) return;
+    if (serverForm.number.length === 0 || isNaN(Number(serverForm.number))) return;
     if (serverForm.name.length === 0) return;
 
-    const server : Server = {
+    const server: Server = {
       hosts: serverForm.hosts,
-      port: {number: Number(serverForm.number),  name: serverForm.name, protocol: serverForm.protocol},
-      tls: serverForm.protocol === "HTTPS" || serverForm.protocol === "TLS" ?
-        {mode: serverForm.tlsMode, serverCertificate: serverForm.tlsServerCertificate, privateKey: serverForm.tlsPrivateKey, caCertificates: serverForm.tlsCaCertificate}
-        : undefined
-    }
-    return server
-  }
+      port: { number: Number(serverForm.number), name: serverForm.name, protocol: serverForm.protocol },
+      tls:
+        serverForm.protocol === 'HTTPS' || serverForm.protocol === 'TLS'
+          ? {
+              mode: serverForm.tlsMode,
+              serverCertificate: serverForm.tlsServerCertificate,
+              privateKey: serverForm.tlsPrivateKey,
+              caCertificates: serverForm.tlsCaCertificate
+            }
+          : undefined
+    };
+    return server;
+  };
 
   render() {
     return (
       <>
-        <TableComposable
-          aria-label="Server List"
-        >
+        <TableComposable aria-label="Server List">
           <Thead>
             <Tr>
-              {headerCells.map((e) => (
+              {headerCells.map(e => (
                 <Th>{e.title}</Th>
               ))}
             </Tr>
           </Thead>
           <Tbody>
             {this.props.serverForm.map((server, i) => (
-              <ServerBuilder server={server}
-                               onRemoveServer={this.onRemoveServer}
-                               index={i}
-                               onChange={this.onChange}
+              <ServerBuilder
+                server={server}
+                onRemoveServer={this.onRemoveServer}
+                index={i}
+                onChange={this.onChange}
               ></ServerBuilder>
             ))}
             <Tr>
@@ -139,7 +135,7 @@ class ServerList extends React.Component<Props> {
                 <Button
                   name="addServer"
                   variant={ButtonVariant.link}
-                  icon={<PlusCircleIcon/>}
+                  icon={<PlusCircleIcon />}
                   onClick={this.onAddServer}
                   className={addServerStyle}
                 >

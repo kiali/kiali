@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Stack, StackItem, Title, TitleSizes} from '@patternfly/react-core';
+import { Stack, StackItem, Title, TitleSizes } from '@patternfly/react-core';
 import { ReferenceIstioObjectLink } from '../../components/Link/IstioObjectLink';
 import { ObjectReference } from '../../types/IstioObjects';
 

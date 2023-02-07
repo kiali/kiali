@@ -23,14 +23,14 @@ import {
   getGatewaysAsList,
   PeerAuthentication,
   Validations,
-  getK8sGatewaysAsList,
+  getK8sGatewaysAsList
 } from '../../types/IstioObjects';
 import ServiceWizardDropdown from '../../components/IstioWizards/ServiceWizardDropdown';
 import TimeControl from '../../components/Time/TimeControl';
-import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
-import {ErrorMsg} from "../../types/ErrorMsg";
-import ErrorSection from "../../components/ErrorSection/ErrorSection";
-import connectRefresh from "../../components/Refresh/connectRefresh";
+import RenderHeaderContainer from '../../components/Nav/Page/RenderHeader';
+import { ErrorMsg } from '../../types/ErrorMsg';
+import ErrorSection from '../../components/ErrorSection/ErrorSection';
+import connectRefresh from '../../components/Refresh/connectRefresh';
 
 type ServiceDetailsState = {
   currentTab: string;
@@ -121,8 +121,11 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       })
       .catch(error => {
         AlertUtils.addError('Could not fetch Service Details.', error);
-        const msg : ErrorMsg = {title: 'No Service is selected', description: this.props.match.params.service +" is not found in the mesh"};
-        this.setState({error: msg});
+        const msg: ErrorMsg = {
+          title: 'No Service is selected',
+          description: this.props.match.params.service + ' is not found in the mesh'
+        };
+        this.setState({ error: msg });
       });
 
     API.getIstioConfig(this.props.match.params.namespace, ['peerauthentications'], false, '', '')
@@ -230,9 +233,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           rightToolbar={<TimeControl customDuration={useCustomTime} />}
           actionsToolbar={actionsToolbar}
         />
-        {this.state.error && (
-          <ErrorSection error={this.state.error} />
-        )}
+        {this.state.error && <ErrorSection error={this.state.error} />}
         {!this.state.error && (
           <ParameterizedTabs
             id="basic-tabs"
@@ -248,15 +249,15 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           >
             {this.renderTabs()}
           </ParameterizedTabs>
-          )}
+        )}
       </>
     );
   }
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerInfo: state.jaegerState.info,
+  jaegerInfo: state.jaegerState.info
 });
 
-const ServiceDetailsPageContainer = connectRefresh( connect(mapStateToProps)(ServiceDetails));
+const ServiceDetailsPageContainer = connectRefresh(connect(mapStateToProps)(ServiceDetails));
 export default ServiceDetailsPageContainer;

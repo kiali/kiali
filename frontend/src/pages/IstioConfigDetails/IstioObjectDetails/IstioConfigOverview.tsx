@@ -1,12 +1,4 @@
-import {
-  Label,
-  Stack,
-  StackItem,
-  Title,
-  TitleSizes,
-  Tooltip,
-  TooltipPosition
-} from '@patternfly/react-core';
+import { Label, Stack, StackItem, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import Labels from 'components/Label/Labels';
 import { PFBadge } from 'components/Pf/PfBadges';
 import LocalTime from 'components/Time/LocalTime';
@@ -30,9 +22,9 @@ import IstioConfigHelp from './IstioConfigHelp';
 import IstioConfigReferences from './IstioConfigReferences';
 import IstioConfigValidationReferences from './IstioConfigValidationReferences';
 import IstioStatusMessageList from './IstioStatusMessageList';
-import { KioskElement } from "../../../components/Kiosk/KioskElement";
-import {PFColors} from "../../../components/Pf/PfColors";
-import {GetIstioObjectUrl} from "../../../components/Link/IstioObjectLink";
+import { KioskElement } from '../../../components/Kiosk/KioskElement';
+import { PFColors } from '../../../components/Pf/PfColors';
+import { GetIstioObjectUrl } from '../../../components/Link/IstioObjectLink';
 
 interface IstioConfigOverviewProps {
   istioObjectDetails: IstioConfigDetails;
@@ -112,10 +104,12 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
       </div>
     );
 
-    let urlInKiali = "";
+    let urlInKiali = '';
     if (istioObject !== undefined && istioObject.metadata.namespace !== undefined && istioObject.kind !== undefined) {
       // here a "/console" is required as external link is used
-      urlInKiali = "/console" + GetIstioObjectUrl(istioObject.metadata.name, istioObject.metadata.namespace , istioObject.kind.toLowerCase() );
+      urlInKiali =
+        '/console' +
+        GetIstioObjectUrl(istioObject.metadata.name, istioObject.metadata.namespace, istioObject.kind.toLowerCase());
     }
 
     return (
@@ -138,17 +132,17 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
               >
                 <KialiIcon.Info className={infoStyle} />
               </Tooltip>
-              {this.props.istioValidations && (!this.props.statusMessages || this.props.statusMessages.length === 0)
-                && (!this.props.istioValidations.checks || this.props.istioValidations.checks.length === 0)
-                && (
-                <span className={healthIconStyle}>
-                  <ValidationObjectSummary
-                    id={'config-validation'}
-                    validations={[this.props.istioValidations]}
-                    reconciledCondition={getReconciliationCondition(this.props.istioObjectDetails)}
-                  />
-                </span>
-              )}
+              {this.props.istioValidations &&
+                (!this.props.statusMessages || this.props.statusMessages.length === 0) &&
+                (!this.props.istioValidations.checks || this.props.istioValidations.checks.length === 0) && (
+                  <span className={healthIconStyle}>
+                    <ValidationObjectSummary
+                      id={'config-validation'}
+                      validations={[this.props.istioValidations]}
+                      reconciledCondition={getReconciliationCondition(this.props.istioObjectDetails)}
+                    />
+                  </span>
+                )}
             </>
           )}
         </StackItem>
@@ -159,8 +153,10 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
           </StackItem>
         )}
 
-        {((this.props.statusMessages && this.props.statusMessages.length > 0 ) ||
-          (this.props.istioValidations && this.props.istioValidations.checks && this.props.istioValidations.checks.length > 0 ) ) && (
+        {((this.props.statusMessages && this.props.statusMessages.length > 0) ||
+          (this.props.istioValidations &&
+            this.props.istioValidations.checks &&
+            this.props.istioValidations.checks.length > 0)) && (
           <StackItem>
             <IstioStatusMessageList messages={this.props.statusMessages} checks={this.props.istioValidations?.checks} />
           </StackItem>
@@ -193,15 +189,30 @@ class IstioConfigOverview extends React.Component<IstioConfigOverviewProps> {
         )}
         {!this.props.istioAPIEnabled && (
           <StackItem>
-              <KialiIcon.Warning className={warnStyle} /> <b>Istio API is disabled.</b> Be careful when editing the configuration as the Istio config validations are disabled when the Istio API is disabled.
+            <KialiIcon.Warning className={warnStyle} /> <b>Istio API is disabled.</b> Be careful when editing the
+            configuration as the Istio config validations are disabled when the Istio API is disabled.
           </StackItem>
         )}
         <KioskElement>
           <StackItem>
-            <Tooltip content={"This is a Read only view of the YAML including Validations. It is possible to edit directly in Kiali "} position={TooltipPosition.top}>
-              <Label color="green" isCompact>Read only mode</Label>
+            <Tooltip
+              content={
+                'This is a Read only view of the YAML including Validations. It is possible to edit directly in Kiali '
+              }
+              position={TooltipPosition.top}
+            >
+              <Label color="green" isCompact>
+                Read only mode
+              </Label>
             </Tooltip>
-            <a href={urlInKiali} style={{marginLeft: '5px', fontSize: '85%', color: PFColors.ActiveText}} target="_blank" rel="noreferrer">Edit in Kiali</a>
+            <a
+              href={urlInKiali}
+              style={{ marginLeft: '5px', fontSize: '85%', color: PFColors.ActiveText }}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Edit in Kiali
+            </a>
           </StackItem>
         </KioskElement>
       </Stack>

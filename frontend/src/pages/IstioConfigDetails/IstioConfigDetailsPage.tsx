@@ -1,11 +1,6 @@
 import * as React from 'react';
 import { Prompt, RouteComponentProps } from 'react-router-dom';
-import {
-  aceOptions,
-  IstioConfigDetails,
-  IstioConfigId,
-  safeDumpOptions
-} from '../../types/IstioConfigDetails';
+import { aceOptions, IstioConfigDetails, IstioConfigId, safeDumpOptions } from '../../types/IstioConfigDetails';
 import * as AlertUtils from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
@@ -50,16 +45,16 @@ import {
 import { dicIstioType } from '../../types/IstioConfigList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
 import { AxiosError } from 'axios';
-import RefreshContainer from "../../components/Refresh/Refresh";
+import RefreshContainer from '../../components/Refresh/Refresh';
 import IstioConfigOverview from './IstioObjectDetails/IstioConfigOverview';
 import { Annotation } from 'react-ace/types';
-import RenderHeaderContainer from "../../components/Nav/Page/RenderHeader";
-import {ErrorMsg} from "../../types/ErrorMsg";
-import ErrorSection from "../../components/ErrorSection/ErrorSection";
-import RefreshNotifier from "../../components/Refresh/RefreshNotifier";
-import {isParentKiosk} from "../../components/Kiosk/KioskActions";
-import {KialiAppState} from "../../store/Store";
-import {connect} from "react-redux";
+import RenderHeaderContainer from '../../components/Nav/Page/RenderHeader';
+import { ErrorMsg } from '../../types/ErrorMsg';
+import ErrorSection from '../../components/ErrorSection/ErrorSection';
+import RefreshNotifier from '../../components/Refresh/RefreshNotifier';
+import { isParentKiosk } from '../../components/Kiosk/KioskActions';
+import { KialiAppState } from '../../store/Store';
+import { connect } from 'react-redux';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -164,7 +159,10 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         );
       })
       .catch(error => {
-        const msg : ErrorMsg = {title: 'No Istio object is selected', description: this.props.match.params.object +" is not found in the mesh"};
+        const msg: ErrorMsg = {
+          title: 'No Istio object is selected',
+          description: this.props.match.params.object + ' is not found in the mesh'
+        };
         this.setState({
           isRemoved: true,
           error: msg
@@ -552,7 +550,9 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         overview={this.state.isExpanded}
         onOverview={this.onDrawerToggle}
       />
-    ) : ('');
+    ) : (
+      ''
+    );
   };
 
   renderActions = () => {
@@ -583,27 +583,25 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
           rightToolbar={<RefreshContainer id="config_details_refresh" hideLabel={true} />}
           actionsToolbar={!this.state.error ? this.renderActions() : undefined}
         />
-        {this.state.error && (
-          <ErrorSection error={this.state.error} />
-        )}
+        {this.state.error && <ErrorSection error={this.state.error} />}
         {!this.state.error && !isParentKiosk(this.props.kiosk) && (
-        <ParameterizedTabs
-          id="basic-tabs"
-          onSelect={tabValue => {
-            this.setState({ currentTab: tabValue });
-          }}
-          tabMap={paramToTab}
-          tabName={tabName}
-          defaultTab={this.defaultTab()}
-          activeTab={this.state.currentTab}
-          mountOnEnter={false}
-          unmountOnExit={true}
-        >
-          <Tab key="istio-yaml" title={`YAML ${this.state.isModified ? ' * ' : ''}`} eventKey={0}>
-            <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>
-          </Tab>
-        </ParameterizedTabs>
-          )}
+          <ParameterizedTabs
+            id="basic-tabs"
+            onSelect={tabValue => {
+              this.setState({ currentTab: tabValue });
+            }}
+            tabMap={paramToTab}
+            tabName={tabName}
+            defaultTab={this.defaultTab()}
+            activeTab={this.state.currentTab}
+            mountOnEnter={false}
+            unmountOnExit={true}
+          >
+            <Tab key="istio-yaml" title={`YAML ${this.state.isModified ? ' * ' : ''}`} eventKey={0}>
+              <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>
+            </Tab>
+          </ParameterizedTabs>
+        )}
         {!this.state.error && isParentKiosk(this.props.kiosk) && (
           <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>
         )}

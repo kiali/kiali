@@ -1,13 +1,13 @@
-import * as React from "react";
-import { Button, Form, FormGroup, Modal, ModalVariant, TooltipPosition } from "@patternfly/react-core";
-import { UserSettingsActions } from "../../actions/UserSettingsActions";
-import { HistoryManager, URLParam } from "../../app/History";
-import { useKialiDispatch, useKialiSelector } from "../../hooks/redux";
-import { DurationInSeconds, IntervalInMilliseconds, TimeRange } from "../../types/Common";
-import { DurationDropdownComponent } from "../DurationDropdown/DurationDropdown";
-import { Refresh } from "../Refresh/Refresh";
-import { TimeRangeComponent } from "./TimeRangeComponent";
-import {kioskDurationAction, kioskTimeRangeAction} from "../Kiosk/KioskActions";
+import * as React from 'react';
+import { Button, Form, FormGroup, Modal, ModalVariant, TooltipPosition } from '@patternfly/react-core';
+import { UserSettingsActions } from '../../actions/UserSettingsActions';
+import { HistoryManager, URLParam } from '../../app/History';
+import { useKialiDispatch, useKialiSelector } from '../../hooks/redux';
+import { DurationInSeconds, IntervalInMilliseconds, TimeRange } from '../../types/Common';
+import { DurationDropdownComponent } from '../DurationDropdown/DurationDropdown';
+import { Refresh } from '../Refresh/Refresh';
+import { TimeRangeComponent } from './TimeRangeComponent';
+import { kioskDurationAction, kioskTimeRangeAction } from '../Kiosk/KioskActions';
 
 interface Props {
   customDuration: boolean;
@@ -19,9 +19,9 @@ interface Props {
 
 export function TimeDurationModal(props: Props) {
   const dispatch = useKialiDispatch();
-  const reduxDuration = useKialiSelector((state) => state.userSettings.duration);
-  const reduxRefreshInterval = useKialiSelector((state) => state.userSettings.refreshInterval);
-  const reduxTimeRange = useKialiSelector((state) => state.userSettings.timeRange);
+  const reduxDuration = useKialiSelector(state => state.userSettings.duration);
+  const reduxRefreshInterval = useKialiSelector(state => state.userSettings.refreshInterval);
+  const reduxTimeRange = useKialiSelector(state => state.userSettings.timeRange);
 
   const [duration, setDuration] = React.useState(reduxDuration);
   const [refreshInterval, setRefreshInterval] = React.useState(reduxRefreshInterval);
@@ -73,24 +73,30 @@ export function TimeDurationModal(props: Props) {
       width={700}
       isOpen={props.isOpen}
       showClose={false}
-      actions={[<Button key="confirm" variant="primary" onClick={handleConfirm}>Confirm</Button>,<Button key="cancel" variant="link" onClick={handleCancel}>Cancel</Button>]}
+      actions={[
+        <Button key="confirm" variant="primary" onClick={handleConfirm}>
+          Confirm
+        </Button>,
+        <Button key="cancel" variant="link" onClick={handleCancel}>
+          Cancel
+        </Button>
+      ]}
       position="top"
     >
       <Form isHorizontal={true}>
         {props.customDuration ? (
-          <FormGroup
-            label="Time range"
-            fieldId="drform-time-range"
-          >
-            <div style={{display: "flex"}}>
-              <TimeRangeComponent menuAppendTo="parent" timeRange={timeRange} setTimeRange={handleSetTimeRange} tooltip={'Time range'} />
+          <FormGroup label="Time range" fieldId="drform-time-range">
+            <div style={{ display: 'flex' }}>
+              <TimeRangeComponent
+                menuAppendTo="parent"
+                timeRange={timeRange}
+                setTimeRange={handleSetTimeRange}
+                tooltip={'Time range'}
+              />
             </div>
           </FormGroup>
         ) : (
-          <FormGroup
-            label="Duration"
-            fieldId="drform-duration"
-          >
+          <FormGroup label="Duration" fieldId="drform-duration">
             <DurationDropdownComponent
               id={'drform-duration-dd'}
               disabled={false}
@@ -103,10 +109,7 @@ export function TimeDurationModal(props: Props) {
             />
           </FormGroup>
         )}
-        <FormGroup
-          label="Refresh interval"
-          fieldId="drform-refresh"
-        >
+        <FormGroup label="Refresh interval" fieldId="drform-refresh">
           <Refresh
             id="drform-metrics-refresh"
             hideLabel={true}

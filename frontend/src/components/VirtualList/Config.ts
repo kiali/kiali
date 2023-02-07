@@ -12,7 +12,7 @@ import NamespaceInfo from '../../pages/Overview/NamespaceInfo';
 import * as React from 'react';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import { PFBadges, PFBadgeType } from '../../components/Pf/PfBadges';
-import { isGateway } from "../../helpers/LabelFilterHelper";
+import { isGateway } from '../../helpers/LabelFilterHelper';
 
 export type SortResource = AppListItem | WorkloadListItem | ServiceListItem;
 export type TResource = SortResource | IstioConfigItem;
@@ -222,8 +222,8 @@ export const IstioTypes = {
   workloadentry: { name: 'WorkloadEntry', url: 'workloadentries', badge: PFBadges.WorkloadEntry } as istioConfigType,
   workloadgroup: { name: 'WorkloadGroup', url: 'workloadgroups', badge: PFBadges.WorkloadGroup } as istioConfigType,
   envoyfilter: { name: 'EnvoyFilter', url: 'envoyfilters', badge: PFBadges.EnvoyFilter } as istioConfigType,
-  wasmplugin: {name: 'WasmPlugin', url: 'wasmplugins', badge: PFBadges.WasmPlugin} as istioConfigType,
-  telemetry: {name: 'Telemetry', url: 'telemetries', badge: PFBadges.Telemetry} as istioConfigType,
+  wasmplugin: { name: 'WasmPlugin', url: 'wasmplugins', badge: PFBadges.WasmPlugin } as istioConfigType,
+  telemetry: { name: 'Telemetry', url: 'telemetries', badge: PFBadges.Telemetry } as istioConfigType,
   attributemanifest: {
     name: 'AttributeManifest',
     url: 'attributemanifests',

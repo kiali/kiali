@@ -6,7 +6,7 @@ import { TimeInMilliseconds } from 'types/Common';
 export const GraphActions = {
   onNamespaceChange: createAction(ActionKeys.GRAPH_ON_NAMESPACE_CHANGE),
   setEdgeMode: createStandardAction(ActionKeys.GRAPH_SET_EDGE_MODE)<EdgeMode>(),
-  setGraphDefinition: createStandardAction(ActionKeys.GRAPH_SET_DEFINITION)<GraphDefinition>(),  
+  setGraphDefinition: createStandardAction(ActionKeys.GRAPH_SET_DEFINITION)<GraphDefinition>(),
   setLayout: createStandardAction(ActionKeys.GRAPH_SET_LAYOUT)<Layout>(),
   setNamespaceLayout: createStandardAction(ActionKeys.GRAPH_SET_NAMESPACE_LAYOUT)<Layout>(),
   setNode: createStandardAction(ActionKeys.GRAPH_SET_NODE)<NodeParamsType | undefined>(),

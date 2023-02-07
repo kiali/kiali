@@ -4,9 +4,9 @@ import Slider from './Slider/Slider';
 import { style } from 'typestyle';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
 import { EqualizerIcon } from '@patternfly/react-icons';
-import {getDefaultBackendRefs} from './WizardActions';
+import { getDefaultBackendRefs } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import {ServiceOverview} from "../../types/ServiceList";
+import { ServiceOverview } from '../../types/ServiceList';
 
 type Props = {
   subServices: ServiceOverview[];
@@ -78,7 +78,7 @@ class K8sTrafficShifting extends React.Component<Props, State> {
   onWeight = (serviceName: string, newWeight: number) => {
     this.setState(
       prevState => {
-         // Set new weight; remember rest of the nodes
+        // Set new weight; remember rest of the nodes
         for (let i = 0; i < prevState.backendRefs.length; i++) {
           if (prevState.backendRefs[i].name === serviceName) {
             prevState.backendRefs[i].weight = newWeight;
@@ -108,42 +108,41 @@ class K8sTrafficShifting extends React.Component<Props, State> {
         props: {}
       }
     ];
-    const servicesRows = this.state.backendRefs
-      .map(service => {
-        return {
-          cells: [
-            <>
-              <div>
-                <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-                {service.name}
-              </div>
-            </>,
-            // This <> wrapper is needed by Slider
-            <>
-              <Slider
-                id={'slider-' + service.name}
-                key={'slider-' + service.name}
-                tooltip={true}
-                input={true}
-                inputFormat=""
-                value={service.weight}
-                min={0}
-                max={100}
-                maxLimit={100}
-                onSlide={value => {
-                  this.onWeight(service.name, value as number);
-                }}
-                onSlideStop={value => {
-                  this.onWeight(service.name, value as number);
-                }}
-                locked={false}
-                showLock={false}
-                mirrored={false}
-              />
-            </>
-          ]
-        };
-      });
+    const servicesRows = this.state.backendRefs.map(service => {
+      return {
+        cells: [
+          <>
+            <div>
+              <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
+              {service.name}
+            </div>
+          </>,
+          // This <> wrapper is needed by Slider
+          <>
+            <Slider
+              id={'slider-' + service.name}
+              key={'slider-' + service.name}
+              tooltip={true}
+              input={true}
+              inputFormat=""
+              value={service.weight}
+              min={0}
+              max={100}
+              maxLimit={100}
+              onSlide={value => {
+                this.onWeight(service.name, value as number);
+              }}
+              onSlideStop={value => {
+                this.onWeight(service.name, value as number);
+              }}
+              locked={false}
+              showLock={false}
+              mirrored={false}
+            />
+          </>
+        ]
+      };
+    });
     return (
       <>
         <Table cells={serviceCells} rows={servicesRows} aria-label="weighted routing">

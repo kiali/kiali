@@ -92,8 +92,9 @@ export const sortFields: SortField<NamespaceInfo>[] = [
 ];
 
 export const sortFunc = (allNamespaces: NamespaceInfo[], sortField: SortField<NamespaceInfo>, isAscending: boolean) => {
-  var sortedNamespaces = allNamespaces.filter(ns => ns.name !== serverConfig.istioNamespace)
-    .sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a))
+  var sortedNamespaces = allNamespaces
+    .filter(ns => ns.name !== serverConfig.istioNamespace)
+    .sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
 
   return allNamespaces.filter(ns => ns.name === serverConfig.istioNamespace).concat(sortedNamespaces);
 };

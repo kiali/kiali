@@ -10,14 +10,14 @@ import { renderTrafficStatus } from '../Health/HealthDetails';
 import { createIcon } from '../Health/Helper';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
 import { KialiIcon } from '../../config/KialiIcon';
-import {KialiAppState} from "../../store/Store";
-import {connect} from "react-redux";
-import {isParentKiosk, kioskContextMenuAction} from "../Kiosk/KioskActions";
-import { isGateway } from "../../helpers/LabelFilterHelper";
+import { KialiAppState } from '../../store/Store';
+import { connect } from 'react-redux';
+import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
+import { isGateway } from '../../helpers/LabelFilterHelper';
 
 type ReduxProps = {
   kiosk: string;
-}
+};
 
 type Props = ReduxProps & {
   namespace: string;
@@ -62,7 +62,9 @@ class DetailDescription extends React.Component<Props> {
         onClick={() => {
           kioskContextMenuAction(href);
         }}
-      >{appName}</Link>
+      >
+        {appName}
+      </Link>
     ) : (
       <Link to={href}>{appName}</Link>
     );
@@ -71,9 +73,7 @@ class DetailDescription extends React.Component<Props> {
         <div className={iconStyle}>
           <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
         </div>
-        <span>
-          {link}
-        </span>
+        <span>{link}</span>
       </li>
     );
   }
@@ -86,7 +86,9 @@ class DetailDescription extends React.Component<Props> {
         onClick={() => {
           kioskContextMenuAction(href);
         }}
-      >{serviceName}</Link>
+      >
+        {serviceName}
+      </Link>
     ) : (
       <Link to={href}>{serviceName}</Link>
     );
@@ -95,9 +97,7 @@ class DetailDescription extends React.Component<Props> {
         <div className={iconStyle}>
           <PFBadge badge={PFBadges.Service} position={TooltipPosition.top} />
         </div>
-        <span>
-          {link}
-        </span>
+        <span>{link}</span>
       </li>
     );
   }
@@ -136,9 +136,7 @@ class DetailDescription extends React.Component<Props> {
         {workload.workloadName}
       </Link>
     ) : (
-      <Link to={href}>
-        {workload.workloadName}
-      </Link>
+      <Link to={href}>{workload.workloadName}</Link>
     );
     return (
       <span key={'WorkloadItem_' + workload.workloadName}>
@@ -150,7 +148,13 @@ class DetailDescription extends React.Component<Props> {
           <KialiIcon.Info className={infoStyle} />
         </Tooltip>
         {!workload.istioSidecar && (
-          <MissingSidecar namespace={this.props.namespace} isGateway={isGateway(workload.labels)} tooltip={true} style={{ marginLeft: '10px' }} text={''} />
+          <MissingSidecar
+            namespace={this.props.namespace}
+            isGateway={isGateway(workload.labels)}
+            tooltip={true}
+            style={{ marginLeft: '10px' }}
+            text={''}
+          />
         )}
       </span>
     );
@@ -179,9 +183,7 @@ class DetailDescription extends React.Component<Props> {
           {workload.workloadName}
         </Link>
       ) : (
-        <Link to={href}>
-          {workload.workloadName}
-        </Link>
+        <Link to={href}>{workload.workloadName}</Link>
       );
       return (
         <span key={`WorkloadItem_${workload.workloadName}`}>
@@ -201,7 +203,13 @@ class DetailDescription extends React.Component<Props> {
             <span style={{ marginLeft: '10px' }}>{createIcon(sub.status)}</span>
           </Tooltip>
           {!workload.istioSidecar && (
-            <MissingSidecar namespace={this.props.namespace} isGateway={isGateway(workload.labels)} tooltip={true} style={{ marginLeft: '10px' }} text={''} />
+            <MissingSidecar
+              namespace={this.props.namespace}
+              isGateway={isGateway(workload.labels)}
+              tooltip={true}
+              style={{ marginLeft: '10px' }}
+              text={''}
+            />
           )}
         </span>
       );
@@ -304,8 +312,8 @@ class DetailDescription extends React.Component<Props> {
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  kiosk: state.globalState.kiosk,
+  kiosk: state.globalState.kiosk
 });
 
-const DetailDescriptionContainer = connect(mapStateToProps)(DetailDescription)
+const DetailDescriptionContainer = connect(mapStateToProps)(DetailDescription);
 export default DetailDescriptionContainer;

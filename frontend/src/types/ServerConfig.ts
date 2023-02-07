@@ -123,7 +123,7 @@ export interface ServerConfig {
   istioNamespace: string;
   istioLabels: { [key in IstioLabelKey]: string };
   kialiFeatureFlags: KialiFeatureFlags;
-  logLevel: string,
+  logLevel: string;
   prometheus: {
     globalScrapeInterval?: DurationInSeconds;
     storageTsdbRetention?: DurationInSeconds;

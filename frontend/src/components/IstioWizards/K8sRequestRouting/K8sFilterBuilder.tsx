@@ -8,9 +8,9 @@ import {
   TextInput,
   ButtonVariant
 } from '@patternfly/react-core';
-import {ServiceOverview} from "../../../types/ServiceList";
-import {getServicePort} from "../../../types/ServiceInfo";
-import {style} from "typestyle";
+import { ServiceOverview } from '../../../types/ServiceList';
+import { getServicePort } from '../../../types/ServiceInfo';
+import { style } from 'typestyle';
 
 type Props = {
   filterType: string;
@@ -67,11 +67,11 @@ export const REMOVE = 'remove';
 
 const allOptions = {
   [REQ_MOD]: [SET, ADD, REMOVE],
-  [RESP_MOD]: [SET, ADD, REMOVE],
+  [RESP_MOD]: [SET, ADD, REMOVE]
 };
 
 const serviceStyle = style({
-  width: '100%',
+  width: '100%'
 });
 
 class K8sFilterBuilder extends React.Component<Props, State> {
@@ -82,7 +82,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
       isHeaderDropdown: false,
       isSchemeDropdown: false,
       isStatusCodeDropdown: false,
-      isServiceDropdown: false,
+      isServiceDropdown: false
     };
   }
 
@@ -117,7 +117,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
   };
 
   render() {
-    const renderFilterOptions: string[] = allOptions[this.props.filterType]
+    const renderFilterOptions: string[] = allOptions[this.props.filterType];
     return (
       <InputGroup>
         <Dropdown
@@ -174,15 +174,16 @@ class K8sFilterBuilder extends React.Component<Props, State> {
             placeholder="Header name..."
           />
         )}
-        {(this.props.filterType === REQ_MOD || this.props.filterType === RESP_MOD) && this.props.headerOp !== REMOVE && (
-          <TextInput
-            id="filter-header-value-id"
-            value={this.props.headerValue}
-            onChange={this.props.onHeaderValueChange}
-            placeholder="Header Value..."
-          />
-        )}
-        {(this.props.filterType === REQ_RED) && (
+        {(this.props.filterType === REQ_MOD || this.props.filterType === RESP_MOD) &&
+          this.props.headerOp !== REMOVE && (
+            <TextInput
+              id="filter-header-value-id"
+              value={this.props.headerValue}
+              onChange={this.props.onHeaderValueChange}
+              placeholder="Header Value..."
+            />
+          )}
+        {this.props.filterType === REQ_RED && (
           <Dropdown
             toggle={
               <DropdownToggle onToggle={this.onSchemeOpToggle} data-test={'scheme-toggle'}>
@@ -206,7 +207,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
             ))}
           />
         )}
-        {(this.props.filterType === REQ_RED) && (
+        {this.props.filterType === REQ_RED && (
           <TextInput
             id="hostname"
             value={this.props.hostName}
@@ -214,7 +215,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
             placeholder="Hostname..."
           />
         )}
-        {(this.props.filterType === REQ_RED) && (
+        {this.props.filterType === REQ_RED && (
           <TextInput
             id="portValue"
             value={this.props.portValue}
@@ -222,7 +223,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
             placeholder="Port..."
           />
         )}
-        {(this.props.filterType === REQ_RED) && (
+        {this.props.filterType === REQ_RED && (
           <Dropdown
             toggle={
               <DropdownToggle onToggle={this.onStatusCodeOpToggle} data-test={'status-code'}>
@@ -246,7 +247,7 @@ class K8sFilterBuilder extends React.Component<Props, State> {
             ))}
           />
         )}
-        {(this.props.filterType === REQ_MIR) && (
+        {this.props.filterType === REQ_MIR && (
           <Dropdown
             className={serviceStyle}
             toggle={

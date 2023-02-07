@@ -1,6 +1,6 @@
 import React from 'react';
-import {store} from "../../../store/ConfigStore";
-import {isKiosk} from "../../Kiosk/KioskActions";
+import { store } from '../../../store/ConfigStore';
+import { isKiosk } from '../../Kiosk/KioskActions';
 
 // TOP_PADDING constant is used to adjust the height of the main div to allow scrolling in the inner container layer.
 export const TOP_PADDING = 76 + 118;

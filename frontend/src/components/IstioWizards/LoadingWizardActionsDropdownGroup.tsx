@@ -1,5 +1,5 @@
-import { DropdownGroup, DropdownItem, Spinner } from "@patternfly/react-core";
-import * as React from "react";
+import { DropdownGroup, DropdownItem, Spinner } from '@patternfly/react-core';
+import * as React from 'react';
 
 export function LoadingWizardActionsDropdownGroup() {
   return (

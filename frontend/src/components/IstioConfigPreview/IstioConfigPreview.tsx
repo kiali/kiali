@@ -142,7 +142,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
             it => it.title === item.title
           )
         : [];
-    const  propItems = filterItems.length > 0 ? filterItems[0].items : [];
+    const propItems = filterItems.length > 0 ? filterItems[0].items : [];
     return (
       <Tab eventKey={key} key={key + '_tab_preview'} title={item.title}>
         <EditResources

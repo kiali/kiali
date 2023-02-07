@@ -1,13 +1,13 @@
-import { useSelector } from "react-redux";
-import { KialiAppState } from "../store/Store";
-import { IntervalInMilliseconds, TimeInMilliseconds } from "../types/Common";
-import { useEffect, useState } from "react";
+import { useSelector } from 'react-redux';
+import { KialiAppState } from '../store/Store';
+import { IntervalInMilliseconds, TimeInMilliseconds } from '../types/Common';
+import { useEffect, useState } from 'react';
 
 let numSubscribers = 0;
 let intervalId: null | number = null;
 
 function doTick(time?: TimeInMilliseconds) {
-  const refreshTick = new CustomEvent('refreshTick', {detail: time ?? Date.now()});
+  const refreshTick = new CustomEvent('refreshTick', { detail: time ?? Date.now() });
   document.dispatchEvent(refreshTick);
 }
 
@@ -16,7 +16,9 @@ export function triggerRefresh(time?: TimeInMilliseconds) {
 }
 
 export default function useRefreshInterval() {
-  const refreshInterval = useSelector<KialiAppState, IntervalInMilliseconds>((state) => state.userSettings.refreshInterval);
+  const refreshInterval = useSelector<KialiAppState, IntervalInMilliseconds>(
+    state => state.userSettings.refreshInterval
+  );
   const [lastRefreshAt, setLastRefreshAt] = useState<TimeInMilliseconds>(Date.now());
   const [previousRefreshAt, setPreviousRefreshAt] = useState<TimeInMilliseconds>(lastRefreshAt);
 
@@ -54,7 +56,7 @@ export default function useRefreshInterval() {
         window.clearInterval(intervalId);
         intervalId = null;
       }
-    }
+    };
   }, [refreshInterval]);
 
   return { lastRefreshAt, previousRefreshAt, refreshInterval };

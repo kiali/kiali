@@ -16,9 +16,9 @@ import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import TourStopContainer from 'components/Tour/TourStop';
 import { summaryPanelWidth } from './SummaryPanelCommon';
-import { WizardAction, WizardMode } from "components/IstioWizards/WizardActions";
-import { ServiceDetailsInfo } from "../../types/ServiceInfo";
-import { PeerAuthentication } from "../../types/IstioObjects";
+import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
+import { ServiceDetailsInfo } from '../../types/ServiceInfo';
+import { PeerAuthentication } from '../../types/IstioObjects';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -29,7 +29,14 @@ type MainSummaryPanelPropType = SummaryPanelPropType & {
   jaegerState: JaegerState;
   kiosk: string;
   onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
-  onLaunchWizard?: (key: WizardAction, mode: WizardMode, namespace: string, serviceDetails: ServiceDetailsInfo, gateways: string[], peerAuths: PeerAuthentication[]) => void;
+  onLaunchWizard?: (
+    key: WizardAction,
+    mode: WizardMode,
+    namespace: string,
+    serviceDetails: ServiceDetailsInfo,
+    gateways: string[],
+    peerAuths: PeerAuthentication[]
+  ) => void;
 };
 
 const mainStyle = style({

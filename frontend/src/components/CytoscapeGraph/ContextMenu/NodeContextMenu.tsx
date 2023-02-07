@@ -2,13 +2,13 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { style } from 'typestyle';
-import { Spinner, Tooltip, TooltipPosition } from "@patternfly/react-core";
+import { Spinner, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 
 import history from 'app/History';
 import { BoxByType, DecoratedGraphNodeData, NodeType } from 'types/Graph';
 import { JaegerInfo } from 'types/JaegerInfo';
-import { durationSelector } from "store/Selectors";
+import { durationSelector } from 'store/Selectors';
 import { KialiAppState } from 'store/Store';
 import { Paths, serverConfig } from 'config';
 import { NodeContextMenuProps } from '../CytoscapeContextMenu';
@@ -16,17 +16,13 @@ import { getTitle } from 'pages/Graph/SummaryPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { renderBadgedName } from 'pages/Graph/SummaryLink';
 import { PFColors } from 'components/Pf/PfColors';
-import {
-  SERVICE_WIZARD_ACTIONS,
-  WIZARD_TITLES,
-  WizardAction
-} from "../../IstioWizards/WizardActions";
-import { DELETE_TRAFFIC_ROUTING } from "../../IstioWizards/ServiceWizardActionsDropdownGroup";
-import { isParentKiosk, kioskContextMenuAction } from "../../Kiosk/KioskActions";
-import { DurationInSeconds, TimeInMilliseconds } from "types/Common";
-import { useServiceDetailForGraphNode } from "../../../hooks/services";
-import { canDelete } from "../../../types/Permissions";
-import { getServiceDetailsUpdateLabel, hasServiceDetailsTrafficRouting } from "../../../types/ServiceInfo";
+import { SERVICE_WIZARD_ACTIONS, WIZARD_TITLES, WizardAction } from '../../IstioWizards/WizardActions';
+import { DELETE_TRAFFIC_ROUTING } from '../../IstioWizards/ServiceWizardActionsDropdownGroup';
+import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
+import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
+import { useServiceDetailForGraphNode } from '../../../hooks/services';
+import { canDelete } from '../../../types/Permissions';
+import { getServiceDetailsUpdateLabel, hasServiceDetailsTrafficRouting } from '../../../types/ServiceInfo';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -106,7 +102,12 @@ function getLinkParamsForNode(node: DecoratedGraphNodeData): LinkParams | undefi
 }
 
 export function NodeContextMenu(props: Props) {
-  const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(props, true, props.duration, props.updateTime);
+  const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(
+    props,
+    true,
+    props.duration,
+    props.updateTime
+  );
   const updateLabel = getServiceDetailsUpdateLabel(serviceDetails);
 
   // TODO: Deduplicate
@@ -138,7 +139,7 @@ export function NodeContextMenu(props: Props) {
       // Kiosk actions are used when the kiosk specifies a parent,
       // otherwise the kiosk=true will keep the links inside Kiali
       if (isParentKiosk(props.kiosk)) {
-        item =
+        item = (
           <Link
             to={''}
             onClick={() => {
@@ -146,7 +147,8 @@ export function NodeContextMenu(props: Props) {
             }}
             className={commonLinkProps.className}
             children={commonLinkProps.children}
-          />;
+          />
+        );
       } else {
         item = <Link to={href} {...commonLinkProps} />;
       }
@@ -168,7 +170,14 @@ export function NodeContextMenu(props: Props) {
     props.contextMenu.hide(0);
 
     if (props.onLaunchWizard && serviceDetails && gateways && peerAuthentications) {
-      props.onLaunchWizard(eventKey, updateLabel.length === 0 ? 'create' : 'update', props.namespace, serviceDetails, gateways, peerAuthentications);
+      props.onLaunchWizard(
+        eventKey,
+        updateLabel.length === 0 ? 'create' : 'update',
+        props.namespace,
+        serviceDetails,
+        gateways,
+        peerAuthentications
+      );
     }
   }
 
@@ -197,7 +206,9 @@ export function NodeContextMenu(props: Props) {
   }
 
   function renderWizardActionItem(eventKey: string) {
-    const enabledItem = !hasServiceDetailsTrafficRouting(serviceDetails) || (hasServiceDetailsTrafficRouting(serviceDetails) && updateLabel === eventKey);
+    const enabledItem =
+      !hasServiceDetailsTrafficRouting(serviceDetails) ||
+      (hasServiceDetailsTrafficRouting(serviceDetails) && updateLabel === eventKey);
 
     // An Item is enabled under two conditions:
     // a) No traffic -> Wizard can create new one
@@ -205,16 +216,21 @@ export function NodeContextMenu(props: Props) {
     // Otherwise, the item should be disabled
     if (!enabledItem) {
       return (
-        <div key={eventKey} className={contextMenuItem} style={{color: '#d2d2d2'}}>
+        <div key={eventKey} className={contextMenuItem} style={{ color: '#d2d2d2' }}>
           <Tooltip position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage()}</>}>
             <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{WIZARD_TITLES[eventKey]}</div>
           </Tooltip>
         </div>
-      )
+      );
     } else {
       return (
         <div key={eventKey} className={contextMenuItem} data-test={eventKey + '_action'}>
-          <a href="#" rel="noreferrer noopener" className={contextMenuItemLink} onClick={(e) => handleClickWizard(e, eventKey as WizardAction)}>
+          <a
+            href="#"
+            rel="noreferrer noopener"
+            className={contextMenuItemLink}
+            onClick={e => handleClickWizard(e, eventKey as WizardAction)}
+          >
             {WIZARD_TITLES[eventKey]}
           </a>
         </div>
@@ -223,9 +239,12 @@ export function NodeContextMenu(props: Props) {
   }
 
   function renderDeleteTrafficRoutingItem() {
-    if (!canDelete(serviceDetails?.istioPermissions) || !hasServiceDetailsTrafficRouting(serviceDetails) /*|| props.isDisabled*/) {
+    if (
+      !canDelete(serviceDetails?.istioPermissions) ||
+      !hasServiceDetailsTrafficRouting(serviceDetails) /*|| props.isDisabled*/
+    ) {
       return (
-        <div className={contextMenuItem} style={{color: '#d2d2d2'}}>
+        <div className={contextMenuItem} style={{ color: '#d2d2d2' }}>
           <Tooltip position={TooltipPosition.left} content={<>{getDropdownItemTooltipMessage()}</>}>
             <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>Delete Traffic Routing</div>
           </Tooltip>
@@ -234,7 +253,13 @@ export function NodeContextMenu(props: Props) {
     } else {
       return (
         <div className={contextMenuItem}>
-          <a href="#" rel="noreferrer noopener" className={contextMenuItemLink} onClick={handleDeleteTrafficRouting} data-test="delete-traffic-routing">
+          <a
+            href="#"
+            rel="noreferrer noopener"
+            className={contextMenuItemLink}
+            onClick={handleDeleteTrafficRouting}
+            data-test="delete-traffic-routing"
+          >
             Delete Traffic Routing
           </a>
         </div>

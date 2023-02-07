@@ -23,7 +23,7 @@ import {
   titleStyle
 } from 'styles/DropdownStyles';
 import { INITIAL_GRAPH_STATE } from 'reducers/GraphDataState';
-import { KialiDispatch } from "types/Redux";
+import { KialiDispatch } from 'types/Redux';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
 import { getCrippledFeatures } from 'services/Api';
 

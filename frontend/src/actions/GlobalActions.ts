@@ -9,7 +9,7 @@ export const GlobalActions = {
   decrementLoadingCounter: createAction(ActionKeys.DECREMENT_LOADING_COUNTER),
   setPageVisibilityHidden: createAction(ActionKeys.SET_PAGE_VISIBILITY_HIDDEN),
   setPageVisibilityVisible: createAction(ActionKeys.SET_PAGE_VISIBILITY_VISIBLE),
-  setKiosk: createStandardAction(ActionKeys.SET_KIOSK)<KioskMode>(),
+  setKiosk: createStandardAction(ActionKeys.SET_KIOSK)<KioskMode>()
 };
 
 export type GlobalAction = ActionType<typeof GlobalActions>;

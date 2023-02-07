@@ -45,13 +45,13 @@ const allOptions = {
   [PATH]: [EXACT, PREFIX, REGEX],
   [HEADERS]: [EXACT, REGEX],
   [QUERY_PARAMS]: [EXACT, REGEX],
-  [METHOD]: ["CONNECT", "DELETE", GET, "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"]
+  [METHOD]: ['CONNECT', 'DELETE', GET, 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'TRACE']
 };
 
 const placeholderText = {
   [PATH]: 'Path value...',
   [HEADERS]: 'Header value...',
-  [QUERY_PARAMS]: 'Query param value...',
+  [QUERY_PARAMS]: 'Query param value...'
 };
 
 class K8sMatchBuilder extends React.Component<Props, State> {
@@ -76,7 +76,7 @@ class K8sMatchBuilder extends React.Component<Props, State> {
   };
 
   render() {
-    const renderOpOptions: string[] = allOptions[this.props.category]
+    const renderOpOptions: string[] = allOptions[this.props.category];
     return (
       <InputGroup>
         <Dropdown

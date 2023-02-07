@@ -17,7 +17,9 @@ import {
   EnvoyFilter,
   WorkloadGroup,
   References,
-  HelpMessage, WasmPlugin, Telemetry
+  HelpMessage,
+  WasmPlugin,
+  Telemetry
 } from './IstioObjects';
 import { AceOptions } from 'react-ace/types';
 

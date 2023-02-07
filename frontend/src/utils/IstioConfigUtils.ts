@@ -1,5 +1,12 @@
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
-import { ConnectionPoolSettings, IstioObject, ObjectCheck, OutlierDetection, StatusCondition, Validations } from '../types/IstioObjects';
+import {
+  ConnectionPoolSettings,
+  IstioObject,
+  ObjectCheck,
+  OutlierDetection,
+  StatusCondition,
+  Validations
+} from '../types/IstioObjects';
 import _ from 'lodash';
 import { IstioConfigItem } from 'types/IstioConfigList';
 
@@ -185,7 +192,7 @@ export const hasMissingAuthPolicy = (workloadName: string, validations: Validati
   }
 
   return hasMissingAP;
-}
+};
 
 export const getReconciliationCondition = (
   istioConfigDetails?: IstioConfigDetails | IstioConfigItem

@@ -87,7 +87,7 @@ describe('Overview Page ', () => {
       'electronic-shop',
       'alpha',
       'beta',
-      'fraud-detection',      
+      'fraud-detection',
       'travel-agency',
       'travel-control',
       'travel-portal'
@@ -100,7 +100,7 @@ describe('Overview Page ', () => {
       'istio-system',
       'travel-portal',
       'travel-control',
-      'travel-agency',      
+      'travel-agency',
       'fraud-detection',
       'beta',
       'alpha',

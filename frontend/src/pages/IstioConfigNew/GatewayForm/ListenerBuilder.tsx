@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { isGatewayHostValid } from '../../../utils/IstioConfigUtils';
-import {Button, ButtonVariant, FormSelect, FormSelectOption, TextInput} from "@patternfly/react-core";
-import {isValid} from "../../../utils/Common";
-import {TrashIcon} from "@patternfly/react-icons";
-import {ListenerForm} from "../K8sGatewayForm";
-import {Td, Tr} from '@patternfly/react-table';
-import {addSelectorLabels} from "./ListenerList";
+import { Button, ButtonVariant, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
+import { isValid } from '../../../utils/Common';
+import { TrashIcon } from '@patternfly/react-icons';
+import { ListenerForm } from '../K8sGatewayForm';
+import { Td, Tr } from '@patternfly/react-table';
+import { addSelectorLabels } from './ListenerList';
 
 type Props = {
   listener: ListenerForm;
@@ -19,33 +19,31 @@ export const protocols = ['HTTP'];
 export const allowedRoutes = ['All', 'Selector', 'Same'];
 
 export const isValidName = (name: string) => {
-  return name !== undefined && name.length > 0
-}
+  return name !== undefined && name.length > 0;
+};
 
 export const isValidHostname = (hostname: string) => {
-  return hostname !== undefined && hostname.length > 0 && isGatewayHostValid(hostname)
-}
+  return hostname !== undefined && hostname.length > 0 && isGatewayHostValid(hostname);
+};
 
 export const isValidPort = (port: string) => {
-  return port.length > 0 && !isNaN(Number(port)) && Number(port) >= 0 &&
-    Number(port) <= 65535
-}
+  return port.length > 0 && !isNaN(Number(port)) && Number(port) >= 0 && Number(port) <= 65535;
+};
 
 export const isValidSelector = (selector: string) => {
-  return selector.length === 0 || typeof (addSelectorLabels(selector)) !== "undefined"
-}
+  return selector.length === 0 || typeof addSelectorLabels(selector) !== 'undefined';
+};
 
 class ListenerBuilder extends React.Component<Props> {
-
   isValidHost = (host: string): boolean => {
     return isGatewayHostValid(host);
   };
 
   onAddHostname = (value: string, _) => {
-    const l = this.props.listener
-    l.hostname = value.trim()
+    const l = this.props.listener;
+    l.hostname = value.trim();
 
-    this.props.onChange(l, this.props.index)
+    this.props.onChange(l, this.props.index);
 
     this.setState({
       newHostname: value,
@@ -54,53 +52,53 @@ class ListenerBuilder extends React.Component<Props> {
   };
 
   onAddPort = (value: string, _) => {
-    const l = this.props.listener
-    l.port = value.trim()
+    const l = this.props.listener;
+    l.port = value.trim();
 
-    this.props.onChange(l, this.props.index)
+    this.props.onChange(l, this.props.index);
   };
 
   onAddName = (value: string, _) => {
-    const l = this.props.listener
-    l.name = value.trim()
+    const l = this.props.listener;
+    l.name = value.trim();
 
-    this.props.onChange(l, this.props.index)
+    this.props.onChange(l, this.props.index);
   };
 
   onAddProtocol = (value: string, _) => {
-    const l = this.props.listener
-    l.protocol = value.trim()
+    const l = this.props.listener;
+    l.protocol = value.trim();
 
-    this.props.onChange(l, this.props.index)
+    this.props.onChange(l, this.props.index);
   };
 
   onAddFrom = (value: string, _) => {
-    const l = this.props.listener
-    l.from = value.trim()
+    const l = this.props.listener;
+    l.from = value.trim();
 
-    this.props.onChange(l, this.props.index)
+    this.props.onChange(l, this.props.index);
   };
 
   onAddSelectorLabels = (value: string, _) => {
-    const l = this.props.listener
-    l.sSelectorLabels = value.trim()
+    const l = this.props.listener;
+    l.sSelectorLabels = value.trim();
 
-    this.props.onChange(l, this.props.index)
+    this.props.onChange(l, this.props.index);
   };
 
   render() {
     return (
       <Tr>
-      <Td>
-        <TextInput
-          value={this.props.listener.name}
-          type="text"
-          id="addName"
-          aria-describedby="add name"
-          onChange={this.onAddName}
-          validated={isValid(isValidName(this.props.listener.name))}
-        />
-      </Td>
+        <Td>
+          <TextInput
+            value={this.props.listener.name}
+            type="text"
+            id="addName"
+            aria-describedby="add name"
+            onChange={this.onAddName}
+            validated={isValid(isValidName(this.props.listener.name))}
+          />
+        </Td>
         <Td>
           <TextInput
             value={this.props.listener.hostname}
@@ -121,7 +119,7 @@ class ListenerBuilder extends React.Component<Props> {
             aria-describedby="add port"
             name="addPortNumber"
             onChange={this.onAddPort}
-            validated={isValid(isValidPort(this.props.listener.port)) }
+            validated={isValid(isValidPort(this.props.listener.port))}
           />
         </Td>
         <Td>
@@ -137,12 +135,7 @@ class ListenerBuilder extends React.Component<Props> {
           </FormSelect>
         </Td>
         <Td>
-          <FormSelect
-            value={this.props.listener.from}
-            id="addFrom"
-            name="addFrom"
-            onChange={this.onAddFrom}
-          >
+          <FormSelect value={this.props.listener.from} id="addFrom" name="addFrom" onChange={this.onAddFrom}>
             {allowedRoutes.map((option, index) => (
               <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
             ))}
@@ -161,7 +154,7 @@ class ListenerBuilder extends React.Component<Props> {
             id="deleteBtn"
             variant={ButtonVariant.link}
             icon={<TrashIcon />}
-            style={{padding: 0}}
+            style={{ padding: 0 }}
             onClick={() => this.props.onRemoveListener(this.props.index)}
           />
         </Td>
@@ -171,5 +164,3 @@ class ListenerBuilder extends React.Component<Props> {
 }
 
 export default ListenerBuilder;
-
-

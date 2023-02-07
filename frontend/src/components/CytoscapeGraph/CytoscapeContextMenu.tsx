@@ -4,20 +4,28 @@ import * as Cy from 'cytoscape';
 import { Router } from 'react-router';
 import tippy, { Instance } from 'tippy.js';
 import { DecoratedGraphEdgeData, DecoratedGraphNodeData } from '../../types/Graph';
-import { PeerAuthentication } from "../../types/IstioObjects";
-import { ServiceDetailsInfo } from "../../types/ServiceInfo";
+import { PeerAuthentication } from '../../types/IstioObjects';
+import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { Provider } from 'react-redux';
 import { store } from '../../store/ConfigStore';
 import history from '../../app/History';
 import { getOptions } from './ContextMenu/NodeContextMenu';
-import { WizardAction, WizardMode } from "../IstioWizards/WizardActions";
+import { WizardAction, WizardMode } from '../IstioWizards/WizardActions';
 
 export type EdgeContextMenuProps = DecoratedGraphEdgeData & ContextMenuProps;
 export type EdgeContextMenuComponentType = React.ComponentType<EdgeContextMenuProps>;
-export type NodeContextMenuProps = DecoratedGraphNodeData & ContextMenuProps & {
-  onLaunchWizard?: (key: WizardAction, mode: WizardMode, namespace: string, serviceDetails: ServiceDetailsInfo, gateways: string[], peerAuths: PeerAuthentication[]) => void;
-  onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
-};
+export type NodeContextMenuProps = DecoratedGraphNodeData &
+  ContextMenuProps & {
+    onLaunchWizard?: (
+      key: WizardAction,
+      mode: WizardMode,
+      namespace: string,
+      serviceDetails: ServiceDetailsInfo,
+      gateways: string[],
+      peerAuths: PeerAuthentication[]
+    ) => void;
+    onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
+  };
 export type NodeContextMenuComponentType = React.ComponentType<NodeContextMenuProps>;
 export type ContextMenuComponentType = EdgeContextMenuComponentType | NodeContextMenuComponentType;
 
@@ -25,7 +33,14 @@ type Props = {
   contextMenuEdgeComponent?: EdgeContextMenuComponentType;
   contextMenuNodeComponent?: NodeContextMenuComponentType;
   onDeleteTrafficRouting?: (key: string, serviceDetails: ServiceDetailsInfo) => void;
-  onLaunchWizard?: (key: WizardAction, mode: WizardMode, namespace: string, serviceDetails: ServiceDetailsInfo, gateways: string[], peerAuths: PeerAuthentication[]) => void;
+  onLaunchWizard?: (
+    key: WizardAction,
+    mode: WizardMode,
+    namespace: string,
+    serviceDetails: ServiceDetailsInfo,
+    gateways: string[],
+    peerAuths: PeerAuthentication[]
+  ) => void;
 };
 
 type TippyInstance = Instance;
@@ -151,7 +166,9 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
       }
     ).instances[0];
 
-    let menuComponent = (<ContextMenuComponentType element={target} contextMenu={tippyInstance} isHover={isHover} {...target.data()} />);
+    let menuComponent = (
+      <ContextMenuComponentType element={target} contextMenu={tippyInstance} isHover={isHover} {...target.data()} />
+    );
     if (isNode) {
       menuComponent = (
         <ContextMenuComponentType
@@ -160,15 +177,14 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
           isHover={isHover}
           onDeleteTrafficRouting={this.props.onDeleteTrafficRouting}
           onLaunchWizard={this.props.onLaunchWizard}
-          {...target.data()} />
+          {...target.data()}
+        />
       );
     }
 
     const result = (
       <Provider store={store}>
-        <Router history={history}>
-          {menuComponent}
-        </Router>
+        <Router history={history}>{menuComponent}</Router>
       </Provider>
     );
 

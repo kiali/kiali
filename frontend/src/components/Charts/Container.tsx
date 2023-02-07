@@ -22,9 +22,14 @@ const formatValue = (label: string, datum: RichDataPoint, value: number, y0?: nu
   // Scale factor is usually undefined, except when a second axis is in use (then it's the ratio between first axis and second axis maxs)
 
   if (y0 !== undefined) {
-    return label + ':' +
-      ' source = ' + getFormatter(d3Format, datum.unit!, true)(value / (datum.scaleFactor || 1)) +
-      '; destination = ' + getFormatter(d3Format, datum.unit!, true)(y0 / (datum.scaleFactor || 1));
+    return (
+      label +
+      ':' +
+      ' source = ' +
+      getFormatter(d3Format, datum.unit!, true)(value / (datum.scaleFactor || 1)) +
+      '; destination = ' +
+      getFormatter(d3Format, datum.unit!, true)(y0 / (datum.scaleFactor || 1))
+    );
   }
 
   return label + ': ' + getFormatter(d3Format, datum.unit!, true)(value / (datum.scaleFactor || 1));

@@ -17,8 +17,8 @@ import { TraceListItem } from 'components/JaegerIntegration/TraceListItem';
 import { summaryFont } from './SummaryPanelCommon';
 import { DecoratedGraphNodeData } from 'types/Graph';
 import transformTraceData from 'utils/tracing/TraceTransform';
-import {isParentKiosk, kioskContextMenuAction} from "../../components/Kiosk/KioskActions";
-import { KialiDispatch } from "../../types/Redux";
+import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
+import { KialiDispatch } from '../../types/Redux';
 
 type ReduxProps = {
   kiosk: string;

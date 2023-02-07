@@ -14,7 +14,7 @@ import {
   getAccumulatedTrafficRateTcp
 } from 'utils/TrafficRate';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import KialiPageLinkContainer from "components/Link/KialiPageLink";
+import KialiPageLinkContainer from 'components/Link/KialiPageLink';
 
 type SummaryPanelClusterBoxState = {
   clusterBox: any;

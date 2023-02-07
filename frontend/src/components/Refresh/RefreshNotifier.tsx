@@ -1,6 +1,6 @@
-import { useEffect } from "react";
-import { TimeInMilliseconds } from "../../types/Common";
-import useRefreshInterval from "../../hooks/refresh";
+import { useEffect } from 'react';
+import { TimeInMilliseconds } from '../../types/Common';
+import useRefreshInterval from '../../hooks/refresh';
 
 interface Props {
   onTick: (timestamp: TimeInMilliseconds) => void;

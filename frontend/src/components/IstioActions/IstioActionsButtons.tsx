@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Button, ButtonVariant } from '@patternfly/react-core';
-import { triggerRefresh } from "../../hooks/refresh";
+import { triggerRefresh } from '../../hooks/refresh';
 
 type Props = {
   objectName: string;
