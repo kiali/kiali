@@ -162,20 +162,20 @@ func (o *K8SClientMock) GetTokenSubject(authInfo *api.AuthInfo) (string, error) 
 }
 
 func (o *K8SClientMock) MockService(namespace, name string) {
-	s := fakeService(namespace, name)
+	s := FakeService(namespace, name)
 	o.On("GetService", namespace, name).Return(&s, nil)
 }
 
 func (o *K8SClientMock) MockServices(namespace string, names []string) {
 	services := []core_v1.Service{}
 	for _, name := range names {
-		services = append(services, fakeService(namespace, name))
+		services = append(services, FakeService(namespace, name))
 	}
 	o.On("GetServices", namespace, mock.AnythingOfType("map[string]string")).Return(services, nil)
 	o.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 }
 
-func fakeService(namespace, name string) core_v1.Service {
+func FakeService(namespace, name string) core_v1.Service {
 	return core_v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      name,
