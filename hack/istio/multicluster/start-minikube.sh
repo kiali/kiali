@@ -107,7 +107,7 @@ echo "==== START MINIKUBE FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT
 start_minikube "${CLUSTER1_NAME}" "70-84" "--extra-config=apiserver.oidc-issuer-url=https://${KUBE_HOSTNAME}/realms/kube --extra-config=apiserver.oidc-ca-file=${MINIKUBE_KEYCLOAK_CERTS_DIR}/root-ca.pem --extra-config=apiserver.oidc-client-id=kube --extra-config=apiserver.oidc-groups-claim=groups --extra-config=apiserver.oidc-username-prefix=oidc: --extra-config=apiserver.oidc-groups-prefix=oidc: --extra-config=apiserver.oidc-username-claim=preferred_username"
 
 # Wait for ingress to become ready before deploying keycloak since keycloak relies on it.
-kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx
+${CLIENT_EXE} rollout status deployment/ingress-nginx-controller -n ingress-nginx
 
 helm upgrade --install --wait --timeout 15m \
   --namespace keycloak --create-namespace \
@@ -136,12 +136,12 @@ postgresql:
 EOF
 
 # create secret used by keycloak ingress
-kubectl create secret tls -n keycloak keycloak.kind.cluster-tls \
+${CLIENT_EXE} create secret tls -n keycloak keycloak.kind.cluster-tls \
   --cert="${KEYCLOAK_CERTS_DIR}"/cert.pem \
   --key="${KEYCLOAK_CERTS_DIR}"/key.pem
 
 # Give the ingress some time to be ready
-# kubectl wait ingress/keycloak -n keycloak --context east --for=jsonpath='{.status.loadBalancer.ingress[*].hostname}'=localhost
+# ${CLIENT_EXE} wait ingress/keycloak -n keycloak --context east --for=jsonpath='{.status.loadBalancer.ingress[*].hostname}'=localhost
 sleep 20
 
 # Get a token from keycloak to use the admin api

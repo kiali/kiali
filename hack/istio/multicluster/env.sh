@@ -49,7 +49,7 @@ CLIENT_EXE_NAME="kubectl"
 ISTIO_DIR=""
 
 # If the scripts need image registry client, this is it (docker or podman)
-DORP="${DORP:-docker}"
+DORP="${DORP:-podman}"
 
 # The namespace where Istio will be found - this namespace must be the same on both clusters
 ISTIO_NAMESPACE="istio-system"
@@ -94,8 +94,11 @@ CLUSTER2_USER="kiali"
 CLUSTER2_PASS="kiali"
 
 # Should Kiali be installed? This installs the last release of Kiali via the kiali-server helm chart.
-# If you want another verison or your own dev build, you must disable this and install what you want manually.
+# If you want another version, you must disable this and install what you want manually.
 KIALI_ENABLED="true"
+
+# When installing Kiali, this will determine if a released image is used or if a local dev image is to be pushed and used.
+KIALI_USE_DEV_IMAGE="false"
 
 # Should Bookinfo demo be installed? If so, where?
 BOOKINFO_ENABLED="true"
@@ -195,6 +198,11 @@ while [[ $# -gt 0 ]]; do
       KIALI_ENABLED="$2"
       shift;shift
       ;;
+    -kudi|--kiali-use-dev-image)
+      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--kiali-use-dev-image must be 'true' or 'false'" && exit 1
+      KIALI_USE_DEV_IMAGE="$2"
+      shift;shift
+      ;;
     -k1wf|--kiali1-web-fqdn)
       KIALI1_WEB_FQDN="$2"
       shift;shift
@@ -283,6 +291,11 @@ Valid command line arguments:
   -ke|--kiali-enabled <bool>: If "true" the latest release of Kiali will be installed in both clusters. If you want
                               a different version of Kiali installed, you must set this to "false" and install it yourself.
                               (Default: true)
+  -kudi|--kiali-use-dev-image: If "true" the local dev image of Kiali will be pushed and used in the Kiali deployment.
+                               The local dev image must be tagged as "quay.io/kiali/kiali:dev" prior to running this script;
+                               that will be the image pushed to the clusters. You can "make container-build-kiali" to build it.
+                               Will be ignored if --kiali-enabled is 'false'. (Default: false)
+                               CURRENTLY ONLY SUPPORTED WITH MINIKUBE!
   -k1wf|--kiali1-web-fqdn <fqdn>: If specified, this will be the #1 Kaili setting for spec.server.web_fqdn.
   -k1ws|--kiali1-web-schema <schema>: If specified, this will be the #1 Kaili setting for spec.server.web_schema.
   -k2wf|--kiali2-web-fqdn <fqdn>: If specified, this will be the #2 Kaili setting for spec.server.web_fqdn.
@@ -443,6 +456,7 @@ export BOOKINFO_ENABLED \
        ISTIO_NAMESPACE \
        ISTIO_TAG \
        KIALI_ENABLED \
+       KIALI_USE_DEV_IMAGE \
        MANAGE_KIND \
        MANAGE_MINIKUBE \
        MANUAL_MESH_NETWORK_CONFIG \
@@ -475,6 +489,7 @@ ISTIO_DIR=$ISTIO_DIR
 ISTIO_NAMESPACE=$ISTIO_NAMESPACE
 ISTIO_TAG=$ISTIO_TAG
 KIALI_ENABLED=$KIALI_ENABLED
+KIALI_USE_DEV_IMAGE=$KIALI_USE_DEV_IMAGE
 KIALI1_WEB_FQDN=$KIALI1_WEB_FQDN
 KIALI1_WEB_SCHEMA=$KIALI1_WEB_SCHEMA
 KIALI2_WEB_FQDN=$KIALI2_WEB_FQDN
