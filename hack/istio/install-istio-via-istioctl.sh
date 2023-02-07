@@ -410,12 +410,10 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   echo Deleting Core Istio
   if [ "${PURGE_UNINSTALL}" == "true" ]; then
     echo "Purging all Istio resources"
-    # Although the 'uninstall' command has been available since Istio 1.7 and is listed in the official istio doc,
-    # it's still available in 'experimental' (x) scope, so it might change in the future.
     # The optional --purge flag will remove all Istio resources, including cluster-scoped resources that may be shared with other Istio control planes.
-    ${ISTIOCTL} x uninstall --purge -y
+    ${ISTIOCTL} uninstall --purge -y
   else
-    ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} delete -f -
+    ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} delete --ignore-not-found=true -f -
   fi
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     echo "===== IMPORTANT ====="
