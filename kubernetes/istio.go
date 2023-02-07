@@ -289,7 +289,7 @@ func (in *K8SClient) GetRegistryServices() ([]*RegistryService, error) {
 	} else {
 		debugStatus, err := in.getIstiodDebugStatus(registryzPath)
 		if err != nil {
-			log.Errorf("Failed to call Istiod endpoint %s error: %s", registryzPath, err)
+			log.Tracef("Failed to call Istiod endpoint %s error: %s", registryzPath, err)
 			return nil, err
 		}
 		result = debugStatus
@@ -312,7 +312,7 @@ func (in *K8SClient) GetRegistryEndpoints() ([]*RegistryEndpoint, error) {
 	} else {
 		debugStatus, err := in.getIstiodDebugStatus(endpointzPath)
 		if err != nil {
-			log.Errorf("Failed to call Istiod endpoint %s error: %s", endpointzPath, err)
+			log.Tracef("Failed to call Istiod endpoint %s error: %s", endpointzPath, err)
 			return nil, err
 		}
 		result = debugStatus
@@ -335,7 +335,7 @@ func (in *K8SClient) GetRegistryConfiguration() (*RegistryConfiguration, error) 
 	} else {
 		debugStatus, err := in.getIstiodDebugStatus(configzPath)
 		if err != nil {
-			log.Errorf("Failed to call Istiod endpoint %s error: %s", configzPath, err)
+			log.Tracef("Failed to call Istiod endpoint %s error: %s", configzPath, err)
 			return nil, err
 		}
 		result = debugStatus
