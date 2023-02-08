@@ -4,9 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"k8s.io/client-go/tools/clientcmd/api"
+
 	kiali_business "github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/kubernetes"
-	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 func ConfigDump(w http.ResponseWriter, r *http.Request) {
