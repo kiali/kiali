@@ -19,6 +19,7 @@ Current list of maintainers (alphabetically ordered):
 * [hhovsepy](https://github.com/hhovsepy)
 * [israel-hdez](https://github.com/israel-hdez)
 * [jmazzitelli](https://github.com/jmazzitelli)
+* [josunect](https://github.com/josunect)
 * [leandroberetta](https://github.com/leandroberetta)
 * [nrfox](https://github.com/nrfox)
 * [xunzhuo](https://github.com/xunzhuo)
@@ -71,7 +72,6 @@ Current list of testers (alphabetically ordered):
 * [pbajjuri20](https://github.com/pbajjuri20)
 * [prachiyadav](https://github.com/prachiyadav)
 * [ScriptingShrimp](https://github.com/ScriptingShrimp)
-* [skondkar](https://github.com/skondkar)
 
 ### Becoming a Tester
 
@@ -152,6 +152,7 @@ Contact the Maintainers about changing to Emeritus status, or reducing your cont
 * [gbaufake](https://github.com/gbaufake)
 * [josejulio](https://github.com/josejulio)
 * [jotak](https://github.com/jotak)
+* [jstickler](https://github.com/JStickler)
 * [jpkrohling](https://github.com/jpkrohling)
 * [kevinearls](https://github.com/kevinearls)
 * [lucasponce](https://github.com/lucasponce)
@@ -161,6 +162,7 @@ Contact the Maintainers about changing to Emeritus status, or reducing your cont
 * [mwringe](https://github.com/mwringe)
 * [pavolloffay](https://github.com/pavolloffay)
 * [serenamarie125](https://github.com/serenamarie125)
+* [skondkar](https://github.com/skondkar)
 * [xeviknal](https://github.com/xeviknal)
 
 ## Voting
