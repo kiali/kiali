@@ -85,10 +85,14 @@ And('user sees Details information for Apps', () => {
   });
 });
 
-Then('user only sees {int} apps', (sees: number) => {
+And('user only sees the apps with the {string} name in the {string} namespace', (name:string,ns:string) => {
+  let count:number;
+  cy.request('GET', `/api/namespaces/${ns}/apps`).should((response) =>{
+    count = response.body.applications.filter((item) => item.name.includes(name)).length;
+  }); 
   cy.get('tbody').within(() => {
     cy.contains('No apps found').should('not.exist');
-    cy.get('tr').should('have.length', sees);
+    cy.get('tr').should('have.length', count);
   });
 });
 

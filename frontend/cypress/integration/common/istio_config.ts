@@ -18,6 +18,25 @@ function labelsStringToJson(labelsString: string) {
   return `{${labelsJson}}`;
 }
 
+// I included this, because the URL parameter is in plural, but the the Type itself in Kiali is singular
+// This works for all of the types currently present in Kiali (Feb 8 2023), but may break in the future, because
+// it does not support all of the english words  
+function singularize(word:string) {
+  const endings = {
+      ves: 'fe',
+      ies: 'y',
+      i: 'us',
+      zes: 'ze',
+      ses: 's',
+      es: 'e',
+      s: ''
+  };
+  return word.replace(
+      new RegExp(`(${Object.keys(endings).join('|')})$`), 
+      r => endings[r]
+  );
+}
+
 function minimalAuthorizationPolicy(name: string, namespace: string): string {
   return `{
     "apiVersion": "security.istio.io/v1beta1",
@@ -298,6 +317,18 @@ Then('user only sees {string}', (sees: string) => {
   cy.get('tbody').contains('tr', sees);
   cy.get('tbody').within(() => {
     cy.get('tr').should('have.length', 1);
+  });
+});
+
+Then('only {string} are visible in the {string} namespace', (sees: string, ns:string) => {
+  let lowercaseSees:string = sees.charAt(0).toLowerCase() + sees.slice(1);
+  let count:number;
+  cy.request('GET', `/api/istio/config?objects=${lowercaseSees}&validate=true`).should((response) =>{
+    count = response.body[ns][lowercaseSees].length;
+  }); 
+  cy.get('tbody').contains('tr', singularize(sees));
+  cy.get('tbody').within(() => {
+    cy.get('tr').should('have.length', count);
   });
 });
 
