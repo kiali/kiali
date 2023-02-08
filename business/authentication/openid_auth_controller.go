@@ -300,7 +300,7 @@ func (c OpenIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Requ
 
 	if flow.Error != nil {
 		if err, ok := flow.Error.(*badOidcRequest); ok {
-			log.Errorf("Not handling OpenId code flow authentication: %s", err.Detail)
+			log.Debugf("Not handling OpenId code flow authentication: %s", err.Detail)
 			fallbackHandler.ServeHTTP(w, r)
 		} else {
 			if flow.ShouldTerminateSession {
