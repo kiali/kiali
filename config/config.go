@@ -431,8 +431,8 @@ type CertificatesInformationIndicators struct {
 type KialiFeatureFlags struct {
 	CertificatesInformationIndicators CertificatesInformationIndicators `yaml:"certificates_information_indicators,omitempty" json:"certificatesInformationIndicators"`
 	DisabledFeatures                  []string                          `yaml:"disabled_features,omitempty" json:"disabledFeatures,omitempty"`
-	IstioInjectionAction              bool                              `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
 	IstioAnnotationAction             bool                              `yaml:"istio_annotation_action,omitempty" json:"istioAnnotationAction"`
+	IstioInjectionAction              bool                              `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
 	IstioUpgradeAction                bool                              `yaml:"istio_upgrade_action,omitempty" json:"istioUpgradeAction"`
 	UIDefaults                        UIDefaults                        `yaml:"ui_defaults,omitempty" json:"uiDefaults,omitempty"`
 	Validations                       Validations                       `yaml:"validations,omitempty" json:"validations,omitempty"`
@@ -629,8 +629,8 @@ func NewConfig() (c *Config) {
 				Secrets: []string{"cacerts", "istio-ca-secret"},
 			},
 			DisabledFeatures:      []string{},
-			IstioInjectionAction:  true,
 			IstioAnnotationAction: true,
+			IstioInjectionAction:  true,
 			IstioUpgradeAction:    false,
 			UIDefaults: UIDefaults{
 				Graph: GraphUIDefaults{
