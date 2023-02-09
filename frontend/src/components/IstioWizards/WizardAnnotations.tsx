@@ -99,11 +99,11 @@ class WizardAnnotations extends React.Component<Props, State> {
   };
 
   onClose = () => {
-    this.setState({ annotations: this.convertAnnotationsToMap() }, () => this.props.onClose());
+    this.setState({ annotations: this.convertAnnotationsToMap(), validation: [] }, () => this.props.onClose());
   };
 
   onClear = () => {
-    this.setState({ annotations: this.convertAnnotationsToMap() });
+    this.setState({ annotations: this.convertAnnotationsToMap(), validation: [] });
   };
 
   generateInput = (): JSX.Element[] => {
@@ -184,7 +184,7 @@ class WizardAnnotations extends React.Component<Props, State> {
         <Modal
           variant={ModalVariant.large}
           isOpen={this.props.showAnotationsWizard}
-          onClose={this.props.onClose}
+          onClose={this.onClose}
           header={header}
           aria-labelledby="modal-custom-header-label"
           aria-describedby="modal-custom-header-description"
