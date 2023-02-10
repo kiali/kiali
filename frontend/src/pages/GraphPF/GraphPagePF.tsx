@@ -74,7 +74,6 @@ import { triggerRefresh } from '../../hooks/refresh';
 import { GraphData, GraphPageProps } from 'pages/Graph/GraphPage';
 import GraphPF, { FocusNode } from './GraphPF';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import { GraphPFSettings } from './GraphPFElems';
 import { serverConfig } from 'config';
 import { Controller } from '@patternfly/react-topology';
 
@@ -435,17 +434,7 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
     );
     const isReady = !(isEmpty || this.state.graphData.isError);
     const isReplayReady = this.props.replayActive && !!this.props.replayQueryTime;
-    // const cy = this.cytoscapeGraphRef && this.cytoscapeGraphRef.current ? this.cytoscapeGraphRef.current.getCy() : null;
-    const settings: GraphPFSettings = {
-      activeNamespaces: this.state.graphData.fetchParams.namespaces,
-      edgeLabels: this.props.edgeLabels,
-      graphType: this.state.graphData.fetchParams.graphType,
-      homeCluster: serverConfig?.clusterInfo?.name || CLUSTER_DEFAULT,
-      showMissingSidecars: this.props.showMissingSidecars,
-      showSecurity: this.props.showSecurity,
-      showVirtualServices: this.props.showVirtualServices,
-      trafficRates: this.state.graphData.fetchParams.trafficRates
-    };
+
     return (
       <>
         <FlexView className={conStyle} column={true}>
@@ -498,7 +487,7 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
                     <GraphPF
                       focusNode={this.focusNode}
                       graphData={this.state.graphData}
-                      graphSettings={settings}
+                      homeCluster={serverConfig?.clusterInfo?.name || CLUSTER_DEFAULT}
                       {...this.props}
                     />
                   </EmptyGraphLayout>
@@ -561,7 +550,7 @@ export class GraphPagePF extends React.Component<GraphPagePropsPF, GraphPageStat
   }
 
   private onFocus = (focusNode: FocusNode) => {
-    console.log(`onFocus(${focusNode})`);
+    console.debug(`onFocus(${focusNode})`);
   };
 
   private handleEmptyGraphAction = () => {
