@@ -83,6 +83,10 @@ type WorkloadListItem struct {
 	// example: 1
 	PodCount int `json:"podCount"`
 
+	// Annotations of Deployment
+	// required: false
+	Annotations map[string]string `json:"annotations"`
+
 	// HealthAnnotations
 	// required: false
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
@@ -153,6 +157,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.PodCount = len(w.Pods)
 	workload.ServiceAccountNames = w.Pods.ServiceAccounts()
 	workload.AdditionalDetailSample = w.AdditionalDetailSample
+	workload.Annotations = w.Annotations
 	workload.HealthAnnotations = w.HealthAnnotations
 	workload.IstioReferences = []*IstioValidationKey{}
 
@@ -219,6 +224,7 @@ func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
 	if d.Spec.Replicas != nil {
 		workload.DesiredReplicas = *d.Spec.Replicas
 	}
+	workload.Annotations = d.Annotations
 	workload.CurrentReplicas = d.Status.Replicas
 	workload.AvailableReplicas = d.Status.AvailableReplicas
 }

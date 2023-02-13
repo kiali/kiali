@@ -20,7 +20,8 @@ export interface Workload {
   replicas: Number;
   availableReplicas: Number;
   pods: Pod[];
-  health?: WorkloadHealthResponse;
+  annotations: { [key: string]: string };
+  health?: WorkloadHealthResponse;  
   services: Service[];
   runtimes: Runtime[];
   additionalDetails: AdditionalItem[];
@@ -39,6 +40,7 @@ export const emptyWorkload: Workload = {
   replicas: 0,
   availableReplicas: 0,
   pods: [],
+  annotations: {},
   services: [],
   runtimes: [],
   additionalDetails: []

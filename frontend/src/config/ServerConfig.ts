@@ -84,6 +84,7 @@ const defaultServerConfig: ComputedServerConfig = {
     },
     disabledFeatures: [],
     istioInjectionAction: true,
+    istioAnnotationAction: true,
     istioUpgradeAction: false,
     uiDefaults: {
       graph: {

@@ -140,6 +140,11 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	patchType := query.Get("patchType")
+	if patchType == "" {
+		patchType = defaultPatchType
+	}
+
 	namespace := params["namespace"]
 	workload := params["workload"]
 	workloadType := query.Get("type")
@@ -167,7 +172,7 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	workloadDetails, err := business.Workload.UpdateWorkload(r.Context(), namespace, workload, workloadType, true, jsonPatch)
+	workloadDetails, err := business.Workload.UpdateWorkload(r.Context(), namespace, workload, workloadType, true, jsonPatch, patchType)
 	if includeValidations && err == nil {
 		wg.Wait()
 		workloadDetails.Validations = istioConfigValidations

@@ -56,6 +56,7 @@ interface KialiFeatureFlags {
   certificatesInformationIndicators: CertificatesInformationIndicators;
   disabledFeatures: string[];
   istioInjectionAction: boolean;
+  istioAnnotationAction: boolean;
   istioUpgradeAction: boolean;
   uiDefaults: UIDefaults;
 }

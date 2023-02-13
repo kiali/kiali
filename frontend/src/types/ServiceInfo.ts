@@ -55,6 +55,7 @@ export interface Service {
   resourceVersion: string;
   ip: string;
   ports?: ServicePort[];
+  annotations: { [key: string]: string };
   externalName: string;
   labels?: { [key: string]: string };
   selectors?: { [key: string]: string };

@@ -506,9 +506,28 @@ export const updateWorkload = (
   namespace: string,
   name: string,
   type: string,
-  jsonPatch: string
+  jsonPatch: string,
+  patchType?: string
 ): Promise<Response<string>> => {
-  return newRequest(HTTP_VERBS.PATCH, urls.workload(namespace, name), { type: type }, jsonPatch);
+  const params: any = {};
+  params.type = type
+  if (patchType) {
+    params.patchType = patchType
+  }
+  return newRequest(HTTP_VERBS.PATCH, urls.workload(namespace, name), params, jsonPatch);
+};
+
+export const updateService = (
+  namespace: string,
+  name: string,
+  jsonPatch: string,
+  patchType?: string
+): Promise<Response<string>> => {
+  const params: any = {};
+  if (patchType) {
+    params.patchType = patchType
+  }
+  return newRequest(HTTP_VERBS.PATCH, urls.service(namespace, name), params, jsonPatch);
 };
 
 export const getPod = (namespace: string, name: string) => {

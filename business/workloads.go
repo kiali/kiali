@@ -365,7 +365,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 	return workload, nil
 }
 
-func (in *WorkloadService) UpdateWorkload(ctx context.Context, namespace string, workloadName string, workloadType string, includeServices bool, jsonPatch string) (*models.Workload, error) {
+func (in *WorkloadService) UpdateWorkload(ctx context.Context, namespace string, workloadName string, workloadType string, includeServices bool, jsonPatch string, patchType string) (*models.Workload, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "UpdateWorkload",
 		observability.Attribute("package", "business"),
@@ -374,11 +374,12 @@ func (in *WorkloadService) UpdateWorkload(ctx context.Context, namespace string,
 		observability.Attribute("workloadType", workloadType),
 		observability.Attribute("includeServices", includeServices),
 		observability.Attribute("jsonPatch", jsonPatch),
+		observability.Attribute("patchType", patchType),
 	)
 	defer end()
 
 	// Identify controller and apply patch to workload
-	err := in.updateWorkload(namespace, workloadName, workloadType, jsonPatch)
+	err := in.updateWorkload(namespace, workloadName, workloadType, jsonPatch, patchType)
 	if err != nil {
 		return nil, err
 	}
@@ -1684,7 +1685,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 	return wl, kubernetes.NewNotFound(criteria.WorkloadName, "Kiali", "Workload")
 }
 
-func (in *WorkloadService) updateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string) error {
+func (in *WorkloadService) updateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string, patchType string) error {
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if _, err := in.businessLayer.Namespace.GetNamespace(context.TODO(), namespace); err != nil {
@@ -1727,7 +1728,7 @@ func (in *WorkloadService) updateWorkload(namespace string, workloadName string,
 			defer wg.Done()
 			var err error
 			if isWorkloadIncluded(wkType) {
-				err = in.k8s.UpdateWorkload(namespace, workloadName, wkType, jsonPatch)
+				err = in.k8s.UpdateWorkload(namespace, workloadName, wkType, jsonPatch, patchType)
 			}
 			if err != nil {
 				if !errors.IsNotFound(err) {

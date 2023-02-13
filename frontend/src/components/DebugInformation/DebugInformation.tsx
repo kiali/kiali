@@ -65,6 +65,7 @@ const propsToShow = [
   'istioStatusEnabled',
   'logLevel',
   'istioCanaryRevision',
+  'istioAnnotationsAction',
   'istioInjectionAction'
 ];
 

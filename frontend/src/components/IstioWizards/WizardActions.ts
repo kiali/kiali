@@ -70,6 +70,7 @@ export const WIZARD_K8S_REQUEST_ROUTING = 'k8s_request_routing';
 export const WIZARD_ENABLE_AUTO_INJECTION = 'enable_auto_injection';
 export const WIZARD_DISABLE_AUTO_INJECTION = 'disable_auto_injection';
 export const WIZARD_REMOVE_AUTO_INJECTION = 'remove_auto_injection';
+export const WIZARD_EDIT_ANNOTATIONS = 'edit_annotations';
 
 export const SERVICE_WIZARD_ACTIONS = [
   WIZARD_REQUEST_ROUTING,
@@ -2048,5 +2049,14 @@ export const buildWorkloadInjectionPatch = (workloadType: string, enable: boolea
     };
   }
 
+  return JSON.stringify(patch);
+};
+
+export const buildAnnotationPatch = (annotations: { [key: string]: string }): string => {
+  const patch = [{
+    "op": "replace",
+    "path": "/metadata/annotations",    
+    "value": annotations
+  }];  
   return JSON.stringify(patch);
 };

@@ -145,12 +145,12 @@ func (o *K8SClientMock) UpdateNamespace(namespace string, jsonPatch string) (*co
 	return args.Get(0).(*core_v1.Namespace), args.Error(1)
 }
 
-func (o *K8SClientMock) UpdateWorkload(namespace string, name string, workloadType string, jsonPatch string) error {
-	args := o.Called(namespace, name, workloadType, jsonPatch)
+func (o *K8SClientMock) UpdateWorkload(namespace string, name string, workloadType string, jsonPatch string, patchType string) error {
+	args := o.Called(namespace, name, workloadType, jsonPatch, patchType)
 	return args.Error(1)
 }
 
-func (o *K8SClientMock) UpdateService(namespace string, name string, jsonPatch string) error {
-	args := o.Called(namespace, name, jsonPatch)
+func (o *K8SClientMock) UpdateService(namespace string, name string, jsonPatch string, patchType string) error {
+	args := o.Called(namespace, name, jsonPatch, patchType)
 	return args.Error(1)
 }

@@ -139,6 +139,10 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 		rateInterval = defaultHealthRateInterval
 	}
 
+	patchType := queryParams.Get("patchType")
+	if patchType == "" {
+		patchType = defaultPatchType
+	}
 	includeValidations := false
 	if _, found := queryParams["validate"]; found {
 		includeValidations = true
@@ -171,7 +175,7 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	serviceDetails, err := business.Svc.UpdateService(r.Context(), namespace, service, rateInterval, queryTime, jsonPatch)
+	serviceDetails, err := business.Svc.UpdateService(r.Context(), namespace, service, rateInterval, queryTime, jsonPatch, patchType)
 
 	if includeValidations && err == nil {
 		wg.Wait()
