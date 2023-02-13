@@ -42,6 +42,7 @@ import {
 import layoutFactory from './layouts/layoutFactory';
 import { hideTrace, showTrace } from './TracePF';
 import { GraphHighlighterPF } from './GraphHighlighterPF';
+import { TimeInMilliseconds } from 'types/Common';
 
 let requestFit = false;
 
@@ -81,6 +82,7 @@ export const TopologyContent: React.FC<{
   homeCluster: string;
   onReady: (controller: any) => void;
   options: TopologyOptions;
+  setUpdateTime: (val: TimeInMilliseconds) => void;
   showMissingSidecars: boolean;
   showSecurity: boolean;
   showVirtualServices: boolean;
@@ -94,6 +96,7 @@ export const TopologyContent: React.FC<{
   homeCluster,
   onReady,
   options,
+  setUpdateTime,
   showMissingSidecars,
   showSecurity,
   showVirtualServices,
@@ -383,7 +386,10 @@ export const TopologyContent: React.FC<{
       console.log('onReady');
       onReady(controller);
     }
-  }, [controller, graphData, graphSettings, highlighter, onReady, options.layout, setDetailsLevel]);
+
+    // notify that the graph has been updated
+    setUpdateTime(Date.now());
+  }, [controller, graphData, graphSettings, highlighter, onReady, options.layout, setDetailsLevel, setUpdateTime]);
 
   React.useEffect(() => {
     console.log(`controller changed`);
@@ -485,6 +491,7 @@ export const GraphPF: React.FC<{
   graphData: GraphData;
   homeCluster: string;
   onReady: (controller: any) => void;
+  setUpdateTime: (val: TimeInMilliseconds) => void;
   showMissingSidecars: boolean;
   showSecurity: boolean;
   showVirtualServices: boolean;
@@ -496,6 +503,7 @@ export const GraphPF: React.FC<{
   graphData,
   homeCluster,
   onReady,
+  setUpdateTime,
   showMissingSidecars,
   showSecurity,
   showVirtualServices,
@@ -537,6 +545,7 @@ export const GraphPF: React.FC<{
         homeCluster={homeCluster}
         onReady={onReady}
         options={DefaultOptions}
+        setUpdateTime={setUpdateTime}
         showMissingSidecars={showMissingSidecars}
         showSecurity={showSecurity}
         showVirtualServices={showVirtualServices}
