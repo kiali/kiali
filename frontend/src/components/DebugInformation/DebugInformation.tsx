@@ -118,6 +118,15 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
     this.setState({ copyStatus: result ? CopyStatus.COPIED : CopyStatus.NOT_COPIED });
   };
 
+  download = () => {
+    const element = document.createElement('a');
+    const file = new Blob([this.getCopyText()], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = `debug_${this.state.currentTab === 'kialiConfig' ? 'kiali_config' : 'additional_state'}.json`;
+    document.body.appendChild(element); // Required for this to work in FireFox
+    element.click();
+  };
+
   hideAlert = () => {
     this.setState({ copyStatus: CopyStatus.NOT_COPIED });
   };
@@ -160,6 +169,14 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
     };
     debugInformation = this.filterDebugInformation(debugInformation);
     return beautify(debugInformation, this.parseConfig, 2);
+  }
+
+  getCopyText(): string {
+    const text =
+      this.state.currentTab === 'kialiConfig'
+        ? JSON.stringify(this.state.config, null, 2)
+        : this.renderDebugInformation();
+    return text;
   }
 
   private columns = (): ICell[] => {
@@ -233,17 +250,10 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
         title="Debug information"
         actions={[
           <Button onClick={this.close}>Close</Button>,
-          <CopyToClipboard
-            onCopy={this.copyCallback}
-            text={
-              this.state.currentTab === 'kialiConfig'
-                ? JSON.stringify(this.state.config, null, 2)
-                : this.renderDebugInformation()
-            }
-            options={copyToClipboardOptions}
-          >
+          <CopyToClipboard onCopy={this.copyCallback} text={this.getCopyText()} options={copyToClipboardOptions}>
             <Button variant={ButtonVariant.primary}>Copy</Button>
-          </CopyToClipboard>
+          </CopyToClipboard>,
+          <Button onClick={this.download}>Download</Button>
         ]}
       >
         {this.state.copyStatus === CopyStatus.COPIED && (
