@@ -6,6 +6,7 @@ import { TrashIcon } from '@patternfly/react-icons';
 import { ListenerForm } from '../K8sGatewayForm';
 import { Td, Tr } from '@patternfly/react-table';
 import { addSelectorLabels } from './ListenerList';
+import { MAX_PORT, MIN_PORT } from '../../../types/IstioObjects';
 
 type Props = {
   listener: ListenerForm;
@@ -27,7 +28,7 @@ export const isValidHostname = (hostname: string) => {
 };
 
 export const isValidPort = (port: string) => {
-  return port.length > 0 && !isNaN(Number(port)) && Number(port) >= 0 && Number(port) <= 65535;
+  return port.length > 0 && !isNaN(Number(port)) && Number(port) >= MIN_PORT && Number(port) <= MAX_PORT;
 };
 
 export const isValidSelector = (selector: string) => {

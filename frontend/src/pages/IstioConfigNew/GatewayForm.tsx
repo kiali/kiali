@@ -2,7 +2,7 @@ import * as React from 'react';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import { FormGroup, Switch, TextInputBase as TextInput } from '@patternfly/react-core';
 import ServerList from './GatewayForm/ServerList';
-import { Server, ServerForm, ServerTLSSettings } from '../../types/IstioObjects';
+import { MAX_PORT, Server, ServerForm, ServerTLSSettings, MIN_PORT } from '../../types/IstioObjects';
 import { isValid } from 'utils/Common';
 import { areValidHosts } from './GatewayForm/ServerBuilder';
 
@@ -40,8 +40,8 @@ const areValidGateways = (servers: Server[]): boolean => {
     return (
       areValidHosts(s.hosts) &&
       s.port.name !== '' &&
-      s.port.number >= 0 &&
-      s.port.number <= 65635 &&
+      s.port.number >= MIN_PORT &&
+      s.port.number <= MAX_PORT &&
       isValidTLS(s.port.protocol, s.tls)
     );
   });
@@ -50,7 +50,6 @@ const areValidGateways = (servers: Server[]): boolean => {
 const isValidTLS = (protocol: string, tls: ServerTLSSettings | undefined): boolean => {
   if (tls !== undefined) {
     const tlsRequired = protocol === 'HTTPS' || protocol === 'TLS';
-
     const certsValid = tlsRequired
       ? tls.mode === 'SIMPLE' || tls.mode === 'MUTUAL'
         ? tls.serverCertificate !== undefined &&
