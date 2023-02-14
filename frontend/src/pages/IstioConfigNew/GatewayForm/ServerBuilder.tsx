@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
-import { cellWidth, TableComposable, Tbody, Td, Th, Tr } from '@patternfly/react-table';
+import { cellWidth, TableComposable, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { TrashIcon } from '@patternfly/react-icons';
 import { isGatewayHostValid } from '../../../utils/IstioConfigUtils';
 import { ServerForm } from '../../../types/IstioObjects';
@@ -185,9 +185,13 @@ class ServerBuilder extends React.Component<Props, State> {
           </FormGroup>
           <FormGroup label="Port" isRequired={true} fieldId="server-port" style={{ padding: '10px 0' }}>
             <TableComposable aria-label="Port Level MTLS">
-              {portHeader.map(e => (
-                <Th>{e.title}</Th>
-              ))}
+              <Thead>
+                <Tr>
+                  {portHeader.map(e => (
+                    <Th>{e.title}</Th>
+                  ))}
+                </Tr>
+              </Thead>
               <Tbody>{this.portRows()}</Tbody>
             </TableComposable>
           </FormGroup>
