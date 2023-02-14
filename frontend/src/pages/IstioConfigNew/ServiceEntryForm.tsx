@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Port, ServiceEntrySpec } from '../../types/IstioObjects';
+import { MAX_PORT, MIN_PORT, Port, ServiceEntrySpec } from '../../types/IstioObjects';
 import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
@@ -109,14 +109,16 @@ const isValidName = (name: string): boolean => {
 };
 
 const isValidPortNumber = (portNumber: string): boolean => {
-  return portNumber.length > 0 && !isNaN(Number(portNumber)) && Number(portNumber) >= 0 && Number(portNumber) <= 65536;
+  return (
+    portNumber.length > 0 &&
+    !isNaN(Number(portNumber)) &&
+    Number(portNumber) >= MIN_PORT &&
+    Number(portNumber) <= MAX_PORT
+  );
 };
 
 const isValidTargetPort = (targetPort: string): boolean => {
-  return (
-    targetPort.length === 0 ||
-    (targetPort.length > 0 && !isNaN(Number(targetPort)) && Number(targetPort) >= 0 && Number(targetPort) <= 65536)
-  );
+  return targetPort.length === 0 || isValidPortNumber(targetPort);
 };
 
 class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {

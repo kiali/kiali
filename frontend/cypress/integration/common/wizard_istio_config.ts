@@ -23,7 +23,7 @@ And('user adds listener', () => {
 });
 
 And('user types {string} in the name input', (name) => {
-  cy.get('input[id="name0"]').type(name);
+  cy.get('input[id="name"]').type(name);
 });
 
 And('user types {string} in the add listener name input', (name) => {
