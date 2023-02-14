@@ -36,6 +36,9 @@ _output
 # VSCode
 .vscode/
 
+# Swagger
+swagger.json
+
 # The vendor directory is to be committed to the git repo
 #vendor/
 
