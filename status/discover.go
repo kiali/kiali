@@ -15,7 +15,7 @@ import (
 var clientFactory kubernetes.ClientFactory
 
 func getClient() (kubernetes.ClientInterface, error) {
-	saToken, err := kubernetes.GetKialiToken()
+	saToken, err := kubernetes.GetKialiTokenForHomeCluster()
 	if err != nil {
 		return nil, err
 	}

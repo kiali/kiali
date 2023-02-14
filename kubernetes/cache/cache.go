@@ -82,7 +82,8 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, na
 		tokenNamespaceDuration:     time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
 	}
 
-	for cluster, kialiClient := range clientFactory.GetSAClients() {
+	for _, cluster := range clientFactory.GetClusterNames() {
+		kialiClient := clientFactory.GetSAClient(cluster)
 		cache, err := NewKubeCache(kialiClient, cfg, NewRegistryHandler(kialiCacheImpl.RefreshRegistryStatus), namespaceSeedList...)
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: %s. Err: %v", cluster, err)

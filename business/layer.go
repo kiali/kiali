@@ -73,7 +73,7 @@ func initKialiCache() {
 		// TODO: This is leaking cluster-scoped vs. namespace-scoped in a way.
 		var namespaceSeedList []string
 		if !config.Get().AllNamespacesAccessible() {
-			cfg, err := kubernetes.ConfigClient()
+			cfg, err := kubernetes.GetConfigForLocalCluster()
 			if err != nil {
 				log.Errorf("Failed to initialize Kiali Cache. Unable to create Kube rest config. Err: %s", err)
 				return

@@ -16,7 +16,7 @@ func TestIsTokenExpired(t *testing.T) {
 	DefaultServiceAccountPath = tmpFileTokenExpired
 
 	setupFile("thisisarandomtoken", tmpFileTokenExpired, t)
-	token, err := GetKialiToken()
+	token, err := GetKialiTokenForHomeCluster()
 	assert.Nil(t, err)
 
 	assert.True(t, token != "")
@@ -32,7 +32,7 @@ func TestGetKialiToken(t *testing.T) {
 
 	setupFile(data, tmpFileGetToken, t)
 
-	token, err := GetKialiToken()
+	token, err := GetKialiTokenForHomeCluster()
 	assert.Nil(t, err)
 
 	assert.True(t, data == token)

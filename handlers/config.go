@@ -109,7 +109,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	// The following code fetches the cluster info. Cluster info is not critical.
 	// It's even possible that it cannot be resolved (because of Istio not being with MC turned on).
 	// Because of these two reasons, let's simply ignore errors in the following code.
-	token, getTokenErr := kubernetes.GetKialiToken()
+	token, getTokenErr := kubernetes.GetKialiTokenForHomeCluster()
 	if getTokenErr == nil {
 		layer, getLayerErr := business.Get(&api.AuthInfo{Token: token})
 		if getLayerErr == nil {

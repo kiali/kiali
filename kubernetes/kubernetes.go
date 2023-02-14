@@ -56,7 +56,6 @@ type K8SClientInterface interface {
 	GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error)
 	GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
 	GetSecret(namespace, name string) (*core_v1.Secret, error)
-	GetSecrets(namespace string, labelSelector string) ([]core_v1.Secret, error)
 	GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	GetService(namespace string, name string) (*core_v1.Service, error)
 	GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
@@ -429,7 +428,7 @@ func (in *K8SClient) getPodPortForwarder(namespace, name, portMap string) (httpu
 
 	writer := new(bytes.Buffer)
 
-	clientConfig, err := ConfigClient()
+	clientConfig, err := GetConfigForLocalCluster()
 	if err != nil {
 		log.Errorf("Error getting Kubernetes Client config: %v", err)
 		return nil, err

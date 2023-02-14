@@ -129,7 +129,11 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 
 func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	// create a mock volume mount directory where the test remote cluster secret content will go
-	remoteClusterSecretsDir = t.TempDir()
+	originalRemoteClusterSecretsDir := kubernetes.RemoteClusterSecretsDir
+	defer func(dir string) {
+		kubernetes.RemoteClusterSecretsDir = dir
+	}(originalRemoteClusterSecretsDir)
+	kubernetes.RemoteClusterSecretsDir = t.TempDir()
 
 	check := assert.New(t)
 
@@ -166,7 +170,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 		},
 	}
 	marshalledRemoteSecretData, _ := yaml.Marshal(remoteSecretData)
-	createTestRemoteClusterSecretFile(t, remoteClusterSecretsDir, "KialiCluster", string(marshalledRemoteSecretData))
+	createTestRemoteClusterSecretFile(t, kubernetes.RemoteClusterSecretsDir, "KialiCluster", string(marshalledRemoteSecretData))
 
 	var nilDeployment *apps_v1.Deployment
 	k8s.On("IsOpenShift").Return(false)

@@ -242,7 +242,7 @@ func getAddonStatus(name string, enabled bool, isCore bool, auth *config.Auth, u
 	}
 
 	if auth.UseKialiToken {
-		token, err := kubernetes.GetKialiToken()
+		token, err := kubernetes.GetKialiTokenForHomeCluster()
 		if err != nil {
 			log.Errorf("Could not read the Kiali Service Account token: %v", err)
 		}

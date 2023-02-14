@@ -72,7 +72,7 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 		}
 	}
 
-	kialiToken, err := kubernetes.GetKialiToken()
+	kialiToken, err := kubernetes.GetKialiTokenForHomeCluster()
 	if err != nil {
 		return nil, err
 	}

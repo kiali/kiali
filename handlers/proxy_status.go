@@ -14,7 +14,7 @@ func ConfigDump(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	// Get business layer
-	kialiToken, err := kubernetes.GetKialiToken()
+	kialiToken, err := kubernetes.GetKialiTokenForHomeCluster()
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error (kiali token): "+err.Error())
 	}
@@ -41,7 +41,7 @@ func ConfigDumpResourceEntries(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	// Get business layer
-	kialiToken, err := kubernetes.GetKialiToken()
+	kialiToken, err := kubernetes.GetKialiTokenForHomeCluster()
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error (kiali token): "+err.Error())
 	}

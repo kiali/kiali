@@ -48,16 +48,26 @@ func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo) (kubernetes.Cli
 	return o.Clients[kubernetes.HomeClusterName], nil
 }
 
-func (o *K8SClientFactoryMock) GetSAClients() map[string]kubernetes.ClientInterface {
+func (o *K8SClientFactoryMock) GetSAClient(cluster string) kubernetes.ClientInterface {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
-	return o.Clients
+	return o.Clients[cluster]
 }
 
 func (o *K8SClientFactoryMock) GetSAHomeClusterClient() kubernetes.ClientInterface {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
 	return o.Clients[kubernetes.HomeClusterName]
+}
+
+func (o *K8SClientFactoryMock) GetClusterNames() []string {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	clusterNames := make([]string, 0)
+	for cn := range o.Clients {
+		clusterNames = append(clusterNames, cn)
+	}
+	return clusterNames
 }
 
 /////
@@ -74,7 +84,8 @@ func NewK8SClientMock() *K8SClientMock {
 	k8s := new(K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetKialiToken").Return("")
+	k8s.On("GetKialiTokenForHomeCluster").Return("")
+	k8s.On("GetClusterNames").Return(kubernetes.HomeClusterName)
 	return k8s
 }
 
@@ -132,6 +143,11 @@ func (o *K8SClientMock) GetServerVersion() (*version.Info, error) {
 func (o *K8SClientMock) GetToken() string {
 	args := o.Called()
 	return args.Get(0).(string)
+}
+
+func (o *K8SClientMock) GetClusterNames() []string {
+	args := o.Called()
+	return args.Get(0).([]string)
 }
 
 // GetAuthInfo returns the AuthInfo struct for the client

@@ -62,18 +62,24 @@ deploy_kiali() {
   ${CLIENT_EXE} create secret generic kiali --from-literal="oidc-secret=kube-client-secret" -n istio-system
   ${CLIENT_EXE} create clusterrolebinding kiali-user-viewer --clusterrole=kiali-viewer --user=oidc:kiali
 
+  if [ "${SINGLE_KIALI}" == "true" ]; then
+    echo "Preparing remote cluster secret for single Kiali install in multicluster mode."
+    ${SCRIPT_DIR}/kiali-create-remote-cluster-secret.sh -c ${CLIENT_EXE} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} -vo false
+  fi
+
   # use the latest published server helm chart (if using dev images, it is up to the user to make sure this chart works with the dev image)
-  helm upgrade --install                 \
-    ${helm_args}                         \
-    --namespace ${ISTIO_NAMESPACE}       \
+  helm upgrade --install                          \
+    ${helm_args}                                  \
+    --namespace ${ISTIO_NAMESPACE}                \
     --set kubernetes_config.cache_enabled="false" \
-    --set auth.strategy="openid"      \
-    --set auth.openid.client_id="kube"      \
+    --set auth.strategy="openid"                  \
+    --set auth.openid.client_id="kube"            \
     --set auth.openid.issuer_uri="https://${kube_hostname}/realms/kube" \
-    --set deployment.ingress.enabled="true" \
-    --repo https://kiali.org/helm-charts \
-    kiali-server                         \
-    kiali-server
+    --set deployment.logger.log_level="debug"     \
+    --set deployment.ingress.enabled="true"       \
+    --repo https://kiali.org/helm-charts          \
+    kiali-server                                  \
+    ${KIALI_SERVER_HELM_CHARTS}
 }
 
 echo "==== DEPLOY KIALI TO CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
