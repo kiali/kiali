@@ -94,7 +94,7 @@ class ListenerBuilder extends React.Component<Props> {
           <TextInput
             value={this.props.listener.name}
             type="text"
-            id="addName"
+            id={'addName' + this.props.index}
             aria-describedby="add name"
             onChange={this.onAddName}
             validated={isValid(isValidName(this.props.listener.name))}
@@ -104,7 +104,7 @@ class ListenerBuilder extends React.Component<Props> {
           <TextInput
             value={this.props.listener.hostname}
             type="text"
-            id="addHostname"
+            id={'addHostname' + this.props.index}
             aria-describedby="add hostname"
             name="addHostname"
             onChange={this.onAddHostname}
@@ -115,7 +115,7 @@ class ListenerBuilder extends React.Component<Props> {
           <TextInput
             value={this.props.listener.port}
             type="text"
-            id="addPort"
+            id={'addPort' + this.props.index}
             placeholder="80"
             aria-describedby="add port"
             name="addPortNumber"
@@ -126,7 +126,7 @@ class ListenerBuilder extends React.Component<Props> {
         <Td>
           <FormSelect
             value={this.props.listener.protocol}
-            id="addPortProtocol"
+            id={'addPortProtocol' + this.props.index}
             name="addPortProtocol"
             onChange={this.onAddProtocol}
           >
@@ -136,7 +136,12 @@ class ListenerBuilder extends React.Component<Props> {
           </FormSelect>
         </Td>
         <Td>
-          <FormSelect value={this.props.listener.from} id="addFrom" name="addFrom" onChange={this.onAddFrom}>
+          <FormSelect
+            value={this.props.listener.from}
+            id={'addFrom' + this.props.index}
+            name="addFrom"
+            onChange={this.onAddFrom}
+          >
             {allowedRoutes.map((option, index) => (
               <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
             ))}
@@ -144,7 +149,7 @@ class ListenerBuilder extends React.Component<Props> {
         </Td>
         <Td>
           <TextInput
-            id="addSelectorLabels"
+            id={'addSelectorLabels' + this.props.index}
             name="addSelectorLabels"
             onChange={this.onAddSelectorLabels}
             validated={isValid(isValidSelector(this.props.listener.sSelectorLabels))}
@@ -152,7 +157,7 @@ class ListenerBuilder extends React.Component<Props> {
         </Td>
         <Td>
           <Button
-            id="deleteBtn"
+            id={'deleteBtn' + this.props.index}
             variant={ButtonVariant.link}
             icon={<TrashIcon />}
             style={{ padding: 0 }}

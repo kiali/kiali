@@ -126,7 +126,7 @@ class ServerBuilder extends React.Component<Props, State> {
           <TextInput
             value={this.props.server.number}
             type="text"
-            id="addPortNumber"
+            id={'addPortNumber' + this.props.index}
             aria-describedby="add port number"
             name="addPortNumber"
             onChange={this.onAddPortNumber}
@@ -137,7 +137,7 @@ class ServerBuilder extends React.Component<Props, State> {
           <TextInput
             value={this.props.server.name}
             type="text"
-            id="addPortName"
+            id={'addPortName' + this.props.index}
             aria-describedby="add port name"
             name="addPortName"
             onChange={this.onAddPortName}
@@ -147,7 +147,7 @@ class ServerBuilder extends React.Component<Props, State> {
         <Td style={{ padding: '0 10px 0 0' }}>
           <FormSelect
             value={this.props.server.protocol}
-            id="addPortProtocol"
+            id={'addPortProtocol' + this.props.index}
             name="addPortProtocol"
             onChange={this.onAddPortProtocol}
           >
@@ -176,7 +176,7 @@ class ServerBuilder extends React.Component<Props, State> {
               value={this.props.server.hosts.join(',')}
               isRequired={true}
               type="text"
-              id="hosts"
+              id={'hosts' + this.props.index}
               aria-describedby="hosts"
               name="hosts"
               onChange={this.onAddHosts}

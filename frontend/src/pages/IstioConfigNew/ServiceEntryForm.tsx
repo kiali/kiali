@@ -313,7 +313,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
           <>
             <TextInput
               value={p.number}
-              id="addPortNumber"
+              id={'addPortNumber' + i}
               aria-describedby="add port number"
               name={i.toString()}
               placeholder="80"
@@ -324,7 +324,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
           <>
             <TextInput
               value={p.name}
-              id="addPortName"
+              id={'addPortName' + i}
               aria-describedby="add port name"
               name={i.toString()}
               onChange={this.onAddPortName}
@@ -332,7 +332,12 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
             />
           </>,
           <>
-            <FormSelect value={p.protocol} id="addPortProtocol" name={i.toString()} onChange={this.onAddPortProtocol}>
+            <FormSelect
+              value={p.protocol}
+              id={'addPortProtocol' + i}
+              name={i.toString()}
+              onChange={this.onAddPortProtocol}
+            >
               {protocols.map((option, index) => (
                 <FormSelectOption key={'p' + index} value={option} label={option} />
               ))}
@@ -341,7 +346,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
           <>
             <TextInput
               value={p.targetPort}
-              id="addTargetPort"
+              id={'addTargetPort' + i}
               aria-describedby="add target port"
               name={i.toString()}
               onChange={this.onAddTargetPort}
@@ -350,7 +355,7 @@ class ServiceEntryForm extends React.Component<Props, ServiceEntryState> {
           </>,
           <>
             <Button
-              id="deleteBtn"
+              id={'deleteBtn' + i}
               variant={ButtonVariant.link}
               icon={<TrashIcon />}
               style={{ padding: 0 }}
