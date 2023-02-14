@@ -2,11 +2,19 @@
 
 
 # Kiali
-Kiali project, observability for the Istio service mesh
+# Kiali Project, The Console for Istio Service Mesh
 
 NOTE! The Kiali API is not for public use and is not supported for any use outside of the Kiali UI itself.
 The API can and will change from version to version with no guarantee of backwards compatibility.
 
+To generate this API document:
+```
+
+> alias swagger='docker run --rm -it  --user $(id -u):$(id -g) -e GOCACHE=/tmp -e GOPATH=$(go env GOPATH):/go -v $HOME:$HOME -w $(pwd) quay.io/goswagger/swagger'
+> swagger generate spec -o ./swagger.json
+> swagger generate markdown --quiet --spec ./swagger.json --output ./kiali_internal_api.md
+
+```
   
 
 ## Informations
@@ -119,6 +127,7 @@ _
 | Method  | URI     | Name   | Summary |
 |---------|---------|--------|---------|
 | GET | /api/config | [get config](#get-config) |  |
+| GET | /api/crippled | [get crippled features](#get-crippled-features) |  |
 | GET | /api/healthz | [healthz](#healthz) |  |
 | GET | /api | [root](#root) |  |
   
@@ -133,6 +142,7 @@ _
 | GET | /api/namespaces/{namespace}/metrics | [namespace metrics](#namespace-metrics) |  |
 | PATCH | /api/namespaces/{namespace} | [namespace update](#namespace-update) | Endpoint to update the Namespace configuration using Json Merge Patch strategy. |
 | GET | /api/namespaces/{namespace}/validations | [namespace validations](#namespace-validations) |  |
+| GET | /api/istio/validations | [namespaces validations](#namespaces-validations) |  |
   
 
 
@@ -1218,6 +1228,66 @@ Status: Internal Server Error
 ###### Inlined models
 
 **<span id="get-config-internal-server-error-body"></span> GetConfigInternalServerErrorBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
+| Message | string| `string` |  | |  |  |
+
+
+
+### <span id="get-crippled-features"></span> get crippled features (*getCrippledFeatures*)
+
+```
+GET /api/crippled
+```
+
+Endpoint to get the crippled features of Kiali
+
+#### URI Schemes
+  * http
+  * https
+
+#### Produces
+  * application/json
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#get-crippled-features-200) | OK | HTTP status code 200 and statusInfo model in data |  | [schema](#get-crippled-features-200-schema) |
+| [500](#get-crippled-features-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#get-crippled-features-500-schema) |
+
+#### Responses
+
+
+##### <span id="get-crippled-features-200"></span> 200 - HTTP status code 200 and statusInfo model in data
+Status: OK
+
+###### <span id="get-crippled-features-200-schema"></span> Schema
+   
+  
+
+[StatusInfo](#status-info)
+
+##### <span id="get-crippled-features-500"></span> 500 - A Internal is the error message that means something has gone wrong
+Status: Internal Server Error
+
+###### <span id="get-crippled-features-500-schema"></span> Schema
+   
+  
+
+[GetCrippledFeaturesInternalServerErrorBody](#get-crippled-features-internal-server-error-body)
+
+###### Inlined models
+
+**<span id="get-crippled-features-internal-server-error-body"></span> GetCrippledFeaturesInternalServerErrorBody**
 
 
   
@@ -3817,6 +3887,92 @@ Status: Internal Server Error
 
 
 
+### <span id="namespaces-validations"></span> namespaces validations (*namespacesValidations*)
+
+```
+GET /api/istio/validations
+```
+
+Get validation summary for all objects in the given namespaces
+
+#### URI Schemes
+  * http
+  * https
+
+#### Produces
+  * application/json
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#namespaces-validations-200) | OK | Return the validation status of a specific Namespace |  | [schema](#namespaces-validations-200-schema) |
+| [400](#namespaces-validations-400) | Bad Request | BadRequestError: the client request is incorrect |  | [schema](#namespaces-validations-400-schema) |
+| [500](#namespaces-validations-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#namespaces-validations-500-schema) |
+
+#### Responses
+
+
+##### <span id="namespaces-validations-200"></span> 200 - Return the validation status of a specific Namespace
+Status: OK
+
+###### <span id="namespaces-validations-200-schema"></span> Schema
+   
+  
+
+[IstioValidationSummary](#istio-validation-summary)
+
+##### <span id="namespaces-validations-400"></span> 400 - BadRequestError: the client request is incorrect
+Status: Bad Request
+
+###### <span id="namespaces-validations-400-schema"></span> Schema
+   
+  
+
+[NamespacesValidationsBadRequestBody](#namespaces-validations-bad-request-body)
+
+##### <span id="namespaces-validations-500"></span> 500 - A Internal is the error message that means something has gone wrong
+Status: Internal Server Error
+
+###### <span id="namespaces-validations-500-schema"></span> Schema
+   
+  
+
+[NamespacesValidationsInternalServerErrorBody](#namespaces-validations-internal-server-error-body)
+
+###### Inlined models
+
+**<span id="namespaces-validations-bad-request-body"></span> NamespacesValidationsBadRequestBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `400`| HTTP status code | `400` |
+| Message | string| `string` |  | |  |  |
+
+
+
+**<span id="namespaces-validations-internal-server-error-body"></span> NamespacesValidationsInternalServerErrorBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
+| Message | string| `string` |  | |  |  |
+
+
+
 ### <span id="openid-redirect"></span> openid redirect (*openidRedirect*)
 
 ```
@@ -4261,7 +4417,14 @@ Endpoint to set pod proxy log level
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
 | pod | `path` | string | `string` |  | ✓ |  | The pod name. |
-| level | `query` | string | `string` |  | ✓ |  | The log level for the pod's proxy. |
+| level | `query` | string | `string` |  | ✓ |  | The log level for the pod's proxy.
+off ProxyLogLevelOff
+trace ProxyLogLevelTrace
+debug ProxyLogLevelDebug
+info ProxyLogLevelInfo
+warning ProxyLogLevelWarning
+error ProxyLogLevelError
+critical ProxyLogLevelCritical |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -4416,7 +4579,7 @@ Status: OK
    
   
 
-map of any 
+any
 
 ##### <span id="pod-proxy-resource-404"></span> 404 - A NotFoundError is the error message that is generated when server could not find what was requested.
 Status: Not Found
@@ -5958,6 +6121,48 @@ Status: Internal Server Error
 
 
 
+### <span id="address-type"></span> AddressType
+
+
+> A predefined CamelCase string identifier (currently limited to `IPAddress` or `Hostname`)
+A domain-prefixed string identifier (like `acme.io/CustomAddressType`)
+
+Values `IPAddress` and `Hostname` have Extended support.
+
+The `NamedAddress` value has been deprecated in favor of implementation
+specific domain-prefixed strings.
+
+All other values, including domain-prefixed values have Custom support, which
+are used in implementation-specific behaviors. Support for additional
+predefined CamelCase identifiers may be added in future releases.
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=253
++kubebuilder:validation:Pattern=`^Hostname|IPAddress|NamedAddress|[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*\/[A-Za-z0-9\/\-._~%!$&'()*+,;=:]+$`
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| AddressType | string| string | | A predefined CamelCase string identifier (currently limited to `IPAddress` or `Hostname`)
+A domain-prefixed string identifier (like `acme.io/CustomAddressType`)
+
+Values `IPAddress` and `Hostname` have Extended support.
+
+The `NamedAddress` value has been deprecated in favor of implementation
+specific domain-prefixed strings.
+
+All other values, including domain-prefixed values have Custom support, which
+are used in implementation-specific behaviors. Support for additional
+predefined CamelCase identifiers may be added in future releases.
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=253
++kubebuilder:validation:Pattern=`^Hostname|IPAddress|NamedAddress|[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*\/[A-Za-z0-9\/\-._~%!$&'()*+,;=:]+$` |  |
+
+
+
 ### <span id="addresses"></span> Addresses
 
 
@@ -6167,14 +6372,38 @@ set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
 More info: http://kubernetes.io/docs/user-guide/annotations
 +optional |  |
-| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
-This is used to distinguish resources with same name and namespace in different clusters.
-This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
+| CreationTimestamp | string| `string` |  | | CreationTimestamp is a timestamp representing the server time when this object was
+created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+
+Populated by the system.
+Read-only.
+Null for lists.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
 it will be removed from the system. Only set when deletionTimestamp is also set.
 May only be shortened.
 Read-only.
++optional |  |
+| DeletionTimestamp | string| `string` |  | | DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
+field is set by the server when a graceful deletion is requested by the user, and is not
+directly settable by a client. The resource is expected to be deleted (no longer visible
+from resource lists, and not reachable by name) after the time in this field, once the
+finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
+Once the deletionTimestamp is set, this value may not be unset or be set further into the
+future, although it may be shortened or the resource may be deleted prior to this time.
+For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
+by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
+the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
+remove the pod from the API. In the presence of network partitions, this object may still
+exist after this timestamp, until an administrator or automated process can determine the
+resource is fully terminated.
+If not set, graceful deletion of the object has not been requested.
+
+Populated by the system when a graceful deletion is requested.
+Read-only.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
 is an identifier for the responsible component that will remove the entry
@@ -6199,10 +6428,7 @@ The provided value has the same validation rules as the Name field,
 and may be truncated by the length of the suffix required to make the value
 unique on the server.
 
-If this field is specified and the generated name exists, the server will
-NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-should retry (optionally after the time indicated in the Retry-After header).
+If this field is specified and the generated name exists, the server will return a 409.
 
 Applied only if Name is not specified.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
@@ -6264,19 +6490,50 @@ Read-only.
 Value must be treated as opaque by clients and .
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
 +optional |  |
-| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
-Populated by the system.
-Read-only.
-
-DEPRECATED
-Kubernetes will stop propagating this field in 1.20 release and the field is planned
-to be removed in 1.21 release.
+| SelfLink | string| `string` |  | | Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
 +optional |  |
-| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
-| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| ZZZ_DeprecatedClusterName | string| `string` |  | | Deprecated: ClusterName is a legacy field that was always cleared by
+the system and never used; it will be removed completely in 1.25.
+
+The name in the go struct is changed to help clients detect
+accidental use.
+
++optional |  |
 | spec | [AuthorizationPolicy](#authorization-policy)| `AuthorizationPolicy` |  | |  |  |
 | status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
 | uid | [UID](#uid)| `UID` |  | |  |  |
+
+
+
+### <span id="backend-object-reference"></span> BackendObjectReference
+
+
+> Note that when a namespace is specified, a ReferenceGrant object
+is required in the referent namespace to allow that namespace's
+owner to accept the reference. See the ReferenceGrant documentation
+for details.
+
+The API object must be valid in the cluster; the Group and Kind must
+be registered in the cluster for this reference to be valid.
+
+References to objects with invalid Group and Kind are not valid, and must
+be rejected by the implementation, with appropriate Conditions set
+on the containing object.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| group | [Group](#group)| `Group` |  | |  |  |
+| kind | [Kind](#kind)| `Kind` |  | |  |  |
+| name | [ObjectName](#object-name)| `ObjectName` |  | |  |  |
+| namespace | [Namespace](#namespace)| `Namespace` |  | |  |  |
+| port | [PortNumber](#port-number)| `PortNumber` |  | |  |  |
 
 
 
@@ -6291,7 +6548,7 @@ to be removed in 1.21 release.
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| Bootstrap | map of any | `map[string]interface{}` |  | |  |  |
+| Bootstrap | [interface{}](#interface)| `interface{}` |  | |  |  |
 
 
 
@@ -6385,9 +6642,84 @@ to be removed in 1.21 release.
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| IsCore | boolean| `bool` | ✓ | | When true, the component is necessary for Istio to function. Otherwise, it is an addon | `true` |
-| Name | string| `string` | ✓ | | The app label value of the Istio component | `istio-ingressgateway` |
-| Status | string| `string` | ✓ | | The status of a Istio component | `Not Found` |
+| IsCore | boolean| `bool` | ✓ | | When true, the component is necessary for Istio to function. Otherwise, it is an addon. | `true` |
+| Name | string| `string` | ✓ | | The workload name of the Istio component. | `istio-ingressgateway` |
+| Status | string| `string` | ✓ | | The status of an Istio component. | `Not Found` |
+
+
+
+### <span id="condition"></span> Condition
+
+
+> This struct is intended for direct use as an array at the field path .status.conditions.  For example,
+type FooStatus struct{
+Represents the observations of a foo's current state.
+Known .status.conditions.type are: "Available", "Progressing", and "Degraded"
++patchMergeKey=type
++patchStrategy=merge
++listType=map
++listMapKey=type
+Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+
+other fields
+}
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| LastTransitionTime | string| `string` |  | | lastTransitionTime is the last time the condition transitioned from one status to another.
+This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
++required
++kubebuilder:validation:Required
++kubebuilder:validation:Type=string
++kubebuilder:validation:Format=date-time |  |
+| Message | string| `string` |  | | message is a human readable message indicating details about the transition.
+This may be an empty string.
++required
++kubebuilder:validation:Required
++kubebuilder:validation:MaxLength=32768 |  |
+| ObservedGeneration | int64 (formatted integer)| `int64` |  | | observedGeneration represents the .metadata.generation that the condition was set based upon.
+For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+with respect to the current state of the instance.
++optional
++kubebuilder:validation:Minimum=0 |  |
+| Reason | string| `string` |  | | reason contains a programmatic identifier indicating the reason for the condition's last transition.
+Producers of specific condition types may define expected values and meanings for this field,
+and whether the values are considered a guaranteed API.
+The value should be a CamelCase string.
+This field may not be empty.
++required
++kubebuilder:validation:Required
++kubebuilder:validation:MaxLength=1024
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:Pattern=`^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$` |  |
+| Type | string| `string` |  | | type of condition in CamelCase or in foo.example.com/CamelCase.
+
+Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
+useful (see .node.status.conditions), the ability to deconflict is important.
+The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
++required
++kubebuilder:validation:Required
++kubebuilder:validation:Pattern=`^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$`
++kubebuilder:validation:MaxLength=316 |  |
+| status | [ConditionStatus](#condition-status)| `ConditionStatus` |  | |  |  |
+
+
+
+### <span id="condition-status"></span> ConditionStatus
+
+
+  
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| ConditionStatus | string| string | |  |  |
 
 
 
@@ -6531,14 +6863,38 @@ set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
 More info: http://kubernetes.io/docs/user-guide/annotations
 +optional |  |
-| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
-This is used to distinguish resources with same name and namespace in different clusters.
-This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
+| CreationTimestamp | string| `string` |  | | CreationTimestamp is a timestamp representing the server time when this object was
+created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+
+Populated by the system.
+Read-only.
+Null for lists.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
 it will be removed from the system. Only set when deletionTimestamp is also set.
 May only be shortened.
 Read-only.
++optional |  |
+| DeletionTimestamp | string| `string` |  | | DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
+field is set by the server when a graceful deletion is requested by the user, and is not
+directly settable by a client. The resource is expected to be deleted (no longer visible
+from resource lists, and not reachable by name) after the time in this field, once the
+finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
+Once the deletionTimestamp is set, this value may not be unset or be set further into the
+future, although it may be shortened or the resource may be deleted prior to this time.
+For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
+by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
+the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
+remove the pod from the API. In the presence of network partitions, this object may still
+exist after this timestamp, until an administrator or automated process can determine the
+resource is fully terminated.
+If not set, graceful deletion of the object has not been requested.
+
+Populated by the system when a graceful deletion is requested.
+Read-only.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
 is an identifier for the responsible component that will remove the entry
@@ -6563,10 +6919,7 @@ The provided value has the same validation rules as the Name field,
 and may be truncated by the length of the suffix required to make the value
 unique on the server.
 
-If this field is specified and the generated name exists, the server will
-NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-should retry (optionally after the time indicated in the Retry-After header).
+If this field is specified and the generated name exists, the server will return a 409.
 
 Applied only if Name is not specified.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
@@ -6628,16 +6981,15 @@ Read-only.
 Value must be treated as opaque by clients and .
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
 +optional |  |
-| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
-Populated by the system.
-Read-only.
-
-DEPRECATED
-Kubernetes will stop propagating this field in 1.20 release and the field is planned
-to be removed in 1.21 release.
+| SelfLink | string| `string` |  | | Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
 +optional |  |
-| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
-| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| ZZZ_DeprecatedClusterName | string| `string` |  | | Deprecated: ClusterName is a legacy field that was always cleared by
+the system and never used; it will be removed completely in 1.25.
+
+The name in the go struct is changed to help clients detect
+accidental use.
+
++optional |  |
 | spec | [DestinationRule](#destination-rule)| `DestinationRule` |  | |  |  |
 | status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
 | uid | [UID](#uid)| `UID` |  | |  |  |
@@ -6762,14 +7114,38 @@ set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
 More info: http://kubernetes.io/docs/user-guide/annotations
 +optional |  |
-| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
-This is used to distinguish resources with same name and namespace in different clusters.
-This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
+| CreationTimestamp | string| `string` |  | | CreationTimestamp is a timestamp representing the server time when this object was
+created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+
+Populated by the system.
+Read-only.
+Null for lists.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
 it will be removed from the system. Only set when deletionTimestamp is also set.
 May only be shortened.
 Read-only.
++optional |  |
+| DeletionTimestamp | string| `string` |  | | DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
+field is set by the server when a graceful deletion is requested by the user, and is not
+directly settable by a client. The resource is expected to be deleted (no longer visible
+from resource lists, and not reachable by name) after the time in this field, once the
+finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
+Once the deletionTimestamp is set, this value may not be unset or be set further into the
+future, although it may be shortened or the resource may be deleted prior to this time.
+For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
+by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
+the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
+remove the pod from the API. In the presence of network partitions, this object may still
+exist after this timestamp, until an administrator or automated process can determine the
+resource is fully terminated.
+If not set, graceful deletion of the object has not been requested.
+
+Populated by the system when a graceful deletion is requested.
+Read-only.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
 is an identifier for the responsible component that will remove the entry
@@ -6794,10 +7170,7 @@ The provided value has the same validation rules as the Name field,
 and may be truncated by the length of the suffix required to make the value
 unique on the server.
 
-If this field is specified and the generated name exists, the server will
-NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-should retry (optionally after the time indicated in the Retry-After header).
+If this field is specified and the generated name exists, the server will return a 409.
 
 Applied only if Name is not specified.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
@@ -6859,16 +7232,15 @@ Read-only.
 Value must be treated as opaque by clients and .
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
 +optional |  |
-| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
-Populated by the system.
-Read-only.
-
-DEPRECATED
-Kubernetes will stop propagating this field in 1.20 release and the field is planned
-to be removed in 1.21 release.
+| SelfLink | string| `string` |  | | Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
 +optional |  |
-| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
-| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| ZZZ_DeprecatedClusterName | string| `string` |  | | Deprecated: ClusterName is a legacy field that was always cleared by
+the system and never used; it will be removed completely in 1.25.
+
+The name in the go struct is changed to help clients detect
+accidental use.
+
++optional |  |
 | spec | [EnvoyFilter](#envoy-filter)| `EnvoyFilter` |  | |  |  |
 | status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
 | uid | [UID](#uid)| `UID` |  | |  |  |
@@ -6917,7 +7289,8 @@ to be removed in 1.21 release.
 ### <span id="external-service-info"></span> ExternalServiceInfo
 
 
-> This is used for returning a response of Kiali Status
+> Status response model
+This is used for returning a response of Kiali Status
   
 
 
@@ -6968,8 +7341,8 @@ The exact format is defined in sigs.k8s.io/structured-merge-diff
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | egressInfo | [GWInfoIngress](#g-w-info-ingress)| `GWInfoIngress` |  | |  |  |
-| ingressInfo | [GWInfoIngress](#g-w-info-ingress)| `GWInfoIngress` |  | |  |  |
 | gatewayAPIInfo | [GWInfoIngress](#g-w-info-ingress)| `GWInfoIngress` |  | |  |  |
+| ingressInfo | [GWInfoIngress](#g-w-info-ingress)| `GWInfoIngress` |  | |  |  |
 
 
 
@@ -6994,26 +7367,8 @@ The exact format is defined in sigs.k8s.io/structured-merge-diff
 ### <span id="gateway"></span> Gateway
 
 
-> <!-- crd generation tags
-+cue-gen:Gateway:groupName:networking.istio.io
-+cue-gen:Gateway:version:v1beta1
-+cue-gen:Gateway:annotations:helm.sh/resource-policy=keep
-+cue-gen:Gateway:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
-+cue-gen:Gateway:subresource:status
-+cue-gen:Gateway:scope:Namespaced
-+cue-gen:Gateway:resource:categories=istio-io,networking-istio-io,shortNames=gw
-+cue-gen:Gateway:preserveUnknownFields:false
->
-
-<!-- go code generation tags
-+kubetype-gen
-+kubetype-gen:groupVersion=networking.istio.io/v1beta1
-+genclient
-+k8s:deepcopy-gen=true
->
-<!-- istio code generation tags
-+istio.io/sync-from:networking/v1alpha3/gateway.proto
->
+> Gateway represents an instance of a service-traffic handling infrastructure
+by binding Listeners to a set of IP addresses.
   
 
 
@@ -7034,14 +7389,38 @@ set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
 More info: http://kubernetes.io/docs/user-guide/annotations
 +optional |  |
-| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
-This is used to distinguish resources with same name and namespace in different clusters.
-This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
+| CreationTimestamp | string| `string` |  | | CreationTimestamp is a timestamp representing the server time when this object was
+created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+
+Populated by the system.
+Read-only.
+Null for lists.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
 it will be removed from the system. Only set when deletionTimestamp is also set.
 May only be shortened.
 Read-only.
++optional |  |
+| DeletionTimestamp | string| `string` |  | | DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
+field is set by the server when a graceful deletion is requested by the user, and is not
+directly settable by a client. The resource is expected to be deleted (no longer visible
+from resource lists, and not reachable by name) after the time in this field, once the
+finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
+Once the deletionTimestamp is set, this value may not be unset or be set further into the
+future, although it may be shortened or the resource may be deleted prior to this time.
+For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
+by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
+the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
+remove the pod from the API. In the presence of network partitions, this object may still
+exist after this timestamp, until an administrator or automated process can determine the
+resource is fully terminated.
+If not set, graceful deletion of the object has not been requested.
+
+Populated by the system when a graceful deletion is requested.
+Read-only.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
 is an identifier for the responsible component that will remove the entry
@@ -7066,10 +7445,7 @@ The provided value has the same validation rules as the Name field,
 and may be truncated by the length of the suffix required to make the value
 unique on the server.
 
-If this field is specified and the generated name exists, the server will
-NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-should retry (optionally after the time indicated in the Retry-After header).
+If this field is specified and the generated name exists, the server will return a 409.
 
 Applied only if Name is not specified.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
@@ -7131,19 +7507,213 @@ Read-only.
 Value must be treated as opaque by clients and .
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
 +optional |  |
-| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
-Populated by the system.
-Read-only.
-
-DEPRECATED
-Kubernetes will stop propagating this field in 1.20 release and the field is planned
-to be removed in 1.21 release.
+| SelfLink | string| `string` |  | | Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
 +optional |  |
-| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
-| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
-| spec | [Gateway](#gateway)| `Gateway` |  | |  |  |
-| status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
+| ZZZ_DeprecatedClusterName | string| `string` |  | | Deprecated: ClusterName is a legacy field that was always cleared by
+the system and never used; it will be removed completely in 1.25.
+
+The name in the go struct is changed to help clients detect
+accidental use.
+
++optional |  |
+| spec | [GatewaySpec](#gateway-spec)| `GatewaySpec` |  | |  |  |
+| status | [GatewayStatus](#gateway-status)| `GatewayStatus` |  | |  |  |
 | uid | [UID](#uid)| `UID` |  | |  |  |
+
+
+
+### <span id="gateway-address"></span> GatewayAddress
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Value | string| `string` |  | | Value of the address. The validity of the values will depend
+on the type and support by the controller.
+
+Examples: `1.2.3.4`, `128::1`, `my-ip-address`.
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=253 |  |
+| type | [AddressType](#address-type)| `AddressType` |  | |  |  |
+
+
+
+### <span id="gateway-controller"></span> GatewayController
+
+
+> Valid values include:
+
+"example.com/bar"
+
+Invalid values include:
+
+"example.com" - must include path
+"foo.example.com" - must include path
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=253
++kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*\/[A-Za-z0-9\/\-._~%!$&'()*+,;=:]+$`
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| GatewayController | string| string | | Valid values include:
+
+"example.com/bar"
+
+Invalid values include:
+
+"example.com" - must include path
+"foo.example.com" - must include path
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=253
++kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*\/[A-Za-z0-9\/\-._~%!$&'()*+,;=:]+$` |  |
+
+
+
+### <span id="gateway-spec"></span> GatewaySpec
+
+
+> Not all possible combinations of options specified in the Spec are
+valid. Some invalid configurations can be caught synchronously via a
+webhook, but there are many cases that will require asynchronous
+signaling via the GatewayStatus block.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Addresses | [][GatewayAddress](#gateway-address)| `[]*GatewayAddress` |  | | Addresses requested for this Gateway. This is optional and behavior can
+depend on the implementation. If a value is set in the spec and the
+requested address is invalid or unavailable, the implementation MUST
+indicate this in the associated entry in GatewayStatus.Addresses.
+
+The Addresses field represents a request for the address(es) on the
+"outside of the Gateway", that traffic bound for this Gateway will use.
+This could be the IP address or hostname of an external load balancer or
+other networking infrastructure, or some other address that traffic will
+be sent to.
+
+The .listener.hostname field is used to route traffic that has already
+arrived at the Gateway to the correct in-cluster destination.
+
+If no Addresses are specified, the implementation MAY schedule the
+Gateway in an implementation-specific manner, assigning an appropriate
+set of Addresses.
+
+The implementation MUST bind all Listeners to every GatewayAddress that
+it assigns to the Gateway and add a corresponding entry in
+GatewayStatus.Addresses.
+
+Support: Extended
+
++optional
++kubebuilder:validation:MaxItems=16 |  |
+| Listeners | [][Listener](#listener)| `[]*Listener` |  | | Listeners associated with this Gateway. Listeners define
+logical endpoints that are bound on this Gateway's addresses.
+At least one Listener MUST be specified.
+
+Each listener in a Gateway must have a unique combination of Hostname,
+Port, and Protocol.
+
+An implementation MAY group Listeners by Port and then collapse each
+group of Listeners into a single Listener if the implementation
+determines that the Listeners in the group are "compatible". An
+implementation MAY also group together and collapse compatible
+Listeners belonging to different Gateways.
+
+For example, an implementation might consider Listeners to be
+compatible with each other if all of the following conditions are
+met:
+
+1. Either each Listener within the group specifies the "HTTP"
+Protocol or each Listener within the group specifies either
+the "HTTPS" or "TLS" Protocol.
+
+2. Each Listener within the group specifies a Hostname that is unique
+within the group.
+
+3. As a special case, one Listener within a group may omit Hostname,
+in which case this Listener matches when no other Listener
+matches.
+
+If the implementation does collapse compatible Listeners, the
+hostname provided in the incoming client request MUST be
+matched to a Listener to find the correct set of Routes.
+The incoming hostname MUST be matched using the Hostname
+field for each Listener in order of most to least specific.
+That is, exact matches must be processed before wildcard
+matches.
+
+If this field specifies multiple Listeners that have the same
+Port value but are not compatible, the implementation must raise
+a "Conflicted" condition in the Listener status.
+
+Support: Core
+
++listType=map
++listMapKey=name
++kubebuilder:validation:MinItems=1
++kubebuilder:validation:MaxItems=64 |  |
+| gatewayClassName | [ObjectName](#object-name)| `ObjectName` |  | |  |  |
+
+
+
+### <span id="gateway-status"></span> GatewayStatus
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Addresses | [][GatewayAddress](#gateway-address)| `[]*GatewayAddress` |  | | Addresses lists the IP addresses that have actually been
+bound to the Gateway. These addresses may differ from the
+addresses in the Spec, e.g. if the Gateway automatically
+assigns an address from a reserved pool.
+
++optional
++kubebuilder:validation:MaxItems=16 |  |
+| Conditions | [][Condition](#condition)| `[]*Condition` |  | | Conditions describe the current conditions of the Gateway.
+
+Implementations should prefer to express Gateway conditions
+using the `GatewayConditionType` and `GatewayConditionReason`
+constants so that operators and tools can converge on a common
+vocabulary to describe Gateway state.
+
+Known condition types are:
+
+"Scheduled"
+"Ready"
+
++optional
++listType=map
++listMapKey=type
++kubebuilder:validation:MaxItems=8
++kubebuilder:default={{type: "Scheduled", status: "Unknown", reason:"NotReconciled", message:"Waiting for controller", lastTransitionTime: "1970-01-01T00:00:00Z"}} |  |
+| Listeners | [][ListenerStatus](#listener-status)| `[]*ListenerStatus` |  | | Listeners provide status for each unique listener port defined in the Spec.
+
++optional
++listType=map
++listMapKey=name
++kubebuilder:validation:MaxItems=64 |  |
 
 
 
@@ -7162,6 +7732,967 @@ to be removed in 1.21 release.
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | ExternalLinks | [][ExternalLink](#external-link)| `[]*ExternalLink` |  | |  |  |
+
+
+
+### <span id="group"></span> Group
+
+
+> This validation is based off of the corresponding Kubernetes validation:
+https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/util/validation/validation.go#L208
+
+Valid values include:
+
+"" - empty string implies core Kubernetes API group
+"networking.k8s.io"
+"foo.example.com"
+
+Invalid values include:
+
+"example.com/bar" - "/" is an invalid character
+
++kubebuilder:validation:MaxLength=253
++kubebuilder:validation:Pattern=`^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| Group | string| string | | This validation is based off of the corresponding Kubernetes validation:
+https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/util/validation/validation.go#L208
+
+Valid values include:
+
+"" - empty string implies core Kubernetes API group
+"networking.k8s.io"
+"foo.example.com"
+
+Invalid values include:
+
+"example.com/bar" - "/" is an invalid character
+
++kubebuilder:validation:MaxLength=253
++kubebuilder:validation:Pattern=`^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$` |  |
+
+
+
+### <span id="http-backend-ref"></span> HTTPBackendRef
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Filters | [][HTTPRouteFilter](#http-route-filter)| `[]*HTTPRouteFilter` |  | | Filters defined at this level should be executed if and only if the
+request is being forwarded to the backend defined here.
+
+Support: Custom (For broader support of filters, use the Filters field
+in HTTPRouteRule.)
+
++optional
++kubebuilder:validation:MaxItems=16 |  |
+| Weight | int32 (formatted integer)| `int32` |  | | Weight specifies the proportion of requests forwarded to the referenced
+backend. This is computed as weight/(sum of all weights in this
+BackendRefs list). For non-zero values, there may be some epsilon from
+the exact proportion defined here depending on the precision an
+implementation supports. Weight is not a percentage and the sum of
+weights does not need to equal 100.
+
+If only one backend is specified and it has a weight greater than 0, 100%
+of the traffic is forwarded to that backend. If weight is set to 0, no
+traffic should be forwarded for this entry. If unspecified, weight
+defaults to 1.
+
+Support for this field varies based on the context where used.
+
++optional
++kubebuilder:default=1
++kubebuilder:validation:Minimum=0
++kubebuilder:validation:Maximum=1000000 |  |
+| group | [Group](#group)| `Group` |  | |  |  |
+| kind | [Kind](#kind)| `Kind` |  | |  |  |
+| name | [ObjectName](#object-name)| `ObjectName` |  | |  |  |
+| namespace | [Namespace](#namespace)| `Namespace` |  | |  |  |
+| port | [PortNumber](#port-number)| `PortNumber` |  | |  |  |
+
+
+
+### <span id="http-header"></span> HTTPHeader
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Value | string| `string` |  | | Value is the value of HTTP Header to be matched.
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=4096 |  |
+| name | [HTTPHeaderName](#http-header-name)| `HTTPHeaderName` |  | |  |  |
+
+
+
+### <span id="http-header-match"></span> HTTPHeaderMatch
+
+
+> HTTPHeaderMatch describes how to select a HTTP route by matching HTTP request
+headers.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Value | string| `string` |  | | Value is the value of HTTP Header to be matched.
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=4096 |  |
+| name | [HTTPHeaderName](#http-header-name)| `HTTPHeaderName` |  | |  |  |
+| type | [HeaderMatchType](#header-match-type)| `HeaderMatchType` |  | |  |  |
+
+
+
+### <span id="http-header-name"></span> HTTPHeaderName
+
+
+> Valid values include:
+
+"Authorization"
+"Set-Cookie"
+
+Invalid values include:
+
+":method" - ":" is an invalid character. This means that HTTP/2 pseudo
+headers are not currently supported by this type.
+"/invalid" - "/" is an invalid character
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=256
++kubebuilder:validation:Pattern=`^[A-Za-z0-9!#$%&'*+\-.^_\x60|~]+$`
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| HTTPHeaderName | string| string | | Valid values include:
+
+"Authorization"
+"Set-Cookie"
+
+Invalid values include:
+
+":method" - ":" is an invalid character. This means that HTTP/2 pseudo
+headers are not currently supported by this type.
+"/invalid" - "/" is an invalid character
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=256
++kubebuilder:validation:Pattern=`^[A-Za-z0-9!#$%&'*+\-.^_\x60|~]+$` |  |
+
+
+
+### <span id="http-method"></span> HTTPMethod
+
+
+> Note that values may be added to this enum, implementations
+must ensure that unknown values will not cause a crash.
+
+Unknown values here must result in the implementation setting the
+Attached Condition for the Route to `status: False`, with a
+Reason of `UnsupportedValue`.
+
++kubebuilder:validation:Enum=GET;HEAD;POST;PUT;DELETE;CONNECT;OPTIONS;TRACE;PATCH
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| HTTPMethod | string| string | | Note that values may be added to this enum, implementations
+must ensure that unknown values will not cause a crash.
+
+Unknown values here must result in the implementation setting the
+Attached Condition for the Route to `status: False`, with a
+Reason of `UnsupportedValue`.
+
++kubebuilder:validation:Enum=GET;HEAD;POST;PUT;DELETE;CONNECT;OPTIONS;TRACE;PATCH |  |
+
+
+
+### <span id="http-path-match"></span> HTTPPathMatch
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Value | string| `string` |  | | Value of the HTTP path to match against.
+
++optional
++kubebuilder:default="/"
++kubebuilder:validation:MaxLength=1024 |  |
+| type | [PathMatchType](#path-match-type)| `PathMatchType` |  | |  |  |
+
+
+
+### <span id="http-path-modifier"></span> HTTPPathModifier
+
+
+> <gateway:experimental>
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| ReplaceFullPath | string| `string` |  | | ReplaceFullPath specifies the value with which to replace the full path
+of a request during a rewrite or redirect.
+
+<gateway:experimental>
++kubebuilder:validation:MaxLength=1024
++optional |  |
+| ReplacePrefixMatch | string| `string` |  | | ReplacePrefixMatch specifies the value with which to replace the prefix
+match of a request during a rewrite or redirect. For example, a request
+to "/foo/bar" with a prefix match of "/foo" would be modified to "/bar".
+
+Note that this matches the behavior of the PathPrefix match type. This
+matches full path elements. A path element refers to the list of labels
+in the path split by the `/` separator. When specified, a trailing `/` is
+ignored. For example, the paths `/abc`, `/abc/`, and `/abc/def` would all
+match the prefix `/abc`, but the path `/abcd` would not.
+
+<gateway:experimental>
++kubebuilder:validation:MaxLength=1024
++optional |  |
+| type | [HTTPPathModifierType](#http-path-modifier-type)| `HTTPPathModifierType` |  | |  |  |
+
+
+
+### <span id="http-path-modifier-type"></span> HTTPPathModifierType
+
+
+  
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| HTTPPathModifierType | string| string | |  |  |
+
+
+
+### <span id="http-query-param-match"></span> HTTPQueryParamMatch
+
+
+> HTTPQueryParamMatch describes how to select a HTTP route by matching HTTP
+query parameters.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Name | string| `string` |  | | Name is the name of the HTTP query param to be matched. This must be an
+exact string match. (See
+https://tools.ietf.org/html/rfc7230#section-2.7.3).
+
+If multiple entries specify equivalent query param names, only the first
+entry with an equivalent name MUST be considered for a match. Subsequent
+entries with an equivalent query param name MUST be ignored.
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=256 |  |
+| Value | string| `string` |  | | Value is the value of HTTP query param to be matched.
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=1024 |  |
+| type | [QueryParamMatchType](#query-param-match-type)| `QueryParamMatchType` |  | |  |  |
+
+
+
+### <span id="http-request-header-filter"></span> HTTPRequestHeaderFilter
+
+
+> HTTPRequestHeaderFilter defines configuration for the RequestHeaderModifier
+filter.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Add | [][HTTPHeader](#http-header)| `[]*HTTPHeader` |  | | Add adds the given header(s) (name, value) to the request
+before the action. It appends to any existing values associated
+with the header name.
+
+Input:
+GET /foo HTTP/1.1
+my-header: foo
+
+Config:
+add:
+name: "my-header"
+value: "bar"
+
+Output:
+GET /foo HTTP/1.1
+my-header: foo
+my-header: bar
+
++optional
++listType=map
++listMapKey=name
++kubebuilder:validation:MaxItems=16 |  |
+| Remove | []string| `[]string` |  | | Remove the given header(s) from the HTTP request before the action. The
+value of Remove is a list of HTTP header names. Note that the header
+names are case-insensitive (see
+https://datatracker.ietf.org/doc/html/rfc2616#section-4.2).
+
+Input:
+GET /foo HTTP/1.1
+my-header1: foo
+my-header2: bar
+my-header3: baz
+
+Config:
+remove: ["my-header1", "my-header3"]
+
+Output:
+GET /foo HTTP/1.1
+my-header2: bar
+
++optional
++kubebuilder:validation:MaxItems=16 |  |
+| Set | [][HTTPHeader](#http-header)| `[]*HTTPHeader` |  | | Set overwrites the request with the given header (name, value)
+before the action.
+
+Input:
+GET /foo HTTP/1.1
+my-header: foo
+
+Config:
+set:
+name: "my-header"
+value: "bar"
+
+Output:
+GET /foo HTTP/1.1
+my-header: bar
+
++optional
++listType=map
++listMapKey=name
++kubebuilder:validation:MaxItems=16 |  |
+
+
+
+### <span id="http-request-mirror-filter"></span> HTTPRequestMirrorFilter
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| backendRef | [BackendObjectReference](#backend-object-reference)| `BackendObjectReference` |  | |  |  |
+
+
+
+### <span id="http-request-redirect-filter"></span> HTTPRequestRedirectFilter
+
+
+> HTTPRequestRedirect defines a filter that redirects a request. This filter
+MUST NOT be used on the same Route rule as a HTTPURLRewrite filter.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Scheme | string| `string` |  | | Scheme is the scheme to be used in the value of the `Location`
+header in the response.
+When empty, the scheme of the request is used.
+
+Support: Extended
+
+Note that values may be added to this enum, implementations
+must ensure that unknown values will not cause a crash.
+
+Unknown values here must result in the implementation setting the
+Attached Condition for the Route to `status: False`, with a
+Reason of `UnsupportedValue`.
+
++optional
++kubebuilder:validation:Enum=http;https |  |
+| StatusCode | int64 (formatted integer)| `int64` |  | | StatusCode is the HTTP status code to be used in response.
+
+Support: Core
+
+Note that values may be added to this enum, implementations
+must ensure that unknown values will not cause a crash.
+
+Unknown values here must result in the implementation setting the
+Attached Condition for the Route to `status: False`, with a
+Reason of `UnsupportedValue`.
+
++optional
++kubebuilder:default=302
++kubebuilder:validation:Enum=301;302 |  |
+| hostname | [PreciseHostname](#precise-hostname)| `PreciseHostname` |  | |  |  |
+| path | [HTTPPathModifier](#http-path-modifier)| `HTTPPathModifier` |  | |  |  |
+| port | [PortNumber](#port-number)| `PortNumber` |  | |  |  |
+
+
+
+### <span id="http-route"></span> HTTPRoute
+
+
+> HTTPRoute provides a way to route HTTP requests. This includes the capability
+to match requests by hostname, path, header, or query param. Filters can be
+used to specify additional processing steps. Backends specify where matching
+requests should be routed.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| APIVersion | string| `string` |  | | APIVersion defines the versioned schema of this representation of an object.
+Servers should convert recognized schemas to the latest internal value, and
+may reject unrecognized values.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
++optional |  |
+| Annotations | map of string| `map[string]string` |  | | Annotations is an unstructured key value map stored with a resource that may be
+set by external tools to store and retrieve arbitrary metadata. They are not
+queryable and should be preserved when modifying objects.
+More info: http://kubernetes.io/docs/user-guide/annotations
++optional |  |
+| CreationTimestamp | string| `string` |  | | CreationTimestamp is a timestamp representing the server time when this object was
+created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+
+Populated by the system.
+Read-only.
+Null for lists.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
++optional |  |
+| DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
+it will be removed from the system. Only set when deletionTimestamp is also set.
+May only be shortened.
+Read-only.
++optional |  |
+| DeletionTimestamp | string| `string` |  | | DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
+field is set by the server when a graceful deletion is requested by the user, and is not
+directly settable by a client. The resource is expected to be deleted (no longer visible
+from resource lists, and not reachable by name) after the time in this field, once the
+finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
+Once the deletionTimestamp is set, this value may not be unset or be set further into the
+future, although it may be shortened or the resource may be deleted prior to this time.
+For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
+by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
+the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
+remove the pod from the API. In the presence of network partitions, this object may still
+exist after this timestamp, until an administrator or automated process can determine the
+resource is fully terminated.
+If not set, graceful deletion of the object has not been requested.
+
+Populated by the system when a graceful deletion is requested.
+Read-only.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
++optional |  |
+| Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
+is an identifier for the responsible component that will remove the entry
+from the list. If the deletionTimestamp of the object is non-nil, entries
+in this list can only be removed.
+Finalizers may be processed and removed in any order.  Order is NOT enforced
+because it introduces significant risk of stuck finalizers.
+finalizers is a shared field, any actor with permission can reorder it.
+If the finalizer list is processed in order, then this can lead to a situation
+in which the component responsible for the first finalizer in the list is
+waiting for a signal (field value, external system, or other) produced by a
+component responsible for a finalizer later in the list, resulting in a deadlock.
+Without enforced ordering finalizers are free to order amongst themselves and
+are not vulnerable to ordering changes in the list.
++optional
++patchStrategy=merge |  |
+| GenerateName | string| `string` |  | | GenerateName is an optional prefix, used by the server, to generate a unique
+name ONLY IF the Name field has not been provided.
+If this field is used, the name returned to the client will be different
+than the name passed. This value will also be combined with a unique suffix.
+The provided value has the same validation rules as the Name field,
+and may be truncated by the length of the suffix required to make the value
+unique on the server.
+
+If this field is specified and the generated name exists, the server will return a 409.
+
+Applied only if Name is not specified.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
++optional |  |
+| Generation | int64 (formatted integer)| `int64` |  | | A sequence number representing a specific generation of the desired state.
+Populated by the system. Read-only.
++optional |  |
+| Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
+Servers may infer this from the endpoint the client submits requests to.
+Cannot be updated.
+In CamelCase.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
++optional |  |
+| Labels | map of string| `map[string]string` |  | | Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: http://kubernetes.io/docs/user-guide/labels
++optional |  |
+| ManagedFields | [][ManagedFieldsEntry](#managed-fields-entry)| `[]*ManagedFieldsEntry` |  | | ManagedFields maps workflow-id and version to the set of fields
+that are managed by that workflow. This is mostly for internal
+housekeeping, and users typically shouldn't need to set or
+understand this field. A workflow can be the user's name, a
+controller's name, or the name of a specific apply path like
+"ci-cd". The set of fields is always in the version that the
+workflow used when modifying the object.
+
++optional |  |
+| Name | string| `string` |  | | Name must be unique within a namespace. Is required when creating resources, although
+some resources may allow a client to request the generation of an appropriate name
+automatically. Name is primarily intended for creation idempotence and configuration
+definition.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/identifiers#names
++optional |  |
+| Namespace | string| `string` |  | | Namespace defines the space within which each name must be unique. An empty namespace is
+equivalent to the "default" namespace, but "default" is the canonical representation.
+Not all objects are required to be scoped to a namespace - the value of this field for
+those objects will be empty.
+
+Must be a DNS_LABEL.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/namespaces
++optional |  |
+| OwnerReferences | [][OwnerReference](#owner-reference)| `[]*OwnerReference` |  | | List of objects depended by this object. If ALL objects in the list have
+been deleted, this object will be garbage collected. If this object is managed by a controller,
+then an entry in this list will point to this controller, with the controller field set to true.
+There cannot be more than one managing controller.
++optional
++patchMergeKey=uid
++patchStrategy=merge |  |
+| ResourceVersion | string| `string` |  | | An opaque value that represents the internal version of this object that can
+be used by clients to determine when objects have changed. May be used for optimistic
+concurrency, change detection, and the watch operation on a resource or set of resources.
+Clients must treat these values as opaque and passed unmodified back to the server.
+They may only be valid for a particular resource or set of resources.
+
+Populated by the system.
+Read-only.
+Value must be treated as opaque by clients and .
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
++optional |  |
+| SelfLink | string| `string` |  | | Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
++optional |  |
+| ZZZ_DeprecatedClusterName | string| `string` |  | | Deprecated: ClusterName is a legacy field that was always cleared by
+the system and never used; it will be removed completely in 1.25.
+
+The name in the go struct is changed to help clients detect
+accidental use.
+
++optional |  |
+| spec | [HTTPRouteSpec](#http-route-spec)| `HTTPRouteSpec` |  | |  |  |
+| status | [HTTPRouteStatus](#http-route-status)| `HTTPRouteStatus` |  | |  |  |
+| uid | [UID](#uid)| `UID` |  | |  |  |
+
+
+
+### <span id="http-route-filter"></span> HTTPRouteFilter
+
+
+> HTTPRouteFilter defines processing steps that must be completed during the
+request or response lifecycle. HTTPRouteFilters are meant as an extension
+point to express processing that may be done in Gateway implementations. Some
+examples include request or response modification, implementing
+authentication strategies, rate-limiting, and traffic shaping. API
+guarantee/conformance is defined based on the type of the filter.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| extensionRef | [LocalObjectReference](#local-object-reference)| `LocalObjectReference` |  | |  |  |
+| requestHeaderModifier | [HTTPRequestHeaderFilter](#http-request-header-filter)| `HTTPRequestHeaderFilter` |  | |  |  |
+| requestMirror | [HTTPRequestMirrorFilter](#http-request-mirror-filter)| `HTTPRequestMirrorFilter` |  | |  |  |
+| requestRedirect | [HTTPRequestRedirectFilter](#http-request-redirect-filter)| `HTTPRequestRedirectFilter` |  | |  |  |
+| type | [HTTPRouteFilterType](#http-route-filter-type)| `HTTPRouteFilterType` |  | |  |  |
+| urlRewrite | [HTTPURLRewriteFilter](#http-url-rewrite-filter)| `HTTPURLRewriteFilter` |  | |  |  |
+
+
+
+### <span id="http-route-filter-type"></span> HTTPRouteFilterType
+
+
+  
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| HTTPRouteFilterType | string| string | |  |  |
+
+
+
+### <span id="http-route-match"></span> HTTPRouteMatch
+
+
+> For example, the match below will match a HTTP request only if its path
+starts with `/foo` AND it contains the `version: v1` header:
+
+```
+match:
+path:
+value: "/foo"
+headers:
+name: "version"
+value "v1"
+```
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Headers | [][HTTPHeaderMatch](#http-header-match)| `[]*HTTPHeaderMatch` |  | | Headers specifies HTTP request header matchers. Multiple match values are
+ANDed together, meaning, a request must match all the specified headers
+to select the route.
+
++listType=map
++listMapKey=name
++optional
++kubebuilder:validation:MaxItems=16 |  |
+| QueryParams | [][HTTPQueryParamMatch](#http-query-param-match)| `[]*HTTPQueryParamMatch` |  | | QueryParams specifies HTTP query parameter matchers. Multiple match
+values are ANDed together, meaning, a request must match all the
+specified query parameters to select the route.
+
++listType=map
++listMapKey=name
++optional
++kubebuilder:validation:MaxItems=16 |  |
+| method | [HTTPMethod](#http-method)| `HTTPMethod` |  | |  |  |
+| path | [HTTPPathMatch](#http-path-match)| `HTTPPathMatch` |  | |  |  |
+
+
+
+### <span id="http-route-rule"></span> HTTPRouteRule
+
+
+> HTTPRouteRule defines semantics for matching an HTTP request based on
+conditions (matches), processing it (filters), and forwarding the request to
+an API object (backendRefs).
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| BackendRefs | [][HTTPBackendRef](#http-backend-ref)| `[]*HTTPBackendRef` |  | | BackendRefs defines the backend(s) where matching requests should be
+sent.
+
+Failure behavior here depends on how many BackendRefs are specified and
+how many are invalid.
+
+If *all* entries in BackendRefs are invalid, and there are also no filters
+specified in this route rule, *all* traffic which matches this rule MUST
+receive a 500 status code.
+
+See the HTTPBackendRef definition for the rules about what makes a single
+HTTPBackendRef invalid.
+
+When a HTTPBackendRef is invalid, 500 status codes MUST be returned for
+requests that would have otherwise been routed to an invalid backend. If
+multiple backends are specified, and some are invalid, the proportion of
+requests that would otherwise have been routed to an invalid backend
+MUST receive a 500 status code.
+
+For example, if two backends are specified with equal weights, and one is
+invalid, 50 percent of traffic must receive a 500. Implementations may
+choose how that 50 percent is determined.
+
+Support: Core for Kubernetes Service
+
+Support: Custom for any other resource
+
+Support for weight: Core
+
++optional
++kubebuilder:validation:MaxItems=16 |  |
+| Filters | [][HTTPRouteFilter](#http-route-filter)| `[]*HTTPRouteFilter` |  | | Filters define the filters that are applied to requests that match
+this rule.
+
+The effects of ordering of multiple behaviors are currently unspecified.
+This can change in the future based on feedback during the alpha stage.
+
+Conformance-levels at this level are defined based on the type of filter:
+
+ALL core filters MUST be supported by all implementations.
+Implementers are encouraged to support extended filters.
+Implementation-specific custom filters have no API guarantees across
+implementations.
+
+Specifying a core filter multiple times has unspecified or custom
+conformance.
+
+All filters are expected to be compatible with each other except for the
+URLRewrite and RequestRedirect filters, which may not be combined. If an
+implementation can not support other combinations of filters, they must clearly
+document that limitation. In all cases where incompatible or unsupported
+filters are specified, implementations MUST add a warning condition to status.
+
+Support: Core
+
++optional
++kubebuilder:validation:MaxItems=16 |  |
+| Matches | [][HTTPRouteMatch](#http-route-match)| `[]*HTTPRouteMatch` |  | | Matches define conditions used for matching the rule against incoming
+HTTP requests. Each match is independent, i.e. this rule will be matched
+if **any** one of the matches is satisfied.
+
+For example, take the following matches configuration:
+
+```
+matches:
+path:
+value: "/foo"
+headers:
+name: "version"
+value: "v2"
+path:
+value: "/v2/foo"
+```
+
+For a request to match against this rule, a request must satisfy
+EITHER of the two conditions:
+
+path prefixed with `/foo` AND contains the header `version: v2`
+path prefix of `/v2/foo`
+
+See the documentation for HTTPRouteMatch on how to specify multiple
+match conditions that should be ANDed together.
+
+If no matches are specified, the default is a prefix
+path match on "/", which has the effect of matching every
+HTTP request.
+
+Proxy or Load Balancer routing configuration generated from HTTPRoutes
+MUST prioritize rules based on the following criteria, continuing on
+ties. Precedence must be given to the Rule with the largest number
+of:
+
+Characters in a matching non-wildcard hostname.
+Characters in a matching hostname.
+Characters in a matching path.
+Header matches.
+Query param matches.
+
+If ties still exist across multiple Routes, matching precedence MUST be
+determined in order of the following criteria, continuing on ties:
+
+The oldest Route based on creation timestamp.
+The Route appearing first in alphabetical order by
+"{namespace}/{name}".
+
+If ties still exist within the Route that has been given precedence,
+matching precedence MUST be granted to the first matching rule meeting
+the above criteria.
+
+When no rules matching a request have been successfully attached to the
+parent a request is coming from, a HTTP 404 status code MUST be returned.
+
++optional
++kubebuilder:validation:MaxItems=8
++kubebuilder:default={{path:{ type: "PathPrefix", value: "/"}}} |  |
+
+
+
+### <span id="http-route-spec"></span> HTTPRouteSpec
+
+
+> HTTPRouteSpec defines the desired state of HTTPRoute
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Hostnames | [][Hostname](#hostname)| `[]Hostname` |  | | Hostnames defines a set of hostname that should match against the HTTP
+Host header to select a HTTPRoute to process the request. This matches
+the RFC 1123 definition of a hostname with 2 notable exceptions:
+
+1. IPs are not allowed.
+2. A hostname may be prefixed with a wildcard label (`*.`). The wildcard
+label must appear by itself as the first label.
+
+If a hostname is specified by both the Listener and HTTPRoute, there
+must be at least one intersecting hostname for the HTTPRoute to be |  |
+| ParentRefs | [][ParentReference](#parent-reference)| `[]*ParentReference` |  | | ParentRefs references the resources (usually Gateways) that a Route wants
+to be attached to. Note that the referenced parent resource needs to
+allow this for the attachment to be complete. For Gateways, that means
+the Gateway needs to allow attachment from Routes of this kind and
+namespace.
+
+The only kind of parent resource with "Core" support is Gateway. This API
+may be extended in the future to support additional kinds of parent
+resources such as one of the route kinds.
+
+It is invalid to reference an identical parent more than once. It is
+valid to reference multiple distinct sections within the same parent
+resource, such as 2 Listeners within a Gateway.
+
+It is possible to separately reference multiple distinct objects that may
+be collapsed by an implementation. For example, some implementations may
+choose to merge compatible Gateway Listeners together. If that is the
+case, the list of routes attached to those resources should also be
+merged.
+
++optional
++kubebuilder:validation:MaxItems=32 |  |
+| Rules | [][HTTPRouteRule](#http-route-rule)| `[]*HTTPRouteRule` |  | | Rules are a list of HTTP matchers, filters and actions.
+
++optional
++kubebuilder:validation:MaxItems=16
++kubebuilder:default={{matches: {{path: {type: "PathPrefix", value: "/"}}}}} |  |
+
+
+
+### <span id="http-route-status"></span> HTTPRouteStatus
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Parents | [][RouteParentStatus](#route-parent-status)| `[]*RouteParentStatus` |  | | Parents is a list of parent resources (usually Gateways) that are
+associated with the route, and the status of the route with respect to
+each parent. When this route attaches to a parent, the controller that
+manages the parent must add an entry to this list when the controller
+first sees the route and should update the entry as appropriate when the
+route or gateway is modified.
+
+Note that parent references that cannot be resolved by an implementation
+of this API will not be added to this list. Implementations of this API
+can only populate Route status for the Gateways/parent resources they are
+responsible for.
+
+A maximum of 32 Gateways will be represented in this list. An empty list
+means the route has not been attached to any Gateway.
+
++kubebuilder:validation:MaxItems=32 |  |
+
+
+
+### <span id="http-url-rewrite-filter"></span> HTTPURLRewriteFilter
+
+
+> Support: Extended
+
+<gateway:experimental>
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| hostname | [PreciseHostname](#precise-hostname)| `PreciseHostname` |  | |  |  |
+| path | [HTTPPathModifier](#http-path-modifier)| `HTTPPathModifier` |  | |  |  |
+
+
+
+### <span id="header-match-type"></span> HeaderMatchType
+
+
+> "Exact"
+"RegularExpression"
+
+Note that values may be added to this enum, implementations
+must ensure that unknown values will not cause a crash.
+
+Unknown values here must result in the implementation setting the
+Attached Condition for the Route to `status: False`, with a
+Reason of `UnsupportedValue`.
+
++kubebuilder:validation:Enum=Exact;RegularExpression
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| HeaderMatchType | string| string | | "Exact"
+"RegularExpression"
+
+Note that values may be added to this enum, implementations
+must ensure that unknown values will not cause a crash.
+
+Unknown values here must result in the implementation setting the
+Attached Condition for the Route to `status: False`, with a
+Reason of `UnsupportedValue`.
+
++kubebuilder:validation:Enum=Exact;RegularExpression |  |
 
 
 
@@ -7195,6 +8726,48 @@ It is true for simple service names and FQDN services.
 It is false for service.namespace format and service entries. |  |
 | Namespace | string| `string` |  | |  |  |
 | Service | string| `string` |  | |  |  |
+
+
+
+### <span id="hostname"></span> Hostname
+
+
+> 1. IPs are not allowed.
+2. A hostname may be prefixed with a wildcard label (`*.`). The wildcard
+label must appear by itself as the first label.
+
+Hostname can be "precise" which is a domain name without the terminating
+dot of a network host (e.g. "foo.example.com") or "wildcard", which is a
+domain name prefixed with a single wildcard label (e.g. `*.example.com`).
+
+Note that as per RFC1035 and RFC1123, a *label* must consist of lower case
+alphanumeric characters or '-', and must start and end with an alphanumeric
+character. No other punctuation is allowed.
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=253
++kubebuilder:validation:Pattern=`^(\*\.)?[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| Hostname | string| string | | 1. IPs are not allowed.
+2. A hostname may be prefixed with a wildcard label (`*.`). The wildcard
+label must appear by itself as the first label.
+
+Hostname can be "precise" which is a domain name without the terminating
+dot of a network host (e.g. "foo.example.com") or "wildcard", which is a
+domain name prefixed with a single wildcard label (e.g. `*.example.com`).
+
+Note that as per RFC1035 and RFC1123, a *label* must consist of lower case
+alphanumeric characters or '-', and must start and end with an alphanumeric
+character. No other punctuation is allowed.
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=253
++kubebuilder:validation:Pattern=`^(\*\.)?[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$` |  |
 
 
 
@@ -7263,6 +8836,8 @@ Can be True, False, Unknown. |  |
 | destinationRule | [DestinationRule](#destination-rule)| `DestinationRule` |  | |  |  |
 | envoyFilter | [EnvoyFilter](#envoy-filter)| `EnvoyFilter` |  | |  |  |
 | gateway | [Gateway](#gateway)| `Gateway` |  | |  |  |
+| k8sGateway | [Gateway](#gateway)| `Gateway` |  | |  |  |
+| k8sHTTPRoute | [HTTPRoute](#http-route)| `HTTPRoute` |  | |  |  |
 | namespace | [Namespace](#namespace)| `Namespace` |  | |  |  |
 | peerAuthentication | [PeerAuthentication](#peer-authentication)| `PeerAuthentication` |  | |  |  |
 | permissions | [ResourcePermissions](#resource-permissions)| `ResourcePermissions` |  | |  |  |
@@ -7270,8 +8845,10 @@ Can be True, False, Unknown. |  |
 | requestAuthentication | [RequestAuthentication](#request-authentication)| `RequestAuthentication` |  | |  |  |
 | serviceEntry | [ServiceEntry](#service-entry)| `ServiceEntry` |  | |  |  |
 | sidecar | [Sidecar](#sidecar)| `Sidecar` |  | |  |  |
+| telemetry | [Telemetry](#telemetry)| `Telemetry` |  | |  |  |
 | validation | [IstioValidation](#istio-validation)| `IstioValidation` |  | |  |  |
 | virtualService | [VirtualService](#virtual-service)| `VirtualService` |  | |  |  |
+| wasmPlugin | [WasmPlugin](#wasm-plugin)| `WasmPlugin` |  | |  |  |
 | workloadEntry | [WorkloadEntry](#workload-entry)| `WorkloadEntry` |  | |  |  |
 | workloadGroup | [WorkloadGroup](#workload-group)| `WorkloadGroup` |  | |  |  |
 
@@ -7299,7 +8876,8 @@ Can be True, False, Unknown. |  |
 ### <span id="istio-config-list"></span> IstioConfigList
 
 
-> This type is used for returning a response of IstioConfigList
+> IstioConfigList istioConfigList
+This type is used for returning a response of IstioConfigList
   
 
 
@@ -7314,11 +8892,15 @@ Can be True, False, Unknown. |  |
 | DestinationRules | [][DestinationRule](#destination-rule)| `[]*DestinationRule` |  | |  |  |
 | EnvoyFilters | [][EnvoyFilter](#envoy-filter)| `[]*EnvoyFilter` |  | |  |  |
 | Gateways | [][Gateway](#gateway)| `[]*Gateway` |  | |  |  |
+| K8sGateways | [][Gateway](#gateway)| `[]*Gateway` |  | |  |  |
+| K8sHTTPRoutes | [][HTTPRoute](#http-route)| `[]*HTTPRoute` |  | |  |  |
 | PeerAuthentications | [][PeerAuthentication](#peer-authentication)| `[]*PeerAuthentication` |  | |  |  |
 | RequestAuthentications | [][RequestAuthentication](#request-authentication)| `[]*RequestAuthentication` |  | |  |  |
 | ServiceEntries | [][ServiceEntry](#service-entry)| `[]*ServiceEntry` |  | |  |  |
 | Sidecars | [][Sidecar](#sidecar)| `[]*Sidecar` |  | |  |  |
+| Telemetries | [][Telemetry](#telemetry)| `[]*Telemetry` |  | |  |  |
 | VirtualServices | [][VirtualService](#virtual-service)| `[]*VirtualService` |  | |  |  |
+| WasmPlugins | [][WasmPlugin](#wasm-plugin)| `[]*WasmPlugin` |  | |  |  |
 | WorkloadEntries | [][WorkloadEntry](#workload-entry)| `[]*WorkloadEntry` |  | |  |  |
 | WorkloadGroups | [][WorkloadGroup](#workload-group)| `[]*WorkloadGroup` |  | |  |  |
 | namespace | [Namespace](#namespace)| `Namespace` | ✓ | |  |  |
@@ -7351,6 +8933,7 @@ Can be True, False, Unknown. |  |
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | IsMaistra | boolean| `bool` | ✓ | | If true, the Istio implementation is a variant of Maistra. |  |
+| IstioAPIEnabled | boolean| `bool` |  | | Is api enabled |  |
 
 
 
@@ -7542,6 +9125,42 @@ generation is still in progress.  See https://istio.io/latest/docs/reference/con
 
 
 
+### <span id="kind"></span> Kind
+
+
+> Valid values include:
+
+"Service"
+"HTTPRoute"
+
+Invalid values include:
+
+"invalid/kind" - "/" is an invalid character
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=63
++kubebuilder:validation:Pattern=`^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$`
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| Kind | string| string | | Valid values include:
+
+"Service"
+"HTTPRoute"
+
+Invalid values include:
+
+"invalid/kind" - "/" is an invalid character
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=63
++kubebuilder:validation:Pattern=`^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$` |  |
+
+
+
 ### <span id="listener"></span> Listener
 
 
@@ -7560,12 +9179,67 @@ generation is still in progress.  See https://istio.io/latest/docs/reference/con
 
 
 
+### <span id="listener-status"></span> ListenerStatus
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| AttachedRoutes | int32 (formatted integer)| `int32` |  | | AttachedRoutes represents the total number of Routes that have been
+successfully attached to this Listener. |  |
+| Conditions | [][Condition](#condition)| `[]*Condition` |  | | Conditions describe the current condition of this listener.
+
++listType=map
++listMapKey=type
++kubebuilder:validation:MaxItems=8 |  |
+| SupportedKinds | [][RouteGroupKind](#route-group-kind)| `[]*RouteGroupKind` |  | | SupportedKinds is the list indicating the Kinds supported by this
+listener. This MUST represent the kinds an implementation supports for
+that Listener configuration.
+
+If kinds are specified in Spec that are not supported, they MUST NOT
+appear in this list and an implementation MUST set the "ResolvedRefs"
+condition to "False" with the "InvalidRouteKinds" reason. If both valid
+and invalid Route kinds are specified, the implementation MUST
+reference the valid Route kinds that have been specified.
+
++kubebuilder:validation:MaxItems=8 |  |
+| name | [SectionName](#section-name)| `SectionName` |  | |  |  |
+
+
+
 ### <span id="listeners"></span> Listeners
 
 
   
 
 [][Listener](#listener)
+
+### <span id="local-object-reference"></span> LocalObjectReference
+
+
+> References to objects with invalid Group and Kind are not valid, and must
+be rejected by the implementation, with appropriate Conditions set
+on the containing object.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| group | [Group](#group)| `Group` |  | |  |  |
+| kind | [Kind](#kind)| `Kind` |  | |  |  |
+| name | [ObjectName](#object-name)| `ObjectName` |  | |  |  |
+
+
 
 ### <span id="log"></span> Log
 
@@ -7600,6 +9274,8 @@ generation is still in progress.  See https://istio.io/latest/docs/reference/con
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| AutoMTLSEnabled | boolean| `bool` |  | |  |  |
+| MinTLS | string| `string` |  | |  |  |
 | Status | string| `string` | ✓ | | mTLS status: MTLS_ENABLED, MTLS_PARTIALLY_ENABLED, MTLS_NOT_ENABLED | `MTLS_ENABLED` |
 
 
@@ -7633,9 +9309,14 @@ share the same name. For example, a status update will be distinct from a
 regular update using the same manager name.
 Note that the APIVersion field is not related to the Subresource field and
 it always corresponds to the version of the main resource. |  |
+| Time | string| `string` |  | | Time is the timestamp of when the ManagedFields entry was added. The
+timestamp will also be updated if a field is added, the manager
+changes any of the owned fields value or removes a field. The
+timestamp does not update when a field is removed from the entry
+because another manager took it over.
++optional |  |
 | fieldsV1 | [FieldsV1](#fields-v1)| `FieldsV1` |  | |  |  |
 | operation | [ManagedFieldsOperationType](#managed-fields-operation-type)| `ManagedFieldsOperationType` |  | |  |  |
-| time | [Time](#time)| `Time` |  | |  |  |
 
 
 
@@ -7785,6 +9466,52 @@ This type is used to describe a set of objects.
 
 
 
+### <span id="namespace"></span> Namespace
+
+
+> This validation is based off of the corresponding Kubernetes validation:
+https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/util/validation/validation.go#L187
+
+This is used for Namespace name validation here:
+https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/api/validation/generic.go#L63
+
+Valid values include:
+
+"example"
+
+Invalid values include:
+
+"example.com" - "." is an invalid character
+
++kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=63
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| Namespace | string| string | | This validation is based off of the corresponding Kubernetes validation:
+https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/util/validation/validation.go#L187
+
+This is used for Namespace name validation here:
+https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/api/validation/generic.go#L63
+
+Valid values include:
+
+"example"
+
+Invalid values include:
+
+"example.com" - "." is an invalid character
+
++kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=63 |  |
+
+
+
 ### <span id="namespace-app-health"></span> NamespaceAppHealth
 
 
@@ -7857,6 +9584,22 @@ This type is used to describe a set of objects.
 
 
 
+### <span id="object-name"></span> ObjectName
+
+
+> +kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=253
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| ObjectName | string| string | | +kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=253 |  |
+
+
+
 ### <span id="owner-reference"></span> OwnerReference
 
 
@@ -7878,6 +9621,8 @@ be cluster-scoped, so there is no namespace field.
 | BlockOwnerDeletion | boolean| `bool` |  | | If true, AND if the owner has the "foregroundDeletion" finalizer, then
 the owner cannot be deleted from the key-value store until this
 reference is removed.
+See https://kubernetes.io/docs/concepts/architecture/garbage-collection/#foreground-deletion
+for how the garbage collector interacts with this field and enforces the foreground deletion.
 Defaults to false.
 To set this field, a user needs "delete" permission of the owner,
 otherwise 422 (Unprocessable Entity) will be returned.
@@ -7892,6 +9637,76 @@ More info: http://kubernetes.io/docs/user-guide/identifiers#names |  |
 
 
 
+### <span id="parent-reference"></span> ParentReference
+
+
+> The API object must be valid in the cluster; the Group and Kind must
+be registered in the cluster for this reference to be valid.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| group | [Group](#group)| `Group` |  | |  |  |
+| kind | [Kind](#kind)| `Kind` |  | |  |  |
+| name | [ObjectName](#object-name)| `ObjectName` |  | |  |  |
+| namespace | [Namespace](#namespace)| `Namespace` |  | |  |  |
+| port | [PortNumber](#port-number)| `PortNumber` |  | |  |  |
+| sectionName | [SectionName](#section-name)| `SectionName` |  | |  |  |
+
+
+
+### <span id="path-match-type"></span> PathMatchType
+
+
+> "Exact"
+"PathPrefix"
+"RegularExpression"
+
+PathPrefix and Exact paths must be syntactically valid:
+
+Must begin with the `/` character
+Must not contain consecutive `/` characters (e.g. `/foo///`, `//`).
+
+Note that values may be added to this enum, implementations
+must ensure that unknown values will not cause a crash.
+
+Unknown values here must result in the implementation setting the
+Attached Condition for the Route to `status: False`, with a
+Reason of `UnsupportedValue`.
+
++kubebuilder:validation:Enum=Exact;PathPrefix;RegularExpression
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| PathMatchType | string| string | | "Exact"
+"PathPrefix"
+"RegularExpression"
+
+PathPrefix and Exact paths must be syntactically valid:
+
+Must begin with the `/` character
+Must not contain consecutive `/` characters (e.g. `/foo///`, `//`).
+
+Note that values may be added to this enum, implementations
+must ensure that unknown values will not cause a crash.
+
+Unknown values here must result in the implementation setting the
+Attached Condition for the Route to `status: False`, with a
+Reason of `UnsupportedValue`.
+
++kubebuilder:validation:Enum=Exact;PathPrefix;RegularExpression |  |
+
+
+
 ### <span id="peer-authentication"></span> PeerAuthentication
 
 
@@ -7902,11 +9717,15 @@ Policy to allow mTLS traffic for all workloads under namespace `foo`:
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
+
 name: default
 namespace: foo
+
 spec:
+
 mtls:
 mode: STRICT
+
 ```
 For mesh level, put the policy in root-namespace according to your Istio installation.
 
@@ -7916,23 +9735,31 @@ require mTLS for workload `finance`.
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
+
 name: default
 namespace: foo
+
 spec:
+
 mtls:
 mode: PERMISSIVE
+
 
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
+
 name: default
 namespace: foo
+
 spec:
+
 selector:
 matchLabels:
 app: finance
 mtls:
 mode: STRICT
+
 ```
 Policy to allow mTLS strict for all workloads, but leave port 8080 to
 plaintext:
@@ -7940,9 +9767,12 @@ plaintext:
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
+
 name: default
 namespace: foo
+
 spec:
+
 selector:
 matchLabels:
 app: finance
@@ -7951,6 +9781,7 @@ mode: STRICT
 portLevelMtls:
 8080:
 mode: DISABLE
+
 ```
 Policy to inherit mTLS mode from namespace (or mesh) settings, and overwrite
 settings for port 8080
@@ -7958,9 +9789,12 @@ settings for port 8080
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
+
 name: default
 namespace: foo
+
 spec:
+
 selector:
 matchLabels:
 app: finance
@@ -7969,6 +9803,7 @@ mode: UNSET
 portLevelMtls:
 8080:
 mode: DISABLE
+
 ```
 
 <!-- crd generation tags
@@ -8014,14 +9849,38 @@ set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
 More info: http://kubernetes.io/docs/user-guide/annotations
 +optional |  |
-| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
-This is used to distinguish resources with same name and namespace in different clusters.
-This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
+| CreationTimestamp | string| `string` |  | | CreationTimestamp is a timestamp representing the server time when this object was
+created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+
+Populated by the system.
+Read-only.
+Null for lists.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
 it will be removed from the system. Only set when deletionTimestamp is also set.
 May only be shortened.
 Read-only.
++optional |  |
+| DeletionTimestamp | string| `string` |  | | DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
+field is set by the server when a graceful deletion is requested by the user, and is not
+directly settable by a client. The resource is expected to be deleted (no longer visible
+from resource lists, and not reachable by name) after the time in this field, once the
+finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
+Once the deletionTimestamp is set, this value may not be unset or be set further into the
+future, although it may be shortened or the resource may be deleted prior to this time.
+For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
+by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
+the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
+remove the pod from the API. In the presence of network partitions, this object may still
+exist after this timestamp, until an administrator or automated process can determine the
+resource is fully terminated.
+If not set, graceful deletion of the object has not been requested.
+
+Populated by the system when a graceful deletion is requested.
+Read-only.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
 is an identifier for the responsible component that will remove the entry
@@ -8046,10 +9905,7 @@ The provided value has the same validation rules as the Name field,
 and may be truncated by the length of the suffix required to make the value
 unique on the server.
 
-If this field is specified and the generated name exists, the server will
-NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-should retry (optionally after the time indicated in the Retry-After header).
+If this field is specified and the generated name exists, the server will return a 409.
 
 Applied only if Name is not specified.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
@@ -8111,16 +9967,15 @@ Read-only.
 Value must be treated as opaque by clients and .
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
 +optional |  |
-| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
-Populated by the system.
-Read-only.
-
-DEPRECATED
-Kubernetes will stop propagating this field in 1.20 release and the field is planned
-to be removed in 1.21 release.
+| SelfLink | string| `string` |  | | Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
 +optional |  |
-| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
-| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| ZZZ_DeprecatedClusterName | string| `string` |  | | Deprecated: ClusterName is a legacy field that was always cleared by
+the system and never used; it will be removed completely in 1.25.
+
+The name in the go struct is changed to help clients detect
+accidental use.
+
++optional |  |
 | spec | [PeerAuthentication](#peer-authentication)| `PeerAuthentication` |  | |  |  |
 | status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
 | uid | [UID](#uid)| `UID` |  | |  |  |
@@ -8193,12 +10048,54 @@ IstioMutualTLSModeLabel = "istio" |  |
 
 
 
+### <span id="port-number"></span> PortNumber
+
+
+> +kubebuilder:validation:Minimum=1
++kubebuilder:validation:Maximum=65535
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| PortNumber | int32 (formatted integer)| int32 | | +kubebuilder:validation:Minimum=1
++kubebuilder:validation:Maximum=65535 |  |
+
+
+
 ### <span id="ports"></span> Ports
 
 
   
 
 [][Port](#port)
+
+### <span id="precise-hostname"></span> PreciseHostname
+
+
+> Note that as per RFC1035 and RFC1123, a *label* must consist of lower case
+alphanumeric characters or '-', and must start and end with an alphanumeric
+character. No other punctuation is allowed.
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=253
++kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| PreciseHostname | string| string | | Note that as per RFC1035 and RFC1123, a *label* must consist of lower case
+alphanumeric characters or '-', and must start and end with an alphanumeric
+character. No other punctuation is allowed.
+
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=253
++kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$` |  |
+
+
 
 ### <span id="process"></span> Process
 
@@ -8272,6 +10169,40 @@ If at least one variable is false, then the proxy isn't fully sync'ed with pilot
 
 
 
+### <span id="query-param-match-type"></span> QueryParamMatchType
+
+
+> "Exact"
+"RegularExpression"
+
+Note that values may be added to this enum, implementations
+must ensure that unknown values will not cause a crash.
+
+Unknown values here must result in the implementation setting the
+Attached Condition for the Route to `status: False`, with a
+Reason of `UnsupportedValue`.
+
++kubebuilder:validation:Enum=Exact;RegularExpression
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| QueryParamMatchType | string| string | | "Exact"
+"RegularExpression"
+
+Note that values may be added to this enum, implementations
+must ensure that unknown values will not cause a crash.
+
+Unknown values here must result in the implementation setting the
+Attached Condition for the Route to `status: False`, with a
+Reason of `UnsupportedValue`.
+
++kubebuilder:validation:Enum=Exact;RegularExpression |  |
+
+
+
 ### <span id="reference"></span> Reference
 
 
@@ -8315,9 +10246,12 @@ If at least one variable is false, then the proxy isn't fully sync'ed with pilot
 apiVersion: security.istio.io/v1beta1
 kind: RequestAuthentication
 metadata:
+
 name: httpbin
 namespace: foo
+
 spec:
+
 selector:
 matchLabels:
 app: httpbin
@@ -8325,12 +10259,16 @@ jwtRules:
 issuer: "issuer-foo"
 jwksUri: https://example.com/.well-known/jwks.json
 
+
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
+
 name: httpbin
 namespace: foo
+
 spec:
+
 selector:
 matchLabels:
 app: httpbin
@@ -8338,6 +10276,7 @@ rules:
 from:
 source:
 requestPrincipals: ["*"]
+
 ```
 
 A policy in the root namespace ("istio-system" by default) applies to workloads in all namespaces
@@ -8348,23 +10287,31 @@ valid JWT token.
 apiVersion: security.istio.io/v1beta1
 kind: RequestAuthentication
 metadata:
+
 name: req-authn-for-all
 namespace: istio-system
+
 spec:
+
 jwtRules:
 issuer: "issuer-foo"
 jwksUri: https://example.com/.well-known/jwks.json
 
+
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
+
 name: require-jwt-for-all
 namespace: istio-system
+
 spec:
+
 rules:
 from:
 source:
 requestPrincipals: ["*"]
+
 ```
 
 The next example shows how to set a different JWT requirement for a different `host`. The `RequestAuthentication`
@@ -8375,9 +10322,12 @@ set from the OpenID Connect spec).
 apiVersion: security.istio.io/v1beta1
 kind: RequestAuthentication
 metadata:
+
 name: httpbin
 namespace: foo
+
 spec:
+
 selector:
 matchLabels:
 app: httpbin
@@ -8385,12 +10335,16 @@ jwtRules:
 issuer: "issuer-foo"
 issuer: "issuer-bar"
 
+
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
+
 name: httpbin
 namespace: foo
+
 spec:
+
 selector:
 matchLabels:
 app: httpbin
@@ -8407,6 +10361,7 @@ requestPrincipals: ["issuer-bar/*"]
 to:
 operation:
 hosts: ["another-host.com"]
+
 ```
 
 You can fine tune the authorization policy to set different requirement per path. For example,
@@ -8417,9 +10372,12 @@ authorization policy could be:
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
+
 name: httpbin
 namespace: foo
+
 spec:
+
 selector:
 matchLabels:
 app: httpbin
@@ -8430,6 +10388,7 @@ requestPrincipals: ["*"]
 to:
 operation:
 paths: ["/healthz"]
+
 ```
 
 [Experimental] Routing based on derived [metadata](https://istio.io/latest/docs/reference/config/security/conditions/)
@@ -8449,9 +10408,12 @@ VirtualService to route the request based on the "sub" claim.
 apiVersion: security.istio.io/v1beta1
 kind: RequestAuthentication
 metadata:
+
 name: jwt-on-ingress
 namespace: istio-system
+
 spec:
+
 selector:
 matchLabels:
 app: istio-ingressgateway
@@ -8459,12 +10421,16 @@ jwtRules:
 issuer: "example.com"
 jwksUri: https://example.com/.well-known/jwks.json
 
+
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
+
 name: require-jwt
 namespace: istio-system
+
 spec:
+
 selector:
 matchLabels:
 app: istio-ingressgateway
@@ -8473,11 +10439,15 @@ from:
 source:
 requestPrincipals: ["*"]
 
+
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
+
 name: route-jwt
+
 spec:
+
 hosts:
 foo.prod.svc.cluster.local
 gateways:
@@ -8497,6 +10467,7 @@ route:
 destination:
 host: foo.prod.svc.cluster.local
 subset: v1
+
 ```
 
 <!-- crd generation tags
@@ -8537,14 +10508,38 @@ set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
 More info: http://kubernetes.io/docs/user-guide/annotations
 +optional |  |
-| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
-This is used to distinguish resources with same name and namespace in different clusters.
-This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
+| CreationTimestamp | string| `string` |  | | CreationTimestamp is a timestamp representing the server time when this object was
+created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+
+Populated by the system.
+Read-only.
+Null for lists.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
 it will be removed from the system. Only set when deletionTimestamp is also set.
 May only be shortened.
 Read-only.
++optional |  |
+| DeletionTimestamp | string| `string` |  | | DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
+field is set by the server when a graceful deletion is requested by the user, and is not
+directly settable by a client. The resource is expected to be deleted (no longer visible
+from resource lists, and not reachable by name) after the time in this field, once the
+finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
+Once the deletionTimestamp is set, this value may not be unset or be set further into the
+future, although it may be shortened or the resource may be deleted prior to this time.
+For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
+by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
+the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
+remove the pod from the API. In the presence of network partitions, this object may still
+exist after this timestamp, until an administrator or automated process can determine the
+resource is fully terminated.
+If not set, graceful deletion of the object has not been requested.
+
+Populated by the system when a graceful deletion is requested.
+Read-only.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
 is an identifier for the responsible component that will remove the entry
@@ -8569,10 +10564,7 @@ The provided value has the same validation rules as the Name field,
 and may be truncated by the length of the suffix required to make the value
 unique on the server.
 
-If this field is specified and the generated name exists, the server will
-NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-should retry (optionally after the time indicated in the Retry-After header).
+If this field is specified and the generated name exists, the server will return a 409.
 
 Applied only if Name is not specified.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
@@ -8634,16 +10626,15 @@ Read-only.
 Value must be treated as opaque by clients and .
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
 +optional |  |
-| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
-Populated by the system.
-Read-only.
-
-DEPRECATED
-Kubernetes will stop propagating this field in 1.20 release and the field is planned
-to be removed in 1.21 release.
+| SelfLink | string| `string` |  | | Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
 +optional |  |
-| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
-| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| ZZZ_DeprecatedClusterName | string| `string` |  | | Deprecated: ClusterName is a legacy field that was always cleared by
+the system and never used; it will be removed completely in 1.25.
+
+The name in the go struct is changed to help clients detect
+accidental use.
+
++optional |  |
 | spec | [RequestAuthentication](#request-authentication)| `RequestAuthentication` |  | |  |  |
 | status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
 | uid | [UID](#uid)| `UID` |  | |  |  |
@@ -8722,14 +10713,7 @@ True means allowed.
 ### <span id="response-flags"></span> ResponseFlags
 
 
-> "200" : {
-"-"     : "80.0",
-"DC"    : "10.0",
-"FI,FD" : "10.0"
-}, ...
   
-
-
 
 [ResponseFlags](#response-flags)
 
@@ -8771,6 +10755,66 @@ True means allowed.
 | Name | string| `string` |  | |  |  |
 | VirtualService | string| `string` |  | |  |  |
 | domains | [Host](#host)| `Host` |  | |  |  |
+
+
+
+### <span id="route-group-kind"></span> RouteGroupKind
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| group | [Group](#group)| `Group` |  | |  |  |
+| kind | [Kind](#kind)| `Kind` |  | |  |  |
+
+
+
+### <span id="route-parent-status"></span> RouteParentStatus
+
+
+> RouteParentStatus describes the status of a route with respect to an
+associated Parent.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Conditions | [][Condition](#condition)| `[]*Condition` |  | | Conditions describes the status of the route with respect to the Gateway.
+Note that the route's availability is also subject to the Gateway's own
+status conditions and listener status.
+
+If the Route's ParentRef specifies an existing Gateway that supports
+Routes of this kind AND that Gateway's controller has sufficient access,
+then that Gateway's controller MUST set the "Accepted" condition on the
+Route, to indicate whether the route has been accepted or rejected by the
+Gateway, and why.
+
+A Route MUST be considered "Accepted" if at least one of the Route's
+rules is implemented by the Gateway.
+
+There are a number of cases where the "Accepted" condition may not be set
+due to lack of controller visibility, that includes when:
+
+The Route refers to a non-existent parent.
+The Route is of a type that the controller does not support.
+The Route is in a namespace the controller does not have access to.
+
++listType=map
++listMapKey=type
++kubebuilder:validation:MinItems=1
++kubebuilder:validation:MaxItems=8 |  |
+| controllerName | [GatewayController](#gateway-controller)| `GatewayController` |  | |  |  |
+| parentRef | [ParentReference](#parent-reference)| `ParentReference` |  | |  |  |
 
 
 
@@ -8820,6 +10864,48 @@ True means allowed.
 
 
 
+### <span id="section-name"></span> SectionName
+
+
+> This validation is based off of the corresponding Kubernetes validation:
+https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/util/validation/validation.go#L208
+
+Valid values include:
+
+"example.com"
+"foo.example.com"
+
+Invalid values include:
+
+"example.com/bar" - "/" is an invalid character
+
++kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=253
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| SectionName | string| string | | This validation is based off of the corresponding Kubernetes validation:
+https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/util/validation/validation.go#L208
+
+Valid values include:
+
+"example.com"
+"foo.example.com"
+
+Invalid values include:
+
+"example.com/bar" - "/" is an invalid character
+
++kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
++kubebuilder:validation:MinLength=1
++kubebuilder:validation:MaxLength=253 |  |
+
+
+
 ### <span id="service"></span> Service
 
 
@@ -8859,7 +10945,9 @@ True means allowed.
 |------|------|---------|:--------:| ------- |-------------|---------|
 | DestinationRules | [][DestinationRule](#destination-rule)| `[]*DestinationRule` |  | |  |  |
 | IstioSidecar | boolean| `bool` |  | |  |  |
+| K8sHTTPRoutes | [][HTTPRoute](#http-route)| `[]*HTTPRoute` |  | |  |  |
 | ServiceEntries | [][ServiceEntry](#service-entry)| `[]*ServiceEntry` |  | |  |  |
+| SubServices | [][ServiceOverview](#service-overview)| `[]*ServiceOverview` |  | | Services with same app labels (different versions or a single version) |  |
 | VirtualServices | [][VirtualService](#virtual-service)| `[]*VirtualService` |  | |  |  |
 | endpoints | [Endpoints](#endpoints)| `Endpoints` |  | |  |  |
 | health | [ServiceHealth](#service-health)| `ServiceHealth` |  | |  |  |
@@ -8923,14 +11011,38 @@ set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
 More info: http://kubernetes.io/docs/user-guide/annotations
 +optional |  |
-| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
-This is used to distinguish resources with same name and namespace in different clusters.
-This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
+| CreationTimestamp | string| `string` |  | | CreationTimestamp is a timestamp representing the server time when this object was
+created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+
+Populated by the system.
+Read-only.
+Null for lists.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
 it will be removed from the system. Only set when deletionTimestamp is also set.
 May only be shortened.
 Read-only.
++optional |  |
+| DeletionTimestamp | string| `string` |  | | DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
+field is set by the server when a graceful deletion is requested by the user, and is not
+directly settable by a client. The resource is expected to be deleted (no longer visible
+from resource lists, and not reachable by name) after the time in this field, once the
+finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
+Once the deletionTimestamp is set, this value may not be unset or be set further into the
+future, although it may be shortened or the resource may be deleted prior to this time.
+For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
+by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
+the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
+remove the pod from the API. In the presence of network partitions, this object may still
+exist after this timestamp, until an administrator or automated process can determine the
+resource is fully terminated.
+If not set, graceful deletion of the object has not been requested.
+
+Populated by the system when a graceful deletion is requested.
+Read-only.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
 is an identifier for the responsible component that will remove the entry
@@ -8955,10 +11067,7 @@ The provided value has the same validation rules as the Name field,
 and may be truncated by the length of the suffix required to make the value
 unique on the server.
 
-If this field is specified and the generated name exists, the server will
-NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-should retry (optionally after the time indicated in the Retry-After header).
+If this field is specified and the generated name exists, the server will return a 409.
 
 Applied only if Name is not specified.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
@@ -9020,16 +11129,15 @@ Read-only.
 Value must be treated as opaque by clients and .
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
 +optional |  |
-| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
-Populated by the system.
-Read-only.
-
-DEPRECATED
-Kubernetes will stop propagating this field in 1.20 release and the field is planned
-to be removed in 1.21 release.
+| SelfLink | string| `string` |  | | Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
 +optional |  |
-| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
-| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| ZZZ_DeprecatedClusterName | string| `string` |  | | Deprecated: ClusterName is a legacy field that was always cleared by
+the system and never used; it will be removed completely in 1.25.
+
+The name in the go struct is changed to help clients detect
+accidental use.
+
++optional |  |
 | spec | [ServiceEntry](#service-entry)| `ServiceEntry` |  | |  |  |
 | status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
 | uid | [UID](#uid)| `UID` |  | |  |  |
@@ -9107,6 +11215,7 @@ to be removed in 1.21 release.
 | Labels | map of string| `map[string]string` |  | | Labels for Service |  |
 | Name | string| `string` | ✓ | | Name of the Service | `reviews-v1` |
 | Namespace | string| `string` |  | | Namespace of the Service |  |
+| Ports | map of int64 (formatted integer)| `map[string]int64` |  | | Names and Ports of Service |  |
 | Selector | map of string| `map[string]string` |  | | Selector for Service |  |
 | ServiceRegistry | string| `string` |  | | ServiceRegistry values:
 Kubernetes: 	is a service registry backed by k8s API server
@@ -9187,14 +11296,38 @@ set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
 More info: http://kubernetes.io/docs/user-guide/annotations
 +optional |  |
-| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
-This is used to distinguish resources with same name and namespace in different clusters.
-This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
+| CreationTimestamp | string| `string` |  | | CreationTimestamp is a timestamp representing the server time when this object was
+created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+
+Populated by the system.
+Read-only.
+Null for lists.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
 it will be removed from the system. Only set when deletionTimestamp is also set.
 May only be shortened.
 Read-only.
++optional |  |
+| DeletionTimestamp | string| `string` |  | | DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
+field is set by the server when a graceful deletion is requested by the user, and is not
+directly settable by a client. The resource is expected to be deleted (no longer visible
+from resource lists, and not reachable by name) after the time in this field, once the
+finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
+Once the deletionTimestamp is set, this value may not be unset or be set further into the
+future, although it may be shortened or the resource may be deleted prior to this time.
+For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
+by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
+the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
+remove the pod from the API. In the presence of network partitions, this object may still
+exist after this timestamp, until an administrator or automated process can determine the
+resource is fully terminated.
+If not set, graceful deletion of the object has not been requested.
+
+Populated by the system when a graceful deletion is requested.
+Read-only.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
 is an identifier for the responsible component that will remove the entry
@@ -9219,10 +11352,7 @@ The provided value has the same validation rules as the Name field,
 and may be truncated by the length of the suffix required to make the value
 unique on the server.
 
-If this field is specified and the generated name exists, the server will
-NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-should retry (optionally after the time indicated in the Retry-After header).
+If this field is specified and the generated name exists, the server will return a 409.
 
 Applied only if Name is not specified.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
@@ -9284,16 +11414,15 @@ Read-only.
 Value must be treated as opaque by clients and .
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
 +optional |  |
-| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
-Populated by the system.
-Read-only.
-
-DEPRECATED
-Kubernetes will stop propagating this field in 1.20 release and the field is planned
-to be removed in 1.21 release.
+| SelfLink | string| `string` |  | | Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
 +optional |  |
-| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
-| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| ZZZ_DeprecatedClusterName | string| `string` |  | | Deprecated: ClusterName is a legacy field that was always cleared by
+the system and never used; it will be removed completely in 1.25.
+
+The name in the go struct is changed to help clients detect
+accidental use.
+
++optional |  |
 | spec | [Sidecar](#sidecar)| `Sidecar` |  | |  |  |
 | status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
 | uid | [UID](#uid)| `UID` |  | |  |  |
@@ -9370,7 +11499,8 @@ included, ES with dynamic settings off will automatically ignore unneeded fields
 ### <span id="status-info"></span> StatusInfo
 
 
-> This is used for returning a response of Kiali Status
+> StatusInfo statusInfo
+This is used for returning a response of Kiali Status
   
 
 
@@ -9384,7 +11514,7 @@ included, ES with dynamic settings off will automatically ignore unneeded fields
 | ExternalServices | [][ExternalServiceInfo](#external-service-info)| `[]*ExternalServiceInfo` | ✓ | | An array of external services installed |  |
 | Status | map of string| `map[string]string` | ✓ | | The state of Kiali
 A hash of key,values with versions of Kiali and state |  |
-| WarningMessages | []string| `[]string` |  | | An array of warningMessages |  |
+| WarningMessages | []string| `[]string` |  | | An array of warningMessages. CAUTION: Please read the doc comments the in AddWarningMessages func. |  |
 | istioEnvironment | [IstioEnvironment](#istio-environment)| `IstioEnvironment` | ✓ | |  |  |
 
 
@@ -9406,17 +11536,167 @@ A hash of key,values with versions of Kiali and state |  |
 
 
 
-### <span id="time"></span> Time
+### <span id="telemetry"></span> Telemetry
 
 
-> +protobuf.options.marshal=false
-+protobuf.as=Timestamp
-+protobuf.options.(gogoproto.goproto_stringer)=false
+> <!-- go code generation tags
++kubetype-gen
++kubetype-gen:groupVersion=telemetry.istio.io/v1alpha1
++genclient
++k8s:deepcopy-gen=true
+>
   
 
 
 
-[interface{}](#interface)
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| APIVersion | string| `string` |  | | APIVersion defines the versioned schema of this representation of an object.
+Servers should convert recognized schemas to the latest internal value, and
+may reject unrecognized values.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
++optional |  |
+| Annotations | map of string| `map[string]string` |  | | Annotations is an unstructured key value map stored with a resource that may be
+set by external tools to store and retrieve arbitrary metadata. They are not
+queryable and should be preserved when modifying objects.
+More info: http://kubernetes.io/docs/user-guide/annotations
++optional |  |
+| CreationTimestamp | string| `string` |  | | CreationTimestamp is a timestamp representing the server time when this object was
+created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+
+Populated by the system.
+Read-only.
+Null for lists.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
++optional |  |
+| DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
+it will be removed from the system. Only set when deletionTimestamp is also set.
+May only be shortened.
+Read-only.
++optional |  |
+| DeletionTimestamp | string| `string` |  | | DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
+field is set by the server when a graceful deletion is requested by the user, and is not
+directly settable by a client. The resource is expected to be deleted (no longer visible
+from resource lists, and not reachable by name) after the time in this field, once the
+finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
+Once the deletionTimestamp is set, this value may not be unset or be set further into the
+future, although it may be shortened or the resource may be deleted prior to this time.
+For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
+by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
+the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
+remove the pod from the API. In the presence of network partitions, this object may still
+exist after this timestamp, until an administrator or automated process can determine the
+resource is fully terminated.
+If not set, graceful deletion of the object has not been requested.
+
+Populated by the system when a graceful deletion is requested.
+Read-only.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
++optional |  |
+| Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
+is an identifier for the responsible component that will remove the entry
+from the list. If the deletionTimestamp of the object is non-nil, entries
+in this list can only be removed.
+Finalizers may be processed and removed in any order.  Order is NOT enforced
+because it introduces significant risk of stuck finalizers.
+finalizers is a shared field, any actor with permission can reorder it.
+If the finalizer list is processed in order, then this can lead to a situation
+in which the component responsible for the first finalizer in the list is
+waiting for a signal (field value, external system, or other) produced by a
+component responsible for a finalizer later in the list, resulting in a deadlock.
+Without enforced ordering finalizers are free to order amongst themselves and
+are not vulnerable to ordering changes in the list.
++optional
++patchStrategy=merge |  |
+| GenerateName | string| `string` |  | | GenerateName is an optional prefix, used by the server, to generate a unique
+name ONLY IF the Name field has not been provided.
+If this field is used, the name returned to the client will be different
+than the name passed. This value will also be combined with a unique suffix.
+The provided value has the same validation rules as the Name field,
+and may be truncated by the length of the suffix required to make the value
+unique on the server.
+
+If this field is specified and the generated name exists, the server will return a 409.
+
+Applied only if Name is not specified.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
++optional |  |
+| Generation | int64 (formatted integer)| `int64` |  | | A sequence number representing a specific generation of the desired state.
+Populated by the system. Read-only.
++optional |  |
+| Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
+Servers may infer this from the endpoint the client submits requests to.
+Cannot be updated.
+In CamelCase.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
++optional |  |
+| Labels | map of string| `map[string]string` |  | | Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: http://kubernetes.io/docs/user-guide/labels
++optional |  |
+| ManagedFields | [][ManagedFieldsEntry](#managed-fields-entry)| `[]*ManagedFieldsEntry` |  | | ManagedFields maps workflow-id and version to the set of fields
+that are managed by that workflow. This is mostly for internal
+housekeeping, and users typically shouldn't need to set or
+understand this field. A workflow can be the user's name, a
+controller's name, or the name of a specific apply path like
+"ci-cd". The set of fields is always in the version that the
+workflow used when modifying the object.
+
++optional |  |
+| Name | string| `string` |  | | Name must be unique within a namespace. Is required when creating resources, although
+some resources may allow a client to request the generation of an appropriate name
+automatically. Name is primarily intended for creation idempotence and configuration
+definition.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/identifiers#names
++optional |  |
+| Namespace | string| `string` |  | | Namespace defines the space within which each name must be unique. An empty namespace is
+equivalent to the "default" namespace, but "default" is the canonical representation.
+Not all objects are required to be scoped to a namespace - the value of this field for
+those objects will be empty.
+
+Must be a DNS_LABEL.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/namespaces
++optional |  |
+| OwnerReferences | [][OwnerReference](#owner-reference)| `[]*OwnerReference` |  | | List of objects depended by this object. If ALL objects in the list have
+been deleted, this object will be garbage collected. If this object is managed by a controller,
+then an entry in this list will point to this controller, with the controller field set to true.
+There cannot be more than one managing controller.
++optional
++patchMergeKey=uid
++patchStrategy=merge |  |
+| ResourceVersion | string| `string` |  | | An opaque value that represents the internal version of this object that can
+be used by clients to determine when objects have changed. May be used for optimistic
+concurrency, change detection, and the watch operation on a resource or set of resources.
+Clients must treat these values as opaque and passed unmodified back to the server.
+They may only be valid for a particular resource or set of resources.
+
+Populated by the system.
+Read-only.
+Value must be treated as opaque by clients and .
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
++optional |  |
+| SelfLink | string| `string` |  | | Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
++optional |  |
+| ZZZ_DeprecatedClusterName | string| `string` |  | | Deprecated: ClusterName is a legacy field that was always cleared by
+the system and never used; it will be removed completely in 1.25.
+
+The name in the go struct is changed to help clients detect
+accidental use.
+
++optional |  |
+| spec | [Telemetry](#telemetry)| `Telemetry` |  | |  |  |
+| status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
+| uid | [UID](#uid)| `UID` |  | |  |  |
+
+
 
 ### <span id="timestamp"></span> Timestamp
 
@@ -9466,7 +11746,16 @@ Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
 .setNanos((int) ((millis % 1000) * 1000000)).build();
 
 
-Example 5: Compute Timestamp from current time in Python.
+Example 5: Compute Timestamp from Java `Instant.now()`.
+
+Instant now = Instant.now();
+
+Timestamp timestamp =
+Timestamp.newBuilder().setSeconds(now.getEpochSecond())
+.setNanos(now.getNano()).build();
+
+
+Example 6: Compute Timestamp from current time in Python.
 
 timestamp = Timestamp()
 timestamp.GetCurrentTime()
@@ -9570,7 +11859,8 @@ intent and helps make sure that UIDs and names do not get conflated. |  |
 ### <span id="user-session-data"></span> UserSessionData
 
 
-> This is used for returning the token
+> UserSessionData userSessionData
+This is used for returning the token
   
 
 
@@ -9664,14 +11954,38 @@ set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
 More info: http://kubernetes.io/docs/user-guide/annotations
 +optional |  |
-| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
-This is used to distinguish resources with same name and namespace in different clusters.
-This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
+| CreationTimestamp | string| `string` |  | | CreationTimestamp is a timestamp representing the server time when this object was
+created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+
+Populated by the system.
+Read-only.
+Null for lists.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
 it will be removed from the system. Only set when deletionTimestamp is also set.
 May only be shortened.
 Read-only.
++optional |  |
+| DeletionTimestamp | string| `string` |  | | DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
+field is set by the server when a graceful deletion is requested by the user, and is not
+directly settable by a client. The resource is expected to be deleted (no longer visible
+from resource lists, and not reachable by name) after the time in this field, once the
+finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
+Once the deletionTimestamp is set, this value may not be unset or be set further into the
+future, although it may be shortened or the resource may be deleted prior to this time.
+For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
+by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
+the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
+remove the pod from the API. In the presence of network partitions, this object may still
+exist after this timestamp, until an administrator or automated process can determine the
+resource is fully terminated.
+If not set, graceful deletion of the object has not been requested.
+
+Populated by the system when a graceful deletion is requested.
+Read-only.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
 is an identifier for the responsible component that will remove the entry
@@ -9696,10 +12010,7 @@ The provided value has the same validation rules as the Name field,
 and may be truncated by the length of the suffix required to make the value
 unique on the server.
 
-If this field is specified and the generated name exists, the server will
-NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-should retry (optionally after the time indicated in the Retry-After header).
+If this field is specified and the generated name exists, the server will return a 409.
 
 Applied only if Name is not specified.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
@@ -9761,16 +12072,15 @@ Read-only.
 Value must be treated as opaque by clients and .
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
 +optional |  |
-| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
-Populated by the system.
-Read-only.
-
-DEPRECATED
-Kubernetes will stop propagating this field in 1.20 release and the field is planned
-to be removed in 1.21 release.
+| SelfLink | string| `string` |  | | Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
 +optional |  |
-| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
-| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| ZZZ_DeprecatedClusterName | string| `string` |  | | Deprecated: ClusterName is a legacy field that was always cleared by
+the system and never used; it will be removed completely in 1.25.
+
+The name in the go struct is changed to help clients detect
+accidental use.
+
++optional |  |
 | spec | [VirtualService](#virtual-service)| `VirtualService` |  | |  |  |
 | status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
 | uid | [UID](#uid)| `UID` |  | |  |  |
@@ -9793,6 +12103,184 @@ associated with a workload node.
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | Name | string| `string` | ✓ | | Name of the workload entry object |  |
+
+
+
+### <span id="wasm-plugin"></span> WasmPlugin
+
+
+> <!-- crd generation tags
++cue-gen:WasmPlugin:groupName:extensions.istio.io
++cue-gen:WasmPlugin:version:v1alpha1
++cue-gen:WasmPlugin:storageVersion
++cue-gen:WasmPlugin:annotations:helm.sh/resource-policy=keep
++cue-gen:WasmPlugin:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
++cue-gen:WasmPlugin:subresource:status
++cue-gen:WasmPlugin:scope:Namespaced
++cue-gen:WasmPlugin:resource:categories=istio-io,extensions-istio-io
++cue-gen:WasmPlugin:preserveUnknownFields:pluginConfig
++cue-gen:WasmPlugin:printerColumn:name=Age,type=date,JSONPath=.metadata.creationTimestamp,description="CreationTimestamp is a timestamp
+representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+Populated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata"
+>
+
+<!-- go code generation tags
++kubetype-gen
++kubetype-gen:groupVersion=extensions.istio.io/v1alpha1
++genclient
++k8s:deepcopy-gen=true
+>
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| APIVersion | string| `string` |  | | APIVersion defines the versioned schema of this representation of an object.
+Servers should convert recognized schemas to the latest internal value, and
+may reject unrecognized values.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
++optional |  |
+| Annotations | map of string| `map[string]string` |  | | Annotations is an unstructured key value map stored with a resource that may be
+set by external tools to store and retrieve arbitrary metadata. They are not
+queryable and should be preserved when modifying objects.
+More info: http://kubernetes.io/docs/user-guide/annotations
++optional |  |
+| CreationTimestamp | string| `string` |  | | CreationTimestamp is a timestamp representing the server time when this object was
+created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+
+Populated by the system.
+Read-only.
+Null for lists.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
++optional |  |
+| DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
+it will be removed from the system. Only set when deletionTimestamp is also set.
+May only be shortened.
+Read-only.
++optional |  |
+| DeletionTimestamp | string| `string` |  | | DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
+field is set by the server when a graceful deletion is requested by the user, and is not
+directly settable by a client. The resource is expected to be deleted (no longer visible
+from resource lists, and not reachable by name) after the time in this field, once the
+finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
+Once the deletionTimestamp is set, this value may not be unset or be set further into the
+future, although it may be shortened or the resource may be deleted prior to this time.
+For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
+by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
+the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
+remove the pod from the API. In the presence of network partitions, this object may still
+exist after this timestamp, until an administrator or automated process can determine the
+resource is fully terminated.
+If not set, graceful deletion of the object has not been requested.
+
+Populated by the system when a graceful deletion is requested.
+Read-only.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
++optional |  |
+| Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
+is an identifier for the responsible component that will remove the entry
+from the list. If the deletionTimestamp of the object is non-nil, entries
+in this list can only be removed.
+Finalizers may be processed and removed in any order.  Order is NOT enforced
+because it introduces significant risk of stuck finalizers.
+finalizers is a shared field, any actor with permission can reorder it.
+If the finalizer list is processed in order, then this can lead to a situation
+in which the component responsible for the first finalizer in the list is
+waiting for a signal (field value, external system, or other) produced by a
+component responsible for a finalizer later in the list, resulting in a deadlock.
+Without enforced ordering finalizers are free to order amongst themselves and
+are not vulnerable to ordering changes in the list.
++optional
++patchStrategy=merge |  |
+| GenerateName | string| `string` |  | | GenerateName is an optional prefix, used by the server, to generate a unique
+name ONLY IF the Name field has not been provided.
+If this field is used, the name returned to the client will be different
+than the name passed. This value will also be combined with a unique suffix.
+The provided value has the same validation rules as the Name field,
+and may be truncated by the length of the suffix required to make the value
+unique on the server.
+
+If this field is specified and the generated name exists, the server will return a 409.
+
+Applied only if Name is not specified.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
++optional |  |
+| Generation | int64 (formatted integer)| `int64` |  | | A sequence number representing a specific generation of the desired state.
+Populated by the system. Read-only.
++optional |  |
+| Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
+Servers may infer this from the endpoint the client submits requests to.
+Cannot be updated.
+In CamelCase.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
++optional |  |
+| Labels | map of string| `map[string]string` |  | | Map of string keys and values that can be used to organize and categorize
+(scope and select) objects. May match selectors of replication controllers
+and services.
+More info: http://kubernetes.io/docs/user-guide/labels
++optional |  |
+| ManagedFields | [][ManagedFieldsEntry](#managed-fields-entry)| `[]*ManagedFieldsEntry` |  | | ManagedFields maps workflow-id and version to the set of fields
+that are managed by that workflow. This is mostly for internal
+housekeeping, and users typically shouldn't need to set or
+understand this field. A workflow can be the user's name, a
+controller's name, or the name of a specific apply path like
+"ci-cd". The set of fields is always in the version that the
+workflow used when modifying the object.
+
++optional |  |
+| Name | string| `string` |  | | Name must be unique within a namespace. Is required when creating resources, although
+some resources may allow a client to request the generation of an appropriate name
+automatically. Name is primarily intended for creation idempotence and configuration
+definition.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/identifiers#names
++optional |  |
+| Namespace | string| `string` |  | | Namespace defines the space within which each name must be unique. An empty namespace is
+equivalent to the "default" namespace, but "default" is the canonical representation.
+Not all objects are required to be scoped to a namespace - the value of this field for
+those objects will be empty.
+
+Must be a DNS_LABEL.
+Cannot be updated.
+More info: http://kubernetes.io/docs/user-guide/namespaces
++optional |  |
+| OwnerReferences | [][OwnerReference](#owner-reference)| `[]*OwnerReference` |  | | List of objects depended by this object. If ALL objects in the list have
+been deleted, this object will be garbage collected. If this object is managed by a controller,
+then an entry in this list will point to this controller, with the controller field set to true.
+There cannot be more than one managing controller.
++optional
++patchMergeKey=uid
++patchStrategy=merge |  |
+| ResourceVersion | string| `string` |  | | An opaque value that represents the internal version of this object that can
+be used by clients to determine when objects have changed. May be used for optimistic
+concurrency, change detection, and the watch operation on a resource or set of resources.
+Clients must treat these values as opaque and passed unmodified back to the server.
+They may only be valid for a particular resource or set of resources.
+
+Populated by the system.
+Read-only.
+Value must be treated as opaque by clients and .
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
++optional |  |
+| SelfLink | string| `string` |  | | Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
++optional |  |
+| ZZZ_DeprecatedClusterName | string| `string` |  | | Deprecated: ClusterName is a legacy field that was always cleared by
+the system and never used; it will be removed completely in 1.25.
+
+The name in the go struct is changed to help clients detect
+accidental use.
+
++optional |  |
+| spec | [WasmPlugin](#wasm-plugin)| `WasmPlugin` |  | |  |  |
+| status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
+| uid | [UID](#uid)| `UID` |  | |  |  |
 
 
 
@@ -9888,14 +12376,38 @@ set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
 More info: http://kubernetes.io/docs/user-guide/annotations
 +optional |  |
-| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
-This is used to distinguish resources with same name and namespace in different clusters.
-This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
+| CreationTimestamp | string| `string` |  | | CreationTimestamp is a timestamp representing the server time when this object was
+created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+
+Populated by the system.
+Read-only.
+Null for lists.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
 it will be removed from the system. Only set when deletionTimestamp is also set.
 May only be shortened.
 Read-only.
++optional |  |
+| DeletionTimestamp | string| `string` |  | | DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
+field is set by the server when a graceful deletion is requested by the user, and is not
+directly settable by a client. The resource is expected to be deleted (no longer visible
+from resource lists, and not reachable by name) after the time in this field, once the
+finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
+Once the deletionTimestamp is set, this value may not be unset or be set further into the
+future, although it may be shortened or the resource may be deleted prior to this time.
+For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
+by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
+the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
+remove the pod from the API. In the presence of network partitions, this object may still
+exist after this timestamp, until an administrator or automated process can determine the
+resource is fully terminated.
+If not set, graceful deletion of the object has not been requested.
+
+Populated by the system when a graceful deletion is requested.
+Read-only.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
 is an identifier for the responsible component that will remove the entry
@@ -9920,10 +12432,7 @@ The provided value has the same validation rules as the Name field,
 and may be truncated by the length of the suffix required to make the value
 unique on the server.
 
-If this field is specified and the generated name exists, the server will
-NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-should retry (optionally after the time indicated in the Retry-After header).
+If this field is specified and the generated name exists, the server will return a 409.
 
 Applied only if Name is not specified.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
@@ -9985,16 +12494,15 @@ Read-only.
 Value must be treated as opaque by clients and .
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
 +optional |  |
-| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
-Populated by the system.
-Read-only.
-
-DEPRECATED
-Kubernetes will stop propagating this field in 1.20 release and the field is planned
-to be removed in 1.21 release.
+| SelfLink | string| `string` |  | | Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
 +optional |  |
-| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
-| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| ZZZ_DeprecatedClusterName | string| `string` |  | | Deprecated: ClusterName is a legacy field that was always cleared by
+the system and never used; it will be removed completely in 1.25.
+
+The name in the go struct is changed to help clients detect
+accidental use.
+
++optional |  |
 | spec | [WorkloadEntry](#workload-entry)| `WorkloadEntry` |  | |  |  |
 | status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
 | uid | [UID](#uid)| `UID` |  | |  |  |
@@ -10047,14 +12555,38 @@ set by external tools to store and retrieve arbitrary metadata. They are not
 queryable and should be preserved when modifying objects.
 More info: http://kubernetes.io/docs/user-guide/annotations
 +optional |  |
-| ClusterName | string| `string` |  | | The name of the cluster which the object belongs to.
-This is used to distinguish resources with same name and namespace in different clusters.
-This field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.
+| CreationTimestamp | string| `string` |  | | CreationTimestamp is a timestamp representing the server time when this object was
+created. It is not guaranteed to be set in happens-before order across separate operations.
+Clients may not set this value. It is represented in RFC3339 form and is in UTC.
+
+Populated by the system.
+Read-only.
+Null for lists.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | DeletionGracePeriodSeconds | int64 (formatted integer)| `int64` |  | | Number of seconds allowed for this object to gracefully terminate before
 it will be removed from the system. Only set when deletionTimestamp is also set.
 May only be shortened.
 Read-only.
++optional |  |
+| DeletionTimestamp | string| `string` |  | | DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This
+field is set by the server when a graceful deletion is requested by the user, and is not
+directly settable by a client. The resource is expected to be deleted (no longer visible
+from resource lists, and not reachable by name) after the time in this field, once the
+finalizers list is empty. As long as the finalizers list contains items, deletion is blocked.
+Once the deletionTimestamp is set, this value may not be unset or be set further into the
+future, although it may be shortened or the resource may be deleted prior to this time.
+For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react
+by sending a graceful termination signal to the containers in the pod. After that 30 seconds,
+the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup,
+remove the pod from the API. In the presence of network partitions, this object may still
+exist after this timestamp, until an administrator or automated process can determine the
+resource is fully terminated.
+If not set, graceful deletion of the object has not been requested.
+
+Populated by the system when a graceful deletion is requested.
+Read-only.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 +optional |  |
 | Finalizers | []string| `[]string` |  | | Must be empty before the object is deleted from the registry. Each entry
 is an identifier for the responsible component that will remove the entry
@@ -10079,10 +12611,7 @@ The provided value has the same validation rules as the Name field,
 and may be truncated by the length of the suffix required to make the value
 unique on the server.
 
-If this field is specified and the generated name exists, the server will
-NOT return a 409 - instead, it will either return 201 Created or 500 with Reason
-ServerTimeout indicating a unique name could not be found in the time allotted, and the client
-should retry (optionally after the time indicated in the Retry-After header).
+If this field is specified and the generated name exists, the server will return a 409.
 
 Applied only if Name is not specified.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
@@ -10144,16 +12673,15 @@ Read-only.
 Value must be treated as opaque by clients and .
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
 +optional |  |
-| SelfLink | string| `string` |  | | SelfLink is a URL representing this object.
-Populated by the system.
-Read-only.
-
-DEPRECATED
-Kubernetes will stop propagating this field in 1.20 release and the field is planned
-to be removed in 1.21 release.
+| SelfLink | string| `string` |  | | Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
 +optional |  |
-| creationTimestamp | [Time](#time)| `Time` |  | |  |  |
-| deletionTimestamp | [Time](#time)| `Time` |  | |  |  |
+| ZZZ_DeprecatedClusterName | string| `string` |  | | Deprecated: ClusterName is a legacy field that was always cleared by
+the system and never used; it will be removed completely in 1.25.
+
+The name in the go struct is changed to help clients detect
+accidental use.
+
++optional |  |
 | spec | [WorkloadGroup](#workload-group)| `WorkloadGroup` |  | |  |  |
 | status | [IstioStatus](#istio-status)| `IstioStatus` |  | |  |  |
 | uid | [UID](#uid)| `UID` |  | |  |  |
@@ -10191,6 +12719,7 @@ to be removed in 1.21 release.
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | IstioSidecar | boolean| `bool` | ✓ | | Define if all Pods related to the Workload has an IstioSidecar deployed | `true` |
+| Labels | map of string| `map[string]string` |  | | Labels for Workload |  |
 | ServiceAccountNames | []string| `[]string` | ✓ | | List of service accounts involved in this application |  |
 | WorkloadName | string| `string` | ✓ | | Name of a workload member of an application | `reviews-v1` |
 
