@@ -1296,3 +1296,6 @@ export interface CanaryUpgradeStatus {
   migratedNamespaces: string[];
   pendingNamespaces: string[];
 }
+
+export const MAX_PORT = 65535;
+export const MIN_PORT = 0;

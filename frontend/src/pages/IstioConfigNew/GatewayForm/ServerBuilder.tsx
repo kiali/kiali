@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
-import { cellWidth, TableComposable, Td, Th, Tr } from '@patternfly/react-table';
+import { cellWidth, TableComposable, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { TrashIcon } from '@patternfly/react-icons';
 import { isGatewayHostValid } from '../../../utils/IstioConfigUtils';
 import { ServerForm } from '../../../types/IstioObjects';
@@ -126,7 +126,7 @@ class ServerBuilder extends React.Component<Props, State> {
           <TextInput
             value={this.props.server.number}
             type="text"
-            id="addPortNumber"
+            id={'addPortNumber' + this.props.index}
             aria-describedby="add port number"
             name="addPortNumber"
             onChange={this.onAddPortNumber}
@@ -137,7 +137,7 @@ class ServerBuilder extends React.Component<Props, State> {
           <TextInput
             value={this.props.server.name}
             type="text"
-            id="addPortName"
+            id={'addPortName' + this.props.index}
             aria-describedby="add port name"
             name="addPortName"
             onChange={this.onAddPortName}
@@ -147,7 +147,7 @@ class ServerBuilder extends React.Component<Props, State> {
         <Td style={{ padding: '0 10px 0 0' }}>
           <FormSelect
             value={this.props.server.protocol}
-            id="addPortProtocol"
+            id={'addPortProtocol' + this.props.index}
             name="addPortProtocol"
             onChange={this.onAddPortProtocol}
           >
@@ -176,7 +176,7 @@ class ServerBuilder extends React.Component<Props, State> {
               value={this.props.server.hosts.join(',')}
               isRequired={true}
               type="text"
-              id="hosts"
+              id={'hosts' + this.props.index}
               aria-describedby="hosts"
               name="hosts"
               onChange={this.onAddHosts}
@@ -185,10 +185,14 @@ class ServerBuilder extends React.Component<Props, State> {
           </FormGroup>
           <FormGroup label="Port" isRequired={true} fieldId="server-port" style={{ padding: '10px 0' }}>
             <TableComposable aria-label="Port Level MTLS">
-              {portHeader.map(e => (
-                <Th>{e.title}</Th>
-              ))}
-              {this.portRows()}
+              <Thead>
+                <Tr>
+                  {portHeader.map(e => (
+                    <Th>{e.title}</Th>
+                  ))}
+                </Tr>
+              </Thead>
+              <Tbody>{this.portRows()}</Tbody>
             </TableComposable>
           </FormGroup>
           {showTls && (

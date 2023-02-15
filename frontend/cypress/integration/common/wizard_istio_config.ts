@@ -27,15 +27,15 @@ And('user types {string} in the name input', (name) => {
 });
 
 And('user types {string} in the add listener name input', (name) => {
-  cy.get('input[id="addName"]').type(name);
+  cy.get('input[id="addName0"]').type(name);
 });
 
 And('user types {string} in the add hostname input', (host) => {
-  cy.get('input[id="addHostname"]').type(host);
+  cy.get('input[id="addHostname0"]').type(host);
 });
 
 And('user types {string} in the add port input', (port) => {
-  cy.get('input[id="addPort"]').type(port);
+  cy.get('input[id="addPort0"]').type(port);
 });
 
 And('user creates the istio config', () => {
