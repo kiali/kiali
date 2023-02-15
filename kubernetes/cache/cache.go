@@ -62,7 +62,7 @@ type kialiCacheImpl struct {
 	kubeCache              map[string]KubeCache
 	refreshDuration        time.Duration
 	tokenLock              sync.RWMutex
-	tokenNamespaces        map[string]namespaceCache
+	tokenNamespaces        map[string]map[string]namespaceCache // By token, by cluster
 	tokenNamespaceDuration time.Duration
 	proxyStatusLock        sync.RWMutex
 	proxyStatusNamespaces  map[string]map[string]podProxyStatus
@@ -78,7 +78,7 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, na
 		kubeCache:                  make(map[string]KubeCache),
 		proxyStatusNamespaces:      make(map[string]map[string]podProxyStatus),
 		refreshDuration:            time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
-		tokenNamespaces:            make(map[string]namespaceCache),
+		tokenNamespaces:            make(map[string]map[string]namespaceCache),
 		tokenNamespaceDuration:     time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
 	}
 

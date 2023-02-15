@@ -114,8 +114,6 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	// (Side note 3: The control plane namespace is always included via api.namespaces.include and
 	// never excluded via api.namespaces.exclude or api.namespaces.label_selector_exclude.)
 
-	labelSelectorInclude := configObject.API.Namespaces.LabelSelectorInclude
-
 	// determine if we are to exclude namespaces by label - if so, set the label name and value for use later
 	labelSelectorExclude := configObject.API.Namespaces.LabelSelectorExclude
 	var labelSelectorExcludeName string
@@ -130,118 +128,14 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}
 
 	namespaces := []models.Namespace{}
-	_, queryAllNamespaces := in.isAccessibleNamespaces["**"]
 
-	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
-	if in.hasProjects {
-		projects, err2 := in.k8s.GetProjects(labelSelectorInclude)
-		if err2 == nil {
-			// Everything is good, return the projects we got from OpenShift
-			if queryAllNamespaces {
-				namespaces = models.CastProjectCollection(projects)
-
-				// add the namespaces explicitly included in the include list.
-				includes := configObject.API.Namespaces.Include
-				if len(includes) > 0 {
-					var allNamespaces []models.Namespace
-					var seedNamespaces []models.Namespace
-
-					if labelSelectorInclude == "" {
-						// we have already retrieved all the namespaces, but we want only those in the Include list
-						allNamespaces = namespaces
-						seedNamespaces = make([]models.Namespace, 0)
-					} else {
-						// we have already got those namespaces that match the LabelSelectorInclude - that is our seed list.
-						// but we need ALL namespaces so we can look for more that match the Include list.
-						if allProjects, err := in.k8s.GetProjects(""); err != nil {
-							return nil, err
-						} else {
-							allNamespaces = models.CastProjectCollection(allProjects)
-							seedNamespaces = namespaces
-						}
-					}
-					namespaces = in.addIncludedNamespaces(allNamespaces, seedNamespaces)
-				}
-			} else {
-				filteredProjects := make([]osproject_v1.Project, 0)
-				for _, project := range projects {
-					if _, isAccessible := in.isAccessibleNamespaces[project.Name]; isAccessible {
-						filteredProjects = append(filteredProjects, project)
-					}
-				}
-				namespaces = models.CastProjectCollection(filteredProjects)
+	for _, cluster := range clientFactory.GetClusterNames() {
+		kialiClient := clientFactory.GetSAClient(cluster)
+		nsList, error := in.GetNamespacesByClient(kialiClient, cluster)
+		if error == nil {
+			for _, ns := range nsList {
+				namespaces = append(namespaces, ns)
 			}
-		}
-	} else {
-		// if the accessible namespaces define a distinct list of namespaces, use only those.
-		// If accessible namespaces include the special "**" (meaning all namespaces) ask k8s for them.
-		// Note that "**" requires cluster role permission to list all namespaces.
-		accessibleNamespaces := configObject.Deployment.AccessibleNamespaces
-
-		if queryAllNamespaces {
-			nss, err := in.k8s.GetNamespaces(labelSelectorInclude)
-			if err != nil {
-				// Fallback to using the Kiali service account, if needed
-				if errors.IsForbidden(err) {
-					if nss, err = in.getNamespacesUsingKialiSA(labelSelectorInclude, err); err != nil {
-						return nil, err
-					}
-				} else {
-					return nil, err
-				}
-			}
-
-			namespaces = models.CastNamespaceCollection(nss)
-
-			// add the namespaces explicitly included in the includes list.
-			includes := configObject.API.Namespaces.Include
-			if len(includes) > 0 {
-				var allNamespaces []models.Namespace
-				var seedNamespaces []models.Namespace
-
-				if labelSelectorInclude == "" {
-					// we have already retrieved all the namespaces, but we want only those in the Include list
-					allNamespaces = namespaces
-					seedNamespaces = make([]models.Namespace, 0)
-				} else {
-					// we have already got those namespaces that match the LabelSelectorInclude - that is our seed list.
-					// but we need ALL namespaces so we can look for more that match the Include list.
-					allK8sNamespaces, err := in.k8s.GetNamespaces("")
-					if err != nil {
-						// Fallback to using the Kiali service account, if needed
-						if errors.IsForbidden(err) {
-							if allK8sNamespaces, err = in.getNamespacesUsingKialiSA("", err); err != nil {
-								return nil, err
-							}
-						} else {
-							return nil, err
-						}
-					}
-					allNamespaces = models.CastNamespaceCollection(allK8sNamespaces)
-					seedNamespaces = namespaces
-				}
-				namespaces = in.addIncludedNamespaces(allNamespaces, seedNamespaces)
-			}
-		} else {
-			k8sNamespaces := make([]core_v1.Namespace, 0)
-			for _, ans := range accessibleNamespaces {
-				k8sNs, err := in.k8s.GetNamespace(ans)
-				if err != nil {
-					if errors.IsNotFound(err) {
-						// If a namespace is not found, then we skip it from the list of namespaces
-						log.Warningf("Kiali has an accessible namespace [%s] which doesn't exist", ans)
-					} else if errors.IsForbidden(err) {
-						// Also, if namespace isn't readable, skip it.
-						log.Warningf("Kiali has an accessible namespace [%s] which is forbidden", ans)
-					} else {
-						// On any other error, abort and return the error.
-						return nil, err
-					}
-				} else {
-					k8sNamespaces = append(k8sNamespaces, *k8sNs)
-				}
-			}
-			namespaces = models.CastNamespaceCollection(k8sNamespaces)
 		}
 	}
 
@@ -279,6 +173,137 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}
 
 	return result, nil
+}
+
+func (in *NamespaceService) GetNamespacesByClient(client kubernetes.ClientInterface, cluster string) ([]models.Namespace, error) {
+	configObject := config.Get()
+
+	labelSelectorInclude := configObject.API.Namespaces.LabelSelectorInclude
+
+	namespaces := []models.Namespace{}
+	_, queryAllNamespaces := in.isAccessibleNamespaces["**"]
+
+	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
+	if in.hasProjects {
+		projects, err2 := client.GetProjects(labelSelectorInclude)
+		if err2 == nil {
+			// Everything is good, return the projects we got from OpenShift
+			if queryAllNamespaces {
+				namespaces = models.CastProjectCollection(projects)
+
+				// add the namespaces explicitly included in the include list.
+				includes := configObject.API.Namespaces.Include
+				if len(includes) > 0 {
+					var allNamespaces []models.Namespace
+					var seedNamespaces []models.Namespace
+
+					if labelSelectorInclude == "" {
+						// we have already retrieved all the namespaces, but we want only those in the Include list
+						allNamespaces = namespaces
+						seedNamespaces = make([]models.Namespace, 0)
+					} else {
+						// we have already got those namespaces that match the LabelSelectorInclude - that is our seed list.
+						// but we need ALL namespaces so we can look for more that match the Include list.
+						if allProjects, err := client.GetProjects(""); err != nil {
+							return nil, err
+						} else {
+							allNamespaces = models.CastProjectCollection(allProjects)
+							seedNamespaces = namespaces
+						}
+					}
+					namespaces = in.addIncludedNamespaces(allNamespaces, seedNamespaces)
+				}
+			} else {
+				filteredProjects := make([]osproject_v1.Project, 0)
+				for _, project := range projects {
+					if _, isAccessible := in.isAccessibleNamespaces[project.Name]; isAccessible {
+						filteredProjects = append(filteredProjects, project)
+					}
+				}
+				namespaces = models.CastProjectCollection(filteredProjects)
+			}
+		}
+	} else {
+		// if the accessible namespaces define a distinct list of namespaces, use only those.
+		// If accessible namespaces include the special "**" (meaning all namespaces) ask k8s for them.
+		// Note that "**" requires cluster role permission to list all namespaces.
+		accessibleNamespaces := configObject.Deployment.AccessibleNamespaces
+
+		if queryAllNamespaces {
+			nss, err := client.GetNamespaces(labelSelectorInclude)
+			if err != nil {
+				// Fallback to using the Kiali service account, if needed
+				if errors.IsForbidden(err) {
+					if nss, err = in.getNamespacesUsingKialiSA(cluster, client, labelSelectorInclude, err); err != nil {
+						return nil, err
+					}
+				} else {
+					return nil, err
+				}
+			}
+
+			namespaces = models.CastNamespaceCollection(nss, cluster)
+
+			// add the namespaces explicitly included in the includes list.
+			includes := configObject.API.Namespaces.Include
+			if len(includes) > 0 {
+				var allNamespaces []models.Namespace
+				var seedNamespaces []models.Namespace
+
+				if labelSelectorInclude == "" {
+					// we have already retrieved all the namespaces, but we want only those in the Include list
+					allNamespaces = namespaces
+					seedNamespaces = make([]models.Namespace, 0)
+				} else {
+					// we have already got those namespaces that match the LabelSelectorInclude - that is our seed list.
+					// but we need ALL namespaces so we can look for more that match the Include list.
+					allK8sNamespaces, err := client.GetNamespaces("")
+					if err != nil {
+						// Fallback to using the Kiali service account, if needed
+						if errors.IsForbidden(err) {
+							if allK8sNamespaces, err = in.getNamespacesUsingKialiSA(cluster, client, "", err); err != nil {
+								return nil, err
+							}
+						} else {
+							return nil, err
+						}
+					}
+					allNamespaces = models.CastNamespaceCollection(allK8sNamespaces, cluster)
+					seedNamespaces = namespaces
+				}
+				namespaces = in.addIncludedNamespaces(allNamespaces, seedNamespaces)
+			}
+		} else {
+			k8sNamespaces := make([]core_v1.Namespace, 0)
+			for _, ans := range accessibleNamespaces {
+				k8sNs, err := client.GetNamespace(ans)
+				if err != nil {
+					if errors.IsNotFound(err) {
+						// If a namespace is not found, then we skip it from the list of namespaces
+						log.Warningf("Kiali has an accessible namespace [%s] which doesn't exist", ans)
+					} else if errors.IsForbidden(err) {
+						// Also, if namespace isn't readable, skip it.
+						log.Warningf("Kiali has an accessible namespace [%s] which is forbidden", ans)
+					} else {
+						// On any other error, abort and return the error.
+						return nil, err
+					}
+				} else {
+					k8sNamespaces = append(k8sNamespaces, *k8sNs)
+				}
+			}
+			namespaces = models.CastNamespaceCollection(k8sNamespaces, "")
+		}
+	}
+
+	result := namespaces
+
+	if kialiCache != nil {
+		kialiCache.SetNamespaces(in.k8s.GetToken(), result)
+	}
+
+	return result, nil
+
 }
 
 // addIncludedNamespaces will look at all the namespaces and return all of them that match the Include list.
@@ -422,7 +447,7 @@ func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) 
 		if err != nil {
 			return nil, err
 		}
-		result = models.CastNamespace(*ns)
+		result = models.CastNamespace(*ns, "")
 	}
 	// Refresh cache in case of cache expiration
 	if kialiCache != nil {
@@ -462,17 +487,24 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 	return in.GetNamespace(ctx, namespace)
 }
 
-func (in *NamespaceService) getNamespacesUsingKialiSA(labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {
+func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, failedCliente kubernetes.ClientInterface, labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {
 	// Check if we already are using the Kiali ServiceAccount token. If we are, no need to do further processing, since
 	// this would just circle back to the same results.
-	if kialiToken, err := kubernetes.GetKialiTokenForHomeCluster(); err != nil {
-		return nil, err
-	} else if in.k8s.GetToken() == kialiToken {
-		return nil, forwardedError
+	if cluster == clientFactory.GetHomeClusterName() {
+		// Check if we already are using the Kiali ServiceAccount token. If we are, no need to do further processing, since
+		// this would just circle back to the same results.
+		if kialiToken, err := kubernetes.GetKialiTokenForHomeCluster(); err != nil {
+			return nil, err
+		} else if in.k8s.GetToken() == kialiToken {
+			return nil, forwardedError
+		}
+	} else {
+		//kubeConfig := kubernetes.GetConfigForRemoteCluster(kubernetes.GetRemoteClusterInfos()[cluster.Name])
+		// TODO
 	}
 
 	// Let's get the namespaces list using the Kiali Service Account
-	nss, err := getNamespacesForKialiSA(labelSelector)
+	nss, err := in.getNamespacesForKialiSA(cluster, labelSelector)
 	if err != nil {
 		return nil, err
 	}
@@ -480,7 +512,7 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(labelSelector string, forw
 	// Only take namespaces where the user has privileges
 	var namespaces []core_v1.Namespace
 	for _, item := range nss {
-		if _, getNsErr := in.k8s.GetNamespace(item.Name); getNsErr == nil {
+		if _, getNsErr := failedCliente.GetNamespace(item.Name); getNsErr == nil {
 			// Namespace is accessible
 			namespaces = append(namespaces, item)
 		} else if !errors.IsForbidden(getNsErr) {
@@ -493,26 +525,31 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(labelSelector string, forw
 	return namespaces, nil
 }
 
-func getNamespacesForKialiSA(labelSelector string) ([]core_v1.Namespace, error) {
-	clientFactory, err := kubernetes.GetClientFactory()
-	if err != nil {
-		return nil, err
+func (in *NamespaceService) getNamespacesForKialiSA(cluster string, labelSelector string) ([]core_v1.Namespace, error) {
+	if cluster == clientFactory.GetHomeClusterName() {
+		clientFactory, err := kubernetes.GetClientFactory()
+		if err != nil {
+			return nil, err
+		}
+
+		kialiToken, err := kubernetes.GetKialiTokenForHomeCluster()
+		if err != nil {
+			return nil, err
+		}
+
+		k8s, err := clientFactory.GetClient(&api.AuthInfo{Token: kialiToken})
+		if err != nil {
+			return nil, err
+		}
+
+		nss, err := k8s.GetNamespaces(labelSelector)
+		if err != nil {
+			return nil, err
+		}
+
+		return nss, nil
+	} else {
+		return nil, nil
 	}
 
-	kialiToken, err := kubernetes.GetKialiTokenForHomeCluster()
-	if err != nil {
-		return nil, err
-	}
-
-	k8s, err := clientFactory.GetClient(&api.AuthInfo{Token: kialiToken})
-	if err != nil {
-		return nil, err
-	}
-
-	nss, err := k8s.GetNamespaces(labelSelector)
-	if err != nil {
-		return nil, err
-	}
-
-	return nss, nil
 }

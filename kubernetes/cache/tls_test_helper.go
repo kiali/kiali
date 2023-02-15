@@ -14,7 +14,7 @@ import (
 // It populates the Namespaces, Informers and Registry information needed
 func FakeTlsKialiCache(token string, namespaces []string, pa []*security_v1beta1.PeerAuthentication, dr []*networking_v1beta1.DestinationRule) KialiCache {
 	kialiCacheImpl := kialiCacheImpl{
-		tokenNamespaces: make(map[string]namespaceCache),
+		tokenNamespaces: make(map[string]map[string]namespaceCache),
 		// ~ long duration for unit testing
 		refreshDuration: time.Hour,
 	}
