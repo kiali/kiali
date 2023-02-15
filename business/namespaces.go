@@ -443,11 +443,16 @@ func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) 
 		result = models.CastProject(*project)
 	} else {
 		var ns *core_v1.Namespace
-		ns, err = in.k8s.GetNamespace(namespace)
-		if err != nil {
-			return nil, err
+		var cl string
+		for _, cluster := range clientFactory.GetClusterNames() {
+			kialiClient := clientFactory.GetSAClient(cluster)
+			ns, err = kialiClient.GetNamespace(namespace)
+			if err == nil {
+				cl = cluster
+				break
+			}
 		}
-		result = models.CastNamespace(*ns, "")
+		result = models.CastNamespace(*ns, cl)
 	}
 	// Refresh cache in case of cache expiration
 	if kialiCache != nil {
@@ -526,7 +531,7 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, failedClie
 }
 
 func (in *NamespaceService) getNamespacesForKialiSA(cluster string, labelSelector string) ([]core_v1.Namespace, error) {
-	if cluster == clientFactory.GetHomeClusterName() {
+	if cluster == clientFactory.GetHomeClusterName() || cluster == "" {
 		clientFactory, err := kubernetes.GetClientFactory()
 		if err != nil {
 			return nil, err
@@ -549,7 +554,19 @@ func (in *NamespaceService) getNamespacesForKialiSA(cluster string, labelSelecto
 
 		return nss, nil
 	} else {
-		return nil, nil
+		client := clientFactory.GetSAClient(cluster)
+
+		k8s, err := clientFactory.GetClient(&api.AuthInfo{Token: client.GetToken()})
+		if err != nil {
+			return nil, err
+		}
+
+		nss, err := k8s.GetNamespaces(labelSelector)
+		if err != nil {
+			return nil, err
+		}
+
+		return nss, nil
 	}
 
 }
