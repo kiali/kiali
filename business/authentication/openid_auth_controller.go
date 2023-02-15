@@ -1153,13 +1153,6 @@ func getOpenIdMetadata() (*openIdMetadata, error) {
 			return nil, errors.New("the OpenID provider does not expose an authorization endpoint")
 		}
 
-		// Log warning if OpenId provider Metadata does not expose "id_token" in it's supported response types.
-		// It's possible to try authentication. If metadata is right, the error will be evident to the user when trying to login.
-		responseTypes := strings.Join(metadata.ResponseTypesSupported, " ")
-		if !strings.Contains(responseTypes, "id_token") {
-			log.Warning("Configured OpenID provider informs response_type=id_token is unsupported. Users may not be able to login.")
-		}
-
 		// Log warning if OpenId provider informs that some of the configured scopes are not supported
 		// It's possible to try authentication. If metadata is right, the error will be evident to the user when trying to login.
 		scopes := getConfiguredOpenIdScopes()
