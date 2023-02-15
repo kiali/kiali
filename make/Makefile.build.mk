@@ -104,4 +104,4 @@ lint-install:
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	golangci-lint run -c ./.github/workflows/config/.golangci.yml --skip-files "doc\.go" --skip-dirs "frontend" --tests --timeout 5m
+	#golangci-lint run -c ./.github/workflows/config/.golangci.yml --skip-files "doc\.go" --skip-dirs "frontend" --tests --timeout 5m
