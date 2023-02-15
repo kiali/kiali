@@ -492,7 +492,7 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 	return in.GetNamespace(ctx, namespace)
 }
 
-func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, failedCliente kubernetes.ClientInterface, labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {
+func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, failedClient kubernetes.ClientInterface, labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {
 	// Check if we already are using the Kiali ServiceAccount token. If we are, no need to do further processing, since
 	// this would just circle back to the same results.
 	if cluster == clientFactory.GetHomeClusterName() {
@@ -504,8 +504,13 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, failedClie
 			return nil, forwardedError
 		}
 	} else {
-		//kubeConfig := kubernetes.GetConfigForRemoteCluster(kubernetes.GetRemoteClusterInfos()[cluster.Name])
-		// TODO
+		for _, cluster := range clientFactory.GetClusterNames() {
+			token := clientFactory.GetSAClient(cluster).GetToken()
+			// TODO: Check
+			if in.k8s.GetToken() == token {
+				return nil, forwardedError
+			}
+		}
 	}
 
 	// Let's get the namespaces list using the Kiali Service Account
@@ -517,7 +522,7 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, failedClie
 	// Only take namespaces where the user has privileges
 	var namespaces []core_v1.Namespace
 	for _, item := range nss {
-		if _, getNsErr := failedCliente.GetNamespace(item.Name); getNsErr == nil {
+		if _, getNsErr := failedClient.GetNamespace(item.Name); getNsErr == nil {
 			// Namespace is accessible
 			namespaces = append(namespaces, item)
 		} else if !errors.IsForbidden(getNsErr) {
