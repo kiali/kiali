@@ -37,7 +37,8 @@ const buildCommonQueryParams = (params: GraphUrlParams): string => {
   return q;
 };
 
-export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams): string => {
+export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams, isPf = false): string => {
+  const route = isPf ? 'pfgraph' : 'graph';
   let queryParams = buildCommonQueryParams(params);
   if (params.activeNamespaces.length > 0) {
     const namespaces = params.activeNamespaces.map(namespace => namespace.name).join(',');
@@ -47,44 +48,46 @@ export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams): string
     // Kiosk value can be true or the url of the parent
     queryParams += '&kiosk=' + getKioskMode();
   }
-  return `/graph/namespaces?` + queryParams;
+  return `/${route}/namespaces?` + queryParams;
 };
 
-export const makeNodeGraphUrlFromParams = (params: GraphUrlParams): string => {
+export const makeNodeGraphUrlFromParams = (params: GraphUrlParams, isPf = false): string => {
+  const route = isPf ? 'pfgraph' : 'graph';
   const node = params.node;
   if (node) {
     switch (node.nodeType) {
       case NodeType.AGGREGATE:
         return (
-          `/graph/node/namespaces/${node.namespace.name}/aggregates/${node.aggregate}/${node.aggregateValue}?` +
+          `/${route}/node/namespaces/${node.namespace.name}/aggregates/${node.aggregate}/${node.aggregateValue}?` +
           buildCommonQueryParams(params)
         );
       case NodeType.APP:
         if (node.version && node.version !== 'unknown') {
           return (
-            `/graph/node/namespaces/${node.namespace.name}/applications/${node.app}/versions/${node.version}?` +
+            `/${route}/node/namespaces/${node.namespace.name}/applications/${node.app}/versions/${node.version}?` +
             buildCommonQueryParams(params)
           );
         }
         return (
-          `/graph/node/namespaces/${node.namespace.name}/applications/${node.app}?` + buildCommonQueryParams(params)
+          `/${route}/node/namespaces/${node.namespace.name}/applications/${node.app}?` + buildCommonQueryParams(params)
         );
       case NodeType.BOX:
         // can only be app box
         return (
-          `/graph/node/namespaces/${node.namespace.name}/applications/${node.app}?` + buildCommonQueryParams(params)
+          `/${route}/node/namespaces/${node.namespace.name}/applications/${node.app}?` + buildCommonQueryParams(params)
         );
       case NodeType.SERVICE:
         return (
-          `/graph/node/namespaces/${node.namespace.name}/services/${node.service}?` + buildCommonQueryParams(params)
+          `/${route}/node/namespaces/${node.namespace.name}/services/${node.service}?` + buildCommonQueryParams(params)
         );
       case NodeType.WORKLOAD:
         return (
-          `/graph/node/namespaces/${node.namespace.name}/workloads/${node.workload}?` + buildCommonQueryParams(params)
+          `/${route}/node/namespaces/${node.namespace.name}/workloads/${node.workload}?` +
+          buildCommonQueryParams(params)
         );
       default:
         console.debug('makeNodeUrl defaulting to makeNamespaceUrl');
-        return makeNamespacesGraphUrlFromParams(params);
+        return makeNamespacesGraphUrlFromParams(params, isPf);
     }
   } else {
     // this should never happen but typescript needs this

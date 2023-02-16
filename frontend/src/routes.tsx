@@ -93,8 +93,28 @@ const pathRoutes: Path[] = [
     component: GraphRoute
   },
   {
+    path: '/graph/node/namespaces/:namespace/' + Paths.AGGREGATES + '/:aggregate/:aggregateValue',
+    component: GraphPageContainer
+  },
+  {
+    path: '/graph/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app/versions/:version',
+    component: GraphPageContainer
+  },
+  {
     path: '/graph/namespaces',
     component: GraphPage
+  },
+  {
+    path: '/pfgraph/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
+    component: GraphPagePFContainer
+  },
+  {
+    path: '/pfgraph/node/namespaces/:namespace/' + Paths.SERVICES + '/:service',
+    component: GraphPagePFContainer
+  },
+  {
+    path: '/pfgraph/node/namespaces/:namespace/' + Paths.WORKLOADS + '/:workload',
+    component: GraphPagePFContainer
   },
   {
     path: '/pfgraph/namespaces',

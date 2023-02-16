@@ -237,17 +237,18 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   }
 
   private handleNamespaceReturn = () => {
+    const route = this.props.isPF ? 'pfgraph' : 'graph';
     if (
       !this.props.summaryData ||
       (this.props.summaryData.summaryType !== 'node' && this.props.summaryData.summaryType !== 'box')
     ) {
-      history.push(`/graph/namespaces`);
+      history.push(`/${route}/namespaces`);
       return;
     }
 
     const selector = `node[id = "${this.props.summaryData!.summaryTarget.data(CyNode.id)}"]`;
     this.props.setNode(undefined);
-    history.push(`/graph/namespaces?focusSelector=${encodeURI(selector)}`);
+    history.push(`/${route}/namespaces?focusSelector=${encodeURI(selector)}`);
   };
 }
 

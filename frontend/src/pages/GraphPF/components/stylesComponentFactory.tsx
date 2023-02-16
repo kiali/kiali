@@ -184,7 +184,7 @@ const handleDoubleTap = (doubleTapNode: GraphElement) => {
   };
 
   // To ensure updated components get the updated URL, update the URL first and then the state
-  history.push(makeNodeGraphUrlFromParams(urlParams));
+  history.push(makeNodeGraphUrlFromParams(urlParams, true));
 };
 
 // This allows us to navigate to the service details page when zoomed in on nodes
