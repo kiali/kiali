@@ -25,7 +25,7 @@ func FakeGatewaysKialiCache(gws []*networking_v1beta1.Gateway) KialiCache {
 		panic(fmt.Sprintf("Error creating KialiCache in testing. Err: %v", err))
 	}
 	kialiCacheImpl := kialiCacheImpl{
-		tokenNamespaces: make(map[string]map[string]namespaceCache),
+		tokenNamespaces: make(map[string]namespaceCache),
 		// ~ long duration for unit testing
 		refreshDuration: time.Hour,
 		KubeCache:       cache,
@@ -63,7 +63,7 @@ func FakeServicesKialiCache(rss []*kubernetes.RegistryService,
 		panic(fmt.Sprintf("Error creating KialiCache in testing. Err: %v", err))
 	}
 	kialiCacheImpl := kialiCacheImpl{
-		tokenNamespaces: make(map[string]map[string]namespaceCache),
+		tokenNamespaces: make(map[string]namespaceCache),
 		// ~ long duration for unit testing
 		refreshDuration: time.Hour,
 		KubeCache:       cache,

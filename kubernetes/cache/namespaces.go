@@ -19,24 +19,19 @@ func (c *kialiCacheImpl) SetNamespaces(token string, namespaces []models.Namespa
 	defer c.tokenLock.Unlock()
 	c.tokenLock.Lock()
 	nameNamespace := make(map[string]map[string]models.Namespace)
-	nsList := make(map[string][]models.Namespace)
 	for _, ns := range namespaces {
-		if nameNamespace[ns.Cluster] == nil {
-			nameNamespace[ns.Cluster] = make(map[string]models.Namespace)
+		for _, cluster := range ns.Clusters {
+			if nameNamespace[ns.Name] == nil {
+				nameNamespace[ns.Name] = make(map[string]models.Namespace)
+			}
+			nameNamespace[ns.Name][cluster] = ns
 		}
-		nameNamespace[ns.Cluster][ns.Name] = ns
-		nsList[ns.Cluster] = append(nsList[ns.Cluster], ns)
 	}
 
-	for _, cluster := range c.clientFactory.GetClusterNames() {
-		if c.tokenNamespaces[token] == nil {
-			c.tokenNamespaces[token] = make(map[string]namespaceCache)
-		}
-		c.tokenNamespaces[token][cluster] = namespaceCache{
-			created:       time.Now(),
-			namespaces:    nsList[cluster],
-			nameNamespace: nameNamespace[cluster],
-		}
+	c.tokenNamespaces[token] = namespaceCache{
+		created:       time.Now(),
+		namespaces:    namespaces,
+		nameNamespace: nameNamespace,
 	}
 }
 
@@ -46,16 +41,11 @@ func (c *kialiCacheImpl) GetNamespaces(token string) []models.Namespace {
 	if nsToken, existToken := c.tokenNamespaces[token]; !existToken {
 		return nil
 	} else {
-		clusterList := []models.Namespace{}
-		for _, cluster := range c.clientFactory.GetClusterNames() {
-			if time.Since(nsToken[cluster].created) < c.tokenNamespaceDuration {
-				clusterList = append(clusterList, nsToken[cluster].namespaces...)
-			}
+		var nsList []models.Namespace
+		if time.Since(nsToken.created) < c.tokenNamespaceDuration {
+			nsList = append(nsList, nsToken.namespaces...)
 		}
-		if len(clusterList) > 0 {
-			return clusterList
-		}
-		return nil
+		return nsList
 	}
 }
 
@@ -65,16 +55,18 @@ func (c *kialiCacheImpl) GetNamespace(token string, namespace string) *models.Na
 	if nsToken, existToken := c.tokenNamespaces[token]; !existToken {
 		return nil
 	} else {
-		// TODO: Should return more than one?
-		for _, cluster := range c.clientFactory.GetClusterNames() {
-			if time.Since(nsToken[cluster].created) <= c.tokenNamespaceDuration {
-				if ns, existsNamespace := c.tokenNamespaces[token][cluster].nameNamespace[namespace]; existsNamespace {
+		if time.Since(nsToken.created) <= c.tokenNamespaceDuration {
+			for cluster, _ := range nsToken.nameNamespace[namespace] {
+				if ns, existsNamespace := nsToken.nameNamespace[namespace][cluster]; existsNamespace {
+					// TODO: Return N
 					return &ns
 				} else {
 					return nil
 				}
 			}
+
 		}
+
 		return nil
 	}
 }
@@ -82,5 +74,5 @@ func (c *kialiCacheImpl) GetNamespace(token string, namespace string) *models.Na
 func (c *kialiCacheImpl) RefreshTokenNamespaces() {
 	defer c.tokenLock.Unlock()
 	c.tokenLock.Lock()
-	c.tokenNamespaces = make(map[string]map[string]namespaceCache)
+	c.tokenNamespaces = make(map[string]namespaceCache)
 }

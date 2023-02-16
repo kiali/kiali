@@ -34,11 +34,10 @@ type KialiCache interface {
 }
 
 // namespaceCache caches namespaces according to their token.
-// TODO: Support multi-cluster.
 type namespaceCache struct {
 	created       time.Time
 	namespaces    []models.Namespace
-	nameNamespace map[string]models.Namespace
+	nameNamespace map[string]map[string]models.Namespace // By name and cluster to keep uniqueness
 }
 
 type podProxyStatus struct {
@@ -62,7 +61,7 @@ type kialiCacheImpl struct {
 	kubeCache              map[string]KubeCache
 	refreshDuration        time.Duration
 	tokenLock              sync.RWMutex
-	tokenNamespaces        map[string]map[string]namespaceCache // By token, by cluster
+	tokenNamespaces        map[string]namespaceCache
 	tokenNamespaceDuration time.Duration
 	proxyStatusLock        sync.RWMutex
 	proxyStatusNamespaces  map[string]map[string]podProxyStatus
@@ -78,7 +77,7 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config, na
 		kubeCache:                  make(map[string]KubeCache),
 		proxyStatusNamespaces:      make(map[string]map[string]podProxyStatus),
 		refreshDuration:            time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
-		tokenNamespaces:            make(map[string]map[string]namespaceCache),
+		tokenNamespaces:            make(map[string]namespaceCache),
 		tokenNamespaceDuration:     time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
 	}
 
