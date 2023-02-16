@@ -377,6 +377,7 @@ export const TopologyContent: React.FC<{
       });
 
       controller.fromModel(model);
+      controller.getGraph().setData({ graphData: graphData });
     };
 
     const initialGraph = !controller.hasGraph();
