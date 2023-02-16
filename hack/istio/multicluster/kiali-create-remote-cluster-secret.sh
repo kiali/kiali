@@ -227,16 +227,20 @@ else
   info REMOTE_CLUSTER_SERVER_URL=${REMOTE_CLUSTER_SERVER_URL}
 fi
 
-REMOTE_CLUSTER_CA_FILE="$(${CLIENT_EXE} config view -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME}'")].cluster.certificate-authority}' 2>/dev/null)"
-if [ ! -r "${REMOTE_CLUSTER_CA_FILE}" ]; then
-  error "Unable to read the remote cluster CA file specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME}]. Check that the kubeconfig is correct."
-else
-  info REMOTE_CLUSTER_CA_FILE=${REMOTE_CLUSTER_CA_FILE}
-fi
-
-REMOTE_CLUSTER_CA_BYTES="$(cat ${REMOTE_CLUSTER_CA_FILE} 2>/dev/null | base64 --wrap=0 2>/dev/null)"
+# The CA data can either be specified directly in the config or a CA file is defined that we then have to read
+REMOTE_CLUSTER_CA_BYTES="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME}'")].cluster.certificate-authority-data}' 2>/dev/null)"
 if [ "${REMOTE_CLUSTER_CA_BYTES}" == "" ]; then
-  error "Unable to get the remote cluster CA cert data from the CA file [${REMOTE_CLUSTER_CA_FILE}] specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME}]. Check that the kubeconfig is correct."
+  REMOTE_CLUSTER_CA_FILE="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME}'")].cluster.certificate-authority}' 2>/dev/null)"
+  if [ ! -r "${REMOTE_CLUSTER_CA_FILE}" ]; then
+    error "Unable to read the remote cluster CA bytes or file specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME}]. Check that the kubeconfig is correct."
+  else
+    info REMOTE_CLUSTER_CA_FILE=${REMOTE_CLUSTER_CA_FILE}
+  fi
+
+  REMOTE_CLUSTER_CA_BYTES="$(cat ${REMOTE_CLUSTER_CA_FILE} 2>/dev/null | base64 --wrap=0 2>/dev/null)"
+  if [ "${REMOTE_CLUSTER_CA_BYTES}" == "" ]; then
+    error "Unable to get the remote cluster CA cert data from the CA file [${REMOTE_CLUSTER_CA_FILE}] specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME}]. Check that the kubeconfig is correct."
+  fi
 fi
 
 # We need helm for some of the commands below - make sure it is in PATH.
