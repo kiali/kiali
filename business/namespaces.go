@@ -128,15 +128,34 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}
 
 	namespaces := []models.Namespace{}
+	nsmap := make(map[string]models.Namespace)
 
 	for _, cluster := range clientFactory.GetClusterNames() {
 		kialiClient := clientFactory.GetSAClient(cluster)
 		nsList, error := in.GetNamespacesByClient(kialiClient, cluster)
 		if error == nil {
 			for _, ns := range nsList {
-				namespaces = append(namespaces, ns)
+				v, _ := nsmap[ns.Name]
+				if v.Name != "" {
+					// Merge data
+					for k, v := range v.Labels {
+						ns.Labels[k] = v
+					}
+					for k, v := range v.Annotations {
+						ns.Annotations[k] = v
+					}
+					ns.Clusters = append(ns.Clusters, v.Clusters...)
+					nsmap[ns.Name] = ns
+				} else {
+					nsmap[ns.Name] = ns
+				}
+
 			}
 		}
+	}
+
+	for _, value := range nsmap {
+		namespaces = append(namespaces, value)
 	}
 
 	result := namespaces
