@@ -25,7 +25,7 @@ type Namespace struct {
 	//
 	// example:  east
 	// required: true
-	Clusters []string `json:"cluster"`
+	Clusters []string `json:"clusters"`
 
 	// Creation date of the namespace.
 	// There is no need to export this through the API. So, this is
