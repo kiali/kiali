@@ -73,7 +73,7 @@ const durationRegexp = /^[\d]+\.?[\d]*(h|m|s|ms)$/;
 
 // Gateway hosts have only dnsName
 export const isK8sGatewayHostValid = (k8sGatewayHost: string): boolean => {
-  if (k8sGatewayHost.length === 0) {
+  if (k8sGatewayHost.length < 1 && k8sGatewayHost.length > 253) {
     return false;
   }
 
