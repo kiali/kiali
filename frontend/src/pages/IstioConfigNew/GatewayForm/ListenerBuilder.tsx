@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { isGatewayHostValid } from '../../../utils/IstioConfigUtils';
+import { isK8sGatewayHostValid } from '../../../utils/IstioConfigUtils';
 import { Button, ButtonVariant, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
 import { isValid } from '../../../utils/Common';
 import { TrashIcon } from '@patternfly/react-icons';
@@ -24,7 +24,7 @@ export const isValidName = (name: string) => {
 };
 
 export const isValidHostname = (hostname: string) => {
-  return hostname !== undefined && hostname.length > 0 && isGatewayHostValid(hostname);
+  return hostname !== undefined && hostname.length > 0 && isK8sGatewayHostValid(hostname);
 };
 
 export const isValidPort = (port: string) => {
@@ -37,7 +37,7 @@ export const isValidSelector = (selector: string) => {
 
 class ListenerBuilder extends React.Component<Props> {
   isValidHost = (host: string): boolean => {
-    return isGatewayHostValid(host);
+    return isK8sGatewayHostValid(host);
   };
 
   onAddHostname = (value: string, _) => {

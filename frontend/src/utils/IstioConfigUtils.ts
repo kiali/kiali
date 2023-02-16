@@ -65,10 +65,20 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails | IstioCo
   return istioObject;
 };
 
+const k8sHostRegexp = /^(\*\.)?[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
 const nsRegexp = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[-a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
 const hostRegexp = /(?=^.{4,253}$)(^((?!-)(([a-zA-Z0-9-]{0,62}[a-zA-Z0-9])|\*)\.)+[a-zA-Z]{2,63}$)/;
 const ipRegexp = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$/;
 const durationRegexp = /^[\d]+\.?[\d]*(h|m|s|ms)$/;
+
+// Gateway hosts have only dnsName
+export const isK8sGatewayHostValid = (k8sGatewayHost: string): boolean => {
+  if (k8sGatewayHost.length === 0) {
+    return false;
+  }
+
+  return k8sGatewayHost.search(k8sHostRegexp) === 0;
+};
 
 // Gateway hosts have namespace/dnsName with namespace optional
 export const isGatewayHostValid = (gatewayHost: string): boolean => {
