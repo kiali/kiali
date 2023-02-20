@@ -62,6 +62,7 @@ func NewServer() *Server {
 	// Clients must use TLS 1.2 or higher
 	tlsConfig := &tls.Config{
 		MinVersion: tls.VersionTLS12,
+		NextProtos: []string{"h2", "http/1.1"},
 	}
 
 	// create the server definition that will handle both console and api server traffic
@@ -98,6 +99,7 @@ func (s *Server) Start() {
 		var err error
 		if secure {
 			log.Infof("Server endpoint will require https")
+			log.Infof("Server will support protocols: %v", s.httpServer.TLSConfig.NextProtos)
 			s.router.Use(secureHttpsMiddleware)
 			err = s.httpServer.ListenAndServeTLS(conf.Identity.CertFile, conf.Identity.PrivateKeyFile)
 		} else {
