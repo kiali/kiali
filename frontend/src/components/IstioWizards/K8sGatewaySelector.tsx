@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Form, FormGroup, FormSelect, FormSelectOption, Radio, Switch, TextInput } from '@patternfly/react-core';
 import { GATEWAY_TOOLTIP, wizardTooltip } from './WizardHelp';
 import { isValid } from 'utils/Common';
+import { isK8sGatewayHostValid } from '../../utils/IstioConfigUtils';
 
 type Props = {
   serviceName: string;
@@ -47,16 +48,10 @@ class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelectorState>
   }
 
   checkGwHosts = (gwHosts: string): boolean => {
-    const hosts = gwHosts.split(',');
-    for (let i = 0; i < hosts.length; i++) {
-      if (hosts[i] === '*') {
-        continue;
-      }
-      if (!hosts[i].includes('.')) {
-        return false;
-      }
-    }
-    return true;
+    // All k8s gateway hosts must be valid
+    return gwHosts.split(',').every(host => {
+      return isK8sGatewayHostValid(host);
+    });
   };
 
   onFormChange = (component: K8sGatewayForm, value: string) => {
@@ -180,7 +175,7 @@ class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelectorState>
                   fieldId="gwHosts"
                   label="K8s API Gateway Hosts"
                   helperText="One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma."
-                  helperTextInvalid="K8s API Gateway hosts should be specified using FQDN format or '*.' format."
+                  helperTextInvalid="K8s API Gateway hosts should be specified using FQDN format or '*.' format. IPs are not allowed."
                   validated={isValid(this.state.gwHostsValid)}
                 >
                   <TextInput
