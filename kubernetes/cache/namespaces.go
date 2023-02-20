@@ -56,7 +56,7 @@ func (c *kialiCacheImpl) GetNamespace(token string, namespace string) *models.Na
 		return nil
 	} else {
 		if time.Since(nsToken.created) <= c.tokenNamespaceDuration {
-			for cluster, _ := range nsToken.nameNamespace[namespace] {
+			for cluster := range nsToken.nameNamespace[namespace] {
 				if ns, existsNamespace := nsToken.nameNamespace[namespace][cluster]; existsNamespace {
 					// TODO: Return N
 					return &ns
