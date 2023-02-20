@@ -881,6 +881,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
                 <Tab eventKey={0} title={'K8s HTTPRoute Hosts'}>
                   <div style={{ marginTop: '20px' }}>
                     <K8sRouteHosts
+                      valid={this.state.valid.k8sRouteHosts}
                       k8sRouteHosts={this.state.k8sRouteHosts}
                       gateway={this.state.gateway}
                       onK8sRouteHostsChange={this.onK8sRouteHosts}

@@ -71,9 +71,14 @@ const hostRegexp = /(?=^.{4,253}$)(^((?!-)(([a-zA-Z0-9-]{0,62}[a-zA-Z0-9])|\*)\.
 const ipRegexp = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$/;
 const durationRegexp = /^[\d]+\.?[\d]*(h|m|s|ms)$/;
 
-// Gateway hosts have only dnsName
+// K8s gateway hosts have only dnsName
 export const isK8sGatewayHostValid = (k8sGatewayHost: string): boolean => {
   if (k8sGatewayHost.length < 1 && k8sGatewayHost.length > 253) {
+    return false;
+  }
+
+  // K8s gateway host must be fqdn but not ip address
+  if (k8sGatewayHost.split('.').length < 2 || k8sGatewayHost.search(ipRegexp) === 0) {
     return false;
   }
 
