@@ -2,7 +2,7 @@ import { After, And, Given, Then, When } from '@badeball/cypress-cucumber-prepro
 import { getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from "./transition";
 
-When('user clicks in the {string} Istio config actions', (action) => {
+When('user clicks in the {string} Istio config actions', (action:string) => {
   cy.get('button[data-test="config-actions-dropdown"]')
       .click()
       .get('#loading_kiali_spinner')
@@ -14,7 +14,7 @@ When('user clicks in the {string} Istio config actions', (action) => {
       .should('not.exist');
 });
 
-And('user sees the {string} config wizard', (title) => {
+And('user sees the {string} config wizard', (title:string) => {
   cy.get('h1').should('contain.text', title);
 });
 
@@ -22,20 +22,20 @@ And('user adds listener', () => {
   cy.get('button[name="addListener"]').click()
 });
 
-And('user types {string} in the name input', (name) => {
-  cy.get('input[id="name"]').type(name);
+And('user types {string} in the {string} input', (value:string, id:string) => {
+  cy.get(`input[id="${id}"]`).type(value);
 });
 
-And('user types {string} in the add listener name input', (name) => {
-  cy.get('input[id="addName0"]').type(name);
+And('user adds a server to a server list', () => {
+  cy.get('[aria-label="Server List"]').find('button').click();
 });
 
-And('user types {string} in the add hostname input', (host) => {
-  cy.get('input[id="addHostname0"]').type(host);
+And('the {string} input should display a warning', (id:string)=>{
+  cy.get(`input[id="${id}"]`).invoke('attr', 'aria-invalid').should('eq', 'true');
 });
 
-And('user types {string} in the add port input', (port) => {
-  cy.get('input[id="addPort0"]').type(port);
+And('the {string} input should not display a warning', (id:string)=>{
+  cy.get(`input[id="${id}"]`).invoke('attr', 'aria-invalid').should('eq', 'false');
 });
 
 And('user creates the istio config', () => {
@@ -47,6 +47,31 @@ And('user creates the istio config', () => {
   });
 });
 
-Then('the K8sGateway {string} should be listed in {string} namespace', function(name, namespace: string) {
-  cy.get(`[data-test=VirtualItem_Ns${namespace}_k8sgateway_${name}] svg`).should('exist');
+And('user chooses {string} mode from the {string} select',(option:string, id:string) => {
+  cy.get(`select[id="${id}"]`).select(option);
+});
+
+And('the {string} message should be displayed',(message:string)=> {
+  cy.get('main').contains(message).should('be.visible');
+});
+
+And('user opens the {string} submenu',(title:string)=>{
+  cy.get('button').contains(title).click();
+});
+
+Then('the {string} {string} should be listed in {string} namespace', function(type:string, name:string, namespace: string) {
+  cy.get(`[data-test=VirtualItem_Ns${namespace}_${type.toLowerCase()}_${name}] svg`).should('exist');
+});
+
+Then('the preview button should be disabled', () =>{
+  cy.get('[data-test="preview"').should('be.disabled');
+});
+
+
+Then('an error message {string} is displayed', (message:string) =>{
+  cy.get('h4').contains(message).should("be.visible");
+});
+
+Then('the {string} input should be empty', (id:string) => {
+  cy.get(`input[id="${id}"]`).should('be.empty');
 });
