@@ -128,26 +128,28 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}
 
 	namespaces := []models.Namespace{}
+	// Merge namespaces from different clusters
+	// Namespace sameness
 	nsmap := make(map[string]models.Namespace)
 
 	for _, cluster := range clientFactory.GetClusterNames() {
 		kialiClient := clientFactory.GetSAClient(cluster)
 		nsList, error := in.GetNamespacesByClient(kialiClient, cluster)
 		if error == nil {
-			for _, ns := range nsList {
-				v, _ := nsmap[ns.Name]
-				if v.Name != "" {
+			for _, clusterNamespace := range nsList {
+				namespacesAcum := nsmap[clusterNamespace.Name]
+				if namespacesAcum.Name != "" {
 					// Merge data
-					for k, v := range v.Labels {
-						ns.Labels[k] = v
+					for label, value := range namespacesAcum.Labels {
+						clusterNamespace.Labels[label] = value
 					}
-					for k, v := range v.Annotations {
-						ns.Annotations[k] = v
+					for annotation, value := range namespacesAcum.Annotations {
+						clusterNamespace.Annotations[annotation] = value
 					}
-					ns.Clusters = append(ns.Clusters, v.Clusters...)
-					nsmap[ns.Name] = ns
+					clusterNamespace.Clusters = append(clusterNamespace.Clusters, namespacesAcum.Clusters...)
+					nsmap[clusterNamespace.Name] = clusterNamespace
 				} else {
-					nsmap[ns.Name] = ns
+					nsmap[clusterNamespace.Name] = clusterNamespace
 				}
 
 			}
@@ -514,7 +516,7 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, failedClient kubernetes.ClientInterface, labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {
 	// Check if we already are using the Kiali ServiceAccount token. If we are, no need to do further processing, since
 	// this would just circle back to the same results.
-	if cluster == clientFactory.GetHomeClusterName() {
+	if cluster == kubernetes.HomeClusterName {
 		// Check if we already are using the Kiali ServiceAccount token. If we are, no need to do further processing, since
 		// this would just circle back to the same results.
 		if kialiToken, err := kubernetes.GetKialiTokenForHomeCluster(); err != nil {
@@ -555,7 +557,7 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, failedClie
 }
 
 func (in *NamespaceService) getNamespacesForKialiSA(cluster string, labelSelector string) ([]core_v1.Namespace, error) {
-	if cluster == clientFactory.GetHomeClusterName() || cluster == "" {
+	if cluster == kubernetes.HomeClusterName || cluster == "" {
 		clientFactory, err := kubernetes.GetClientFactory()
 		if err != nil {
 			return nil, err

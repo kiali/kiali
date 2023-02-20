@@ -29,7 +29,6 @@ type ClientFactory interface {
 	GetSAClient(cluster string) ClientInterface
 	GetSAHomeClusterClient() ClientInterface
 	GetClusterNames() []string
-	GetHomeClusterName() string
 }
 
 // clientFactory used to generate per users clients
@@ -214,11 +213,6 @@ func (cf *clientFactory) newSAClient(clusterInfo *RemoteClusterInfo) (*K8SClient
 // getClient returns a client for the specified token. Creating one if necessary.
 func (cf *clientFactory) GetClient(authInfo *api.AuthInfo) (ClientInterface, error) {
 	return cf.getRecycleClient(authInfo, defaultExpirationTime)
-}
-
-// getClient returns a client for the specified token. Creating one if necessary.
-func (cf *clientFactory) GetHomeClusterName() string {
-	return HomeClusterName
 }
 
 // getRecycleClient returns a client for the specified token with expirationTime. Creating one if necessary.
