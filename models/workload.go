@@ -157,7 +157,11 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.PodCount = len(w.Pods)
 	workload.ServiceAccountNames = w.Pods.ServiceAccounts()
 	workload.AdditionalDetailSample = w.AdditionalDetailSample
-	workload.Annotations = w.Annotations
+	if len(w.Annotations) > 0 {
+		workload.Annotations = w.Annotations
+	} else {
+		workload.Annotations = map[string]string{}
+	}
 	workload.HealthAnnotations = w.HealthAnnotations
 	workload.IstioReferences = []*IstioValidationKey{}
 
@@ -224,7 +228,11 @@ func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
 	if d.Spec.Replicas != nil {
 		workload.DesiredReplicas = *d.Spec.Replicas
 	}
-	workload.Annotations = d.Annotations
+	if len(d.Annotations) > 0 {
+		workload.Annotations = d.Annotations
+	} else {
+		workload.Annotations = map[string]string{}
+	}
 	workload.CurrentReplicas = d.Status.Replicas
 	workload.AvailableReplicas = d.Status.AvailableReplicas
 }
