@@ -18,6 +18,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/util"
 )
@@ -95,7 +96,7 @@ func TestTokenAuthControllerRejectsInvalidToken(t *testing.T) {
 	k8s.On("GetNamespaces", "").Return([]v1.Namespace{
 		{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
 	}, k8s_errors.NewForbidden(schema.GroupResource{Group: "v1", Resource: "Projects"}, "", errors.New("err")))
-	k8s.On("GetToken").Return("faketoken")
+	k8s.On("GetToken").Return(kubernetes.GetKialiTokenForHomeCluster())
 
 	requestBody := strings.NewReader("token=Foo")
 	request := httptest.NewRequest(http.MethodPost, "/api/authenticate", requestBody)
@@ -191,11 +192,14 @@ func TestTokenAuthControllerValidatesSessionForUserWithMissingPrivileges(t *test
 	}
 
 	k8s := new(kubetest.K8SClientMock)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, nil)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespaces", "").Return([]v1.Namespace{
 		{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
 	}, k8s_errors.NewForbidden(schema.GroupResource{Group: "v1", Resource: "Projects"}, "", errors.New("err")))
+	k8s.On("GetToken").Return(kubernetes.GetKialiTokenForHomeCluster())
 
 	controller := NewTokenAuthController(CookieSessionPersistor{}, func(authInfo *api.AuthInfo) (*business.Layer, error) {
 		return business.NewWithBackends(k8s, nil, nil), nil

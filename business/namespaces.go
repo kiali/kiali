@@ -139,6 +139,8 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 			return nil, fmt.Errorf("Error getting client factory")
 		}
 	}
+
+	var clusterError error
 	for _, cluster := range clientFactory.GetClusterNames() {
 		kialiClient := clientFactory.GetSAClient(cluster)
 		nsList, error := in.GetNamespacesByClient(kialiClient, cluster)
@@ -160,7 +162,13 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 				}
 
 			}
+		} else {
+			clusterError = error
 		}
+	}
+
+	if clusterError != nil {
+		return nil, clusterError
 	}
 
 	for _, value := range nsmap {
@@ -527,19 +535,19 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, failedClient kubernetes.ClientInterface, labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {
 	// Check if we already are using the Kiali ServiceAccount token. If we are, no need to do further processing, since
 	// this would just circle back to the same results.
-	if cluster == kubernetes.HomeClusterName {
+	if cluster == kubernetes.HomeClusterName || cluster == "" {
 		// Check if we already are using the Kiali ServiceAccount token. If we are, no need to do further processing, since
 		// this would just circle back to the same results.
 		if kialiToken, err := kubernetes.GetKialiTokenForHomeCluster(); err != nil {
 			return nil, err
-		} else if in.k8s.GetToken() == kialiToken {
+		} else if failedClient.GetToken() == kialiToken {
 			return nil, forwardedError
 		}
 	} else {
 		for _, cluster := range clientFactory.GetClusterNames() {
 			token := clientFactory.GetSAClient(cluster).GetToken()
 			// TODO: Check
-			if in.k8s.GetToken() == token {
+			if failedClient.GetToken() == token {
 				return nil, forwardedError
 			}
 		}
@@ -568,9 +576,14 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, failedClie
 }
 
 func (in *NamespaceService) getNamespacesForKialiSA(cluster string, labelSelector string) ([]core_v1.Namespace, error) {
-	clientFactory, err := kubernetes.GetClientFactory()
-	if err != nil {
-		return nil, err
+
+	if clientFactory == nil {
+		var err error
+		clientFactory, err = kubernetes.GetClientFactory()
+		if err != nil {
+			return nil, err
+		}
+
 	}
 	if cluster == kubernetes.HomeClusterName || cluster == "" {
 
