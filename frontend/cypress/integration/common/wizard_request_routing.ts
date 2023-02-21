@@ -1,9 +1,9 @@
-import {And, Before, Given, Then, When} from "@badeball/cypress-cucumber-preprocessor";
+import {And, Before, Given, When} from "@badeball/cypress-cucumber-preprocessor";
 
 const url = "/console";
 
 Before(() => {
-    // Focing to not stop cypress on unexpected errors not related to the tests.
+    // Forcing to not stop cypress on unexpected errors not related to the tests.
     // There are some random failures due timeouts/loadtime/framework that throws some error in the browser.
     // After reviewing the tests failures, those are unrelated to the app, so,
     // it needs this event to not fail the CI action due some "slow" action or similar.
@@ -21,12 +21,12 @@ Before(() => {
     });
 });
 
-Given('user opens the namespace {string} and {string} service details page', (namespace, service) => {
+Given('user opens the namespace {string} and {string} service details page', (namespace: string, service: string) => {
     // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
     cy.visit(url + '/namespaces/' + namespace + '/services/' + service + '?refresh=0');
 });
 
-When('user clicks in the {string} actions', (action) => {
+When('user clicks in the {string} actions', (action: string) => {
     let actionId = '';
     switch (action) {
         case 'Request Routing':
@@ -56,16 +56,16 @@ When('user clicks in the {string} actions', (action) => {
         .should('not.exist');
 });
 
-And('user sees the {string} wizard', (title) => {
+And('user sees the {string} wizard', (title: string) => {
     cy.get('div[aria-label="' + title + '"]');
 });
 
-And('user clicks in the {string} tab', (tab) => {
+And('user clicks in the {string} tab', (tab: string) => {
     cy.get('button[data-test="' + tab +'"]')
         .click();
 });
 
-And('user clicks in the {string} request matching dropdown', (select) => {
+And('user clicks in the {string} request matching dropdown', (select: string) => {
     cy.get('button[data-test="requestmatching-header-toggle"]')
         .click();
 
@@ -73,7 +73,7 @@ And('user clicks in the {string} request matching dropdown', (select) => {
         .click();
 });
 
-And('user clicks in the {string} request filtering dropdown', (select) => {
+And('user clicks in the {string} request filtering dropdown', (select: string) => {
     cy.get('button[data-test="filtering-type-toggle"]')
         .click();
 
@@ -81,17 +81,17 @@ And('user clicks in the {string} request filtering dropdown', (select) => {
         .click();
 });
 
-And('user types {string} in the matching header input', (header) => {
+And('user types {string} in the matching header input', (header: string) => {
     cy.get('input[id="header-name-id"]')
         .type(header);
 });
 
-And('user types {string} in the filtering header input', (header) => {
+And('user types {string} in the filtering header input', (header: string) => {
     cy.get('input[id="filter-header-name-id"]')
         .type(header);
 });
 
-And('user clicks in the {string} match value dropdown', (value) => {
+And('user clicks in the {string} match value dropdown', (value: string) => {
     cy.get('button[data-test="requestmatching-match-toggle"]')
         .click();
 
@@ -99,7 +99,7 @@ And('user clicks in the {string} match value dropdown', (value) => {
         .click();
 });
 
-And('user types {string} in the match value input', (value) => {
+And('user types {string} in the match value input', (value: string) => {
     cy.get('input[id="match-value-id"]')
         .type(value);
 });
@@ -114,7 +114,7 @@ And('user adds a filter', () => {
         .click();
 });
 
-And('user types {string} traffic weight in the {string} workload', (weight, workload) => {
+And('user types {string} traffic weight in the {string} workload', (weight: string, workload: string) => {
     cy.get('input[data-test="input-slider-' + workload + '"]')
         .type(weight);
 });
@@ -124,7 +124,7 @@ And('user adds a route', () => {
         .click();
 });
 
-And('user clicks in {string} matching selected', (match) => {
+And('user clicks in {string} matching selected', (match: string) => {
    cy.get('span[data-test="' + match + '"]')
        .children()
        .first()         // div wrapper
@@ -171,11 +171,11 @@ And('user confirms delete the configuration', () => {
     });
 });
 
-And('user sees the {string} {string} {string} reference', (namespace, name, type) => {
+And('user sees the {string} {string} {string} reference', (namespace: string, name: string, type: string) => {
     cy.get('a[data-test="' + type + '-' + namespace + '-' + name + '"]');
 });
 
-And('user clicks in the {string} {string} {string} reference', (namespace, name, type) => {
+And('user clicks in the {string} {string} {string} reference', (namespace: string, name: string, type: string) => {
     cy.get('a[data-test="' + type + '-' + namespace + '-' + name + '"]')
         .click();
 
@@ -196,14 +196,14 @@ And('user clicks in the {string} {string} {string} reference', (namespace, name,
         .should('include', expectedURl);
 });
 
-And('user sees the {string} regex in the editor', (regexContent) => {
+And('user sees the {string} regex in the editor', (regexContent: string) => {
     const re = new RegExp(regexContent);
     cy.get('.ace_content')
         .invoke('text')
         .should('match', re);
 });
 
-And('user clicks on {string} Advanced Options', (action) => {
+And('user clicks on {string} Advanced Options', (action: string) => {
     cy.get('div[id="' + action.toLowerCase() + '_advanced_options"]').prev()
         .click();
 });
