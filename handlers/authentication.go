@@ -80,7 +80,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		case http.StatusUnauthorized:
 			err := authentication.GetAuthController().TerminateSession(r, w)
 			if err != nil {
-				log.Error("Failed to clean a stale session: %s", err.Error())
+				log.Errorf("Failed to clean a stale session: %s", err.Error())
 			}
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		default:
