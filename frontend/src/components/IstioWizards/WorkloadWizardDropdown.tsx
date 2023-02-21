@@ -218,7 +218,7 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         items.push(this.props.workload.istioSidecar ? disableActionWrapper : enableActionWrapper);
       }
     }
-    if (this.props.workload.type === 'Deployment' && this.props.workload.annotations) {
+    if (this.props.workload.type === 'Deployment') {
       const annotationsAction = (
         <DropdownItem
           data-test={WIZARD_EDIT_ANNOTATIONS}
@@ -255,15 +255,13 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
     // TODO WorkloadWizard component contains only 3scale actions but in the future we may need to bring it back
     return (
       <>
-        {this.props.workload.annotations && (
-          <WizardAnnotations
-            showAnotationsWizard={this.state.showWizard}
-            onChange={annotations => this.onChangeAnnotations(annotations)}
-            onClose={() => this.onWizardToggle(false)}
-            annotations={this.props.workload.annotations}
-            canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
-          />
-        )}
+        <WizardAnnotations
+          showAnotationsWizard={this.state.showWizard}
+          onChange={annotations => this.onChangeAnnotations(annotations)}
+          onClose={() => this.onWizardToggle(false)}
+          annotations={this.props.workload.annotations}
+          canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
+        />
         {!validActions
           ? this.renderTooltip(
               'tooltip_wizard_actions',

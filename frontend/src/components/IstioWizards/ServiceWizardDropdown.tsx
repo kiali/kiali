@@ -256,15 +256,13 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
         {!hasSidecarWorkloads
           ? this.renderTooltip('tooltip_wizard_actions', TooltipPosition.top, toolTipMsgActions, dropdown)
           : dropdown}
-        {this.props.annotations && (
-          <WizardAnnotations
-            showAnotationsWizard={this.state.showAnnotationsWizard}
-            onChange={annotations => this.onChangeAnnotations(annotations)}
-            onClose={() => this.setState({ showAnnotationsWizard: false })}
-            annotations={this.props.annotations}
-            canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
-          />
-        )}
+        <WizardAnnotations
+          showAnotationsWizard={this.state.showAnnotationsWizard}
+          onChange={annotations => this.onChangeAnnotations(annotations)}
+          onClose={() => this.setState({ showAnnotationsWizard: false })}
+          annotations={this.props.annotations}
+          canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
+        />
         <ServiceWizard
           show={this.state.showWizard}
           type={this.state.wizardType}
