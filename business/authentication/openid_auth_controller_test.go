@@ -161,7 +161,7 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 
 	// Check that cookies are set and have the right expiration.
 	response := rr.Result()
-	//assert.Len(t, response.Cookies(), 2)
+	assert.Len(t, response.Cookies(), 2)
 
 	// nonce cookie cleanup
 	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)

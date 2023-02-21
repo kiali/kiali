@@ -568,14 +568,11 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, failedClie
 }
 
 func (in *NamespaceService) getNamespacesForKialiSA(cluster string, labelSelector string) ([]core_v1.Namespace, error) {
+	clientFactory, err := kubernetes.GetClientFactory()
+	if err != nil {
+		return nil, err
+	}
 	if cluster == kubernetes.HomeClusterName || cluster == "" {
-		if clientFactory == nil {
-			var err error
-			clientFactory, err = kubernetes.GetClientFactory()
-			if err != nil {
-				return nil, err
-			}
-		}
 
 		kialiToken, err := kubernetes.GetKialiTokenForHomeCluster()
 		if err != nil {
