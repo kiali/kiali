@@ -132,6 +132,13 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	// Namespace sameness
 	nsmap := make(map[string]models.Namespace)
 
+	if clientFactory == nil {
+		var err error
+		clientFactory, err = kubernetes.GetClientFactory()
+		if err != nil {
+			return nil, fmt.Errorf("Error getting client factory")
+		}
+	}
 	for _, cluster := range clientFactory.GetClusterNames() {
 		kialiClient := clientFactory.GetSAClient(cluster)
 		nsList, error := in.GetNamespacesByClient(kialiClient, cluster)
@@ -465,13 +472,17 @@ func (in *NamespaceService) GetNamespace(ctx context.Context, namespace string) 
 	} else {
 		var ns *core_v1.Namespace
 		var cl string
+		var err error
 		for _, cluster := range clientFactory.GetClusterNames() {
 			kialiClient := clientFactory.GetSAClient(cluster)
 			ns, err = kialiClient.GetNamespace(namespace)
-			if err == nil {
+			if ns != nil {
 				cl = cluster
 				break
 			}
+		}
+		if err != nil {
+			return nil, err
 		}
 		result = models.CastNamespace(*ns, cl)
 	}
@@ -558,9 +569,12 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, failedClie
 
 func (in *NamespaceService) getNamespacesForKialiSA(cluster string, labelSelector string) ([]core_v1.Namespace, error) {
 	if cluster == kubernetes.HomeClusterName || cluster == "" {
-		clientFactory, err := kubernetes.GetClientFactory()
-		if err != nil {
-			return nil, err
+		if clientFactory == nil {
+			var err error
+			clientFactory, err = kubernetes.GetClientFactory()
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		kialiToken, err := kubernetes.GetKialiTokenForHomeCluster()
