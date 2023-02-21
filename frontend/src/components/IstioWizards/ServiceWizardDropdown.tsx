@@ -24,7 +24,7 @@ import {
   WIZARD_EDIT_ANNOTATIONS
 } from './WizardActions';
 import { MessageType } from '../../types/MessageCenter';
-import WizardAnnotations from "./WizardAnnotations";
+import WizardAnnotations from './WizardAnnotations';
 import ServiceWizard from './ServiceWizard';
 import { canCreate, canUpdate, ResourcePermissions } from '../../types/Permissions';
 import ServiceWizardActionsDropdownGroup, { DELETE_TRAFFIC_ROUTING } from './ServiceWizardActionsDropdownGroup';
@@ -130,7 +130,7 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
         break;
       }
       case WIZARD_EDIT_ANNOTATIONS: {
-        this.setState({showAnnotationsWizard: true})
+        this.setState({ showAnnotationsWizard: true });
         break;
       }
       default:
@@ -197,6 +197,7 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
         virtualServices={this.props.virtualServices}
         destinationRules={this.props.destinationRules}
         k8sHTTPRoutes={this.props.k8sHTTPRoutes || []}
+        annotations={this.props.annotations}
         istioPermissions={this.props.istioPermissions}
         onAction={this.onAction}
         onDelete={this.onAction}
@@ -206,26 +207,26 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
 
   onChangeAnnotations = (annotations: { [key: string]: string }) => {
     const jsonInjectionPatch = buildAnnotationPatch(annotations);
-    API.updateService(this.props.namespace, this.props.serviceName, jsonInjectionPatch, "json")
-          .then(_ => {
-            AlertUtils.add('Service ' + this.props.serviceName + ' updated', 'default', MessageType.SUCCESS);
-            this.setState(
-              {
-                showAnnotationsWizard: false
-              },
-              () => this.props.onChange()
-            );
-          })
-          .catch(error => {
-            AlertUtils.addError('Could not update service ' + this.props.serviceName, error);
-            this.setState(
-              {
-                showAnnotationsWizard: false
-              },
-              () => this.props.onChange()
-            );
-    });
-  }
+    API.updateService(this.props.namespace, this.props.serviceName, jsonInjectionPatch, 'json')
+      .then(_ => {
+        AlertUtils.add('Service ' + this.props.serviceName + ' updated', 'default', MessageType.SUCCESS);
+        this.setState(
+          {
+            showAnnotationsWizard: false
+          },
+          () => this.props.onChange()
+        );
+      })
+      .catch(error => {
+        AlertUtils.addError('Could not update service ' + this.props.serviceName, error);
+        this.setState(
+          {
+            showAnnotationsWizard: false
+          },
+          () => this.props.onChange()
+        );
+      });
+  };
 
   render() {
     const hasSidecarWorkloads = this.hasSidecarWorkloads();
@@ -255,13 +256,15 @@ class ServiceWizardDropdownComponent extends React.Component<Props, State> {
         {!hasSidecarWorkloads
           ? this.renderTooltip('tooltip_wizard_actions', TooltipPosition.top, toolTipMsgActions, dropdown)
           : dropdown}
-        <WizardAnnotations 
-          showAnotationsWizard={this.state.showAnnotationsWizard} 
-          onChange={(annotations) => this.onChangeAnnotations(annotations)} 
-          onClose={() => this.setState({showAnnotationsWizard: false})} 
-          annotations={this.props.annotations} 
-          canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
-        />
+        {this.props.annotations && (
+          <WizardAnnotations
+            showAnotationsWizard={this.state.showAnnotationsWizard}
+            onChange={annotations => this.onChangeAnnotations(annotations)}
+            onClose={() => this.setState({ showAnnotationsWizard: false })}
+            annotations={this.props.annotations}
+            canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
+          />
+        )}
         <ServiceWizard
           show={this.state.showWizard}
           type={this.state.wizardType}
