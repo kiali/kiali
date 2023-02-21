@@ -17,6 +17,7 @@ Feature: Kiali Istio Config page
     And user adds listener
     And user types "k8sapigateway" in the "name" input
     And user types "listener" in the "addName0" input
+    And user checks validation in the hostname "addHostname0" input
     And user types "website.com" in the "addHostname0" input
     And user types "8080" in the "addPort0" input
     And user previews the configuration

@@ -28,9 +28,20 @@ declare namespace Cypress {
   interface Chainable<Subject> {
     /**
      * Custom command to select DOM element by the 'data-test' attribute.
+     * @param selector the DOM element selector
+     * @param args the rest of DOM element args
      * @example cy.getBySel('greeting')
      */
     getBySel(selector: string, ...args: any): Chainable<Subject>;
+
+    /**
+     * Custom command to check text validation for inputs.
+     * @param id the input identifier
+     * @param text the text to validate
+     * @param valid check if the text must be valid or invalid
+     * @example cy.inputValidation('hostname','host',false)
+     */
+    inputValidation(id: string, text: string, valid: boolean): Chainable<Subject>;
 
     /**
      * Login to Kiali with the given username and password.
@@ -203,4 +214,10 @@ Cypress.Commands.add('login', (username: string, password: string) => {
   });
 });
 
-Cypress.Commands.add('getBySel', (selector: string, ...args) => cy.get(`[data-test="${selector}"]`, ...args));
+Cypress.Commands.add('getBySel', (selector: string, ...args: any) => cy.get(`[data-test="${selector}"]`, ...args));
+
+Cypress.Commands.add('inputValidation', (id: string, text: string, valid = true) => {
+  cy.get(`input[id="${id}"]`).type(text);
+  cy.get(`input[id="${id}"]`).should('have.attr', 'aria-invalid', `${!valid}`);
+  cy.get(`input[id="${id}"]`).clear();
+});

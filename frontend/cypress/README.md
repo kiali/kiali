@@ -60,7 +60,7 @@ cypress/
 4) Failed tests could mean that:
     * Reuse of step definitions is not suitable or gets broken by different testcase or your modifications
     * We want to refactor broken code and if its heavily used, move it into a custom command file (cypress/support/commands.ts) - i.e. `cy.login()`, `cy.kiali_apply_config()` lives there
-5) Test case execution should be all green, you are ready to commit your test case. You might want verify whole regression run locally - so you did not introduce any braking changes in your PR
+5) Test case execution should be all green, you are ready to commit your test case. You might want verify whole regression run locally - so you did not introduce any breaking changes in your PR
 
 ## Performance Tests
 
