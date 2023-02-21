@@ -64,6 +64,8 @@ func TestTokenAuthControllerRejectsUserWithoutPrivilegesInAnyNamespace(t *testin
 	})
 
 	rr := httptest.NewRecorder()
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, nil)
 	sData, err := controller.Authenticate(request, rr)
 
 	assert.Nil(t, sData)
@@ -86,11 +88,14 @@ func TestTokenAuthControllerRejectsInvalidToken(t *testing.T) {
 	// Returning a forbidden error when a cluster API call is made should have the result of
 	// a rejected authentication.
 	k8s := new(kubetest.K8SClientMock)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, nil)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespaces", "").Return([]v1.Namespace{
 		{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}},
 	}, k8s_errors.NewForbidden(schema.GroupResource{Group: "v1", Resource: "Projects"}, "", errors.New("err")))
+	k8s.On("GetToken").Return("faketoken")
 
 	requestBody := strings.NewReader("token=Foo")
 	request := httptest.NewRequest(http.MethodPost, "/api/authenticate", requestBody)
@@ -228,6 +233,8 @@ func createValidSession() (*httptest.ResponseRecorder, *UserSessionData, error) 
 	})
 
 	rr := httptest.NewRecorder()
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, nil)
 	sData, err := controller.Authenticate(request, rr)
 	return rr, sData, err
 }
