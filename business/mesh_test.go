@@ -104,10 +104,10 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	t.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
 	t.Setenv("KUBERNETES_SERVICE_PORT", "9443")
 	t.Setenv("ACTIVE_NAMESPACE", "foo")
-
-	layer := NewWithBackends(k8s, nil, nil)
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
+
+	layer := NewWithBackends(k8s, nil, nil)
 	meshSvc := layer.Mesh
 
 	r := httptest.NewRequest("GET", "http://kiali.url.local/", nil)
@@ -348,6 +348,21 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 		},
 	}
 
+	kialiSvc := []core_v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Annotations: map[string]string{
+					"operator-sdk/primary-resource": "kiali-operator/myKialiCR",
+				},
+				Labels: map[string]string{
+					"app.kubernetes.io/version": "v1.25",
+				},
+				Name:      "kiali-service",
+				Namespace: "foo",
+			},
+		},
+	}
+
 	notFoundErr := errors.StatusError{
 		ErrStatus: v1.Status{
 			Reason: v1.StatusReasonNotFound,
@@ -362,6 +377,7 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	k8s.On("GetDeployment", "foo", "bar").Return(&istioDeploymentMock, nil)
 	k8s.On("GetConfigMap", "foo", conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName).Return(nilConfigMap, &notFoundErr)
 	k8s.On("GetNamespace", "foo").Return(nilNamespace, &notFoundErr)
+	k8s.On("GetServicesByLabels", "foo", "app.kubernetes.io/part-of=kiali").Return(kialiSvc, nil)
 
 	// Create a MeshService and invoke IsMeshConfigured
 	layer := NewWithBackends(k8s, nil, nil)
