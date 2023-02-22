@@ -191,6 +191,8 @@ func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 
 func mockCombinedValidationService(istioConfigList *models.IstioConfigList, services []string, namespace string, podList *core_v1.PodList) IstioValidationsService {
 	k8s := new(kubetest.K8SClientMock)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	fakeIstioObjects := []runtime.Object{}
 	for _, p := range fakeMeshPolicies() {

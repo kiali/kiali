@@ -105,6 +105,8 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	t.Setenv("ACTIVE_NAMESPACE", "foo")
 
 	layer := NewWithBackends(k8s, nil, nil)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 	meshSvc := layer.Mesh
 
 	r := httptest.NewRequest("GET", "http://kiali.url.local/", nil)
