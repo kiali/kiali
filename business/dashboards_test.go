@@ -1,7 +1,6 @@
 package business
 
 import (
-	"github.com/kiali/kiali/kubernetes/kubetest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +8,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/dashboards"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	pmock "github.com/kiali/kiali/prometheus/prometheustest"
 )
