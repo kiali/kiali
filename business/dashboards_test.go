@@ -1,6 +1,7 @@
 package business
 
 import (
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,6 +52,10 @@ func TestGetDashboard(t *testing.T) {
 	query.FillDefaults()
 	prom.MockMetric("my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
 	prom.MockHistogram("my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
+
+	k8s := kubetest.NewK8SClientMock()
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	dashboard, err := service.GetDashboard(&api.AuthInfo{Token: ""}, query, "dashboard1")
 

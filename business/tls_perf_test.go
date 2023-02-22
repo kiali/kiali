@@ -80,6 +80,8 @@ func testPerfScenario(exStatus string, nss []core_v1.Namespace, drs []*networkin
 		k8s.On("GetNamespace", ns.Name).Return(&ns, nil)
 		nsNames = append(nsNames, ns.Name)
 	}
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	conf = config.NewConfig()
 	conf.Deployment.AccessibleNamespaces = []string{"**"}
