@@ -151,9 +151,17 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 				if namespacesAcum.Name != "" {
 					// Merge data
 					for label, value := range namespacesAcum.Labels {
+						if clusterNamespace.Labels[label] == value {
+							// TODO: Create a warning for this to be sent in the response?
+							log.Infof("The label '%v' has different value '%v' for cluster '%v' in namespace '%v' ", label, value, cluster, namespacesAcum.Name)
+						}
 						clusterNamespace.Labels[label] = value
 					}
 					for annotation, value := range namespacesAcum.Annotations {
+						if clusterNamespace.Annotations[annotation] == value {
+							// TODO: Create a warning for this to be sent in the response?
+							log.Infof("The annotation '%v' has different value '%v' for cluster '%v' in namespace '%v' ", annotation, value, cluster, namespacesAcum.Name)
+						}
 						clusterNamespace.Annotations[annotation] = value
 					}
 					clusterNamespace.Clusters = append(clusterNamespace.Clusters, namespacesAcum.Clusters...)
