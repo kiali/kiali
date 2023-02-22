@@ -341,7 +341,7 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1beta1.Destinatio
 	k8s.On("GetToken").Return("token")
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
-	
+
 	conf = config.NewConfig()
 	conf.Deployment.AccessibleNamespaces = []string{"**"}
 	config.Set(conf)
