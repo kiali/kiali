@@ -98,6 +98,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	k8s.On("GetConfigMap", conf.IstioNamespace, conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName).Return(&sidecarConfigMapMock, nil)
 
 	k8s.On("GetNamespace", "foo").Return(&kialiNs, nil)
+	k8s.On("GetServicesByLabels").Return(kialiSvc, nil)
 	k8s.On("GetServicesByLabels", "foo", "app.kubernetes.io/part-of=kiali").Return(kialiSvc, nil)
 
 	t.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
