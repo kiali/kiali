@@ -35,8 +35,9 @@ type KialiCache interface {
 
 // namespaceCache caches namespaces according to their token.
 type namespaceCache struct {
-	created       time.Time
-	namespaces    []models.Namespace
+	created time.Time
+	// TODO: Decide if this is the best option
+	namespaces    []models.Namespace                     // Merge namespaces with the same name and cluster
 	nameNamespace map[string]map[string]models.Namespace // By name and cluster to keep uniqueness
 }
 
@@ -61,7 +62,7 @@ type kialiCacheImpl struct {
 	kubeCache              map[string]KubeCache
 	refreshDuration        time.Duration
 	tokenLock              sync.RWMutex
-	tokenNamespaces        map[string]namespaceCache
+	tokenNamespaces        map[string]namespaceCache // TODO: Another option can be define here the namespaces by token/cluster
 	tokenNamespaceDuration time.Duration
 	proxyStatusLock        sync.RWMutex
 	proxyStatusNamespaces  map[string]map[string]podProxyStatus
