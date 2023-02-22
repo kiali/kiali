@@ -38,6 +38,8 @@ func TestMeshStatusEnabled(t *testing.T) {
 	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	k8s.On("GetToken").Return("token")
 	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
@@ -63,6 +65,8 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	TLSService := getTLSService(k8s, true, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
@@ -89,6 +93,8 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
@@ -116,6 +122,8 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
@@ -143,6 +151,8 @@ func TestMeshStatusDisabled(t *testing.T) {
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	TLSService := getTLSService(k8s, false, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
@@ -167,6 +177,8 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 	TLSService := getTLSService(k8s, true, ns, pa, dr)
 	status, err := TLSService.MeshWidemTLSStatus(context.TODO(), ns)
 
@@ -296,6 +308,8 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	k8s.On("GetProjects", mock.AnythingOfType("string")).Return(projects, nil)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&projects[0], nil)
 	k8s.On("GetToken").Return("token")
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
 
 	autoMtls := false
 	kialiCache = cache.FakeTlsKialiCache("token", nss, ps, drs)
@@ -325,7 +339,9 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1beta1.Destinatio
 	k8s.On("GetProjects", mock.AnythingOfType("string")).Return(projects, nil)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&projects[0], nil)
 	k8s.On("GetToken").Return("token")
-
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
+	
 	conf = config.NewConfig()
 	conf.Deployment.AccessibleNamespaces = []string{"**"}
 	config.Set(conf)
