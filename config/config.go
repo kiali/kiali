@@ -418,7 +418,8 @@ type UIDefaults struct {
 
 // Validations defines default settings configured for the Validations subsystem
 type Validations struct {
-	Ignore []string `yaml:"ignore,omitempty" json:"ignore,omitempty"`
+	Ignore                   []string `yaml:"ignore,omitempty" json:"ignore,omitempty"`
+	SkipWildcardGatewayHosts bool     `yaml:"skip_wildcard_gateway_hosts,omitempty"`
 }
 
 // CertificatesInformationIndicators defines configuration to enable the feature and to grant read permissions to a list of secrets

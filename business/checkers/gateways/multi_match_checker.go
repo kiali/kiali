@@ -10,6 +10,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/intutil"
 )
@@ -148,10 +149,12 @@ func (m MultiMatchChecker) findMatch(host Host, selector string) (bool, []Host) 
 			// only compare hosts that share the target namespace or hosts where at least one of the pair is exported to all namespaces
 			if h.TargetNamespace == targetNamespaceAll || host.TargetNamespace == targetNamespaceAll || h.TargetNamespace == host.TargetNamespace {
 				if h.Port == host.Port {
-					// wildcardMatches will always match
+					// wildcardMatches will always match unless SkipWildcardGatewayHosts is set 'true'
 					if host.Hostname == wildCardMatch || h.Hostname == wildCardMatch {
-						duplicates = append(duplicates, host)
-						duplicates = append(duplicates, h)
+						if !config.Get().KialiFeatureFlags.Validations.SkipWildcardGatewayHosts {
+							duplicates = append(duplicates, host)
+							duplicates = append(duplicates, h)
+						}
 						continue
 					}
 
