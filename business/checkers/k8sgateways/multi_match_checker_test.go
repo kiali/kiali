@@ -55,6 +55,16 @@ func TestDuplicateListenersCheckError(t *testing.T) {
 	assert.NotNil(validation)
 	assert.True(validation.Valid)
 	assert.Greater(len(validation.Checks), 0)
+
+	secValidation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway"}]
+	assert.True(ok)
+	assert.NotNil(secValidation)
+	assert.True(secValidation.Valid)
+	assert.Greater(len(secValidation.Checks), 0)
+
+	// Check references
+	assert.Equal(1, len(validation.References))
+	assert.Equal(1, len(secValidation.References))
 }
 
 func TestDuplicateListenersCheckOk(t *testing.T) {
@@ -106,6 +116,15 @@ func TestDuplicateAddresssCheckError(t *testing.T) {
 	assert.True(validation.Valid)
 	assert.Greater(len(validation.Checks), 0)
 
+	secValidation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway"}]
+	assert.True(ok)
+	assert.NotNil(secValidation)
+	assert.True(secValidation.Valid)
+	assert.Greater(len(secValidation.Checks), 0)
+
+	// Check references
+	assert.Equal(1, len(validation.References))
+	assert.Equal(1, len(secValidation.References))
 }
 
 func TestDuplicateAddresssCheckOk(t *testing.T) {
