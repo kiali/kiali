@@ -44,7 +44,9 @@ class WizardAnnotations extends React.Component<Props, State> {
 
   convertAnnotationsToMap = () => {
     const m = new Map();
-    Object.keys(this.props.annotations).map((value, index) => m.set(index, [value, this.props.annotations[value]]));
+    Object.keys(this.props.annotations || {}).map((value, index) =>
+      m.set(index, [value, this.props.annotations[value]])
+    );
     return m;
   };
 

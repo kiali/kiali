@@ -20,6 +20,7 @@ type Props = {
   destinationRules: DestinationRule[];
   virtualServices: VirtualService[];
   k8sHTTPRoutes: K8sHTTPRoute[];
+  annotations?: { [key: string]: string };
   istioPermissions: ResourcePermissions;
   onAction?: (key: WizardAction, mode: WizardMode) => void;
   onDelete?: (key: string) => void;
@@ -88,11 +89,20 @@ const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = props 
   });
 
   // Annotations
-  actionItems.push(
-    <DropdownItem key={WIZARD_EDIT_ANNOTATIONS} component="button"  onClick={() => handleActionClick(WIZARD_EDIT_ANNOTATIONS)} data-test={WIZARD_EDIT_ANNOTATIONS}>
-      {serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode ? "Edit Annotations" : "View Annotations"}
-    </DropdownItem>
-  )
+  if (props.annotations) {
+    actionItems.push(
+      <DropdownItem
+        key={WIZARD_EDIT_ANNOTATIONS}
+        component="button"
+        onClick={() => handleActionClick(WIZARD_EDIT_ANNOTATIONS)}
+        data-test={WIZARD_EDIT_ANNOTATIONS}
+      >
+        {serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode
+          ? 'Edit Annotations'
+          : 'View Annotations'}
+      </DropdownItem>
+    );
+  }
 
   actionItems.push(<DropdownSeparator key="actions_separator" />);
 
