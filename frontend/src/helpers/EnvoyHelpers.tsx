@@ -37,7 +37,10 @@ export const routeLink = (
     if (result && result[1]) {
       return (
         <React.Fragment>
-          <Link onClick={handler} to={`/namespaces/${namespace}/workloads/${workload}?tab=envoy&name=${result[1]}`}>
+          <Link
+            onClick={handler}
+            to={`/namespaces/${namespace}/workloads/${workload}?tab=envoy&envoyTab=routes&name=${result[1]}`}
+          >
             {route}
           </Link>
         </React.Fragment>
