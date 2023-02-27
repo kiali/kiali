@@ -101,7 +101,7 @@ func listenerMatches(listener kubernetes.EnvoyListener) []map[string]interface{}
 
 		port := ""
 		if match.DestinationPort != nil {
-			port = fmt.Sprintf(":%d", match.DestinationPort)
+			port = fmt.Sprintf(":%d", *match.DestinationPort)
 		}
 
 		if len(match.PrefixRanges) > 0 {
