@@ -440,9 +440,6 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 	// All WorkloadEntries
 	rValue.WorkloadEntries = append(rValue.WorkloadEntries, istioConfigList.WorkloadEntries...)
 
-	// All K8sGateways
-	rValue.K8sGateways = append(rValue.K8sGateways, istioConfigList.K8sGateways...)
-
 	in.filterPeerAuths(namespace, mtlsDetails, istioConfigList.PeerAuthentications)
 
 	in.filterAuthPolicies(namespace, rbacDetails, istioConfigList.AuthorizationPolicies)
