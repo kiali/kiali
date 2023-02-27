@@ -1,5 +1,5 @@
 import { Bullseye, Spinner } from '@patternfly/react-core';
-import { CogIcon, ExportIcon } from '@patternfly/react-icons';
+import { LongArrowAltRightIcon } from '@patternfly/react-icons';
 import {
   Controller,
   createTopologyControlButtons,
@@ -25,7 +25,7 @@ import {
 } from '@patternfly/react-topology';
 import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
-import { EdgeLabelMode, GraphEvent } from 'types/Graph';
+import { EdgeLabelMode, EdgeMode, GraphEvent } from 'types/Graph';
 import { JaegerTrace } from 'types/JaegerInfo';
 import stylesComponentFactory from './components/stylesComponentFactory';
 import elementFactory from './elements/elementFactory';
@@ -76,8 +76,10 @@ export const DefaultOptions: TopologyOptions = {
 export const TopologyContent: React.FC<{
   controller: Controller;
   edgeLabels: EdgeLabelMode[];
+  edgeMode: EdgeMode;
   focusNode?: FocusNode;
   graphData: GraphData;
+  setEdgeMode: (edgeMode: EdgeMode) => void;
   highlighter: GraphHighlighterPF;
   homeCluster: string;
   onReady: (controller: any) => void;
@@ -91,11 +93,13 @@ export const TopologyContent: React.FC<{
 }> = ({
   controller,
   edgeLabels,
+  edgeMode,
   graphData,
   highlighter,
   homeCluster,
   onReady,
   options,
+  setEdgeMode,
   setUpdateTime,
   showMissingSidecars,
   showSecurity,
@@ -440,25 +444,42 @@ export const TopologyContent: React.FC<{
           controlButtons={createTopologyControlButtons({
             ...defaultControlButtonsOptions,
             fitToScreen: false,
+            zoomIn: false,
+            zoomOut: false,
             customButtons: [
+              // TODO, get rid of the show all edges option, and the disabling, when we can set an option active
               {
-                id: 'export',
-                icon: <ExportIcon />,
-                // tooltip: t('Export'),
+                ariaLabel: 'Show All Edges',
                 callback: () => {
-                  // const svg = document.getElementsByClassName('pf-topology-visualization-surface__svg')[0];
-                  // saveSvgAsPng(svg, 'topology.png', {
-                  //  backgroundColor: '#fff',
-                  //  encoderOptions: 0
-                  //});
-                }
+                  setEdgeMode(EdgeMode.ALL);
+                },
+                disabled: EdgeMode.ALL === edgeMode,
+                icon: <LongArrowAltRightIcon />,
+                id: 'toolbar_edge_mode_all',
+                tooltip: 'Show all edges'
               },
               {
-                id: 'options',
-                icon: <CogIcon />,
-                // tooltip: t('More options'),
+                ariaLabel: 'Hide Healthy Edges',
                 callback: () => {
-                  //  toggleTopologyOptions();
+                  //change this back when we have the active styling
+                  //setEdgeMode(EdgeMode.UNHEALTHY === edgeMode ? EdgeMode.ALL : EdgeMode.UNHEALTHY);
+                  setEdgeMode(EdgeMode.UNHEALTHY);
+                },
+                disabled: EdgeMode.UNHEALTHY === edgeMode,
+                icon: <LongArrowAltRightIcon />,
+                id: 'toolbar_edge_mode_unhealthy',
+                tooltip: 'Hide healthy edges'
+              },
+              {
+                ariaLabel: 'Hide All Edges',
+                id: 'toolbar_edge_mode_none',
+                disabled: EdgeMode.NONE === edgeMode,
+                icon: <LongArrowAltRightIcon />,
+                tooltip: 'Hide all edges',
+                callback: () => {
+                  //change this back when we have the active styling
+                  //setEdgeMode(EdgeMode.NONE === edgeMode ? EdgeMode.ALL : EdgeMode.NONE);
+                  setEdgeMode(EdgeMode.NONE);
                 }
               }
             ],
@@ -488,10 +509,12 @@ export const TopologyContent: React.FC<{
 
 export const GraphPF: React.FC<{
   edgeLabels: EdgeLabelMode[];
+  edgeMode: EdgeMode;
   focusNode?: FocusNode;
   graphData: GraphData;
   homeCluster: string;
   onReady: (controller: any) => void;
+  setEdgeMode: (edgeMode: EdgeMode) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showMissingSidecars: boolean;
   showSecurity: boolean;
@@ -500,10 +523,12 @@ export const GraphPF: React.FC<{
   updateSummary: (graphEvent: GraphEvent) => void;
 }> = ({
   edgeLabels,
+  edgeMode,
   focusNode,
   graphData,
   homeCluster,
   onReady,
+  setEdgeMode,
   setUpdateTime,
   showMissingSidecars,
   showSecurity,
@@ -540,12 +565,14 @@ export const GraphPF: React.FC<{
       <TopologyContent
         controller={controller}
         edgeLabels={edgeLabels}
+        edgeMode={edgeMode}
         focusNode={focusNode}
         graphData={graphData}
         highlighter={highlighter!}
         homeCluster={homeCluster}
         onReady={onReady}
         options={DefaultOptions}
+        setEdgeMode={setEdgeMode}
         setUpdateTime={setUpdateTime}
         showMissingSidecars={showMissingSidecars}
         showSecurity={showSecurity}

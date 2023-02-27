@@ -115,6 +115,7 @@ type ReduxProps = {
   replayActive: boolean;
   replayQueryTime: TimeInMilliseconds;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
+  setEdgeMode: (edgeMode: EdgeMode) => void;
   setGraphDefinition: (graphDefinition: GraphDefinition) => void;
   setRankResult: (result: RankResult) => void;
   setNode: (node?: NodeParamsType) => void;
@@ -896,6 +897,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   onNamespaceChange: bindActionCreators(GraphActions.onNamespaceChange, dispatch),
   onReady: (controller: any) => dispatch(GraphThunkActions.graphPFReady(controller)),
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
+  setEdgeMode: bindActionCreators(GraphActions.setEdgeMode, dispatch),
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   setRankResult: bindActionCreators(GraphActions.setRankResult, dispatch),
