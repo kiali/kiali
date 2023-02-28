@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 
 	osproject_v1 "github.com/openshift/api/project/v1"
 	core_v1 "k8s.io/api/core/v1"
@@ -141,43 +142,61 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 		}
 	}
 
-	var clusterError error
-	for _, cluster := range clientFactory.GetClusterNames() {
-		kialiClient := clientFactory.GetSAClient(cluster)
-		nsList, error := in.GetNamespacesByClient(kialiClient, cluster)
-		if error == nil {
-			for _, clusterNamespace := range nsList {
-				namespacesAcum := nsmap[clusterNamespace.Name]
-				if namespacesAcum.Name != "" {
-					// Merge data
-					for label, value := range namespacesAcum.Labels {
-						if clusterNamespace.Labels[label] == value {
-							// TODO: Create a warning for this to be sent in the response?
-							log.Infof("The label '%v' has different value '%v' for cluster '%v' in namespace '%v' ", label, value, cluster, namespacesAcum.Name)
-						}
-						clusterNamespace.Labels[label] = value
-					}
-					for annotation, value := range namespacesAcum.Annotations {
-						if clusterNamespace.Annotations[annotation] == value {
-							// TODO: Create a warning for this to be sent in the response?
-							log.Infof("The annotation '%v' has different value '%v' for cluster '%v' in namespace '%v' ", annotation, value, cluster, namespacesAcum.Name)
-						}
-						clusterNamespace.Annotations[annotation] = value
-					}
-					clusterNamespace.Clusters = append(clusterNamespace.Clusters, namespacesAcum.Clusters...)
-					nsmap[clusterNamespace.Name] = clusterNamespace
-				} else {
-					nsmap[clusterNamespace.Name] = clusterNamespace
-				}
+	clusterNames := clientFactory.GetClusterNames()
+	nsList := make(map[string][]models.Namespace)
+	nFetches := len(clusterNames)
+	wg := sync.WaitGroup{}
+	wg.Add(nFetches)
+	errChan := make(chan error, nFetches)
 
+	for _, cluster := range clusterNames {
+		go func(ctx context.Context) {
+			defer wg.Done()
+			kialiClient := clientFactory.GetSAClient(cluster)
+			list, error := in.GetNamespacesByClient(kialiClient, cluster)
+			if error != nil {
+				log.Errorf("Error fetching Namespaces per cluster %s: %s", cluster, error)
+				errChan <- error
+			} else {
+				nsList[cluster] = list
 			}
-		} else {
-			clusterError = error
-		}
+		}(ctx)
 	}
 
-	if clusterError != nil {
-		return nil, clusterError
+	wg.Wait()
+	if len(errChan) != 0 {
+		// TODO: Return error if one failure?
+		err := <-errChan
+		return nil, err
+	}
+
+	// Combine namespace data
+	for _, cluster := range clusterNames {
+		for _, clusterNamespace := range nsList[cluster] {
+			namespacesAcum := nsmap[clusterNamespace.Name]
+			if namespacesAcum.Name != "" {
+				// Merge data
+				for label, value := range namespacesAcum.Labels {
+					if clusterNamespace.Labels[label] == value {
+						// TODO: Create a warning for this to be sent in the response?
+						log.Infof("The label '%v' has different value '%v' for cluster '%v' in namespace '%v' ", label, value, cluster, namespacesAcum.Name)
+					}
+					clusterNamespace.Labels[label] = value
+				}
+				for annotation, value := range namespacesAcum.Annotations {
+					if clusterNamespace.Annotations[annotation] == value {
+						// TODO: Create a warning for this to be sent in the response?
+						log.Infof("The annotation '%v' has different value '%v' for cluster '%v' in namespace '%v' ", annotation, value, cluster, namespacesAcum.Name)
+					}
+					clusterNamespace.Annotations[annotation] = value
+				}
+				clusterNamespace.Clusters = append(clusterNamespace.Clusters, namespacesAcum.Clusters...)
+				nsmap[clusterNamespace.Name] = clusterNamespace
+			} else {
+				nsmap[clusterNamespace.Name] = clusterNamespace
+			}
+
+		}
 	}
 
 	for _, value := range nsmap {
