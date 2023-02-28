@@ -4,54 +4,72 @@ import (
 	"context"
 	"testing"
 
-	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	apps_v1 "k8s.io/api/apps/v1"
-	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
-func setupAppService(k8s *kubetest.K8SClientMock) *AppService {
+func setupAppService(k8s *kubetest.FakeK8sClient) *AppService {
 	prom := new(prometheustest.PromClientMock)
 	layer := NewWithBackends(k8s, prom, nil)
 	setupGlobalMeshConfig()
 	return &AppService{k8s: k8s, prom: prom, businessLayer: layer}
 }
 
+func setupTestingKialiCache(k8s *kubetest.FakeK8sClient, conf *config.Config, require *require.Assertions) func() {
+	if conf == nil {
+		conf = config.NewConfig()
+		config.Set(conf)
+	}
+
+	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	clientFactory.SetClients(map[string]kubernetes.ClientInterface{
+		kubernetes.HomeClusterName: k8s,
+	})
+
+	kialiCache, _ = cache.NewKialiCache(clientFactory, *conf)
+	require.NotNil(kialiCache)
+
+	kialiCache.CheckNamespace("Namespace")
+	kialiCache.SetRegistryStatus(&kubernetes.RegistryStatus{})
+
+	return func() {
+		kialiCache.Stop()
+		kialiCache = nil
+	}
+}
+
 func TestGetAppListFromDeployments(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheEnabled = false
-	config.Set(conf)
+	// Auxiliar fake* tests defined in workload_test.go
+	objects := []runtime.Object{
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range FakeDeployments() {
+		o := obj
+		objects = append(objects, &o)
+	}
 
 	// Setup mocks
-	k8s := new(kubetest.K8SClientMock)
-	// Auxiliar fake* tests defined in workload_test.go
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
-	// Not needed a result, just to not send an error to test this usecase
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}, nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDeployments(), nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
-	k8s.On("GetDaemonSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.CronJob{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
-	k8s.On("GetToken").Return("token")
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
+	k8s.Token = "token" // Not needed a result, just to not send an error to test this usecase
+
+	stopCache := setupTestingKialiCache(k8s, nil, require)
+	defer stopCache()
+
 	svc := setupAppService(k8s)
 
 	criteria := AppCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
@@ -65,32 +83,37 @@ func TestGetAppListFromDeployments(t *testing.T) {
 }
 
 func TestGetAppFromDeployments(t *testing.T) {
+	require := require.New(t)
 	assert := assert.New(t)
 
-	// Setup mocks
-	k8s := new(kubetest.K8SClientMock)
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}, nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDeployments(), nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
-	k8s.On("GetDaemonSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.CronJob{}, nil)
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(FakeServices(), nil)
-
 	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheEnabled = false
 	conf.ExternalServices.CustomDashboards.Enabled = false
 	config.Set(conf)
+
+	// Setup mocks
+	objects := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range FakeDeployments() {
+		o := obj
+		objects = append(objects, &o)
+	}
+	for _, obj := range FakeServices() {
+		o := obj
+		objects = append(objects, &o)
+	}
+
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
+
+	stopCache := setupTestingKialiCache(k8s, conf, require)
+	defer stopCache()
+
 	svc := setupAppService(k8s)
 
 	criteria := AppCriteria{Namespace: "Namespace", AppName: "httpbin"}
-	appDetails, _ := svc.GetAppDetails(context.TODO(), criteria)
+	appDetails, appDetailsErr := svc.GetAppDetails(context.TODO(), criteria)
+	assert.NoError(appDetailsErr)
 
 	assert.Equal("Namespace", appDetails.Namespace.Name)
 	assert.Equal("httpbin", appDetails.Name)
@@ -103,27 +126,25 @@ func TestGetAppFromDeployments(t *testing.T) {
 }
 
 func TestGetAppListFromReplicaSets(t *testing.T) {
+	require := require.New(t)
 	assert := assert.New(t)
-	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheEnabled = false
-	config.Set(conf)
 
 	// Setup mocks
-	k8s := new(kubetest.K8SClientMock)
 	// Auxiliar fake* tests defined in workload_test.go
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}, nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeReplicaSets(), nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
-	k8s.On("GetDaemonSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.CronJob{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
+	objects := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range FakeReplicaSets() {
+		o := obj
+		objects = append(objects, &o)
+	}
+
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
+
+	stopCache := setupTestingKialiCache(k8s, nil, require)
+	defer stopCache()
+
 	svc := setupAppService(k8s)
 
 	criteria := AppCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
@@ -136,28 +157,27 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 }
 
 func TestGetAppFromReplicaSets(t *testing.T) {
+	require := require.New(t)
 	assert := assert.New(t)
 
 	// Setup mocks
-	k8s := new(kubetest.K8SClientMock)
-	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}}, nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeReplicaSets(), nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
-	k8s.On("GetDaemonSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.DaemonSet{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.CronJob{}, nil)
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(FakeServices(), nil)
+	objects := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range FakeReplicaSets() {
+		o := obj
+		objects = append(objects, &o)
+	}
+	for _, obj := range FakeServices() {
+		o := obj
+		objects = append(objects, &o)
+	}
 
-	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheEnabled = false
-	conf.ExternalServices.CustomDashboards.Enabled = false
-	config.Set(conf)
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
+
+	stopCache := setupTestingKialiCache(k8s, nil, require)
+	defer stopCache()
 
 	svc := setupAppService(k8s)
 
