@@ -224,6 +224,39 @@ func TestWildCardMatchingHost(t *testing.T) {
 	}
 }
 
+func TestSkipWildCardMatchingHost(t *testing.T) {
+	conf := config.NewConfig()
+	conf.KialiFeatureFlags.Validations.SkipWildcardGatewayHosts = true
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
+		data.CreateEmptyGateway("validgateway", "test", map[string]string{
+			"istio": "istio-ingress",
+		}))
+
+	// Another namespace
+	gwObject2 := data.AddServerToGateway(data.CreateServer([]string{"*"}, 80, "http", "http"),
+		data.CreateEmptyGateway("stillvalid", "test", map[string]string{
+			"istio": "istio-ingress",
+		}))
+
+	// Another namespace
+	gwObject3 := data.AddServerToGateway(data.CreateServer([]string{"*.justhost.com"}, 80, "http", "http"),
+		data.CreateEmptyGateway("keepsvalid", "test", map[string]string{
+			"istio": "istio-ingress",
+		}))
+
+	gws := []*networking_v1beta1.Gateway{gwObject, gwObject2, gwObject3}
+
+	vals := MultiMatchChecker{
+		Gateways: gws,
+	}.Check()
+
+	assert.Equal(0, len(vals))
+}
+
 func TestSameWildcardHostPortConfigInDifferentNamespace(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
