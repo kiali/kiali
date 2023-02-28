@@ -50,6 +50,7 @@ import (
 var (
 	version    = "unknown"
 	commitHash = "unknown"
+	goVersion  = "unknown"
 )
 
 // Command line arguments
@@ -73,7 +74,7 @@ func main() {
 	validateFlags()
 
 	// log startup information
-	log.Infof("Kiali: Version: %v, Commit: %v\n", version, commitHash)
+	log.Infof("Kiali: Version: %v, Commit: %v, Go: %v", version, commitHash, goVersion)
 	log.Debugf("Kiali: Command line: [%v]", strings.Join(os.Args, " "))
 
 	// load config file if specified, otherwise, rely on environment variables to configure us
