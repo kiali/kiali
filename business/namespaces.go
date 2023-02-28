@@ -143,50 +143,56 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}
 
 	clusterNames := clientFactory.GetClusterNames()
-	nsList := make(map[string][]models.Namespace)
-	nFetches := len(clusterNames)
-	wg := sync.WaitGroup{}
-	wg.Add(nFetches)
-	errChan := make(chan error, nFetches)
 
-	for _, cluster := range clusterNames {
-		go func(ctx context.Context) {
-			defer wg.Done()
-			kialiClient := clientFactory.GetSAClient(cluster)
-			list, error := in.GetNamespacesByClient(kialiClient, cluster)
-			if error != nil {
-				log.Errorf("Error fetching Namespaces per cluster %s: %s", cluster, error)
-				errChan <- error
-			} else {
-				nsList[cluster] = list
-			}
-		}(ctx)
+	wg := &sync.WaitGroup{}
+	type result struct {
+		cluster string
+		ns      []models.Namespace
+		err     error
 	}
+	resultsCh := make(chan result)
 
-	wg.Wait()
-	if len(errChan) != 0 {
-		// TODO: Return error if one failure?
-		err := <-errChan
-		return nil, err
-	}
+	go func(ctx context.Context) {
+		for _, cluster := range clusterNames {
+			wg.Add(1)
+			go func(ctx context.Context, c string) {
+				defer wg.Done()
+				kialiClient := clientFactory.GetSAClient(c)
+				list, error := in.GetNamespacesByClient(kialiClient, c)
+				if error != nil {
+					log.Errorf("Error fetching Namespaces per cluster %s: %s", c, error)
+					resultsCh <- result{cluster: c, ns: nil, err: error}
+				} else {
+					resultsCh <- result{cluster: c, ns: list, err: nil}
+				}
+			}(ctx, cluster)
+		}
+		wg.Wait()
+		close(resultsCh)
+	}(ctx)
 
 	// Combine namespace data
-	for _, cluster := range clusterNames {
-		for _, clusterNamespace := range nsList[cluster] {
+	for result := range resultsCh {
+		if result.err != nil {
+			log.Errorf("Error fetching Namespaces per cluster %s: %s", result.cluster, result.err)
+			// TODO: Return error if one failure?
+			return nil, result.err
+		}
+		for _, clusterNamespace := range result.ns {
 			namespacesAcum := nsmap[clusterNamespace.Name]
 			if namespacesAcum.Name != "" {
 				// Merge data
 				for label, value := range namespacesAcum.Labels {
 					if clusterNamespace.Labels[label] == value {
 						// TODO: Create a warning for this to be sent in the response?
-						log.Infof("The label '%v' has different value '%v' for cluster '%v' in namespace '%v' ", label, value, cluster, namespacesAcum.Name)
+						log.Infof("The label '%v' has different value '%v' for cluster '%v' in namespace '%v' ", label, value, result.cluster, namespacesAcum.Name)
 					}
 					clusterNamespace.Labels[label] = value
 				}
 				for annotation, value := range namespacesAcum.Annotations {
 					if clusterNamespace.Annotations[annotation] == value {
 						// TODO: Create a warning for this to be sent in the response?
-						log.Infof("The annotation '%v' has different value '%v' for cluster '%v' in namespace '%v' ", annotation, value, cluster, namespacesAcum.Name)
+						log.Infof("The annotation '%v' has different value '%v' for cluster '%v' in namespace '%v' ", annotation, value, result.cluster, namespacesAcum.Name)
 					}
 					clusterNamespace.Annotations[annotation] = value
 				}
@@ -195,15 +201,13 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 			} else {
 				nsmap[clusterNamespace.Name] = clusterNamespace
 			}
-
 		}
 	}
-
 	for _, value := range nsmap {
 		namespaces = append(namespaces, value)
 	}
 
-	result := namespaces
+	resultns := namespaces
 
 	// exclude namespaces that are:
 	// 1. to be filtered out via the exclude list
@@ -211,7 +215,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	// Note that the control plane namespace is never excluded
 	excludes := configObject.API.Namespaces.Exclude
 	if len(excludes) > 0 || labelSelectorExclude != "" {
-		result = []models.Namespace{}
+		resultns = []models.Namespace{}
 	NAMESPACES:
 		for _, namespace := range namespaces {
 			if namespace.Name != configObject.IstioNamespace {
@@ -228,15 +232,15 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 					}
 				}
 			}
-			result = append(result, namespace)
+			resultns = append(resultns, namespace)
 		}
 	}
 
 	if kialiCache != nil {
-		kialiCache.SetNamespaces(in.k8s.GetToken(), result)
+		kialiCache.SetNamespaces(in.k8s.GetToken(), resultns)
 	}
 
-	return result, nil
+	return resultns, nil
 }
 
 func (in *NamespaceService) GetNamespacesByClient(client kubernetes.ClientInterface, cluster string) ([]models.Namespace, error) {
