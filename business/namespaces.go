@@ -183,16 +183,17 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 			if namespacesAcum.Name != "" {
 				// Merge data
 				for label, value := range namespacesAcum.Labels {
-					if clusterNamespace.Labels[label] == value {
-						// TODO: Create a warning for this to be sent in the response?
+					if clusterNamespace.Labels[label] != "" && clusterNamespace.Labels[label] != value {
 						log.Infof("The label '%v' has different value '%v' for cluster '%v' in namespace '%v' ", label, value, result.cluster, namespacesAcum.Name)
+						clusterNamespace.Labels[label] = fmt.Sprintf("[%s,%s]", clusterNamespace.Labels[label], value)
+					} else {
+						clusterNamespace.Labels[label] = value
 					}
-					clusterNamespace.Labels[label] = value
 				}
 				for annotation, value := range namespacesAcum.Annotations {
-					if clusterNamespace.Annotations[annotation] == value {
-						// TODO: Create a warning for this to be sent in the response?
+					if clusterNamespace.Annotations[annotation] != "" && clusterNamespace.Annotations[annotation] != value {
 						log.Infof("The annotation '%v' has different value '%v' for cluster '%v' in namespace '%v' ", annotation, value, result.cluster, namespacesAcum.Name)
+						clusterNamespace.Annotations[annotation] = fmt.Sprintf("[%s,%s]", clusterNamespace.Annotations[annotation], value)
 					}
 					clusterNamespace.Annotations[annotation] = value
 				}
