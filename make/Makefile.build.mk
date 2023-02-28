@@ -42,7 +42,7 @@ build-ui-test: build-ui
 	@cd ${ROOTDIR}/frontend && yarn run test
 
 ## build-linux-multi-arch: Build Kiali binary with arch suffix for multi-arch
-build-linux-multi-arch:
+build-linux-multi-arch: go-check
 	@for arch in ${TARGET_ARCHS}; do \
 		echo "Building for architecture [$${arch}]"; \
 		${GO_BUILD_ENVVARS} GOOS=linux GOARCH=$${arch} ${GO} build \
@@ -50,7 +50,7 @@ build-linux-multi-arch:
 	done
 
 ## install: Install missing dependencies. Runs `go install` internally
-install:
+install: go-check
 	@echo Installing...
 	${GO_BUILD_ENVVARS} ${GO} install \
 		-ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}"
@@ -64,7 +64,7 @@ format:
 	$(shell ./hack/fix_imports.sh)
 
 ## build-system-test: Building executable for system tests with code coverage enabled
-build-system-test:
+build-system-test: go-check
 	@echo Building executable for system tests with code coverage enabled
 	${GO} test -c -covermode=count -coverpkg $(shell ${GO} list ./... | grep -v test |  awk -vORS=, "{ print $$1 }" | sed "s/,$$//") \
 	  -o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}"
