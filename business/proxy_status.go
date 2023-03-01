@@ -67,7 +67,7 @@ func (in *ProxyStatusService) GetConfigDumpResourceEntries(namespace, pod, resou
 	return buildDump(dump, resource, namespaces)
 }
 
-func buildDump(dump *kubernetes.ConfigDump, resource string, namespaces []models.Namespace) (*models.EnvoyProxyDump, error) {
+func buildDump(dump *kubernetes.ConfigDump, resource string, namespaces []models.CombinedNamespace) (*models.EnvoyProxyDump, error) {
 	response := &models.EnvoyProxyDump{}
 	var err error
 

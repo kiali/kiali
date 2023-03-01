@@ -37,8 +37,9 @@ type KialiCache interface {
 type namespaceCache struct {
 	created time.Time
 	// TODO: Decide if this is the best option
-	namespaces    []models.Namespace                     // Merge namespaces with the same name and cluster
-	nameNamespace map[string]map[string]models.Namespace // By name and cluster to keep uniqueness
+	namespacesCombined []models.CombinedNamespace             // Merge namespaces with the same name and cluster
+	namespaces         []models.Namespace                     // Merge namespaces with the same name and cluster
+	nameNamespace      map[string]map[string]models.Namespace // By name and cluster to keep uniqueness
 }
 
 type podProxyStatus struct {

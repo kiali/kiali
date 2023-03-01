@@ -91,12 +91,13 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, namespace
 
 	// We fetch without target service as some validations will require full-namespace details
 	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, namespace, errChan, &wg)
+	ns := models.CastCombinedNamespaces(namespaces)
 
 	if workload != "" {
 		// load only requested workload
 		go in.fetchWorkload(ctx, &workloadsPerNamespace, workload, namespace, errChan, &wg)
 	} else {
-		go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &namespaces, errChan, &wg)
+		go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &ns, errChan, &wg)
 	}
 
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
@@ -198,8 +199,9 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		wg.Add(1)
 	}
 
+	ns := models.CastCombinedNamespaces(namespaces)
 	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, namespace, errChan, &wg)
-	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &namespaces, errChan, &wg)
+	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, &ns, errChan, &wg)
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
 
 	if istioApiEnabled {
@@ -338,7 +340,7 @@ func (in *IstioValidationsService) fetchServices(ctx context.Context, rValue *mo
 	}
 }
 
-func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue *map[string]models.WorkloadList, namespaces *models.Namespaces, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue *map[string]models.WorkloadList, namespaces *models.CombinedNamespaces, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
 		nss, err := in.businessLayer.Namespace.GetNamespaces(ctx)

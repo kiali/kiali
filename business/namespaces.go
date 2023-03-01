@@ -62,7 +62,7 @@ func NewNamespaceService(k8s kubernetes.ClientInterface) NamespaceService {
 }
 
 // Returns a list of the given namespaces / projects
-func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespace, error) {
+func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.CombinedNamespace, error) {
 	var end observability.EndFunc
 	_, end = observability.StartSpan(ctx, "GetNamespaces",
 		observability.Attribute("package", "business"),
@@ -131,7 +131,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	namespaces := []models.Namespace{}
 	// Merge namespaces from different clusters
 	// Namespace sameness
-	nsmap := make(map[string]models.Namespace)
+	//nsmap := make(map[string]models.Namespace)
 
 	if clientFactory == nil {
 		var err error
@@ -179,35 +179,24 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 			return nil, result.err
 		}
 		for _, clusterNamespace := range result.ns {
-			namespacesAcum := nsmap[clusterNamespace.Name]
-			if namespacesAcum.Name != "" {
-				// Merge data
-				for label, value := range namespacesAcum.Labels {
-					if clusterNamespace.Labels[label] != "" && clusterNamespace.Labels[label] != value {
-						log.Infof("The label '%v' has different value '%v' for cluster '%v' in namespace '%v' ", label, value, result.cluster, namespacesAcum.Name)
-						clusterNamespace.Labels[label] = fmt.Sprintf("[%s,%s]", clusterNamespace.Labels[label], value)
-					} else {
-						clusterNamespace.Labels[label] = value
-					}
+			namespaces = append(namespaces, clusterNamespace)
+			/*
+				namespacesAcum := nsmap[clusterNamespace.Name]
+				combinedNs := models.CastCombinedNamespace(clusterNamespace)
+				if namespacesAcum.Name != "" {
+					nsmap[namespacesAcum.Name] = models.CombineNs(nsmap[namespacesAcum.Name], combinedNs)
+				} else {
+					nsmap[clusterNamespace.Name] = combinedNs
 				}
-				for annotation, value := range namespacesAcum.Annotations {
-					if clusterNamespace.Annotations[annotation] != "" && clusterNamespace.Annotations[annotation] != value {
-						log.Infof("The annotation '%v' has different value '%v' for cluster '%v' in namespace '%v' ", annotation, value, result.cluster, namespacesAcum.Name)
-						clusterNamespace.Annotations[annotation] = fmt.Sprintf("[%s,%s]", clusterNamespace.Annotations[annotation], value)
-					}
-					clusterNamespace.Annotations[annotation] = value
-				}
-				clusterNamespace.Clusters = append(clusterNamespace.Clusters, namespacesAcum.Clusters...)
-				nsmap[clusterNamespace.Name] = clusterNamespace
-			} else {
-				nsmap[clusterNamespace.Name] = clusterNamespace
-			}
+			*/
+
 		}
 	}
-	for _, value := range nsmap {
-		namespaces = append(namespaces, value)
-	}
-
+	/*
+		for _, value := range nsmap {
+			namespaces = append(namespaces, value)
+		}
+	*/
 	resultns := namespaces
 
 	// exclude namespaces that are:
@@ -228,9 +217,13 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 					}
 				}
 				if labelSelectorExclude != "" {
+					//for _, label := range namespace.Labels[labelSelectorExcludeName] {
+					//if label == labelSelectorExcludeValue {
 					if namespace.Labels[labelSelectorExcludeName] == labelSelectorExcludeValue {
 						continue NAMESPACES
 					}
+					//}
+
 				}
 			}
 			resultns = append(resultns, namespace)
@@ -241,7 +234,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 		kialiCache.SetNamespaces(in.k8s.GetToken(), resultns)
 	}
 
-	return resultns, nil
+	return models.CastCombinedNamespaceCollection(resultns), nil
 }
 
 func (in *NamespaceService) GetNamespacesByClient(client kubernetes.ClientInterface, cluster string) ([]models.Namespace, error) {

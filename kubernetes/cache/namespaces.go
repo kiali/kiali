@@ -9,7 +9,7 @@ import (
 type (
 	NamespacesCache interface {
 		SetNamespaces(token string, namespaces []models.Namespace)
-		GetNamespaces(token string) []models.Namespace
+		GetNamespaces(token string) []models.CombinedNamespace
 		GetNamespace(token string, namespace string) *models.Namespace
 		RefreshTokenNamespaces()
 	}
@@ -19,33 +19,33 @@ func (c *kialiCacheImpl) SetNamespaces(token string, namespaces []models.Namespa
 	defer c.tokenLock.Unlock()
 	c.tokenLock.Lock()
 	nameNamespace := make(map[string]map[string]models.Namespace)
+
 	for _, ns := range namespaces {
-		for _, cluster := range ns.Clusters {
-			if nameNamespace[ns.Name] == nil {
-				nameNamespace[ns.Name] = make(map[string]models.Namespace)
-			}
-			nameNamespace[ns.Name][cluster] = ns
+		if (nameNamespace[ns.Name]) == nil {
+			nameNamespace[ns.Name] = make(map[string]models.Namespace)
 		}
+		nameNamespace[ns.Name][ns.Cluster] = ns
 	}
 
 	c.tokenNamespaces[token] = namespaceCache{
-		created:       time.Now(),
-		namespaces:    namespaces,
-		nameNamespace: nameNamespace,
+		created:            time.Now(),
+		namespaces:         namespaces,
+		namespacesCombined: models.CastCombinedNamespaces(namespaces),
+		nameNamespace:      nameNamespace,
 	}
 }
 
-func (c *kialiCacheImpl) GetNamespaces(token string) []models.Namespace {
+func (c *kialiCacheImpl) GetNamespaces(token string) []models.CombinedNamespace {
 	defer c.tokenLock.RUnlock()
 	c.tokenLock.RLock()
 	if nsToken, existToken := c.tokenNamespaces[token]; !existToken {
 		return nil
 	} else {
-		var nsList []models.Namespace
+		var nsList []models.CombinedNamespace
 		if time.Since(nsToken.created) < c.tokenNamespaceDuration {
-			nsList = append(nsList, nsToken.namespaces...)
+			return nsList
 		}
-		return nsList
+		return nil
 	}
 }
 
@@ -64,7 +64,6 @@ func (c *kialiCacheImpl) GetNamespace(token string, namespace string) *models.Na
 					return nil
 				}
 			}
-
 		}
 
 		return nil
