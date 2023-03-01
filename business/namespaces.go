@@ -129,9 +129,6 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Combine
 	}
 
 	namespaces := []models.Namespace{}
-	// Merge namespaces from different clusters
-	// Namespace sameness
-	//nsmap := make(map[string]models.Namespace)
 
 	if clientFactory == nil {
 		var err error
@@ -180,23 +177,10 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Combine
 		}
 		for _, clusterNamespace := range result.ns {
 			namespaces = append(namespaces, clusterNamespace)
-			/*
-				namespacesAcum := nsmap[clusterNamespace.Name]
-				combinedNs := models.CastCombinedNamespace(clusterNamespace)
-				if namespacesAcum.Name != "" {
-					nsmap[namespacesAcum.Name] = models.CombineNs(nsmap[namespacesAcum.Name], combinedNs)
-				} else {
-					nsmap[clusterNamespace.Name] = combinedNs
-				}
-			*/
 
 		}
 	}
-	/*
-		for _, value := range nsmap {
-			namespaces = append(namespaces, value)
-		}
-	*/
+
 	resultns := namespaces
 
 	// exclude namespaces that are:
@@ -217,13 +201,9 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Combine
 					}
 				}
 				if labelSelectorExclude != "" {
-					//for _, label := range namespace.Labels[labelSelectorExcludeName] {
-					//if label == labelSelectorExcludeValue {
 					if namespace.Labels[labelSelectorExcludeName] == labelSelectorExcludeValue {
 						continue NAMESPACES
 					}
-					//}
-
 				}
 			}
 			resultns = append(resultns, namespace)
