@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Button, Tooltip, ButtonVariant, TextInput, Form } from '@patternfly/react-core';
-import { Controller, GraphElement } from '@patternfly/react-topology';
+import { Controller, Graph, GraphElement } from '@patternfly/react-topology';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../../store/Store';
@@ -22,7 +22,17 @@ import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
 import history, { HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
-import { descendents, EdgeData, elems, NodeData, SelectExp, selectOr, SelectOr } from 'pages/GraphPF/GraphPFElems';
+import {
+  descendents,
+  EdgeData,
+  elems,
+  NodeData,
+  SelectAnd,
+  SelectExp,
+  selectOr,
+  SelectOr
+} from 'pages/GraphPF/GraphPFElems';
+import { FIT_PADDING } from 'pages/GraphPF/GraphPF';
 
 type ReduxProps = {
   edgeLabels: EdgeLabelMode[];
@@ -462,16 +472,37 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
     this.props.setHideValue(val);
   };
 
+  // we need to remove edges completely because an invisible edge will still
+  // be considered by the layout (I don't know why)
+  //private fhideEdge(e: GraphElement) {
+  //  e.setVisible(false);
+  // e.remove();
+  //}
+
+  //private fhideNode(e: GraphElement) {
+  //  e.setVisible(false);
+  //}
+
+  // All edges have the graph as a parent
+  private unhideElement(g: Graph, e: GraphElement) {
+    e.setVisible(true);
+    if (!e.hasParent()) {
+      g.appendChild(e);
+    }
+  }
+
   private handleHide = (controller: Controller, graphChanged: boolean) => {
     const selector = this.parseValue(this.props.hideValue, false);
     const checkRemovals = selector.nodeSelector || selector.edgeSelector || this.props.edgeMode !== EdgeMode.ALL;
+    const graph = controller.getGraph();
+    let needLayout = false;
 
-    // TODO - Change back to debug level
-    console.info(`Hide selector=[${JSON.stringify(selector)}]`);
+    console.debug(`Hide selector=[${JSON.stringify(selector)}]`);
 
     // unhide hidden elements when we are dealing with the same graph. Either way,release for garbage collection
     if (!!this.hiddenElements && !graphChanged) {
-      this.hiddenElements.forEach(e => e.setVisible(true));
+      needLayout = true;
+      this.hiddenElements.forEach(e => this.unhideElement(graph, e));
     }
     this.hiddenElements = undefined;
 
@@ -511,7 +542,7 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
       });
 
       // unhide any box hits, we only hide empty boxes
-      nodes.filter(n => n.isGroup() && !n.isVisible()).forEach(g => g.setVisible(true));
+      nodes.filter(n => n.isGroup() && !n.isVisible()).forEach(g => this.unhideElement(graph, g));
 
       // Handle EdgeMode as part of Hide, just edges, leave remaining visible nodes
       if (this.props.edgeMode !== EdgeMode.ALL) {
@@ -521,7 +552,7 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
             break;
           case EdgeMode.UNHEALTHY:
             edges.forEach(e => {
-              if (e.isVisible() && e.getData()[CyNode.healthStatus]) {
+              if (e.isVisible() && !e.getData()[CyNode.healthStatus]) {
                 e.setVisible(false);
               }
             });
@@ -538,9 +569,18 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
           }
         });
 
-      this.hiddenElements = (nodes.filter(n => !n.isVisible()) as GraphElement[]).concat(
-        edges.filter(e => !e.isVisible())
-      );
+      const finalNodes = nodes.filter(n => !n.isVisible()) as GraphElement[];
+      const finalEdges = edges.filter(e => !e.isVisible()) as GraphElement[];
+      // we need to remove edges completely because an invisible edge is not
+      // ignored by layout (I don't know why, nodes are ignored)
+      finalEdges.forEach(e => e.remove());
+      this.hiddenElements = finalNodes.concat(finalEdges);
+    }
+
+    if (needLayout || !!this.hiddenElements) {
+      controller.getGraph().reset();
+      controller.getGraph().layout();
+      controller.getGraph().fit(FIT_PADDING);
     }
   };
 
@@ -598,14 +638,14 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
     // generate separate selectors for each disjunctive clause and then stitch them together. This
     // lets us mix node and edge criteria.
     const orClauses = preparedVal.split(' OR ');
-    let orNodeSelector;
-    let orEdgeSelector;
+    let orNodeSelector: SelectOr = [];
+    let orEdgeSelector: SelectOr = [];
 
     for (const clause of orClauses) {
       const expressions = clause.split(' AND ');
       const conjunctive = expressions.length > 1;
-      let nodeSelector: SelectOr | undefined;
-      let edgeSelector: SelectOr | undefined;
+      let nodeSelector: SelectAnd = [];
+      let edgeSelector: SelectAnd = [];
       let target;
 
       for (const expression of expressions) {
@@ -621,16 +661,20 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
         }
 
         if (target === 'node') {
-          nodeSelector = this.appendSelector(nodeSelector, parsedExpression);
+          nodeSelector.push(parsedExpression.selector as SelectExp);
         } else {
-          edgeSelector = this.appendSelector(edgeSelector, parsedExpression);
+          edgeSelector.push(parsedExpression.selector as SelectExp);
         }
       }
 
       // parsed successfully, clear any previous error message
       this.setError(undefined, isFind);
-      orNodeSelector = !orNodeSelector ? nodeSelector : `${orNodeSelector},${nodeSelector}`;
-      orEdgeSelector = !orEdgeSelector ? edgeSelector : `${orEdgeSelector},${edgeSelector}`;
+      if (nodeSelector.length > 0) {
+        orNodeSelector.push(nodeSelector);
+      }
+      if (edgeSelector.length > 0) {
+        orEdgeSelector.push(edgeSelector);
+      }
     }
 
     return { nodeSelector: orNodeSelector, edgeSelector: orEdgeSelector };
@@ -890,7 +934,10 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
       default:
         // special node operand
         if (field.startsWith('label:')) {
-          return { target: 'node', selector: { prop: CytoscapeGraphUtils.toSafeCyFieldName(field), op: op, val: val } };
+          return {
+            target: 'node',
+            selector: { prop: CytoscapeGraphUtils.toSafeCyFieldName(field), op: op, val: val }
+          };
         }
 
         return this.setError(`Invalid operand [${field}]`, isFind);
@@ -940,9 +987,15 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
         return { target: 'node', selector: { prop: CyNode.isDead, op: isNegation ? 'falsy' : 'truthy' } };
       case 'fi':
       case 'faultinjection':
-        return { target: 'node', selector: { prop: CyNode.hasFaultInjection, op: isNegation ? 'falsy' : 'truthy' } };
+        return {
+          target: 'node',
+          selector: { prop: CyNode.hasFaultInjection, op: isNegation ? 'falsy' : 'truthy' }
+        };
       case 'inaccessible':
-        return { target: 'node', selector: { prop: CyNode.isInaccessible, op: isNegation ? 'falsy' : 'truthy' } };
+        return {
+          target: 'node',
+          selector: { prop: CyNode.isInaccessible, op: isNegation ? 'falsy' : 'truthy' }
+        };
       case 'healthy':
         return {
           target: 'node',
@@ -969,13 +1022,22 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
         return { target: 'node', selector: { prop: CyNode.isOutside, op: isNegation ? 'falsy' : 'truthy' } };
       case 'rr':
       case 'requestrouting':
-        return { target: 'node', selector: { prop: CyNode.hasRequestRouting, op: isNegation ? 'falsy' : 'truthy' } };
+        return {
+          target: 'node',
+          selector: { prop: CyNode.hasRequestRouting, op: isNegation ? 'falsy' : 'truthy' }
+        };
       case 'rto':
       case 'requesttimeout':
-        return { target: 'node', selector: { prop: CyNode.hasRequestTimeout, op: isNegation ? 'falsy' : 'truthy' } };
+        return {
+          target: 'node',
+          selector: { prop: CyNode.hasRequestTimeout, op: isNegation ? 'falsy' : 'truthy' }
+        };
       case 'se':
       case 'serviceentry':
-        return { target: 'node', selector: { prop: CyNode.isServiceEntry, op: isNegation ? 'falsy' : 'truthy' } };
+        return {
+          target: 'node',
+          selector: { prop: CyNode.isServiceEntry, op: isNegation ? 'falsy' : 'truthy' }
+        };
       case 'sc':
       case 'sidecar':
         return { target: 'node', selector: { prop: CyNode.hasMissingSC, op: isNegation ? 'falsy' : 'truthy' } };
@@ -987,7 +1049,10 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
         };
       case 'ts':
       case 'trafficshifting':
-        return { target: 'node', selector: { prop: CyNode.hasTrafficShifting, op: isNegation ? 'falsy' : 'truthy' } };
+        return {
+          target: 'node',
+          selector: { prop: CyNode.hasTrafficShifting, op: isNegation ? 'falsy' : 'truthy' }
+        };
       case 'trafficsource':
       case 'root':
         return { target: 'node', selector: { prop: CyNode.isRoot, op: isNegation ? 'falsy' : 'truthy' } };
@@ -996,7 +1061,10 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
         return { target: 'node', selector: { prop: CyNode.hasVS, op: isNegation ? 'falsy' : 'truthy' } };
       case 'we':
       case 'workloadentry':
-        return { target: 'node', selector: { prop: CyNode.hasWorkloadEntry, op: isNegation ? 'falsy' : 'truthy' } };
+        return {
+          target: 'node',
+          selector: { prop: CyNode.hasWorkloadEntry, op: isNegation ? 'falsy' : 'truthy' }
+        };
       //
       // edges...
       //
@@ -1018,18 +1086,6 @@ export class GraphFindPF extends React.Component<GraphFindProps, GraphFindState>
 
         return undefined;
     }
-  };
-
-  private appendSelector = (
-    selector: SelectOr | undefined,
-    parsedExpression: ParsedExpression
-  ): SelectOr | undefined => {
-    if (!selector) {
-      return Array.isArray(parsedExpression.selector) ? parsedExpression.selector : [[parsedExpression.selector]];
-    }
-
-    selector.push([parsedExpression.selector as SelectExp]);
-    return selector;
   };
 }
 

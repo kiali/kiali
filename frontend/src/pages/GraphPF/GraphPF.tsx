@@ -47,9 +47,10 @@ import { TimeInMilliseconds } from 'types/Common';
 let requestFit = false;
 
 const DEFAULT_NODE_SIZE = 75;
-const FIT_PADDING = 80;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
+
+export const FIT_PADDING = 80;
 
 export enum LayoutName {
   Cola = 'Cola',
@@ -396,6 +397,7 @@ export const TopologyContent: React.FC<{
     setUpdateTime(Date.now());
   }, [controller, graphData, graphSettings, highlighter, onReady, options.layout, setDetailsLevel, setUpdateTime]);
 
+  //TODO REMOVE THESE DEBUGGING MESSAGES...
   React.useEffect(() => {
     console.log(`controller changed`);
   }, [controller]);
