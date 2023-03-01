@@ -24,12 +24,14 @@ clean-all: clean clean-ui
 ## go-check: Check if the go version installed is supported by Kiali
 go-check:
 	@GO=${GO} hack/check_go_version.sh "${GO_VERSION_KIALI}"
+	@$(eval GO_ACTUAL_VERSION ?= $(shell ${GO} version | grep -Eo  '[0-9]+\.[0-9]+\.[0-9]+'))
+	@echo "Using actual Go version of: ${GO_ACTUAL_VERSION}"
 
 ## build: Runs `make go-check` internally and build Kiali binary
 build: go-check
 	@echo Building...
 	${GO_BUILD_ENVVARS} ${GO} build \
-		-o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}" ${GO_BUILD_FLAGS}
+		-o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}" ${GO_BUILD_FLAGS}
 
 ## build-ui: Runs the yarn commands to build the frontend UI
 build-ui:
@@ -40,18 +42,18 @@ build-ui-test: build-ui
 	@cd ${ROOTDIR}/frontend && yarn run test
 
 ## build-linux-multi-arch: Build Kiali binary with arch suffix for multi-arch
-build-linux-multi-arch:
+build-linux-multi-arch: go-check
 	@for arch in ${TARGET_ARCHS}; do \
 		echo "Building for architecture [$${arch}]"; \
 		${GO_BUILD_ENVVARS} GOOS=linux GOARCH=$${arch} ${GO} build \
-			-o ${GOPATH}/bin/kiali-$${arch} -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}" ${GO_BUILD_FLAGS}; \
+			-o ${GOPATH}/bin/kiali-$${arch} -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}" ${GO_BUILD_FLAGS}; \
 	done
 
 ## install: Install missing dependencies. Runs `go install` internally
-install:
+install: go-check
 	@echo Installing...
 	${GO_BUILD_ENVVARS} ${GO} install \
-		-ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
+		-ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}"
 
 ## format: Format all the files excluding vendor. Runs `gofmt` and `goimports` internally
 format:
@@ -62,10 +64,10 @@ format:
 	$(shell ./hack/fix_imports.sh)
 
 ## build-system-test: Building executable for system tests with code coverage enabled
-build-system-test:
+build-system-test: go-check
 	@echo Building executable for system tests with code coverage enabled
 	${GO} test -c -covermode=count -coverpkg $(shell ${GO} list ./... | grep -v test |  awk -vORS=, "{ print $$1 }" | sed "s/,$$//") \
-	  -o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
+	  -o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}"
 
 ## test: Run tests, excluding third party tests under vendor and frontend. Runs `go test` internally
 test:
