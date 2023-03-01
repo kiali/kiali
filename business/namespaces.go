@@ -129,9 +129,6 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}
 
 	namespaces := []models.Namespace{}
-	// Merge namespaces from different clusters
-	// Namespace sameness
-	nsmap := make(map[string]models.Namespace)
 
 	if clientFactory == nil {
 		var err error
@@ -179,33 +176,8 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 			return nil, result.err
 		}
 		for _, clusterNamespace := range result.ns {
-			namespacesAcum := nsmap[clusterNamespace.Name]
-			if namespacesAcum.Name != "" {
-				// Merge data
-				for label, value := range namespacesAcum.Labels {
-					if clusterNamespace.Labels[label] != "" && clusterNamespace.Labels[label] != value {
-						log.Infof("The label '%v' has different value '%v' for cluster '%v' in namespace '%v' ", label, value, result.cluster, namespacesAcum.Name)
-						clusterNamespace.Labels[label] = fmt.Sprintf("[%s,%s]", clusterNamespace.Labels[label], value)
-					} else {
-						clusterNamespace.Labels[label] = value
-					}
-				}
-				for annotation, value := range namespacesAcum.Annotations {
-					if clusterNamespace.Annotations[annotation] != "" && clusterNamespace.Annotations[annotation] != value {
-						log.Infof("The annotation '%v' has different value '%v' for cluster '%v' in namespace '%v' ", annotation, value, result.cluster, namespacesAcum.Name)
-						clusterNamespace.Annotations[annotation] = fmt.Sprintf("[%s,%s]", clusterNamespace.Annotations[annotation], value)
-					}
-					clusterNamespace.Annotations[annotation] = value
-				}
-				clusterNamespace.Clusters = append(clusterNamespace.Clusters, namespacesAcum.Clusters...)
-				nsmap[clusterNamespace.Name] = clusterNamespace
-			} else {
-				nsmap[clusterNamespace.Name] = clusterNamespace
-			}
+			namespaces = append(namespaces, clusterNamespace)
 		}
-	}
-	for _, value := range nsmap {
-		namespaces = append(namespaces, value)
 	}
 
 	resultns := namespaces
