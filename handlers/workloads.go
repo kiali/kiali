@@ -45,10 +45,17 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	p := workloadParams{}
 	p.extract(r)
 
-	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeIstioResources: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
-
 	// Get business layer
 	businessLayer, err := getBusiness(r)
+
+	// @TODO
+	//ns, err := checkNamespaceAccess(r.Context(), businessLayer.Namespace, p.Namespace)
+	//if err != nil {
+	//	RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
+	//	return
+	//}
+
+	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeIstioResources: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
 
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Workloads initialization error: "+err.Error())
@@ -79,14 +86,20 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	p := workloadParams{}
 	p.extract(r)
 
-	criteria := business.WorkloadCriteria{Namespace: p.Namespace, WorkloadName: p.WorkloadName, WorkloadType: p.WorkloadType, IncludeIstioResources: true, IncludeServices: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
-
 	// Get business layer
-	business, err := getBusiness(r)
+	businessLayer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Workloads initialization error: "+err.Error())
 		return
 	}
+
+	// @TODO
+	//ns, err := checkNamespaceAccess(r.Context(), businessLayer.Namespace, p.Namespace)
+	//if err != nil {
+	//	RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
+	//	return
+	//}
+	criteria := business.WorkloadCriteria{Namespace: p.Namespace, WorkloadName: p.WorkloadName, WorkloadType: p.WorkloadType, IncludeIstioResources: true, IncludeServices: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
 
 	includeValidations := false
 	if p.Validate {
@@ -101,12 +114,12 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), criteria.Namespace, "", criteria.WorkloadName)
+			istioConfigValidations, errValidations = businessLayer.Validations.GetValidations(r.Context(), criteria.Namespace, "", criteria.WorkloadName)
 		}()
 	}
 
 	// Fetch and build workload
-	workloadDetails, err := business.Workload.GetWorkload(r.Context(), criteria)
+	workloadDetails, err := businessLayer.Workload.GetWorkload(r.Context(), criteria)
 	if includeValidations && err == nil {
 		wg.Wait()
 		workloadDetails.Validations = istioConfigValidations
@@ -114,7 +127,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if criteria.IncludeHealth && err == nil {
-		workloadDetails.Health, err = business.Health.GetWorkloadHealth(r.Context(), criteria.Namespace, criteria.WorkloadName, criteria.RateInterval, criteria.QueryTime, workloadDetails)
+		workloadDetails.Health, err = businessLayer.Health.GetWorkloadHealth(r.Context(), criteria.Namespace, criteria.WorkloadName, criteria.RateInterval, criteria.QueryTime, workloadDetails)
 		if err != nil {
 			handleErrorResponse(w, err)
 		}
