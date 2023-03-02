@@ -89,9 +89,9 @@ func TestHasWorkloadEntryAddedToGraph(t *testing.T) {
 
 	traffic := graph.NewTrafficMap()
 
-	n0 := graph.NewNode("testCluster", "appNamespace", "ratings", "appNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
+	n0, _ := graph.NewNode("testCluster", "appNamespace", "ratings", "appNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
 	n0.Metadata[graph.HasWorkloadEntry] = []graph.WEInfo{{Name: "ratings-v1"}}
-	traffic[n0.ID] = &n0
+	traffic[n0.ID] = n0
 	cytoConfig := NewConfig(traffic, graph.ConfigOptions{})
 
 	cytoNode := cytoConfig.Elements.Nodes[0]
@@ -103,8 +103,8 @@ func TestHasWorkloadEntryEmpty(t *testing.T) {
 
 	traffic := graph.NewTrafficMap()
 
-	n0 := graph.NewNode("testCluster", "appNamespace", "ratings", "appNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
-	traffic[n0.ID] = &n0
+	n0, _ := graph.NewNode("testCluster", "appNamespace", "ratings", "appNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
+	traffic[n0.ID] = n0
 	cytoConfig := NewConfig(traffic, graph.ConfigOptions{})
 
 	cytoNode := cytoConfig.Elements.Nodes[0]
@@ -116,13 +116,13 @@ func TestHTTPToTrafficRate(t *testing.T) {
 
 	traffic := graph.NewTrafficMap()
 
-	svc := graph.NewNode("testCluster", "appNamespace", "ratings", "appNamespace", "", "ratings", "", graph.GraphTypeVersionedApp)
-	traffic[svc.ID] = &svc
+	svc, _ := graph.NewNode("testCluster", "appNamespace", "ratings", "appNamespace", "", "ratings", "", graph.GraphTypeVersionedApp)
+	traffic[svc.ID] = svc
 
-	v1 := graph.NewNode("testCluster", "appNamespace", "", "appNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
-	traffic[v1.ID] = &v1
+	v1, _ := graph.NewNode("testCluster", "appNamespace", "", "appNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
+	traffic[v1.ID] = v1
 
-	e := svc.AddEdge(&v1)
+	e := svc.AddEdge(v1)
 	e.Metadata[graph.HTTP.EdgeResponses] = graph.Responses{
 		"200": &graph.ResponseDetail{
 			Flags: graph.ResponseFlags{

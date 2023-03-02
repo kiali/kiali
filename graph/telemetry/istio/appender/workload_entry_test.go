@@ -63,30 +63,30 @@ func workloadEntriesTrafficMap() map[string]*graph.Node {
 	// 1 service, 3 workloads. v1 and v2 are workload entries. v3 is not a workload entry e.g. a kube deployment.
 
 	// Service node
-	n0 := graph.NewNode(testCluster, appNamespace, appName, appNamespace, "", "", "", graph.GraphTypeVersionedApp)
+	n0, _ := graph.NewNode(testCluster, appNamespace, appName, appNamespace, "", "", "", graph.GraphTypeVersionedApp)
 
 	// v1 Workload
-	n1 := graph.NewNode(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
+	n1, _ := graph.NewNode(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 
 	// v2 Workload
-	n2 := graph.NewNode(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
+	n2, _ := graph.NewNode(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
 
 	// v3 Workload
-	n3 := graph.NewNode(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
+	n3, _ := graph.NewNode(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
 
 	// v4 Workload (just to test ignoring of outsider nodes)
-	n4 := graph.NewNode(testCluster, "outsider", "outsider", "outsider", "outsider-v1", "outsider", "v1", graph.GraphTypeVersionedApp)
+	n4, _ := graph.NewNode(testCluster, "outsider", "outsider", "outsider", "outsider-v1", "outsider", "v1", graph.GraphTypeVersionedApp)
 
-	trafficMap[n0.ID] = &n0
-	trafficMap[n1.ID] = &n1
-	trafficMap[n2.ID] = &n2
-	trafficMap[n3.ID] = &n3
-	trafficMap[n4.ID] = &n4
+	trafficMap[n0.ID] = n0
+	trafficMap[n1.ID] = n1
+	trafficMap[n2.ID] = n2
+	trafficMap[n3.ID] = n3
+	trafficMap[n4.ID] = n4
 
-	n0.AddEdge(&n1).Metadata[graph.ProtocolKey] = graph.HTTP.Name
-	n0.AddEdge(&n2).Metadata[graph.ProtocolKey] = graph.HTTP.Name
-	n0.AddEdge(&n3).Metadata[graph.ProtocolKey] = graph.HTTP.Name
-	n0.AddEdge(&n4).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n0.AddEdge(n1).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n0.AddEdge(n2).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n0.AddEdge(n3).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n0.AddEdge(n4).Metadata[graph.ProtocolKey] = graph.HTTP.Name
 	// Need to put some metadata in here to ensure it gets counted as a workload
 
 	return trafficMap
@@ -100,27 +100,27 @@ func TestWorkloadEntry(t *testing.T) {
 
 	assert.Equal(5, len(trafficMap))
 
-	seSVCID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "", "", "", graph.GraphTypeVersionedApp)
+	seSVCID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "", "", "", graph.GraphTypeVersionedApp)
 	seSVCNode, found := trafficMap[seSVCID]
 	assert.True(found)
 	assert.Equal(4, len(seSVCNode.Edges))
 
-	v1WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
+	v1WorkloadID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	v1Node, found := trafficMap[v1WorkloadID]
 	assert.True(found)
 	assert.NotContains(v1Node.Metadata, graph.HasWorkloadEntry)
 
-	v2WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
+	v2WorkloadID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
 	v2Node, found := trafficMap[v2WorkloadID]
 	assert.True(found)
 	assert.NotContains(v2Node.Metadata, graph.HasWorkloadEntry)
 
-	v3WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
+	v3WorkloadID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
 	v3Node, found := trafficMap[v3WorkloadID]
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
 
-	v4WorkloadID, _ := graph.Id(testCluster, "outsider", "outsider", "outsider", "outsider-v1", "outsider", "v1", graph.GraphTypeVersionedApp)
+	v4WorkloadID, _, _ := graph.Id(testCluster, "outsider", "outsider", "outsider", "outsider-v1", "outsider", "v1", graph.GraphTypeVersionedApp)
 	v4Node, found := trafficMap[v4WorkloadID]
 	assert.True(found)
 	assert.NotContains(v4Node.Metadata, graph.HasWorkloadEntry)
@@ -136,17 +136,17 @@ func TestWorkloadEntry(t *testing.T) {
 
 	assert.Equal(5, len(trafficMap))
 
-	workloadV1ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
+	workloadV1ID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	workloadV1Node, found := trafficMap[workloadV1ID]
 	assert.True(found)
 	assert.Equal(workloadV1Node.Metadata[graph.HasWorkloadEntry], []graph.WEInfo{{Name: "workloadA"}})
 
-	workloadV2ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
+	workloadV2ID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
 	workloadV2Node, found := trafficMap[workloadV2ID]
 	assert.True(found)
 	assert.Equal(workloadV2Node.Metadata[graph.HasWorkloadEntry], []graph.WEInfo{{Name: "workloadB"}})
 
-	workloadV3ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
+	workloadV3ID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
 	workloadV3Node, found := trafficMap[workloadV3ID]
 	assert.True(found)
 	assert.NotContains(workloadV3Node.Metadata, graph.HasWorkloadEntry)
@@ -176,22 +176,22 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 
 	assert.Equal(5, len(trafficMap))
 
-	seSVCID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "", "", "", graph.GraphTypeVersionedApp)
+	seSVCID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "", "", "", graph.GraphTypeVersionedApp)
 	seSVCNode, found := trafficMap[seSVCID]
 	assert.True(found)
 	assert.Equal(4, len(seSVCNode.Edges))
 
-	v1WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
+	v1WorkloadID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	v1Node, found := trafficMap[v1WorkloadID]
 	assert.True(found)
 	assert.NotContains(v1Node.Metadata, graph.HasWorkloadEntry)
 
-	v2WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
+	v2WorkloadID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
 	v2Node, found := trafficMap[v2WorkloadID]
 	assert.True(found)
 	assert.NotContains(v2Node.Metadata, graph.HasWorkloadEntry)
 
-	v3WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
+	v3WorkloadID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
 	v3Node, found := trafficMap[v3WorkloadID]
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
@@ -207,17 +207,17 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 
 	assert.Equal(5, len(trafficMap))
 
-	workloadV1ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
+	workloadV1ID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	workloadV1Node, found := trafficMap[workloadV1ID]
 	assert.True(found)
 	assert.NotContains(workloadV1Node.Metadata, graph.HasWorkloadEntry)
 
-	workloadV2ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
+	workloadV2ID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
 	workloadV2Node, found := trafficMap[workloadV2ID]
 	assert.True(found)
 	assert.NotContains(workloadV2Node.Metadata, graph.HasWorkloadEntry)
 
-	workloadV3ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
+	workloadV3ID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
 	workloadV3Node, found := trafficMap[workloadV3ID]
 	assert.True(found)
 	assert.NotContains(workloadV3Node.Metadata, graph.HasWorkloadEntry)
@@ -255,22 +255,22 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 
 	assert.Equal(5, len(trafficMap))
 
-	seSVCID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "", "", "", graph.GraphTypeVersionedApp)
+	seSVCID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "", "", "", graph.GraphTypeVersionedApp)
 	seSVCNode, found := trafficMap[seSVCID]
 	assert.True(found)
 	assert.Equal(4, len(seSVCNode.Edges))
 
-	v1WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
+	v1WorkloadID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	v1Node, found := trafficMap[v1WorkloadID]
 	assert.True(found)
 	assert.NotContains(v1Node.Metadata, graph.HasWorkloadEntry)
 
-	v2WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
+	v2WorkloadID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
 	v2Node, found := trafficMap[v2WorkloadID]
 	assert.True(found)
 	assert.NotContains(v2Node.Metadata, graph.HasWorkloadEntry)
 
-	v3WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
+	v3WorkloadID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
 	v3Node, found := trafficMap[v3WorkloadID]
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
@@ -286,7 +286,7 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 
 	assert.Equal(5, len(trafficMap))
 
-	workloadV1ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
+	workloadV1ID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	workloadV1Node, found := trafficMap[workloadV1ID]
 	assert.True(found)
 	assert.Equal(
@@ -294,12 +294,12 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 		[]graph.WEInfo{{Name: "workloadV1A"}, {Name: "workloadV1B"}},
 	)
 
-	workloadV2ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
+	workloadV2ID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
 	workloadV2Node, found := trafficMap[workloadV2ID]
 	assert.True(found)
 	assert.Equal(workloadV2Node.Metadata[graph.HasWorkloadEntry], []graph.WEInfo{{Name: "workloadV2"}})
 
-	workloadV3ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
+	workloadV3ID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
 	workloadV3Node, found := trafficMap[workloadV3ID]
 	assert.True(found)
 	assert.NotContains(workloadV3Node.Metadata, graph.HasWorkloadEntry)
@@ -313,22 +313,22 @@ func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 
 	assert.Equal(5, len(trafficMap))
 
-	seSVCID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "", "", "", graph.GraphTypeVersionedApp)
+	seSVCID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "", "", "", graph.GraphTypeVersionedApp)
 	seSVCNode, found := trafficMap[seSVCID]
 	assert.True(found)
 	assert.Equal(4, len(seSVCNode.Edges))
 
-	v1WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
+	v1WorkloadID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	v1Node, found := trafficMap[v1WorkloadID]
 	assert.True(found)
 	assert.NotContains(v1Node.Metadata, graph.HasWorkloadEntry)
 
-	v2WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
+	v2WorkloadID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
 	v2Node, found := trafficMap[v2WorkloadID]
 	assert.True(found)
 	assert.NotContains(v2Node.Metadata, graph.HasWorkloadEntry)
 
-	v3WorkloadID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
+	v3WorkloadID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
 	v3Node, found := trafficMap[v3WorkloadID]
 	assert.True(found)
 	assert.NotContains(v3Node.Metadata, graph.HasWorkloadEntry)
@@ -344,17 +344,17 @@ func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 
 	assert.Equal(5, len(trafficMap))
 
-	workloadV1ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
+	workloadV1ID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
 	workloadV1Node, found := trafficMap[workloadV1ID]
 	assert.True(found)
 	assert.NotContains(workloadV1Node.Metadata, graph.HasWorkloadEntry)
 
-	workloadV2ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
+	workloadV2ID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v2", appName, "v2", graph.GraphTypeVersionedApp)
 	workloadV2Node, found := trafficMap[workloadV2ID]
 	assert.True(found)
 	assert.NotContains(workloadV2Node.Metadata, graph.HasWorkloadEntry)
 
-	workloadV3ID, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
+	workloadV3ID, _, _ := graph.Id(testCluster, appNamespace, appName, appNamespace, "ratings-v3", appName, "v3", graph.GraphTypeVersionedApp)
 	workloadV3Node, found := trafficMap[workloadV3ID]
 	assert.True(found)
 	assert.NotContains(workloadV3Node.Metadata, graph.HasWorkloadEntry)

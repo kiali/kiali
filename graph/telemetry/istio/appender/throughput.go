@@ -168,7 +168,11 @@ func (a ThroughputAppender) populateThroughputMap(throughputMap map[string]float
 		// - dest node is already a service node
 		inject := false
 		if a.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
-			_, destNodeType := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
+			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
+			if err != nil {
+				log.Warningf("Skipping (t) %s, %s", m.String(), err)
+				continue
+			}
 			inject = (graph.NodeTypeService != destNodeType)
 		}
 
@@ -183,8 +187,16 @@ func (a ThroughputAppender) populateThroughputMap(throughputMap map[string]float
 }
 
 func (a ThroughputAppender) addThroughput(throughputMap map[string]float64, val float64, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
-	sourceID, _ := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
-	destID, _ := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
+	sourceID, _, err := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
+	if err != nil {
+		log.Warningf("Skipping addThroughput (source), %s", err)
+		return
+	}
+	destID, _, err := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
+	if err != nil {
+		log.Warningf("Skipping addThroughput (dest), %s", err)
+		return
+	}
 	key := fmt.Sprintf("%s %s http", sourceID, destID)
 
 	throughputMap[key] += val

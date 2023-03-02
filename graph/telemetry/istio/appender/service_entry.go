@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/log"
 )
 
 const ServiceEntryAppenderName = "serviceEntry"
@@ -101,7 +102,11 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 
 	// Replace "se-service" nodes with an "se-aggregate" serviceEntry node
 	for se, seServiceNodes := range seMap {
-		serviceEntryNode := graph.NewNode(globalInfo.HomeCluster, namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
+		serviceEntryNode, err := graph.NewNode(globalInfo.HomeCluster, namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
+		if err != nil {
+			log.Warningf("Skipping serviceEntryNode, %s", err)
+			continue
+		}
 		serviceEntryNode.Metadata[graph.IsServiceEntry] = &graph.SEInfo{
 			Hosts:     se.hosts,
 			Location:  se.location,
@@ -110,7 +115,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 		serviceEntryNode.Metadata[graph.DestServices] = graph.NewDestServicesMetadata()
 		for _, doomedSeServiceNode := range seServiceNodes {
 			// aggregate node traffic
-			graph.AggregateNodeTraffic(doomedSeServiceNode, &serviceEntryNode)
+			graph.AggregateNodeTraffic(doomedSeServiceNode, serviceEntryNode)
 			// aggregate node dest-services to capture all of the distinct requested services
 			if destServices, ok := doomedSeServiceNode.Metadata[graph.DestServices]; ok {
 				for k, v := range destServices.(graph.DestServicesMetadata) {
@@ -121,14 +126,14 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 			for _, n := range trafficMap {
 				for _, edge := range n.Edges {
 					if edge.Dest.ID == doomedSeServiceNode.ID {
-						edge.Dest = &serviceEntryNode
+						edge.Dest = serviceEntryNode
 					}
 				}
 
 				// If there is more than one doomed node, edges leading to the new aggregated node must
 				// also be aggregated per source and protocol.
 				if len(seServiceNodes) > 1 {
-					aggregateEdges(n, &serviceEntryNode)
+					aggregateEdges(n, serviceEntryNode)
 				}
 			}
 			// redirect/aggregate edges leading from the doomed se-service node [to an egress gateway]
@@ -148,7 +153,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 			}
 			delete(trafficMap, doomedSeServiceNode.ID)
 		}
-		trafficMap[serviceEntryNode.ID] = &serviceEntryNode
+		trafficMap[serviceEntryNode.ID] = serviceEntryNode
 	}
 }
 

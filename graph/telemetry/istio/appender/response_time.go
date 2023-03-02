@@ -212,7 +212,11 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		// - dest node is already a service node
 		inject := false
 		if a.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
-			_, destNodeType := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
+			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
+			if err != nil {
+				log.Warningf("Skipping (rt) %s, %s", m.String(), err)
+				continue
+			}
 			inject = (graph.NodeTypeService != destNodeType)
 		}
 
@@ -226,8 +230,17 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 }
 
 func (a ResponseTimeAppender) addResponseTime(responseTimeMap map[string]float64, val float64, protocol, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
-	sourceID, _ := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
-	destID, _ := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
+	sourceID, _, err := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
+	if err != nil {
+		log.Warningf("Skipping addResponseTime (source), %s", err)
+		return
+	}
+	destID, _, err := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
+	if err != nil {
+		log.Warningf("Skipping addResponseTime (dest), %s", err)
+		return
+	}
+
 	key := fmt.Sprintf("%s %s %s", sourceID, destID, protocol)
 
 	// For edges within the namespace we may get a responseTime reported from both the incoming and outgoing

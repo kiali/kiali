@@ -201,7 +201,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 		val := float64(s.Value)
 
 		// inject aggregate node between source and destination
-		sourceID, _ := graph.Id(sourceCluster, sourceWlNs, "", sourceWlNs, sourceWl, sourceApp, sourceVer, a.GraphType)
+		sourceID, _, _ := graph.Id(sourceCluster, sourceWlNs, "", sourceWlNs, sourceWl, sourceApp, sourceVer, a.GraphType)
 		sourceNode, sourceFound := trafficMap[sourceID]
 		if !sourceFound {
 			log.Debugf("Expected source [%s] node not found in traffic map. Skipping aggregate injection [%s]", sourceID, aggregate)
@@ -214,9 +214,9 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 		// else show the independent aggregation by using the workload/app node as the dest
 		destID := ""
 		if a.InjectServiceNodes {
-			destID, _ = graph.Id(destCluster, destSvcNs, destSvcName, "", "", "", "", a.GraphType) // service
+			destID, _, _ = graph.Id(destCluster, destSvcNs, destSvcName, "", "", "", "", a.GraphType) // service
 		} else {
-			destID, _ = graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType) // wl/app
+			destID, _, _ = graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType) // wl/app
 		}
 		destNode, destFound := trafficMap[destID]
 		if !destFound {

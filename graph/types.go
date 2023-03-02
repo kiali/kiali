@@ -97,18 +97,21 @@ func (tm TrafficMap) Edges() []*Edge {
 }
 
 // NewNode constructor
-func NewNode(cluster, serviceNamespace, service, workloadNamespace, workload, app, version, graphType string) Node {
-	id, nodeType := Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, version, graphType)
+func NewNode(cluster, serviceNamespace, service, workloadNamespace, workload, app, version, graphType string) (*Node, error) {
+	id, nodeType, err := Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, version, graphType)
+	if err != nil {
+		return nil, err
+	}
 	namespace := workloadNamespace
 	if !IsOK(namespace) {
 		namespace = serviceNamespace
 	}
 
-	return NewNodeExplicit(id, cluster, namespace, workload, app, version, service, nodeType, graphType)
+	return NewNodeExplicit(id, cluster, namespace, workload, app, version, service, nodeType, graphType), nil
 }
 
 // NewNodeExplicit constructor assigns the specified ID
-func NewNodeExplicit(id, cluster, namespace, workload, app, version, service, nodeType, graphType string) Node {
+func NewNodeExplicit(id, cluster, namespace, workload, app, version, service, nodeType, graphType string) *Node {
 	metadata := make(Metadata)
 
 	// trim unnecessary fields
@@ -142,7 +145,7 @@ func NewNodeExplicit(id, cluster, namespace, workload, app, version, service, no
 		service = ""
 	}
 
-	return Node{
+	return &Node{
 		ID:        id,
 		NodeType:  nodeType,
 		Cluster:   cluster,
@@ -178,7 +181,7 @@ func NewTrafficMap() TrafficMap {
 }
 
 // Id returns the unique node ID
-func Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, version, graphType string) (id, nodeType string) {
+func Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, version, graphType string) (id, nodeType string, err error) {
 	// prefer the workload namespace
 	namespace := workloadNamespace
 	if !IsOK(namespace) {
@@ -187,7 +190,7 @@ func Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, ve
 
 	// first, check for the special-case "unknown" source node
 	if Unknown == namespace && Unknown == workload && Unknown == app && service == "" {
-		return fmt.Sprintf("%s_unknown_source", cluster), NodeTypeUnknown
+		return fmt.Sprintf("%s_unknown_source", cluster), NodeTypeUnknown, nil
 	}
 
 	// It is possible that a request is made for an unknown destination. For example, an Ingress
@@ -195,7 +198,7 @@ func Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, ve
 	// Every other field is unknown. Allow one unknown service per namespace to help reflect these
 	// bad destinations in the graph,  it may help diagnose a problem.
 	if Unknown == workload && Unknown == app && Unknown == service {
-		return fmt.Sprintf("svc_%s_%s_unknown", cluster, namespace), NodeTypeService
+		return fmt.Sprintf("svc_%s_%s_unknown", cluster, namespace), NodeTypeService, nil
 	}
 
 	workloadOk := IsOK(workload)
@@ -203,7 +206,7 @@ func Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, ve
 	serviceOk := IsOK(service)
 
 	if !workloadOk && !appOk && !serviceOk {
-		panic(fmt.Sprintf("Failed ID gen1: cluster=[%s] namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", cluster, namespace, workload, app, version, service, graphType))
+		return "", "", fmt.Errorf("Failed ID gen1: cluster=[%s] namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", cluster, namespace, workload, app, version, service, graphType)
 	}
 
 	// handle workload graph nodes (service graphs are initially processed as workload graphs)
@@ -211,12 +214,12 @@ func Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, ve
 		// workload graph nodes are type workload or service
 		if !workloadOk {
 			if serviceOk {
-				return fmt.Sprintf("svc_%s_%s_%s", cluster, namespace, service), NodeTypeService
+				return fmt.Sprintf("svc_%s_%s_%s", cluster, namespace, service), NodeTypeService, nil
 			}
 			// We have seen cases when app is set but workload is unknown and service may be unknown or not set (See #5696)
-			return fmt.Sprintf("svc_%s_%s_%s", cluster, namespace, Unknown), NodeTypeService
+			return fmt.Sprintf("svc_%s_%s_%s", cluster, namespace, Unknown), NodeTypeService, nil
 		}
-		return fmt.Sprintf("wl_%s_%s_%v", cluster, namespace, workload), NodeTypeWorkload
+		return fmt.Sprintf("wl_%s_%s_%v", cluster, namespace, workload), NodeTypeWorkload, nil
 	}
 
 	// handle app and versionedApp graphs
@@ -230,22 +233,22 @@ func Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, ve
 		// For a [versionless] App graph use the app label to aggregate versions/workloads into one node
 		if graphType == GraphTypeVersionedApp {
 			if workloadOk {
-				return fmt.Sprintf("vapp_%s_%s_%s", cluster, namespace, workload), NodeTypeApp
+				return fmt.Sprintf("vapp_%s_%s_%s", cluster, namespace, workload), NodeTypeApp, nil
 			}
 			if versionOk {
-				return fmt.Sprintf("vapp_%s_%s_%s_%s", cluster, namespace, app, version), NodeTypeApp
+				return fmt.Sprintf("vapp_%s_%s_%s_%s", cluster, namespace, app, version), NodeTypeApp, nil
 			}
 		}
-		return fmt.Sprintf("app_%s_%s_%s", cluster, namespace, app), NodeTypeApp
+		return fmt.Sprintf("app_%s_%s_%s", cluster, namespace, app), NodeTypeApp, nil
 	}
 
 	// fall back to workload if applicable
 	if workloadOk {
-		return fmt.Sprintf("wl_%s_%s_%s", cluster, namespace, workload), NodeTypeWorkload
+		return fmt.Sprintf("wl_%s_%s_%s", cluster, namespace, workload), NodeTypeWorkload, nil
 	}
 
 	// fall back to service as a last resort in the app graph
-	return fmt.Sprintf("svc_%s_%s_%s", cluster, namespace, service), NodeTypeService
+	return fmt.Sprintf("svc_%s_%s_%s", cluster, namespace, service), NodeTypeService, nil
 }
 
 // NewAggregateNode constructor, set svcName and app to "" when not service-specific aggregate

@@ -261,19 +261,19 @@ func addFakeEdgeTraffic(e *graph.Edge, destination string) {
 
 func (g *Generator) newServiceNode(app app) *graph.Node {
 	// It is important to leave app name blank here, otherwise this node will be considered a workload.
-	s := graph.NewNode(app.Cluster, app.Namespace, app.Name, app.Namespace, "", "", "", g.GraphType)
-	return &s
+	s, _ := graph.NewNode(app.Cluster, app.Namespace, app.Name, app.Namespace, "", "", "", g.GraphType)
+	return s
 }
 
 func (g *Generator) newWorkloadNode(app app, version string) *graph.Node {
 	workload := app.Name + "-" + version
-	node := graph.NewNode(app.Cluster, app.Namespace, "", app.Namespace, workload, app.Name, version, g.GraphType)
+	node, _ := graph.NewNode(app.Cluster, app.Namespace, "", app.Namespace, workload, app.Name, version, g.GraphType)
 	if app.IsIngress {
 		node.Metadata[graph.IsRoot] = true
 		node.Metadata[graph.IsIngressGateway] = graph.GatewaysMetadata{node.Workload: []string{"*"}}
 		node.Metadata[graph.IsOutside] = true
 	}
-	return &node
+	return node
 }
 
 func (g *Generator) ensureNamespace(name string) error {
