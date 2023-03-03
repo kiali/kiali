@@ -87,7 +87,7 @@ func graphNodeIstio(ctx context.Context, business *business.Layer, client *prome
 	globalInfo.Business = business
 	globalInfo.Context = ctx
 
-	trafficMap := istio.BuildNodeTrafficMap(o.TelemetryOptions, client, globalInfo)
+	trafficMap, _ := istio.BuildNodeTrafficMap(o.TelemetryOptions, client, globalInfo)
 	code, config = generateGraph(trafficMap, o)
 
 	return code, config

@@ -351,7 +351,11 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metri
 		// - dest node is already a service node
 		inject := false
 		if o.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
-			_, destNodeType := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
+			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
+			if err != nil {
+				log.Warningf("Skipping %s, %s", m.String(), err)
+				continue
+			}
 			inject = (graph.NodeTypeService != destNodeType)
 		}
 		addTraffic(trafficMap, metric, inject, val, protocol, code, flags, host, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
@@ -359,8 +363,16 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metri
 }
 
 func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val float64, protocol, code, flags, host, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer string, o graph.TelemetryOptions) {
-	source, _ := addNode(trafficMap, sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, o)
-	dest, _ := addNode(trafficMap, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
+	source, _, err := addNode(trafficMap, sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, o)
+	if err != nil {
+		log.Warningf("Skipping addTraffic (source), %s", err)
+		return
+	}
+	dest, _, err := addNode(trafficMap, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
+	if err != nil {
+		log.Warningf("Skipping addTraffic (dest), %s", err)
+		return
+	}
 
 	// Istio can generate duplicate metrics by reporting from both the source and destination proxies. To avoid
 	// processing the same information twice we keep track of the time series applied to a particular edge. The
@@ -369,7 +381,11 @@ func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val flo
 	edgeTSHash := fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s:%s:%s:%s:%s:%s", metric, source.Metadata[tsHash], dest.Metadata[tsHash], code, flags, host))))
 
 	if inject {
-		injectedService, _ := addNode(trafficMap, destCluster, destSvcNs, destSvcName, "", "", "", "", o)
+		injectedService, _, err := addNode(trafficMap, destCluster, destSvcNs, destSvcName, "", "", "", "", o)
+		if err != nil {
+			log.Warningf("Skipping addTraffic (inject), %s", err)
+			return
+		}
 		if addEdgeTraffic(trafficMap, val, protocol, code, flags, host, source, injectedService, edgeTSHash, o) {
 			addToDestServices(injectedService.Metadata, destCluster, destSvcNs, destSvcName)
 
@@ -421,8 +437,11 @@ func addToDestServices(md graph.Metadata, cluster, namespace, service string) {
 	destServices.(graph.DestServicesMetadata)[destService.Key()] = destService
 }
 
-func addNode(trafficMap graph.TrafficMap, cluster, serviceNs, service, workloadNs, workload, app, version string, o graph.TelemetryOptions) (*graph.Node, bool) {
-	id, nodeType := graph.Id(cluster, serviceNs, service, workloadNs, workload, app, version, o.GraphType)
+func addNode(trafficMap graph.TrafficMap, cluster, serviceNs, service, workloadNs, workload, app, version string, o graph.TelemetryOptions) (*graph.Node, bool, error) {
+	id, nodeType, err := graph.Id(cluster, serviceNs, service, workloadNs, workload, app, version, o.GraphType)
+	if err != nil {
+		return nil, false, err
+	}
 	node, found := trafficMap[id]
 	if !found {
 		namespace := workloadNs
@@ -430,11 +449,11 @@ func addNode(trafficMap graph.TrafficMap, cluster, serviceNs, service, workloadN
 			namespace = serviceNs
 		}
 		newNode := graph.NewNodeExplicit(id, cluster, namespace, workload, app, version, service, nodeType, o.GraphType)
-		node = &newNode
+		node = newNode
 		trafficMap[id] = node
 	}
 	node.Metadata["tsHash"] = timeSeriesHash(cluster, serviceNs, service, workloadNs, workload, app, version)
-	return node, found
+	return node, found, nil
 }
 
 func timeSeriesHash(cluster, serviceNs, service, workloadNs, workload, app, version string) string {
@@ -442,12 +461,16 @@ func timeSeriesHash(cluster, serviceNs, service, workloadNs, workload, app, vers
 }
 
 // BuildNodeTrafficMap is required by the graph/TelemtryVendor interface
-func BuildNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+func BuildNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) (graph.TrafficMap, error) {
 	if o.NodeOptions.Aggregate != "" {
-		return handleAggregateNodeTrafficMap(o, client, globalInfo)
+		return handleAggregateNodeTrafficMap(o, client, globalInfo), nil
 	}
 
-	n := graph.NewNode(o.NodeOptions.Cluster, o.NodeOptions.Namespace, o.NodeOptions.Service, o.NodeOptions.Namespace, o.NodeOptions.Workload, o.NodeOptions.App, o.NodeOptions.Version, o.GraphType)
+	n, err := graph.NewNode(o.NodeOptions.Cluster, o.NodeOptions.Namespace, o.NodeOptions.Service, o.NodeOptions.Namespace, o.NodeOptions.Workload, o.NodeOptions.App, o.NodeOptions.Version, o.GraphType)
+	if err != nil {
+		log.Warningf("Skipping NodeTrafficMap (bad node), %s", err)
+		return nil, err
+	}
 
 	log.Tracef("Build graph for node [%+v]", n)
 
@@ -471,13 +494,13 @@ func BuildNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, gl
 	// the current decision is to not reduce the node graph to provide more detail.  This may be
 	// confusing to users, we'll see...
 
-	return trafficMap
+	return trafficMap, nil
 }
 
 // buildNodeTrafficMap returns a map of all nodes requesting or requested by the target node (key=id). Node graphs
 // are from the perspective of the node, as such we use destination telemetry for incoming traffic and source telemetry
 // for outgoing traffic.
-func buildNodeTrafficMap(cluster, namespace string, n graph.Node, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
+func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
 	// create map to aggregate traffic by protocol and response code
 	trafficMap := graph.NewTrafficMap()
 	duration := o.Namespaces[namespace].Duration

@@ -248,7 +248,11 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		// - dest node is already a service node
 		inject := false
 		if a.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
-			_, destNodeType := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
+			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
+			if err != nil {
+				log.Warningf("Skipping (sp) %s, %s", m.String(), err)
+				continue
+			}
 			inject = (graph.NodeTypeService != destNodeType)
 		}
 		if inject {
@@ -264,8 +268,16 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 }
 
 func (a SecurityPolicyAppender) addSecurityPolicy(securityPolicyMap map[string]PolicyRates, csp string, val float64, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
-	sourceId, _ := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
-	destId, _ := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
+	sourceId, _, err := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
+	if err != nil {
+		log.Warningf("Skipping addSecurityPolicy (source), %s", err)
+		return
+	}
+	destId, _, err := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
+	if err != nil {
+		log.Warningf("Skipping addSecurityPolicy (dest), %s", err)
+		return
+	}
 	key := fmt.Sprintf("%s %s", sourceId, destId)
 	var policyRates PolicyRates
 	var ok bool
@@ -303,8 +315,16 @@ func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[stri
 }
 
 func (a SecurityPolicyAppender) addPrincipal(principalMap map[string]map[graph.MetadataKey]string, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, sourcePrincipal, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, destPrincipal string) {
-	sourceID, _ := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
-	destID, _ := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
+	sourceID, _, err := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
+	if err != nil {
+		log.Warningf("Skipping addPrincipal (source), %s", err)
+		return
+	}
+	destID, _, err := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
+	if err != nil {
+		log.Warningf("Skipping addPrincipal (dest), %s", err)
+		return
+	}
 	key := fmt.Sprintf("%s %s", sourceID, destID)
 	var ok bool
 	if _, ok = principalMap[key]; !ok {

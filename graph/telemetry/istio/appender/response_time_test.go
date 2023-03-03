@@ -194,7 +194,7 @@ func TestResponseTimeP95(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := responseTimeTestTraffic()
-	ingressID, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingressID, _, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressID]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -467,7 +467,7 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := responseTimeTestTraffic()
-	ingressID, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingressID, _, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressID]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -740,7 +740,7 @@ func TestResponseTimeAvg(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := responseTimeTestTraffic()
-	ingressID, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingressID, _, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressID]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -831,33 +831,33 @@ func TestResponseTimeAvg(t *testing.T) {
 }
 
 func responseTimeTestTraffic() graph.TrafficMap {
-	ingress := graph.NewNode(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
-	productpageService := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "", "", "", "", graph.GraphTypeVersionedApp)
-	productpage := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
-	reviewsService := graph.NewNode(business.DefaultClusterID, "bookinfo", "reviews", "", "", "", "", graph.GraphTypeVersionedApp)
-	reviewsV1 := graph.NewNode(business.DefaultClusterID, "bookinfo", "reviews", "bookinfo", "reviews-v1", "reviews", "v1", graph.GraphTypeVersionedApp)
-	reviewsV2 := graph.NewNode(business.DefaultClusterID, "bookinfo", "reviews", "bookinfo", "reviews-v2", "reviews", "v2", graph.GraphTypeVersionedApp)
-	ratingsService := graph.NewNode(business.DefaultClusterID, "bookinfo", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)
-	ratings := graph.NewNode(business.DefaultClusterID, "bookinfo", "ratings", "bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
+	ingress, _ := graph.NewNode(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	productpageService, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "", "", "", "", graph.GraphTypeVersionedApp)
+	productpage, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	reviewsService, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "reviews", "", "", "", "", graph.GraphTypeVersionedApp)
+	reviewsV1, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "reviews", "bookinfo", "reviews-v1", "reviews", "v1", graph.GraphTypeVersionedApp)
+	reviewsV2, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "reviews", "bookinfo", "reviews-v2", "reviews", "v2", graph.GraphTypeVersionedApp)
+	ratingsService, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)
+	ratings, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "ratings", "bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
 	trafficMap := graph.NewTrafficMap()
 
-	trafficMap[ingress.ID] = &ingress
-	trafficMap[productpageService.ID] = &productpageService
-	trafficMap[productpage.ID] = &productpage
-	trafficMap[reviewsService.ID] = &reviewsService
-	trafficMap[reviewsV1.ID] = &reviewsV1
-	trafficMap[reviewsV2.ID] = &reviewsV2
-	trafficMap[ratingsService.ID] = &ratingsService
-	trafficMap[ratings.ID] = &ratings
+	trafficMap[ingress.ID] = ingress
+	trafficMap[productpageService.ID] = productpageService
+	trafficMap[productpage.ID] = productpage
+	trafficMap[reviewsService.ID] = reviewsService
+	trafficMap[reviewsV1.ID] = reviewsV1
+	trafficMap[reviewsV2.ID] = reviewsV2
+	trafficMap[ratingsService.ID] = ratingsService
+	trafficMap[ratings.ID] = ratings
 
-	ingress.AddEdge(&productpageService).Metadata[graph.ProtocolKey] = "http"
-	productpageService.AddEdge(&productpage).Metadata[graph.ProtocolKey] = "http"
-	productpage.AddEdge(&reviewsService).Metadata[graph.ProtocolKey] = "http"
-	reviewsService.AddEdge(&reviewsV1).Metadata[graph.ProtocolKey] = "http"
-	reviewsService.AddEdge(&reviewsV2).Metadata[graph.ProtocolKey] = "http"
-	reviewsV1.AddEdge(&ratingsService).Metadata[graph.ProtocolKey] = "http"
-	reviewsV2.AddEdge(&ratingsService).Metadata[graph.ProtocolKey] = "http"
-	ratingsService.AddEdge(&ratings).Metadata[graph.ProtocolKey] = "http"
+	ingress.AddEdge(productpageService).Metadata[graph.ProtocolKey] = "http"
+	productpageService.AddEdge(productpage).Metadata[graph.ProtocolKey] = "http"
+	productpage.AddEdge(reviewsService).Metadata[graph.ProtocolKey] = "http"
+	reviewsService.AddEdge(reviewsV1).Metadata[graph.ProtocolKey] = "http"
+	reviewsService.AddEdge(reviewsV2).Metadata[graph.ProtocolKey] = "http"
+	reviewsV1.AddEdge(ratingsService).Metadata[graph.ProtocolKey] = "http"
+	reviewsV2.AddEdge(ratingsService).Metadata[graph.ProtocolKey] = "http"
+	ratingsService.AddEdge(ratings).Metadata[graph.ProtocolKey] = "http"
 
 	return trafficMap
 }

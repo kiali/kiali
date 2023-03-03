@@ -21,20 +21,20 @@ import (
 func setupLabelerTrafficMap() (map[string]*graph.Node, string, string, string, string, string) {
 	trafficMap := graph.NewTrafficMap()
 
-	appNode := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", graph.Unknown, "test", "", graph.GraphTypeVersionedApp)
-	trafficMap[appNode.ID] = &appNode
+	appNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", graph.Unknown, "test", "", graph.GraphTypeVersionedApp)
+	trafficMap[appNode.ID] = appNode
 
-	appNodeV1 := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
-	trafficMap[appNodeV1.ID] = &appNodeV1
+	appNodeV1, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	trafficMap[appNodeV1.ID] = appNodeV1
 
-	appNodeV2 := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", "test-v2", "test", "v2", graph.GraphTypeVersionedApp)
-	trafficMap[appNodeV2.ID] = &appNodeV2
+	appNodeV2, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", "test-v2", "test", "v2", graph.GraphTypeVersionedApp)
+	trafficMap[appNodeV2.ID] = appNodeV2
 
-	serviceNode := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	trafficMap[serviceNode.ID] = &serviceNode
+	serviceNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	trafficMap[serviceNode.ID] = serviceNode
 
-	workloadNode := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", "test-v1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
-	trafficMap[workloadNode.ID] = &workloadNode
+	workloadNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "test", "testNamespace", "test-v1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
+	trafficMap[workloadNode.ID] = workloadNode
 
 	return trafficMap, appNode.ID, appNodeV1.ID, appNodeV2.ID, serviceNode.ID, workloadNode.ID
 }

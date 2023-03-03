@@ -157,8 +157,8 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 func buildWorkloadTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode(business.DefaultClusterID, "testNamespace", "", "testNamespace", "workload-1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
-	trafficMap[node.ID] = &node
+	node, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "", "testNamespace", "workload-1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
+	trafficMap[node.ID] = node
 
 	return trafficMap
 }
@@ -166,8 +166,8 @@ func buildWorkloadTrafficMap() graph.TrafficMap {
 func buildInaccessibleWorkloadTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode(business.DefaultClusterID, "inaccessibleNamespace", "", "inaccessibleNamespace", "workload-1", graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	trafficMap[node.ID] = &node
+	node, _ := graph.NewNode(business.DefaultClusterID, "inaccessibleNamespace", "", "inaccessibleNamespace", "workload-1", graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	trafficMap[node.ID] = node
 
 	return trafficMap
 }
@@ -175,8 +175,8 @@ func buildInaccessibleWorkloadTrafficMap() graph.TrafficMap {
 func buildAppTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode(business.DefaultClusterID, "testNamespace", "", "testNamespace", graph.Unknown, "myTest", graph.Unknown, graph.GraphTypeVersionedApp)
-	trafficMap[node.ID] = &node
+	node, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "", "testNamespace", graph.Unknown, "myTest", graph.Unknown, graph.GraphTypeVersionedApp)
+	trafficMap[node.ID] = node
 
 	return trafficMap
 }
@@ -184,8 +184,8 @@ func buildAppTrafficMap() graph.TrafficMap {
 func buildServiceTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode(business.DefaultClusterID, "testNamespace", "svc", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	trafficMap[node.ID] = &node
+	node, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "svc", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	trafficMap[node.ID] = node
 
 	return trafficMap
 }

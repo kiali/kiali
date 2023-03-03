@@ -68,7 +68,7 @@ func TestSecurityPolicyDefaultRates(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := securityPolicyTestTraffic()
-	ingressID, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingressID, _, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressID]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -173,7 +173,7 @@ func TestSecurityPolicyTotalRates(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := securityPolicyTestTraffic()
-	ingressID, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingressID, _, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressID]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -249,7 +249,7 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := securityPolicyTestTrafficWithServiceNodes()
-	ingressId, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingressId, _, _ := graph.Id(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressId]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -293,28 +293,28 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 }
 
 func securityPolicyTestTraffic() graph.TrafficMap {
-	ingress := graph.NewNode(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
-	productpage := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	ingress, _ := graph.NewNode(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	productpage, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
 	trafficMap := graph.NewTrafficMap()
-	trafficMap[ingress.ID] = &ingress
-	trafficMap[productpage.ID] = &productpage
+	trafficMap[ingress.ID] = ingress
+	trafficMap[productpage.ID] = productpage
 
-	ingress.AddEdge(&productpage)
+	ingress.AddEdge(productpage)
 
 	return trafficMap
 }
 
 func securityPolicyTestTrafficWithServiceNodes() graph.TrafficMap {
-	ingress := graph.NewNode(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
-	productpagesvc := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "", "", "", graph.GraphTypeVersionedApp)
-	productpage := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	ingress, _ := graph.NewNode(business.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	productpagesvc, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "", "", "", graph.GraphTypeVersionedApp)
+	productpage, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
 	trafficMap := graph.NewTrafficMap()
-	trafficMap[ingress.ID] = &ingress
-	trafficMap[productpagesvc.ID] = &productpagesvc
-	trafficMap[productpage.ID] = &productpage
+	trafficMap[ingress.ID] = ingress
+	trafficMap[productpagesvc.ID] = productpagesvc
+	trafficMap[productpage.ID] = productpage
 
-	ingress.AddEdge(&productpagesvc)
-	productpagesvc.AddEdge(&productpage)
+	ingress.AddEdge(productpagesvc)
+	productpagesvc.AddEdge(productpage)
 
 	return trafficMap
 }

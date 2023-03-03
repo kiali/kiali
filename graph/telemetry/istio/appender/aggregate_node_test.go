@@ -71,7 +71,7 @@ func TestNamespacesGraphWithServiceInjection(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := aggregateNodeTestTraffic(true)
-	ppID, _ := graph.Id(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	ppID, _, _ := graph.Id(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
 	pp, ok := trafficMap[ppID]
 	assert.Equal(true, ok)
 	assert.Equal(1, len(pp.Edges))
@@ -198,7 +198,7 @@ func TestNamespacesGraphNoServiceInjection(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := aggregateNodeTestTraffic(false)
-	ppID, _ := graph.Id(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	ppID, _, _ := graph.Id(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
 	pp, ok := trafficMap[ppID]
 	assert.Equal(true, ok)
 	assert.Equal(1, len(pp.Edges))
@@ -293,7 +293,7 @@ func TestNodeGraphWithServiceInjection(t *testing.T) {
 	mockQuery(api, q0, &v0)
 
 	trafficMap := aggregateNodeTestTraffic(true)
-	ppID, _ := graph.Id(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	ppID, _, _ := graph.Id(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
 	pp, ok := trafficMap[ppID]
 	assert.Equal(true, ok)
 	assert.Equal(1, len(pp.Edges))
@@ -405,7 +405,7 @@ func TestNamespacesGraphWithServiceInjectionSkipRates(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := aggregateNodeTestTraffic(true)
-	ppID, _ := graph.Id(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	ppID, _, _ := graph.Id(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
 	pp, ok := trafficMap[ppID]
 	assert.Equal(true, ok)
 	assert.Equal(1, len(pp.Edges))
@@ -482,7 +482,7 @@ func TestNodeGraphNoServiceInjection(t *testing.T) {
 	mockQuery(api, q0, &v0)
 
 	trafficMap := aggregateNodeTestTraffic(false)
-	ppID, _ := graph.Id(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	ppID, _, _ := graph.Id(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
 	pp, ok := trafficMap[ppID]
 	assert.Equal(true, ok)
 	assert.Equal(1, len(pp.Edges))
@@ -563,7 +563,7 @@ func TestNodeGraphWithServiceInjectionSkipRates(t *testing.T) {
 	mockQuery(api, q0, &v0)
 
 	trafficMap := aggregateNodeTestTraffic(true)
-	ppID, _ := graph.Id(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	ppID, _, _ := graph.Id(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
 	pp, ok := trafficMap[ppID]
 	assert.Equal(true, ok)
 	assert.Equal(1, len(pp.Edges))
@@ -608,19 +608,19 @@ func TestNodeGraphWithServiceInjectionSkipRates(t *testing.T) {
 }
 
 func aggregateNodeTestTraffic(injectServices bool) graph.TrafficMap {
-	productpage := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
-	reviews := graph.NewNode(business.DefaultClusterID, "bookinfo", "reviews", "bookinfo", "reviews-v1", "reviews", "v1", graph.GraphTypeVersionedApp)
-	reviewsService := graph.NewNode(business.DefaultClusterID, "bookinfo", "reviews", "", "", "", "", graph.GraphTypeVersionedApp)
+	productpage, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	reviews, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "reviews", "bookinfo", "reviews-v1", "reviews", "v1", graph.GraphTypeVersionedApp)
+	reviewsService, _ := graph.NewNode(business.DefaultClusterID, "bookinfo", "reviews", "", "", "", "", graph.GraphTypeVersionedApp)
 
 	trafficMap := graph.NewTrafficMap()
-	trafficMap[productpage.ID] = &productpage
-	trafficMap[reviews.ID] = &reviews
+	trafficMap[productpage.ID] = productpage
+	trafficMap[reviews.ID] = reviews
 	if injectServices {
-		trafficMap[reviewsService.ID] = &reviewsService
-		productpage.AddEdge(&reviewsService)
-		reviewsService.AddEdge(&reviews)
+		trafficMap[reviewsService.ID] = reviewsService
+		productpage.AddEdge(reviewsService)
+		reviewsService.AddEdge(reviews)
 	} else {
-		productpage.AddEdge(&reviews)
+		productpage.AddEdge(reviews)
 	}
 
 	return trafficMap

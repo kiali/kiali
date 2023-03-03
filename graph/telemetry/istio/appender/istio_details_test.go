@@ -20,27 +20,27 @@ import (
 func setupTrafficMap() (map[string]*graph.Node, string, string, string, string, string, string) {
 	trafficMap := graph.NewTrafficMap()
 
-	appNode := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", graph.Unknown, "ratings", "", graph.GraphTypeVersionedApp)
+	appNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", graph.Unknown, "ratings", "", graph.GraphTypeVersionedApp)
 	appNode.Metadata[graph.DestServices] = graph.NewDestServicesMetadata().Add("testNamespace ratings", graph.ServiceName{Namespace: "testNamespace", Name: "ratings"})
-	trafficMap[appNode.ID] = &appNode
+	trafficMap[appNode.ID] = appNode
 
-	appNodeV1 := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
+	appNodeV1, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
 	appNodeV1.Metadata[graph.DestServices] = graph.NewDestServicesMetadata().Add("testNamespace ratings", graph.ServiceName{Namespace: "testNamespace", Name: "ratings"})
-	trafficMap[appNodeV1.ID] = &appNodeV1
+	trafficMap[appNodeV1.ID] = appNodeV1
 
-	appNodeV2 := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", "ratings-v2", "ratings", "v2", graph.GraphTypeVersionedApp)
+	appNodeV2, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", "ratings-v2", "ratings", "v2", graph.GraphTypeVersionedApp)
 	appNodeV2.Metadata[graph.DestServices] = graph.NewDestServicesMetadata().Add("testNamespace ratings", graph.ServiceName{Namespace: "testNamespace", Name: "ratings"})
-	trafficMap[appNodeV2.ID] = &appNodeV2
+	trafficMap[appNodeV2.ID] = appNodeV2
 
-	serviceNode := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	trafficMap[serviceNode.ID] = &serviceNode
+	serviceNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	trafficMap[serviceNode.ID] = serviceNode
 
-	workloadNode := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", "ratings-v1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
+	workloadNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "testNamespace", "ratings-v1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
 	workloadNode.Metadata[graph.DestServices] = graph.NewDestServicesMetadata().Add("testNamespace ratings", graph.ServiceName{Namespace: "testNamespace", Name: "ratings"})
-	trafficMap[workloadNode.ID] = &workloadNode
+	trafficMap[workloadNode.ID] = workloadNode
 
-	fooServiceNode := graph.NewNode(business.DefaultClusterID, "testNamespace", "foo", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	trafficMap[fooServiceNode.ID] = &fooServiceNode
+	fooServiceNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "foo", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	trafficMap[fooServiceNode.ID] = fooServiceNode
 
 	return trafficMap, appNode.ID, appNodeV1.ID, appNodeV2.ID, serviceNode.ID, workloadNode.ID, fooServiceNode.ID
 }
@@ -306,13 +306,13 @@ func TestSEInAppBox(t *testing.T) {
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
 
 	trafficMap := graph.NewTrafficMap()
-	serviceEntryNode := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)
+	serviceEntryNode, _ := graph.NewNode(business.DefaultClusterID, "testNamespace", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)
 	serviceEntryNode.Metadata[graph.IsServiceEntry] = &graph.SEInfo{
 		Hosts:     []string{"foobar.com"},
 		Location:  "MESH_INTERNAL",
 		Namespace: "testNamespace",
 	}
-	trafficMap[serviceEntryNode.ID] = &serviceEntryNode
+	trafficMap[serviceEntryNode.ID] = serviceEntryNode
 
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
