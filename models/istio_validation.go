@@ -279,6 +279,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Global default sidecar should not have workloadSelector",
 		Severity: WarningSeverity,
 	},
+	"sidecar.outboundtrafficpolicy.mode.ambiguous": {
+		Code:     "KIA1007",
+		Message:  "OutboundTrafficPolicy with empty mode value is ambiguous due to an Istio limitation. This may indicate ALLOW_ANY or REGISTRY_ONLY. Inspect the value using other means.",
+		Severity: Unknown,
+	},
 	"virtualservices.gateway.oldnomenclature": {
 		Code:     "KIA1108",
 		Message:  "Preferred nomenclature: <gateway namespace>/<gateway name>",
