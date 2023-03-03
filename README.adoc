@@ -324,6 +324,33 @@ If you are using VisualStudio Code, you can install the following `launcher.json
 }
 ----
 
+=== Debugging With Google Chrome Developer Tools
+
+You can debug the Kiali GUI directly inside of Google Chrome using the Chrome Developer Tools.
+
+First, run the Kiali Server backend, either normally within a cluster or via `run-server.sh` as explained earlier. Determine what the Kiali URL is before moving to the next step. For example, if you run Kiali in minikube, and you set up a port-forward that exposes it, the URL to remember will be `http://localhost:20001/kiali`.
+
+Second, run the GUI frontend using make: `make -e YARN_START_URL=http://<kiali-url> yarn-start` where `<kiali-url>` is the URL you determined from the previous step. For example, if the Kiali Server is running in minikube with a port-forward exposing it, then run `make -e YARN_START_URL=http://localhost:20001/kiali yarn-start`. This command will start the Kiali GUI frontend on a local endpoint. After the `yarn-start` command is ready, look at the output for the "Local" URL you use to access it. The output will look something like this:
+```
+Compiled successfully!
+
+You can now view @kiali/kiali-ui in the browser.
+
+  Local:            http://localhost:3000
+  On Your Network:  http://192.168.1.15:3000
+...
+```
+
+Third, start Google Chrome and point the browser to the local URL for the Kiali GUI frontend started by yarn-start (in the example above, that will be `http://localhost:3000`).
+
+Fourth, in Google Chrome, open the Developer Tools. You can press `Control-Shift-I` to do this.
+
+Fifth, within the Developer Tools, navigate to the `Sources` tab, then the `Filesystem` sub-tab, and press the `+ Add folder to workspace` link. In the file selection dialog, select your Kiali `frontend/src` folder. This will inform Google Chrome Developer Tools where your Kiali GUI frontend source code can be found.
+
+At this point, you need to give Google Chrome permission to access your local source code folder. Towards the top of the browser window, you will see a prompt - press the "Allow" button to give Chrome the necessary permissions it needs.
+
+You are now ready to debug the Kiali Server frontend. You can set breakpoints, inspect variables, examine stack traces, etc. just as you can do with any typical debugging tool.
+
 == Configuration
 
 Many configuration settings can optionally be set within the Kiali Operator custom resource (CR) file. See link:https://github.com/kiali/kiali-operator/blob/master/deploy/kiali/kiali_cr.yaml[this example Kiali CR file] that has all the configuration settings documented.
