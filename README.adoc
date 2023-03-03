@@ -273,7 +273,9 @@ make cypress-gui
 
 Note that `make cypress-gui` runs the Cypress GUI that allows you to pick which individual tests to run. To run the entire test suite in headless mode, use the make target `cypress-run` instead.
 
-==== Debugging With VisualStudio Code
+=== Debugging With VisualStudio Code
+
+==== Server Backend
 
 If you are using VisualStudio Code, you can install the following `launcher.json` that is then used to launch the Kiali Server in the debugger. Run the `hack/run-kiali.sh` script first to ensure the proper services are up (such as the Prometheus port-forward proxy).
 
@@ -297,6 +299,26 @@ If you are using VisualStudio Code, you can install the following `launcher.json
                 "KUBERNETES_SERVICE_PORT": "8001",
                 "LOG_LEVEL": "trace"
             }
+        }
+    ]
+}
+----
+
+==== GUI Frontend
+
+If you are using VisualStudio Code, you can install the following `launcher.json` that is then used to launch Chrom to debug the Kiali Server GUI frontend in the debugger. Run the `make -e YARN_START_URL=http://localhost:20001/kiali yarn-start` first to start the GUI frontend locally. Make sure your YARN_START_URL is valid - it should point to a running Kiali Server. In this example, it assumes you ran a port-forward so that the Kiali Server can be reached at localhost:20001. If running in minikube, you could alternatively use `$(minikube ip):80` as the host/port assuming an Ingress is set up to access Kiali.
+
+[source,json]
+----
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Chrome",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:3001"
+            "webRoot": "${workspaceFolder}"
         }
     ]
 }
