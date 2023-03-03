@@ -16,7 +16,7 @@ func (c OutboundTrafficPolicyModeChecker) Check() ([]*models.IstioCheck, bool) {
 	// read this issue to find out why we do this check: https://github.com/kiali/kiali/issues/5882
 	if c.Sidecar.Spec.OutboundTrafficPolicy != nil {
 		if c.Sidecar.Spec.OutboundTrafficPolicy.Mode.Number() == 0 {
-			check := models.Build("sidecar.outboundtrafficpolicy.mode.ambiguous", "spec.outboundTrafficPolicy")
+			check := models.Build("sidecar.outboundtrafficpolicy.mode.ambiguous", "spec/outboundTrafficPolicy")
 			checks = append(checks, &check)
 		}
 	}
