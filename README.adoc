@@ -306,7 +306,7 @@ If you are using VisualStudio Code, you can install the following `launcher.json
 
 ==== GUI Frontend
 
-If you are using VisualStudio Code, you can install the following `launcher.json` that is then used to launch Chrom to debug the Kiali Server GUI frontend in the debugger. Run the `make -e YARN_START_URL=http://localhost:20001/kiali yarn-start` first to start the GUI frontend locally. Make sure your YARN_START_URL is valid - it should point to a running Kiali Server. In this example, it assumes you ran a port-forward so that the Kiali Server can be reached at localhost:20001. If running in minikube, you could alternatively use `$(minikube ip):80` as the host/port assuming an Ingress is set up to access Kiali.
+If you are using VisualStudio Code, you can install the following `launcher.json` that is then used to launch Chrome to debug the Kiali Server GUI frontend in the debugger. Run the `make -e YARN_START_URL=http://localhost:20001/kiali yarn-start` first to start the GUI frontend locally. Make sure your YARN_START_URL is valid - it should point to a running Kiali Server. In this example, it assumes you ran a port-forward so that the Kiali Server can be reached at localhost:20001. If running in minikube, you could alternatively use `$(minikube ip):80` as the host/port assuming an Ingress is set up to access Kiali.
 
 [source,json]
 ----
@@ -317,7 +317,7 @@ If you are using VisualStudio Code, you can install the following `launcher.json
             "name": "Launch Chrome",
             "type": "chrome",
             "request": "launch",
-            "url": "http://localhost:3001"
+            "url": "http://localhost:3001",
             "webRoot": "${workspaceFolder}"
         }
     ]
