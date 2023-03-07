@@ -9,7 +9,7 @@ if ! which goimports &> /dev/null; then
   go install golang.org/x/tools/cmd/goimports@latest
 fi
 
-FILES=`find . -path './vendor' -prune -o -path './frontend' -prune -o -type f -iname '*.go' -print`
+FILES=`find . -path './vendor' -prune -o -path './frontend/kiali-ui' -prune -o -type f -iname '*.go' -print`
 
 for gofile in $FILES; do
   awk -i inplace '

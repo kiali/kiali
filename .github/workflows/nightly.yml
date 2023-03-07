@@ -92,7 +92,7 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: build
-        path: frontend/build
+        path: frontend/kiali-ui/build
 
     - name: Build and push image
       run: |

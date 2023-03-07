@@ -1,0 +1,39 @@
+# Javascript builds
+node_modules
+lib
+tsc_out
+.out
+.changelog
+.DS_Store
+coverage
+.cache
+.tmp
+.eslintcache
+package-lock.json
+
+# package managers
+lerna-debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+
+# IDEs and editors
+.idea
+.project
+.classpath
+.c9
+*.launch
+.settings
+*.sublime-workspace
+.history
+.vscode
+.yo-rc.json
+
+# IDE - VSCode
+.vscode
+# For vim
+*.swp
+
+

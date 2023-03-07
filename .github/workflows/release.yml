@@ -231,8 +231,8 @@ jobs:
         sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
 
         # UI version
-        jq -r '.version |= "${RELEASE_VERSION:1}"' frontend/package.json > frontend/package.json.tmp
-        mv frontend/package.json.tmp frontend/package.json
+        jq -r '.version |= "${RELEASE_VERSION:1}"' frontend/kiali-ui/package.json > frontend/kiali-ui/package.json.tmp
+        mv frontend/kiali-ui/package.json.tmp frontend/kiali-ui/package.json
 
 
     - name: Set up Go
@@ -248,7 +248,7 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: build
-        path: frontend/build
+        path: frontend/kiali-ui/build
 
     - name: Build and push image
       run: |
@@ -287,10 +287,10 @@ jobs:
       run: |
         sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $NEXT_VERSION-SNAPSHOT/" Makefile
 
-        jq -r ".version |= \"${NEXT_VERSION:1}\"" frontend/package.json > frontend/package.json.tmp
-        mv frontend/package.json.tmp frontend/package.json
+        jq -r ".version |= \"${NEXT_VERSION:1}\"" frontend/kiali-ui/package.json > frontend/kiali-ui/package.json.tmp
+        mv frontend/kiali-ui/package.json.tmp frontend/kiali-ui/package.json
 
-        git add Makefile frontend/package.json
+        git add Makefile frontend/kiali-ui/package.json
 
         git commit -m "Prepare for next version"
 

@@ -7,28 +7,28 @@
 # If the YARN_START_URL is empty but the 'proxy' field is set, the existing value will be used. Otherwise this cmd fails.
 yarn-start:
 	@if [ -n "${YARN_START_URL}" ]; then \
-		sed -i -e "2 i \ \ \"proxy\": \"${YARN_START_URL}\"," -e "/\"proxy\":/d" ${ROOTDIR}/frontend/package.json; \
+		sed -i -e "2 i \ \ \"proxy\": \"${YARN_START_URL}\"," -e "/\"proxy\":/d" ${ROOTDIR}/frontend/kiali-ui/package.json; \
 	else \
-		if ! (cat ${ROOTDIR}/frontend/package.json | grep -q "\"proxy\":"); then \
-			echo "${ROOTDIR}/frontend/package.json does not have a 'proxy' setting and you did not set YARN_START_URL. Aborting."; \
+		if ! (cat ${ROOTDIR}/frontend/kiali-ui/package.json | grep -q "\"proxy\":"); then \
+			echo "${ROOTDIR}/frontend/kiali-ui/package.json does not have a 'proxy' setting and you did not set YARN_START_URL. Aborting."; \
 			exit 1; \
 		fi; \
 	fi
-	@echo "'yarn start' will use this proxy setting: $$(grep proxy ${ROOTDIR}/frontend/package.json)"
-	@cd ${ROOTDIR}/frontend && yarn start
+	@echo "'yarn start' will use this proxy setting: $$(grep proxy ${ROOTDIR}/frontend/kiali-ui/package.json)"
+	@cd ${ROOTDIR}/frontend/kiali-ui && yarn start
 
 ## cypress-run: Runs all the cypress frontend integration tests locally without the GUI (i.e. headless).
 cypress-run:
-	@cd ${ROOTDIR}/frontend && yarn cypress:run --headless --config numTestsKeptInMemory=0,video=false
+	@cd ${ROOTDIR}/frontend/kiali-ui && yarn cypress:run --headless --config numTestsKeptInMemory=0,video=false
 
 ## cypress-gui: Opens the cypress GUI letting you pick which frontend integration tests to run locally.
 cypress-gui:
-	@cd ${ROOTDIR}/frontend && yarn cypress
+	@cd ${ROOTDIR}/frontend/kiali-ui && yarn cypress
 
 ## perf-tests-run: Runs the frontend perf tests locally without the GUI.
 perf-tests-run:
-	@cd ${ROOTDIR}/frontend && ${ROOTDIR}/frontend/node_modules/cypress/bin/cypress run --headless --config numTestsKeptInMemory=0,video=false --config-file cypress-perf.config.ts
+	@cd ${ROOTDIR}/frontend/kiali-ui && ${ROOTDIR}/frontend/kiali-ui/node_modules/cypress/bin/cypress run --headless --config numTestsKeptInMemory=0,video=false --config-file cypress-perf.config.ts
 
 ## perf-tests-gui: Runs the frontend perf tests locally with the GUI.
 perf-tests-gui:
-	@cd ${ROOTDIR}/frontend && yarn cypress --config-file cypress-perf.config.ts
+	@cd ${ROOTDIR}/frontend/kiali-ui && yarn cypress --config-file cypress-perf.config.ts

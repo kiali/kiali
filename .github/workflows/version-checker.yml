@@ -5,12 +5,12 @@ on:
   push:
     branches: [master, "^v\\d+\\.\\d+$"]
     paths:
-      - 'frontend/package.json'
+      - 'frontend/kiali-ui/package.json'
       - 'Makefile'
   pull_request:
     branches: [master, "^v\\d+\\.\\d+$"]
     paths:
-      - 'frontend/package.json'
+      - 'frontend/kiali-ui/package.json'
       - 'Makefile'
 jobs:
   version:
@@ -23,12 +23,12 @@ jobs:
         id: version_info
         run: |
           CORE_VERSION=$(grep '^VERSION ?=' ./Makefile | sed -e "s/^VERSION\s?=\sv//" -e "s/-SNAPSHOT//")
-          PACKAGE_VERSION=$(grep '"version":' ./frontend/package.json | sed -e "s/\s*\"version\":\s\"//" -e "s/\",//")
+          PACKAGE_VERSION=$(grep '"version":' ./frontend/kiali-ui/package.json | sed -e "s/\s*\"version\":\s\"//" -e "s/\",//")
           echo "CORE_VERSION=$CORE_VERSION" >> $GITHUB_ENV 
           echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV 
       - name: verify version
         if: ${{ steps.version_info.outputs.CORE_VERSION != steps.version_info.outputs.PACKAGE_VERSION }}
         run: |
-          echo "Versions in Makefile ( ${{ env.CORE_VERSION }} ) and frontend/package.json ( ${{ env.PACKAGE_VERSION }} ) are not aligned"
+          echo "Versions in Makefile ( ${{ env.CORE_VERSION }} ) and frontend/kiali-ui/package.json ( ${{ env.PACKAGE_VERSION }} ) are not aligned"
           exit 1
 

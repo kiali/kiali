@@ -482,8 +482,8 @@ if [ -z "${UI_CONSOLE_DIR:-}" ]; then
       find_results="$(find "${cur_path}" -maxdepth 1 -mindepth 1 -name "kiali-ui" | head -n 1)"
     fi
     if [ ! -z "${find_results}" ]; then
-      if [ -d "${find_results}/build" ]; then
-        UI_CONSOLE_DIR="${find_results}/build"
+      if [ -d "${find_results}/kiali-ui/build" ]; then
+        UI_CONSOLE_DIR="${find_results}/kiali-ui/build"
         break;
       else
         warnmsg "Directory 'kiali-ui' was found without a 'build' directory - did you forget to build the UI?: ${find_results}"

@@ -1,0 +1,49 @@
+name: Core Libraries Checker Version
+
+on:
+  # Run on master and release branches
+  push:
+    branches: [master, "^v\\d+\\.\\d+$"]
+    paths:
+      - 'frontend/kiali-ui/package.json'
+      - 'frontend/core/package.json'
+  pull_request:
+    branches: [master, "^v\\d+\\.\\d+$"]
+    paths:
+      - 'frontend/kiali-ui/package.json'
+      - 'frontend/core/package.json'
+jobs:
+  version:
+    name: Check React/Patternfly version
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        lib: [
+         "@patternfly/patternfly",
+         "@patternfly/react-charts",
+         "@patternfly/react-core",
+         "@patternfly/react-styles",
+         "@patternfly/react-table",
+         "@patternfly/react-tokens",
+         "react",
+         "react-dom"
+        ] 
+    steps:
+      - uses: actions/checkout@v3
+      - name: Calculate versions
+        id: version_info
+        run: |
+          echo "Checking ${{ matrix.lib }}"
+          PACKAGE_VERSION=$(grep '"${{ matrix.lib }}":' ./frontend/kiali-ui/package.json | sed -e "s/\s*\".*\":\s\"//" -e "s/\",*//")
+          PACKAGE_PLUGIN_VERSION=$(grep '"${{ matrix.lib }}":' ./frontend/core/package.json | sed -e "s/\s*\".*\":\s\"//" -e "s/\",*//")  
+          echo "${{ matrix.lib }} is:"
+          echo "    Kiali-ui: $PACKAGE_VERSION"     
+          echo "    Core: $PACKAGE_PLUGIN_VERSION"      
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV 
+          echo "PACKAGE_PLUGIN_VERSION=$PACKAGE_PLUGIN_VERSION" >> $GITHUB_ENV 
+      - name: Verify libs version
+        if: ${{ env.PACKAGE_PLUGIN_VERSION != env.PACKAGE_VERSION }}
+        run: |
+          echo "Versions of ${{ matrix.lib }} in frontend/core/package.json ( ${{ env.PACKAGE_PLUGIN_VERSION }} ) and frontend/kiali-ui/package.json ( ${{ env.PACKAGE_VERSION }} ) are not aligned"
+          exit 1
+

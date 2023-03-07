@@ -25,14 +25,14 @@ jobs:
         with:
           node-version: "14"
           cache: yarn
-          cache-dependency-path: frontend/yarn.lock
+          cache-dependency-path: frontend/kiali-ui/yarn.lock
 
       - name: Build
         run: make clean-all build-ui
 
       - name: Test frontend
         run: |
-          cd frontend
+          cd frontend/kiali-ui
           yarn pretty-quick --check --verbose --branch ${{ inputs.target_branch }}
           yarn test
 
@@ -40,4 +40,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: build
-          path: frontend/build/
+          path: frontend/kiali-ui/build/

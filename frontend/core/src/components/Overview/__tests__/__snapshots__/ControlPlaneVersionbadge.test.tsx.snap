@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Matches the snapshot 1`] = `
+<DocumentFragment>
+  <span
+    class="pf-c-label pf-m-blue pf-m-compact"
+  >
+    <span
+      class="pf-c-label__content"
+    >
+      1.0
+    </span>
+  </span>
+</DocumentFragment>
+`;

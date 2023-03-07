@@ -14,8 +14,8 @@ clean:
 ## clean-ui: Removes the UI build/ and node_modules/ directories.
 clean-ui:
 	@echo Cleaning UI ...
-	@rm -rf ${ROOTDIR}/frontend/node_modules
-	@rm -rf ${ROOTDIR}/frontend/build
+	@rm -rf ${ROOTDIR}/frontend/kiali-ui/node_modules
+	@rm -rf ${ROOTDIR}/frontend/kiali-ui/build
 
 ## clean-all: Runs `make clean` internally, removes the _output dir, and cleans the UI
 clean-all: clean clean-ui
@@ -35,11 +35,11 @@ build: go-check
 
 ## build-ui: Runs the yarn commands to build the frontend UI
 build-ui:
-	@cd ${ROOTDIR}/frontend && yarn install --frozen-lockfile && yarn run build
+	@cd ${ROOTDIR}/frontend/kiali-ui && yarn install --frozen-lockfile && yarn run build
 
 ## build-ui-test: Runs the yarn commands to build the dev frontend UI and runs the UI tests
 build-ui-test: build-ui
-	@cd ${ROOTDIR}/frontend && yarn run test
+	@cd ${ROOTDIR}/frontend/kiali-ui && yarn run test
 
 ## build-linux-multi-arch: Build Kiali binary with arch suffix for multi-arch
 build-linux-multi-arch: go-check
@@ -72,7 +72,7 @@ build-system-test: go-check
 ## test: Run tests, excluding third party tests under vendor and frontend. Runs `go test` internally
 test:
 	@echo Running tests, excluding third party tests under vendor
-	${GO} test ${GO_TEST_FLAGS} $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration/)
+	${GO} test ${GO_TEST_FLAGS} $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/kiali-ui/ -e /tests/integration/)
 
 ## test-integration-setup: Setup go library for converting test result into junit xml
 test-integration-setup:

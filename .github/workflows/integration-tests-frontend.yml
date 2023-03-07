@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: "14"
           cache: yarn
-          cache-dependency-path: frontend/yarn.lock
+          cache-dependency-path: frontend/kiali-ui/yarn.lock
 
       - name: Download go binary
         uses: actions/download-artifact@v3
@@ -43,7 +43,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: build
-          path: frontend/build
+          path: frontend/kiali-ui/build
 
       - name: Setup kind
         run: hack/setup-kind-in-ci.sh
@@ -62,7 +62,7 @@ jobs:
       - name: Run cypress integration tests
         uses: cypress-io/github-action@v4
         with:
-          working-directory: frontend
+          working-directory: frontend/kiali-ui
           command: yarn run cypress:run
         env:
           CYPRESS_BASE_URL: ${{ env.kiali_url }}
@@ -82,4 +82,4 @@ jobs:
         if: failure()
         with:
           name: cypress-screenshots
-          path: frontend/cypress/screenshots
+          path: frontend/kiali-ui/cypress/screenshots

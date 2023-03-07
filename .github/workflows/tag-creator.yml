@@ -89,8 +89,8 @@ jobs:
           sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
 
           if [[ $BRANCH != "v1.36" && $BRANCH != "v1.24" ]]; then
-            sed -i -r 's/"version": (.*)/"version": "'${RELEASE_VERSION:1}'",/' frontend/package.json
-            git add frontend/package.json
+            sed -i -r 's/"version": (.*)/"version": "'${RELEASE_VERSION:1}'",/' frontend/kiali-ui/package.json
+            git add frontend/kiali-ui/package.json
           fi
 
           git add Makefile
