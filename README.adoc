@@ -310,20 +310,26 @@ If you are using VisualStudio Code, you can install the following `launcher.json
 
 You can debug the Kiali GUI directly inside of Google Chrome using the Chrome Developer Tools.
 
-First, run the Kiali Server backend, either normally within a cluster or via `run-server.sh` as explained earlier. Determine what the Kiali URL is before moving to the next step. For example, if you run Kiali in minikube, and you set up a port-forward that exposes it, the URL to remember will be `http://localhost:20001/kiali`.
+First, run the Kiali Server backend, either normally within a cluster or via `run-kiali.sh` as explained earlier. Determine what the Kiali URL is before moving to the next step. For example, if you run Kiali in minikube, and you set up a port-forward that exposes it, the URL to remember will be `http://localhost:20001/kiali`.
 
-Second, run the GUI frontend using make: `make -e YARN_START_URL=http://<kiali-url> yarn-start` where `<kiali-url>` is the URL you determined from the previous step. For example, if the Kiali Server is running in minikube with a port-forward exposing it, then run `make -e YARN_START_URL=http://localhost:20001/kiali yarn-start`. This command will start the Kiali GUI frontend on a local endpoint. After the `yarn-start` command is ready, look at the output for the "Local" URL you use to access it. The output will look something like this:
+Second, run the GUI frontend using make: `make -e YARN_START_URL=<kiali-url> yarn-start` where `<kiali-url>` is the URL you determined from the previous step. You may need to also pass `-e PORT=3001` to override the default port where the yarn server will listen to (the default is `3000` which will conflict with Grafana if you started the Kiali Server via `run-kiali.sh`). Some examples:
+
+* If the Kiali Server is running in minikube with a port-forward exposing it, then run `make -e YARN_START_URL=http://localhost:20001/kiali yarn-start`.
+* If the Kiali Server is running in OpenShift with the usual Kiali Route exposing it, then run `make -e YARN_START_URL=https://<Kiali-OpenShift-Route-IP>/ yarn-start`.
+* If the Kiali Server is running locally via `run-kiali.sh`, then run `make -e YARN_START_URL=http://localhost:20001/kiali -e PORT=3001 yarn-start`.
+
+The `yarn-start` make command will start the Kiali GUI frontend on a local endpoint - when it is ready, look at the output for the "Local" URL you use to access it. The output will look something like this:
 ```
 Compiled successfully!
 
 You can now view @kiali/kiali-ui in the browser.
 
-  Local:            http://localhost:3000
-  On Your Network:  http://192.168.1.15:3000
+  Local:            http://localhost:3001
+  On Your Network:  http://192.168.1.15:3001
 ...
 ```
 
-Third, start Google Chrome and point the browser to the local URL for the Kiali GUI frontend started by yarn-start (in the example above, that will be `http://localhost:3000`).
+Third, start Google Chrome and point the browser to the local URL for the Kiali GUI frontend started by yarn-start (in the example above, that will be `http://localhost:3001`).
 
 Fourth, in Google Chrome, open the Developer Tools. You can press `F12` or `Control-Shift-I` to do this.
 
