@@ -57,7 +57,7 @@ class IstioConfigReferences extends React.Component<IstioConfigReferencesProps> 
           this.props.workloadReferences.map(reference => {
             return (
               <StackItem>
-                <WorkloadLink name={reference.name} namespace={reference.namespace} />
+                <WorkloadLink name={reference.name} namespace={reference.namespace} cluster={'@ TODO'} />
               </StackItem>
             );
           })}

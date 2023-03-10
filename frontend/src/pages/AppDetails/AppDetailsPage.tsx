@@ -166,6 +166,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.app}
           objectType={MetricsObjectTypes.APP}
+          cluster={'@TODO'}
           direction={'inbound'}
         />
       </Tab>
@@ -179,6 +180,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.app}
           objectType={MetricsObjectTypes.APP}
+          cluster={'@TODO'}
           direction={'outbound'}
         />
       </Tab>
@@ -195,6 +197,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             <TracesComponent
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.match.params.namespace}
+              cluster={'@TODO'}
               target={this.props.match.params.app}
               targetKind={'app'}
             />

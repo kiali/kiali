@@ -108,6 +108,7 @@ describe('Metrics for a service', () => {
                 lastRefreshAt={Date.now()}
                 namespace="ns"
                 object="svc"
+                cluster="_kiali_home"
                 objectType={MetricsObjectTypes.SERVICE}
                 direction={'inbound'}
               />
@@ -127,6 +128,7 @@ describe('Metrics for a service', () => {
         <IstioMetrics
           namespace="ns"
           object="svc"
+          cluster="_kiali_home"
           objectType={MetricsObjectTypes.SERVICE}
           direction={'inbound'}
           lastRefreshAt={Date.now()}
@@ -156,6 +158,7 @@ describe('Metrics for a service', () => {
         <IstioMetrics
           namespace="ns"
           object="svc"
+          cluster="_kiali_home"
           objectType={MetricsObjectTypes.SERVICE}
           direction={'inbound'}
           lastRefreshAt={Date.now()}
@@ -196,6 +199,7 @@ describe('Inbound Metrics for a workload', () => {
               lastRefreshAt={Date.now()}
               namespace="ns"
               object="svc"
+              cluster="_kiali_home"
               objectType={MetricsObjectTypes.WORKLOAD}
               direction={'inbound'}
             />
@@ -214,6 +218,7 @@ describe('Inbound Metrics for a workload', () => {
         <IstioMetrics
           namespace="ns"
           object="wkd"
+          cluster="_kiali_home"
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'inbound'}
           lastRefreshAt={Date.now()}
@@ -243,6 +248,7 @@ describe('Inbound Metrics for a workload', () => {
         <IstioMetrics
           namespace="ns"
           object="wkd"
+          cluster="_kiali_home"
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'inbound'}
           lastRefreshAt={Date.now()}

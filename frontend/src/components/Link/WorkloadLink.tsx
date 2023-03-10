@@ -7,16 +7,17 @@ import { KioskLink } from './KioskLink';
 type Props = {
   name: string;
   namespace: string;
+  cluster: string;
   query?: string;
 };
 
-export const getWorkloadLink = (name: string, namespace: string, query?: string): string => {
+export const getWorkloadLink = (name: string, namespace: string, cluster: string, query?: string): string => {
   let to = '/namespaces/' + namespace + '/' + Paths.WORKLOADS;
 
-  to = to + '/' + name;
+  to = to + '/' + name + '?cluster=' + cluster;
 
   if (!!query) {
-    to = to + '?' + query;
+    to = to + '&' + query;
   }
 
   return to;
@@ -24,12 +25,12 @@ export const getWorkloadLink = (name: string, namespace: string, query?: string)
 
 export class WorkloadLink extends React.Component<Props> {
   render() {
-    const { name, namespace, query } = this.props;
+    const { name, namespace, cluster, query } = this.props;
 
     return (
       <>
         <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-        <WorkloadLinkItem namespace={namespace} name={name} query={query} />
+        <WorkloadLinkItem namespace={namespace} name={name} cluster={cluster} query={query} />
       </>
     );
   }
@@ -37,12 +38,12 @@ export class WorkloadLink extends React.Component<Props> {
 
 class WorkloadLinkItem extends React.Component<Props> {
   render() {
-    const { name, namespace, query } = this.props;
-    const href = getWorkloadLink(name, namespace, query);
+    const { name, namespace, cluster, query } = this.props;
+    const href = getWorkloadLink(name, namespace, cluster, query);
     return (
       <KioskLink
         linkName={namespace + '/' + name}
-        dataTest={'workload-' + namespace + '-' + name}
+        dataTest={'workload-' + cluster + '-' + namespace + '-' + name}
         href={href}
       ></KioskLink>
     );

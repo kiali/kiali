@@ -114,12 +114,15 @@ const conf = {
       appHealth: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/health`,
       appMetrics: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/metrics`,
       appDashboard: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/dashboard`,
-      appSpans: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/spans`,
+      appSpans: (cluster: string, namespace: string, app: string) =>
+        `api/namespaces/${namespace}/apps/${app}/spans?cluster=${cluster}`,
       canaryUpgradeStatus: () => 'api/mesh/canaries/status',
       clusters: 'api/clusters',
       crippledFeatures: 'api/crippled',
-      serviceSpans: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}/spans`,
-      workloadSpans: (namespace: string, workload: string) => `api/namespaces/${namespace}/workloads/${workload}/spans`,
+      serviceSpans: (cluster: string, namespace: string, service: string) =>
+        `api/namespaces/${namespace}/services/${service}/spans?cluster=${cluster}`,
+      workloadSpans: (cluster: string, namespace: string, workload: string) =>
+        `api/namespaces/${namespace}/workloads/${workload}/spans?cluster=${cluster}`,
       customDashboard: (namespace: string, template: string) =>
         `api/namespaces/${namespace}/customdashboard/${template}`,
       grafana: 'api/grafana',
@@ -130,9 +133,12 @@ const conf = {
         `api/namespaces/${namespace}/istio/${objectType}/${object}`,
       istioPermissions: 'api/istio/permissions',
       jaeger: 'api/jaeger',
-      appTraces: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/traces`,
-      serviceTraces: (namespace: string, svc: string) => `api/namespaces/${namespace}/services/${svc}/traces`,
-      workloadTraces: (namespace: string, wkd: string) => `api/namespaces/${namespace}/workloads/${wkd}/traces`,
+      appTraces: (cluster: string, namespace: string, app: string) =>
+        `api/namespaces/${namespace}/apps/${app}/traces?cluster=${cluster}`,
+      serviceTraces: (cluster: string, namespace: string, svc: string) =>
+        `api/namespaces/${namespace}/services/${svc}/traces?cluster=${cluster}`,
+      workloadTraces: (cluster: string, namespace: string, wkd: string) =>
+        `api/namespaces/${namespace}/workloads/${wkd}/traces?cluster=${cluster}`,
       jaegerErrorTraces: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/errortraces`,
       jaegerTrace: (idTrace: string) => `api/traces/${idTrace}`,
       logout: 'api/logout',
@@ -167,15 +173,16 @@ const conf = {
         `api/namespaces/${namespace}/services/${service}/dashboard`,
       status: 'api/status',
       workloads: (namespace: string) => `api/namespaces/${namespace}/workloads`,
-      workload: (namespace: string, workload: string) => `api/namespaces/${namespace}/workloads/${workload}`,
-      workloadGraphElements: (namespace: string, workload: string) =>
-        `api/namespaces/${namespace}/workloads/${workload}/graph`,
-      workloadHealth: (namespace: string, workload: string) =>
-        `api/namespaces/${namespace}/workloads/${workload}/health`,
-      workloadMetrics: (namespace: string, workload: string) =>
-        `api/namespaces/${namespace}/workloads/${workload}/metrics`,
-      workloadDashboard: (namespace: string, workload: string) =>
-        `api/namespaces/${namespace}/workloads/${workload}/dashboard`
+      workload: (cluster: string, namespace: string, workload: string) =>
+        `api/namespaces/${namespace}/workloads/${workload}?cluster=${cluster}`,
+      workloadGraphElements: (cluster: string, namespace: string, workload: string) =>
+        `api/namespaces/${namespace}/workloads/${workload}/graph?cluster=${cluster}`,
+      workloadHealth: (cluster: string, namespace: string, workload: string) =>
+        `api/namespaces/${namespace}/workloads/${workload}/health?cluster=${cluster}`,
+      workloadMetrics: (cluster: string, namespace: string, workload: string) =>
+        `api/namespaces/${namespace}/workloads/${workload}/metrics?cluster=${cluster}`,
+      workloadDashboard: (cluster: string, namespace: string, workload: string) =>
+        `api/namespaces/${namespace}/workloads/${workload}/dashboard?cluster=${cluster}`
     }
   },
   /** Graph configurations */

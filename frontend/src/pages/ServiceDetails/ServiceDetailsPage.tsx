@@ -171,6 +171,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           namespace={this.props.match.params.namespace}
           object={this.props.match.params.service}
           objectType={MetricsObjectTypes.SERVICE}
+          cluster={'@TODO'}
           direction={'inbound'}
         />
       </Tab>
@@ -184,6 +185,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           <TracesComponent
             lastRefreshAt={this.props.lastRefreshAt}
             namespace={this.props.match.params.namespace}
+            cluster={'@TODO'}
             target={this.props.match.params.service}
             targetKind={'service'}
           />

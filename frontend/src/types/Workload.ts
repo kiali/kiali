@@ -21,7 +21,7 @@ export interface Workload {
   availableReplicas: Number;
   pods: Pod[];
   annotations: { [key: string]: string };
-  health?: WorkloadHealthResponse;  
+  health?: WorkloadHealthResponse;
   services: Service[];
   runtimes: Runtime[];
   additionalDetails: AdditionalItem[];
@@ -60,6 +60,7 @@ export const WorkloadType = {
 
 export interface WorkloadOverview {
   name: string;
+  cluster: string;
   type: string;
   istioSidecar: boolean;
   additionalDetailSample?: AdditionalItem;

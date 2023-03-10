@@ -65,7 +65,7 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 	k8s.OpenShift = true
 	svc := setupWorkloadService(k8s, config.NewConfig())
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false, Cluster: kubernetes.HomeClusterName}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
