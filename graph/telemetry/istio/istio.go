@@ -51,7 +51,7 @@ const (
 
 var grpcMetric = regexp.MustCompile(`istio_.*_messages`)
 
-// BuildNamespacesTrafficMap is required by the graph/TelemtryVendor interface
+// BuildNamespacesTrafficMap is required by the graph/TelemetryVendor interface
 func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "BuildNamespacesTrafficMap",
