@@ -87,6 +87,7 @@ type Entry = {
 
 interface WorkloadPodLogsState {
   accessLogModals: Map<string, AccessLog>;
+  cluster: string;
   containerOptions?: ContainerOption[];
   entries: Entry[];
   fullscreen: boolean;
@@ -198,9 +199,11 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
 
     const urlParams = new URLSearchParams(history.location.search);
     const showSpans = urlParams.get(URLParam.SHOW_SPANS);
+    const cluster = String(urlParams.get('cluster'));
 
     const defaultState = {
       accessLogModals: new Map<string, AccessLog>(),
+      cluster: cluster,
       entries: [],
       fullscreen: false,
       hideLogValue: '',
@@ -962,7 +965,7 @@ export class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, Workl
         endMicros: endTime * 1000,
         startMicros: sinceTime * 1000000
       };
-      promises.unshift(getWorkloadSpans(namespace, this.props.workload, params));
+      promises.unshift(getWorkloadSpans(this.state.cluster, namespace, this.props.workload, params));
     }
 
     this.promises

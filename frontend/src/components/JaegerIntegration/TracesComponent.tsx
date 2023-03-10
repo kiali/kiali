@@ -32,6 +32,7 @@ type ReduxProps = {
 type TracesProps = ReduxProps & {
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
+  cluster: string;
   target: string;
   targetKind: TargetKind;
 };
@@ -119,6 +120,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
   private fetchTraces = async () => {
     const options: FetchOptions = {
       namespace: this.props.namespace,
+      cluster: this.props.cluster,
       target: this.props.target,
       targetKind: this.props.targetKind,
       spanLimit: this.state.querySettings.limit,

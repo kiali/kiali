@@ -57,6 +57,7 @@ type WorkloadService struct {
 }
 
 type WorkloadCriteria struct {
+	Cluster               string
 	Namespace             string
 	WorkloadName          string
 	WorkloadType          string
@@ -312,6 +313,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkload",
 		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", criteria.Cluster),
 		observability.Attribute("namespace", criteria.Namespace),
 		observability.Attribute("workloadName", criteria.WorkloadName),
 		observability.Attribute("workloadType", criteria.WorkloadType),
@@ -326,7 +328,13 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		return nil, err
 	}
 
-	workload, err2 := fetchWorkload(ctx, in.businessLayer, criteria)
+	cluster := criteria.Cluster
+	if cluster == "" {
+		cluster = kubernetes.HomeClusterName
+	}
+	client := in.businessLayer.k8sClients[cluster]
+
+	workload, err2 := fetchWorkloadFromCluster(ctx, in.businessLayer, client, criteria)
 	if err2 != nil {
 		return nil, err2
 	}
@@ -595,6 +603,20 @@ func isAccessLogEmpty(al *parser.AccessLog) bool {
 }
 
 func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSelector string) (models.Workloads, error) {
+	allWls := models.Workloads{}
+	for c := range layer.k8sClients {
+		ws, err := fetchWorkloadsFromCluster(ctx, layer, c, namespace, labelSelector)
+		if err != nil {
+			return nil, err
+		} else {
+			allWls = append(allWls, ws...)
+		}
+	}
+
+	return allWls, nil
+}
+
+func fetchWorkloadsFromCluster(ctx context.Context, layer *Layer, cluster string, namespace string, labelSelector string) (models.Workloads, error) {
 	var pods []core_v1.Pod
 	var repcon []core_v1.ReplicationController
 	var dep []apps_v1.Deployment
@@ -613,6 +635,12 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 		return nil, err
 	}
 
+	if cluster == "" {
+		cluster = kubernetes.HomeClusterName
+	}
+
+	kialiClient := layer.k8sClients[cluster]
+
 	wg := sync.WaitGroup{}
 	wg.Add(9)
 	errChan := make(chan error, 9)
@@ -621,7 +649,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 	go func() {
 		defer wg.Done()
 		var err error
-		pods, err = layer.Workload.k8s.GetPods(namespace, labelSelector)
+		pods, err = kialiClient.GetPods(namespace, labelSelector)
 		if err != nil {
 			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -632,7 +660,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 	go func() {
 		defer wg.Done()
 		var err error
-		dep, err = layer.Workload.k8s.GetDeployments(namespace)
+		dep, err = kialiClient.GetDeployments(namespace)
 		if err != nil {
 			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -643,7 +671,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 	go func() {
 		defer wg.Done()
 		var err error
-		repset, err = layer.Workload.k8s.GetReplicaSets(namespace)
+		repset, err = kialiClient.GetReplicaSets(namespace)
 		if err != nil {
 			log.Errorf("Error fetching ReplicaSets per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -656,7 +684,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 
 		var err error
 		if isWorkloadIncluded(kubernetes.ReplicationControllerType) {
-			repcon, err = layer.Workload.k8s.GetReplicationControllers(namespace)
+			repcon, err = kialiClient.GetReplicationControllers(namespace)
 			if err != nil {
 				log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -669,8 +697,8 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 		defer wg.Done()
 
 		var err error
-		if layer.Workload.k8s.IsOpenShift() && isWorkloadIncluded(kubernetes.DeploymentConfigType) {
-			depcon, err = layer.Workload.k8s.GetDeploymentConfigs(namespace)
+		if kialiClient.IsOpenShift() && isWorkloadIncluded(kubernetes.DeploymentConfigType) {
+			depcon, err = kialiClient.GetDeploymentConfigs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching DeploymentConfigs per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -684,7 +712,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 
 		var err error
 		if isWorkloadIncluded(kubernetes.StatefulSetType) {
-			fulset, err = layer.Workload.k8s.GetStatefulSets(namespace)
+			fulset, err = kialiClient.GetStatefulSets(namespace)
 			if err != nil {
 				log.Errorf("Error fetching StatefulSets per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -698,7 +726,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 
 		var err error
 		if isWorkloadIncluded(kubernetes.CronJobType) {
-			conjbs, err = layer.Workload.k8s.GetCronJobs(namespace)
+			conjbs, err = kialiClient.GetCronJobs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching CronJobs per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -712,7 +740,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 
 		var err error
 		if isWorkloadIncluded(kubernetes.JobType) {
-			jbs, err = layer.Workload.k8s.GetJobs(namespace)
+			jbs, err = kialiClient.GetJobs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -726,7 +754,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 
 		var err error
 		if isWorkloadIncluded(kubernetes.DaemonSetType) {
-			daeset, err = layer.Workload.k8s.GetDaemonSets(namespace)
+			daeset, err = kialiClient.GetDaemonSets(namespace)
 			if err != nil {
 				log.Errorf("Error fetching DaemonSets per namespace %s: %s", namespace, err)
 			}
@@ -940,6 +968,7 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 			Pods:     models.Pods{},
 			Services: []models.ServiceOverview{},
 		}
+		w.Cluster = cluster
 		controllerType := controllers[controllerName]
 		// Flag to add a controller if it is found
 		cnFound := true
@@ -1131,7 +1160,14 @@ func fetchWorkloads(ctx context.Context, layer *Layer, namespace string, labelSe
 	return ws, nil
 }
 
+// @TODO should be merged with fetchWorkloadFromCluster method
 func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria) (*models.Workload, error) {
+	client := layer.k8sClients[kubernetes.HomeClusterName]
+
+	return fetchWorkloadFromCluster(ctx, layer, client, criteria)
+}
+
+func fetchWorkloadFromCluster(ctx context.Context, layer *Layer, client kubernetes.ClientInterface, criteria WorkloadCriteria) (*models.Workload, error) {
 	var pods []core_v1.Pod
 	var repcon []core_v1.ReplicationController
 	var dep *apps_v1.Deployment
@@ -1169,7 +1205,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 	go func() {
 		defer wg.Done()
 		var err error
-		pods, err = layer.Workload.k8s.GetPods(criteria.Namespace, "")
+		pods, err = client.GetPods(criteria.Namespace, "")
 		if err != nil {
 			log.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err)
 			errChan <- err
@@ -1184,7 +1220,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.DeploymentType {
 			return
 		}
-		dep, err = layer.Workload.k8s.GetDeployment(criteria.Namespace, criteria.WorkloadName)
+		dep, err = client.GetDeployment(criteria.Namespace, criteria.WorkloadName)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				dep = nil
@@ -1203,7 +1239,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 			return
 		}
 		var err error
-		repset, err = layer.Workload.k8s.GetReplicaSets(criteria.Namespace)
+		repset, err = client.GetReplicaSets(criteria.Namespace)
 		if err != nil {
 			log.Errorf("Error fetching ReplicaSets per namespace %s: %s", criteria.Namespace, err)
 			errChan <- err
@@ -1220,7 +1256,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 
 		var err error
 		if isWorkloadIncluded(kubernetes.ReplicationControllerType) {
-			repcon, err = layer.Workload.k8s.GetReplicationControllers(criteria.Namespace)
+			repcon, err = client.GetReplicationControllers(criteria.Namespace)
 			if err != nil {
 				log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", criteria.Namespace, err)
 				errChan <- err
@@ -1237,8 +1273,8 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 		}
 
 		var err error
-		if layer.Workload.k8s.IsOpenShift() && isWorkloadIncluded(kubernetes.DeploymentConfigType) {
-			depcon, err = layer.Workload.k8s.GetDeploymentConfig(criteria.Namespace, criteria.WorkloadName)
+		if client.IsOpenShift() && isWorkloadIncluded(kubernetes.DeploymentConfigType) {
+			depcon, err = client.GetDeploymentConfig(criteria.Namespace, criteria.WorkloadName)
 			if err != nil {
 				depcon = nil
 			}
@@ -1255,7 +1291,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 
 		var err error
 		if isWorkloadIncluded(kubernetes.StatefulSetType) {
-			fulset, err = layer.Workload.k8s.GetStatefulSet(criteria.Namespace, criteria.WorkloadName)
+			fulset, err = client.GetStatefulSet(criteria.Namespace, criteria.WorkloadName)
 			if err != nil {
 				fulset = nil
 			}
@@ -1272,7 +1308,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 
 		var err error
 		if isWorkloadIncluded(kubernetes.CronJobType) {
-			conjbs, err = layer.Workload.k8s.GetCronJobs(criteria.Namespace)
+			conjbs, err = client.GetCronJobs(criteria.Namespace)
 			if err != nil {
 				log.Errorf("Error fetching CronJobs per namespace %s: %s", criteria.Namespace, err)
 				errChan <- err
@@ -1290,7 +1326,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 
 		var err error
 		if isWorkloadIncluded(kubernetes.JobType) {
-			jbs, err = layer.Workload.k8s.GetJobs(criteria.Namespace)
+			jbs, err = client.GetJobs(criteria.Namespace)
 			if err != nil {
 				log.Errorf("Error fetching Jobs per namespace %s: %s", criteria.Namespace, err)
 				errChan <- err
@@ -1308,7 +1344,7 @@ func fetchWorkload(ctx context.Context, layer *Layer, criteria WorkloadCriteria)
 
 		var err error
 		if isWorkloadIncluded(kubernetes.DaemonSetType) {
-			ds, err = layer.Workload.k8s.GetDaemonSet(criteria.Namespace, criteria.WorkloadName)
+			ds, err = client.GetDaemonSet(criteria.Namespace, criteria.WorkloadName)
 			if err != nil {
 				ds = nil
 			}

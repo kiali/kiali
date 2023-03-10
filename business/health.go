@@ -368,6 +368,7 @@ func (in *HealthService) getAppRequestsHealth(namespace, app, rateInterval strin
 
 func (in *HealthService) getWorkloadRequestsHealth(namespace, workload, rateInterval string, queryTime time.Time, w *models.Workload) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
+	// @TODO include w.Cluster into query
 	inbound, outbound, err := in.prom.GetWorkloadRequestRates(namespace, workload, rateInterval, queryTime)
 	if err != nil {
 		return rqHealth, err

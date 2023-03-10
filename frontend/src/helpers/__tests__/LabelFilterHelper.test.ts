@@ -64,6 +64,7 @@ const appList: AppListItem[] = [
 
 const workloadList: WorkloadListItem[] = [
   {
+    cluster: '_kiali_home',
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'details-v1',
@@ -76,6 +77,7 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
+    cluster: '_kiali_home',
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'productpage-v1',
@@ -88,6 +90,7 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
+    cluster: '_kiali_home',
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'ratings-v1',
@@ -100,6 +103,7 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
+    cluster: '_kiali_home',
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'reviews-v1',
@@ -112,6 +116,7 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
+    cluster: '_kiali_home',
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'reviews-v2',
@@ -124,6 +129,7 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
+    cluster: '_kiali_home',
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'reviews-v3',
@@ -232,6 +238,7 @@ describe('LabelFilter', () => {
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
+        cluster: '_kiali_home',
         health: emptyWorkHealth,
         name: 'reviews-v1',
         type: 'Deployment',
@@ -244,6 +251,7 @@ describe('LabelFilter', () => {
       },
       {
         namespace: 'bookinfo',
+        cluster: '_kiali_home',
         health: emptyWorkHealth,
         name: 'reviews-v2',
         type: 'Deployment',
@@ -256,6 +264,7 @@ describe('LabelFilter', () => {
       },
       {
         namespace: 'bookinfo',
+        cluster: '_kiali_home',
         health: emptyWorkHealth,
         name: 'reviews-v3',
         type: 'Deployment',

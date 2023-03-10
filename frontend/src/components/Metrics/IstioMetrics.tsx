@@ -47,6 +47,7 @@ type MetricsState = {
 type ObjectId = {
   namespace: string;
   object: string;
+  cluster: string;
 };
 
 type IstioMetricsProps = ObjectId &
@@ -151,6 +152,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     if (this.props.jaegerIntegration) {
       this.spanOverlay.fetch({
         namespace: this.props.namespace,
+        cluster: this.props.cluster,
         target: this.props.object,
         targetKind: this.props.objectType,
         range: this.props.timeRange
@@ -169,7 +171,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     let promise: Promise<API.Response<DashboardModel>>;
     switch (this.props.objectType) {
       case MetricsObjectTypes.WORKLOAD:
-        promise = API.getWorkloadDashboard(this.props.namespace, this.props.object, opts);
+        promise = API.getWorkloadDashboard(this.props.cluster, this.props.namespace, this.props.object, opts);
         break;
       case MetricsObjectTypes.APP:
         promise = API.getAppDashboard(this.props.namespace, this.props.object, opts);
