@@ -65,6 +65,7 @@ func (s SidecarChecker) runChecks(sidecar *networking_v1beta1.Sidecar) models.Is
 		common.WorkloadSelectorNoWorkloadFoundChecker(SidecarCheckerType, selectorLabels, s.WorkloadsPerNamespace),
 		sidecars.EgressHostChecker{Sidecar: sidecar, ServiceEntries: serviceHosts, RegistryServices: s.RegistryServices},
 		sidecars.GlobalChecker{Sidecar: sidecar},
+		sidecars.OutboundTrafficPolicyModeChecker{Sidecar: sidecar},
 	}
 
 	for _, checker := range enabledCheckers {
