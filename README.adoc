@@ -306,9 +306,9 @@ If you are using VisualStudio Code, you can install the following `launcher.json
 
 === Debugging GUI Frontend
 
-==== Google Chrome Developer Tools
+You can debug the Kiali GUI directly inside of Google Chrome using the Chrome Developer Tools or using VisualStudio Code.
 
-You can debug the Kiali GUI directly inside of Google Chrome using the Chrome Developer Tools.
+In order to use either one, you first must perform some initial steps.
 
 First, run the Kiali Server backend, either normally within a cluster or via `run-kiali.sh` as explained earlier. Determine what the Kiali URL is before moving to the next step. For example, if you run Kiali in minikube, and you set up a port-forward that exposes it, the URL to remember will be `http://localhost:20001/kiali`.
 
@@ -319,6 +319,7 @@ Second, run the GUI frontend using make: `make -e YARN_START_URL=<kiali-url> yar
 * If the Kiali Server is running locally via `run-kiali.sh`, then run `make -e YARN_START_URL=http://localhost:20001/kiali -e PORT=3001 yarn-start`.
 
 The `yarn-start` make command will start the Kiali GUI frontend on a local endpoint - when it is ready, look at the output for the "Local" URL you use to access it. The output will look something like this:
+
 ```
 Compiled successfully!
 
@@ -329,11 +330,15 @@ You can now view @kiali/kiali-ui in the browser.
 ...
 ```
 
-Third, start Google Chrome and point the browser to the local URL for the Kiali GUI frontend started by yarn-start (in the example above, that will be `http://localhost:3001`).
+At this point, you can begin to set up your debugger tool of choice - see the next sections.
 
-Fourth, in Google Chrome, open the Developer Tools. You can press `F12` or `Control-Shift-I` to do this.
+==== Google Chrome Developer Tools
 
-Fifth, within the Developer Tools, navigate to the `Sources` tab, then the `Filesystem` sub-tab, and press the `+ Add folder to workspace` link. In the file selection dialog, select your Kiali `frontend/src` folder. This will inform Google Chrome Developer Tools where your Kiali GUI frontend source code can be found.
+Start Google Chrome and point the browser to the local URL for the Kiali GUI frontend started by yarn-start (in the example above, that will be `http://localhost:3001`).
+
+In Google Chrome, open the Developer Tools. You can press `F12` or `Control-Shift-I` to do this.
+
+Within the Developer Tools, navigate to the `Sources` tab, then the `Filesystem` sub-tab, and press the `+ Add folder to workspace` link. In the file selection dialog, select your Kiali `frontend/src` folder. This will inform Developer Tools where your Kiali GUI frontend source code can be found.
 
 At this point, you need to give Google Chrome permission to access your local source code folder. Towards the top of the browser window, you will see a prompt - press the "Allow" button to give Chrome the necessary permissions it needs.
 
@@ -341,7 +346,7 @@ You are now ready to debug the Kiali Server frontend. You can set breakpoints, i
 
 ==== VisualStudio Code
 
-If you are using VisualStudio Code, you can install the following `launcher.json` that is then used to launch Chrome to debug the Kiali Server GUI frontend in the debugger. Run the `make -e YARN_START_URL=http://localhost:20001/kiali yarn-start` first to start the GUI frontend locally. Make sure your YARN_START_URL is valid - it should point to a running Kiali Server. In this example, it assumes you ran a port-forward so that the Kiali Server can be reached at localhost:20001. If running in minikube, you could alternatively use `$(minikube ip):80` as the host/port assuming an Ingress is set up to access Kiali.
+If you are using VisualStudio Code, you can install the following `launcher.json` that is then used to launch Google Chrome to debug the Kiali Server GUI frontend in the debugger. The `url` setting is the local URL of the yarn-start server - make sure you use the one appropriate for your environment.
 
 [source,json]
 ----
